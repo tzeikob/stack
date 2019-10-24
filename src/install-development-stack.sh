@@ -314,6 +314,39 @@ case $answer in
   done
 esac
 
+# Docker
+read -p "Do you want to install docker-ce?(Y/n)" answer
+
+case $answer in
+ ( [Yy][Ee][Ss] | [Yy] | "" )
+  echo -e "Installing docker community edition."
+  sudo apt update
+  sudo apt-get install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+  sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+
+  sudo apt update
+  sudo apt install docker-ce docker-ce-cli containerd.io
+
+  echo -e "Creating docker user group."
+  sudo groupadd docker
+
+  echo -e "Adding current user to docker user group."
+  sudo usermod -aG docker $USER
+
+  compose_version="1.24.1"
+  read -p "Which version of the docker compose do you want to install:($compose_version) " version
+
+  if [[ $version != "" ]]; then
+    compose_version=$version
+  fi
+
+  sudo curl -L "https://github.com/docker/compose/releases/download/$compose_version/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+  sudo chmod +x /usr/local/bin/docker-compose
+
+  echo -e "${S}Docker has been installed successfully.${R}\n"
+esac
+
 # Editors
 editors=$workspace/editors
 
