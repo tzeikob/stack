@@ -446,4 +446,26 @@ case $answer in
   echo -e "${S}Postman has been installed successfully in $postman.${R}\n"
 esac
 
+# Mongo Compass
+read -p "Do you want to install mongodb compass community?(Y/n)" answer
+
+case $answer in
+ ( [Yy][Ee][Ss] | [Yy] | "" )
+  compass_version="1.19.12"
+  read -p "Which version of the mongodb compass do you want to install:($compass_version) " version
+
+  if [[ $version != "" ]]; then
+    compass_version=$version
+  fi
+
+  echo -e "Downloading mongodb compass community version $compass_version."
+  wget -q --show-progress -P $temp -O $temp/compass.deb "https://downloads.mongodb.com/compass/mongodb-compass-community_"$compass_version"_amd64.deb"
+
+  echo -e "Installing mongodb compass using deb packaging."
+  sudo dpkg -i $temp/compass.deb
+  rm $temp/compass.deb
+
+  echo -e "${S}MongoDB Compass has been installed successfully.${R}\n"
+esac
+
 echo -e "Installation completed successfully."
