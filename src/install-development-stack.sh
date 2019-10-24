@@ -468,4 +468,39 @@ case $answer in
   echo -e "${S}MongoDB Compass has been installed successfully.${R}\n"
 esac
 
+# Robo 3T
+read -p "Do you want to install robo 3t?(Y/n)" answer
+
+case $answer in
+ ( [Yy][Ee][Ss] | [Yy] | "" )
+  robo3t=$editors/robo3t
+  mkdir -p $robo3t
+
+  read -p "Enter the url to the latest robo 3t tar.gz file: " url
+  echo -e "Downloading robo 3t tar.gz file."
+  wget -q --show-progress -P $temp -O $temp/robo3t.tar.gz $url
+
+  echo -e "Extracting robo 3t files to ${V}$robo3t${R}."
+  tar zxf $temp/robo3t.tar.gz -C $robo3t --strip-components 1
+  rm $temp/robo3t.tar.gz
+
+  wget -q --show-progress -P $robo3t -O $robo3t/icon.png https://images.g2crowd.com/uploads/product/image/large_detail/large_detail_f49ab27210b28cdaf3e3bd3f7d2d629f/robo3t.png
+
+  sudo ln -sfn $robo3t/bin/robo3t /usr/local/bin/robo3t
+
+  echo -e "Creating robo 3t's application dock entry."
+
+  desktopfile="/usr/share/applications/robo3t.desktop"
+  sudo touch $desktopfile
+  sudo echo "[Desktop Entry]" | sudo tee -a $desktopfile
+  sudo echo "Type=Application" | sudo tee -a $desktopfile
+  sudo echo "Name=Robo 3T" | sudo tee -a $desktopfile
+  sudo echo "Icon=$robo3t/icon.png" | sudo tee -a $desktopfile
+  sudo echo "Exec=$robo3t/bin/robo3t" | sudo tee -a $desktopfile
+  sudo echo "Comment=Robo 3T" | sudo tee -a $desktopfile
+  sudo echo "Categories=Databases;Editor;" | sudo tee -a $desktopfile
+
+  echo -e "${S}Robo 3T has been installed successfully in $robo3t.${R}\n"
+esac
+
 echo -e "Installation completed successfully."
