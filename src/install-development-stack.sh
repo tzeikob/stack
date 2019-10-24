@@ -15,12 +15,11 @@ echo -e "Host: ${V}$HOSTNAME${R}"
 echo -e "Username: ${V}$USER${R}\n"
 
 # Temporary folder
-read -p "Where do you want to save temporary files?(./.tmp)" path
+temp=".tmp"
+read -p "Where do you want to save temporary files?($temp)" path
 
 if [[ $path != "" ]]; then
  temp=$path
-else
- temp="./.tmp"
 fi
 
 if [[ -d $temp ]]; then
@@ -33,20 +32,21 @@ fi
 echo -e "${S}Temporary folder has been set to $temp successfully.${R}\n"
 
 # Workspace folder
-read -p "Enter the absolute path to the workspace home folder:(home/$USER/Workspace) " path
+workspace="/home/$USER/Workspace"
+read -p "Enter the absolute path to the workspace home folder:($workspace) " path
 
-if [[ $path == "" ]]; then
- path="/home/$USER/Workspace"
+if [[ $path != "" ]]; then
+ workspace=$path
 fi
 
-if [[ -d $path ]]; then
- echo -e "Path ${V}$path${R} already exists."
+if [[ -d $workspace ]]; then
+ echo -e "Path ${V}$workspace${R} already exists."
 else
- echo -e "Creating path ${V}$path${R}."
- mkdir -p $path
+ echo -e "Creating path ${V}$workspace${R}."
+ mkdir -p $workspace
 fi
 
-echo -e "${S}Workspace home path has been set to $path successfully.${R}\n"
+echo -e "${S}Workspace home path has been set to $workspace successfully.${R}\n"
 
 # System upgrade
 read -p "Do you want to upgrade your base system to the latest updates?(Y/n)" answer
@@ -75,8 +75,7 @@ read -p "Do you want to install chrome?(Y/n)" answer
 case $answer in
  ( [Yy][Ee][Ss] | [Yy] | "" )
   echo -e "Downloading the latest version of chrome."
-  url="https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb"
-  wget -q --show-progress -P $temp $url
+  wget -q --show-progress -P $temp https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
 
   echo -e "Installing chrome using deb packaging."
   sudo dpkg -i $temp/google-chrome-stable_current_amd64.deb
@@ -90,8 +89,7 @@ read -p "Do you want to install skype?(Y/n)" answer
 case $answer in
  ( [Yy][Ee][Ss] | [Yy] | "" )
   echo -e "Downloading the latest version of skype."
-  url="https://repo.skype.com/latest/skypeforlinux-64.deb"
-  wget -q --show-progress -P $temp $url
+  wget -q --show-progress -P $temp https://repo.skype.com/latest/skypeforlinux-64.deb
 
   echo -e "Installing skype using deb packaging."
   sudo dpkg -i $temp/skypeforlinux-64.deb
@@ -121,7 +119,6 @@ case $answer in
     mkdir -p ~/.config/autostart
     desktopfile="/home/$USER/.config/autostart/slack.desktop"
     touch $desktopfile
-
     sudo echo "[Desktop Entry]" | sudo tee -a $desktopfile
     sudo echo "Type=Application" | sudo tee -a $desktopfile
     sudo echo "Name=Slack" | sudo tee -a $desktopfile
@@ -187,23 +184,24 @@ case $answer in
 esac
 
 # NodeJS
+node=$workspace/node
+nvm=$node/nvm
 read -p "Do you want to install NodeJS via nvm?(Y/n)" answer
 
 case $answer in
  ( [Yy][Ee][Ss] | [Yy] | "" )
-  nvmpath=$path/node/nvm
-  mkdir -p $nvmpath
+  mkdir -p $nvm
 
   read -p "Enter the url to the latest version of nvm: " url
-  echo -e "Installing latest version of nvm in ${V}$nvmpath${R}."
+  echo -e "Installing latest version of nvm in ${V}$nvm${R}."
   wget -q --show-progress -P $temp -O $temp/nvm-install.sh $url
 
-  export NVM_DIR=$nvmpath
+  export NVM_DIR=$nvm
   bash $temp/nvm-install.sh
   rm -rf $temp/nvm-install.sh
 
   source ~/.bashrc
-  source ~/Workspace/node/nvm/nvm.sh
+  source $nvm/nvm.sh
 
   nvm install --lts
   nvm install node
@@ -212,32 +210,34 @@ case $answer in
   echo -e "Currently installed NodeJS versions:"
   nvm ls
 
-  echo -e "${S}NodeJS has been installed successfully in $nvmpath/versions/node.${R}"
+  echo -e "${S}NodeJS LTS and current versions have been installed successfully in $nvm/versions/node.${R}"
 esac
 
-# JDK
-javapath=$path/java
+# JAVA
+java=$workspace/java
+
+# JDKs
 read -p "Do you want to install a JDK?(Y/n)" answer
 
 case $answer in
  ( [Yy][Ee][Ss] | [Yy] | "" )
-  mkdir -p $javapath
+  mkdir -p $java
 
   read -p "Enter the url to the JDK binary tar.gz file: " url
   echo -e "Downloading the JDK binary file."
   wget -q --show-progress -P $temp --no-check-certificate -c --header "Cookie: oraclelicense=accept-securebackup-cookie" $url
 
-  echo -e "Extracting JDK binary files to ${V}$javapath${R}."
-  tar zxf $temp/jdk* -C $javapath
+  echo -e "Extracting JDK binary files to ${V}$java${R}."
+  tar zxf $temp/jdk* -C $java
   rm -rf $temp/jdk*
 
-  echo -e "${S}JDK has been installed succefully to $javapath.${R}\n"
+  echo -e "${S}JDK has been installed succefully to $java.${R}\n"
 
   # Install more JDKs
   while :
   do
     echo -e "Currently installed JDKs are:"
-    tree -d --noreport -n -L 1 $javapath
+    tree -d --noreport -n -L 1 $java
 
     read -p "Do you want to install another JDK?(Y/n)" answer
     case $answer in
@@ -246,11 +246,11 @@ case $answer in
       echo -e "Downloading the JDK binary file."
       wget -q --show-progress -P $temp --no-check-certificate -c --header "Cookie: oraclelicense=accept-securebackup-cookie" $url
 
-      echo -e "Extracting JDK binary files to ${V}$javapath${R}."
-      tar zxf $temp/jdk* -C $javapath
+      echo -e "Extracting JDK binary files to ${V}$java${R}."
+      tar zxf $temp/jdk* -C $java
       rm -rf $temp/jdk*
 
-      echo -e "${S}JDK has been installed succefully to $javapath.${R}\n"
+      echo -e "${S}JDK has been installed succefully to $java.${R}\n"
       ;;
      *)
       break
@@ -259,10 +259,10 @@ case $answer in
 esac
 
 # Alternatives
-jdks=$(ls -A $javapath | grep ^jdk)
+jdks=$(ls -A $java | grep ^jdk)
 
 if [ "$jdks" ]; then
-  read -p "Some JDKs found in $javapath, do you want to add them in alternatives?(Y/n)" answer
+  read -p "Some JDKs found in $java, do you want to add them in alternatives?(Y/n)" answer
 
   case $answer in
    ( [Yy][Ee][Ss] | [Yy] | "" )
@@ -283,25 +283,25 @@ if [ "$jdks" ]; then
 fi
 
 # Maven
+maven=$workspace/maven
 read -p "Do you want to install maven?(Y/n)" answer
 
 case $answer in
  ( [Yy][Ee][Ss] | [Yy] | "" )
-  mavenpath=$path/maven
-  mkdir -p $mavenpath
+  mkdir -p $maven
 
   read -p "Enter the url to the maven binary tar.gz file: " url
   echo -e "Downloading the maven binary file."
   wget -q --show-progress -P $temp $url
 
-  echo -e "Extracting the maven files to ${V}$mavenpath${R}."
-  tar zxf $temp/apache-maven* -C $mavenpath
+  echo -e "Extracting the maven files to ${V}$maven${R}."
+  tar zxf $temp/apache-maven* -C $maven
   rm -rf $temp/apache-maven*
 
-  echo -e "${S}Maven has been installed successfully in $mavenpath.${R}\n"
+  echo -e "${S}Maven has been installed successfully in $maven.${R}\n"
 
-  for d in $mavenpath/* ; do
-    read -p "Found Maven $(basename $d), do you want to add it to update-alternatives?(Y/n)" answer
+  for d in $maven/* ; do
+    read -p "Found Maven $(basename $d), do you want to add it to alternatives?(Y/n)" answer
 
     case $answer in
      ( [Yy][Ee][Ss] | [Yy] | "" )
@@ -313,6 +313,9 @@ case $answer in
     esac
   done
 esac
+
+# Editors
+editors=$workspace/editors
 
 # Atom
 read -p "Do you want to install atom?(Y/n)" answer
@@ -333,18 +336,18 @@ read -p "Do you want to install ideaIC?(Y/n)" answer
 
 case $answer in
  ( [Yy][Ee][Ss] | [Yy] | "" )
-  editorspath=$path/editors
-  mkdir -p $editorspath
+  ideaic=$editors/idea-ic
+  mkdir -p $ideaic
 
   read -p "Enter the url to the ideaIC tar.gz file: " url
   echo -e "Downloading the ideaIC tar.gz file."
   wget -q --show-progress -P $temp $url
 
-  echo -e "Extracting the ideaIC files to ${V}$editorspath${R}."
-  tar zxf $temp/ideaIC* -C $editorspath
+  echo -e "Extracting the ideaIC files to ${V}$ideaic${R}."
+  tar zxf $temp/ideaIC* -C $ideaic --strip-components 1
   rm -rf $temp/ideaIC*
 
-  echo -e "${S}IdeaIC has been installed successfully in $editorspath.${R}\n"
+  echo -e "${S}IdeaIC has been installed successfully in $ideaic.${R}\n"
 esac
 
 # DBeaver
@@ -352,17 +355,17 @@ read -p "Do you want to install dbeaver?(Y/n)" answer
 
 case $answer in
  ( [Yy][Ee][Ss] | [Yy] | "" )
-  editorspath=$path/editors
-  mkdir -p $editorspath
+  dbeaver=$editors/dbeaver
+  mkdir -p $dbeaver
 
   echo -e "Downloading the latest version of the dbeaver tar.gz file."
   wget -q --show-progress -P $temp wget https://dbeaver.io/files/dbeaver-ce-latest-linux.gtk.x86_64.tar.gz
 
-  echo -e "Extracting the dbeaver files to ${V}$editorspath${R}."
-  tar zxf $temp/dbeaver-ce* -C $editorspath
+  echo -e "Extracting the dbeaver files to ${V}$dbeaver${R}."
+  tar zxf $temp/dbeaver-ce* -C $dbeaver --strip-components 1
   rm -rf $temp/dbeaver-ce*
 
-  sudo ln -sfn $editorspath/dbeaver/dbeaver /usr/local/bin/dbeaver
+  sudo ln -sfn $dbeaver/dbeaver /usr/local/bin/dbeaver
 
   echo -e "Creating dbeaver's application dock entry."
 
@@ -371,12 +374,12 @@ case $answer in
   sudo echo "[Desktop Entry]" | sudo tee -a $desktopfile
   sudo echo "Type=Application" | sudo tee -a $desktopfile
   sudo echo "Name=DBeaver Community" | sudo tee -a $desktopfile
-  sudo echo "Icon=$editorspath/dbeaver/dbeaver.png" | sudo tee -a $desktopfile
-  sudo echo "Exec=$editorspath/dbeaver/dbeaver" | sudo tee -a $desktopfile
+  sudo echo "Icon=$dbeaver/dbeaver.png" | sudo tee -a $desktopfile
+  sudo echo "Exec=$dbeaver/dbeaver" | sudo tee -a $desktopfile
   sudo echo "Comment=DBeaver Community" | sudo tee -a $desktopfile
   sudo echo "Categories=Development;Databases;" | sudo tee -a $desktopfile
 
-  echo -e "${S}DBeaver has been installed successfully in the $editorspath.${R}\n"
+  echo -e "${S}DBeaver has been installed successfully in the $dbeaver.${R}\n"
 esac
 
 # Postman
@@ -384,16 +387,16 @@ read -p "Do you want to install postman?(Y/n)" answer
 
 case $answer in
  ( [Yy][Ee][Ss] | [Yy] | "" )
-  editorspath=$path/editors
-  mkdir -p $editorspath
+  postman=$editors/postman
+  mkdir -p $postman
 
   echo -e "Downloading the latest version of postman."
-  url="https://dl.pstmn.io/download/latest/linux64"
-  wget -q --show-progress -P $temp -O $temp/postman.tar.gz $url
+  wget -q --show-progress -P $temp -O $temp/postman.tar.gz https://dl.pstmn.io/download/latest/linux64
 
-  echo -e "Extracting postman files to ${V}$editorspath${R}."
-  tar zxf $temp/postman.tar.gz -C $editorspath
-  sudo ln -sfn $editorspath/Postman/Postman /usr/local/bin/postman
+  echo -e "Extracting postman files to ${V}$postman${R}."
+  tar zxf $temp/postman.tar.gz -C $postman --strip-components 1
+
+  sudo ln -sfn $postman/Postman /usr/local/bin/postman
 
   echo -e "Creating postman's application dock entry."
 
@@ -402,12 +405,12 @@ case $answer in
   sudo echo "[Desktop Entry]" | sudo tee -a $desktopfile
   sudo echo "Type=Application" | sudo tee -a $desktopfile
   sudo echo "Name=Postman" | sudo tee -a $desktopfile
-  sudo echo "Icon=$editorspath/Postman/app/resources/app/assets/icon.png" | sudo tee -a $desktopfile
-  sudo echo "Exec=$editorspath/Postman/Postman" | sudo tee -a $desktopfile
+  sudo echo "Icon=$postman/app/resources/app/assets/icon.png" | sudo tee -a $desktopfile
+  sudo echo "Exec=$postman/Postman" | sudo tee -a $desktopfile
   sudo echo "Comment=Postman" | sudo tee -a $desktopfile
   sudo echo "Categories=Development;Code;" | sudo tee -a $desktopfile
 
-  echo -e "${S}Postman has been installed successfully in $editorspath.${R}\n"
+  echo -e "${S}Postman has been installed successfully in $postman.${R}\n"
 esac
 
 echo -e "Installation completed successfully."
