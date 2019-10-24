@@ -104,13 +104,35 @@ read -p "Do you want to install slack?(Y/n)" answer
 
 case $answer in
  ( [Yy][Ee][Ss] | [Yy] | "" )
-
   read -p "Enter the url to the slack binary file: " url
   echo -e "Downloading the latest version of slack."
   wget -q --show-progress -P $temp -O $temp/slack-desktop-amd64.deb $url
 
   echo -e "Installing slack using deb packaging."
   sudo apt install $temp/slack-desktop-amd64.deb
+
+  # Ask user to start slack at system start up
+  read -p "Do you want to start slack at start up?(Y/n)" answer
+
+  case $answer in
+   ( [Yy][Ee][Ss] | [Yy] | "" )
+    echo -e "Adding slack desktop entry to autostart."
+
+    mkdir -p ~/.config/autostart
+    desktopfile="/home/$USER/.config/autostart/slack.desktop"
+    touch $desktopfile
+
+    sudo echo "[Desktop Entry]" | sudo tee -a $desktopfile
+    sudo echo "Type=Application" | sudo tee -a $desktopfile
+    sudo echo "Name=Slack" | sudo tee -a $desktopfile
+    sudo echo "Comment=Slack Desktop" | sudo tee -a $desktopfile
+    sudo echo "Exec=/usr/bin/slack -u" | sudo tee -a $desktopfile
+    sudo echo "X-GNOME-Autostart-enabled=true" | sudo tee -a $desktopfile
+    sudo echo "StartupNotify=false" | sudo tee -a $desktopfile
+    sudo echo "Terminal=false" | sudo tee -a $desktopfile
+    # sudo echo "Hidden=false" | sudo tee -a $desktopfile
+    # sudo echo "NoDisplay=false" | sudo tee -a $desktopfile
+  esac
 
   echo -e "${S}Slack has been installed successfully.${R}\n"
 esac
