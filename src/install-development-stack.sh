@@ -186,6 +186,35 @@ case $answer in
   echo -e "${S}Git has been installed successfully.${R}\n"
 esac
 
+# NodeJS
+read -p "Do you want to install NodeJS via nvm?(Y/n)" answer
+
+case $answer in
+ ( [Yy][Ee][Ss] | [Yy] | "" )
+  nvmpath=$path/node/nvm
+  mkdir -p $nvmpath
+
+  read -p "Enter the url to the latest version of nvm: " url
+  echo -e "Installing latest version of nvm in ${V}$nvmpath${R}."
+  wget -q --show-progress -P $temp -O $temp/nvm-install.sh $url
+
+  export NVM_DIR=$nvmpath
+  bash $temp/nvm-install.sh
+  rm -rf $temp/nvm-install.sh
+
+  source ~/.bashrc
+  source ~/Workspace/node/nvm/nvm.sh
+
+  nvm install --lts
+  nvm install node
+  nvm use --lts
+
+  echo -e "Currently installed NodeJS versions:"
+  nvm ls
+
+  echo -e "${S}NodeJS has been installed successfully in $nvmpath/versions/node.${R}"
+esac
+
 # JDK
 javapath=$path/java
 read -p "Do you want to install a JDK?(Y/n)" answer
