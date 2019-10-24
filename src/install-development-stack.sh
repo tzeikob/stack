@@ -134,8 +134,8 @@ case $answer in
   echo -e "${S}Slack has been installed successfully.${R}\n"
 esac
 
-# Virtual Box v6.0
-read -p "Do you want to install virtual box 6.0?(Y/n)" answer
+# Virtual Box
+read -p "Do you want to install virtual box?(Y/n)" answer
 
 case $answer in
  ( [Yy][Ee][Ss] | [Yy] | "" )
@@ -315,7 +315,7 @@ case $answer in
 esac
 
 # Docker
-read -p "Do you want to install docker-ce?(Y/n)" answer
+read -p "Do you want to install docker?(Y/n)" answer
 
 case $answer in
  ( [Yy][Ee][Ss] | [Yy] | "" )
@@ -447,7 +447,7 @@ case $answer in
 esac
 
 # Mongo Compass
-read -p "Do you want to install mongodb compass community?(Y/n)" answer
+read -p "Do you want to install mongodb compass?(Y/n)" answer
 
 case $answer in
  ( [Yy][Ee][Ss] | [Yy] | "" )
