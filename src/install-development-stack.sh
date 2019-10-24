@@ -187,10 +187,11 @@ case $answer in
 esac
 
 # JDK
+javapath=$path/java
 read -p "Do you want to install a JDK?(Y/n)" answer
+
 case $answer in
  ( [Yy][Ee][Ss] | [Yy] | "" )
-  javapath=$path/java
   mkdir -p $javapath
 
   read -p "Enter the url to the JDK binary tar.gz file: " url
@@ -210,7 +211,6 @@ case $answer in
     tree -d --noreport -n -L 1 $javapath
 
     read -p "Do you want to install another JDK?(Y/n)" answer
-
     case $answer in
      ( [Yy][Ee][Ss] | [Yy] | "" )
       read -p "Enter the url to the JDK binary tar.gz file: " url
@@ -227,24 +227,31 @@ case $answer in
       break
     esac
   done
-
-  # Installing JDKs executables with update-alternatives
-  echo -e "Adding java and javac to update-alternatives."
-
-  for d in $javapath/* ; do
-    read -p "Found JDK $(basename $d), do you want to add it to update-alternatives?(Y/n)" answer
-
-    case $answer in
-     ( [Yy][Ee][Ss] | [Yy] | "" )
-      read -p "Enter the priority for this alternative entry: " priority
-
-      sudo update-alternatives --install /usr/bin/java java $d/bin/java $priority
-      sudo update-alternatives --install /usr/bin/javac javac $d/bin/javac $priority
-
-      echo -e "${S}JDK $(basename $d) has been added in alternatives.${R}\n"
-    esac
-  done
 esac
+
+# Alternatives
+jdks=$(ls -A $javapath | grep ^jdk)
+
+if [ "$jdks" ]; then
+  read -p "Some JDKs found in $javapath, do you want to add them in alternatives?(Y/n)" answer
+
+  case $answer in
+   ( [Yy][Ee][Ss] | [Yy] | "" )
+    for d in $jdks ; do
+     read -p "Do you want to add $(basename $d) in alternatives?(Y/n)" answer
+
+     case $answer in
+      ( [Yy][Ee][Ss] | [Yy] | "" )
+       read -p "Enter the priority for this alternative entry: " priority
+
+       sudo update-alternatives --install /usr/bin/java java $d/bin/java $priority
+       sudo update-alternatives --install /usr/bin/javac javac $d/bin/javac $priority
+
+       echo -e "${S}JDK $(basename $d) has been added in alternatives.${R}\n"
+     esac
+    done
+  esac
+fi
 
 # Maven
 read -p "Do you want to install maven?(Y/n)" answer
