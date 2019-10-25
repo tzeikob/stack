@@ -79,6 +79,7 @@ case $answer in
 
   echo -e "Installing chrome using deb packaging."
   sudo dpkg -i $temp/google-chrome-stable_current_amd64.deb
+  rm -rf $temp/google-chrome-stable_current_amd64.deb
 
   echo -e "${S}Chrome has been installed successfully.${R}\n"
 esac
@@ -93,6 +94,7 @@ case $answer in
 
   echo -e "Installing skype using deb packaging."
   sudo dpkg -i $temp/skypeforlinux-64.deb
+  rm -rf $temp/skypeforlinux-64.deb
 
   echo -e "${S}Skype has been installed successfully.${R}\n"
 esac
@@ -108,6 +110,7 @@ case $answer in
 
   echo -e "Installing slack using deb packaging."
   sudo dpkg -i $temp/slack-desktop-amd64.deb
+  rm -rf $temp/slack-desktop-amd64.deb
 
   # Ask user to start slack at system start up
   read -p "Do you want to start slack at start up?(Y/n)" answer
@@ -428,6 +431,7 @@ case $answer in
 
   echo -e "Extracting postman files to ${V}$postman${R}."
   tar zxf $temp/postman.tar.gz -C $postman --strip-components 1
+  rm -rf $temp/postman.tar.gz
 
   sudo ln -sfn $postman/Postman /usr/local/bin/postman
 
