@@ -33,7 +33,7 @@ echo -e "${S}Temporary folder has been set to $temp successfully.${R}\n"
 
 # Workspace folder
 workspace="/home/$USER/Workspace"
-read -p "Enter the absolute path to the workspace home folder:($workspace) " path
+read -p "Enter the path to the workspace folder:($workspace) " path
 
 if [[ $path != "" ]]; then
  workspace=$path
@@ -49,7 +49,7 @@ fi
 echo -e "${S}Workspace home path has been set to $workspace successfully.${R}\n"
 
 # System upgrade
-read -p "Do you want to upgrade your base system to the latest updates?(Y/n)" answer
+read -p "Do you want to upgrade your base system?(Y/n)" answer
 
 case $answer in
  ( [Yy][Ee][Ss] | [Yy] | "" )
@@ -262,7 +262,7 @@ esac
 jdks=$(ls -A $java | grep ^jdk)
 
 if [ "$jdks" ]; then
-  read -p "Some JDKs found in $java, do you want to add them in alternatives?(Y/n)" answer
+  read -p "Found JDKs, do you want to add them in alternatives?(Y/n)" answer
 
   case $answer in
    ( [Yy][Ee][Ss] | [Yy] | "" )
@@ -516,20 +516,20 @@ fi
 echo -e "${S}Sources folder has been set successfully to $sources.${R}\n"
 
 # Bookmarks
-read -p "Do you want to create Workspace and Sources bookmarks?(Y/n)" answer
+read -p "Do you want to create workspace bookmarks?(Y/n)" answer
 
 case $answer in
  ( [Yy][Ee][Ss] | [Yy] | "" )
   bookmarksfile="/home/$USER/.config/gtk-3.0/bookmarks"
 
-  echo -e "Adding Workspace and Sources to bookmarks."
+  echo -e "Adding workspace and sources to bookmarks file ${V}$bookmarksfile${R}."
   echo "file://$workspace Workspace" | tee -a $bookmarksfile
   echo "file://$workspace/sources Sources" | tee -a $bookmarksfile
 
-  echo -e "${S}Workspace and Sources bookmarks added successfully.${R}\n"
+  echo -e "${S}Workspace bookmarks have been added successfully.${R}\n"
 esac
 
-echo -e "Workspace stack has been installed under $workspace:"
-tree -d --noreport -n -L 2 $workspace
+echo -e "Workspace stack has been installed under ${V}$workspace${R}:"
+tree -d --noreport -L 2 $workspace
 
-echo -e "${S}Installation completed successfully.${R}"
+echo -e "\n${S}Installation completed successfully.${R}"
