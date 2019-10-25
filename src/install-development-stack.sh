@@ -503,4 +503,11 @@ case $answer in
   echo -e "${S}Robo 3T has been installed successfully in $robo3t.${R}\n"
 esac
 
+# Bookmarks
+bookmarksfile="/home/$USER/.config/gtk-3.0/bookmarks"
+
+echo -e "Adding worksapce and sources folder to files bookmarks."
+echo "file://$workspace Workspace" | tee -a $bookmarksfile
+echo "file://$workspace/sources Sources" | tee -a $bookmarksfile
+
 echo -e "Installation completed successfully."
