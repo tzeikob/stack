@@ -533,6 +533,22 @@ case $answer in
   echo -e "${S}Workspace bookmarks have been added successfully.${R}\n"
 esac
 
+# Terminal
+read -p "Do you want to load terminal profiles?(Y/n)" answer
+
+case $answer in
+ ( [Yy][Ee][Ss] | [Yy] | "" )
+  echo -e "Downloading terminal profiles backup file."
+  conffile=$temp/terminal.dconf
+  wget -q --show-progress -P $temp -O $conffile https://www.dropbox.com/s/qslstp28n1g6wtk/terminal.dconf?dl=0
+
+  echo -e "Installing terminal profiles from ${V}$conffile${R}."
+  dconf load /org/gnome/terminal/legacy/profiles:/ < $conffile
+  rm -rf $conffile
+
+  echo -e "${S}Terminal profiles have been loaded successfully.${R}\n"
+esac
+
 echo -e "Workspace stack has been installed under ${V}$workspace${R}:"
 tree -d --noreport -L 2 $workspace
 
