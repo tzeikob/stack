@@ -503,11 +503,33 @@ case $answer in
   echo -e "${S}Robo 3T has been installed successfully in $robo3t.${R}\n"
 esac
 
+# Sources
+sources=$workspace/sources
+
+if [[ -d $sources ]]; then
+ echo -e "Sources folder ${V}$sources${R} already exists."
+else
+ echo -e "Creating sources folder ${V}$sources${R}."
+ mkdir -p $sources
+fi
+
+echo -e "${S}Sources folder has been set successfully to $sources.${R}\n"
+
 # Bookmarks
-bookmarksfile="/home/$USER/.config/gtk-3.0/bookmarks"
+read -p "Do you want to create Workspace and Sources bookmarks?(Y/n)" answer
 
-echo -e "Adding worksapce and sources folder to files bookmarks."
-echo "file://$workspace Workspace" | tee -a $bookmarksfile
-echo "file://$workspace/sources Sources" | tee -a $bookmarksfile
+case $answer in
+ ( [Yy][Ee][Ss] | [Yy] | "" )
+  bookmarksfile="/home/$USER/.config/gtk-3.0/bookmarks"
 
-echo -e "Installation completed successfully."
+  echo -e "Adding Workspace and Sources to bookmarks."
+  echo "file://$workspace Workspace" | tee -a $bookmarksfile
+  echo "file://$workspace/sources Sources" | tee -a $bookmarksfile
+
+  echo -e "${S}Workspace and Sources bookmarks added successfully.${R}\n"
+esac
+
+echo -e "Workspace stack has been installed under $workspace:"
+tree -d --noreport -n -L 2 $workspace
+
+echo -e "${S}Installation completed successfully.${R}"
