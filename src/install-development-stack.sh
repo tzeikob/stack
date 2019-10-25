@@ -65,7 +65,7 @@ read -p "Do you want to install third-party utilities?(Y/n)" answer
 case $answer in
  ( [Yy][Ee][Ss] | [Yy] | "" )
   echo -e "Installing various software utilities."
-  sudo apt install tree curl
+  sudo apt install tree curl unzip
   echo -e "${S}Software utilities have been installed successfully.${R}\n"
 esac
 
@@ -549,6 +549,29 @@ case $answer in
   echo -e "${S}Terminal profiles have been loaded successfully.${R}\n"
 esac
 
+# SSH
+read -p "Do you want to restore backup SSH files?(Y/n)" answer
+
+case $answer in
+ ( [Yy][Ee][Ss] | [Yy] | "" )
+  read -p "Enter the url to the backup SSH files: " url
+  echo -e "Downloading backup SSH files."
+  sshhome=/home/$USER/.ssh
+  ssharchive=$temp/ssh.zip
+  curl -L $url > $ssharchive
+
+  echo -e "Extracting backup SSH files to ${V}$sshhome${R}."
+  mkdir -p $sshhome
+  unzip $ssharchive -d $sshhome
+  rm -rf $ssharchive
+
+  echo -e "The following SSH files have been restored:"
+  tree --noreport -n -L 1 $sshhome
+
+  echo -e "${S}SSH files have been restored successfully in $sshhome.${R}\n"
+esac
+
+# Report
 echo -e "Workspace stack has been installed under ${V}$workspace${R}:"
 tree -d --noreport -L 2 $workspace
 
