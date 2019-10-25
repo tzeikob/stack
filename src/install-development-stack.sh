@@ -107,7 +107,7 @@ case $answer in
   wget -q --show-progress -P $temp -O $temp/slack-desktop-amd64.deb $url
 
   echo -e "Installing slack using deb packaging."
-  sudo apt install $temp/slack-desktop-amd64.deb
+  sudo dpkg -i $temp/slack-desktop-amd64.deb
 
   # Ask user to start slack at system start up
   read -p "Do you want to start slack at start up?(Y/n)" answer
