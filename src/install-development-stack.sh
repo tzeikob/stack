@@ -1,5 +1,5 @@
 #!/bin/bash
-# A shell script to install a development environment
+# A shell script to install a development stack environment
 
 # Style markers
 R="\033[0m" # Reset styles
@@ -7,7 +7,7 @@ V="\e[93m" # Highlight values in yellow
 S="\e[92m" # Highlight logs in green
 
 # Welcome screen
-echo -e "Welcome to the workspace installation process."
+echo -e "Welcome to the workspace stack installation process."
 
 echo -e "Date: ${V}$(date)${R}"
 echo -e "System: ${V}$(lsb_release -si) $(lsb_release -sr)${R}"
@@ -16,7 +16,7 @@ echo -e "Username: ${V}$USER${R}\n"
 
 # Temporary folder
 temp=".tmp"
-read -p "Where do you want to save temporary files?($temp)" path
+read -p "Where do you want to save installation temporary files?($temp)" path
 
 if [[ $path != "" ]]; then
  temp=$path
