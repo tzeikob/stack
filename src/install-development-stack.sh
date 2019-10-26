@@ -617,6 +617,8 @@ case $answer in
   echo -e "${S}SSH files have been restored successfully in $aws_home.${R}\n"
 esac
 
+# TODO: Add script code to put start up scripts to backup secret and setting files to cloud
+
 # Report
 echo -e "Workspace stack has been installed under ${V}$workspace${R}:"
 tree -d --noreport -L 2 $workspace
