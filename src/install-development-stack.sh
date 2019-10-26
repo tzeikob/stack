@@ -59,7 +59,7 @@ case $answer in
   echo -e "${S}System upgrade finished successfully.${R}\n"
 esac
 
-# Utility software
+# Utilities
 read -p "Do you want to install third-party utilities?(Y/n)" answer
 
 case $answer in
@@ -84,22 +84,21 @@ case $answer in
   sudo apt update
   sudo apt install python3-gpg dropbox
 
-  echo -e "Starting the dropbox daemon."
+  echo -e "Starting the dropbox daemon..."
   dropbox start -i &>/dev/null
 
   # Prevent process to jump to the next step before dropbox has been synced
   while true; do
-    status=$(dropbox status)
-    if [[ $status == "Up to date" ]]; then
-      echo -ne "\n"
-      break;
-    fi
-
     output=$(dropbox status | sed -n 1p)
-    echo "$output\r"
+    echo -ne "$output                                   \r"
+
+    if [[ $output == "Up to date" ]]; then
+      echo -e "Dropbox files have been synced to ${V}/home/$USER/Dropbox${R}.\n"
+      break
+    fi
   done
 
-  echo -e "${S}Dropbox has been installed and synced in /home/$USER/Dropbox.${R}\n"
+  echo -e "${S}Dropbox has been installed successfully.${R}\n"
 esac
 
 # Chrome
@@ -249,7 +248,7 @@ case $answer in
   echo -e "${S}NodeJS LTS and current versions have been installed successfully in $nvm/versions/node.${R}"
 esac
 
-# JAVA
+# Java
 java=$workspace/java
 
 # JDKs
