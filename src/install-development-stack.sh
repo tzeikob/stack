@@ -589,7 +589,7 @@ case $answer in
 
   echo -e "Copying backup SSH files to ${V}$ssh_home${R}."
   mkdir -p $ssh_home
-  cp $dropbox/Stacj/Secret/ssh/* $ssh_home
+  cp $dropbox/Stack/Secret/ssh/* $ssh_home
   sudo chmod 600 $ssh_home/*
 
   echo -e "The following SSH files have been restored:"
