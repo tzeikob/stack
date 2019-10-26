@@ -153,18 +153,18 @@ case $answer in
     echo -e "Adding slack desktop entry to autostart."
 
     mkdir -p ~/.config/autostart
-    desktopfile="/home/$USER/.config/autostart/slack.desktop"
-    touch $desktopfile
-    echo "[Desktop Entry]" | tee -a $desktopfile
-    echo "Type=Application" | tee -a $desktopfile
-    echo "Name=Slack" | tee -a $desktopfile
-    echo "Comment=Slack Desktop" | tee -a $desktopfile
-    echo "Exec=/usr/bin/slack -u" | tee -a $desktopfile
-    echo "X-GNOME-Autostart-enabled=true" | tee -a $desktopfile
-    echo "StartupNotify=false" | tee -a $desktopfile
-    echo "Terminal=false" | tee -a $desktopfile
-    # echo "Hidden=false" | tee -a $desktopfile
-    # echo "NoDisplay=false" | tee -a $desktopfile
+    desktop_file="/home/$USER/.config/autostart/slack.desktop"
+    touch $desktop_file
+    echo "[Desktop Entry]" | tee -a $desktop_file
+    echo "Type=Application" | tee -a $desktop_file
+    echo "Name=Slack" | tee -a $desktop_file
+    echo "Comment=Slack Desktop" | tee -a $desktop_file
+    echo "Exec=/usr/bin/slack -u" | tee -a $desktop_file
+    echo "X-GNOME-Autostart-enabled=true" | tee -a $desktop_file
+    echo "StartupNotify=false" | tee -a $desktop_file
+    echo "Terminal=false" | tee -a $desktop_file
+    # echo "Hidden=false" | tee -a $desktop_file
+    # echo "NoDisplay=false" | tee -a $desktop_file
   esac
 
   echo -e "${S}Slack has been installed successfully.${R}\n"
@@ -178,6 +178,7 @@ case $answer in
   echo -e "Installing virtual box ${V}version 6.0${R}."
   wget -q https://www.virtualbox.org/download/oracle_vbox_2016.asc -O- | sudo apt-key add -
   sudo add-apt-repository "deb [arch=amd64] http://download.virtualbox.org/virtualbox/debian $(lsb_release -cs) contrib"
+
   sudo apt update
   sudo apt install virtualbox-6.0
 
@@ -438,15 +439,15 @@ case $answer in
 
   echo -e "Creating dbeaver's application dock entry."
 
-  desktopfile="/usr/share/applications/dbeaver.desktop"
-  sudo touch $desktopfile
-  sudo echo "[Desktop Entry]" | sudo tee -a $desktopfile
-  sudo echo "Type=Application" | sudo tee -a $desktopfile
-  sudo echo "Name=DBeaver Community" | sudo tee -a $desktopfile
-  sudo echo "Icon=$dbeaver/dbeaver.png" | sudo tee -a $desktopfile
-  sudo echo "Exec=$dbeaver/dbeaver" | sudo tee -a $desktopfile
-  sudo echo "Comment=DBeaver Community" | sudo tee -a $desktopfile
-  sudo echo "Categories=Development;Databases;" | sudo tee -a $desktopfile
+  desktop_file="/usr/share/applications/dbeaver.desktop"
+  sudo touch $desktop_file
+  sudo echo "[Desktop Entry]" | sudo tee -a $desktop_file
+  sudo echo "Type=Application" | sudo tee -a $desktop_file
+  sudo echo "Name=DBeaver Community" | sudo tee -a $desktop_file
+  sudo echo "Icon=$dbeaver/dbeaver.png" | sudo tee -a $desktop_file
+  sudo echo "Exec=$dbeaver/dbeaver" | sudo tee -a $desktop_file
+  sudo echo "Comment=DBeaver Community" | sudo tee -a $desktop_file
+  sudo echo "Categories=Development;Databases;" | sudo tee -a $desktop_file
 
   echo -e "${S}DBeaver has been installed successfully in the $dbeaver.${R}\n"
 esac
@@ -470,15 +471,15 @@ case $answer in
 
   echo -e "Creating postman's application dock entry."
 
-  desktopfile="/usr/share/applications/postman.desktop"
-  sudo touch $desktopfile
-  sudo echo "[Desktop Entry]" | sudo tee -a $desktopfile
-  sudo echo "Type=Application" | sudo tee -a $desktopfile
-  sudo echo "Name=Postman" | sudo tee -a $desktopfile
-  sudo echo "Icon=$postman/app/resources/app/assets/icon.png" | sudo tee -a $desktopfile
-  sudo echo "Exec=$postman/Postman" | sudo tee -a $desktopfile
-  sudo echo "Comment=Postman" | sudo tee -a $desktopfile
-  sudo echo "Categories=Development;Code;" | sudo tee -a $desktopfile
+  desktop_file="/usr/share/applications/postman.desktop"
+  sudo touch $desktop_file
+  sudo echo "[Desktop Entry]" | sudo tee -a $desktop_file
+  sudo echo "Type=Application" | sudo tee -a $desktop_file
+  sudo echo "Name=Postman" | sudo tee -a $desktop_file
+  sudo echo "Icon=$postman/app/resources/app/assets/icon.png" | sudo tee -a $desktop_file
+  sudo echo "Exec=$postman/Postman" | sudo tee -a $desktop_file
+  sudo echo "Comment=Postman" | sudo tee -a $desktop_file
+  sudo echo "Categories=Development;Code;" | sudo tee -a $desktop_file
 
   echo -e "${S}Postman has been installed successfully in $postman.${R}\n"
 esac
@@ -527,15 +528,15 @@ case $answer in
 
   echo -e "Creating robo 3t's application dock entry."
 
-  desktopfile="/usr/share/applications/robo3t.desktop"
-  sudo touch $desktopfile
-  sudo echo "[Desktop Entry]" | sudo tee -a $desktopfile
-  sudo echo "Type=Application" | sudo tee -a $desktopfile
-  sudo echo "Name=Robo 3T" | sudo tee -a $desktopfile
-  sudo echo "Icon=$robo3t/icon.png" | sudo tee -a $desktopfile
-  sudo echo "Exec=$robo3t/bin/robo3t" | sudo tee -a $desktopfile
-  sudo echo "Comment=Robo 3T" | sudo tee -a $desktopfile
-  sudo echo "Categories=Databases;Editor;" | sudo tee -a $desktopfile
+  desktop_file="/usr/share/applications/robo3t.desktop"
+  sudo touch $desktop_file
+  sudo echo "[Desktop Entry]" | sudo tee -a $desktop_file
+  sudo echo "Type=Application" | sudo tee -a $desktop_file
+  sudo echo "Name=Robo 3T" | sudo tee -a $desktop_file
+  sudo echo "Icon=$robo3t/icon.png" | sudo tee -a $desktop_file
+  sudo echo "Exec=$robo3t/bin/robo3t" | sudo tee -a $desktop_file
+  sudo echo "Comment=Robo 3T" | sudo tee -a $desktop_file
+  sudo echo "Categories=Databases;Editor;" | sudo tee -a $desktop_file
 
   echo -e "${S}Robo 3T has been installed successfully in $robo3t.${R}\n"
 esac
@@ -557,12 +558,12 @@ read -p "Do you want to create workspace bookmarks?(Y/n)" answer
 
 case $answer in
  ( [Yy][Ee][Ss] | [Yy] | "" )
-  bookmarksfile="/home/$USER/.config/gtk-3.0/bookmarks"
+  bookmarks_file="/home/$USER/.config/gtk-3.0/bookmarks"
 
-  echo -e "Adding workspace and sources to bookmarks file ${V}$bookmarksfile${R}."
-  echo "file://$workspace Workspace" | tee -a $bookmarksfile
-  echo "file://$workspace/sources Sources" | tee -a $bookmarksfile
-  echo "file://$dropbox Dropbox" | tee -a $bookmarksfile
+  echo -e "Adding workspace and sources to bookmarks file ${V}$bookmarks_file${R}."
+  echo "file://$workspace Workspace" | tee -a $bookmarks_file
+  echo "file://$workspace/sources Sources" | tee -a $bookmarks_file
+  echo "file://$dropbox Dropbox" | tee -a $bookmarks_file
 
   echo -e "${S}Workspace bookmarks have been added successfully.${R}\n"
 esac
