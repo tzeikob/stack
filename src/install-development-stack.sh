@@ -69,6 +69,39 @@ case $answer in
   echo -e "${S}Software utilities have been installed successfully.${R}\n"
 esac
 
+# Dropbox
+read -p "Do you want to install dropbox?(Y/n)" answer
+
+case $answer in
+ ( [Yy][Ee][Ss] | [Yy] | "" )
+  echo -e "Adding official dropbox repository."
+  dropbox_list=/etc/apt/sources.list.d/dropbox.list
+  sudo touch $dropbox_list
+  sudo echo "deb [arch=i386,amd64] http://linux.dropbox.com/ubuntu $(lsb_release -cs) main" | sudo tee -a $dropbox_list
+  sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 1C61A2656FB57B7E4DE0F4C1FC918B335044912E
+
+  echo -e "Installing the latest version of dropbox."
+  sudo apt update
+  sudo apt install python3-gpg dropbox
+
+  echo -e "Starting the dropbox daemon."
+  dropbox start -i &>/dev/null
+
+  # Prevent process to jump to the next step before dropbox has been synced
+  while true; do
+    status=$(dropbox status)
+    if [[ $status == "Up to date" ]]; then
+      echo -ne "\n"
+      break;
+    fi
+
+    output=$(dropbox status | sed -n 1p)
+    echo "$output\r"
+  done
+
+  echo -e "${S}Dropbox has been installed and synced in /home/$USER/Dropbox.${R}\n"
+esac
+
 # Chrome
 read -p "Do you want to install chrome?(Y/n)" answer
 
@@ -122,16 +155,16 @@ case $answer in
     mkdir -p ~/.config/autostart
     desktopfile="/home/$USER/.config/autostart/slack.desktop"
     touch $desktopfile
-    sudo echo "[Desktop Entry]" | sudo tee -a $desktopfile
-    sudo echo "Type=Application" | sudo tee -a $desktopfile
-    sudo echo "Name=Slack" | sudo tee -a $desktopfile
-    sudo echo "Comment=Slack Desktop" | sudo tee -a $desktopfile
-    sudo echo "Exec=/usr/bin/slack -u" | sudo tee -a $desktopfile
-    sudo echo "X-GNOME-Autostart-enabled=true" | sudo tee -a $desktopfile
-    sudo echo "StartupNotify=false" | sudo tee -a $desktopfile
-    sudo echo "Terminal=false" | sudo tee -a $desktopfile
-    # sudo echo "Hidden=false" | sudo tee -a $desktopfile
-    # sudo echo "NoDisplay=false" | sudo tee -a $desktopfile
+    echo "[Desktop Entry]" | tee -a $desktopfile
+    echo "Type=Application" | tee -a $desktopfile
+    echo "Name=Slack" | tee -a $desktopfile
+    echo "Comment=Slack Desktop" | tee -a $desktopfile
+    echo "Exec=/usr/bin/slack -u" | tee -a $desktopfile
+    echo "X-GNOME-Autostart-enabled=true" | tee -a $desktopfile
+    echo "StartupNotify=false" | tee -a $desktopfile
+    echo "Terminal=false" | tee -a $desktopfile
+    # echo "Hidden=false" | tee -a $desktopfile
+    # echo "NoDisplay=false" | tee -a $desktopfile
   esac
 
   echo -e "${S}Slack has been installed successfully.${R}\n"
@@ -529,6 +562,7 @@ case $answer in
   echo -e "Adding workspace and sources to bookmarks file ${V}$bookmarksfile${R}."
   echo "file://$workspace Workspace" | tee -a $bookmarksfile
   echo "file://$workspace/sources Sources" | tee -a $bookmarksfile
+  echo "file:///home/$USER/Dropbox Dropbox" | tee -a $bookmarksfile
 
   echo -e "${S}Workspace bookmarks have been added successfully.${R}\n"
 esac
