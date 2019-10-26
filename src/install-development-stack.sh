@@ -571,6 +571,28 @@ case $answer in
   echo -e "${S}SSH files have been restored successfully in $sshhome.${R}\n"
 esac
 
+# AWS
+read -p "Do you want to restore backup AWS files?(Y/n)" answer
+
+case $answer in
+ ( [Yy][Ee][Ss] | [Yy] | "" )
+  read -p "Enter the url to the backup AWS files: " url
+  echo -e "Downloading backup AWS files."
+  awshome=/home/$USER/.aws
+  awsarchive=$temp/aws.zip
+  curl -L $url > $awsarchive
+
+  echo -e "Extracting backup AWS files to ${V}$awshome${R}."
+  mkdir -p $awshome
+  unzip $awsarchive -d $awshome
+  rm -rf $awsarchive
+
+  echo -e "The following SSH files have been restored:"
+  tree --noreport -n -L 1 $awshome
+
+  echo -e "${S}SSH files have been restored successfully in $awshome.${R}\n"
+esac
+
 # Report
 echo -e "Workspace stack has been installed under ${V}$workspace${R}:"
 tree -d --noreport -L 2 $workspace
