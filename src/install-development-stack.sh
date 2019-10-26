@@ -70,6 +70,7 @@ case $answer in
 esac
 
 # Dropbox
+dropbox=/home/$USER/Dropbox
 read -p "Do you want to install dropbox?(Y/n)" answer
 
 case $answer in
@@ -93,7 +94,7 @@ case $answer in
     echo -ne "$output                                   \r"
 
     if [[ $output == "Up to date" ]]; then
-      echo -e "Dropbox files have been synced to ${V}/home/$USER/Dropbox${R}.\n"
+      echo -e "Dropbox files have been synced to ${V}$dropbox${R}.\n"
       break
     fi
   done
@@ -561,25 +562,22 @@ case $answer in
   echo -e "Adding workspace and sources to bookmarks file ${V}$bookmarksfile${R}."
   echo "file://$workspace Workspace" | tee -a $bookmarksfile
   echo "file://$workspace/sources Sources" | tee -a $bookmarksfile
-  echo "file:///home/$USER/Dropbox Dropbox" | tee -a $bookmarksfile
+  echo "file://$dropbox Dropbox" | tee -a $bookmarksfile
 
   echo -e "${S}Workspace bookmarks have been added successfully.${R}\n"
 esac
 
 # Terminal
-read -p "Do you want to load terminal profiles?(Y/n)" answer
+read -p "Do you want to restore terminal profiles?(Y/n)" answer
 
 case $answer in
  ( [Yy][Ee][Ss] | [Yy] | "" )
-  echo -e "Downloading terminal profiles backup file."
-  conffile=$temp/terminal.dconf
-  wget -q --show-progress -P $temp -O $conffile https://www.dropbox.com/s/qslstp28n1g6wtk/terminal.dconf?dl=0
+  terminal_conf=$dropbox/Stack/Terminal/profiles.dconf
 
-  echo -e "Installing terminal profiles from ${V}$conffile${R}."
-  dconf load /org/gnome/terminal/legacy/profiles:/ < $conffile
-  rm -rf $conffile
+  echo -e "Restoring terminal profiles from ${V}$terminal_conf${R}."
+  dconf load /org/gnome/terminal/legacy/profiles:/ < $terminal_conf
 
-  echo -e "${S}Terminal profiles have been loaded successfully.${R}\n"
+  echo -e "${S}Terminal profiles have been restored successfully.${R}\n"
 esac
 
 # SSH
@@ -587,22 +585,17 @@ read -p "Do you want to restore backup SSH files?(Y/n)" answer
 
 case $answer in
  ( [Yy][Ee][Ss] | [Yy] | "" )
-  read -p "Enter the url to the backup SSH files: " url
-  echo -e "Downloading backup SSH files."
-  sshhome=/home/$USER/.ssh
-  ssharchive=$temp/ssh.zip
-  curl -L $url > $ssharchive
+  ssh_home=/home/$USER/.ssh
 
-  echo -e "Extracting backup SSH files to ${V}$sshhome${R}."
-  mkdir -p $sshhome
-  unzip $ssharchive -d $sshhome
-  sudo chmod 600 $sshhome/*
-  rm -rf $ssharchive
+  echo -e "Copying backup SSH files to ${V}$ssh_home${R}."
+  mkdir -p $ssh_home
+  cp $dropbox/Stacj/Secret/ssh/* $ssh_home
+  sudo chmod 600 $ssh_home/*
 
   echo -e "The following SSH files have been restored:"
-  tree --noreport -n -L 1 $sshhome
+  tree --noreport -n -L 1 $ssh_home
 
-  echo -e "${S}SSH files have been restored successfully in $sshhome.${R}\n"
+  echo -e "${S}SSH files have been restored successfully in $ssh_home.${R}\n"
 esac
 
 # AWS
@@ -610,22 +603,17 @@ read -p "Do you want to restore backup AWS files?(Y/n)" answer
 
 case $answer in
  ( [Yy][Ee][Ss] | [Yy] | "" )
-  read -p "Enter the url to the backup AWS files: " url
-  echo -e "Downloading backup AWS files."
-  awshome=/home/$USER/.aws
-  awsarchive=$temp/aws.zip
-  curl -L $url > $awsarchive
+  aws_home=/home/$USER/.aws
 
-  echo -e "Extracting backup AWS files to ${V}$awshome${R}."
-  mkdir -p $awshome
-  unzip $awsarchive -d $awshome
-  sudo chmod 600 $awshome/*
-  rm -rf $awsarchive
+  echo -e "Copying backup AWS files to ${V}$aws_home${R}."
+  mkdir -p $aws_home
+  cp $dropbox/Stack/Secret/aws/* $aws_home
+  sudo chmod 600 $aws_home/*
 
-  echo -e "The following SSH files have been restored:"
-  tree --noreport -n -L 1 $awshome
+  echo -e "The following AWS files have been restored:"
+  tree --noreport -n -L 1 $aws_home
 
-  echo -e "${S}SSH files have been restored successfully in $awshome.${R}\n"
+  echo -e "${S}SSH files have been restored successfully in $aws_home.${R}\n"
 esac
 
 # Report
