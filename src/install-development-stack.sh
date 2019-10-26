@@ -563,6 +563,7 @@ case $answer in
   echo -e "Extracting backup SSH files to ${V}$sshhome${R}."
   mkdir -p $sshhome
   unzip $ssharchive -d $sshhome
+  sudo chmod 600 $sshhome/*
   rm -rf $ssharchive
 
   echo -e "The following SSH files have been restored:"
@@ -585,6 +586,7 @@ case $answer in
   echo -e "Extracting backup AWS files to ${V}$awshome${R}."
   mkdir -p $awshome
   unzip $awsarchive -d $awshome
+  sudo chmod 600 $awshome/*
   rm -rf $awsarchive
 
   echo -e "The following SSH files have been restored:"
