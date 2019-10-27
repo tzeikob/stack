@@ -2,10 +2,11 @@
 # A shell script to install a development stack environment
 # Last Updated: Ubuntu 18.04.03 LTS
 
-# Style markers
+# Style markers various helper vars
 R="\033[0m" # Reset styles
 V="\e[93m" # Highlight values in yellow
 S="\e[92m" # Highlight logs in green
+yes="^([Yy][Ee][Ss]|[Yy]|"")$"
 
 # Welcome screen
 echo -e "Welcome to the workspace stack installation process."
@@ -17,7 +18,8 @@ echo -e "Username: ${V}$USER${R}\n"
 
 # Temporary folder
 temp=".tmp"
-read -p "Where do you want to save installation temporary files?($temp)" path
+
+read -p "Where do you want to save installation temporary files?($temp) " path
 
 if [[ $path != "" ]]; then
  temp=$path
@@ -34,6 +36,7 @@ echo -e "${S}Temporary folder has been set to $temp successfully.${R}\n"
 
 # Workspace folder
 workspace="/home/$USER/Workspace"
+
 read -p "Enter the path to the workspace folder:($workspace) " path
 
 if [[ $path != "" ]]; then
@@ -50,32 +53,32 @@ fi
 echo -e "${S}Workspace home path has been set to $workspace successfully.${R}\n"
 
 # System upgrade
-read -p "Do you want to upgrade your base system?(Y/n)" answer
+read -p "Do you want to upgrade your base system?(Y/n) " answer
 
-case $answer in
- ( [Yy][Ee][Ss] | [Yy] | "" )
-  echo -e "Updating the repositories package list."
+if [[ $answer =~ $yes ]]; then
+  echo -e "Upgrading the base system with the latest updates."
   sudo apt update
   sudo apt upgrade
-  echo -e "${S}System upgrade finished successfully.${R}\n"
-esac
+
+  echo -e "${S}System upgrade has been finished successfully.${R}\n"
+fi
 
 # Utilities
-read -p "Do you want to install third-party utilities?(Y/n)" answer
+read -p "Do you want to install third-party utilities?(Y/n) " answer
 
-case $answer in
- ( [Yy][Ee][Ss] | [Yy] | "" )
+if [[ $answer =~ $yes ]]; then
   echo -e "Installing various software utilities."
   sudo apt install tree curl unzip
+
   echo -e "${S}Software utilities have been installed successfully.${R}\n"
-esac
+fi
 
 # Dropbox
 dropbox=/home/$USER/Dropbox
-read -p "Do you want to install dropbox?(Y/n)" answer
 
-case $answer in
- ( [Yy][Ee][Ss] | [Yy] | "" )
+read -p "Do you want to install dropbox?(Y/n) " answer
+
+if [[ $answer =~ $yes ]]; then
   echo -e "Adding official dropbox repository."
   dropbox_list=/etc/apt/sources.list.d/dropbox.list
   sudo touch $dropbox_list
@@ -101,13 +104,12 @@ case $answer in
   done
 
   echo -e "${S}Dropbox has been installed successfully.${R}\n"
-esac
+fi
 
 # Chrome
-read -p "Do you want to install chrome?(Y/n)" answer
+read -p "Do you want to install chrome?(Y/n) " answer
 
-case $answer in
- ( [Yy][Ee][Ss] | [Yy] | "" )
+if [[ $answer =~ $yes ]]; then
   echo -e "Downloading the latest version of chrome."
   wget -q --show-progress -P $temp https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
 
@@ -116,13 +118,12 @@ case $answer in
   rm -rf $temp/google-chrome-stable_current_amd64.deb
 
   echo -e "${S}Chrome has been installed successfully.${R}\n"
-esac
+fi
 
 # Skype
-read -p "Do you want to install skype?(Y/n)" answer
+read -p "Do you want to install skype?(Y/n) " answer
 
-case $answer in
- ( [Yy][Ee][Ss] | [Yy] | "" )
+if [[ $answer =~ $yes ]]; then
   echo -e "Downloading the latest version of skype."
   wget -q --show-progress -P $temp https://repo.skype.com/latest/skypeforlinux-64.deb
 
@@ -131,13 +132,12 @@ case $answer in
   rm -rf $temp/skypeforlinux-64.deb
 
   echo -e "${S}Skype has been installed successfully.${R}\n"
-esac
+fi
 
 # Slack
-read -p "Do you want to install slack?(Y/n)" answer
+read -p "Do you want to install slack?(Y/n) " answer
 
-case $answer in
- ( [Yy][Ee][Ss] | [Yy] | "" )
+if [[ $answer =~ $yes ]]; then
   read -p "Enter the url to the slack binary file: " url
   echo -e "Downloading the latest version of slack."
   wget -q --show-progress -P $temp -O $temp/slack-desktop-amd64.deb $url
@@ -147,10 +147,9 @@ case $answer in
   rm -rf $temp/slack-desktop-amd64.deb
 
   # Ask user to start slack at system start up
-  read -p "Do you want to start slack at start up?(Y/n)" answer
+  read -p "Do you want to start slack at start up?(Y/n) " answer
 
-  case $answer in
-   ( [Yy][Ee][Ss] | [Yy] | "" )
+  if [[ $answer =~ $yes ]]; then
     echo -e "Adding slack desktop entry to autostart."
 
     mkdir -p ~/.config/autostart
@@ -166,16 +165,15 @@ case $answer in
     echo "Terminal=false" | tee -a $desktop_file
     # echo "Hidden=false" | tee -a $desktop_file
     # echo "NoDisplay=false" | tee -a $desktop_file
-  esac
+  fi
 
   echo -e "${S}Slack has been installed successfully.${R}\n"
-esac
+fi
 
 # Virtual Box
-read -p "Do you want to install virtual box?(Y/n)" answer
+read -p "Do you want to install virtual box?(Y/n) " answer
 
-case $answer in
- ( [Yy][Ee][Ss] | [Yy] | "" )
+if [[ $answer =~ $yes ]]; then
   echo -e "Installing virtual box ${V}version 6.0${R}."
   wget -q https://www.virtualbox.org/download/oracle_vbox_2016.asc -O- | sudo apt-key add -
   sudo add-apt-repository "deb [arch=amd64] http://download.virtualbox.org/virtualbox/debian $(lsb_release -cs) contrib"
@@ -184,13 +182,12 @@ case $answer in
   sudo apt install virtualbox-6.0
 
   echo -e "${S}Virtual box has been installed successfully.${R}\n"
-esac
+fi
 
 # Git
-read -p "Do you want to install git?(Y/n)" answer
+read -p "Do you want to install git?(Y/n) " answer
 
-case $answer in
- ( [Yy][Ee][Ss] | [Yy] | "" )
+if [[ $answer =~ $yes ]]; then
   ppa="git-core/ppa"
 
   if ! grep -q "^deb .*$ppa" /etc/apt/sources.list /etc/apt/sources.list.d/*; then
@@ -202,7 +199,7 @@ case $answer in
   echo -e "Installing the latest version of git."
   sudo apt install git
 
-  read -p "Enter a global username to be associated in each git commit:($USER)" username
+  read -p "Enter a global username to be associated in each git commit:($USER) " username
   if [[ $username == "" ]]; then
    username = $USER
   fi
@@ -210,7 +207,7 @@ case $answer in
   git config --global user.name "$username"
   echo -e "Global username has been set to ${V}$(git config --global user.name)${R}."
 
-  read -p "Enter a global email to be associated in each git commit:($USER@$HOSTNAME)" email
+  read -p "Enter a global email to be associated in each git commit:($USER@$HOSTNAME) " email
   if [[ $email == "" ]]; then
    email = $USER@$HOSTNAME
   fi
@@ -219,15 +216,15 @@ case $answer in
   echo -e "Global email has been set to ${V}$(git config --global user.email)${R}."
 
   echo -e "${S}Git has been installed successfully.${R}\n"
-esac
+fi
 
 # NodeJS
 node=$workspace/node
 nvm=$node/nvm
-read -p "Do you want to install NodeJS through nvm?(Y/n)" answer
 
-case $answer in
- ( [Yy][Ee][Ss] | [Yy] | "" )
+read -p "Do you want to install NodeJS through nvm?(Y/n) " answer
+
+if [[ $answer =~ $yes ]]; then
   mkdir -p $nvm
 
   read -p "Enter the url to the latest version of nvm: " url
@@ -250,14 +247,14 @@ case $answer in
   nvm ls
 
   echo -e "${S}NodeJS LTS and current versions have been installed successfully in $nvm/versions/node.${R}"
-esac
+fi
 
 # Java
 java=$workspace/java
-read -p "Do you want to install JDKs?(Y/n)" answer
 
-case $answer in
- ( [Yy][Ee][Ss] | [Yy] | "" )
+read -p "Do you want to install JDKs?(Y/n) " answer
+
+if [[ $answer =~ $yes ]]; then
   mkdir -p $java
 
   while true; do
@@ -275,43 +272,41 @@ case $answer in
     echo -e "Currently installed JDKs are:"
     tree -d --noreport -n -L 1 $java
 
-    read -p "Do you want to install another JDK?(Y/n)" answer
+    read -p "Do you want to install another JDK?(Y/n) " answer
     if ! [[ $answer =~ ^([Yy][Ee][Ss]|[Yy]|"")$ ]]; then
       break
     fi
   done
-esac
+fi
 
 # Alternatives
 jdks=$(ls -A $java | grep ^jdk)
 
 if [ "$jdks" ]; then
-  read -p "Found JDKs, do you want to add them in alternatives?(Y/n)" answer
+  read -p "Do you want to add JDKs in alternatives?(Y/n) " answer
 
-  case $answer in
-   ( [Yy][Ee][Ss] | [Yy] | "" )
+  if [[ $answer =~ $yes ]]; then
     for d in $jdks ; do
-     read -p "Do you want to add $(basename $d) in alternatives?(Y/n)" answer
+      read -p "Do you want to add $(basename $d) in alternatives?(Y/n) " answer
 
-     case $answer in
-      ( [Yy][Ee][Ss] | [Yy] | "" )
-       read -p "Enter the priority for this alternative entry: " priority
+      if [[ $answer =~ $yes ]]; then
+        read -p "Enter the priority for this alternative entry: " priority
 
-       sudo update-alternatives --install /usr/bin/java java $d/bin/java $priority
-       sudo update-alternatives --install /usr/bin/javac javac $d/bin/javac $priority
+        sudo update-alternatives --install /usr/bin/java java $d/bin/java $priority
+        sudo update-alternatives --install /usr/bin/javac javac $d/bin/javac $priority
 
-       echo -e "${S}JDK $(basename $d) has been added in alternatives.${R}\n"
-     esac
-    done
-  esac
+        echo -e "${S}JDK $(basename $d) has been added in alternatives.${R}\n"
+     fi
+   done
+ fi
 fi
 
 # Maven
 maven=$workspace/maven
-read -p "Do you want to install maven?(Y/n)" answer
 
-case $answer in
- ( [Yy][Ee][Ss] | [Yy] | "" )
+read -p "Do you want to install maven?(Y/n) " answer
+
+if [[ $answer =~ $yes ]]; then
   mkdir -p $maven
 
   read -p "Enter the url to the maven binary tar.gz file: " url
@@ -325,24 +320,22 @@ case $answer in
   echo -e "${S}Maven has been installed successfully in $maven.${R}\n"
 
   for d in $maven/* ; do
-    read -p "Found Maven $(basename $d), do you want to add it to alternatives?(Y/n)" answer
+    read -p "Do you want to add maven to alternatives?(Y/n) " answer
 
-    case $answer in
-     ( [Yy][Ee][Ss] | [Yy] | "" )
+    if [[ $answer =~ $yes ]]; then
       read -p "Enter the priority for this alternative entry: " priority
 
       sudo update-alternatives --install /usr/bin/mvn mvn $d/bin/mvn $priority
 
       echo -e "${S}Maven $(basename $d) has been added in alternatives.${R}\n"
-    esac
+    fi
   done
-esac
+fi
 
 # Docker
-read -p "Do you want to install docker?(Y/n)" answer
+read -p "Do you want to install docker?(Y/n) " answer
 
-case $answer in
- ( [Yy][Ee][Ss] | [Yy] | "" )
+if [[ $answer =~ $yes ]]; then
   echo -e "Installing docker community edition."
   sudo apt update
   sudo apt-get install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
@@ -369,16 +362,15 @@ case $answer in
   sudo chmod +x /usr/local/bin/docker-compose
 
   echo -e "${S}Docker has been installed successfully.${R}\n"
-esac
+fi
 
 # Editors
 editors=$workspace/editors
 
 # Atom
-read -p "Do you want to install atom?(Y/n)" answer
+read -p "Do you want to install atom?(Y/n) " answer
 
-case $answer in
- ( [Yy][Ee][Ss] | [Yy] | "" )
+if [[ $answer =~ $yes ]]; then
   echo -e "Installing the latest version of atom."
   wget -q https://packagecloud.io/AtomEditor/atom/gpgkey -O- | sudo apt-key add -
   sudo add-apt-repository "deb [arch=amd64] https://packagecloud.io/AtomEditor/atom/any/ any main"
@@ -386,13 +378,12 @@ case $answer in
   sudo apt install atom
 
   echo -e "${S}Atom has been installed successfully.${R}\n"
-esac
+fi
 
 # IdeaIC
-read -p "Do you want to install ideaIC?(Y/n)" answer
+read -p "Do you want to install ideaIC?(Y/n) " answer
 
-case $answer in
- ( [Yy][Ee][Ss] | [Yy] | "" )
+if [[ $answer =~ $yes ]]; then
   ideaic=$editors/idea-ic
   mkdir -p $ideaic
 
@@ -405,13 +396,12 @@ case $answer in
   rm -rf $temp/ideaIC*
 
   echo -e "${S}IdeaIC has been installed successfully in $ideaic.${R}\n"
-esac
+fi
 
 # DBeaver
-read -p "Do you want to install dbeaver?(Y/n)" answer
+read -p "Do you want to install dbeaver?(Y/n) " answer
 
-case $answer in
- ( [Yy][Ee][Ss] | [Yy] | "" )
+if [[ $answer =~ $yes ]]; then
   dbeaver=$editors/dbeaver
   mkdir -p $dbeaver
 
@@ -437,13 +427,12 @@ case $answer in
   sudo echo "Categories=Development;Databases;" | sudo tee -a $desktop_file
 
   echo -e "${S}DBeaver has been installed successfully in the $dbeaver.${R}\n"
-esac
+fi
 
 # Postman
-read -p "Do you want to install postman?(Y/n)" answer
+read -p "Do you want to install postman?(Y/n) " answer
 
-case $answer in
- ( [Yy][Ee][Ss] | [Yy] | "" )
+if [[ $answer =~ $yes ]]; then
   postman=$editors/postman
   mkdir -p $postman
 
@@ -469,13 +458,12 @@ case $answer in
   sudo echo "Categories=Development;Code;" | sudo tee -a $desktop_file
 
   echo -e "${S}Postman has been installed successfully in $postman.${R}\n"
-esac
+fi
 
 # Mongo Compass
-read -p "Do you want to install mongodb compass?(Y/n)" answer
+read -p "Do you want to install mongodb compass?(Y/n) " answer
 
-case $answer in
- ( [Yy][Ee][Ss] | [Yy] | "" )
+if [[ $answer =~ $yes ]]; then
   compass_version="1.19.12"
   read -p "Which version of the mongodb compass do you want to install:($compass_version) " version
 
@@ -491,13 +479,12 @@ case $answer in
   rm $temp/compass.deb
 
   echo -e "${S}MongoDB Compass has been installed successfully.${R}\n"
-esac
+fi
 
 # Robo 3T
-read -p "Do you want to install robo 3t?(Y/n)" answer
+read -p "Do you want to install robo 3t?(Y/n) " answer
 
-case $answer in
- ( [Yy][Ee][Ss] | [Yy] | "" )
+if [[ $answer =~ $yes ]]; then
   robo3t=$editors/robo3t
   mkdir -p $robo3t
 
@@ -526,7 +513,7 @@ case $answer in
   sudo echo "Categories=Databases;Editor;" | sudo tee -a $desktop_file
 
   echo -e "${S}Robo 3T has been installed successfully in $robo3t.${R}\n"
-esac
+fi
 
 # Sources
 sources=$workspace/sources
@@ -541,10 +528,9 @@ fi
 echo -e "${S}Sources folder has been set successfully to $sources.${R}\n"
 
 # Bookmarks
-read -p "Do you want to create workspace bookmarks?(Y/n)" answer
+read -p "Do you want to create workspace bookmarks?(Y/n) " answer
 
-case $answer in
- ( [Yy][Ee][Ss] | [Yy] | "" )
+if [[ $answer =~ $yes ]]; then
   bookmarks_file="/home/$USER/.config/gtk-3.0/bookmarks"
 
   echo -e "Adding workspace and sources to bookmarks file ${V}$bookmarks_file${R}."
@@ -553,26 +539,24 @@ case $answer in
   echo "file://$dropbox Dropbox" | tee -a $bookmarks_file
 
   echo -e "${S}Workspace bookmarks have been added successfully.${R}\n"
-esac
+fi
 
 # Terminal
-read -p "Do you want to restore terminal profiles?(Y/n)" answer
+read -p "Do you want to restore terminal profiles?(Y/n) " answer
 
-case $answer in
- ( [Yy][Ee][Ss] | [Yy] | "" )
+if [[ $answer =~ $yes ]]; then
   terminal_conf=$dropbox/Stack/Terminal/profiles.dconf
 
   echo -e "Restoring terminal profiles from ${V}$terminal_conf${R}."
   dconf load /org/gnome/terminal/legacy/profiles:/ < $terminal_conf
 
   echo -e "${S}Terminal profiles have been restored successfully.${R}\n"
-esac
+fi
 
 # SSH
-read -p "Do you want to restore backup SSH files?(Y/n)" answer
+read -p "Do you want to restore backup SSH files?(Y/n) " answer
 
-case $answer in
- ( [Yy][Ee][Ss] | [Yy] | "" )
+if [[ $answer =~ $yes ]]; then
   ssh_home=/home/$USER/.ssh
 
   echo -e "Copying backup SSH files to ${V}$ssh_home${R}."
@@ -584,13 +568,12 @@ case $answer in
   tree --noreport -n -L 1 $ssh_home
 
   echo -e "${S}SSH files have been restored successfully in $ssh_home.${R}\n"
-esac
+fi
 
 # AWS
-read -p "Do you want to restore backup AWS files?(Y/n)" answer
+read -p "Do you want to restore backup AWS files?(Y/n) " answer
 
-case $answer in
- ( [Yy][Ee][Ss] | [Yy] | "" )
+if [[ $answer =~ $yes ]]; then
   aws_home=/home/$USER/.aws
 
   echo -e "Copying backup AWS files to ${V}$aws_home${R}."
@@ -602,7 +585,7 @@ case $answer in
   tree --noreport -n -L 1 $aws_home
 
   echo -e "${S}SSH files have been restored successfully in $aws_home.${R}\n"
-esac
+fi
 
 # Report
 echo -e "Workspace stack has been installed under ${V}$workspace${R}:"
