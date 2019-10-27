@@ -60,6 +60,10 @@ if [[ $answer =~ $yes ]]; then
   sudo apt update
   sudo apt upgrade
 
+  echo -e "Repairing possible broken packages."
+  sudo apt autoremove
+  sudo apt --fix-broken install
+
   echo -e "${S}System upgrade has been finished successfully.${R}\n"
 fi
 
@@ -98,7 +102,7 @@ if [[ $answer =~ $yes ]]; then
     echo -ne "$output                                   \r"
 
     if [[ $output == "Up to date" ]]; then
-      echo -e "Dropbox files have been synced to ${V}$dropbox${R}.\n"
+      echo -e "Dropbox files have been synced to ${V}$dropbox${R}."
       break
     fi
   done
@@ -246,7 +250,7 @@ if [[ $answer =~ $yes ]]; then
   echo -e "Currently installed NodeJS versions:"
   nvm ls
 
-  echo -e "${S}NodeJS LTS and current versions have been installed successfully in $nvm/versions/node.${R}"
+  echo -e "${S}NodeJS LTS and current versions have been installed successfully in $nvm/versions/node.${R}\n"
 fi
 
 # Java
@@ -267,7 +271,7 @@ if [[ $answer =~ $yes ]]; then
     tar zxf $jdk_file -C $java
     rm -rf $jdk_file
 
-    echo -e "${S}JDK has been installed succefully to $java.${R}\n"
+    echo -e "${S}JDK has been installed successfully to $java.${R}\n"
 
     echo -e "Currently installed JDKs are:"
     tree -d --noreport -n -L 1 $java
@@ -292,8 +296,8 @@ if [ "$jdks" ]; then
       if [[ $answer =~ $yes ]]; then
         read -p "Enter the priority for this alternative entry: " priority
 
-        sudo update-alternatives --install /usr/bin/java java $d/bin/java $priority
-        sudo update-alternatives --install /usr/bin/javac javac $d/bin/javac $priority
+        sudo update-alternatives --install /usr/bin/java java $java/$d/bin/java $priority
+        sudo update-alternatives --install /usr/bin/javac javac $java/$d/bin/javac $priority
 
         echo -e "${S}JDK $(basename $d) has been added in alternatives.${R}\n"
      fi
@@ -339,6 +343,7 @@ if [[ $answer =~ $yes ]]; then
   echo -e "Installing docker community edition."
   sudo apt update
   sudo apt-get install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+
   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
   sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 
@@ -394,6 +399,20 @@ if [[ $answer =~ $yes ]]; then
   echo -e "Extracting the ideaIC files to ${V}$ideaic${R}."
   tar zxf $temp/ideaIC* -C $ideaic --strip-components 1
   rm -rf $temp/ideaIC*
+
+  sudo ln -sfn $ideaic/bin/idea.sh /usr/local/bin/idea
+
+  echo -e "Creating ideaIC's application dock entry."
+
+  desktop_file="/usr/share/applications/idea.desktop"
+  sudo touch $desktop_file
+  sudo echo "[Desktop Entry]" | sudo tee -a $desktop_file
+  sudo echo "Type=Application" | sudo tee -a $desktop_file
+  sudo echo "Name=IdeaIC" | sudo tee -a $desktop_file
+  sudo echo "Icon=$ideaic/bin/idea.png" | sudo tee -a $desktop_file
+  sudo echo "Exec=$ideaic/bin/idea.sh" | sudo tee -a $desktop_file
+  sudo echo "Comment=IdeaIC" | sudo tee -a $desktop_file
+  sudo echo "Categories=Development;Code;" | sudo tee -a $desktop_file
 
   echo -e "${S}IdeaIC has been installed successfully in $ideaic.${R}\n"
 fi
