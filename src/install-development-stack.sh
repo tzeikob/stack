@@ -1,5 +1,6 @@
 #!/bin/bash
 # A shell script to install a development stack environment
+# Last Updated: Ubuntu 18.04.03 LTS
 
 # Style markers
 R="\033[0m" # Reset styles
