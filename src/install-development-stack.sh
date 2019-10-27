@@ -394,11 +394,12 @@ if [[ $answer =~ $yes ]]; then
 
   read -p "Enter the url to the ideaIC tar.gz file: " url
   echo -e "Downloading the ideaIC tar.gz file."
-  wget -q --show-progress -P $temp $url
+  ideaic_archive=$temp/ideaic.tar.gz
+  wget -q --show-progress -P $temp -O $ideaic_archive $url
 
   echo -e "Extracting the ideaIC files to ${V}$ideaic${R}."
-  tar zxf $temp/ideaIC* -C $ideaic --strip-components 1
-  rm -rf $temp/ideaIC*
+  tar zxf $ideaic_archive -C $ideaic --strip-components 1
+  rm -rf $ideaic_archive
 
   sudo ln -sfn $ideaic/bin/idea.sh /usr/local/bin/idea
 
@@ -515,7 +516,8 @@ if [[ $answer =~ $yes ]]; then
   tar zxf $temp/robo3t.tar.gz -C $robo3t --strip-components 1
   rm $temp/robo3t.tar.gz
 
-  wget -q --show-progress -P $robo3t -O $robo3t/icon.png https://images.g2crowd.com/uploads/product/image/large_detail/large_detail_f49ab27210b28cdaf3e3bd3f7d2d629f/robo3t.png
+  icon_url="https://blog.robomongo.org/content/images/2016/01/enjoy.png"
+  wget -q --show-progress -P $robo3t -O $robo3t/icon.png $icon_url
 
   sudo ln -sfn $robo3t/bin/robo3t /usr/local/bin/robo3t
 
