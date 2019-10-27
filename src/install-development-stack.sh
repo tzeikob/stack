@@ -224,16 +224,17 @@ esac
 # NodeJS
 node=$workspace/node
 nvm=$node/nvm
-read -p "Do you want to install NodeJS via nvm?(Y/n)" answer
+read -p "Do you want to install NodeJS through nvm?(Y/n)" answer
 
 case $answer in
  ( [Yy][Ee][Ss] | [Yy] | "" )
   mkdir -p $nvm
 
   read -p "Enter the url to the latest version of nvm: " url
-  echo -e "Installing latest version of nvm in ${V}$nvm${R}."
+  echo -e "Downloading the nvm installation script file."
   wget -q --show-progress -P $temp -O $temp/nvm-install.sh $url
 
+  echo -e "Installing latest version of nvm in ${V}$nvm${R}."
   export NVM_DIR=$nvm
   bash $temp/nvm-install.sh
   rm -rf $temp/nvm-install.sh
