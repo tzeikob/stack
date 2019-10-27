@@ -254,46 +254,31 @@ esac
 
 # Java
 java=$workspace/java
-
-# JDKs
-read -p "Do you want to install a JDK?(Y/n)" answer
+read -p "Do you want to install JDKs?(Y/n)" answer
 
 case $answer in
  ( [Yy][Ee][Ss] | [Yy] | "" )
   mkdir -p $java
 
-  read -p "Enter the url to the JDK binary tar.gz file: " url
-  echo -e "Downloading the JDK binary file."
-  wget -q --show-progress -P $temp --no-check-certificate -c --header "Cookie: oraclelicense=accept-securebackup-cookie" $url
+  while true; do
+    read -p "Enter the url to the JDK binary tar.gz file: " url
+    echo -e "Downloading the JDK binary file."
+    jdk_file=$temp/jdk.tar.gz
+    wget -q --show-progress -P $temp -O $jdk_file --no-check-certificate -c --header "Cookie: oraclelicense=accept-securebackup-cookie" $url
 
-  echo -e "Extracting JDK binary files to ${V}$java${R}."
-  tar zxf $temp/jdk* -C $java
-  rm -rf $temp/jdk*
+    echo -e "Extracting JDK binary files to ${V}$java${R}."
+    tar zxf $jdk_file -C $java
+    rm -rf $jdk_file
 
-  echo -e "${S}JDK has been installed succefully to $java.${R}\n"
+    echo -e "${S}JDK has been installed succefully to $java.${R}\n"
 
-  # Install more JDKs
-  while :
-  do
     echo -e "Currently installed JDKs are:"
     tree -d --noreport -n -L 1 $java
 
     read -p "Do you want to install another JDK?(Y/n)" answer
-    case $answer in
-     ( [Yy][Ee][Ss] | [Yy] | "" )
-      read -p "Enter the url to the JDK binary tar.gz file: " url
-      echo -e "Downloading the JDK binary file."
-      wget -q --show-progress -P $temp --no-check-certificate -c --header "Cookie: oraclelicense=accept-securebackup-cookie" $url
-
-      echo -e "Extracting JDK binary files to ${V}$java${R}."
-      tar zxf $temp/jdk* -C $java
-      rm -rf $temp/jdk*
-
-      echo -e "${S}JDK has been installed succefully to $java.${R}\n"
-      ;;
-     *)
+    if ! [[ $answer =~ ^([Yy][Ee][Ss]|[Yy]|"")$ ]]; then
       break
-    esac
+    fi
   done
 esac
 
