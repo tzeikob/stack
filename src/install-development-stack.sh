@@ -604,8 +604,8 @@ if [[ $answer =~ $yes ]]; then
   echo -e "${S}Robo 3T has been installed successfully in $robo3t.${R}\n"
 fi
 
-# Favorite Applications
-read -p "Do you want to add favorite applications?(Y/n) " answer
+# Dock
+read -p "Do you want to add favorite applications in Dock?(Y/n) " answer
 
 if [[ $answer =~ $yes ]]; then
   echo -e "Found the following favorite applications:"
@@ -617,7 +617,11 @@ if [[ $answer =~ $yes ]]; then
   echo -e "The new favorite applications are: "
   gsettings get org.gnome.shell favorite-apps
 
-  echo -e "${S}Favorite applications have been updated successfully.${R}\n"
+  echo -e "Setting dock panel to bottom."
+  gsettings set org.gnome.shell.extensions.dash-to-dock dock-position BOTTOM
+  gsettings set org.gnome.shell.extensions.dash-to-dock dash-max-icon-size 26
+
+  echo -e "${S}Dock panel has been updated successfully.${R}\n"
 fi
 
 # Sources
