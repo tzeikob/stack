@@ -700,8 +700,11 @@ fi
 read -p "Do you want to install the greek language?(Y/n) " answer
 
 if [[ $answer =~ $yes ]]; then
-  echo -e "Installing the greek language."
+  echo -e "Installing the greek language packages."
   sudo apt install `check-language-support -l el`
+
+  echo -e "Add greek layout into the keyboard inpuit sources."
+  gsettings set org.gnome.desktop.input-sources sources "[('xkb', 'us'), ('xkb', 'gr')]"
 
   echo -e "${S}Greek language has been installed successfully.${R}\n"
 fi
