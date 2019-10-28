@@ -8,6 +8,9 @@ V="\e[93m" # Highlight values in yellow
 S="\e[92m" # Highlight logs in green
 yes="^([Yy][Ee][Ss]|[Yy]|"")$"
 
+# List of favorite applications to be added in the dock
+favorites="'org.gnome.Nautilus.desktop', 'org.gnome.Terminal.desktop', 'firefox.desktop'"
+
 # Welcome screen
 echo -e "Welcome to the workspace stack installation process."
 
@@ -139,6 +142,9 @@ if [[ $answer =~ $yes ]]; then
     fi
   done
 
+  # Adding dropbox desktop entry in favorites applications
+  favorites=$favorites", 'dropbox.desktop'"
+
   echo -e "${S}Dropbox has been installed successfully.${R}\n"
 fi
 
@@ -153,6 +159,9 @@ if [[ $answer =~ $yes ]]; then
   sudo dpkg -i $temp/google-chrome-stable_current_amd64.deb
   rm -rf $temp/google-chrome-stable_current_amd64.deb
 
+  # Adding chrome desktop entry in favorites applications
+  favorites=$favorites", 'google-chrome.desktop'"
+
   echo -e "${S}Chrome has been installed successfully.${R}\n"
 fi
 
@@ -166,6 +175,9 @@ if [[ $answer =~ $yes ]]; then
   echo -e "Installing skype using deb packaging."
   sudo dpkg -i $temp/skypeforlinux-64.deb
   rm -rf $temp/skypeforlinux-64.deb
+
+  # Adding skype desktop entry in favorites applications
+  favorites=$favorites", 'skypeforlinux.desktop'"
 
   echo -e "${S}Skype has been installed successfully.${R}\n"
 fi
@@ -203,6 +215,9 @@ if [[ $answer =~ $yes ]]; then
     # echo "NoDisplay=false" | tee -a $desktop_file
   fi
 
+  # Adding slack desktop entry in favorites applications
+  favorites=$favorites", 'slack.desktop'"
+
   echo -e "${S}Slack has been installed successfully.${R}\n"
 fi
 
@@ -210,12 +225,15 @@ fi
 read -p "Do you want to install virtual box?(Y/n) " answer
 
 if [[ $answer =~ $yes ]]; then
-  echo -e "Installing virtual box ${V}version 6.0${R}."
+  echo -e "Installing virtual box version 6.0."
   wget -q https://www.virtualbox.org/download/oracle_vbox_2016.asc -O- | sudo apt-key add -
   sudo add-apt-repository "deb [arch=amd64] http://download.virtualbox.org/virtualbox/debian $(lsb_release -cs) contrib"
 
   sudo apt update
   sudo apt install virtualbox-6.0
+
+  # Adding virtual box desktop entry in favorites applications
+  favorites=$favorites", 'virtualbox.desktop'"
 
   echo -e "${S}Virtual box has been installed successfully.${R}\n"
 fi
@@ -414,6 +432,9 @@ if [[ $answer =~ $yes ]]; then
   sudo apt update
   sudo apt install atom
 
+  # Adding atom desktop entry in favorites applications
+  favorites=$favorites", 'atom.desktop'"
+
   echo -e "${S}Atom has been installed successfully.${R}\n"
 fi
 
@@ -447,6 +468,9 @@ if [[ $answer =~ $yes ]]; then
   sudo echo "Comment=IntelliJ Community" | sudo tee -a $desktop_file
   sudo echo "Categories=Development;Code;" | sudo tee -a $desktop_file
 
+  # Adding intelliJ desktop entry in favorites applications
+  favorites=$favorites", 'idea.desktop'"
+
   echo -e "${S}IdeaIC has been installed successfully in $ideaic.${R}\n"
 fi
 
@@ -477,6 +501,9 @@ if [[ $answer =~ $yes ]]; then
   sudo echo "Exec=$dbeaver/dbeaver" | sudo tee -a $desktop_file
   sudo echo "Comment=DBeaver Community" | sudo tee -a $desktop_file
   sudo echo "Categories=Development;Databases;" | sudo tee -a $desktop_file
+
+  # Adding dbeaver desktop entry in favorites applications
+  favorites=$favorites", 'dbeaver.desktop'"
 
   echo -e "${S}DBeaver has been installed successfully in the $dbeaver.${R}\n"
 fi
@@ -509,6 +536,9 @@ if [[ $answer =~ $yes ]]; then
   sudo echo "Comment=Postman" | sudo tee -a $desktop_file
   sudo echo "Categories=Development;Code;" | sudo tee -a $desktop_file
 
+  # Adding postman desktop entry in favorites applications
+  favorites=$favorites", 'postman.desktop'"
+
   echo -e "${S}Postman has been installed successfully in $postman.${R}\n"
 fi
 
@@ -529,6 +559,9 @@ if [[ $answer =~ $yes ]]; then
   echo -e "Installing mongodb compass using deb packaging."
   sudo dpkg -i $temp/compass.deb
   rm $temp/compass.deb
+
+  # Adding mongo compass desktop entry in favorites applications
+  favorites=$favorites", 'mongodb-compass-community.desktop'"
 
   echo -e "${S}MongoDB Compass has been installed successfully.${R}\n"
 fi
@@ -565,7 +598,22 @@ if [[ $answer =~ $yes ]]; then
   sudo echo "Comment=Robo 3T" | sudo tee -a $desktop_file
   sudo echo "Categories=Databases;Editor;" | sudo tee -a $desktop_file
 
+  # Adding robo 3t desktop entry in favorites applications
+  favorites=$favorites", 'robo3t.desktop'"
+
   echo -e "${S}Robo 3T has been installed successfully in $robo3t.${R}\n"
+fi
+
+# Favorite Applications
+read -p "Do you want to add favorite applications in the dock?(Y/n) " answer
+
+if [[ $answer =~ $yes ]]; then
+  echo -e "Adding favorite applications in the dock launcher."
+  favorites="['org.gnome.Nautilus.desktop', 'org.gnome.Terminal.desktop', 'firefox.desktop', $favorites]"
+  gsettings set org.gnome.shell favorite-apps $favorites
+  gsettings get org.gnome.shell favorite-apps
+
+  echo -e "${S}The following application have been added in favorites.{$R}\n"
 fi
 
 # Sources
