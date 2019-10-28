@@ -16,6 +16,23 @@ echo -e "System: ${V}$(lsb_release -si) $(lsb_release -sr)${R}"
 echo -e "Host: ${V}$HOSTNAME${R}"
 echo -e "Username: ${V}$USER${R}\n"
 
+# Disabling automatic upgrades
+read -p "Do you want to disable automatic upgrades?(Y/n) " answer
+
+if [[ $answer =~ $yes ]]; then
+  upgrades_conf=/etc/apt/apt.conf.d/20auto-upgrades
+
+  echo -e "Disabling automatic upgrades in ${V}$upgrades_conf${R}."
+
+  sudo sed -i 's/APT::Periodic::Update-Package-Lists "1"/APT::Periodic::Update-Package-Lists "0"/' $upgrades_conf
+  sudo sed -i 's/APT::Periodic::Download-Upgradeable-Packages "1"/APT::Periodic::Download-Upgradeable-Packages "0"/' $upgrades_conf
+  sudo sed -i 's/APT::Periodic::AutocleanInterval "1"/APT::Periodic::AutocleanInterval "0"/' $upgrades_conf
+  sudo sed -i 's/APT::Periodic::Unattended-Upgrade "1"/APT::Periodic::Unattended-Upgrade "0"/' $upgrades_conf
+  cat $upgrades_conf
+
+  echo -e "${S}Automatic upgrades have been disabled successfully.${R}\n"
+fi
+
 # Temporary folder
 temp=".tmp"
 
