@@ -732,3 +732,9 @@ echo -e "Workspace stack has been installed under ${V}$workspace${R}:"
 tree -d --noreport -L 2 $workspace
 
 echo -e "\n${S}Installation completed successfully.${R}"
+
+read -p "Do you want to reboot?(Y/n) " answer
+
+if [[ $answer =~ $yes ]]; then
+  sudo reboot
+fi
