@@ -696,6 +696,16 @@ if [[ $answer =~ $yes ]]; then
   echo -e "${S}SSH files have been restored successfully in $aws_home.${R}\n"
 fi
 
+# Languages
+read -p "Do you want to install the greek language?(Y/n) " answer
+
+if [[ $answer =~ $yes ]]; then
+  echo -e "Installing the greek language."
+  sudo apt install `check-language-support -l el`
+
+  echo -e "${S}Greek language has been installed successfully.${R}\n"
+fi
+
 # Report
 echo -e "Workspace stack has been installed under ${V}$workspace${R}:"
 tree -d --noreport -L 2 $workspace
