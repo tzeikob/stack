@@ -610,7 +610,11 @@ read -p "Do you want to add favorite applications in the dock?(Y/n) " answer
 if [[ $answer =~ $yes ]]; then
   echo -e "Adding favorite applications in the dock launcher."
   favorites="['org.gnome.Nautilus.desktop', 'org.gnome.Terminal.desktop', 'firefox.desktop', $favorites]"
+  echo $favorites
+  gsettings get org.gnome.shell favorite-apps
+  echo "--"
   gsettings set org.gnome.shell favorite-apps $favorites
+  echo "--"
   gsettings get org.gnome.shell favorite-apps
 
   echo -e "${S}The following application have been added in favorites.{$R}\n"
