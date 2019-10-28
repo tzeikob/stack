@@ -604,6 +604,16 @@ if [[ $answer =~ $yes ]]; then
   echo -e "${S}Robo 3T has been installed successfully in $robo3t.${R}\n"
 fi
 
+# Sources
+sources=$workspace/sources
+
+if [[ -d $sources ]]; then
+ echo -e "Sources folder ${V}$sources${R} already exists."
+else
+ echo -e "Creating sources folder ${V}$sources${R}."
+ mkdir -p $sources
+fi
+
 # Dock
 read -p "Do you want to add favorite applications in Dock?(Y/n) " answer
 
@@ -622,16 +632,6 @@ if [[ $answer =~ $yes ]]; then
   gsettings set org.gnome.shell.extensions.dash-to-dock dash-max-icon-size 26
 
   echo -e "${S}Dock panel has been updated successfully.${R}\n"
-fi
-
-# Sources
-sources=$workspace/sources
-
-if [[ -d $sources ]]; then
- echo -e "Sources folder ${V}$sources${R} already exists."
-else
- echo -e "Creating sources folder ${V}$sources${R}."
- mkdir -p $sources
 fi
 
 echo -e "${S}Sources folder has been set successfully to $sources.${R}\n"
