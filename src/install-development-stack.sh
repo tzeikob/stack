@@ -665,6 +665,9 @@ if [[ $answer =~ $yes ]]; then
   gsettings set org.gnome.shell.extensions.dash-to-dock dock-position BOTTOM
   gsettings set org.gnome.shell.extensions.dash-to-dock dash-max-icon-size 26
 
+  echo -e "Hiding the trash icon from the desktop."
+  gsettings set org.gnome.nautilus.desktop trash-icon-visible false
+
   echo -e "${S}Dock panel has been updated successfully.${R}\n"
 fi
 
