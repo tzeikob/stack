@@ -706,6 +706,24 @@ if [[ $answer =~ $yes ]]; then
   echo -e "Add greek layout into the keyboard inpuit sources."
   gsettings set org.gnome.desktop.input-sources sources "[('xkb', 'us'), ('xkb', 'gr')]"
 
+  echo -e "Setting regional formats back to US:"
+  sudo update-locale LANG=en_US.UTF-8
+  sudo update-locale LANGUAGE=
+  sudo update-locale LC_CTYPE="en_US.UTF-8"
+  sudo update-locale LC_NUMERIC=en_US.UTF-8
+  sudo update-locale LC_TIME=en_US.UTF-8
+  sudo update-locale LC_COLLATE="en_US.UTF-8"
+  sudo update-locale LC_MONETARY=en_US.UTF-8
+  sudo update-locale LC_MESSAGES="en_US.UTF-8"
+  sudo update-locale LC_PAPER=en_US.UTF-8
+  sudo update-locale LC_NAME=en_US.UTF-8
+  sudo update-locale LC_ADDRESS=en_US.UTF-8
+  sudo update-locale LC_TELEPHONE=en_US.UTF-8
+  sudo update-locale LC_MEASUREMENT=en_US.UTF-8
+  sudo update-locale LC_IDENTIFICATION=en_US.UTF-8
+  sudo update-locale LC_ALL=
+  locale
+
   echo -e "${S}Greek language has been installed successfully.${R}\n"
 fi
 
