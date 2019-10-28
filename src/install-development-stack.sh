@@ -17,7 +17,7 @@ echo -e "Host: ${V}$HOSTNAME${R}"
 echo -e "Username: ${V}$USER${R}\n"
 
 # Temporary folder
-temp=".tmp"
+temp="./.tmp"
 
 read -p "Where do you want to save installation temporary files?($temp) " path
 
