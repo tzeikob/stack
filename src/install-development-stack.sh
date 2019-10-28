@@ -52,6 +52,32 @@ fi
 
 echo -e "${S}Workspace home path has been set to $workspace successfully.${R}\n"
 
+# Disabling lock screen
+read -p "Do you want to disable screen lock?(Y/n) " answer
+
+if [[ $answer =~ $yes ]]; then
+  echo -e "Disabling screen lock."
+  gsettings set org.gnome.desktop.screensaver lock-enabled false
+
+  echo -e "${S}Screen lock has been disabled successfully.${R}\n"
+fi
+
+# Disabling automatic upgrades
+read -p "Do you want to disable automatic upgrades?(Y/n) " answer
+
+if [[ $answer =~ $yes ]]; then
+  upgrades_conf=/etc/apt/apt.conf.d/20auto-upgrades
+
+  echo -e "Disabling automatic upgrades in ${V}$upgrades_conf${R}."
+  sudo sed -i 's/APT::Periodic::Update-Package-Lists "1"/APT::Periodic::Update-Package-Lists "0"/' $upgrades_conf
+  sudo sed -i 's/APT::Periodic::Download-Upgradeable-Packages "1"/APT::Periodic::Download-Upgradeable-Packages "0"/' $upgrades_conf
+  sudo sed -i 's/APT::Periodic::AutocleanInterval "1"/APT::Periodic::AutocleanInterval "0"/' $upgrades_conf
+  sudo sed -i 's/APT::Periodic::Unattended-Upgrade "1"/APT::Periodic::Unattended-Upgrade "0"/' $upgrades_conf
+  cat $upgrades_conf
+
+  echo -e "${S}Automatic upgrades have been disabled successfully.${R}\n"
+fi
+
 # System upgrade
 read -p "Do you want to upgrade your base system?(Y/n) " answer
 
@@ -64,23 +90,6 @@ if [[ $answer =~ $yes ]]; then
   sudo apt autoremove
 
   echo -e "${S}System upgrade has been finished successfully.${R}\n"
-fi
-
-# Disabling automatic upgrades
-read -p "Do you want to disable automatic upgrades?(Y/n) " answer
-
-if [[ $answer =~ $yes ]]; then
-  upgrades_conf=/etc/apt/apt.conf.d/20auto-upgrades
-
-  echo -e "Disabling automatic upgrades in ${V}$upgrades_conf${R}."
-
-  sudo sed -i 's/APT::Periodic::Update-Package-Lists "1"/APT::Periodic::Update-Package-Lists "0"/' $upgrades_conf
-  sudo sed -i 's/APT::Periodic::Download-Upgradeable-Packages "1"/APT::Periodic::Download-Upgradeable-Packages "0"/' $upgrades_conf
-  sudo sed -i 's/APT::Periodic::AutocleanInterval "1"/APT::Periodic::AutocleanInterval "0"/' $upgrades_conf
-  sudo sed -i 's/APT::Periodic::Unattended-Upgrade "1"/APT::Periodic::Unattended-Upgrade "0"/' $upgrades_conf
-  cat $upgrades_conf
-
-  echo -e "${S}Automatic upgrades have been disabled successfully.${R}\n"
 fi
 
 # Dependencies
