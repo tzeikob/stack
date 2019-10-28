@@ -58,6 +58,8 @@ read -p "Do you want to disable screen lock?(Y/n) " answer
 if [[ $answer =~ $yes ]]; then
   echo -e "Disabling screen lock."
   gsettings set org.gnome.desktop.screensaver lock-enabled false
+  gsettings set org.gnome.desktop.session idle-delay 0
+  gsettings set org.gnome.settings-daemon.plugins.power idle-dim false
 
   echo -e "${S}Screen lock has been disabled successfully.${R}\n"
 fi
