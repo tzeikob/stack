@@ -605,18 +605,19 @@ if [[ $answer =~ $yes ]]; then
 fi
 
 # Favorite Applications
-read -p "Do you want to add favorite applications in the dock?(Y/n) " answer
+read -p "Do you want to add favorite applications?(Y/n) " answer
 
 if [[ $answer =~ $yes ]]; then
-  echo -e "Adding favorite applications in the dock launcher."
-  echo $favorites
-  gsettings get org.gnome.shell favorite-apps
-  echo "--"
-  gsettings set org.gnome.shell favorite-apps "["$favorites"]"
-  echo "--"
+  echo -e "Found the following favorite applications:"
   gsettings get org.gnome.shell favorite-apps
 
-  echo -e "${S}The following application have been added in favorites.{$R}\n"
+  echo -e "Updating the list of favorite applications."
+  gsettings set org.gnome.shell favorite-apps "[$favorites]"
+
+  echo -e "The new favorite applications are: "
+  gsettings get org.gnome.shell favorite-apps
+
+  echo -e "${S}Favorite applications have been updated successfully.${R}\n"
 fi
 
 # Sources
