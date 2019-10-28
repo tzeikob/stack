@@ -614,6 +614,40 @@ else
  mkdir -p $sources
 fi
 
+# SSH
+read -p "Do you want to restore backup SSH files?(Y/n) " answer
+
+if [[ $answer =~ $yes ]]; then
+  ssh_home=/home/$USER/.ssh
+
+  echo -e "Copying backup SSH files to ${V}$ssh_home${R}."
+  mkdir -p $ssh_home
+  cp $dropbox/Stack/Secret/ssh/* $ssh_home
+  sudo chmod 600 $ssh_home/*
+
+  echo -e "The following SSH files have been restored:"
+  tree --noreport -n -L 1 $ssh_home
+
+  echo -e "${S}SSH files have been restored successfully in $ssh_home.${R}\n"
+fi
+
+# AWS
+read -p "Do you want to restore backup AWS files?(Y/n) " answer
+
+if [[ $answer =~ $yes ]]; then
+  aws_home=/home/$USER/.aws
+
+  echo -e "Copying backup AWS files to ${V}$aws_home${R}."
+  mkdir -p $aws_home
+  cp $dropbox/Stack/Secret/aws/* $aws_home
+  sudo chmod 600 $aws_home/*
+
+  echo -e "The following AWS files have been restored:"
+  tree --noreport -n -L 1 $aws_home
+
+  echo -e "${S}SSH files have been restored successfully in $aws_home.${R}\n"
+fi
+
 # Dock
 read -p "Do you want to add favorite applications in Dock?(Y/n) " answer
 
@@ -660,40 +694,6 @@ if [[ $answer =~ $yes ]]; then
   dconf load /org/gnome/terminal/legacy/profiles:/ < $terminal_conf
 
   echo -e "${S}Terminal profiles have been restored successfully.${R}\n"
-fi
-
-# SSH
-read -p "Do you want to restore backup SSH files?(Y/n) " answer
-
-if [[ $answer =~ $yes ]]; then
-  ssh_home=/home/$USER/.ssh
-
-  echo -e "Copying backup SSH files to ${V}$ssh_home${R}."
-  mkdir -p $ssh_home
-  cp $dropbox/Stack/Secret/ssh/* $ssh_home
-  sudo chmod 600 $ssh_home/*
-
-  echo -e "The following SSH files have been restored:"
-  tree --noreport -n -L 1 $ssh_home
-
-  echo -e "${S}SSH files have been restored successfully in $ssh_home.${R}\n"
-fi
-
-# AWS
-read -p "Do you want to restore backup AWS files?(Y/n) " answer
-
-if [[ $answer =~ $yes ]]; then
-  aws_home=/home/$USER/.aws
-
-  echo -e "Copying backup AWS files to ${V}$aws_home${R}."
-  mkdir -p $aws_home
-  cp $dropbox/Stack/Secret/aws/* $aws_home
-  sudo chmod 600 $aws_home/*
-
-  echo -e "The following AWS files have been restored:"
-  tree --noreport -n -L 1 $aws_home
-
-  echo -e "${S}SSH files have been restored successfully in $aws_home.${R}\n"
 fi
 
 # Languages
