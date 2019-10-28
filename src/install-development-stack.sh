@@ -60,21 +60,25 @@ if [[ $answer =~ $yes ]]; then
   sudo apt update
   sudo apt upgrade
 
-  echo -e "Repairing possible broken packages."
+  echo -e "Removing any not used packages."
   sudo apt autoremove
-  sudo apt --fix-broken install
 
   echo -e "${S}System upgrade has been finished successfully.${R}\n"
 fi
 
-# Utilities
-read -p "Do you want to install third-party utilities?(Y/n) " answer
+# Dependencies
+packages=(tree curl unzip gconf-service gconf-service-backend gconf2
+          gconf2-common libappindicator1 libgconf-2-4 libindicator7
+          libpython-stdlib python python-minimal python2.7 python2.7-minimal)
+
+echo -e "Required dependencies:\n${V}"${packages[@]}${R}
+read -p "Do you want to install those dependencies?(Y/n) " answer
 
 if [[ $answer =~ $yes ]]; then
-  echo -e "Installing various software utilities."
-  sudo apt install tree curl unzip
+  echo -e "Installing software dependencies."
+  sudo apt install ${packages[@]}
 
-  echo -e "${S}Software utilities have been installed successfully.${R}\n"
+  echo -e "${S}Dependencies have been installed successfully.${R}\n"
 fi
 
 # Dropbox
@@ -385,34 +389,34 @@ if [[ $answer =~ $yes ]]; then
   echo -e "${S}Atom has been installed successfully.${R}\n"
 fi
 
-# IdeaIC
-read -p "Do you want to install ideaIC?(Y/n) " answer
+# IntelliJ
+read -p "Do you want to install intelliJ Community?(Y/n) " answer
 
 if [[ $answer =~ $yes ]]; then
   ideaic=$editors/idea-ic
   mkdir -p $ideaic
 
-  read -p "Enter the url to the ideaIC tar.gz file: " url
-  echo -e "Downloading the ideaIC tar.gz file."
+  read -p "Enter the url to the intelliJ tar.gz file: " url
+  echo -e "Downloading the intelliJ tar.gz file."
   ideaic_archive=$temp/ideaic.tar.gz
   wget -q --show-progress -P $temp -O $ideaic_archive $url
 
-  echo -e "Extracting the ideaIC files to ${V}$ideaic${R}."
+  echo -e "Extracting the intelliJ files to ${V}$ideaic${R}."
   tar zxf $ideaic_archive -C $ideaic --strip-components 1
   rm -rf $ideaic_archive
 
   sudo ln -sfn $ideaic/bin/idea.sh /usr/local/bin/idea
 
-  echo -e "Creating ideaIC's application dock entry."
+  echo -e "Creating intelliJ's application dock entry."
 
   desktop_file="/usr/share/applications/idea.desktop"
   sudo touch $desktop_file
   sudo echo "[Desktop Entry]" | sudo tee -a $desktop_file
   sudo echo "Type=Application" | sudo tee -a $desktop_file
-  sudo echo "Name=IdeaIC" | sudo tee -a $desktop_file
+  sudo echo "Name=IntelliJ Cummunity" | sudo tee -a $desktop_file
   sudo echo "Icon=$ideaic/bin/idea.png" | sudo tee -a $desktop_file
   sudo echo "Exec=$ideaic/bin/idea.sh" | sudo tee -a $desktop_file
-  sudo echo "Comment=IdeaIC" | sudo tee -a $desktop_file
+  sudo echo "Comment=IntelliJ Community" | sudo tee -a $desktop_file
   sudo echo "Categories=Development;Code;" | sudo tee -a $desktop_file
 
   echo -e "${S}IdeaIC has been installed successfully in $ideaic.${R}\n"
