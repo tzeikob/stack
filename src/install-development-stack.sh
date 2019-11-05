@@ -438,6 +438,23 @@ if [[ $answer =~ $yes ]]; then
   echo -e "${S}Atom has been installed successfully.${R}\n"
 fi
 
+# Visual Studio
+read -p "Do you want to install visual studio?(Y/n) " answer
+
+if [[ $answer =~ $yes ]]; then
+  echo -e "Downloading the latest version of visual studio."
+  wget -q --show-progress -P $temp -O $temp/visual-studio.deb https://go.microsoft.com/fwlink/?LinkID=760868
+
+  echo -e "Installing visual studio using deb packaging."
+  sudo dpkg -i $temp/visual-studio.deb
+  rm -rf $temp/visual-studio.deb
+
+  # Adding vs desktop entry in favorites applications
+  favorites=$favorites", 'code.desktop'"
+
+  echo -e "${S}Visual studio has been installed successfully.${R}\n"
+fi
+
 # IntelliJ
 read -p "Do you want to install intelliJ Community?(Y/n) " answer
 
