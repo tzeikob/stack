@@ -621,6 +621,23 @@ if [[ $answer =~ $yes ]]; then
   echo -e "${S}Robo 3T has been installed successfully in $robo3t.${R}\n"
 fi
 
+# Libre Office
+read -p "Do you want to install libre office?(Y/n) " answer
+
+if [[ $answer =~ $yes ]]; then
+  echo -e "Adding the libre office PPA repository."
+  sudo add-apt-repository ppa:libreoffice/ppa
+
+  echo -e "Installing the libre office."
+  sudo apt update
+  sudo apt install libreoffice
+
+  # Adding skype desktop entry in favorites applications
+  # favorites=$favorites", 'skypeforlinux.desktop'"
+
+  echo -e "${S}Libre office has been installed successfully.${R}\n"
+fi
+
 # Sources
 sources=$workspace/sources
 
