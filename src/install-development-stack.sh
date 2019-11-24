@@ -100,7 +100,7 @@ fi
 # Dependencies
 packages=(tree curl unzip gconf-service gconf-service-backend gconf2
           gconf2-common libappindicator1 libgconf-2-4 libindicator7
-          libpython-stdlib python python-minimal python2.7 python2.7-minimal)
+          libpython-stdlib python python-minimal python2.7 python2.7-minimal libatomic1)
 
 echo -e "Required dependencies:\n${V}"${packages[@]}${R}
 read -p "Do you want to install those dependencies?(Y/n) " answer
