@@ -248,6 +248,20 @@ if [[ $answer =~ $yes ]]; then
   echo -e "${S}Virtual box has been installed successfully.${R}\n"
 fi
 
+# Libre Office
+read -p "Do you want to install Libre Office?(Y/n) " answer
+
+if [[ $answer =~ $yes ]]; then
+  echo -e "Adding the Libre Office PPA repository."
+  sudo add-apt-repository ppa:libreoffice/ppa
+
+  echo -e "Installing the Libre Office."
+  sudo apt update
+  sudo apt install libreoffice
+
+  echo -e "${S}Libre Office has been installed successfully.${R}\n"
+fi
+
 # Git
 read -p "Do you want to install Git?(Y/n) " answer
 
@@ -354,6 +368,9 @@ if [ "$jdks" ]; then
       read -p "Do you want to add $(basename $d) in alternatives?(Y/n) " answer
 
       if [[ $answer =~ $yes ]]; then
+        echo -e "Already JDKs found installed in alternatives:"
+        update-alternatives --display java
+
         read -p "Enter the priority for this alternative entry: " priority
 
         sudo update-alternatives --install /usr/bin/java java $java/$d/bin/java $priority
@@ -387,6 +404,9 @@ if [[ $answer =~ $yes ]]; then
     read -p "Do you want to add Maven to alternatives?(Y/n) " answer
 
     if [[ $answer =~ $yes ]]; then
+      echo -e "Already MVNs found installed in alternatives:"
+      update-alternatives --display mvn
+
       read -p "Enter the priority for this alternative entry: " priority
 
       sudo update-alternatives --install /usr/bin/mvn mvn $d/bin/mvn $priority
@@ -629,20 +649,6 @@ if [[ $answer =~ $yes ]]; then
   favorites=$favorites", 'robo3t.desktop'"
 
   echo -e "${S}Robo3T has been installed successfully in $robo3t.${R}\n"
-fi
-
-# Libre Office
-read -p "Do you want to install Libre Office?(Y/n) " answer
-
-if [[ $answer =~ $yes ]]; then
-  echo -e "Adding the Libre Office PPA repository."
-  sudo add-apt-repository ppa:libreoffice/ppa
-
-  echo -e "Installing the Libre Office."
-  sudo apt update
-  sudo apt install libreoffice
-
-  echo -e "${S}Libre Office has been installed successfully.${R}\n"
 fi
 
 # Sources
