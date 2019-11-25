@@ -125,16 +125,16 @@ fi
 # Dropbox
 dropbox=/home/$USER/Dropbox
 
-read -p "Do you want to install dropbox?(Y/n) " answer
+read -p "Do you want to install Dropbox?(Y/n) " answer
 
 if [[ $answer =~ $yes ]]; then
-  echo -e "Adding official dropbox repository."
+  echo -e "Adding official Dropbox repository."
   dropbox_list=/etc/apt/sources.list.d/dropbox.list
   sudo touch $dropbox_list
   sudo echo "deb [arch=i386,amd64] http://linux.dropbox.com/ubuntu $(lsb_release -cs) main" | sudo tee -a $dropbox_list
   sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 1C61A2656FB57B7E4DE0F4C1FC918B335044912E
 
-  echo -e "Installing the latest version of dropbox."
+  echo -e "Installing the latest version of Dropbox."
   sudo apt update
   sudo apt install python3-gpg dropbox
 
@@ -159,13 +159,13 @@ if [[ $answer =~ $yes ]]; then
 fi
 
 # Chrome
-read -p "Do you want to install chrome?(Y/n) " answer
+read -p "Do you want to install Chrome?(Y/n) " answer
 
 if [[ $answer =~ $yes ]]; then
-  echo -e "Downloading the latest version of chrome."
+  echo -e "Downloading the latest version of Chrome."
   wget -q --show-progress -P $temp https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
 
-  echo -e "Installing chrome using deb packaging."
+  echo -e "Installing Chrome using deb packaging."
   sudo dpkg -i $temp/google-chrome-stable_current_amd64.deb
   rm -rf $temp/google-chrome-stable_current_amd64.deb
 
@@ -176,13 +176,13 @@ if [[ $answer =~ $yes ]]; then
 fi
 
 # Skype
-read -p "Do you want to install skype?(Y/n) " answer
+read -p "Do you want to install Skype?(Y/n) " answer
 
 if [[ $answer =~ $yes ]]; then
-  echo -e "Downloading the latest version of skype."
+  echo -e "Downloading the latest version of Skype."
   wget -q --show-progress -P $temp https://repo.skype.com/latest/skypeforlinux-64.deb
 
-  echo -e "Installing skype using deb packaging."
+  echo -e "Installing Skype using deb packaging."
   sudo dpkg -i $temp/skypeforlinux-64.deb
   rm -rf $temp/skypeforlinux-64.deb
 
@@ -193,22 +193,22 @@ if [[ $answer =~ $yes ]]; then
 fi
 
 # Slack
-read -p "Do you want to install slack?(Y/n) " answer
+read -p "Do you want to install Slack?(Y/n) " answer
 
 if [[ $answer =~ $yes ]]; then
-  read -p "Enter the url to the slack binary file: " url
-  echo -e "Downloading the latest version of slack."
+  read -p "Enter the url to the Slack binary file: " url
+  echo -e "Downloading the latest version of Slack."
   wget -q --show-progress -P $temp -O $temp/slack-desktop-amd64.deb $url
 
-  echo -e "Installing slack using deb packaging."
+  echo -e "Installing Slack using deb packaging."
   sudo dpkg -i $temp/slack-desktop-amd64.deb
   rm -rf $temp/slack-desktop-amd64.deb
 
   # Ask user to start slack at system start up
-  read -p "Do you want to start slack at start up?(Y/n) " answer
+  read -p "Do you want to start Slack at start up?(Y/n) " answer
 
   if [[ $answer =~ $yes ]]; then
-    echo -e "Adding slack desktop entry to autostart."
+    echo -e "Adding Slack desktop entry to autostart."
 
     mkdir -p ~/.config/autostart
     desktop_file="/home/$USER/.config/autostart/slack.desktop"
@@ -232,10 +232,10 @@ if [[ $answer =~ $yes ]]; then
 fi
 
 # Virtual Box
-read -p "Do you want to install virtual box?(Y/n) " answer
+read -p "Do you want to install Virtual Box?(Y/n) " answer
 
 if [[ $answer =~ $yes ]]; then
-  echo -e "Installing virtual box version 6.0."
+  echo -e "Installing Virtual Box version 6.0."
   wget -q https://www.virtualbox.org/download/oracle_vbox_2016.asc -O- | sudo apt-key add -
   sudo add-apt-repository "deb [arch=amd64] http://download.virtualbox.org/virtualbox/debian $(lsb_release -cs) contrib"
 
@@ -249,21 +249,21 @@ if [[ $answer =~ $yes ]]; then
 fi
 
 # Git
-read -p "Do you want to install git?(Y/n) " answer
+read -p "Do you want to install Git?(Y/n) " answer
 
 if [[ $answer =~ $yes ]]; then
   ppa="git-core/ppa"
 
   if ! grep -q "^deb .*$ppa" /etc/apt/sources.list /etc/apt/sources.list.d/*; then
-   echo -e "Adding the git ppa repository."
+   echo -e "Adding the Git ppa repository."
    sudo add-apt-repository ppa:$ppa
    sudo apt update
   fi
 
-  echo -e "Installing the latest version of git."
+  echo -e "Installing the latest version of Git."
   sudo apt install git
 
-  read -p "Enter a global username to be associated in each git commit:($USER) " username
+  read -p "Enter a global username to be associated in each commit:($USER) " username
   if [[ $username == "" ]]; then
    username = $USER
   fi
@@ -271,7 +271,7 @@ if [[ $answer =~ $yes ]]; then
   git config --global user.name "$username"
   echo -e "Global username has been set to ${V}$(git config --global user.name)${R}."
 
-  read -p "Enter a global email to be associated in each git commit:($USER@$HOSTNAME) " email
+  read -p "Enter a global email to be associated in each commit:($USER@$HOSTNAME) " email
   if [[ $email == "" ]]; then
    email = $USER@$HOSTNAME
   fi
@@ -286,16 +286,16 @@ fi
 node=$workspace/node
 nvm=$node/nvm
 
-read -p "Do you want to install NodeJS through nvm?(Y/n) " answer
+read -p "Do you want to install NodeJS through NVM?(Y/n) " answer
 
 if [[ $answer =~ $yes ]]; then
   mkdir -p $nvm
 
-  read -p "Enter the url to the latest version of nvm: " url
-  echo -e "Downloading the nvm installation script file."
+  read -p "Enter the url to the latest version of NVM: " url
+  echo -e "Downloading the NVM installation script file."
   wget -q --show-progress -P $temp -O $temp/nvm-install.sh $url
 
-  echo -e "Installing latest version of nvm in ${V}$nvm${R}."
+  echo -e "Installing latest version of NVM in ${V}$nvm${R}."
   export NVM_DIR=$nvm
   bash $temp/nvm-install.sh
   rm -rf $temp/nvm-install.sh
@@ -310,7 +310,7 @@ if [[ $answer =~ $yes ]]; then
   echo -e "Currently installed NodeJS versions:"
   nvm ls
 
-  echo -e "${S}NodeJS LTS and current versions have been installed successfully in $nvm/versions/node.${R}\n"
+  echo -e "${S}NodeJS have been installed successfully in $nvm/versions/node.${R}\n"
 fi
 
 # Java
@@ -368,23 +368,23 @@ fi
 # Maven
 maven=$workspace/maven
 
-read -p "Do you want to install maven?(Y/n) " answer
+read -p "Do you want to install Maven?(Y/n) " answer
 
 if [[ $answer =~ $yes ]]; then
   mkdir -p $maven
 
-  read -p "Enter the url to the maven binary tar.gz file: " url
-  echo -e "Downloading the maven binary file."
+  read -p "Enter the url to the Maven binary tar.gz file: " url
+  echo -e "Downloading the Maven binary file."
   wget -q --show-progress -P $temp $url
 
-  echo -e "Extracting the maven files to ${V}$maven${R}."
+  echo -e "Extracting the Maven files to ${V}$maven${R}."
   tar zxf $temp/apache-maven* -C $maven
   rm -rf $temp/apache-maven*
 
   echo -e "${S}Maven has been installed successfully in $maven.${R}\n"
 
   for d in $maven/* ; do
-    read -p "Do you want to add maven to alternatives?(Y/n) " answer
+    read -p "Do you want to add Maven to alternatives?(Y/n) " answer
 
     if [[ $answer =~ $yes ]]; then
       read -p "Enter the priority for this alternative entry: " priority
@@ -397,10 +397,10 @@ if [[ $answer =~ $yes ]]; then
 fi
 
 # Docker
-read -p "Do you want to install docker?(Y/n) " answer
+read -p "Do you want to install Docker?(Y/n) " answer
 
 if [[ $answer =~ $yes ]]; then
-  echo -e "Installing docker community edition."
+  echo -e "Installing Docker community edition."
   sudo apt update
   sudo apt-get install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
 
@@ -410,14 +410,14 @@ if [[ $answer =~ $yes ]]; then
   sudo apt update
   sudo apt install docker-ce docker-ce-cli containerd.io
 
-  echo -e "Creating docker user group."
+  echo -e "Creating Docker user group."
   sudo groupadd docker
 
-  echo -e "Adding current user to docker user group."
+  echo -e "Adding current user to the Docker user group."
   sudo usermod -aG docker $USER
 
   compose_version="1.24.1"
-  read -p "Which version of the docker compose do you want to install:($compose_version) " version
+  read -p "Which version of the Docker Compose do you want to install:($compose_version) " version
 
   if [[ $version != "" ]]; then
     compose_version=$version
@@ -433,10 +433,10 @@ fi
 editors=$workspace/editors
 
 # Atom
-read -p "Do you want to install atom?(Y/n) " answer
+read -p "Do you want to install Atom?(Y/n) " answer
 
 if [[ $answer =~ $yes ]]; then
-  echo -e "Installing the latest version of atom."
+  echo -e "Installing the latest version of Atom."
   wget -q https://packagecloud.io/AtomEditor/atom/gpgkey -O- | sudo apt-key add -
   sudo add-apt-repository "deb [arch=amd64] https://packagecloud.io/AtomEditor/atom/any/ any main"
   sudo apt update
@@ -449,41 +449,41 @@ if [[ $answer =~ $yes ]]; then
 fi
 
 # Visual Studio
-read -p "Do you want to install visual studio?(Y/n) " answer
+read -p "Do you want to install Visual Studio?(Y/n) " answer
 
 if [[ $answer =~ $yes ]]; then
-  echo -e "Downloading the latest version of visual studio."
+  echo -e "Downloading the latest version of Visual Studio."
   wget -q --show-progress -P $temp -O $temp/visual-studio.deb https://go.microsoft.com/fwlink/?LinkID=760868
 
-  echo -e "Installing visual studio using deb packaging."
+  echo -e "Installing Visual Studio using deb packaging."
   sudo dpkg -i $temp/visual-studio.deb
   rm -rf $temp/visual-studio.deb
 
   # Adding vs desktop entry in favorites applications
   favorites=$favorites", 'code.desktop'"
 
-  echo -e "${S}Visual studio has been installed successfully.${R}\n"
+  echo -e "${S}Visual Studio has been installed successfully.${R}\n"
 fi
 
 # IntelliJ
-read -p "Do you want to install intelliJ Community?(Y/n) " answer
+read -p "Do you want to install IntelliJ Community?(Y/n) " answer
 
 if [[ $answer =~ $yes ]]; then
   ideaic=$editors/idea-ic
   mkdir -p $ideaic
 
-  read -p "Enter the url to the intelliJ tar.gz file: " url
-  echo -e "Downloading the intelliJ tar.gz file."
+  read -p "Enter the url to the IntelliJ tar.gz file: " url
+  echo -e "Downloading the IntelliJ tar.gz file."
   ideaic_archive=$temp/ideaic.tar.gz
   wget -q --show-progress -P $temp -O $ideaic_archive $url
 
-  echo -e "Extracting the intelliJ files to ${V}$ideaic${R}."
+  echo -e "Extracting the IntelliJ files to ${V}$ideaic${R}."
   tar zxf $ideaic_archive -C $ideaic --strip-components 1
   rm -rf $ideaic_archive
 
   sudo ln -sfn $ideaic/bin/idea.sh /usr/local/bin/idea
 
-  echo -e "Creating intelliJ's application dock entry."
+  echo -e "Creating IntelliJ's application dock entry."
 
   desktop_file="/usr/share/applications/idea.desktop"
   sudo touch $desktop_file
@@ -498,26 +498,26 @@ if [[ $answer =~ $yes ]]; then
   # Adding intelliJ desktop entry in favorites applications
   favorites=$favorites", 'idea.desktop'"
 
-  echo -e "${S}IdeaIC has been installed successfully in $ideaic.${R}\n"
+  echo -e "${S}IntelliJ has been installed successfully in $ideaic.${R}\n"
 fi
 
 # DBeaver
-read -p "Do you want to install dbeaver?(Y/n) " answer
+read -p "Do you want to install DBeaver?(Y/n) " answer
 
 if [[ $answer =~ $yes ]]; then
   dbeaver=$editors/dbeaver
   mkdir -p $dbeaver
 
-  echo -e "Downloading the latest version of the dbeaver tar.gz file."
+  echo -e "Downloading the latest version of the DBeaver tar.gz file."
   wget -q --show-progress -P $temp wget https://dbeaver.io/files/dbeaver-ce-latest-linux.gtk.x86_64.tar.gz
 
-  echo -e "Extracting the dbeaver files to ${V}$dbeaver${R}."
+  echo -e "Extracting the DBeaver files to ${V}$dbeaver${R}."
   tar zxf $temp/dbeaver-ce* -C $dbeaver --strip-components 1
   rm -rf $temp/dbeaver-ce*
 
   sudo ln -sfn $dbeaver/dbeaver /usr/local/bin/dbeaver
 
-  echo -e "Creating dbeaver's application dock entry."
+  echo -e "Creating DBeaver's application dock entry."
 
   desktop_file="/usr/share/applications/dbeaver.desktop"
   sudo touch $desktop_file
@@ -536,22 +536,22 @@ if [[ $answer =~ $yes ]]; then
 fi
 
 # Postman
-read -p "Do you want to install postman?(Y/n) " answer
+read -p "Do you want to install Postman?(Y/n) " answer
 
 if [[ $answer =~ $yes ]]; then
   postman=$editors/postman
   mkdir -p $postman
 
-  echo -e "Downloading the latest version of postman."
+  echo -e "Downloading the latest version of Postman."
   wget -q --show-progress -P $temp -O $temp/postman.tar.gz https://dl.pstmn.io/download/latest/linux64
 
-  echo -e "Extracting postman files to ${V}$postman${R}."
+  echo -e "Extracting Postman files to ${V}$postman${R}."
   tar zxf $temp/postman.tar.gz -C $postman --strip-components 1
   rm -rf $temp/postman.tar.gz
 
   sudo ln -sfn $postman/Postman /usr/local/bin/postman
 
-  echo -e "Creating postman's application dock entry."
+  echo -e "Creating Postman's application dock entry."
 
   desktop_file="/usr/share/applications/postman.desktop"
   sudo touch $desktop_file
@@ -570,20 +570,20 @@ if [[ $answer =~ $yes ]]; then
 fi
 
 # Mongo Compass
-read -p "Do you want to install mongodb compass?(Y/n) " answer
+read -p "Do you want to install MongoDB Compass?(Y/n) " answer
 
 if [[ $answer =~ $yes ]]; then
   compass_version="1.19.12"
-  read -p "Which version of the mongodb compass do you want to install:($compass_version) " version
+  read -p "Which version of the MongoDB Compass do you want to install:($compass_version) " version
 
   if [[ $version != "" ]]; then
     compass_version=$version
   fi
 
-  echo -e "Downloading mongodb compass community version $compass_version."
+  echo -e "Downloading MongoDB Compass community version $compass_version."
   wget -q --show-progress -P $temp -O $temp/compass.deb "https://downloads.mongodb.com/compass/mongodb-compass-community_"$compass_version"_amd64.deb"
 
-  echo -e "Installing mongodb compass using deb packaging."
+  echo -e "Installing mongoDB compass using deb packaging."
   sudo dpkg -i $temp/compass.deb
   rm $temp/compass.deb
 
@@ -594,17 +594,17 @@ if [[ $answer =~ $yes ]]; then
 fi
 
 # Robo 3T
-read -p "Do you want to install robo 3t?(Y/n) " answer
+read -p "Do you want to install Robo3t?(Y/n) " answer
 
 if [[ $answer =~ $yes ]]; then
   robo3t=$editors/robo3t
   mkdir -p $robo3t
 
-  read -p "Enter the url to the latest robo 3t tar.gz file: " url
-  echo -e "Downloading robo 3t tar.gz file."
+  read -p "Enter the url to the latest Robo3t tar.gz file: " url
+  echo -e "Downloading Robo3t tar.gz file."
   wget -q --show-progress -P $temp -O $temp/robo3t.tar.gz $url
 
-  echo -e "Extracting robo 3t files to ${V}$robo3t${R}."
+  echo -e "Extracting Robo3t files to ${V}$robo3t${R}."
   tar zxf $temp/robo3t.tar.gz -C $robo3t --strip-components 1
   rm $temp/robo3t.tar.gz
 
@@ -613,7 +613,7 @@ if [[ $answer =~ $yes ]]; then
 
   sudo ln -sfn $robo3t/bin/robo3t /usr/local/bin/robo3t
 
-  echo -e "Creating robo 3t's application dock entry."
+  echo -e "Creating Robo3t's application dock entry."
 
   desktop_file="/usr/share/applications/robo3t.desktop"
   sudo touch $desktop_file
@@ -625,24 +625,24 @@ if [[ $answer =~ $yes ]]; then
   sudo echo "Comment=Robo 3T" | sudo tee -a $desktop_file
   sudo echo "Categories=Databases;Editor;" | sudo tee -a $desktop_file
 
-  # Adding robo 3t desktop entry in favorites applications
+  # Adding robo3t desktop entry in favorites applications
   favorites=$favorites", 'robo3t.desktop'"
 
-  echo -e "${S}Robo 3T has been installed successfully in $robo3t.${R}\n"
+  echo -e "${S}Robo3T has been installed successfully in $robo3t.${R}\n"
 fi
 
 # Libre Office
-read -p "Do you want to install libre office?(Y/n) " answer
+read -p "Do you want to install Libre Office?(Y/n) " answer
 
 if [[ $answer =~ $yes ]]; then
-  echo -e "Adding the libre office PPA repository."
+  echo -e "Adding the Libre Office PPA repository."
   sudo add-apt-repository ppa:libreoffice/ppa
 
-  echo -e "Installing the libre office."
+  echo -e "Installing the Libre Office."
   sudo apt update
   sudo apt install libreoffice
 
-  echo -e "${S}Libre office has been installed successfully.${R}\n"
+  echo -e "${S}Libre Office has been installed successfully.${R}\n"
 fi
 
 # Sources
