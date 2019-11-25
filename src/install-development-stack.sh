@@ -55,6 +55,16 @@ fi
 
 echo -e "${S}Workspace home path has been set to $workspace successfully.${R}\n"
 
+# Set Local RTC Time
+read -p "Do you want to use local time?(Y/n) " answer
+
+if [[ $answer =~ $yes ]]; then
+  echo -e "Setting system to use local time instead of UTC."
+  timedatectl set-local-rtc 1 --adjust-system-clock
+
+  echo -e "${S}System has been set to use local time successfully.${R}\n"
+fi
+
 # Disabling lock screen
 read -p "Do you want to disable screen lock?(Y/n) " answer
 
