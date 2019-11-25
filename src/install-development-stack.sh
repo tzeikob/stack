@@ -648,11 +648,13 @@ fi
 # Sources
 sources=$workspace/sources
 
-if [[ -d $sources ]]; then
- echo -e "Sources folder ${V}$sources${R} already exists."
-else
- echo -e "Creating sources folder ${V}$sources${R}."
- mkdir -p $sources
+if [[ ! -d $sources ]]; then
+  echo -e "Creating sources folder ${V}$sources${R}."
+  mkdir -p $sources
+  mkdir -p $sources/me
+  mkdir -p $sources/temp
+
+  echo -e "${S}Sources folder has been created successfully.${R}\n"
 fi
 
 # SSH
@@ -711,8 +713,6 @@ if [[ $answer =~ $yes ]]; then
 
   echo -e "${S}Dock panel has been updated successfully.${R}\n"
 fi
-
-echo -e "${S}Sources folder has been set successfully to $sources.${R}\n"
 
 # Bookmarks
 read -p "Do you want to create workspace bookmarks?(Y/n) " answer
