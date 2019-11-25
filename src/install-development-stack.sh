@@ -642,9 +642,6 @@ if [[ $answer =~ $yes ]]; then
   sudo apt update
   sudo apt install libreoffice
 
-  # Adding skype desktop entry in favorites applications
-  # favorites=$favorites", 'skypeforlinux.desktop'"
-
   echo -e "${S}Libre office has been installed successfully.${R}\n"
 fi
 
