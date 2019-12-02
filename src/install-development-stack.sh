@@ -122,6 +122,16 @@ if [[ $answer =~ $yes ]]; then
   echo -e "${S}Dependencies have been installed successfully.${R}\n"
 fi
 
+# Solaar for Logitech Mouse
+read -p "Do you want to install Sollar?(Y/n) " answer
+
+if [[ $answer =~ $yes ]]; then
+  echo -e "Installing the latest version of the Solaar application."
+  sudo apt install solaar-gnome3
+
+  echo -e "${S}Solaar application has been installed successfully.${R}\n"
+fi
+
 # Dropbox
 dropbox=/home/$USER/Dropbox
 
