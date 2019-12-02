@@ -714,6 +714,7 @@ if [[ $answer =~ $yes ]]; then
 
   echo -e "Installing permission rules."
   ./rules.d/install.sh
+  cd ../../
 
   echo -e "${S}Solaar application has been installed successfully.${R}\n"
 fi
