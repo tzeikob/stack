@@ -122,16 +122,6 @@ if [[ $answer =~ $yes ]]; then
   echo -e "${S}Dependencies have been installed successfully.${R}\n"
 fi
 
-# Solaar for Logitech Mouse
-read -p "Do you want to install Sollar?(Y/n) " answer
-
-if [[ $answer =~ $yes ]]; then
-  echo -e "Installing the latest version of the Solaar application."
-  sudo apt install solaar-gnome3
-
-  echo -e "${S}Solaar application has been installed successfully.${R}\n"
-fi
-
 # Dropbox
 dropbox=/home/$USER/Dropbox
 
@@ -705,6 +695,27 @@ if [[ $answer =~ $yes ]]; then
   tree --noreport -n -L 1 $aws_home
 
   echo -e "${S}SSH files have been restored successfully in $aws_home.${R}\n"
+fi
+
+# Solaar for Logitech Mouse
+read -p "Do you want to install Sollar?(Y/n) " answer
+
+if [[ $answer =~ $yes ]]; then
+  echo -e "Installing dependencies for the Solaar application."
+  sudo apt install udev python-pyudev python3-pyudev python-gi python3-gi gir1.2-gtk-3.0 gir1.2-appindicator3-0.1
+
+  echo -e "Cloning the latest version of the Solaar sources."
+  cd $temp
+  git clone https://github.com/pwr-Solaar/Solaar.git
+
+  echo -e "Installing the latest version of the Solaar application."
+  cd Solaar
+  sudo python setup.py install
+
+  echo -e "Installing permission rules."
+  ./rules.d/install.sh
+
+  echo -e "${S}Solaar application has been installed successfully.${R}\n"
 fi
 
 # Dock
