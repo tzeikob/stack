@@ -651,6 +651,16 @@ if [[ $answer =~ $yes ]]; then
   echo -e "${S}Robo3T has been installed successfully in $robo3t.${R}\n"
 fi
 
+# Gimp
+read -p "Do you want to install Gimp?(Y/n) " answer
+
+if [[ $answer =~ $yes ]]; then
+  echo -e "Installing the Gimp software."
+  sudo apt install gimp
+
+  echo -e "${S}Gimp has been installed successfully.${R}\n"
+fi
+
 # Sources
 sources=$workspace/sources
 
