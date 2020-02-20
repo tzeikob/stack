@@ -62,6 +62,8 @@ if [[ $answer =~ $yes ]]; then
   echo -e "Setting system to use local time instead of UTC."
   timedatectl set-local-rtc 1 --adjust-system-clock
 
+  gsettings set org.gnome.desktop.interface clock-show-date true
+
   echo -e "${S}System has been set to use local time successfully.${R}\n"
 fi
 
