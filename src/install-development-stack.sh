@@ -663,6 +663,21 @@ if [[ $answer =~ $yes ]]; then
   echo -e "${S}Gimp has been installed successfully.${R}\n"
 fi
 
+# qBittorrent
+read -p "Do you want to install qBittorent?(Y/n) " answer
+
+if [[ $answer =~ $yes ]]; then
+  echo -e "Installing the latest version of qBittorent."
+  sudo add-apt-repository ppa:qbittorrent-team/qbittorrent-stable
+  sudo apt update
+  sudo apt install qbittorrent
+
+  # Adding qBittorent desktop entry in favorites applications
+  favorites=$favorites", 'org.qbittorrent.qBittorrent.desktop'"
+
+  echo -e "${S}qBittorent has been installed successfully.${R}\n"
+fi
+
 # Sources
 sources=$workspace/sources
 
