@@ -678,6 +678,16 @@ if [[ $answer =~ $yes ]]; then
   echo -e "${S}qBittorent has been installed successfully.${R}\n"
 fi
 
+# VLC
+read -p "Do you want to install VLC?(Y/n) " answer
+
+if [[ $answer =~ $yes ]]; then
+  echo -e "Installing the VLC."
+  sudo apt install vlc
+
+  echo -e "${S}VLC has been installed successfully.${R}\n"
+fi
+
 # Sources
 sources=$workspace/sources
 
