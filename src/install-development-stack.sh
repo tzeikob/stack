@@ -52,7 +52,7 @@ if [[ $answer =~ $yes ]]; then
   mv /home/$USER/Videos /home/$USER/videos
 
   echo -e "Backup the user dirs file."
-  userdirs=.config/user-dirs.dirs
+  userdirs="/home/$USER/.config/user-dirs.dirs"
   cp $userdirs $userdirs.bak
 
   echo -e "Truncate and update the contents of the user dirs file."
