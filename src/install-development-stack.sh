@@ -402,11 +402,11 @@ if [[ $answer =~ $yes ]]; then
       break
     fi
   done
+
+  jdks=$(ls -A $java | grep ^jdk)
 fi
 
 # Alternatives
-jdks=$(ls -A $java | grep ^jdk)
-
 if [ "$jdks" ]; then
   read -p "Do you want to add JDKs in alternatives?(Y/n) " answer
 
