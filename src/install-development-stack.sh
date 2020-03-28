@@ -37,8 +37,52 @@ fi
 
 echo -e "${S}Temporary folder has been set to $temp successfully.${R}\n"
 
+# Default home folders
+read -p "Do you want to refactor the default home folders?(Y/n) " answer
+
+if [[ $answer =~ $yes ]]; then
+  echo -e "Rename default home folders to lower case."
+  mv /home/$USER/Desktop /home/$USER/desktop
+  mv /home/$USER/Downloads /home/$USER/downloads
+  mv /home/$USER/Templates /home/$USER/templates
+  mv /home/$USER/Public /home/$USER/public
+  mv /home/$USER/Documents /home/$USER/documents
+  mv /home/$USER/Music /home/$USER/music
+  mv /home/$USER/Pictures /home/$USER/pictures
+  mv /home/$USER/Videos /home/$USER/videos
+
+  echo -e "Backup the user dirs file."
+  userdirs=.config/user-dirs.dirs
+  cp $userdirs $userdirs.bak
+
+  echo -e "Truncate and update the contents of the user dirs file."
+  > $userdirs
+  echo "XDG_DESKTOP_DIR=\"$HOME/desktop\"" >> $userdirs
+  echo "XDG_DOWNLOAD_DIR=\"$HOME/downloads\"" >> $userdirs
+  echo "XDG_TEMPLATES_DIR=\"$HOME/templates\"" >> $userdirs
+  echo "XDG_PUBLICSHARE_DIR=\"$HOME/public\"" >> $userdirs
+  echo "XDG_DOCUMENTS_DIR=\"$HOME/documents\"" >> $userdirs
+  echo "XDG_MUSIC_DIR=\"$HOME/music\"" >> $userdirs
+  echo "XDG_PICTURES_DIR=\"$HOME/pictures\"" >> $userdirs
+  echo "XDG_VIDEOS_DIR=\"$HOME/videos\"" >> $userdirs
+
+  echo -e "Update nautilus bookmarks file."
+  bookmarks_file="/home/$USER/.config/gtk-3.0/bookmarks"
+
+  # Backup and truncate the bookmarks file
+  cp $bookmarks_file $bookmarks_file.bak
+  > $bookmarks_file
+
+  echo "file:///home/"$USER"/downloads Downloads" | tee -a $bookmarks_file
+  echo "file:///home/"$USER"/documents Documents" | tee -a $bookmarks_file
+
+  xdg-user-dirs-update
+
+  echo -e "${S}Default home folders have been refactored successfully.${R}\n"
+fi
+
 # Workspace folder
-workspace="/home/$USER/Workspace"
+workspace="/home/$USER/workspace"
 
 read -p "Enter the path to the workspace folder:($workspace) " path
 
@@ -125,7 +169,7 @@ if [[ $answer =~ $yes ]]; then
 fi
 
 # Dropbox
-dropbox=/home/$USER/Dropbox
+dropbox=/home/$USER/dropbox
 
 read -p "Do you want to install Dropbox?(Y/n) " answer
 
