@@ -75,8 +75,9 @@ if [[ $answer =~ $yes ]]; then
 
   echo "file:///home/"$USER"/downloads Downloads" | tee -a $bookmarks_file
   echo "file:///home/"$USER"/documents Documents" | tee -a $bookmarks_file
-
-  xdg-user-dirs-update
+  echo "file:///home/"$USER"/music Music" | tee -a $bookmarks_file
+  echo "file:///home/"$USER"/pictures Pictures" | tee -a $bookmarks_file
+  echo "file:///home/"$USER"/videos Videos" | tee -a $bookmarks_file
 
   echo -e "${S}Default home folders have been refactored successfully.${R}\n"
 fi
