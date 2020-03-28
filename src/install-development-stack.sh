@@ -11,6 +11,9 @@ yes="^([Yy][Ee][Ss]|[Yy]|"")$"
 # List of favorite applications to be added in the dock
 favorites="'org.gnome.Nautilus.desktop', 'org.gnome.Terminal.desktop', 'firefox.desktop'"
 
+# Path to the bookmarks files
+bookmarks_file="/home/$USER/.config/gtk-3.0/bookmarks"
+
 # Welcome screen
 echo -e "Welcome to the workspace stack installation process."
 
@@ -67,9 +70,6 @@ if [[ $answer =~ $yes ]]; then
   echo "XDG_VIDEOS_DIR=\"$HOME/videos\"" >> $userdirs
 
   echo -e "Update nautilus bookmarks file."
-  bookmarks_file="/home/$USER/.config/gtk-3.0/bookmarks"
-
-  # Backup and truncate the bookmarks file
   cp $bookmarks_file $bookmarks_file.bak
   > $bookmarks_file
 
@@ -96,6 +96,9 @@ if [[ -d $workspace ]]; then
 else
  echo -e "Creating path ${V}$workspace${R}."
  mkdir -p $workspace
+
+ echo -e "Adding workspace to bookmarks file ${V}$bookmarks_file${R}."
+ echo "file://$workspace Workspace" | tee -a $bookmarks_file
 fi
 
 echo -e "${S}Workspace home path has been set to $workspace successfully.${R}\n"
@@ -201,6 +204,9 @@ if [[ $answer =~ $yes ]]; then
 
   # Adding dropbox desktop entry in favorites applications
   favorites=$favorites", 'dropbox.desktop'"
+
+  echo -e "Adding dropbox to bookmarks file ${V}$bookmarks_file${R}."
+  echo "file://$dropbox Dropbox" | tee -a $bookmarks_file
 
   echo -e "${S}Dropbox has been installed successfully.${R}\n"
 fi
@@ -742,6 +748,9 @@ if [[ ! -d $sources ]]; then
   mkdir -p $sources/me
   mkdir -p $sources/temp
 
+  echo -e "Adding sources to bookmarks file ${V}$bookmarks_file${R}."
+  echo "file://$workspace/sources Sources" | tee -a $bookmarks_file
+
   echo -e "${S}Sources folder has been created successfully.${R}\n"
 fi
 
@@ -800,20 +809,6 @@ if [[ $answer =~ $yes ]]; then
   gsettings set org.gnome.nautilus.desktop trash-icon-visible false
 
   echo -e "${S}Dock panel has been updated successfully.${R}\n"
-fi
-
-# Bookmarks
-read -p "Do you want to create workspace bookmarks?(Y/n) " answer
-
-if [[ $answer =~ $yes ]]; then
-  bookmarks_file="/home/$USER/.config/gtk-3.0/bookmarks"
-
-  echo -e "Adding workspace and sources to bookmarks file ${V}$bookmarks_file${R}."
-  echo "file://$workspace Workspace" | tee -a $bookmarks_file
-  echo "file://$workspace/sources Sources" | tee -a $bookmarks_file
-  echo "file://$dropbox Dropbox" | tee -a $bookmarks_file
-
-  echo -e "${S}Workspace bookmarks have been added successfully.${R}\n"
 fi
 
 # Terminal
