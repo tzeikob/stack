@@ -54,7 +54,7 @@ else
 fi
 
 if [[ $answer =~ $yes ]]; then
-  source $dir/loca-time.sh
+  source $dir/local-time.sh
 fi
 
 # Disable screen lock
