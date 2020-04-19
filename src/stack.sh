@@ -17,6 +17,8 @@ dir=$(dirname $0)
 source $dir"/global.sh"
 
 # Initiate local variables
+favorites="'org.gnome.Nautilus.desktop', 'org.gnome.Terminal.desktop', 'firefox.desktop'"
+bookmarks_file="/home/$USER/.config/gtk-3.0/bookmarks"
 now=$(date)
 distro=$(lsb_release -si)
 version=$(lsb_release -sr)
@@ -79,9 +81,6 @@ if [[ $answer =~ $yes ]]; then
 
   log "User dirs file has been updated successfully."
 
-  # Update the nautilus bookmarks file
-  bookmarks_file="/home/$USER/.config/gtk-3.0/bookmarks"
-
   log "Updating the nautilus bookmarks file $bookmarks_file."
 
   cp $bookmarks_file $bookmarks_file.bak
@@ -108,8 +107,8 @@ fi
 if [[ $answer =~ $yes ]]; then
   log "Upgrading the base system with the latest updates."
 
-  sudo apt -q update
-  sudo apt -y -q upgrade
+  sudo apt update -y -q
+  sudo apt upgrade -y -q
 
   log "Removing any not used packages."
 
@@ -129,7 +128,7 @@ fi
 
 # Install system languages
 if [[ $yesToAll = false ]]; then
-  read -p "Do you want to install more languages [Greek]?(Y/n) " answer
+  read -p "Do you want to install more languages?(Y/n) " answer
 else
   answer="yes"
 fi
@@ -213,7 +212,7 @@ if [[ $answer =~ $yes ]]; then
   sudo echo "deb [arch=i386,amd64] http://linux.dropbox.com/ubuntu $(lsb_release -cs) main" | sudo tee -a $dropbox_list
   sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 1C61A2656FB57B7E4DE0F4C1FC918B335044912E
 
-  sudo apt update -q
+  sudo apt update -y -q
   sudo apt install -y -q python3-gpg dropbox
 
   info "Dropbox has been installed successfully.\n"
@@ -241,6 +240,9 @@ if [[ $answer =~ $yes ]]; then
 
   sudo dpkg -i $temp/google-chrome-stable_current_amd64.deb
 
+  # Adding chrome in favorites applications
+  favorites=$favorites", 'google-chrome.desktop'"
+
   info "Chrome has been installed successfully.\n"
 fi
 
@@ -260,6 +262,9 @@ if [[ $answer =~ $yes ]]; then
 
   sudo dpkg -i $temp/skypeforlinux-64.deb
 
+  # Adding skype in favorites applications
+  favorites=$favorites", 'skypeforlinux.desktop'"
+
   info "Skype has been installed successfully.\n"
 fi
 
@@ -274,6 +279,9 @@ if [[ $answer =~ $yes ]]; then
   log "Installing the slack."
 
   sudo apt install -y -q slack
+
+  # Adding slack in favorites applications
+  favorites=$favorites", 'slack.desktop'"
 
   info "Slack has been installed successfully.\n"
 fi
@@ -290,8 +298,11 @@ if [[ $answer =~ $yes ]]; then
 
   sudo add-apt-repository -y multiverse
 
-  sudo apt update -q
+  sudo apt update -y -q
   sudo apt install -y -q virtualbox
+
+  # Adding virtual box in favorites applications
+  favorites=$favorites", 'virtualbox.desktop'"
 
   info "Virtual box has been installed successfully.\n"
 fi
@@ -310,7 +321,7 @@ if [[ $answer =~ $yes ]]; then
 
   if ! grep -q "^deb .*$ppa" /etc/apt/sources.list /etc/apt/sources.list.d/*; then
    sudo add-apt-repository -y ppa:$ppa
-   sudo apt update -q
+   sudo apt update -y -q
   fi
 
   sudo apt install -y -q git
@@ -365,7 +376,7 @@ fi
 
 # Install java
 if [[ $yesToAll = false ]]; then
-  read -p "Do you want to install java [openjdk-8, openjdk-13, maven]?(Y/n) " answer
+  read -p "Do you want to install java?(Y/n) " answer
 else
   answer="yes"
 fi
@@ -394,6 +405,231 @@ if [[ $answer =~ $yes ]]; then
   info "Java has been installed successfully."
 fi
 
-log "Cleaning up the temporary files."
+# Install docker
+if [[ $yesToAll = false ]]; then
+  read -p "Do you want to install docker?(Y/n) " answer
+else
+  answer="yes"
+fi
+
+if [[ $answer =~ $yes ]]; then
+  log "Installing docker community edition."
+  sudo apt update -y -q
+  sudo apt install -y -q apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+  sudo add-apt-repository -y -q "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+
+  sudo apt update -y -q
+  sudo apt install -y -q docker-ce docker-ce-cli containerd.io
+
+  log "Creating Docker user group."
+  sudo groupadd docker
+
+  log "Adding current user to the Docker user group."
+  sudo usermod -aG docker $USER
+
+  log "Installing docker compose."
+
+  sudo curl -L "https://github.com/docker/compose/releases/download/1.24.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+  sudo chmod +x /usr/local/bin/docker-compose
+
+  info "Docker has been installed successfully.\n"
+fi
+
+# Install atom
+if [[ $yesToAll = false ]]; then
+  read -p "Do you want to install atom?(Y/n) " answer
+else
+  answer="yes"
+fi
+
+if [[ $answer =~ $yes ]]; then
+  log "Installing the latest version of Atom."
+
+  wget -q https://packagecloud.io/AtomEditor/atom/gpgkey -O- | sudo apt-key add -
+  sudo add-apt-repository -y -q "deb [arch=amd64] https://packagecloud.io/AtomEditor/atom/any/ any main"
+  sudo apt update -y -q
+  sudo apt install -y -q atom
+
+  # Adding atom in favorites applications
+  favorites=$favorites", 'atom.desktop'"
+
+  info "Atom has been installed successfully.\n"
+fi
+
+# Install visual studio
+if [[ $yesToAll = false ]]; then
+  read -p "Do you want to install visual studio?(Y/n) " answer
+else
+  answer="yes"
+fi
+
+if [[ $answer =~ $yes ]]; then
+  log "Downloading the latest version of visual studio."
+
+  wget -q --show-progress -P $temp -O $temp/visual-studio.deb https://go.microsoft.com/fwlink/?LinkID=760868
+
+  log "Installing visual studio using deb packaging."
+
+  sudo dpkg -i $temp/visual-studio.deb
+
+  # Adding visual studio in favorites applications
+  favorites=$favorites", 'code.desktop'"
+
+  info "Visual studio has been installed successfully.\n"
+fi
+
+# Install intelliJ
+if [[ $yesToAll = false ]]; then
+  read -p "Do you want to install intelliJ?(Y/n) " answer
+else
+  answer="yes"
+fi
+
+if [[ $answer =~ $yes ]]; then
+  log "Installing the latest version of intelliJ."
+
+  sudo snap install intellij-idea-community --classic
+
+  # Adding intelliJ in favorites applications
+  favorites=$favorites", 'idea.desktop'"
+
+  info "IntelliJ has been installed successfully.\n"
+fi
+
+# Install dbeaver
+if [[ $yesToAll = false ]]; then
+  read -p "Do you want to install dbeaver?(Y/n) " answer
+else
+  answer="yes"
+fi
+
+if [[ $answer =~ $yes ]]; then
+  log "Installing the dbeaver."
+
+  wget -O - https://dbeaver.io/debs/dbeaver.gpg.key | apt-key add -
+  echo "deb https://dbeaver.io/debs/dbeaver-ce /" | tee /etc/apt/sources.list.d/dbeaver.list
+
+  sudo apt update -y -q
+  sudo apt install dbeaver-ce -y -q
+
+  # Adding dbeaver in favorites applications
+  favorites=$favorites", 'dbeaver.desktop'"
+
+  info "Dbeaver has been installed successfully."
+fi
+
+# Install mongodb compass
+if [[ $yesToAll = false ]]; then
+  read -p "Do you want to install mongodb compass?(Y/n) " answer
+else
+  answer="yes"
+fi
+
+if [[ $answer =~ $yes ]]; then
+  log "Downloading mongodb compass community version."
+
+  wget -q --show-progress -P $temp -O $temp/compass.deb "https://downloads.mongodb.com/compass/mongodb-compass-community_1.20.5_amd64.deb"
+
+  log "Installing mongodb compass using deb packaging."
+
+  sudo dpkg -i $temp/compass.deb
+
+  # Adding mongodb compass in favorites applications
+  favorites=$favorites", 'mongodb-compass-community.desktop'"
+
+  info "Mongodb compass has been installed successfully.\n"
+fi
+
+# Install postman
+if [[ $yesToAll = false ]]; then
+  read -p "Do you want to install postman?(Y/n) " answer
+else
+  answer="yes"
+fi
+
+if [[ $answer =~ $yes ]]; then
+  log "Installing postman."
+
+  snap install postman
+
+  # Adding postman in favorites applications
+  favorites=$favorites", 'postman.desktop'"
+
+  info "Postman has been isntalled successfully."
+fi
+
+# Install qbtorrent
+if [[ $yesToAll = false ]]; then
+  read -p "Do you want to install qbtorrent?(Y/n) " answer
+else
+  answer="yes"
+fi
+
+if [[ $answer =~ $yes ]]; then
+  log "Installing the latest version of qbittorent."
+
+  sudo add-apt-repository -y ppa:qbittorrent-team/qbittorrent-stable
+  sudo apt update -y -q
+  sudo apt install -y -q qbittorrent
+
+  info "Qbittorent has been installed successfully.\n"
+fi
+
+# Install libre office
+if [[ $yesToAll = false ]]; then
+  read -p "Do you want to install libre office?(Y/n) " answer
+else
+  answer="yes"
+fi
+
+if [[ $answer =~ $yes ]]; then
+  log "Installing the Libre Office."
+
+  sudo add-apt-repository -y -q ppa:libreoffice/ppa
+  sudo apt update -y -q
+  sudo apt install -y -q libreoffice
+
+  info "Libre office has been installed successfully.\n"
+fi
+
+# Create sources folders
+if [[ ! -d $sources ]]; then
+  log "Creating sources folders."
+
+  mkdir -p /home/$USER/sources
+  mkdir -p /home/$USER/sources/me
+  mkdir -p /home/$USER/sources/temp
+
+  echo "file:///home/$USER/sources Sources" | tee -a $bookmarks_file
+
+  info "Sources folder has been created successfully.\n"
+fi
+
+# Update the nautilus bookmarks
+gsettings set org.gnome.shell favorite-apps "[$favorites]"
+
+log "Nautilus files bookmarks have been udpated successfully."
+
+# Update the desktop
+gsettings set org.gnome.shell.extensions.dash-to-dock dock-position BOTTOM
+gsettings set org.gnome.shell.extensions.dash-to-dock dash-max-icon-size 26
+gsettings set org.gnome.nautilus.desktop trash-icon-visible false
+
+log "Desktop has been udpated successfully."
+
+# Cleaning up temparary files
+log "Cleaning up installation files in $temp."
 
 rm -rf $temp
+
+log "Installation files have been removed."
+
+info "Stack installation completed successfully."
+
+read -p "Do you want to reboot?(Y/n) " answer
+
+if [[ $answer =~ $yes ]]; then
+  sudo reboot
+fi
