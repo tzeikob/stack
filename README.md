@@ -1,18 +1,17 @@
 ### Scriptbox
 
-This is a repository of shell script for general purposes.
+This is a repository of bash scripts for general purposes.
 
-#### How to run bash scripts
+#### How to run a bash script
 
-You can run the script using the bash command like so,
-
-```
-bash script-file
-```
-
-or make it executable and run it without the bash command,
+You can execute a bash script with the name `stack.sh` like so.
 
 ```
-sudo chmod +x script-file
-./script-file
+./stack.sh
+```
+
+If the file is not executable you can make it with the following command.
+
+```
+sudo chmod +x stack.sh
 ```
