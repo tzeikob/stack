@@ -594,18 +594,22 @@ if [[ $answer =~ $yes ]]; then
   info "Libre office has been installed successfully.\n"
 fi
 
-# Create sources folders
-if [[ ! -d $sources ]]; then
-  log "Creating sources folders."
+# Create various folders
+log "Creating folder to host databases and sources."
 
-  mkdir -p /home/$USER/sources
-  mkdir -p /home/$USER/sources/me
-  mkdir -p /home/$USER/sources/temp
+# Create folder to host databases
+mkdir -p /home/$USER/dbs
 
-  echo "file:///home/$USER/sources Sources" | tee -a $bookmarks_file
+# Create folders to host sources
+sources_home=/home/$USER/sources
 
-  info "Sources folder has been created successfully.\n"
-fi
+mkdir -p $sources_home
+mkdir -p $sources_home/me
+mkdir -p $sources_home/temp
+
+echo "file://$sources_home Sources" | tee -a $bookmarks_file
+
+info "Folders has been created successfully.\n"
 
 # Update the nautilus bookmarks
 gsettings set org.gnome.shell favorite-apps "[$favorites]"
