@@ -1,11 +1,8 @@
 #!/bin/bash
-# Script to expose global utility variables and functions
+# Script to expose global variables and functions
 
 # Regular expression for yes answers
 yes="^([Yy][Ee][Ss]|[Yy]|"")$"
-
-# Regular expression for no answers
-no="^([Nn][Oo]|[Nn])$"
 
 # Yellow foreground color
 yellow="\e[93m"
@@ -34,7 +31,7 @@ dim="\e[2m"
 # Reset dim style
 reset_dim="\e[22m"
 
-# Set bold text style
+# Set dim text style
 d () {
   echo "$dim$1$reset_dim"
 }
