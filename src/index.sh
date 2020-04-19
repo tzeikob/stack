@@ -53,7 +53,9 @@ if [[ $index =~ ^[0-9]+$ ]]; then
 
     if [[ -f $script ]]; then
       log "\nExecuting the $script script file."
+
       source ${script}
+
       info "Script $script has been completed successfully.\n"
     else
       warn "Sorry, cannot find the $script script file."
