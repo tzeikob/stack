@@ -140,10 +140,6 @@ if [[ $answer =~ $yes ]]; then
   sudo apt -y -qq update
   sudo apt -y -qq install gufw
 
-  sudo cp /etc/gufw/gufw.cfg /etc/gufw/gufw.cfg.bak 2>/dev/null
-
-  sudo echo "Profile = Office" | sudo tee -a /etc/gufw/gufw.cfg
-
   log "Firewall has been set to deny any incoming and allow any outgoing traffic."
 
   log "Enabling UFW service."
