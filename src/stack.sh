@@ -554,7 +554,7 @@ else
 fi
 
 if [[ $answer =~ $yes ]]; then
-  log "Installing the latest version of IntelliJ comunity edition."
+  log "Installing the latest version of IntelliJ community edition."
 
   sudo snap install intellij-idea-community --classic
 
@@ -574,8 +574,8 @@ fi
 if [[ $answer =~ $yes ]]; then
   log "Installing the latest version of DBeaver."
 
-  wget -O - https://dbeaver.io/debs/dbeaver.gpg.key | apt-key add -
-  echo "deb https://dbeaver.io/debs/dbeaver-ce /" | tee /etc/apt/sources.list.d/dbeaver.list
+  wget -O - https://dbeaver.io/debs/dbeaver.gpg.key | sudo apt-key add -
+  echo "deb https://dbeaver.io/debs/dbeaver-ce /" | sudo tee /etc/apt/sources.list.d/dbeaver.list
 
   sudo apt -y -qq update
   sudo apt -y -qq install dbeaver-ce
