@@ -19,6 +19,7 @@ source $dir"/global.sh"
 # Initiate local variables
 favorites="'org.gnome.Nautilus.desktop', 'org.gnome.Terminal.desktop', 'firefox.desktop'"
 bookmarks_file="/home/$USER/.config/gtk-3.0/bookmarks"
+
 now=$(date)
 distro=$(lsb_release -si)
 version=$(lsb_release -sr)
@@ -33,69 +34,77 @@ log "User: $(d $USER)\n"
 # Create temporary files folder
 temp="/tmp/scriptbox/stack"
 
-log "Creating temporary files folder."
+log "Creating temporary files folder to $temp."
 
 mkdir -p $temp
 
-info "Temporary files folder $temp has been created.\n"
+info "Temporary files folder has been created successfully.\n"
 
 # Rename default home folders
-if [[ $yesToAll = false ]]; then
-  read -p "Do you want to rename the default home folders?(Y/n) " answer
-else
-  answer="yes"
-fi
+log "Renaming the default home folders in /home/$USER to lower case."
 
-if [[ $answer =~ $yes ]]; then
-  log "Renaming the default home folders to lower case."
+mv /home/$USER/Desktop /home/$USER/desktop
+mv /home/$USER/Downloads /home/$USER/downloads
+mv /home/$USER/Templates /home/$USER/templates
+mv /home/$USER/Public /home/$USER/public
+mv /home/$USER/Documents /home/$USER/documents
+mv /home/$USER/Music /home/$USER/music
+mv /home/$USER/Pictures /home/$USER/pictures
+mv /home/$USER/Videos /home/$USER/videos
 
-  mv /home/$USER/Desktop /home/$USER/desktop
-  mv /home/$USER/Downloads /home/$USER/downloads
-  mv /home/$USER/Templates /home/$USER/templates
-  mv /home/$USER/Public /home/$USER/public
-  mv /home/$USER/Documents /home/$USER/documents
-  mv /home/$USER/Music /home/$USER/music
-  mv /home/$USER/Pictures /home/$USER/pictures
-  mv /home/$USER/Videos /home/$USER/videos
+# Update the user dirs file
+userdirs_file="/home/$USER/.config/user-dirs.dirs"
 
-  # Update the user dirs file
-  userdirs="/home/$USER/.config/user-dirs.dirs"
+log "Backing up the user dirs file to $userdirs_file.bak."
 
-  log "Updating the user dirs file $userdirs."
+cp $userdirs_file $userdirs_file.bak
 
-  cp $userdirs $userdirs.bak
+log "Updating the contents of the user dirs file."
 
-  log "The user dirs file has been backed up to $userdirs.bak file."
+> $userdirs_file
+echo "XDG_DESKTOP_DIR=\"$HOME/desktop\"" >> $userdirs_file
+echo "XDG_DOWNLOAD_DIR=\"$HOME/downloads\"" >> $userdirs_file
+echo "XDG_TEMPLATES_DIR=\"$HOME/templates\"" >> $userdirs_file
+echo "XDG_PUBLICSHARE_DIR=\"$HOME/public\"" >> $userdirs_file
+echo "XDG_DOCUMENTS_DIR=\"$HOME/documents\"" >> $userdirs_file
+echo "XDG_MUSIC_DIR=\"$HOME/music\"" >> $userdirs_file
+echo "XDG_PICTURES_DIR=\"$HOME/pictures\"" >> $userdirs_file
+echo "XDG_VIDEOS_DIR=\"$HOME/videos\"" >> $userdirs_file
 
-  log "Replacing the contents of the user dirs file."
+cat $userdirs_file
 
-  > $userdirs
-  echo "XDG_DESKTOP_DIR=\"$HOME/desktop\"" >> $userdirs
-  echo "XDG_DOWNLOAD_DIR=\"$HOME/downloads\"" >> $userdirs
-  echo "XDG_TEMPLATES_DIR=\"$HOME/templates\"" >> $userdirs
-  echo "XDG_PUBLICSHARE_DIR=\"$HOME/public\"" >> $userdirs
-  echo "XDG_DOCUMENTS_DIR=\"$HOME/documents\"" >> $userdirs
-  echo "XDG_MUSIC_DIR=\"$HOME/music\"" >> $userdirs
-  echo "XDG_PICTURES_DIR=\"$HOME/pictures\"" >> $userdirs
-  echo "XDG_VIDEOS_DIR=\"$HOME/videos\"" >> $userdirs
+log "User dirs file has been updated successfully."
 
-  log "User dirs file has been updated successfully."
+log "Backing up the nautilus bookmarks file to $bookmarks_file.bak."
 
-  log "Updating the nautilus bookmarks file $bookmarks_file."
+cp $bookmarks_file $bookmarks_file.bak
 
-  cp $bookmarks_file $bookmarks_file.bak
+log "Updating the contents of the nautilus bookmarks file."
 
-  log "The nautilus bookmarks has been backed up to $bookmarks_file.bak. file"
+> $bookmarks_file
+echo "file:///home/"$USER"/downloads Downloads" | tee -a $bookmarks_file
+echo "file:///home/"$USER"/documents Documents" | tee -a $bookmarks_file
+echo "file:///home/"$USER"/music Music" | tee -a $bookmarks_file
+echo "file:///home/"$USER"/pictures Pictures" | tee -a $bookmarks_file
+echo "file:///home/"$USER"/videos Videos" | tee -a $bookmarks_file
 
-  > $bookmarks_file
-  echo "file:///home/"$USER"/downloads Downloads" | tee -a $bookmarks_file
-  echo "file:///home/"$USER"/documents Documents" | tee -a $bookmarks_file
-  echo "file:///home/"$USER"/music Music" | tee -a $bookmarks_file
-  echo "file:///home/"$USER"/pictures Pictures" | tee -a $bookmarks_file
-  echo "file:///home/"$USER"/videos Videos" | tee -a $bookmarks_file
+cat $bookmarks_file
 
-  info "The default home folders have been renamed successfully.\n"
-fi
+info "The default home folders have been renamed successfully.\n"
+
+# Create various folders
+log "Creating folders to host databases and code sources."
+
+mkdir -p /home/$USER/dbs
+
+sources_home=/home/$USER/sources
+mkdir -p $sources_home
+mkdir -p $sources_home/me
+mkdir -p $sources_home/temp
+
+echo "file://$sources_home Sources" | tee -a $bookmarks_file
+
+info "Host folders have been created successfully.\n"
 
 # Upgrade the system
 if [[ $yesToAll = false ]]; then
@@ -128,7 +137,7 @@ fi
 
 # Install system languages
 if [[ $yesToAll = false ]]; then
-  read -p "Do you want to install more languages?(Y/n) " answer
+  read -p "Do you want to install the Greek language?(Y/n) " answer
 else
   answer="yes"
 fi
@@ -172,12 +181,12 @@ else
 fi
 
 if [[ $answer =~ $yes ]]; then
-  log "Setting the system to use local time instead of UTC."
+  log "Setting the system to use local RTC time instead of UTC."
 
   timedatectl set-local-rtc 1 --adjust-system-clock
   gsettings set org.gnome.desktop.interface clock-show-date true
 
-  info "System has been set to use local time successfully.\n"
+  info "System has been set to use local RTC time successfully.\n"
 fi
 
 # Disable screen lock
@@ -205,7 +214,7 @@ else
 fi
 
 if [[ $answer =~ $yes ]]; then
-  log "Installing the latest verion of dropbox."
+  log "Installing the latest version of dropbox."
 
   dropbox_list=/etc/apt/sources.list.d/dropbox.list
   sudo touch $dropbox_list
@@ -214,8 +223,6 @@ if [[ $answer =~ $yes ]]; then
 
   sudo apt update -y -q
   sudo apt install -y -q python3-gpg dropbox
-
-  info "Dropbox has been installed successfully.\n"
 
   log "Starting the dropbox daemon."
 
@@ -297,7 +304,6 @@ if [[ $answer =~ $yes ]]; then
   log "Installing the virtual box."
 
   sudo add-apt-repository -y multiverse
-
   sudo apt update -y -q
   sudo apt install -y -q virtualbox
 
@@ -334,7 +340,7 @@ if [[ $answer =~ $yes ]]; then
 
   git config --global user.name "$username"
 
-  log "Git username has been set to $(git config --global user.name)."
+  log "You git username has been set to $(git config --global user.name)."
 
   read -p "Enter your git email:($USER@$HOSTNAME) " email
 
@@ -344,7 +350,7 @@ if [[ $answer =~ $yes ]]; then
 
   git config --global user.email "$email"
 
-  log "Git email has been set to $(git config --global user.email)."
+  log "Your git email has been set to $(git config --global user.email)."
 
   info "Git has been installed successfully.\n"
 fi
@@ -357,7 +363,7 @@ else
 fi
 
 if [[ $answer =~ $yes ]]; then
-  log "Installing node via nvm."
+  log "Installing nvm to manage multiple node versions."
 
   wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash
 
@@ -382,25 +388,31 @@ else
 fi
 
 if [[ $answer =~ $yes ]]; then
-  log "Installing open JDK 8."
+  log "Installing the open JDK 8."
 
   sudo apt install -y -q openjdk-8-jdk openjdk-8-doc openjdk-8-source
 
   log "Open JDK 8 has been installed successfully."
 
-  log "Installing open JDK 11 (LTS)."
+  log "Installing the open JDK 11 (LTS)."
 
   sudo apt install -y -q openjdk-11-jdk openjdk-11-doc openjdk-11-source
 
   log "Open JDK 11 (LTS) has been installed successfully."
 
-  log "Configuring update alternatives."
+  log "Selecting default java executable (java) through update alternatives."
 
   sudo update-alternatives --config java
 
-  log "Installing the maven."
+  log "Selecting default java compiler (javac) through update alternatives."
+
+  sudo update-alternatives --config javac
+
+  log "Installing the maven in /home/$USER/.m2."
 
   sudo apt install -y -q maven
+
+  log "Maven has been installed successfully."
 
   info "Java has been installed successfully."
 fi
@@ -414,6 +426,7 @@ fi
 
 if [[ $answer =~ $yes ]]; then
   log "Installing docker community edition."
+
   sudo apt update -y -q
   sudo apt install -y -q apt-transport-https ca-certificates curl gnupg-agent software-properties-common
 
@@ -423,15 +436,19 @@ if [[ $answer =~ $yes ]]; then
   sudo apt update -y -q
   sudo apt install -y -q docker-ce docker-ce-cli containerd.io
 
-  log "Creating Docker user group."
+  log "Creating docker user group."
+
   sudo groupadd docker
 
-  log "Adding current user to the Docker user group."
+  log "Adding current user to the docker user group."
+
   sudo usermod -aG docker $USER
 
-  log "Installing docker compose."
+  docker_compose_version="1.25.5"
 
-  sudo curl -L "https://github.com/docker/compose/releases/download/1.24.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+  log "Installing docker compose v$docker_compose_version."
+
+  sudo curl -L "https://github.com/docker/compose/releases/download/$docker_compose_version/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
   sudo chmod +x /usr/local/bin/docker-compose
 
   info "Docker has been installed successfully.\n"
@@ -445,10 +462,11 @@ else
 fi
 
 if [[ $answer =~ $yes ]]; then
-  log "Installing the latest version of Atom."
+  log "Installing the latest version of atom."
 
   wget -q https://packagecloud.io/AtomEditor/atom/gpgkey -O- | sudo apt-key add -
   sudo add-apt-repository -y -q "deb [arch=amd64] https://packagecloud.io/AtomEditor/atom/any/ any main"
+
   sudo apt update -y -q
   sudo apt install -y -q atom
 
@@ -488,7 +506,7 @@ else
 fi
 
 if [[ $answer =~ $yes ]]; then
-  log "Installing the latest version of intelliJ."
+  log "Installing the latest version of intelliJ comunity edition."
 
   sudo snap install intellij-idea-community --classic
 
@@ -528,9 +546,11 @@ else
 fi
 
 if [[ $answer =~ $yes ]]; then
-  log "Downloading mongodb compass community version."
+  compass_version="1.20.5"
 
-  wget -q --show-progress -P $temp -O $temp/compass.deb "https://downloads.mongodb.com/compass/mongodb-compass-community_1.20.5_amd64.deb"
+  log "Downloading mongodb compass community v$compass_version."
+
+  wget -q --show-progress -P $temp -O $temp/compass.deb "https://downloads.mongodb.com/compass/mongodb-compass-community_${compass_version}_amd64.deb"
 
   log "Installing mongodb compass using deb packaging."
 
@@ -550,7 +570,7 @@ else
 fi
 
 if [[ $answer =~ $yes ]]; then
-  log "Installing postman."
+  log "Installing postman via snap."
 
   snap install postman
 
@@ -585,7 +605,7 @@ else
 fi
 
 if [[ $answer =~ $yes ]]; then
-  log "Installing the Libre Office."
+  log "Installing the libre office."
 
   sudo add-apt-repository -y -q ppa:libreoffice/ppa
   sudo apt update -y -q
@@ -594,43 +614,24 @@ if [[ $answer =~ $yes ]]; then
   info "Libre office has been installed successfully.\n"
 fi
 
-# Create various folders
-log "Creating folder to host databases and sources."
+# Update the dock panel
+log "Updating the dock."
 
-# Create folder to host databases
-mkdir -p /home/$USER/dbs
-
-# Create folders to host sources
-sources_home=/home/$USER/sources
-
-mkdir -p $sources_home
-mkdir -p $sources_home/me
-mkdir -p $sources_home/temp
-
-echo "file://$sources_home Sources" | tee -a $bookmarks_file
-
-info "Folders has been created successfully.\n"
-
-# Update the nautilus bookmarks
 gsettings set org.gnome.shell favorite-apps "[$favorites]"
-
-log "Nautilus files bookmarks have been udpated successfully."
-
-# Update the desktop
 gsettings set org.gnome.shell.extensions.dash-to-dock dock-position BOTTOM
 gsettings set org.gnome.shell.extensions.dash-to-dock dash-max-icon-size 26
 gsettings set org.gnome.nautilus.desktop trash-icon-visible false
 
-log "Desktop has been udpated successfully."
+log "Dock has been updated successfully."
 
-# Cleaning up temparary files
-log "Cleaning up installation files in $temp."
+# Cleaning up the system from temporary files
+log "Cleaning up any temporary file under $temp."
 
 rm -rf $temp
 
-log "Installation files have been removed."
+log "Temporary files have been removed."
 
-info "Stack installation completed successfully."
+info "Stack installation completed successfully.\n"
 
 read -p "Do you want to reboot?(Y/n) " answer
 
