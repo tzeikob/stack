@@ -71,8 +71,6 @@ echo "XDG_MUSIC_DIR=\"$HOME/music\"" >> $userdirs_file
 echo "XDG_PICTURES_DIR=\"$HOME/pictures\"" >> $userdirs_file
 echo "XDG_VIDEOS_DIR=\"$HOME/videos\"" >> $userdirs_file
 
-cat $userdirs_file
-
 info "User dirs file has been updated successfully.\n"
 
 log "Backing up the bookmarks file to $bookmarks_file.bak."
@@ -87,8 +85,6 @@ echo "file:///home/"$USER"/documents Documents" | tee -a $bookmarks_file
 echo "file:///home/"$USER"/music Music" | tee -a $bookmarks_file
 echo "file:///home/"$USER"/pictures Pictures" | tee -a $bookmarks_file
 echo "file:///home/"$USER"/videos Videos" | tee -a $bookmarks_file
-
-cat $bookmarks_file
 
 info "The default home folders have been renamed successfully.\n"
 
