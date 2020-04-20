@@ -151,6 +151,14 @@ if [[ $answer =~ $yes ]]; then
   sudo ufw enable
   sudo ufw status verbose
 
+  log "Installing the latest version of VeraCrypt software."
+
+  sudo add-apt-repository -y -n ppa:unit193/encryption
+  sudo apt -y -qq update
+  sudo apt -y -qq install veracrypt
+
+  log "VeraCrypt has been installed."
+
   info "System has been updated successfully.\n"
 fi
 
