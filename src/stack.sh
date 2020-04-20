@@ -410,7 +410,7 @@ if [[ $answer =~ $yes ]]; then
 
   sudo update-alternatives --display java
 
-  log "\nInstalling the latest version of Maven in /home/$USER/.m2."
+  log "\nInstalling the latest version of Maven."
 
   sudo apt -y -qq install maven
 
