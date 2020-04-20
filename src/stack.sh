@@ -73,13 +73,13 @@ echo "XDG_VIDEOS_DIR=\"$HOME/videos\"" >> $userdirs_file
 
 cat $userdirs_file
 
-log "User dirs file has been updated successfully."
+info "User dirs file has been updated successfully.\n"
 
-log "Backing up the nautilus bookmarks file to $bookmarks_file.bak."
+log "Backing up the bookmarks file to $bookmarks_file.bak."
 
 cp $bookmarks_file $bookmarks_file.bak
 
-log "Updating the contents of the nautilus bookmarks file."
+log "Updating the contents of the bookmarks file."
 
 > $bookmarks_file
 echo "file:///home/"$USER"/downloads Downloads" | tee -a $bookmarks_file
