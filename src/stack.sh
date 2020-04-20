@@ -134,6 +134,23 @@ if [[ $answer =~ $yes ]]; then
 
   sudo apt install -y -q ${packages[@]}
 
+  log "Installing GUI for UFW to manage firewall rules."
+
+  sudo add-apt-repository -y -q universe
+  sudo apt update -y -q
+  sudo apt install -y -q gufw
+
+  sudo cp /etc/gufw/gufw.cfg /etc/gufw/gufw.cfg.bak 2>/dev/null
+
+  sudo echo "Profile = Office" | sudo tee -a /etc/gufw/gufw.cfg
+
+  log "Firewall has been set to deny any incoming and allow any outgoing traffic."
+
+  log "Enabling UFW service."
+
+  sudo ufw enable
+  sudo ufw status verbose
+
   info "System has been updated successfully.\n"
 fi
 
