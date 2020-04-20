@@ -400,7 +400,7 @@ if [[ $answer =~ $yes ]]; then
 
   log "Open JDK 8 has been installed successfully."
 
-  log "\nInstalling the version 11 (LTS) of Open JDK 11."
+  log "\nInstalling the version 11 (LTS) of Open JDK."
 
   sudo apt -y -qq install openjdk-11-jdk openjdk-11-doc openjdk-11-source
 
