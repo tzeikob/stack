@@ -272,7 +272,7 @@ fi
 if [[ $answer =~ $yes ]]; then
   log "Installing the latest version of Slack."
 
-  sudo apt -y -qq install slack-desktop
+  sudo snap install slack --classic
 
   info "Slack has been installed successfully.\n"
 fi
