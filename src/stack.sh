@@ -116,12 +116,12 @@ fi
 if [[ $answer =~ $yes ]]; then
   log "Upgrading the base system with the latest updates."
 
-  sudo apt update -y -q
-  sudo apt upgrade -y -q
+  sudo apt -y -qq update
+  sudo apt -y -qq upgrade
 
   log "Removing any not used packages."
 
-  sudo apt -y -q autoremove
+  sudo apt -y -qq autoremove
 
   log "Installing the following third-party software dependencies:"
 
@@ -132,13 +132,13 @@ if [[ $answer =~ $yes ]]; then
 
   log $packages
 
-  sudo apt install -y -q ${packages[@]}
+  sudo apt -y -qq install ${packages[@]}
 
   log "Installing GUI for UFW to manage firewall rules."
 
-  sudo add-apt-repository -y -q universe
-  sudo apt update -y -q
-  sudo apt install -y -q gufw
+  sudo add-apt-repository -y -n universe
+  sudo apt -y -qq update
+  sudo apt -y -qq install gufw
 
   sudo cp /etc/gufw/gufw.cfg /etc/gufw/gufw.cfg.bak 2>/dev/null
 
@@ -172,7 +172,7 @@ fi
 if [[ $answer =~ $yes ]]; then
   log "Installing the greek language packages."
 
-  sudo apt install -y -q `check-language-support -l el`
+  sudo apt -y -qq install `check-language-support -l el`
 
   log "Adding greek layout into the keyboard input sources."
 
@@ -248,8 +248,8 @@ if [[ $answer =~ $yes ]]; then
   sudo echo "deb [arch=i386,amd64] http://linux.dropbox.com/ubuntu $(lsb_release -cs) main" | sudo tee -a $dropbox_list
   sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 1C61A2656FB57B7E4DE0F4C1FC918B335044912E
 
-  sudo apt update -y -q
-  sudo apt install -y -q python3-gpg dropbox
+  sudo apt -y -qq update
+  sudo apt -y -qq install python3-gpg dropbox
 
   log "Starting the Dropbox daemon."
 
@@ -312,7 +312,7 @@ fi
 if [[ $answer =~ $yes ]]; then
   log "Installing the latest version of Slack."
 
-  sudo apt install -y -q slack
+  sudo apt -y -qq install slack
 
   # Adding Slack in favorites applications
   favorites=$favorites", 'slack.desktop'"
@@ -354,9 +354,9 @@ fi
 if [[ $answer =~ $yes ]]; then
   log "Installing the latest version of Virtual Box."
 
-  sudo add-apt-repository -y multiverse
-  sudo apt update -y -q
-  sudo apt install -y -q virtualbox
+  sudo add-apt-repository -y -n multiverse
+  sudo apt -y -qq update
+  sudo apt -y -qq install virtualbox
 
   # Adding Virtual Box in favorites applications
   favorites=$favorites", 'virtualbox.desktop'"
@@ -377,11 +377,11 @@ if [[ $answer =~ $yes ]]; then
   ppa="git-core/ppa"
 
   if ! grep -q "^deb .*$ppa" /etc/apt/sources.list /etc/apt/sources.list.d/*; then
-   sudo add-apt-repository -y ppa:$ppa
-   sudo apt update -y -q
+   sudo add-apt-repository -y -n ppa:$ppa
+   sudo apt -y -qq update
   fi
 
-  sudo apt install -y -q git
+  sudo apt -y -qq install git
 
   read -p "Enter your git username:($USER) " username
 
@@ -445,13 +445,13 @@ fi
 if [[ $answer =~ $yes ]]; then
   log "Installing the version 8 of Open JDK."
 
-  sudo apt install -y -q openjdk-8-jdk openjdk-8-doc openjdk-8-source
+  sudo apt -y -qq install openjdk-8-jdk openjdk-8-doc openjdk-8-source
 
   log "Open JDK 8 has been installed successfully."
 
   log "Installing the version 11 (LTS) of Open JDK 11."
 
-  sudo apt install -y -q openjdk-11-jdk openjdk-11-doc openjdk-11-source
+  sudo apt -y -qq install openjdk-11-jdk openjdk-11-doc openjdk-11-source
 
   log "Open JDK 11 (LTS) has been installed successfully."
 
@@ -465,7 +465,7 @@ if [[ $answer =~ $yes ]]; then
 
   log "Installing the latest version of Maven in /home/$USER/.m2."
 
-  sudo apt install -y -q maven
+  sudo apt -y -qq install maven
 
   log "Maven has been installed successfully."
 
@@ -482,14 +482,14 @@ fi
 if [[ $answer =~ $yes ]]; then
   log "Installing latest version of docker community edition."
 
-  sudo apt update -y -q
-  sudo apt install -y -q apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+  sudo apt -y -qq update
+  sudo apt -y -qq install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
 
   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-  sudo add-apt-repository -y -q "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+  sudo add-apt-repository -y -n "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 
-  sudo apt update -y -q
-  sudo apt install -y -q docker-ce docker-ce-cli containerd.io
+  sudo apt -y -qq update
+  sudo apt -y -qq install docker-ce docker-ce-cli containerd.io
 
   log "Creating docker user group."
 
@@ -520,10 +520,10 @@ if [[ $answer =~ $yes ]]; then
   log "Installing the latest version of Atom."
 
   wget -q https://packagecloud.io/AtomEditor/atom/gpgkey -O- | sudo apt-key add -
-  sudo add-apt-repository -y -q "deb [arch=amd64] https://packagecloud.io/AtomEditor/atom/any/ any main"
+  sudo add-apt-repository -y -n "deb [arch=amd64] https://packagecloud.io/AtomEditor/atom/any/ any main"
 
-  sudo apt update -y -q
-  sudo apt install -y -q atom
+  sudo apt -y -qq update
+  sudo apt -y -qq install atom
 
   # Adding Atom in favorites applications
   favorites=$favorites", 'atom.desktop'"
@@ -584,8 +584,8 @@ if [[ $answer =~ $yes ]]; then
   wget -O - https://dbeaver.io/debs/dbeaver.gpg.key | apt-key add -
   echo "deb https://dbeaver.io/debs/dbeaver-ce /" | tee /etc/apt/sources.list.d/dbeaver.list
 
-  sudo apt update -y -q
-  sudo apt install dbeaver-ce -y -q
+  sudo apt -y -qq update
+  sudo apt -y -qq install dbeaver-ce
 
   # Adding DBeaver in favorites applications
   favorites=$favorites", 'dbeaver.desktop'"
@@ -627,7 +627,7 @@ fi
 if [[ $answer =~ $yes ]]; then
   log "Installing the latest version of Postman via snap."
 
-  snap install postman
+  sudo snap install postman
 
   # Adding Postman in favorites applications
   favorites=$favorites", 'postman.desktop'"
@@ -635,21 +635,21 @@ if [[ $answer =~ $yes ]]; then
   info "Postman has been isntalled successfully."
 fi
 
-# Install QBtorrent
+# Install QBittorrent
 if [[ $yesToAll = false ]]; then
-  read -p "Do you want to install QBtorrent?(Y/n) " answer
+  read -p "Do you want to install QBittorrent?(Y/n) " answer
 else
   answer="yes"
 fi
 
 if [[ $answer =~ $yes ]]; then
-  log "Installing the latest version of QBittorent."
+  log "Installing the latest version of QBittorrent."
 
-  sudo add-apt-repository -y ppa:qbittorrent-team/qbittorrent-stable
-  sudo apt update -y -q
-  sudo apt install -y -q qbittorrent
+  sudo add-apt-repository -y -n ppa:qbittorrent-team/qbittorrent-stable
+  sudo apt -y -qq update
+  sudo apt -y -qq install qbittorrent
 
-  info "QBittorent has been installed successfully.\n"
+  info "QBittorrent has been installed successfully.\n"
 fi
 
 # Install libre office
@@ -662,9 +662,9 @@ fi
 if [[ $answer =~ $yes ]]; then
   log "Installing the latest version of Libre Office."
 
-  sudo add-apt-repository -y -q ppa:libreoffice/ppa
-  sudo apt update -y -q
-  sudo apt install -y -q libreoffice
+  sudo add-apt-repository -y -n ppa:libreoffice/ppa
+  sudo apt -y -qq update
+  sudo apt -y -qq install libreoffice
 
   info "Libre Office has been installed successfully.\n"
 fi
