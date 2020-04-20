@@ -408,8 +408,7 @@ if [[ $answer =~ $yes ]]; then
 
   log "\nCurrently installed JDKs."
 
-  sudo update-alternatives --config java
-  sudo update-alternatives --config javac
+  sudo update-alternatives --display java
 
   log "\nInstalling the latest version of Maven in /home/$USER/.m2."
 
