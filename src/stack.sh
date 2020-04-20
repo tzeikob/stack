@@ -293,6 +293,30 @@ if [[ $answer =~ $yes ]]; then
   info "Slack has been installed successfully.\n"
 fi
 
+# Install microsoft teams
+if [[ $yesToAll = false ]]; then
+  read -p "Do you want to install microsoft teams?(Y/n) " answer
+else
+  answer="yes"
+fi
+
+if [[ $answer =~ $yes ]]; then
+  msteams_version="1.3.00.5153"
+
+  log "Downloading the microsoft teams version $msteams_version."
+
+  wget -q --show-progress -P $temp https://packages.microsoft.com/repos/ms-teams/pool/main/t/teams/teams_${msteams_version}_amd64.deb
+
+  log "Installing microsoft teams using deb packaging."
+
+  sudo dpkg -i $temp/teams_${msteams_version}_amd64.deb
+
+  # Adding msteams in favorites applications
+  favorites=$favorites", 'teams.desktop'"
+
+  info "Microsoft teams has been installed successfully.\n"
+fi
+
 # Install virtualbox
 if [[ $yesToAll = false ]]; then
   read -p "Do you want to install virtual box?(Y/n) " answer
