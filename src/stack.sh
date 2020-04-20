@@ -41,7 +41,7 @@ mkdir -p $temp
 info "Temporary files folder has been created successfully.\n"
 
 # Rename default home folders
-log "Renaming the default home folders in /home/$USER to lower case."
+log "Renaming the default home folders (/home/$USER) to lower case."
 
 mv /home/$USER/Desktop /home/$USER/desktop
 mv /home/$USER/Downloads /home/$USER/downloads
@@ -123,12 +123,14 @@ if [[ $answer =~ $yes ]]; then
 
   sudo apt -y -q autoremove
 
-  log "Installing third-party software dependencies."
+  log "Installing the following third-party software dependencies:"
 
   packages=(tree curl unzip htop gconf-service gconf-service-backend gconf2
             gconf2-common libappindicator1 libgconf-2-4 libindicator7
             libpython-stdlib python python-minimal python2.7 python2.7-minimal libatomic1
             gimp vlc)
+
+  log $packages
 
   sudo apt install -y -q ${packages[@]}
 
@@ -181,7 +183,7 @@ else
 fi
 
 if [[ $answer =~ $yes ]]; then
-  log "Setting the system to use local RTC time instead of UTC."
+  log "Use local RTC time instead of UTC."
 
   timedatectl set-local-rtc 1 --adjust-system-clock
   gsettings set org.gnome.desktop.interface clock-show-date true
@@ -206,15 +208,15 @@ if [[ $answer =~ $yes ]]; then
   info "Screen lock has been disabled successfully.\n"
 fi
 
-# Install dropbox
+# Install Dropbox
 if [[ $yesToAll = false ]]; then
-  read -p "Do you want to install dropbox?(Y/n) " answer
+  read -p "Do you want to install Dropbox?(Y/n) " answer
 else
   answer="yes"
 fi
 
 if [[ $answer =~ $yes ]]; then
-  log "Installing the latest version of dropbox."
+  log "Installing the latest version of Dropbox."
 
   dropbox_list=/etc/apt/sources.list.d/dropbox.list
   sudo touch $dropbox_list
@@ -224,78 +226,78 @@ if [[ $answer =~ $yes ]]; then
   sudo apt update -y -q
   sudo apt install -y -q python3-gpg dropbox
 
-  log "Starting the dropbox daemon."
+  log "Starting the Dropbox daemon."
 
   dropbox start -i &>/dev/null
 
   info "Dropbox has been installed successfully.\n"
 fi
 
-# Install chrome
+# Install Chrome
 if [[ $yesToAll = false ]]; then
-  read -p "Do you want to install chrome?(Y/n) " answer
+  read -p "Do you want to install Chrome?(Y/n) " answer
 else
   answer="yes"
 fi
 
 if [[ $answer =~ $yes ]]; then
-  log "Downloading the latest version of chrome."
+  log "Downloading the latest version of Chrome."
 
   wget -q --show-progress -P $temp https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
 
-  log "Installing chrome using deb packaging."
+  log "Installing Chrome using deb packaging."
 
   sudo dpkg -i $temp/google-chrome-stable_current_amd64.deb
 
-  # Adding chrome in favorites applications
+  # Adding Chrome in favorites applications
   favorites=$favorites", 'google-chrome.desktop'"
 
   info "Chrome has been installed successfully.\n"
 fi
 
-# Install skype
+# Install Skype
 if [[ $yesToAll = false ]]; then
-  read -p "Do you want to install skype?(Y/n) " answer
+  read -p "Do you want to install Skype?(Y/n) " answer
 else
   answer="yes"
 fi
 
 if [[ $answer =~ $yes ]]; then
-  log "Downloading the latest version of skype."
+  log "Downloading the latest version of Skype."
 
   wget -q --show-progress -P $temp https://repo.skype.com/latest/skypeforlinux-64.deb
 
-  log "Installing skype using deb packaging."
+  log "Installing Skype using deb packaging."
 
   sudo dpkg -i $temp/skypeforlinux-64.deb
 
-  # Adding skype in favorites applications
+  # Adding Skype in favorites applications
   favorites=$favorites", 'skypeforlinux.desktop'"
 
   info "Skype has been installed successfully.\n"
 fi
 
-# Install slack
+# Install Slack
 if [[ $yesToAll = false ]]; then
-  read -p "Do you want to install slack?(Y/n) " answer
+  read -p "Do you want to install Slack?(Y/n) " answer
 else
   answer="yes"
 fi
 
 if [[ $answer =~ $yes ]]; then
-  log "Installing the slack."
+  log "Installing the latest version of Slack."
 
   sudo apt install -y -q slack
 
-  # Adding slack in favorites applications
+  # Adding Slack in favorites applications
   favorites=$favorites", 'slack.desktop'"
 
   info "Slack has been installed successfully.\n"
 fi
 
-# Install microsoft teams
+# Install Microsoft Teams
 if [[ $yesToAll = false ]]; then
-  read -p "Do you want to install microsoft teams?(Y/n) " answer
+  read -p "Do you want to install Microsoft Teams?(Y/n) " answer
 else
   answer="yes"
 fi
@@ -303,49 +305,49 @@ fi
 if [[ $answer =~ $yes ]]; then
   msteams_version="1.3.00.5153"
 
-  log "Downloading the microsoft teams version $msteams_version."
+  log "Downloading the version $msteams_version of Microsoft Teams."
 
   wget -q --show-progress -P $temp https://packages.microsoft.com/repos/ms-teams/pool/main/t/teams/teams_${msteams_version}_amd64.deb
 
-  log "Installing microsoft teams using deb packaging."
+  log "Installing Microsoftt Teams using deb packaging."
 
   sudo dpkg -i $temp/teams_${msteams_version}_amd64.deb
 
-  # Adding msteams in favorites applications
+  # Adding Microsoft Teams in favorites applications
   favorites=$favorites", 'teams.desktop'"
 
-  info "Microsoft teams has been installed successfully.\n"
+  info "Microsoft Teams has been installed successfully.\n"
 fi
 
-# Install virtualbox
+# Install Virtual Box
 if [[ $yesToAll = false ]]; then
-  read -p "Do you want to install virtual box?(Y/n) " answer
+  read -p "Do you want to install Virtual Box?(Y/n) " answer
 else
   answer="yes"
 fi
 
 if [[ $answer =~ $yes ]]; then
-  log "Installing the virtual box."
+  log "Installing the latest version of Virtual Box."
 
   sudo add-apt-repository -y multiverse
   sudo apt update -y -q
   sudo apt install -y -q virtualbox
 
-  # Adding virtual box in favorites applications
+  # Adding Virtual Box in favorites applications
   favorites=$favorites", 'virtualbox.desktop'"
 
-  info "Virtual box has been installed successfully.\n"
+  info "Virtual Box has been installed successfully.\n"
 fi
 
-# Install git
+# Install Git
 if [[ $yesToAll = false ]]; then
-  read -p "Do you want to install git?(Y/n) " answer
+  read -p "Do you want to install Git?(Y/n) " answer
 else
   answer="yes"
 fi
 
 if [[ $answer =~ $yes ]]; then
-  log "Installing the git."
+  log "Installing the latest version of Git."
 
   ppa="git-core/ppa"
 
@@ -364,9 +366,9 @@ if [[ $answer =~ $yes ]]; then
 
   git config --global user.name "$username"
 
-  log "You git username has been set to $(git config --global user.name)."
+  log "You Git username has been set to $(git config --global user.name)."
 
-  read -p "Enter your git email:($USER@$HOSTNAME) " email
+  read -p "Enter your Git email:($USER@$HOSTNAME) " email
 
   if [[ $email == "" ]]; then
    email = $USER@$HOSTNAME
@@ -374,82 +376,86 @@ if [[ $answer =~ $yes ]]; then
 
   git config --global user.email "$email"
 
-  log "Your git email has been set to $(git config --global user.email)."
+  log "Your Git email has been set to $(git config --global user.email)."
 
   info "Git has been installed successfully.\n"
 fi
 
-# Install node
+# Install Node
 if [[ $yesToAll = false ]]; then
-  read -p "Do you want to install node?(Y/n) " answer
+  read -p "Do you want to install Node?(Y/n) " answer
 else
   answer="yes"
 fi
 
 if [[ $answer =~ $yes ]]; then
-  log "Installing nvm to manage multiple node versions."
+  nvm_version="0.35.3"
 
-  wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash
+  log "Installing the version $nvm_version of NVM."
+
+  wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v$nvm_version/install.sh | bash
 
   source /home/$USER/.bashrc
   source /home/$USER/.nvm/nvm.sh
+
+  log "Installing Node LTS and latest stable versions."
 
   nvm install --lts
   nvm install node
   nvm use --lts
 
-  log "Currently installed node versions:"
+  log "The following Node versions have been installed (/home/$USER/.nvm/versions/node):"
   nvm ls
 
-  info "Node has been installed successfully in /home/$USER/.nvm/versions/node.\n"
+  info "Node has been installed successfully.\n"
 fi
 
-# Install java
+# Install Open JDKs
 if [[ $yesToAll = false ]]; then
-  read -p "Do you want to install java?(Y/n) " answer
+  read -p "Do you want to install Open JDK?(Y/n) " answer
 else
   answer="yes"
 fi
 
 if [[ $answer =~ $yes ]]; then
-  log "Installing the open JDK 8."
+  log "Installing the version 8 of Open JDK."
 
   sudo apt install -y -q openjdk-8-jdk openjdk-8-doc openjdk-8-source
 
   log "Open JDK 8 has been installed successfully."
 
-  log "Installing the open JDK 11 (LTS)."
+  log "Installing the version 11 (LTS) of Open JDK 11."
 
   sudo apt install -y -q openjdk-11-jdk openjdk-11-doc openjdk-11-source
 
   log "Open JDK 11 (LTS) has been installed successfully."
 
-  log "Selecting default java executable (java) through update alternatives."
+  log "Selecting default executable (java) through update alternatives."
 
   sudo update-alternatives --config java
 
-  log "Selecting default java compiler (javac) through update alternatives."
+  log "Selecting default compiler (javac) through update alternatives."
 
   sudo update-alternatives --config javac
 
-  log "Installing the maven in /home/$USER/.m2."
+  log "Installing the latest version of Maven in /home/$USER/.m2."
 
   sudo apt install -y -q maven
 
   log "Maven has been installed successfully."
 
-  info "Java has been installed successfully."
+  info "Java has been installed successfully.\n"
 fi
 
-# Install docker
+# Install Docker
 if [[ $yesToAll = false ]]; then
-  read -p "Do you want to install docker?(Y/n) " answer
+  read -p "Do you want to install Docker?(Y/n) " answer
 else
   answer="yes"
 fi
 
 if [[ $answer =~ $yes ]]; then
-  log "Installing docker community edition."
+  log "Installing latest version of docker community edition."
 
   sudo apt update -y -q
   sudo apt install -y -q apt-transport-https ca-certificates curl gnupg-agent software-properties-common
@@ -470,7 +476,7 @@ if [[ $answer =~ $yes ]]; then
 
   docker_compose_version="1.25.5"
 
-  log "Installing docker compose v$docker_compose_version."
+  log "Installing the version $docker_compose_version of docker compose."
 
   sudo curl -L "https://github.com/docker/compose/releases/download/$docker_compose_version/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
   sudo chmod +x /usr/local/bin/docker-compose
@@ -478,15 +484,15 @@ if [[ $answer =~ $yes ]]; then
   info "Docker has been installed successfully.\n"
 fi
 
-# Install atom
+# Install Atom
 if [[ $yesToAll = false ]]; then
-  read -p "Do you want to install atom?(Y/n) " answer
+  read -p "Do you want to install Atom?(Y/n) " answer
 else
   answer="yes"
 fi
 
 if [[ $answer =~ $yes ]]; then
-  log "Installing the latest version of atom."
+  log "Installing the latest version of Atom."
 
   wget -q https://packagecloud.io/AtomEditor/atom/gpgkey -O- | sudo apt-key add -
   sudo add-apt-repository -y -q "deb [arch=amd64] https://packagecloud.io/AtomEditor/atom/any/ any main"
@@ -494,61 +500,61 @@ if [[ $answer =~ $yes ]]; then
   sudo apt update -y -q
   sudo apt install -y -q atom
 
-  # Adding atom in favorites applications
+  # Adding Atom in favorites applications
   favorites=$favorites", 'atom.desktop'"
 
   info "Atom has been installed successfully.\n"
 fi
 
-# Install visual studio
+# Install Visual Studio
 if [[ $yesToAll = false ]]; then
-  read -p "Do you want to install visual studio?(Y/n) " answer
+  read -p "Do you want to install Visual Studio?(Y/n) " answer
 else
   answer="yes"
 fi
 
 if [[ $answer =~ $yes ]]; then
-  log "Downloading the latest version of visual studio."
+  log "Downloading the latest version of Visual Studio."
 
   wget -q --show-progress -P $temp -O $temp/visual-studio.deb https://go.microsoft.com/fwlink/?LinkID=760868
 
-  log "Installing visual studio using deb packaging."
+  log "Installing Visual Studio using deb packaging."
 
   sudo dpkg -i $temp/visual-studio.deb
 
-  # Adding visual studio in favorites applications
+  # Adding Visual Studio in favorites applications
   favorites=$favorites", 'code.desktop'"
 
-  info "Visual studio has been installed successfully.\n"
+  info "Visual Studio has been installed successfully.\n"
 fi
 
-# Install intelliJ
+# Install IntelliJ
 if [[ $yesToAll = false ]]; then
-  read -p "Do you want to install intelliJ?(Y/n) " answer
+  read -p "Do you want to install IntelliJ?(Y/n) " answer
 else
   answer="yes"
 fi
 
 if [[ $answer =~ $yes ]]; then
-  log "Installing the latest version of intelliJ comunity edition."
+  log "Installing the latest version of IntelliJ comunity edition."
 
   sudo snap install intellij-idea-community --classic
 
-  # Adding intelliJ in favorites applications
+  # Adding IntelliJ in favorites applications
   favorites=$favorites", 'idea.desktop'"
 
   info "IntelliJ has been installed successfully.\n"
 fi
 
-# Install dbeaver
+# Install DBeaver
 if [[ $yesToAll = false ]]; then
-  read -p "Do you want to install dbeaver?(Y/n) " answer
+  read -p "Do you want to install DBeaver?(Y/n) " answer
 else
   answer="yes"
 fi
 
 if [[ $answer =~ $yes ]]; then
-  log "Installing the dbeaver."
+  log "Installing the latest version of DBeaver."
 
   wget -O - https://dbeaver.io/debs/dbeaver.gpg.key | apt-key add -
   echo "deb https://dbeaver.io/debs/dbeaver-ce /" | tee /etc/apt/sources.list.d/dbeaver.list
@@ -556,15 +562,15 @@ if [[ $answer =~ $yes ]]; then
   sudo apt update -y -q
   sudo apt install dbeaver-ce -y -q
 
-  # Adding dbeaver in favorites applications
+  # Adding DBeaver in favorites applications
   favorites=$favorites", 'dbeaver.desktop'"
 
-  info "Dbeaver has been installed successfully."
+  info "DBeaver has been installed successfully."
 fi
 
-# Install mongodb compass
+# Install MongoDB Compass
 if [[ $yesToAll = false ]]; then
-  read -p "Do you want to install mongodb compass?(Y/n) " answer
+  read -p "Do you want to install MongoDB Compass?(Y/n) " answer
 else
   answer="yes"
 fi
@@ -572,70 +578,70 @@ fi
 if [[ $answer =~ $yes ]]; then
   compass_version="1.20.5"
 
-  log "Downloading mongodb compass community v$compass_version."
+  log "Downloading the version $compass_version of MongoDB Compass community."
 
   wget -q --show-progress -P $temp -O $temp/compass.deb "https://downloads.mongodb.com/compass/mongodb-compass-community_${compass_version}_amd64.deb"
 
-  log "Installing mongodb compass using deb packaging."
+  log "Installing MongoDB Compass using deb packaging."
 
   sudo dpkg -i $temp/compass.deb
 
-  # Adding mongodb compass in favorites applications
+  # Adding MongoDB Compass in favorites applications
   favorites=$favorites", 'mongodb-compass-community.desktop'"
 
-  info "Mongodb compass has been installed successfully.\n"
+  info "MongoDB compass has been installed successfully.\n"
 fi
 
-# Install postman
+# Install Postman
 if [[ $yesToAll = false ]]; then
-  read -p "Do you want to install postman?(Y/n) " answer
+  read -p "Do you want to install Postman?(Y/n) " answer
 else
   answer="yes"
 fi
 
 if [[ $answer =~ $yes ]]; then
-  log "Installing postman via snap."
+  log "Installing the latest version of Postman via snap."
 
   snap install postman
 
-  # Adding postman in favorites applications
+  # Adding Postman in favorites applications
   favorites=$favorites", 'postman.desktop'"
 
   info "Postman has been isntalled successfully."
 fi
 
-# Install qbtorrent
+# Install QBtorrent
 if [[ $yesToAll = false ]]; then
-  read -p "Do you want to install qbtorrent?(Y/n) " answer
+  read -p "Do you want to install QBtorrent?(Y/n) " answer
 else
   answer="yes"
 fi
 
 if [[ $answer =~ $yes ]]; then
-  log "Installing the latest version of qbittorent."
+  log "Installing the latest version of QBittorent."
 
   sudo add-apt-repository -y ppa:qbittorrent-team/qbittorrent-stable
   sudo apt update -y -q
   sudo apt install -y -q qbittorrent
 
-  info "Qbittorent has been installed successfully.\n"
+  info "QBittorent has been installed successfully.\n"
 fi
 
 # Install libre office
 if [[ $yesToAll = false ]]; then
-  read -p "Do you want to install libre office?(Y/n) " answer
+  read -p "Do you want to install Libre Office?(Y/n) " answer
 else
   answer="yes"
 fi
 
 if [[ $answer =~ $yes ]]; then
-  log "Installing the libre office."
+  log "Installing the latest version of Libre Office."
 
   sudo add-apt-repository -y -q ppa:libreoffice/ppa
   sudo apt update -y -q
   sudo apt install -y -q libreoffice
 
-  info "Libre office has been installed successfully.\n"
+  info "Libre Office has been installed successfully.\n"
 fi
 
 # Update the dock panel
