@@ -225,31 +225,6 @@ if [[ $answer =~ $yes ]]; then
   info "Screen lock has been disabled successfully.\n"
 fi
 
-# Install Dropbox
-if [[ $yesToAll = false ]]; then
-  read -p "Do you want to install Dropbox?(Y/n) " answer
-else
-  answer="yes"
-fi
-
-if [[ $answer =~ $yes ]]; then
-  log "Installing the latest version of Dropbox."
-
-  dropbox_list=/etc/apt/sources.list.d/dropbox.list
-  sudo touch $dropbox_list
-  sudo echo "deb [arch=i386,amd64] http://linux.dropbox.com/ubuntu $(lsb_release -cs) main" | sudo tee -a $dropbox_list
-  sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 1C61A2656FB57B7E4DE0F4C1FC918B335044912E
-
-  sudo apt -y -qq update
-  sudo apt -y -qq install python3-gpg dropbox
-
-  log "Starting the Dropbox daemon."
-
-  dropbox start -i &>/dev/null
-
-  info "Dropbox has been installed successfully.\n"
-fi
-
 # Install Chrome
 if [[ $yesToAll = false ]]; then
   read -p "Do you want to install Chrome?(Y/n) " answer
