@@ -599,16 +599,15 @@ if [[ $answer =~ $yes ]]; then
   info "Libre Office has been installed successfully.\n"
 fi
 
-# Update the dock panel
-log "Updating the dock."
+# Update the desktop
+log "Updating the desktop appearence."
 
 gsettings set org.gnome.shell.extensions.dash-to-dock dock-position BOTTOM
 gsettings set org.gnome.shell.extensions.dash-to-dock dash-max-icon-size 26
+gsettings set org.gnome.shell.extensions.desktop-icons show-home false
+gsettings set org.gnome.shell.extensions.desktop-icons show-trash false
 
-# TODO: Fix
-gsettings set org.gnome.nautilus.desktop trash-icon-visible false
-
-info "Dock has been updated successfully.\n"
+info "Desktop has been updated successfully.\n"
 
 # Cleaning up the system from temporary files
 log "Cleaning up any temporary file under $temp."
