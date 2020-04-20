@@ -38,10 +38,10 @@ log "Creating temporary files folder to $temp."
 
 mkdir -p $temp
 
-info "Temporary files folder has been created successfully.\n"
+info "Temporary files folder has been created successfully"
 
 # Rename default home folders
-log "Renaming the default home folders (/home/$USER) to lower case."
+log "\nRenaming the default home folders (/home/$USER) to lower case."
 
 mv /home/$USER/Desktop /home/$USER/desktop
 mv /home/$USER/Downloads /home/$USER/downloads
@@ -71,9 +71,9 @@ echo "XDG_MUSIC_DIR=\"$HOME/music\"" >> $userdirs_file
 echo "XDG_PICTURES_DIR=\"$HOME/pictures\"" >> $userdirs_file
 echo "XDG_VIDEOS_DIR=\"$HOME/videos\"" >> $userdirs_file
 
-info "User dirs file has been updated successfully.\n"
+info "User dirs file has been updated successfully."
 
-log "Backing up the bookmarks file to $bookmarks_file.bak."
+log "\nBacking up the bookmarks file to $bookmarks_file.bak."
 
 cp $bookmarks_file $bookmarks_file.bak
 
@@ -86,10 +86,10 @@ echo "file:///home/"$USER"/music Music" | tee -a $bookmarks_file
 echo "file:///home/"$USER"/pictures Pictures" | tee -a $bookmarks_file
 echo "file:///home/"$USER"/videos Videos" | tee -a $bookmarks_file
 
-info "The default home folders have been renamed successfully.\n"
+info "The default home folders have been renamed successfully."
 
 # Create various folders
-log "Creating folders to host databases and code sources."
+log "\nCreating folders to host databases and code sources."
 
 mkdir -p /home/$USER/dbs
 
@@ -115,11 +115,11 @@ if [[ $answer =~ $yes ]]; then
   sudo apt -y -qq update
   sudo apt -y -qq upgrade
 
-  log "Removing any not used packages."
+  log "\nRemoving any not used packages."
 
   sudo apt -y -qq autoremove
 
-  log "Installing the following third-party software dependencies:"
+  log "\nInstalling the following third-party software dependencies:"
 
   packages=(tree curl unzip htop gconf-service gconf-service-backend gconf2
             gconf2-common libappindicator1 libgconf-2-4 libindicator7
@@ -130,7 +130,7 @@ if [[ $answer =~ $yes ]]; then
 
   sudo apt -y -qq install ${packages[@]}
 
-  log "Installing GUI for UFW to manage firewall rules."
+  log "\nInstalling GUI for UFW to manage firewall rules."
 
   sudo add-apt-repository -y -n universe
   sudo apt -y -qq update
@@ -143,7 +143,7 @@ if [[ $answer =~ $yes ]]; then
   sudo ufw enable
   sudo ufw status verbose
 
-  log "Installing the latest version of VeraCrypt software."
+  log "\nInstalling the latest version of VeraCrypt software."
 
   sudo add-apt-repository -y -n ppa:unit193/encryption
   sudo apt -y -qq update
@@ -170,7 +170,7 @@ if [[ $answer =~ $yes ]]; then
 
   gsettings set org.gnome.desktop.input-sources sources "[('xkb', 'us'), ('xkb', 'gr')]"
 
-  log "Set regional formats back to US."
+  log "\nSet regional formats back to US."
 
   sudo update-locale LANG=en_US.UTF-8
   sudo update-locale LANGUAGE=
@@ -415,7 +415,7 @@ if [[ $answer =~ $yes ]]; then
   source /home/$USER/.bashrc
   source /home/$USER/.nvm/nvm.sh
 
-  log "Installing Node LTS and latest stable versions."
+  log "\nInstalling Node LTS and latest stable versions."
 
   nvm install --lts
   nvm install node
@@ -441,22 +441,22 @@ if [[ $answer =~ $yes ]]; then
 
   log "Open JDK 8 has been installed successfully."
 
-  log "Installing the version 11 (LTS) of Open JDK 11."
+  log "\nInstalling the version 11 (LTS) of Open JDK 11."
 
   sudo apt -y -qq install openjdk-11-jdk openjdk-11-doc openjdk-11-source
 
   log "Open JDK 11 (LTS) has been installed successfully."
 
-  log "Currently installed JDKs."
+  log "\nCurrently installed JDKs."
 
   sudo update-alternatives --config java
   sudo update-alternatives --config javac
 
-  log "Installing the latest version of Maven in /home/$USER/.m2."
+  log "\nInstalling the latest version of Maven in /home/$USER/.m2."
 
   sudo apt -y -qq install maven
 
-  log "Maven has been installed successfully."
+  log "Maven has been installed."
 
   info "Java has been installed successfully.\n"
 fi
@@ -490,7 +490,7 @@ if [[ $answer =~ $yes ]]; then
 
   docker_compose_version="1.25.5"
 
-  log "Installing the version $docker_compose_version of docker compose."
+  log "\nInstalling the version $docker_compose_version of docker compose."
 
   sudo curl -L "https://github.com/docker/compose/releases/download/$docker_compose_version/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
   sudo chmod +x /usr/local/bin/docker-compose
@@ -666,17 +666,17 @@ gsettings set org.gnome.shell.extensions.dash-to-dock dock-position BOTTOM
 gsettings set org.gnome.shell.extensions.dash-to-dock dash-max-icon-size 26
 gsettings set org.gnome.nautilus.desktop trash-icon-visible false
 
-log "Dock has been updated successfully."
+info "Dock has been updated successfully.\n"
 
 # Cleaning up the system from temporary files
 log "Cleaning up any temporary file under $temp."
 
 rm -rf $temp
 
-log "Temporary files have been removed."
+info "Temporary files have been removed.\n"
 
-info "Stack installation completed successfully.\n"
-
+# Ask user to reboot
+log "Stack installation completed successfully."
 read -p "Do you want to reboot?(Y/n) " answer
 
 if [[ $answer =~ $yes ]]; then
