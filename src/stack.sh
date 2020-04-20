@@ -127,7 +127,7 @@ if [[ $answer =~ $yes ]]; then
 
   packages=(tree curl unzip htop gconf-service gconf-service-backend gconf2
             gconf2-common libappindicator1 libgconf-2-4 libindicator7
-            libpython-stdlib python python-minimal python2.7 python2.7-minimal libatomic1
+            libpython2-stdlib python python2.7 python2.7-minimal libatomic1
             gimp vlc)
 
   log $packages
