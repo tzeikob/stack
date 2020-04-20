@@ -451,12 +451,9 @@ if [[ $answer =~ $yes ]]; then
 
   log "Open JDK 11 (LTS) has been installed successfully."
 
-  log "Selecting default executable (java) through update alternatives."
+  log "Currently installed JDKs."
 
   sudo update-alternatives --config java
-
-  log "Selecting default compiler (javac) through update alternatives."
-
   sudo update-alternatives --config javac
 
   log "Installing the latest version of Maven in /home/$USER/.m2."
