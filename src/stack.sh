@@ -17,7 +17,6 @@ dir=$(dirname $0)
 source $dir"/global.sh"
 
 # Initiate local variables
-favorites="'org.gnome.Nautilus.desktop', 'org.gnome.Terminal.desktop', 'firefox.desktop'"
 bookmarks_file="/home/$USER/.config/gtk-3.0/bookmarks"
 
 now=$(date)
@@ -241,9 +240,6 @@ if [[ $answer =~ $yes ]]; then
 
   sudo dpkg -i $temp/google-chrome-stable_current_amd64.deb
 
-  # Adding Chrome in favorites applications
-  favorites=$favorites", 'google-chrome.desktop'"
-
   info "Chrome has been installed successfully.\n"
 fi
 
@@ -263,9 +259,6 @@ if [[ $answer =~ $yes ]]; then
 
   sudo dpkg -i $temp/skypeforlinux-64.deb
 
-  # Adding Skype in favorites applications
-  favorites=$favorites", 'skypeforlinux.desktop'"
-
   info "Skype has been installed successfully.\n"
 fi
 
@@ -280,9 +273,6 @@ if [[ $answer =~ $yes ]]; then
   log "Installing the latest version of Slack."
 
   sudo apt -y -qq install slack-desktop
-
-  # Adding Slack in favorites applications
-  favorites=$favorites", 'slack.desktop'"
 
   info "Slack has been installed successfully.\n"
 fi
@@ -305,9 +295,6 @@ if [[ $answer =~ $yes ]]; then
 
   sudo dpkg -i $temp/teams_${msteams_version}_amd64.deb
 
-  # Adding Microsoft Teams in favorites applications
-  favorites=$favorites", 'teams.desktop'"
-
   info "Microsoft Teams has been installed successfully.\n"
 fi
 
@@ -324,9 +311,6 @@ if [[ $answer =~ $yes ]]; then
   sudo add-apt-repository -y -n multiverse
   sudo apt -y -qq update
   sudo apt -y -qq install virtualbox
-
-  # Adding Virtual Box in favorites applications
-  favorites=$favorites", 'virtualbox.desktop'"
 
   info "Virtual Box has been installed successfully.\n"
 fi
@@ -489,9 +473,6 @@ if [[ $answer =~ $yes ]]; then
   sudo apt -y -qq update
   sudo apt -y -qq install atom
 
-  # Adding Atom in favorites applications
-  favorites=$favorites", 'atom.desktop'"
-
   info "Atom has been installed successfully.\n"
 fi
 
@@ -511,9 +492,6 @@ if [[ $answer =~ $yes ]]; then
 
   sudo dpkg -i $temp/visual-studio.deb
 
-  # Adding Visual Studio in favorites applications
-  favorites=$favorites", 'code.desktop'"
-
   info "Visual Studio has been installed successfully.\n"
 fi
 
@@ -528,9 +506,6 @@ if [[ $answer =~ $yes ]]; then
   log "Installing the latest version of IntelliJ community edition."
 
   sudo snap install intellij-idea-community --classic
-
-  # Adding IntelliJ in favorites applications
-  favorites=$favorites", 'idea.desktop'"
 
   info "IntelliJ has been installed successfully.\n"
 fi
@@ -551,10 +526,7 @@ if [[ $answer =~ $yes ]]; then
   sudo apt -y -qq update
   sudo apt -y -qq install dbeaver-ce
 
-  # Adding DBeaver in favorites applications
-  favorites=$favorites", 'dbeaver.desktop'"
-
-  info "DBeaver has been installed successfully."
+  info "DBeaver has been installed successfully.\n"
 fi
 
 # Install MongoDB Compass
@@ -575,9 +547,6 @@ if [[ $answer =~ $yes ]]; then
 
   sudo dpkg -i $temp/compass.deb
 
-  # Adding MongoDB Compass in favorites applications
-  favorites=$favorites", 'mongodb-compass-community.desktop'"
-
   info "MongoDB compass has been installed successfully.\n"
 fi
 
@@ -593,10 +562,7 @@ if [[ $answer =~ $yes ]]; then
 
   sudo snap install postman
 
-  # Adding Postman in favorites applications
-  favorites=$favorites", 'postman.desktop'"
-
-  info "Postman has been isntalled successfully."
+  info "Postman has been isntalled successfully.\n"
 fi
 
 # Install QBittorrent
@@ -616,7 +582,7 @@ if [[ $answer =~ $yes ]]; then
   info "QBittorrent has been installed successfully.\n"
 fi
 
-# Install libre office
+# Install Libre Office
 if [[ $yesToAll = false ]]; then
   read -p "Do you want to install Libre Office?(Y/n) " answer
 else
@@ -636,9 +602,10 @@ fi
 # Update the dock panel
 log "Updating the dock."
 
-gsettings set org.gnome.shell favorite-apps "[$favorites]"
 gsettings set org.gnome.shell.extensions.dash-to-dock dock-position BOTTOM
 gsettings set org.gnome.shell.extensions.dash-to-dock dash-max-icon-size 26
+
+# TODO: Fix
 gsettings set org.gnome.nautilus.desktop trash-icon-visible false
 
 info "Dock has been updated successfully.\n"
