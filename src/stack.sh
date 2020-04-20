@@ -279,7 +279,7 @@ fi
 if [[ $answer =~ $yes ]]; then
   log "Installing the latest version of Slack."
 
-  sudo apt -y -qq install slack
+  sudo apt -y -qq install slack-desktop
 
   # Adding Slack in favorites applications
   favorites=$favorites", 'slack.desktop'"
