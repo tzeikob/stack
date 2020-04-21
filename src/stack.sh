@@ -334,7 +334,7 @@ if [[ $answer =~ $yes ]]; then
   read -p "Enter your git username:($USER) " username
 
   if [[ $username == "" ]]; then
-   username = $USER
+   username=$USER
   fi
 
   git config --global user.name "$username"
@@ -344,7 +344,7 @@ if [[ $answer =~ $yes ]]; then
   read -p "Enter your Git email:($USER@$HOSTNAME) " email
 
   if [[ $email == "" ]]; then
-   email = $USER@$HOSTNAME
+   email=$USER@$HOSTNAME
   fi
 
   git config --global user.email "$email"
