@@ -22,8 +22,8 @@ blue="\e[94m"
 # Red foreground color
 red="\e[38;5;124m"
 
-# Reset foreground color
-reset_color="\e[39m"
+# Invert fore/background colors
+invert="\e[7m"
 
 # Dim text style
 dim="\e[2m"
@@ -31,30 +31,34 @@ dim="\e[2m"
 # Bold text style
 bold="\e[1m"
 
-# Reset text style
-reset_text="\e[0m"
+# Reset text style and colors
+reset="\e[0m"
 
 # Set dim text style
 d () {
-  echo $dim$1$reset_text
+  echo $dim$1$reset
 }
 
 # Set bold text style
 b () {
-  echo $bold$1$reset_text
+  echo $bold$1$reset
 }
 
 # Log a normal message
 log () {
-  echo -e $white$1$reset_color
+  echo -e $white$1$reset
 }
 
 # Log an info message
 info () {
-  echo -e $green$1$reset_color
+  echo -e $green$1$reset
 }
 
 # Log a warn message
 warn () {
-  echo -e $orange$1$reset_color
+  echo -e $orange$1$reset
+}
+
+highlight () {
+  echo -e $invert$1$reset
 }
