@@ -117,12 +117,12 @@ fi
 if [[ $answer =~ $yes ]]; then
   log "Upgrading the base system with the latest updates."
 
-  sudo apt-get-get -y -qq update >> $apt_log_path
-  sudo apt-get-get -y -qq upgrade >> $apt_log_path
+  sudo apt-get -y -qq update >> $apt_log_path
+  sudo apt-get -y -qq upgrade >> $apt_log_path
 
   log "\nRemoving any not used packages."
 
-  sudo apt-get-get -y -qq autoremove >> $apt_log_path
+  sudo apt-get -y -qq autoremove >> $apt_log_path
 
   log "\nInstalling the following third-party software dependencies:"
 
