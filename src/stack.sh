@@ -598,7 +598,7 @@ gsettings set org.gnome.shell.extensions.desktop-icons show-trash false
 info "Desktop has been updated successfully.\n"
 
 # Cleaning up the system from temporary files
-log "Cleaning up any temporary file under $temp."
+log "Cleaning up temporary files folder $temp."
 
 rm -rf $temp
 
