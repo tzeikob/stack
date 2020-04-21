@@ -25,15 +25,23 @@ red="\e[38;5;124m"
 # Reset foreground color
 reset_color="\e[39m"
 
-# Dim style
+# Dim text style
 dim="\e[2m"
 
-# Reset dim style
-reset_dim="\e[22m"
+# Bold text style
+bold="\e[1m"
+
+# Reset text style
+reset_text="\e[0m"
 
 # Set dim text style
 d () {
-  echo "$dim$1$reset_dim"
+  echo $dim$1$reset_text
+}
+
+# Set bold text style
+b () {
+  echo $bold$1$reset_text
 }
 
 # Log a normal message

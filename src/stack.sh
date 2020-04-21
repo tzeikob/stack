@@ -1,6 +1,14 @@
 #!/bin/bash
 # A bash script to setup a development stack environment
 
+# Define relative paths
+dir=$(dirname $0)
+script_path=$dir"/stack.sh"
+global_path=$dir"/global.sh"
+
+# Import global common dependencies
+source $global_path
+
 # Read command line options
 yesToAll=false
 
@@ -10,20 +18,14 @@ while getopts y OPT; do
   esac
 done
 
-# Load global goodies
-source $(dirname $0)"/global.sh"
+# Print welcome message
+log "$(i Scriptbox v1.0.0)"
+log "Starting the stack script $script_path."
+log "Loading global dependencies from $global_path."
+log "Script launched by user $(b $USER) hosted at $(b $HOSTNAME)."
+log "Running in distro $(b "$(lsb_release -si) $(lsb_release -sr)")."
 
-# Initiate local variables
-now=$(date)
-distro=$(lsb_release -si)
-version=$(lsb_release -sr)
-
-# Print welcome screen
-log "Scriptbox v1.0.0\n"
-log "Date: $(d "$now")"
-log "System: $(d "$distro $version")"
-log "Host: $(d $HOSTNAME)"
-log "User: $(d $USER)\n"
+exit 0
 
 # Create temporary files folder
 temp="/tmp/scriptbox/stack"
