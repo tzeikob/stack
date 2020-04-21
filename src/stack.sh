@@ -129,7 +129,7 @@ if [[ $answer =~ $yes ]]; then
             libpython2-stdlib python python2.7 python2.7-minimal libatomic1
             gimp vlc)
 
-  log "Installing the following third-party software dependencies: ${packages[@]}"
+  log "Installing the following third-party software dependencies: \n${packages[*]}"
 
   sudo apt-get -y install ${packages[@]} >> $apt_log_path
 
