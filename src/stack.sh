@@ -77,28 +77,26 @@ log "Updating the bookmarks file $bookmarks_file."
 
 > $bookmarks_file
 
-echo "file:///home/"$USER"/downloads Downloads" | tee -a $bookmarks_file
-echo "file:///home/"$USER"/documents Documents" | tee -a $bookmarks_file
-echo "file:///home/"$USER"/music Music" | tee -a $bookmarks_file
-echo "file:///home/"$USER"/pictures Pictures" | tee -a $bookmarks_file
-echo "file:///home/"$USER"/videos Videos" | tee -a $bookmarks_file
+echo "file:///home/"$USER"/downloads Downloads" >> $bookmarks_file
+echo "file:///home/"$USER"/documents Documents" >> $bookmarks_file
+echo "file:///home/"$USER"/music Music" >> $bookmarks_file
+echo "file:///home/"$USER"/pictures Pictures" >> $bookmarks_file
+echo "file:///home/"$USER"/videos Videos" >> $bookmarks_file
 
 # Create various host folders
 log "Creating host folders to store databases and sources."
 
 databases_home=/home/$USER/databases
-mkdir -p $databases
-mkdir -p $databases/mysql
-mkdir -p $databases/mongo
+mkdir -p $databases_home
+mkdir -p $databases_home/mysql
+mkdir -p $databases_home/mongo
 
 sources_home=/home/$USER/sources
 mkdir -p $sources_home
 mkdir -p $sources_home/me
 mkdir -p $sources_home/temp
 
-echo "file://$sources_home Sources" | tee -a $bookmarks_file
-
-ls /home/$USER
+echo "file://$sources_home Sources" >> $bookmarks_file
 
 info "User's home folder has been refactored successfully.\n"
 
