@@ -168,7 +168,7 @@ if [[ $answer =~ $yes ]]; then
 
   gsettings set org.gnome.desktop.input-sources sources "[('xkb', 'us'), ('xkb', 'gr')]"
 
-  log "Set regional formats back to US."
+  log "Setting regional formats back to US."
 
   sudo update-locale LANG=en_US.UTF-8
   sudo update-locale LANGUAGE=
@@ -197,7 +197,7 @@ else
 fi
 
 if [[ $answer =~ $yes ]]; then
-  log "Use local RTC time instead of UTC."
+  log "Setting system to use local RTC time instead of UTC."
 
   timedatectl set-local-rtc 1 --adjust-system-clock
   gsettings set org.gnome.desktop.interface clock-show-date true
