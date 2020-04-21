@@ -8,6 +8,7 @@ global_path=$dir"/global.sh"
 
 # Initiate apt log file
 apt_log_path=$dir"/apt.log"
+> $apt_log_path
 
 # Import global common dependencies
 source $global_path
@@ -113,12 +114,12 @@ fi
 if [[ $answer =~ $yes ]]; then
   log "Upgrading the base system with the latest updates."
 
-  sudo apt -y -qq update >> apt_log_path
-  sudo apt -y -qq upgrade >> apt_log_path
+  sudo apt -y -qq update >> $apt_log_path
+  sudo apt -y -qq upgrade >> $apt_log_path
 
   log "\nRemoving any not used packages."
 
-  sudo apt -y -qq autoremove >> apt_log_path
+  sudo apt -y -qq autoremove >> $apt_log_path
 
   log "\nInstalling the following third-party software dependencies:"
 
@@ -129,13 +130,13 @@ if [[ $answer =~ $yes ]]; then
 
   log $packages
 
-  sudo apt -y -qq install ${packages[@]} >> apt_log_path
+  sudo apt -y -qq install ${packages[@]} >> $apt_log_path
 
   log "\nInstalling GUI for UFW to manage firewall rules."
 
-  sudo add-apt-repository -y -n universe >> apt_log_path
-  sudo apt -y -qq update >> apt_log_path
-  sudo apt -y -qq install gufw >> apt_log_path
+  sudo add-apt-repository -y -n universe >> $apt_log_path
+  sudo apt -y -qq update >> $apt_log_path
+  sudo apt -y -qq install gufw >> $apt_log_path
 
   log "Firewall has been set to deny any incoming and allow any outgoing traffic."
 
@@ -146,9 +147,9 @@ if [[ $answer =~ $yes ]]; then
 
   log "\nInstalling the latest version of VeraCrypt."
 
-  sudo add-apt-repository -y -n ppa:unit193/encryption >> apt_log_path
-  sudo apt -y -qq update >> apt_log_path
-  sudo apt -y -qq install veracrypt >> apt_log_path
+  sudo add-apt-repository -y -n ppa:unit193/encryption >> $apt_log_path
+  sudo apt -y -qq update >> $apt_log_path
+  sudo apt -y -qq install veracrypt >> $apt_log_path
 
   log "VeraCrypt has been installed."
 
@@ -165,7 +166,7 @@ fi
 if [[ $answer =~ $yes ]]; then
   log "Installing the greek language packages."
 
-  sudo apt -y -qq install `check-language-support -l el` >> apt_log_path
+  sudo apt -y -qq install `check-language-support -l el` >> $apt_log_path
 
   log "Adding greek layout into the keyboard input sources."
 
@@ -237,7 +238,7 @@ if [[ $answer =~ $yes ]]; then
 
   wget -q --show-progress -P $temp https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
 
-  sudo apt -y -qq install $temp/google-chrome-stable_current_amd64.deb >> apt_log_path
+  sudo apt -y -qq install $temp/google-chrome-stable_current_amd64.deb >> $apt_log_path
 
   info "Chrome has been installed successfully.\n"
 fi
@@ -254,7 +255,7 @@ if [[ $answer =~ $yes ]]; then
 
   wget -q --show-progress -P $temp https://repo.skype.com/latest/skypeforlinux-64.deb
 
-  sudo apt -y -qq install $temp/skypeforlinux-64.deb >> apt_log_path
+  sudo apt -y -qq install $temp/skypeforlinux-64.deb >> $apt_log_path
 
   info "Skype has been installed successfully.\n"
 fi
@@ -269,7 +270,7 @@ fi
 if [[ $answer =~ $yes ]]; then
   log "Installing the latest version of Slack."
 
-  sudo snap install slack --classic >> apt_log_path
+  sudo snap install slack --classic >> $apt_log_path
 
   info "Slack has been installed successfully.\n"
 fi
@@ -288,7 +289,7 @@ if [[ $answer =~ $yes ]]; then
 
   wget -q --show-progress -P $temp https://packages.microsoft.com/repos/ms-teams/pool/main/t/teams/teams_${msteams_version}_amd64.deb
 
-  sudo apt -y -qq install $temp/teams_${msteams_version}_amd64.deb >> apt_log_path
+  sudo apt -y -qq install $temp/teams_${msteams_version}_amd64.deb >> $apt_log_path
 
   info "Microsoft Teams has been installed successfully.\n"
 fi
@@ -303,9 +304,9 @@ fi
 if [[ $answer =~ $yes ]]; then
   log "Installing the latest version of Virtual Box."
 
-  sudo add-apt-repository -y -n multiverse >> apt_log_path
-  sudo apt -y -qq update >> apt_log_path
-  sudo apt -y -qq install virtualbox >> apt_log_path
+  sudo add-apt-repository -y -n multiverse >> $apt_log_path
+  sudo apt -y -qq update >> $apt_log_path
+  sudo apt -y -qq install virtualbox >> $apt_log_path
 
   info "Virtual Box has been installed successfully.\n"
 fi
@@ -323,11 +324,11 @@ if [[ $answer =~ $yes ]]; then
   ppa="git-core/ppa"
 
   if ! grep -q "^deb .*$ppa" /etc/apt/sources.list /etc/apt/sources.list.d/*; then
-   sudo add-apt-repository -y -n ppa:$ppa >> apt_log_path
-   sudo apt -y -qq update >> apt_log_path
+   sudo add-apt-repository -y -n ppa:$ppa >> $apt_log_path
+   sudo apt -y -qq update >> $apt_log_path
   fi
 
-  sudo apt -y -qq install git >> apt_log_path
+  sudo apt -y -qq install git >> $apt_log_path
 
   read -p "Enter your git username:($USER) " username
 
@@ -392,13 +393,13 @@ fi
 if [[ $answer =~ $yes ]]; then
   log "Installing the version 8 of Open JDK."
 
-  sudo apt -y -qq install openjdk-8-jdk openjdk-8-doc openjdk-8-source >> apt_log_path
+  sudo apt -y -qq install openjdk-8-jdk openjdk-8-doc openjdk-8-source >> $apt_log_path
 
   log "Open JDK 8 has been installed successfully."
 
   log "\nInstalling the version 11 (LTS) of Open JDK."
 
-  sudo apt -y -qq install openjdk-11-jdk openjdk-11-doc openjdk-11-source >> apt_log_path
+  sudo apt -y -qq install openjdk-11-jdk openjdk-11-doc openjdk-11-source >> $apt_log_path
 
   log "Open JDK 11 (LTS) has been installed successfully."
 
@@ -408,7 +409,7 @@ if [[ $answer =~ $yes ]]; then
 
   log "\nInstalling the latest version of Maven."
 
-  sudo apt -y -qq install maven >> apt_log_path
+  sudo apt -y -qq install maven >> $apt_log_path
 
   log "Maven has been installed."
 
@@ -425,14 +426,14 @@ fi
 if [[ $answer =~ $yes ]]; then
   log "Installing latest version of docker community edition."
 
-  sudo apt -y -qq update >> apt_log_path
-  sudo apt -y -qq install apt-transport-https ca-certificates curl gnupg-agent software-properties-common >> apt_log_path
+  sudo apt -y -qq update >> $apt_log_path
+  sudo apt -y -qq install apt-transport-https ca-certificates curl gnupg-agent software-properties-common >> $apt_log_path
 
   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-  sudo add-apt-repository -y -n "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" >> apt_log_path
+  sudo add-apt-repository -y -n "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" >> $apt_log_path
 
-  sudo apt -y -qq update >> apt_log_path
-  sudo apt -y -qq install docker-ce docker-ce-cli containerd.io >> apt_log_path
+  sudo apt -y -qq update >> $apt_log_path
+  sudo apt -y -qq install docker-ce docker-ce-cli containerd.io >> $apt_log_path
 
   log "Creating docker user group."
 
@@ -463,10 +464,10 @@ if [[ $answer =~ $yes ]]; then
   log "Installing the latest version of Atom."
 
   wget -q https://packagecloud.io/AtomEditor/atom/gpgkey -O- | sudo apt-key add -
-  sudo add-apt-repository -y -n "deb [arch=amd64] https://packagecloud.io/AtomEditor/atom/any/ any main" >> apt_log_path
+  sudo add-apt-repository -y -n "deb [arch=amd64] https://packagecloud.io/AtomEditor/atom/any/ any main" >> $apt_log_path
 
-  sudo apt -y -qq update >> apt_log_path
-  sudo apt -y -qq install atom >> apt_log_path
+  sudo apt -y -qq update >> $apt_log_path
+  sudo apt -y -qq install atom >> $apt_log_path
 
   info "Atom has been installed successfully.\n"
 fi
@@ -483,7 +484,7 @@ if [[ $answer =~ $yes ]]; then
 
   wget -q --show-progress -P $temp -O $temp/visual-studio.deb https://go.microsoft.com/fwlink/?LinkID=760868
 
-  sudo apt -y -qq install $temp/visual-studio.deb >> apt_log_path
+  sudo apt -y -qq install $temp/visual-studio.deb >> $apt_log_path
 
   info "Visual Studio has been installed successfully.\n"
 fi
@@ -498,7 +499,7 @@ fi
 if [[ $answer =~ $yes ]]; then
   log "Installing the latest version of IntelliJ community edition."
 
-  sudo snap install intellij-idea-community --classic >> apt_log_path
+  sudo snap install intellij-idea-community --classic >> $apt_log_path
 
   info "IntelliJ has been installed successfully.\n"
 fi
@@ -516,8 +517,8 @@ if [[ $answer =~ $yes ]]; then
   wget -O - https://dbeaver.io/debs/dbeaver.gpg.key | sudo apt-key add -
   echo "deb https://dbeaver.io/debs/dbeaver-ce /" | sudo tee /etc/apt/sources.list.d/dbeaver.list
 
-  sudo apt -y -qq update >> apt_log_path
-  sudo apt -y -qq install dbeaver-ce >> apt_log_path
+  sudo apt -y -qq update >> $apt_log_path
+  sudo apt -y -qq install dbeaver-ce >> $apt_log_path
 
   info "DBeaver has been installed successfully.\n"
 fi
@@ -536,7 +537,7 @@ if [[ $answer =~ $yes ]]; then
 
   wget -q --show-progress -P $temp -O $temp/compass.deb "https://downloads.mongodb.com/compass/mongodb-compass-community_${compass_version}_amd64.deb"
 
-  sudo apt -y -qq install $temp/compass.deb >> apt_log_path
+  sudo apt -y -qq install $temp/compass.deb >> $apt_log_path
 
   info "MongoDB compass has been installed successfully.\n"
 fi
@@ -551,7 +552,7 @@ fi
 if [[ $answer =~ $yes ]]; then
   log "Installing the latest version of Postman."
 
-  sudo snap install postman >> apt_log_path
+  sudo snap install postman >> $apt_log_path
 
   info "Postman has been isntalled successfully.\n"
 fi
@@ -566,9 +567,9 @@ fi
 if [[ $answer =~ $yes ]]; then
   log "Installing the latest version of QBittorrent."
 
-  sudo add-apt-repository -y -n ppa:qbittorrent-team/qbittorrent-stable >> apt_log_path
-  sudo apt -y -qq update >> apt_log_path
-  sudo apt -y -qq install qbittorrent >> apt_log_path
+  sudo add-apt-repository -y -n ppa:qbittorrent-team/qbittorrent-stable >> $apt_log_path
+  sudo apt -y -qq update >> $apt_log_path
+  sudo apt -y -qq install qbittorrent >> $apt_log_path
 
   info "QBittorrent has been installed successfully.\n"
 fi
@@ -583,9 +584,9 @@ fi
 if [[ $answer =~ $yes ]]; then
   log "Installing the latest version of Libre Office."
 
-  sudo add-apt-repository -y -n ppa:libreoffice/ppa >> apt_log_path
-  sudo apt -y -qq update >> apt_log_path
-  sudo apt -y -qq install libreoffice >> apt_log_path
+  sudo add-apt-repository -y -n ppa:libreoffice/ppa >> $apt_log_path
+  sudo apt -y -qq update >> $apt_log_path
+  sudo apt -y -qq install libreoffice >> $apt_log_path
 
   info "Libre Office has been installed successfully.\n"
 fi
