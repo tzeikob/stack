@@ -120,35 +120,33 @@ if [[ $answer =~ $yes ]]; then
   sudo apt-get -y -qq update >> $apt_log_path
   sudo apt-get -y -qq upgrade >> $apt_log_path
 
-  log "\nRemoving any not used packages."
+  log "Removing any not used packages."
 
   sudo apt-get -y -qq autoremove >> $apt_log_path
-
-  log "\nInstalling the following third-party software dependencies:"
 
   packages=(tree curl unzip htop gconf-service gconf-service-backend gconf2
             gconf2-common libappindicator1 libgconf-2-4 libindicator7
             libpython2-stdlib python python2.7 python2.7-minimal libatomic1
             gimp vlc)
 
-  log $packages
+  log "Installing the following third-party software dependencies: ${packages[@]}"
 
   sudo apt-get -y -qq install ${packages[@]} >> $apt_log_path
 
-  log "\nInstalling GUI for UFW to manage firewall rules."
+  log "Installing GUI for UFW to manage firewall rules."
 
   sudo add-apt-repository -y -n universe >> $apt_log_path
   sudo apt-get -y -qq update >> $apt_log_path
   sudo apt-get -y -qq install gufw >> $apt_log_path
-
-  log "Firewall has been set to deny any incoming and allow any outgoing traffic."
 
   log "Enabling UFW service."
 
   sudo ufw enable
   sudo ufw status verbose
 
-  log "\nInstalling the latest version of VeraCrypt."
+  log "Firewall has been set to deny any incoming and allow any outgoing traffic."
+
+  log "Installing the latest version of VeraCrypt."
 
   sudo add-apt-repository -y -n ppa:unit193/encryption >> $apt_log_path
   sudo apt-get -y -qq update >> $apt_log_path
@@ -273,7 +271,7 @@ fi
 if [[ $answer =~ $yes ]]; then
   log "Installing the latest version of Slack."
 
-  sudo snap install slack --classic >> $apt_log_path
+  sudo snap install slack --classic
 
   info "Slack has been installed successfully.\n"
 fi
@@ -368,20 +366,22 @@ if [[ $answer =~ $yes ]]; then
 
   log "Installing the version $nvm_version of NVM."
 
-  wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v$nvm_version/install.sh | bash
+  wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v$nvm_version/install.sh | bash >> $apt_log_path
 
   source /home/$USER/.bashrc
   source /home/$USER/.nvm/nvm.sh
 
-  log "\nInstalling Node LTS and latest stable versions."
+  log "NVM has been installed under /home/$USER/.nvm"
 
-  nvm install --lts
-  nvm install node
-  nvm use --lts
+  log "Installing Node LTS and latest stable versions."
 
-  log "Node versions have are located in /home/$USER/.nvm/versions/node."
+  nvm install --lts >> $apt_log_path
+  nvm install node >> $apt_log_path
+  nvm use --lts >> $apt_log_path
 
-  nvm ls
+  log "Node versions can be found under /home/$USER/.nvm/versions/node."
+
+  log "Node in use is $(nvm current)."
 
   info "Node has been installed successfully.\n"
 fi
@@ -400,21 +400,23 @@ if [[ $answer =~ $yes ]]; then
 
   log "Open JDK 8 has been installed successfully."
 
-  log "\nInstalling the version 11 (LTS) of Open JDK."
+  log "Installing the version 11 (LTS) of Open JDK."
 
   sudo apt-get -y -qq install openjdk-11-jdk openjdk-11-doc openjdk-11-source >> $apt_log_path
 
   log "Open JDK 11 (LTS) has been installed successfully."
 
-  log "\nCurrently installed JDKs."
+  log "JDK in use is $(java -version)."
 
-  sudo update-alternatives --display java
+  sudo update-alternatives --display java >> $apt_log_path
 
-  log "\nInstalling the latest version of Maven."
+  log "Installing the latest version of Maven."
 
   sudo apt-get -y -qq install maven >> $apt_log_path
 
   log "Maven has been installed."
+
+  mvn -version >> $apt_log_path
 
   info "Java has been installed successfully.\n"
 fi
@@ -427,12 +429,12 @@ else
 fi
 
 if [[ $answer =~ $yes ]]; then
-  log "Installing latest version of docker community edition."
+  log "Installing the latest version of docker community edition."
 
   sudo apt-get -y -qq update >> $apt_log_path
   sudo apt-get -y -qq install apt-transport-https ca-certificates curl gnupg-agent software-properties-common >> $apt_log_path
 
-  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -  >> $apt_log_path
   sudo add-apt-repository -y -n "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" >> $apt_log_path
 
   sudo apt-get -y -qq update >> $apt_log_path
@@ -448,7 +450,7 @@ if [[ $answer =~ $yes ]]; then
 
   docker_compose_version="1.25.5"
 
-  log "\nInstalling the version $docker_compose_version of docker compose."
+  log "Installing the version $docker_compose_version of docker compose."
 
   sudo curl -L "https://github.com/docker/compose/releases/download/$docker_compose_version/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
   sudo chmod +x /usr/local/bin/docker-compose
@@ -466,7 +468,7 @@ fi
 if [[ $answer =~ $yes ]]; then
   log "Installing the latest version of Atom."
 
-  wget -q https://packagecloud.io/AtomEditor/atom/gpgkey -O- | sudo apt-key add -
+  wget -q https://packagecloud.io/AtomEditor/atom/gpgkey -O- | sudo apt-key add -  >> $apt_log_path
   sudo add-apt-repository -y -n "deb [arch=amd64] https://packagecloud.io/AtomEditor/atom/any/ any main" >> $apt_log_path
 
   sudo apt-get -y -qq update >> $apt_log_path
@@ -502,7 +504,7 @@ fi
 if [[ $answer =~ $yes ]]; then
   log "Installing the latest version of IntelliJ community edition."
 
-  sudo snap install intellij-idea-community --classic >> $apt_log_path
+  sudo snap install intellij-idea-community --classic
 
   info "IntelliJ has been installed successfully.\n"
 fi
@@ -517,8 +519,8 @@ fi
 if [[ $answer =~ $yes ]]; then
   log "Installing the latest version of DBeaver."
 
-  wget -O - https://dbeaver.io/debs/dbeaver.gpg.key | sudo apt-key add -
-  echo "deb https://dbeaver.io/debs/dbeaver-ce /" | sudo tee /etc/apt/sources.list.d/dbeaver.list
+  wget -O - https://dbeaver.io/debs/dbeaver.gpg.key | sudo apt-key add - >> $apt_log_path
+  echo "deb https://dbeaver.io/debs/dbeaver-ce /" | sudo tee /etc/apt/sources.list.d/dbeaver.list >> $apt_log_path
 
   sudo apt-get -y -qq update >> $apt_log_path
   sudo apt-get -y -qq install dbeaver-ce >> $apt_log_path
@@ -555,7 +557,7 @@ fi
 if [[ $answer =~ $yes ]]; then
   log "Installing the latest version of Postman."
 
-  sudo snap install postman >> $apt_log_path
+  sudo snap install postman
 
   info "Postman has been isntalled successfully.\n"
 fi
