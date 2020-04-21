@@ -168,7 +168,7 @@ if [[ $answer =~ $yes ]]; then
 
   gsettings set org.gnome.desktop.input-sources sources "[('xkb', 'us'), ('xkb', 'gr')]"
 
-  log "\nSet regional formats back to US."
+  log "Set regional formats back to US."
 
   sudo update-locale LANG=en_US.UTF-8
   sudo update-locale LANGUAGE=
@@ -185,7 +185,6 @@ if [[ $answer =~ $yes ]]; then
   sudo update-locale LC_MEASUREMENT=en_US.UTF-8
   sudo update-locale LC_IDENTIFICATION=en_US.UTF-8
   sudo update-locale LC_ALL=
-  locale
 
   info "System languages have been updated successfully.\n"
 fi
