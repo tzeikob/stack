@@ -46,15 +46,15 @@ b () {
 
 # Log a normal message
 log () {
-  echo -e "$white$1$reset_color"
+  echo -e $white$1$reset_color
 }
 
 # Log an info message
 info () {
-  echo -e "$green$1$reset_color"
+  echo -e $green$1$reset_color
 }
 
 # Log a warn message
 warn () {
-  echo -e "$orange$1$reset_color"
+  echo -e $orange$1$reset_color
 }
