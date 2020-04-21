@@ -111,11 +111,11 @@ if [[ $answer =~ $yes ]]; then
   log "Upgrading the base system with the latest updates."
 
   sudo apt -y -qq update
-  sudo apt -y -qq upgrade -o=Dpkg::Use-Pty=0
+  sudo apt -y -qq upgrade
 
   log "\nRemoving any not used packages."
 
-  sudo apt -y -qq autoremove -o=Dpkg::Use-Pty=0
+  sudo apt -y -qq autoremove
 
   log "\nInstalling the following third-party software dependencies:"
 
@@ -126,13 +126,13 @@ if [[ $answer =~ $yes ]]; then
 
   log $packages
 
-  sudo apt -y -qq install -o=Dpkg::Use-Pty=0 ${packages[@]}
+  sudo apt -y -qq install ${packages[@]}
 
   log "\nInstalling GUI for UFW to manage firewall rules."
 
   sudo add-apt-repository -y -n universe
   sudo apt -y -qq update
-  sudo apt -y -qq install -o=Dpkg::Use-Pty=0 gufw
+  sudo apt -y -qq install gufw
 
   log "Firewall has been set to deny any incoming and allow any outgoing traffic."
 
@@ -145,7 +145,7 @@ if [[ $answer =~ $yes ]]; then
 
   sudo add-apt-repository -y -n ppa:unit193/encryption
   sudo apt -y -qq update
-  sudo apt -y -qq install -o=Dpkg::Use-Pty=0 veracrypt
+  sudo apt -y -qq install veracrypt
 
   log "VeraCrypt has been installed."
 
@@ -162,7 +162,7 @@ fi
 if [[ $answer =~ $yes ]]; then
   log "Installing the greek language packages."
 
-  sudo apt -y -qq install -o=Dpkg::Use-Pty=0 `check-language-support -l el`
+  sudo apt -y -qq install `check-language-support -l el`
 
   log "Adding greek layout into the keyboard input sources."
 
@@ -230,13 +230,11 @@ else
 fi
 
 if [[ $answer =~ $yes ]]; then
-  log "Downloading the latest version of Chrome."
+  log "Installing the latest version of Chrome."
 
   wget -q --show-progress -P $temp https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
 
-  log "Installing Chrome using deb packaging."
-
-  sudo apt install -o=Dpkg::Use-Pty=0 $temp/google-chrome-stable_current_amd64.deb
+  sudo apt -y -qq install $temp/google-chrome-stable_current_amd64.deb
 
   info "Chrome has been installed successfully.\n"
 fi
@@ -249,13 +247,11 @@ else
 fi
 
 if [[ $answer =~ $yes ]]; then
-  log "Downloading the latest version of Skype."
+  log "Installing the latest version of Skype."
 
   wget -q --show-progress -P $temp https://repo.skype.com/latest/skypeforlinux-64.deb
 
-  log "Installing Skype using deb packaging."
-
-  sudo apt install -o=Dpkg::Use-Pty=0 $temp/skypeforlinux-64.deb
+  sudo apt -y -qq install $temp/skypeforlinux-64.deb
 
   info "Skype has been installed successfully.\n"
 fi
@@ -285,13 +281,11 @@ fi
 if [[ $answer =~ $yes ]]; then
   msteams_version="1.3.00.5153"
 
-  log "Downloading the version $msteams_version of Microsoft Teams."
+  log "Installing the version $msteams_version of Microsoftt Teams."
 
   wget -q --show-progress -P $temp https://packages.microsoft.com/repos/ms-teams/pool/main/t/teams/teams_${msteams_version}_amd64.deb
 
-  log "Installing Microsoftt Teams using deb packaging."
-
-  sudo apt install -o=Dpkg::Use-Pty=0 $temp/teams_${msteams_version}_amd64.deb
+  sudo apt -y -qq install $temp/teams_${msteams_version}_amd64.deb
 
   info "Microsoft Teams has been installed successfully.\n"
 fi
@@ -308,7 +302,7 @@ if [[ $answer =~ $yes ]]; then
 
   sudo add-apt-repository -y -n multiverse
   sudo apt -y -qq update
-  sudo apt -y -qq install -o=Dpkg::Use-Pty=0 virtualbox
+  sudo apt -y -qq install virtualbox
 
   info "Virtual Box has been installed successfully.\n"
 fi
@@ -330,7 +324,7 @@ if [[ $answer =~ $yes ]]; then
    sudo apt -y -qq update
   fi
 
-  sudo apt -y -qq install -o=Dpkg::Use-Pty=0 git
+  sudo apt -y -qq install git
 
   read -p "Enter your git username:($USER) " username
 
@@ -395,13 +389,13 @@ fi
 if [[ $answer =~ $yes ]]; then
   log "Installing the version 8 of Open JDK."
 
-  sudo apt -y -qq install -o=Dpkg::Use-Pty=0 openjdk-8-jdk openjdk-8-doc openjdk-8-source
+  sudo apt -y -qq install openjdk-8-jdk openjdk-8-doc openjdk-8-source
 
   log "Open JDK 8 has been installed successfully."
 
   log "\nInstalling the version 11 (LTS) of Open JDK."
 
-  sudo apt -y -qq install -o=Dpkg::Use-Pty=0 openjdk-11-jdk openjdk-11-doc openjdk-11-source
+  sudo apt -y -qq install openjdk-11-jdk openjdk-11-doc openjdk-11-source
 
   log "Open JDK 11 (LTS) has been installed successfully."
 
@@ -411,7 +405,7 @@ if [[ $answer =~ $yes ]]; then
 
   log "\nInstalling the latest version of Maven."
 
-  sudo apt -y -qq install -o=Dpkg::Use-Pty=0 maven
+  sudo apt -y -qq install maven
 
   log "Maven has been installed."
 
@@ -429,13 +423,13 @@ if [[ $answer =~ $yes ]]; then
   log "Installing latest version of docker community edition."
 
   sudo apt -y -qq update
-  sudo apt -y -qq install -o=Dpkg::Use-Pty=0 apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+  sudo apt -y -qq install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
 
   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
   sudo add-apt-repository -y -n "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 
   sudo apt -y -qq update
-  sudo apt -y -qq install -o=Dpkg::Use-Pty=0 docker-ce docker-ce-cli containerd.io
+  sudo apt -y -qq install docker-ce docker-ce-cli containerd.io
 
   log "Creating docker user group."
 
@@ -469,7 +463,7 @@ if [[ $answer =~ $yes ]]; then
   sudo add-apt-repository -y -n "deb [arch=amd64] https://packagecloud.io/AtomEditor/atom/any/ any main"
 
   sudo apt -y -qq update
-  sudo apt -y -qq install -o=Dpkg::Use-Pty=0 atom
+  sudo apt -y -qq install atom
 
   info "Atom has been installed successfully.\n"
 fi
@@ -482,13 +476,11 @@ else
 fi
 
 if [[ $answer =~ $yes ]]; then
-  log "Downloading the latest version of Visual Studio."
+  log "Installing the latest version of Visual Studio."
 
   wget -q --show-progress -P $temp -O $temp/visual-studio.deb https://go.microsoft.com/fwlink/?LinkID=760868
 
-  log "Installing Visual Studio using deb packaging."
-
-  sudo apt install -o=Dpkg::Use-Pty=0 $temp/visual-studio.deb
+  sudo apt -y -qq install $temp/visual-studio.deb
 
   info "Visual Studio has been installed successfully.\n"
 fi
@@ -522,7 +514,7 @@ if [[ $answer =~ $yes ]]; then
   echo "deb https://dbeaver.io/debs/dbeaver-ce /" | sudo tee /etc/apt/sources.list.d/dbeaver.list
 
   sudo apt -y -qq update
-  sudo apt -y -qq install -o=Dpkg::Use-Pty=0 dbeaver-ce
+  sudo apt -y -qq install dbeaver-ce
 
   info "DBeaver has been installed successfully.\n"
 fi
@@ -537,13 +529,11 @@ fi
 if [[ $answer =~ $yes ]]; then
   compass_version="1.20.5"
 
-  log "Downloading the version $compass_version of MongoDB Compass community."
+  log "Installing the version $compass_version of MongoDB Compass community."
 
   wget -q --show-progress -P $temp -O $temp/compass.deb "https://downloads.mongodb.com/compass/mongodb-compass-community_${compass_version}_amd64.deb"
 
-  log "Installing MongoDB Compass using deb packaging."
-
-  sudo apt install -o=Dpkg::Use-Pty=0 $temp/compass.deb
+  sudo apt -y -qq install $temp/compass.deb
 
   info "MongoDB compass has been installed successfully.\n"
 fi
@@ -575,7 +565,7 @@ if [[ $answer =~ $yes ]]; then
 
   sudo add-apt-repository -y -n ppa:qbittorrent-team/qbittorrent-stable
   sudo apt -y -qq update
-  sudo apt -y -qq install -o=Dpkg::Use-Pty=0 qbittorrent
+  sudo apt -y -qq install qbittorrent
 
   info "QBittorrent has been installed successfully.\n"
 fi
@@ -592,7 +582,7 @@ if [[ $answer =~ $yes ]]; then
 
   sudo add-apt-repository -y -n ppa:libreoffice/ppa
   sudo apt -y -qq update
-  sudo apt -y -qq install -o=Dpkg::Use-Pty=0 libreoffice
+  sudo apt -y -qq install libreoffice
 
   info "Libre Office has been installed successfully.\n"
 fi
