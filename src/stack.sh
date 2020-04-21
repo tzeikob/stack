@@ -111,11 +111,11 @@ if [[ $answer =~ $yes ]]; then
   log "Upgrading the base system with the latest updates."
 
   sudo apt -y -qq update
-  sudo apt -y -qq -o=Dpkg::Use-Pty=0 upgrade
+  sudo apt -y -qq upgrade
 
   log "\nRemoving any not used packages."
 
-  sudo apt -y -qq -o=Dpkg::Use-Pty=0 autoremove
+  sudo apt -y -qq autoremove
 
   log "\nInstalling the following third-party software dependencies:"
 
@@ -126,13 +126,13 @@ if [[ $answer =~ $yes ]]; then
 
   log $packages
 
-  sudo apt -y -qq -o=Dpkg::Use-Pty=0 install ${packages[@]}
+  sudo apt -y -qq install ${packages[@]}
 
   log "\nInstalling GUI for UFW to manage firewall rules."
 
   sudo add-apt-repository -y -n universe
   sudo apt -y -qq update
-  sudo apt -y -qq -o=Dpkg::Use-Pty=0 install gufw
+  sudo apt -y -qq install gufw
 
   log "Firewall has been set to deny any incoming and allow any outgoing traffic."
 
@@ -145,7 +145,7 @@ if [[ $answer =~ $yes ]]; then
 
   sudo add-apt-repository -y -n ppa:unit193/encryption
   sudo apt -y -qq update
-  sudo apt -y -qq -o=Dpkg::Use-Pty=0 install veracrypt
+  sudo apt -y -qq install veracrypt
 
   log "VeraCrypt has been installed."
 
@@ -162,7 +162,7 @@ fi
 if [[ $answer =~ $yes ]]; then
   log "Installing the greek language packages."
 
-  sudo apt -y -qq -o=Dpkg::Use-Pty=0 install `check-language-support -l el`
+  sudo apt -y -qq install `check-language-support -l el`
 
   log "Adding greek layout into the keyboard input sources."
 
@@ -309,7 +309,7 @@ if [[ $answer =~ $yes ]]; then
 
   sudo add-apt-repository -y -n multiverse
   sudo apt -y -qq update
-  sudo apt -y -qq -o=Dpkg::Use-Pty=0 install virtualbox
+  sudo apt -y -qq install virtualbox
 
   info "Virtual Box has been installed successfully.\n"
 fi
@@ -331,7 +331,7 @@ if [[ $answer =~ $yes ]]; then
    sudo apt -y -qq update
   fi
 
-  sudo apt -y -qq -o=Dpkg::Use-Pty=0 install git
+  sudo apt -y -qq install git
 
   read -p "Enter your git username:($USER) " username
 
@@ -396,13 +396,13 @@ fi
 if [[ $answer =~ $yes ]]; then
   log "Installing the version 8 of Open JDK."
 
-  sudo apt -y -qq -o=Dpkg::Use-Pty=0 install openjdk-8-jdk openjdk-8-doc openjdk-8-source
+  sudo apt -y -qq install openjdk-8-jdk openjdk-8-doc openjdk-8-source
 
   log "Open JDK 8 has been installed successfully."
 
   log "\nInstalling the version 11 (LTS) of Open JDK."
 
-  sudo apt -y -qq -o=Dpkg::Use-Pty=0 install openjdk-11-jdk openjdk-11-doc openjdk-11-source
+  sudo apt -y -qq install openjdk-11-jdk openjdk-11-doc openjdk-11-source
 
   log "Open JDK 11 (LTS) has been installed successfully."
 
@@ -412,7 +412,7 @@ if [[ $answer =~ $yes ]]; then
 
   log "\nInstalling the latest version of Maven."
 
-  sudo apt -y -qq -o=Dpkg::Use-Pty=0 install maven
+  sudo apt -y -qq install maven
 
   log "Maven has been installed."
 
@@ -430,13 +430,13 @@ if [[ $answer =~ $yes ]]; then
   log "Installing latest version of docker community edition."
 
   sudo apt -y -qq update
-  sudo apt -y -qq -o=Dpkg::Use-Pty=0 install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+  sudo apt -y -qq install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
 
   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
   sudo add-apt-repository -y -n "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 
   sudo apt -y -qq update
-  sudo apt -y -qq -o=Dpkg::Use-Pty=0 install docker-ce docker-ce-cli containerd.io
+  sudo apt -y -qq install docker-ce docker-ce-cli containerd.io
 
   log "Creating docker user group."
 
@@ -470,7 +470,7 @@ if [[ $answer =~ $yes ]]; then
   sudo add-apt-repository -y -n "deb [arch=amd64] https://packagecloud.io/AtomEditor/atom/any/ any main"
 
   sudo apt -y -qq update
-  sudo apt -y -qq -o=Dpkg::Use-Pty=0 install atom
+  sudo apt -y -qq install atom
 
   info "Atom has been installed successfully.\n"
 fi
@@ -523,7 +523,7 @@ if [[ $answer =~ $yes ]]; then
   echo "deb https://dbeaver.io/debs/dbeaver-ce /" | sudo tee /etc/apt/sources.list.d/dbeaver.list
 
   sudo apt -y -qq update
-  sudo apt -y -qq -o=Dpkg::Use-Pty=0 install dbeaver-ce
+  sudo apt -y -qq install dbeaver-ce
 
   info "DBeaver has been installed successfully.\n"
 fi
@@ -576,7 +576,7 @@ if [[ $answer =~ $yes ]]; then
 
   sudo add-apt-repository -y -n ppa:qbittorrent-team/qbittorrent-stable
   sudo apt -y -qq update
-  sudo apt -y -qq -o=Dpkg::Use-Pty=0 install qbittorrent
+  sudo apt -y -qq install qbittorrent
 
   info "QBittorrent has been installed successfully.\n"
 fi
@@ -593,7 +593,7 @@ if [[ $answer =~ $yes ]]; then
 
   sudo add-apt-repository -y -n ppa:libreoffice/ppa
   sudo apt -y -qq update
-  sudo apt -y -qq -o=Dpkg::Use-Pty=0 install libreoffice
+  sudo apt -y -qq install libreoffice
 
   info "Libre Office has been installed successfully.\n"
 fi
