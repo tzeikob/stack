@@ -18,14 +18,10 @@ while getopts y OPT; do
   esac
 done
 
-# Print welcome message
-log "$(i Scriptbox v1.0.0)"
-log "Starting the stack script $script_path."
-log "Loading global dependencies from $global_path."
-log "Script launched by user $(b $USER) hosted at $(b $HOSTNAME)."
-log "Running in distro $(b "$(lsb_release -si) $(lsb_release -sr)")."
+highlight " -ScriptBox v1.0.0, $(date +"%a %d %B %Y %H:%M %Z")- "
 
-exit 0
+log "Starting the stack script $script_path."
+log "Loading global dependencies from $global_path.\n"
 
 # Create temporary files folder
 temp="/tmp/scriptbox/stack"
@@ -34,10 +30,10 @@ log "Creating temporary files folder to $temp."
 
 mkdir -p $temp
 
-info "Temporary files folder has been created successfully"
+info "Temporary folder has been created successfully.\n"
 
 # Rename default home folders
-log "\nRenaming the default home folders (/home/$USER) to lower case."
+log "Refactoring user's home folders in /home/$USER."
 
 mv /home/$USER/Desktop /home/$USER/desktop
 mv /home/$USER/Downloads /home/$USER/downloads
@@ -55,9 +51,10 @@ log "Backing up the user dirs file to $userdirs_file.bak."
 
 cp $userdirs_file $userdirs_file.bak
 
-log "Updating the contents of the user dirs file."
+log "Updating the user dirs file $userdirs_file."
 
 > $userdirs_file
+
 echo "XDG_DESKTOP_DIR=\"$HOME/desktop\"" >> $userdirs_file
 echo "XDG_DOWNLOAD_DIR=\"$HOME/downloads\"" >> $userdirs_file
 echo "XDG_TEMPLATES_DIR=\"$HOME/templates\"" >> $userdirs_file
@@ -67,30 +64,32 @@ echo "XDG_MUSIC_DIR=\"$HOME/music\"" >> $userdirs_file
 echo "XDG_PICTURES_DIR=\"$HOME/pictures\"" >> $userdirs_file
 echo "XDG_VIDEOS_DIR=\"$HOME/videos\"" >> $userdirs_file
 
-info "User dirs file has been updated successfully."
+log "User dirs file has been updated successfully."
 
 # Update the bookmarks file
 bookmarks_file="/home/$USER/.config/gtk-3.0/bookmarks"
 
-log "\nBacking up the bookmarks file to $bookmarks_file.bak."
+log "Backing up the bookmarks file to $bookmarks_file.bak."
 
 cp $bookmarks_file $bookmarks_file.bak
 
-log "Updating the contents of the bookmarks file."
+log "Updating the bookmarks file $bookmarks_file."
 
 > $bookmarks_file
+
 echo "file:///home/"$USER"/downloads Downloads" | tee -a $bookmarks_file
 echo "file:///home/"$USER"/documents Documents" | tee -a $bookmarks_file
 echo "file:///home/"$USER"/music Music" | tee -a $bookmarks_file
 echo "file:///home/"$USER"/pictures Pictures" | tee -a $bookmarks_file
 echo "file:///home/"$USER"/videos Videos" | tee -a $bookmarks_file
 
-info "The default home folders have been renamed successfully."
+# Create various host folders
+log "Creating host folders to store databases and sources."
 
-# Create various folders
-log "\nCreating folders to host databases and code sources."
-
-mkdir -p /home/$USER/dbs
+databases_home=/home/$USER/databases
+mkdir -p $databases
+mkdir -p $databases/mysql
+mkdir -p $databases/mongo
 
 sources_home=/home/$USER/sources
 mkdir -p $sources_home
@@ -99,7 +98,9 @@ mkdir -p $sources_home/temp
 
 echo "file://$sources_home Sources" | tee -a $bookmarks_file
 
-info "Host folders have been created successfully.\n"
+ls /home/$USER
+
+info "User's home folder has been refactored successfully.\n"
 
 # Upgrade the system
 if [[ $yesToAll = false ]]; then
@@ -112,11 +113,11 @@ if [[ $answer =~ $yes ]]; then
   log "Upgrading the base system with the latest updates."
 
   sudo apt -y -qq update
-  sudo apt -y -qq upgrade
+  sudo apt -y -qq -o=Dpkg::Use-Pty=0 upgrade
 
   log "\nRemoving any not used packages."
 
-  sudo apt -y -qq autoremove
+  sudo apt -y -qq -o=Dpkg::Use-Pty=0 autoremove
 
   log "\nInstalling the following third-party software dependencies:"
 
@@ -127,13 +128,13 @@ if [[ $answer =~ $yes ]]; then
 
   log $packages
 
-  sudo apt -y -qq install ${packages[@]}
+  sudo apt -y -qq -o=Dpkg::Use-Pty=0 install ${packages[@]}
 
   log "\nInstalling GUI for UFW to manage firewall rules."
 
   sudo add-apt-repository -y -n universe
   sudo apt -y -qq update
-  sudo apt -y -qq install gufw
+  sudo apt -y -qq -o=Dpkg::Use-Pty=0 install gufw
 
   log "Firewall has been set to deny any incoming and allow any outgoing traffic."
 
@@ -142,11 +143,11 @@ if [[ $answer =~ $yes ]]; then
   sudo ufw enable
   sudo ufw status verbose
 
-  log "\nInstalling the latest version of VeraCrypt software."
+  log "\nInstalling the latest version of VeraCrypt."
 
   sudo add-apt-repository -y -n ppa:unit193/encryption
   sudo apt -y -qq update
-  sudo apt -y -qq install veracrypt
+  sudo apt -y -qq -o=Dpkg::Use-Pty=0 install veracrypt
 
   log "VeraCrypt has been installed."
 
@@ -163,7 +164,7 @@ fi
 if [[ $answer =~ $yes ]]; then
   log "Installing the greek language packages."
 
-  sudo apt -y -qq install `check-language-support -l el`
+  sudo apt -y -qq -o=Dpkg::Use-Pty=0 install `check-language-support -l el`
 
   log "Adding greek layout into the keyboard input sources."
 
@@ -310,7 +311,7 @@ if [[ $answer =~ $yes ]]; then
 
   sudo add-apt-repository -y -n multiverse
   sudo apt -y -qq update
-  sudo apt -y -qq install virtualbox
+  sudo apt -y -qq -o=Dpkg::Use-Pty=0 install virtualbox
 
   info "Virtual Box has been installed successfully.\n"
 fi
@@ -332,7 +333,7 @@ if [[ $answer =~ $yes ]]; then
    sudo apt -y -qq update
   fi
 
-  sudo apt -y -qq install git
+  sudo apt -y -qq -o=Dpkg::Use-Pty=0 install git
 
   read -p "Enter your git username:($USER) " username
 
@@ -380,7 +381,8 @@ if [[ $answer =~ $yes ]]; then
   nvm install node
   nvm use --lts
 
-  log "The following Node versions have been installed (/home/$USER/.nvm/versions/node):"
+  log "Node versions have are located in /home/$USER/.nvm/versions/node."
+
   nvm ls
 
   info "Node has been installed successfully.\n"
@@ -396,13 +398,13 @@ fi
 if [[ $answer =~ $yes ]]; then
   log "Installing the version 8 of Open JDK."
 
-  sudo apt -y -qq install openjdk-8-jdk openjdk-8-doc openjdk-8-source
+  sudo apt -y -qq -o=Dpkg::Use-Pty=0 install openjdk-8-jdk openjdk-8-doc openjdk-8-source
 
   log "Open JDK 8 has been installed successfully."
 
   log "\nInstalling the version 11 (LTS) of Open JDK."
 
-  sudo apt -y -qq install openjdk-11-jdk openjdk-11-doc openjdk-11-source
+  sudo apt -y -qq -o=Dpkg::Use-Pty=0 install openjdk-11-jdk openjdk-11-doc openjdk-11-source
 
   log "Open JDK 11 (LTS) has been installed successfully."
 
@@ -412,7 +414,7 @@ if [[ $answer =~ $yes ]]; then
 
   log "\nInstalling the latest version of Maven."
 
-  sudo apt -y -qq install maven
+  sudo apt -y -qq -o=Dpkg::Use-Pty=0 install maven
 
   log "Maven has been installed."
 
@@ -430,13 +432,13 @@ if [[ $answer =~ $yes ]]; then
   log "Installing latest version of docker community edition."
 
   sudo apt -y -qq update
-  sudo apt -y -qq install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+  sudo apt -y -qq -o=Dpkg::Use-Pty=0 install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
 
   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
   sudo add-apt-repository -y -n "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 
   sudo apt -y -qq update
-  sudo apt -y -qq install docker-ce docker-ce-cli containerd.io
+  sudo apt -y -qq -o=Dpkg::Use-Pty=0 install docker-ce docker-ce-cli containerd.io
 
   log "Creating docker user group."
 
@@ -470,7 +472,7 @@ if [[ $answer =~ $yes ]]; then
   sudo add-apt-repository -y -n "deb [arch=amd64] https://packagecloud.io/AtomEditor/atom/any/ any main"
 
   sudo apt -y -qq update
-  sudo apt -y -qq install atom
+  sudo apt -y -qq -o=Dpkg::Use-Pty=0 install atom
 
   info "Atom has been installed successfully.\n"
 fi
@@ -523,7 +525,7 @@ if [[ $answer =~ $yes ]]; then
   echo "deb https://dbeaver.io/debs/dbeaver-ce /" | sudo tee /etc/apt/sources.list.d/dbeaver.list
 
   sudo apt -y -qq update
-  sudo apt -y -qq install dbeaver-ce
+  sudo apt -y -qq -o=Dpkg::Use-Pty=0 install dbeaver-ce
 
   info "DBeaver has been installed successfully.\n"
 fi
@@ -576,7 +578,7 @@ if [[ $answer =~ $yes ]]; then
 
   sudo add-apt-repository -y -n ppa:qbittorrent-team/qbittorrent-stable
   sudo apt -y -qq update
-  sudo apt -y -qq install qbittorrent
+  sudo apt -y -qq -o=Dpkg::Use-Pty=0 install qbittorrent
 
   info "QBittorrent has been installed successfully.\n"
 fi
@@ -593,7 +595,7 @@ if [[ $answer =~ $yes ]]; then
 
   sudo add-apt-repository -y -n ppa:libreoffice/ppa
   sudo apt -y -qq update
-  sudo apt -y -qq install libreoffice
+  sudo apt -y -qq -o=Dpkg::Use-Pty=0 install libreoffice
 
   info "Libre Office has been installed successfully.\n"
 fi
