@@ -10,11 +10,8 @@ while getopts y OPT; do
   esac
 done
 
-# Set current relative path
-dir=$(dirname $0)
-
 # Load global goodies
-source $dir"/global.sh"
+source $(dirname $0)"/global.sh"
 
 # Initiate local variables
 now=$(date)
