@@ -11,7 +11,7 @@ apt_log_path=$dir"/apt.log"
 > $apt_log_path
 
 # Open a terminal along to tail installation's logs
-gnome-terminal --tab -- bash -c "tail -f ${apt_log_path}; sleep 8h"
+gnome-terminal --tab -- bash -c "tail -f ${apt_log_path}; sleep 8h" > /dev/null 2>&1
 
 # Import global common dependencies
 source $global_path
