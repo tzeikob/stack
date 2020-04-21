@@ -17,8 +17,6 @@ dir=$(dirname $0)
 source $dir"/global.sh"
 
 # Initiate local variables
-bookmarks_file="/home/$USER/.config/gtk-3.0/bookmarks"
-
 now=$(date)
 distro=$(lsb_release -si)
 version=$(lsb_release -sr)
@@ -71,6 +69,9 @@ echo "XDG_PICTURES_DIR=\"$HOME/pictures\"" >> $userdirs_file
 echo "XDG_VIDEOS_DIR=\"$HOME/videos\"" >> $userdirs_file
 
 info "User dirs file has been updated successfully."
+
+# Update the bookmarks file
+bookmarks_file="/home/$USER/.config/gtk-3.0/bookmarks"
 
 log "\nBacking up the bookmarks file to $bookmarks_file.bak."
 
