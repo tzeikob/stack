@@ -375,7 +375,7 @@ if [[ $answer =~ $yes ]]; then
   source /home/$USER/.bashrc >> $apt_log_path
   source /home/$USER/.nvm/nvm.sh >> $apt_log_path
 
-  log "NVM has been installed under /home/$USER/.nvm"
+  log "NVM has been installed under /home/$USER/.nvm."
 
   log "Installing Node LTS and latest stable versions."
 
