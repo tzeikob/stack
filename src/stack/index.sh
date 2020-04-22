@@ -515,7 +515,7 @@ if [[ $answer =~ $yes ]]; then
   settings_home="/home/$USER/.config/Code/User"
   settings_file="settings.json"
 
-  log "Creating visual studio code settings file (${settings_home}/${settings_file})."
+  log "Creating user settings file (${settings_home}/${settings_file})."
 
   mkdir -p $settings_home
   cp $dir/visual-studio-settings.json $settings_home/$settings_file
