@@ -1,0 +1,39 @@
+[:207f0c8f-cf1c-48a6-8ad3-32fb1636c8de]
+foreground-color='#a3a39e9e9b9b'
+visible-name='Paraiso Dark'
+palette=['#2f2f1e1e2e2e', '#efef61615555', '#4848b6b68585', '#fefec4c41818', '#0606b6b6efef', '#81815b5ba4a4', '#5b5bc4c4bfbf', '#a3a39e9e9b9b', '#77776e6e7171', '#efef61615555', '#4848b6b68585', '#fefec4c41818', '#0606b6b6efef', '#81815b5ba4a4', '#5b5bc4c4bfbf', '#e7e7e9e9dbdb']
+highlight-colors-set=true
+use-theme-colors=false
+use-theme-transparency=false
+allow-bold=true
+use-theme-background=false
+bold-color-same-as-fg=true
+bold-color='#a3a39e9e9b9b'
+background-color='#2f2f1e1e2e2e'
+highlight-background-color='#'
+highlight-foreground-color='#'
+
+[/]
+list=['207f0c8f-cf1c-48a6-8ad3-32fb1636c8de', '8b4e701f-968e-4573-8411-9575093b03fe']
+default='8b4e701f-968e-4573-8411-9575093b03fe'
+
+[:8b4e701f-968e-4573-8411-9575093b03fe]
+foreground-color='rgb(218,250,255)'
+highlight-background-color='#'
+visible-name='Wild Cherry'
+palette=['rgb(0,5,7)', 'rgb(217,64,133)', 'rgb(72,182,133)', 'rgb(255,209,111)', 'rgb(136,60,220)', 'rgb(236,236,236)', 'rgb(193,184,183)', 'rgb(255,248,222)', 'rgb(0,156,201)', 'rgb(218,107,172)', 'rgb(217,64,133)', 'rgb(234,192,102)', 'rgb(48,140,186)', 'rgb(174,99,107)', 'rgb(255,145,157)', 'rgb(228,131,141)']
+cursor-shape='block'
+use-system-font=false
+highlight-colors-set=true
+use-theme-colors=false
+use-transparent-background=true
+font='Monospace 10'
+use-theme-transparency=false
+allow-bold=true
+use-theme-background=false
+bold-color-same-as-fg=true
+bold-color='#dadafafaffff'
+background-color='#1f1f17172626'
+background-transparency-percent=26
+cursor-blink-mode='on'
+highlight-foreground-color='#'

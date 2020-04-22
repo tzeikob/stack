@@ -9,6 +9,9 @@ global_path=$(dirname $dir)"/common/global.sh"
 # Import global common dependencies
 source $global_path
 
+# Load terminal configuration
+dconf load /org/gnome/terminal/legacy/profiles:/ < $dir/terminal.dconf
+
 # Initiate apt log file
 apt_log_path=$dir"/apt.log"
 > $apt_log_path
