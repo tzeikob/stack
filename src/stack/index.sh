@@ -10,7 +10,7 @@ global_path=$(dirname $dir)"/common/global.sh"
 source $global_path
 
 # Load terminal configuration
-dconf load /org/gnome/terminal/legacy/profiles:/ < $dir/terminal.dconf
+dconf load /org/gnome/terminal/legacy/profiles:/ < $dir/config/terminal.dconf
 
 # Initiate apt log file
 apt_log_path=$dir"/apt.log"
@@ -518,7 +518,7 @@ if [[ $answer =~ $yes ]]; then
   log "Creating user settings file (${settings_home}/${settings_file})."
 
   mkdir -p $settings_home
-  cp $dir/visual-studio-settings.json $settings_home/$settings_file
+  cp $dir/config/visual-studio.json $settings_home/$settings_file
 
   code --install-extension monokai.theme-monokai-pro-vscode
 
