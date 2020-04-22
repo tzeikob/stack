@@ -42,6 +42,18 @@ mkdir -p $temp
 
 info "Temporary folder has been created successfully.\n"
 
+# Loading fonts
+log "Installing extra system fonts."
+
+wget -q --show-progress -P $temp https://github.com/tonsky/FiraCode/releases/download/3.1/FiraCode_3.1.zip
+unzip $temp"/FiraCode_3.1.zip"
+mkdir -p "/home/$USER/.local/share/fonts"
+mv $temp"/ttf/*" "/home/$USER/.local/share/fonts"
+
+fc-cache -f -v >> $apt_log_path
+
+info "Fonts have been installed successfully."
+
 # Rename default home folders
 log "Refactoring user's home folders in /home/$USER."
 
@@ -483,21 +495,38 @@ if [[ $answer =~ $yes ]]; then
   info "Atom has been installed successfully.\n"
 fi
 
-# Install Visual Studio
+# Install Visual Studio Code
 if [[ $yesToAll = false ]]; then
-  read -p "Do you want to install Visual Studio?(Y/n) " answer
+  read -p "Do you want to install Visual Studio Code?(Y/n) " answer
 else
   answer="yes"
 fi
 
 if [[ $answer =~ $yes ]]; then
-  log "Installing the latest version of Visual Studio."
+  log "Installing the latest version of Visual Studio Code."
 
-  wget -q --show-progress -P $temp -O $temp/visual-studio.deb https://go.microsoft.com/fwlink/?LinkID=760868
+  wget -q --show-progress -P $temp -O $temp/visual-studio-code.deb https://go.microsoft.com/fwlink/?LinkID=760868
 
-  sudo apt-get -y install $temp/visual-studio.deb >> $apt_log_path
+  sudo apt-get -y install $temp/visual-studio-code.deb >> $apt_log_path
 
-  info "Visual Studio has been installed successfully.\n"
+  settings_home="/home$USER/.config/Code/User/"
+  settings_file="settings.json"
+
+  log "Configuring visual studio code ($settings_home}/${settings_file})."
+
+  mkdir -p $settings_home
+
+  > $settings_home/$settings_file
+  echo "{" >> $settings_home/$settings_file
+  echo " "editor.fontFamily": "Fira Code"," >> $settings_home/$settings_file
+  echo " "editor.fontLigatures": true," >> $settings_home/$settings_file
+  echo " "workbench.colorTheme": "Monokai Pro (Filter Ristretto)"," >> $settings_home/$settings_file
+  echo " "workbench.iconTheme": "Monokai Pro (Filter Ristretto) Icons"" >> $settings_home/$settings_file
+  echo "}" >> $settings_home/$settings_file
+
+  code --install-extension monokai.theme-monokai-pro-vscode
+
+  info "Visual Studio Code has been installed successfully.\n"
 fi
 
 # Install IntelliJ
