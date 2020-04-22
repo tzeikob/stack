@@ -366,10 +366,11 @@ if [[ $answer =~ $yes ]]; then
 
   log "Installing the version $nvm_version of NVM."
 
-  wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v$nvm_version/install.sh | bash >> $apt_log_path
+  wget -q --show-progress -P $temp -O $temp/nvm-install.sh https://raw.githubusercontent.com/nvm-sh/nvm/v$nvm_version/install.sh
 
-  source /home/$USER/.bashrc
-  source /home/$USER/.nvm/nvm.sh
+  bash $temp/nvm-install.sh >> $apt_log_path
+  source /home/$USER/.bashrc >> $apt_log_path
+  source /home/$USER/.nvm/nvm.sh >> $apt_log_path
 
   log "NVM has been installed under /home/$USER/.nvm"
 
@@ -381,7 +382,7 @@ if [[ $answer =~ $yes ]]; then
 
   log "Node versions can be found under /home/$USER/.nvm/versions/node."
 
-  log "Node in use is $(nvm current)."
+  log "Node $(nvm current) is currently in use."
 
   info "Node has been installed successfully.\n"
 fi
