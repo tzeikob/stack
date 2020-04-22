@@ -410,7 +410,7 @@ if [[ $answer =~ $yes ]]; then
 
   log "Open JDK 11 (LTS) has been installed successfully."
 
-  log "JDK currently in use is: \n."
+  log "JDK currently in use is:"
 
   java -version
 
@@ -424,7 +424,7 @@ if [[ $answer =~ $yes ]]; then
 
   mvn -version >> $apt_log_path
 
-  info "Java has been installed successfully.\n"
+  info "JDKs have been installed successfully.\n"
 fi
 
 # Install Docker
