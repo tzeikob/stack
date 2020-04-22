@@ -379,8 +379,8 @@ if [[ $answer =~ $yes ]]; then
 
   log "Installing Node LTS and latest stable versions."
 
-  nvm install --lts >> $apt_log_path
-  nvm install node >> $apt_log_path
+  nvm install --no-progress --lts >> $apt_log_path
+  nvm install --no-progress node >> $apt_log_path
   nvm use --lts >> $apt_log_path
 
   log "Node versions can be found under /home/$USER/.nvm/versions/node."
