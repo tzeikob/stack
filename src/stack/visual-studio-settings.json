@@ -1,0 +1,11 @@
+{
+  "editor.fontFamily": "Fira Code",
+  "editor.fontLigatures": true,
+  "workbench.startupEditor": "newUntitledFile",
+  "editor.minimap.enabled": false,
+  "editor.tabSize": 2,
+  "javascript.updateImportsOnFileMove.enabled": "never",
+  "editor.renderWhitespace": "all",
+  "workbench.colorTheme": "Monokai Pro (Filter Ristretto)",
+  "workbench.iconTheme": "Monokai Pro (Filter Ristretto) Icons"
+}
