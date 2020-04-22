@@ -407,7 +407,9 @@ if [[ $answer =~ $yes ]]; then
 
   log "Open JDK 11 (LTS) has been installed successfully."
 
-  log "JDK in use is $(java -version)."
+  log "JDK currently in use is: \n."
+
+  java -version
 
   sudo update-alternatives --display java >> $apt_log_path
 
