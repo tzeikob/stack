@@ -474,7 +474,7 @@ fi
 if [[ $answer =~ $yes ]]; then
   log "Installing the latest version of Atom."
 
-  wget -q https://packagecloud.io/AtomEditor/atom/gpgkey -O- | sudo apt-key add -  >> $apt_log_path
+  wget -q https://packagecloud.io/AtomEditor/atom/gpgkey -O- | sudo apt-key add -
   sudo add-apt-repository -y -n "deb [arch=amd64] https://packagecloud.io/AtomEditor/atom/any/ any main" >> $apt_log_path
 
   sudo apt-get -y update >> $apt_log_path
@@ -525,7 +525,7 @@ fi
 if [[ $answer =~ $yes ]]; then
   log "Installing the latest version of DBeaver."
 
-  wget -O - https://dbeaver.io/debs/dbeaver.gpg.key | sudo apt-key add - >> $apt_log_path
+  wget -O - https://dbeaver.io/debs/dbeaver.gpg.key | sudo apt-key add -
   echo "deb https://dbeaver.io/debs/dbeaver-ce /" | sudo tee /etc/apt/sources.list.d/dbeaver.list >> $apt_log_path
 
   sudo apt-get -y update >> $apt_log_path
