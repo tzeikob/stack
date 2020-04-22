@@ -512,13 +512,13 @@ if [[ $answer =~ $yes ]]; then
 
   sudo apt-get -y install $temp/visual-studio-code.deb >> $apt_log_path
 
-  settings_home="/home/$USER/.config/Code/User/"
+  settings_home="/home/$USER/.config/Code/User"
   settings_file="settings.json"
 
   log "Creating visual studio code settings file (${settings_home}/${settings_file})."
 
   mkdir -p $settings_home
-  cp $dir/visual-studio-setting.json $settings_home/$settings_file
+  cp $dir/visual-studio-settings.json $settings_home/$settings_file
 
   code --install-extension monokai.theme-monokai-pro-vscode
 
