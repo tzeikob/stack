@@ -3,8 +3,8 @@
 
 # Define relative paths
 dir=$(dirname $0)
-script_path=$dir"/stack.sh"
-global_path=$dir"/global.sh"
+script_path=$dir"/index.sh"
+global_path=$(dirname $dir)"/common/global.sh"
 
 # Import global common dependencies
 source $global_path
