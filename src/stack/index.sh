@@ -42,17 +42,20 @@ mkdir -p $temp
 
 info "Temporary folder has been created successfully.\n"
 
-# Loading fonts
+# Loading extra fonts
 log "Installing extra system fonts."
 
 wget -q --show-progress -P $temp https://github.com/tonsky/FiraCode/releases/download/3.1/FiraCode_3.1.zip
-unzip $temp"/FiraCode_3.1.zip"
-mkdir -p "/home/$USER/.local/share/fonts"
-mv $temp"/ttf/*" "/home/$USER/.local/share/fonts"
+
+unzip $temp/FiraCode_3.1.zip -d $temp >> $apt_log_path
+mkdir -p /home/$USER/.local/share/fonts
+cp $temp/ttf/* /home/$USER/.local/share/fonts
+
+log "Updating system's font cache."
 
 fc-cache -f -v >> $apt_log_path
 
-info "Fonts have been installed successfully."
+info "Fonts have been installed successfully.\n"
 
 # Rename default home folders
 log "Refactoring user's home folders in /home/$USER."
