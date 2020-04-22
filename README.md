@@ -4,14 +4,14 @@ This is a repository of bash scripts for general purposes.
 
 #### How to run a bash script
 
-You can execute a bash script with the name `stack.sh` like so.
+You can execute a bash script with the name `stack/index.sh` like so.
 
 ```
-./stack.sh
+./stack/index.sh
 ```
 
 If the file is not executable you can make it with the following command.
 
 ```
-sudo chmod +x stack.sh
+sudo chmod +x stack/index.sh
 ```
