@@ -517,12 +517,19 @@ if [[ $answer =~ $yes ]]; then
   settings_home="/home/$USER/.config/Code/User"
   settings_file="settings.json"
 
-  log "Creating user settings file (${settings_home}/${settings_file})."
+  log "Creating user settings file in ${settings_home}/${settings_file}."
 
   mkdir -p $settings_home
   cp $dir/config/visual-studio.json $settings_home/$settings_file
 
-  code --install-extension monokai.theme-monokai-pro-vscode
+  log "Installing extra themes."
+
+  code --install-extension jolaleye.horizon-theme-vscode
+
+  log "Installing extra plugins and extensions."
+
+  code --install-extension dbaeumer.vscode-eslint
+  code --install-extension yzhang.markdown-all-in-one
 
   info "Visual Studio Code has been installed successfully.\n"
 fi
