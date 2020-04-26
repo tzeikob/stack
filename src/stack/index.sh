@@ -150,14 +150,6 @@ if [[ $answer =~ $yes ]]; then
 
   sudo apt-get -y install ${packages[@]} >> $apt_log_path
 
-  log "Installing the latest version of VeraCrypt."
-
-  sudo add-apt-repository -y -n ppa:unit193/encryption >> $apt_log_path
-  sudo apt-get -y update >> $apt_log_path
-  sudo apt-get -y install veracrypt >> $apt_log_path
-
-  log "VeraCrypt has been installed."
-
   info "System has been updated successfully.\n"
 fi
 
@@ -169,15 +161,13 @@ else
 fi
 
 if [[ $answer =~ $yes ]]; then
-  log "Enabling system's firewall through UFW."
-
   log "Installing GUFW to manage firewall rules via user interface."
 
   sudo add-apt-repository -y -n universe >> $apt_log_path
   sudo apt-get -y update >> $apt_log_path
   sudo apt-get -y install gufw >> $apt_log_path
 
-  log "Enabling the UFW service."
+  log "Enabling the system's firewall with UFW service."
 
   sudo ufw enable
   sudo ufw status verbose
@@ -637,6 +627,23 @@ if [[ $answer =~ $yes ]]; then
   sudo apt-get -y install libreoffice >> $apt_log_path
 
   info "Libre Office has been installed successfully.\n"
+fi
+
+# Install VeraCrypt
+if [[ $yesToAll = false ]]; then
+  read -p "Do you want to install VeraCrypt?(Y/n) " answer
+else
+  answer="yes"
+fi
+
+if [[ $answer =~ $yes ]]; then
+  log "Installing the latest version of VeraCrypt."
+
+  sudo add-apt-repository -y -n ppa:unit193/encryption >> $apt_log_path
+  sudo apt-get -y update >> $apt_log_path
+  sudo apt-get -y install veracrypt >> $apt_log_path
+
+  info "VeraCrypt has been installed successfully.\n"
 fi
 
 # Update the desktop
