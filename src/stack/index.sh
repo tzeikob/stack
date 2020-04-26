@@ -150,19 +150,6 @@ if [[ $answer =~ $yes ]]; then
 
   sudo apt-get -y install ${packages[@]} >> $apt_log_path
 
-  log "Installing GUI for UFW to manage firewall rules."
-
-  sudo add-apt-repository -y -n universe >> $apt_log_path
-  sudo apt-get -y update >> $apt_log_path
-  sudo apt-get -y install gufw >> $apt_log_path
-
-  log "Enabling UFW service."
-
-  sudo ufw enable
-  sudo ufw status verbose
-
-  log "Firewall has been set to deny any incoming and allow any outgoing traffic."
-
   log "Installing the latest version of VeraCrypt."
 
   sudo add-apt-repository -y -n ppa:unit193/encryption >> $apt_log_path
@@ -172,6 +159,32 @@ if [[ $answer =~ $yes ]]; then
   log "VeraCrypt has been installed."
 
   info "System has been updated successfully.\n"
+fi
+
+# Enable system firewall
+if [[ $yesToAll = false ]]; then
+  read -p "Do you want to enable the system's firewall?(Y/n) " answer
+else
+  answer="yes"
+fi
+
+if [[ $answer =~ $yes ]]; then
+  log "Enabling system's firewall through UFW."
+
+  log "Installing GUFW to manage firewall rules via user interface."
+
+  sudo add-apt-repository -y -n universe >> $apt_log_path
+  sudo apt-get -y update >> $apt_log_path
+  sudo apt-get -y install gufw >> $apt_log_path
+
+  log "Enabling the UFW service."
+
+  sudo ufw enable
+  sudo ufw status verbose
+
+  log "Any incoming traffic has been set to deny and outgoing to allow."
+
+  info "Firewall has been enabled successfully.\n"
 fi
 
 # Install system languages
