@@ -42,21 +42,6 @@ mkdir -p $temp
 
 info "Temporary folder has been created successfully.\n"
 
-# Loading extra fonts
-log "Installing extra system fonts."
-
-wget -q --show-progress -P $temp https://github.com/tonsky/FiraCode/releases/download/3.1/FiraCode_3.1.zip
-
-unzip $temp/FiraCode_3.1.zip -d $temp >> $apt_log_path
-mkdir -p /home/$USER/.local/share/fonts
-cp $temp/ttf/* /home/$USER/.local/share/fonts
-
-log "Updating system's font cache."
-
-fc-cache -f -v >> $apt_log_path
-
-info "Fonts have been installed successfully.\n"
-
 # Rename default home folders
 log "Refactoring user's home folders in /home/$USER."
 
@@ -124,6 +109,20 @@ mkdir -p $sources_home/temp
 echo "file://$sources_home Sources" >> $bookmarks_file
 
 info "User's home folder has been refactored successfully.\n"
+
+# Install extra fonts
+fonts_home="/home/$USER/.local/share/fonts"
+
+log "Installing extra system fonts to $fonts_home."
+
+mkdir -p $fonts_home
+cp $dir/fonts/* $fonts_home
+
+log "Updating system's font cache."
+
+fc-cache -f -v >> $apt_log_path
+
+info "Extra fonts have been installed successfully.\n"
 
 # Upgrade the system
 if [[ $yesToAll = false ]]; then
