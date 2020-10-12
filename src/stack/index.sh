@@ -247,6 +247,22 @@ if [[ $answer =~ $yes ]]; then
   info "Screen lock has been disabled successfully.\n"
 fi
 
+# Set inotify watches to monitor files
+if [[ $yesToAll = false ]]; then
+  read -p "Do you want to increase the inotify watches limit?(Y/n) " answer
+else
+  answer="yes"
+fi
+
+if [[ $answer =~ $yes ]]; then
+  watches_limit=524288
+
+  log "Setting the inotify watches limit to a higher value."
+  echo fs.inotify.max_user_watches=$watches_limit | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
+
+  info "The inotify watches limit has been set to $watches_limit."
+fi
+
 # Install Chrome
 if [[ $yesToAll = false ]]; then
   read -p "Do you want to install Chrome?(Y/n) " answer
