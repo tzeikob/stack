@@ -388,6 +388,24 @@ if [[ $answer =~ $yes ]]; then
   log "Your Git email has been set to $(git config --global user.email)."
 
   info "Git has been installed successfully.\n"
+
+  # Show branch in promt for git folders
+  if [[ $yesToAll = false ]]; then
+   read -p "Do you want to show branch name in promt?(Y/n) " answer
+  else
+    answer="yes"
+  fi
+  
+  if [[ $answer =~ $yes ]]; then
+    echo '' | tee -a ~/.bashrc
+    echo '# Show git branch name' | tee -a ~/.bashrc
+    echo 'parse_git_branch() {' | tee -a ~/.bashrc
+    echo ' git branch 2> /dev/null | sed -e "/^[^*]/d" -e "s/* \(.*\)/:\\1/"' | tee -a ~/.bashrc
+    echo '}' | tee -a ~/.bashrc
+    echo "PS1='\${debian_chroot:+(\$debian_chroot)}\[\\033[01;32m\]\u@\h\[\\033[00m\]:\[\\033[01;34m\]\w\[\\033[01;31m\]\$(parse_git_branch)\[\\033[00m\]\$ '" | tee -a ~/.bashrc
+
+    info "Promt has been updated to include branch name for git folders (~/.bashrc).\n"
+  fi
 fi
 
 # Install Node
