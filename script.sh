@@ -318,7 +318,7 @@ installGit () {
 
 # Task to configure cmd prompt to show current git branch
 enableGitPrompt () {
-  info "Configuring prompt to show the current branch name for git folders (~/.bashrc)"
+  log "Configuring prompt to show the current branch name for git folders (~/.bashrc)"
 
   echo '' | tee -a ~/.bashrc
   echo '# Show git branch name' | tee -a ~/.bashrc
