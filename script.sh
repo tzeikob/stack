@@ -490,7 +490,7 @@ cleanTempFolder () {
 
   rm -rf $TEMP
 
-  info "Temporary files have been removed ($TEMP)"
+  log "Temporary files have been removed ($TEMP)"
 }
 
 # Task to print a good bye message
