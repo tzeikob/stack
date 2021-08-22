@@ -362,7 +362,9 @@ installJava () {
 
   log "OpenJDK has been installed successfully"
 
-  log "JDK currently in use is $(java -version)"
+  log "JDK currently in use is:"
+
+  java -version
 
   sudo update-alternatives --display java >> $LOG_FILE
 
