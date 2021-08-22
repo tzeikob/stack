@@ -428,7 +428,9 @@ installVSCode () {
 
   log "Installing the following VS Code plugins and extensions:\n${extensions[*]}"
 
-  code --install-extension ${extension[@]}
+  for ext in ${extensions[@]}; do
+    code --install-extension "$ext"
+  done
 
   success "Visual Studio Code has been installed successfully"
 }
