@@ -506,10 +506,8 @@ rebootSystem () {
 }
 
 log "Stack v$VERSION"
-log "Running on $(lsb_release -si) $(lsb_release -sr) $(lsb_release -sc) - $(uname -r)"
-log "User $USER@$HOSTNAME\n"
-
-log "The stack script has been started"
+log "Running on $(lsb_release -si) $(lsb_release -sr) $(lsb_release -sc)"
+log "Logged as $USER@$HOSTNAME with kernel $(uname -r)\n"
 
 # Initiate task execution list with the mandatory tasks
 tasks=(createTempFolder)
