@@ -495,7 +495,7 @@ cleanTempFolder () {
 
 # Task to print a good bye message
 sayGoodBye () {
-  success "Stack script has completed successfully"
+  success "\nStack script has completed successfully"
   log "Have a nice coding time, see ya!"
 }
 
@@ -604,4 +604,6 @@ else
 fi
 
 # Start executing each task in order
+log "\nStarting the execution of tasks"
+
 for task in "${tasks[@]}"; do "${task}"; done
