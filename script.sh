@@ -502,6 +502,9 @@ rebootSystem () {
 }
 
 log "Stack v$VERSION"
+log "Running on $(d "$distro $version") - $(uname -r)"
+log "User $(d $USER)@$(d $HOSTNAME)\n"
+
 log "The stack script has been started"
 
 # Initiate task execution list with the mandatory tasks
