@@ -502,8 +502,8 @@ rebootSystem () {
 }
 
 log "Stack v$VERSION"
-log "Running on $(d "$distro $version") - $(uname -r)"
-log "User $(d $USER)@$(d $HOSTNAME)\n"
+log "Running on $(lsb_release -si) $(lsb_release -sr) $(lsb_release -sc) - $(uname -r)"
+log "User $USER@$HOSTNAME\n"
 
 log "The stack script has been started"
 
