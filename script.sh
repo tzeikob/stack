@@ -537,18 +537,18 @@ while getopts :y opt; do
 done
 
 if [[ $yesToAll = false ]]; then
+  log "\nLook and feel:"
+  ask "Do you want to hide desktop icons?" configureDesktop
+  ask "Do you want to reposition dock to bottom?" configureDock
+  ask "Do you want to disable screen lock?" disableScreenLock
+
   log "System configuration:"
   ask "Do you want to upgrade your system?" upgradeSystem
   ask "Do you want to install extra languages (Greek)?" installExtraLanguages
   ask "Do you want to use local RTC time?" setLocalRTCTime
   ask "Do you want to enable the firewall via UFW?" enableFirewall
   ask "Do you want to increase the inotify watches limit?" increaseInotifyLimit
-  ask "Do you want to disable screen lock?" disableScreenLock
   ask "Do you want to rename home folders to lowecase?" renameHomeFolders
-
-  log "\nLook and feel:"
-  ask "Do you want to hide desktop icons?" configureDesktop
-  ask "Do you want to reposition dock to bottom?" configureDock
 
   log "\nThird-party software:"
   ask "Do you want to install Chrome?" installChrome
@@ -584,15 +584,15 @@ if [[ $yesToAll = false ]]; then
   ask "Do you want to reboot after stack script is done?" rebootSystem
 else
   tasks+=(
+    configureDesktop
+    configureDock
+    disableScreenLock
     upgradeSystem
     installExtraLanguages
     setLocalRTCTime
     enableFirewall
     increaseInotifyLimit
-    disableScreenLock
     renameHomeFolders
-    configureDesktop
-    configureDock
     installChrome
     installSlack
     installMSTeams
