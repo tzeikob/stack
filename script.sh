@@ -402,7 +402,7 @@ installDocker () {
   sudo apt-get -y update >> $LOG_FILE
   sudo apt-get -y install apt-transport-https ca-certificates curl gnupg lsb-release >> $LOG_FILE
 
-  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg >> $LOG_FILE
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg >> $LOG_FILE
   
   echo \
   "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
