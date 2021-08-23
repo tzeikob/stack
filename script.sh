@@ -502,7 +502,12 @@ sayGoodBye () {
 # Task to reboot the system
 rebootSystem () {
   log "Restarting the system..."
-  sleep 3
+  
+  for secs in 10 9 8 7 6 5 4 3 2 1; do
+    echo -ne "Reboot will start in $secs secs (press Ctrl-C to cancel reboot)\\r"
+    sleep 1
+  done
+
   reboot
 }
 
