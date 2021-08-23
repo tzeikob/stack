@@ -502,6 +502,7 @@ sayGoodBye () {
 # Task to reboot the system
 rebootSystem () {
   log "Restarting the system..."
+  sleep 3
   reboot
 }
 
