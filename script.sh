@@ -24,11 +24,6 @@ success () {
   echo -e "\e[92m$1\e[0m"
 }
 
-# Log a head title message, head title
-head () {
-  echo -e "\e[7m $1 \e[0m"
-}
-
 # Log a progress message, progress message
 progress () {
   echo -ne "\e[97m$1\e[0m\\r"
@@ -72,7 +67,6 @@ createTempFolder () {
 
 # Task to upgrade the system via apt
 upgradeSystem () {
-  head "System Upgrade"
   log "Upgrading the system with the latest updates"
 
   sudo apt-get -y update >> $LOG_FILE
@@ -98,9 +92,8 @@ upgradeSystem () {
 
 # Task to install extra system languages, Greek
 installExtraLanguages () {
-  head "Languages"
-  log "Installing extra languages..."
-  log "Installing the greek language packages"
+  log "Installing extra languages for the system"
+  log "Setting up the greek language packages"
 
   sudo apt-get -y install `check-language-support -l el` >> $LOG_FILE
 
@@ -131,7 +124,6 @@ installExtraLanguages () {
 
 # Task to set local RTC time
 setLocalRTCTime () {
-  head "Local Time"
   log "Configuring system to use local RTC time instead of UTC"
 
   timedatectl set-local-rtc 1 --adjust-system-clock
@@ -142,7 +134,6 @@ setLocalRTCTime () {
 
 # Task to enable system's firewall via UFW
 enableFirewall () {
-  head "Firewall"
   log "Installing GUFW to manage firewall rules via user interface"
 
   sudo add-apt-repository -y -n universe >> $LOG_FILE
@@ -155,12 +146,11 @@ enableFirewall () {
   sudo ufw status verbose
 
   log "Any incoming traffic has been set to deny and outgoing to allow"
-  success "Firewall has been enabled successfully"
+  success "Firewall has been enabled successfully\n"
 }
 
 # Task to increase inotify watches limit to monitor more files
 increaseInotifyLimit () {
-  head "Inotify"
   log "Setting the inotify watches limit to a higher value"
 
   local watches_limit=524288
@@ -171,7 +161,6 @@ increaseInotifyLimit () {
 
 # Task to disable screen lock
 disableScreenLock () {
-  head "Screen Lock"
   log "Disabling screen lock operation"
 
   gsettings set org.gnome.desktop.screensaver lock-enabled false
@@ -186,7 +175,6 @@ disableScreenLock () {
 
 # Task to rename the default home folders
 renameHomeFolders () {
-  head "Home Folders"
   log "Renaming user's home folders in /home/$USER"
 
   mv /home/$USER/Desktop /home/$USER/desktop
@@ -240,7 +228,6 @@ renameHomeFolders () {
 
 # Task to configure desktop look and feel
 configureDesktop () {
-  head "Desktop"
   log "Configuring desktop look and feel"
 
   log "Hiding desktop home and trash icons"
@@ -253,7 +240,6 @@ configureDesktop () {
 
 # Task to configure dock's look and feel
 configureDock () {
-  head "Dock"
   log "Configuring dock look and feel"
 
   log "Setting dock's position to bottom and icon size to 22"
@@ -266,7 +252,6 @@ configureDock () {
 
 # Task to install Chrome
 installChrome () {
-  head "Google Chrome"
   log "Installing the latest version of Chrome"
 
   wget -q --show-progress -P $TEMP https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
@@ -277,7 +262,6 @@ installChrome () {
 
 # Task to install Slack
 installSlack () {
-  head "Slack"
   log "Installing the latest version of Slack"
 
   sudo snap install slack --classic
@@ -287,7 +271,6 @@ installSlack () {
 
 # Task to install Microsoft Teams
 installMSTeams () {
-  head "Microsoft Teams"
   log "Installing the latest version of Microsoft Teams"
 
   sudo snap install teams
@@ -297,7 +280,6 @@ installMSTeams () {
 
 # Task to install Skype
 installSkype () {
-  head "Skype"
   log "Installing the latest version of Skype"
 
   sudo snap install skype
@@ -307,7 +289,6 @@ installSkype () {
 
 # Task to install Virtual Box
 installVirtualBox () {
-  head "Virtual Box"
   log "Installing the latest version of Virtual Box"
 
   sudo add-apt-repository -y -n multiverse >> $LOG_FILE
@@ -319,7 +300,6 @@ installVirtualBox () {
 
 # Task to install git
 installGit () {
-  head "Git"
   log "Installing the latest version of Git"
 
   ppa="git-core/ppa"
@@ -346,7 +326,6 @@ installGit () {
 
 # Task to configure cmd prompt to show current git branch
 enableGitPrompt () {
-  head "Cmd Prompt/Git"
   log "Configuring prompt to show the current branch name for git folders (~/.bashrc)"
 
   echo '' | tee -a ~/.bashrc
@@ -361,7 +340,6 @@ enableGitPrompt () {
 
 # Task to install Node via NVM
 installNode () {
-  head "Node"
   log "Installing the NVM version $NVM_VERSION"
 
   wget -q --show-progress -P $TEMP -O $TEMP/nvm-install.sh https://raw.githubusercontent.com/nvm-sh/nvm/v$NVM_VERSION/install.sh
@@ -386,7 +364,6 @@ installNode () {
 
 # Task to install Java, Open JDK and Maven
 installJava () {
-  head "Java"
   log "Installing the OpenJDK version 11"
 
   sudo apt-get -y install openjdk-11-jdk openjdk-11-doc openjdk-11-source >> $LOG_FILE
@@ -410,7 +387,6 @@ installJava () {
 
 # Task to install Docker and Compose
 installDocker () {
-  head "Docker"
   log "Installing the latest version of Docker"
 
   sudo apt-get -y update >> $LOG_FILE
@@ -440,7 +416,6 @@ installDocker () {
 
 # Task to install Atom
 installAtom () {
-  head "Atom"
   log "Installing the latest version of Atom"
 
   sudo snap install atom --classic
@@ -450,7 +425,6 @@ installAtom () {
 
 # Task to install Visual Studio Code
 installVSCode () {
-  head "Visual Studio Code"
   log "Installing the latest version of Visual Studio Code"
 
   sudo snap install code --classic
@@ -471,7 +445,6 @@ installVSCode () {
 
 # Task to install IntelliJ Idea
 installIntelliJIdea () {
-  head "IntelliJ Idea"
   log "Installing the latest version of IntelliJ Idea"
 
   sudo snap install intellij-idea-community --classic
@@ -481,7 +454,6 @@ installIntelliJIdea () {
 
 # Task to install MongoDB Compass
 installMongoDBCompass () {
-  head "MongoDB Compass"
   log "Installing the MongoDB Compass version $MONGODB_COMPASS_VERSION"
 
   wget -q --show-progress -P $TEMP -O $TEMP/compass.deb "https://downloads.mongodb.com/compass/mongodb-compass_${MONGODB_COMPASS_VERSION}_amd64.deb"
@@ -493,7 +465,6 @@ installMongoDBCompass () {
 
 # Task to install DBeaver
 installDBeaver () {
-  head "DBeaver"
   log "Installing the latest version of DBeaver"
 
   sudo snap install dbeaver-ce
@@ -503,7 +474,6 @@ installDBeaver () {
 
 # Task to install Postman
 installPostman () {
-  head "Postman"
   log "Installing the latest version of Postman"
 
   sudo snap install postman
@@ -513,7 +483,6 @@ installPostman () {
 
 # Task to install Libre Office
 installLiberOffice () {
-  head "Libre Office"
   log "Installing the latest version of Libre Office"
 
   sudo add-apt-repository -y -n ppa:libreoffice/ppa >> $LOG_FILE
@@ -532,7 +501,7 @@ cleanTempFolder () {
 
 # Task to print a good bye message
 sayGoodBye () {
-  success "\nStack script completed successfully"
+  success "Stack script completed successfully"
   log "Have a nice coding time, see ya!\n"
 }
 
@@ -607,7 +576,7 @@ if [[ $yesToAll = false ]]; then
   ask "Do you want to install Postman?" installPostman
   ask "Do you want to install Libre Office?" installLiberOffice
 
-  log "\nPost Actions:"
+  log "\nPost actions:"
   ask "Do you want to clean temp files?" cleanTempFolder
 
   tasks+=(sayGoodBye)
