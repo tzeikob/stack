@@ -62,7 +62,8 @@ ask () {
 createTempFolder () {
   mkdir -p $TEMP
 
-  log "Temporary folder has been created successfully ($TEMP)\n"
+  log "Temporary folder has been created successfully ($TEMP)"
+  log "Logs have been routed to $LOG_FILE\n"
 }
 
 # Task to configure desktop look and feel
@@ -635,7 +636,6 @@ for secs in 5 4 3 2 1; do
 done
 
 log "\nStarting the execution of tasks..."
-log "Logs have been routed to $LOG_FILE"
 
 startTime=`date +%s`
 
