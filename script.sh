@@ -162,10 +162,15 @@ installExtraLanguages () {
 
 # Task to set local RTC time
 setLocalRTCTime () {
-  log "Configuring system to use local RTC time instead of UTC"
+  log "Configuring system to use local RTC time"
 
   timedatectl set-local-rtc 1 --adjust-system-clock
+
+  log "Now using local RTC Time instead of UTC"
+
   gsettings set org.gnome.desktop.interface clock-show-date true
+
+  log "Clock has bee set to show the date"
 
   success "System has been set to use local RTC time successfully\n"
 }
