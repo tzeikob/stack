@@ -448,7 +448,7 @@ installIntelliJIdea () {
 installMongoDBCompass () {
   log "Installing the MongoDB Compass version $MONGODB_COMPASS_VERSION"
 
-  wget -q --show-progress -P $TEMP -O $TEMP/compass.deb "https://downloads.mongodb.com/compass/mongodb-compass-community_${MONGODB_COMPASS_VERSION}_amd64.deb"
+  wget -q --show-progress -P $TEMP -O $TEMP/compass.deb "https://downloads.mongodb.com/compass/mongodb-compass_${MONGODB_COMPASS_VERSION}_amd64.deb"
 
   sudo apt-get -y install $TEMP/compass.deb >> $LOG_FILE
 
