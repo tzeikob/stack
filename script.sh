@@ -522,7 +522,7 @@ rebootSystem () {
   
   # Sleep 10 secs before reboot
   for secs in 10 9 8 7 6 5 4 3 2 1; do
-    progress "Reboot will start in $secs secs (press Ctrl-C to cancel reboot)"
+    progress "Reboot will start in $secs secs (Ctrl-C to cancel)"
     sleep 1
   done
 
@@ -628,8 +628,13 @@ else
 fi
 
 # Start executing each task in order
+for secs in 5 4 3 2 1; do
+  progress "Installation will start in $secs secs (Ctrl-C to cancel)"
+  sleep 1
+done
+
 log "\nStarting the execution of tasks..."
-log "Logs have been routed to $LOG_FILE\n"
+log "Logs have been routed to $LOG_FILE"
 
 startTime=`date +%s`
 
