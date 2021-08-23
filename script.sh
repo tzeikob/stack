@@ -417,7 +417,7 @@ installDocker () {
 
   sudo usermod -aG docker $USER
 
-  log "Installing the docker compose v$DOCKER_COMPOSE_VERSION"
+  log "Installing the Docker Compose version $DOCKER_COMPOSE_VERSION"
 
   sudo curl -L "https://github.com/docker/compose/releases/download/$DOCKER_COMPOSE_VERSION/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
   sudo chmod +x /usr/local/bin/docker-compose
