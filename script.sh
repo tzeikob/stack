@@ -65,6 +65,44 @@ createTempFolder () {
   log "A temporary folder created under under $TEMP\n"
 }
 
+# Task to configure desktop look and feel
+configureDesktop () {
+  log "Configuring desktop look and feel"
+
+  log "Hiding desktop home and trash icons"
+
+  gsettings set org.gnome.shell.extensions.desktop-icons show-home false
+  gsettings set org.gnome.shell.extensions.desktop-icons show-trash false
+
+  success "Desktop has been updated successfully\n"
+}
+
+# Task to configure dock's look and feel
+configureDock () {
+  log "Configuring dock look and feel"
+
+  log "Setting dock's position to bottom and icon size to 22"
+
+  gsettings set org.gnome.shell.extensions.dash-to-dock dock-position BOTTOM
+  gsettings set org.gnome.shell.extensions.dash-to-dock dash-max-icon-size 22
+
+  success "Dock has been updated successfully\n"
+}
+
+# Task to disable screen lock
+disableScreenLock () {
+  log "Disabling screen lock operation"
+
+  gsettings set org.gnome.desktop.screensaver lock-enabled false
+  gsettings set org.gnome.desktop.session idle-delay 0
+  gsettings set org.gnome.settings-daemon.plugins.power idle-dim false
+
+  log "Idle delay has been set to 0"
+  log "Power idle dim has been disabled"
+
+  success "Screen lock has been disabled successfully\n"
+}
+
 # Task to upgrade the system via apt
 upgradeSystem () {
   log "Upgrading the system with the latest updates"
@@ -159,20 +197,6 @@ increaseInotifyLimit () {
   success "The inotify watches limit has been set to $watches_limit\n"
 }
 
-# Task to disable screen lock
-disableScreenLock () {
-  log "Disabling screen lock operation"
-
-  gsettings set org.gnome.desktop.screensaver lock-enabled false
-  gsettings set org.gnome.desktop.session idle-delay 0
-  gsettings set org.gnome.settings-daemon.plugins.power idle-dim false
-
-  log "Idle delay has been set to 0"
-  log "Power idle dim has been disabled"
-
-  success "Screen lock has been disabled successfully\n"
-}
-
 # Task to rename the default home folders
 renameHomeFolders () {
   log "Renaming user's home folders in /home/$USER"
@@ -224,30 +248,6 @@ renameHomeFolders () {
   echo "file:///home/"$USER"/videos Videos" >> $bookmarks_file
 
   success "Home folders and bookmarks renamed successfully\n"
-}
-
-# Task to configure desktop look and feel
-configureDesktop () {
-  log "Configuring desktop look and feel"
-
-  log "Hiding desktop home and trash icons"
-
-  gsettings set org.gnome.shell.extensions.desktop-icons show-home false
-  gsettings set org.gnome.shell.extensions.desktop-icons show-trash false
-
-  success "Desktop has been updated successfully\n"
-}
-
-# Task to configure dock's look and feel
-configureDock () {
-  log "Configuring dock look and feel"
-
-  log "Setting dock's position to bottom and icon size to 22"
-
-  gsettings set org.gnome.shell.extensions.dash-to-dock dock-position BOTTOM
-  gsettings set org.gnome.shell.extensions.dash-to-dock dash-max-icon-size 22
-
-  success "Dock has been updated successfully\n"
 }
 
 # Task to install Chrome
