@@ -400,10 +400,13 @@ installDocker () {
   log "Installing the latest version of Docker"
 
   sudo apt-get -y update >> $LOG_FILE
-  sudo apt-get -y install apt-transport-https ca-certificates curl gnupg-agent software-properties-common >> $LOG_FILE
+  sudo apt-get -y install apt-transport-https ca-certificates curl gnupg lsb-release >> $LOG_FILE
 
-  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -  >> $LOG_FILE
-  sudo add-apt-repository -y -n "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" >> $LOG_FILE
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg >> $LOG_FILE
+  
+  echo \
+  "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
   sudo apt-get -y update >> $LOG_FILE
   sudo apt-get -y install docker-ce docker-ce-cli containerd.io >> $LOG_FILE
