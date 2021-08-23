@@ -328,12 +328,12 @@ installGit () {
 enableGitPrompt () {
   log "Configuring prompt to show the current branch name for git folders (~/.bashrc)"
 
-  echo '' | tee -a ~/.bashrc
-  echo '# Show git branch name' | tee -a ~/.bashrc
-  echo 'parse_git_branch() {' | tee -a ~/.bashrc
-  echo ' git branch 2> /dev/null | sed -e "/^[^*]/d" -e "s/* \(.*\)/:\\1/"' | tee -a ~/.bashrc
-  echo '}' | tee -a ~/.bashrc
-  echo "PS1='\${debian_chroot:+(\$debian_chroot)}\[\\033[01;32m\]\u@\h\[\\033[00m\]:\[\\033[01;34m\]\w\[\\033[01;31m\]\$(parse_git_branch)\[\\033[00m\]\$ '" | tee -a ~/.bashrc
+  echo '' >> ~/.bashrc
+  echo '# Show git branch name' >> ~/.bashrc
+  echo 'parse_git_branch() {' >> ~/.bashrc
+  echo ' git branch 2> /dev/null | sed -e "/^[^*]/d" -e "s/* \(.*\)/:\\1/"' >> ~/.bashrc
+  echo '}' >> ~/.bashrc
+  echo "PS1='\${debian_chroot:+(\$debian_chroot)}\[\\033[01;32m\]\u@\h\[\\033[00m\]:\[\\033[01;34m\]\w\[\\033[01;31m\]\$(parse_git_branch)\[\\033[00m\]\$ '" >> ~/.bashrc
 
   log "Command prompt has been updated successfully\n"
 }
