@@ -62,7 +62,7 @@ ask () {
 createTempFolder () {
   mkdir -p $TEMP
 
-  log "A temporary folder created under under $TEMP\n"
+  log "Temporary folder has been created successfully ($TEMP)\n"
 }
 
 # Task to configure desktop look and feel
@@ -518,7 +518,7 @@ rebootSystem () {
 
 log "Stack v$VERSION"
 log "Running on $(lsb_release -si) $(lsb_release -sr) $(lsb_release -sc)"
-log "Logged as $USER@$HOSTNAME with kernel $(uname -r)\n"
+log "Logged in as $USER@$HOSTNAME with kernel $(uname -r)\n"
 
 # Initiate task execution list with the mandatory tasks
 tasks=(createTempFolder)
@@ -540,7 +540,7 @@ if [[ $yesToAll = false ]]; then
   ask "Do you want to reposition dock to bottom?" configureDock
   ask "Do you want to disable screen lock?" disableScreenLock
 
-  log "System configuration:"
+  log "\nSystem configuration:"
   ask "Do you want to upgrade your system?" upgradeSystem
   ask "Do you want to install extra languages (Greek)?" installExtraLanguages
   ask "Do you want to use local RTC time?" setLocalRTCTime
