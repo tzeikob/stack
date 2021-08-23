@@ -4,7 +4,7 @@
 # Global variables and functions
 VERSION="1.0.0"
 YES="^([Yy][Ee][Ss]|[Yy]|"")$"
-TEMP="/tmp/stack-$(date +%s)"
+TEMP="/tmp/stack.$(date +%s)"
 LOG_FILE="$TEMP/stdout.log"
 GIT_USER_NAME=""
 GIT_USER_EMAIL=""
@@ -618,5 +618,6 @@ fi
 
 # Start executing each task in order
 log "\nStarting the execution of tasks..."
+log "Logs have been routed to $LOG_FILE\n"
 
 for task in "${tasks[@]}"; do "${task}"; done
