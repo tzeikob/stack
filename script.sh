@@ -29,7 +29,7 @@ head () {
   echo -e "\e[7m $1 \e[0m"
 }
 
-# Log a progress mesage, progress message
+# Log a progress message, progress message
 progress () {
   echo -ne "\e[97m$1\e[0m\\r"
 }
@@ -67,7 +67,7 @@ ask () {
 createTempFolder () {
   mkdir -p $TEMP
 
-  log "A temporary folder created for installation files ($TEMP)"
+  log "A temporary folder created under under $TEMP\n"
 }
 
 # Task to upgrade the system via apt
@@ -538,7 +538,7 @@ sayGoodBye () {
 
 # Task to reboot the system
 rebootSystem () {
-  log "System has been set to restarting mode..."
+  log "Script has been switched to system restart mode..."
   
   # Sleep 10 secs before reboot
   for secs in 10 9 8 7 6 5 4 3 2 1; do
@@ -551,7 +551,7 @@ rebootSystem () {
 
 log "Stack v$VERSION"
 log "Running on $(lsb_release -si) $(lsb_release -sr) $(lsb_release -sc)"
-log "Logged as $USER@$HOSTNAME on kernel $(uname -r)\n"
+log "Logged as $USER@$HOSTNAME with kernel $(uname -r)\n"
 
 # Initiate task execution list with the mandatory tasks
 tasks=(createTempFolder)
@@ -568,7 +568,7 @@ while getopts :y opt; do
 done
 
 if [[ $yesToAll = false ]]; then
-  head "System configuration"
+  log "System configuration:"
   ask "Do you want to upgrade your system?" upgradeSystem
   ask "Do you want to install extra languages (Greek)?" installExtraLanguages
   ask "Do you want to use local RTC time?" setLocalRTCTime
@@ -577,11 +577,11 @@ if [[ $yesToAll = false ]]; then
   ask "Do you want to disable screen lock?" disableScreenLock
   ask "Do you want to rename home folders to lowecase?" renameHomeFolders
 
-  head "Look and feel"
+  log "\nLook and feel:"
   ask "Do you want to hide desktop icons?" configureDesktop
   ask "Do you want to reposition dock to bottom?" configureDock
 
-  head "Third-party software"
+  log "\nThird-party software:"
   ask "Do you want to install Chrome?" installChrome
   ask "Do you want to install Slack?" installSlack
   ask "Do you want to install Microsoft Teams?" installMSTeams
@@ -607,7 +607,7 @@ if [[ $yesToAll = false ]]; then
   ask "Do you want to install Postman?" installPostman
   ask "Do you want to install Libre Office?" installLiberOffice
 
-  head "Post Actions"
+  log "\nPost Actions:"
   ask "Do you want to clean temp files?" cleanTempFolder
 
   tasks+=(sayGoodBye)
@@ -648,6 +648,6 @@ else
 fi
 
 # Start executing each task in order
-log "\nStarting the execution of tasks"
+log "\nStarting the execution of tasks..."
 
 for task in "${tasks[@]}"; do "${task}"; done
