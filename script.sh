@@ -485,9 +485,7 @@ installPostman () {
 installLiberOffice () {
   log "Installing the latest version of Libre Office"
 
-  sudo add-apt-repository -y -n ppa:libreoffice/ppa >> $LOG_FILE
-  sudo apt -y update >> $LOG_FILE
-  sudo apt -y install libreoffice >> $LOG_FILE
+  sudo snap install libreoffice
 
   success "Libre Office has been installed successfully\n"
 }
