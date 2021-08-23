@@ -513,7 +513,7 @@ cleanTempFolder () {
 # Task to print a good bye message
 sayGoodBye () {
   local endTime=`date +%s`
-  local runtime=$(((endTime-startTime)/60*1000))
+  local runtime=$(((endTime-startTime)/60))
 
   log "Stack script completed in $runtime mins"
   success "Have a nice coding time, see ya!\n"
@@ -524,7 +524,7 @@ rebootSystem () {
   log "Script has been switched to restart mode..."
   
   # Sleep 10 secs before reboot
-  for secs in 10 9 8 7 6 5 4 3 2 1; do
+  for secs in 10 9 8 7 6 5 4 3 2 1 0; do
     progress "Reboot will start in $secs secs (Ctrl-C to cancel)"
     sleep 1
   done
@@ -632,7 +632,7 @@ fi
 
 # Start executing each task in order
 log ""
-for secs in 5 4 3 2 1; do
+for secs in 5 4 3 2 1 0; do
   progress "Installation will start in $secs secs (Ctrl-C to cancel)"
   sleep 1
 done
