@@ -499,7 +499,10 @@ cleanTempFolder () {
 
 # Task to print a good bye message
 sayGoodBye () {
-  success "Stack script completed successfully"
+  local endTime=`date +%s`
+  local runtime=$(((endTime-startTime)/60*1000))
+
+  success "Stack script completed in $runtime mins"
   log "Have a nice coding time, see ya!\n"
 }
 
@@ -617,5 +620,7 @@ fi
 # Start executing each task in order
 log "\nStarting the execution of tasks..."
 log "Logs have been routed to $LOG_FILE\n"
+
+startTime=`date +%s`
 
 for task in "${tasks[@]}"; do "${task}"; done
