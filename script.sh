@@ -110,12 +110,12 @@ disableScreenLock () {
 upgradeSystem () {
   log "Upgrading the system with the latest updates"
 
-  sudo apt -y update >> $LOG_FILE
-  sudo apt -y upgrade >> $LOG_FILE
+  sudo apt-get -y update >> $LOG_FILE
+  sudo apt-get -y upgrade >> $LOG_FILE
 
   log "Latest updates have been installed successfully"
 
-  sudo apt -y autoremove >> $LOG_FILE
+  sudo apt-get -y autoremove >> $LOG_FILE
 
   log "Unnecessary packages have been removed"
 
@@ -126,7 +126,7 @@ upgradeSystem () {
 
   log "Installing the following third-party dependencies:\n${packages[*]}"
 
-  sudo apt -y install ${packages[@]} >> $LOG_FILE
+  sudo apt-get -y install ${packages[@]} >> $LOG_FILE
 
   success "System has been upgraded successfully\n"
 }
@@ -136,7 +136,7 @@ installExtraLanguages () {
   log "Installing extra languages for the system"
   log "Setting up the greek language packages"
 
-  sudo apt -y install `check-language-support -l el` >> $LOG_FILE
+  sudo apt-get -y install `check-language-support -l el` >> $LOG_FILE
 
   log "Adding greek layout into the keyboard input sources"
 
@@ -183,8 +183,8 @@ enableFirewall () {
   log "Installing GUFW to manage firewall rules via user interface"
 
   sudo add-apt-repository -y -n universe >> $LOG_FILE
-  sudo apt -y update >> $LOG_FILE
-  sudo apt -y install gufw >> $LOG_FILE
+  sudo apt-get -y update >> $LOG_FILE
+  sudo apt-get -y install gufw >> $LOG_FILE
 
   log "Enabling the system's firewall via the UFW service"
 
@@ -264,7 +264,7 @@ installChrome () {
   log "Installing the latest version of Chrome"
 
   wget -q --show-progress -P $TEMP https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-  sudo apt -y install $TEMP/google-chrome-stable_current_amd64.deb >> $LOG_FILE
+  sudo apt-get -y install $TEMP/google-chrome-stable_current_amd64.deb >> $LOG_FILE
 
   success "Chrome has been installed successfully\n"
 }
@@ -301,8 +301,8 @@ installVirtualBox () {
   log "Installing the latest version of Virtual Box"
 
   sudo add-apt-repository -y -n multiverse >> $LOG_FILE
-  sudo apt -y update >> $LOG_FILE
-  sudo apt -y install virtualbox >> $LOG_FILE
+  sudo apt-get -y update >> $LOG_FILE
+  sudo apt-get -y install virtualbox >> $LOG_FILE
 
   success "Virtual Box has been installed successfully\n"
 }
@@ -315,10 +315,10 @@ installGit () {
 
   if ! grep -q "^deb .*$ppa" /etc/apt/sources.list /etc/apt/sources.list.d/*; then
    sudo add-apt-repository -y -n ppa:$ppa >> $LOG_FILE
-   sudo apt -y update >> $LOG_FILE
+   sudo apt-get -y update >> $LOG_FILE
   fi
 
-  sudo apt -y install git >> $LOG_FILE
+  sudo apt-get -y install git >> $LOG_FILE
 
   if [[ -n $GIT_USER_NAME ]]; then
     git config --global user.name "$GIT_USER_NAME"
@@ -377,7 +377,7 @@ installNode () {
 installJava () {
   log "Installing the OpenJDK version 11"
 
-  sudo apt -y install openjdk-11-jdk openjdk-11-doc openjdk-11-source >> $LOG_FILE
+  sudo apt-get -y install openjdk-11-jdk openjdk-11-doc openjdk-11-source >> $LOG_FILE
 
   log "OpenJDK has been installed successfully"
 
@@ -389,7 +389,7 @@ installJava () {
 
   log "Installing the latest version of Maven"
 
-  sudo apt -y install maven >> $LOG_FILE
+  sudo apt-get -y install maven >> $LOG_FILE
 
   mvn -version
 
@@ -400,14 +400,14 @@ installJava () {
 installDocker () {
   log "Installing the latest version of Docker"
 
-  sudo apt -y update >> $LOG_FILE
-  sudo apt -y install apt-transport-https ca-certificates curl gnupg-agent software-properties-common >> $LOG_FILE
+  sudo apt-get -y update >> $LOG_FILE
+  sudo apt-get -y install apt-transport-https ca-certificates curl gnupg-agent software-properties-common >> $LOG_FILE
 
   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -  >> $LOG_FILE
   sudo add-apt-repository -y -n "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" >> $LOG_FILE
 
-  sudo apt -y update >> $LOG_FILE
-  sudo apt -y install docker-ce docker-ce-cli containerd.io >> $LOG_FILE
+  sudo apt-get -y update >> $LOG_FILE
+  sudo apt-get -y install docker-ce docker-ce-cli containerd.io >> $LOG_FILE
 
   log "Creating the docker user group"
 
@@ -469,7 +469,7 @@ installMongoDBCompass () {
 
   wget -q --show-progress -P $TEMP -O $TEMP/compass.deb "https://downloads.mongodb.com/compass/mongodb-compass_${MONGODB_COMPASS_VERSION}_amd64.deb"
 
-  sudo apt -y install $TEMP/compass.deb >> $LOG_FILE
+  sudo apt-get -y install $TEMP/compass.deb >> $LOG_FILE
 
   success "MongoDB compass has been installed successfully\n"
 }
