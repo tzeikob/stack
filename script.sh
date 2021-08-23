@@ -548,7 +548,7 @@ while getopts :y opt; do
 done
 
 if [[ $yesToAll = false ]]; then
-  log "\nLook and feel:"
+  log "Look and feel:"
   ask "Do you want to hide desktop icons?" configureDesktop
   ask "Do you want to reposition dock to bottom?" configureDock
   ask "Do you want to disable screen lock?" disableScreenLock
@@ -628,12 +628,13 @@ else
 fi
 
 # Start executing each task in order
+log ""
 for secs in 5 4 3 2 1; do
   progress "Installation will start in $secs secs (Ctrl-C to cancel)"
   sleep 1
 done
 
-log "Starting the execution of tasks..."
+log "\nStarting the execution of tasks..."
 log "Logs have been routed to $LOG_FILE"
 
 startTime=`date +%s`
