@@ -633,7 +633,7 @@ for secs in 5 4 3 2 1; do
   sleep 1
 done
 
-log "\nStarting the execution of tasks..."
+log "Starting the execution of tasks..."
 log "Logs have been routed to $LOG_FILE"
 
 startTime=`date +%s`
