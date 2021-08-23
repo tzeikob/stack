@@ -24,6 +24,16 @@ success () {
   echo -e "\e[92m$1\e[0m"
 }
 
+# Log a head title message, head title
+head () {
+  echo -e "\e[7m $1 \e[0m"
+}
+
+# Log a progress mesage, progress message
+progress () {
+  echo -ne "\e[97m$1\e[0m\\r"
+}
+
 # Log an error and exit the process, abort message
 abort () {
   echo -e "\033[0;31m$1\e[0m" >&2
@@ -55,39 +65,41 @@ ask () {
 
 # Task to create temp folder
 createTempFolder () {
-  log "Creating a folder for temorary files"
-
   mkdir -p $TEMP
 
-  log "Temp folder has been created successfully ($TEMP)"
+  log "A temporary folder created for installation files ($TEMP)"
 }
 
 # Task to upgrade the system via apt
 upgradeSystem () {
-  log "Upgrading the base system with the latest updates"
+  head "System Upgrade"
+  log "Upgrading the system with the latest updates"
 
   sudo apt-get -y update >> $LOG_FILE
-  sudo apt-get -y upgrade >> $LOG_FILE
+  sudo apt-get -y upgrade
 
-  log "Removing not used unnecessary packages"
+  log "Latest updates have been installed successfully"
 
   sudo apt-get -y autoremove >> $LOG_FILE
+
+  log "Unnecessary packages have been removed"
 
   local packages=(tree curl unzip htop gconf-service gconf-service-backend gconf2
             gconf2-common libappindicator1 libgconf-2-4 libindicator7
             libpython2-stdlib python python2.7 python2.7-minimal libatomic1
             gimp vlc)
 
-  log "Installing the following third-party software dependencies: \n${packages[*]}"
+  log "Installing the following third-party dependencies:\n${packages[*]}"
 
-  sudo apt-get -y install ${packages[@]} >> $LOG_FILE
+  sudo apt-get -y install ${packages[@]}
 
-  success "System has been updated successfully"
+  success "System has been upgraded successfully\n"
 }
 
 # Task to install extra system languages, Greek
 installExtraLanguages () {
-  log "Installing extra languages"
+  head "Languages"
+  log "Installing extra languages..."
   log "Installing the greek language packages"
 
   sudo apt-get -y install `check-language-support -l el` >> $LOG_FILE
@@ -114,21 +126,23 @@ installExtraLanguages () {
   sudo update-locale LC_IDENTIFICATION=en_US.UTF-8
   sudo update-locale LC_ALL=
 
-  success "System languages have been updated successfully"
+  success "System languages have been updated successfully\n"
 }
 
 # Task to set local RTC time
 setLocalRTCTime () {
+  head "Local Time"
   log "Configuring system to use local RTC time instead of UTC"
 
   timedatectl set-local-rtc 1 --adjust-system-clock
   gsettings set org.gnome.desktop.interface clock-show-date true
 
-  success "System has been set to use local RTC time successfully"
+  success "System has been set to use local RTC time successfully\n"
 }
 
 # Task to enable system's firewall via UFW
 enableFirewall () {
+  head "Firewall"
   log "Installing GUFW to manage firewall rules via user interface"
 
   sudo add-apt-repository -y -n universe >> $LOG_FILE
@@ -146,27 +160,33 @@ enableFirewall () {
 
 # Task to increase inotify watches limit to monitor more files
 increaseInotifyLimit () {
+  head "Inotify"
   log "Setting the inotify watches limit to a higher value"
 
   local watches_limit=524288
   echo fs.inotify.max_user_watches=$watches_limit | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
 
-  success "The inotify watches limit has been set to $watches_limit"
+  success "The inotify watches limit has been set to $watches_limit\n"
 }
 
 # Task to disable screen lock
 disableScreenLock () {
+  head "Screen Lock"
   log "Disabling screen lock operation"
 
   gsettings set org.gnome.desktop.screensaver lock-enabled false
   gsettings set org.gnome.desktop.session idle-delay 0
   gsettings set org.gnome.settings-daemon.plugins.power idle-dim false
 
-  success "Screen lock has been disabled successfully"
+  log "Idle delay has been set to 0"
+  log "Power idle dim has been disabled"
+
+  success "Screen lock has been disabled successfully\n"
 }
 
 # Task to rename the default home folders
 renameHomeFolders () {
+  head "Home Folders"
   log "Renaming user's home folders in /home/$USER"
 
   mv /home/$USER/Desktop /home/$USER/desktop
@@ -215,11 +235,12 @@ renameHomeFolders () {
   echo "file:///home/"$USER"/pictures Pictures" >> $bookmarks_file
   echo "file:///home/"$USER"/videos Videos" >> $bookmarks_file
 
-  success "Home folders and bookmarks renamed successfully"
+  success "Home folders and bookmarks renamed successfully\n"
 }
 
 # Task to configure desktop look and feel
 configureDesktop () {
+  head "Desktop"
   log "Configuring desktop look and feel"
 
   log "Hiding desktop home and trash icons"
@@ -227,11 +248,12 @@ configureDesktop () {
   gsettings set org.gnome.shell.extensions.desktop-icons show-home false
   gsettings set org.gnome.shell.extensions.desktop-icons show-trash false
 
-  success "Desktop has been updated successfully"
+  success "Desktop has been updated successfully\n"
 }
 
 # Task to configure dock's look and feel
 configureDock () {
+  head "Dock"
   log "Configuring dock look and feel"
 
   log "Setting dock's position to bottom and icon size to 22"
@@ -239,59 +261,65 @@ configureDock () {
   gsettings set org.gnome.shell.extensions.dash-to-dock dock-position BOTTOM
   gsettings set org.gnome.shell.extensions.dash-to-dock dash-max-icon-size 22
 
-  success "Dock has been updated successfully"
+  success "Dock has been updated successfully\n"
 }
 
 # Task to install Chrome
 installChrome () {
+  head "Google Chrome"
   log "Installing the latest version of Chrome"
 
   wget -q --show-progress -P $TEMP https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
   sudo apt-get -y install $TEMP/google-chrome-stable_current_amd64.deb >> $LOG_FILE
 
-  success "Chrome has been installed successfully"
+  success "Chrome has been installed successfully\n"
 }
 
 # Task to install Slack
 installSlack () {
+  head "Slack"
   log "Installing the latest version of Slack"
 
   sudo snap install slack --classic
 
-  success "Slack has been installed successfully"
+  success "Slack has been installed successfully\n"
 }
 
 # Task to install Microsoft Teams
 installMSTeams () {
+  head "Microsoft Teams"
   log "Installing the latest version of Microsoft Teams"
 
   sudo snap install teams
 
-  success "Microsoft Teams has been installed successfully"
+  success "Microsoft Teams has been installed successfully\n"
 }
 
 # Task to install Skype
 installSkype () {
+  head "Skype"
   log "Installing the latest version of Skype"
 
   sudo snap install skype
 
-  success "Skype has been installed successfully"
+  success "Skype has been installed successfully\n"
 }
 
 # Task to install Virtual Box
 installVirtualBox () {
+  head "Virtual Box"
   log "Installing the latest version of Virtual Box"
 
   sudo add-apt-repository -y -n multiverse >> $LOG_FILE
   sudo apt-get -y update >> $LOG_FILE
   sudo apt-get -y install virtualbox >> $LOG_FILE
 
-  success "Virtual Box has been installed successfully"
+  success "Virtual Box has been installed successfully\n"
 }
 
 # Task to install git
 installGit () {
+  head "Git"
   log "Installing the latest version of Git"
 
   ppa="git-core/ppa"
@@ -313,11 +341,12 @@ installGit () {
     log "Git global email has been set to $(git config --global user.email)"
   fi
 
-  success "Git has been installed successfully"
+  success "Git has been installed successfully\n"
 }
 
 # Task to configure cmd prompt to show current git branch
 enableGitPrompt () {
+  head "Cmd Prompt/Git"
   log "Configuring prompt to show the current branch name for git folders (~/.bashrc)"
 
   echo '' | tee -a ~/.bashrc
@@ -327,11 +356,12 @@ enableGitPrompt () {
   echo '}' | tee -a ~/.bashrc
   echo "PS1='\${debian_chroot:+(\$debian_chroot)}\[\\033[01;32m\]\u@\h\[\\033[00m\]:\[\\033[01;34m\]\w\[\\033[01;31m\]\$(parse_git_branch)\[\\033[00m\]\$ '" | tee -a ~/.bashrc
 
-  log "Command prompt has been updated successfully"
+  log "Command prompt has been updated successfully\n"
 }
 
 # Task to install Node via NVM
 installNode () {
+  head "Node"
   log "Installing the NVM version $NVM_VERSION"
 
   wget -q --show-progress -P $TEMP -O $TEMP/nvm-install.sh https://raw.githubusercontent.com/nvm-sh/nvm/v$NVM_VERSION/install.sh
@@ -351,11 +381,12 @@ installNode () {
   log "Node versions can be found under /home/$USER/.nvm/versions/node"
   log "Node $(nvm current) is currently in use"
 
-  success "Node has been installed successfully"
+  success "Node has been installed successfully\n"
 }
 
 # Task to install Java, Open JDK and Maven
 installJava () {
+  head "Java"
   log "Installing the OpenJDK version 11"
 
   sudo apt-get -y install openjdk-11-jdk openjdk-11-doc openjdk-11-source >> $LOG_FILE
@@ -374,11 +405,12 @@ installJava () {
 
   mvn -version >> $LOG_FILE
 
-  success "Java has been installed successfully"
+  success "Java has been installed successfully\n"
 }
 
 # Task to install Docker and Compose
 installDocker () {
+  head "Docker"
   log "Installing the latest version of Docker"
 
   sudo apt-get -y update >> $LOG_FILE
@@ -403,20 +435,22 @@ installDocker () {
   sudo curl -L "https://github.com/docker/compose/releases/download/$DOCKER_COMPOSE_VERSION/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
   sudo chmod +x /usr/local/bin/docker-compose
 
-  success "Docker has been installed successfully"
+  success "Docker has been installed successfully\n"
 }
 
 # Task to install Atom
 installAtom () {
+  head "Atom"
   log "Installing the latest version of Atom"
 
   sudo snap install atom --classic
 
-  success "Atom has been installed successfully"
+  success "Atom has been installed successfully\n"
 }
 
 # Task to install Visual Studio Code
 installVSCode () {
+  head "Visual Studio Code"
   log "Installing the latest version of Visual Studio Code"
 
   sudo snap install code --classic
@@ -432,79 +466,83 @@ installVSCode () {
     code --install-extension "$ext"
   done
 
-  success "Visual Studio Code has been installed successfully"
+  success "Visual Studio Code has been installed successfully\n"
 }
 
 # Task to install IntelliJ Idea
 installIntelliJIdea () {
+  head "IntelliJ Idea"
   log "Installing the latest version of IntelliJ Idea"
 
   sudo snap install intellij-idea-community --classic
 
-  success "IntelliJ Idea has been installed successfully"
+  success "IntelliJ Idea has been installed successfully\n"
 }
 
 # Task to install MongoDB Compass
 installMongoDBCompass () {
+  head "MongoDB Compass"
   log "Installing the MongoDB Compass version $MONGODB_COMPASS_VERSION"
 
   wget -q --show-progress -P $TEMP -O $TEMP/compass.deb "https://downloads.mongodb.com/compass/mongodb-compass_${MONGODB_COMPASS_VERSION}_amd64.deb"
 
   sudo apt-get -y install $TEMP/compass.deb >> $LOG_FILE
 
-  success "MongoDB compass has been installed successfully"
+  success "MongoDB compass has been installed successfully\n"
 }
 
 # Task to install DBeaver
 installDBeaver () {
+  head "DBeaver"
   log "Installing the latest version of DBeaver"
 
   sudo snap install dbeaver-ce
 
-  success "DBeaver has been installed successfully"
+  success "DBeaver has been installed successfully\n"
 }
 
 # Task to install Postman
 installPostman () {
+  head "Postman"
   log "Installing the latest version of Postman"
 
   sudo snap install postman
 
-  success "Postman has been isntalled successfully"
+  success "Postman has been isntalled successfully\n"
 }
 
 # Task to install Libre Office
 installLiberOffice () {
+  head "Libre Office"
   log "Installing the latest version of Libre Office"
 
   sudo add-apt-repository -y -n ppa:libreoffice/ppa >> $LOG_FILE
   sudo apt-get -y update >> $LOG_FILE
   sudo apt-get -y install libreoffice >> $LOG_FILE
 
-  success "Libre Office has been installed successfully"
+  success "Libre Office has been installed successfully\n"
 }
 
 # Task to clean up temporary files
 cleanTempFolder () {
-  log "Cleaning up temporary files"
+  log "Cleaning up installation files ($TEMP)"
 
   rm -rf $TEMP
-
-  log "Temporary files have been removed ($TEMP)"
 }
 
 # Task to print a good bye message
 sayGoodBye () {
-  success "\nStack script has completed successfully"
-  log "Have a nice coding time, see ya!"
+  success "\nStack script completed successfully"
+  log "Have a nice coding time, see ya!\n"
 }
 
 # Task to reboot the system
 rebootSystem () {
-  log "Restarting the system..."
+  log "System has been set to restarting mode..."
   
+  # Sleep 10 secs before reboot
   for secs in 10 9 8 7 6 5 4 3 2 1; do
-    echo -ne "Reboot will start in $secs secs (press Ctrl-C to cancel reboot)\\r"
+    progress "Reboot will start in $secs secs (press Ctrl-C to cancel reboot)"
     sleep 1
   done
 
@@ -513,7 +551,7 @@ rebootSystem () {
 
 log "Stack v$VERSION"
 log "Running on $(lsb_release -si) $(lsb_release -sr) $(lsb_release -sc)"
-log "Logged as $USER@$HOSTNAME with kernel $(uname -r)\n"
+log "Logged as $USER@$HOSTNAME on kernel $(uname -r)\n"
 
 # Initiate task execution list with the mandatory tasks
 tasks=(createTempFolder)
@@ -530,7 +568,7 @@ while getopts :y opt; do
 done
 
 if [[ $yesToAll = false ]]; then
-  log "System configuration:"
+  head "System configuration"
   ask "Do you want to upgrade your system?" upgradeSystem
   ask "Do you want to install extra languages (Greek)?" installExtraLanguages
   ask "Do you want to use local RTC time?" setLocalRTCTime
@@ -539,11 +577,11 @@ if [[ $yesToAll = false ]]; then
   ask "Do you want to disable screen lock?" disableScreenLock
   ask "Do you want to rename home folders to lowecase?" renameHomeFolders
 
-  log "\nLook and feel:"
+  head "Look and feel"
   ask "Do you want to hide desktop icons?" configureDesktop
   ask "Do you want to reposition dock to bottom?" configureDock
 
-  log "\nThird-party software:"
+  head "Third-party software"
   ask "Do you want to install Chrome?" installChrome
   ask "Do you want to install Slack?" installSlack
   ask "Do you want to install Microsoft Teams?" installMSTeams
@@ -569,7 +607,7 @@ if [[ $yesToAll = false ]]; then
   ask "Do you want to install Postman?" installPostman
   ask "Do you want to install Libre Office?" installLiberOffice
 
-  log "\nPost actions:"
+  head "Post Actions"
   ask "Do you want to clean temp files?" cleanTempFolder
 
   tasks+=(sayGoodBye)
