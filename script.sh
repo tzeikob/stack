@@ -200,8 +200,7 @@ increaseInotifyLimit () {
   log "Setting the inotify watches limit to a higher value"
 
   local watches_limit=524288
-  sudo echo fs.inotify.max_user_watches=$watches_limit >> /etc/sysctl.conf
-  sudo sysctl -p
+  echo fs.inotify.max_user_watches=$watches_limit | sudo tee -a /etc/sysctl.conf >/dev/null && sudo sysctl -p
 
   success "The inotify watches limit has been set to $watches_limit\n"
 }
