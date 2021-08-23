@@ -69,9 +69,10 @@ createTempFolder () {
 configureDesktop () {
   log "Configuring desktop look and feel"
 
-  log "Hiding desktop home and trash icons"
-
+  log "Hiding desktop home icon"
   gsettings set org.gnome.shell.extensions.desktop-icons show-home false
+
+  log "Hiding desktop trash icon"
   gsettings set org.gnome.shell.extensions.desktop-icons show-trash false
 
   success "Desktop has been updated successfully\n"
@@ -81,9 +82,10 @@ configureDesktop () {
 configureDock () {
   log "Configuring dock look and feel"
 
-  log "Setting dock's position to bottom and icon size to 22"
-
+  log "Positioning dock panel to bottom"
   gsettings set org.gnome.shell.extensions.dash-to-dock dock-position BOTTOM
+
+  log "Setting dock size to 22 pixels"
   gsettings set org.gnome.shell.extensions.dash-to-dock dash-max-icon-size 22
 
   success "Dock has been updated successfully\n"
@@ -332,7 +334,7 @@ installGit () {
 
 # Task to configure cmd prompt to show current git branch
 enableGitPrompt () {
-  log "Configuring prompt to show the current branch name for git folders (~/.bashrc)"
+  log "Setting cmd prompt to show current branch for git folders (~/.bashrc)"
 
   echo '' >> ~/.bashrc
   echo '# Show git branch name' >> ~/.bashrc
@@ -341,7 +343,9 @@ enableGitPrompt () {
   echo '}' >> ~/.bashrc
   echo "PS1='\${debian_chroot:+(\$debian_chroot)}\[\\033[01;32m\]\u@\h\[\\033[00m\]:\[\\033[01;34m\]\w\[\\033[01;31m\]\$(parse_git_branch)\[\\033[00m\]\$ '" >> ~/.bashrc
 
-  log "Command prompt has been updated successfully\n"
+  log "Cmd prompt will now shown as user@host:~/path/to/folder[:branch]"
+
+  success "Command prompt has been updated successfully\n"
 }
 
 # Task to install Node via NVM
@@ -386,7 +390,7 @@ installJava () {
 
   sudo apt -y install maven >> $LOG_FILE
 
-  mvn -version >> $LOG_FILE
+  mvn -version
 
   success "Java has been installed successfully\n"
 }
@@ -508,13 +512,13 @@ sayGoodBye () {
   local endTime=`date +%s`
   local runtime=$(((endTime-startTime)/60*1000))
 
-  success "Stack script completed in $runtime mins"
-  log "Have a nice coding time, see ya!\n"
+  log "Stack script completed in $runtime mins"
+  success "Have a nice coding time, see ya!\n"
 }
 
 # Task to reboot the system
 rebootSystem () {
-  log "Script has been switched to system restart mode..."
+  log "Script has been switched to restart mode..."
   
   # Sleep 10 secs before reboot
   for secs in 10 9 8 7 6 5 4 3 2 1; do
