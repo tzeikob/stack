@@ -644,7 +644,7 @@ if [[ $yesToAll = false ]]; then
 
   if [[ $(tasksContains installGit) == true ]]; then
     read -p "Awesome, what's your git user name?(enter to skip) " GIT_USER_NAME
-    read -p "...and your git user email please?(enter to skip) " GIT_USER_EMAIL
+    read -p "May I have your git user email as well?(enter to skip) " GIT_USER_EMAIL
 
     ask "Should cmd prompt show the current branch in git folders?" enableGitPrompt
   fi
