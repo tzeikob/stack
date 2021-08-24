@@ -163,10 +163,17 @@ disableScreenLock () {
 updateSystem () {
   log "Updating the system with the latest updates"
 
+  log "Getting newest information of packages and their repositories..."
+
   sudo apt-get -y update >> $LOG_FILE
+
+  log "Getting system up to date..."
+
   sudo apt-get -y upgrade >> $LOG_FILE
 
   log "Latest updates have been installed successfully"
+
+  log "Removing unnecessary packages..."
 
   sudo apt-get -y autoremove >> $LOG_FILE
 
@@ -206,6 +213,8 @@ increaseInotifyLimit () {
   local watches_limit=524288
   echo fs.inotify.max_user_watches=$watches_limit | sudo tee -a /etc/sysctl.conf >/dev/null && sudo sysctl -p
 
+  log "You are now able to monitor much more files"
+
   success "The inotify watches limit has been set to $watches_limit\n"
 }
 
@@ -214,7 +223,13 @@ enableFirewall () {
   log "Installing GUFW to manage firewall rules via user interface"
 
   sudo add-apt-repository -y -n universe >> $LOG_FILE
+
+  log "Getting newest information of packages and their repositories..."
+
   sudo apt-get -y update >> $LOG_FILE
+
+  log "Installing the GUFW package..."
+
   sudo apt-get -y install gufw >> $LOG_FILE
 
   log "Enabling the system's firewall via the UFW service"
@@ -223,12 +238,15 @@ enableFirewall () {
   sudo ufw status verbose
 
   log "Any incoming traffic has been set to deny and outgoing to allow"
+
   success "Firewall has been enabled successfully\n"
 }
 
 # Task to install extra system languages, Greek
 installGreekLanguage () {
-  log "Installing language packages for Greek"
+  log "Installing extra language packages"
+
+  log "Downloading and setting Greek language packages..."
 
   sudo apt-get -y install `check-language-support -l el` >> $LOG_FILE
 
@@ -262,7 +280,13 @@ installVirtualBox () {
   log "Installing the latest version of Virtual Box"
 
   sudo add-apt-repository -y -n multiverse >> $LOG_FILE
+
+  log "Getting newest information of packages and their repositories..."
+
   sudo apt-get -y update >> $LOG_FILE
+
+  log "Installing the Virtual Box package..."
+
   sudo apt-get -y install virtualbox >> $LOG_FILE
 
   success "Virtual Box has been installed successfully\n"
@@ -272,7 +296,12 @@ installVirtualBox () {
 installDocker () {
   log "Installing the latest version of Docker"
 
+  log "Getting newest information of packages and their repositories..."
+
   sudo apt-get -y update >> $LOG_FILE
+
+  log "Installing third-party utilities..."
+
   sudo apt-get -y install apt-transport-https ca-certificates curl gnupg lsb-release >> $LOG_FILE
 
   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg >> $LOG_FILE
@@ -280,6 +309,8 @@ installDocker () {
   echo \
   "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
   $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+  log "Installing Docker packages..."
 
   sudo apt-get -y update >> $LOG_FILE
   sudo apt-get -y install docker-ce docker-ce-cli containerd.io >> $LOG_FILE
@@ -304,12 +335,16 @@ installDocker () {
 installGit () {
   log "Installing the latest version of Git"
 
+  log "Getting newest information of packages and their repositories..."
+
   ppa="git-core/ppa"
 
   if ! grep -q "^deb .*$ppa" /etc/apt/sources.list /etc/apt/sources.list.d/*; then
    sudo add-apt-repository -y -n ppa:$ppa >> $LOG_FILE
    sudo apt-get -y update >> $LOG_FILE
   fi
+
+  log "Installing Git packages..."
 
   sudo apt-get -y install git >> $LOG_FILE
 
@@ -346,7 +381,11 @@ enableGitPrompt () {
 installNode () {
   log "Installing Node via the NVM version $NVM_VERSION"
 
-  wget -q --show-progress -P $TEMP -O $TEMP/nvm-install.sh https://raw.githubusercontent.com/nvm-sh/nvm/v$NVM_VERSION/install.sh
+  log "Downloading NVM installation script..."
+
+  wget -q --show-progress -P $TEMP -O $TEMP/nvm-install.sh https://raw.githubusercontent.com/nvm-sh/nvm/v$NVM_VERSION/install.sh >> $LOG_FILE
+
+  log "Installing NVM package..."
 
   bash $TEMP/nvm-install.sh >> $LOG_FILE
   source /home/$USER/.bashrc >> $LOG_FILE
@@ -368,7 +407,9 @@ installNode () {
 
 # Task to install Java, Open JDK and Maven
 installJava () {
-  log "Installing Java via the OpenJDK version 11"
+  log "Installing the Java Development Kit"
+
+  log "Installing OpenJDK version 11..."
 
   sudo apt-get -y install openjdk-11-jdk openjdk-11-doc openjdk-11-source >> $LOG_FILE
 
@@ -380,7 +421,7 @@ installJava () {
 
   sudo update-alternatives --display java >> $LOG_FILE
 
-  log "Installing the latest version of Maven"
+  log "Installing the latest version of Maven..."
 
   sudo apt-get -y install maven >> $LOG_FILE
 
@@ -431,7 +472,11 @@ installIntelliJIdea () {
 installMongoDBCompass () {
   log "Installing the MongoDB Compass version $MONGODB_COMPASS_VERSION"
 
-  wget -q --show-progress -P $TEMP -O $TEMP/compass.deb "https://downloads.mongodb.com/compass/mongodb-compass_${MONGODB_COMPASS_VERSION}_amd64.deb"
+  log "Downloading the package file..."
+
+  wget -q --show-progress -P $TEMP -O $TEMP/compass.deb "https://downloads.mongodb.com/compass/mongodb-compass_${MONGODB_COMPASS_VERSION}_amd64.deb" >> $LOG_FILE
+
+  log "Installing the MongoDB Compass package..."
 
   sudo apt-get -y install $TEMP/compass.deb >> $LOG_FILE
 
@@ -463,6 +508,9 @@ installChrome () {
   log "Downloading the binary file..."
 
   wget -q --show-progress -P $TEMP https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb >> $LOG_FILE
+
+  log "Installing the Chrome package..."
+
   sudo apt-get -y install $TEMP/google-chrome-stable_current_amd64.deb >> $LOG_FILE
 
   success "Chrome has been installed successfully\n"
