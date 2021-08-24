@@ -21,7 +21,7 @@ log () {
 
 # Log a success info message, success message
 success () {
-  echo -e "\e[92m$1\e[0m"
+  echo -e "\e[92m \u2713 $1\e[0m"
 }
 
 # Log a progress message, progress message
@@ -63,17 +63,17 @@ createTempFolder () {
   mkdir -p $TEMP
 
   log "Temporary folder has been created successfully ($TEMP)"
-  log "Logs have been routed to $LOG_FILE\n"
+  log "You might want to know that logs have been routed to $LOG_FILE\n"
 }
 
 # Task to configure desktop look and feel
 configureDesktop () {
-  log "Configuring desktop look and feel"
+  log "Configuring desktop's look and feel"
 
-  log "Hiding desktop home icon"
+  log "Hiding home icon from desktop"
   gsettings set org.gnome.shell.extensions.desktop-icons show-home false
 
-  log "Hiding desktop trash icon"
+  log "Hiding trash icon from desktop"
   gsettings set org.gnome.shell.extensions.desktop-icons show-trash false
 
   success "Desktop has been updated successfully\n"
@@ -81,133 +81,20 @@ configureDesktop () {
 
 # Task to configure dock's look and feel
 configureDock () {
-  log "Configuring dock look and feel"
+  log "Configuring dock's look and feel"
 
-  log "Positioning dock panel to bottom"
+  log "Positioning dock to the bottom"
   gsettings set org.gnome.shell.extensions.dash-to-dock dock-position BOTTOM
 
-  log "Setting dock size to 22 pixels"
+  log "Setting dock's size down to 22 pixels"
   gsettings set org.gnome.shell.extensions.dash-to-dock dash-max-icon-size 22
 
   success "Dock has been updated successfully\n"
 }
 
-# Task to disable screen lock
-disableScreenLock () {
-  log "Disabling screen lock operation"
-
-  gsettings set org.gnome.desktop.screensaver lock-enabled false
-  gsettings set org.gnome.desktop.session idle-delay 0
-  gsettings set org.gnome.settings-daemon.plugins.power idle-dim false
-
-  log "Idle delay has been set to 0"
-  log "Power idle dim has been disabled"
-
-  success "Screen lock has been disabled successfully\n"
-}
-
-# Task to upgrade the system via apt
-upgradeSystem () {
-  log "Upgrading the system with the latest updates"
-
-  sudo apt-get -y update >> $LOG_FILE
-  sudo apt-get -y upgrade >> $LOG_FILE
-
-  log "Latest updates have been installed successfully"
-
-  sudo apt-get -y autoremove >> $LOG_FILE
-
-  log "Unnecessary packages have been removed"
-
-  local packages=(tree curl unzip htop gconf-service gconf-service-backend gconf2
-            gconf2-common libappindicator1 libgconf-2-4 libindicator7
-            libpython2-stdlib python python2.7 python2.7-minimal libatomic1
-            gimp vlc)
-
-  log "Installing the following third-party dependencies:\n${packages[*]}"
-
-  sudo apt-get -y install ${packages[@]} >> $LOG_FILE
-
-  success "System has been upgraded successfully\n"
-}
-
-# Task to install extra system languages, Greek
-installExtraLanguages () {
-  log "Installing extra languages for the system"
-  log "Setting up the greek language packages"
-
-  sudo apt-get -y install `check-language-support -l el` >> $LOG_FILE
-
-  log "Adding greek layout into the keyboard input sources"
-
-  gsettings set org.gnome.desktop.input-sources sources "[('xkb', 'us'), ('xkb', 'gr')]"
-
-  log "Setting regional formats back to US"
-
-  sudo update-locale LANG=en_US.UTF-8
-  sudo update-locale LANGUAGE=
-  sudo update-locale LC_CTYPE="en_US.UTF-8"
-  sudo update-locale LC_NUMERIC=en_US.UTF-8
-  sudo update-locale LC_TIME=en_US.UTF-8
-  sudo update-locale LC_COLLATE="en_US.UTF-8"
-  sudo update-locale LC_MONETARY=en_US.UTF-8
-  sudo update-locale LC_MESSAGES="en_US.UTF-8"
-  sudo update-locale LC_PAPER=en_US.UTF-8
-  sudo update-locale LC_NAME=en_US.UTF-8
-  sudo update-locale LC_ADDRESS=en_US.UTF-8
-  sudo update-locale LC_TELEPHONE=en_US.UTF-8
-  sudo update-locale LC_MEASUREMENT=en_US.UTF-8
-  sudo update-locale LC_IDENTIFICATION=en_US.UTF-8
-  sudo update-locale LC_ALL=
-
-  success "System languages have been updated successfully\n"
-}
-
-# Task to set local RTC time
-setLocalRTCTime () {
-  log "Configuring system to use local RTC time"
-
-  timedatectl set-local-rtc 1 --adjust-system-clock
-
-  log "Now using local RTC Time instead of UTC"
-
-  gsettings set org.gnome.desktop.interface clock-show-date true
-
-  log "Clock has bee set to show the date"
-
-  success "System has been set to use local RTC time successfully\n"
-}
-
-# Task to enable system's firewall via UFW
-enableFirewall () {
-  log "Installing GUFW to manage firewall rules via user interface"
-
-  sudo add-apt-repository -y -n universe >> $LOG_FILE
-  sudo apt-get -y update >> $LOG_FILE
-  sudo apt-get -y install gufw >> $LOG_FILE
-
-  log "Enabling the system's firewall via the UFW service"
-
-  sudo ufw enable
-  sudo ufw status verbose
-
-  log "Any incoming traffic has been set to deny and outgoing to allow"
-  success "Firewall has been enabled successfully\n"
-}
-
-# Task to increase inotify watches limit to monitor more files
-increaseInotifyLimit () {
-  log "Setting the inotify watches limit to a higher value"
-
-  local watches_limit=524288
-  echo fs.inotify.max_user_watches=$watches_limit | sudo tee -a /etc/sysctl.conf >/dev/null && sudo sysctl -p
-
-  success "The inotify watches limit has been set to $watches_limit\n"
-}
-
 # Task to rename the default home folders
 renameHomeFolders () {
-  log "Renaming user's home folders in /home/$USER"
+  log "Renaming home folders in /home/$USER"
 
   mv /home/$USER/Desktop /home/$USER/desktop
   mv /home/$USER/Downloads /home/$USER/downloads
@@ -258,41 +145,116 @@ renameHomeFolders () {
   success "Home folders and bookmarks renamed successfully\n"
 }
 
-# Task to install Chrome
-installChrome () {
-  log "Installing the latest version of Chrome"
+# Task to disable screen lock
+disableScreenLock () {
+  log "Disabling the auto screen lock operation"
 
-  wget -q --show-progress -P $TEMP https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-  sudo apt-get -y install $TEMP/google-chrome-stable_current_amd64.deb >> $LOG_FILE
+  gsettings set org.gnome.desktop.screensaver lock-enabled false
+  gsettings set org.gnome.desktop.session idle-delay 0
+  gsettings set org.gnome.settings-daemon.plugins.power idle-dim false
 
-  success "Chrome has been installed successfully\n"
+  log "Idle delay has been set to 0"
+  log "Power idle dim has been disabled"
+
+  success "Screen lock has been disabled successfully\n"
 }
 
-# Task to install Slack
-installSlack () {
-  log "Installing the latest version of Slack"
+# Task to update the system via apt
+updateSystem () {
+  log "Updating the system with the latest updates"
 
-  sudo snap install slack --classic
+  sudo apt-get -y update >> $LOG_FILE
+  sudo apt-get -y upgrade >> $LOG_FILE
 
-  success "Slack has been installed successfully\n"
+  log "Latest updates have been installed successfully"
+
+  sudo apt-get -y autoremove >> $LOG_FILE
+
+  log "Unnecessary packages have been removed"
+
+  local packages=(tree curl unzip htop gconf-service gconf-service-backend gconf2
+            gconf2-common libappindicator1 libgconf-2-4 libindicator7
+            libpython2-stdlib python python2.7 python2.7-minimal libatomic1
+            gimp vlc)
+
+  log "Installing the following third-party dependencies:\n${packages[*]}"
+
+  sudo apt-get -y install ${packages[@]} >> $LOG_FILE
+
+  success "System has been updated successfully\n"
 }
 
-# Task to install Microsoft Teams
-installMSTeams () {
-  log "Installing the latest version of Microsoft Teams"
+# Task to set local RTC time
+setLocalRTCTime () {
+  log "Configuring system to use local RTC time"
 
-  sudo snap install teams
+  timedatectl set-local-rtc 1 --adjust-system-clock
 
-  success "Microsoft Teams has been installed successfully\n"
+  log "Now the system is using the local RTC Time instead of UTC"
+
+  gsettings set org.gnome.desktop.interface clock-show-date true
+
+  log "Clock has been set to show the date as well"
+
+  success "System has been set to use local RTC time successfully\n"
 }
 
-# Task to install Skype
-installSkype () {
-  log "Installing the latest version of Skype"
+# Task to increase inotify watches limit to monitor more files
+increaseInotifyLimit () {
+  log "Setting the inotify watches limit to a higher value"
 
-  sudo snap install skype
+  local watches_limit=524288
+  echo fs.inotify.max_user_watches=$watches_limit | sudo tee -a /etc/sysctl.conf >/dev/null && sudo sysctl -p
 
-  success "Skype has been installed successfully\n"
+  success "The inotify watches limit has been set to $watches_limit\n"
+}
+
+# Task to enable system's firewall via UFW
+enableFirewall () {
+  log "Installing GUFW to manage firewall rules via user interface"
+
+  sudo add-apt-repository -y -n universe >> $LOG_FILE
+  sudo apt-get -y update >> $LOG_FILE
+  sudo apt-get -y install gufw >> $LOG_FILE
+
+  log "Enabling the system's firewall via the UFW service"
+
+  sudo ufw enable
+  sudo ufw status verbose
+
+  log "Any incoming traffic has been set to deny and outgoing to allow"
+  success "Firewall has been enabled successfully\n"
+}
+
+# Task to install extra system languages, Greek
+installGreekLanguage () {
+  log "Installing language packages for Greek"
+
+  sudo apt-get -y install `check-language-support -l el` >> $LOG_FILE
+
+  log "Adding greek layout into the keyboard input sources"
+
+  gsettings set org.gnome.desktop.input-sources sources "[('xkb', 'us'), ('xkb', 'gr')]"
+
+  log "Setting regional formats back to US"
+
+  sudo update-locale LANG=en_US.UTF-8
+  sudo update-locale LANGUAGE=
+  sudo update-locale LC_CTYPE="en_US.UTF-8"
+  sudo update-locale LC_NUMERIC=en_US.UTF-8
+  sudo update-locale LC_TIME=en_US.UTF-8
+  sudo update-locale LC_COLLATE="en_US.UTF-8"
+  sudo update-locale LC_MONETARY=en_US.UTF-8
+  sudo update-locale LC_MESSAGES="en_US.UTF-8"
+  sudo update-locale LC_PAPER=en_US.UTF-8
+  sudo update-locale LC_NAME=en_US.UTF-8
+  sudo update-locale LC_ADDRESS=en_US.UTF-8
+  sudo update-locale LC_TELEPHONE=en_US.UTF-8
+  sudo update-locale LC_MEASUREMENT=en_US.UTF-8
+  sudo update-locale LC_IDENTIFICATION=en_US.UTF-8
+  sudo update-locale LC_ALL=
+
+  success "System languages have been updated successfully\n"
 }
 
 # Task to install Virtual Box
@@ -304,95 +266,6 @@ installVirtualBox () {
   sudo apt-get -y install virtualbox >> $LOG_FILE
 
   success "Virtual Box has been installed successfully\n"
-}
-
-# Task to install git
-installGit () {
-  log "Installing the latest version of Git"
-
-  ppa="git-core/ppa"
-
-  if ! grep -q "^deb .*$ppa" /etc/apt/sources.list /etc/apt/sources.list.d/*; then
-   sudo add-apt-repository -y -n ppa:$ppa >> $LOG_FILE
-   sudo apt-get -y update >> $LOG_FILE
-  fi
-
-  sudo apt-get -y install git >> $LOG_FILE
-
-  if [[ -n $GIT_USER_NAME ]]; then
-    git config --global user.name "$GIT_USER_NAME"
-    log "Git global username has been set to $(git config --global user.name)"
-  fi
-
-  if [[ -n $GIT_USER_EMAIL ]]; then
-    git config --global user.email "$GIT_USER_EMAIL"
-    log "Git global email has been set to $(git config --global user.email)"
-  fi
-
-  success "Git has been installed successfully\n"
-}
-
-# Task to configure cmd prompt to show current git branch
-enableGitPrompt () {
-  log "Setting cmd prompt to show current branch for git folders (~/.bashrc)"
-
-  echo '' >> ~/.bashrc
-  echo '# Show git branch name' >> ~/.bashrc
-  echo 'parse_git_branch() {' >> ~/.bashrc
-  echo ' git branch 2> /dev/null | sed -e "/^[^*]/d" -e "s/* \(.*\)/:\\1/"' >> ~/.bashrc
-  echo '}' >> ~/.bashrc
-  echo "PS1='\${debian_chroot:+(\$debian_chroot)}\[\\033[01;32m\]\u@\h\[\\033[00m\]:\[\\033[01;34m\]\w\[\\033[01;31m\]\$(parse_git_branch)\[\\033[00m\]\$ '" >> ~/.bashrc
-
-  log "Cmd prompt will now shown as user@host:~/path/to/folder[:branch]"
-
-  success "Command prompt has been updated successfully\n"
-}
-
-# Task to install Node via NVM
-installNode () {
-  log "Installing the NVM version $NVM_VERSION"
-
-  wget -q --show-progress -P $TEMP -O $TEMP/nvm-install.sh https://raw.githubusercontent.com/nvm-sh/nvm/v$NVM_VERSION/install.sh
-
-  bash $TEMP/nvm-install.sh >> $LOG_FILE
-  source /home/$USER/.bashrc >> $LOG_FILE
-  source /home/$USER/.nvm/nvm.sh >> $LOG_FILE
-
-  log "NVM has been installed under /home/$USER/.nvm"
-
-  log "Installing Node LTS and latest stable versions"
-
-  nvm install --no-progress --lts >> $LOG_FILE
-  nvm install --no-progress node >> $LOG_FILE
-  nvm use --lts >> $LOG_FILE
-
-  log "Node versions can be found under /home/$USER/.nvm/versions/node"
-  log "Node $(nvm current) is currently in use"
-
-  success "Node has been installed successfully\n"
-}
-
-# Task to install Java, Open JDK and Maven
-installJava () {
-  log "Installing the OpenJDK version 11"
-
-  sudo apt-get -y install openjdk-11-jdk openjdk-11-doc openjdk-11-source >> $LOG_FILE
-
-  log "OpenJDK has been installed successfully"
-
-  log "JDK currently in use is:"
-
-  java -version
-
-  sudo update-alternatives --display java >> $LOG_FILE
-
-  log "Installing the latest version of Maven"
-
-  sudo apt-get -y install maven >> $LOG_FILE
-
-  mvn -version
-
-  success "Java has been installed successfully\n"
 }
 
 # Task to install Docker and Compose
@@ -427,6 +300,95 @@ installDocker () {
   success "Docker has been installed successfully\n"
 }
 
+# Task to install git
+installGit () {
+  log "Installing the latest version of Git"
+
+  ppa="git-core/ppa"
+
+  if ! grep -q "^deb .*$ppa" /etc/apt/sources.list /etc/apt/sources.list.d/*; then
+   sudo add-apt-repository -y -n ppa:$ppa >> $LOG_FILE
+   sudo apt-get -y update >> $LOG_FILE
+  fi
+
+  sudo apt-get -y install git >> $LOG_FILE
+
+  if [[ -n $GIT_USER_NAME ]]; then
+    git config --global user.name "$GIT_USER_NAME"
+    log "Git global user name has been set to $(git config --global user.name)"
+  fi
+
+  if [[ -n $GIT_USER_EMAIL ]]; then
+    git config --global user.email "$GIT_USER_EMAIL"
+    log "Git global user email has been set to $(git config --global user.email)"
+  fi
+
+  success "Git has been installed successfully\n"
+}
+
+# Task to configure cmd prompt to show current git branch
+enableGitPrompt () {
+  log "Setting cmd prompt to show current branch in git folders (~/.bashrc)"
+
+  echo '' >> ~/.bashrc
+  echo '# Show git branch name' >> ~/.bashrc
+  echo 'parse_git_branch() {' >> ~/.bashrc
+  echo ' git branch 2> /dev/null | sed -e "/^[^*]/d" -e "s/* \(.*\)/:\\1/"' >> ~/.bashrc
+  echo '}' >> ~/.bashrc
+  echo "PS1='\${debian_chroot:+(\$debian_chroot)}\[\\033[01;32m\]\u@\h\[\\033[00m\]:\[\\033[01;34m\]\w\[\\033[01;31m\]\$(parse_git_branch)\[\\033[00m\]\$ '" >> ~/.bashrc
+
+  log "Cmd prompt will now shown as user@host:~/path/to/folder[:branch]"
+
+  success "Command prompt has been updated successfully\n"
+}
+
+# Task to install Node via NVM
+installNode () {
+  log "Installing Node via the NVM version $NVM_VERSION"
+
+  wget -q --show-progress -P $TEMP -O $TEMP/nvm-install.sh https://raw.githubusercontent.com/nvm-sh/nvm/v$NVM_VERSION/install.sh
+
+  bash $TEMP/nvm-install.sh >> $LOG_FILE
+  source /home/$USER/.bashrc >> $LOG_FILE
+  source /home/$USER/.nvm/nvm.sh >> $LOG_FILE
+
+  log "NVM has been installed under /home/$USER/.nvm"
+
+  log "Installing Node LTS and latest stable versions"
+
+  nvm install --no-progress --lts >> $LOG_FILE
+  nvm install --no-progress node >> $LOG_FILE
+  nvm use --lts >> $LOG_FILE
+
+  log "Node versions can be found under /home/$USER/.nvm/versions/node"
+  log "Node $(nvm current) is currently in use"
+
+  success "Node has been installed successfully\n"
+}
+
+# Task to install Java, Open JDK and Maven
+installJava () {
+  log "Installing Java via the OpenJDK version 11"
+
+  sudo apt-get -y install openjdk-11-jdk openjdk-11-doc openjdk-11-source >> $LOG_FILE
+
+  log "OpenJDK has been installed successfully"
+
+  log "JDK currently in use is:"
+
+  java -version
+
+  sudo update-alternatives --display java >> $LOG_FILE
+
+  log "Installing the latest version of Maven"
+
+  sudo apt-get -y install maven >> $LOG_FILE
+
+  mvn -version
+
+  success "Java has been installed successfully\n"
+}
+
 # Task to install Atom
 installAtom () {
   log "Installing the latest version of Atom"
@@ -447,7 +409,7 @@ installVSCode () {
     yzhang.markdown-all-in-one
   )
 
-  log "Installing the following VS Code plugins and extensions:\n${extensions[*]}"
+  log "Installing the following plugins and extensions:\n${extensions[*]}"
 
   for ext in ${extensions[@]}; do
     code --install-extension "$ext"
@@ -494,8 +456,47 @@ installPostman () {
   success "Postman has been isntalled successfully\n"
 }
 
+# Task to install Chrome
+installChrome () {
+  log "Installing the latest version of Chrome"
+
+  log "Downloading the binary file..."
+
+  wget -q --show-progress -P $TEMP https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb >> $LOG_FILE
+  sudo apt-get -y install $TEMP/google-chrome-stable_current_amd64.deb >> $LOG_FILE
+
+  success "Chrome has been installed successfully\n"
+}
+
+# Task to install Slack
+installSlack () {
+  log "Installing the latest version of Slack"
+
+  sudo snap install slack --classic
+
+  success "Slack has been installed successfully\n"
+}
+
+# Task to install Microsoft Teams
+installMSTeams () {
+  log "Installing the latest version of Microsoft Teams"
+
+  sudo snap install teams
+
+  success "Microsoft Teams has been installed successfully\n"
+}
+
+# Task to install Skype
+installSkype () {
+  log "Installing the latest version of Skype"
+
+  sudo snap install skype
+
+  success "Skype has been installed successfully\n"
+}
+
 # Task to install Libre Office
-installLiberOffice () {
+installLibreOffice () {
   log "Installing the latest version of Libre Office"
 
   sudo snap install libreoffice
@@ -515,7 +516,7 @@ sayGoodBye () {
   local endTime=`date +%s`
   local runtime=$(((endTime-startTime)/60))
 
-  log "Stack script completed in $runtime mins"
+  log "Installation has been completed in $runtime mins"
   success "Have a nice coding time, see ya!\n"
 }
 
@@ -547,85 +548,96 @@ while getopts :y opt; do
   esac
 done
 
-log "Script initialization is done\n"
+log "Script initialization has been completed\n"
 
 # Initiate task execution list with the mandatory tasks
 tasks=(createTempFolder)
 
 if [[ $yesToAll = false ]]; then
-  log "Look and feel:"
-  ask "Do you want to hide desktop icons?" configureDesktop
-  ask "Do you want to reposition dock to bottom?" configureDock
-  ask "Do you want to disable screen lock?" disableScreenLock
+  log "Me likes a clean look and feel:"
+  ask "You may want to hide desktop icons?" configureDesktop
+  ask "Do you want to reposition dock to the bottom?" configureDock
+  ask "Should home folders (~/Downloads, etc.) be renamed to lowercase?" renameHomeFolders
+  ask "Would disabling screen lock be helpful to you?" disableScreenLock
 
-  log "\nSystem configuration:"
-  ask "Do you want to upgrade your system?" upgradeSystem
-  ask "Do you want to install extra languages (Greek)?" installExtraLanguages
-  ask "Do you want to use local RTC time?" setLocalRTCTime
-  ask "Do you want to enable the firewall via UFW?" enableFirewall
-  ask "Do you want to increase the inotify watches limit?" increaseInotifyLimit
-  ask "Do you want to rename home folders to lowecase?" renameHomeFolders
+  log "\nCaptain, the system is out of order:"
+  ask "I guess you want to get the latest system updates?" updateSystem
+  ask "Should system time be set to local RTC time?" setLocalRTCTime
+  ask "Will higher inotify watches limit help you to monitor files?" increaseInotifyLimit
+  ask "Do you want to enable firewall via UFW?" enableFirewall
+  ask "Is Greek an extra language you need in your keyboard?" installGreekLanguage
 
-  log "\nThird-party software:"
-  ask "Do you want to install Chrome?" installChrome
-  ask "Do you want to install Slack?" installSlack
-  ask "Do you want to install Microsoft Teams?" installMSTeams
-  ask "Do you want to install Skype?" installSkype
+  log "\nDope, shippin' with containers is:"
   ask "Do you want to install Virtual Box?" installVirtualBox
+  ask "Do you want to install Docker and Compose?" installDocker
+
+  log "\nWe all say coding is so sexy:"
   ask "Do you want to install Git?" installGit
 
   if [[ $(tasksContains installGit) == true ]]; then
-    read -p "What's your git user name?(enter to skip) " GIT_USER_NAME
-    read -p "What's your git user email?(enter to skip) " GIT_USER_EMAIL
+    read -p "Awesome, what's your git user name?(enter to skip) " GIT_USER_NAME
+    read -p "...and your git user email please?(enter to skip) " GIT_USER_EMAIL
 
-    ask "Should cmd prompt show the current branch for git folders?" enableGitPrompt
+    ask "Should cmd prompt show the current branch in git folders?" enableGitPrompt
   fi
 
   ask "Do you want to install Node?" installNode
   ask "Do you want to install Java with Maven?" installJava
-  ask "Do you want to install Docker and Compose?" installDocker
   ask "Do you want to install Atom?" installAtom
   ask "Do you want to install Visual Studio Code?" installVSCode
   ask "Do you want to install IntelliJ Idea?" installIntelliJIdea
+
+  log "\nIt's all about data:"
   ask "Do you want to install MongoDB Compass?" installMongoDBCompass
   ask "Do you want to install DBeaver?" installDBeaver
   ask "Do you want to install Postman?" installPostman
-  ask "Do you want to install Libre Office?" installLiberOffice
 
-  log "\nPost actions:"
-  ask "Do you want to clean temp files?" cleanTempFolder
+  log "\nWork in teams, get things done:"
+  ask "Do you want to install Chrome?" installChrome
+  ask "Do you want to install Slack?" installSlack
+  ask "Do you want to install Microsoft Teams?" installMSTeams
+  ask "Do you want to install Skype?" installSkype
+  ask "Do you want to install Libre Office?" installLibreOffice
+
+  log "\nWe're almost done:"
+  ask "You may want to post clean temp files, right?" cleanTempFolder
 
   tasks+=(sayGoodBye)
 
-  ask "Do you want to reboot after stack script is done?" rebootSystem
+  ask "Do you want to reboot after installation?" rebootSystem
 else
   tasks+=(
     configureDesktop
     configureDock
-    disableScreenLock
-    upgradeSystem
-    installExtraLanguages
-    setLocalRTCTime
-    enableFirewall
-    increaseInotifyLimit
     renameHomeFolders
-    installChrome
-    installSlack
-    installMSTeams
-    installSkype
+    disableScreenLock
+
+    updateSystem
+    setLocalRTCTime
+    increaseInotifyLimit
+    enableFirewall
+    installGreekLanguage
+
     installVirtualBox
+    installDocker
+
     installGit
     enableGitPrompt
     installNode
     installJava
-    installDocker
     installAtom
     installVSCode
     installIntelliJIdea
+
     installMongoDBCompass
     installDBeaver
     installPostman
-    installLiberOffice
+
+    installChrome
+    installSlack
+    installMSTeams
+    installSkype
+    installLibreOffice
     cleanTempFolder
     sayGoodBye
     rebootSystem
@@ -635,11 +647,11 @@ fi
 # Start executing each task in order
 log ""
 for secs in 5 4 3 2 1 0; do
-  progress "Installation will start in $secs secs (Ctrl-C to cancel)"
+  progress "Installation is ready to launch in $secs (Ctrl-C to cancel)"
   sleep 1
 done
 
-log "\nStarting the execution of tasks..."
+log "\nLiftoff! We have a liftoff..."
 
 startTime=`date +%s`
 
