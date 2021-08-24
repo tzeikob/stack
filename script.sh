@@ -31,7 +31,7 @@ progress () {
 
 # Log an error and exit the process, abort message
 abort () {
-  echo -e "\033[0;31m$1\e[0m" >&2
+  echo -e "\n\033[0;31m$1\e[0m" >&2
   echo -e "Process exited with code: 1" >&2
   exit 1
 }
