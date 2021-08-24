@@ -63,7 +63,7 @@ createTempFolder () {
   mkdir -p $TEMP
 
   log "Temporary folder has been created successfully ($TEMP)"
-  log "You might want to know that logs have been routed to $LOG_FILE\n"
+  log "Logs have been routed to $LOG_FILE\n"
 }
 
 # Task to configure desktop look and feel
@@ -163,9 +163,11 @@ disableScreenLock () {
 updateSystem () {
   log "Updating the system with the latest updates"
 
-  log "Getting newest information of packages and their repositories..."
+  log "Getting newest information of repositories..."
 
   sudo apt-get -y update >> $LOG_FILE
+
+  log "Information of repositories has been updated"
 
   log "Getting system up to date..."
 
@@ -224,13 +226,17 @@ enableFirewall () {
 
   sudo add-apt-repository -y -n universe >> $LOG_FILE
 
-  log "Getting newest information of packages and their repositories..."
+  log "Getting newest information of repositories..."
 
   sudo apt-get -y update >> $LOG_FILE
+
+  log "Information of repositories has been updated"
 
   log "Installing the GUFW package..."
 
   sudo apt-get -y install gufw >> $LOG_FILE
+
+  log "GUFW package has been installed"
 
   log "Enabling the system's firewall via the UFW service"
 
@@ -249,6 +255,8 @@ installGreekLanguage () {
   log "Downloading and setting Greek language packages..."
 
   sudo apt-get -y install `check-language-support -l el` >> $LOG_FILE
+
+  log "Greek language packages has been installed"
 
   log "Adding greek layout into the keyboard input sources"
 
@@ -281,11 +289,13 @@ installVirtualBox () {
 
   sudo add-apt-repository -y -n multiverse >> $LOG_FILE
 
-  log "Getting newest information of packages and their repositories..."
+  log "Getting newest information of repositories..."
 
   sudo apt-get -y update >> $LOG_FILE
 
-  log "Installing the Virtual Box package..."
+  log "Information of repositories has been updated"
+
+  log "Installing the package..."
 
   sudo apt-get -y install virtualbox >> $LOG_FILE
 
@@ -296,13 +306,17 @@ installVirtualBox () {
 installDocker () {
   log "Installing the latest version of Docker"
 
-  log "Getting newest information of packages and their repositories..."
+  log "Getting newest information of repositories..."
 
   sudo apt-get -y update >> $LOG_FILE
+
+  log "Information of repositories has been updated"
 
   log "Installing third-party utilities..."
 
   sudo apt-get -y install apt-transport-https ca-certificates curl gnupg lsb-release >> $LOG_FILE
+
+  log "Third-party utilities have been installed"
 
   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg >> $LOG_FILE
   
@@ -310,10 +324,12 @@ installDocker () {
   "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
   $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-  log "Installing Docker packages..."
+  log "Installing Docer packages..."
 
   sudo apt-get -y update >> $LOG_FILE
   sudo apt-get -y install docker-ce docker-ce-cli containerd.io >> $LOG_FILE
+
+  log "Docker packages have been installed"
 
   log "Creating the docker user group"
 
@@ -335,18 +351,22 @@ installDocker () {
 installGit () {
   log "Installing the latest version of Git"
 
-  log "Getting newest information of packages and their repositories..."
-
   ppa="git-core/ppa"
 
   if ! grep -q "^deb .*$ppa" /etc/apt/sources.list /etc/apt/sources.list.d/*; then
-   sudo add-apt-repository -y -n ppa:$ppa >> $LOG_FILE
-   sudo apt-get -y update >> $LOG_FILE
+    log "Getting newest information of repositories..."
+
+    sudo add-apt-repository -y -n ppa:$ppa >> $LOG_FILE
+    sudo apt-get -y update >> $LOG_FILE
+
+    log "Information of repositories has been updated"
   fi
 
-  log "Installing Git packages..."
+  log "Installing the package..."
 
   sudo apt-get -y install git >> $LOG_FILE
+
+  log "The package has been installed"
 
   if [[ -n $GIT_USER_NAME ]]; then
     git config --global user.name "$GIT_USER_NAME"
@@ -383,7 +403,9 @@ installNode () {
 
   log "Downloading NVM installation script..."
 
-  wget -q --show-progress -P $TEMP -O $TEMP/nvm-install.sh https://raw.githubusercontent.com/nvm-sh/nvm/v$NVM_VERSION/install.sh >> $LOG_FILE
+  wget -q -P $TEMP -O $TEMP/nvm-install.sh https://raw.githubusercontent.com/nvm-sh/nvm/v$NVM_VERSION/install.sh
+
+  log "NVM script has been downloaded"
 
   log "Installing NVM package..."
 
@@ -409,7 +431,7 @@ installNode () {
 installJava () {
   log "Installing the Java Development Kit"
 
-  log "Installing OpenJDK version 11..."
+  log "Downloading and installing OpenJDK version 11..."
 
   sudo apt-get -y install openjdk-11-jdk openjdk-11-doc openjdk-11-source >> $LOG_FILE
 
@@ -425,7 +447,7 @@ installJava () {
 
   sudo apt-get -y install maven >> $LOG_FILE
 
-  mvn -version
+  log "Maven has been installed"
 
   success "Java has been installed successfully\n"
 }
@@ -474,9 +496,11 @@ installMongoDBCompass () {
 
   log "Downloading the package file..."
 
-  wget -q --show-progress -P $TEMP -O $TEMP/compass.deb "https://downloads.mongodb.com/compass/mongodb-compass_${MONGODB_COMPASS_VERSION}_amd64.deb" >> $LOG_FILE
+  wget -q -P $TEMP -O $TEMP/compass.deb "https://downloads.mongodb.com/compass/mongodb-compass_${MONGODB_COMPASS_VERSION}_amd64.deb"
 
-  log "Installing the MongoDB Compass package..."
+  log "Package file has been downloaded"
+
+  log "Installing the package..."
 
   sudo apt-get -y install $TEMP/compass.deb >> $LOG_FILE
 
@@ -505,11 +529,13 @@ installPostman () {
 installChrome () {
   log "Installing the latest version of Chrome"
 
-  log "Downloading the binary file..."
+  log "Downloading the package file..."
 
-  wget -q --show-progress -P $TEMP https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb >> $LOG_FILE
+  wget -q -P $TEMP https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
 
-  log "Installing the Chrome package..."
+  log "Package file has been downloaded"
+
+  log "Installing the package..."
 
   sudo apt-get -y install $TEMP/google-chrome-stable_current_amd64.deb >> $LOG_FILE
 
