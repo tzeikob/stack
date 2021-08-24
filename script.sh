@@ -721,6 +721,7 @@ for secs in 5 4 3 2 1 0; do
 done
 
 log "\nLiftoff! We have a liftoff..."
+sleep 5
 
 startTime=`date +%s`
 
