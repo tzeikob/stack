@@ -21,7 +21,7 @@ log () {
 
 # Log a success info message, success message
 success () {
-  echo -e "\e[92m \u2713 $1\e[0m"
+  echo -e "\e[92m$1\e[0m"
 }
 
 # Log a progress message, progress message
