@@ -66,99 +66,6 @@ createTempFolder () {
   log "Logs have been routed to $LOG_FILE\n"
 }
 
-# Task to configure desktop look and feel
-configureDesktop () {
-  log "Configuring desktop's look and feel"
-
-  log "Hiding home icon from desktop"
-  gsettings set org.gnome.shell.extensions.desktop-icons show-home false
-
-  log "Hiding trash icon from desktop"
-  gsettings set org.gnome.shell.extensions.desktop-icons show-trash false
-
-  success "Desktop has been updated successfully\n"
-}
-
-# Task to configure dock's look and feel
-configureDock () {
-  log "Configuring dock's look and feel"
-
-  log "Positioning dock to the bottom"
-  gsettings set org.gnome.shell.extensions.dash-to-dock dock-position BOTTOM
-
-  log "Setting dock's size down to 22 pixels"
-  gsettings set org.gnome.shell.extensions.dash-to-dock dash-max-icon-size 22
-
-  success "Dock has been updated successfully\n"
-}
-
-# Task to rename the default home folders
-renameHomeFolders () {
-  log "Renaming home folders in /home/$USER"
-
-  mv /home/$USER/Desktop /home/$USER/desktop
-  mv /home/$USER/Downloads /home/$USER/downloads
-  mv /home/$USER/Templates /home/$USER/templates
-  mv /home/$USER/Public /home/$USER/public
-  mv /home/$USER/Documents /home/$USER/documents
-  mv /home/$USER/Music /home/$USER/music
-  mv /home/$USER/Pictures /home/$USER/pictures
-  mv /home/$USER/Videos /home/$USER/videos
-
-  # Task to update the user dirs file
-  local userdirs_file="/home/$USER/.config/user-dirs.dirs"
-
-  log "Backing up the user dirs file to $userdirs_file.bak"
-
-  cp $userdirs_file $userdirs_file.bak
-
-  log "Updating the user dirs file $userdirs_file"
-
-  > $userdirs_file
-  echo "XDG_DESKTOP_DIR=\"$HOME/desktop\"" >> $userdirs_file
-  echo "XDG_DOWNLOAD_DIR=\"$HOME/downloads\"" >> $userdirs_file
-  echo "XDG_TEMPLATES_DIR=\"$HOME/templates\"" >> $userdirs_file
-  echo "XDG_PUBLICSHARE_DIR=\"$HOME/public\"" >> $userdirs_file
-  echo "XDG_DOCUMENTS_DIR=\"$HOME/documents\"" >> $userdirs_file
-  echo "XDG_MUSIC_DIR=\"$HOME/music\"" >> $userdirs_file
-  echo "XDG_PICTURES_DIR=\"$HOME/pictures\"" >> $userdirs_file
-  echo "XDG_VIDEOS_DIR=\"$HOME/videos\"" >> $userdirs_file
-
-  log "User dirs file has been updated successfully"
-
-  # Update the bookmarks file
-  local bookmarks_file="/home/$USER/.config/gtk-3.0/bookmarks"
-
-  log "Backing up the bookmarks file to $bookmarks_file.bak"
-
-  cp $bookmarks_file $bookmarks_file.bak
-
-  log "Updating the bookmarks file $bookmarks_file"
-
-  > $bookmarks_file
-  echo "file:///home/"$USER"/downloads Downloads" >> $bookmarks_file
-  echo "file:///home/"$USER"/documents Documents" >> $bookmarks_file
-  echo "file:///home/"$USER"/music Music" >> $bookmarks_file
-  echo "file:///home/"$USER"/pictures Pictures" >> $bookmarks_file
-  echo "file:///home/"$USER"/videos Videos" >> $bookmarks_file
-
-  success "Home folders and bookmarks renamed successfully\n"
-}
-
-# Task to disable screen lock
-disableScreenLock () {
-  log "Disabling the auto screen lock operation"
-
-  gsettings set org.gnome.desktop.screensaver lock-enabled false
-  gsettings set org.gnome.desktop.session idle-delay 0
-  gsettings set org.gnome.settings-daemon.plugins.power idle-dim false
-
-  log "Idle delay has been set to 0"
-  log "Power idle dim has been disabled"
-
-  success "Screen lock has been disabled successfully\n"
-}
-
 # Task to update the system via apt
 updateSystem () {
   log "Updating the system with the latest updates"
@@ -578,6 +485,99 @@ installLibreOffice () {
   success "Libre Office has been installed successfully\n"
 }
 
+# Task to configure desktop look and feel
+configureDesktop () {
+  log "Configuring desktop's look and feel"
+
+  log "Hiding home icon from desktop"
+  gsettings set org.gnome.shell.extensions.desktop-icons show-home false
+
+  log "Hiding trash icon from desktop"
+  gsettings set org.gnome.shell.extensions.desktop-icons show-trash false
+
+  success "Desktop has been updated successfully\n"
+}
+
+# Task to configure dock's look and feel
+configureDock () {
+  log "Configuring dock's look and feel"
+
+  log "Positioning dock to the bottom"
+  gsettings set org.gnome.shell.extensions.dash-to-dock dock-position BOTTOM
+
+  log "Setting dock's size down to 22 pixels"
+  gsettings set org.gnome.shell.extensions.dash-to-dock dash-max-icon-size 22
+
+  success "Dock has been updated successfully\n"
+}
+
+# Task to rename the default home folders
+renameHomeFolders () {
+  log "Renaming home folders in /home/$USER"
+
+  mv /home/$USER/Desktop /home/$USER/desktop
+  mv /home/$USER/Downloads /home/$USER/downloads
+  mv /home/$USER/Templates /home/$USER/templates
+  mv /home/$USER/Public /home/$USER/public
+  mv /home/$USER/Documents /home/$USER/documents
+  mv /home/$USER/Music /home/$USER/music
+  mv /home/$USER/Pictures /home/$USER/pictures
+  mv /home/$USER/Videos /home/$USER/videos
+
+  # Task to update the user dirs file
+  local userdirs_file="/home/$USER/.config/user-dirs.dirs"
+
+  log "Backing up the user dirs file to $userdirs_file.bak"
+
+  cp $userdirs_file $userdirs_file.bak
+
+  log "Updating the user dirs file $userdirs_file"
+
+  > $userdirs_file
+  echo "XDG_DESKTOP_DIR=\"$HOME/desktop\"" >> $userdirs_file
+  echo "XDG_DOWNLOAD_DIR=\"$HOME/downloads\"" >> $userdirs_file
+  echo "XDG_TEMPLATES_DIR=\"$HOME/templates\"" >> $userdirs_file
+  echo "XDG_PUBLICSHARE_DIR=\"$HOME/public\"" >> $userdirs_file
+  echo "XDG_DOCUMENTS_DIR=\"$HOME/documents\"" >> $userdirs_file
+  echo "XDG_MUSIC_DIR=\"$HOME/music\"" >> $userdirs_file
+  echo "XDG_PICTURES_DIR=\"$HOME/pictures\"" >> $userdirs_file
+  echo "XDG_VIDEOS_DIR=\"$HOME/videos\"" >> $userdirs_file
+
+  log "User dirs file has been updated successfully"
+
+  # Update the bookmarks file
+  local bookmarks_file="/home/$USER/.config/gtk-3.0/bookmarks"
+
+  log "Backing up the bookmarks file to $bookmarks_file.bak"
+
+  cp $bookmarks_file $bookmarks_file.bak
+
+  log "Updating the bookmarks file $bookmarks_file"
+
+  > $bookmarks_file
+  echo "file:///home/"$USER"/downloads Downloads" >> $bookmarks_file
+  echo "file:///home/"$USER"/documents Documents" >> $bookmarks_file
+  echo "file:///home/"$USER"/music Music" >> $bookmarks_file
+  echo "file:///home/"$USER"/pictures Pictures" >> $bookmarks_file
+  echo "file:///home/"$USER"/videos Videos" >> $bookmarks_file
+
+  success "Home folders and bookmarks renamed successfully\n"
+}
+
+# Task to disable screen lock
+disableScreenLock () {
+  log "Disabling the auto screen lock operation"
+
+  gsettings set org.gnome.desktop.screensaver lock-enabled false
+  gsettings set org.gnome.desktop.session idle-delay 0
+  gsettings set org.gnome.settings-daemon.plugins.power idle-dim false
+
+  log "Idle delay has been set to 0"
+  log "Power idle dim has been disabled"
+
+  success "Screen lock has been disabled successfully\n"
+}
+
 # Task to clean up temporary files
 cleanTempFolder () {
   log "Cleaning up installation files ($TEMP)"
@@ -628,13 +628,7 @@ log "Script initialization has been completed\n"
 tasks=(createTempFolder)
 
 if [[ $yesToAll = false ]]; then
-  log "Me likes a clean look and feel:"
-  ask "You may want to hide desktop icons?" configureDesktop
-  ask "Do you want to reposition dock to the bottom?" configureDock
-  ask "Should home folders (~/Downloads, etc.) be renamed to lowercase?" renameHomeFolders
-  ask "Would disabling screen lock be helpful to you?" disableScreenLock
-
-  log "\nCaptain, the system is out of order:"
+  log "Captain, the system is out of order:"
   ask "I guess you want to get the latest system updates?" updateSystem
   ask "Should system time be set to local RTC time?" setLocalRTCTime
   ask "Will higher inotify watches limit help you to monitor files?" increaseInotifyLimit
@@ -673,6 +667,12 @@ if [[ $yesToAll = false ]]; then
   ask "Do you want to install Skype?" installSkype
   ask "Do you want to install Libre Office?" installLibreOffice
 
+  log "\nMe likes a clean look and feel:"
+  ask "You may want to hide desktop icons?" configureDesktop
+  ask "Do you want to reposition dock to the bottom?" configureDock
+  ask "Should home folders (~/Downloads, etc.) be renamed to lowercase?" renameHomeFolders
+  ask "Would disabling screen lock be helpful to you?" disableScreenLock
+
   log "\nWe're almost done:"
   ask "You may want to post clean temp files, right?" cleanTempFolder
 
@@ -681,20 +681,13 @@ if [[ $yesToAll = false ]]; then
   ask "Do you want to reboot after installation?" rebootSystem
 else
   tasks+=(
-    configureDesktop
-    configureDock
-    renameHomeFolders
-    disableScreenLock
-
     updateSystem
     setLocalRTCTime
     increaseInotifyLimit
     enableFirewall
     installGreekLanguage
-
     installVirtualBox
     installDocker
-
     installGit
     enableGitPrompt
     installNode
@@ -702,16 +695,18 @@ else
     installAtom
     installVSCode
     installIntelliJIdea
-
     installMongoDBCompass
     installDBeaver
     installPostman
-
     installChrome
     installSlack
     installMSTeams
     installSkype
     installLibreOffice
+    configureDesktop
+    configureDock
+    renameHomeFolders
+    disableScreenLock
     cleanTempFolder
     sayGoodBye
     rebootSystem
