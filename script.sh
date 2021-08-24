@@ -534,12 +534,9 @@ rebootSystem () {
 
 log "Stack v$VERSION"
 log "Running on $(lsb_release -si) $(lsb_release -sr) $(lsb_release -sc)"
-log "Logged in as $USER@$HOSTNAME with kernel $(uname -r)\n"
+log "Logged in as $USER@$HOSTNAME with kernel $(uname -r)"
 
-# Initiate task execution list with the mandatory tasks
-tasks=(createTempFolder)
-
-# Read option y to enable yes to all tasks, default is false
+# Read options, y to enable yes to all tasks
 yesToAll=false
 while getopts :y opt; do
   case $opt in
@@ -549,6 +546,11 @@ while getopts :y opt; do
     *) abort "Error: Ooops argument $OPTARG is not supported";;
   esac
 done
+
+log "Script initialization is done\n"
+
+# Initiate task execution list with the mandatory tasks
+tasks=(createTempFolder)
 
 if [[ $yesToAll = false ]]; then
   log "Look and feel:"
