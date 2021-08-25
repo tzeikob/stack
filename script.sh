@@ -605,6 +605,12 @@ rebootSystem () {
   reboot
 }
 
+# Disallow to run this script as root or with sudo
+if [[ "$UID" == "0" ]]; then
+  abort 'Error: Do not run this script as root or using sudo'
+  exit 1
+fi
+
 log "Stack v$VERSION"
 log "Running on $(lsb_release -si) $(lsb_release -sr) $(lsb_release -sc)"
 log "Logged in as $USER@$HOSTNAME with kernel $(uname -r)"
