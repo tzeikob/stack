@@ -587,11 +587,18 @@ cleanTempFolder () {
 
 # Task to print a good bye message
 sayGoodBye () {
+  log "Stack crew ready for landing"
+  sleep 2
+  log "Current velocity is 5 meters/sec"
+  sleep 4
+  log "Touch down, we have touch down!"
+  sleep 2
+
   local endTime=`date +%s`
   local runtime=$(((endTime-startTime)/60))
 
-  log "Installation has been completed in $runtime mins"
-  success "Have a nice coding time, see ya!\n"
+  log "\nInstallation has been completed in $runtime mins"
+  success "Have a nice coding time!\n"
 }
 
 # Task to reboot the system
@@ -714,14 +721,19 @@ else
 fi
 
 # Start executing each task in order
-log ""
-for secs in 5 4 3 2 1 0; do
-  progress "Installation is ready to launch in $secs (Ctrl-C to cancel)"
+log "\nStack crew ready for launch"
+sleep 2
+log "T-10 seconds to go..."
+sleep 2
+for secs in 8 7 6 5 4 3 2 1 "zero!"; do
+  progress "Installation will launch in $secs (Ctrl-C to abort)"
   sleep 1
 done
 
-log "\nLiftoff! We have a liftoff..."
-sleep 5
+log "\nIgnition..."
+sleep 1
+log "Liftoff, we have a liftoff!"
+sleep 4
 
 startTime=`date +%s`
 
