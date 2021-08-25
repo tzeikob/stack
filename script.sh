@@ -131,8 +131,6 @@ increaseInotifyLimit () {
 enableFirewall () {
   log "Installing GUFW to manage firewall rules via user interface"
 
-  sudo add-apt-repository -y -n universe >> $LOG_FILE
-
   log "Updating apt-get repositories..."
 
   sudo apt-get -y update >> $LOG_FILE
@@ -193,8 +191,6 @@ installGreekLanguage () {
 # Task to install Virtual Box
 installVirtualBox () {
   log "Installing the latest version of Virtual Box"
-
-  sudo add-apt-repository -y -n multiverse >> $LOG_FILE
 
   log "Updating apt-get repositories..."
 
@@ -258,16 +254,11 @@ installDocker () {
 installGit () {
   log "Installing the latest version of Git"
 
-  ppa="git-core/ppa"
+  log "Updating apt-get repositories..."
 
-  if ! grep -q "^deb .*$ppa" /etc/apt/sources.list /etc/apt/sources.list.d/*; then
-    log "Updating apt-get repositories..."
+  sudo apt-get -y update >> $LOG_FILE
 
-    sudo add-apt-repository -y -n ppa:$ppa >> $LOG_FILE
-    sudo apt-get -y update >> $LOG_FILE
-
-    log "Repositories have been updated"
-  fi
+  log "Repositories have been updated"
 
   log "Installing the package..."
 
