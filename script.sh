@@ -723,8 +723,10 @@ done
 
 log "\nIgnition..."
 sleep 1
-log "Liftoff, we have a liftoff!"
+log "Liftoff, we have a liftoff!\n"
 sleep 4
+
+log "Installation has been started..."
 
 startTime=`date +%s`
 
