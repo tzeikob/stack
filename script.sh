@@ -70,11 +70,11 @@ createTempFolder () {
 updateSystem () {
   log "Updating the system with the latest updates"
 
-  log "Getting newest information of repositories..."
+  log "Updating apt-get repositories..."
 
   sudo apt-get -y update >> $LOG_FILE
 
-  log "Information of repositories has been updated"
+  log "Repositories have been updated"
 
   log "Getting system up to date..."
 
@@ -133,11 +133,11 @@ enableFirewall () {
 
   sudo add-apt-repository -y -n universe >> $LOG_FILE
 
-  log "Getting newest information of repositories..."
+  log "Updating apt-get repositories..."
 
   sudo apt-get -y update >> $LOG_FILE
 
-  log "Information of repositories has been updated"
+  log "Repositories have been updated"
 
   log "Installing the GUFW package..."
 
@@ -196,11 +196,11 @@ installVirtualBox () {
 
   sudo add-apt-repository -y -n multiverse >> $LOG_FILE
 
-  log "Getting newest information of repositories..."
+  log "Updating apt-get repositories..."
 
   sudo apt-get -y update >> $LOG_FILE
 
-  log "Information of repositories has been updated"
+  log "Repositories have been updated"
 
   log "Installing the package..."
 
@@ -213,11 +213,11 @@ installVirtualBox () {
 installDocker () {
   log "Installing the latest version of Docker"
 
-  log "Getting newest information of repositories..."
+  log "Updating apt-get repositories..."
 
   sudo apt-get -y update >> $LOG_FILE
 
-  log "Information of repositories has been updated"
+  log "Repositories have been updated"
 
   log "Installing third-party utilities..."
 
@@ -261,12 +261,12 @@ installGit () {
   ppa="git-core/ppa"
 
   if ! grep -q "^deb .*$ppa" /etc/apt/sources.list /etc/apt/sources.list.d/*; then
-    log "Getting newest information of repositories..."
+    log "Updating apt-get repositories..."
 
     sudo add-apt-repository -y -n ppa:$ppa >> $LOG_FILE
     sudo apt-get -y update >> $LOG_FILE
 
-    log "Information of repositories has been updated"
+    log "Repositories have been updated"
   fi
 
   log "Installing the package..."
