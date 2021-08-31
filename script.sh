@@ -568,13 +568,6 @@ disableScreenLock () {
   success "Screen lock has been disabled successfully\n"
 }
 
-# Task to clean up temporary files
-cleanTempFolder () {
-  log "Cleaning up installation files ($TEMP)"
-
-  rm -rf $TEMP
-}
-
 # Task to print a good bye message
 sayGoodBye () {
   progress "Stack crew ready for landing"
@@ -611,7 +604,7 @@ log "Stack v$VERSION"
 log "Running on $(lsb_release -si) $(lsb_release -sr) $(lsb_release -sc)"
 log "Logged in as $USER@$HOSTNAME with kernel $(uname -r)"
 log "Temporary folder has been created successfully ($TEMP)"
-log "Logs have been routed to $LOG_FILE\n"
+log "Logs have been routed to $LOG_FILE"
 
 # Disallow to run this script as root or with sudo
 if [[ "$UID" == "0" ]]; then
@@ -681,11 +674,9 @@ if [[ $yesToAll = false ]]; then
   ask "Should home folders (~/Downloads, etc.) be renamed to lowercase?" renameHomeFolders
   ask "Would disabling screen lock be helpful to you?" disableScreenLock
 
-  log "\nWe're almost done:"
-  ask "You may want to post clean temp files, right?" cleanTempFolder
-
   tasks+=(sayGoodBye)
 
+  log "\nWe're almost done:"
   ask "Do you want to reboot after installation?" rebootSystem
 else
   tasks+=(
@@ -715,7 +706,6 @@ else
     configureDock
     renameHomeFolders
     disableScreenLock
-    cleanTempFolder
     sayGoodBye
     rebootSystem
   )
