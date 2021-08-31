@@ -65,14 +65,6 @@ ask () {
   fi
 }
 
-# Task to create temp folder
-createTempFolder () {
-  mkdir -p $TEMP
-
-  log "Temporary folder has been created successfully ($TEMP)"
-  log "Logs have been routed to $LOG_FILE\n"
-}
-
 # Task to update the system via apt
 updateSystem () {
   log "Updating the system with the latest updates"
@@ -612,9 +604,14 @@ rebootSystem () {
   reboot
 }
 
+# Create a temporary folder
+mkdir -p $TEMP
+
 log "Stack v$VERSION"
 log "Running on $(lsb_release -si) $(lsb_release -sr) $(lsb_release -sc)"
 log "Logged in as $USER@$HOSTNAME with kernel $(uname -r)"
+log "Temporary folder has been created successfully ($TEMP)"
+log "Logs have been routed to $LOG_FILE\n"
 
 # Disallow to run this script as root or with sudo
 if [[ "$UID" == "0" ]]; then
@@ -635,8 +632,8 @@ done
 
 log "Script initialization has been completed\n"
 
-# Initiate task execution list with the mandatory tasks
-tasks=(createTempFolder)
+# Initiate task execution list
+tasks=()
 
 if [[ $yesToAll = false ]]; then
   log "Captain, the system is out of order:"
