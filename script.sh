@@ -213,7 +213,7 @@ installDocker () {
 
   updateRepositories
 
-  log "Installing Docer packages..."
+  log "Installing Docker packages..."
 
   sudo apt-get -y install docker-ce docker-ce-cli containerd.io >> $LOG_FILE
 
