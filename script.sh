@@ -65,15 +65,18 @@ ask () {
   fi
 }
 
-# Task to update the system via apt
-updateSystem () {
-  log "Updating the system with the latest updates"
-
+# Update apt-get repositories
+updateRepositories () {
   log "Updating apt-get repositories..."
 
   sudo apt-get -y update >> $LOG_FILE
 
   log "Repositories have been updated"
+}
+
+# Task to update the system via apt
+updateSystem () {
+  log "Updating the system with the latest updates"
 
   log "Getting system up to date..."
 
@@ -130,12 +133,6 @@ increaseInotifyLimit () {
 enableFirewall () {
   log "Installing GUFW to manage firewall rules via user interface"
 
-  log "Updating apt-get repositories..."
-
-  sudo apt-get -y update >> $LOG_FILE
-
-  log "Repositories have been updated"
-
   log "Installing the GUFW package..."
 
   sudo apt-get -y install gufw >> $LOG_FILE
@@ -191,13 +188,7 @@ installGreekLanguage () {
 installVirtualBox () {
   log "Installing the latest version of Virtual Box"
 
-  log "Updating apt-get repositories..."
-
-  sudo apt-get -y update >> $LOG_FILE
-
-  log "Repositories have been updated"
-
-  log "Installing the package..."
+  log "Installing the package file..."
 
   sudo apt-get -y install virtualbox >> $LOG_FILE
 
@@ -207,12 +198,6 @@ installVirtualBox () {
 # Task to install Docker and Compose
 installDocker () {
   log "Installing the latest version of Docker"
-
-  log "Updating apt-get repositories..."
-
-  sudo apt-get -y update >> $LOG_FILE
-
-  log "Repositories have been updated"
 
   log "Installing third-party utilities..."
 
@@ -226,9 +211,10 @@ installDocker () {
   "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
   $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
+  updateRepositories
+
   log "Installing Docer packages..."
 
-  sudo apt-get -y update >> $LOG_FILE
   sudo apt-get -y install docker-ce docker-ce-cli containerd.io >> $LOG_FILE
 
   log "Docker packages have been installed"
@@ -252,12 +238,6 @@ installDocker () {
 # Task to install git
 installGit () {
   log "Installing the latest version of Git"
-
-  log "Updating apt-get repositories..."
-
-  sudo apt-get -y update >> $LOG_FILE
-
-  log "Repositories have been updated"
 
   log "Installing the package..."
 
@@ -603,7 +583,7 @@ mkdir -p $TEMP
 log "Stack v$VERSION"
 log "Running on $(lsb_release -si) $(lsb_release -sr) $(lsb_release -sc)"
 log "Logged in as $USER@$HOSTNAME with kernel $(uname -r)"
-log "Temporary folder has been created successfully ($TEMP)"
+log "Temporary folder has been created ($TEMP)"
 log "Logs have been routed to $LOG_FILE"
 
 # Disallow to run this script as root or with sudo
@@ -625,8 +605,8 @@ done
 
 log "Script initialization has been completed\n"
 
-# Initiate task execution list
-tasks=()
+# Initiate task execution list, first update repos
+tasks=(updateRepositories)
 
 if [[ $yesToAll = false ]]; then
   log "Captain, the system is out of order:"
@@ -712,7 +692,7 @@ else
 fi
 
 # Start executing each task in order
-progress "Stack crew ready for launch"
+progress "\nStack crew ready for launch"
 sleep 2
 progress "T-10 seconds to go..."
 sleep 2
