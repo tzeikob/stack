@@ -605,8 +605,8 @@ done
 
 log "Script initialization has been completed\n"
 
-# Initiate task execution list, first update repos
-tasks=(updateRepositories)
+# Initiate task execution list
+tasks=()
 
 if [[ $yesToAll = false ]]; then
   log "Captain, the system is out of order:"
@@ -707,6 +707,10 @@ progress "We have a liftoff!"
 sleep 4
 
 log "Installation has been started..."
+
+updateRepositories
+
+log "Start executing tasks...\n"
 
 startTime=`date +%s`
 
