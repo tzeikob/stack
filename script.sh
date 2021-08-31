@@ -26,7 +26,7 @@ success () {
 
 # Log a progress message, progress message
 progress () {
-  echo -ne "\e[97m$1\e[0m\\r"
+  echo -ne "\033[2K\e[97m$1\e[0m\\r"
 }
 
 # Log an error and exit the process, abort message
@@ -578,17 +578,17 @@ cleanTempFolder () {
 
 # Task to print a good bye message
 sayGoodBye () {
-  log "Stack crew ready for landing"
+  progress "Stack crew ready for landing"
   sleep 2
-  log "Current velocity is 5 meters/sec"
+  progress "Current velocity is 5 meters/sec"
   sleep 4
-  log "Touch down, we have touch down!"
+  progress "Touch down, we have touch down!"
   sleep 2
 
   local endTime=`date +%s`
   local runtime=$(((endTime-startTime)/60))
 
-  log "\nInstallation has been completed in $runtime mins"
+  log "Installation has been completed in $runtime mins"
   success "Have a nice coding time!\n"
 }
 
@@ -718,18 +718,18 @@ else
 fi
 
 # Start executing each task in order
-log "\nStack crew ready for launch"
+progress "Stack crew ready for launch"
 sleep 2
-log "T-10 seconds to go..."
+progress "T-10 seconds to go..."
 sleep 2
 for secs in 8 7 6 5 4 3 2 1 "zero!"; do
   progress "Installation will launch in $secs (Ctrl-C to abort)"
   sleep 1
 done
 
-log "\nIgnition..."
-sleep 1
-log "Liftoff, we have a liftoff!\n"
+progress "Ignition..."
+sleep 2
+progress "We have a liftoff!"
 sleep 4
 
 log "Installation has been started..."
