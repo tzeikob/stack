@@ -17,22 +17,29 @@ MONGODB_COMPASS_VERSION="1.28.1"
 # Log a normal info message, log message
 log () {
   echo -e "\e[97m$1\e[0m"
+  echo -e "$1" >> $LOG_FILE
 }
 
 # Log a success info message, success message
 success () {
   echo -e "\e[92m$1\e[0m"
+  echo -e "$1" >> $LOG_FILE
 }
 
 # Log a progress message, progress message
 progress () {
   echo -ne "\033[2K\e[97m$1\e[0m\\r"
+  echo -e "$1" >> $LOG_FILE
 }
 
 # Log an error and exit the process, abort message
 abort () {
-  echo -e "\n\033[0;31m$1\e[0m" >&2
-  echo -e "Process exited with code: 1" >&2
+  echo -e "\n\033[0;31m$1\e[0m"
+  echo -e "\n$1" >> $LOG_FILE
+
+  echo -e "Process exited with code: 1"
+  echo -e "Process exited with code: 1" >> $LOG_FILE
+
   exit 1
 }
 
