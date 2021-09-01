@@ -481,6 +481,23 @@ installSkype () {
   success "Skype has been installed successfully\n"
 }
 
+# Task to install TeamViewer
+installTeamViewer () {
+  log "Installing the latest version of TeamViewer"
+
+  log "Downloading the package file..."
+
+  wget -q -P $TEMP -O $TEMP/teamviewer.deb "https://download.teamviewer.com/download/linux/teamviewer_amd64.deb"
+
+  log "Package file has been downloaded"
+
+  log "Installing the package..."
+
+  sudo apt-get -y install $TEMP/teamviewer.deb >> $LOG_FILE
+
+  success "TeamViewer has been installed successfully\n"
+}
+
 # Task to install Libre Office
 installLibreOffice () {
   log "Installing the latest version of Libre Office"
@@ -706,6 +723,7 @@ if [[ $yesToAll = false ]]; then
   ask "Do you want to install Discord?" installDiscord
   ask "Do you want to install Microsoft Teams?" installMSTeams
   ask "Do you want to install Skype?" installSkype
+  ask "Do you want to install TeamViewer?" installTeamViewer
   ask "Do you want to install Libre Office?" installLibreOffice
 
   log "\nNobody is escaping from media nowdays:"
@@ -748,6 +766,7 @@ else
     installDiscord
     installMSTeams
     installSkype
+    installTeamViewer
     installLibreOffice
     installGimp
     installVLC
