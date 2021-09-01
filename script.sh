@@ -419,6 +419,15 @@ installChrome () {
   success "Chrome has been installed successfully\n"
 }
 
+# Task to install Thunderbird
+installThunderbird () {
+  log "Installing the latest version of Thunderbird"
+
+  sudo snap install thunderbird
+
+  success "Thunderbird has been installed successfully\n"
+}
+
 # Task to install Slack
 installSlack () {
   log "Installing the latest version of Slack"
@@ -643,6 +652,7 @@ if [[ $yesToAll = false ]]; then
 
   log "\nWork in teams, get things done:"
   ask "Do you want to install Chrome?" installChrome
+  ask "Do you want to install Thunderbird?" installThunderbird
   ask "Do you want to install Slack?" installSlack
   ask "Do you want to install Microsoft Teams?" installMSTeams
   ask "Do you want to install Skype?" installSkype
@@ -678,6 +688,7 @@ else
     installDBeaver
     installPostman
     installChrome
+    installThunderbird
     installSlack
     installMSTeams
     installSkype
