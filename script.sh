@@ -12,6 +12,7 @@ GIT_USER_EMAIL=""
 # Third-party dependencies
 NVM_VERSION="0.38.0"
 DOCKER_COMPOSE_VERSION="1.29.2"
+DROPBOX_VERSION="2020.03.04"
 MONGODB_COMPASS_VERSION="1.28.1"
 
 # Log a normal info message, log message
@@ -233,6 +234,23 @@ installDocker () {
   sudo chmod +x /usr/local/bin/docker-compose
 
   success "Docker has been installed successfully\n"
+}
+
+# Task to install Dropbox
+installDropbox () {
+  log "Installing the Dropbox version $DROPBOX_VERSION"
+
+  log "Downloading the package file..."
+
+  wget -q -P $TEMP -O $TEMP/dropbox.deb "https://linux.dropbox.com/packages/ubuntu/dropbox_${DROPBOX_VERSION}_amd64.deb"
+
+  log "Package file has been downloaded"
+
+  log "Installing the package..."
+
+  sudo apt-get -y install $TEMP/dropbox.deb >> $LOG_FILE
+
+  success "Dropbox has been installed successfully\n"
 }
 
 # Task to install git
@@ -637,6 +655,7 @@ if [[ $yesToAll = false ]]; then
   log "\nDope, shippin' with containers is:"
   ask "Do you want to install Virtual Box?" installVirtualBox
   ask "Do you want to install Docker and Compose?" installDocker
+  ask "Do you want to install Dropbox?" installDropbox
 
   log "\nWe all say coding is so sexy:"
   ask "Do you want to install Git?" installGit
@@ -687,6 +706,7 @@ else
     installGreekLanguage
     installVirtualBox
     installDocker
+    installDropbox
     installGit
     enableGitPrompt
     installNode
