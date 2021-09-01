@@ -437,6 +437,15 @@ installSlack () {
   success "Slack has been installed successfully\n"
 }
 
+# Task to install Discord
+installDiscord () {
+  log "Installing the latest version of Discord"
+
+  sudo snap install discord
+
+  success "Discord has been installed successfully\n"
+}
+
 # Task to install Microsoft Teams
 installMSTeams () {
   log "Installing the latest version of Microsoft Teams"
@@ -654,6 +663,7 @@ if [[ $yesToAll = false ]]; then
   ask "Do you want to install Chrome?" installChrome
   ask "Do you want to install Thunderbird?" installThunderbird
   ask "Do you want to install Slack?" installSlack
+  ask "Do you want to install Discord?" installDiscord
   ask "Do you want to install Microsoft Teams?" installMSTeams
   ask "Do you want to install Skype?" installSkype
   ask "Do you want to install Libre Office?" installLibreOffice
@@ -690,6 +700,7 @@ else
     installChrome
     installThunderbird
     installSlack
+    installDiscord
     installMSTeams
     installSkype
     installLibreOffice
