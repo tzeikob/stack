@@ -75,6 +75,19 @@ updateRepositories () {
   log "Repositories have been updated"
 }
 
+# Task to install prerequisites
+installPrerequisites () {
+  log "Installing a few prerequisites packages..."
+
+  local packages=(tree wget curl unzip htop gconf-service gconf-service-backend gconf2
+            gconf2-common libappindicator1 libgconf-2-4 libindicator7
+            libpython2-stdlib python python2.7 python2.7-minimal libatomic1 poppler-utils)
+
+  sudo apt-get -y install ${packages[@]} >> $LOG_FILE
+
+  log "Prerequisites package have been installed"
+}
+
 # Task to update the system via apt
 updateSystem () {
   log "Updating the system with the latest updates"
@@ -90,14 +103,6 @@ updateSystem () {
   sudo apt-get -y autoremove >> $LOG_FILE
 
   log "Unnecessary packages have been removed"
-
-  local packages=(tree curl unzip htop gconf-service gconf-service-backend gconf2
-            gconf2-common libappindicator1 libgconf-2-4 libindicator7
-            libpython2-stdlib python python2.7 python2.7-minimal libatomic1 poppler-utils)
-
-  log "Installing the following third-party dependencies:\n${packages[*]}"
-
-  sudo apt-get -y install ${packages[@]} >> $LOG_FILE
 
   success "System has been updated successfully\n"
 }
@@ -676,6 +681,8 @@ while getopts :y opt; do
     *) abort "Error: Ooops argument $OPTARG is not supported";;
   esac
 done
+
+installPrerequisites
 
 log "Script initialization has been completed\n"
 
