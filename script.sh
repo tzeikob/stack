@@ -94,7 +94,7 @@ updateSystem () {
   local packages=(tree curl unzip htop gconf-service gconf-service-backend gconf2
             gconf2-common libappindicator1 libgconf-2-4 libindicator7
             libpython2-stdlib python python2.7 python2.7-minimal libatomic1
-            gimp vlc poppler-utils)
+            vlc poppler-utils)
 
   log "Installing the following third-party dependencies:\n${packages[*]}"
 
@@ -491,6 +491,17 @@ installLibreOffice () {
   success "Libre Office has been installed successfully\n"
 }
 
+# Task to install Gimp
+installGimp () {
+  log "Installing the latest version of Gimp"
+
+  log "Installing the package file..."
+
+  sudo apt-get -y install gimp >> $LOG_FILE
+
+  success "Gimp has been installed successfully\n"
+}
+
 # Task to configure desktop look and feel
 configureDesktop () {
   log "Configuring desktop's look and feel"
@@ -687,6 +698,9 @@ if [[ $yesToAll = false ]]; then
   ask "Do you want to install Skype?" installSkype
   ask "Do you want to install Libre Office?" installLibreOffice
 
+  log "\nNobody is escaping from media nowdays:"
+  ask "Do you want to install Gimp?" installGimp
+
   log "\nMe likes a clean look and feel:"
   ask "You may want to hide desktop icons?" configureDesktop
   ask "Do you want to reposition dock to the bottom?" configureDock
@@ -724,6 +738,7 @@ else
     installMSTeams
     installSkype
     installLibreOffice
+    installGimp
     configureDesktop
     configureDock
     renameHomeFolders
