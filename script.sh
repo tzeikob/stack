@@ -93,8 +93,7 @@ updateSystem () {
 
   local packages=(tree curl unzip htop gconf-service gconf-service-backend gconf2
             gconf2-common libappindicator1 libgconf-2-4 libindicator7
-            libpython2-stdlib python python2.7 python2.7-minimal libatomic1
-            vlc poppler-utils)
+            libpython2-stdlib python python2.7 python2.7-minimal libatomic1 poppler-utils)
 
   log "Installing the following third-party dependencies:\n${packages[*]}"
 
@@ -502,6 +501,17 @@ installGimp () {
   success "Gimp has been installed successfully\n"
 }
 
+# Task to install VLC
+installVLC () {
+  log "Installing the latest version of VLC"
+
+  log "Installing the package file..."
+
+  sudo apt-get -y install vlc >> $LOG_FILE
+
+  success "VLC has been installed successfully\n"
+}
+
 # Task to configure desktop look and feel
 configureDesktop () {
   log "Configuring desktop's look and feel"
@@ -700,6 +710,7 @@ if [[ $yesToAll = false ]]; then
 
   log "\nNobody is escaping from media nowdays:"
   ask "Do you want to install Gimp?" installGimp
+  ask "Do you want to install VLC Player?" installVLC
 
   log "\nMe likes a clean look and feel:"
   ask "You may want to hide desktop icons?" configureDesktop
@@ -739,6 +750,7 @@ else
     installSkype
     installLibreOffice
     installGimp
+    installVLC
     configureDesktop
     configureDock
     renameHomeFolders
