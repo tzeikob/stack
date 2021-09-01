@@ -85,7 +85,7 @@ installPrerequisites () {
 
   sudo apt-get -y install ${packages[@]} >> $LOG_FILE
 
-  log "Prerequisite package have been installed"
+  log "Prerequisite packages have been installed"
 }
 
 # Task to update the system via apt
