@@ -77,7 +77,7 @@ updateRepositories () {
 
 # Task to install prerequisites
 installPrerequisites () {
-  log "Installing a few prerequisites packages..."
+  log "Installing a few prerequisite packages..."
 
   local packages=(tree wget curl unzip htop gconf-service gconf-service-backend gconf2
             gconf2-common libappindicator1 libgconf-2-4 libindicator7
@@ -85,7 +85,7 @@ installPrerequisites () {
 
   sudo apt-get -y install ${packages[@]} >> $LOG_FILE
 
-  log "Prerequisites package have been installed"
+  log "Prerequisite package have been installed"
 }
 
 # Task to update the system via apt
@@ -682,15 +682,13 @@ while getopts :y opt; do
   esac
 done
 
-installPrerequisites
-
-log "Script initialization has been completed\n"
+log "Script initialization has been completed"
 
 # Initiate task execution list
 tasks=()
 
 if [[ $yesToAll = false ]]; then
-  log "Captain, the system is out of order:"
+  log "\nCaptain, the system is out of order:"
   ask "I guess you want to get the latest system updates?" updateSystem
   ask "Should system time be set to local RTC time?" setLocalRTCTime
   ask "Will higher inotify watches limit help you to monitor files?" increaseInotifyLimit
@@ -804,6 +802,7 @@ sleep 4
 log "Installation has been started..."
 
 updateRepositories
+installPrerequisites
 
 log "Start executing tasks...\n"
 
