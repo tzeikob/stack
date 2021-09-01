@@ -94,7 +94,7 @@ updateSystem () {
   local packages=(tree curl unzip htop gconf-service gconf-service-backend gconf2
             gconf2-common libappindicator1 libgconf-2-4 libindicator7
             libpython2-stdlib python python2.7 python2.7-minimal libatomic1
-            gimp vlc)
+            gimp vlc poppler-utils)
 
   log "Installing the following third-party dependencies:\n${packages[*]}"
 
