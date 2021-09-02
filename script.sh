@@ -681,9 +681,10 @@ rebootSystem () {
   reboot
 }
 
-# Create a temporary folder
+# Create the temporary folder
 mkdir -p $TEMP
 
+# Echoing welcome messages
 log "Stack v$VERSION"
 log "Running on $(lsb_release -si) $(lsb_release -sr) $(lsb_release -sc)"
 log "Logged in as $USER@$HOSTNAME with kernel $(uname -r)"
@@ -709,7 +710,7 @@ done
 
 log "Script initialization has been completed"
 
-# Initiate task execution list
+# Fill up task execution list
 tasks=()
 
 if [[ $yesToAll = false ]]; then
@@ -811,7 +812,7 @@ else
   )
 fi
 
-# Start executing each task in order
+# Echoing launching messages
 progress "\nStack crew ready for launch"
 sleep 2
 progress "T-10 seconds to go..."
@@ -828,6 +829,7 @@ sleep 4
 
 log "Installation has been started..."
 
+# Execute some preparatory tasks
 updateRepositories
 installPrerequisites
 
@@ -835,4 +837,5 @@ log "Start executing tasks...\n"
 
 startTime=`date +%s`
 
+# Start executing each task in order
 for task in "${tasks[@]}"; do "${task}"; done
