@@ -654,8 +654,8 @@ sayGoodBye () {
 rebootSystem () {
   log "Script has been switched to restart mode..."
   
-  # Sleep 10 secs before reboot
-  for secs in 10 9 8 7 6 5 4 3 2 1 0; do
+  # Count down 15 secs before reboot
+  for secs in $(seq 15 -1 0); do
     progress "Reboot will start in $secs secs (Ctrl-C to cancel)"
     sleep 1
   done
@@ -796,14 +796,14 @@ progress "\nStack crew ready for launch"
 sleep 2
 progress "T-10 seconds to go..."
 sleep 2
-for secs in 8 7 6 5 4 3 2 1 "zero!"; do
+for secs in $(seq 8 -1 0); do
   progress "Installation will launch in $secs (Ctrl-C to abort)"
   sleep 1
 done
 
 progress "Ignition..."
 sleep 2
-progress "We have a liftoff!"
+progress "Liftoff, We have liftoff!"
 sleep 4
 
 log "Installation has been started..."
