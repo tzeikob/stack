@@ -650,6 +650,50 @@ disableScreenLock () {
   success "Screen lock has been disabled successfully\n"
 }
 
+# Task to configure the workspaces
+configureWorkspaces () {
+  log "Configuring workspaces for multiple monitor setups"
+
+  gsettings set org.gnome.mutter workspaces-only-on-primary false
+
+  log "Workspaces for only the primary monitor has been disabled"
+
+  gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-up "['']"
+  gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-up "['<Super>Up']"
+  gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-down "['']"
+  gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-down "['<Super>Down']"
+
+  log "Switch between workspaces with 'Super+Up/Down'"
+
+  gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-1 "['<Super>Insert']"
+  gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-2 "['<Super>Home']"
+  
+  gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-3 "['<Super>Page_Up']"
+  gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-4 "['<Super>Delete']"
+  gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-5 "['<Super>End']"
+  gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-6 "['<Super>Page_Down']"
+
+  log "Switch directly to workspace 1-3 with 'Super+Insert/Home/Page_Up'"
+  log "Switch directly to workspace 4-6 with 'Super+Delete/End/Page_Down'"
+
+  gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-up "['<Super><Alt>Up']"
+  gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-down "['<Super><Alt>Down']"
+
+  log "Move windows between workspaces with 'Super+Alt+Up/Down'"
+
+  gsettings set org.gnome.desktop.wm.keybindings maximize "['<Super><Ctrl>Up']"
+  gsettings set org.gnome.desktop.wm.keybindings unmaximize "['<Super><Ctrl>Down']"
+
+  log "Maximize and restore windows within a workspace with 'Super+Ctrl+Up/Down'"
+
+  gsettings set org.gnome.mutter.keybindings toggle-tiled-left "['<Super><Ctrl>Left']"
+  gsettings set org.gnome.mutter.keybindings toggle-tiled-right "['<Super><Ctrl>Right']"
+
+  log "View split windows left and right within a workspace with 'Super+Ctrl+Left/Right'"
+
+  success "Workspaces have been configured successfully"
+}
+
 # Task to print a good bye message
 sayGoodBye () {
   progress "Stack crew ready for landing"
@@ -767,6 +811,7 @@ if [[ $yesToAll = false ]]; then
   ask "Do you want to reposition dock to the bottom?" configureDock
   ask "Should home folders (~/Downloads, etc.) be renamed to lowercase?" renameHomeFolders
   ask "Would disabling screen lock be helpful to you?" disableScreenLock
+  ask "Do you want to enabled workspaces for multiple monitor setups?" configureWorkspaces
 
   tasks+=(sayGoodBye)
 
@@ -807,6 +852,7 @@ else
     configureDock
     renameHomeFolders
     disableScreenLock
+    configureWorkspaces
     sayGoodBye
     rebootSystem
   )
