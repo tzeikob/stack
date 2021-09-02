@@ -435,13 +435,13 @@ installChrome () {
 
   log "Downloading the package file..."
 
-  wget -q -P $TEMP https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+  wget -q -P $TEMP -O $TEMP/chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
 
   log "Package file has been downloaded"
 
   log "Installing the package..."
 
-  sudo apt-get -y install $TEMP/google-chrome-stable_current_amd64.deb >> $LOG_FILE
+  sudo apt-get -y install $TEMP/chrome.deb >> $LOG_FILE
 
   success "Chrome has been installed successfully\n"
 }
