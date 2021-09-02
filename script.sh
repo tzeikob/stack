@@ -75,7 +75,7 @@ updateRepositories () {
   log "Repositories have been updated"
 }
 
-# Task to install prerequisites
+# Install prerequisite packages
 installPrerequisites () {
   log "Installing a few prerequisite packages..."
 
@@ -88,6 +88,15 @@ installPrerequisites () {
   log "Prerequisite packages have been installed"
 }
 
+# Remove unnecessary apt packages
+removeUnnecessaryPackages () {
+  log "Removing unnecessary packages..."
+
+  sudo apt-get -y autoremove >> $LOG_FILE
+
+  log "Unnecessary packages have been removed"
+}
+
 # Task to update the system via apt
 updateSystem () {
   log "Updating the system with the latest updates"
@@ -98,11 +107,7 @@ updateSystem () {
 
   log "Latest updates have been installed successfully"
 
-  log "Removing unnecessary packages..."
-
-  sudo apt-get -y autoremove >> $LOG_FILE
-
-  log "Unnecessary packages have been removed"
+  removeUnnecessaryPackages
 
   success "System has been updated successfully\n"
 }
@@ -635,6 +640,8 @@ sayGoodBye () {
   sleep 4
   progress "Touch down, we have touch down!"
   sleep 2
+
+  removeUnnecessaryPackages
 
   local endTime=`date +%s`
   local runtime=$(((endTime-startTime)/60))
