@@ -374,6 +374,7 @@ installVSCode () {
   local extensions=(
     dbaeumer.vscode-eslint
     yzhang.markdown-all-in-one
+    streetsidesoftware.code-spell-checker
   )
 
   log "Installing the following plugins and extensions:\n${extensions[*]}"
