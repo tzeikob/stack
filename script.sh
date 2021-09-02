@@ -328,6 +328,14 @@ installNode () {
   log "Node versions can be found under /home/$USER/.nvm/versions/node"
   log "Node $(nvm current) is currently in use"
 
+  log "Making local NPM dep's binaries available in cmd line (~/.bashrc)..."
+
+  echo "" >> ~/.bashrc
+  echo "# Make local NPM dep's binaries to be available in cmd line" >> ~/.bashrc
+  echo 'export PATH="./node_modules/.bin:$PATH"' >> ~/.bashrc
+
+  log "Path './node_modules/.bin' has been added to PATH successfully"
+
   success "Node has been installed successfully\n"
 }
 
