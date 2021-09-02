@@ -482,6 +482,15 @@ installDiscord () {
   success "Discord has been installed successfully\n"
 }
 
+# Task to install Telegram
+installTelegram () {
+  log "Installing the latest version of Telegram"
+
+  sudo snap install telegram-desktop
+
+  success "Telegram has been installed successfully\n"
+}
+
 # Task to install Microsoft Teams
 installMSTeams () {
   log "Installing the latest version of Microsoft Teams"
@@ -742,6 +751,7 @@ if [[ $yesToAll = false ]]; then
   ask "Do you want to install Thunderbird?" installThunderbird
   ask "Do you want to install Slack?" installSlack
   ask "Do you want to install Discord?" installDiscord
+  ask "Do you want to install Telegram?" installTelegram
   ask "Do you want to install Microsoft Teams?" installMSTeams
   ask "Do you want to install Skype?" installSkype
   ask "Do you want to install TeamViewer?" installTeamViewer
@@ -785,6 +795,7 @@ else
     installThunderbird
     installSlack
     installDiscord
+    installTelegram
     installMSTeams
     installSkype
     installTeamViewer
