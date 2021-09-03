@@ -762,7 +762,7 @@ configureWorkspaces () {
 
   log "Switch between applications with 'Ctrl+Up'"
 
-  success "Workspaces have been configured successfully"
+  success "Workspaces have been configured successfully\n"
 }
 
 # Task to print a good bye message
