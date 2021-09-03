@@ -757,6 +757,8 @@ configureWorkspaces () {
   gsettings set org.gnome.desktop.wm.keybindings switch-group-backward "[]"
   gsettings set org.gnome.desktop.wm.keybindings cycle-windows "[]"
   gsettings set org.gnome.desktop.wm.keybindings cycle-windows-backward "[]"
+  gsettings set org.gnome.desktop.wm.keybindings cycle-panels "[]"
+  gsettings set org.gnome.desktop.wm.keybindings cycle-panels-backward "[]"
   gsettings set org.gnome.desktop.wm.keybindings cycle-group "[]"
   gsettings set org.gnome.desktop.wm.keybindings cycle-group-backward "[]"
 
