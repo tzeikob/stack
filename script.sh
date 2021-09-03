@@ -652,44 +652,96 @@ disableScreenLock () {
 
 # Task to configure the workspaces
 configureWorkspaces () {
-  log "Configuring workspaces for multiple monitor setups"
+  log "Configuring workspaces for multiple monitors setups"
 
   gsettings set org.gnome.mutter workspaces-only-on-primary false
 
-  log "Workspaces for only the primary monitor has been disabled"
+  log "Workspaces for multiple monitors setups have been enabled"
 
-  gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-up "['']"
+  gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-up "[]"
   gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-up "['<Super>Up']"
-  gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-down "['']"
+  gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-down "[]"
   gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-down "['<Super>Down']"
+  gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-last "[]"
+  gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-left "[]"
+  gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-right "[]"
 
-  log "Switch between workspaces with 'Super+Up/Down'"
+  log "Switch to workspace above with 'Super+Up'"
+  log "Switch to workspace below with 'Super+Down'"
 
   gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-1 "['<Super>Insert']"
   gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-2 "['<Super>Home']"
-  
   gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-3 "['<Super>Page_Up']"
   gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-4 "['<Super>Delete']"
   gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-5 "['<Super>End']"
   gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-6 "['<Super>Page_Down']"
 
-  log "Switch directly to workspace 1-3 with 'Super+Insert/Home/Page_Up'"
-  log "Switch directly to workspace 4-6 with 'Super+Delete/End/Page_Down'"
+  log "Switch to workspace 1-3 with 'Super+Insert/Home/Page_Up'"
+  log "Switch to workspace 4-6 with 'Super+Delete/End/Page_Down'"
 
   gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-up "['<Super><Alt>Up']"
   gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-down "['<Super><Alt>Down']"
+  gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-last "[]"
 
-  log "Move windows between workspaces with 'Super+Alt+Up/Down'"
+  log "Move window one workspace up with 'Super+Alt+Up'"
+  log "Move window one workspace down with 'Super+Alt+Down'"
 
-  gsettings set org.gnome.desktop.wm.keybindings maximize "['<Super><Ctrl>Up']"
-  gsettings set org.gnome.desktop.wm.keybindings unmaximize "['<Super><Ctrl>Down']"
+  gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-1 "['<Super><Alt>Insert']"
+  gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-2 "['<Super><Alt>Home']"
+  gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-3 "['<Super><Alt>Page_Up']"
+  gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-4 "['<Super><Alt>Delete']"
+  gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-5 "['<Super><Alt>End']"
+  gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-6 "['<Super><Alt>Page_Down']"
 
-  log "Maximize and restore windows within a workspace with 'Super+Ctrl+Up/Down'"
+  log "Move window to workspace 1-3 with 'Super+Alt+Insert/Home/Page_Up'"
+  log "Move window to workspace 4-6 with 'Super+Alt+Delete/End/Page_Down'"
 
-  gsettings set org.gnome.mutter.keybindings toggle-tiled-left "['<Super><Ctrl>Left']"
-  gsettings set org.gnome.mutter.keybindings toggle-tiled-right "['<Super><Ctrl>Right']"
+  gsettings set org.gnome.desktop.wm.keybindings move-to-monitor-left "['<Super><Alt>Left']"
+  gsettings set org.gnome.desktop.wm.keybindings move-to-monitor-right "['<Super><Alt>Right']"
+  gsettings set org.gnome.desktop.wm.keybindings move-to-monitor-up "[]"
+  gsettings set org.gnome.desktop.wm.keybindings move-to-monitor-down "[]"
 
-  log "View split windows left and right within a workspace with 'Super+Ctrl+Left/Right'"
+  log "Move window one monitor to the left with Super+Alt+Left"
+  log "Move window one monitor to the right with Super+Alt+Right"
+
+  gsettings set org.gnome.desktop.wm.keybindings toggle-maximized "['<Ctrl><Super>Up']"
+  gsettings set org.gnome.desktop.wm.keybindings minimize "['<Ctrl><Super>Down']"
+  gsettings set org.gnome.desktop.wm.keybindings maximize "[]"
+  gsettings set org.gnome.desktop.wm.keybindings unmaximize "[]"
+
+  log "Maximize or restore window with 'Ctrl+Super+Up'"
+  log "Hide and minimize window with 'Ctrl+Super+Down'"
+
+  gsettings set org.gnome.mutter.keybindings toggle-tiled-left "['<Ctrl><Super>Left']"
+  gsettings set org.gnome.mutter.keybindings toggle-tiled-right "['<Ctrl><Super>Right']"
+
+  log "Toogle window tiled left with 'Ctrl+Super+Left'"
+  log "Toggle window tiled right with 'Ctrl+Super+Right'"
+
+  gsettings set org.gnome.desktop.wm.keybindings show-desktop "['<Ctrl><Super>Delete']"
+  gsettings set org.gnome.desktop.wm.keybindings toggle-fullscreen "['<Ctrl><Super>End']"
+  gsettings set org.gnome.desktop.wm.keybindings close "['<Ctrl><Super>Page_Down']"
+
+  log "Show or hide desktop with 'Ctrl+Super+Delete'"
+  log "Toggle window fullscreen with 'Ctrl+Super+End'"
+  log "Close window with 'Ctrl+Super+Page_Down'"
+
+  gsettings set org.gnome.desktop.wm.keybindings activate-window-menu "[]"
+  gsettings set org.gnome.desktop.wm.keybindings maximize-horizontally "[]"
+  gsettings set org.gnome.desktop.wm.keybindings maximize-vertically "[]"
+  gsettings set org.gnome.desktop.wm.keybindings move-to-corner-ne "[]"
+  gsettings set org.gnome.desktop.wm.keybindings move-to-corner-nw "[]"
+  gsettings set org.gnome.desktop.wm.keybindings move-to-corner-se "[]"
+  gsettings set org.gnome.desktop.wm.keybindings move-to-corner-sw "[]"
+
+  gsettings set org.gnome.desktop.wm.keybindings move-to-side-e "[]"
+  gsettings set org.gnome.desktop.wm.keybindings move-to-side-n "[]"
+  gsettings set org.gnome.desktop.wm.keybindings move-to-side-w "[]"
+  gsettings set org.gnome.desktop.wm.keybindings move-to-side-s "[]"
+
+  gsettings set org.gnome.desktop.wm.keybindings begin-move "[]"
+  gsettings set org.gnome.desktop.wm.keybindings begin-resize "[]"
+  gsettings set org.gnome.desktop.wm.keybindings toggle-on-all-workspaces "[]"
 
   success "Workspaces have been configured successfully"
 }
