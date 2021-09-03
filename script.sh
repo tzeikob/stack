@@ -882,7 +882,7 @@ if [[ $yesToAll = false ]]; then
   ask "Do you want to reposition dock to the bottom?" configureDock
   ask "Should home folders (~/Downloads, etc.) be renamed to lowercase?" renameHomeFolders
   ask "Would disabling screen lock be helpful to you?" disableScreenLock
-  ask "Do you want to enabled workspaces for multiple monitor setups?" configureWorkspaces
+  ask "Do you want to enabled workspaces for multiple monitors setups?" configureWorkspaces
 
   tasks+=(sayGoodBye)
 
