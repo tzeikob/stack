@@ -650,13 +650,9 @@ disableScreenLock () {
   success "Screen lock has been disabled successfully\n"
 }
 
-# Task to configure the workspaces
-configureWorkspaces () {
-  log "Configuring workspaces for multiple monitors setups"
-
-  gsettings set org.gnome.mutter workspaces-only-on-primary false
-
-  log "Workspaces for multiple monitors setups have been enabled"
+# Task to set shortcuts for multiple monitor workspaces
+configureWorkspaceShortcuts () {
+  log "Setting shortcuts for multiple monitor workspaces"
 
   gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-up "[]"
   gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-up "['<Super>Up']"
@@ -767,7 +763,11 @@ configureWorkspaces () {
   # Disable switch display modes cause might interfere with rest shortcuts
   gsettings set org.gnome.mutter.keybindings switch-monitor '[]'
 
-  success "Workspaces have been configured successfully\n"
+  gsettings set org.gnome.mutter workspaces-only-on-primary false
+
+  log "Workspaces for multiple monitor setups have been enabled"
+
+  success "Shortcuts for workspaces have been configured successfully\n"
 }
 
 # Task to print a good bye message
@@ -887,7 +887,7 @@ if [[ $yesToAll = false ]]; then
   ask "Do you want to reposition dock to the bottom?" configureDock
   ask "Should home folders (~/Downloads, etc.) be renamed to lowercase?" renameHomeFolders
   ask "Would disabling screen lock be helpful to you?" disableScreenLock
-  ask "Do you want to enabled workspaces for multiple monitors setups?" configureWorkspaces
+  ask "Do you want to set shortcuts for multiple monitor workspaces?" configureWorkspaceShortcuts
 
   tasks+=(sayGoodBye)
 
@@ -928,7 +928,7 @@ else
     configureDock
     renameHomeFolders
     disableScreenLock
-    configureWorkspaces
+    configureWorkspaceShortcuts
     sayGoodBye
     rebootSystem
   )
