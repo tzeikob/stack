@@ -764,6 +764,9 @@ configureWorkspaces () {
 
   log "Switch between applications with 'Ctrl+Up'"
 
+  # Disable switch display modes cause might interfere with rest shortcuts
+  gsettings set org.gnome.mutter.keybindings switch-monitor '[]'
+
   success "Workspaces have been configured successfully\n"
 }
 
