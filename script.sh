@@ -654,13 +654,13 @@ disableScreenLock () {
 configureWorkspaceShortcuts () {
   log "Setting shortcuts for multiple monitor workspaces"
 
-  gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-up "[]"
+  gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-up "['']"
   gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-up "['<Super>Up']"
-  gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-down "[]"
+  gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-down "['']"
   gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-down "['<Super>Down']"
-  gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-last "[]"
-  gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-left "[]"
-  gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-right "[]"
+  gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-last "['']"
+  gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-left "['']"
+  gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-right "['']"
 
   log "Switch to workspace above with 'Super+Up'"
   log "Switch to workspace below with 'Super+Down'"
@@ -677,7 +677,7 @@ configureWorkspaceShortcuts () {
 
   gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-up "['<Super><Alt>Up']"
   gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-down "['<Super><Alt>Down']"
-  gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-last "[]"
+  gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-last "['']"
 
   log "Move window one workspace up with 'Super+Alt+Up'"
   log "Move window one workspace down with 'Super+Alt+Down'"
@@ -694,34 +694,34 @@ configureWorkspaceShortcuts () {
 
   gsettings set org.gnome.desktop.wm.keybindings move-to-monitor-left "['<Super><Alt>Left']"
   gsettings set org.gnome.desktop.wm.keybindings move-to-monitor-right "['<Super><Alt>Right']"
-  gsettings set org.gnome.desktop.wm.keybindings move-to-monitor-up "[]"
-  gsettings set org.gnome.desktop.wm.keybindings move-to-monitor-down "[]"
+  gsettings set org.gnome.desktop.wm.keybindings move-to-monitor-up "['']"
+  gsettings set org.gnome.desktop.wm.keybindings move-to-monitor-down "['']"
 
   log "Move window one monitor to the left with 'Super+Alt+Left'"
   log "Move window one monitor to the right with 'Super+Alt+Right'"
 
   gsettings set org.gnome.desktop.wm.keybindings toggle-maximized "['<Ctrl><Super>Up']"
   gsettings set org.gnome.desktop.wm.keybindings minimize "['<Ctrl><Super>Down']"
-  gsettings set org.gnome.desktop.wm.keybindings maximize "[]"
-  gsettings set org.gnome.desktop.wm.keybindings unmaximize "[]"
-  gsettings set org.gnome.desktop.wm.keybindings maximize-horizontally "[]"
-  gsettings set org.gnome.desktop.wm.keybindings maximize-vertically "[]"
-  gsettings set org.gnome.desktop.wm.keybindings begin-move "[]"
-  gsettings set org.gnome.desktop.wm.keybindings begin-resize "[]"
+  gsettings set org.gnome.desktop.wm.keybindings maximize "['']"
+  gsettings set org.gnome.desktop.wm.keybindings unmaximize "['']"
+  gsettings set org.gnome.desktop.wm.keybindings maximize-horizontally "['']"
+  gsettings set org.gnome.desktop.wm.keybindings maximize-vertically "['']"
+  gsettings set org.gnome.desktop.wm.keybindings begin-move "['']"
+  gsettings set org.gnome.desktop.wm.keybindings begin-resize "['']"
 
   log "Maximize or restore window with 'Ctrl+Super+Up'"
   log "Hide and minimize window with 'Ctrl+Super+Down'"
 
   gsettings set org.gnome.mutter.keybindings toggle-tiled-left "['<Ctrl><Super>Left']"
   gsettings set org.gnome.mutter.keybindings toggle-tiled-right "['<Ctrl><Super>Right']"
-  gsettings set org.gnome.desktop.wm.keybindings move-to-corner-ne "[]"
-  gsettings set org.gnome.desktop.wm.keybindings move-to-corner-nw "[]"
-  gsettings set org.gnome.desktop.wm.keybindings move-to-corner-se "[]"
-  gsettings set org.gnome.desktop.wm.keybindings move-to-corner-sw "[]"
-  gsettings set org.gnome.desktop.wm.keybindings move-to-side-e "[]"
-  gsettings set org.gnome.desktop.wm.keybindings move-to-side-n "[]"
-  gsettings set org.gnome.desktop.wm.keybindings move-to-side-w "[]"
-  gsettings set org.gnome.desktop.wm.keybindings move-to-side-s "[]"
+  gsettings set org.gnome.desktop.wm.keybindings move-to-corner-ne "['']"
+  gsettings set org.gnome.desktop.wm.keybindings move-to-corner-nw "['']"
+  gsettings set org.gnome.desktop.wm.keybindings move-to-corner-se "['']"
+  gsettings set org.gnome.desktop.wm.keybindings move-to-corner-sw "['']"
+  gsettings set org.gnome.desktop.wm.keybindings move-to-side-e "['']"
+  gsettings set org.gnome.desktop.wm.keybindings move-to-side-n "['']"
+  gsettings set org.gnome.desktop.wm.keybindings move-to-side-w "['']"
+  gsettings set org.gnome.desktop.wm.keybindings move-to-side-s "['']"
 
   log "Toggle window tiled left with 'Ctrl+Super+Left'"
   log "Toggle window tiled right with 'Ctrl+Super+Right'"
@@ -732,9 +732,9 @@ configureWorkspaceShortcuts () {
   gsettings set org.gnome.desktop.wm.keybindings toggle-fullscreen "['<Ctrl><Super>Delete']"
   gsettings set org.gnome.desktop.wm.keybindings close "['<Ctrl><Super>End']"
   gsettings set org.gnome.desktop.wm.keybindings show-desktop "['<Ctrl><Super>Page_Down']"
-  gsettings set org.gnome.desktop.wm.keybindings activate-window-menu "[]"
-  gsettings set org.gnome.desktop.wm.keybindings toggle-on-all-workspaces "[]"
-  gsettings set org.gnome.desktop.wm.keybindings raise-or-lower "[]"
+  gsettings set org.gnome.desktop.wm.keybindings activate-window-menu "['']"
+  gsettings set org.gnome.desktop.wm.keybindings toggle-on-all-workspaces "['']"
+  gsettings set org.gnome.desktop.wm.keybindings raise-or-lower "['']"
 
   log "Toogle window always on top with 'Ctrl+Super+Insert'"
   log "Move window to background with 'Ctrl+Super+Home'"
@@ -744,30 +744,94 @@ configureWorkspaceShortcuts () {
   log "Show or hide desktop with 'Ctrl+Super+Page_Down'"
   
   gsettings set org.gnome.desktop.wm.keybindings switch-applications "['<Ctrl>Up']"
-  gsettings set org.gnome.desktop.wm.keybindings switch-applications-backward "[]"
-  gsettings set org.gnome.desktop.wm.keybindings switch-windows "[]"
-  gsettings set org.gnome.desktop.wm.keybindings switch-windows-backward "[]"
-  gsettings set org.gnome.desktop.wm.keybindings switch-panels "[]"
-  gsettings set org.gnome.desktop.wm.keybindings switch-panels-backward "[]"
-  gsettings set org.gnome.desktop.wm.keybindings switch-group "[]"
-  gsettings set org.gnome.desktop.wm.keybindings switch-group-backward "[]"
-  gsettings set org.gnome.desktop.wm.keybindings cycle-windows "[]"
-  gsettings set org.gnome.desktop.wm.keybindings cycle-windows-backward "[]"
-  gsettings set org.gnome.desktop.wm.keybindings cycle-panels "[]"
-  gsettings set org.gnome.desktop.wm.keybindings cycle-panels-backward "[]"
-  gsettings set org.gnome.desktop.wm.keybindings cycle-group "[]"
-  gsettings set org.gnome.desktop.wm.keybindings cycle-group-backward "[]"
+  gsettings set org.gnome.desktop.wm.keybindings switch-applications-backward "['']"
+  gsettings set org.gnome.desktop.wm.keybindings switch-windows "['']"
+  gsettings set org.gnome.desktop.wm.keybindings switch-windows-backward "['']"
+  gsettings set org.gnome.desktop.wm.keybindings switch-panels "['']"
+  gsettings set org.gnome.desktop.wm.keybindings switch-panels-backward "['']"
+  gsettings set org.gnome.desktop.wm.keybindings switch-group "['']"
+  gsettings set org.gnome.desktop.wm.keybindings switch-group-backward "['']"
+  gsettings set org.gnome.desktop.wm.keybindings cycle-windows "['']"
+  gsettings set org.gnome.desktop.wm.keybindings cycle-windows-backward "['']"
+  gsettings set org.gnome.desktop.wm.keybindings cycle-panels "['']"
+  gsettings set org.gnome.desktop.wm.keybindings cycle-panels-backward "['']"
+  gsettings set org.gnome.desktop.wm.keybindings cycle-group "['']"
+  gsettings set org.gnome.desktop.wm.keybindings cycle-group-backward "['']"
 
   log "Switch between applications with 'Ctrl+Up'"
 
   # Disable switch display modes cause might interfere with rest shortcuts
-  gsettings set org.gnome.mutter.keybindings switch-monitor '[]'
+  gsettings set org.gnome.mutter.keybindings switch-monitor "['']"
 
   gsettings set org.gnome.mutter workspaces-only-on-primary false
 
   log "Workspaces for multiple monitor setups have been enabled"
 
   success "Shortcuts for workspaces have been configured successfully\n"
+}
+
+# Task to set a few system shortcuts
+configureSystemShortcuts () {
+  log "Setting shortcuts for a few system utilities and operations"
+
+  gsettings set org.gnome.desktop.wm.keybindings switch-input-source "['<Super>space']"
+  gsettings set org.gnome.desktop.wm.keybindings switch-input-source-backward  "['']"
+
+  log "Switch keyboard language with 'Super+space'"
+
+  gsettings set org.gnome.settings-daemon.plugins.media-keys volume-up "<Super>period"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys volume-down "<Super>comma"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys volume-mute "<Super>slash"
+
+  log "Increase volume with 'Super+.'"
+  log "Decrease volume with 'Super+,'"
+  log "Mute volume with 'Super+/'"
+
+  gsettings set org.gnome.settings-daemon.plugins.media-keys screenshot "['']"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys screenshot-clip "['']"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys window-screenshot "['']"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys window-screenshot-clip "['']"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys area-screenshot-clip "['']"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys area-screenshot "Print"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys screencast "<Super>Print"
+
+  log "Save an area screenshot with 'Print'"
+  log "Record a short screen cast with 'Super+Print'"
+
+  gsettings set org.gnome.shell.keybindings focus-active-notification "['']"
+  gsettings set org.gnome.shell.keybindings open-application-menu "['']"
+  gsettings set org.gnome.shell.keybindings toggle-application-view "['']"
+  gsettings set org.gnome.shell.keybindings toggle-message-tray "['']"
+  gsettings set org.gnome.shell.keybindings toggle-overview "['']"
+  gsettings set org.gnome.mutter.wayland.keybindings restore-shortcuts "['']"
+  gsettings set org.gnome.desktop.wm.keybindings panel-main-menu "['']"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys screensaver "Scroll_Lock"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys logout "<Super>Scroll_Lock"
+
+  log "Lock screen with 'Scroll Lock'"
+  log "Logout with 'Super+Scroll Lock'"
+
+  gsettings set org.gnome.settings-daemon.plugins.media-keys control-center "['<Super>s']"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys terminal "<Super>t"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys www "<Super>w"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys home "<Super>e"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys calculator "['<Super>c']"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys email "['<Super>m']"
+  gsettings set org.gnome.desktop.wm.keybindings panel-run-dialog "['<Super>backslash']"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys search "<Super>f"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys help "<Super>h"
+
+  log "Open the settings with 'Super+s'"
+  log "Open terminal with 'Super+t'"
+  log "Open default web browser with 'Super+w'"
+  log "Open file explorer with 'Super+e'"
+  log "Open calculator with 'Super+c'"
+  log "Open default mail client with 'Super+m'"
+  log "Open the command prompt dialog with 'Super+Backslash'"
+  log "Open search with 'Super+f'"
+  log "Open help with 'Super+h'"
+
+  success "System shortcuts have been configured successfully\n"
 }
 
 # Task to print a good bye message
@@ -888,6 +952,7 @@ if [[ $yesToAll = false ]]; then
   ask "Should home folders (~/Downloads, etc.) be renamed to lowercase?" renameHomeFolders
   ask "Would disabling screen lock be helpful to you?" disableScreenLock
   ask "Do you want to set shortcuts for multiple monitor workspaces?" configureWorkspaceShortcuts
+  ask "You might want to set a few system shortcuts (settings, terminal, etc.)?" configureSystemShortcuts
 
   tasks+=(sayGoodBye)
 
@@ -929,6 +994,7 @@ else
     renameHomeFolders
     disableScreenLock
     configureWorkspaceShortcuts
+    configureSystemShortcuts
     sayGoodBye
     rebootSystem
   )
