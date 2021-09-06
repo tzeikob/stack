@@ -557,6 +557,15 @@ installVLC () {
   success "VLC has been installed successfully\n"
 }
 
+# Task to install Spotify
+installSpotify () {
+  log "Installing the latest version of Spotify"
+
+  sudo snap install spotify
+
+  success "Spotify has been installed successfully\n"
+}
+
 # Task to configure desktop look and feel
 configureDesktop () {
   log "Configuring desktop's look and feel"
@@ -945,6 +954,7 @@ if [[ $yesToAll = false ]]; then
   log "\nNobody is escaping from media nowdays:"
   ask "Do you want to install Gimp?" installGimp
   ask "Do you want to install VLC player?" installVLC
+  ask "Do you want to install Spotify?" installSpotify
 
   log "\nMe likes a clean look and feel:"
   ask "You may want to hide desktop icons?" configureDesktop
@@ -989,6 +999,7 @@ else
     installLibreOffice
     installGimp
     installVLC
+    installSpotify
     configureDesktop
     configureDock
     renameHomeFolders
