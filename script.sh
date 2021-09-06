@@ -654,6 +654,10 @@ disableScreenLock () {
 configureWorkspaceShortcuts () {
   log "Setting shortcuts for multiple monitor workspaces"
 
+  gsettings set org.gnome.mutter workspaces-only-on-primary false
+
+  log "Workspaces for multiple monitor setups have been enabled"
+
   gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-up "['']"
   gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-up "['<Super>Up']"
   gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-down "['']"
@@ -762,10 +766,6 @@ configureWorkspaceShortcuts () {
 
   # Disable switch display modes cause might interfere with rest shortcuts
   gsettings set org.gnome.mutter.keybindings switch-monitor "['']"
-
-  gsettings set org.gnome.mutter workspaces-only-on-primary false
-
-  log "Workspaces for multiple monitor setups have been enabled"
 
   success "Shortcuts for workspaces have been configured successfully\n"
 }
