@@ -546,9 +546,9 @@ installGimp () {
   success "Gimp has been installed successfully\n"
 }
 
-# Task to install VLC
+# Task to install VLC player
 installVLC () {
-  log "Installing the latest version of VLC"
+  log "Installing the latest version of VLC player"
 
   log "Installing the package file..."
 
@@ -944,7 +944,7 @@ if [[ $yesToAll = false ]]; then
 
   log "\nNobody is escaping from media nowdays:"
   ask "Do you want to install Gimp?" installGimp
-  ask "Do you want to install VLC Player?" installVLC
+  ask "Do you want to install VLC player?" installVLC
 
   log "\nMe likes a clean look and feel:"
   ask "You may want to hide desktop icons?" configureDesktop
