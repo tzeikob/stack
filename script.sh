@@ -779,9 +779,9 @@ configureSystemShortcuts () {
 
   log "Switch keyboard language with 'Super+space'"
 
-  gsettings set org.gnome.settings-daemon.plugins.media-keys volume-up "<Super>period"
-  gsettings set org.gnome.settings-daemon.plugins.media-keys volume-down "<Super>comma"
-  gsettings set org.gnome.settings-daemon.plugins.media-keys volume-mute "<Super>slash"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys volume-up "['<Super>period']"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys volume-down "['<Super>comma']"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys volume-mute "['<Super>slash']"
 
   log "Increase volume with 'Super+.'"
   log "Decrease volume with 'Super+,'"
@@ -792,8 +792,8 @@ configureSystemShortcuts () {
   gsettings set org.gnome.settings-daemon.plugins.media-keys window-screenshot "['']"
   gsettings set org.gnome.settings-daemon.plugins.media-keys window-screenshot-clip "['']"
   gsettings set org.gnome.settings-daemon.plugins.media-keys area-screenshot-clip "['']"
-  gsettings set org.gnome.settings-daemon.plugins.media-keys area-screenshot "Print"
-  gsettings set org.gnome.settings-daemon.plugins.media-keys screencast "<Super>Print"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys area-screenshot "['Print']"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys screencast "['<Super>Print']"
 
   log "Save an area screenshot with 'Print'"
   log "Record a short screen cast with 'Super+Print'"
@@ -805,21 +805,21 @@ configureSystemShortcuts () {
   gsettings set org.gnome.shell.keybindings toggle-overview "['']"
   gsettings set org.gnome.mutter.wayland.keybindings restore-shortcuts "['']"
   gsettings set org.gnome.desktop.wm.keybindings panel-main-menu "['']"
-  gsettings set org.gnome.settings-daemon.plugins.media-keys screensaver "Scroll_Lock"
-  gsettings set org.gnome.settings-daemon.plugins.media-keys logout "<Super>Scroll_Lock"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys screensaver "['Scroll_Lock']"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys logout "['<Super>Scroll_Lock']"
 
   log "Lock screen with 'Scroll Lock'"
   log "Logout with 'Super+Scroll Lock'"
 
   gsettings set org.gnome.settings-daemon.plugins.media-keys control-center "['<Super>s']"
-  gsettings set org.gnome.settings-daemon.plugins.media-keys terminal "<Super>t"
-  gsettings set org.gnome.settings-daemon.plugins.media-keys www "<Super>w"
-  gsettings set org.gnome.settings-daemon.plugins.media-keys home "<Super>e"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys terminal "['<Super>t']"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys www "['<Super>w']"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys home "['<Super>e']"
   gsettings set org.gnome.settings-daemon.plugins.media-keys calculator "['<Super>c']"
   gsettings set org.gnome.settings-daemon.plugins.media-keys email "['<Super>m']"
   gsettings set org.gnome.desktop.wm.keybindings panel-run-dialog "['<Super>backslash']"
-  gsettings set org.gnome.settings-daemon.plugins.media-keys search "<Super>f"
-  gsettings set org.gnome.settings-daemon.plugins.media-keys help "<Super>h"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys search "['<Super>f']"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys help "['<Super>h']"
 
   log "Open the settings with 'Super+s'"
   log "Open terminal with 'Super+t'"
