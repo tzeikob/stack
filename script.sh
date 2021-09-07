@@ -443,6 +443,15 @@ installSublimeText () {
   success "Sublime Text has been installed successfully\n"
 }
 
+# Task to install the Neovim editor
+installNeovim () {
+  log "Installing the latest version of Neovim editor"
+
+  sudo snap install --beta nvim --classic
+
+  success "Neovim has been installed successfully\n"
+}
+
 # Task to install IntelliJ Idea
 installIntelliJIdea () {
   log "Installing the latest version of IntelliJ Idea"
@@ -1007,6 +1016,7 @@ if [[ $yesToAll = false ]]; then
   ask "Do you want to install Atom?" installAtom
   ask "Do you want to install Visual Studio Code?" installVSCode
   ask "Do you want to install Sublime Text?" installSublimeText
+  ask "Are you that brave to use Neovim editor?" installNeovim
   ask "Do you want to install IntelliJ Idea?" installIntelliJIdea
 
   log "\nIt's all about data:"
@@ -1059,6 +1069,7 @@ else
     installAtom
     installVSCode
     installSublimeText
+    installNeovim
     installIntelliJIdea
     installMongoDBCompass
     installDBeaver
