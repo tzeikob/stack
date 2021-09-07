@@ -739,8 +739,8 @@ configureWorkspaceShortcuts () {
   gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-left "['']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-right "['']" >> $LOG_FILE 2>&1
 
-  log "Switch to workspace above with...............<Super> + Up"
-  log "Switch to workspace below with...............<Super> + Down"
+  log "Switch to workspace above with................Super + Up"
+  log "Switch to workspace below with................Super + Down"
 
   gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-1 "['<Super>Insert']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-2 "['<Super>Home']" >> $LOG_FILE 2>&1
@@ -749,15 +749,15 @@ configureWorkspaceShortcuts () {
   gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-5 "['<Super>End']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-6 "['<Super>Page_Down']" >> $LOG_FILE 2>&1
 
-  log "Switch to workspace 1-3 with.................<Super> + Insert/Home/Page Up"
-  log "Switch to workspace 4-6 with.................<Super> + Delete/End/Page Down"
+  log "Switch to workspace 1-3 with..................Super + Insert | Home | Page Up"
+  log "Switch to workspace 4-6 with..................Super + Delete | End | Page Down"
 
   gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-up "['<Super><Alt>Up']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-down "['<Super><Alt>Down']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-last "['']" >> $LOG_FILE 2>&1
 
-  log "Move window one workspace up with............<Super> + <Alt> + Up"
-  log "Move window one workspace down with..........<Super> + <Alt> + Down"
+  log "Move window one workspace up with.............Super + Alt + Up"
+  log "Move window one workspace down with...........Super + Alt + Down"
 
   gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-1 "['<Super><Alt>Insert']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-2 "['<Super><Alt>Home']" >> $LOG_FILE 2>&1
@@ -766,16 +766,16 @@ configureWorkspaceShortcuts () {
   gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-5 "['<Super><Alt>End']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-6 "['<Super><Alt>Page_Down']" >> $LOG_FILE 2>&1
 
-  log "Move window to workspace 1-3 with............<Super> + <Alt> + Insert/Home/Page Up"
-  log "Move window to workspace 4-6 with............<Super> + <Alt> + Delete/End/Page Down"
+  log "Move window to workspace 1-3 with.............Super + Alt + Insert | Home | Page Up"
+  log "Move window to workspace 4-6 with.............Super + Alt + Delete | End | Page Down"
 
   gsettings set org.gnome.desktop.wm.keybindings move-to-monitor-left "['<Super><Alt>Left']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings move-to-monitor-right "['<Super><Alt>Right']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings move-to-monitor-up "['']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings move-to-monitor-down "['']" >> $LOG_FILE 2>&1
 
-  log "Move window one monitor to the left with.....<Super> + <Alt> + Left"
-  log "Move window one monitor to the right with....<Super> + <Alt> + Right"
+  log "Move window one monitor to the left with......Super + Alt + Left"
+  log "Move window one monitor to the right with.....Super + Alt + Right"
 
   gsettings set org.gnome.desktop.wm.keybindings toggle-maximized "['<Ctrl><Super>Up']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings minimize "['<Ctrl><Super>Down']" >> $LOG_FILE 2>&1
@@ -786,8 +786,8 @@ configureWorkspaceShortcuts () {
   gsettings set org.gnome.desktop.wm.keybindings begin-move "['']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings begin-resize "['']" >> $LOG_FILE 2>&1
 
-  log "Maximize or restore window with..............<Ctrl> + <Super> + Up"
-  log "Hide and minimize window with................<Ctrl> + <Super> + Down"
+  log "Maximize or restore window with...............Super + Ctrl + Up"
+  log "Hide and minimize window with.................Super + Ctrl + Down"
 
   gsettings set org.gnome.mutter.keybindings toggle-tiled-left "['<Ctrl><Super>Left']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.mutter.keybindings toggle-tiled-right "['<Ctrl><Super>Right']" >> $LOG_FILE 2>&1
@@ -800,8 +800,8 @@ configureWorkspaceShortcuts () {
   gsettings set org.gnome.desktop.wm.keybindings move-to-side-w "['']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings move-to-side-s "['']" >> $LOG_FILE 2>&1
 
-  log "Toggle window tiled left with................<Ctrl> + <Super> + Left"
-  log "Toggle window tiled right with...............<Ctrl> + <Super> + Right"
+  log "Toggle window tiled left with.................Super + Ctrl + Left"
+  log "Toggle window tiled right with................Super + Ctrl + Right"
 
   gsettings set org.gnome.desktop.wm.keybindings always-on-top "['<Ctrl><Super>Insert']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings lower "['<Ctrl><Super>Home']" >> $LOG_FILE 2>&1
@@ -813,12 +813,12 @@ configureWorkspaceShortcuts () {
   gsettings set org.gnome.desktop.wm.keybindings toggle-on-all-workspaces "['']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings raise-or-lower "['']" >> $LOG_FILE 2>&1
 
-  log "Toogle window always on top with.............<Ctrl> + <Super> + Insert"
-  log "Move window to background with...............<Ctrl> + <Super> + Home"
-  log "Move window to foreground with...............<Ctrl> + <Super> + Page Up"
-  log "Toggle window fullscreen with................<Ctrl> + <Super> + Delete"
-  log "Close window with............................<Ctrl> + <Super> + End"
-  log "Show or hide desktop with....................<Ctrl> + <Super> + Page Down"
+  log "Toogle window always on top with..............Super + Ctrl + Insert"
+  log "Move window to background with................Super + Ctrl + Home"
+  log "Move window to foreground with................Super + Ctrl + Page Up"
+  log "Toggle window fullscreen with.................Super + Ctrl + Delete"
+  log "Close window with.............................Super + Ctrl + End"
+  log "Show or hide desktop with.....................Super + Ctrl + Page Down"
   
   gsettings set org.gnome.desktop.wm.keybindings switch-applications "['<Ctrl>Up']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings switch-applications-backward "['']" >> $LOG_FILE 2>&1
@@ -835,7 +835,7 @@ configureWorkspaceShortcuts () {
   gsettings set org.gnome.desktop.wm.keybindings cycle-group "['']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings cycle-group-backward "['']" >> $LOG_FILE 2>&1
 
-  log "Switch between applications with.............<Ctrl> + Up"
+  log "Switch between applications with..............Ctrl + Up"
 
   # Disable switch display modes cause might interfere with rest shortcuts
   gsettings set org.gnome.mutter.keybindings switch-monitor "['']" >> $LOG_FILE 2>&1
@@ -850,15 +850,15 @@ configureSystemShortcuts () {
   gsettings set org.gnome.desktop.wm.keybindings switch-input-source "['<Super>space']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings switch-input-source-backward  "['']" >> $LOG_FILE 2>&1
 
-  log "Switch keyboard language with................<Super> + Space"
+  log "Switch keyboard language with.................Super + Space"
 
   gsettings set org.gnome.settings-daemon.plugins.media-keys volume-up "['<Super>period']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.settings-daemon.plugins.media-keys volume-down "['<Super>comma']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.settings-daemon.plugins.media-keys volume-mute "['<Super>slash']" >> $LOG_FILE 2>&1
 
-  log "Increase volume with.........................<Super> + ."
-  log "Decrease volume with.........................<Super> + ,"
-  log "Mute volume with.............................<Super> + /"
+  log "Increase volume with..........................Super + ."
+  log "Decrease volume with..........................Super + ,"
+  log "Mute volume with..............................Super + /"
 
   gsettings set org.gnome.settings-daemon.plugins.media-keys screenshot "['']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.settings-daemon.plugins.media-keys screenshot-clip "['']" >> $LOG_FILE 2>&1
@@ -868,8 +868,8 @@ configureSystemShortcuts () {
   gsettings set org.gnome.settings-daemon.plugins.media-keys area-screenshot "['Print']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.settings-daemon.plugins.media-keys screencast "['<Super>Print']" >> $LOG_FILE 2>&1
 
-  log "Save an area screenshot with.................Print"
-  log "Record a short screen cast with..............<Super> + Print"
+  log "Save an area screenshot with..................Print"
+  log "Record a short screen cast with...............Super + Print"
 
   gsettings set org.gnome.shell.keybindings focus-active-notification "['']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.shell.keybindings open-application-menu "['']" >> $LOG_FILE 2>&1
@@ -881,8 +881,8 @@ configureSystemShortcuts () {
   gsettings set org.gnome.settings-daemon.plugins.media-keys screensaver "['Scroll_Lock']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.settings-daemon.plugins.media-keys logout "['<Super>Scroll_Lock']" >> $LOG_FILE 2>&1
 
-  log "Lock screen with.............................Scroll Lock"
-  log "Logout with..................................<Super> + Scroll Lock"
+  log "Lock screen with..............................Scroll Lock"
+  log "Logout with...................................Super + Scroll Lock"
 
   gsettings set org.gnome.settings-daemon.plugins.media-keys control-center "['<Super>s']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.settings-daemon.plugins.media-keys terminal "['<Super>t']" >> $LOG_FILE 2>&1
@@ -895,23 +895,23 @@ configureSystemShortcuts () {
   gsettings set org.gnome.settings-daemon.plugins.media-keys search "['<Super>f']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.settings-daemon.plugins.media-keys help "['<Super>h']" >> $LOG_FILE 2>&1
 
-  log "Open the settings with.......................<Super> + S"
-  log "Open terminal with...........................<Super> + T"
-  log "Open default web browser with................<Super> + W"
-  log "Open file explorer with......................<Super> + E"
-  log "Open calculator with.........................<Super> + C"
-  log "Open default mail client with................<Super> + M"
-  log "Open the command prompt dialog with..........<Super> + Backslash"
-  log "Toggle notifications/calendar panel with.....<Super> + N"
-  log "Open search with.............................<Super> + F"
-  log "Open help with...............................<Super> + H"
+  log "Open the settings with........................Super + S"
+  log "Open terminal with............................Super + T"
+  log "Open default web browser with.................Super + W"
+  log "Open file explorer with.......................Super + E"
+  log "Open calculator with..........................Super + C"
+  log "Open default mail client with.................Super + M"
+  log "Open the command prompt dialog with...........Super + Backslash"
+  log "Toggle notifications/calendar panel with......Super + N"
+  log "Open search with..............................Super + F"
+  log "Open help with................................Super + H"
 
   gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ name 'Power Off' >> $LOG_FILE 2>&1
   gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ command 'gnome-session-quit --power-off' >> $LOG_FILE 2>&1
   gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ binding '<Super>Pause' >> $LOG_FILE 2>&1
 
-  log "Power off with...............................<Super> + Pause"
+  log "Power off with................................Super + Pause"
 
   success "System shortcuts have been configured successfully\n"
 }
