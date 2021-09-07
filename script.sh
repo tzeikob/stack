@@ -849,6 +849,7 @@ configureSystemShortcuts () {
   gsettings set org.gnome.settings-daemon.plugins.media-keys calculator "['<Super>c']"
   gsettings set org.gnome.settings-daemon.plugins.media-keys email "['<Super>m']"
   gsettings set org.gnome.desktop.wm.keybindings panel-run-dialog "['<Super>backslash']"
+  gsettings set org.gnome.shell.keybindings toggle-message-tray "['<Super>n']"
   gsettings set org.gnome.settings-daemon.plugins.media-keys search "['<Super>f']"
   gsettings set org.gnome.settings-daemon.plugins.media-keys help "['<Super>h']"
 
@@ -859,6 +860,7 @@ configureSystemShortcuts () {
   log "Open calculator with 'Super+c'"
   log "Open default mail client with 'Super+m'"
   log "Open the command prompt dialog with 'Super+Backslash'"
+  log "Toggle notifications/calendar panel with 'Super+n'"
   log "Open search with 'Super+f'"
   log "Open help with 'Super+h'"
 
