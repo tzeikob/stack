@@ -679,7 +679,7 @@ disableScreenLock () {
 
 # Task to set shortcuts for multiple monitor workspaces
 configureWorkspaceShortcuts () {
-  log "Setting shortcuts for multiple monitor workspaces"
+  log "Setting shortcuts for workspaces and windows navigation"
 
   gsettings set org.gnome.mutter workspaces-only-on-primary false
 
@@ -794,12 +794,12 @@ configureWorkspaceShortcuts () {
   # Disable switch display modes cause might interfere with rest shortcuts
   gsettings set org.gnome.mutter.keybindings switch-monitor "['']"
 
-  success "Shortcuts for workspaces have been configured successfully\n"
+  success "Shortcuts for workspaces and windows have been configured successfully\n"
 }
 
-# Task to set a few system shortcuts
+# Task to set system shortcuts
 configureSystemShortcuts () {
-  log "Setting shortcuts for a few system utilities and operations"
+  log "Setting shortcuts for system operations and utilities"
 
   gsettings set org.gnome.desktop.wm.keybindings switch-input-source "['<Super>space']"
   gsettings set org.gnome.desktop.wm.keybindings switch-input-source-backward  "['']"
@@ -986,8 +986,8 @@ if [[ $yesToAll = false ]]; then
   ask "Do you want to reposition dock to the bottom?" configureDock
   ask "Should home folders (~/Downloads, etc.) be renamed to lowercase?" renameHomeFolders
   ask "Would disabling screen lock be helpful to you?" disableScreenLock
-  ask "Do you want to set shortcuts for multiple monitor workspaces?" configureWorkspaceShortcuts
-  ask "You might want to set a few system shortcuts (settings, terminal, etc.)?" configureSystemShortcuts
+  ask "Wanna use our opinionated workspaces and window navigation shortcuts?" configureWorkspaceShortcuts
+  ask "Wanna use our opinionated system shortcuts?" configureSystemShortcuts
 
   tasks+=(sayGoodBye)
 
