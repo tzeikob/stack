@@ -434,6 +434,15 @@ installVSCode () {
   success "Visual Studio Code has been installed successfully\n"
 }
 
+# Task to install Sublime Text
+installSublimeText () {
+  log "Installing the latest version of Sublime Text"
+
+  sudo snap install sublime-text --classic
+
+  success "Sublime Text has been installed successfully\n"
+}
+
 # Task to install IntelliJ Idea
 installIntelliJIdea () {
   log "Installing the latest version of IntelliJ Idea"
@@ -997,6 +1006,7 @@ if [[ $yesToAll = false ]]; then
   ask "Do you want to install Java with Maven?" installJava
   ask "Do you want to install Atom?" installAtom
   ask "Do you want to install Visual Studio Code?" installVSCode
+  ask "Do you want to install Sublime Text?" installSublimeText
   ask "Do you want to install IntelliJ Idea?" installIntelliJIdea
 
   log "\nIt's all about data:"
@@ -1048,6 +1058,7 @@ else
     installJava
     installAtom
     installVSCode
+    installSublimeText
     installIntelliJIdea
     installMongoDBCompass
     installDBeaver
