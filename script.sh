@@ -987,7 +987,7 @@ if [[ $yesToAll = false ]]; then
   ask "Should home folders (~/Downloads, etc.) be renamed to lowercase?" renameHomeFolders
   ask "Would disabling screen lock be helpful to you?" disableScreenLock
   ask "Wanna use our opinionated workspaces and windows navigation shortcuts?" configureWorkspaceShortcuts
-  ask "Wanna use our opinionated system shortcuts?" configureSystemShortcuts
+  ask "Wanna use our opinionated system shortcuts (existing custom shortcuts will be removed)?" configureSystemShortcuts
 
   tasks+=(sayGoodBye)
 
