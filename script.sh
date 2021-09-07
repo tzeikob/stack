@@ -79,9 +79,27 @@ updateRepositories () {
 installPrerequisites () {
   log "Installing a few prerequisite packages..."
 
-  local packages=(tree wget curl unzip htop gconf-service gconf-service-backend gconf2
-            gconf2-common libappindicator1 libgconf-2-4 libindicator7
-            libpython2-stdlib python python2.7 python2.7-minimal libatomic1 poppler-utils)
+  local packages=(
+    tree
+    wget
+    curl
+    unzip
+    htop
+    gconf-service
+    gconf-service-backend
+    gconf2
+    gconf2-common
+    libappindicator1
+    libgconf-2-4
+    libindicator7
+    libpython2-stdlib
+    python
+    python2.7
+    python2.7-minimal
+    libatomic1
+    poppler-utils
+    dconf-editor
+  )
 
   sudo apt-get -y install ${packages[@]} >> $LOG_FILE
 
