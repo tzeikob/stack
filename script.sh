@@ -986,7 +986,7 @@ if [[ $yesToAll = false ]]; then
   ask "Do you want to reposition dock to the bottom?" configureDock
   ask "Should home folders (~/Downloads, etc.) be renamed to lowercase?" renameHomeFolders
   ask "Would disabling screen lock be helpful to you?" disableScreenLock
-  ask "Wanna use our opinionated workspaces and window navigation shortcuts?" configureWorkspaceShortcuts
+  ask "Wanna use our opinionated workspaces and windows navigation shortcuts?" configureWorkspaceShortcuts
   ask "Wanna use our opinionated system shortcuts?" configureSystemShortcuts
 
   tasks+=(sayGoodBye)
