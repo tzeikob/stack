@@ -123,7 +123,7 @@ updateSystem () {
 
   sudo apt-get -y upgrade >> $LOG_FILE 2>&1
 
-  log "Latest updates have been installed successfully"
+  log "Latest updates have been installed"
 
   removeUnnecessaryPackages
 
@@ -161,7 +161,7 @@ increaseInotifyLimit () {
 enableFirewall () {
   log "Installing GUFW to manage firewall rules via user interface"
 
-  log "Downloading ans extracting the package..."
+  log "Downloading and extracting the package..."
 
   sudo apt-get -y install gufw >> $LOG_FILE 2>&1
 
@@ -185,7 +185,7 @@ installGreekLanguage () {
 
   sudo apt-get -y install `check-language-support -l el` >> $LOG_FILE 2>&1
 
-  log "Greek language packages has been installed"
+  log "Greek language packages have been installed"
 
   log "Adding greek layout into the keyboard input sources"
 
@@ -220,6 +220,8 @@ installVirtualBox () {
 
   sudo apt-get -y install virtualbox >> $LOG_FILE 2>&1
 
+  log "Package has been installed"
+
   success "Virtual Box has been installed successfully\n"
 }
 
@@ -227,11 +229,11 @@ installVirtualBox () {
 installDocker () {
   log "Installing the latest version of Docker"
 
-  log "Downloadinf and extracting third-party Docker utilities..."
+  log "Downloading and extracting prerequisite packages..."
 
   sudo apt-get -y install apt-transport-https ca-certificates curl gnupg lsb-release >> $LOG_FILE 2>&1
 
-  log "Third-party utilities have been installed"
+  log "Prerequisite packages have been installed"
 
   log "Adding docker repository to apt sources..."
 
@@ -240,6 +242,8 @@ installDocker () {
   echo \
   "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
   $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list >> $LOG_FILE 2>&1
+
+  log "Docker apt repository has been added to sources"
 
   updateRepositories
 
@@ -280,6 +284,8 @@ installDropbox () {
   log "Extracting and installing the package file..."
 
   sudo apt-get -y install $TEMP/dropbox.deb >> $LOG_FILE 2>&1
+
+  log "Package has been installed"
 
   success "Dropbox has been installed successfully\n"
 }
@@ -358,13 +364,13 @@ installNode () {
   log "Node versions can be found under /home/$USER/.nvm/versions/node"
   log "Node $(nvm current) is currently in use"
 
-  log "Making local NPM dep's binaries available in cmd line (~/.bashrc)..."
+  log "Making local NPM dep's binaries available in cmd line..."
 
   echo "" >> ~/.bashrc
   echo "# Make local NPM dep's binaries to be available in cmd line" >> ~/.bashrc
   echo 'export PATH="./node_modules/.bin:$PATH"' >> ~/.bashrc
 
-  log "Path './node_modules/.bin' has been added to PATH successfully"
+  log "Path './node_modules/.bin' has been added to PATH (~/.bashrc)"
 
   success "Node has been installed successfully\n"
 }
@@ -451,6 +457,8 @@ installMongoDBCompass () {
 
   sudo apt-get -y install $TEMP/compass.deb >> $LOG_FILE 2>&1
 
+  log "Package file has been installed"
+
   success "MongoDB compass has been installed successfully\n"
 }
 
@@ -485,6 +493,8 @@ installChrome () {
   log "Extracting and installing the package file..."
 
   sudo apt-get -y install $TEMP/chrome.deb >> $LOG_FILE 2>&1
+
+  log "Package file has been installed"
 
   success "Chrome has been installed successfully\n"
 }
@@ -557,6 +567,8 @@ installTeamViewer () {
 
   sudo apt-get -y install $TEMP/teamviewer.deb >> $LOG_FILE 2>&1
 
+  log "Package file has been installed"
+
   success "TeamViewer has been installed successfully\n"
 }
 
@@ -577,6 +589,8 @@ installGimp () {
 
   sudo apt-get -y install gimp >> $LOG_FILE 2>&1
 
+  log "Package file has been installed"
+
   success "Gimp has been installed successfully\n"
 }
 
@@ -587,6 +601,8 @@ installVLC () {
   log "Downloading and extracting the package..."
 
   sudo apt-get -y install vlc >> $LOG_FILE 2>&1
+
+  log "Package file has been installed"
 
   success "VLC has been installed successfully\n"
 }
@@ -629,7 +645,7 @@ configureDock () {
 
 # Task to rename the default home folders
 renameHomeFolders () {
-  log "Renaming home folders in /home/$USER"
+  log "Renaming home folders in '/home/$USER'"
 
   mv /home/$USER/Desktop /home/$USER/desktop
   mv /home/$USER/Downloads /home/$USER/downloads
@@ -643,11 +659,11 @@ renameHomeFolders () {
   # Task to update the user dirs file
   local userdirs_file="/home/$USER/.config/user-dirs.dirs"
 
-  log "Backing up the user dirs file to $userdirs_file.bak"
+  log "Backing up the user dirs file ($userdirs_file)"
 
   cp $userdirs_file $userdirs_file.bak
 
-  log "Updating the user dirs file $userdirs_file"
+  log "Updating the user dirs file..."
 
   > $userdirs_file
   echo "XDG_DESKTOP_DIR=\"$HOME/desktop\"" >> $userdirs_file
@@ -659,16 +675,16 @@ renameHomeFolders () {
   echo "XDG_PICTURES_DIR=\"$HOME/pictures\"" >> $userdirs_file
   echo "XDG_VIDEOS_DIR=\"$HOME/videos\"" >> $userdirs_file
 
-  log "User dirs file has been updated successfully"
+  log "User dirs file has been updated"
 
   # Update the bookmarks file
   local bookmarks_file="/home/$USER/.config/gtk-3.0/bookmarks"
 
-  log "Backing up the bookmarks file to $bookmarks_file.bak"
+  log "Backing up the bookmarks file ($bookmarks_file)"
 
   cp $bookmarks_file $bookmarks_file.bak
 
-  log "Updating the bookmarks file $bookmarks_file"
+  log "Updating the bookmarks file..."
 
   > $bookmarks_file
   echo "file:///home/"$USER"/downloads Downloads" >> $bookmarks_file
@@ -714,8 +730,8 @@ configureWorkspaceShortcuts () {
   gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-left "['']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-right "['']" >> $LOG_FILE 2>&1
 
-  log "Switch to workspace above with 'Super+Up'"
-  log "Switch to workspace below with 'Super+Down'"
+  log "Switch to workspace above with...............<Super> + Up"
+  log "Switch to workspace below with...............<Super> + Down"
 
   gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-1 "['<Super>Insert']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-2 "['<Super>Home']" >> $LOG_FILE 2>&1
@@ -724,15 +740,15 @@ configureWorkspaceShortcuts () {
   gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-5 "['<Super>End']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-6 "['<Super>Page_Down']" >> $LOG_FILE 2>&1
 
-  log "Switch to workspace 1-3 with 'Super+Insert/Home/Page_Up'"
-  log "Switch to workspace 4-6 with 'Super+Delete/End/Page_Down'"
+  log "Switch to workspace 1-3 with.................<Super> + Insert/Home/Page Up"
+  log "Switch to workspace 4-6 with.................<Super> + Delete/End/Page Down"
 
   gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-up "['<Super><Alt>Up']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-down "['<Super><Alt>Down']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-last "['']" >> $LOG_FILE 2>&1
 
-  log "Move window one workspace up with 'Super+Alt+Up'"
-  log "Move window one workspace down with 'Super+Alt+Down'"
+  log "Move window one workspace up with............<Super> + <Alt> + Up"
+  log "Move window one workspace down with..........<Super> + <Alt> + Down"
 
   gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-1 "['<Super><Alt>Insert']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-2 "['<Super><Alt>Home']" >> $LOG_FILE 2>&1
@@ -741,16 +757,16 @@ configureWorkspaceShortcuts () {
   gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-5 "['<Super><Alt>End']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-6 "['<Super><Alt>Page_Down']" >> $LOG_FILE 2>&1
 
-  log "Move window to workspace 1-3 with 'Super+Alt+Insert/Home/Page_Up'"
-  log "Move window to workspace 4-6 with 'Super+Alt+Delete/End/Page_Down'"
+  log "Move window to workspace 1-3 with............<Super> + <Alt> + Insert/Home/Page Up"
+  log "Move window to workspace 4-6 with............<Super> + <Alt> + Delete/End/Page Down"
 
   gsettings set org.gnome.desktop.wm.keybindings move-to-monitor-left "['<Super><Alt>Left']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings move-to-monitor-right "['<Super><Alt>Right']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings move-to-monitor-up "['']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings move-to-monitor-down "['']" >> $LOG_FILE 2>&1
 
-  log "Move window one monitor to the left with 'Super+Alt+Left'"
-  log "Move window one monitor to the right with 'Super+Alt+Right'"
+  log "Move window one monitor to the left with.....<Super> + <Alt> + Left"
+  log "Move window one monitor to the right with....<Super> + <Alt> + Right"
 
   gsettings set org.gnome.desktop.wm.keybindings toggle-maximized "['<Ctrl><Super>Up']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings minimize "['<Ctrl><Super>Down']" >> $LOG_FILE 2>&1
@@ -761,8 +777,8 @@ configureWorkspaceShortcuts () {
   gsettings set org.gnome.desktop.wm.keybindings begin-move "['']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings begin-resize "['']" >> $LOG_FILE 2>&1
 
-  log "Maximize or restore window with 'Ctrl+Super+Up'"
-  log "Hide and minimize window with 'Ctrl+Super+Down'"
+  log "Maximize or restore window with..............<Ctrl> + <Super> + Up"
+  log "Hide and minimize window with................<Ctrl> + <Super> + Down"
 
   gsettings set org.gnome.mutter.keybindings toggle-tiled-left "['<Ctrl><Super>Left']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.mutter.keybindings toggle-tiled-right "['<Ctrl><Super>Right']" >> $LOG_FILE 2>&1
@@ -775,8 +791,8 @@ configureWorkspaceShortcuts () {
   gsettings set org.gnome.desktop.wm.keybindings move-to-side-w "['']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings move-to-side-s "['']" >> $LOG_FILE 2>&1
 
-  log "Toggle window tiled left with 'Ctrl+Super+Left'"
-  log "Toggle window tiled right with 'Ctrl+Super+Right'"
+  log "Toggle window tiled left with................<Ctrl> + <Super> + Left"
+  log "Toggle window tiled right with...............<Ctrl> + <Super> + Right"
 
   gsettings set org.gnome.desktop.wm.keybindings always-on-top "['<Ctrl><Super>Insert']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings lower "['<Ctrl><Super>Home']" >> $LOG_FILE 2>&1
@@ -788,12 +804,12 @@ configureWorkspaceShortcuts () {
   gsettings set org.gnome.desktop.wm.keybindings toggle-on-all-workspaces "['']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings raise-or-lower "['']" >> $LOG_FILE 2>&1
 
-  log "Toogle window always on top with 'Ctrl+Super+Insert'"
-  log "Move window to background with 'Ctrl+Super+Home'"
-  log "Move window to foreground with 'Ctrl+Super+Page_Up'"
-  log "Toggle window fullscreen with 'Ctrl+Super+Delete'"
-  log "Close window with 'Ctrl+Super+End'"
-  log "Show or hide desktop with 'Ctrl+Super+Page_Down'"
+  log "Toogle window always on top with.............<Ctrl> + <Super> + Insert"
+  log "Move window to background with...............<Ctrl> + <Super> + Home"
+  log "Move window to foreground with...............<Ctrl> + <Super> + Page Up"
+  log "Toggle window fullscreen with................<Ctrl> + <Super> + Delete"
+  log "Close window with............................<Ctrl> + <Super> + End"
+  log "Show or hide desktop with....................<Ctrl> + <Super> + Page Down"
   
   gsettings set org.gnome.desktop.wm.keybindings switch-applications "['<Ctrl>Up']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings switch-applications-backward "['']" >> $LOG_FILE 2>&1
@@ -810,7 +826,7 @@ configureWorkspaceShortcuts () {
   gsettings set org.gnome.desktop.wm.keybindings cycle-group "['']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings cycle-group-backward "['']" >> $LOG_FILE 2>&1
 
-  log "Switch between applications with 'Ctrl+Up'"
+  log "Switch between applications with.............<Ctrl> + Up"
 
   # Disable switch display modes cause might interfere with rest shortcuts
   gsettings set org.gnome.mutter.keybindings switch-monitor "['']" >> $LOG_FILE 2>&1
@@ -825,15 +841,15 @@ configureSystemShortcuts () {
   gsettings set org.gnome.desktop.wm.keybindings switch-input-source "['<Super>space']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings switch-input-source-backward  "['']" >> $LOG_FILE 2>&1
 
-  log "Switch keyboard language with 'Super+space'"
+  log "Switch keyboard language with................<Super> + Space"
 
   gsettings set org.gnome.settings-daemon.plugins.media-keys volume-up "['<Super>period']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.settings-daemon.plugins.media-keys volume-down "['<Super>comma']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.settings-daemon.plugins.media-keys volume-mute "['<Super>slash']" >> $LOG_FILE 2>&1
 
-  log "Increase volume with 'Super+.'"
-  log "Decrease volume with 'Super+,'"
-  log "Mute volume with 'Super+/'"
+  log "Increase volume with.........................<Super> + ."
+  log "Decrease volume with.........................<Super> + ,"
+  log "Mute volume with.............................<Super> + /"
 
   gsettings set org.gnome.settings-daemon.plugins.media-keys screenshot "['']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.settings-daemon.plugins.media-keys screenshot-clip "['']" >> $LOG_FILE 2>&1
@@ -843,8 +859,8 @@ configureSystemShortcuts () {
   gsettings set org.gnome.settings-daemon.plugins.media-keys area-screenshot "['Print']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.settings-daemon.plugins.media-keys screencast "['<Super>Print']" >> $LOG_FILE 2>&1
 
-  log "Save an area screenshot with 'Print'"
-  log "Record a short screen cast with 'Super+Print'"
+  log "Save an area screenshot with.................Print"
+  log "Record a short screen cast with..............<Super> + Print"
 
   gsettings set org.gnome.shell.keybindings focus-active-notification "['']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.shell.keybindings open-application-menu "['']" >> $LOG_FILE 2>&1
@@ -856,8 +872,8 @@ configureSystemShortcuts () {
   gsettings set org.gnome.settings-daemon.plugins.media-keys screensaver "['Scroll_Lock']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.settings-daemon.plugins.media-keys logout "['<Super>Scroll_Lock']" >> $LOG_FILE 2>&1
 
-  log "Lock screen with 'Scroll Lock'"
-  log "Logout with 'Super+Scroll Lock'"
+  log "Lock screen with.............................Scroll Lock"
+  log "Logout with..................................<Super> + Scroll Lock"
 
   gsettings set org.gnome.settings-daemon.plugins.media-keys control-center "['<Super>s']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.settings-daemon.plugins.media-keys terminal "['<Super>t']" >> $LOG_FILE 2>&1
@@ -870,23 +886,23 @@ configureSystemShortcuts () {
   gsettings set org.gnome.settings-daemon.plugins.media-keys search "['<Super>f']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.settings-daemon.plugins.media-keys help "['<Super>h']" >> $LOG_FILE 2>&1
 
-  log "Open the settings with 'Super+s'"
-  log "Open terminal with 'Super+t'"
-  log "Open default web browser with 'Super+w'"
-  log "Open file explorer with 'Super+e'"
-  log "Open calculator with 'Super+c'"
-  log "Open default mail client with 'Super+m'"
-  log "Open the command prompt dialog with 'Super+Backslash'"
-  log "Toggle notifications/calendar panel with 'Super+n'"
-  log "Open search with 'Super+f'"
-  log "Open help with 'Super+h'"
+  log "Open the settings with.......................<Super> + S"
+  log "Open terminal with...........................<Super> + T"
+  log "Open default web browser with................<Super> + W"
+  log "Open file explorer with......................<Super> + E"
+  log "Open calculator with.........................<Super> + C"
+  log "Open default mail client with................<Super> + M"
+  log "Open the command prompt dialog with..........<Super> + Backslash"
+  log "Toggle notifications/calendar panel with.....<Super> + N"
+  log "Open search with.............................<Super> + F"
+  log "Open help with...............................<Super> + H"
 
   gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ name 'Power Off' >> $LOG_FILE 2>&1
   gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ command 'gnome-session-quit --power-off' >> $LOG_FILE 2>&1
   gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ binding '<Super>Pause' >> $LOG_FILE 2>&1
 
-  log "Power off with 'Super+Pause'"
+  log "Power off with...............................<Super> + Pause"
 
   success "System shortcuts have been configured successfully\n"
 }
@@ -1074,7 +1090,7 @@ sleep 2
 progress "Liftoff, We have liftoff!"
 sleep 4
 
-log "Installation has been started..."
+log "Installation has been started"
 
 # Execute some preparatory tasks
 updateRepositories
