@@ -121,7 +121,7 @@ updateSystem () {
 
   removeUnnecessaryPackages
 
-  log "\U2713 System has been updated successfully\n"
+  log "System has been updated successfully\n"
 }
 
 # Task to set local RTC time
@@ -136,7 +136,7 @@ setLocalRTCTime () {
 
   log "Clock has been set to show the date as well"
 
-  log "\U2713 System has been set to use local RTC time successfully\n"
+  log "System has been set to use local RTC time successfully\n"
 }
 
 # Task to increase inotify watches limit to monitor more files
@@ -148,7 +148,7 @@ increaseInotifyLimit () {
 
   log "You are now able to monitor much more files"
 
-  log "\U2713 The inotify watches limit has been set to $watches_limit\n"
+  log "The inotify watches limit has been set to $watches_limit\n"
 }
 
 # Task to enable system's firewall via UFW
@@ -168,7 +168,7 @@ enableFirewall () {
 
   log "Any incoming traffic has been set to deny and outgoing to allow"
 
-  log "\U2713 Firewall has been enabled successfully\n"
+  log "Firewall has been enabled successfully\n"
 }
 
 # Task to install extra system languages, Greek
@@ -203,7 +203,7 @@ installGreekLanguage () {
   sudo update-locale LC_IDENTIFICATION=en_US.UTF-8 >> $LOG_FILE 2>&1
   sudo update-locale LC_ALL= >> $LOG_FILE 2>&1
 
-  log "\U2713 System languages have been updated successfully\n"
+  log "System languages have been updated successfully\n"
 }
 
 # Task to install Virtual Box
@@ -216,7 +216,7 @@ installVirtualBox () {
 
   log "Package has been installed"
 
-  log "\U2713 Virtual Box has been installed successfully\n"
+  log "Virtual Box has been installed successfully\n"
 }
 
 # Task to install Docker and Compose
@@ -262,7 +262,7 @@ installDocker () {
 
   log "Docker compose version $DOCKER_COMPOSE_VERSION has been installed"
 
-  log "\U2713 Docker has been installed successfully\n"
+  log "Docker has been installed successfully\n"
 }
 
 # Task to install Dropbox
@@ -281,7 +281,7 @@ installDropbox () {
 
   log "Package has been installed"
 
-  log "\U2713 Dropbox has been installed successfully\n"
+  log "Dropbox has been installed successfully\n"
 }
 
 # Task to install git
@@ -304,7 +304,7 @@ installGit () {
     log "Git global user email has been set to $(git config --global user.email)"
   fi
 
-  log "\U2713 Git has been installed successfully\n"
+  log "Git has been installed successfully\n"
 }
 
 # Task to configure cmd prompt to show current git branch
@@ -320,7 +320,7 @@ enableGitPrompt () {
 
   log "Cmd prompt will now shown as user@host:~/path/to/folder[:branch]"
 
-  log "\U2713 Command prompt has been updated successfully\n"
+  log "Command prompt has been updated successfully\n"
 }
 
 # Task to install Node via NVM
@@ -366,7 +366,7 @@ installNode () {
 
   log "Path './node_modules/.bin' has been added to PATH (~/.bashrc)"
 
-  log "\U2713 Node has been installed successfully\n"
+  log "Node has been installed successfully\n"
 }
 
 # Task to install Java, Open JDK and Maven
@@ -393,7 +393,7 @@ installJava () {
 
   log "Maven has been installed"
 
-  log "\U2713 Java has been installed successfully\n"
+  log "Java has been installed successfully\n"
 }
 
 # Task to install Atom
@@ -402,7 +402,7 @@ installAtom () {
 
   sudo snap install atom --classic
 
-  log "\U2713 Atom has been installed successfully\n"
+  log "Atom has been installed successfully\n"
 }
 
 # Task to install Visual Studio Code
@@ -425,7 +425,7 @@ installVSCode () {
 
   log "The following plugins and extensions have been installed: \n${extensions[*]}"
 
-  log "\U2713 Visual Studio Code has been installed successfully\n"
+  log "Visual Studio Code has been installed successfully\n"
 }
 
 # Task to install Sublime Text
@@ -434,7 +434,7 @@ installSublimeText () {
 
   sudo snap install sublime-text --classic
 
-  log "\U2713 Sublime Text has been installed successfully\n"
+  log "Sublime Text has been installed successfully\n"
 }
 
 # Task to install the Neovim editor
@@ -443,7 +443,7 @@ installNeovim () {
 
   sudo snap install --beta nvim --classic
 
-  log "\U2713 Neovim has been installed successfully\n"
+  log "Neovim has been installed successfully\n"
 }
 
 # Task to install IntelliJ Idea
@@ -452,7 +452,7 @@ installIntelliJIdea () {
 
   sudo snap install intellij-idea-community --classic
 
-  log "\U2713 IntelliJ Idea has been installed successfully\n"
+  log "IntelliJ Idea has been installed successfully\n"
 }
 
 # Task to install MongoDB Compass
@@ -471,7 +471,7 @@ installMongoDBCompass () {
 
   log "Package file has been installed"
 
-  log "\U2713 MongoDB compass has been installed successfully\n"
+  log "MongoDB compass has been installed successfully\n"
 }
 
 # Task to install DBeaver
@@ -480,7 +480,7 @@ installDBeaver () {
 
   sudo snap install dbeaver-ce
 
-  log "\U2713 DBeaver has been installed successfully\n"
+  log "DBeaver has been installed successfully\n"
 }
 
 # Task to install Postman
@@ -489,7 +489,7 @@ installPostman () {
 
   sudo snap install postman
 
-  log "\U2713 Postman has been isntalled successfully\n"
+  log "Postman has been isntalled successfully\n"
 }
 
 # Task to install Chrome
@@ -508,7 +508,7 @@ installChrome () {
 
   log "Package file has been installed"
 
-  log "\U2713 Chrome has been installed successfully\n"
+  log "Chrome has been installed successfully\n"
 }
 
 # Task to install Thunderbird
@@ -517,7 +517,7 @@ installThunderbird () {
 
   sudo snap install thunderbird
 
-  log "\U2713 Thunderbird has been installed successfully\n"
+  log "Thunderbird has been installed successfully\n"
 }
 
 # Task to install Slack
@@ -526,7 +526,7 @@ installSlack () {
 
   sudo snap install slack --classic
 
-  log "\U2713 Slack has been installed successfully\n"
+  log "Slack has been installed successfully\n"
 }
 
 # Task to install Discord
@@ -535,7 +535,7 @@ installDiscord () {
 
   sudo snap install discord
 
-  log "\U2713 Discord has been installed successfully\n"
+  log "Discord has been installed successfully\n"
 }
 
 # Task to install Telegram
@@ -544,7 +544,7 @@ installTelegram () {
 
   sudo snap install telegram-desktop
 
-  log "\U2713 Telegram has been installed successfully\n"
+  log "Telegram has been installed successfully\n"
 }
 
 # Task to install Microsoft Teams
@@ -553,7 +553,7 @@ installMSTeams () {
 
   sudo snap install teams
 
-  log "\U2713 Microsoft Teams has been installed successfully\n"
+  log "Microsoft Teams has been installed successfully\n"
 }
 
 # Task to install Skype
@@ -562,7 +562,7 @@ installSkype () {
 
   sudo snap install skype
 
-  log "\U2713 Skype has been installed successfully\n"
+  log "Skype has been installed successfully\n"
 }
 
 # Task to install TeamViewer
@@ -581,7 +581,7 @@ installTeamViewer () {
 
   log "Package file has been installed"
 
-  log "\U2713 TeamViewer has been installed successfully\n"
+  log "TeamViewer has been installed successfully\n"
 }
 
 # Task to install Libre Office
@@ -590,7 +590,7 @@ installLibreOffice () {
 
   sudo snap install libreoffice
 
-  log "\U2713 Libre Office has been installed successfully\n"
+  log "Libre Office has been installed successfully\n"
 }
 
 # Task to install Gimp
@@ -603,7 +603,7 @@ installGimp () {
 
   log "Package file has been installed"
 
-  log "\U2713 Gimp has been installed successfully\n"
+  log "Gimp has been installed successfully\n"
 }
 
 # Task to install VLC player
@@ -616,7 +616,7 @@ installVLC () {
 
   log "Package file has been installed"
 
-  log "\U2713 VLC has been installed successfully\n"
+  log "VLC has been installed successfully\n"
 }
 
 # Task to install Spotify
@@ -625,7 +625,7 @@ installSpotify () {
 
   sudo snap install spotify
 
-  log "\U2713 Spotify has been installed successfully\n"
+  log "Spotify has been installed successfully\n"
 }
 
 # Task to configure desktop look and feel
@@ -637,7 +637,7 @@ configureDesktop () {
 
   log "All desktop icons are now hidden"
 
-  log "\U2713 Desktop has been updated successfully\n"
+  log "Desktop has been updated successfully\n"
 }
 
 # Task to configure dock's look and feel
@@ -652,7 +652,7 @@ configureDock () {
 
   log "Dock size has been changed to 26 pixels"
 
-  log "\U2713 Dock has been updated successfully\n"
+  log "Dock has been updated successfully\n"
 }
 
 # Task to rename the default home folders
@@ -705,7 +705,7 @@ renameHomeFolders () {
   echo "file:///home/"$USER"/pictures Pictures" >> $bookmarks_file
   echo "file:///home/"$USER"/videos Videos" >> $bookmarks_file
 
-  log "\U2713 Home folders and bookmarks renamed successfully\n"
+  log "Home folders and bookmarks renamed successfully\n"
 }
 
 # Task to disable screen lock
@@ -719,7 +719,7 @@ disableScreenLock () {
   log "Idle delay has been set to 0"
   log "Power idle dim has been disabled"
 
-  log "\U2713 Screen lock has been disabled successfully\n"
+  log "Screen lock has been disabled successfully\n"
 }
 
 # Task to set shortcuts for multiple monitor workspaces
@@ -839,7 +839,7 @@ configureWorkspaceShortcuts () {
   # Disable switch display modes cause might interfere with rest shortcuts
   gsettings set org.gnome.mutter.keybindings switch-monitor "['']" >> $LOG_FILE 2>&1
 
-  log "\U2713 Shortcuts for workspaces and windows have been configured successfully\n"
+  log "Shortcuts for workspaces and windows have been configured successfully\n"
 }
 
 # Task to set system shortcuts
@@ -934,7 +934,7 @@ configureSystemShortcuts () {
   log "Open sound settings panel.....................Super + A"
   log "Power off with................................Super + Pause"
 
-  log "\U2713 System shortcuts have been configured successfully\n"
+  log "System shortcuts have been configured successfully\n"
 }
 
 # Task to print a good bye message
