@@ -900,7 +900,7 @@ configureSystemShortcuts () {
   gsettings set org.gnome.settings-daemon.plugins.media-keys calculator "['<Super>c']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.settings-daemon.plugins.media-keys email "['<Super>m']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings panel-run-dialog "['<Super>backslash']" >> $LOG_FILE 2>&1
-  gsettings set org.gnome.shell.keybindings toggle-message-tray "['<Super>n']" >> $LOG_FILE 2>&1
+  gsettings set org.gnome.shell.keybindings toggle-message-tray "['<Super>i']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.settings-daemon.plugins.media-keys search "['<Super>f']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.settings-daemon.plugins.media-keys help "['<Super>h']" >> $LOG_FILE 2>&1
 
@@ -911,34 +911,34 @@ configureSystemShortcuts () {
   log "Open calculator with..........................Super + C"
   log "Open default mail client with.................Super + M"
   log "Open the command prompt dialog with...........Super + Backslash"
-  log "Toggle notifications/calendar panel with......Super + N"
+  log "Toggle notifications/calendar panel with......Super + I"
   log "Open search with..............................Super + F"
   log "Open help with................................Super + H"
 
   gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/']" >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ name 'Power Off' >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ command 'gnome-session-quit --power-off' >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ binding '<Super>Pause' >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ name 'Network Settings' >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ command 'gnome-control-center network' >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ binding '<Super>n' >> $LOG_FILE 2>&1
 
   gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/']" >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/ name 'Network Settings' >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/ command 'gnome-control-center network' >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/ binding '<Super>i' >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/ name 'Bluetooth Settings' >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/ command 'gnome-control-center bluetooth' >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/ binding '<Super>b' >> $LOG_FILE 2>&1
 
   gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/']" >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/ name 'Bluetooth Settings' >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/ command 'gnome-control-center bluetooth' >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/ binding '<Super>b' >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/ name 'Sound Settings' >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/ command 'gnome-control-center sound' >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/ binding '<Super>a' >> $LOG_FILE 2>&1
 
   gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/']" >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/ name 'Sound Settings' >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/ command 'gnome-control-center sound' >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/ binding '<Super>a' >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/ name 'Power Off' >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/ command 'gnome-session-quit --power-off' >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/ binding '<Super>Pause' >> $LOG_FILE 2>&1
 
-  log "Power off with................................Super + Pause"
-  log "Open network settings panel...................Super + I"
+  log "Open network settings panel...................Super + N"
   log "Open bluetooth settings panel.................Super + B"
   log "Open sound settings panel.....................Super + A"
+  log "Power off with................................Super + Pause"
 
   success "System shortcuts have been configured successfully\n"
 }
