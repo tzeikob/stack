@@ -619,6 +619,19 @@ installVLC () {
   log "VLC has been installed successfully\n"
 }
 
+# Task to install Rhythmbox player
+installRhythmbox () {
+  log "Installing the latest version of Rhythmbox"
+
+  log "Downloading and extracting the package" "\U1F4AC"
+
+  sudo apt-get -y install rhythmbox >> $LOG_FILE 2>&1
+
+  log "Package file has been installed"
+
+  log "Rhythmbox has been installed successfully\n"
+}
+
 # Task to install Spotify
 installSpotify () {
   log "Installing the latest version of Spotify"
@@ -1015,6 +1028,7 @@ if [[ $yesToAll = false ]]; then
   log "\nNobody is escaping from media nowdays" "\U1F4AC"
   ask "Do you want to install Gimp?" installGimp
   ask "Do you want to install VLC player?" installVLC
+  ask "Do you want to install Rhythmbox player?" installRhythmbox
   ask "Do you want to install Spotify?" installSpotify
 
   log "\nMe likes a clean look and feel" "\U1F4AC"
@@ -1062,6 +1076,7 @@ else
     installLibreOffice
     installGimp
     installVLC
+    installRhythmbox
     installSpotify
     configureDesktop
     configureDock
