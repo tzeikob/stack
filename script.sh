@@ -873,8 +873,9 @@ configureSystemShortcuts () {
     '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/'
     '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/'
     '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/'
+    '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom4/'
   )
-  gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "['${k[0]}', '${k[1]}', '${k[2]}', '${k[3]}']" >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "['${k[0]}', '${k[1]}', '${k[2]}', '${k[3]}', '${k[4]}']" >> $LOG_FILE 2>&1
   
   gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ name 'Network Settings' >> $LOG_FILE 2>&1
   gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ command 'gnome-control-center network' >> $LOG_FILE 2>&1
@@ -891,6 +892,10 @@ configureSystemShortcuts () {
   gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/ name 'Power Off' >> $LOG_FILE 2>&1
   gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/ command 'gnome-session-quit --power-off' >> $LOG_FILE 2>&1
   gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/ binding '<Super>Pause' >> $LOG_FILE 2>&1
+
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom4/ name 'Open Editor' >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom4/ command 'gedit' >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom4/ binding '<Super>g' >> $LOG_FILE 2>&1
 
   log "Custom keybindigns have been set"
 
