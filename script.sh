@@ -736,10 +736,6 @@ configureWorkspaceShortcuts () {
 
   log "Workspaces for multiple monitor setups have been enabled"
 
-  gsettings set org.gnome.desktop.wm.preferences focus-new-windows 'strict' >> $LOG_FILE 2>&1
-
-  log "Turn focusing for new windows into strict mode"
-
   gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-up "['']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-up "['<Super>Up']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-down "['']" >> $LOG_FILE 2>&1
