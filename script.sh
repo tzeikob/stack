@@ -951,7 +951,7 @@ sayGoodBye () {
   local endTime=`date +%s`
   local runtime=$(((endTime-startTime)/60))
 
-  log "Installation has been completed in $runtime mins"
+  log "\nInstallation has been completed in $runtime mins"
   log "Have a nice coding time, $USER! \U1F389\n"
 }
 
