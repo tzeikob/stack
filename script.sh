@@ -980,11 +980,11 @@ tasks=()
 
 if [[ $yesToAll = false ]]; then
   log "\nCaptain, the system is out of order" "\U1F4AC"
-  ask "I guess you want to get the latest system updates?" updateSystem
+  ask "Do you want to get the latest system updates?" updateSystem
   ask "Should system time be set to local RTC time?" setLocalRTCTime
-  ask "Will higher inotify watches limit help you to monitor files?" increaseInotifyLimit
-  ask "Do you want to enable firewall via UFW?" enableFirewall
-  ask "Is Greek an extra language you need in your keyboard?" installGreekLanguage
+  ask "Do you need to monitor many files?" increaseInotifyLimit
+  ask "Do you want to enable firewall?" enableFirewall
+  ask "Is Greek an extra language you need?" installGreekLanguage
 
   log "\nDope, shippin' with containers is" "\U1F4AC"
   ask "Do you want to install Virtual Box?" installVirtualBox
@@ -998,11 +998,11 @@ if [[ $yesToAll = false ]]; then
     read -p "Awesome, what's your git user name?(enter to skip) " GIT_USER_NAME
     read -p "May I have your git user email as well?(enter to skip) " GIT_USER_EMAIL
 
-    ask "Should cmd prompt show the current branch in git folders?" enableGitPrompt
+    ask "Should cmd prompt show the branch in git folders?" enableGitPrompt
   fi
 
   ask "Do you want to install Node?" installNode
-  ask "Do you want to install Java with Maven?" installJava
+  ask "Do you want to install Java?" installJava
   ask "Do you want to install Atom?" installAtom
   ask "Do you want to install Visual Studio Code?" installVSCode
   ask "Do you want to install Sublime Text?" installSublimeText
@@ -1034,10 +1034,10 @@ if [[ $yesToAll = false ]]; then
   log "\nMe likes a clean look and feel" "\U1F4AC"
   ask "You may want to hide desktop icons?" configureDesktop
   ask "Do you want to reposition dock to the bottom?" configureDock
-  ask "Should home folders (~/Downloads, etc.) be renamed to lowercase?" renameHomeFolders
+  ask "Do you like home folders renamed to lowercase?" renameHomeFolders
   ask "Would disabling screen lock be helpful to you?" disableScreenLock
-  ask "Wanna use our opinionated workspaces and windows navigation shortcuts?" configureWorkspaceShortcuts
-  ask "Wanna use our opinionated system shortcuts (existing custom shortcuts will be removed)?" configureSystemShortcuts
+  ask "Do you want to override default workspaces shortcuts?" configureWorkspaceShortcuts
+  ask "Do you want to override default system shortcuts?" configureSystemShortcuts
 
   tasks+=(sayGoodBye)
 
