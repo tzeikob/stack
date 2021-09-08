@@ -15,9 +15,9 @@ DOCKER_COMPOSE_VERSION="1.29.2"
 DROPBOX_VERSION="2020.03.04"
 MONGODB_COMPASS_VERSION="1.28.1"
 
-# Log a normal info message, log message
+# Log a normal info message, log message emoji
 log () {
-  echo -e "\e[97m$1\e[0m"
+  echo -e "\e[97m$1\e[0m $2"
   echo -e "$1" >> $LOG_FILE
 }
 
@@ -35,7 +35,7 @@ progress () {
 
 # Log an error and exit the process, abort message
 abort () {
-  echo -e "\n\033[0;31m$1\e[0m"
+  echo -e "\n\e[97m$1\e[0m \U1F480"
   echo -e "\n$1" >> $LOG_FILE
 
   echo -e "Process exited with code: 1"
@@ -68,7 +68,7 @@ ask () {
 
 # Update apt-get repositories
 updateRepositories () {
-  log "Updating apt repositories..."
+  log "Updating apt repositories" "\U1F4AC"
 
   sudo apt-get -y update >> $LOG_FILE 2>&1
 
@@ -77,7 +77,7 @@ updateRepositories () {
 
 # Install prerequisite packages
 installPrerequisites () {
-  log "Installing a few prerequisite packages..."
+  log "Installing a few prerequisite packages" "\U1F4AC"
 
   local packages=(
     tree
@@ -108,7 +108,7 @@ installPrerequisites () {
 
 # Remove unnecessary apt packages
 removeUnnecessaryPackages () {
-  log "Removing unnecessary packages..."
+  log "Removing unnecessary packages" "\U1F4AC"
 
   sudo apt-get -y autoremove >> $LOG_FILE 2>&1
 
@@ -119,7 +119,7 @@ removeUnnecessaryPackages () {
 updateSystem () {
   log "Updating the system with the latest updates"
 
-  log "Getting system up to date..."
+  log "Getting system up to date" "\U1F4AC"
 
   sudo apt-get -y upgrade >> $LOG_FILE 2>&1
 
@@ -161,7 +161,7 @@ increaseInotifyLimit () {
 enableFirewall () {
   log "Installing GUFW to manage firewall rules via user interface"
 
-  log "Downloading and extracting the package..."
+  log "Downloading and extracting the package" "\U1F4AC"
 
   sudo apt-get -y install gufw >> $LOG_FILE 2>&1
 
@@ -181,7 +181,7 @@ enableFirewall () {
 installGreekLanguage () {
   log "Installing extra language packages"
 
-  log "Downloading and setting Greek language packages..."
+  log "Downloading and setting Greek language packages" "\U1F4AC"
 
   sudo apt-get -y install `check-language-support -l el` >> $LOG_FILE 2>&1
 
@@ -216,7 +216,7 @@ installGreekLanguage () {
 installVirtualBox () {
   log "Installing the latest version of Virtual Box"
 
-  log "Downloading and extracting the package..."
+  log "Downloading and extracting the package" "\U1F4AC"
 
   sudo apt-get -y install virtualbox >> $LOG_FILE 2>&1
 
@@ -229,13 +229,13 @@ installVirtualBox () {
 installDocker () {
   log "Installing the latest version of Docker"
 
-  log "Downloading and extracting prerequisite packages..."
+  log "Downloading and extracting prerequisite packages" "\U1F4AC"
 
   sudo apt-get -y install apt-transport-https ca-certificates curl gnupg lsb-release >> $LOG_FILE 2>&1
 
   log "Prerequisite packages have been installed"
 
-  log "Adding docker repository to apt sources..."
+  log "Adding docker repository to apt sources" "\U1F4AC"
 
   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg >> $LOG_FILE 2>&1
   
@@ -247,7 +247,7 @@ installDocker () {
 
   updateRepositories
 
-  log "Installing Docker packages..."
+  log "Installing Docker packages" "\U1F4AC"
 
   sudo apt-get -y install docker-ce docker-ce-cli containerd.io >> $LOG_FILE 2>&1
 
@@ -261,7 +261,7 @@ installDocker () {
 
   sudo usermod -aG docker $USER >> $LOG_FILE 2>&1
 
-  log "Installing the Docker Compose..."
+  log "Installing the Docker Compose" "\U1F4AC"
 
   sudo curl -L "https://github.com/docker/compose/releases/download/$DOCKER_COMPOSE_VERSION/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose >> $LOG_FILE 2>&1
   sudo chmod +x /usr/local/bin/docker-compose >> $LOG_FILE 2>&1
@@ -275,13 +275,13 @@ installDocker () {
 installDropbox () {
   log "Installing the Dropbox version $DROPBOX_VERSION"
 
-  log "Downloading the package file..."
+  log "Downloading the package file" "\U1F4AC"
 
   wget -q -P $TEMP -O $TEMP/dropbox.deb "https://linux.dropbox.com/packages/ubuntu/dropbox_${DROPBOX_VERSION}_amd64.deb" >> $LOG_FILE 2>&1
 
   log "Package file has been downloaded"
 
-  log "Extracting and installing the package file..."
+  log "Extracting and installing the package file" "\U1F4AC"
 
   sudo apt-get -y install $TEMP/dropbox.deb >> $LOG_FILE 2>&1
 
@@ -294,7 +294,7 @@ installDropbox () {
 installGit () {
   log "Installing the latest version of Git"
 
-  log "Downloading and extracting the package..."
+  log "Downloading and extracting the package" "\U1F4AC"
 
   sudo apt-get -y install git >> $LOG_FILE 2>&1
 
@@ -333,13 +333,13 @@ enableGitPrompt () {
 installNode () {
   log "Installing Node via the NVM version $NVM_VERSION"
 
-  log "Downloading NVM installation script..."
+  log "Downloading NVM installation script" "\U1F4AC"
 
   wget -q -P $TEMP -O $TEMP/nvm-install.sh https://raw.githubusercontent.com/nvm-sh/nvm/v$NVM_VERSION/install.sh >> $LOG_FILE 2>&1
 
   log "NVM script has been downloaded"
 
-  log "Installing NVM package..."
+  log "Installing NVM package" "\U1F4AC"
 
   bash $TEMP/nvm-install.sh >> $LOG_FILE 2>&1
   source /home/$USER/.bashrc >> $LOG_FILE 2>&1
@@ -347,13 +347,13 @@ installNode () {
 
   log "NVM has been installed under /home/$USER/.nvm"
 
-  log "Installing Node latest LTS version..."
+  log "Installing Node latest LTS version" "\U1F4AC"
 
   nvm install --no-progress --lts >> $LOG_FILE 2>&1
 
   log "Node latest LTS version has been installed successfully"
 
-  log "Installing Node latest stable version..."
+  log "Installing Node latest stable version" "\U1F4AC"
 
   nvm install --no-progress node >> $LOG_FILE 2>&1
 
@@ -364,7 +364,7 @@ installNode () {
   log "Node versions can be found under /home/$USER/.nvm/versions/node"
   log "Node $(nvm current) is currently in use"
 
-  log "Making local NPM dep's binaries available in cmd line..."
+  log "Making local NPM dep's binaries available in cmd line"
 
   echo "" >> ~/.bashrc
   echo "# Make local NPM dep's binaries to be available in cmd line" >> ~/.bashrc
@@ -379,7 +379,7 @@ installNode () {
 installJava () {
   log "Installing the Java Development Kit version 11"
 
-  log "Downloading and extracting OpenJDK packages..."
+  log "Downloading and extracting OpenJDK packages" "\U1F4AC"
 
   sudo apt-get -y install openjdk-11-jdk openjdk-11-doc openjdk-11-source >> $LOG_FILE 2>&1
 
@@ -393,7 +393,7 @@ installJava () {
 
   sudo update-alternatives --display java >> $LOG_FILE 2>&1
 
-  log "Installing the latest version of Maven..."
+  log "Installing the latest version of Maven" "\U1F4AC"
 
   sudo apt-get -y install maven >> $LOG_FILE 2>&1
 
@@ -423,7 +423,7 @@ installVSCode () {
     streetsidesoftware.code-spell-checker
   )
 
-  log "Installing extra plugins and extensions..."
+  log "Installing extra plugins and extensions" "\U1F4AC"
 
   for ext in ${extensions[@]}; do
     code --install-extension "$ext" >> $LOG_FILE 2>&1
@@ -465,13 +465,13 @@ installIntelliJIdea () {
 installMongoDBCompass () {
   log "Installing the MongoDB Compass version $MONGODB_COMPASS_VERSION"
 
-  log "Downloading the package file..."
+  log "Downloading the package file" "\U1F4AC"
 
   wget -q -P $TEMP -O $TEMP/compass.deb "https://downloads.mongodb.com/compass/mongodb-compass_${MONGODB_COMPASS_VERSION}_amd64.deb" >> $LOG_FILE 2>&1
 
   log "Package file has been downloaded"
 
-  log "Extracting and installing the package file..."
+  log "Extracting and installing the package file" "\U1F4AC"
 
   sudo apt-get -y install $TEMP/compass.deb >> $LOG_FILE 2>&1
 
@@ -502,13 +502,13 @@ installPostman () {
 installChrome () {
   log "Installing the latest version of Chrome"
 
-  log "Downloading the package file..."
+  log "Downloading the package file" "\U1F4AC"
 
   wget -q -P $TEMP -O $TEMP/chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb >> $LOG_FILE 2>&1
 
   log "Package file has been downloaded"
 
-  log "Extracting and installing the package file..."
+  log "Extracting and installing the package file" "\U1F4AC"
 
   sudo apt-get -y install $TEMP/chrome.deb >> $LOG_FILE 2>&1
 
@@ -575,13 +575,13 @@ installSkype () {
 installTeamViewer () {
   log "Installing the latest version of TeamViewer"
 
-  log "Downloading the package file..."
+  log "Downloading the package file" "\U1F4AC"
 
   wget -q -P $TEMP -O $TEMP/teamviewer.deb "https://download.teamviewer.com/download/linux/teamviewer_amd64.deb" >> $LOG_FILE 2>&1
 
   log "Package file has been downloaded"
 
-  log "Extracting and installing the package file..."
+  log "Extracting and installing the package file" "\U1F4AC"
 
   sudo apt-get -y install $TEMP/teamviewer.deb >> $LOG_FILE 2>&1
 
@@ -603,7 +603,7 @@ installLibreOffice () {
 installGimp () {
   log "Installing the latest version of Gimp"
 
-  log "Downloading and extracting the package..."
+  log "Downloading and extracting the package" "\U1F4AC"
 
   sudo apt-get -y install gimp >> $LOG_FILE 2>&1
 
@@ -616,7 +616,7 @@ installGimp () {
 installVLC () {
   log "Installing the latest version of VLC player"
 
-  log "Downloading and extracting the package..."
+  log "Downloading and extracting the package" "\U1F4AC"
 
   sudo apt-get -y install vlc >> $LOG_FILE 2>&1
 
@@ -681,7 +681,7 @@ renameHomeFolders () {
 
   cp $userdirs_file $userdirs_file.bak
 
-  log "Updating the user dirs file..."
+  log "Updating the user dirs file"
 
   > $userdirs_file
   echo "XDG_DESKTOP_DIR=\"$HOME/desktop\"" >> $userdirs_file
@@ -702,7 +702,7 @@ renameHomeFolders () {
 
   cp $bookmarks_file $bookmarks_file.bak
 
-  log "Updating the bookmarks file..."
+  log "Updating the bookmarks file"
 
   > $bookmarks_file
   echo "file:///home/"$USER"/downloads Downloads" >> $bookmarks_file
@@ -958,7 +958,7 @@ sayGoodBye () {
   local runtime=$(((endTime-startTime)/60))
 
   log "Installation has been completed in $runtime mins"
-  success "Have a nice coding time!\n"
+  success "Have a nice coding time, $USER! \U1F389\n"
 }
 
 # Task to reboot the system
@@ -986,7 +986,7 @@ log "Logs have been routed to $LOG_FILE"
 
 # Disallow to run this script as root or with sudo
 if [[ "$UID" == "0" ]]; then
-  abort 'Error: Do not run this script as root or using sudo'
+  abort "Error: Do not run this script as root or using sudo"
   exit 1
 fi
 
@@ -1007,19 +1007,19 @@ log "Script initialization has been completed"
 tasks=()
 
 if [[ $yesToAll = false ]]; then
-  log "\nCaptain, the system is out of order:"
+  log "\nCaptain, the system is out of order" "\U1F4AC"
   ask "I guess you want to get the latest system updates?" updateSystem
   ask "Should system time be set to local RTC time?" setLocalRTCTime
   ask "Will higher inotify watches limit help you to monitor files?" increaseInotifyLimit
   ask "Do you want to enable firewall via UFW?" enableFirewall
   ask "Is Greek an extra language you need in your keyboard?" installGreekLanguage
 
-  log "\nDope, shippin' with containers is:"
+  log "\nDope, shippin' with containers is" "\U1F4AC"
   ask "Do you want to install Virtual Box?" installVirtualBox
   ask "Do you want to install Docker and Compose?" installDocker
   ask "Do you want to install Dropbox?" installDropbox
 
-  log "\nWe all say coding is so sexy:"
+  log "\nWe all say coding is so sexy" "\U1F4AC"
   ask "Do you want to install Git?" installGit
 
   if [[ $(tasksContains installGit) == true ]]; then
@@ -1037,12 +1037,12 @@ if [[ $yesToAll = false ]]; then
   ask "Are you that brave to use Neovim editor?" installNeovim
   ask "Do you want to install IntelliJ Idea?" installIntelliJIdea
 
-  log "\nIt's all about data:"
+  log "\nIt's all about data" "\U1F4AC"
   ask "Do you want to install MongoDB Compass?" installMongoDBCompass
   ask "Do you want to install DBeaver?" installDBeaver
   ask "Do you want to install Postman?" installPostman
 
-  log "\nWork in teams, get things done:"
+  log "\nWork in teams, get things done" "\U1F4AC"
   ask "Do you want to install Chrome?" installChrome
   ask "Do you want to install Thunderbird?" installThunderbird
   ask "Do you want to install Slack?" installSlack
@@ -1053,12 +1053,12 @@ if [[ $yesToAll = false ]]; then
   ask "Do you want to install TeamViewer?" installTeamViewer
   ask "Do you want to install Libre Office?" installLibreOffice
 
-  log "\nNobody is escaping from media nowdays:"
+  log "\nNobody is escaping from media nowdays" "\U1F4AC"
   ask "Do you want to install Gimp?" installGimp
   ask "Do you want to install VLC player?" installVLC
   ask "Do you want to install Spotify?" installSpotify
 
-  log "\nMe likes a clean look and feel:"
+  log "\nMe likes a clean look and feel" "\U1F4AC"
   ask "You may want to hide desktop icons?" configureDesktop
   ask "Do you want to reposition dock to the bottom?" configureDock
   ask "Should home folders (~/Downloads, etc.) be renamed to lowercase?" renameHomeFolders
@@ -1068,7 +1068,7 @@ if [[ $yesToAll = false ]]; then
 
   tasks+=(sayGoodBye)
 
-  log "\nWe're almost done:"
+  log "\nWe're almost done" "\U1F4AC"
   ask "Do you want to reboot after installation?" rebootSystem
 else
   tasks+=(
@@ -1127,7 +1127,7 @@ done
 
 progress "Ignition..."
 sleep 2
-progress "Liftoff, We have liftoff!"
+progress "Liftoff! We have Liftoff!"
 sleep 4
 
 log "Installation has been started"
