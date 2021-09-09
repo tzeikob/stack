@@ -932,8 +932,8 @@ sayGoodBye () {
 rebootSystem () {
   log "Script has been switched to restart mode..."
   
-  # Count down 15 secs before reboot
-  for secs in $(seq 15 -1 0); do
+  # Count down 45 secs before reboot
+  for secs in $(seq 45 -1 0); do
     progress "Reboot will start in $secs secs (Ctrl-C to cancel)"
     sleep 1
   done
