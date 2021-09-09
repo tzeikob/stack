@@ -918,13 +918,13 @@ sayGoodBye () {
   progress "Touch down, we have touch down!"
   sleep 2
 
-  # clean up any unnecessary package
+  # Clean up any unnecessary package
   removeUnnecessaryPackages
 
   local endTime=`date +%s`
   local runtime=$(((endTime-startTime)/60))
 
-  log "\nInstallation has been completed in $runtime mins \U1F389"
+  log "Installation has been completed in $runtime mins \U1F389"
   log "Have a nice coding time, $USER!\n"
 }
 
