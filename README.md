@@ -1,17 +1,19 @@
-#### Introduction
+# Stack
 
-This is a repository of bash scripts for general purposes.
+Stack is a open source script to install a new development stack setup on debian gnome based linux distributions.
 
-#### How to run a bash script
+## How to run the script
 
-You can execute a bash script with the name `stack/index.sh` like so.
-
-```
-./stack/index.sh
-```
-
-If the file is not executable you can make it with the following command.
+Download the script file to your local folder and make it executable, like so:
 
 ```
-sudo chmod +x stack/index.sh
+wget https://raw.githubusercontent.com/tzeikob/stack/master/script.sh
+
+chmod +x ./script.sh
+```
+
+To execute the script you have to run the following command:
+
+```
+./script
 ```
