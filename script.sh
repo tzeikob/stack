@@ -60,13 +60,35 @@ ask () {
   fi
 }
 
-# Update apt-get repositories
+# Update apt repositories
 updateRepositories () {
   log "Updating apt repositories" "\U1F4AC"
 
   sudo apt-get -y update >> $LOG_FILE 2>&1
 
   log "Repositories have been updated"
+}
+
+# Remove unnecessary apt packages
+removeUnnecessaryPackages () {
+  log "Removing unnecessary apt packages" "\U1F4AC"
+
+  sudo apt-get -y autoremove >> $LOG_FILE 2>&1
+
+  log "Unnecessary packages have been removed"
+}
+
+# Upgrade the system via apt
+upgradeSystem () {
+  log "Upgrading the system with the latest updates"
+
+  log "Getting system up to date" "\U1F4AC"
+
+  sudo apt-get -y upgrade >> $LOG_FILE 2>&1
+
+  log "Latest updates have been installed"
+
+  log "System has been upgraded successfully\n"
 }
 
 # Install prerequisite packages
@@ -98,30 +120,6 @@ installPrerequisites () {
   sudo apt-get -y install ${packages[@]} >> $LOG_FILE 2>&1
 
   log "Prerequisite packages have been installed"
-}
-
-# Remove unnecessary apt packages
-removeUnnecessaryPackages () {
-  log "Removing unnecessary packages" "\U1F4AC"
-
-  sudo apt-get -y autoremove >> $LOG_FILE 2>&1
-
-  log "Unnecessary packages have been removed"
-}
-
-# Task to update the system via apt
-updateSystem () {
-  log "Updating the system with the latest updates"
-
-  log "Getting system up to date" "\U1F4AC"
-
-  sudo apt-get -y upgrade >> $LOG_FILE 2>&1
-
-  log "Latest updates have been installed"
-
-  removeUnnecessaryPackages
-
-  log "System has been updated successfully\n"
 }
 
 # Task to set local RTC time
@@ -924,6 +922,7 @@ sayGoodBye () {
   progress "Touch down, we have touch down!"
   sleep 2
 
+  # clean up any unnecessary package
   removeUnnecessaryPackages
 
   local endTime=`date +%s`
@@ -980,7 +979,6 @@ tasks=()
 
 if [[ $yesToAll = false ]]; then
   log "\nCaptain, the system is out of order" "\U1F4AC"
-  ask "Do you want to get the latest system updates?" updateSystem
   ask "Should system time be set to local RTC time?" setLocalRTCTime
   ask "Do you need to monitor many files?" increaseInotifyLimit
   ask "Do you want to enable firewall?" enableFirewall
@@ -1045,7 +1043,6 @@ if [[ $yesToAll = false ]]; then
   ask "Do you want to reboot after installation?" rebootSystem
 else
   tasks+=(
-    updateSystem
     setLocalRTCTime
     increaseInotifyLimit
     enableFirewall
@@ -1108,9 +1105,10 @@ log "Installation has been started"
 
 # Execute some preparatory tasks
 updateRepositories
+upgradeSystem
 installPrerequisites
 
-log "Start executing tasks...\n"
+log "Stack is now ready to start executing tasks\n"
 
 startTime=`date +%s`
 
