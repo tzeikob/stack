@@ -88,7 +88,7 @@ upgradeSystem () {
 
   log "Latest updates have been installed"
 
-  log "System has been upgraded successfully\n"
+  log "System has been upgraded successfully"
 }
 
 # Install prerequisite packages
