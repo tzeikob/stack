@@ -80,15 +80,11 @@ removeUnnecessaryPackages () {
 
 # Upgrade the system via apt
 upgradeSystem () {
-  log "Upgrading the system with the latest updates"
-
-  log "Getting system up to date" "\U1F4AC"
+  log "Upgrading system with latest updates" "\U1F4AC"
 
   sudo apt-get -y upgrade >> $LOG_FILE 2>&1
 
   log "Latest updates have been installed"
-
-  log "System has been upgraded successfully"
 }
 
 # Install prerequisite packages
