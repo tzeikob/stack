@@ -21,9 +21,9 @@ log () {
   echo -e "$1" >> $LOG_FILE
 }
 
-# Log a progress message, progress message
+# Log a progress message, progress message emoji
 progress () {
-  echo -ne "\033[2K\e[97m$1\e[0m\\r"
+  echo -ne "\033[2K\e[97m$1\e[0m $2\\r"
   echo -e "$1" >> $LOG_FILE
 }
 
@@ -911,11 +911,11 @@ configureSystemShortcuts () {
 
 # Task to print a good bye message
 sayGoodBye () {
-  progress "Stack crew ready for landing"
+  progress "Stack crew ready for landing" "\U1F4AC"
   sleep 2
-  progress "Current velocity is 5 meters/sec"
+  progress "Current velocity is 5 meters/sec" "\U1F4AC"
   sleep 4
-  progress "Touch down, we have touch down!"
+  progress "Touch down, we have touch down!" "\U1F4AC"
   sleep 2
 
   # Clean up any unnecessary package
@@ -1083,18 +1083,18 @@ else
 fi
 
 # Echoing launching messages
-progress "\nStack crew ready for launch"
+progress "\nStack crew ready for launch" "\U1F4AC"
 sleep 2
-progress "T-10 seconds to go..."
+progress "T-10 seconds to go..." "\U1F4AC"
 sleep 2
 for secs in $(seq 8 -1 0); do
-  progress "Installation will launch in $secs (Ctrl-C to abort)"
+  progress "Installation will launch in $secs (Ctrl-C to abort)" "\U1F4AC"
   sleep 1
 done
 
-progress "Ignition..."
+progress "Igggnition..." "\U1F525\U1F4A8"
 sleep 2
-progress "Liftoff! We have Liftoff!"
+progress "Liftoff! We have Liftoff!" "\U1F4AC"
 sleep 4
 
 log "Installation has been started"
