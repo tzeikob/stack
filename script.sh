@@ -800,8 +800,8 @@ configureWorkspaceShortcuts () {
   gsettings set org.gnome.desktop.wm.keybindings toggle-on-all-workspaces "['']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings raise-or-lower "['']" >> $LOG_FILE 2>&1
 
-  log "Window navigation shortcuts have been set"
-  
+  log "Windows navigation shortcuts have been set"
+
   gsettings set org.gnome.desktop.wm.keybindings switch-applications "['<Ctrl>Up']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings switch-applications-backward "['']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings switch-windows "['']" >> $LOG_FILE 2>&1
@@ -827,7 +827,7 @@ configureWorkspaceShortcuts () {
 
 # Task to set system shortcuts
 configureSystemShortcuts () {
-  log "Setting shortcuts for various system operations and utilities"
+  log "Setting shortcuts for various system operations"
 
   gsettings set org.gnome.desktop.wm.keybindings switch-input-source "['<Super>space']" >> $LOG_FILE 2>&1
   gsettings set org.gnome.desktop.wm.keybindings switch-input-source-backward  "['']" >> $LOG_FILE 2>&1
@@ -883,7 +883,7 @@ configureSystemShortcuts () {
     '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom4/'
   )
   gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "['${k[0]}', '${k[1]}', '${k[2]}', '${k[3]}', '${k[4]}']" >> $LOG_FILE 2>&1
-  
+
   gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ name 'Network Settings' >> $LOG_FILE 2>&1
   gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ command 'gnome-control-center network' >> $LOG_FILE 2>&1
   gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ binding '<Super>n' >> $LOG_FILE 2>&1
