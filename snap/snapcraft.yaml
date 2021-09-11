@@ -13,7 +13,6 @@ confinement: classic
 apps:
   stak:
     command: bin/script.sh
-    plugs: [network, home]
 
 parts:
   stak:
