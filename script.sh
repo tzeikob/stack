@@ -1,10 +1,10 @@
 #!/bin/bash
-# A shell script to install and setup your development stack
+# A tool to automate the setup of a development stack
 
 # Global variables and functions
 VERSION="1.0.0"
 YES="^([Yy][Ee][Ss]|[Yy]|"")$"
-TEMP="/tmp/stack.$(date +%s)"
+TEMP="/tmp/stak.$(date +%s)"
 LOG_FILE="$TEMP/stdout.log"
 GIT_USER_NAME=""
 GIT_USER_EMAIL=""
@@ -911,7 +911,7 @@ configureSystemShortcuts () {
 
 # Task to print a good bye message
 sayGoodBye () {
-  progress "Stack crew ready for landing" "\U1F4AC"
+  progress "Stak crew ready for landing" "\U1F4AC"
   sleep 2
   progress "Current velocity is 5 meters/sec" "\U1F4AC"
   sleep 4
@@ -945,7 +945,7 @@ rebootSystem () {
 mkdir -p $TEMP
 
 # Echoing welcome messages
-log "Stack v$VERSION"
+log "Stak v$VERSION"
 log "Running on $(lsb_release -si) $(lsb_release -sr) $(lsb_release -sc)"
 log "Logged in as $USER@$HOSTNAME with kernel $(uname -r)"
 log "Temporary folder has been created ($TEMP)"
@@ -1083,7 +1083,7 @@ else
 fi
 
 # Echoing launching messages
-progress "\nStack crew ready for launch" "\U1F4AC"
+progress "\nStak crew ready for launch" "\U1F4AC"
 sleep 2
 progress "T-10 seconds to go..." "\U1F4AC"
 sleep 2
@@ -1104,7 +1104,7 @@ updateRepositories
 upgradeSystem
 installPrerequisites
 
-log "Stack is now ready to start executing tasks\n"
+log "Stak is now ready to start executing tasks\n"
 
 startTime=`date +%s`
 
