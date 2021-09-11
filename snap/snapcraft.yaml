@@ -1,0 +1,23 @@
+name: stak
+base: core20
+version: '0.1.0'
+summary: A tool to automate the setup of a development stack
+description: |
+  Stak is an open source tool to speed up and automate the setup
+  and installation process of your development stack on debian and
+  gnome based linux distributions.
+
+grade: devel
+confinement: classic
+
+apps:
+  stak:
+    command: bin/script.sh
+    plugs: [network, home]
+
+parts:
+  stak:
+    plugin: dump
+    source: .
+    organize:
+      script.sh: bin/
