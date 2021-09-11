@@ -4,3 +4,6 @@
 
 # Log files
 **/*.log
+
+# Snapcraft binaries
+*.snap

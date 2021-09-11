@@ -8,7 +8,7 @@ description: |
   gnome based linux distributions.
 
 grade: devel
-confinement: classic
+confinement: strict
 
 apps:
   stak:
