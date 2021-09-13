@@ -6,6 +6,12 @@ description: |
   Stak is an open source tool to speed up and automate the setup
   and installation process of your development stack on debian and
   gnome based linux distributions.
+license: MIT
+title: Stak
+source-code: https://github.com/tzeikob/stak
+website: https://github.com/tzeikob/stak
+issues: https://github.com/tzeikob/stak/issues
+contact: iakopap@gmail.com
 
 grade: devel
 confinement: strict
