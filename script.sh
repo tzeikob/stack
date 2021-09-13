@@ -1093,7 +1093,7 @@ for secs in $(seq 8 -1 0); do
   sleep 1
 done
 
-progress "Igggnition..." "\U1F525\U1F4A8"
+progress "Igggnition!!!" "\U1F4AC"
 sleep 2
 progress "Liftoff! We have Liftoff!" "\U1F4AC"
 sleep 4
