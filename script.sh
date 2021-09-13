@@ -948,6 +948,7 @@ mkdir -p $TEMP
 log "Stak v$VERSION"
 log "Running on $(lsb_release -si) $(lsb_release -sr) $(lsb_release -sc)"
 log "Logged in as $USER@$HOSTNAME with kernel $(uname -r)"
+log "Script spawn process with PID $$"
 log "Temporary folder has been created ($TEMP)"
 log "Logs have been routed to $LOG_FILE"
 
