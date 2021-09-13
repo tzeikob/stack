@@ -23,6 +23,7 @@ architectures:
 apps:
   stak:
     command: bin/script.sh
+    plugs: [shutdown]
 
 parts:
   stak:
