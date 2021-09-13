@@ -13,8 +13,8 @@ website: https://github.com/tzeikob/stak
 issues: https://github.com/tzeikob/stak/issues
 contact: iakopap@gmail.com
 
-grade: devel
-confinement: strict
+grade: stable
+confinement: classic
 
 architectures:
   - build-on: amd64
@@ -23,7 +23,6 @@ architectures:
 apps:
   stak:
     command: bin/script.sh
-    plugs: [shutdown]
 
 parts:
   stak:
