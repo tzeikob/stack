@@ -2,7 +2,7 @@
 # A tool to automate the setup of a development stack
 
 # Global variables and functions
-VERSION="1.0.0"
+VERSION="0.1.0"
 YES="^([Yy][Ee][Ss]|[Yy]|"")$"
 TEMP="/tmp/stak.$(date +%s)"
 LOG_FILE="$TEMP/stdout.log"
