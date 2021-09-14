@@ -8,11 +8,11 @@ Stack is a welcome script tool to speed up and automate the tasks you have to do
 
 ### Opt in for optional tasks
 
-The tool has been implemented in an opt in/out approach, where the user decides which of the provided tasks he goes with. The script will start iterating across a set of questions per task and every time the user opts in, the corresponding task wil be added to the execution list. A task could be either a configuration or installation task. The tasks are grouped in the following main scopes:
+The tool is implemented in an opt in/out approach, where the user decides which of the provided tasks he wants to go with. The script will start iterating across a set of questions per task and every time the user opts in, the corresponding task is added to the execution list. A task could be either a configuration or an installation task. The tasks are grouped in the following main scopes:
 
 * Base system configuration
 * Programming languages
-* Development and IDEs
+* Editors and IDEs
 * Database and APIs
 * Containerization and virtual machines
 * Collaboration and team work
@@ -35,7 +35,7 @@ Apart from the opt in tasks the tool executes a set of mandatory and preparatory
 * Upgrade the system to latest updates
 * Install a few prerequisite utility packages
 
-These tasks will be executed before any opt in task though making sure the system along with any dependencies are set up.
+These tasks will be executed before any opt in task thus making sure the system along with any dependencies have already been set.
 
 ## How to use it
 
@@ -75,7 +75,7 @@ Programming languages
   - Install Node
   - Install Java
 
-Development and IDEs
+Editors and IDEs
 
   - Install Visual Studio Code
   - Install Atom
