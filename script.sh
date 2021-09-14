@@ -1,10 +1,10 @@
 #!/bin/bash
-# A tool to automate the setup of a development stack
+# A tool to automate the setup of your development stack
 
 # Global variables and functions
 VERSION="0.1.0"
 YES="^([Yy][Ee][Ss]|[Yy]|"")$"
-TEMP="/tmp/stak.$(date +%s)"
+TEMP="/tmp/stack.$(date +%s)"
 LOG_FILE="$TEMP/stdout.log"
 GIT_USER_NAME=""
 GIT_USER_EMAIL=""
@@ -60,7 +60,7 @@ ask () {
   fi
 }
 
-# Update apt repositories
+# Task to update apt repositories
 updateRepositories () {
   log "Updating apt repositories" "\U1F4AC"
 
@@ -69,7 +69,7 @@ updateRepositories () {
   log "Repositories have been updated"
 }
 
-# Remove unnecessary apt packages
+# Task to remove unnecessary apt packages
 removeUnnecessaryPackages () {
   log "Removing unnecessary apt packages" "\U1F4AC"
 
@@ -78,7 +78,7 @@ removeUnnecessaryPackages () {
   log "Unnecessary packages have been removed"
 }
 
-# Upgrade the system via apt
+# Task to upgrade the system via apt
 upgradeSystem () {
   log "Upgrading system with latest updates" "\U1F4AC"
 
@@ -87,7 +87,7 @@ upgradeSystem () {
   log "Latest updates have been installed"
 }
 
-# Install prerequisite packages
+# Task to install prerequisite packages
 installPrerequisites () {
   log "Installing a few prerequisite packages" "\U1F4AC"
 
@@ -200,84 +200,6 @@ installGreekLanguage () {
   log "System languages have been updated successfully\n"
 }
 
-# Task to install Virtual Box
-installVirtualBox () {
-  log "Installing the latest version of Virtual Box"
-
-  log "Downloading and extracting the package" "\U1F4AC"
-
-  sudo apt-get -y install virtualbox >> $LOG_FILE 2>&1
-
-  log "Package has been installed"
-
-  log "Virtual Box has been installed successfully\n"
-}
-
-# Task to install Docker and Compose
-installDocker () {
-  log "Installing the latest version of Docker"
-
-  log "Downloading and extracting prerequisite packages" "\U1F4AC"
-
-  sudo apt-get -y install apt-transport-https ca-certificates curl gnupg lsb-release >> $LOG_FILE 2>&1
-
-  log "Prerequisite packages have been installed"
-
-  log "Adding docker repository to apt sources" "\U1F4AC"
-
-  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg >> $LOG_FILE 2>&1
-  
-  echo \
-  "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
-  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-
-  log "Docker apt repository has been added to sources"
-
-  updateRepositories
-
-  log "Installing Docker packages" "\U1F4AC"
-
-  sudo apt-get -y install docker-ce docker-ce-cli containerd.io >> $LOG_FILE 2>&1
-
-  log "Docker packages have been installed"
-
-  log "Creating the docker user group"
-
-  sudo groupadd docker >> $LOG_FILE 2>&1
-
-  log "Adding current user $USER to the docker user group"
-
-  sudo usermod -aG docker $USER >> $LOG_FILE 2>&1
-
-  log "Installing the Docker Compose" "\U1F4AC"
-
-  sudo curl -L "https://github.com/docker/compose/releases/download/$DOCKER_COMPOSE_VERSION/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose >> $LOG_FILE 2>&1
-  sudo chmod +x /usr/local/bin/docker-compose >> $LOG_FILE 2>&1
-
-  log "Docker compose version $DOCKER_COMPOSE_VERSION has been installed"
-
-  log "Docker has been installed successfully\n"
-}
-
-# Task to install Dropbox
-installDropbox () {
-  log "Installing the Dropbox version $DROPBOX_VERSION"
-
-  log "Downloading the package file" "\U1F4AC"
-
-  wget -q -P $TEMP -O $TEMP/dropbox.deb "https://linux.dropbox.com/packages/ubuntu/dropbox_${DROPBOX_VERSION}_amd64.deb" >> $LOG_FILE 2>&1
-
-  log "Package file has been downloaded"
-
-  log "Extracting and installing the package file" "\U1F4AC"
-
-  sudo apt-get -y install $TEMP/dropbox.deb >> $LOG_FILE 2>&1
-
-  log "Package has been installed"
-
-  log "Dropbox has been installed successfully\n"
-}
-
 # Task to install git
 installGit () {
   log "Installing the latest version of Git"
@@ -299,22 +221,6 @@ installGit () {
   fi
 
   log "Git has been installed successfully\n"
-}
-
-# Task to configure cmd prompt to show current git branch
-enableGitPrompt () {
-  log "Setting cmd prompt to show current branch in git folders (~/.bashrc)"
-
-  echo '' >> ~/.bashrc
-  echo '# Show git branch name' >> ~/.bashrc
-  echo 'parse_git_branch() {' >> ~/.bashrc
-  echo ' git branch 2> /dev/null | sed -e "/^[^*]/d" -e "s/* \(.*\)/:\\1/"' >> ~/.bashrc
-  echo '}' >> ~/.bashrc
-  echo "PS1='\${debian_chroot:+(\$debian_chroot)}\[\\033[01;32m\]\u@\h\[\\033[00m\]:\[\\033[01;34m\]\w\[\\033[01;31m\]\$(parse_git_branch)\[\\033[00m\]\$ '" >> ~/.bashrc
-
-  log "Cmd prompt will now shown as user@host:~/path/to/folder[:branch]"
-
-  log "Command prompt has been updated successfully\n"
 }
 
 # Task to install Node via NVM
@@ -390,15 +296,6 @@ installJava () {
   log "Java has been installed successfully\n"
 }
 
-# Task to install Atom
-installAtom () {
-  log "Installing the latest version of Atom"
-
-  sudo snap install atom --classic
-
-  log "Atom has been installed successfully\n"
-}
-
 # Task to install Visual Studio Code
 installVSCode () {
   log "Installing the latest version of Visual Studio Code"
@@ -420,6 +317,15 @@ installVSCode () {
   log "The following plugins and extensions have been installed: \n${extensions[*]}"
 
   log "Visual Studio Code has been installed successfully\n"
+}
+
+# Task to install Atom
+installAtom () {
+  log "Installing the latest version of Atom"
+
+  sudo snap install atom --classic
+
+  log "Atom has been installed successfully\n"
 }
 
 # Task to install Sublime Text
@@ -484,6 +390,65 @@ installPostman () {
   sudo snap install postman
 
   log "Postman has been isntalled successfully\n"
+}
+
+# Task to install Docker and Compose
+installDocker () {
+  log "Installing the latest version of Docker"
+
+  log "Downloading and extracting prerequisite packages" "\U1F4AC"
+
+  sudo apt-get -y install apt-transport-https ca-certificates curl gnupg lsb-release >> $LOG_FILE 2>&1
+
+  log "Prerequisite packages have been installed"
+
+  log "Adding docker repository to apt sources" "\U1F4AC"
+
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg >> $LOG_FILE 2>&1
+  
+  echo \
+  "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+  log "Docker apt repository has been added to sources"
+
+  updateRepositories
+
+  log "Installing Docker packages" "\U1F4AC"
+
+  sudo apt-get -y install docker-ce docker-ce-cli containerd.io >> $LOG_FILE 2>&1
+
+  log "Docker packages have been installed"
+
+  log "Creating the docker user group"
+
+  sudo groupadd docker >> $LOG_FILE 2>&1
+
+  log "Adding current user $USER to the docker user group"
+
+  sudo usermod -aG docker $USER >> $LOG_FILE 2>&1
+
+  log "Installing the Docker Compose" "\U1F4AC"
+
+  sudo curl -L "https://github.com/docker/compose/releases/download/$DOCKER_COMPOSE_VERSION/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose >> $LOG_FILE 2>&1
+  sudo chmod +x /usr/local/bin/docker-compose >> $LOG_FILE 2>&1
+
+  log "Docker compose version $DOCKER_COMPOSE_VERSION has been installed"
+
+  log "Docker has been installed successfully\n"
+}
+
+# Task to install Virtual Box
+installVirtualBox () {
+  log "Installing the latest version of Virtual Box"
+
+  log "Downloading and extracting the package" "\U1F4AC"
+
+  sudo apt-get -y install virtualbox >> $LOG_FILE 2>&1
+
+  log "Package has been installed"
+
+  log "Virtual Box has been installed successfully\n"
 }
 
 # Task to install Chrome
@@ -578,6 +543,25 @@ installTeamViewer () {
   log "TeamViewer has been installed successfully\n"
 }
 
+# Task to install Dropbox
+installDropbox () {
+  log "Installing the Dropbox version $DROPBOX_VERSION"
+
+  log "Downloading the package file" "\U1F4AC"
+
+  wget -q -P $TEMP -O $TEMP/dropbox.deb "https://linux.dropbox.com/packages/ubuntu/dropbox_${DROPBOX_VERSION}_amd64.deb" >> $LOG_FILE 2>&1
+
+  log "Package file has been downloaded"
+
+  log "Extracting and installing the package file" "\U1F4AC"
+
+  sudo apt-get -y install $TEMP/dropbox.deb >> $LOG_FILE 2>&1
+
+  log "Package has been installed"
+
+  log "Dropbox has been installed successfully\n"
+}
+
 # Task to install Libre Office
 installLibreOffice () {
   log "Installing the latest version of Libre Office"
@@ -585,32 +569,6 @@ installLibreOffice () {
   sudo snap install libreoffice
 
   log "Libre Office has been installed successfully\n"
-}
-
-# Task to install Gimp
-installGimp () {
-  log "Installing the latest version of Gimp"
-
-  log "Downloading and extracting the package" "\U1F4AC"
-
-  sudo apt-get -y install gimp >> $LOG_FILE 2>&1
-
-  log "Package file has been installed"
-
-  log "Gimp has been installed successfully\n"
-}
-
-# Task to install VLC player
-installVLC () {
-  log "Installing the latest version of VLC player"
-
-  log "Downloading and extracting the package" "\U1F4AC"
-
-  sudo apt-get -y install vlc >> $LOG_FILE 2>&1
-
-  log "Package file has been installed"
-
-  log "VLC has been installed successfully\n"
 }
 
 # Task to install Rhythmbox player
@@ -626,6 +584,19 @@ installRhythmbox () {
   log "Rhythmbox has been installed successfully\n"
 }
 
+# Task to install VLC player
+installVLC () {
+  log "Installing the latest version of VLC player"
+
+  log "Downloading and extracting the package" "\U1F4AC"
+
+  sudo apt-get -y install vlc >> $LOG_FILE 2>&1
+
+  log "Package file has been installed"
+
+  log "VLC has been installed successfully\n"
+}
+
 # Task to install Spotify
 installSpotify () {
   log "Installing the latest version of Spotify"
@@ -633,6 +604,19 @@ installSpotify () {
   sudo snap install spotify
 
   log "Spotify has been installed successfully\n"
+}
+
+# Task to install Gimp
+installGimp () {
+  log "Installing the latest version of Gimp"
+
+  log "Downloading and extracting the package" "\U1F4AC"
+
+  sudo apt-get -y install gimp >> $LOG_FILE 2>&1
+
+  log "Package file has been installed"
+
+  log "Gimp has been installed successfully\n"
 }
 
 # Task to configure desktop look and feel
@@ -727,6 +711,90 @@ disableScreenLock () {
   log "Power idle dim has been disabled"
 
   log "Screen lock has been disabled successfully\n"
+}
+
+# Task to set system shortcuts
+configureSystemShortcuts () {
+  log "Setting shortcuts for various system operations"
+
+  gsettings set org.gnome.desktop.wm.keybindings switch-input-source "['<Super>space']" >> $LOG_FILE 2>&1
+  gsettings set org.gnome.desktop.wm.keybindings switch-input-source-backward  "['']" >> $LOG_FILE 2>&1
+
+  log "Keyboard input source shortcut has been set"
+
+  gsettings set org.gnome.settings-daemon.plugins.media-keys volume-up "['<Super>period']" >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys volume-down "['<Super>comma']" >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys volume-mute "['<Super>slash']" >> $LOG_FILE 2>&1
+
+  log "Sound volume shortcuts have been set"
+
+  gsettings set org.gnome.settings-daemon.plugins.media-keys screenshot "['']" >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys screenshot-clip "['']" >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys window-screenshot "['']" >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys window-screenshot-clip "['']" >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys area-screenshot-clip "['']" >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys area-screenshot "['Print']" >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys screencast "['<Super>Print']" >> $LOG_FILE 2>&1
+
+  log "Screenshot and screencast shortcuts have been set"
+
+  gsettings set org.gnome.shell.keybindings focus-active-notification "['']" >> $LOG_FILE 2>&1
+  gsettings set org.gnome.shell.keybindings open-application-menu "['']" >> $LOG_FILE 2>&1
+  gsettings set org.gnome.shell.keybindings toggle-application-view "['']" >> $LOG_FILE 2>&1
+  gsettings set org.gnome.shell.keybindings toggle-message-tray "['']" >> $LOG_FILE 2>&1
+  gsettings set org.gnome.shell.keybindings toggle-overview "['']" >> $LOG_FILE 2>&1
+  gsettings set org.gnome.mutter.wayland.keybindings restore-shortcuts "['']" >> $LOG_FILE 2>&1
+  gsettings set org.gnome.desktop.wm.keybindings panel-main-menu "['']" >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys screensaver "['Scroll_Lock']" >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys logout "['<Super>Scroll_Lock']" >> $LOG_FILE 2>&1
+
+  log "Lock and logout shortcuts have been set"
+
+  gsettings set org.gnome.settings-daemon.plugins.media-keys control-center "['<Super>s']" >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys terminal "['<Super>t']" >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys www "['<Super>w']" >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys home "['<Super>e']" >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys calculator "['<Super>c']" >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys email "['<Super>m']" >> $LOG_FILE 2>&1
+  gsettings set org.gnome.desktop.wm.keybindings panel-run-dialog "['<Super>backslash']" >> $LOG_FILE 2>&1
+  gsettings set org.gnome.shell.keybindings toggle-message-tray "['<Super>i']" >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys search "['<Super>f']" >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys help "['<Super>h']" >> $LOG_FILE 2>&1
+
+  log "Launcher shortcuts have been set"
+
+  local k=(
+    '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/'
+    '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/'
+    '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/'
+    '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/'
+    '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom4/'
+  )
+  gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "['${k[0]}', '${k[1]}', '${k[2]}', '${k[3]}', '${k[4]}']" >> $LOG_FILE 2>&1
+
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ name 'Network Settings' >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ command 'gnome-control-center network' >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ binding '<Super>n' >> $LOG_FILE 2>&1
+
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/ name 'Bluetooth Settings' >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/ command 'gnome-control-center bluetooth' >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/ binding '<Super>b' >> $LOG_FILE 2>&1
+
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/ name 'Sound Settings' >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/ command 'gnome-control-center sound' >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/ binding '<Super>a' >> $LOG_FILE 2>&1
+
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/ name 'Power Off' >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/ command 'gnome-session-quit --power-off' >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/ binding '<Super>Pause' >> $LOG_FILE 2>&1
+
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom4/ name 'Open Editor' >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom4/ command 'gedit' >> $LOG_FILE 2>&1
+  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom4/ binding '<Super>g' >> $LOG_FILE 2>&1
+
+  log "Custom keybindigns have been set"
+
+  log "System shortcuts have been configured successfully\n"
 }
 
 # Task to set shortcuts for multiple monitor workspaces
@@ -825,93 +893,25 @@ configureWorkspaceShortcuts () {
   log "Shortcuts for workspaces and windows have been configured successfully\n"
 }
 
-# Task to set system shortcuts
-configureSystemShortcuts () {
-  log "Setting shortcuts for various system operations"
+# Task to configure cmd prompt to show current git branch
+enableGitPrompt () {
+  log "Setting cmd prompt to show current branch in git folders (~/.bashrc)"
 
-  gsettings set org.gnome.desktop.wm.keybindings switch-input-source "['<Super>space']" >> $LOG_FILE 2>&1
-  gsettings set org.gnome.desktop.wm.keybindings switch-input-source-backward  "['']" >> $LOG_FILE 2>&1
+  echo '' >> ~/.bashrc
+  echo '# Show git branch name' >> ~/.bashrc
+  echo 'parse_git_branch() {' >> ~/.bashrc
+  echo ' git branch 2> /dev/null | sed -e "/^[^*]/d" -e "s/* \(.*\)/:\\1/"' >> ~/.bashrc
+  echo '}' >> ~/.bashrc
+  echo "PS1='\${debian_chroot:+(\$debian_chroot)}\[\\033[01;32m\]\u@\h\[\\033[00m\]:\[\\033[01;34m\]\w\[\\033[01;31m\]\$(parse_git_branch)\[\\033[00m\]\$ '" >> ~/.bashrc
 
-  log "Keyboard input source shortcut has been set"
+  log "Cmd prompt will now shown as user@host:~/path/to/folder[:branch]"
 
-  gsettings set org.gnome.settings-daemon.plugins.media-keys volume-up "['<Super>period']" >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys volume-down "['<Super>comma']" >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys volume-mute "['<Super>slash']" >> $LOG_FILE 2>&1
-
-  log "Sound volume shortcuts have been set"
-
-  gsettings set org.gnome.settings-daemon.plugins.media-keys screenshot "['']" >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys screenshot-clip "['']" >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys window-screenshot "['']" >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys window-screenshot-clip "['']" >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys area-screenshot-clip "['']" >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys area-screenshot "['Print']" >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys screencast "['<Super>Print']" >> $LOG_FILE 2>&1
-
-  log "Screenshot and screencast shortcuts have been set"
-
-  gsettings set org.gnome.shell.keybindings focus-active-notification "['']" >> $LOG_FILE 2>&1
-  gsettings set org.gnome.shell.keybindings open-application-menu "['']" >> $LOG_FILE 2>&1
-  gsettings set org.gnome.shell.keybindings toggle-application-view "['']" >> $LOG_FILE 2>&1
-  gsettings set org.gnome.shell.keybindings toggle-message-tray "['']" >> $LOG_FILE 2>&1
-  gsettings set org.gnome.shell.keybindings toggle-overview "['']" >> $LOG_FILE 2>&1
-  gsettings set org.gnome.mutter.wayland.keybindings restore-shortcuts "['']" >> $LOG_FILE 2>&1
-  gsettings set org.gnome.desktop.wm.keybindings panel-main-menu "['']" >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys screensaver "['Scroll_Lock']" >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys logout "['<Super>Scroll_Lock']" >> $LOG_FILE 2>&1
-
-  log "Lock and logout shortcuts have been set"
-
-  gsettings set org.gnome.settings-daemon.plugins.media-keys control-center "['<Super>s']" >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys terminal "['<Super>t']" >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys www "['<Super>w']" >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys home "['<Super>e']" >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys calculator "['<Super>c']" >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys email "['<Super>m']" >> $LOG_FILE 2>&1
-  gsettings set org.gnome.desktop.wm.keybindings panel-run-dialog "['<Super>backslash']" >> $LOG_FILE 2>&1
-  gsettings set org.gnome.shell.keybindings toggle-message-tray "['<Super>i']" >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys search "['<Super>f']" >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys help "['<Super>h']" >> $LOG_FILE 2>&1
-
-  log "Launcher shortcuts have been set"
-
-  local k=(
-    '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/'
-    '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/'
-    '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/'
-    '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/'
-    '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom4/'
-  )
-  gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "['${k[0]}', '${k[1]}', '${k[2]}', '${k[3]}', '${k[4]}']" >> $LOG_FILE 2>&1
-
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ name 'Network Settings' >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ command 'gnome-control-center network' >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ binding '<Super>n' >> $LOG_FILE 2>&1
-
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/ name 'Bluetooth Settings' >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/ command 'gnome-control-center bluetooth' >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/ binding '<Super>b' >> $LOG_FILE 2>&1
-
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/ name 'Sound Settings' >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/ command 'gnome-control-center sound' >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/ binding '<Super>a' >> $LOG_FILE 2>&1
-
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/ name 'Power Off' >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/ command 'gnome-session-quit --power-off' >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/ binding '<Super>Pause' >> $LOG_FILE 2>&1
-
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom4/ name 'Open Editor' >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom4/ command 'gedit' >> $LOG_FILE 2>&1
-  gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom4/ binding '<Super>g' >> $LOG_FILE 2>&1
-
-  log "Custom keybindigns have been set"
-
-  log "System shortcuts have been configured successfully\n"
+  log "Command prompt has been updated successfully\n"
 }
 
 # Task to print a good bye message
 sayGoodBye () {
-  progress "Stak crew ready for landing" "\U1F4AC"
+  progress "Stack crew ready for landing" "\U1F4AC"
   sleep 2
   progress "Current velocity is 5 meters/sec" "\U1F4AC"
   sleep 4
@@ -945,7 +945,7 @@ rebootSystem () {
 mkdir -p $TEMP
 
 # Echoing welcome messages
-log "Stak v$VERSION"
+log "Stack v$VERSION"
 log "Running on $(lsb_release -si) $(lsb_release -sr) $(lsb_release -sc)"
 log "Logged in as $USER@$HOSTNAME with kernel $(uname -r)"
 log "Script spawn process with PID $$"
@@ -976,38 +976,37 @@ tasks=()
 
 if [[ $yesToAll = false ]]; then
   log "\nCaptain, the system is out of order" "\U1F4AC"
-  ask "Should system time be set to local RTC time?" setLocalRTCTime
-  ask "Do you need to monitor many files?" increaseInotifyLimit
-  ask "Do you want to enable firewall?" enableFirewall
-  ask "Is Greek an extra language you need?" installGreekLanguage
+  ask "Set system time to local RTC time?" setLocalRTCTime
+  ask "Allow to monitor large amount of files?" increaseInotifyLimit
+  ask "Enable firewall via UFW?" enableFirewall
+  ask "Install extra unicode languages like Greek?" installGreekLanguage
 
-  log "\nDope, shippin' with containers is" "\U1F4AC"
-  ask "Do you want to install Virtual Box?" installVirtualBox
-  ask "Do you want to install Docker and Compose?" installDocker
-  ask "Do you want to install Dropbox?" installDropbox
-
-  log "\nWe all say coding is so sexy" "\U1F4AC"
+  log "\nHell yeah, coding is so sexy!" "\U1F4AC"
   ask "Do you want to install Git?" installGit
 
   if [[ $(tasksContains installGit) == true ]]; then
     read -p "Awesome, what's your git user name?(enter to skip) " GIT_USER_NAME
     read -p "May I have your git user email as well?(enter to skip) " GIT_USER_EMAIL
-
-    ask "Should cmd prompt show the branch in git folders?" enableGitPrompt
   fi
 
   ask "Do you want to install Node?" installNode
   ask "Do you want to install Java?" installJava
-  ask "Do you want to install Atom?" installAtom
+
+  log "\nAlways in style you have to code" "\U1F4AC"
   ask "Do you want to install Visual Studio Code?" installVSCode
+  ask "Do you want to install Atom?" installAtom
   ask "Do you want to install Sublime Text?" installSublimeText
-  ask "Are you that brave to use Neovim editor?" installNeovim
+  ask "Do you want to install Neovim?" installNeovim
   ask "Do you want to install IntelliJ Idea?" installIntelliJIdea
 
-  log "\nIt's all about data" "\U1F4AC"
+  log "\nIt's always about backend services" "\U1F4AC"
   ask "Do you want to install MongoDB Compass?" installMongoDBCompass
   ask "Do you want to install DBeaver?" installDBeaver
   ask "Do you want to install Postman?" installPostman
+
+  log "\nDope, shippin' with containers is" "\U1F4AC"
+  ask "Do you want to install Docker and Compose?" installDocker
+  ask "Do you want to install Virtual Box?" installVirtualBox
 
   log "\nWork in teams, get things done" "\U1F4AC"
   ask "Do you want to install Chrome?" installChrome
@@ -1018,21 +1017,26 @@ if [[ $yesToAll = false ]]; then
   ask "Do you want to install Microsoft Teams?" installMSTeams
   ask "Do you want to install Skype?" installSkype
   ask "Do you want to install TeamViewer?" installTeamViewer
+  ask "Do you want to install Dropbox?" installDropbox
   ask "Do you want to install Libre Office?" installLibreOffice
 
   log "\nNobody is escaping from media nowdays" "\U1F4AC"
-  ask "Do you want to install Gimp?" installGimp
-  ask "Do you want to install VLC player?" installVLC
-  ask "Do you want to install Rhythmbox player?" installRhythmbox
+  ask "Do you want to install Rhythmbox?" installRhythmbox
+  ask "Do you want to install VLC?" installVLC
   ask "Do you want to install Spotify?" installSpotify
+  ask "Do you want to install Gimp?" installGimp
 
   log "\nMe likes a clean look and feel" "\U1F4AC"
-  ask "You may want to hide desktop icons?" configureDesktop
-  ask "Do you want to reposition dock to the bottom?" configureDock
-  ask "Do you like home folders renamed to lowercase?" renameHomeFolders
-  ask "Would disabling screen lock be helpful to you?" disableScreenLock
-  ask "Do you want to override default workspaces shortcuts?" configureWorkspaceShortcuts
-  ask "Do you want to override default system shortcuts?" configureSystemShortcuts
+  ask "Hide desktop icons?" configureDesktop
+  ask "Move dock to the bottom?" configureDock
+  ask "Rename home folders to lowercase?" renameHomeFolders
+  ask "Disable auto screen lock?" disableScreenLock
+  ask "Override default system shortcuts?" configureSystemShortcuts
+  ask "Override default workspaces shortcuts?" configureWorkspaceShortcuts
+
+  if [[ $(tasksContains installGit) == true ]]; then
+    ask "Set cmd prompt to show branch for git folders?" enableGitPrompt
+  fi
 
   tasks+=(sayGoodBye)
 
@@ -1044,21 +1048,19 @@ else
     increaseInotifyLimit
     enableFirewall
     installGreekLanguage
-    installVirtualBox
-    installDocker
-    installDropbox
     installGit
-    enableGitPrompt
     installNode
     installJava
-    installAtom
     installVSCode
+    installAtom
     installSublimeText
     installNeovim
     installIntelliJIdea
     installMongoDBCompass
     installDBeaver
     installPostman
+    installDocker
+    installVirtualBox
     installChrome
     installThunderbird
     installSlack
@@ -1067,24 +1069,26 @@ else
     installMSTeams
     installSkype
     installTeamViewer
+    installDropbox
     installLibreOffice
-    installGimp
-    installVLC
     installRhythmbox
+    installVLC
     installSpotify
+    installGimp
     configureDesktop
     configureDock
     renameHomeFolders
     disableScreenLock
-    configureWorkspaceShortcuts
     configureSystemShortcuts
+    configureWorkspaceShortcuts
+    enableGitPrompt
     sayGoodBye
     rebootSystem
   )
 fi
 
 # Echoing launching messages
-progress "\nStak crew ready for launch" "\U1F4AC"
+progress "\nStack crew ready for launch" "\U1F4AC"
 sleep 2
 progress "T-10 seconds to go..." "\U1F4AC"
 sleep 2
@@ -1105,7 +1109,7 @@ updateRepositories
 upgradeSystem
 installPrerequisites
 
-log "Stak is now ready to start executing tasks\n"
+log "Stack is now ready to start executing tasks\n"
 
 startTime=`date +%s`
 
