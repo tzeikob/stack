@@ -14,6 +14,8 @@ NVM_VERSION="0.38.0"
 DOCKER_COMPOSE_VERSION="1.29.2"
 DROPBOX_VERSION="2020.03.04"
 MONGODB_COMPASS_VERSION="1.28.1"
+SLACK_VERSION="4.19.2"
+INTELLIJ_IDEA_VERSION="2021.2.2"
 
 # Log a normal info message, log message emoji
 log () {
@@ -97,6 +99,7 @@ installPrerequisites () {
     curl
     unzip
     htop
+    apt-transport-https
     gconf-service
     gconf-service-backend
     gconf2
@@ -300,7 +303,17 @@ installJava () {
 installVSCode () {
   log "Installing the latest version of Visual Studio Code"
 
-  sudo snap install code --classic
+  log "Downloading the package file" "\U1F4AC"
+
+  wget -q -P $TEMP -O $TEMP/code.deb "https://go.microsoft.com/fwlink/?LinkID=760868" >> $LOG_FILE 2>&1
+
+  log "Package file has been downloaded"
+
+  log "Extracting and installing the package file" "\U1F4AC"
+
+  sudo apt-get -y install $TEMP/code.deb >> $LOG_FILE 2>&1
+
+  log "Package file has been installed"
 
   local extensions=(
     dbaeumer.vscode-eslint
@@ -323,7 +336,17 @@ installVSCode () {
 installAtom () {
   log "Installing the latest version of Atom"
 
-  sudo snap install atom --classic
+  log "Downloading the package file" "\U1F4AC"
+
+  wget -q -P $TEMP -O $TEMP/atom.deb "https://atom.io/download/deb" >> $LOG_FILE 2>&1
+
+  log "Package file has been downloaded"
+
+  log "Extracting and installing the package file" "\U1F4AC"
+
+  sudo apt-get -y install $TEMP/atom.deb >> $LOG_FILE 2>&1
+
+  log "Package file has been installed"
 
   log "Atom has been installed successfully\n"
 }
@@ -332,7 +355,20 @@ installAtom () {
 installSublimeText () {
   log "Installing the latest version of Sublime Text"
 
-  sudo snap install sublime-text --classic
+  log "Adding sublime repository to apt sources list" "\U1F4AC"
+
+  wget -qO - https://download.sublimetext.com/sublimehq-pub.gpg | sudo apt-key add - >> $LOG_FILE 2>&1
+  echo "deb https://download.sublimetext.com/ apt/stable/" | sudo tee /etc/apt/sources.list.d/sublime-text.list > /dev/null
+
+  log "Repository has been added to sources list"
+
+  updateRepositories
+
+  log "Downloading and extracting package" "\U1F4AC"
+
+  sudo apt-get -y install sublime-text >> $LOG_FILE 2>&1
+
+  log "Package has been installed"
 
   log "Sublime Text has been installed successfully\n"
 }
@@ -341,7 +377,11 @@ installSublimeText () {
 installNeovim () {
   log "Installing the latest version of Neovim editor"
 
-  sudo snap install --beta nvim --classic
+  log "Downloading and extracting package" "\U1F4AC"
+
+  sudo apt-get -y install neovim >> $LOG_FILE 2>&1
+
+  log "Package has been installed"
 
   log "Neovim has been installed successfully\n"
 }
@@ -350,7 +390,30 @@ installNeovim () {
 installIntelliJIdea () {
   log "Installing the latest version of IntelliJ Idea"
 
-  sudo snap install intellij-idea-community --classic
+  log "Downloading and extracting archive file" "\U1F4AC"
+
+  wget -q -P $TEMP -O $TEMP/idea-ic.tar.gz "https://download.jetbrains.com/idea/ideaIC-${INTELLIJ_IDEA_VERSION}.tar.gz" >> $LOG_FILE 2>&1
+
+  sudo mkdir -p /opt/IdeaIC
+  sudo tar -xzf $TEMP/idea-ic.tar.gz --strip-components=1 -C /opt/IdeaIC
+
+  log "Archive file has been extracted"
+
+  sudo ln -s /opt/IdeaIC/bin/idea.sh /usr/local/bin/idea
+
+  local desktopFile="/usr/share/applications/idea.desktop"
+
+  sudo touch $desktopFile
+
+  echo "[Desktop Entry]" | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
+  echo "Type=Application" | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
+  echo "Name=Idea IC" | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
+  echo "Icon=/opt/IdeaIC/bin/idea.png" | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
+  echo 'Exec="/opt/IdeaIC/idea.sh"' | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
+  echo "Comment=Idea IC" | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
+  echo "Categories=Development;Code;" | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
+
+  log "Executable and desktop file have been created"
 
   log "IntelliJ Idea has been installed successfully\n"
 }
@@ -378,7 +441,17 @@ installMongoDBCompass () {
 installDBeaver () {
   log "Installing the latest version of DBeaver"
 
-  sudo snap install dbeaver-ce
+  log "Downloading the package file" "\U1F4AC"
+
+  wget -q -P $TEMP -O $TEMP/dbeaver.deb "https://dbeaver.io/files/dbeaver-ce_latest_amd64.deb" >> $LOG_FILE 2>&1
+
+  log "Package file has been downloaded"
+
+  log "Extracting and installing the package file" "\U1F4AC"
+
+  sudo apt-get -y install $TEMP/dbeaver.deb >> $LOG_FILE 2>&1
+
+  log "Package file has been installed"
 
   log "DBeaver has been installed successfully\n"
 }
@@ -387,7 +460,29 @@ installDBeaver () {
 installPostman () {
   log "Installing the latest version of Postman"
 
-  sudo snap install postman
+  log "Downloading and extracting archive file" "\U1F4AC"
+
+  wget -q -P $TEMP -O $TEMP/postman.tar.gz "https://dl.pstmn.io/download/latest/linux64" >> $LOG_FILE 2>&1
+
+  sudo tar -xzf $TEMP/postman.tar.gz -C /opt
+
+  log "Archive file has been extracted"
+
+  sudo ln -s /opt/Postman/Postman /usr/local/bin/postman
+
+  local desktopFile="/usr/share/applications/postman.desktop"
+
+  sudo touch $desktopFile
+
+  echo "[Desktop Entry]" | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
+  echo "Type=Application" | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
+  echo "Name=Postman" | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
+  echo "Icon=/opt/Postman/app/resources/app/assets/icon.png" | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
+  echo 'Exec="/opt/Postman/Postman"' | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
+  echo "Comment=Postman GUI" | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
+  echo "Categories=Development;Code;" | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
+
+  log "Executable and desktop file have been created"
 
   log "Postman has been isntalled successfully\n"
 }
@@ -474,7 +569,11 @@ installChrome () {
 installThunderbird () {
   log "Installing the latest version of Thunderbird"
 
-  sudo snap install thunderbird
+  log "Downloading and extracting package" "\U1F4AC"
+
+  sudo apt-get -y install thunderbird >> $LOG_FILE 2>&1
+
+  log "Package has been installed"
 
   log "Thunderbird has been installed successfully\n"
 }
@@ -483,7 +582,17 @@ installThunderbird () {
 installSlack () {
   log "Installing the latest version of Slack"
 
-  sudo snap install slack --classic
+  log "Downloading the package file" "\U1F4AC"
+
+  wget -q -P $TEMP -O $TEMP/slack.deb "https://downloads.slack-edge.com/releases/linux/${SLACK_VERSION}/prod/x64/slack-desktop-${SLACK_VERSION}-amd64.deb" >> $LOG_FILE 2>&1
+
+  log "Package file has been downloaded"
+
+  log "Extracting and installing the package file" "\U1F4AC"
+
+  sudo apt-get -y install $TEMP/slack.deb >> $LOG_FILE 2>&1
+
+  log "Package file has been installed"
 
   log "Slack has been installed successfully\n"
 }
@@ -492,7 +601,17 @@ installSlack () {
 installDiscord () {
   log "Installing the latest version of Discord"
 
-  sudo snap install discord
+  log "Downloading the package file" "\U1F4AC"
+
+  wget -q -P $TEMP -O $TEMP/discord.deb "https://discord.com/api/download?platform=linux&format=deb" >> $LOG_FILE 2>&1
+
+  log "Package file has been downloaded"
+
+  log "Extracting and installing the package file" "\U1F4AC"
+
+  sudo apt-get -y install $TEMP/discord.deb >> $LOG_FILE 2>&1
+
+  log "Package file has been installed"
 
   log "Discord has been installed successfully\n"
 }
@@ -501,7 +620,17 @@ installDiscord () {
 installTelegram () {
   log "Installing the latest version of Telegram"
 
-  sudo snap install telegram-desktop
+  log "Downloading the package file" "\U1F4AC"
+
+  wget -q -P $TEMP -O $TEMP/telegram.deb "https://telegram.org/dl/desktop/linux" >> $LOG_FILE 2>&1
+
+  log "Package file has been downloaded"
+
+  log "Extracting and installing the package file" "\U1F4AC"
+
+  sudo apt-get -y install $TEMP/telegram.deb >> $LOG_FILE 2>&1
+
+  log "Package file has been installed"
 
   log "Telegram has been installed successfully\n"
 }
@@ -510,7 +639,17 @@ installTelegram () {
 installMSTeams () {
   log "Installing the latest version of Microsoft Teams"
 
-  sudo snap install teams
+  log "Downloading the package file" "\U1F4AC"
+
+  wget -q -P $TEMP -O $TEMP/msteams.deb "https://go.microsoft.com/fwlink/p/?LinkID=2112886&clcid=0x409&culture=en-us&country=US" >> $LOG_FILE 2>&1
+
+  log "Package file has been downloaded"
+
+  log "Extracting and installing the package file" "\U1F4AC"
+
+  sudo apt-get -y install $TEMP/msteams.deb >> $LOG_FILE 2>&1
+
+  log "Package file has been installed"
 
   log "Microsoft Teams has been installed successfully\n"
 }
@@ -519,7 +658,17 @@ installMSTeams () {
 installSkype () {
   log "Installing the latest version of Skype"
 
-  sudo snap install skype
+  log "Downloading the package file" "\U1F4AC"
+
+  wget -q -P $TEMP -O $TEMP/skype.deb "https://go.skype.com/skypeforlinux-64.deb" >> $LOG_FILE 2>&1
+
+  log "Package file has been downloaded"
+
+  log "Extracting and installing the package file" "\U1F4AC"
+
+  sudo apt-get -y install $TEMP/skype.deb >> $LOG_FILE 2>&1
+
+  log "Package file has been installed"
 
   log "Skype has been installed successfully\n"
 }
@@ -566,7 +715,11 @@ installDropbox () {
 installLibreOffice () {
   log "Installing the latest version of Libre Office"
 
-  sudo snap install libreoffice
+  log "Downloading and extracting package" "\U1F4AC"
+
+  sudo apt-get -y install libreoffice >> $LOG_FILE 2>&1
+
+  log "Package has been installed"
 
   log "Libre Office has been installed successfully\n"
 }
@@ -601,7 +754,20 @@ installVLC () {
 installSpotify () {
   log "Installing the latest version of Spotify"
 
-  sudo snap install spotify
+  log "Adding spotify repository to apt sources list" "\U1F4AC"
+
+  curl -sS https://download.spotify.com/debian/pubkey_0D811D58.gpg | sudo apt-key add - >> $LOG_FILE 2>&1
+  echo "deb http://repository.spotify.com stable non-free" | sudo tee /etc/apt/sources.list.d/spotify.list > /dev/null
+
+  log "Repository has been added to sources list"
+
+  updateRepositories
+
+  log "Downloading and extracting package" "\U1F4AC"
+
+  sudo apt-get -y install spotify-client >> $LOG_FILE 2>&1
+
+  log "Package has been installed"
 
   log "Spotify has been installed successfully\n"
 }
