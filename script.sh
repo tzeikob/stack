@@ -40,7 +40,7 @@ abort () {
   exit 1
 }
 
-# Creates a desktop entry, filename, name, icon, exec, categories
+# Creates a desktop entry, <filename>, <name>, <icon>, <exec>, <categories>
 createDesktopEntry () {
   local desktopFile="/usr/share/applications/$1.desktop"
 
