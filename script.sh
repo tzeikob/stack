@@ -487,7 +487,7 @@ installPostman () {
 
   log "Desktop entry file has been created"
 
-  log "Postman has been isntalled successfully\n"
+  log "Postman has been installed successfully\n"
 }
 
 # Task to install Docker and Compose
@@ -500,7 +500,7 @@ installDocker () {
 
   log "Prerequisite packages have been installed"
 
-  log "Adding docker repository to apt sources" "\U1F4AC"
+  log "Adding docker repository to apt sources list" "\U1F4AC"
 
   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg >> $LOG_FILE 2>&1
   
@@ -508,7 +508,7 @@ installDocker () {
   "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
   $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-  log "Docker apt repository has been added to sources"
+  log "Repository has been added to sources list"
 
   updateRepositories
 
@@ -518,13 +518,13 @@ installDocker () {
 
   log "Docker packages have been installed"
 
-  log "Creating the docker user group"
-
   sudo groupadd docker >> $LOG_FILE 2>&1
 
-  log "Adding current user $USER to the docker user group"
+  log "Docker user group has been created"
 
   sudo usermod -aG docker $USER >> $LOG_FILE 2>&1
+
+  log "Current user $USER added to the docker user group"
 
   log "Installing the Docker Compose" "\U1F4AC"
 
