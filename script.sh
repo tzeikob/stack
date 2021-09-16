@@ -409,7 +409,7 @@ installIntelliJIdea () {
   echo "Type=Application" | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
   echo "Name=Idea IC" | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
   echo "Icon=/opt/IdeaIC/bin/idea.png" | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
-  echo 'Exec="/opt/IdeaIC/idea.sh"' | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
+  echo 'Exec="/opt/IdeaIC/bin/idea.sh"' | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
   echo "Comment=Idea IC" | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
   echo "Categories=Development;Code;" | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
 
