@@ -17,19 +17,19 @@ MONGODB_COMPASS_VERSION="1.28.1"
 SLACK_VERSION="4.19.2"
 INTELLIJ_IDEA_VERSION="2021.2.2"
 
-# Log a normal info message, log message emoji
+# Logs a normal info message, <message> <emoji>
 log () {
   echo -e "\e[97m$1\e[0m $2"
   echo -e "$1" >> $LOG_FILE
 }
 
-# Log a progress message, progress message emoji
+# Logs a progress message, <message> <emoji>
 progress () {
   echo -ne "\033[2K\e[97m$1\e[0m $2\\r"
   echo -e "$1" >> $LOG_FILE
 }
 
-# Log an error and exit the process, abort message
+# Logs an error and exit the process, <message>
 abort () {
   echo -e "\n\e[97m$1\e[0m \U1F480"
   echo -e "\n$1" >> $LOG_FILE
@@ -40,7 +40,22 @@ abort () {
   exit 1
 }
 
-# Check if tasks list contains a given task, tasksContains taskName
+# Creates a desktop entry, filename, name, icon, exec, categories
+createDesktopEntry () {
+  local desktopFile="/usr/share/applications/$1.desktop"
+
+  sudo touch $desktopFile
+
+  echo "[Desktop Entry]" | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
+  echo "Type=Application" | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
+  echo "Name=$2" | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
+  echo "Icon=$3" | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
+  echo "Exec=\"$4\"" | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
+  echo "Comment=$2" | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
+  echo "Categories=$5" | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
+}
+
+# Checks if tasks list contains a given task, <taskName>
 tasksContains () {
   local result=false
 
@@ -54,7 +69,7 @@ tasksContains () {
   echo $result
 }
 
-# Ask if a task should be added to tasks list or not, ask question taskName
+# Asks if a task should be added to tasks list or not, <question> <taskName>
 ask () {
   read -p "$1(Y/n) " answer
   if [[ $answer =~ $YES ]]; then
@@ -399,21 +414,15 @@ installIntelliJIdea () {
 
   log "Archive file has been extracted"
 
-  sudo ln -s /opt/IdeaIC/bin/idea.sh /usr/local/bin/idea
+  local symlink="/usr/local/bin/idea"
 
-  local desktopFile="/usr/share/applications/idea.desktop"
+  sudo ln -s /opt/IdeaIC/bin/idea.sh $symlink
 
-  sudo touch $desktopFile
+  log "Executable symbolic link has been created ($symlink)"
 
-  echo "[Desktop Entry]" | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
-  echo "Type=Application" | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
-  echo "Name=Idea IC" | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
-  echo "Icon=/opt/IdeaIC/bin/idea.png" | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
-  echo 'Exec="/opt/IdeaIC/bin/idea.sh"' | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
-  echo "Comment=Idea IC" | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
-  echo "Categories=Development;Code;" | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
+  createDesktopEntry "idea" "Idea IC" "/opt/IdeaIC/bin/idea.png" "/opt/IdeaIC/bin/idea.sh" "Development;Code;"
 
-  log "Executable and desktop file have been created"
+  log "Desktop entry file has been created"
 
   log "IntelliJ Idea has been installed successfully\n"
 }
@@ -468,21 +477,15 @@ installPostman () {
 
   log "Archive file has been extracted"
 
-  sudo ln -s /opt/Postman/Postman /usr/local/bin/postman
+  local symlink="/usr/local/bin/postman"
 
-  local desktopFile="/usr/share/applications/postman.desktop"
+  sudo ln -s /opt/Postman/Postman $symlink
 
-  sudo touch $desktopFile
+  log "Executable symbolic link has been created ($symlink)"
 
-  echo "[Desktop Entry]" | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
-  echo "Type=Application" | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
-  echo "Name=Postman" | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
-  echo "Icon=/opt/Postman/app/resources/app/assets/icon.png" | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
-  echo 'Exec="/opt/Postman/Postman"' | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
-  echo "Comment=Postman GUI" | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
-  echo "Categories=Development;Code;" | sudo tee -a $desktopFile >> $LOG_FILE 2>&1
+  createDesktopEntry "postman" "Postman" "/opt/Postman/app/resources/app/assets/icon.png" "/opt/Postman/Postman" "Development;Code;"
 
-  log "Executable and desktop file have been created"
+  log "Desktop entry file has been created"
 
   log "Postman has been isntalled successfully\n"
 }
