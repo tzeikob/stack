@@ -247,7 +247,7 @@ installNode () {
 
   log "Downloading NVM installation script" "\U1F4AC"
 
-  wget -q -P $TEMP -O $TEMP/nvm-install.sh https://raw.githubusercontent.com/nvm-sh/nvm/v$NVM_VERSION/install.sh >> $LOG_FILE 2>&1
+  wget --no-show-progress -P $TEMP -O $TEMP/nvm-install.sh https://raw.githubusercontent.com/nvm-sh/nvm/v$NVM_VERSION/install.sh >> $LOG_FILE 2>&1
 
   log "NVM script has been downloaded"
 
@@ -320,7 +320,7 @@ installVSCode () {
 
   log "Downloading the package file" "\U1F4AC"
 
-  wget -q -P $TEMP -O $TEMP/code.deb "https://go.microsoft.com/fwlink/?LinkID=760868" >> $LOG_FILE 2>&1
+  wget --no-show-progress -P $TEMP -O $TEMP/code.deb "https://go.microsoft.com/fwlink/?LinkID=760868" >> $LOG_FILE 2>&1
 
   log "Package file has been downloaded"
 
@@ -353,7 +353,7 @@ installAtom () {
 
   log "Downloading the package file" "\U1F4AC"
 
-  wget -q -P $TEMP -O $TEMP/atom.deb "https://atom.io/download/deb" >> $LOG_FILE 2>&1
+  wget --no-show-progress -P $TEMP -O $TEMP/atom.deb "https://atom.io/download/deb" >> $LOG_FILE 2>&1
 
   log "Package file has been downloaded"
 
@@ -407,7 +407,7 @@ installIntelliJIdea () {
 
   log "Downloading and extracting archive file" "\U1F4AC"
 
-  wget -q -P $TEMP -O $TEMP/idea-ic.tar.gz "https://download.jetbrains.com/idea/ideaIC-${INTELLIJ_IDEA_VERSION}.tar.gz" >> $LOG_FILE 2>&1
+  wget --no-show-progress -P $TEMP -O $TEMP/idea-ic.tar.gz "https://download.jetbrains.com/idea/ideaIC-${INTELLIJ_IDEA_VERSION}.tar.gz" >> $LOG_FILE 2>&1
 
   sudo mkdir -p /opt/IdeaIC
   sudo tar -xzf $TEMP/idea-ic.tar.gz --strip-components=1 -C /opt/IdeaIC
@@ -433,7 +433,7 @@ installMongoDBCompass () {
 
   log "Downloading the package file" "\U1F4AC"
 
-  wget -q -P $TEMP -O $TEMP/compass.deb "https://downloads.mongodb.com/compass/mongodb-compass_${MONGODB_COMPASS_VERSION}_amd64.deb" >> $LOG_FILE 2>&1
+  wget --no-show-progress -P $TEMP -O $TEMP/compass.deb "https://downloads.mongodb.com/compass/mongodb-compass_${MONGODB_COMPASS_VERSION}_amd64.deb" >> $LOG_FILE 2>&1
 
   log "Package file has been downloaded"
 
@@ -452,7 +452,7 @@ installDBeaver () {
 
   log "Downloading the package file" "\U1F4AC"
 
-  wget -q -P $TEMP -O $TEMP/dbeaver.deb "https://dbeaver.io/files/dbeaver-ce_latest_amd64.deb" >> $LOG_FILE 2>&1
+  wget --no-show-progress -P $TEMP -O $TEMP/dbeaver.deb "https://dbeaver.io/files/dbeaver-ce_latest_amd64.deb" >> $LOG_FILE 2>&1
 
   log "Package file has been downloaded"
 
@@ -471,7 +471,7 @@ installPostman () {
 
   log "Downloading and extracting archive file" "\U1F4AC"
 
-  wget -q -P $TEMP -O $TEMP/postman.tar.gz "https://dl.pstmn.io/download/latest/linux64" >> $LOG_FILE 2>&1
+  wget --no-show-progress -P $TEMP -O $TEMP/postman.tar.gz "https://dl.pstmn.io/download/latest/linux64" >> $LOG_FILE 2>&1
 
   sudo tar -xzf $TEMP/postman.tar.gz -C /opt
 
@@ -555,7 +555,7 @@ installChrome () {
 
   log "Downloading the package file" "\U1F4AC"
 
-  wget -q -P $TEMP -O $TEMP/chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb >> $LOG_FILE 2>&1
+  wget --no-show-progress -P $TEMP -O $TEMP/chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb >> $LOG_FILE 2>&1
 
   log "Package file has been downloaded"
 
@@ -587,7 +587,7 @@ installSlack () {
 
   log "Downloading the package file" "\U1F4AC"
 
-  wget -q -P $TEMP -O $TEMP/slack.deb "https://downloads.slack-edge.com/releases/linux/${SLACK_VERSION}/prod/x64/slack-desktop-${SLACK_VERSION}-amd64.deb" >> $LOG_FILE 2>&1
+  wget --no-show-progress -P $TEMP -O $TEMP/slack.deb "https://downloads.slack-edge.com/releases/linux/${SLACK_VERSION}/prod/x64/slack-desktop-${SLACK_VERSION}-amd64.deb" >> $LOG_FILE 2>&1
 
   log "Package file has been downloaded"
 
@@ -606,7 +606,7 @@ installDiscord () {
 
   log "Downloading the package file" "\U1F4AC"
 
-  wget -q -P $TEMP -O $TEMP/discord.deb "https://discord.com/api/download?platform=linux&format=deb" >> $LOG_FILE 2>&1
+  wget --no-show-progress -P $TEMP -O $TEMP/discord.deb "https://discord.com/api/download?platform=linux&format=deb" >> $LOG_FILE 2>&1
 
   log "Package file has been downloaded"
 
@@ -625,7 +625,7 @@ installTelegram () {
 
   log "Downloading the package file" "\U1F4AC"
 
-  wget -q -P $TEMP -O $TEMP/telegram.deb "https://telegram.org/dl/desktop/linux" >> $LOG_FILE 2>&1
+  wget --no-show-progress -P $TEMP -O $TEMP/telegram.deb "https://telegram.org/dl/desktop/linux" >> $LOG_FILE 2>&1
 
   log "Package file has been downloaded"
 
@@ -644,7 +644,7 @@ installMSTeams () {
 
   log "Downloading the package file" "\U1F4AC"
 
-  wget -q -P $TEMP -O $TEMP/msteams.deb "https://go.microsoft.com/fwlink/p/?LinkID=2112886&clcid=0x409&culture=en-us&country=US" >> $LOG_FILE 2>&1
+  wget --no-show-progress -P $TEMP -O $TEMP/msteams.deb "https://go.microsoft.com/fwlink/p/?LinkID=2112886&clcid=0x409&culture=en-us&country=US" >> $LOG_FILE 2>&1
 
   log "Package file has been downloaded"
 
@@ -663,7 +663,7 @@ installSkype () {
 
   log "Downloading the package file" "\U1F4AC"
 
-  wget -q -P $TEMP -O $TEMP/skype.deb "https://go.skype.com/skypeforlinux-64.deb" >> $LOG_FILE 2>&1
+  wget --no-show-progress -P $TEMP -O $TEMP/skype.deb "https://go.skype.com/skypeforlinux-64.deb" >> $LOG_FILE 2>&1
 
   log "Package file has been downloaded"
 
@@ -682,7 +682,7 @@ installTeamViewer () {
 
   log "Downloading the package file" "\U1F4AC"
 
-  wget -q -P $TEMP -O $TEMP/teamviewer.deb "https://download.teamviewer.com/download/linux/teamviewer_amd64.deb" >> $LOG_FILE 2>&1
+  wget --no-show-progress -P $TEMP -O $TEMP/teamviewer.deb "https://download.teamviewer.com/download/linux/teamviewer_amd64.deb" >> $LOG_FILE 2>&1
 
   log "Package file has been downloaded"
 
@@ -701,7 +701,7 @@ installDropbox () {
 
   log "Downloading the package file" "\U1F4AC"
 
-  wget -q -P $TEMP -O $TEMP/dropbox.deb "https://linux.dropbox.com/packages/ubuntu/dropbox_${DROPBOX_VERSION}_amd64.deb" >> $LOG_FILE 2>&1
+  wget --no-show-progress -P $TEMP -O $TEMP/dropbox.deb "https://linux.dropbox.com/packages/ubuntu/dropbox_${DROPBOX_VERSION}_amd64.deb" >> $LOG_FILE 2>&1
 
   log "Package file has been downloaded"
 
