@@ -623,15 +623,9 @@ installDiscord () {
 installTelegram () {
   log "Installing the latest version of Telegram"
 
-  log "Downloading the package file" "\U1F4AC"
+  log "Downloading and extracting the package" "\U1F4AC"
 
-  wget --no-show-progress -P $TEMP -O $TEMP/telegram.deb "https://telegram.org/dl/desktop/linux" >> $LOG_FILE 2>&1
-
-  log "Package file has been downloaded"
-
-  log "Extracting and installing the package file" "\U1F4AC"
-
-  sudo apt-get -y install $TEMP/telegram.deb >> $LOG_FILE 2>&1
+  sudo apt-get -y install telegram-desktop >> $LOG_FILE 2>&1
 
   log "Package file has been installed"
 
