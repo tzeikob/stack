@@ -627,7 +627,7 @@ installTelegram () {
 
   sudo apt-get -y install telegram-desktop >> $LOG_FILE 2>&1
 
-  log "Package file has been installed"
+  log "Package has been installed"
 
   log "Telegram has been installed successfully\n"
 }
@@ -729,7 +729,7 @@ installRhythmbox () {
 
   sudo apt-get -y install rhythmbox >> $LOG_FILE 2>&1
 
-  log "Package file has been installed"
+  log "Package has been installed"
 
   log "Rhythmbox has been installed successfully\n"
 }
@@ -742,7 +742,7 @@ installVLC () {
 
   sudo apt-get -y install vlc >> $LOG_FILE 2>&1
 
-  log "Package file has been installed"
+  log "Package has been installed"
 
   log "VLC has been installed successfully\n"
 }
@@ -777,7 +777,7 @@ installGimp () {
 
   sudo apt-get -y install gimp >> $LOG_FILE 2>&1
 
-  log "Package file has been installed"
+  log "Package has been installed"
 
   log "Gimp has been installed successfully\n"
 }
