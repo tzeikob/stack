@@ -2,7 +2,7 @@
 
 Stack is a shell script to bootstrap and automate the process of installing a development environment based on the [archlinux](https://archlinux.org/) distribution. The primary goal is to get as quickly as possible an environment with a development stack ready to use.
 
-## What should you know
+## What you should know
 
 ### We adopt an opt-in approach
 
@@ -47,7 +47,12 @@ sudo mkfs.fat -F 32 /dev/sdx1
 Then just run the following command to copy the files from the archlinux iso file to the drive.
 
 ```sh
-sudo dd bs=4M if=path/to/archlinux-version-x86_64.iso of=/dev/sdx conv=fsync oflag=direct status=progress
+sudo dd if=path/to/archlinux-version-x86_64.iso \
+  of=/dev/sdx \
+  bs=4M \
+  conv=fsync \
+  oflag=direct \
+  status=progress
 ```
 
 This will take a while copying files from the iso file to the bootable media drive.
