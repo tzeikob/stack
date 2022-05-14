@@ -22,7 +22,7 @@ Well, we think that a desktop environment handled by a tiling window manager off
 
 ### Requirements and limitations
 
-This script is meant to work only with UEFI systems and not with old legacy hardware, we wanted to keep things simple. Another thing you should be aware of is that during the boot time of the installation media the **secure boot** option should be disabled in your BIOS other wise the media wont boot.
+This script is meant to work only with UEFI systems and not with old legacy hardware, we wanted to keep it simple. Another thing you should be aware of is that during the boot time of the installation media the *secure boot* option should be disabled in your BIOS otherwise the media wont boot.
 
 ## How to use it
 
