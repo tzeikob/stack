@@ -14,3 +14,7 @@ abort () {
 
 echo -e "Stack v$VERSION"
 echo -e "Starting base installation process"
+
+if [ ! -d "/sys/firmware/efi/efivars" ]; then
+  abort "This script supports only UEFI systems" 1
+fi

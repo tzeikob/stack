@@ -20,6 +20,10 @@ Apart from the mandatory tasks during the installation, the script is implemente
 
 Well, we think that a desktop environment handled by a tiling window manager offers the best user experience and is what gives you the boost in productivity and especially to keep the overall visual overhead to the minimum. It might take a while to get used to such an environment but after a short training period the benefits will start paying you back.
 
+### Requirements and limitations
+
+This script is meant to work only with UEFI systems and not with old legacy hardware, we wanted to keep things simple. Another thing you should be aware of is that during the boot time of the installation media the **secure boot** option should be disabled in your BIOS other wise the media wont boot.
+
 ## How to use it
 
 ### Create the bootable installation media
