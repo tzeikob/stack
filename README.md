@@ -99,7 +99,7 @@ ping -c 5 8.8.8.8
 To start the execution of the installation use the following command:
 
 ```sh
-bash -c "$(curl -sLo- https://raw.githubusercontent.com/tzeikob/stack/master/install.sh)"
+bash -c "$(curl -sLo- https://raw.githubusercontent.com/tzeikob/stack/master/bootstrap.sh)"
 ```
 
 > In case fonts are tiny especially in 4k monitors, you can increase the size by running `setfont ter-132n`.
