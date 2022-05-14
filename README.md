@@ -1,126 +1,100 @@
 # Stack
 
-Stack is a welcome script tool to speed up and automate the tasks you have to do in order to setup and install your development stack software right after a fresh and clean ubuntu installation.
+Stack is a shell script to bootstrap and automate the process of installing a development environment based on the [archlinux](https://archlinux.org/) distribution. The primary goal is to get as quickly as possible an environment with a development stack ready to use.
 
-> Note: This script tool is using **sudo** internally to get root access so to be able to setup your system and install third-party software, please read carefully before proceed.
+## What should you know
 
-## What this tool does?
+### We adopt an opt-in approach
 
-### Opt in for optional tasks
+Apart from the mandatory tasks during the installation, the script is implemented in an opt-in/out approach. The user is who decides, upon various options, with what he will go. The script will start iterating across a set of questions, gathering user input and doing tasks in incremental fashion. The tasks are grouped in the following main scopes:
 
-The tool is implemented in an opt in/out approach, where the user decides which of the provided tasks he wants to go with. The script will start iterating across a set of questions per task and every time the user opts in, the corresponding task is added to the execution list. A task could be either a configuration or an installation task. The tasks are grouped in the following main scopes:
+* Disk partitioning
+* Base packages
+* Hardware drivers
+* Host and users
+* Desktop and look and feel
+* Development Stack
+* Utility Applications
 
-* Base system configuration
-* Programming languages
-* Editors and IDEs
-* Database and APIs
-* Containerization and virtual machines
-* Collaboration and team work
-* Music and media
-* Look and feel
+### Why a tiling window manager?
 
-Each task will be provide as a question to the user asking him to opt in or not:
-
-```sh
-Do you want to install Node?(Y/n) y
-Do you want to install Visual Studio Code?(Y/n) y
-...
-```
-
-### Mandatory and preparatory tasks
-
-Apart from the opt in tasks the tool executes a set of mandatory and preparatory system tasks:
-
-* Update the apt-get repositories
-* Upgrade the system to latest updates
-* Install a few prerequisite utility packages
-
-These tasks will be executed before any opt in task thus making sure the system along with any dependencies have already been set.
+Well, we think that a desktop environment handled by a tiling window manager offers the best user experience and is what gives you the boost in productivity and especially to keep the overall visual overhead to the minimum. It might take a while to get used to such an environment but after a short training period the benefits will start paying you back.
 
 ## How to use it
 
-### Run it as a standalone bash script
+### Create the bootable installation media
 
-Just copy, paste and execute the following command in your prompt:
+The first thing to do is to create a bootable media with the latest arclinux iso image file, which can be downloaded from the official [archlinux](https://archlinux.org/download/) page. Below you can find instructions how to create a bootable flash drive medium either in linux or windows.
 
-```sh
-bash -c "$(wget -qO- https://git.io/JuSGv)"
-```
+#### Linux
 
-Otherwise you can download the script file to your local folder, make it executable and run it like so:
+Get a usb flash drive and plug it to your system, the drive should now be found in the list of available disks ready to be used. By executing the following command you should find the actual device path to that drive.
 
 ```sh
-wget https://raw.githubusercontent.com/tzeikob/stack/master/script.sh
-
-chmod +x ./script.sh
-
-./script
+sudo fdisk -l
 ```
 
-## List of opt in tasks
+> **IMPORTANT**, always double check the device path corresponds to the correct usb drive otherwise you're taking the risk of wiping out data from other functional disks of your system.
 
-Below you can find the full list of each task provided currently by the tool.
+Now assuming the device path to the usb drive is **/dev/sdx**, where in your case *x* should be any letter (*a*, *b*, *c*, etc.). Use the gdisk tool to clean the drive from existing partitions (*o* and then *w*), create a new clean linux partition (*n*, accept defaults and then *w*) and format it as **FAT32** with the following command:
 
+```sh
+sudo mkfs.fat -F 32 /dev/sdx1
 ```
-Base system configuration
 
-  - Set system time to local RTC time
-  - Allow to monitor large amount of files
-  - Enable firewall via UFW
-  - Install extra unicode languages like Greek
+> Where **/dev/sdx1** should be the device path to that partition in the **/dev/sdx** disk.
 
-Programming languages
+Then just run the following command to copy the files from the archlinux iso file to the drive.
 
-  - Install Git
-  - Install Node
-  - Install Java
-
-Editors and IDEs
-
-  - Install Visual Studio Code
-  - Install Atom
-  - Install Sublime Text
-  - Install Neovim
-  - Install IntelliJ Idea
-
-Database and APIs
-
-  - Install MongoDB Compass
-  - Install DBeaver
-  - Install Postman
-
-Containerization and virtual machines
-
-  - Install Docker and Compose
-  - Install Virtual Box
-
-Collaboration and team work
-
-  - Install Chrome
-  - Install Thunderbird
-  - Install Slack
-  - Install Discord
-  - Install Telegram
-  - Install Microsoft Teams
-  - Install Skype
-  - Install TeamViewer
-  - Install Dropbox
-  - Install Libre Office
-
-Music and media
-
-  - Install Rhythmbox
-  - Install VLC
-  - Install Spotify
-  - Install Gimp
-
-Look and feel
-
-  - Hide desktop icons
-  - Move dock to the bottom
-  - Rename home folders to lowercase
-  - Disable auto screen lock
-  - Override default system shortcuts
-  - Override default workspaces shortcuts
-  - Set cmd prompt to show branch for git folders
+```sh
+sudo dd bs=4M if=path/to/archlinux-version-x86_64.iso of=/dev/sdx conv=fsync oflag=direct status=progress
 ```
+
+This will take a while copying files from the iso file to the bootable media drive.
+
+#### Windows
+
+In windows you can create a bootable installation media using the general purpose [rufus](https://rufus.ie/en) tool.
+
+### Boot with the installation media
+
+Once you are ready with the bootable media plug it to the system you want to apply the installation. Choose to boot with that drive and you will be immediately prompt with the archlinux installation menu. Pick the option *Arch Linux install medium* and wait until you get in the *archiso* as *root*.
+
+> Note that you must disable the *secure boot* option in your BIOS otherwise the installation wont boot.
+
+### Connect to the internet
+
+If your system is using an ethernet cable to connect to the internet then you probably are ready to skip this step.
+
+But in the case your only option is to connect wirelessly via wifi you should use the [iwctl](https://wiki.archlinux.org/title/Iwd) tool. By typing the following command you can check the available network interfaces:
+
+```sh
+ip link
+```
+
+If your system has a wifi adapter then the corresponding network interface will appear in the list (e.g. *wlan0*), then you can use iwctl to scan and connect to your network, like so:
+
+```sh
+iwctl
+
+[iwd] device list
+[iwd] station <device> scan
+[iwd] station <device> get-networks
+[iwd] station <device> connect <SSID>
+```
+
+In order to confirm you are actually connected to the internet please try to ping any public server like so:
+
+```sh
+ping -c 5 8.8.8.8
+```
+
+### Start the installation
+
+To start the execution of the installation use the following command:
+
+```sh
+bash -c "$(curl -sLo- https://raw.githubusercontent.com/tzeikob/stack/master/install.sh)"
+```
+
+> In case fonts are tiny especially in 4k monitors, you can increase the size by running `setfont ter-132n`.
