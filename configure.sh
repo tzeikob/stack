@@ -27,3 +27,19 @@ echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
 locale-gen
 
 echo -e "Locales have been genereated successfully"
+
+echo -e "\nSetting up hostname and hosts..."
+read -p "Enter the host name of your system: [arch] " hostname
+
+if [[ $hostname =~ $BLANK ]]; then
+  hostname="arch"
+fi
+
+echo $hostname >> /etc/hostname
+
+echo "" >> /etc/hosts
+echo "127.0.0.1    localhost" >> /etc/hosts
+echo "::1          localhost" >> /etc/hosts
+echo "127.0.1.1    $hostname" >> /etc/hosts
+
+echo -e "Hostname and hosts have been set"
