@@ -3,10 +3,13 @@
 BLANK="^(""|[ *])$"
 YES="^([Yy][Ee][Ss]|[Yy])$"
 
+NVIDIA="^(nvidia|n)$"
 AMD="^(amd|a)$"
 INTEL="^(intel|i)$"
+VIRTUAL="^(virtual|v)$"
 
 CPU="($AMD|$INTEL)"
+GPU="($NVIDIA|$AMD|$INTEL|$VIRTUAL)"
 
 echo -e "\nSetting up the local timezone..."
 read -p "Enter your timezone in slash form (e.g. Europe/Athens): " timezone
@@ -75,3 +78,36 @@ fi
 echo -e "Installing $cpu_vendor cpu packages..."
 
 pacman -S $cpu_pkg
+
+read -p "What video card is your system using? [NVIDIA/amd/intel/virtual] " gpu_vendor
+
+while [[ ! $gpu_vendor =~ $GPU && ! $gpu_vendor =~ $BLANK ]]; do
+  echo -e "Invalid gpu vendor: '$gpu_vendor'"
+  read -p "Please enter a valid gpu vendor: " gpu_vendor
+done
+
+if [[ $gpu_vendor =~ $AMD ]]; then
+  gpu_vendor="amd"
+  gpu_pkg="xf86-video-ati"
+  gpu_module="amdgpu"
+elif [[ $gpu_vendor =~ $INTEL ]]; then
+  gpu_vendor="intel"
+  gpu_pkg="xf86-video-intel"
+  gpu_module="i915"
+elif [[ $gpu_vendor =~ $VIRTUAL ]]; then
+  gpu_vendor="virtual"
+  gpu_pkg=""
+  gpu_module=""
+else
+  gpu_vendor="nvidia"
+  gpu_pkg="nvidia nvidia-utils nvidia-settings"
+  gpu_module="nvidia"
+fi
+
+if [[ ! $gpu_pkg =~ $BLANK ]]; then
+  echo -e "Installing $gpu_vendor gpu packages..."
+
+  pacman -S $gpu_pkg
+else
+  echo -e "No gpu packages will be installed"
+fi
