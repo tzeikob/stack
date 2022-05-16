@@ -72,3 +72,27 @@ echo -e "\nCreating installation partitions in '$device'..."
 echo -e "\nPrinting a short report of the '$device'..."
 
 fdisk $device -l
+
+dev_efi=${device}1
+dev_swap=${device}2
+dev_root=${device}3
+
+if [[ ! $swap =~ $YES ]]; then
+  dev_root=${device}2
+fi
+
+echo -e "\nFormating the '$dev_efi' EFI partition as FAT32..."
+
+mkfs.fat -F 32 $dev_efi
+
+if [[ $swap =~ $YES ]]; then
+  echo -e "\nFormating the '$dev_swap' swap partition..."
+  mkswap $dev_swap
+  swapon $dev_swap
+fi
+
+echo -e "\nFormating the '$dev_root' root partition as EXT4..."
+
+mkfs.ext4 $dev_root
+
+echo -e "Disk partitioning has been completed successfully"
