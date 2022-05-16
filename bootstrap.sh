@@ -96,3 +96,14 @@ echo -e "\nFormating the '$dev_root' root partition as EXT4..."
 mkfs.ext4 $dev_root
 
 echo -e "Disk partitioning has been completed successfully"
+
+echo -e "\nMounting the EFI and root partitions..."
+
+mount $dev_root /mnt
+
+mkdir -p /mnt/boot
+mount $dev_efi /mnt/boot
+
+echo -e "Partitions have been mounted under '/mnt':"
+
+lsblk $device
