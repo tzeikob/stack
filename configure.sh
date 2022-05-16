@@ -11,6 +11,8 @@ VIRTUAL="^(virtual|v)$"
 CPU="($AMD|$INTEL)"
 GPU="($NVIDIA|$AMD|$INTEL|$VIRTUAL)"
 
+shopt -s nocasematch
+
 echo -e "\nSetting up the local timezone..."
 read -p "Enter your timezone in slash form (e.g. Europe/Athens): " timezone
 
