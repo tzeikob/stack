@@ -16,7 +16,7 @@ Apart from the mandatory tasks during the installation, the script is implemente
 * Development Stack
 * Utility Applications
 
-### Why a tiling window manager?
+### Why a tiling window manager
 
 Well, we think that a desktop environment handled by a tiling window manager offers the best user experience and is what gives you the boost in productivity and especially to keep the overall visual overhead to the minimum. It might take a while to get used to such an environment but after a short training period the benefits will start paying you back.
 
@@ -106,4 +106,4 @@ To start the execution of the installation use the following command:
 bash -c "$(curl -sLo- https://raw.githubusercontent.com/tzeikob/stack/master/bootstrap.sh)"
 ```
 
-> In case fonts are tiny especially in 4k monitors, you can increase the size by running `setfont ter-132n`.
+> In high-dpi screens you can increase the font size by running `setfont ter-132n`.
