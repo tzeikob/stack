@@ -11,7 +11,7 @@ if [[ $branch =~ $BLANK ]]; then
   branch="master"
 fi
 
-echo -e "Stack v$VERSION"
+echo -e "Stack v$VERSION - $branch"
 echo -e "Starting base installation process"
 
 if [ ! -d "/sys/firmware/efi/efivars" ]; then
