@@ -5,18 +5,13 @@ VERSION="0.1.0"
 BLANK="^(""|[ *])$"
 YES="^([Yy][Ee][Ss]|[Yy])$"
 
-abort () {
-  echo -e "\n$1"
-  echo -e "Process exiting with code: $2"
-
-  exit $2
-}
-
 echo -e "Stack v$VERSION"
 echo -e "Starting base installation process"
 
 if [ ! -d "/sys/firmware/efi/efivars" ]; then
-  abort "This script supports only UEFI systems" 1
+  echo -e "This script supports only UEFI systems"
+  echo -e "Process exiting with code: 1"
+  exit 1
 fi
 
 echo -e "\nPartitioning and formatting the installation disk..."
@@ -35,7 +30,9 @@ read -p "Do you want to create swap partition? [y/N] " swap
 read -p "IMPORTANT, all data in '$device' will be lost, shall we proceed? [y/N] " answer
 
 if [[ ! $answer =~ $YES ]]; then
-  abort "Canceling the installation process..." 0
+  echo -e "Canceling the installation process..."
+  echo -e "Process exiting with code: 0"
+  exit 0
 fi
 
 echo -e "\nErasing existing partitions in '$device'..."
