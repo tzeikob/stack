@@ -107,3 +107,22 @@ mount $dev_efi /mnt/boot
 echo -e "Partitions have been mounted under '/mnt':"
 
 lsblk $device
+
+echo -e "\nStarting the installation of the base packages..."
+echo -e "Updating the system clock..."
+
+timedatectl set-ntp true
+timedatectl status
+
+echo -e "System clock has been updated"
+
+echo -e "Refreshing the mirror list..."
+
+pacman -Syy
+
+echo -e "The mirror list is now up to date"
+echo -e "Installing base linux packages..."
+
+pacstrap /mnt base linux linux-headers linux-lts linux-lts-headers linux-firmware archlinux-keyring
+
+echo -e "Base packages have been installed successfully"
