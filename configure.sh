@@ -16,3 +16,14 @@ hwclock --systohc
 
 echo -e "System clock synchronized to the hardware clock"
 echo -e "Local timezone has been set successfully"
+
+echo -e "\nSetting up the system locales..."
+
+echo "LANG=en_US.UTF-8" >> /etc/locale.conf
+
+echo "" >> /etc/locale.gen
+echo "el_GR.UTF-8 UTF-8" >> /etc/locale.gen
+echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
+locale-gen
+
+echo -e "Locales have been genereated successfully"
