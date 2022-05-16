@@ -157,7 +157,7 @@ if [ $BOOTSTRAP == "true" ]; then
   echo -e "Moving to the installation disk..."
 
   arch-chroot /mnt \
-    bash -c "$(curl -sLo- https://raw.githubusercontent.com/tzeikob/stack/exp/stack.sh)" -s --no-bootstrap &&
+    bash -c "$(curl -sLo- https://raw.githubusercontent.com/tzeikob/stack/issue-22/stack.sh)" -s --no-bootstrap &&
     echo -e "Unmounting the partitions..." &&
     umount -R /mnt &&
     echo -e "Rebooting the system in 10 secs (ctrl-c to cancel)..." &&
