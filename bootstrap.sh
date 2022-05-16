@@ -46,3 +46,29 @@ echo -e "\nErasing existing partitions in '$device'..."
   echo w
   echo y
 ) | gdisk $device
+
+echo -e "\nCreating installation partitions in '$device'..."
+
+(
+  echo n     # create new partition
+  echo       # default to the next partition id
+  echo       # default the first sector
+  echo +500M # set size to 500MB
+  echo ef00  # set partition type to EFI
+  [[ $swap =~ $YES ]] && echo n     # create new partition
+  [[ $swap =~ $YES ]] && echo       # default to the next partition id
+  [[ $swap =~ $YES ]] && echo       # default the first sector
+  [[ $swap =~ $YES ]] && echo +2G   # set size to 2GB
+  [[ $swap =~ $YES ]] && echo 8200  # set partition type to Swap
+  echo n     # create new partition
+  echo       # default to the next partition id
+  echo       # default the first sector
+  echo       # set size to the remaining disk size
+  echo 8300  # set partition type to Linux File System
+  echo w     # write changes
+  echo y     # confirm writing chages
+) | gdisk $device
+
+echo -e "\nPrinting a short report of the '$device'..."
+
+fdisk $device -l
