@@ -145,3 +145,16 @@ echo -e "Adding user $username to the group of sudoers..."
 sed -i 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
 
 echo -e "User $username with sudo priviledges has been created"
+
+echo -e "\nInstalling the bootloader via GRUB..."
+
+grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=grup_uefi --recheck
+grub-mkconfig -o /boot/grub/grub.cfg
+
+sed -i '/#GRUB_SAVEDEFAULT=true/i GRUB_DEFAULT=saved' /etc/default/grub
+sed -i 's/#GRUB_SAVEDEFAULT=true/GRUB_SAVEDEFAULT=true/' /etc/default/grub
+sed -i 's/#GRUB_DISABLE_SUBMENU=y/GRUB_DISABLE_SUBMENU=y/' /etc/default/grub
+
+grub-mkconfig -o /boot/grub/grub.cfg
+
+echo -e "Bootloader has been installed"
