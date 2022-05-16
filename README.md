@@ -71,6 +71,8 @@ Once you are ready with the bootable media plug it to the system you want to app
 
 > Note that you must disable the *secure boot* option in your BIOS otherwise the installation wont boot.
 
+In high-dpi screens you can increase the font size by running `setfont ter-132n`.
+
 ### Connect to the internet
 
 If your system is using an ethernet cable to connect to the internet then you probably are ready to skip this step.
@@ -105,5 +107,3 @@ To start the execution of the installation use the following command:
 ```sh
 bash -c "$(curl -sLo- https://raw.githubusercontent.com/tzeikob/stack/master/bootstrap.sh)"
 ```
-
-> In high-dpi screens you can increase the font size by running `setfont ter-132n`.
