@@ -105,5 +105,5 @@ ping -c 5 8.8.8.8
 To start the execution of the installation use the following command:
 
 ```sh
-bash -c "$(curl -sLo- https://raw.githubusercontent.com/tzeikob/stack/master/bootstrap.sh)"
+bash -c "$(curl -sLo- https://raw.githubusercontent.com/tzeikob/stack/master/stack.sh)"
 ```
