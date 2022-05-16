@@ -32,3 +32,8 @@ while [ ! -b "$device" ]; do
 done
 
 read -p "Do you want to create swap partition? [y/N] " swap
+read -p "IMPORTANT, all data in '$device' will be lost, shall we proceed? [y/N] " answer
+
+if [[ ! $answer =~ $YES ]]; then
+  abort "Canceling the installation process..." 0
+fi
