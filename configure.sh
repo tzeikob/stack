@@ -158,3 +158,15 @@ sed -i 's/#GRUB_DISABLE_SUBMENU=y/GRUB_DISABLE_SUBMENU=y/' /etc/default/grub
 grub-mkconfig -o /boot/grub/grub.cfg
 
 echo -e "Bootloader has been installed"
+
+echo -e "\nEnabling system services..."
+
+systemctl enable NetworkManager
+systemctl enable bluetooth
+systemctl enable cups
+systemctl enable sshd
+systemctl enable reflector.timer
+systemctl enable fstrim.timer
+
+echo -e "\nScript has been completed successfully!"
+echo -e "Exiting back to archiso..."
