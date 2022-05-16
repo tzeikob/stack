@@ -126,3 +126,9 @@ echo -e "Installing base linux packages..."
 pacstrap /mnt base linux linux-headers linux-lts linux-lts-headers linux-firmware archlinux-keyring
 
 echo -e "Base packages have been installed successfully"
+
+echo -e "\nCreating the file system table..."
+
+genfstab -U /mnt >> /mnt/etc/fstab
+
+echo -e "The file system table has been created in '/mnt/etc/fstab'"
