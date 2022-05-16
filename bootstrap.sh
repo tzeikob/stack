@@ -37,3 +37,12 @@ read -p "IMPORTANT, all data in '$device' will be lost, shall we proceed? [y/N] 
 if [[ ! $answer =~ $YES ]]; then
   abort "Canceling the installation process..." 0
 fi
+
+echo -e "\nErasing existing partitions in '$device'..."
+
+(
+  echo o
+  echo y
+  echo w
+  echo y
+) | gdisk $device
