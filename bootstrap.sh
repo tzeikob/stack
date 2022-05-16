@@ -5,6 +5,12 @@ VERSION="0.1.0"
 BLANK="^(""|[ *])$"
 YES="^([Yy][Ee][Ss]|[Yy])$"
 
+branch=$1
+
+if [[ $branch =~ $BLANK ]]; then
+  branch="master"
+fi
+
 echo -e "Stack v$VERSION"
 echo -e "Starting base installation process"
 
@@ -132,4 +138,5 @@ echo -e "The file system table has been created in '/mnt/etc/fstab'"
 
 echo -e "Moving to the installation disk..."
 
-arch-chroot /mnt
+arch-chroot /mnt \
+  bash -c "$(curl -sLo- https://raw.githubusercontent.com/tzeikob/stack/$branch/configure.sh)"
