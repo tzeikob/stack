@@ -3,6 +3,11 @@
 BLANK="^(""|[ *])$"
 YES="^([Yy][Ee][Ss]|[Yy])$"
 
+AMD="^(amd|a)$"
+INTEL="^(intel|i)$"
+
+CPU="($AMD|$INTEL)"
+
 echo -e "\nSetting up the local timezone..."
 read -p "Enter your timezone in slash form (e.g. Europe/Athens): " timezone
 
@@ -50,3 +55,23 @@ pacman -S base-devel grub os-prober efibootmgr mtools dosfstools wpa_supplicant 
   bash-completion nfs-utils networkmanager dialog wireless_tools netctl inetutils dnsutils reflector rsync \
   cups bluez bluez-utils \
   terminus-font vim nano git
+
+echo -e "\nInstalling hardware drivers..."
+read -p "What proccessor is your system running? [AMD/intel] " cpu_vendor
+
+while [[ ! $cpu_vendor =~ $CPU && ! $cpu_vendor =~ $BLANK ]]; do
+  echo -e "Invalid cpu vendor: '$cpu_vendor'"
+  read -p "Please enter a valid cpu vendor: " cpu_vendor
+done
+
+if [[ $cpu_vendor =~ $INTEL ]]; then
+  cpu_vendor="intel"
+  cpu_pkg="intel-ucode"
+else
+  cpu_vendor="amd"
+  cpu_pkg="amd-ucode"
+fi
+
+echo -e "Installing $cpu_vendor cpu packages..."
+
+pacman -S $cpu_pkg
