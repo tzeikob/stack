@@ -132,3 +132,7 @@ echo -e "\nCreating the file system table..."
 genfstab -U /mnt >> /mnt/etc/fstab
 
 echo -e "The file system table has been created in '/mnt/etc/fstab'"
+
+echo -e "Moving to the installation disk..."
+
+arch-chroot /mnt
