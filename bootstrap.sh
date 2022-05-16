@@ -139,4 +139,9 @@ echo -e "The file system table has been created in '/mnt/etc/fstab'"
 echo -e "Moving to the installation disk..."
 
 arch-chroot /mnt \
-  bash -c "$(curl -sLo- https://raw.githubusercontent.com/tzeikob/stack/$branch/configure.sh)"
+  bash -c "$(curl -sLo- https://raw.githubusercontent.com/tzeikob/stack/$branch/configure.sh)" &&
+  echo -e "Manually unmount all partitions..." &&
+  umount -R /mnt &&
+  echo -e "Rebooting the system in 10 secs (ctrl-c to cancel)..." &&
+  sleep 10 &&
+  reboot
