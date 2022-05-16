@@ -135,7 +135,7 @@ echo -e "Moving to the installation disk..."
 
 arch-chroot /mnt \
   bash -c "$(curl -sLo- https://raw.githubusercontent.com/tzeikob/stack/$BRANCH/configure.sh)" &&
-  echo -e "Manually unmount all partitions..." &&
+  echo -e "Unmounting the partitions..." &&
   umount -R /mnt &&
   echo -e "Rebooting the system in 10 secs (ctrl-c to cancel)..." &&
   sleep 10 &&
