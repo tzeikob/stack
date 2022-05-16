@@ -121,3 +121,27 @@ if [[ ! $gpu_pkg =~ $BLANK ]]; then
 else
   echo -e "No gpu packages will be installed"
 fi
+
+echo -e "\nSetting up users and passwords..."
+echo -e "Adding password for the root user..."
+
+passwd
+
+echo -e "Creating a new sudoer user..."
+read -p "Enter the name of the sudoer user: [bob] " username
+
+if [[ $username =~ $BLANK ]]; then
+  username="bob"
+fi
+
+useradd -m -g users -G wheel $username
+
+echo -e "Adding password for the user $username..."
+
+passwd $username
+
+echo -e "Adding user $username to the group of sudoers..."
+
+sed -i 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
+
+echo -e "User $username with sudo priviledges has been created"
