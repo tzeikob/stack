@@ -30,3 +30,5 @@ while [ ! -b "$device" ]; do
   echo -e "Invalid device path: '$device'"
   read -p "Please enter a valid device path: " device
 done
+
+read -p "Do you want to create swap partition? [y/N] " swap
