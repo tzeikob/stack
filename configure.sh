@@ -43,3 +43,10 @@ echo "::1          localhost" >> /etc/hosts
 echo "127.0.1.1    $hostname" >> /etc/hosts
 
 echo -e "Hostname and hosts have been set"
+
+echo -e "\nInstalling extra base packages..."
+
+pacman -S base-devel grub os-prober efibootmgr mtools dosfstools wpa_supplicant openssh \
+  bash-completion nfs-utils networkmanager dialog wireless_tools netctl inetutils dnsutils reflector rsync \
+  cups bluez bluez-utils \
+  terminus-font vim nano git
