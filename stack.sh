@@ -15,20 +15,20 @@ GPU="($NVIDIA|$AMD|$INTEL|$VIRTUAL)"
 
 shopt -s nocasematch
 
-opt=${1-}
+while [ $# -gt 0 ]; do
+  case $1 in
+    "--bootstrap" | "-b") BOOTSTRAP=true;;
+    "--no-bootstrap") BOOTSTRAP=false;;
+    *)
+      echo -e "Invalid option '$1'"
+      echo -e "Process exiting with code: 1"
+      exit 1;;
+  esac
 
-case $opt in
-  "--bootstrap" | "-b" | "")
-    BOOTSTRAP=true;;
-  "--no-bootstrap")
-    BOOTSTRAP=false;;
-  *)
-    echo -e "option '$opt' is not supported"
-    echo -e "Process exiting with code: 1"
-    exit 1;;
-esac
+  shift
+done
 
-if [ $BOOTSTRAP == "true" ]; then
+if [[ $BOOTSTRAP == true || $BOOTSTRAP == "" ]]; then
   echo -e "Stack v$VERSION"
   echo -e "Starting base installation process"
 
