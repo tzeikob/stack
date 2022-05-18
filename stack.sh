@@ -322,6 +322,7 @@ cat << \EOF | sed 's/  //' > /mnt/install.sh
   systemctl enable sshd
   systemctl enable reflector.timer
   systemctl enable fstrim.timer
+  systemctl enable firewalld
 
   echo -e "\nScript has been completed successfully!"
   echo -e "Exiting back to archiso..."
