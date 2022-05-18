@@ -4,6 +4,7 @@ VERSION="0.1.0"
 
 BLANK="^(""|[ *])$"
 YES="^([Yy][Ee][Ss]|[Yy])$"
+INT="^[0-9]+$"
 
 echo -e "Stack v$VERSION"
 echo -e "Starting base installation process"
@@ -26,7 +27,13 @@ while [ ! -b "$device" ]; do
   read -p "Please enter a valid device path: " device
 done
 
-read -p "Do you want to create swap partition? [y/N] " swap
+read -p "Enter the size of the swap partition in GB (0 to skip swap): " swapsize
+
+while [[ ! $swapsize =~ $INT ]]; do
+  echo -e "Invalid swap size: '$swapsize'"
+  read -p "Please enter a valid size: " swapsize
+done
+
 read -p "IMPORTANT, all data in '$device' will be lost, shall we proceed? [y/N] " answer
 
 if [[ ! $answer =~ $YES ]]; then
@@ -52,11 +59,11 @@ echo -e "\nCreating installation partitions in '$device'..."
   echo       # default the first sector
   echo +500M # set size to 500MB
   echo ef00  # set partition type to EFI
-  [[ $swap =~ $YES ]] && echo n     # create new partition
-  [[ $swap =~ $YES ]] && echo       # default to the next partition id
-  [[ $swap =~ $YES ]] && echo       # default the first sector
-  [[ $swap =~ $YES ]] && echo +2G   # set size to 2GB
-  [[ $swap =~ $YES ]] && echo 8200  # set partition type to Swap
+  [[ $swapsize -gt 0 ]] && echo n             # create new partition
+  [[ $swapsize -gt 0 ]] && echo               # default to the next partition id
+  [[ $swapsize -gt 0 ]] && echo               # default the first sector
+  [[ $swapsize -gt 0 ]] && echo +${swapsize}G # set size to 2GB
+  [[ $swapsize -gt 0 ]] && echo 8200          # set partition type to Swap
   echo n     # create new partition
   echo       # default to the next partition id
   echo       # default the first sector
@@ -74,7 +81,7 @@ dev_efi=${device}1
 dev_swap=${device}2
 dev_root=${device}3
 
-if [[ ! $swap =~ $YES ]]; then
+if [[ $swapsize -eq 0 ]]; then
   dev_root=${device}2
 fi
 
@@ -82,7 +89,7 @@ echo -e "\nFormating the '$dev_efi' EFI partition as FAT32..."
 
 mkfs.fat -F 32 $dev_efi
 
-if [[ $swap =~ $YES ]]; then
+if [[ $swapsize -gt 0 ]]; then
   echo -e "\nFormating the '$dev_swap' swap partition..."
   mkswap $dev_swap
   swapon $dev_swap
