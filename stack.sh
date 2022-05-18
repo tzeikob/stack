@@ -193,14 +193,19 @@ cat << \EOF | sed 's/  //' > /mnt/install.sh
 
   echo -e "\nInstalling extra base packages..."
 
-  pacman -S base-devel grub os-prober efibootmgr mtools dosfstools wpa_supplicant openssh \
-    bash-completion nfs-utils networkmanager dialog wireless_tools netctl inetutils dnsutils reflector rsync \
+  pacman -S base-devel grub os-prober efibootmgr mtools dosfstools \
+    bash-completion \
     cups bluez bluez-utils \
     terminus-font vim nano git
 
   echo -e "Installing power management utilities..."
 
   pacman -S acpi acpi_call tlp
+
+  echo -e "Installing network utility packages..."
+
+  pacman -S networkmanager dialog wireless_tools netctl inetutils dnsutils \
+    wpa_supplicant openssh nfs-utils reflector rsync
 
   echo -e "Installing audio drivers and packages..."
 
