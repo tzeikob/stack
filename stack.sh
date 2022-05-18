@@ -248,19 +248,19 @@ cat << \EOF | sed 's/  //' > /mnt/install.sh
 
   if [[ $gpu_vendor =~ $AMD ]]; then
     gpu_vendor="amd"
-    gpu_pkg="xf86-video-ati"
+    gpu_pkg="xf86-video-ati" # or try messa
     gpu_module="amdgpu"
   elif [[ $gpu_vendor =~ $INTEL ]]; then
     gpu_vendor="intel"
-    gpu_pkg="xf86-video-intel"
+    gpu_pkg="xf86-video-intel" # or try mesa
     gpu_module="i915"
   elif [[ $gpu_vendor =~ $VIRTUAL ]]; then
     gpu_vendor="virtual"
-    gpu_pkg=""
+    gpu_pkg="xf86-video-vmware virtualbox-guest-utils"
     gpu_module=""
   else
     gpu_vendor="nvidia"
-    gpu_pkg="nvidia nvidia-utils nvidia-settings"
+    gpu_pkg="nvidia nvidia-lts nvidia-utils nvidia-settings"
     gpu_module="nvidia"
   fi
 
@@ -331,6 +331,10 @@ cat << \EOF | sed 's/  //' > /mnt/install.sh
   systemctl enable reflector.timer
   systemctl enable fstrim.timer
   systemctl enable firewalld
+
+  if [[ $gpu_vendor =~ $VIRTUAL ]]; then
+    systemctl enable vboxservice
+  fi
 
   echo -e "\nScript has been completed successfully!"
   echo -e "Exiting back to archiso..."
