@@ -140,7 +140,7 @@ echo -e "The file system table has been created in '/mnt/etc/fstab'"
 echo -e "Generating the root installation script..."
 
 cat << \EOF | sed 's/  //' > /mnt/install.sh
-  #!/usr/bin/env bas
+  #!/usr/bin/env bash
 
   BLANK="^(""|[ *])$"
   YES="^([Yy][Ee][Ss]|[Yy])$"
