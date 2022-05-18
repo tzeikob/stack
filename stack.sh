@@ -196,6 +196,7 @@ cat << \EOF | sed 's/  //' > /mnt/install.sh
   pacman -S base-devel grub os-prober efibootmgr mtools dosfstools wpa_supplicant openssh \
     bash-completion nfs-utils networkmanager dialog wireless_tools netctl inetutils dnsutils reflector rsync \
     cups bluez bluez-utils \
+    alsa-utils pipewire pipewire-alsa pipewire-pulse pipewire-jack \
     terminus-font vim nano git
 
   echo -e "\nInstalling hardware drivers..."
