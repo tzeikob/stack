@@ -332,8 +332,8 @@ echo -e "Moving to the installation disk..."
 
 arch-chroot /mnt \
   bash /install.sh &&
-  # echo -e "Removing installation files..." &&
-  # rm /mnt/install.sh &&
+  echo -e "Removing installation files..." &&
+  rm /mnt/install.sh &&
   echo -e "Unmounting the partitions..." &&
   umount -R /mnt &&
   echo -e "Rebooting the system in 10 secs (ctrl-c to cancel)..." &&
