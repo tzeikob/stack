@@ -165,7 +165,7 @@ cat << \EOF | sed 's/  //' > /mnt/install.sh
     read -p "Please enter a valid timezone: " timezone
   done
 
-  ln -sf /usr/share/zoneinfo/$timezone /etc/localtime
+  timedatectl set-timezone $timezone
   hwclock --systohc
 
   echo -e "System clock synchronized to the hardware clock"
@@ -321,6 +321,7 @@ cat << \EOF | sed 's/  //' > /mnt/install.sh
 
   echo -e "\nEnabling system services..."
 
+  systemctl enable systemd-timesyncd
   systemctl enable NetworkManager
   systemctl enable bluetooth
   systemctl enable tlp
