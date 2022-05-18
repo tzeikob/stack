@@ -200,7 +200,7 @@ cat << \EOF | sed 's/  //' > /mnt/install.sh
 
   echo -e "Installing power management utilities..."
 
-  pacman -S acpi acpi_call tlp
+  pacman -S acpi acpid acpi_call tlp
 
   echo -e "Installing network utility packages..."
 
