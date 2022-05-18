@@ -193,7 +193,7 @@ cat << \EOF | sed 's/  //' > /mnt/install.sh
 
   echo -e "\nInstalling extra base packages..."
 
-  pacman -S base-devel grub os-prober efibootmgr mtools dosfstools \
+  pacman -S base-devel grub efibootmgr mtools dosfstools \
     bash-completion \
     cups bluez bluez-utils \
     terminus-font vim nano git
