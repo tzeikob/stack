@@ -198,6 +198,10 @@ cat << \EOF | sed 's/  //' > /mnt/install.sh
     cups bluez bluez-utils \
     alsa-utils pipewire pipewire-alsa pipewire-pulse pipewire-jack \
     terminus-font vim nano git
+  
+  echo -e "Installing power management utilities..."
+
+  pacman -S acpi acpi_call tlp
 
   echo -e "\nInstalling hardware drivers..."
   read -p "What proccessor is your system running? [AMD/intel] " cpu_vendor
