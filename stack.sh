@@ -316,6 +316,8 @@ cat << \EOF | sed 's/  //' > /mnt/install.sh
 
   systemctl enable NetworkManager
   systemctl enable bluetooth
+  systemctl enable tlp
+  systemctl enable acpid
   systemctl enable cups
   systemctl enable sshd
   systemctl enable reflector.timer
