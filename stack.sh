@@ -189,7 +189,7 @@ cat << \EOF | sed 's/  //' > /mnt/install.sh
     hostname="arch"
   fi
 
-  echo $hostname >> /etc/hostname
+  hostnamectl set-hostname $hostname
 
   echo "" >> /etc/hosts
   echo "127.0.0.1    localhost" >> /etc/hosts
