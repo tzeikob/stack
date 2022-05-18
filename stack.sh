@@ -205,7 +205,8 @@ cat << \EOF | sed 's/  //' > /mnt/install.sh
   echo -e "Installing network utility packages..."
 
   pacman -S networkmanager dialog wireless_tools netctl inetutils dnsutils \
-    wpa_supplicant openssh nfs-utils reflector rsync
+    wpa_supplicant openssh nfs-utils reflector rsync openbsd-netcat iptables-nft \
+    ipset firewalld
 
   echo -e "Installing audio drivers and packages..."
 
