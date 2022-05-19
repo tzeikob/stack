@@ -90,7 +90,7 @@ fi
 
 echo -e "Formating the '$dev_root' root partition as EXT4..."
 
-mkfs.ext4 $dev_root
+mkfs.ext4 -q $dev_root
 
 echo -e "\nMounting the boot and root partitions..."
 
