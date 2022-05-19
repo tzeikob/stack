@@ -59,7 +59,7 @@ dev_efi=${device}1
 if [[ $swapsize -gt 0 ]]; then
   echo -e "Creating the swap partition..."
 
-  sgdisk -n 2:0:+2G -c 2:"Swap Partition" -t 2:8200 "$device"
+  sgdisk -n 2:0:+${swapsize}G -c 2:"Swap Partition" -t 2:8200 "$device"
   dev_swap=${device}2
 
   echo -e "Creating the root partition..."
