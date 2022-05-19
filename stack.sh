@@ -42,75 +42,68 @@ if [[ ! $answer =~ $YES ]]; then
   exit 0
 fi
 
-echo -e "\nErasing existing partitions in '$device'..."
+echo -e "\nStarting partitioning in '$device'..."
+echo -e "Erasing any existing GPT and MBR data tables..."
 
-(
-  echo o
-  echo y
-  echo w
-  echo y
-) | gdisk $device
+sgdisk -Z "$device"
 
-echo -e "\nCreating installation partitions in '$device'..."
+echo -e "Creating a clean GPT table free of partitions..."
 
-(
-  echo n     # create new partition
-  echo       # default to the next partition id
-  echo       # default the first sector
-  echo +500M # set size to 500MB
-  echo ef00  # set partition type to EFI
-  [[ $swapsize -gt 0 ]] && echo n             # create new partition
-  [[ $swapsize -gt 0 ]] && echo               # default to the next partition id
-  [[ $swapsize -gt 0 ]] && echo               # default the first sector
-  [[ $swapsize -gt 0 ]] && echo +${swapsize}G # set size to 2GB
-  [[ $swapsize -gt 0 ]] && echo 8200          # set partition type to Swap
-  echo n     # create new partition
-  echo       # default to the next partition id
-  echo       # default the first sector
-  echo       # set size to the remaining disk size
-  echo 8300  # set partition type to Linux File System
-  echo w     # write changes
-  echo y     # confirm writing chages
-) | gdisk $device
+sgdisk -og "$device"
 
-echo -e "\nPrinting a short report of the '$device'..."
+echo -e "Creating the boot EFI partition..."
 
-fdisk $device -l
-
+sgdisk -n 1:0:+500M -c 1:"EFI System Partition" -t 1:ef00 "$device"
 dev_efi=${device}1
-dev_swap=${device}2
-dev_root=${device}3
 
-if [[ $swapsize -eq 0 ]]; then
+if [[ $swapsize -gt 0 ]]; then
+  echo -e "Creating the swap partition..."
+
+  sgdisk -n 2:0:+2G -c 2:"Swap Partition" -t 2:8200 "$device"
+  dev_swap=${device}2
+
+  echo -e "Creating the root partition..."
+
+  sgdisk -n 3:0:0 -c 3:"Root Partition" -t 3:8300 "$device"
+  dev_root=${device}3
+else
+  echo -e "Creating the root partition..."
+
+  sgdisk -n 2:0:0 -c 2:"Root Partition" -t 2:8300 "$device"
   dev_root=${device}2
 fi
 
-echo -e "\nFormating the '$dev_efi' EFI partition as FAT32..."
+echo -e "Partitioning on '$device' has completed:\n"
+
+sgdisk -p "$device"
+
+echo -e "\nFormatting partitions in '$device'..."
+echo -e "Formating the '$dev_efi' boot EFI partition as FAT32..."
 
 mkfs.fat -F 32 $dev_efi
 
 if [[ $swapsize -gt 0 ]]; then
-  echo -e "\nFormating the '$dev_swap' swap partition..."
+  echo -e "Formating the '$dev_swap' swap partition..."
   mkswap $dev_swap
   swapon $dev_swap
 fi
 
-echo -e "\nFormating the '$dev_root' root partition as EXT4..."
+echo -e "Formating the '$dev_root' root partition as EXT4..."
 
 mkfs.ext4 $dev_root
 
-echo -e "Disk partitioning has been completed successfully"
-
-echo -e "\nMounting the EFI and root partitions..."
+echo -e "\nMounting the boot and root partitions..."
 
 mount $dev_root /mnt
 
 mkdir -p /mnt/boot
 mount $dev_efi /mnt/boot
 
-echo -e "Partitions have been mounted under '/mnt':"
+echo -e "Partitions have been mounted under '/mnt':\n"
 
 lsblk $device
+
+exit 0
 
 echo -e "\nStarting the installation of the base packages..."
 echo -e "Updating the system clock..."
