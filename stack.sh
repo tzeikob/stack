@@ -92,6 +92,8 @@ echo -e "Formating the '$dev_root' root partition as EXT4..."
 
 mkfs.ext4 -q $dev_root
 
+echo -e "Formating has been completed successfully"
+
 echo -e "\nMounting the boot and root partitions..."
 
 mount $dev_root /mnt
@@ -102,8 +104,6 @@ mount $dev_efi /mnt/boot
 echo -e "Partitions have been mounted under '/mnt':\n"
 
 lsblk $device
-
-exit 0
 
 echo -e "\nStarting the installation of the base packages..."
 echo -e "Updating the system clock..."
