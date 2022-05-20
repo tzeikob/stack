@@ -168,9 +168,8 @@ cat << \EOF | sed 's/  //' > /mnt/install.sh
 
   echo "LANG=en_US.UTF-8" >> /etc/locale.conf
 
-  echo "" >> /etc/locale.gen
-  echo "el_GR.UTF-8 UTF-8" >> /etc/locale.gen
-  echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
+  sed -i 's/#\(en_US\.UTF-8 UTF-8\)/\1/' /etc/locale.gen
+  sed -i 's/#\(el_GR\.UTF-8 UTF-8\)/\1/' /etc/locale.gen
   locale-gen
 
   echo -e "Locales have been genereated successfully"
