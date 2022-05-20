@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e -u
+
 VERSION="0.1.0"
 
 BLANK="^(""|[ *])$"
@@ -134,6 +136,8 @@ echo -e "Generating the root installation script..."
 
 cat << \EOF | sed 's/  //' > /mnt/install.sh
   #!/usr/bin/env bash
+
+  set -e -u
 
   BLANK="^(""|[ *])$"
   YES="^([Yy][Ee][Ss]|[Yy])$"
