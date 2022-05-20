@@ -115,8 +115,9 @@ timedatectl status
 
 echo -e "System clock has been updated"
 
-echo -e "Refreshing the mirror list..."
+echo -e "Refreshing the packages mirror list..."
 
+reflector --latest 5 --sort rate --save /etc/pacman.d/mirrorlist
 pacman -Syy
 
 echo -e "The mirror list is now up to date"
@@ -200,6 +201,13 @@ cat << \EOF | sed 's/  //' > /mnt/install.sh
   echo -e "Hostname and hosts have been set"
 
   echo -e "\nInstalling extra base packages..."
+
+  echo -e "Refreshing the packages mirror list..."
+
+  reflector --latest 5 --sort rate --save /etc/pacman.d/mirrorlist
+  pacman -Syy
+
+  echo -e "The mirror list is now up to date"
 
   pacman -S base-devel grub efibootmgr mtools dosfstools \
     bash-completion \
