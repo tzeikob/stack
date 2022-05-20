@@ -119,14 +119,14 @@ echo -e "Resolving your geographical location..."
 
 country=$(curl -sLo- https://ipinfo.io/country)
 
-echo -e "Refreshing the packages mirror list for $country..."
+echo -e "Refreshing the mirror list for $country..."
 
-reflector --country $country --age 8 --sort rate --download-timeout 60 --save /etc/pacman.d/mirrorlist
+reflector --country $country --age 8 --sort age -n 5 --save /etc/pacman.d/mirrorlist
 
 if [ ! $? -eq 0 ]; then
   echo -e "Reflector failed, falling back to the default region DE"
 
-  reflector --country DE --age 8 --sort rate --download-timeout 60 --save /etc/pacman.d/mirrorlist
+  reflector --country DE --age 8 --sort age -n 5 --save /etc/pacman.d/mirrorlist
 fi
 
 pacman -Syy
@@ -216,14 +216,14 @@ cat << \EOF | sed 's/  //' > /mnt/install.sh
 
   echo -e "\nInstalling extra base packages..."
 
-  echo -e "Refreshing the packages mirror list for $country..."
+  echo -e "Refreshing the mirror list for $country..."
 
-  reflector --country $country --age 8 --sort rate --download-timeout 60 --save /etc/pacman.d/mirrorlist
+  reflector --country $country --age 8 --sort age -n 5 --save /etc/pacman.d/mirrorlist
 
   if [ ! $? -eq 0 ]; then
     echo -e "Reflector failed, falling back to the default region DE"
 
-    reflector --country DE --age 8 --sort rate --download-timeout 60 --save /etc/pacman.d/mirrorlist
+    reflector --country DE --age 8 --sort age -n 5 --save /etc/pacman.d/mirrorlist
   fi
 
   pacman -Syy
