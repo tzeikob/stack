@@ -115,15 +115,27 @@ timedatectl status
 
 echo -e "System clock has been updated"
 
-echo -e "Refreshing the packages mirror list..."
+echo -e "Resolving your geographical location..."
 
-reflector --age 8 --sort rate --save /etc/pacman.d/mirrorlist
+country=$(curl -sLo- https://ipinfo.io/country)
+
+echo -e "Refreshing the packages mirror list for $country..."
+
+reflector --country $country --age 8 --sort rate --download-timeout 60 --save /etc/pacman.d/mirrorlist
+
+if [ ! $? -eq 0 ]; then
+  echo -e "Reflector failed, falling back to the default region DE"
+
+  reflector --country DE --age 8 --sort rate --download-timeout 60 --save /etc/pacman.d/mirrorlist
+fi
+
 pacman -Syy
 
 echo -e "The mirror list is now up to date"
 echo -e "Installing base linux packages..."
 
-pacstrap /mnt base linux linux-headers linux-lts linux-lts-headers linux-firmware archlinux-keyring
+pacstrap /mnt base linux linux-headers linux-lts linux-lts-headers linux-firmware \
+  archlinux-keyring reflector rsync
 
 echo -e "Base packages have been installed successfully"
 
@@ -150,6 +162,8 @@ cat << \EOF | sed 's/  //' > /mnt/install.sh
 
   CPU="($AMD|$INTEL)"
   GPU="($NVIDIA|$AMD|$INTEL|$VIRTUAL)"
+
+  country=${1-DE}
 
   shopt -s nocasematch
 
@@ -202,10 +216,16 @@ cat << \EOF | sed 's/  //' > /mnt/install.sh
 
   echo -e "\nInstalling extra base packages..."
 
-  echo -e "Refreshing the packages mirror list..."
+  echo -e "Refreshing the packages mirror list for $country..."
 
-  pacman -S reflector rsync
-  reflector --age 8 --sort rate --save /etc/pacman.d/mirrorlist
+  reflector --country $country --age 8 --sort rate --download-timeout 60 --save /etc/pacman.d/mirrorlist
+
+  if [ ! $? -eq 0 ]; then
+    echo -e "Reflector failed, falling back to the default region DE"
+
+    reflector --country DE --age 8 --sort rate --download-timeout 60 --save /etc/pacman.d/mirrorlist
+  fi
+
   pacman -Syy
 
   echo -e "The mirror list is now up to date"
@@ -353,7 +373,7 @@ EOF
 echo -e "Moving to the installation disk..."
 
 arch-chroot /mnt \
-  bash /install.sh &&
+  bash /install.sh $country &&
   echo -e "Removing installation files..." &&
   rm /mnt/install.sh &&
   echo -e "Unmounting the partitions..." &&
