@@ -117,7 +117,7 @@ echo -e "System clock has been updated"
 
 echo -e "Refreshing the packages mirror list..."
 
-reflector --latest 5 --sort rate --download-timeout 30 --save /etc/pacman.d/mirrorlist
+reflector --age 8 --sort rate --save /etc/pacman.d/mirrorlist
 pacman -Syy
 
 echo -e "The mirror list is now up to date"
@@ -204,7 +204,8 @@ cat << \EOF | sed 's/  //' > /mnt/install.sh
 
   echo -e "Refreshing the packages mirror list..."
 
-  reflector --latest 5 --sort rate --download-timeout 30 --save /etc/pacman.d/mirrorlist
+  pacman -S reflector rsync
+  reflector --age 8 --sort rate --save /etc/pacman.d/mirrorlist
   pacman -Syy
 
   echo -e "The mirror list is now up to date"
@@ -221,7 +222,7 @@ cat << \EOF | sed 's/  //' > /mnt/install.sh
   echo -e "Installing network utility packages..."
 
   pacman -S networkmanager dialog wireless_tools netctl inetutils dnsutils \
-    wpa_supplicant openssh nfs-utils reflector rsync openbsd-netcat iptables-nft \
+    wpa_supplicant openssh nfs-utils openbsd-netcat iptables-nft \
     ipset firewalld
 
   echo -e "Installing audio drivers and packages..."
