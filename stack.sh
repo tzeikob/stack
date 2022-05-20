@@ -117,7 +117,7 @@ echo -e "System clock has been updated"
 
 echo -e "Refreshing the packages mirror list..."
 
-reflector --latest 5 --sort rate --save /etc/pacman.d/mirrorlist
+reflector --latest 5 --sort rate --download-timeout 30 --save /etc/pacman.d/mirrorlist
 pacman -Syy
 
 echo -e "The mirror list is now up to date"
@@ -204,7 +204,7 @@ cat << \EOF | sed 's/  //' > /mnt/install.sh
 
   echo -e "Refreshing the packages mirror list..."
 
-  reflector --latest 5 --sort rate --save /etc/pacman.d/mirrorlist
+  reflector --latest 5 --sort rate --download-timeout 30 --save /etc/pacman.d/mirrorlist
   pacman -Syy
 
   echo -e "The mirror list is now up to date"
