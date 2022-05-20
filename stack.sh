@@ -166,6 +166,11 @@ cat << \EOF | sed 's/  //' > /mnt/install.sh
   hwclock --systohc
 
   echo -e "System clock synchronized to the hardware clock"
+  echo -e "Enabling NTP synchronization..."
+
+  timedatectl set-ntp true
+  timedatectl status
+
   echo -e "Local timezone has been set successfully"
 
   echo -e "\nSetting up the system locales..."
