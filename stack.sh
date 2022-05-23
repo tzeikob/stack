@@ -169,7 +169,10 @@ cat << \EOF | sed 's/  //' > /mnt/install.sh
   echo -e "Starting the installation script..."
 
   echo -e "\nSetting up the local timezone..."
-  read -p "Enter your timezone in slash form (e.g. Europe/Athens): " timezone
+
+  resolved_timezone=$(curl -sLo- https://ipapi.co/timezone?format=json)
+  read -p "What is your current timezone? [$resolved_timezone]: " timezone
+  timezone=${timezone:-$resolved_timezone}
 
   while [ ! -f "/usr/share/zoneinfo/$timezone" ]; do
     echo -e "Invalid timezone: '$timezone'"
