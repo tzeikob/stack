@@ -113,19 +113,22 @@ timedatectl status
 
 echo -e "System clock has been updated"
 
-echo -e "Resolving your geographical location..."
+resolved_country=$(curl -sLo- https://ipapi.co/country_name?format=json)
+read -p "What is your current location? [$resolved_country] " country
 
-country=$(curl -sLo- https://ipinfo.io/country)
-
-echo -e "Refreshing the mirror list for $country..."
-
-reflector --country $country --age 8 --sort age -n 5 --save /etc/pacman.d/mirrorlist
-
-if [ ! $? -eq 0 ]; then
-  echo -e "Reflector failed, falling back to the default region DE"
-
-  reflector --country DE --age 8 --sort age -n 5 --save /etc/pacman.d/mirrorlist
+if [[ $country =~ $BLANK ]]; then
+  country=$resolved_country
 fi
+
+echo -e "Refreshing the mirror list from servers in $country..."
+
+reflector --country $country --age 8 --sort age --save /etc/pacman.d/mirrorlist
+
+while [ ! $? -eq 0 ]; do
+  read -p "Reflector failed for $country, please enter another country: " country
+
+  reflector --country $country --age 8 --sort age --save /etc/pacman.d/mirrorlist
+done
 
 pacman -Syy
 
@@ -159,7 +162,7 @@ cat << \EOF | sed 's/  //' > /mnt/install.sh
   CPU="($AMD|$INTEL)"
   GPU="($NVIDIA|$AMD|$INTEL|$VIRTUAL)"
 
-  country=${1-DE}
+  country=${1-Germany}
 
   shopt -s nocasematch
 
@@ -212,15 +215,15 @@ cat << \EOF | sed 's/  //' > /mnt/install.sh
 
   echo -e "\nInstalling extra base packages..."
 
-  echo -e "Refreshing the mirror list for $country..."
+  echo -e "Refreshing the mirror list from servers in $country..."
 
-  reflector --country $country --age 8 --sort age -n 5 --save /etc/pacman.d/mirrorlist
+  reflector --country $country --age 8 --sort age --save /etc/pacman.d/mirrorlist
 
-  if [ ! $? -eq 0 ]; then
-    echo -e "Reflector failed, falling back to the default region DE"
+  while [ ! $? -eq 0 ]; do
+    read -p "Reflector failed for $country, please enter another country: " country
 
-    reflector --country DE --age 8 --sort age -n 5 --save /etc/pacman.d/mirrorlist
-  fi
+    reflector --country $country --age 8 --sort age --save /etc/pacman.d/mirrorlist
+  done
 
   pacman -Syy
 
