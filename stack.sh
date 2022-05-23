@@ -11,6 +11,21 @@ if [ ! -d "/sys/firmware/efi/efivars" ]; then
   exit 1
 fi
 
+echo -e "Setting the keyboard layout..."
+read -p "Enter the key map of your keyboard: [us] " keymap
+keymap=${keymap:-"us"}
+
+keymap_path=$(find /usr/share/kbd/keymaps/ -type f -name "$keymap.map.gz")
+
+while [ -z "$keymap_path" ]; do
+  echo -e "Invalid key map: '$keymap'"
+  read -p "Please enter a valid keymap: [us] " keymap
+  keymap=${keymap:-"us"}
+  keymap_path=$(find /usr/share/kbd/keymaps/ -type f -name "$keymap.map.gz")
+done
+
+loadkeys $keymap
+
 echo -e "\nPartitioning and formatting the installation disk..."
 echo -e "The following disks found in your system:"
 
@@ -151,6 +166,24 @@ cat << \EOF | sed 's/  //' > /mnt/install.sh
   shopt -s nocasematch
 
   echo -e "Starting the installation script..."
+
+  echo -e "Setting the keyboard layout..."
+
+  read -p "Enter the key map of your keyboard: [us] " keymap
+  keymap=${keymap:-"us"}
+
+  keymap_path=$(find /usr/share/kbd/keymaps/ -type f -name "$keymap.map.gz")
+
+  while [ -z "$keymap_path" ]; do
+    echo -e "Invalid key map: '$keymap'"
+    read -p "Please enter a valid keymap: [us] " keymap
+    keymap=${keymap:-"us"}
+    keymap_path=$(find /usr/share/kbd/keymaps/ -type f -name "$keymap.map.gz")
+  done
+
+  echo "KEYMAP=$keymap" > /etc/vconsole.conf
+
+  echo -e "Keyboard layout has been set to $keymap"
 
   echo -e "\nSetting up the local timezone..."
 
