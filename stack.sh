@@ -2,10 +2,6 @@
 
 VERSION="0.1.0"
 
-BLANK="^(""|[ *])$"
-YES="^([Yy][Ee][Ss]|[Yy])$"
-INT="^[0-9]+$"
-
 echo -e "Stack v$VERSION"
 echo -e "Starting base installation process"
 
@@ -28,15 +24,17 @@ while [ ! -b "$device" ]; do
 done
 
 read -p "Enter the size of the swap partition in GB (0 to skip swap): " swapsize
+swapsize=${swapsize:-0}
 
-while [[ ! $swapsize =~ $INT ]]; do
+while [[ ! $swapsize =~ ^[0-9]+$ ]]; do
   echo -e "Invalid swap size: '$swapsize'"
-  read -p "Please enter a valid size: " swapsize
+  read -p "Please enter a valid size: (0 to skip swap) " swapsize
+  swapsize=${swapsize:-0}
 done
 
 read -p "IMPORTANT, all data in '$device' will be lost, shall we proceed? [y/N] " answer
 
-if [[ ! $answer =~ $YES ]]; then
+if [[ ! $answer =~ ^([Yy][Ee][Ss]|[Yy])$ ]]; then
   echo -e "Canceling the installation process..."
   echo -e "Process exiting with code: 0"
   exit 0
@@ -115,10 +113,7 @@ echo -e "System clock has been updated"
 
 resolved_country=$(curl -sLo- https://ipapi.co/country_name?format=json)
 read -p "What is your current location? [$resolved_country] " country
-
-if [[ $country =~ $BLANK ]]; then
-  country=$resolved_country
-fi
+country=${country:-$resolved_country}
 
 echo -e "Refreshing the mirror list from servers in $country..."
 
@@ -151,17 +146,6 @@ echo -e "Generating the root installation script..."
 cat << \EOF | sed 's/  //' > /mnt/install.sh
   #!/usr/bin/env bash
 
-  BLANK="^(""|[ *])$"
-  YES="^([Yy][Ee][Ss]|[Yy])$"
-
-  NVIDIA="^(nvidia|n)$"
-  AMD="^(amd|a)$"
-  INTEL="^(intel|i)$"
-  VIRTUAL="^(virtual|v)$"
-
-  CPU="($AMD|$INTEL)"
-  GPU="($NVIDIA|$AMD|$INTEL|$VIRTUAL)"
-
   country=${1-Germany}
 
   shopt -s nocasematch
@@ -176,7 +160,8 @@ cat << \EOF | sed 's/  //' > /mnt/install.sh
 
   while [ ! -f "/usr/share/zoneinfo/$timezone" ]; do
     echo -e "Invalid timezone: '$timezone'"
-    read -p "Please enter a valid timezone: " timezone
+    read -p "Please enter a valid timezone: [$resolved_timezone] " timezone
+    timezone=${timezone:-$resolved_timezone}
   done
 
   ln -sf /usr/share/zoneinfo/$timezone /etc/localtime
@@ -202,10 +187,7 @@ cat << \EOF | sed 's/  //' > /mnt/install.sh
 
   echo -e "\nSetting up hostname and hosts..."
   read -p "Enter the host name of your system: [arch] " hostname
-
-  if [[ $hostname =~ $BLANK ]]; then
-    hostname="arch"
-  fi
+  hostname=${hostname:-"arch"}
 
   echo $hostname >> /etc/hostname
 
@@ -253,13 +235,15 @@ cat << \EOF | sed 's/  //' > /mnt/install.sh
 
   echo -e "\nInstalling hardware drivers..."
   read -p "What proccessor is your system running? [AMD/intel] " cpu_vendor
+  cpu_vendor=${cpu_vendor:-"amd"}
 
-  while [[ ! $cpu_vendor =~ $CPU && ! $cpu_vendor =~ $BLANK ]]; do
+  while [[ ! $cpu_vendor =~ (^(amd|intel)$) ]]; do
     echo -e "Invalid cpu vendor: '$cpu_vendor'"
-    read -p "Please enter a valid cpu vendor: " cpu_vendor
+    read -p "Please enter a valid cpu vendor: [AMD/intel] " cpu_vendor
+    cpu_vendor=${cpu_vendor:-"amd"}
   done
 
-  if [[ $cpu_vendor =~ $INTEL ]]; then
+  if [[ $cpu_vendor =~ (^intel$) ]]; then
     cpu_vendor="intel"
     cpu_pkg="intel-ucode"
   else
@@ -272,21 +256,23 @@ cat << \EOF | sed 's/  //' > /mnt/install.sh
   pacman -S $cpu_pkg
 
   read -p "What video card is your system using? [NVIDIA/amd/intel/virtual] " gpu_vendor
+  gpu_vendor=${gpu_vendor:-"nvidia"}
 
-  while [[ ! $gpu_vendor =~ $GPU && ! $gpu_vendor =~ $BLANK ]]; do
+  while [[ ! $gpu_vendor =~ (^(nvidia|amd|intel|virtual)$) ]]; do
     echo -e "Invalid gpu vendor: '$gpu_vendor'"
-    read -p "Please enter a valid gpu vendor: " gpu_vendor
+    read -p "Please enter a valid gpu vendor: [NVIDIA/amd/intel/virtual] " gpu_vendor
+    gpu_vendor=${gpu_vendor:-"nvidia"}
   done
 
-  if [[ $gpu_vendor =~ $AMD ]]; then
+  if [[ $gpu_vendor =~ (^amd$) ]]; then
     gpu_vendor="amd"
     gpu_pkg="xf86-video-ati" # or try messa
     gpu_module="amdgpu"
-  elif [[ $gpu_vendor =~ $INTEL ]]; then
+  elif [[ $gpu_vendor =~ (^intel$) ]]; then
     gpu_vendor="intel"
     gpu_pkg="xf86-video-intel" # or try mesa
     gpu_module="i915"
-  elif [[ $gpu_vendor =~ $VIRTUAL ]]; then
+  elif [[ $gpu_vendor =~ (^virtual$) ]]; then
     gpu_vendor="virtual"
     gpu_pkg="xf86-video-vmware virtualbox-guest-utils"
     gpu_module=""
@@ -296,7 +282,7 @@ cat << \EOF | sed 's/  //' > /mnt/install.sh
     gpu_module="nvidia"
   fi
 
-  if [[ ! $gpu_pkg =~ $BLANK ]]; then
+  if [ ! -z "$gpu_pkg" ]; then
     echo -e "Installing $gpu_vendor gpu packages..."
 
     pacman -S $gpu_pkg
@@ -319,12 +305,9 @@ cat << \EOF | sed 's/  //' > /mnt/install.sh
 
   passwd
 
-  echo -e "Creating a new sudoer user..."
+  echo -e "Creating the new sudoer user..."
   read -p "Enter the name of the sudoer user: [bob] " username
-
-  if [[ $username =~ $BLANK ]]; then
-    username="bob"
-  fi
+  username=${username:-"bob"}
 
   useradd -m -g users -G wheel $username
 
@@ -364,7 +347,7 @@ cat << \EOF | sed 's/  //' > /mnt/install.sh
   systemctl enable fstrim.timer
   systemctl enable firewalld
 
-  if [[ $gpu_vendor =~ $VIRTUAL ]]; then
+  if [[ $gpu_vendor =~ (^virtual$) ]]; then
     systemctl enable vboxservice
   fi
 
