@@ -343,9 +343,11 @@ cat << \EOF | sed 's/  //' > /mnt/install.sh
   systemctl enable acpid
   systemctl enable cups
   systemctl enable sshd
-  systemctl enable reflector.timer
   systemctl enable fstrim.timer
   systemctl enable firewalld
+
+  sed -i 's/# --country\(.\)/--country $country/' /etc/xdg/reflector/reflector.conf
+  systemctl enable reflector.timer
 
   if [[ $gpu_vendor =~ (^virtual$) ]]; then
     systemctl enable vboxservice
