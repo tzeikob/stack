@@ -379,7 +379,7 @@ cat << \EOF | sed 's/  //' > /mnt/install.sh
   systemctl enable fstrim.timer
   systemctl enable firewalld
 
-  sed -i 's/# --country\(.\)/--country $country/' /etc/xdg/reflector/reflector.conf
+  sed -i "s/# --country.*/--country $country/" /etc/xdg/reflector/reflector.conf
   systemctl enable reflector.timer
 
   if [[ $gpu_vendor =~ (^virtual$) ]]; then
