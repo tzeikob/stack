@@ -49,7 +49,7 @@ echo -e "Local timezone has been set to '$timezone'"
 
 echo -e "\nSetting up the system locales..."
 
-read -p "Enter locales in the lang_COUNTRY form separated by space: [en_US] " locales
+read -p "Enter locales separated by spaces (e.g. en_US el_GR): [en_US] " locales
 locales=${locales:-"en_US"}
 
 for locale in $locales; do
