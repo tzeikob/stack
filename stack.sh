@@ -18,6 +18,7 @@ while [ -z "$keymap_path" ]; do
   echo -e "Invalid key map: '$keymap'"
   read -p "Please enter a valid keymap: [us] " keymap
   keymap=${keymap:-"us"}
+
   keymap_path=$(find /usr/share/kbd/keymaps/ -type f -name "$keymap.map.gz")
 done
 
@@ -51,7 +52,7 @@ echo -e "Local timezone has been set to '$timezone'"
 echo -e "\nSetting up the system locales..."
 
 read -p "Enter locales in the lang_COUNTRY form separated by space: [en_US] " locales
-locales=${locales:-'en_US'}
+locales=${locales:-"en_US"}
 
 for locale in $locales; do
   while [ -z "$locale" ] || ! grep -q "$locale" /etc/locale.gen; do
@@ -102,21 +103,22 @@ pacman -S base-devel grub efibootmgr mtools dosfstools \
   cups bluez bluez-utils \
   terminus-font vim nano git
 
-echo -e "Installing power management utilities..."
+echo -e "\nInstalling power management utilities..."
 
 pacman -S acpi acpid acpi_call tlp
 
-echo -e "Installing network utility packages..."
+echo -e "\nInstalling network utility packages..."
 
 pacman -S networkmanager dialog wireless_tools netctl inetutils dnsutils \
   wpa_supplicant openssh nfs-utils openbsd-netcat iptables-nft \
   ipset firewalld
 
-echo -e "Installing audio drivers and packages..."
+echo -e "\nInstalling audio drivers and packages..."
 
 pacman -S alsa-utils pipewire pipewire-alsa pipewire-pulse pipewire-jack
 
-echo -e "\nInstalling hardware drivers..."
+echo -e "\nInstalling cpu drivers..."
+
 read -p "What proccessor is your system running? [AMD/intel] " cpu_vendor
 cpu_vendor=${cpu_vendor:-"amd"}
 
@@ -137,6 +139,10 @@ fi
 echo -e "Installing $cpu_vendor cpu packages..."
 
 pacman -S $cpu_pkg
+
+echo -e "CPU packages have been installed"
+
+echo -e "\nInstalling gpu drivers..."
 
 read -p "What video card is your system using? [NVIDIA/amd/intel/virtual] " gpu_vendor
 gpu_vendor=${gpu_vendor:-"nvidia"}
@@ -169,6 +175,8 @@ if [ ! -z "$gpu_pkg" ]; then
   echo -e "Installing $gpu_vendor gpu packages..."
 
   pacman -S $gpu_pkg
+
+  echo -e "GPU packages have been installed"
 
   sed -i "s/MODULES=(\(.*\))$/MODULES=(\1 $gpu_module)/" /etc/mkinitcpio.conf
   sed -i "s/MODULES=( \(.*\))$/MODULES=(\1)/" /etc/mkinitcpio.conf
@@ -236,5 +244,5 @@ if [[ $gpu_vendor =~ (^virtual$) ]]; then
   systemctl enable vboxservice
 fi
 
-echo -e "\nThe stack script has been completed successfully!"
+echo -e "\nThe stack script has been completed successfully"
 echo -e "You can now exit, umount -R /mnt and reboot"

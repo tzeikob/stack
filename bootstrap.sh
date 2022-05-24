@@ -10,6 +10,7 @@ if [ ! -d "/sys/firmware/efi/efivars" ]; then
 fi
 
 echo -e "Setting the keyboard layout..."
+
 read -p "Enter the key map of your keyboard: [us] " keymap
 keymap=${keymap:-"us"}
 
