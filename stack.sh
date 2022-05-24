@@ -107,24 +107,24 @@ pacman -Syy
 
 echo -e "The mirror list is now up to date"
 
-pacman -S base-devel grub efibootmgr mtools dosfstools \
+pacman -S --noprogressbar -q base-devel grub efibootmgr mtools dosfstools \
   bash-completion \
   cups bluez bluez-utils \
   terminus-font vim nano git
 
 echo -e "\nInstalling power management utilities..."
 
-pacman -S acpi acpid acpi_call tlp
+pacman -S --noprogressbar -q acpi acpid acpi_call tlp
 
 echo -e "\nInstalling network utility packages..."
 
-pacman -S networkmanager dialog wireless_tools netctl inetutils dnsutils \
+pacman -S --noprogressbar -q networkmanager dialog wireless_tools netctl inetutils dnsutils \
   wpa_supplicant openssh nfs-utils openbsd-netcat iptables-nft \
   ipset firewalld
 
 echo -e "\nInstalling audio drivers and packages..."
 
-pacman -S alsa-utils pipewire pipewire-alsa pipewire-pulse pipewire-jack
+pacman -S --noprogressbar -q alsa-utils pipewire pipewire-alsa pipewire-pulse pipewire-jack
 
 echo -e "\nInstalling cpu drivers..."
 
