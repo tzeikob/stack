@@ -24,7 +24,7 @@ Well, we think that a desktop environment handled by a tiling window manager off
 
 This script is meant to work only with UEFI systems and not with old legacy hardware, we wanted to keep it simple. Another thing you should be aware of is that during the boot time of the installation media the *secure boot* option should be disabled in your BIOS otherwise the media wont boot.
 
-## How to use it
+## Do some preparatory work
 
 ### Create the bootable installation media
 
@@ -100,10 +100,42 @@ In order to confirm you are actually connected to the internet please try to pin
 ping -c 5 8.8.8.8
 ```
 
-### Start the installation
+## Start the installation
 
-To start the execution of the installation use the following command:
+### Run the bootstrap script
+
+The bootstrap script is responsible for low-level tasks like disk partitioning, base packages and the file system table.
+
+To start the execution of the bootstrap script use the following command:
+
+```sh
+bash -c "$(curl -sLo- https://raw.githubusercontent.com/tzeikob/stack/master/bootstrap.sh)"
+```
+
+> **IMPORTANT**, this script does disk partitioning tasks always double check to avoid any **data loss**.
+
+After the script completes use the `arch-chroot` to move from the `archiso` to the actual installation disk:
+
+```sh
+arch-chroot /mnt
+```
+
+### Run the stack script
+
+The stack script is where the final stack environment is getting installed and configured.
+
+To start the execution of the stack script run the following command:
 
 ```sh
 bash -c "$(curl -sLo- https://raw.githubusercontent.com/tzeikob/stack/master/stack.sh)"
 ```
+
+After the script completes exit, unmount the partitions and reboot:
+
+```sh
+exit
+umount -R /mnt
+reboot
+```
+
+Wait the system to reboot and voila, *you're all set!*
