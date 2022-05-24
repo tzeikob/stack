@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-country=${1-Germany}
-
 shopt -s nocasematch
 
 echo -e "Stack v0.0.1"
@@ -86,13 +84,24 @@ echo -e "\nInstalling extra base packages..."
 
 echo -e "Refreshing the mirror list from servers in $country..."
 
+resolved_country=$(curl -sLo- https://ipapi.co/country_name?format=json)
+read -p "What is your current location? [$resolved_country] " country
+country=${country:-$resolved_country}
+
+echo -e "Refreshing the mirror list from servers in $country..."
+
 reflector --country $country --age 8 --sort age --save /etc/pacman.d/mirrorlist
 
 while [ ! $? -eq 0 ]; do
-  read -p "Reflector failed for $country, please enter another country: " country
+  read -p "Reflector failed for $country, please enter another country: [$resolved_country] " country
+  country=${country:-$resolved_country}
 
   reflector --country $country --age 8 --sort age --save /etc/pacman.d/mirrorlist
 done
+
+sed -i "s/# --country.*/--country $country/" /etc/xdg/reflector/reflector.conf
+
+echo -e "Reflector country option set to '$country'"
 
 pacman -Syy
 
@@ -236,8 +245,6 @@ systemctl enable cups
 systemctl enable sshd
 systemctl enable fstrim.timer
 systemctl enable firewalld
-
-sed -i "s/# --country.*/--country $country/" /etc/xdg/reflector/reflector.conf
 systemctl enable reflector.timer
 
 if [[ $gpu_vendor =~ (^virtual$) ]]; then
