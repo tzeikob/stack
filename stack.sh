@@ -210,11 +210,21 @@ cat << \EOF | sed 's/  //' > /mnt/install.sh
 
   echo -e "\nSetting up the system locales..."
 
-  echo "LANG=en_US.UTF-8" >> /etc/locale.conf
+  read -p "Enter locales in the lang_COUNTRY form separated by space: [en_US] " locales
+  locales=${locales:-'en_US'}
 
-  sed -i 's/#\(en_US\.UTF-8 UTF-8\)/\1/' /etc/locale.gen
-  sed -i 's/#\(el_GR\.UTF-8 UTF-8\)/\1/' /etc/locale.gen
+  for locale in $locales; do
+    while [ -z "$locale" ] || ! grep -q "$locale" /etc/locale.gen; do
+      echo -e "Invalid locale name: '$locale'"
+      read -p "Re-enter the locale: " locale
+    done
+
+    sed -i "s/#\($locale.*\)/\1/" /etc/locale.gen
+    echo -e "Locale $locale added for generation"
+  done
+
   locale-gen
+  echo "LANG=en_US.UTF-8" >> /etc/locale.conf
 
   echo -e "Locales have been genereated successfully"
 
