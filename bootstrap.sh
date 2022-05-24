@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+shopt -s nocasematch
+
 echo -e "Stack v0.0.1"
 echo -e "Starting the bootstrap process...\n"
 
@@ -59,7 +61,7 @@ fi
 
 read -p "IMPORTANT, all data in '$device' will be lost, shall we proceed? [y/N] " answer
 
-if [[ ! $answer =~ ^([Yy][Ee][Ss]|[Yy])$ ]]; then
+if [[ ! $answer =~ ^(yes|y)$ ]]; then
   echo -e "Canceling the installation process..."
   echo -e "Process exiting with code: 0"
   exit 0
