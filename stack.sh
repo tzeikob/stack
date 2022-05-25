@@ -4,7 +4,7 @@ shopt -s nocasematch
 
 country=${1:-"Germany"}
 
-echo -e "Starting the stack installation process...\n"
+echo -e "Starting the stack installation process..."
 
 echo -e "\nRefreshing the mirror list from servers in '$country'..."
 
@@ -111,7 +111,7 @@ else
   echo -e "No gpu packages will be installed"
 fi
 
-echo -e "Setting keyboard layout..."
+echo -e "\nSetting keyboard layout..."
 
 read -p "Enter the key map of your keyboard: [us] " keymap
 keymap=${keymap:-"us"}
