@@ -253,7 +253,4 @@ if [[ $gpu_vendor =~ (^virtual$) ]]; then
 fi
 
 echo -e "\nThe stack script has been completed"
-echo -e "The script will exit, unmount and reboot in 10 secs (ctrl-c to skip)"
-
-sleep 10
-exit | exit && umount -R /mnt && reboot
+echo -e "Exiting the stack installation script..."

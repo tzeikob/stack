@@ -2,6 +2,8 @@
 
 shopt -s nocasematch
 
+branch=$1
+
 echo -e "Stack v0.0.1"
 echo -e "Starting the bootstrap process...\n"
 
@@ -174,7 +176,14 @@ genfstab -U /mnt >> /mnt/etc/fstab
 echo -e "The file system table has been created in '/mnt/etc/fstab'"
 
 echo -e "\nBootstrap process has been completed successfully"
-echo -e "The script will move to the installation disk in 10 secs (ctrl-c to skip)"
+echo -e "Script will move to the installation disk in 10 secs (ctrl-c to skip)..."
 
 sleep 10
-arch-chroot /mnt
+
+arch-chroot /mnt \
+  bash -c "$(curl -sLo- https://raw.githubusercontent.com/tzeikob/stack/${branch:-master}/bootstrap.sh)" &&
+  echo -e "Unmounting disk partitions under '/mnt'..." &&
+  umount -R /mnt &&
+  echo -e "Rebooting the system in 10 secs (ctrl-c to skip)..." &&
+  sleep 10 &&
+  reboot

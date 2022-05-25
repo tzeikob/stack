@@ -102,26 +102,10 @@ ping -c 5 8.8.8.8
 
 ## Start the installation
 
-### Run the bootstrap script
-
-The bootstrap script is responsible for low-level tasks like disk partitioning, base packages and the file system table.
-
-To start the execution of the bootstrap script use the following command:
+To start the execution of the installation use the following command:
 
 ```sh
 bash -c "$(curl -sLo- https://raw.githubusercontent.com/tzeikob/stack/master/bootstrap.sh)"
 ```
 
 > **IMPORTANT**, this script does disk partitioning tasks so always double check to avoid any **data loss**.
-
-### Run the stack script
-
-The stack script is where the final stack environment is getting installed and configured.
-
-To start the execution of the stack script run the following command:
-
-```sh
-bash -c "$(curl -sLo- https://raw.githubusercontent.com/tzeikob/stack/master/stack.sh)"
-```
-
-Wait the system to reboot and voila, *you're all set!*
