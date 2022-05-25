@@ -124,12 +124,4 @@ To start the execution of the stack script run the following command:
 bash -c "$(curl -sLo- https://raw.githubusercontent.com/tzeikob/stack/master/stack.sh)"
 ```
 
-After the script completes exit, unmount the partitions and reboot:
-
-```sh
-exit
-umount -R /mnt
-reboot
-```
-
 Wait the system to reboot and voila, *you're all set!*

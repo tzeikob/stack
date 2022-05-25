@@ -3,9 +3,9 @@
 shopt -s nocasematch
 
 echo -e "Stack v0.0.1"
-echo -e "Starting the stack process...\n"
+echo -e "Starting the stack installation process...\n"
 
-echo -e "Setting the keyboard layout..."
+echo -e "Setting keyboard layout..."
 
 read -p "Enter the key map of your keyboard: [us] " keymap
 keymap=${keymap:-"us"}
@@ -22,7 +22,7 @@ done
 
 echo "KEYMAP=$keymap" > /etc/vconsole.conf
 
-echo -e "Keyboard layout has been set to $keymap"
+echo -e "Keyboard layout has been set to '$keymap'"
 
 echo -e "\nSetting up the local timezone..."
 
@@ -47,7 +47,7 @@ timedatectl status
 
 echo -e "Local timezone has been set to '$timezone'"
 
-echo -e "\nSetting up the system locales..."
+echo -e "\nSetting up system locales..."
 
 read -p "Enter locales separated by spaces (e.g. en_US el_GR): [en_US] " locales
 locales=${locales:-"en_US"}
@@ -59,7 +59,7 @@ for locale in $locales; do
   done
 
   sed -i "s/#\($locale.*\)/\1/" /etc/locale.gen
-  echo -e "Locale $locale added for generation"
+  echo -e "Locale '$locale' added for generation"
 done
 
 locale-gen
@@ -68,6 +68,7 @@ echo "LANG=en_US.UTF-8" >> /etc/locale.conf
 echo -e "Locales have been genereated successfully"
 
 echo -e "\nSetting up hostname and hosts..."
+
 read -p "Enter the host name of your system: [arch] " hostname
 hostname=${hostname:-"arch"}
 
@@ -78,22 +79,21 @@ echo "127.0.0.1    localhost" >> /etc/hosts
 echo "::1          localhost" >> /etc/hosts
 echo "127.0.1.1    $hostname" >> /etc/hosts
 
-echo -e "Hostname and hosts have been set"
+echo -e "Hostname and hosts have been set to '$hostname'"
 
-echo -e "\nInstalling extra base packages..."
-
-echo -e "Refreshing the mirror list from servers in $country..."
+echo -e "\nRefreshing the mirror list..."
 
 resolved_country=$(curl -sLo- https://ipapi.co/country_name?format=json)
 read -p "What is your current location? [$resolved_country] " country
 country=${country:-$resolved_country}
 
-echo -e "Refreshing the mirror list from servers in $country..."
+echo -e "Refreshing the mirror list from servers in '$country'..."
 
 reflector --country $country --age 8 --sort age --save /etc/pacman.d/mirrorlist
 
 while [ ! $? -eq 0 ]; do
-  read -p "Reflector failed for $country, please enter another country: [$resolved_country] " country
+  echo -e "Reflector failed for '$country'"
+  read -p "Please enter another country: [$resolved_country] " country
   country=${country:-$resolved_country}
 
   reflector --country $country --age 8 --sort age --save /etc/pacman.d/mirrorlist
@@ -101,11 +101,13 @@ done
 
 sed -i "s/# --country.*/--country $country/" /etc/xdg/reflector/reflector.conf
 
-echo -e "Reflector country option set to '$country'"
+echo -e "Reflector mirror country limit set to '$country'"
 
 pacman -Syy
 
 echo -e "The mirror list is now up to date"
+
+echo -e "\nInstalling extra base packages..."
 
 pacman -S base-devel grub efibootmgr mtools dosfstools \
   bash-completion \
@@ -128,7 +130,7 @@ pacman -S alsa-utils pipewire pipewire-alsa pipewire-pulse pipewire-jack
 
 echo -e "\nInstalling cpu drivers..."
 
-read -p "What proccessor is your system running? [AMD/intel] " cpu_vendor
+read -p "What proccessor is your system running on? [AMD/intel] " cpu_vendor
 cpu_vendor=${cpu_vendor:-"amd"}
 
 while [[ ! $cpu_vendor =~ (^(amd|intel)$) ]]; do
@@ -145,7 +147,7 @@ else
   cpu_pkg="amd-ucode"
 fi
 
-echo -e "Installing $cpu_vendor cpu packages..."
+echo -e "Installing cpu packages for '$cpu_vendor'..."
 
 pacman -S $cpu_pkg
 
@@ -181,11 +183,9 @@ else
 fi
 
 if [ ! -z "$gpu_pkg" ]; then
-  echo -e "Installing $gpu_vendor gpu packages..."
+  echo -e "Installing gpu packages for '$gpu_vendor'..."
 
   pacman -S $gpu_pkg
-
-  echo -e "GPU packages have been installed"
 
   sed -i "s/MODULES=(\(.*\))$/MODULES=(\1 $gpu_module)/" /etc/mkinitcpio.conf
   sed -i "s/MODULES=( \(.*\))$/MODULES=(\1)/" /etc/mkinitcpio.conf
@@ -196,6 +196,7 @@ if [ ! -z "$gpu_pkg" ]; then
   mkinitcpio -p linux-lts
 
   echo -e "Initramfs has been re-genereated successfully"
+  echo -e "GPU packages have been installed"
 else
   echo -e "No gpu packages will be installed"
 fi
@@ -211,15 +212,15 @@ username=${username:-"bob"}
 
 useradd -m -g users -G wheel $username
 
-echo -e "Adding password for the user $username..."
+echo -e "Adding password for the user '$username'..."
 
 passwd $username
 
-echo -e "Adding user $username to the group of sudoers..."
+echo -e "Adding user '$username' to the group of sudoers..."
 
 sed -i 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
 
-echo -e "User $username with sudo priviledges has been created"
+echo -e "User '$username' has now sudo priviledges"
 
 echo -e "\nInstalling the bootloader via GRUB..."
 
@@ -251,5 +252,8 @@ if [[ $gpu_vendor =~ (^virtual$) ]]; then
   systemctl enable vboxservice
 fi
 
-echo -e "\nThe stack script has been completed successfully"
-echo -e "You can now exit, umount -R /mnt and reboot"
+echo -e "\nThe stack script has been completed"
+echo -e "The script will exit, unmount and reboot in 10 secs (ctrl-c to skip)"
+
+sleep 10
+exit && umount -R /mnt && reboot
