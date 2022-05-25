@@ -256,4 +256,4 @@ echo -e "\nThe stack script has been completed"
 echo -e "The script will exit, unmount and reboot in 10 secs (ctrl-c to skip)"
 
 sleep 10
-exit && umount -R /mnt && reboot
+exit | exit && umount -R /mnt && reboot
