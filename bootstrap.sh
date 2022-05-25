@@ -61,7 +61,7 @@ else
   echo -e 'Swap has been skipped'
 fi
 
-echo -e "IMPORTANT, all data in '$device' will be lost"
+echo -e "\nIMPORTANT, all data in '$device' will be lost"
 read -p "Shall we proceed and partition the disk? [y/N] " answer
 
 if [[ ! $answer =~ ^(yes|y)$ ]]; then
