@@ -131,13 +131,14 @@ echo -e "Partitions have been mounted under '/mnt':\n"
 
 lsblk $device
 
-echo -e "\nStarting the installation of the base packages..."
-echo -e "Updating the system clock..."
+echo -e "\nUpdating the system clock..."
 
 timedatectl set-ntp true
 timedatectl status
 
 echo -e "System clock has been updated"
+
+echo -e "\nUpdating the mirror list..."
 
 resolved_country=$(curl -sLo- https://ipapi.co/country_name?format=json)
 read -p "What is your current location? [$resolved_country] " country
@@ -158,7 +159,8 @@ done
 pacman -Syy
 
 echo -e "The mirror list is now up to date"
-echo -e "Installing base linux packages..."
+
+echo -e "\nInstalling base linux packages..."
 
 pacstrap /mnt base linux linux-headers linux-lts linux-lts-headers linux-firmware \
   archlinux-keyring reflector rsync
