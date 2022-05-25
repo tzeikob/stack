@@ -175,4 +175,4 @@ echo -e "\nBootstrap process has been completed successfully"
 echo -e "The script will move to the installation disk in 10 secs (ctrl-c to skip)"
 
 sleep 10
-arch-chrot /mnt
+arch-chroot /mnt
