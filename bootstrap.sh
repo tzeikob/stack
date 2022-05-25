@@ -11,7 +11,7 @@ if [ ! -d "/sys/firmware/efi/efivars" ]; then
   exit 1
 fi
 
-echo -e "Setting the keyboard layout..."
+echo -e "Setting keyboard layout..."
 
 read -p "Enter the key map of your keyboard: [us] " keymap
 keymap=${keymap:-"us"}
@@ -42,24 +42,25 @@ while [ ! -b "$device" ]; do
   read -p "Please enter a valid device path: " device
 done
 
-echo -e "Installation disk set to device '$device'"
+echo -e "Installation disk set to '$device'"
 
-read -p "Enter the size of the swap partition in GB, 0 to skip swap: [0] " swapsize
+read -p "Enter the size of the swap partition in GB (0 to skip): [0] " swapsize
 swapsize=${swapsize:-0}
 
 while [[ ! $swapsize =~ ^[0-9]+$ ]]; do
   echo -e "Invalid swap size: '$swapsize'"
-  read -p "Please enter a valid size, 0 to skip swap: [0] " swapsize
+  read -p "Please enter a valid size (0 to skip): [0] " swapsize
   swapsize=${swapsize:-0}
 done
 
 if [[ $swapsize -gt 0 ]]; then
-  echo -e "Swap size set to '$swapsize'"
+  echo -e "Swap size set to '$swapsize' GB"
 else
   echo -e 'Swap has been skipped'
 fi
 
-read -p "IMPORTANT, all data in '$device' will be lost, shall we proceed? [y/N] " answer
+echo -e "IMPORTANT, all data in '$device' will be lost"
+read -p "Shall we proceed? [y/N] " answer
 
 if [[ ! $answer =~ ^(yes|y)$ ]]; then
   echo -e "Canceling the installation process..."
@@ -67,7 +68,7 @@ if [[ ! $answer =~ ^(yes|y)$ ]]; then
   exit 0
 fi
 
-echo -e "Erasing any existing GPT and MBR data tables..."
+echo -e "\nErasing any existing GPT and MBR data tables..."
 
 sgdisk -Z "$device"
 
@@ -147,7 +148,8 @@ echo -e "Refreshing the mirror list from servers in $country..."
 reflector --country $country --age 8 --sort age --save /etc/pacman.d/mirrorlist
 
 while [ ! $? -eq 0 ]; do
-  read -p "Reflector failed for $country, please enter another country: [$resolved_country] " country
+  echo -e "Reflector failed for '$country'"
+  read -p "Please enter another country: [$resolved_country] " country
   country=${country:-$resolved_country}
 
   reflector --country $country --age 8 --sort age --save /etc/pacman.d/mirrorlist
@@ -170,4 +172,7 @@ genfstab -U /mnt >> /mnt/etc/fstab
 echo -e "The file system table has been created in '/mnt/etc/fstab'"
 
 echo -e "\nBootstrap process has been completed successfully"
-echo -e "Run 'arch-chroot /mnt' to move in the installation disk"
+echo -e "The script will move to the installation disk in 10 secs (ctrl-c to skip)"
+
+sleep 10
+arch-chrot /mnt

@@ -112,13 +112,7 @@ To start the execution of the bootstrap script use the following command:
 bash -c "$(curl -sLo- https://raw.githubusercontent.com/tzeikob/stack/master/bootstrap.sh)"
 ```
 
-> **IMPORTANT**, this script does disk partitioning tasks always double check to avoid any **data loss**.
-
-After the script completes use the `arch-chroot` to move from the `archiso` to the actual installation disk:
-
-```sh
-arch-chroot /mnt
-```
+> **IMPORTANT**, this script does disk partitioning tasks so always double check to avoid any **data loss**.
 
 ### Run the stack script
 
