@@ -36,15 +36,17 @@ while [ ! -f "/usr/share/zoneinfo/$timezone" ]; do
 done
 
 ln -sf /usr/share/zoneinfo/$timezone /etc/localtime
-hwclock --systohc
 
-echo -e "System clock synchronized to the hardware clock"
-echo -e "Enabling NTP synchronization..."
+echo -e "Local timezone has been set to '$timezone'"
+
+echo -e "\nEnabling NTP synchronization..."
 
 timedatectl set-ntp true
 timedatectl status
 
-echo -e "Local timezone has been set to '$timezone'"
+hwclock --systohc
+
+echo -e "System clock synchronized to the hardware clock"
 
 echo -e "\nSetting up system locales..."
 
@@ -100,7 +102,7 @@ done
 
 sed -i "s/# --country.*/--country $country/" /etc/xdg/reflector/reflector.conf
 
-echo -e "Reflector mirror country limit set to '$country'"
+echo -e "Reflector mirror country set to '$country'"
 
 pacman -Syy
 
@@ -146,7 +148,7 @@ else
   cpu_pkg="amd-ucode"
 fi
 
-echo -e "Installing cpu packages for '$cpu_vendor'..."
+echo -e "CPU vendor set to '$cpu_vendor'"
 
 pacman -S $cpu_pkg
 
@@ -182,7 +184,7 @@ else
 fi
 
 if [ ! -z "$gpu_pkg" ]; then
-  echo -e "Installing gpu packages for '$gpu_vendor'..."
+  echo -e "GPU vendor set to '$gpu_vendor'"
 
   pacman -S $gpu_pkg
 
@@ -206,6 +208,7 @@ echo -e "Adding password for the root user..."
 passwd
 
 echo -e "Creating the new sudoer user..."
+
 read -p "Enter the name of the sudoer user: [bob] " username
 username=${username:-"bob"}
 

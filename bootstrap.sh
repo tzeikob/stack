@@ -62,7 +62,7 @@ else
 fi
 
 echo -e "IMPORTANT, all data in '$device' will be lost"
-read -p "Shall we proceed? [y/N] " answer
+read -p "Shall we proceed and partition the disk? [y/N] " answer
 
 if [[ ! $answer =~ ^(yes|y)$ ]]; then
   echo -e "Canceling the installation process..."
@@ -70,7 +70,7 @@ if [[ ! $answer =~ ^(yes|y)$ ]]; then
   exit 0
 fi
 
-echo -e "\nErasing any existing GPT and MBR data tables..."
+echo -e "Erasing any existing GPT and MBR data tables..."
 
 sgdisk -Z "$device"
 
