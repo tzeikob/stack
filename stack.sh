@@ -2,7 +2,6 @@
 
 shopt -s nocasematch
 
-echo -e "Stack v0.0.1"
 echo -e "Starting the stack installation process...\n"
 
 echo -e "Setting keyboard layout..."
