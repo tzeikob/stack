@@ -2,111 +2,20 @@
 
 shopt -s nocasematch
 
+country=${1:-"Germany"}
+
 echo -e "Starting the stack installation process...\n"
 
-echo -e "Setting keyboard layout..."
-
-read -p "Enter the key map of your keyboard: [us] " keymap
-keymap=${keymap:-"us"}
-
-keymap_path=$(find /usr/share/kbd/keymaps/ -type f -name "$keymap.map.gz")
-
-while [ -z "$keymap_path" ]; do
-  echo -e "Invalid key map: '$keymap'"
-  read -p "Please enter a valid keymap: [us] " keymap
-  keymap=${keymap:-"us"}
-
-  keymap_path=$(find /usr/share/kbd/keymaps/ -type f -name "$keymap.map.gz")
-done
-
-echo "KEYMAP=$keymap" > /etc/vconsole.conf
-
-echo -e "Keyboard layout has been set to '$keymap'"
-
-echo -e "\nSetting up the local timezone..."
-
-resolved_timezone=$(curl -sLo- https://ipapi.co/timezone?format=json)
-read -p "What is your current timezone? [$resolved_timezone]: " timezone
-timezone=${timezone:-$resolved_timezone}
-
-while [ ! -f "/usr/share/zoneinfo/$timezone" ]; do
-  echo -e "Invalid timezone: '$timezone'"
-  read -p "Please enter a valid timezone: [$resolved_timezone] " timezone
-  timezone=${timezone:-$resolved_timezone}
-done
-
-ln -sf /usr/share/zoneinfo/$timezone /etc/localtime
-
-echo -e "Local timezone has been set to '$timezone'"
-
-echo -e "\nEnabling NTP synchronization..."
-
-timedatectl set-ntp true
-timedatectl status
-
-hwclock --systohc
-
-echo -e "System clock synchronized to the hardware clock"
-
-echo -e "\nSetting up system locales..."
-
-read -p "Enter locales separated by spaces (e.g. en_US el_GR): [en_US] " locales
-locales=${locales:-"en_US"}
-
-for locale in $locales; do
-  while [ -z "$locale" ] || ! grep -q "$locale" /etc/locale.gen; do
-    echo -e "Invalid locale name: '$locale'"
-    read -p "Re-enter the locale: " locale
-  done
-
-  sed -i "s/#\($locale.*\)/\1/" /etc/locale.gen
-  echo -e "Locale '$locale' added for generation"
-done
-
-locale-gen
-echo "LANG=en_US.UTF-8" >> /etc/locale.conf
-
-echo -e "Locales have been genereated successfully"
-
-echo -e "\nSetting up hostname and hosts..."
-
-read -p "Enter the host name of your system: [arch] " hostname
-hostname=${hostname:-"arch"}
-
-echo $hostname >> /etc/hostname
-
-echo "" >> /etc/hosts
-echo "127.0.0.1    localhost" >> /etc/hosts
-echo "::1          localhost" >> /etc/hosts
-echo "127.0.1.1    $hostname" >> /etc/hosts
-
-echo -e "Hostname and hosts have been set to '$hostname'"
-
-echo -e "\nRefreshing the mirror list..."
-
-resolved_country=$(curl -sLo- https://ipapi.co/country_name?format=json)
-read -p "What is your current location? [$resolved_country] " country
-country=${country:-$resolved_country}
-
-echo -e "Refreshing the mirror list from servers in '$country'..."
+echo -e "\nRefreshing the mirror list from servers in '$country'..."
 
 reflector --country $country --age 8 --sort age --save /etc/pacman.d/mirrorlist
+pacman -Syy
 
-while [ ! $? -eq 0 ]; do
-  echo -e "Reflector failed for '$country'"
-  read -p "Please enter another country: [$resolved_country] " country
-  country=${country:-$resolved_country}
-
-  reflector --country $country --age 8 --sort age --save /etc/pacman.d/mirrorlist
-done
+echo -e "The mirror list is now up to date"
 
 sed -i "s/# --country.*/--country $country/" /etc/xdg/reflector/reflector.conf
 
 echo -e "Reflector mirror country set to '$country'"
-
-pacman -Syy
-
-echo -e "The mirror list is now up to date"
 
 echo -e "\nInstalling extra base packages..."
 
@@ -202,7 +111,86 @@ else
   echo -e "No gpu packages will be installed"
 fi
 
+echo -e "Setting keyboard layout..."
+
+read -p "Enter the key map of your keyboard: [us] " keymap
+keymap=${keymap:-"us"}
+
+keymap_path=$(find /usr/share/kbd/keymaps/ -type f -name "$keymap.map.gz")
+
+while [ -z "$keymap_path" ]; do
+  echo -e "Invalid key map: '$keymap'"
+  read -p "Please enter a valid keymap: [us] " keymap
+  keymap=${keymap:-"us"}
+
+  keymap_path=$(find /usr/share/kbd/keymaps/ -type f -name "$keymap.map.gz")
+done
+
+echo "KEYMAP=$keymap" > /etc/vconsole.conf
+
+echo -e "Keyboard layout has been set to '$keymap'"
+
+echo -e "\nSetting up the local timezone..."
+
+resolved_timezone=$(curl -sLo- https://ipapi.co/timezone?format=json)
+read -p "What is your current timezone? [$resolved_timezone]: " timezone
+timezone=${timezone:-$resolved_timezone}
+
+while [ ! -f "/usr/share/zoneinfo/$timezone" ]; do
+  echo -e "Invalid timezone: '$timezone'"
+  read -p "Please enter a valid timezone: [$resolved_timezone] " timezone
+  timezone=${timezone:-$resolved_timezone}
+done
+
+ln -sf /usr/share/zoneinfo/$timezone /etc/localtime
+
+echo -e "Local timezone has been set to '$timezone'"
+
+echo -e "\nEnabling NTP synchronization..."
+
+timedatectl set-ntp true
+timedatectl status
+
+hwclock --systohc
+
+echo -e "System clock synchronized to the hardware clock"
+
+echo -e "\nSetting up system locales..."
+
+read -p "Enter locales separated by spaces (e.g. en_US el_GR): [en_US] " locales
+locales=${locales:-"en_US"}
+
+for locale in $locales; do
+  while [ -z "$locale" ] || ! grep -q "$locale" /etc/locale.gen; do
+    echo -e "Invalid locale name: '$locale'"
+    read -p "Re-enter the locale: " locale
+  done
+
+  sed -i "s/#\($locale.*\)/\1/" /etc/locale.gen
+  echo -e "Locale '$locale' added for generation"
+done
+
+locale-gen
+echo "LANG=en_US.UTF-8" >> /etc/locale.conf
+
+echo -e "Locales have been genereated successfully"
+
+echo -e "\nSetting up hostname and hosts..."
+
+read -p "Enter the host name of your system: [arch] " hostname
+hostname=${hostname:-"arch"}
+
+echo $hostname >> /etc/hostname
+
+echo "" >> /etc/hosts
+echo "127.0.0.1    localhost" >> /etc/hosts
+echo "::1          localhost" >> /etc/hosts
+echo "127.0.1.1    $hostname" >> /etc/hosts
+
+echo -e "Hostname and hosts have been set to '$hostname'"
+
 echo -e "\nSetting up users and passwords..."
+
 echo -e "Adding password for the root user..."
 
 passwd
