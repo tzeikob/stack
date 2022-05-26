@@ -32,19 +32,19 @@ loadkeys $keymap
 
 echo -e "Keyboard layout set to '$keymap'"
 
-echo -e "\nPartitioning the installation disk..."
+echo -e "\nProceeding to the disk layout..."
 echo -e "The following disks found in your system:"
 
 lsblk
 
-read -p "Enter the device path of the disk to apply the installation on: " device
+read -p "Enter the block device disk the new system will be installed on: " device
 
 while [ ! -b "$device" ]; do
-  echo -e "Invalid device path: '$device'"
-  read -p "Please enter a valid device path: " device
+  echo -e "Invalid block device: '$device'"
+  read -p "Please enter a valid block device: " device
 done
 
-echo -e "Installation disk set to '$device'"
+echo -e "Installation disk set to block device '$device'"
 
 read -p "Enter the size of the swap partition in GB (0 to skip): [0] " swapsize
 swapsize=${swapsize:-0}
@@ -174,7 +174,7 @@ genfstab -U /mnt >> /mnt/etc/fstab
 echo -e "The file system table has been created in '/mnt/etc/fstab'"
 
 echo -e "\nBootstrap process has been completed successfully"
-echo -e "Script will move to the installation disk in 10 secs (ctrl-c to skip)..."
+echo -e "Moving to the new system in 10 secs (ctrl-c to skip)..."
 
 sleep 10
 
