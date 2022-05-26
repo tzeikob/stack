@@ -165,7 +165,7 @@ echo -e "The mirror list is now up to date"
 echo -e "\nInstalling base linux packages..."
 
 pacstrap /mnt base linux linux-headers linux-lts linux-lts-headers linux-firmware \
-  archlinux-keyring reflector rsync
+  archlinux-keyring reflector rsync sudo
 
 echo -e "Base packages have been installed successfully"
 
