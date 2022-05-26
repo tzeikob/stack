@@ -125,9 +125,7 @@ echo -e "Formating has been completed successfully"
 echo -e "\nMounting the boot and root partitions..."
 
 mount $dev_root /mnt
-
-mkdir -p /mnt/boot
-mount $dev_efi /mnt/boot
+mount --mkdir $dev_efi /mnt/boot
 
 echo -e "Partitions have been mounted under '/mnt':\n"
 
