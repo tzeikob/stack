@@ -145,13 +145,13 @@ echo -e "\nInstalling cpu drivers..."
 read -p "What proccessor is your system running on? [AMD/intel] " cpu_vendor
 cpu_vendor=${cpu_vendor:-"amd"}
 
-while [[ ! $cpu_vendor =~ (^(amd|intel)$) ]]; do
+while [[ ! $cpu_vendor =~ ^(amd|intel)$ ]]; do
   echo -e "Invalid cpu vendor: '$cpu_vendor'"
   read -p "Please enter a valid cpu vendor: [AMD/intel] " cpu_vendor
   cpu_vendor=${cpu_vendor:-"amd"}
 done
 
-if [[ $cpu_vendor =~ (^intel$) ]]; then
+if [[ $cpu_vendor =~ ^intel$ ]]; then
   cpu_vendor="intel"
   cpu_pkg="intel-ucode"
 else
@@ -170,21 +170,21 @@ echo -e "\nInstalling gpu drivers..."
 read -p "What video card is your system using? [NVIDIA/amd/intel/virtual] " gpu_vendor
 gpu_vendor=${gpu_vendor:-"nvidia"}
 
-while [[ ! $gpu_vendor =~ (^(nvidia|amd|intel|virtual)$) ]]; do
+while [[ ! $gpu_vendor =~ ^(nvidia|amd|intel|virtual)$ ]]; do
   echo -e "Invalid gpu vendor: '$gpu_vendor'"
   read -p "Please enter a valid gpu vendor: [NVIDIA/amd/intel/virtual] " gpu_vendor
   gpu_vendor=${gpu_vendor:-"nvidia"}
 done
 
-if [[ $gpu_vendor =~ (^amd$) ]]; then
+if [[ $gpu_vendor =~ ^amd$ ]]; then
   gpu_vendor="amd"
   gpu_pkg="xf86-video-ati" # or try messa
   gpu_module="amdgpu"
-elif [[ $gpu_vendor =~ (^intel$) ]]; then
+elif [[ $gpu_vendor =~ ^intel$ ]]; then
   gpu_vendor="intel"
   gpu_pkg="xf86-video-intel" # or try mesa
   gpu_module="i915"
-elif [[ $gpu_vendor =~ (^virtual$) ]]; then
+elif [[ $gpu_vendor =~ ^virtual$ ]]; then
   gpu_vendor="virtual"
   gpu_pkg="xf86-video-vmware virtualbox-guest-utils"
   gpu_module=""
@@ -239,7 +239,7 @@ systemctl enable fstrim.timer
 systemctl enable firewalld
 systemctl enable reflector.timer
 
-if [[ $gpu_vendor =~ (^virtual$) ]]; then
+if [[ $gpu_vendor =~ ^virtual$ ]]; then
   systemctl enable vboxservice
 fi
 
