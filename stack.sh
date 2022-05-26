@@ -204,8 +204,8 @@ if [ ! -z "$gpu_pkg" ]; then
 
   echo -e "Video card driver module added into the '/etc/mkinitcpio.conf/'"
 
-  mkinitcpio -p linux
-  mkinitcpio -p linux-lts
+  mkinitcpio -P linux
+  mkinitcpio -P linux-lts
 
   echo -e "Initramfs has been re-genereated successfully"
   echo -e "GPU packages have been installed"
