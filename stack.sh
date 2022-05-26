@@ -22,6 +22,7 @@ while [ -z "$keymap_path" ]; do
 done
 
 echo "KEYMAP=$keymap" > /etc/vconsole.conf
+loadkeys $keymap
 
 echo -e "Keyboard layout has been set to '$keymap'"
 
