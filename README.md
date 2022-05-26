@@ -69,7 +69,7 @@ In windows you can create a bootable installation media using the general purpos
 
 Once you are ready with the bootable media plug it to the system you want to apply the installation. Choose to boot with that drive and you will be immediately prompt with the archlinux installation menu. Pick the option *Arch Linux install medium* and wait until you get in the *archiso* as *root*.
 
-> Note that you must disable the *secure boot* option in your BIOS otherwise the installation wont boot.
+> Note that you must disable the *secure boot* option in your BIOS otherwise the installation wont boot, after the installation you can enable it back again.
 
 In high-dpi screens you can increase the font size by running `setfont ter-132n`.
 
