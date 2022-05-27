@@ -199,18 +199,21 @@ if [ ! -z "$gpu_pkg" ]; then
 
   pacman -S $gpu_pkg
 
+  echo -e "GPU packages have been installed"
+else
+  echo -e "No gpu packages will be installed"
+fi
+
+if [ ! -z "$gpu_module" ]; then
+  echo -e "\nRe-generating initramfs for the '$gpu_vendor' gpu modules..."
+
   sed -i "s/MODULES=(\(.*\))$/MODULES=(\1 $gpu_module)/" /etc/mkinitcpio.conf
   sed -i "s/MODULES=( \(.*\))$/MODULES=(\1)/" /etc/mkinitcpio.conf
-
-  echo -e "Video card driver module added into the '/etc/mkinitcpio.conf/'"
 
   mkinitcpio -P linux
   mkinitcpio -P linux-lts
 
-  echo -e "Initramfs has been re-genereated successfully"
-  echo -e "GPU packages have been installed"
-else
-  echo -e "No gpu packages will be installed"
+  echo -e "Images have been re-genereated successfully"
 fi
 
 echo -e "\nInstalling the bootloader via GRUB..."

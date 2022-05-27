@@ -70,7 +70,7 @@ if [[ ! $answer =~ ^(yes|y)$ ]]; then
   exit 0
 fi
 
-echo -e "\nErasing any existing GPT and MBR data tables..."
+echo -e "\nClearing any pre-existing GPT or MBR data table..."
 
 sgdisk -Z "$device"
 
