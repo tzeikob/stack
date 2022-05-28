@@ -160,10 +160,26 @@ pacman -Syy
 
 echo -e "The mirror list is now up to date"
 
-echo -e "\nInstalling base linux packages..."
+echo -e "\nInstalling the base system..."
 
-pacstrap /mnt base linux linux-headers linux-lts linux-lts-headers linux-firmware \
-  archlinux-keyring reflector rsync sudo
+read -p "Which linux kernels to install: [STABLE/lts/both] " linux_kernels
+linux_kernels=${linux_kernels:-"stable"}
+
+while [[ ! $linux_kernels =~ ^(stable|lts|both)$ ]]; do
+  echo -e "Invalid linux kernel: '$linux_kernels'"
+  read -p "Please enter which linux kernels to install: [STABLE/lts/both] " linux_kernels
+  linux_kernels=${linux_kernels:-"stable"}
+done
+
+if [[ $linux_kernels =~ ^stable$ ]]; then
+  linux_kernels="linux linux-headers"
+elif [[ $linux_kernels =~ ^lts$ ]]; then
+  linux_kernels="linux-lts linux-lts-headers"
+else
+  linux_kernels="linux linux-headers linux-lts linux-lts-headers"
+fi
+
+pacstrap /mnt base $linux_kernels linux-firmware archlinux-keyring reflector rsync sudo
 
 echo -e "Base packages have been installed successfully"
 
