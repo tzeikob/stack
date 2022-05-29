@@ -56,7 +56,7 @@ while [[ ! $swapsize =~ ^[0-9]+$ ]]; do
 done
 
 if [[ $swapsize -gt 0 ]]; then
-  echo -e "Swap size set to '$swapsize' GB"
+  echo -e "Swap size set to '${swapsize}GB'"
 else
   echo -e 'Swap has been skipped'
 fi
