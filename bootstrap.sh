@@ -172,14 +172,17 @@ while [[ ! $linux_kernels =~ ^(stable|lts|both)$ ]]; do
 done
 
 if [[ $linux_kernels =~ ^stable$ ]]; then
-  linux_kernels="linux linux-headers"
+  linux_kernels="linux"
+  linux_headers="linux-headers"
 elif [[ $linux_kernels =~ ^lts$ ]]; then
-  linux_kernels="linux-lts linux-lts-headers"
+  linux_kernels="linux-lts"
+  linux_headers="linux-lts-headers"
 else
-  linux_kernels="linux linux-headers linux-lts linux-lts-headers"
+  linux_kernels="linux linux-lts"
+  linux_headers="linux-headers linux-lts linux-lts-headers"
 fi
 
-pacstrap /mnt base $linux_kernels linux-firmware archlinux-keyring reflector rsync sudo
+pacstrap /mnt base $linux_kernels $linux_headers linux-firmware archlinux-keyring reflector rsync sudo
 
 echo -e "Base packages have been installed successfully"
 

@@ -210,8 +210,7 @@ if [ ! -z "$gpu_module" ]; then
   sed -i "s/MODULES=(\(.*\))$/MODULES=(\1 $gpu_module)/" /etc/mkinitcpio.conf
   sed -i "s/MODULES=( \(.*\))$/MODULES=(\1)/" /etc/mkinitcpio.conf
 
-  mkinitcpio -P linux
-  mkinitcpio -P linux-lts
+  mkinitcpio -P
 
   echo -e "Images have been re-genereated successfully"
 fi
