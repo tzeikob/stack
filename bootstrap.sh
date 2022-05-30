@@ -179,7 +179,7 @@ elif [[ $linux_kernels =~ ^lts$ ]]; then
   linux_headers="linux-lts-headers"
 else
   linux_kernels="linux linux-lts"
-  linux_headers="linux-headers linux-lts linux-lts-headers"
+  linux_headers="linux-headers linux-lts-headers"
 fi
 
 pacstrap /mnt base $linux_kernels $linux_headers linux-firmware archlinux-keyring reflector rsync sudo
