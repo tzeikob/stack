@@ -70,39 +70,56 @@ if [[ ! $answer =~ ^(yes|y)$ ]]; then
   exit 0
 fi
 
-echo -e "\nClearing any pre-existing GPT or MBR data table..."
+echo -e "\nCreating a clean GPT table..."
 
-sgdisk -Z "$device"
+parted --script $device mklabel gpt
 
-echo -e "Creating a clean GPT table free of partitions..."
-
-sgdisk -og "$device"
+echo -e "GPT table has been created"
 
 echo -e "Creating the boot EFI partition..."
 
-sgdisk -n 1:0:+500M -c 1:"EFI System Partition" -t 1:ef00 "$device"
+boot_start=1
+boot_end=301
+
+parted --script $device mkpart "Boot" fat32 ${boot_start}MiB ${boot_end}MiB
+parted --script $device set 1 boot on
 dev_efi=${device}1
+
+echo -e "EFI boot partition has been created under '$dev_efi'"
 
 if [[ $swapsize -gt 0 ]]; then
   echo -e "Creating the swap partition..."
 
-  sgdisk -n 2:0:+${swapsize}G -c 2:"Swap Partition" -t 2:8200 "$device"
+  swap_start=$boot_end
+  swap_end=$(expr $swap_start + $swapsize \* 1024)
+
+  parted --script $device mkpart "Swap" linux-swap ${swap_start}Mib ${swap_end}Mib
   dev_swap=${device}2
+
+  echo -e "Swap partition has been created under '$dev_swap'"
 
   echo -e "Creating the root partition..."
 
-  sgdisk -n 3:0:0 -c 3:"Root Partition" -t 3:8300 "$device"
+  root_start=$swap_end
+
+  parted --script $device mkpart "Root" ext4 ${root_start}Mib 100%
   dev_root=${device}3
+
+  echo -e "The root partition has been created under '$dev_root'"
 else
   echo -e "Creating the root partition..."
 
-  sgdisk -n 2:0:0 -c 2:"Root Partition" -t 2:8300 "$device"
+  root_start=$boot_end
+
+  parted --script $device mkpart "Root" ext4 ${root_start}Mib 100%
   dev_root=${device}2
+
+  echo -e "The root partition has been created: '$dev_root'"
 fi
 
 echo -e "Partitioning on '$device' has been completed:\n"
 
-sgdisk -p "$device"
+parted --script $device print
 
 echo -e "\nFormatting partitions in '$device'..."
 echo -e "Formating the '$dev_efi' boot EFI partition as FAT32..."
