@@ -129,7 +129,7 @@ pacman -S base-devel grub efibootmgr mtools dosfstools \
 
 echo -e "\nInstalling power management utilities..."
 
-pacman -S acpi acpid acpi_call tlp
+pacman -S acpi acpid acpi_call
 
 echo -e "\nInstalling network utility packages..."
 
@@ -201,7 +201,6 @@ else
   fi
 
   gpu_pkg="$gpu_pkg nvidia-utils nvidia-settings"
-
   gpu_module="nvidia"
 fi
 
