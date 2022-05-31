@@ -79,7 +79,7 @@ echo -e "GPT table has been created"
 echo -e "Creating the boot EFI partition..."
 
 boot_start=1
-boot_end=301
+boot_end=501
 
 parted --script $device mkpart "Boot" fat32 ${boot_start}MiB ${boot_end}MiB
 parted --script $device set 1 boot on
