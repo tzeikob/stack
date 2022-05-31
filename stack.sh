@@ -2,7 +2,8 @@
 
 shopt -s nocasematch
 
-country=${1:-"Germany"}
+kernels=${1:-"all"}
+country=${2:-"germany"}
 
 echo -e "Starting the stack installation process..."
 
@@ -190,7 +191,17 @@ elif [[ $gpu_vendor =~ ^virtual$ ]]; then
   gpu_module=""
 else
   gpu_vendor="nvidia"
-  gpu_pkg="nvidia nvidia-lts nvidia-utils nvidia-settings"
+
+  if [[ $kernels =~ ^stable$ ]]; then
+    gpu_pkg="nvidia"
+  elif [[ $kernels =~ ^lts$ ]]; then
+    gpu_pkg="nvidia-lts"
+  else
+    gpu_pkg="nvidia nvidia-lts"
+  fi
+
+  gpu_pkg="$gpu_pkg nvidia-utils nvidia-settings"
+
   gpu_module="nvidia"
 fi
 

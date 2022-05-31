@@ -179,19 +179,19 @@ echo -e "The mirror list is now up to date"
 
 echo -e "\nInstalling the base system..."
 
-read -p "Which linux kernels to install: [STABLE/lts/both] " linux_kernels
-linux_kernels=${linux_kernels:-"stable"}
+read -p "Which linux kernels to install: [stable/lts/ALL] " kernels
+kernels=${kernels:-"all"}
 
-while [[ ! $linux_kernels =~ ^(stable|lts|both)$ ]]; do
-  echo -e "Invalid linux kernel: '$linux_kernels'"
-  read -p "Please enter which linux kernels to install: [STABLE/lts/both] " linux_kernels
-  linux_kernels=${linux_kernels:-"stable"}
+while [[ ! $kernels =~ ^(stable|lts|all)$ ]]; do
+  echo -e "Invalid linux kernel: '$kernels'"
+  read -p "Please enter which linux kernels to install: [stable/lts/ALL] " kernels
+  kernels=${kernels:-"all"}
 done
 
-if [[ $linux_kernels =~ ^stable$ ]]; then
+if [[ $kernels =~ ^stable$ ]]; then
   linux_kernels="linux"
   linux_headers="linux-headers"
-elif [[ $linux_kernels =~ ^lts$ ]]; then
+elif [[ $kernels =~ ^lts$ ]]; then
   linux_kernels="linux-lts"
   linux_headers="linux-lts-headers"
 else
@@ -215,7 +215,7 @@ echo -e "Moving to the new system in 10 secs (ctrl-c to skip)..."
 sleep 10
 
 arch-chroot /mnt \
-  bash -c "$(curl -sLo- https://raw.githubusercontent.com/tzeikob/stack/${branch:-master}/stack.sh)" -s "$country" &&
+  bash -c "$(curl -sLo- https://raw.githubusercontent.com/tzeikob/stack/${branch:-master}/stack.sh)" -s "$kernels" "$country" &&
   echo -e "Unmounting disk partitions under '/mnt'..." &&
   umount -R /mnt &&
   echo -e "Rebooting the system in 10 secs (ctrl-c to skip)..." &&
