@@ -126,15 +126,15 @@ if [[ $swapsize -gt 0 ]]; then
   echo -e "Creating the swap file..."
 
   dd if=/dev/zero of=/swapfile bs=1M count=$(expr $swapsize \* 1024) status=progress
-  chmod 600 /swapfile
-  mkswap /swapfile
+  chmod 0600 /swapfile
+  mkswap -U clear /swapfile
 
   echo -e "Enabling swap..."
 
-  cp /etc/fstab /etc/fstab.bak
-  echo "/swapfile none swap sw 0 0" | tee -a /etc/fstab
-
   swapon -a && free -m
+
+  cp /etc/fstab /etc/fstab.bak
+  echo "/swapfile none swap defaults 0 0" | tee -a /etc/fstab
 
   echo -e "Swap file has been set successfully to '/swapfile'"
 else
