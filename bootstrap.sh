@@ -167,7 +167,7 @@ sleep 10
 arch-chroot /mnt \
   bash -c "$(curl -sLo- https://raw.githubusercontent.com/tzeikob/stack/${branch:-master}/stack.sh)" -s "$kernels" "$country" &&
   echo -e "Unmounting disk partitions under '/mnt'..." &&
-  umount -R /mnt &&
+  umount -R /mnt ||
   echo -e "Rebooting the system in 10 secs (ctrl-c to skip)..." &&
   sleep 10 &&
   reboot
