@@ -274,7 +274,6 @@ echo -e "\nEnabling system services..."
 systemctl enable systemd-timesyncd
 systemctl enable NetworkManager
 systemctl enable bluetooth
-systemctl enable tlp
 systemctl enable acpid
 systemctl enable cups
 systemctl enable sshd
