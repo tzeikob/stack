@@ -46,21 +46,6 @@ done
 
 echo -e "Installation disk set to block device '$device'"
 
-read -p "Enter the size of the swap partition in GB (0 to skip): [0] " swapsize
-swapsize=${swapsize:-0}
-
-while [[ ! $swapsize =~ ^[0-9]+$ ]]; do
-  echo -e "Invalid swap size: '$swapsize'"
-  read -p "Please enter a valid size (0 to skip): [0] " swapsize
-  swapsize=${swapsize:-0}
-done
-
-if [[ $swapsize -gt 0 ]]; then
-  echo -e "Swap size set to '${swapsize}GB'"
-else
-  echo -e 'Swap has been skipped'
-fi
-
 echo -e "\nIMPORTANT, all data in '$device' will be lost"
 read -p "Shall we proceed and partition the disk? [y/N] " answer
 
@@ -78,71 +63,36 @@ echo -e "GPT table has been created"
 
 echo -e "Creating the boot EFI partition..."
 
-boot_start=1
-boot_end=501
-
-parted --script $device mkpart "Boot" fat32 ${boot_start}MiB ${boot_end}MiB
+parted --script $device mkpart "Boot" fat32 1MiB 501MiB
 parted --script $device set 1 boot on
-dev_efi=${device}1
 
-echo -e "EFI boot partition has been created under '$dev_efi'"
+echo -e "EFI boot partition has been created under '${device}1'"
 
-if [[ $swapsize -gt 0 ]]; then
-  echo -e "Creating the swap partition..."
+echo -e "Creating the root partition..."
 
-  swap_start=$boot_end
-  swap_end=$(expr $swap_start + $swapsize \* 1024)
+parted --script $device mkpart "Root" ext4 501Mib 100%
 
-  parted --script $device mkpart "Swap" linux-swap ${swap_start}Mib ${swap_end}Mib
-  dev_swap=${device}2
-
-  echo -e "Swap partition has been created under '$dev_swap'"
-
-  echo -e "Creating the root partition..."
-
-  root_start=$swap_end
-
-  parted --script $device mkpart "Root" ext4 ${root_start}Mib 100%
-  dev_root=${device}3
-
-  echo -e "The root partition has been created under '$dev_root'"
-else
-  echo -e "Creating the root partition..."
-
-  root_start=$boot_end
-
-  parted --script $device mkpart "Root" ext4 ${root_start}Mib 100%
-  dev_root=${device}2
-
-  echo -e "The root partition has been created: '$dev_root'"
-fi
+echo -e "The root partition has been created under '${device}2'"
 
 echo -e "Partitioning on '$device' has been completed:\n"
 
 parted --script $device print
 
 echo -e "\nFormatting partitions in '$device'..."
-echo -e "Formating the '$dev_efi' boot EFI partition as FAT32..."
+echo -e "Formating the '${device}1' boot EFI partition as FAT32..."
 
-mkfs.fat -F 32 $dev_efi
+mkfs.fat -F 32 ${device}1
 
-if [[ $swapsize -gt 0 ]]; then
-  echo -e "Formating the '$dev_swap' swap partition..."
+echo -e "Formating the '${device}2' root partition as EXT4..."
 
-  mkswap $dev_swap
-  swapon $dev_swap
-fi
-
-echo -e "Formating the '$dev_root' root partition as EXT4..."
-
-mkfs.ext4 -F -q $dev_root
+mkfs.ext4 -F -q ${device}2
 
 echo -e "Formating has been completed successfully"
 
 echo -e "\nMounting the boot and root partitions..."
 
-mount $dev_root /mnt
-mount --mkdir $dev_efi /mnt/boot
+mount ${device}2 /mnt
+mount --mkdir ${device}1 /mnt/boot
 
 echo -e "Partitions have been mounted under '/mnt':\n"
 

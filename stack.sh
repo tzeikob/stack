@@ -109,6 +109,38 @@ sed -i 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
 
 echo -e "User '$username' has now sudo priviledges"
 
+echo -e "\nSetting up the swap file..."
+
+read -p "Enter the size of the swap file in GB (0 to skip): [0] " swapsize
+swapsize=${swapsize:-0}
+
+while [[ ! $swapsize =~ ^[0-9]+$ ]]; do
+  echo -e "Invalid swap file size: '$swapsize'"
+  read -p "Please enter a valid size in GB (0 to skip): [0] " swapsize
+  swapsize=${swapsize:-0}
+done
+
+if [[ $swapsize -gt 0 ]]; then
+  echo -e "Swap file size set to '${swapsize}GB'"
+
+  echo -e "Creating the swap file..."
+
+  dd if=/dev/zero of=/swapfile bs=1M count=$(expr $swapsize \* 1024) status=progress
+  chmod 600 /swapfile
+  mkswap /swapfile
+
+  echo -e "Enabling swap..."
+
+  cp /etc/fstab /etc/fstab.bak
+  echo "/swapfile none swap sw 0 0" | tee -a /etc/fstab
+
+  swapon -a && free -m
+
+  echo -e "Swap file has been set successfully to '/swapfile'"
+else
+  echo -e "No swap file will be set"
+fi
+
 echo -e "\nRefreshing the mirror list from servers in '$country'..."
 
 reflector --country $country --age 8 --sort age --save /etc/pacman.d/mirrorlist
