@@ -267,6 +267,11 @@ sed -i 's/#GRUB_DISABLE_SUBMENU=y/GRUB_DISABLE_SUBMENU=y/' /etc/default/grub
 
 grub-mkconfig -o /boot/grub/grub.cfg
 
+if [[ $gpu_vendor =~ ^virtual$ ]]; then
+  mkdir -p /boot/EFI/BOOT
+  cp /boot/EFI/GRUB/grubx64.efi /boot/EFI/BOOT/BOOTX64.EFI
+fi
+
 echo -e "Bootloader has been installed"
 
 echo -e "\nEnabling system services..."
