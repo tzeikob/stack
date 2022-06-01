@@ -131,7 +131,7 @@ if [[ $swapsize -gt 0 ]]; then
 
   echo -e "Enabling swap..."
 
-  swapon -a && free -m
+  swapon /swapfile && free -m
 
   cp /etc/fstab /etc/fstab.bak
   echo "/swapfile none swap defaults 0 0" | tee -a /etc/fstab
