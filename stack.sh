@@ -157,7 +157,7 @@ echo -e "\nInstalling extra base packages..."
 pacman -S base-devel grub efibootmgr mtools dosfstools gdisk parted \
   bash-completion man-db man-pages texinfo \
   cups bluez bluez-utils \
-  terminus-font vim nano git htop
+  terminus-font vim nano git htop tree
 
 echo -e "\nInstalling power management utilities..."
 
