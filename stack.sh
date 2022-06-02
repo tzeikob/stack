@@ -109,6 +109,18 @@ sed -i 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
 
 echo -e "User '$username' has now sudo priviledges"
 
+echo -e "\nHardening system's security..."
+
+sed -i 's;# dir = /var/run/faillock;dir = /var/lib/faillock;' /etc/security/faillock.conf
+
+echo -e "Faillocks set to be persistent after system reboot"
+
+sed -i 's/#PermitRootLogin .*/PermitRootLogin no/' /etc/ssh/sshd_config
+
+echo -e "Disable permission for SSH with the root user"
+
+echo -e "Security configuration has been completed"
+
 echo -e "\nSetting up the swap file..."
 
 read -p "Enter the size of the swap file in GB (0 to skip): [0] " swapsize
@@ -157,7 +169,7 @@ echo -e "\nInstalling extra base packages..."
 pacman -S base-devel grub efibootmgr mtools dosfstools gdisk parted \
   bash-completion man-db man-pages texinfo \
   cups bluez bluez-utils \
-  terminus-font vim nano git htop tree
+  terminus-font vim nano git htop tree arch-audit
 
 echo -e "\nInstalling power management utilities..."
 
