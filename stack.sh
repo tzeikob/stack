@@ -109,18 +109,6 @@ sed -i 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
 
 echo -e "User '$username' has now sudo priviledges"
 
-echo -e "\nHardening system's security..."
-
-sed -i 's;# dir = /var/run/faillock;dir = /var/lib/faillock;' /etc/security/faillock.conf
-
-echo -e "Faillocks set to be persistent after system reboot"
-
-sed -i 's/#PermitRootLogin .*/PermitRootLogin no/' /etc/ssh/sshd_config
-
-echo -e "Disable permission for SSH with the root user"
-
-echo -e "Security configuration has been completed"
-
 echo -e "\nSetting up the swap file..."
 
 read -p "Enter the size of the swap file in GB (0 to skip): [0] " swapsize
@@ -285,6 +273,18 @@ if [[ $gpu_vendor =~ ^virtual$ ]]; then
 fi
 
 echo -e "Bootloader has been installed"
+
+echo -e "\nHardening system's security..."
+
+sed -i 's;# dir = /var/run/faillock;dir = /var/lib/faillock;' /etc/security/faillock.conf
+
+echo -e "Faillocks set to be persistent after system reboot"
+
+sed -i 's/#PermitRootLogin .*/PermitRootLogin no/' /etc/ssh/sshd_config
+
+echo -e "Disable permission for SSH with the root user"
+
+echo -e "Security configuration has been completed"
 
 echo -e "\nEnabling system services..."
 
