@@ -38,10 +38,12 @@ echo -e "The following disks found in your system:"
 lsblk
 
 read -p "Enter the block device disk the new system will be installed on: " device
+device=/dev/$device
 
 while [ ! -b "$device" ]; do
   echo -e "Invalid block device: '$device'"
   read -p "Please enter a valid block device: " device
+  device=/dev/$device
 done
 
 echo -e "Installation disk set to block device '$device'"
