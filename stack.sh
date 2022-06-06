@@ -154,7 +154,7 @@ echo -e "Reflector mirror country set to '$country'"
 
 echo -e "\nInstalling extra base packages..."
 
-pacman -S base-devel pacman-contrib grub efibootmgr mtools dosfstools gdisk parted \
+pacman -S base-devel pacman-contrib pkgstats grub efibootmgr mtools dosfstools gdisk parted \
   bash-completion man-db man-pages texinfo \
   cups bluez bluez-utils \
   terminus-font vim nano git htop tree arch-audit
