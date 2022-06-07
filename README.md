@@ -87,6 +87,8 @@ You can list all the available key maps with the following command:
 ls /usr/share/kbd/keymaps/**/*.map.gz | less
 ```
 
+> Note, the `loadkeys` command requires only the filename without the `map.gz` extension.
+
 ### Connect to the internet
 
 If your system is using an ethernet cable to connect to the internet then you probably are ready to skip this step.
