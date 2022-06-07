@@ -163,14 +163,14 @@ genfstab -U /mnt >> /mnt/etc/fstab
 echo -e "The file system table has been created in '/mnt/etc/fstab'"
 
 echo -e "\nBootstrap process has been completed successfully"
-echo -e "Moving to the new system in 10 secs (ctrl-c to skip)..."
+echo -e "Moving to the new system in 15 secs (ctrl-c to skip)..."
 
-sleep 10
+sleep 15
 
 arch-chroot /mnt \
   bash -c "$(curl -sLo- https://raw.githubusercontent.com/tzeikob/stack/$branch/stack.sh)" -s "$device" "$kernels" "$country" &&
   echo -e "Unmounting all partitions under '/mnt'..." &&
   umount -R /mnt || echo -e "Ignoring any busy mounted points..." &&
-  echo -e "Rebooting the system in 10 secs (ctrl-c to skip)..." &&
-  sleep 10 &&
+  echo -e "Rebooting the system in 15 secs (ctrl-c to skip)..." &&
+  sleep 15 &&
   reboot
