@@ -46,20 +46,20 @@ if [[ $uefi == true ]]; then
   parted --script $device mkpart "Boot" fat32 1MiB 501MiB
   parted --script $device set 1 boot on
 
-  echo -e "EFI boot partition has been created under '${device}1'"
+  echo -e "EFI boot partition created under '${device}1'"
 
   parted --script $device mkpart "Root" ext4 501Mib 100%
 
-  echo -e "Root partition has been created under '${device}2'"
+  echo -e "Root partition created under '${device}2'"
 
-  echo -e "Partitioning on '$device' has been completed:\n"
+  echo -e "Partitioning table completed successfully:\n"
 
   parted --script $device print
 
-  echo -e "\nFormatting partitions in '$device'..."
+  echo -e "Formatting partitions in '$device'..."
 
   mkfs.fat -F 32 ${device}1
-  mkfs.ext4 -F -q ${device}2
+  mkfs.ext4 -F ${device}2
 
   echo -e "Formating has been completed successfully"
 
@@ -78,9 +78,9 @@ else
   parted --script $device mkpart primary ext4 1Mib 100%
   parted --script $device set 1 boot on
 
-  echo -e "Root partition has been created under '${device}1'"
+  echo -e "Root partition created under '${device}1'"
 
-  echo -e "Partitioning on '$device' has been completed:\n"
+  echo -e "Partitioning table completed successfully:\n"
 
   parted --script $device print
 
@@ -97,7 +97,7 @@ else
   echo -e "Root partition '${device}1' mounted to '/mnt'"
 fi
 
-echo -e "\nDisk layout of the '$device' after partitioning:\n"
+echo -e "Disk layout of '$device' after partitioning:\n"
 
 lsblk $device
 
