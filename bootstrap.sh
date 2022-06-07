@@ -13,25 +13,6 @@ fi
 echo -e "Stack v0.0.1 - $([ $uefi == true ] && echo 'UEFI' || echo 'BIOS')"
 echo -e "Starting the bootstrap process...\n"
 
-echo -e "Setting keyboard layout..."
-
-read -p "Enter the key map of your keyboard: [us] " keymap
-keymap=${keymap:-"us"}
-
-keymap_path=$(find /usr/share/kbd/keymaps/ -type f -name "$keymap.map.gz")
-
-while [ -z "$keymap_path" ]; do
-  echo -e "Invalid key map: '$keymap'"
-  read -p "Please enter a valid keymap: [us] " keymap
-  keymap=${keymap:-"us"}
-
-  keymap_path=$(find /usr/share/kbd/keymaps/ -type f -name "$keymap.map.gz")
-done
-
-loadkeys $keymap
-
-echo -e "Keyboard layout set to '$keymap'"
-
 echo -e "\nProceeding to the disk layout..."
 echo -e "The following disks found in your system:"
 

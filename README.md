@@ -73,6 +73,20 @@ Once you are ready with the bootable media plug it to the system you want to app
 
 In high-dpi screens you can increase the font size by running `setfont ter-132n`.
 
+### Set the console keyboard layout
+
+For those who have a non-us keyboard you can set the key map that corresponds to your's keyboard layout, like so:
+
+```sh
+loadkeys <key_map>
+```
+
+You can list all the available key maps with the following command:
+
+```sh
+ls /usr/share/kbd/keymaps/**/*.map.gz | less
+```
+
 ### Connect to the internet
 
 If your system is using an ethernet cable to connect to the internet then you probably are ready to skip this step.
