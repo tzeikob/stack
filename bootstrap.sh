@@ -3,15 +3,14 @@
 shopt -s nocasematch
 
 branch=$1
-
-echo -e "Stack v0.0.1"
-echo -e "Starting the bootstrap process...\n"
+uefi=true
 
 if [ ! -d "/sys/firmware/efi/efivars" ]; then
-  echo -e "This script supports only UEFI systems"
-  echo -e "Process exiting with code: 1"
-  exit 1
+  uefi=false
 fi
+
+echo -e "Stack v0.0.1 - $([ $uefi == true ] && echo 'UEFI' || echo 'BIOS')"
+echo -e "Starting the bootstrap process...\n"
 
 echo -e "Setting keyboard layout..."
 
@@ -57,46 +56,77 @@ if [[ ! $answer =~ ^(yes|y)$ ]]; then
   exit 0
 fi
 
-echo -e "\nCreating a clean GPT table..."
+if [[ $uefi == true ]]; then
+  echo -e "\nCreating a clean GPT partition table..."
 
-parted --script $device mklabel gpt
+  parted --script $device mklabel gpt
 
-echo -e "GPT table has been created"
+  echo -e "GPT partition table has been created"
 
-echo -e "Creating the boot EFI partition..."
+  echo -e "Creating the boot EFI partition..."
 
-parted --script $device mkpart "Boot" fat32 1MiB 501MiB
-parted --script $device set 1 boot on
+  parted --script $device mkpart "Boot" fat32 1MiB 501MiB
+  parted --script $device set 1 boot on
 
-echo -e "EFI boot partition has been created under '${device}1'"
+  echo -e "EFI boot partition has been created under '${device}1'"
 
-echo -e "Creating the root partition..."
+  echo -e "Creating the root partition..."
 
-parted --script $device mkpart "Root" ext4 501Mib 100%
+  parted --script $device mkpart "Root" ext4 501Mib 100%
 
-echo -e "The root partition has been created under '${device}2'"
+  echo -e "The root partition has been created under '${device}2'"
 
-echo -e "Partitioning on '$device' has been completed:\n"
+  echo -e "Partitioning on '$device' has been completed:\n"
 
-parted --script $device print
+  parted --script $device print
 
-echo -e "\nFormatting partitions in '$device'..."
-echo -e "Formating the '${device}1' boot EFI partition as FAT32..."
+  echo -e "\nFormatting partitions in '$device'..."
+  echo -e "Formating the '${device}1' boot EFI partition as FAT32..."
 
-mkfs.fat -F 32 ${device}1
+  mkfs.fat -F 32 ${device}1
 
-echo -e "Formating the '${device}2' root partition as EXT4..."
+  echo -e "Formating the '${device}2' root partition as EXT4..."
 
-mkfs.ext4 -F -q ${device}2
+  mkfs.ext4 -F -q ${device}2
 
-echo -e "Formating has been completed successfully"
+  echo -e "Formating has been completed successfully"
 
-echo -e "\nMounting the boot and root partitions..."
+  echo -e "\nMounting the boot and root partitions..."
 
-mount ${device}2 /mnt
-mount --mkdir ${device}1 /mnt/boot
+  mount ${device}2 /mnt
+  mount --mkdir ${device}1 /mnt/boot
+else
+  echo -e "\nCreating a clean MBR partition table..."
 
-echo -e "Partitions have been mounted under '/mnt':\n"
+  parted --script $device mklabel msdos
+
+  echo -e "MBR partition table has been created"
+
+  echo -e "Creating the root partition..."
+
+  parted --script $device mkpart primary ext4 1Mib 100%
+  parted --script $device set 1 boot on
+
+  echo -e "The root partition has been created under '${device}1'"
+
+  echo -e "Partitioning on '$device' has been completed:\n"
+
+  parted --script $device print
+
+  echo -e "\nFormatting partitions in '$device'..."
+
+  echo -e "Formating the '${device}1' root partition as EXT4..."
+
+  mkfs.ext4 -F -q ${device}1
+
+  echo -e "Formating has been completed successfully"
+
+  echo -e "\nMounting the root partition..."
+
+  mount ${device}1 /mnt
+fi
+
+echo -e "Disk layout has been completed:\n"
 
 lsblk $device
 
@@ -167,7 +197,7 @@ echo -e "Moving to the new system in 10 secs (ctrl-c to skip)..."
 sleep 10
 
 arch-chroot /mnt \
-  bash -c "$(curl -sLo- https://raw.githubusercontent.com/tzeikob/stack/${branch:-master}/stack.sh)" -s "$kernels" "$country" &&
+  bash -c "$(curl -sLo- https://raw.githubusercontent.com/tzeikob/stack/${branch:-master}/stack.sh)" -s "$device" "$kernels" "$country" &&
   echo -e "Unmounting disk partitions under '/mnt'..." &&
   umount -R /mnt || echo -e "Ignoring any busy mounted points..." &&
   echo -e "Rebooting the system in 10 secs (ctrl-c to skip)..." &&

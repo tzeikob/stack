@@ -2,8 +2,15 @@
 
 shopt -s nocasematch
 
-kernels=${1:-"all"}
-country=${2:-"germany"}
+device=$1
+kernels=${2:-"all"}
+country=${3:-"germany"}
+
+uefi=true
+
+if [ ! -d "/sys/firmware/efi/efivars" ]; then
+  uefi=false
+fi
 
 echo -e "Starting the stack installation process..."
 
@@ -154,10 +161,11 @@ echo -e "Reflector mirror country set to '$country'"
 
 echo -e "\nInstalling extra base packages..."
 
-pacman -S base-devel pacman-contrib pkgstats grub efibootmgr mtools dosfstools gdisk parted \
+pacman -S base-devel pacman-contrib pkgstats grub mtools dosfstools gdisk parted \
   bash-completion man-db man-pages texinfo \
   cups bluez bluez-utils \
-  terminus-font vim nano git htop tree arch-audit
+  terminus-font vim nano git htop tree arch-audit \
+  $([ $uefi == true ] && echo 'efibootmgr')
 
 echo -e "\nInstalling power management utilities..."
 
@@ -258,7 +266,11 @@ fi
 
 echo -e "\nInstalling the bootloader via GRUB..."
 
-grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
+if [[ $uefi == true ]]; then
+  grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
+else
+  grub-install --target=i386-pc $device
+fi
 
 sed -i '/#GRUB_SAVEDEFAULT=true/i GRUB_DEFAULT=saved' /etc/default/grub
 sed -i 's/#GRUB_SAVEDEFAULT=true/GRUB_SAVEDEFAULT=true/' /etc/default/grub
@@ -266,7 +278,7 @@ sed -i 's/#GRUB_DISABLE_SUBMENU=y/GRUB_DISABLE_SUBMENU=y/' /etc/default/grub
 
 grub-mkconfig -o /boot/grub/grub.cfg
 
-if [[ $gpu_vendor =~ ^virtual$ ]]; then
+if [[ $gpu_vendor =~ ^virtual$ && $uefi == true ]]; then
   mkdir -p /boot/EFI/BOOT
   cp /boot/EFI/GRUB/grubx64.efi /boot/EFI/BOOT/BOOTX64.EFI
 fi
