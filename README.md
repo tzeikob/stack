@@ -75,7 +75,7 @@ In high-dpi screens you can increase the font size by running `setfont ter-132n`
 
 ### Set the console keyboard layout
 
-For those who have a non-us keyboard you can set the key map that corresponds to your's keyboard layout, like so:
+For those who have a non-us keyboard you can set the key map that corresponds to yours keyboard layout:
 
 ```sh
 loadkeys <key_map>
@@ -87,7 +87,7 @@ You can list all the available key maps with the following command:
 ls /usr/share/kbd/keymaps/**/*.map.gz | less
 ```
 
-> Note, the `loadkeys` command requires only the filename without the `map.gz` extension.
+> Note, the `loadkeys` command requires only the filename without the file extension (.map.gz).
 
 ### Connect to the internet
 
