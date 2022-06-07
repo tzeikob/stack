@@ -105,7 +105,7 @@ echo -e "\nUpdating the system clock..."
 
 timedatectl set-ntp true
 timedatectl status
-sleep 5
+sleep 10
 
 echo -e "System clock has been updated"
 
