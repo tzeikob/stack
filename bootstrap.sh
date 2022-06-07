@@ -13,7 +13,7 @@ fi
 echo -e "Stack v0.0.1 - $([ $uefi == true ] && echo 'UEFI' || echo 'BIOS')"
 echo -e "Starting the bootstrap process...\n"
 
-echo -e "\nPartitioning the installation disk..."
+echo -e "Partitioning the installation disk..."
 echo -e "The following disks found in your system:"
 
 lsblk
@@ -59,7 +59,7 @@ if [[ $uefi == true ]]; then
   echo -e "Formatting partitions in '$device'..."
 
   mkfs.fat -F 32 ${device}1
-  mkfs.ext4 -F ${device}2
+  mkfs.ext4 -F -q ${device}2
 
   echo -e "Formating has been completed successfully"
 
