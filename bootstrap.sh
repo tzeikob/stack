@@ -2,7 +2,8 @@
 
 shopt -s nocasematch
 
-branch=$1
+branch=${1:-"master"}
+
 uefi=true
 
 if [ ! -d "/sys/firmware/efi/efivars" ]; then
@@ -197,7 +198,7 @@ echo -e "Moving to the new system in 10 secs (ctrl-c to skip)..."
 sleep 10
 
 arch-chroot /mnt \
-  bash -c "$(curl -sLo- https://raw.githubusercontent.com/tzeikob/stack/${branch:-master}/stack.sh)" -s "$device" "$kernels" "$country" &&
+  bash -c "$(curl -sLo- https://raw.githubusercontent.com/tzeikob/stack/$branch/stack.sh)" -s "$device" "$kernels" "$country" &&
   echo -e "Unmounting disk partitions under '/mnt'..." &&
   umount -R /mnt || echo -e "Ignoring any busy mounted points..." &&
   echo -e "Rebooting the system in 10 secs (ctrl-c to skip)..." &&
