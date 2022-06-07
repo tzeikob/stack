@@ -13,17 +13,17 @@ fi
 echo -e "Stack v0.0.1 - $([ $uefi == true ] && echo 'UEFI' || echo 'BIOS')"
 echo -e "Starting the bootstrap process...\n"
 
-echo -e "\nProceeding to the disk layout..."
+echo -e "\nPartitioning the installation disk..."
 echo -e "The following disks found in your system:"
 
 lsblk
 
-read -p "Enter the block device disk the new system will be installed on: " device
+read -p "Enter the name of disk the new system will be installed on: " device
 device=/dev/$device
 
 while [ ! -b "$device" ]; do
-  echo -e "Invalid block device: '$device'"
-  read -p "Please enter a valid block device: " device
+  echo -e "Invalid disk device: '$device'"
+  read -p "Please enter a valid disk device: " device
   device=/dev/$device
 done
 
@@ -43,32 +43,22 @@ if [[ $uefi == true ]]; then
 
   parted --script $device mklabel gpt
 
-  echo -e "GPT partition table has been created"
-
-  echo -e "Creating the boot EFI partition..."
-
   parted --script $device mkpart "Boot" fat32 1MiB 501MiB
   parted --script $device set 1 boot on
 
   echo -e "EFI boot partition has been created under '${device}1'"
 
-  echo -e "Creating the root partition..."
-
   parted --script $device mkpart "Root" ext4 501Mib 100%
 
-  echo -e "The root partition has been created under '${device}2'"
+  echo -e "Root partition has been created under '${device}2'"
 
   echo -e "Partitioning on '$device' has been completed:\n"
 
   parted --script $device print
 
   echo -e "\nFormatting partitions in '$device'..."
-  echo -e "Formating the '${device}1' boot EFI partition as FAT32..."
 
   mkfs.fat -F 32 ${device}1
-
-  echo -e "Formating the '${device}2' root partition as EXT4..."
-
   mkfs.ext4 -F -q ${device}2
 
   echo -e "Formating has been completed successfully"
@@ -77,27 +67,24 @@ if [[ $uefi == true ]]; then
 
   mount ${device}2 /mnt
   mount --mkdir ${device}1 /mnt/boot
+
+  echo -e "Root partition '${device}2' mounted to '/mnt'"
+  echo -e "Boot partition '${device}1' mounted to '/mnt/boot'"
 else
   echo -e "\nCreating a clean MBR partition table..."
 
   parted --script $device mklabel msdos
 
-  echo -e "MBR partition table has been created"
-
-  echo -e "Creating the root partition..."
-
   parted --script $device mkpart primary ext4 1Mib 100%
   parted --script $device set 1 boot on
 
-  echo -e "The root partition has been created under '${device}1'"
+  echo -e "Root partition has been created under '${device}1'"
 
   echo -e "Partitioning on '$device' has been completed:\n"
 
   parted --script $device print
 
   echo -e "\nFormatting partitions in '$device'..."
-
-  echo -e "Formating the '${device}1' root partition as EXT4..."
 
   mkfs.ext4 -F -q ${device}1
 
@@ -106,9 +93,11 @@ else
   echo -e "\nMounting the root partition..."
 
   mount ${device}1 /mnt
+
+  echo -e "Root partition '${device}1' mounted to '/mnt'"
 fi
 
-echo -e "Disk layout has been completed:\n"
+echo -e "\nDisk layout of the '$device' after partitioning:\n"
 
 lsblk $device
 
@@ -180,7 +169,7 @@ sleep 10
 
 arch-chroot /mnt \
   bash -c "$(curl -sLo- https://raw.githubusercontent.com/tzeikob/stack/$branch/stack.sh)" -s "$device" "$kernels" "$country" &&
-  echo -e "Unmounting disk partitions under '/mnt'..." &&
+  echo -e "Unmounting all partitions under '/mnt'..." &&
   umount -R /mnt || echo -e "Ignoring any busy mounted points..." &&
   echo -e "Rebooting the system in 10 secs (ctrl-c to skip)..." &&
   sleep 10 &&

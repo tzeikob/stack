@@ -361,4 +361,4 @@ if [[ $gpu_vendor =~ ^virtual$ ]]; then
 fi
 
 echo -e "\nThe stack script has been completed"
-echo -e "Exiting the stack installation script..."
+echo -e "Exiting the script and prepare for reboot..."
