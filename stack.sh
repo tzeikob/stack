@@ -220,10 +220,10 @@ done
 
 if [[ $gpu_vendor =~ ^amd$ ]]; then
   gpu_vendor="amd"
-  video_pkgs="$video_pkgs xf86-video-ati"
+  video_pkgs="$video_pkgs xf86-video-amdgpu mesa"
 elif [[ $gpu_vendor =~ ^intel$ ]]; then
   gpu_vendor="intel"
-  video_pkgs="$video_pkgs xf86-video-intel"
+  video_pkgs="$video_pkgs xf86-video-intel mesa"
 elif [[ $gpu_vendor =~ ^virtual$ ]]; then
   gpu_vendor="virtual"
   video_pkgs="$video_pkgs xf86-video-vmware virtualbox-guest-utils"
