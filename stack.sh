@@ -211,43 +211,39 @@ read -p "What video card is your system using? [NVIDIA/amd/intel/virtual] " gpu_
 gpu_vendor=${gpu_vendor:-"nvidia"}
 
 while [[ ! $gpu_vendor =~ ^(nvidia|amd|intel|virtual)$ ]]; do
-  echo -e "Invalid gpu vendor: '$gpu_vendor'"
-  read -p "Please enter a valid gpu vendor: [NVIDIA/amd/intel/virtual] " gpu_vendor
+  echo -e "Invalid GPU vendor: '$gpu_vendor'"
+  read -p "Please enter a valid GPU vendor: [NVIDIA/amd/intel/virtual] " gpu_vendor
   gpu_vendor=${gpu_vendor:-"nvidia"}
 done
 
 if [[ $gpu_vendor =~ ^amd$ ]]; then
   gpu_vendor="amd"
-  gpu_pkg="xf86-video-ati" # or try messa
+  gpu_pkgs="xf86-video-ati"
 elif [[ $gpu_vendor =~ ^intel$ ]]; then
   gpu_vendor="intel"
-  gpu_pkg="xf86-video-intel" # or try mesa
+  gpu_pkgs="xf86-video-intel"
 elif [[ $gpu_vendor =~ ^virtual$ ]]; then
   gpu_vendor="virtual"
-  gpu_pkg="xf86-video-vmware virtualbox-guest-utils"
+  gpu_pkgs="xf86-video-vmware virtualbox-guest-utils"
 else
   gpu_vendor="nvidia"
 
   if [[ $kernels =~ ^stable$ ]]; then
-    gpu_pkg="nvidia"
+    gpu_pkgs="nvidia"
   elif [[ $kernels =~ ^lts$ ]]; then
-    gpu_pkg="nvidia-lts"
+    gpu_pkgs="nvidia-lts"
   else
-    gpu_pkg="nvidia nvidia-lts"
+    gpu_pkgs="nvidia nvidia-lts"
   fi
 
-  gpu_pkg="$gpu_pkg nvidia-utils nvidia-settings"
+  gpu_pkgs="$gpu_pkgs nvidia-utils nvidia-settings"
 fi
 
-if [ ! -z "$gpu_pkg" ]; then
-  echo -e "GPU vendor set to '$gpu_vendor'"
+echo -e "GPU vendor set to '$gpu_vendor'"
 
-  pacman -S $gpu_pkg
+pacman -S $gpu_pkgs
 
-  echo -e "GPU packages have been installed"
-else
-  echo -e "No gpu packages will be installed"
-fi
+echo -e "Video drivers have been installed"
 
 echo -e "\nInstalling the bootloader via GRUB..."
 
