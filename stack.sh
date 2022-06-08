@@ -230,15 +230,28 @@ elif [[ $gpu_vendor =~ ^virtual$ ]]; then
 else
   gpu_vendor="nvidia"
 
-  if [[ $kernels =~ ^stable$ ]]; then
-    video_pkgs="$video_pkgs nvidia"
-  elif [[ $kernels =~ ^lts$ ]]; then
-    video_pkgs="$video_pkgs nvidia-lts"
-  else
-    video_pkgs="$video_pkgs nvidia nvidia-lts"
-  fi
+  read -p "Which type of Nvidia drivers to install? [PROPRIETARY/nouveau] " nvidia_type
+  nvidia_type=${nvidia_type:-"proprietary"}
 
-  video_pkgs="$video_pkgs nvidia-utils nvidia-settings"
+  while [[ ! $nvidia_type =~ ^(proprietary|nouveau)$ ]]; do
+    echo -e "Invalid drivers type: '$nvidia_type'"
+    read -p "Please enter a valid drivers type: [PROPRIETARY/nouveau] " nvidia_type
+    nvidia_type=${nvidia_type:-"proprietary"}
+  done
+
+  if [[ $nvidia_type =~ ^proprietary$ ]]; then
+    if [[ $kernels =~ ^stable$ ]]; then
+      video_pkgs="$video_pkgs nvidia"
+    elif [[ $kernels =~ ^lts$ ]]; then
+      video_pkgs="$video_pkgs nvidia-lts"
+    else
+      video_pkgs="$video_pkgs nvidia nvidia-lts"
+    fi
+
+    video_pkgs="$video_pkgs nvidia-utils nvidia-settings"
+  else
+    video_pkgs="$video_pkgs xf86-video-nouveau mesa"
+  fi
 fi
 
 echo -e "GPU vendor set to '$gpu_vendor'"
