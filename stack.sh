@@ -205,7 +205,7 @@ pacman -S $cpu_pkg
 
 echo -e "CPU packages have been installed"
 
-echo -e "\nInstalling gpu drivers..."
+echo -e "\nInstalling video drivers..."
 
 read -p "What video card is your system using? [NVIDIA/amd/intel/virtual] " gpu_vendor
 gpu_vendor=${gpu_vendor:-"nvidia"}
@@ -219,15 +219,12 @@ done
 if [[ $gpu_vendor =~ ^amd$ ]]; then
   gpu_vendor="amd"
   gpu_pkg="xf86-video-ati" # or try messa
-  gpu_module="amdgpu"
 elif [[ $gpu_vendor =~ ^intel$ ]]; then
   gpu_vendor="intel"
   gpu_pkg="xf86-video-intel" # or try mesa
-  gpu_module="i915"
 elif [[ $gpu_vendor =~ ^virtual$ ]]; then
   gpu_vendor="virtual"
   gpu_pkg="xf86-video-vmware virtualbox-guest-utils"
-  gpu_module=""
 else
   gpu_vendor="nvidia"
 
@@ -240,7 +237,6 @@ else
   fi
 
   gpu_pkg="$gpu_pkg nvidia-utils nvidia-settings"
-  gpu_module="nvidia"
 fi
 
 if [ ! -z "$gpu_pkg" ]; then
@@ -251,17 +247,6 @@ if [ ! -z "$gpu_pkg" ]; then
   echo -e "GPU packages have been installed"
 else
   echo -e "No gpu packages will be installed"
-fi
-
-if [ ! -z "$gpu_module" ]; then
-  echo -e "\nRe-generating initramfs for the '$gpu_vendor' gpu modules..."
-
-  sed -i "s/MODULES=(\(.*\))$/MODULES=(\1 $gpu_module)/" /etc/mkinitcpio.conf
-  sed -i "s/MODULES=( \(.*\))$/MODULES=(\1)/" /etc/mkinitcpio.conf
-
-  mkinitcpio -P
-
-  echo -e "Images have been re-genereated successfully"
 fi
 
 echo -e "\nInstalling the bootloader via GRUB..."
