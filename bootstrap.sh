@@ -68,8 +68,8 @@ if [[ $uefi == true ]]; then
   mount ${device}2 /mnt
   mount --mkdir ${device}1 /mnt/boot
 
-  echo -e "Root partition '${device}2' mounted to '/mnt'"
   echo -e "Boot partition '${device}1' mounted to '/mnt/boot'"
+  echo -e "Root partition '${device}2' mounted to '/mnt'"
 else
   echo -e "\nCreating a clean MBR partition table..."
 
