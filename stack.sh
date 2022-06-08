@@ -104,7 +104,7 @@ echo -e "Creating the new sudoer user..."
 read -p "Enter the name of the sudoer user: [bob] " username
 username=${username:-"bob"}
 
-useradd -m -G wheel $username
+useradd -m -G wheel,audio,video,optical,storage $username
 
 echo -e "Adding password for the user '$username'..."
 
