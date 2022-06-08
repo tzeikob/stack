@@ -180,14 +180,14 @@ echo -e "\nInstalling audio drivers and packages..."
 
 pacman -S alsa-utils pipewire pipewire-alsa pipewire-pulse pipewire-jack
 
-echo -e "\nInstalling cpu drivers..."
+echo -e "\nInstalling the CPU microcode firmware..."
 
 read -p "What proccessor is your system running on? [AMD/intel] " cpu_vendor
 cpu_vendor=${cpu_vendor:-"amd"}
 
 while [[ ! $cpu_vendor =~ ^(amd|intel)$ ]]; do
-  echo -e "Invalid cpu vendor: '$cpu_vendor'"
-  read -p "Please enter a valid cpu vendor: [AMD/intel] " cpu_vendor
+  echo -e "Invalid CPU vendor: '$cpu_vendor'"
+  read -p "Please enter a valid CPU vendor: [AMD/intel] " cpu_vendor
   cpu_vendor=${cpu_vendor:-"amd"}
 done
 
@@ -203,7 +203,7 @@ echo -e "CPU vendor set to '$cpu_vendor'"
 
 pacman -S $cpu_pkg
 
-echo -e "CPU packages have been installed"
+echo -e "Microcode firmware has been installed"
 
 echo -e "\nInstalling video drivers..."
 
