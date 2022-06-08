@@ -104,7 +104,7 @@ lsblk $device
 echo -e "\nUpdating the system clock..."
 
 timedatectl set-ntp true
-sleep 10
+sleep 12
 timedatectl status
 
 echo -e "System clock has been updated"
