@@ -31,6 +31,7 @@ echo -e "Installation disk set to block device '$device'"
 
 echo -e "\nIMPORTANT, all data in '$device' will be lost"
 read -p "Shall we proceed and partition the disk? [y/N] " answer
+answer=${answer:-"no"}
 
 if [[ ! $answer =~ ^(yes|y)$ ]]; then
   echo -e "\nCanceling the installation process..."

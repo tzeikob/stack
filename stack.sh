@@ -262,6 +262,7 @@ pacman -S $video_pkgs
 echo -e "Video drivers have been installed\n"
 
 read -p "Do you want to install a desktop environment? [Y/n] " answer
+answer=${answer:-"yes"}
 
 if [[ $answer =~ ^(yes|y)$ ]]; then
   echo -e "Installing the BSPWM window manager..."
