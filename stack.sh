@@ -102,7 +102,7 @@ echo -e "Adding password for the root user..."
 passwd
 
 while [ ! $? -eq 0 ]; do
-  echo -e "Failed to set the root passowrd"
+  echo -e "Failed to set the root password"
   echo -e "Please set the password again"
 
   passwd
@@ -120,7 +120,7 @@ echo -e "Adding password for the user '$username'..."
 passwd $username
 
 while [ ! $? -eq 0 ]; do
-  echo -e "Failed to set the $username passowrd"
+  echo -e "Failed to set the $username password"
   echo -e "Please set the password again"
 
   passwd $username
