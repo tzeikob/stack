@@ -100,6 +100,13 @@ echo -e "Adding password for the root user..."
 
 passwd
 
+while [ ! $? -eq 0 ]; do
+  echo -e "Failed to set the root passowrd"
+  echo -e "Please set the password again"
+
+  passwd
+done
+
 echo -e "Creating the new sudoer user..."
 
 read -p "Enter the name of the sudoer user: [bob] " username
@@ -110,6 +117,13 @@ useradd -m -G wheel,audio,video,optical,storage $username
 echo -e "Adding password for the user '$username'..."
 
 passwd $username
+
+while [ ! $? -eq 0 ]; do
+  echo -e "Failed to set the $username passowrd"
+  echo -e "Please set the password again"
+
+  passwd $username
+done
 
 echo -e "Adding user '$username' to the group of sudoers..."
 
