@@ -299,7 +299,7 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
   chown -R $username:$username /home/$username/.config/bspwm
   chown -R $username:$username /home/$username/.config/sxhkd
 
-  cp /etx/X11/xinit/xinitrc /home/$username/.xinitrc
+  cp /etc/X11/xinit/xinitrc /home/$username/.xinitrc
 
   sed -i '/twm &/d' /home/$username/.xinitrc
   sed -i '/xclock -geometry 50x50-1+1 &/d' /home/$username/.xinitrc
