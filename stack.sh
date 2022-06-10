@@ -271,13 +271,13 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
 
   echo -e "Setting up the desktop environment configuration..."
 
-  mkdir -p $HOME/.config/{bspwm,sxhkd}
-  install -Dm755 /usr/share/doc/bspwm/examples/bspwmrc $HOME/.config/bspwm
-  install -Dm644 /usr/share/doc/bspwm/examples/sxhkdrc $HOME/.config/sxhkd
+  mkdir -p /home/$username/.config/{bspwm,sxhkd}
+  install -Dm755 /usr/share/doc/bspwm/examples/bspwmrc /home/$username/.config/bspwm
+  install -Dm644 /usr/share/doc/bspwm/examples/sxhkdrc /home/$username/.config/sxhkd
 
-  sed -i 's/.*urxvt/    terminator/' $HOME/.config/sxhkd/sxhkdrc
-  sed -i '5 i setxkbmap us' $HOME/.config/bspwm/bspwmrc
-  sed -i '5 i picom' $HOME/.config/bspwm/bspwmrc
+  sed -i 's/.*urxvt/    terminator/' /home/$username/.config/sxhkd/sxhkdrc
+  sed -i '5 i setxkbmap us' /home/$username/.config/bspwm/bspwmrc
+  sed -i '5 i picom' /home/$username/.config/bspwm/bspwmrc
 else
   echo -e "Desktop environment has been skipped"
 fi
