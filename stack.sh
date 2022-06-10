@@ -313,6 +313,9 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
 
   chown -R $username:$username /home/$username/.xinitrc
 
+  echo '' >> /home/$username/.bash_profile
+  echo '[[ -z $DISPLAY && $XDG_VTNR -eq 1 ]] && exec startx' >> /home/$username/.bash_profile
+
   echo -e "Desktop environment configuration is done"
 else
   echo -e "Desktop environment has been skipped"
