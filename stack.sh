@@ -3,8 +3,9 @@
 shopt -s nocasematch
 
 device=$1
-kernels=${2:-"all"}
-country=${3:-"germany"}
+branch=${2:-"master"}
+kernels=${3:-"all"}
+country=${4:-"germany"}
 
 uefi=true
 
@@ -285,13 +286,34 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
 
   echo -e "Setting up the desktop environment configuration..."
 
-  mkdir -p /home/$username/.config/{bspwm,sxhkd}
-  install -Dm755 /usr/share/doc/bspwm/examples/bspwmrc /home/$username/.config/bspwm
-  install -Dm644 /usr/share/doc/bspwm/examples/sxhkdrc /home/$username/.config/sxhkd
+  config_url="https://raw.githubusercontent.com/tzeikob/stack/$branch/config"
 
-  sed -i 's/.*urxvt/    terminator/' /home/$username/.config/sxhkd/sxhkdrc
-  sed -i '5 i setxkbmap us' /home/$username/.config/bspwm/bspwmrc
-  sed -i '5 i picom' /home/$username/.config/bspwm/bspwmrc
+  mkdir -p /home/$username/.config/{bspwm,sxhkd}
+
+  curl $config_url/bspwmrc -o /home/$username/.config/bspwm/bspwmrc
+  chmod 755 /home/$username/.config/bspwm/bspwmrc
+
+  curl $config_url/sxhkdrc -o /home/$username/.config/sxhkd/sxhkdrc
+  chmod 644 /home/$username/.config/sxhkd/sxhkdrc
+
+  chown -R $username:$username /home/$username/.config/bspwm
+  chown -R $username:$username /home/$username/.config/sxhkd
+
+  cp /etx/X11/xinit/xinitrc /home/$username/.xinitrc
+
+  sed -i '/twm &/d' /home/$username/.xinitrc
+  sed -i '/xclock -geometry 50x50-1+1 &/d' /home/$username/.xinitrc
+  sed -i '/xterm -geometry 80x50+494+51 &/d' /home/$username/.xinitrc
+  sed -i '/xterm -geometry 80x20+494-0 &/d' /home/$username/.xinitrc
+  sed -i '/exec xterm -geometry 80x66+0+0 -name login/d' /home/$username/.xinitrc
+
+  echo "setxkbmap us &" >> /home/$username/.xinitrc
+  echo "picom -f &" >> /home/$username/.xinitrc
+  echo "exec bspwm" >> /home/$username/.xinitrc
+
+  chown -R $username:$username /home/$username/.xinitrc
+
+  echo -e "Desktop environment configuration is done"
 else
   echo -e "Desktop environment has been skipped"
 fi
