@@ -259,7 +259,27 @@ echo -e "GPU vendor set to '$gpu_vendor'"
 
 pacman -S $video_pkgs
 
-echo -e "Video drivers have been installed"
+echo -e "Video drivers have been installed\n"
+
+read -p "Do you want to install a desktop environment? [Y/n] " answer
+
+if [[ $answer =~ ^(yes|y)$ ]]; then
+  echo -e "Installing the BSPWM window manager..."
+
+  pacman -S picom bspwm sxhkd dmenu terminator
+
+  echo -e "Setting up the desktop environment configuration..."
+
+  mkdir -p $HOME/.config/{bspwm,sxhkd}
+  install -Dm755 /usr/share/doc/bspwm/examples/bspwmrc $HOME/.config/bspwm
+  install -Dm644 /usr/share/doc/bspwm/examples/sxhkdrc $HOME/.config/sxhkd
+
+  sed -i 's/.*urxvt/    terminator/' $HOME/.config/sxhkd/sxhkdrc
+  sed -i '5 i setxkbmap us' $HOME/.config/bspwm/bspwmrc
+  sed -i '5 i picom' $HOME/.config/bspwm/bspwmrc
+else
+  echo -e "Desktop environment has been skipped"
+fi
 
 echo -e "\nInstalling the bootloader via GRUB..."
 
