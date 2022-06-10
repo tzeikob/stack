@@ -308,7 +308,7 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
   sed -i '/exec xterm -geometry 80x66+0+0 -name login/d' /home/$username/.xinitrc
 
   echo "setxkbmap us &" >> /home/$username/.xinitrc
-  echo "picom -f &" >> /home/$username/.xinitrc
+  echo "picom --fade-in-step=1 --fade-out-step=1 --fade-delta=0 &" >> /home/$username/.xinitrc
   echo "exec bspwm" >> /home/$username/.xinitrc
 
   chown -R $username:$username /home/$username/.xinitrc
