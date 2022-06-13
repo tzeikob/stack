@@ -15,7 +15,7 @@ fi
 
 echo -e "Starting the stack installation process..."
 
-echo -e "\nSetting console keyboard layout..."
+echo -e "\nSetting console keyboard keymap..."
 
 read -p "Enter the key map of your keyboard: [us] " keymap
 keymap=${keymap:-"us"}
@@ -33,7 +33,7 @@ done
 echo "KEYMAP=$keymap" > /etc/vconsole.conf
 loadkeys $keymap
 
-echo -e "Console keyboard layout has been set to '$keymap'"
+echo -e "Console keyboard keymap has been set to '$keymap'"
 
 echo -e "\nSetting up the local timezone..."
 
@@ -305,25 +305,34 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
   chown -R $username:$username /home/$username/.config/bspwm
   chown -R $username:$username /home/$username/.config/sxhkd
 
-  echo -e "\nSetting keyboard layout..."
+  echo -e "\nSetting the keyboard layout..."
 
-  read -p "Enter the key map of your keyboard: [us] " keymap
-  keymap=${keymap:-"us"}
+  read -p "Enter a keyboard layout: [us] " kb_layout
+  kb_layout=${kb_layout:-"us"}
 
-  localectl list-x11-keymap-layouts | grep "^$keymap$" > /dev/null 2>&1
+  localectl list-x11-keymap-layouts | grep "^$kb_layout$" > /dev/null 2>&1
 
   while [ ! $? -eq 0 ]; do
-    echo -e "Invalid key map: '$keymap'"
-    read -p "Please enter a valid keymap: [us] " keymap
-    keymap=${keymap:-"us"}
+    echo -e "Invalid keyboard layout: '$kb_layout'"
+    read -p "Please enter valid keyboard layout: [us] " kb_layout
+    kb_layout=${kb_layout:-"us"}
 
-    localectl list-x11-keymap-layouts | grep "^$keymap$" > /dev/null 2>&1
+    localectl list-x11-keymap-layouts | grep "^$kb_layout$" > /dev/null 2>&1
   done
 
-  localectl --no-convert set-x11-keymap $keymap
-  localectl status
+  cat << EOF > /etc/X11/xorg.conf.d/00-keyboard.conf &&
+# Written by systemd-localed(8), read by systemd-localed and Xorg. It's
+# probably wise not to edit this file manually. Use localectl(1) to
+# instruct systemd-localed to update it.
+Section "InputClass"
+        Identifier "system-keyboard"
+        MatchIsKeyboard "on"
+        Option "XkbLayout" "$kb_layout"
+        Option "XkbModel" "pc105"
+EndSection
+EOF
 
-  echo -e "Keyboard layout has been set to '$keymap'"
+  echo -e "Keyboard layout has been set to '$kb_layout'"
 
   cp /etc/X11/xinit/xinitrc /home/$username/.xinitrc
 
