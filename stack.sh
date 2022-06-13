@@ -15,7 +15,7 @@ fi
 
 echo -e "Starting the stack installation process..."
 
-echo -e "\nSetting keyboard layout..."
+echo -e "\nSetting console keyboard layout..."
 
 read -p "Enter the key map of your keyboard: [us] " keymap
 keymap=${keymap:-"us"}
@@ -33,7 +33,7 @@ done
 echo "KEYMAP=$keymap" > /etc/vconsole.conf
 loadkeys $keymap
 
-echo -e "Keyboard layout has been set to '$keymap'"
+echo -e "Console keyboard layout has been set to '$keymap'"
 
 echo -e "\nSetting up the local timezone..."
 
@@ -299,6 +299,26 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
   chown -R $username:$username /home/$username/.config/bspwm
   chown -R $username:$username /home/$username/.config/sxhkd
 
+  echo -e "\nSetting keyboard layout..."
+
+  read -p "Enter the key map of your keyboard: [us] " keymap
+  keymap=${keymap:-"us"}
+
+  $(localectl list-x11-keymap-layouts | grep "^$keymap$")
+
+  while [ ! $? -eq 0 ]; do
+    echo -e "Invalid key map: '$keymap'"
+    read -p "Please enter a valid keymap: [us] " keymap
+    keymap=${keymap:-"us"}
+
+    $(localectl list-x11-keymap-layouts | grep "^$keymap$")
+  done
+
+  localectl --no-convert set-x11-keymap $keymap
+  localectl status
+
+  echo -e "Keyboard layout has been set to '$keymap'"
+
   cp /etc/X11/xinit/xinitrc /home/$username/.xinitrc
 
   sed -i '/twm &/d' /home/$username/.xinitrc
@@ -307,7 +327,6 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
   sed -i '/xterm -geometry 80x20+494-0 &/d' /home/$username/.xinitrc
   sed -i '/exec xterm -geometry 80x66+0+0 -name login/d' /home/$username/.xinitrc
 
-  echo "setxkbmap us &" >> /home/$username/.xinitrc
   echo "picom --fade-in-step=1 --fade-out-step=1 --fade-delta=0 &" >> /home/$username/.xinitrc
   echo "exec bspwm" >> /home/$username/.xinitrc
 
