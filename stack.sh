@@ -310,14 +310,14 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
   read -p "Enter the key map of your keyboard: [us] " keymap
   keymap=${keymap:-"us"}
 
-  $(localectl list-x11-keymap-layouts | grep "^$keymap$")
+  localectl list-x11-keymap-layouts | grep "^$keymap$" > /dev/null 2>&1
 
   while [ ! $? -eq 0 ]; do
     echo -e "Invalid key map: '$keymap'"
     read -p "Please enter a valid keymap: [us] " keymap
     keymap=${keymap:-"us"}
 
-    $(localectl list-x11-keymap-layouts | grep "^$keymap$")
+    localectl list-x11-keymap-layouts | grep "^$keymap$" > /dev/null 2>&1
   done
 
   localectl --no-convert set-x11-keymap $keymap
