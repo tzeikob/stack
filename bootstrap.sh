@@ -47,7 +47,7 @@ if [[ $uefi == true ]]; then
   parted --script $device mkpart "Boot" fat32 1MiB 501MiB
   parted --script $device set 1 boot on
 
-  echo -e "EFI boot partition created under '${device}1'"
+  echo -e "Boot partition created under '${device}1'"
 
   parted --script $device mkpart "Root" ext4 501Mib 100%
 
