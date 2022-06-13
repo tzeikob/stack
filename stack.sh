@@ -286,6 +286,12 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
 
   echo -e "Setting up the desktop environment configuration..."
 
+  if [[ $gpu_vendor =~ ^virtual$ ]]; then
+    sed -i 's/vsync = true/#vsync = true/' /etc/xdc/picom.conf
+
+    echo -e "Vsync setting in picom has been disabled"
+  fi
+
   config_url="https://raw.githubusercontent.com/tzeikob/stack/$branch/config"
 
   mkdir -p /home/$username/.config/{bspwm,sxhkd}
