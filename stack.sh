@@ -352,6 +352,7 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
           MatchIsKeyboard "on"
           Option "XkbLayout" "$kb_layouts"
           Option "XkbModel" "pc105"
+          Option "XkbOptions" "grp:alt_shift_toggle"
   EndSection
 EOF
 
