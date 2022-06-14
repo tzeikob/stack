@@ -322,11 +322,11 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
 
   kb_layouts="$kb_layout"
 
-  read -p "Do you want to set an additional layout? [y/N] " answer
+  read -p "Do you want to set additional layouts? [y/N] " answer
   answer=${answer:-"no"}
 
   while [[ $answer =~ ^(yes|y)$ ]]; do
-    read -p "Enter the next keyboard layout: " kb_layout
+    read -p "Enter a keyboard layout: " kb_layout
 
     localectl list-x11-keymap-layouts | grep "^$kb_layout$" > /dev/null 2>&1
 
@@ -339,7 +339,7 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
 
     kb_layouts="$kb_layouts,$kb_layout"
 
-    read -p "Do you want to set another layout? [y/N] " answer
+    read -p "Do you want to add another layout? [y/N] " answer
     answer=${answer:-"no"}
   done
 
