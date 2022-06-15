@@ -5,7 +5,7 @@ shopt -s nocasematch
 device=$1
 branch=${2:-"master"}
 kernels=${3:-"all"}
-country=${4:-"germany"}
+country=${4:-"Greece"}
 
 uefi=true
 
@@ -37,14 +37,13 @@ echo -e "Console keyboard keymap has been set to '$keymap'"
 
 echo -e "\nSetting up the local timezone..."
 
-resolved_timezone=$(curl -sLo- https://ipapi.co/timezone?format=json)
-read -p "What is your current timezone? [$resolved_timezone]: " timezone
-timezone=${timezone:-$resolved_timezone}
+read -p "What is your current timezone? [Europe/Athens]: " timezone
+timezone=${timezone:-"Europe/Athens"}
 
 while [ ! -f "/usr/share/zoneinfo/$timezone" ]; do
   echo -e "Invalid timezone: '$timezone'"
-  read -p "Please enter a valid timezone: [$resolved_timezone] " timezone
-  timezone=${timezone:-$resolved_timezone}
+  read -p "Please enter a valid timezone: [Europe/Athens] " timezone
+  timezone=${timezone:-"Europe/Athens"}
 done
 
 ln -sf /usr/share/zoneinfo/$timezone /etc/localtime

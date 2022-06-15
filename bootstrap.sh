@@ -112,9 +112,8 @@ echo -e "System clock has been updated"
 
 echo -e "\nUpdating the mirror list..."
 
-resolved_country=$(curl -sLo- https://ipapi.co/country_name?format=json)
-read -p "What is your current location? [$resolved_country] " country
-country=${country:-$resolved_country}
+read -p "What is your current location? [Greece] " country
+country=${country:-"Greece"}
 
 echo -e "Refreshing the mirror list from servers in $country..."
 
@@ -122,8 +121,8 @@ reflector --country $country --age 8 --sort age --save /etc/pacman.d/mirrorlist
 
 while [ ! $? -eq 0 ]; do
   echo -e "Reflector failed for '$country'"
-  read -p "Please enter another country: [$resolved_country] " country
-  country=${country:-$resolved_country}
+  read -p "Please enter another country: [Greece] " country
+  country=${country:-"Greece"}
 
   reflector --country $country --age 8 --sort age --save /etc/pacman.d/mirrorlist
 done
