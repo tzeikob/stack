@@ -222,7 +222,7 @@ echo -e "Microcode firmware has been installed"
 
 echo -e "\nInstalling video drivers..."
 
-video_pkgs="xorg xorg-xinit xorg-xrandr"
+video_pkgs="xorg xorg-xinit xorg-xrandr arandr"
 
 read -p "What video card is your system using? [NVIDIA/amd/intel/virtual] " gpu_vendor
 gpu_vendor=${gpu_vendor:-"nvidia"}
