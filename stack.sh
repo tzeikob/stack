@@ -193,7 +193,7 @@ pacman -S networkmanager dialog wireless_tools netctl inetutils dnsutils \
 
 echo -e "\nInstalling audio drivers and packages..."
 
-pacman -S alsa-utils pipewire pipewire-alsa pipewire-pulse pipewire-jack
+pacman -S alsa-utils pipewire pipewire-alsa pipewire-pulse pipewire-jack pavucontrol
 
 echo -e "\nInstalling the CPU microcode firmware..."
 
