@@ -457,6 +457,28 @@ echo -e "Orphan packages post installation hook has been set"
 
 echo -e "Pacman has been configured"
 
+echo -e "Settin up the login screen"
+
+mv /etc/issue /etc/issue.bak
+curl https://raw.githubusercontent.com/tzeikob/stack/$branch/config/issue -o /etc/issue
+
+cat << 'EOF' > /etc/systemd/system/login-issue.service
+[Unit]
+Description=Set login prompt via /etc/issue
+Before=getty@tty1.service getty@tty2.service getty@tty3.service getty@tty4.service getty@tty5.service getty@tty6.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c 'sed -i "5s/.*/  $(date)/" /etc/issue'
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable login-issue
+
+echo -e "Login screen has been set"
+
 echo -e "\nEnabling system services..."
 
 systemctl enable systemd-timesyncd
