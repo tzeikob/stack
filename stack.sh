@@ -477,6 +477,9 @@ EOF
 
 systemctl enable login-issue
 
+sed -ri "s;(ExecStart=-/sbin/agetty)(.*);\1 --nohostname\2;" /lib/systemd/system/getty@.service
+sed -ri "s;(ExecStart=-/sbin/agetty)(.*);\1 --nohostname\2;" /lib/systemd/system/serial-getty@.service
+
 echo -e "Login screen has been set"
 
 echo -e "\nEnabling system services..."
