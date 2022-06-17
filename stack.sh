@@ -52,8 +52,8 @@ echo -e "Local timezone has been set to '$timezone'"
 
 echo -e "\nEnabling NTP synchronization..."
 
-timedatectl set-ntp true
-sleep 25
+timedatectl set-ntp true > /dev/null
+sleep 5
 timedatectl status
 
 hwclock --systohc
