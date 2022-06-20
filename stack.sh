@@ -293,7 +293,10 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
 
   config_url="https://raw.githubusercontent.com/tzeikob/stack/$branch/config"
 
-  mkdir -p /home/$username/.config/{bspwm,sxhkd}
+  mkdir -p /home/$username/.config/{picom,bspwm,sxhkd}
+
+  curl $config_url/picom.conf -o /home/$username/.config/picom/picom.conf
+  chmod 644 /home/$username/.config/picom/picom.conf
 
   curl $config_url/bspwmrc -o /home/$username/.config/bspwm/bspwmrc
   chmod 755 /home/$username/.config/bspwm/bspwmrc
@@ -301,6 +304,7 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
   curl $config_url/sxhkdrc -o /home/$username/.config/sxhkd/sxhkdrc
   chmod 644 /home/$username/.config/sxhkd/sxhkdrc
 
+  chown -R $username:$username /home/$username/.config/picom
   chown -R $username:$username /home/$username/.config/bspwm
   chown -R $username:$username /home/$username/.config/sxhkd
 
