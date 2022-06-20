@@ -304,9 +304,7 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
   curl $config_url/sxhkdrc -o /home/$username/.config/sxhkd/sxhkdrc
   chmod 644 /home/$username/.config/sxhkd/sxhkdrc
 
-  chown -R $username:$username /home/$username/.config/picom
-  chown -R $username:$username /home/$username/.config/bspwm
-  chown -R $username:$username /home/$username/.config/sxhkd
+  chown -R $username:$username /home/$username/.config
 
   echo -e "\nSetting the keyboard layouts..."
 
