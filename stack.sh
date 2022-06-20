@@ -188,7 +188,7 @@ cd /home/$username
 git clone https://aur.archlinux.org/yay.git
 
 chown -R $username:$username yay && cd yay
-su -u $username -c "makepkg -si"
+sudo -u $username makepkg -si
 
 cd / && rm -rf /home/$username/yay
 
