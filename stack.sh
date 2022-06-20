@@ -182,6 +182,18 @@ pacman -S base-devel pacman-contrib pkgstats grub mtools dosfstools gdisk parted
   terminus-font vim nano git htop tree arch-audit \
   $([ $uefi == true ] && echo 'efibootmgr')
 
+echo -e "\nInstalling the yay package..."
+
+cd /home/$username
+git clone https://aur.archlinux.org/yay.git
+
+chown -R $username:$username yay && cd yay
+su -u $username -c "makepkg -si"
+
+cd / && rm -rf /home/$username/yay
+
+echo -e "Yay has been installed"
+
 echo -e "\nInstalling power management utilities..."
 
 pacman -S acpi acpid acpi_call
