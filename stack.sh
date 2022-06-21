@@ -318,6 +318,19 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
 
   chown -R $username:$username /home/$username/.config
 
+  echo -e "\nInstalling the screen locker..."
+
+  git clone https://git.suckless.org/slock
+  cd slock
+  sed -ri 's/(.*)nogroup(.*)/\1nobody\2/' ./config.def.h
+  sed -ri 's/.*INIT.*/  [INIT] = "#1a1b26",/' ./config.def.h
+  sed -ri 's/.*INPUT.*/  [INPUT] = "#383c4a",/' ./config.def.h
+  sed -ri 's/.*FAILED.*/  [FAILED] = "#ff2369"/' ./config.def.h
+  sudo make install
+  cd /
+
+  echo -e "Screen lock has been set"
+
   echo -e "\nSetting the keyboard layouts..."
 
   read -p "Enter the default keyboard layout: [us] " kb_layout
@@ -448,6 +461,14 @@ mv /etc/nftables.conf /etc/nftables.conf.bak
 nft -s list ruleset > /etc/nftables.conf
 
 echo -e "Firewall ruleset has been saved to '/etc/nftables.conf'"
+
+cat << EOF > /etc/X11/xorg.conf.d/01-screenlock.conf
+# Prevents to overpass screen locker by killing xorg or switching vt
+Section "ServerFlags"
+    Option "DontVTSwitch" "True"
+    Option "DontZap"      "True"
+EndSection
+EOF
 
 echo -e "Security configuration has been completed"
 
