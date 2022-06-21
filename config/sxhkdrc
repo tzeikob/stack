@@ -125,5 +125,5 @@ super + {Left,Down,Up,Right}
 #
 
 # lock the screen
-super + l
+super + x
 	slock
