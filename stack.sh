@@ -321,13 +321,13 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
   echo -e "\nInstalling the screen locker..."
 
   git clone https://git.suckless.org/slock
-  cd slock
+  cd /slock
   sed -ri 's/(.*)nogroup(.*)/\1nobody\2/' ./config.def.h
   sed -ri 's/.*INIT.*/  [INIT] = "#1a1b26",/' ./config.def.h
   sed -ri 's/.*INPUT.*/  [INPUT] = "#383c4a",/' ./config.def.h
   sed -ri 's/.*FAILED.*/  [FAILED] = "#ff2369"/' ./config.def.h
-  sudo make install
-  cd /
+  make install
+  cd / && rm -rf /slock
 
   echo -e "Screen lock has been set"
 
