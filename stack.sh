@@ -340,6 +340,7 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
 EOF
 
   chmod +x /home/$username/.config/polybar/launch.sh
+  chown $username:$username /home/$username/.config/polybar/launch.sh
 
   echo -e "Polybar launcher has been set"
 
