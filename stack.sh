@@ -307,13 +307,13 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
 
   mkdir -p /home/$username/.config/{picom,bspwm,sxhkd,polybar}
 
-  curl $config_url/picom.conf -o /home/$username/.config/picom/picom.conf
+  curl $config_url/picom -o /home/$username/.config/picom/picom.conf
   chmod 644 /home/$username/.config/picom/picom.conf
 
-  curl $config_url/bspwmrc -o /home/$username/.config/bspwm/bspwmrc
+  curl $config_url/bspwm -o /home/$username/.config/bspwm/bspwmrc
   chmod 755 /home/$username/.config/bspwm/bspwmrc
 
-  curl $config_url/sxhkdrc -o /home/$username/.config/sxhkd/sxhkdrc
+  curl $config_url/sxhkd -o /home/$username/.config/sxhkd/sxhkdrc
   chmod 644 /home/$username/.config/sxhkd/sxhkdrc
 
   curl $config_url/polybar -o /home/$username/.config/polybar/config.ini
@@ -526,7 +526,7 @@ echo -e "Pacman has been configured"
 echo -e "Settin up the login screen"
 
 mv /etc/issue /etc/issue.bak
-curl https://raw.githubusercontent.com/tzeikob/stack/$branch/config/issue -o /etc/issue
+curl https://raw.githubusercontent.com/tzeikob/stack/$branch/assets/issue -o /etc/issue
 
 cat << 'EOF' > /etc/systemd/system/login-issue.service
 [Unit]
