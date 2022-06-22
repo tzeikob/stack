@@ -293,7 +293,7 @@ answer=${answer:-"yes"}
 if [[ $answer =~ ^(yes|y)$ ]]; then
   echo -e "Installing the BSPWM window manager..."
 
-  pacman -S picom bspwm sxhkd dmenu terminator
+  pacman -S picom bspwm sxhkd dmenu polybar terminator
 
   echo -e "Setting up the desktop environment configuration..."
 
@@ -305,7 +305,7 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
 
   config_url="https://raw.githubusercontent.com/tzeikob/stack/$branch/config"
 
-  mkdir -p /home/$username/.config/{picom,bspwm,sxhkd}
+  mkdir -p /home/$username/.config/{picom,bspwm,sxhkd,polybar}
 
   curl $config_url/picom.conf -o /home/$username/.config/picom/picom.conf
   chmod 644 /home/$username/.config/picom/picom.conf
@@ -316,7 +316,32 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
   curl $config_url/sxhkdrc -o /home/$username/.config/sxhkd/sxhkdrc
   chmod 644 /home/$username/.config/sxhkd/sxhkdrc
 
+  curl $config_url/polybar -o /home/$username/.config/polybar/config.ini
+  chmod 644 /home/$username/.config/polybar/config.ini
+
   chown -R $username:$username /home/$username/.config
+
+  echo -e "\nSetting up the polybar launcher..."
+
+  cat << 'EOF' > /home/$username/.config/polybar/launch.sh
+  #!/usr/bin/env bash
+
+  # Terminate already running bar instances
+  # If all your bars have ipc enabled, you can use 
+  polybar-msg cmd quit
+  # Otherwise you can use the nuclear option:
+  # killall -q polybar
+
+  # Launch bar
+  echo "---" | tee -a /tmp/polybar.log
+  polybar main 2>&1 | tee -a /tmp/polybar.log & disown
+
+  echo "Bars launched..."
+EOF
+
+  chmod +x /home/$username/.config/polybar/launch.sh
+
+  echo -e "Polybar launcher has been set"
 
   echo -e "\nInstalling the screen locker..."
 
