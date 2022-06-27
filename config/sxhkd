@@ -145,3 +145,12 @@ super + Page_Up
 	amixer set Master 2%+
 super + Pause
 	amixer set Master toggle
+
+#
+# Brightness volume
+#
+
+XF86MonBrightnessDown
+	xbacklight -dec 5
+XF86MonBrightnessUp
+	xbacklight -inc 5
