@@ -127,3 +127,21 @@ super + {Left,Down,Up,Right}
 # lock the screen
 super + x
 	slock
+
+#
+# Audio volume
+#
+
+XF86AudioLowerVolume
+	amixer set Master 2%-
+XF86AudioRaiseVolume
+	amixer set Master 2%+
+XF86AudioMute
+	amixer set Master toggle
+
+super + Page_Down
+	amixer set Master 2%-
+super + Page_Up
+	amixer set Master 2%+
+super + Pause
+	amixer set Master toggle
