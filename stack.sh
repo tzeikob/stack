@@ -433,6 +433,15 @@ EOF
   echo '' >> /home/$username/.bash_profile
   echo '[[ -z $DISPLAY && $XDG_VTNR -eq 1 ]] && exec startx' >> /home/$username/.bash_profile
 
+  echo -e "Setting the default wallpaper..."
+
+  mkdir -p /home/$username/media/wallpapers
+  curl https://images.hdqwalls.com/wallpapers/arch-liinux-4k-t0.jpg -o /home/$username/media/wallpapers/default.jpg
+  chown -R $username:$username /home/$username/media
+  nitrogen --set-zoom-fill /home/$username/media/wallpapers/default.jpg --save
+
+  echo -e "Wallpaper has been set successfully"
+
   echo -e "Desktop environment configuration is done"
 else
   echo -e "Desktop environment has been skipped"
