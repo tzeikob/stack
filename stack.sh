@@ -7,6 +7,8 @@ branch=${2:-"master"}
 kernels=${3:-"all"}
 country=${4:-"Greece"}
 
+config_url="https://raw.githubusercontent.com/tzeikob/stack/$branch/config"
+
 uefi=true
 
 if [ ! -d "/sys/firmware/efi/efivars" ]; then
@@ -293,7 +295,7 @@ answer=${answer:-"yes"}
 if [[ $answer =~ ^(yes|y)$ ]]; then
   echo -e "Installing the BSPWM window manager..."
 
-  pacman -S picom bspwm sxhkd dmenu polybar feh terminator
+  pacman -S picom bspwm sxhkd dmenu polybar feh
 
   echo -e "Setting up the desktop environment configuration..."
 
@@ -302,8 +304,6 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
 
     echo -e "Vsync setting in picom has been disabled"
   fi
-
-  config_url="https://raw.githubusercontent.com/tzeikob/stack/$branch/config"
 
   mkdir -p /home/$username/.config/{picom,bspwm,sxhkd,polybar}
 
@@ -449,6 +449,17 @@ EOF
   chmod 754 /home/$username/.fehbg
 
   echo -e "Wallpaper has been set successfully"
+
+  echo -e "Installing the virtual terminal..."
+
+  pacman -S alacritty
+
+  mkdir -p /home/$username/.config/alacritty
+
+  curl $config_url/alacritty -o /home/$username/.config/alacritty/alacritty.yml
+  chown $username:$username /home/$username/.config/alacritty
+
+  echo -e "Virtual terminal has been installed"
 
   echo -e "Desktop environment configuration is done"
 else
