@@ -424,7 +424,7 @@ EOF
   sed -i '/exec xterm -geometry 80x66+0+0 -name login/d' /home/$username/.xinitrc
 
   echo "xsetroot -cursor_name left_ptr" >> /home/$username/.xinitrc
-  echo "nitrogen --restore" >> /home/$username/.xinitrc
+  echo "nitrogen --restore &" >> /home/$username/.xinitrc
   echo "picom --fade-in-step=1 --fade-out-step=1 --fade-delta=0 &" >> /home/$username/.xinitrc
   echo "exec bspwm" >> /home/$username/.xinitrc
 
@@ -438,7 +438,7 @@ EOF
   mkdir -p /home/$username/media/wallpapers
   curl https://images.hdqwalls.com/wallpapers/arch-liinux-4k-t0.jpg -o /home/$username/media/wallpapers/default.jpg
   chown -R $username:$username /home/$username/media
-  nitrogen --set-zoom-fill /home/$username/media/wallpapers/default.jpg --save
+  sudo -u $username nitrogen --set-zoom-fill /home/$username/media/wallpapers/default.jpg --save
 
   echo -e "Wallpaper has been set successfully"
 
