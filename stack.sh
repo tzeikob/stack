@@ -457,7 +457,7 @@ EOF
   mkdir -p /home/$username/.config/alacritty
 
   curl $config_url/alacritty -o /home/$username/.config/alacritty/alacritty.yml
-  chown -R $username:$username /home/$username/.config/alacritty/
+  chown -R $username:$username /home/$username/.config/alacritty
 
   echo -e "Virtual terminal has been installed"
 
