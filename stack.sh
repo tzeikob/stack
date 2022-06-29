@@ -452,7 +452,7 @@ EOF
 
   echo -e "Installing the virtual terminal..."
 
-  pacman -S alacritty
+  pacman -S alacritty ttf-fira-code
 
   mkdir -p /home/$username/.config/alacritty
 
