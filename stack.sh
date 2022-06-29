@@ -463,7 +463,7 @@ EOF
   echo -e "\nbranch () {" >> /home/$username/.bashrc
   echo ' git branch 2> /dev/null | sed -e "/^[^*]/d" -e "s/* \(.*\)/  [\\1]/"' >> /home/$username/.bashrc
   echo -e "}\n" >> /home/$username/.bashrc
-  echo "PS1='\W\e[0;35m$(branch)\e[m > '" >> /home/$username/.bashrc
+  echo "PS1='\W\e[0;35m\$(branch)\e[m > '" >> /home/$username/.bashrc
 
   cp /etc/skel/.bash_profile /root
   cp /etc/skel/.bashrc /root
