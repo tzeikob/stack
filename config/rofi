@@ -2,7 +2,8 @@ configuration {
   display-run: "Run";
   display-drun: "App";
   display-window: "Window";
+  display-emoji: "Emoji";
   drun-display-format: "{name}";
   font: "Fira Code 10";
-  modi: "run,drun,window";
+  modi: "run,drun,window,emoji";
 }
