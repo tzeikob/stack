@@ -295,7 +295,7 @@ answer=${answer:-"yes"}
 if [[ $answer =~ ^(yes|y)$ ]]; then
   echo -e "Installing the BSPWM window manager..."
 
-  pacman -S picom bspwm sxhkd rofi rofi-emoji polybar feh
+  pacman -S picom bspwm sxhkd rofi rofi-emoji rofi-calc polybar feh
 
   echo -e "Setting up the desktop environment configuration..."
 
