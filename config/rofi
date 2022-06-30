@@ -1,0 +1,8 @@
+configuration {
+  display-run: "Run";
+  display-drun: "App";
+  display-window: "Window";
+  drun-display-format: "{name}";
+  font: "Fira Code 10";
+  modi: "run,drun,window";
+}

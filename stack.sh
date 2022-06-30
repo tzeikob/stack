@@ -295,7 +295,7 @@ answer=${answer:-"yes"}
 if [[ $answer =~ ^(yes|y)$ ]]; then
   echo -e "Installing the BSPWM window manager..."
 
-  pacman -S picom bspwm sxhkd dmenu polybar feh
+  pacman -S picom bspwm sxhkd rofi polybar feh
 
   echo -e "Setting up the desktop environment configuration..."
 
@@ -305,7 +305,7 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
     echo -e "Vsync setting in picom has been disabled"
   fi
 
-  mkdir -p /home/$username/.config/{picom,bspwm,sxhkd,polybar}
+  mkdir -p /home/$username/.config/{picom,bspwm,sxhkd,polybar,rofi}
 
   curl $config_url/picom -o /home/$username/.config/picom/picom.conf
   chmod 644 /home/$username/.config/picom/picom.conf
@@ -318,6 +318,9 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
 
   curl $config_url/polybar -o /home/$username/.config/polybar/config.ini
   chmod 644 /home/$username/.config/polybar/config.ini
+
+  curl $config_url/rofi -o /home/$username/.config/rofi/config.rasi
+  chmod 644 /home/$username/.config/rofi/config.rasi
 
   chown -R $username:$username /home/$username/.config
 
