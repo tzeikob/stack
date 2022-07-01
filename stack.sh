@@ -488,6 +488,22 @@ EOF
 
   echo -e "Virtual terminal has been installed"
 
+  echo -e "Installing the cursor theme..."
+
+  cursors_url="https://www.dropbox.com/s/mqt8s1pjfgpmy66/Breeze-Snow.tgz?dl=0"
+  curl -sLo- $cursors_url | tar xzvf - -C /usr/share/icons
+
+  sed -ri 's/Inherits=.*/Inherits=Breeze-Snow/' /usr/share/icons/default/index.theme
+
+  mkdir -p /home/$username/.config/gtk-3.0
+
+  echo "[Settings]" >> /home/$username/.config/gtk-3.0/settings.ini
+  echo "gtk-cursor-theme-name=Breeze-Snow" >> /home/$username/.config/gtk-3.0/settings.ini
+
+  chown -R $username:$username /home/$username/.config/gtk-3.0
+
+  echo -e "Cursor theme has been installed"
+
   echo -e "Desktop environment configuration is done"
 else
   echo -e "Desktop environment has been skipped"
