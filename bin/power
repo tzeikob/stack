@@ -1,0 +1,19 @@
+#! /bin/sh
+
+shutdown=" Shutdown"
+reboot=" Reboot"
+logout=" Logout"
+lock=" Lock"
+
+hide_prompt="inputbar {children: [entry];}"
+exact_lines="listview {lines: 4;}"
+
+chosen=$(printf "$shutdown\n$reboot\n$logout\n$lock" | rofi -dmenu -i -theme-str "$hide_prompt $exact_lines")
+
+case "$chosen" in
+	"$shutdown") sudo shutdown now ;;
+	"$reboot") sudo reboot ;;
+	"$logout") bspc quit ;;
+	"$lock") slock ;;
+	*) exit 1 ;;
+esac

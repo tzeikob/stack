@@ -7,7 +7,9 @@ branch=${2:-"master"}
 kernels=${3:-"all"}
 country=${4:-"Greece"}
 
-config_url="https://raw.githubusercontent.com/tzeikob/stack/$branch/config"
+git_url="https://raw.githubusercontent.com/tzeikob/stack/$branch"
+config_url="$git_url/config"
+bin_url="$git_url/bin"
 
 uefi=true
 
@@ -364,6 +366,17 @@ EOF
   cd / && rm -rf /slock-1.4 /slock-1.4.tar.gz
 
   echo -e "Screen lock has been set"
+
+  echo -e "Installing the power launcher via rofi script..."
+
+  curl $bin_url/power -o /usr/local/bin/power
+  chmod 755 /usr/local/bin/power
+
+  echo -e "\n$username $hostname =NOPASSWD: /sbin/shutdown now,/sbin/reboot" >> /etc/sudoers
+
+  echo -e "User '$username' has granted to trigger power events"
+
+  echo -e "Power launcher has been installed"
 
   echo -e "\nSetting the keyboard layouts..."
 
