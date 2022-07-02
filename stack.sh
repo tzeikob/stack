@@ -491,7 +491,7 @@ EOF
   echo -e "Installing the cursor theme..."
 
   cursors_url="https://www.dropbox.com/s/mqt8s1pjfgpmy66/Breeze-Snow.tgz?dl=0"
-  curl -sLo- $cursors_url | tar xzvf - -C /usr/share/icons
+  curl -sLo- $cursors_url | tar -xzf - -C /usr/share/icons
 
   sed -ri 's/Inherits=.*/Inherits=Breeze-Snow/' /usr/share/icons/default/index.theme
 
