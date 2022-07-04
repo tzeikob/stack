@@ -182,7 +182,7 @@ echo -e "\nInstalling extra base packages..."
 
 pacman -S base-devel pacman-contrib pkgstats grub mtools dosfstools gdisk parted \
   bash-completion man-db man-pages texinfo \
-  cups bluez bluez-utils \
+  cups bluez bluez-utils unzip \
   terminus-font vim nano git htop tree arch-audit \
   $([ $uefi == true ] && echo 'efibootmgr')
 
@@ -431,6 +431,48 @@ EOF
 
   echo -e "Keyboard layouts have been set"
 
+  echo -e "\nInstalling extra fonts..."
+
+  fonts_path="/usr/share/fonts/extra-fonts"
+  mkdir -p $fonts_path
+
+  fonts=(
+    "FiraCode https://github.com/tonsky/FiraCode/releases/download/6.2/Fira_Code_v6.2.zip"
+    "FantasqueSansMono https://github.com/belluzj/fantasque-sans/releases/download/v1.8.0/FantasqueSansMono-Normal.zip"
+    "Hack https://github.com/source-foundry/Hack/releases/download/v3.003/Hack-v3.003-ttf.zip"
+    "Hasklig https://github.com/i-tu/Hasklig/releases/download/v1.2/Hasklig-1.2.zip"
+    "JetBrainsMono https://github.com/JetBrains/JetBrainsMono/releases/download/v2.242/JetBrainsMono-2.242.zip"
+    "Mononoki https://github.com/madmalik/mononoki/releases/download/1.3/mononoki.zip"
+    "VictorMono https://rubjo.github.io/victor-mono/VictorMonoAll.zip"
+    "Cousine https://fonts.google.com/download?family=Cousine"
+    "RobotoMono https://fonts.google.com/download?family=Roboto%20Mono"
+    "ShareTechMono https://fonts.google.com/download?family=Share%20Tech%20Mono"
+    "SpaceMono https://fonts.google.com/download?family=Space%20Mono"
+  )
+
+  for font in "${fonts[@]}"; do
+    font_name=$(echo $font | cut -d " " -f 1)
+    font_url=$(echo $font | cut -d " " -f 2)
+
+    curl -sfLo $fonts_path/$font_name.zip $font_url
+    unzip -q $fonts_path/$font_name.zip -d $fonts_path/$font_name
+
+    find $fonts_path/$font_name/ -depth -mindepth 1 -not -iname "*ttf*" -delete
+    rm -f $fonts_path/$font_name.zip
+
+    echo -e "Font '$font_name' has been installed"
+  done
+
+  fc-cache -f -v
+
+  echo -e "Fonts have been installed under '/usr/share/fonts/nerd-fonts'"
+
+  echo -e "Installing some extra font glyphs..."
+
+  pacman -S ttf-font-awesome noto-fonts-emoji
+
+  echo -e "Extra font glyphs have been installed"
+
   cp /etc/X11/xinit/xinitrc /home/$username/.xinitrc
 
   sed -i '/twm &/d' /home/$username/.xinitrc
@@ -468,7 +510,7 @@ EOF
 
   echo -e "Installing the virtual terminal..."
 
-  pacman -S alacritty ttf-fira-code ttf-font-awesome
+  pacman -S alacritty
 
   mkdir -p /home/$username/.config/alacritty
 
