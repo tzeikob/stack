@@ -484,7 +484,7 @@ EOF
   cp /etc/skel/.bash_profile /root
   cp /etc/skel/.bashrc /root
   sed -i '/PS1.*/d' /root/.bashrc
-  echo -e "PS1='\[\e[0;31m\]\u\[\e[m\] \W  '" >> /root/.bashrc
+  echo -e "PS1='\[\e[1;31m\]\u\[\e[m\] \W  '" >> /root/.bashrc
 
   echo -e "Virtual terminal has been installed"
 
