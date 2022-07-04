@@ -479,12 +479,12 @@ EOF
   echo -e "\nbranch () {" >> /home/$username/.bashrc
   echo ' git branch 2> /dev/null | sed -e "/^[^*]/d" -e "s/* \(.*\)/  [\\1]/"' >> /home/$username/.bashrc
   echo -e "}\n" >> /home/$username/.bashrc
-  echo "PS1='\W\e[0;35m\$(branch)\e[m > '" >> /home/$username/.bashrc
+  echo "PS1='\W\[\e[0;35m\]\$(branch)\[\e[m\] > '" >> /home/$username/.bashrc
 
   cp /etc/skel/.bash_profile /root
   cp /etc/skel/.bashrc /root
   sed -i '/PS1.*/d' /root/.bashrc
-  echo -e "PS1='\e[0;31m\u\e[m \W > '" >> /root/.bashrc
+  echo -e "PS1='\[\e[0;31m\]\u\[\e[m\] \W > '" >> /root/.bashrc
 
   echo -e "Virtual terminal has been installed"
 
