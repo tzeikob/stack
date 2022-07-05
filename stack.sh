@@ -463,7 +463,7 @@ EOF
     echo -e "Font '$font_name' has been installed"
   done
 
-  fc-cache -f -v
+  fc-cache -f
 
   echo -e "Fonts have been installed under '/usr/share/fonts/nerd-fonts'"
 
