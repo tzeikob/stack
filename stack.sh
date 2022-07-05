@@ -457,7 +457,10 @@ EOF
     curl -sfLo $fonts_path/$font_name.zip $font_url
     unzip -q $fonts_path/$font_name.zip -d $fonts_path/$font_name
 
-    find $fonts_path/$font_name/ -depth -mindepth 1 -not -iname "*ttf*" -delete
+    find $fonts_path/$font_name/ -depth -mindepth 1 -iname "*windows*" -exec rm -r {} +
+    find $fonts_path/$font_name/ -depth -mindepth 1 -iname "*macosx*" -exec rm -r {} +
+    find $fonts_path/$font_name/ -depth -type f -not -iname "*ttf*" -delete
+    find $fonts_path/$font_name/ -empty -type d -delete
     rm -f $fonts_path/$font_name.zip
 
     echo -e "Font '$font_name' has been installed"
