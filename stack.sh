@@ -533,21 +533,34 @@ EOF
 
   echo -e "Virtual terminal has been installed"
 
-  echo -e "Installing the cursor theme..."
+  echo -e "Installing the theme, icons and cursors..."
+
+  theme_url="https://github.com/dracula/gtk/archive/master.zip"
+  curl -sfLo /usr/share/themes/Dracula.zip $theme_url
+  unzip -q /usr/share/themes/Dracula.zip -d /usr/share/themes
+  mv /usr/share/themes/gtk-master /usr/share/themes/Dracula
+  rm -f /usr/share/themes/Dracula.zip
+
+  echo -e "Theme files have been installed under '/usr/share/themes'"
+
+  icons_url="https://github.com/dracula/gtk/files/5214870/Dracula.zip"
+  curl -sfLo /usr/share/icons/Dracula.zip $icons_url
+  unzip -q /usr/share/icons/Dracula.zip -d /usr/share/icons
+  rm -f /usr/share/icons/Dracula.zip
+
+  echo -e "Icon files have been installed under '/usr/share/icons'"
 
   cursors_url="https://www.dropbox.com/s/mqt8s1pjfgpmy66/Breeze-Snow.tgz?dl=0"
   curl -sLo- $cursors_url | tar -xzf - -C /usr/share/icons
-
   sed -ri 's/Inherits=.*/Inherits=Breeze-Snow/' /usr/share/icons/default/index.theme
 
+  echo -e "Cursor files have been installed under '/usr/share/icons'"
+
   mkdir -p /home/$username/.config/gtk-3.0
-
-  echo "[Settings]" >> /home/$username/.config/gtk-3.0/settings.ini
-  echo "gtk-cursor-theme-name=Breeze-Snow" >> /home/$username/.config/gtk-3.0/settings.ini
-
+  curl $config_url/theme -o /home/$username/.config/gtk-3.0/settings.ini
   chown -R $username:$username /home/$username/.config/gtk-3.0
 
-  echo -e "Cursor theme has been installed"
+  echo -e "Theme, icons and cursors have been installed"
 
   echo -e "Desktop environment configuration is done"
 else
