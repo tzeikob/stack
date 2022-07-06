@@ -557,7 +557,7 @@ EOF
   echo -e "Cursor files have been installed under '/usr/share/icons'"
 
   mkdir -p /home/$username/.config/gtk-3.0
-  curl $config_url/theme -o /home/$username/.config/gtk-3.0/settings.ini
+  curl $config_url/gtk -o /home/$username/.config/gtk-3.0/settings.ini
   chown -R $username:$username /home/$username/.config/gtk-3.0
 
   echo -e "Theme, icons and cursors have been installed"
