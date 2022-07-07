@@ -1,9 +1,9 @@
 /* Configuration */
 configuration {
   display-run: "Run";
-  display-drun: "App";
-  display-window: "Window";
-  display-emoji: "Emoji";
+  display-drun: "Launch";
+  display-window: "Switch";
+  display-emoji: "Copy";
   display-calc: "Calc";
   drun-display-format: "{name}";
   font: "Fira Code 10";
