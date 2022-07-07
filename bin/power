@@ -2,8 +2,8 @@
 
 shutdown=" Shutdown"
 reboot=" Reboot"
-logout=" Logout"
-lock=" Lock"
+logout=" Logout"
+lock=" Lock"
 
 hide_prompt="inputbar {children: [entry];}"
 exact_lines="listview {lines: 4;}"
