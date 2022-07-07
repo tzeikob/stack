@@ -10,10 +10,10 @@ configuration {
   modi: "run,drun,window,emoji,calc";
 }
 
-/* Theme (default v1.7.3)*/
+/* Theme (default v1.7.3) */
 * {
   selected-normal-foreground:  var(lightbg);
-  foreground:                  rgba ( 0, 43, 54, 100 % );
+  foreground:                  rgba ( 68, 71, 90, 100 % );
   normal-foreground:           var(foreground);
   alternate-normal-background: var(lightbg);
   red:                         rgba ( 220, 50, 47, 100 % );
@@ -28,7 +28,7 @@ configuration {
   background:                  rgba ( 253, 246, 227, 100 % );
   alternate-normal-foreground: var(foreground);
   normal-background:           var(background);
-  lightfg:                     rgba ( 88, 104, 117, 100 % );
+  lightfg:                     rgba (68, 71, 90, 100 % );
   selected-normal-background:  var(lightfg);
   separatorcolor:              var(foreground);
   spacing:                     2;
