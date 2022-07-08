@@ -562,6 +562,22 @@ EOF
 
   echo -e "Theme, icons and cursors have been installed"
 
+  echo -e "Installing the file manager..."
+
+  pacman -S nnn
+
+  mkdir -p /home/$username/.config/nnn
+  curl $config_url/nnn -o /home/$username/.config/nnn/.env_vars
+  chown -R $username:$username /home/$username/.config/nnn/
+  echo -e '\nsource $HOME/.config/nnn/.env_vars' >> /home/$username/.bashrc
+
+  mkdir -p /home/$username/downloads
+  mkdir -p /home/$username/documents
+  mkdir -p /home/$username/sources
+
+  echo -e "Main user home forders have been created"
+  echo -e "File manager has been installed"
+
   echo -e "Desktop environment configuration is done"
 else
   echo -e "Desktop environment has been skipped"
