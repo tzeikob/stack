@@ -169,3 +169,10 @@ XF86MonBrightnessDown
 	xbacklight -dec 5
 XF86MonBrightnessUp
 	xbacklight -inc 5
+
+#
+# File manager
+#
+
+super + n
+	nnn -Rd
