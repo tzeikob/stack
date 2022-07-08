@@ -1,2 +1,2 @@
 export EDITOR="nano"
-export NNN_BMS="d:$HOME/downloads;o:$HOME/documents;p:$HOME/sources"
+export NNN_BMS="d:$HOME/downloads;o:$HOME/documents;s:$HOME/sources"
