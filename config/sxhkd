@@ -172,7 +172,8 @@ XF86MonBrightnessUp
 
 #
 # File manager
-#
+# Todo: this binding creates hard dependency to alacritty and nnn
+# better to resolve binaries on the fly (see $TERMINAL)
 
 super + n
-	nnn -Rd
+	alacritty nnn -R
