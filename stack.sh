@@ -573,6 +573,12 @@ EOF
   chown -R $username:$username /home/$username/.config/nnn/
   echo -e '\nsource $HOME/.config/nnn/.env_vars' >> /home/$username/.bashrc
 
+  echo -e "Installing extra nnn plugins..."
+
+  curl -Ls https://raw.githubusercontent.com/jarun/nnn/master/plugins/getplugs | sh
+
+  echo -e "Creating user home directories..."
+
   mkdir -p /home/$username/downloads \
     /home/$username/documents \
     /home/$username/media/pictures \
