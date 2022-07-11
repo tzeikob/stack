@@ -526,6 +526,8 @@ EOF
   echo -e "}\n" >> /home/$username/.bashrc
   echo "PS1='\W\[\e[0;35m\]\$(branch)\[\e[m\]  '" >> /home/$username/.bashrc
 
+  echo -e '\nexport EDITOR="nano"'
+
   cp /etc/skel/.bash_profile /root
   cp /etc/skel/.bashrc /root
   sed -i '/PS1.*/d' /root/.bashrc
