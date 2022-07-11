@@ -86,5 +86,4 @@ colors:
 cursor:
   style:
     shape: Block
-    blinking: On
-  unfocused_hollow: true
+    blinking: Always
