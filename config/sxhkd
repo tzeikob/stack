@@ -176,4 +176,4 @@ XF86MonBrightnessUp
 # better to resolve binaries on the fly (see $TERMINAL)
 
 super + n
-	alacritty -e nnn -R
+	alacritty -e nnn
