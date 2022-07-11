@@ -573,8 +573,25 @@ EOF
   chown -R $username:$username /home/$username/.config/nnn/
   echo -e '\nsource $HOME/.config/nnn/.env_vars' >> /home/$username/.bashrc
 
-  mkdir -p /home/$username/downloads /home/$username/documents /home/$username/sources
-  chown -R $username:$username /home/$username/downloads /home/$username/documents /home/$username/sources
+  mkdir -p /home/$username/downloads \
+    /home/$username/documents \
+    /home/$username/media/pictures \
+    /home/$username/media/wallpapers \
+    /home/$username/media/music \
+    /home/$username/media/videos \
+    /home/$username/virtual \
+    /home/$username/sources \
+    /home/$username/data
+
+  chown -R $username:$username /home/$username/downloads \
+    /home/$username/documents \
+    /home/$username/media/pictures \
+    /home/$username/media/wallpapers \
+    /home/$username/media/music \
+    /home/$username/media/videos \
+    /home/$username/virtual \
+    /home/$username/sources \
+    /home/$username/data
 
   echo -e "Main user home forders have been created"
   echo -e "File manager has been installed"
