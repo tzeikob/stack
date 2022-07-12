@@ -566,7 +566,7 @@ EOF
 
   echo -e "Installing the file manager..."
 
-  pacman -S nnn
+  pacman -S nnn fzf
 
   mkdir -p /home/$username/.config/nnn
   curl $config_url/nnn -o /home/$username/.config/nnn/.env_vars
