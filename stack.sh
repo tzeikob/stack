@@ -184,6 +184,7 @@ pacman -S base-devel pacman-contrib pkgstats grub mtools dosfstools gdisk parted
   bash-completion man-db man-pages texinfo \
   cups bluez bluez-utils unzip \
   terminus-font vim nano git htop tree arch-audit \
+  atool zip xz unace p7zip gzip lzop bzip2 unrar \
   $([ $uefi == true ] && echo 'efibootmgr')
 
 echo -e "\nInstalling the yay package..."
