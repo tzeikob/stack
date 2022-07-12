@@ -575,7 +575,8 @@ EOF
 
   echo -e "Installing extra nnn plugins..."
 
-  curl -Ls https://raw.githubusercontent.com/jarun/nnn/master/plugins/getplugs | sh
+  curl -Ls https://raw.githubusercontent.com/jarun/nnn/master/plugins/getplugs | HOME=/home/$username/ sh
+  chown -R $username:$username /home/$username/.config/nnn/plugins
 
   echo -e "Creating user home directories..."
 
