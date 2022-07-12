@@ -1,7 +1,8 @@
 export NNN_OPTS="RU"
 export NNN_PLUG="v:imgview;c:chksum;d:dups;e:gpge"
-export NNN_BMS="d:$HOME/downloads;o:$HOME/documents;m:$HOME/media;s:$HOME/sources"
+export NNN_BMS="d:$HOME/downloads;o:$HOME/documents;m:$HOME/media;s:$HOME/sources;t:$HOME/.local/share/Trash/files"
 export NNN_ARCHIVE="\\.(7z|a|ace|alz|arc|arj|bz|bz2|cab|cpio|deb|gz|jar|lha|lz|lzh|lzma|lzo|rar|rpm|rz|t7z|tar|tbz|tbz2|tgz|tlz|txz|tZ|tzo|war|xpi|xz|Z|zip)$"
+export NNN_TRASH=1
 
 BLK="e4" CHR="e4" DIR="04" EXE="02" REG="0f" HARDLINK="75" SYMLINK="75" MISSING="f7" ORPHAN="f7" FIFO="d7" SOCK="cb" OTHER="07"
 export NNN_FCOLORS="$BLK$CHR$DIR$EXE$REG$HARDLINK$SYMLINK$MISSING$ORPHAN$FIFO$SOCK$OTHER"
