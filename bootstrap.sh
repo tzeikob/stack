@@ -177,7 +177,7 @@ echo -e "Moving to the new system in 15 secs (ctrl-c to skip)..."
 sleep 15
 
 arch-chroot /mnt \
-  bash -c "$(curl -sLo- https://raw.githubusercontent.com/tzeikob/stack/$branch/stack.sh)" -s "$device" "$branch" "$kernels" "$country" &&
+  bash -c "$(curl -sLo- https://raw.githubusercontent.com/tzeikob/stack/$branch/stack.sh)" -s "$device" "$branch" "$kernels" "$country" 2>&1 | tee /mnt/var/log/stack.log &&
   echo -e "Unmounting all partitions under '/mnt'..." &&
   umount -R /mnt || echo -e "Ignoring any busy mounted points..." &&
   echo -e "Rebooting the system in 15 secs (ctrl-c to skip)..." &&
