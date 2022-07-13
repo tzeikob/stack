@@ -166,9 +166,9 @@ super + Pause
 #
 
 XF86MonBrightnessDown
-	xbacklight -dec 5
+	xbacklight -dec 10 &
 XF86MonBrightnessUp
-	xbacklight -inc 5
+	xbacklight -inc 10 &
 
 #
 # File manager
