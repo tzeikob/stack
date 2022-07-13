@@ -167,7 +167,11 @@ super + Pause
 
 XF86MonBrightnessDown
 	xbacklight -dec 10 &
+super + alt + Page_Down
+	xbacklight -dec 10 &
 XF86MonBrightnessUp
+	xbacklight -inc 10 &
+super + alt + Page_UP
 	xbacklight -inc 10 &
 
 #
