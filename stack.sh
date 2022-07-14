@@ -604,6 +604,22 @@ EOF
   echo -e "Main user home forders have been created"
   echo -e "File manager has been installed"
 
+  echo -e "Set music player configuration..."
+
+  mkdir -p /home/$username/.config/moc
+  curl $config_url/moc.config -o /home/$username/.config/moc/config
+  chmod 644 /home/$username/.config/moc/config
+
+  mkdir -p /home/$username/.config/moc/themes
+  curl $config_url/moc.theme -o /home/$username/.config/themes/dark
+  chmod 644 /home/$username/.config/themes/dark
+
+  chown -R $username:$username /home/$username/.config/moc
+
+  echo -e '\nalias="mocp -M $HOME/.config/moc"' >> /home/$username/.bashrc
+
+  echo -e "Music player has been configured"
+
   echo -e "Desktop environment configuration is done"
 else
   echo -e "Desktop environment has been skipped"

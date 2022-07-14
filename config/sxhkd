@@ -181,3 +181,10 @@ super + alt + Page_UP
 
 super + n
 	alacritty -e nnn -$NNN_OPTS
+
+#
+# Music player
+#
+
+super + alt + m
+	alacritty -e mocp -M $HOME/.config/moc
