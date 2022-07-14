@@ -606,17 +606,14 @@ EOF
 
   echo -e "Set music player configuration..."
 
-  mkdir -p /home/$username/.config/moc
-  curl $config_url/moc.config -o /home/$username/.config/moc/config
-  chmod 644 /home/$username/.config/moc/config
+  curl $config_url/moc.config -o /home/$username/.moc/config
+  chmod 644 /home/$username/.moc/config
+  chown $username:$username /home/$username/.moc/config
 
-  mkdir -p /home/$username/.config/moc/themes
-  curl $config_url/moc.theme -o /home/$username/.config/themes/dark
-  chmod 644 /home/$username/.config/themes/dark
-
-  chown -R $username:$username /home/$username/.config/moc
-
-  echo -e '\nalias="mocp -M $HOME/.config/moc"' >> /home/$username/.bashrc
+  mkdir -p /home/$username/.moc/themes
+  curl $config_url/moc.theme -o /home/$username/.moc/themes/dark
+  chmod 644 /home/$username/.moc/themes/dark
+  chown $username:$username /home/$username/.moc/themes/dark
 
   echo -e "Music player has been configured"
 

@@ -187,4 +187,4 @@ super + n
 #
 
 super + alt + m
-	alacritty -e mocp -M $HOME/.config/moc
+	alacritty -e mocp
