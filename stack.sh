@@ -608,9 +608,9 @@ EOF
 
   sudo pacman -S moc
 
-  echo -e "Installing optional dependecies..."
+  echo -e "Installing codecs and various dependecies..."
 
-  sudo pacman -S --asdeps --needed $(pacman -Si moc | sed -n '/^Opt/,/^Conf/p' | sed '$d' | sed 's/^Opt.*://g' | sed 's/^\s*//g' | tr '\n' ' ')
+  sudo pacman -S --asdeps --needed faad2 ffmpeg4.4 libmodplug libmpcdec speex taglib wavpack
 
   curl $config_url/moc.config -o /home/$username/.moc/config
   chmod 644 /home/$username/.moc/config
