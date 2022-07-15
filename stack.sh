@@ -621,6 +621,9 @@ EOF
   chmod 644 /home/$username/.moc/themes/dark
   chown $username:$username /home/$username/.moc/themes/dark
 
+  cp /home/$username/.config/nnn/plugins/mocq /home/$username/.config/nnn/plugins/mocq.bak
+  sed -ri 's/(.*)# mocp$/\1alacritty -e mocp \&/' /home/$username/.config/nnn/plugins/mocq
+
   echo -e "Music player has been installed"
 
   echo -e "Desktop environment configuration is done"
