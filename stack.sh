@@ -298,7 +298,7 @@ answer=${answer:-"yes"}
 if [[ $answer =~ ^(yes|y)$ ]]; then
   echo -e "Installing the BSPWM window manager..."
 
-  pacman -S picom bspwm sxhkd rofi rofi-emoji rofi-calc xsel polybar feh firefox sxiv moc mpv
+  pacman -S picom bspwm sxhkd rofi rofi-emoji rofi-calc xsel polybar feh firefox sxiv mpv
 
   echo -e "Setting up the desktop environment configuration..."
 
@@ -604,7 +604,13 @@ EOF
   echo -e "Main user home forders have been created"
   echo -e "File manager has been installed"
 
-  echo -e "Set music player configuration..."
+  echo -e "Installing the music player..."
+
+  sudo pacman -S moc
+
+  echo -e "Installing optional dependecies..."
+
+  sudo pacman -S --asdeps --needed $(pacman -Si moc | sed -n '/^Opt/,/^Conf/p' | sed '$d' | sed 's/^Opt.*://g' | sed 's/^\s*//g' | tr '\n' ' ')
 
   curl $config_url/moc.config -o /home/$username/.moc/config
   chmod 644 /home/$username/.moc/config
@@ -615,7 +621,7 @@ EOF
   chmod 644 /home/$username/.moc/themes/dark
   chown $username:$username /home/$username/.moc/themes/dark
 
-  echo -e "Music player has been configured"
+  echo -e "Music player has been installed"
 
   echo -e "Desktop environment configuration is done"
 else
