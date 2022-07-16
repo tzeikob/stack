@@ -1,5 +1,12 @@
 #! /bin/sh
 
+# Set the window size of the file chooser small to fit the screen
+size=$(gsettings get org.gtk.Settings.FileChooser window-size)
+
+if [[ $size != "(800, 600)" ]]; then
+  gsettings set org.gtk.Settings.FileChooser window-size '(800, 600)'
+fi
+
 pgrep -x sxhkd > /dev/null || sxhkd &
 $HOME/.config/polybar/launch.sh
 
