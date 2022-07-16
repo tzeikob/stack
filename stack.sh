@@ -336,6 +336,12 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
 
   chown -R $username:$username /home/$username/.config
 
+  if [[ $virtual_box =~ ^(yes|y)$ ]]; then
+    sed -i 's/vsync = true;/vsync = false;/' /home/$username/.config/picom/picom.conf
+
+    echo -e "Vsync setting in picom has been disabled"
+  fi
+
   echo -e "\nSetting up the polybar launcher..."
 
   cat << 'EOF' > /home/$username/.config/polybar/launch.sh
