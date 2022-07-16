@@ -243,28 +243,29 @@ echo -e "\nInstalling video drivers..."
 
 video_pkgs="xorg xorg-xinit xorg-xrandr arandr"
 
-read -p "What video card is your system using? [NVIDIA/amd/intel/virtual] " gpu_vendor
-gpu_vendor=${gpu_vendor:-"nvidia"}
+read -p "What video drivers to install? [nvidia/amd/intel/qxl/vmware/none] " video_vendor
 
-while [[ ! $gpu_vendor =~ ^(nvidia|amd|intel|virtual)$ ]]; do
-  echo -e "Invalid GPU vendor: '$gpu_vendor'"
-  read -p "Please enter a valid GPU vendor: [NVIDIA/amd/intel/virtual] " gpu_vendor
-  gpu_vendor=${gpu_vendor:-"nvidia"}
+while [[ ! $video_vendor =~ ^(nvidia|amd|intel|qxl|vmware|none)$ ]]; do
+  echo -e "Invalid video vendor: '$video_vendor'"
+  read -p "Please enter a valid video vendor: [nvidia/amd/intel/qxl/vmware/none] " video_vendor
 done
 
-if [[ $gpu_vendor =~ ^amd$ ]]; then
-  gpu_vendor="amd"
+if [[ $video_vendor =~ ^amd$ ]]; then
+  video_vendor="amd"
   video_pkgs="$video_pkgs xf86-video-amdgpu mesa"
-elif [[ $gpu_vendor =~ ^intel$ ]]; then
-  gpu_vendor="intel"
+elif [[ $video_vendor =~ ^intel$ ]]; then
+  video_vendor="intel"
   video_pkgs="$video_pkgs xf86-video-intel mesa"
-elif [[ $gpu_vendor =~ ^virtual$ ]]; then
-  gpu_vendor="virtual"
-  video_pkgs="$video_pkgs xf86-video-vmware virtualbox-guest-utils"
-else
-  gpu_vendor="nvidia"
+elif [[ $video_vendor =~ ^qxl$ ]]; then
+  video_vendor="qxl"
+  video_pkgs="$video_pkgs xf86-video-qxl"
+elif [[ $video_vendor =~ ^vmware$ ]]; then
+  video_vendor="vmware"
+  video_pkgs="$video_pkgs xf86-video-vmware"
+elif [[ $video_vendor =~ ^nvidia$ ]]; then
+  video_vendor="nvidia"
 
-  read -p "Which type of Nvidia drivers to install? [PROPRIETARY/nouveau] " nvidia_type
+  read -p "Which version of nvidia drivers to install? [PROPRIETARY/nouveau] " nvidia_type
   nvidia_type=${nvidia_type:-"proprietary"}
 
   while [[ ! $nvidia_type =~ ^(proprietary|nouveau)$ ]]; do
@@ -288,7 +289,14 @@ else
   fi
 fi
 
-echo -e "GPU vendor set to '$gpu_vendor'"
+echo -e "Video drivers vendor set to '$video_vendor'"
+
+read -p "Is this a virtual box machine? [y/N] " virtual_box
+virtual_box=${virtual_box:-"no"}
+
+if [[ $virtual_box =~ ^(yes|y)$ ]]; then
+  video_pkgs="$video_pkgs virtualbox-guest-utils"
+fi
 
 pacman -S $video_pkgs
 
@@ -303,12 +311,6 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
   pacman -S picom bspwm sxhkd rofi rofi-emoji rofi-calc xsel polybar feh firefox sxiv mpv
 
   echo -e "Setting up the desktop environment configuration..."
-
-  if [[ $gpu_vendor =~ ^virtual$ ]]; then
-    sed -i 's/vsync = true;/#vsync = true;/' /etc/xdg/picom.conf
-
-    echo -e "Vsync setting in picom has been disabled"
-  fi
 
   mkdir -p /home/$username/.config/{picom,bspwm,sxhkd,polybar,rofi}
 
@@ -674,7 +676,7 @@ sed -i 's/#GRUB_DISABLE_SUBMENU=y/GRUB_DISABLE_SUBMENU=y/' /etc/default/grub
 
 grub-mkconfig -o /boot/grub/grub.cfg
 
-if [[ $gpu_vendor =~ ^virtual$ && $uefi == true ]]; then
+if [[ $virtual_box =~ ^(yes|y)$ && $uefi == true ]]; then
   mkdir -p /boot/EFI/BOOT
   cp /boot/EFI/GRUB/grubx64.efi /boot/EFI/BOOT/BOOTX64.EFI
 fi
@@ -786,7 +788,7 @@ systemctl enable nftables
 systemctl enable reflector.timer
 systemctl enable paccache.timer
 
-if [[ $gpu_vendor =~ ^virtual$ ]]; then
+if [[ $virtual_box =~ ^(yes|y)$ ]]; then
   systemctl enable vboxservice
 fi
 
