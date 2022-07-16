@@ -615,12 +615,12 @@ EOF
   mkdir -p /home/$username/.moc/
   curl $config_url/moc.config -o /home/$username/.moc/config
   chmod 644 /home/$username/.moc/config
-  chown $username:$username /home/$username/.moc/config
 
   mkdir -p /home/$username/.moc/themes
   curl $config_url/moc.theme -o /home/$username/.moc/themes/dark
   chmod 644 /home/$username/.moc/themes/dark
-  chown $username:$username /home/$username/.moc/themes/dark
+
+  chown -R $username:$username /home/$username/.moc/
 
   cp /home/$username/.config/nnn/plugins/mocq /home/$username/.config/nnn/plugins/mocq.bak
   sed -ri 's/(.*)# mocp$/\1alacritty -e mocp \&/' /home/$username/.config/nnn/plugins/mocq
