@@ -612,6 +612,7 @@ EOF
 
   sudo pacman -S --asdeps --needed faad2 ffmpeg4.4 libmodplug libmpcdec speex taglib wavpack
 
+  mkdir -p /home/$username/.moc/
   curl $config_url/moc.config -o /home/$username/.moc/config
   chmod 644 /home/$username/.moc/config
   chown $username:$username /home/$username/.moc/config
