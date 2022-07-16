@@ -10,6 +10,7 @@ country=${4:-"Greece"}
 git_url="https://raw.githubusercontent.com/tzeikob/stack/$branch"
 config_url="$git_url/config"
 bin_url="$git_url/bin"
+assets_url="$git_url/assets"
 
 uefi=true
 
@@ -181,6 +182,7 @@ echo -e "Reflector mirror country set to '$country'"
 echo -e "\nInstalling extra base packages..."
 
 pacman -S base-devel pacman-contrib pkgstats grub mtools dosfstools gdisk parted \
+  curl wget \
   bash-completion man-db man-pages texinfo \
   cups bluez bluez-utils unzip \
   terminus-font vim nano git htop tree arch-audit \
@@ -310,19 +312,24 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
 
   mkdir -p /home/$username/.config/{picom,bspwm,sxhkd,polybar,rofi}
 
-  curl $config_url/picom -o /home/$username/.config/picom/picom.conf
+  curl $config_url/picom -sSo /home/$username/.config/picom/picom.conf \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
   chmod 644 /home/$username/.config/picom/picom.conf
 
-  curl $config_url/bspwm -o /home/$username/.config/bspwm/bspwmrc
+  curl $config_url/bspwm -sSo /home/$username/.config/bspwm/bspwmrc \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
   chmod 755 /home/$username/.config/bspwm/bspwmrc
 
-  curl $config_url/sxhkd -o /home/$username/.config/sxhkd/sxhkdrc
+  curl $config_url/sxhkd -sSo /home/$username/.config/sxhkd/sxhkdrc \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
   chmod 644 /home/$username/.config/sxhkd/sxhkdrc
 
-  curl $config_url/polybar -o /home/$username/.config/polybar/config.ini
+  curl $config_url/polybar -sSo /home/$username/.config/polybar/config.ini \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
   chmod 644 /home/$username/.config/polybar/config.ini
 
-  curl $config_url/rofi -o /home/$username/.config/rofi/config.rasi
+  curl $config_url/rofi -sSo /home/$username/.config/rofi/config.rasi \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
   chmod 644 /home/$username/.config/rofi/config.rasi
 
   chown -R $username:$username /home/$username/.config
@@ -352,10 +359,14 @@ EOF
 
   echo -e "\nInstalling the screen locker..."
 
-  curl -o ./slock-1.4.tar.gz https://dl.suckless.org/tools/slock-1.4.tar.gz
+  curl https://dl.suckless.org/tools/slock-1.4.tar.gz -sSLo ./slock-1.4.tar.gz \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
   tar -xzvf ./slock-1.4.tar.gz
+
   cd /slock-1.4
-  curl -o ./control-clear.diff https://tools.suckless.org/slock/patches/control-clear/slock-git-20161012-control-clear.diff
+
+  curl https://tools.suckless.org/slock/patches/control-clear/slock-git-20161012-control-clear.diff -sSLo ./control-clear.diff \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
   patch -p1 < ./control-clear.diff
 
   sed -ri 's/(.*)nogroup(.*)/\1nobody\2/' ./config.def.h
@@ -370,7 +381,8 @@ EOF
 
   echo -e "Installing the power launcher via rofi script..."
 
-  curl $bin_url/power -o /usr/local/bin/power
+  curl $bin_url/power -sSo /usr/local/bin/power \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
   chmod 755 /usr/local/bin/power
 
   echo -e "\n$username $hostname =NOPASSWD: /sbin/shutdown now,/sbin/reboot" >> /etc/sudoers
@@ -455,7 +467,8 @@ EOF
     font_name=$(echo $font | cut -d " " -f 1)
     font_url=$(echo $font | cut -d " " -f 2)
 
-    curl -sfLo $fonts_path/$font_name.zip $font_url
+    curl $font_url -sSLo $fonts_path/$font_name.zip \
+      --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
     unzip -q $fonts_path/$font_name.zip -d $fonts_path/$font_name
 
     find $fonts_path/$font_name/ -depth -mindepth 1 -iname "*windows*" -exec rm -r {} +
@@ -498,7 +511,8 @@ EOF
   echo -e "Setting up the wallpaper..."
 
   mkdir -p /home/$username/media/wallpapers
-  curl https://images.hdqwalls.com/wallpapers/arch-liinux-4k-t0.jpg -o /home/$username/media/wallpapers/default.jpg
+  curl https://images.hdqwalls.com/wallpapers/arch-liinux-4k-t0.jpg -sSLo /home/$username/media/wallpapers/default.jpg \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
 
   chown -R $username:$username /home/$username/media
 
@@ -518,7 +532,8 @@ EOF
 
   mkdir -p /home/$username/.config/alacritty
 
-  curl $config_url/alacritty -o /home/$username/.config/alacritty/alacritty.yml
+  curl $config_url/alacritty -sSo /home/$username/.config/alacritty/alacritty.yml \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
   chown -R $username:$username /home/$username/.config/alacritty
 
   sed -i '/PS1.*/d' /home/$username/.bashrc
@@ -539,7 +554,8 @@ EOF
   echo -e "Installing the theme, icons and cursors..."
 
   theme_url="https://github.com/dracula/gtk/archive/master.zip"
-  curl -sfLo /usr/share/themes/Dracula.zip $theme_url
+  curl $theme_url -sSLo /usr/share/themes/Dracula.zip \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
   unzip -q /usr/share/themes/Dracula.zip -d /usr/share/themes
   mv /usr/share/themes/gtk-master /usr/share/themes/Dracula
   rm -f /usr/share/themes/Dracula.zip
@@ -547,20 +563,26 @@ EOF
   echo -e "Theme files have been installed under '/usr/share/themes'"
 
   icons_url="https://github.com/dracula/gtk/files/5214870/Dracula.zip"
-  curl -sfLo /usr/share/icons/Dracula.zip $icons_url
+  curl $icons_url -sSLo /usr/share/icons/Dracula.zip \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
   unzip -q /usr/share/icons/Dracula.zip -d /usr/share/icons
   rm -f /usr/share/icons/Dracula.zip
 
   echo -e "Icon files have been installed under '/usr/share/icons'"
 
   cursors_url="https://www.dropbox.com/s/mqt8s1pjfgpmy66/Breeze-Snow.tgz?dl=0"
-  curl -sLo- $cursors_url | tar -xzf - -C /usr/share/icons
+  curl $cursors_url -sSLo /usr/share/icons/breeze-snow.tgz \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
+  tar -xzf /usr/share/icons/breeze-snow.tgz -C /usr/share/icons
+  rm -f /usr/share/icons/breeze-snow.tgz
+
   sed -ri 's/Inherits=.*/Inherits=Breeze-Snow/' /usr/share/icons/default/index.theme
 
   echo -e "Cursor files have been installed under '/usr/share/icons'"
 
   mkdir -p /home/$username/.config/gtk-3.0
-  curl $config_url/gtk -o /home/$username/.config/gtk-3.0/settings.ini
+  curl $config_url/gtk -sSo /home/$username/.config/gtk-3.0/settings.ini \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
   chown -R $username:$username /home/$username/.config/gtk-3.0
 
   echo -e "Theme, icons and cursors have been installed"
@@ -570,13 +592,17 @@ EOF
   pacman -S nnn fzf
 
   mkdir -p /home/$username/.config/nnn
-  curl $config_url/nnn -o /home/$username/.config/nnn/.env_vars
+  curl $config_url/nnn -sSo /home/$username/.config/nnn/.env_vars \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
   chown -R $username:$username /home/$username/.config/nnn/
   echo -e '\nsource $HOME/.config/nnn/.env_vars' >> /home/$username/.bashrc
 
   echo -e "Installing extra nnn plugins..."
 
-  curl -Ls https://raw.githubusercontent.com/jarun/nnn/master/plugins/getplugs | HOME=/home/$username/ sh
+  curl https://raw.githubusercontent.com/jarun/nnn/master/plugins/getplugs -sSLo ./nnn-getplugs \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
+  HOME=/home/$username sh ./nnn-getplugs > dev/null
+  rm -f ./nnn-getplugs
   chown -R $username:$username /home/$username/.config/nnn/plugins
 
   echo -e "Creating user home directories..."
@@ -613,11 +639,13 @@ EOF
   sudo pacman -S --asdeps --needed faad2 ffmpeg4.4 libmodplug libmpcdec speex taglib wavpack
 
   mkdir -p /home/$username/.moc/
-  curl $config_url/moc.config -o /home/$username/.moc/config
+  curl $config_url/moc.config -sSo /home/$username/.moc/config \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
   chmod 644 /home/$username/.moc/config
 
   mkdir -p /home/$username/.moc/themes
-  curl $config_url/moc.theme -o /home/$username/.moc/themes/dark
+  curl $config_url/moc.theme -sSo /home/$username/.moc/themes/dark \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
   chmod 644 /home/$username/.moc/themes/dark
 
   chown -R $username:$username /home/$username/.moc/
@@ -722,7 +750,8 @@ echo -e "Pacman has been configured"
 echo -e "Settin up the login screen"
 
 mv /etc/issue /etc/issue.bak
-curl https://raw.githubusercontent.com/tzeikob/stack/$branch/assets/issue -o /etc/issue
+curl $assets_url/issue -sSo /etc/issue \
+  --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
 
 cat << 'EOF' > /etc/systemd/system/login-issue.service
 [Unit]
