@@ -206,7 +206,7 @@ pacman -S acpi acpid acpi_call
 echo -e "\nInstalling network utility packages..."
 
 pacman -S networkmanager dialog wireless_tools netctl inetutils dnsutils \
-  wpa_supplicant openssh nfs-utils openbsd-netcat nftables iptables-nft ipset
+  wpa_supplicant iwd openssh nfs-utils openbsd-netcat nftables iptables-nft ipset
 
 echo -e "\nInstalling audio drivers and packages..."
 
