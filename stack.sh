@@ -658,7 +658,7 @@ EOF
 
   pacman -S xournalpp
 
-  sydo -u $username yay -S --removemake --nodiffmenu evince-no-gnome poppler > /dev/null
+  sudo -u $username yay -S --removemake --nodiffmenu evince-no-gnome poppler > /dev/null
   xdg-mime default org.gnome.Evince.desktop application/pdf
 
   echo -e "Document viewers have been installed"
