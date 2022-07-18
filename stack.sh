@@ -243,26 +243,14 @@ echo -e "\nInstalling video drivers..."
 
 video_pkgs="xorg xorg-xinit xorg-xrandr arandr"
 
-read -p "Which vendor video drivers to install? [nvidia/nouveau/amd/intel/qxl/vmware/none] " video_vendor
+read -p "Which vendor video drivers to install? [nvidia/amd/intel/nouveau/qxl/vmware/none] " video_vendor
 
-while [[ ! $video_vendor =~ ^(nvidia|nouveau|amd|intel|qxl|vmware|none)$ ]]; do
+while [[ ! $video_vendor =~ ^(nvidia|amd|intel|nouveau|qxl|vmware|none)$ ]]; do
   echo -e "Invalid video driver vendor: '$video_vendor'"
-  read -p "Please enter a valid video driver vendor: [nvidia/nouveau/amd/intel/qxl/vmware/none] " video_vendor
+  read -p "Please enter a valid video driver vendor: [nvidia/amd/intel/nouveau/qxl/vmware/none] " video_vendor
 done
 
-if [[ $video_vendor =~ ^amd$ ]]; then
-  video_vendor="amd"
-  video_pkgs="$video_pkgs xf86-video-amdgpu mesa"
-elif [[ $video_vendor =~ ^intel$ ]]; then
-  video_vendor="intel"
-  video_pkgs="$video_pkgs xf86-video-intel mesa"
-elif [[ $video_vendor =~ ^qxl$ ]]; then
-  video_vendor="qxl"
-  video_pkgs="$video_pkgs xf86-video-qxl mesa"
-elif [[ $video_vendor =~ ^vmware$ ]]; then
-  video_vendor="vmware"
-  video_pkgs="$video_pkgs xf86-video-vmware mesa"
-elif [[ $video_vendor =~ ^nvidia$ ]]; then
+if [[ $video_vendor =~ ^nvidia$ ]]; then
   video_vendor="nvidia"
 
   if [[ $kernels =~ ^stable$ ]]; then
@@ -274,8 +262,20 @@ elif [[ $video_vendor =~ ^nvidia$ ]]; then
   fi
 
   video_pkgs="$video_pkgs nvidia-utils nvidia-settings"
+elif [[ $video_vendor =~ ^amd$ ]]; then
+  video_vendor="amd"
+  video_pkgs="$video_pkgs xf86-video-amdgpu mesa"
+elif [[ $video_vendor =~ ^intel$ ]]; then
+  video_vendor="intel"
+  video_pkgs="$video_pkgs xf86-video-intel mesa"
 elif [[ $video_vendor =~ ^nouveau$ ]]; then
   video_pkgs="$video_pkgs xf86-video-nouveau mesa"
+elif [[ $video_vendor =~ ^qxl$ ]]; then
+  video_vendor="qxl"
+  video_pkgs="$video_pkgs xf86-video-qxl mesa"
+elif [[ $video_vendor =~ ^vmware$ ]]; then
+  video_vendor="vmware"
+  video_pkgs="$video_pkgs xf86-video-vmware mesa"
 else
   video_pkgs="$video_pkgs mesa"
 fi
