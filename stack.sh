@@ -600,7 +600,7 @@ EOF
 
   curl https://raw.githubusercontent.com/jarun/nnn/master/plugins/getplugs -sSLo ./nnn-getplugs \
     --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
-  HOME=/home/$username sh ./nnn-getplugs > dev/null
+  HOME=/home/$username sh ./nnn-getplugs > /dev/null
   rm -f ./nnn-getplugs
   chown -R $username:$username /home/$username/.config/nnn/plugins
 
