@@ -276,6 +276,8 @@ elif [[ $video_vendor =~ ^nvidia$ ]]; then
   video_pkgs="$video_pkgs nvidia-utils nvidia-settings"
 elif [[ $video_vendor =~ ^nouveau$ ]]; then
   video_pkgs="$video_pkgs xf86-video-nouveau mesa"
+else
+  video_pkgs="$video_pkgs mesa"
 fi
 
 echo -e "Video drivers vendor set to '$video_vendor'"
