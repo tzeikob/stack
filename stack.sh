@@ -654,6 +654,13 @@ EOF
 
   echo -e "Music player has been installed"
 
+  echo -e "Installing the document viewer..."
+
+  sydo -u $username yay -S --removemake --nodiffmenu evince-no-gnome poppler > /dev/null
+  xdg-mime default org.gnome.Evince.desktop application/pdf
+
+  echo -e "Document viewer has been installed"
+
   echo -e "Desktop environment configuration is done"
 else
   echo -e "Desktop environment has been skipped"
