@@ -656,12 +656,20 @@ EOF
 
   echo -e "Installing various document viewers..."
 
-  pacman -S xournalpp
+  pacman -S xournalpp poppler
 
-  sudo -u $username yay -S --removemake --nodiffmenu evince-no-gnome poppler > /dev/null
-  xdg-mime default org.gnome.Evince.desktop application/pdf
+  sudo -u $username yay -S --useask --removemake --nodiffmenu evince-no-gnome > /dev/null
 
   echo -e "Document viewers have been installed"
+
+  echo -e "Setting up default applications for basic mime types..."
+
+  curl $config_url/mime -sSo /home/$username/.config/mimeapps.list \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
+
+  chown $username:$username /home/$username/.config/mimeapps.list
+
+  echo -e "Default applications have been set"
 
   echo -e "Desktop environment configuration is done"
 else

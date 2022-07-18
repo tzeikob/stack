@@ -1,0 +1,18 @@
+[Default Applications]
+image/jpeg=sxiv.desktop
+image/jpg=sxiv.desktop
+image/png=sxiv.desktop
+image/tiff=sxiv.desktop
+
+audio/mp3=mpv.desktop
+audio/flac=mpv.desktop
+audio/midi=mpv.desktop
+
+audio/mp4=mpv.desktop
+audio/mkv=mpv.desktop
+audio/mov=mpv.desktop
+audio/mpeg=mpv.desktop
+audio/avi=mpv.desktop
+
+application/pdf=org.gnome.Evince.desktop
+application/gzip=com.github.xournalapp.xournalapp.desktop
