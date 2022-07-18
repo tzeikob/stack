@@ -654,12 +654,14 @@ EOF
 
   echo -e "Music player has been installed"
 
-  echo -e "Installing the document viewer..."
+  echo -e "Installing various document viewers..."
+
+  pacman -S xournalpp
 
   sydo -u $username yay -S --removemake --nodiffmenu evince-no-gnome poppler > /dev/null
   xdg-mime default org.gnome.Evince.desktop application/pdf
 
-  echo -e "Document viewer has been installed"
+  echo -e "Document viewers have been installed"
 
   echo -e "Desktop environment configuration is done"
 else
