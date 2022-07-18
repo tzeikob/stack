@@ -15,4 +15,5 @@ audio/mpeg=mpv.desktop
 audio/avi=mpv.desktop
 
 application/pdf=org.gnome.Evince.desktop
+application/epub+zip=com.github.johnfactotum.Foliate.desktop
 application/gzip=com.github.xournalapp.xournalapp.desktop

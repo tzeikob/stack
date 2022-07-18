@@ -656,7 +656,7 @@ EOF
 
   echo -e "Installing various document viewers..."
 
-  pacman -S xournalpp poppler
+  pacman -S xournalpp poppler foliate
 
   sudo -u $username yay -S --useask --removemake --nodiffmenu evince-no-gnome > /dev/null
 
