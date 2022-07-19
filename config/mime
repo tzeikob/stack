@@ -17,3 +17,6 @@ audio/avi=mpv.desktop
 application/pdf=org.gnome.Evince.desktop
 application/epub+zip=com.github.johnfactotum.Foliate.desktop
 application/gzip=com.github.xournalapp.xournalapp.desktop
+application/x-xojpp=com.github.xournalapp.xournalapp.desktop
+application/x-xopp=com.github.xournalapp.xournalapp.desktop
+application/x-xopt=com.github.xournalapp.xournalapp.desktop
