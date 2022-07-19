@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+size=$(gsettings get org.gtk.Settings.FileChooser window-size)
+
+if [[ $size != "(800, 600)" ]]; then
+  gsettings set org.gtk.Settings.FileChooser window-size '(800, 600)'
+fi

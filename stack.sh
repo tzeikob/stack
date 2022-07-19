@@ -508,6 +508,7 @@ EOF
   chown $username:$username /home/$username/.config/.mime
 
   echo -e '\nsh $HOME/.config/.mime' >> /home/$username/.xinitrc
+  echo -e '\nsh $HOME/.config/gtk-3.0/.filechooser' >> /home/$username/.xinitrc
 
   chown -R $username:$username /home/$username/.xinitrc
 
@@ -589,6 +590,10 @@ EOF
   mkdir -p /home/$username/.config/gtk-3.0
   curl $config_url/gtk -sSo /home/$username/.config/gtk-3.0/settings.ini \
     --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
+
+  curl $bin_url/gtk -sSo /home/$username/.config/gtk-3.0/.filechooser \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
+
   chown -R $username:$username /home/$username/.config/gtk-3.0
 
   echo -e "Theme, icons and cursors have been installed"
