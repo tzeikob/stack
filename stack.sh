@@ -502,6 +502,13 @@ EOF
   echo "~/.fehbg &" >> /home/$username/.xinitrc
   echo "exec bspwm" >> /home/$username/.xinitrc
 
+  curl $bin_url/mime -sSo /home/$username/.config/.mime \
+  --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
+
+  chown $username:$username /home/$username/.config/.mime
+
+  echo -e '\nsh $HOME/.config/.mime' >> /home/$username/.xinitrc
+
   chown -R $username:$username /home/$username/.xinitrc
 
   echo '' >> /home/$username/.bash_profile
@@ -665,15 +672,6 @@ EOF
   sudo -u $username yay -S --useask --removemake --nodiffmenu evince-no-gnome > /dev/null
 
   echo -e "Document viewers have been installed"
-
-  echo -e "Setting up default applications for basic mime types..."
-
-  curl $config_url/mime -sSo /home/$username/.config/mimeapps.list \
-    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
-
-  chown $username:$username /home/$username/.config/mimeapps.list
-
-  echo -e "Default applications have been set"
 
   echo -e "Desktop environment configuration is done"
 else
