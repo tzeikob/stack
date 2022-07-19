@@ -20,3 +20,5 @@ application/gzip=com.github.xournalapp.xournalapp.desktop
 application/x-xojpp=com.github.xournalapp.xournalapp.desktop
 application/x-xopp=com.github.xournalapp.xournalapp.desktop
 application/x-xopt=com.github.xournalapp.xournalapp.desktop
+
+inode/directory=nnn.desktop

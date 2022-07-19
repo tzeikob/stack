@@ -596,6 +596,10 @@ EOF
   chown -R $username:$username /home/$username/.config/nnn/
   echo -e '\nsource $HOME/.config/nnn/.env_vars' >> /home/$username/.bashrc
 
+  sed -i 's/exec=nnn/exec=alacritty -e nnn/' /usr/share/applications/nnn.desktop
+
+  echo -e "File manager set to get open via terminal in xdg-open calls"
+
   echo -e "Installing extra nnn plugins..."
 
   curl https://raw.githubusercontent.com/jarun/nnn/master/plugins/getplugs -sSLo ./nnn-getplugs \
