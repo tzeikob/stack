@@ -325,6 +325,10 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
     --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
   chmod 644 /home/$username/.config/rofi/config.rasi
 
+  curl $bin_url/autostart -sSo /home/$username/.config/autostart \
+  --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
+  chmod 755 /home/$username/.config/autostart
+
   chown -R $username:$username /home/$username/.config
 
   if [[ $virtual_box =~ ^(yes|y)$ ]]; then
@@ -502,14 +506,6 @@ EOF
   echo "~/.fehbg &" >> /home/$username/.xinitrc
   echo "exec bspwm" >> /home/$username/.xinitrc
 
-  curl $bin_url/mime -sSo /home/$username/.config/.mime \
-  --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
-
-  chown $username:$username /home/$username/.config/.mime
-
-  echo -e '\nsh $HOME/.config/.mime' >> /home/$username/.xinitrc
-  echo -e '\nsh $HOME/.config/gtk-3.0/.filechooser' >> /home/$username/.xinitrc
-
   chown -R $username:$username /home/$username/.xinitrc
 
   echo '' >> /home/$username/.bash_profile
@@ -589,9 +585,6 @@ EOF
 
   mkdir -p /home/$username/.config/gtk-3.0
   curl $config_url/gtk -sSo /home/$username/.config/gtk-3.0/settings.ini \
-    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
-
-  curl $bin_url/gtk -sSo /home/$username/.config/gtk-3.0/.filechooser \
     --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
 
   chown -R $username:$username /home/$username/.config/gtk-3.0
