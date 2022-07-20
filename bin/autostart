@@ -15,11 +15,11 @@ xdg-mime default mpv.desktop audio/mp3
 xdg-mime default mpv.desktop audio/flac
 xdg-mime default mpv.desktop audio/midi
 
-xdg-mime default mpv.desktop audio/mp4
-xdg-mime default mpv.desktop audio/mkv
-xdg-mime default mpv.desktop audio/mov
-xdg-mime default mpv.desktop audio/mpeg
-xdg-mime default mpv.desktop audio/avi
+xdg-mime default mpv.desktop video/mp4
+xdg-mime default mpv.desktop video/mkv
+xdg-mime default mpv.desktop video/mov
+xdg-mime default mpv.desktop video/mpeg
+xdg-mime default mpv.desktop video/avi
 
 xdg-mime default org.gnome.Evince.desktop application/pdf
 xdg-mime default com.github.johnfactotum.Foliate.desktop application/epub+zip
