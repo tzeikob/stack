@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 
-# Set the file chooser window size
-gsettings set org.gtk.Settings.FileChooser window-size '(800, 600)'
-
 # Set the default applications for basic mime types
 xdg-mime default nnn.desktop inode/directory
 

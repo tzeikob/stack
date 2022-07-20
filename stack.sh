@@ -329,6 +329,10 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
   --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
   chmod 755 /home/$username/.config/autostart
 
+  curl $bin_url/bspwm -sSo /home/$username/.config/bspwm/rules \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
+  chmod 755 /home/$username/.config/bspwm/rules
+
   chown -R $username:$username /home/$username/.config
 
   if [[ $virtual_box =~ ^(yes|y)$ ]]; then
