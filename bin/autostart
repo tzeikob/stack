@@ -27,4 +27,3 @@ xdg-mime default com.github.johnfactotum.Foliate.desktop application/epub+zip
 xdg-mime default com.github.xournalapp.xournalapp.desktop application/x-xojpp
 xdg-mime default com.github.xournalapp.xournalapp.desktop application/x-xopp
 xdg-mime default com.github.xournalapp.xournalapp.desktop application/x-xopt
-xdg-mime default com.github.xournalapp.xournalapp.desktop application/gzip
