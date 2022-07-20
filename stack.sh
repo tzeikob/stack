@@ -313,6 +313,10 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
     --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
   chmod 755 /home/$username/.config/bspwm/bspwmrc
 
+  curl $bin_url/bspwm -sSo /home/$username/.config/bspwm/rules \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
+  chmod 755 /home/$username/.config/bspwm/rules
+
   curl $config_url/sxhkd -sSo /home/$username/.config/sxhkd/sxhkdrc \
     --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
   chmod 644 /home/$username/.config/sxhkd/sxhkdrc
@@ -328,10 +332,6 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
   curl $config_url/mime -sSo /home/$username/.config/mimeapps.list \
     --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
   chmod 644 /home/$username/.config/mimeapps.list
-
-  curl $bin_url/bspwm -sSo /home/$username/.config/bspwm/rules \
-    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
-  chmod 755 /home/$username/.config/bspwm/rules
 
   chown -R $username:$username /home/$username/.config
 
