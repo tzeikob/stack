@@ -661,6 +661,19 @@ EOF
   cp /home/$username/.config/nnn/plugins/mocq /home/$username/.config/nnn/plugins/mocq.bak
   sed -ri 's/(.*)# mocp$/\1alacritty -e mocp \&/' /home/$username/.config/nnn/plugins/mocq
 
+  cat << EOF > /usr/share/applications/moc.desktop
+[Desktop Entry]
+Type=Application
+Name=moc
+comment=Console music player
+Exec=alacritty -e mocp
+Terminal=true
+Icon=moc
+MimeType=audio/mpeg
+Catogories=Music;Player;ConsoleOnly
+Keywords=Music;Player;Audio
+EOF
+
   echo -e "Music player has been installed"
 
   echo -e "Installing various document viewers..."

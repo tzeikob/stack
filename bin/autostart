@@ -11,9 +11,10 @@ xdg-mime default sxiv.desktop image/jpg
 xdg-mime default sxiv.desktop image/png
 xdg-mime default sxiv.desktop image/tiff
 
-xdg-mime default mpv.desktop audio/mp3
-xdg-mime default mpv.desktop audio/flac
-xdg-mime default mpv.desktop audio/midi
+xdg-mime default moc.desktop audio/mpeg
+xdg-mime default moc.desktop audio/mp3
+xdg-mime default moc.desktop audio/flac
+xdg-mime default moc.desktop audio/midi
 
 xdg-mime default mpv.desktop video/mp4
 xdg-mime default mpv.desktop video/mkv
