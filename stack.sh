@@ -325,9 +325,9 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
     --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
   chmod 644 /home/$username/.config/rofi/config.rasi
 
-  curl $bin_url/autostart -sSo /home/$username/.config/autostart \
-  --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
-  chmod 755 /home/$username/.config/autostart
+  curl $config_url/mime -sSo /home/$username/.config/mimeapps.list \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
+  chmod 644 /home/$username/.config/mimeapps.list
 
   curl $bin_url/bspwm -sSo /home/$username/.config/bspwm/rules \
     --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
