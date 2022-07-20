@@ -2,7 +2,6 @@
 
 pgrep -x sxhkd > /dev/null || sxhkd &
 $HOME/.config/polybar/launch.sh &
-sh $HOME/.config/autostart &
 
 bspc monitor -d 1 2 3 4 5
 
