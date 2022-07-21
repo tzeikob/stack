@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+loop="true"
+
+while [[ $loop = "true" ]]; do
+  read -p "(l)ist (e)mpty (r)estore re(m)move (q)uit: " reply
+
+  while [[ ! $reply =~ ^(l|e|r|m|q)$ ]]; do
+    echo -e "Invalid trash operation key: '$reply'"
+    read -p "Please enter a valid operation key: " reply
+  done
+
+  if [[ $reply == "q" ]]; then
+    loop="false"
+  elif [[ $reply == "l" ]]; then
+    trash-list
+  elif [[ $reply == "e" ]]; then
+    trash-empty
+  elif [[ $reply == "r" ]]; then
+    trash-restore
+  elif [[ $reply == "m" ]]; then
+    read -p "Type the file(s) to remove (enter to cancel): " files
+
+    if [[ ! -z $files ]]; then
+      trash-rm $files
+    fi
+  fi
+done

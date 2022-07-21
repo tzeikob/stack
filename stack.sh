@@ -696,6 +696,10 @@ EOF
     --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
   chmod 755 /usr/local/bin/trash
 
+  curl $bin_url/trash-plugin -sSo /home/$username/.config/nnn/plugins/trash \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
+  chmod 755 /home/$username/.config/nnn/plugins/trash
+
   echo -e '\nalias rr="rm"' >> /home/$username/.bashrc
   echo -e 'alias tt="trash"\n' >> /home/$username/.bashrc
 
