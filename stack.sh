@@ -696,6 +696,9 @@ EOF
     --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
   chmod 755 /usr/local/bin/trash
 
+  echo -e '\nalias rr="rm"' >> /home/$username/.bashrc
+  echo -e 'alias tt="trash"\n' >> /home/$username/.bashrc
+
   echo -e "Trash has been installed successfully"
 
   echo -e "Desktop environment configuration is done"
