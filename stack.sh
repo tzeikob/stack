@@ -186,7 +186,7 @@ pacman -S base-devel pacman-contrib pkgstats grub mtools dosfstools gdisk parted
   bash-completion man-db man-pages texinfo \
   cups bluez bluez-utils unzip \
   terminus-font vim nano git htop tree arch-audit \
-  atool zip xz unace p7zip gzip lzop bzip2 unrar trash-cli \
+  atool zip xz unace p7zip gzip lzop bzip2 unrar \
   $([ $uefi == true ] && echo 'efibootmgr')
 
 echo -e "\nInstalling the yay package..."
@@ -687,6 +687,16 @@ EOF
   sudo -u $username yay -S --useask --removemake --nodiffmenu evince-no-gnome > /dev/null
 
   echo -e "Document viewers have been installed"
+
+  echo -e "Installing the trash..."
+
+  pacman -S trash-cli
+
+  curl $bin_url/trash -sSo /usr/local/bin/trash \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
+  chmod 755 /usr/local/bin/trash
+
+  echo -e "Trash has been installed successfully"
 
   echo -e "Desktop environment configuration is done"
 else

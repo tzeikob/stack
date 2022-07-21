@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+cmd="$1"
+
+if [[ $cmd != "put" ]]; then
+  trash-put $@
+else
+  case "$cmd" in
+    "put")
+      trash-put $@;;
+    "empty")
+      trash-empty;;
+    "list")
+      trash-list;;
+    "restore")
+      trash-restore;;
+    "rm")
+      trash-rm $@;;
+    *)
+      echo -e "Invalid command arguments: $@"
+      exit 1;;
+  esac
+fi
