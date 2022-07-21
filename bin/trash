@@ -15,7 +15,8 @@ case "$cmd" in
   "restore")
     trash-restore;;
   "rm")
-    read -p "The file(s) will be gone forever, want to proceed? (y/N) " reply
+    echo -e "Selected file(s) will be gone forever:"
+    read -p "Should we proceed? (y/N) " reply
     reply=${reply:-"n"}
 
     if [[ $reply =~ ^(yes|y)$ ]]; then
