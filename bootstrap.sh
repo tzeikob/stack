@@ -112,8 +112,8 @@ lsblk $device
 
 echo -e "\nUpdating the system clock..."
 
-timedatectl set-ntp true > /dev/null
-sleep 5
+timedatectl set-ntp true
+sleep 60
 timedatectl status
 
 echo -e "System clock has been updated"
@@ -135,7 +135,10 @@ while [ ! $? -eq 0 ]; do
   reflector --country $country --age 8 --sort age --save /etc/pacman.d/mirrorlist
 done
 
-pacman -Syy
+pacman -Sy archlinux-keyring
+
+pacman-key --init
+pacman-key --populate archlinux
 
 echo -e "The mirror list is now up to date"
 
