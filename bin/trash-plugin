@@ -7,7 +7,9 @@ clear
 loop="true"
 
 while [[ $loop = "true" ]]; do
+  clear
   trash-list
+  echo ""
 
   echo -e "Which trash operation to apply?"
   read -p "(r)estore re(m)ove (e)mpty (q)uit: " reply
