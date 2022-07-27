@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+shopt -s nocasematch
+
 clear
 
 loop="true"
@@ -7,7 +9,7 @@ loop="true"
 while [[ $loop = "true" ]]; do
   trash-list
 
-  echo -e "Apply a trash operation"
+  echo -e "Which trash operation to apply?"
   read -p "(r)estore re(m)ove (e)mpty (q)uit: " reply
 
   while [[ ! $reply =~ ^(r|m|e|q)$ ]]; do
@@ -24,7 +26,12 @@ while [[ $loop = "true" ]]; do
     read -p "Enter the file(s) to remove (blank to cancel): " files
 
     if [[ ! -z $files ]]; then
-      trash-rm $files
+      read -p "File(s) will be gone forever, proceed? (y/N) " reply
+      reply=${reply:-"no"}
+
+      if [[ $reply =~ ^(yes|y)$ ]]; then
+        trash-rm $files
+      fi
     fi
   elif [[ $reply == "e" ]]; then
     trash-empty
