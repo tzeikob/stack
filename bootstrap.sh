@@ -135,7 +135,7 @@ while [ ! $? -eq 0 ]; do
   reflector --country $country --age 8 --sort age --save /etc/pacman.d/mirrorlist
 done
 
-pacman -Sy archlinux-keyring
+pacman --noconfirm -Sy archlinux-keyring
 
 pacman-key --init
 pacman-key --populate archlinux
