@@ -5,10 +5,12 @@ clear
 loop="true"
 
 while [[ $loop = "true" ]]; do
-  echo -e "Select a trash operation:"
-  read -p "(l)ist (e)mpty (r)estore re(m)ove (q)uit: " reply
+  trash-list
 
-  while [[ ! $reply =~ ^(l|e|r|m|q)$ ]]; do
+  echo -e "Apply a trash operation"
+  read -p "(r)estore re(m)ove (e)mpty (q)uit: " reply
+
+  while [[ ! $reply =~ ^(r|m|e|q)$ ]]; do
     read -p "Please enter a valid operation: " reply
   done
 
@@ -16,10 +18,6 @@ while [[ $loop = "true" ]]; do
 
   if [[ $reply == "q" ]]; then
     loop="false"
-  elif [[ $reply == "l" ]]; then
-    trash-list
-  elif [[ $reply == "e" ]]; then
-    trash-empty
   elif [[ $reply == "r" ]]; then
     trash-restore
   elif [[ $reply == "m" ]]; then
@@ -28,6 +26,8 @@ while [[ $loop = "true" ]]; do
     if [[ ! -z $files ]]; then
       trash-rm $files
     fi
+  elif [[ $reply == "e" ]]; then
+    trash-empty
   fi
 
   echo ""
