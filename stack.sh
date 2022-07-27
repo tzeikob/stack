@@ -663,6 +663,7 @@ EOF
   chown -R $username:$username /home/$username/.moc/
 
   cp /home/$username/.config/nnn/plugins/mocq /home/$username/.config/nnn/plugins/mocq.bak
+  chown $username:$username /home/$username/.config/nnn/plugins/mocq.bak
   sed -ri 's/(.*)# mocp$/\1alacritty -e mocp \&/' /home/$username/.config/nnn/plugins/mocq
 
   cat << EOF > /usr/share/applications/moc.desktop
@@ -699,6 +700,7 @@ EOF
   curl $bin_url/trash-plugin -sSo /home/$username/.config/nnn/plugins/trash \
     --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
   chmod 755 /home/$username/.config/nnn/plugins/trash
+  chown $username:$username /home/$username/.config/nnn/plugins/trash
 
   echo -e '\nalias rr="rm"' >> /home/$username/.bashrc
   echo -e 'alias tt="trash"\n' >> /home/$username/.bashrc
