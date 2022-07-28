@@ -615,6 +615,12 @@ EOF
     --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
   HOME=/home/$username sh ./nnn-getplugs > /dev/null
   rm -f ./nnn-getplugs
+
+  curl $bin_url/remove-plugin -sSo /home/$username/.config/nnn/plugins/remove \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
+  chmod 755 /home/$username/.config/nnn/plugins/remove
+  chown $username:$username /home/$username/.config/nnn/plugins/remove
+
   chown -R $username:$username /home/$username/.config/nnn/plugins
 
   echo -e "Creating user home directories..."
