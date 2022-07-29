@@ -137,9 +137,6 @@ done
 
 pacman --noconfirm -Sy archlinux-keyring
 
-pacman-key --init
-pacman-key --populate archlinux
-
 echo -e "The mirror list is now up to date"
 
 echo -e "\nInstalling the base system..."
