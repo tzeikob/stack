@@ -7,7 +7,7 @@ cmd="$1"
 
 case "$cmd" in
   "put")
-    trash-put ${args[@]:1};;
+    trash-put "${args[@]:1}";;
   "empty")
     trash-empty;;
   "list")
@@ -20,8 +20,8 @@ case "$cmd" in
     reply=${reply:-"n"}
 
     if [[ $reply =~ ^(yes|y)$ ]]; then
-      trash-rm ${args[@]:1}
+      trash-rm "${args[@]:1}"
     fi;;
   *)
-    trash-put ${args[@]};;
+    trash-put "${args[@]}";;
 esac
