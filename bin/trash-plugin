@@ -28,7 +28,7 @@ while [[ $loop = "true" ]]; do
     read -p "Enter the file(s) to remove (blank to cancel): " files
 
     if [[ ! -z $files ]]; then
-      read -p "File(s) will be gone forever, proceed? (y/N) " reply
+      read -p "File(s) will be gone forever, proceed? [y/N] " reply
       reply=${reply:-"no"}
 
       if [[ $reply =~ ^(yes|y)$ ]]; then

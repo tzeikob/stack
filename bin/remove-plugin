@@ -21,7 +21,7 @@ do
   printf "$entry\n"
 done
 
-printf "Do you want to proceed? (y/N) "
+printf "Do you want to proceed? [y/N] "
 read -r confirm
 
 if [ "$confirm" = "y" ] || [ "$confirm" = "Y" ]; then
