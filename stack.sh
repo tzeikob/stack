@@ -182,7 +182,7 @@ echo -e "Reflector mirror country set to '$country'"
 echo -e "\nInstalling extra base packages..."
 
 pacman -S base-devel pacman-contrib pkgstats grub mtools dosfstools gdisk parted \
-  curl wget \
+  curl wget udisks2 \
   bash-completion man-db man-pages texinfo \
   cups bluez bluez-utils unzip \
   terminus-font vim nano git htop tree arch-audit \
@@ -626,6 +626,10 @@ EOF
   curl $bin_url/trash-plugin -sSo /home/$username/.config/nnn/plugins/trash \
     --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
   chmod 755 /home/$username/.config/nnn/plugins/trash
+
+  curl $bin_url/mount-plugin -sSo /home/$username/.config/nnn/plugins/mount \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
+  chmod 755 /home/$username/.config/nnn/plugins/mount
 
   chown -R $username:$username /home/$username/.config/nnn/plugins
 

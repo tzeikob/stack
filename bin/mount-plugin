@@ -1,0 +1,49 @@
+#!/usr/bin/env sh
+
+while true
+do
+  clear
+  lsblk
+  printf "Enter device name (q to quit): "
+  read -r reply
+
+  if [ "$reply" = "q" ]; then
+    clear
+    exit
+  else
+    echo ""
+
+    if grep -qs "$reply " /proc/mounts; then
+      sync
+
+      if udisksctl unmount -b /dev/"$reply"
+      then
+        echo "Device '$reply' unmounted successfully"
+
+        if udisksctl power-off -b /dev/"$reply"
+        then
+          echo "Device '$reply' can now be ejected"
+        else
+          echo "Failed to power off device '$reply'"
+        fi
+      else
+        echo "Failed to umount device '$reply'"
+      fi
+    else
+      if udisksctl mount -b "/dev/$reply"
+      then
+        echo "Device '$reply' mounted successfully"
+      else
+        echo "Failed to mount device '$reply'"
+      fi
+    fi
+
+    printf "Enter any char to continue (q to quit): "
+    read -r reply
+
+    if [ "$reply" = "q" ]; then
+      clear
+      exit
+    fi
+  fi
+done
