@@ -182,7 +182,7 @@ echo -e "Reflector mirror country set to '$country'"
 echo -e "\nInstalling extra base packages..."
 
 pacman -S base-devel pacman-contrib pkgstats grub mtools dosfstools gdisk parted \
-  curl wget udisks2 \
+  curl wget udisks2 udiskie \
   bash-completion man-db man-pages texinfo \
   cups bluez bluez-utils unzip \
   terminus-font vim nano git htop tree arch-audit \
@@ -508,6 +508,7 @@ EOF
   echo "xsetroot -cursor_name left_ptr" >> /home/$username/.xinitrc
   echo "picom --fade-in-step=1 --fade-out-step=1 --fade-delta=0 &" >> /home/$username/.xinitrc
   echo "~/.fehbg &" >> /home/$username/.xinitrc
+  echo "udiskie &" >> /home/$username/.xinitrc
   echo "exec bspwm" >> /home/$username/.xinitrc
 
   chown -R $username:$username /home/$username/.xinitrc
