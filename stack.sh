@@ -518,15 +518,15 @@ EOF
 
   echo -e "Setting up the wallpaper..."
 
-  mkdir -p /home/$username/media/wallpapers
-  curl https://images.hdqwalls.com/wallpapers/arch-liinux-4k-t0.jpg -sSLo /home/$username/media/wallpapers/default.jpg \
+  mkdir -p /home/$username/images/wallpapers
+  curl https://images.hdqwalls.com/wallpapers/arch-liinux-4k-t0.jpg -sSLo /home/$username/images/wallpapers/default.jpg \
     --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
 
-  chown -R $username:$username /home/$username/media
+  chown -R $username:$username /home/$username/images/
 
   cat << EOF > /home/$username/.fehbg
   #!/bin/sh
-  feh --no-fehbg --bg-fill '/home/$username/media/wallpapers/default.jpg'
+  feh --no-fehbg --bg-fill '/home/$username/images/wallpapers/default.jpg'
 EOF
 
   chown $username:$username /home/$username/.fehbg
@@ -638,21 +638,19 @@ EOF
 
   mkdir -p /home/$username/downloads \
     /home/$username/documents \
-    /home/$username/media/pictures \
-    /home/$username/media/wallpapers \
-    /home/$username/media/music \
-    /home/$username/media/videos \
-    /home/$username/virtual \
+    /home/$username/images \
+    /home/$username/audios \
+    /home/$username/videos \
+    /home/$username/virtuals \
     /home/$username/sources \
     /home/$username/data
 
   chown -R $username:$username /home/$username/downloads \
     /home/$username/documents \
-    /home/$username/media/pictures \
-    /home/$username/media/wallpapers \
-    /home/$username/media/music \
-    /home/$username/media/videos \
-    /home/$username/virtual \
+    /home/$username/images \
+    /home/$username/audios \
+    /home/$username/videos \
+    /home/$username/virtuals \
     /home/$username/sources \
     /home/$username/data
 
