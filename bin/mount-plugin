@@ -3,47 +3,78 @@
 while true
 do
   clear
-  lsblk
-  printf "Enter device name (q to quit): "
+
+  echo -e "Mount/unmount a disk device"
+  read -p "(l)ocal (n)etwork (q)uit: " reply
+
+  if [ "$reply" = "l" ]; then
+    echo -e ""
+    lsblk
+
+    read -p "Enter device name (sdbX): " device
+    echo -e ""
+
+    if grep -qs "$device " /proc/mounts; then
+      sync
+
+      if udisksctl unmount -b /dev/"$device"
+      then
+        echo -e "Device '$device' unmounted successfully"
+
+        if udisksctl power-off -b /dev/"$device"
+        then
+          echo -e "Device '$device' can now be ejected"
+        else
+          echo -e "Failed to power off device '$device'"
+        fi
+      else
+        echo -e "Failed to umount device '$device'"
+      fi
+    else
+      if udisksctl mount -b "/dev/$device"
+      then
+        echo -e "Device '$device' mounted to $(lsblk -n /dev/"$device" | rev | cut -d' ' -f1 | rev)"
+      else
+        echo -e "Failed to mount device '$device'"
+      fi
+    fi
+  elif [ "$reply" = "n" ]; then
+    read -p "Enter shared folder name: " shared_folder
+
+    if grep -qs "$shared_folder " /proc/mounts; then
+      sync
+
+      if umount "$shared_folder"
+      then
+        echo -e "Device '$shared_folder' unmounted successfully"
+      else
+        echo -e "Failed to umount device '$shared_folder'"
+      fi
+    else
+      sudo mkdir -p /run/media/$USER/network/$shared_folder
+      sudo chown -R $USER:$USER /run/media/$USER/network
+
+      read -p "Enter device ip or host name: " host
+      read -p "Enter user name: " username
+
+      sudo mount.cifs //$host/$shared_folder /run/media/$USER/network/$shared_folder -o user=$username,rw,iocharset=utf8,uid=$USER,gid=$USER
+
+      if [ $? -eq 0 ]; then
+        echo -e "Device //$host/$shared_folder mounted on /run/media/$USER/network/$shared_folder successfully"
+      else
+        echo -e "Failed to mount device from //$host/$shared_folder"
+      fi
+    fi
+  else
+    clear
+    exit
+  fi
+
+  printf "Enter any char to continue (q to quit): "
   read -r reply
 
   if [ "$reply" = "q" ]; then
     clear
     exit
-  else
-    echo ""
-
-    if grep -qs "$reply " /proc/mounts; then
-      sync
-
-      if udisksctl unmount -b /dev/"$reply"
-      then
-        echo "Device '$reply' unmounted successfully"
-
-        if udisksctl power-off -b /dev/"$reply"
-        then
-          echo "Device '$reply' can now be ejected"
-        else
-          echo "Failed to power off device '$reply'"
-        fi
-      else
-        echo "Failed to umount device '$reply'"
-      fi
-    else
-      if udisksctl mount -b "/dev/$reply"
-      then
-        echo "Device '$reply' mounted successfully"
-      else
-        echo "Failed to mount device '$reply'"
-      fi
-    fi
-
-    printf "Enter any char to continue (q to quit): "
-    read -r reply
-
-    if [ "$reply" = "q" ]; then
-      clear
-      exit
-    fi
   fi
 done
