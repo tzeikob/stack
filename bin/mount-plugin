@@ -47,7 +47,7 @@ do
     if grep -qs "$mnt_point " /proc/mounts; then
       sync
 
-      if umount "$mnt_point"
+      if sudo umount "$mnt_point"
       then
         echo -e "Device '$mnt_point' unmounted successfully"
       else
