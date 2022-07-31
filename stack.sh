@@ -519,14 +519,14 @@ EOF
   echo -e "Setting up the wallpaper..."
 
   mkdir -p /home/$username/images/wallpapers
-  curl https://images.hdqwalls.com/wallpapers/arch-liinux-4k-t0.jpg -sSLo /home/$username/images/wallpapers/default.jpg \
+  curl https://images.hdqwalls.com/wallpapers/arch-liinux-4k-t0.jpg -sSLo /home/$username/images/wallpapers/arch-liinux-4k-t0.jpg \
     --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
 
   chown -R $username:$username /home/$username/images/
 
   cat << EOF > /home/$username/.fehbg
   #!/bin/sh
-  feh --no-fehbg --bg-fill '/home/$username/images/wallpapers/default.jpg'
+  feh --no-fehbg --bg-fill '/home/$username/images/wallpapers/arch-liinux-4k-t0.jpg'
 EOF
 
   chown $username:$username /home/$username/.fehbg
