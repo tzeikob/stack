@@ -39,8 +39,10 @@ do
       fi
     fi
   elif [ "$reply" = "n" ]; then
+    read -p "Enter the device ip or host name: " host
     read -p "Enter shared folder name: " shared_folder
-    mnt_point="/run/media/$USER/network/$shared_folder"
+
+    mnt_point="/run/media/$USER/$host/$shared_folder"
 
     if grep -qs "$mnt_point " /proc/mounts; then
       sync
@@ -53,9 +55,8 @@ do
       fi
     else
       sudo mkdir -p $mnt_point
-      sudo chown -R $USER:$USER /run/media/$USER/network
+      sudo chown -R $USER:$USER /run/media/$USER/$host
 
-      read -p "Enter device ip or host name: " host
       read -p "Enter user name: " username
 
       sudo mount.cifs //$host/$shared_folder $mnt_point -o user=$username,rw,iocharset=utf8,uid=$USER,gid=$USER
