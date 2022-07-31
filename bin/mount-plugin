@@ -40,27 +40,28 @@ do
     fi
   elif [ "$reply" = "n" ]; then
     read -p "Enter shared folder name: " shared_folder
+    mnt_point="/run/media/$USER/network/$shared_folder"
 
-    if grep -qs "$shared_folder " /proc/mounts; then
+    if grep -qs "$mnt_point " /proc/mounts; then
       sync
 
-      if umount "$shared_folder"
+      if umount "$mnt_point"
       then
-        echo -e "Device '$shared_folder' unmounted successfully"
+        echo -e "Device '$mnt_point' unmounted successfully"
       else
-        echo -e "Failed to umount device '$shared_folder'"
+        echo -e "Failed to umount device '$mnt_point'"
       fi
     else
-      sudo mkdir -p /run/media/$USER/network/$shared_folder
+      sudo mkdir -p $mnt_point
       sudo chown -R $USER:$USER /run/media/$USER/network
 
       read -p "Enter device ip or host name: " host
       read -p "Enter user name: " username
 
-      sudo mount.cifs //$host/$shared_folder /run/media/$USER/network/$shared_folder -o user=$username,rw,iocharset=utf8,uid=$USER,gid=$USER
+      sudo mount.cifs //$host/$shared_folder $mnt_point -o user=$username,rw,iocharset=utf8,uid=$USER,gid=$USER
 
       if [ $? -eq 0 ]; then
-        echo -e "Device //$host/$shared_folder mounted on /run/media/$USER/network/$shared_folder successfully"
+        echo -e "Device //$host/$shared_folder mounted on $mnt_point successfully"
       else
         echo -e "Failed to mount device from //$host/$shared_folder"
       fi
