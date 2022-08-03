@@ -39,12 +39,15 @@ do
       fi
     fi
   elif [ "$reply" = "n" ]; then
-    read -p "Enter the device ip or host name: " host
-    read -p "Enter shared folder name: " shared_folder
+    read -p "Protocol: [smb] " protocol
+    protocol=${protocol:-"smb"}
+
+    read -p "Host name: " host
+    read -p "Shared folder: " shared_folder
 
     echo -e ""
 
-    device="smb://$host/$shared_folder"
+    device="$protocol://$host/$shared_folder"
 
     if gio mount -l | grep "$device"; then
       sync
