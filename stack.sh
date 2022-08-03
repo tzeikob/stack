@@ -182,7 +182,7 @@ echo -e "Reflector mirror country set to '$country'"
 echo -e "\nInstalling extra base packages..."
 
 pacman -S base-devel pacman-contrib pkgstats grub mtools dosfstools gdisk parted \
-  curl wget udisks2 udiskie \
+  curl wget udisks2 udiskie gvfs gvfs-smb \
   bash-completion man-db man-pages texinfo \
   cups bluez bluez-utils unzip \
   terminus-font vim nano git htop tree arch-audit \

@@ -42,29 +42,26 @@ do
     read -p "Enter the device ip or host name: " host
     read -p "Enter shared folder name: " shared_folder
 
-    mnt_point="/run/media/$USER/$host/$shared_folder"
+    echo -e ""
 
-    if grep -qs "$mnt_point " /proc/mounts; then
+    device="smb://$host/$shared_folder"
+
+    if gio mount -l | grep "$device"; then
       sync
 
-      if sudo umount "$mnt_point"
+      if gio mount -u "$device"
       then
-        echo -e "Device '$mnt_point' unmounted successfully"
+        echo -e "Device '$device' unmounted successfully"
       else
-        echo -e "Failed to umount device '$mnt_point'"
+        echo -e "Failed to umount device '$device'"
       fi
     else
-      sudo mkdir -p $mnt_point
-      sudo chown -R $USER:$USER /run/media/$USER/$host
-
-      read -p "Enter user name: " username
-
-      sudo mount.cifs //$host/$shared_folder $mnt_point -o user=$username,rw,iocharset=utf8,uid=$USER,gid=$USER
+      gio mount "$device"
 
       if [ $? -eq 0 ]; then
-        echo -e "Device //$host/$shared_folder mounted on $mnt_point successfully"
+        echo -e "Device '$device' mounted successfully"
       else
-        echo -e "Failed to mount device from //$host/$shared_folder"
+        echo -e "Failed to mount device from '$device'"
       fi
     fi
   else
