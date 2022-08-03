@@ -7,8 +7,9 @@ do
   echo -e "Mount/unmount a disk device"
   read -p "(l)ocal (n)etwork (q)uit: " reply
 
+  echo -e ""
+
   if [ "$reply" = "l" ]; then
-    echo -e ""
     lsblk
 
     read -p "Enter device name (sdbX): " device
