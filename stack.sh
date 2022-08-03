@@ -508,7 +508,7 @@ EOF
   echo "xsetroot -cursor_name left_ptr" >> /home/$username/.xinitrc
   echo "picom --fade-in-step=1 --fade-out-step=1 --fade-delta=0 &" >> /home/$username/.xinitrc
   echo "~/.fehbg &" >> /home/$username/.xinitrc
-  echo "udiskie &" >> /home/$username/.xinitrc
+  echo "udiskie --notify-command \"ln -s /run/media/$USER $HOME/media/local\" &" >> /home/$username/.xinitrc
   echo "exec bspwm" >> /home/$username/.xinitrc
 
   chown -R $username:$username /home/$username/.xinitrc
@@ -643,7 +643,8 @@ EOF
     /home/$username/videos \
     /home/$username/virtuals \
     /home/$username/sources \
-    /home/$username/data
+    /home/$username/data \
+    /home/$username/media
 
   chown -R $username:$username /home/$username/downloads \
     /home/$username/documents \
@@ -652,7 +653,8 @@ EOF
     /home/$username/videos \
     /home/$username/virtuals \
     /home/$username/sources \
-    /home/$username/data
+    /home/$username/data \
+    /home/$username/media
 
   echo -e "Main user home forders have been created"
   echo -e "File manager has been installed"

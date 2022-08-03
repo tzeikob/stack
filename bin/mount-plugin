@@ -5,7 +5,7 @@ do
   clear
 
   echo -e "Mount/unmount a disk device"
-  read -p "(l)ocal (n)etwork (q)uit: " reply
+  read -p "(l)ocal (r)emote (q)uit: " reply
 
   echo -e ""
 
@@ -34,12 +34,16 @@ do
     else
       if udisksctl mount -b "/dev/$device"
       then
-        echo -e "Device '$device' mounted to $(lsblk -n /dev/"$device" | rev | cut -d' ' -f1 | rev)"
+        echo -e "Device '$device' mounted successfully"
+
+        if [ ! -L "$HOME/media/local" ]; then
+          ln -s /run/media/$USER $HOME/media/local
+        fi
       else
         echo -e "Failed to mount device '$device'"
       fi
     fi
-  elif [ "$reply" = "n" ]; then
+  elif [ "$reply" = "r" ]; then
     read -p "Protocol: [smb] " protocol
     protocol=${protocol:-"smb"}
 
@@ -64,6 +68,10 @@ do
 
       if [ $? -eq 0 ]; then
         echo -e "Device '$device' mounted successfully"
+
+        if [ ! -L "$HOME/media/remote" ]; then
+          ln -s /run/user/$UID/gvfs $HOME/media/remote
+        fi
       else
         echo -e "Failed to mount device from '$device'"
       fi
