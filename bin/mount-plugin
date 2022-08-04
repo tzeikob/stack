@@ -1,0 +1,91 @@
+#!/usr/bin/env sh
+
+while true
+do
+  clear
+
+  echo -e "Mount/unmount a disk device"
+  read -p "(l)ocal (r)emote (q)uit: " reply
+
+  echo -e ""
+
+  if [ "$reply" = "l" ]; then
+    lsblk
+
+    read -p "Enter device name (sdbX): " device
+    echo -e ""
+
+    if grep -qs "$device " /proc/mounts; then
+      sync
+
+      if udisksctl unmount -b /dev/"$device"
+      then
+        echo -e "Device '$device' unmounted successfully"
+
+        if udisksctl power-off -b /dev/"$device"
+        then
+          echo -e "Device '$device' can now be ejected"
+        else
+          echo -e "Failed to power off device '$device'"
+        fi
+      else
+        echo -e "Failed to umount device '$device'"
+      fi
+    else
+      if udisksctl mount -b "/dev/$device"
+      then
+        echo -e "Device '$device' mounted successfully"
+
+        if [ ! -L "$HOME/media/local" ]; then
+          ln -s /run/media/$USER $HOME/media/local
+        fi
+      else
+        echo -e "Failed to mount device '$device'"
+      fi
+    fi
+  elif [ "$reply" = "r" ]; then
+    read -p "Protocol: [smb] " protocol
+    protocol=${protocol:-"smb"}
+
+    read -p "Host name: " host
+    read -p "Shared folder: " shared_folder
+
+    echo -e ""
+
+    device="$protocol://$host/$shared_folder"
+
+    if gio mount -l | grep "$device"; then
+      sync
+
+      if gio mount -u "$device"
+      then
+        echo -e "Device '$device' unmounted successfully"
+      else
+        echo -e "Failed to umount device '$device'"
+      fi
+    else
+      gio mount "$device"
+
+      if [ $? -eq 0 ]; then
+        echo -e "Device '$device' mounted successfully"
+
+        if [ ! -L "$HOME/media/remote" ]; then
+          ln -s /run/user/$UID/gvfs $HOME/media/remote
+        fi
+      else
+        echo -e "Failed to mount device from '$device'"
+      fi
+    fi
+  else
+    clear
+    exit
+  fi
+
+  printf "Enter any char to continue (q to quit): "
+  read -r reply
+
+  if [ "$reply" = "q" ]; then
+    clear
+    exit
+  fi
+done
