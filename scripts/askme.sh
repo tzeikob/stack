@@ -49,15 +49,14 @@ set_mirror () {
     printf "%-25s\t%-25s\t%-25s\t%-25s\n" $first $second $third $fourth
   done
 
-  read -p "Select a country closest to your location: [Greece] " COUNTRY
+  read -p "Select a country closer to your location: [Greece] " COUNTRY
   COUNTRY=${COUNTRY:-"Greece"}
 
   COUNTRIES=$(echo ${COUNTRIES[*]} | tr -d '\n')
   local COUNTRY_RE=$(echo $COUNTRY | awk '{$1=$1;print}' | awk '{gsub(/ /, "_", $0); print $0}')
 
   while [[ ! " ${COUNTRIES[*]} " =~ " ${COUNTRY_RE} " ]]; do
-    echo "Invalid country name: $COUNTRY"
-    read -p "Enter a valid country name: [Greece] " COUNTRY
+    read -p "Please enter a valid country: [Greece] " COUNTRY
     COUNTRY=${COUNTRY:-"Greece"}
 
     COUNTRY_RE=$(echo $COUNTRY | awk '{$1=$1;print}' | awk '{gsub(/ /, "_", $0); print $0}')
@@ -70,30 +69,30 @@ set_mirror () {
 }
 
 set_timezone () {
-  printf "%-20s%-20s\n" "Europe" "America"
-  printf "%-20s%-20s\n" "Asia" "Africa"
-  printf "%-20s%-20s\n" "Antarctica" "Arctic"
+  printf "%-25s\t%-25s\t\n" "Europe" "America"
+  printf "%-25s\t%-25s\t\n" "Asia" "Africa"
+  printf "%-25s\t%-25s\t\n" "Antarctica" "Arctic"
 
   read -p "Select your continent: [Europe] " CONTINENT
   CONTINENT=${CONTINENT:-"Europe"}
 
   while [[ ! "$CONTINENT" =~ (Europe|America|Asia|Africa|Antarctica|Arctic) ]]; do
-    echo "Invalid continent: $CONTINENT"
-    read -p "Enter a valid continent: [Europe] " CONTINENT
+    read -p "Please enter a valid continent: [Europe] " CONTINENT
     CONTINENT=${CONTINENT:-"Europe"}
   done
+
+  echo
 
   CITIES=($(ls -pC /usr/share/zoneinfo/${CONTINENT} | grep -v /))
 
   for ((i = 0; i < ${#CITIES[@]}; i = i + 4)); do
-    printf "%-20s%-20s%-20s%-20s\n" ${CITIES[$((i))]} ${CITIES[$((i + 1))]} ${CITIES[$((i + 2))]} ${CITIES[$((i + 3))]}
+    printf "%-25s\t%-25s\t%-25s\t%-25s\t\n" ${CITIES[$((i))]} ${CITIES[$((i + 1))]} ${CITIES[$((i + 2))]} ${CITIES[$((i + 3))]}
   done
 
   read -p "Enter the city closer to your timezone? " CITY
   TIMEZONE=$CONTINENT/$CITY
 
   while [ ! -f "/usr/share/zoneinfo/$TIMEZONE" ]; do
-    echo "Invalid timezone: $TIMEZONE"
     read -p "Please enter a valid timezone city: " CITY
     TIMEZONE=$CONTINENT/$CITY
   done
@@ -104,8 +103,8 @@ set_timezone () {
 
 echo -e "Setting locations and timezones...\n"
 
-set_mirror
-set_timezone
+set_mirror && echo
+set_timezone && echo
 
 echo -e "\nSetting locales and languages"
 
