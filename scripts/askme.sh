@@ -34,13 +34,44 @@ set_password () {
   set_option "$1_PASSWORD" "$PASSWORD"
 }
 
-echo "Setting locations and timezones..."
+set_mirror () {
+  local OLD_IFS=$IFS
+  IFS=","
 
-read -p "Enter your current location? [Greece] " COUNTRY
-COUNTRY=${COUNTRY:-"Greece"}
+  local COUNTRIES=($(reflector --list-countries | tail -n +3 | awk '{split($0,a,/[A-Z]{2}/); print a[1]}' | awk '{$1=$1;print}' | awk '{gsub(/ /, "_", $0); print $0","}'))
 
-set_option "COUNTRY" "$COUNTRY"
-echo "Current location is set to $COUNTRY"
+  for ((i = 0; i < ${#COUNTRIES[@]}; i = i + 4)); do
+    first=$(echo ${COUNTRIES[$i]} | tr -d '\n' | awk '{gsub(/_/, " ", $0); print $0}')
+    second=$(echo ${COUNTRIES[$((i + 1))]} | tr -d '\n' | awk '{gsub(/_/, " ", $0); print $0}')
+    third=$(echo ${COUNTRIES[$((i + 2))]} | tr -d '\n' | awk '{gsub(/_/, " ", $0); print $0}')
+    fourth=$(echo ${COUNTRIES[$((i + 3))]} | tr -d '\n' | awk '{gsub(/_/, " ", $0); print $0}')
+
+    printf "%-25s\t%-25s\t%-25s\t%-25s\n" $first $second $third $fourth
+  done
+
+  read -p "Select a country closest to your location: [Greece] " COUNTRY
+  COUNTRY=${COUNTRY:-"Greece"}
+
+  COUNTRIES=$(echo ${COUNTRIES[*]} | tr -d '\n')
+  local COUNTRY_RE=$(echo $COUNTRY | awk '{$1=$1;print}' | awk '{gsub(/ /, "_", $0); print $0}')
+
+  while [[ ! " ${COUNTRIES[*]} " =~ " ${COUNTRY_RE} " ]]; do
+    echo "Invalid country name: $COUNTRY"
+    read -p "Enter a valid country name: [Greece] " COUNTRY
+    COUNTRY=${COUNTRY:-"Greece"}
+
+    COUNTRY_RE=$(echo $COUNTRY | awk '{$1=$1;print}' | awk '{gsub(/ /, "_", $0); print $0}')
+  done
+
+  IFS=$OLD_IFS
+
+  set_option "COUNTRY" "$COUNTRY"
+  echo "Mirror country is set to $COUNTRY"
+}
+
+echo -e "Setting locations and timezones...\n"
+
+set_mirror
 
 read -p "Enter your current timezone? [Europe/Athens] " TIMEZONE
 TIMEZONE=${TIMEZONE:-"Europe/Athens"}
