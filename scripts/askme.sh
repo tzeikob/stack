@@ -18,6 +18,9 @@ set_option () {
 }
 
 set_password () {
+  local PASSWORD
+  local COMFIRMED
+
   read -rs -p "Enter a new password: " PASSWORD
   read -rs -p "Re-enter the password: " COMFIRMED
 
