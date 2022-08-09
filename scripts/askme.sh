@@ -49,6 +49,7 @@ set_mirror () {
     printf "%-25s\t%-25s\t%-25s\t%-25s\n" $first $second $third $fourth
   done
 
+  local COUNTRY=""
   read -p "Select a country closer to your location: [Greece] " COUNTRY
   COUNTRY=${COUNTRY:-"Greece"}
 
@@ -73,6 +74,7 @@ set_timezone () {
   printf "%-25s\t%-25s\t\n" "Asia" "Africa"
   printf "%-25s\t%-25s\t\n" "Antarctica" "Arctic"
 
+  local CONTINENT=""
   read -p "Select your continent: [Europe] " CONTINENT
   CONTINENT=${CONTINENT:-"Europe"}
 
@@ -83,14 +85,15 @@ set_timezone () {
 
   echo
 
-  CITIES=($(ls -pC /usr/share/zoneinfo/${CONTINENT} | grep -v /))
+  local CITIES=($(ls -pC /usr/share/zoneinfo/${CONTINENT} | grep -v /))
 
   for ((i = 0; i < ${#CITIES[@]}; i = i + 4)); do
     printf "%-25s\t%-25s\t%-25s\t%-25s\t\n" ${CITIES[$((i))]} ${CITIES[$((i + 1))]} ${CITIES[$((i + 2))]} ${CITIES[$((i + 3))]}
   done
 
+  local CITY=""
   read -p "Enter the city closer to your timezone? " CITY
-  TIMEZONE=$CONTINENT/$CITY
+  local TIMEZONE=$CONTINENT/$CITY
 
   while [ ! -f "/usr/share/zoneinfo/$TIMEZONE" ]; do
     read -p "Please enter a valid timezone city: " CITY
