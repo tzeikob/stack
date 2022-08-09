@@ -21,13 +21,13 @@ set_password () {
   local PASSWORD
   local COMFIRMED
 
-  read -rs -p "Enter a new password: " PASSWORD
+  read -rs -p "Enter a new password: " PASSWORD && echo
   read -rs -p "Re-enter the password: " COMFIRMED
 
   # Repeat until password comfirmed 
   while [ "$PASSWORD" != "$COMFIRMED" ]; do
-    echo "Ooops, passwords do not match"
-    read -rs -p "Please enter a new password: " PASSWORD
+    echo -e "\nOoops, passwords do not match"
+    read -rs -p "Please enter a new password: " PASSWORD && echo
     read -rs -p "Re-enter the password: " COMFIRMED
   done
 
