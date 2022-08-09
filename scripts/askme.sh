@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-shopt -s nocasematch
-
 trim () {
   echo -e "$1" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'
 }
@@ -196,11 +194,13 @@ echo -e "\nSelecting kernel and packages"
 
 read -p "Which linux kernel to install: [STABLE/lts/all] " KERNEL
 KERNEL=${KERNEL:-"stable"}
+KERNEL=${KERNEL,,}
 
 while [[ ! $KERNEL =~ ^(stable|lts|all)$ ]]; do
   echo -e "Invalid linux kernel: $KERNEL"
   read -p "Please enter which linux kernel to install: [STABLE/lts/all] " KERNEL
   KERNEL=${KERNEL:-"stable"}
+  KERNEL=${KERNEL,,}
 done
 
 set_option "KERNEL" "$KERNEL"
@@ -222,8 +222,9 @@ done
 echo -e "\nCAUTION, all data in $DEVICE will be lost"
 read -p "Do you realy want to use this device as installation disk? [y/N] " REPLY
 REPLY=${REPLY:-"no"}
+REPLY=${REPLY,,}
 
-if [[ ! $REPLY =~ ^(yes|y)$ ]]; then
+if [[ ! $REPLY =~ ^(y|yes)$ ]]; then
   read -p "Enter another block device: " DEVICE
   DEVICE="/dev/$DEVICE"
 
@@ -255,21 +256,25 @@ echo -e "\nSetting system environment and hardware drivers..."
 
 read -p "What CPU is your system running on? [AMD/intel] " CPU
 CPU=${CPU:-"amd"}
+CPU=${CPU,,}
 
 while [[ ! $CPU =~ ^(amd|intel)$ ]]; do
   echo -e "Invalid CPU vendor: $CPU"
   read -p "Please enter a valid CPU vendor: [AMD/intel] " CPU
-  cpu_vendor=${CPU:-"amd"}
+  CPU=${CPU:-"amd"}
+  CPU=${CPU,,}
 done
 
 set_option "CPU" "$CPU"
 echo "CPU is set to $CPU"
 
 read -p "Which GPU vendor video drivers to install? [nvidia/amd/intel/nouveau/qxl/vmware/none] " GPU
+GPU=${GPU,,}
 
 while [[ ! $GPU =~ ^(nvidia|amd|intel|nouveau|qxl|vmware|none)$ ]]; do
   echo -e "Invalid GPU driver vendor: $GPU"
   read -p "Please enter a valid GPU driver vendor: [nvidia/amd/intel/nouveau/qxl/vmware/none] " GPU
+  GPU=${GPU,,}
 done
 
 set_option "GPU" "$GPU"
@@ -277,6 +282,7 @@ echo "GPU is set to $GPU"
 
 read -p "Is this a virtual box machine? [y/N] " IS_VM
 IS_VM=${IS_VM:-"no"}
+IS_VM=${IS_VM,,}
 
 set_option "IS_VM" "$IS_VM"
 echo "VM is set to $IS_VM"
