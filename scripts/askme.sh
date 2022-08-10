@@ -109,7 +109,7 @@ set_timezone () {
 
   echo
 
-  local CITIES=($(ls -pC /usr/share/zoneinfo/${CONTINENT} | grep -v /))
+  local CITIES=($(ls -1 -pU /usr/share/zoneinfo/${CONTINENT} | grep -v /))
 
   print 4 "${CITIES[@]}"
 
