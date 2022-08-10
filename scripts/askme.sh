@@ -68,15 +68,17 @@ set_mirror () {
 }
 
 set_timezone () {
-  printf "%-25s\t%-25s\t\n" "Europe" "America"
-  printf "%-25s\t%-25s\t\n" "Asia" "Africa"
-  printf "%-25s\t%-25s\t\n" "Antarctica" "Arctic"
+  printf "%-25s\t%-25s\n" "Europe" "America"
+  printf "%-25s\t%-25s\n" "Asia" "Africa"
+  printf "%-25s\t%-25s\n" "Australia" "Indian"
+  printf "%-25s\t%-25s\n" "Atlantic" "Pacific"
+  printf "%-25s\t%-25s\n" "Antarctica" "Arctic"
 
   local CONTINENT=""
   read -p "Select your continent: [Europe] " CONTINENT
   CONTINENT=${CONTINENT:-"Europe"}
 
-  while [[ ! "$CONTINENT" =~ ^(Europe|America|Asia|Africa|Antarctica|Arctic)$ ]]; do
+  while [[ ! "$CONTINENT" =~ ^(Europe|America|Asia|Africa|Australia|Indian|Atlantic|Pacific|Antarctica|Arctic)$ ]]; do
     read -p "Please enter a valid continent: [Europe] " CONTINENT
     CONTINENT=${CONTINENT:-"Europe"}
   done
