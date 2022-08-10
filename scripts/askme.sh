@@ -4,6 +4,30 @@ trim () {
   echo -e "$1" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'
 }
 
+print () {
+  local COLS=$1 && shift
+
+  local ARR=("${@}")
+  local LEN=${#ARR[@]}
+
+  # Calculate total rows for the given length and columns
+  local ROWS=$(((LEN + COLS - 1) / COLS))
+
+  for ((i = 0; i < $ROWS; i++)); do
+    for ((j = 0; j < $COLS; j++)); do
+      # Map the index of the item to print vertically
+      index=$((i + (j * ROWS)))
+
+      if [[ ! -z "${ARR[$index]}" ]]; then
+        local text=$(trim "${ARR[index]}" | tr -d '\n' | awk '{gsub(/_/, " ", $0); print $0}')
+        printf "%-25s\t" "$text"
+      fi
+    done
+
+    printf "\n"
+  done
+}
+
 set_option () {
   touch -f .options
 
@@ -36,16 +60,15 @@ set_mirror () {
   local OLD_IFS=$IFS
   IFS=","
 
-  local COUNTRIES=($(reflector --list-countries | tail -n +3 | awk '{split($0,a,/[A-Z]{2}/); print a[1]}' | awk '{$1=$1;print}' | awk '{gsub(/ /, "_", $0); print $0","}'))
+  local COUNTRIES=($(
+      reflector --list-countries |
+      tail -n +3 |
+      awk '{split($0,a,/[A-Z]{2}/); print a[1]}' |
+      awk '{$1=$1;print}' |
+      awk '{gsub(/ /, "_", $0); print $0","}'
+  ))
 
-  for ((i = 0; i < ${#COUNTRIES[@]}; i = i + 4)); do
-    first=$(echo ${COUNTRIES[$i]} | tr -d '\n' | awk '{gsub(/_/, " ", $0); print $0}')
-    second=$(echo ${COUNTRIES[$((i + 1))]} | tr -d '\n' | awk '{gsub(/_/, " ", $0); print $0}')
-    third=$(echo ${COUNTRIES[$((i + 2))]} | tr -d '\n' | awk '{gsub(/_/, " ", $0); print $0}')
-    fourth=$(echo ${COUNTRIES[$((i + 3))]} | tr -d '\n' | awk '{gsub(/_/, " ", $0); print $0}')
-
-    printf "%-25s\t%-25s\t%-25s\t%-25s\n" $first $second $third $fourth
-  done
+  print 4 "${COUNTRIES[@]}"
 
   local COUNTRY=""
   read -p "Select a country closer to your location: [Greece] " COUNTRY
@@ -68,11 +91,12 @@ set_mirror () {
 }
 
 set_timezone () {
-  printf "%-25s\t%-25s\n" "Europe" "America"
-  printf "%-25s\t%-25s\n" "Asia" "Africa"
-  printf "%-25s\t%-25s\n" "Australia" "Indian"
-  printf "%-25s\t%-25s\n" "Atlantic" "Pacific"
-  printf "%-25s\t%-25s\n" "Antarctica" "Arctic"
+  local CONTINENTS=(
+     "Africa" "America" "Antarctica" "Arctic" "Asia"
+     "Atlantic" "Australia" "Europe" "Indian" "Pacific"
+  )
+
+  print 4 "${CONTINENTS[@]}"
 
   local CONTINENT=""
   read -p "Select your continent: [Europe] " CONTINENT
@@ -87,9 +111,7 @@ set_timezone () {
 
   local CITIES=($(ls -pC /usr/share/zoneinfo/${CONTINENT} | grep -v /))
 
-  for ((i = 0; i < ${#CITIES[@]}; i = i + 4)); do
-    printf "%-25s\t%-25s\t%-25s\t%-25s\t\n" ${CITIES[$((i))]} ${CITIES[$((i + 1))]} ${CITIES[$((i + 2))]} ${CITIES[$((i + 3))]}
-  done
+  print 4 "${CITIES[@]}"
 
   local CITY=""
   read -p "Enter the city closer to your timezone? " CITY
