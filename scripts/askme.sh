@@ -103,8 +103,7 @@ set_mirror () {
   COUNTRY=$(trim "$COUNTRY")
 
   while [[ ! " ${COUNTRIES[@]} " =~ " $(spaces_to_under "$COUNTRY") " ]]; do
-    read -p "Please enter a valid country: [Greece] " COUNTRY
-    COUNTRY=${COUNTRY:-"Greece"}
+    read -p "Please enter a valid country: " COUNTRY
     COUNTRY=$(trim "$COUNTRY")
   done
 
@@ -126,8 +125,7 @@ set_timezone () {
   CONTINENT=$(trim "$CONTINENT")
 
   while [[ ! "$CONTINENT" =~ ^(Africa|America|Antarctica|Arctic|Asia|Atlantic|Australia|Europe|Indian|Pacific)$ ]]; do
-    read -p "Please enter a valid continent: [Europe] " CONTINENT
-    CONTINENT=${CONTINENT:-"Europe"}
+    read -p "Please enter a valid continent: " CONTINENT
     CONTINENT=$(trim "$CONTINENT")
   done
 
@@ -147,7 +145,7 @@ set_timezone () {
   done
 
   set_option "TIMEZONE" "$CONTINENT/$CITY"
-  echo "Current timezone is set to $TIMEZONE"
+  echo "Current timezone is set to $CONTINENT/$CITY"
 }
 
 echo -e "Setting locations and timezones...\n"
