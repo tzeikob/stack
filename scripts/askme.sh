@@ -76,7 +76,7 @@ set_timezone () {
   read -p "Select your continent: [Europe] " CONTINENT
   CONTINENT=${CONTINENT:-"Europe"}
 
-  while [[ ! "$CONTINENT" =~ (Europe|America|Asia|Africa|Antarctica|Arctic) ]]; do
+  while [[ ! "$CONTINENT" =~ ^(Europe|America|Asia|Africa|Antarctica|Arctic)$ ]]; do
     read -p "Please enter a valid continent: [Europe] " CONTINENT
     CONTINENT=${CONTINENT:-"Europe"}
   done
