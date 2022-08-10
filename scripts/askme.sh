@@ -54,7 +54,7 @@ set_mirror () {
   COUNTRIES=$(echo ${COUNTRIES[*]} | tr -d '\n')
   local COUNTRY_RE=$(echo $COUNTRY | awk '{$1=$1;print}' | awk '{gsub(/ /, "_", $0); print $0}')
 
-  while [[ ! " ${COUNTRIES[*]} " =~ " ${COUNTRY_RE} " ]]; do
+  while [[ ! " $COUNTRIES " =~ " $COUNTRY_RE " ]]; do
     read -p "Please enter a valid country: [Greece] " COUNTRY
     COUNTRY=${COUNTRY:-"Greece"}
 
