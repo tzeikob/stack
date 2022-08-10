@@ -6,6 +6,7 @@ trim () {
 
 print () {
   local COLS=$1 && shift
+  local UNDERSCORES=$2 && shift
 
   local ARR=("${@}")
   local LEN=${#ARR[@]}
@@ -16,10 +17,16 @@ print () {
   for ((i = 0; i < $ROWS; i++)); do
     for ((j = 0; j < $COLS; j++)); do
       # Map the index of the item to print vertically
-      index=$((i + (j * ROWS)))
+      local index=$((i + (j * ROWS)))
 
       if [[ ! -z "${ARR[$index]}" ]]; then
-        local text=$(trim "${ARR[index]}" | tr -d '\n' | awk '{gsub(/_/, " ", $0); print $0}')
+        local text=$(trim "${ARR[index]}" | tr -d '\n')
+
+        # Replace underscores with spaces
+        if [[ "$UNDERSCORES" == true ]]; then
+          text=$(echo $text | awk '{gsub(/_/, " ", $0); print $0}')
+        fi
+
         printf "%-25s\t" "$text"
       fi
     done
@@ -68,7 +75,7 @@ set_mirror () {
       awk '{gsub(/ /, "_", $0); print $0","}'
   ))
 
-  print 4 "${COUNTRIES[@]}"
+  print 4 true "${COUNTRIES[@]}"
 
   local COUNTRY=""
   read -p "Select a country closer to your location: [Greece] " COUNTRY
@@ -96,7 +103,7 @@ set_timezone () {
      "Atlantic" "Australia" "Europe" "Indian" "Pacific"
   )
 
-  print 4 "${CONTINENTS[@]}"
+  print 4 false "${CONTINENTS[@]}"
 
   local CONTINENT=""
   read -p "Select your continent: [Europe] " CONTINENT
@@ -111,7 +118,7 @@ set_timezone () {
 
   local CITIES=($(ls -1 -pU /usr/share/zoneinfo/${CONTINENT} | grep -v /))
 
-  print 4 "${CITIES[@]}"
+  print 4 false "${CITIES[@]}"
 
   local CITY=""
   read -p "Enter the city closer to your timezone? " CITY
