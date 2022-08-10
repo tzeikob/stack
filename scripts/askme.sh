@@ -6,7 +6,7 @@ trim () {
 
 print () {
   local COLS=$1 && shift
-  local UNDERSCORES=$2 && shift
+  local UNDERSCORES=$1 && shift
 
   local ARR=("${@}")
   local LEN=${#ARR[@]}
