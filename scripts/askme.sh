@@ -1,7 +1,23 @@
 #!/usr/bin/env bash
 
 trim () {
-  echo -e "$1" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'
+  local val=${1:-$(</dev/stdin)}
+  echo -e "$val" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'
+}
+
+no_breaks () {
+  local val=${1:-$(</dev/stdin)}
+  echo -e "$val" | tr -d '\n'
+}
+
+spaces_to_under () {
+  local val=${1:-$(</dev/stdin)}
+  echo -e "$val" | awk '{gsub(/ /, "_", $0); print $0}'
+}
+
+under_to_spaces () {
+  local val=${1:-$(</dev/stdin)}
+  echo -e "$val" | awk '{gsub(/_/, " ", $0); print $0}'
 }
 
 print () {
@@ -20,11 +36,11 @@ print () {
       local index=$((i + (j * ROWS)))
 
       if [[ ! -z "${ARR[$index]}" ]]; then
-        local text=$(trim "${ARR[index]}" | tr -d '\n')
+        local text=$(no_breaks "${ARR[index]}")
 
         # Replace underscores with spaces
         if [[ "$UNDERSCORES" == true ]]; then
-          text=$(echo $text | awk '{gsub(/_/, " ", $0); print $0}')
+          text=$(under_to_spaces "$text")
         fi
 
         printf "%-25s\t" "$text"
@@ -68,30 +84,29 @@ set_mirror () {
   IFS=","
 
   local COUNTRIES=($(
-      reflector --list-countries |
-      tail -n +3 |
-      awk '{split($0,a,/[A-Z]{2}/); print a[1]}' |
-      awk '{$1=$1;print}' |
-      awk '{gsub(/ /, "_", $0); print $0","}' |
-      tr -d '\n'
+    reflector --list-countries |
+    tail -n +3 |
+    awk '{split($0,a,/[A-Z]{2}/); print a[1]}' |
+    trim |
+    awk '{print $0","}' |
+    spaces_to_under |
+    no_breaks
   ))
+
+  IFS=$OLD_IFS
 
   print 4 true "${COUNTRIES[@]}"
 
   local COUNTRY=""
   read -p "Select a country closer to your location: [Greece] " COUNTRY
   COUNTRY=${COUNTRY:-"Greece"}
+  COUNTRY=$(trim "$COUNTRY")
 
-  local COUNTRY_RE=$(echo $COUNTRY | awk '{$1=$1;print}' | awk '{gsub(/ /, "_", $0); print $0}')
-
-  while [[ ! " ${COUNTRIES[@]} " =~ " $COUNTRY_RE " ]]; do
+  while [[ ! " ${COUNTRIES[@]} " =~ " $(spaces_to_under "$COUNTRY") " ]]; do
     read -p "Please enter a valid country: [Greece] " COUNTRY
     COUNTRY=${COUNTRY:-"Greece"}
-
-    COUNTRY_RE=$(echo $COUNTRY | awk '{$1=$1;print}' | awk '{gsub(/ /, "_", $0); print $0}')
+    COUNTRY=$(trim "$COUNTRY")
   done
-
-  IFS=$OLD_IFS
 
   set_option "MIRROR" "$COUNTRY"
   echo "Mirror country is set to $COUNTRY"
@@ -99,8 +114,8 @@ set_mirror () {
 
 set_timezone () {
   local CONTINENTS=(
-     "Africa" "America" "Antarctica" "Arctic" "Asia"
-     "Atlantic" "Australia" "Europe" "Indian" "Pacific"
+    "Africa" "America" "Antarctica" "Arctic" "Asia"
+    "Atlantic" "Australia" "Europe" "Indian" "Pacific"
   )
 
   print 4 false "${CONTINENTS[@]}"
@@ -108,10 +123,12 @@ set_timezone () {
   local CONTINENT=""
   read -p "Select your continent: [Europe] " CONTINENT
   CONTINENT=${CONTINENT:-"Europe"}
+  CONTINENT=$(trim "$CONTINENT")
 
-  while [[ ! "$CONTINENT" =~ ^(Europe|America|Asia|Africa|Australia|Indian|Atlantic|Pacific|Antarctica|Arctic)$ ]]; do
+  while [[ ! "$CONTINENT" =~ ^(Africa|America|Antarctica|Arctic|Asia|Atlantic|Australia|Europe|Indian|Pacific)$ ]]; do
     read -p "Please enter a valid continent: [Europe] " CONTINENT
     CONTINENT=${CONTINENT:-"Europe"}
+    CONTINENT=$(trim "$CONTINENT")
   done
 
   echo
@@ -122,14 +139,14 @@ set_timezone () {
 
   local CITY=""
   read -p "Enter the city closer to your timezone? " CITY
-  local TIMEZONE=$CONTINENT/$CITY
+  CITY=$(trim "$CITY")
 
-  while [ ! -f "/usr/share/zoneinfo/$TIMEZONE" ]; do
+  while [ ! -f "/usr/share/zoneinfo/$CONTINENT/$CITY" ]; do
     read -p "Please enter a valid timezone city: " CITY
-    TIMEZONE=$CONTINENT/$CITY
+    CITY=$(trim "$CITY")
   done
 
-  set_option "TIMEZONE" "$TIMEZONE"
+  set_option "TIMEZONE" "$CONTINENT/$CITY"
   echo "Current timezone is set to $TIMEZONE"
 }
 
