@@ -63,7 +63,7 @@ set_mirror () {
 
   IFS=$OLD_IFS
 
-  set_option "COUNTRY" "$COUNTRY"
+  set_option "MIRROR" "$COUNTRY"
   echo "Mirror country is set to $COUNTRY"
 }
 
