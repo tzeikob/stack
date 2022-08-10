@@ -72,7 +72,8 @@ set_mirror () {
       tail -n +3 |
       awk '{split($0,a,/[A-Z]{2}/); print a[1]}' |
       awk '{$1=$1;print}' |
-      awk '{gsub(/ /, "_", $0); print $0","}'
+      awk '{gsub(/ /, "_", $0); print $0","}' |
+      tr -d '\n'
   ))
 
   print 4 true "${COUNTRIES[@]}"
@@ -81,10 +82,9 @@ set_mirror () {
   read -p "Select a country closer to your location: [Greece] " COUNTRY
   COUNTRY=${COUNTRY:-"Greece"}
 
-  COUNTRIES=$(echo ${COUNTRIES[*]} | tr -d '\n')
   local COUNTRY_RE=$(echo $COUNTRY | awk '{$1=$1;print}' | awk '{gsub(/ /, "_", $0); print $0}')
 
-  while [[ ! " $COUNTRIES " =~ " $COUNTRY_RE " ]]; do
+  while [[ ! " ${COUNTRIES[@]} " =~ " $COUNTRY_RE " ]]; do
     read -p "Please enter a valid country: [Greece] " COUNTRY
     COUNTRY=${COUNTRY:-"Greece"}
 
