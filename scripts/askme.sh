@@ -108,7 +108,7 @@ set_mirror () {
   done
 
   set_option "MIRROR" "$COUNTRY"
-  echo " Mirror country is set to $COUNTRY"
+  echo -e " Mirror country is set to $COUNTRY\n"
 }
 
 set_timezone () {
@@ -147,32 +147,63 @@ set_timezone () {
   local TIMEZONE="$CONTINENT/$CITY"
 
   set_option "TIMEZONE" "$TIMEZONE"
-  echo " Current timezone is set to $TIMEZONE"
+  echo -e " Current timezone is set to $TIMEZONE\n"
+}
+
+set_keymap () {
+  local OLD_IFS=$IFS
+  IFS=","
+
+  local extra="apple|mac|window|sun|atari|amiga|ttwin|ruwin"
+  extra="$extra|wangbe|adnw|applkey|backspace|bashkir|bone"
+  extra="$extra|carpalx|croat|colemak|ctrl|defkeymap|euro|keypad|koy"
+
+  local MAPS=($(
+    localectl --no-pager list-keymaps |
+    trim |
+    awk '{print $0","}' |
+    sed -n -E "/$extra/!p"
+  ))
+
+  print 4 false "${MAPS[@]}"
+
+  read -p " Enter your keyboard's keymap (extra for more maps): [us] " KEYMAP
+  KEYMAP=${KEYMAP:-"us"}
+  KEYMAP=$(trim "$KEYMAP")
+
+  if [ "$KEYMAP" == "extra" ]; then
+    local EXTRA=($(
+      localectl --no-pager list-keymaps |
+      trim |
+      awk '{print $0","}' |
+      sed -n -E "/$extra/p"
+    ))
+
+    echo
+    print 4 false "${EXTRA[@]}"
+
+    read -p " Enter your keyboard's keymap: " KEYMAP
+    KEYMAP=$(trim "$KEYMAP")
+  fi
+
+  IFS=$OLD_IFS
+
+  while [ -z "$(find /usr/share/kbd/keymaps/ -type f -name "$KEYMAP.map.gz")" ]; do
+    read -p " Please enter a valid keyboard map: " KEYMAP
+    KEYMAP=$(trim "$KEYMAP")
+  done
+
+  set_option "KEYMAP" "$KEYMAP"
+  echo -e " Keyboard keymap is set to $KEYMAP\n"
 }
 
 clear
 
 echo "Locations and Timezones:" &&
-  set_mirror && echo
-  set_timezone && echo
-
-echo -e "\nSetting locales and languages"
-
-read -p "Enter your keyboard's keymap: [us] " KEYMAP
-KEYMAP=${KEYMAP:-"us"}
-
-KEYMAP_PATH=$(find /usr/share/kbd/keymaps/ -type f -name "$KEYMAP.map.gz")
-
-while [ -z "$KEYMAP_PATH" ]; do
-  echo "Invalid keyboard map: $KEYMAP"
-  read -p "Please enter a valid keyboard map: [us] " KEYMAP
-  KEYMAP=${KEYMAP:-"us"}
-
-  KEYMAP_PATH=$(find /usr/share/kbd/keymaps/ -type f -name "$KEYMAP.map.gz")
-done
-
-set_option "KEYMAP" "$KEYMAP"
-echo "Keyboard map is set to keymap $KEYMAP"
+  set_mirror &&
+  set_timezone &&
+echo "Languages and Locales:" &&
+  set_keymap &&
 
 LAYOUTS_SET=(
   af al am ara at au az ba bd be bg br brai bt bw by ca cd ch cm cn cz
