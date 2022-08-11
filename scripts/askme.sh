@@ -43,7 +43,7 @@ print () {
           text=$(under_to_spaces "$text")
         fi
 
-        printf "%-25s\t" "$text"
+        printf " %-25s\t" "$text"
       fi
     done
 
@@ -66,14 +66,14 @@ set_password () {
   local PASSWORD
   local COMFIRMED
 
-  read -rs -p "Enter a new password: " PASSWORD && echo
-  read -rs -p "Re-enter the password: " COMFIRMED
+  read -rs -p " Enter a new password: " PASSWORD && echo
+  read -rs -p " Re-enter the password: " COMFIRMED
 
   # Repeat until password comfirmed 
   while [ "$PASSWORD" != "$COMFIRMED" ]; do
-    echo -e "\nOoops, passwords do not match"
-    read -rs -p "Please enter a new password: " PASSWORD && echo
-    read -rs -p "Re-enter the password: " COMFIRMED
+    echo -e "\n Ooops, passwords do not match"
+    read -rs -p " Please enter a new password: " PASSWORD && echo
+    read -rs -p " Re-enter the password: " COMFIRMED
   done
 
   set_option "$1_PASSWORD" "$PASSWORD"
@@ -98,17 +98,17 @@ set_mirror () {
   print 4 true "${COUNTRIES[@]}"
 
   local COUNTRY=""
-  read -p "Select a country closer to your location: [Greece] " COUNTRY
+  read -p " Select a country closer to your location: [Greece] " COUNTRY
   COUNTRY=${COUNTRY:-"Greece"}
   COUNTRY=$(trim "$COUNTRY")
 
   while [[ ! " ${COUNTRIES[@]} " =~ " $(spaces_to_under "$COUNTRY") " ]]; do
-    read -p "Please enter a valid country: " COUNTRY
+    read -p " Please enter a valid country: " COUNTRY
     COUNTRY=$(trim "$COUNTRY")
   done
 
   set_option "MIRROR" "$COUNTRY"
-  echo "Mirror country is set to $COUNTRY"
+  echo " Mirror country is set to $COUNTRY"
 }
 
 set_timezone () {
@@ -120,12 +120,12 @@ set_timezone () {
   print 4 false "${CONTINENTS[@]}"
 
   local CONTINENT=""
-  read -p "Select your continent: [Europe] " CONTINENT
+  read -p " Select your continent: [Europe] " CONTINENT
   CONTINENT=${CONTINENT:-"Europe"}
   CONTINENT=$(trim "$CONTINENT")
 
   while [[ ! "$CONTINENT" =~ ^(Africa|America|Antarctica|Arctic|Asia|Atlantic|Australia|Europe|Indian|Pacific)$ ]]; do
-    read -p "Please enter a valid continent: " CONTINENT
+    read -p " Please enter a valid continent: " CONTINENT
     CONTINENT=$(trim "$CONTINENT")
   done
 
@@ -136,24 +136,25 @@ set_timezone () {
   print 4 false "${CITIES[@]}"
 
   local CITY=""
-  read -p "Enter the city closer to your timezone? " CITY
+  read -p " Enter the city closer to your timezone? " CITY
   CITY=$(trim "$CITY")
 
   while [ ! -f "/usr/share/zoneinfo/$CONTINENT/$CITY" ]; do
-    read -p "Please enter a valid timezone city: " CITY
+    read -p " Please enter a valid timezone city: " CITY
     CITY=$(trim "$CITY")
   done
 
   local TIMEZONE="$CONTINENT/$CITY"
 
   set_option "TIMEZONE" "$TIMEZONE"
-  echo "Current timezone is set to $TIMEZONE"
+  echo " Current timezone is set to $TIMEZONE"
 }
 
-echo -e "Setting locations and timezones...\n"
+clear
 
-set_mirror && echo
-set_timezone && echo
+echo "Locations and Timezones:" &&
+  set_mirror && echo
+  set_timezone && echo
 
 echo -e "\nSetting locales and languages"
 
