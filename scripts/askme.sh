@@ -144,8 +144,10 @@ set_timezone () {
     CITY=$(trim "$CITY")
   done
 
-  set_option "TIMEZONE" "$CONTINENT/$CITY"
-  echo "Current timezone is set to $CONTINENT/$CITY"
+  local TIMEZONE="$CONTINENT/$CITY"
+
+  set_option "TIMEZONE" "$TIMEZONE"
+  echo "Current timezone is set to $TIMEZONE"
 }
 
 echo -e "Setting locations and timezones...\n"
