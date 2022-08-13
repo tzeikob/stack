@@ -87,7 +87,7 @@ set_password () {
   set_option "$1_PASSWORD" "$PASSWORD"
 }
 
-set_mirror () {
+set_mirrors () {
   local OLD_IFS=$IFS
   IFS=","
 
@@ -106,17 +106,32 @@ set_mirror () {
   print 4 true "${COUNTRIES[@]}"
 
   local COUNTRY=""
-  read -p " Select a country closer to your location: [Greece] " COUNTRY
+  read -p " Enter the primary mirror country: [Greece] " COUNTRY
   COUNTRY=${COUNTRY:-"Greece"}
   COUNTRY=$(trim "$COUNTRY")
 
-  while [[ ! " ${COUNTRIES[@]} " =~ " $(spaces_to_under "$COUNTRY") " ]]; do
+  while [[ ! " ${COUNTRIES[*]} " =~ " $(spaces_to_under "$COUNTRY") " ]]; do
     read -p " Please enter a valid country: " COUNTRY
     COUNTRY=$(trim "$COUNTRY")
   done
 
-  set_option "MIRROR" "$COUNTRY"
-  echo -e " Mirror country is set to $COUNTRY\n"
+  local MIRROR_SET="$COUNTRY"
+
+  while [ ! -z $COUNTRY ]; do
+    read -p "Enter another mirror country (none to skip): " COUNTRY
+    COUNTRY="$(trim "$COUNTRY")"
+
+    while [ ! -z "$COUNTRY" ] && [[ ! " ${COUNTRIES[*]} " =~ " $(spaces_to_under "$COUNTRY") " ]]; do
+      read -p "Please enter a valid country: " COUNTRY
+      COUNTRY="$(trim "$COUNTRY")"
+    done
+
+    MIRROR_SET="$MIRROR_SET $COUNTRY"
+    MIRROR_SET="$(trim "$MIRROR_SET")"
+  done
+
+  set_option "MIRRORS" "$MIRROR_SET"
+  echo -e " Mirror countries set to $MIRROR_SET\n"
 }
 
 set_timezone () {
@@ -250,7 +265,7 @@ set_layouts () {
 clear
 
 echo "Locations and Timezones:" &&
-  set_mirror &&
+  set_mirrors &&
   set_timezone &&
 echo "Languages and Locales:" &&
   set_keymap &&
