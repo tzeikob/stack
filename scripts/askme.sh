@@ -108,30 +108,30 @@ set_mirrors () {
   local COUNTRY=""
   read -p " Enter the primary mirror country: [Greece] " COUNTRY
   COUNTRY=${COUNTRY:-"Greece"}
-  COUNTRY=$(trim "$COUNTRY")
+  COUNTRY="$(trim "$COUNTRY")"
 
   while [[ ! " ${COUNTRIES[*]} " =~ " $(spaces_to_under "$COUNTRY") " ]]; do
     read -p " Please enter a valid country: " COUNTRY
-    COUNTRY=$(trim "$COUNTRY")
+    COUNTRY="$(trim "$COUNTRY")"
   done
 
-  local MIRROR_SET="$COUNTRY"
+  local MIRROR_SET="\"$COUNTRY\""
 
-  while [ ! -z $COUNTRY ]; do
-    read -p "Enter another mirror country (none to skip): " COUNTRY
+  while [[ ! -z "$COUNTRY" ]]; do
+    read -p " Enter another secondary mirror country (none to skip): " COUNTRY
     COUNTRY="$(trim "$COUNTRY")"
 
     while [ ! -z "$COUNTRY" ] && [[ ! " ${COUNTRIES[*]} " =~ " $(spaces_to_under "$COUNTRY") " ]]; do
-      read -p "Please enter a valid country: " COUNTRY
+      read -p " Please enter a valid country: " COUNTRY
       COUNTRY="$(trim "$COUNTRY")"
     done
 
-    MIRROR_SET="$MIRROR_SET $COUNTRY"
+    [[ ! -z "$COUNTRY" ]] && MIRROR_SET="$MIRROR_SET \"$COUNTRY\""
   done
 
   MIRROR_SET="$(trim "$MIRROR_SET")"
 
-  set_option "MIRRORS" "$MIRROR_SET"
+  set_option "MIRRORS" "($MIRROR_SET)"
   echo -e " Mirror countries set to $MIRROR_SET\n"
 }
 
