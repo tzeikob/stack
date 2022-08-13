@@ -63,11 +63,11 @@ set_option () {
   touch -f .options
 
   # Override pre-existing option
-  if grep -Eq "^${1}.*" .options; then
-    sed -i -e "/^${1}.*/d" .options
+  if grep -Eq "^$1.*" .options; then
+    sed -i -e "/^$1.*/d" .options
   fi
 
-  echo "${1}=${2}" >> .options
+  echo "$1=$2" >> .options
 }
 
 set_password () {
