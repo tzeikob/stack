@@ -232,36 +232,34 @@ set_layouts () {
 
   print 4 false "${LAYOUTS[@]}"
 
-  read -p "Enter your primary keyboard layout: [us] " LAYOUT
+  read -p " Enter your primary keyboard layout: [us] " LAYOUT
   LAYOUT=${LAYOUT:-"us"}
   LAYOUT="$(trim "$LAYOUT")"
 
   while [[ ! " ${LAYOUTS[*]} " =~ " ${LAYOUT} " ]]; do
-    read -p "Please enter a valid layout: " LAYOUT
+    read -p " Please enter a valid layout: " LAYOUT
     LAYOUT="$(trim "$LAYOUT")"
   done
 
-  local LAYOUT_SET="$LAYOUT"
+  local LAYOUT_SET="\"$LAYOUT\""
 
-  while [ ! -z $LAYOUT ]; do
-    read -p "Enter another keyboard layout (none to skip): " LAYOUT
+  while [[ ! -z "$LAYOUT" ]]; do
+    read -p " Enter another secondary layout (none to skip): " LAYOUT
     LAYOUT="$(trim "$LAYOUT")"
 
-    while [ ! -z "$LAYOUT" ] && [[ ! " ${LAYOUTS[*]} " =~ " ${LAYOUT} " ]]; do
-      read -p "Please enter a valid layout: " LAYOUT
+    while [[ ! -z "$LAYOUT" ]] && [[ ! " ${LAYOUTS[*]} " =~ " ${LAYOUT} " ]]; do
+      read -p " Please enter a valid layout: " LAYOUT
       LAYOUT="$(trim "$LAYOUT")"
     done
 
-    LAYOUT_SET="$LAYOUT_SET $LAYOUT"
+    [[ ! -z "$LAYOUT" ]] && LAYOUT_SET="$LAYOUT_SET \"$LAYOUT\""
   done
 
   LAYOUT_SET="$(trim "$LAYOUT_SET")"
 
-  set_option "LAYOUTS" "$LAYOUT_SET"
+  set_option "LAYOUTS" "($LAYOUT_SET)"
   echo "Keyboard layout(s) is set to $LAYOUT_SET\n"
 }
-
-clear
 
 echo "Locations and Timezones:" &&
   set_mirrors &&
