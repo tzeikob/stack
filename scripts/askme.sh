@@ -205,6 +205,48 @@ set_keymap () {
   echo -e " Keyboard keymap is set to $KEYMAP\n"
 }
 
+set_layouts () {
+  LAYOUTS=(
+    af al am ara at au az ba bd be bg br brai bt bw by ca cd ch cm cn cz
+    de dk dz ee epo es et fi fo fr gb ge gh gn gr hr hu id ie il in iq ir
+    is it jp ke kg kh kr kz la latam lk lt lv ma mao md me mk ml mm mn mt
+    mv my ng nl no np ph pk pl pt ro rs ru se si sk sn sy tg th tj tm tr
+    tw tz ua us uz vnza
+  )
+
+  print 4 false "${LAYOUTS[@]}"
+
+  local LAYOUT_SET=""
+
+  read -p "Enter your primary keyboard layout: [us] " LAYOUT
+  LAYOUT=${LAYOUT:-"us"}
+  LAYOUT="$(trim "$LAYOUT")"
+
+  while [[ ! " ${LAYOUTS[*]} " =~ " ${LAYOUT} " ]]; do
+    read -p "Please enter a valid layout: " LAYOUT
+    LAYOUT="$(trim "$LAYOUT")"
+  done
+
+  LAYOUT_SET="$LAYOUT_SET $LAYOUT"
+  LAYOUT_SET="$(trim "$LAYOUT_SET")"
+
+  while [ ! -z $LAYOUT ]; do
+    read -p "Enter another keyboard layout (none to skip): " LAYOUT
+    LAYOUT="$(trim "$LAYOUT")"
+
+    while [ ! -z "$LAYOUT" ] && [[ ! " ${LAYOUTS[*]} " =~ " ${LAYOUT} " ]]; do
+      read -p "Please enter a valid layout: " LAYOUT
+      LAYOUT="$(trim "$LAYOUT")"
+    done
+
+    LAYOUT_SET="$LAYOUT_SET $LAYOUT"
+    LAYOUT_SET="$(trim "$LAYOUT_SET")"
+  done
+
+  set_option "LAYOUTS" "$LAYOUT_SET"
+  echo "Keyboard layout(s) is set to $LAYOUT_SET"
+}
+
 clear
 
 echo "Locations and Timezones:" &&
@@ -212,30 +254,9 @@ echo "Locations and Timezones:" &&
   set_timezone &&
 echo "Languages and Locales:" &&
   set_keymap &&
+  set_layouts
 
-LAYOUTS_SET=(
-  af al am ara at au az ba bd be bg br brai bt bw by ca cd ch cm cn cz
-  de dk dz ee epo es et fi fo fr gb ge gh gn gr hr hu id ie il in iq ir
-  is it jp ke kg kh kr kz la latam lk lt lv ma mao md me mk ml mm mn mt
-  mv my ng nl no np ph pk pl pt ro rs ru se si sk sn sy tg th tj tm tr
-  tw tz ua us uz vnza
-)
-
-read -p "Enter which keyboard layouts to install (e.g. us gr): [us] " LAYOUTS_RAW
-LAYOUTS_RAW=${LAYOUTS_RAW:-"us"}
-LAYOUTS_RAW="$(trim "$LAYOUTS_RAW")"
-
-for LAYOUT in $LAYOUTS_RAW; do
-  while [ -z "$LAYOUT" ] || [[ ! " ${LAYOUTS_SET[*]} " =~ " ${LAYOUT} " ]]; do
-    echo "Invalid layout name: $LAYOUT"
-    read -p "Please re-enter the layout: " LAYOUT
-  done
-
-  LAYOUTS="$LAYOUTS $LAYOUT"
-done
-
-LAYOUTS="$(trim "$LAYOUTS")"
-echo "Keyboard layout(s) is set to $LAYOUTS"
+exit 0
 
 read -p "Enter which locales to install (e.g. en_US el_GR): [en_US] " LOCALES_RAW
 LOCALES_RAW=${LOCALES_RAW:-"en_US"}
