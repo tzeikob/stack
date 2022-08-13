@@ -155,7 +155,7 @@ set_timezone () {
 
   echo
 
-  local CITIES=($(ls -1 -pU /usr/share/zoneinfo/${CONTINENT} | grep -v /))
+  local CITIES=($(ls -1 -pU /usr/share/zoneinfo/$CONTINENT | grep -v /))
 
   print 4 false "${CITIES[@]}"
 
@@ -236,7 +236,7 @@ set_layouts () {
   LAYOUT=${LAYOUT:-"us"}
   LAYOUT="$(trim "$LAYOUT")"
 
-  while [[ ! " ${LAYOUTS[*]} " =~ " ${LAYOUT} " ]]; do
+  while [[ ! " ${LAYOUTS[*]} " =~ " $LAYOUT " ]]; do
     read -p " Please enter a valid layout: " LAYOUT
     LAYOUT="$(trim "$LAYOUT")"
   done
@@ -247,7 +247,7 @@ set_layouts () {
     read -p " Enter another secondary layout (none to skip): " LAYOUT
     LAYOUT="$(trim "$LAYOUT")"
 
-    while [[ ! -z "$LAYOUT" ]] && [[ ! " ${LAYOUTS[*]} " =~ " ${LAYOUT} " ]]; do
+    while [[ ! -z "$LAYOUT" ]] && [[ ! " ${LAYOUTS[*]} " =~ " $LAYOUT " ]]; do
       read -p " Please enter a valid layout: " LAYOUT
       LAYOUT="$(trim "$LAYOUT")"
     done
@@ -258,8 +258,10 @@ set_layouts () {
   LAYOUT_SET="$(trim "$LAYOUT_SET")"
 
   set_option "LAYOUTS" "($LAYOUT_SET)"
-  echo "Keyboard layout(s) is set to $LAYOUT_SET\n"
+  echo -e "Keyboard layout(s) is set to $LAYOUT_SET\n"
 }
+
+clear
 
 echo "Locations and Timezones:" &&
   set_mirrors &&
@@ -267,8 +269,6 @@ echo "Locations and Timezones:" &&
 echo "Languages and Locales:" &&
   set_keymap &&
   set_layouts
-
-exit 0
 
 read -p "Enter which locales to install (e.g. en_US el_GR): [en_US] " LOCALES_RAW
 LOCALES_RAW=${LOCALES_RAW:-"en_US"}
