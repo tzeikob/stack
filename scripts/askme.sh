@@ -127,8 +127,9 @@ set_mirrors () {
     done
 
     MIRROR_SET="$MIRROR_SET $COUNTRY"
-    MIRROR_SET="$(trim "$MIRROR_SET")"
   done
+
+  MIRROR_SET="$(trim "$MIRROR_SET")"
 
   set_option "MIRRORS" "$MIRROR_SET"
   echo -e " Mirror countries set to $MIRROR_SET\n"
@@ -231,8 +232,6 @@ set_layouts () {
 
   print 4 false "${LAYOUTS[@]}"
 
-  local LAYOUT_SET=""
-
   read -p "Enter your primary keyboard layout: [us] " LAYOUT
   LAYOUT=${LAYOUT:-"us"}
   LAYOUT="$(trim "$LAYOUT")"
@@ -242,8 +241,7 @@ set_layouts () {
     LAYOUT="$(trim "$LAYOUT")"
   done
 
-  LAYOUT_SET="$LAYOUT_SET $LAYOUT"
-  LAYOUT_SET="$(trim "$LAYOUT_SET")"
+  local LAYOUT_SET="$LAYOUT"
 
   while [ ! -z $LAYOUT ]; do
     read -p "Enter another keyboard layout (none to skip): " LAYOUT
@@ -255,8 +253,9 @@ set_layouts () {
     done
 
     LAYOUT_SET="$LAYOUT_SET $LAYOUT"
-    LAYOUT_SET="$(trim "$LAYOUT_SET")"
   done
+
+  LAYOUT_SET="$(trim "$LAYOUT_SET")"
 
   set_option "LAYOUTS" "$LAYOUT_SET"
   echo "Keyboard layout(s) is set to $LAYOUT_SET"
