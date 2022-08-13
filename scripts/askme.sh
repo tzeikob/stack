@@ -1,23 +1,31 @@
 #!/usr/bin/env bash
 
 trim () {
-  local val=${1:-$(</dev/stdin)}
-  echo -e "$val" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'
+  local input=""
+  [[ -p /dev/stdin ]] && input="$(cat -)" || input="${@}"
+
+  echo -e "$input" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'
 }
 
 no_breaks () {
-  local val=${1:-$(</dev/stdin)}
-  echo -e "$val" | tr -d '\n'
+  local input=""
+  [[ -p /dev/stdin ]] && input="$(cat -)" || input="${@}"
+
+  echo -e "$input" | tr -d '\n'
 }
 
 spaces_to_under () {
-  local val=${1:-$(</dev/stdin)}
-  echo -e "$val" | awk '{gsub(/ /, "_", $0); print $0}'
+  local input=""
+  [[ -p /dev/stdin ]] && input="$(cat -)" || input="${@}"
+
+  echo -e "$input" | awk '{gsub(/ /, "_", $0); print $0}'
 }
 
 under_to_spaces () {
-  local val=${1:-$(</dev/stdin)}
-  echo -e "$val" | awk '{gsub(/_/, " ", $0); print $0}'
+  local input=""
+  [[ -p /dev/stdin ]] && input="$(cat -)" || input="${@}"
+
+  echo -e "$input" | awk '{gsub(/_/, " ", $0); print $0}'
 }
 
 print () {
