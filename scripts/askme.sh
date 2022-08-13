@@ -258,7 +258,7 @@ set_layouts () {
   LAYOUT_SET="$(trim "$LAYOUT_SET")"
 
   set_option "LAYOUTS" "$LAYOUT_SET"
-  echo "Keyboard layout(s) is set to $LAYOUT_SET"
+  echo "Keyboard layout(s) is set to $LAYOUT_SET\n"
 }
 
 clear
