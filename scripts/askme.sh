@@ -28,6 +28,12 @@ under_to_spaces () {
   echo -e "$input" | awk '{gsub(/_/, " ", $0); print $0}'
 }
 
+remove_dups () {
+  local ARR=("${@}")
+
+  echo "${ARR[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '
+}
+
 print () {
   local COLS=$1 && shift
   local UNDERSCORES=$1 && shift
@@ -261,6 +267,63 @@ set_layouts () {
   echo -e "Keyboard layout(s) is set to $LAYOUT_SET\n"
 }
 
+set_locale () {
+  local LOCALES=($(
+    cat /etc/locale.gen |
+    tail -n +23 |
+    tr -d '#' |
+    awk '{split($0,a,/ /); print a[1]}'
+  ))
+
+  local LANGS=($(
+    echo "${LOCALES[@]}" |
+    tr ' ' '\n' |
+    awk '{split($0,a,/_/); print a[1]}' |
+    awk '{print $0" "}'
+  ))
+
+  LANGS=($(remove_dups "${LANGS[@]}"))
+
+  print 4 false "${LANGS[@]}"
+
+  local LANG=""
+  read -p " Enter the language of your locale: [en] " LANG
+  LANG=${LANG:-"en"}
+  LANG="$(trim "$LANG")"
+
+  while ! grep -q "$LANG" /etc/locale.gen; do
+    read -p " Please enter a valid locale language: " LANG
+    LANG="$(trim "$LANG")"
+  done
+
+  local ENCODINGS=($(
+    cat /etc/locale.gen |
+    tail -n +23 |
+    tr -d '#' |
+    awk "/^$LANG/{print}" |
+    awk '{split($0,a,/_/); print a[2]}' |
+    spaces_to_under |
+    awk '{print $0" "}'
+  ))
+
+  print 4 true "${ENCODINGS[@]}"
+
+  local ENCODING=""
+  read -p " Enter a locale encoding: " ENCODING
+  ENCODING="$(trim "$ENCODING")"
+
+  local LOCALE=$(trim "${LANG}_$ENCODING")
+
+  while ! grep -q "$LOCALE" /etc/locale.gen; do
+    read -p " Please enter a valid locale encoding: " ENCODING
+    ENCODING="$(trim "$ENCODING")"
+    LOCALE=$(trim "${LANG}_$ENCODING")
+  done
+
+  set_option "LOCALE" "$LOCALE"
+  echo -e "Locale is set to $LOCALE\n"
+}
+
 clear
 
 echo "Locations and Timezones:" &&
@@ -268,22 +331,8 @@ echo "Locations and Timezones:" &&
   set_timezone &&
 echo "Languages and Locales:" &&
   set_keymap &&
-  set_layouts
-
-read -p "Enter which locales to install (e.g. en_US el_GR): [en_US] " LOCALES_RAW
-LOCALES_RAW=${LOCALES_RAW:-"en_US"}
-
-for LOCALE in $LOCALES_RAW; do
-  while [ -z "$LOCALE" ] || ! grep -q "$LOCALE" /etc/locale.gen; do
-    echo "Invalid locale name: $LOCALE"
-    read -p "Please re-enter the locale: " LOCALE
-  done
-
-  LOCALES="$LOCALES $LOCALE"
-done
-
-set_option "LOCALES" "$LOCALES"
-echo "Locale(s) is set to $LOCALES"
+  set_layouts &&
+  set_locale
 
 echo -e "\nSetting users and hostname..."
 
