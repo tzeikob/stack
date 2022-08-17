@@ -36,7 +36,7 @@ remove_dups () {
 
 print () {
   local COLS=$1 && shift
-  local UNDERSCORES=$1 && shift
+  local PADDING=$1 && shift
 
   local ARR=("${@}")
   local LEN=${#ARR[@]}
@@ -50,19 +50,29 @@ print () {
       local index=$((i + (j * ROWS)))
 
       if [[ ! -z "${ARR[$index]}" ]]; then
-        local text=$(no_breaks "${ARR[index]}")
+        local text=$(no_breaks "${ARR[$index]}")
 
-        # Replace underscores with spaces
-        if [[ "$UNDERSCORES" == true ]]; then
-          text=$(under_to_spaces "$text")
-        fi
-
-        printf " %-25s\t" "$text"
+        printf " %-${PADDING}s\t" "$text"
       fi
     done
 
     printf "\n"
   done
+}
+
+contains () {
+  local ITEM=$1 && shift
+
+  local ARR=("${@}")
+  local LEN=${#ARR[@]}
+
+  for ((i = 0; i < $LEN; i++)); do
+    if [[ "$ITEM" == "${ARR[$i]}" ]]; then
+      return 0
+    fi
+  done
+
+  return 1
 }
 
 set_option () {
@@ -268,56 +278,62 @@ set_layouts () {
 }
 
 set_locale () {
+  local OLD_IFS=$IFS
+  IFS=" "
+
   local LANGS=($(
     cat /etc/locale.gen |
-    tail -n +23 |
+    tail -n +24 |
     tr -d '#' |
     awk '{split($0,a,/ /); print a[1]}' |
     awk '{split($0,a,/_/); print a[1]}' |
+    trim |
     awk '{print $0" "}'
   ))
 
   LANGS=($(remove_dups "${LANGS[@]}"))
 
-  print 4 false "${LANGS[@]}"
+  print 8 10 "${LANGS[@]}"
 
   local LANG=""
   read -p " Enter the language of your locale: [en] " LANG
   LANG=${LANG:-"en"}
   LANG="$(trim "$LANG")"
 
-  while [[ ! " ${LANGS[*]} " =~ " $LANG " ]]; do
-    read -p " Please enter a valid locale language: " LANG
+  while ! contains "$LANG" "${LANGS[@]}"; do
+    read -p " Please enter a valid language: " LANG
     LANG="$(trim "$LANG")"
   done
 
-  local ENCODINGS=($(
+  IFS=","
+
+  local LOCALES=($(
     cat /etc/locale.gen |
-    tail -n +23 |
+    tail -n +24 |
     tr -d '#' |
     awk "/^$LANG/{print}" |
-    awk '{split($0,a,/_| /); print a[2]}' |
     trim |
-    spaces_to_under |
-    awk '{print $0" "}'
+    awk '{print $0","}' |
+    no_breaks
   ))
 
-  print 4 true "${ENCODINGS[@]}"
+  echo
+  print 5 20 "${LOCALES[@]}"
 
-  local ENCODING=""
-  read -p " Enter a locale encoding: " ENCODING
-  ENCODING="$(trim "$ENCODING")"
+  local LOCALE=""
+  read -p " Enter your locale: " LOCALE
+  LOCALE="$(trim "$LOCALE")"
 
-  while [[ ! " ${ENCODINGS[*]} " =~ " $(spaces_to_under "$ENCODING") " ]]; do
-    read -p " Please enter a valid locale encoding: " ENCODING
-    ENCODING="$(trim "$ENCODING")"
+  while ! contains "$LOCALE" "${LOCALES[@]}"; do
+    read -p " Please enter a valid locale: " LOCALE
+    LOCALE="$(trim "$LOCALE")"
   done
 
-  ENCODING=$(under_to_spaces "$ENCODING")
+  IFS=$OLD_IFS
 
-  local LOCALE=$(trim "${LANG}_$ENCODING")
+  LOCALE=$(trim "$LOCALE")
 
-  set_option "LOCALE" "$LOCALE"
+  set_option "LOCALE" "\"$LOCALE\""
   echo -e "Locale is set to $LOCALE\n"
 }
 
