@@ -183,7 +183,7 @@ set_timezone () {
     CITY=$(trim "$CITY")
   done
 
-  local TIMEZONE="$CONTINENT/$CITY"
+  local TIMEZONE="\"$CONTINENT/$CITY\""
 
   set_option "TIMEZONE" "$TIMEZONE"
   echo -e " Current timezone is set to $TIMEZONE\n"
@@ -231,6 +231,8 @@ set_keymap () {
   done
 
   IFS=$OLD_IFS
+
+  KEYMAP="\"$KEYMAP\""
 
   set_option "KEYMAP" "$KEYMAP"
   echo -e " Keyboard keymap is set to $KEYMAP\n"
@@ -330,9 +332,9 @@ set_locale () {
 
   IFS=$OLD_IFS
 
-  LOCALE=$(trim "$LOCALE")
+  LOCALE="\"$(trim "$LOCALE")\""
 
-  set_option "LOCALE" "\"$LOCALE\""
+  set_option "LOCALE" "$LOCALE"
   echo -e "Locale is set to $LOCALE\n"
 }
 
