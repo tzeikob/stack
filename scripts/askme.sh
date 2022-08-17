@@ -168,11 +168,9 @@ set_timezone () {
     CONTINENT=$(trim "$CONTINENT")
   done
 
-  echo
-
   local CITIES=($(ls -1 -pU /usr/share/zoneinfo/$CONTINENT | grep -v /))
 
-  print 4 20 "${CITIES[@]}"
+  echo && print 4 20 "${CITIES[@]}"
 
   local CITY=""
   read -p " Enter the city closer to your timezone? " CITY
@@ -219,8 +217,7 @@ set_keymap () {
       sed -n -E "/$EXTRA/p"
     ))
 
-    echo
-    print 4 30 "${EXTRA[@]}"
+    echo && print 4 30 "${EXTRA[@]}"
 
     read -p " Enter your keyboard's keymap: " KEYMAP
     KEYMAP=$(trim "$KEYMAP")
@@ -320,8 +317,7 @@ set_locale () {
     no_breaks
   ))
 
-  echo
-  print 5 20 "${LOCALES[@]}"
+  echo && print 5 20 "${LOCALES[@]}"
 
   local LOCALE=""
   read -p " Enter your locale: " LOCALE
