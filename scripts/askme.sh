@@ -268,16 +268,11 @@ set_layouts () {
 }
 
 set_locale () {
-  local LOCALES=($(
+  local LANGS=($(
     cat /etc/locale.gen |
     tail -n +23 |
     tr -d '#' |
-    awk '{split($0,a,/ /); print a[1]}'
-  ))
-
-  local LANGS=($(
-    echo "${LOCALES[@]}" |
-    tr ' ' '\n' |
+    awk '{split($0,a,/ /); print a[1]}' |
     awk '{split($0,a,/_/); print a[1]}' |
     awk '{print $0" "}'
   ))
