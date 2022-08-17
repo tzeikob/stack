@@ -286,7 +286,7 @@ set_locale () {
   LANG=${LANG:-"en"}
   LANG="$(trim "$LANG")"
 
-  while ! grep -q "$LANG" /etc/locale.gen; do
+  while [[ ! " ${LANGS[*]} " =~ " $LANG " ]]; do
     read -p " Please enter a valid locale language: " LANG
     LANG="$(trim "$LANG")"
   done
@@ -296,7 +296,8 @@ set_locale () {
     tail -n +23 |
     tr -d '#' |
     awk "/^$LANG/{print}" |
-    awk '{split($0,a,/_/); print a[2]}' |
+    awk '{split($0,a,/_| /); print a[2]}' |
+    trim |
     spaces_to_under |
     awk '{print $0" "}'
   ))
@@ -307,13 +308,14 @@ set_locale () {
   read -p " Enter a locale encoding: " ENCODING
   ENCODING="$(trim "$ENCODING")"
 
-  local LOCALE=$(trim "${LANG}_$ENCODING")
-
-  while ! grep -q "$LOCALE" /etc/locale.gen; do
+  while [[ ! " ${ENCODINGS[*]} " =~ " $(spaces_to_under "$ENCODING") " ]]; do
     read -p " Please enter a valid locale encoding: " ENCODING
     ENCODING="$(trim "$ENCODING")"
-    LOCALE=$(trim "${LANG}_$ENCODING")
   done
+
+  ENCODING=$(under_to_spaces "$ENCODING")
+
+  local LOCALE=$(trim "${LANG}_$ENCODING")
 
   set_option "LOCALE" "$LOCALE"
   echo -e "Locale is set to $LOCALE\n"
