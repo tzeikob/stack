@@ -1,31 +1,31 @@
 #!/usr/bin/env bash
 
 trim () {
-  local input=""
-  [[ -p /dev/stdin ]] && input="$(cat -)" || input="${@}"
+  local INPUT=""
+  [[ -p /dev/stdin ]] && INPUT="$(cat -)" || INPUT="${@}"
 
-  echo -e "$input" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'
+  echo -e "$INPUT" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'
 }
 
 no_breaks () {
-  local input=""
-  [[ -p /dev/stdin ]] && input="$(cat -)" || input="${@}"
+  local INPUT=""
+  [[ -p /dev/stdin ]] && INPUT="$(cat -)" || INPUT="${@}"
 
-  echo -e "$input" | tr -d '\n'
+  echo -e "$INPUT" | tr -d '\n'
 }
 
 spaces_to_under () {
-  local input=""
-  [[ -p /dev/stdin ]] && input="$(cat -)" || input="${@}"
+  local INPUT=""
+  [[ -p /dev/stdin ]] && INPUT="$(cat -)" || INPUT="${@}"
 
-  echo -e "$input" | awk '{gsub(/ /, "_", $0); print $0}'
+  echo -e "$INPUT" | awk '{gsub(/ /, "_", $0); print $0}'
 }
 
 under_to_spaces () {
-  local input=""
-  [[ -p /dev/stdin ]] && input="$(cat -)" || input="${@}"
+  local INPUT=""
+  [[ -p /dev/stdin ]] && INPUT="$(cat -)" || INPUT="${@}"
 
-  echo -e "$input" | awk '{gsub(/_/, " ", $0); print $0}'
+  echo -e "$INPUT" | awk '{gsub(/_/, " ", $0); print $0}'
 }
 
 remove_dups () {
@@ -47,12 +47,12 @@ print () {
   for ((i = 0; i < $ROWS; i++)); do
     for ((j = 0; j < $COLS; j++)); do
       # Map the index of the item to print vertically
-      local index=$((i + (j * ROWS)))
+      local INDX=$((i + (j * ROWS)))
 
-      if [[ ! -z "${ARR[$index]}" ]]; then
-        local text=$(no_breaks "${ARR[$index]}")
+      if [[ ! -z "${ARR[$INDX]}" ]]; then
+        local TEXT=$(no_breaks "${ARR[$INDX]}")
 
-        printf " %-${PADDING}s\t" "$text"
+        printf " %-${PADDING}s\t" "$TEXT"
       fi
     done
 
@@ -193,19 +193,20 @@ set_keymap () {
   local OLD_IFS=$IFS
   IFS=","
 
-  local extra="apple|mac|window|sun|atari|amiga|ttwin|ruwin"
-  extra="$extra|wangbe|adnw|applkey|backspace|bashkir|bone"
-  extra="$extra|carpalx|croat|colemak|ctrl|defkeymap|euro|keypad|koy"
+  local EXTRA="apple|mac|window|sun|atari|amiga|ttwin|ruwin"
+  EXTRA="$EXTRA|wangbe|adnw|applkey|backspace|bashkir|bone"
+  EXTRA="$EXTRA|carpalx|croat|colemak|ctrl|defkeymap|euro|keypad|koy"
 
   local MAPS=($(
     localectl --no-pager list-keymaps |
     trim |
     awk '{print $0","}' |
-    sed -n -E "/$extra/!p"
+    sed -n -E "/$EXTRA/!p"
   ))
 
   print 4 25 "${MAPS[@]}"
 
+  local KEYMAP=""
   read -p " Enter your keyboard's keymap (extra for more maps): [us] " KEYMAP
   KEYMAP=${KEYMAP:-"us"}
   KEYMAP=$(trim "$KEYMAP")
@@ -215,7 +216,7 @@ set_keymap () {
       localectl --no-pager list-keymaps |
       trim |
       awk '{print $0","}' |
-      sed -n -E "/$extra/p"
+      sed -n -E "/$EXTRA/p"
     ))
 
     echo
@@ -239,7 +240,7 @@ set_keymap () {
 }
 
 set_layouts () {
-  LAYOUTS=(
+  local LAYOUTS=(
     af al am ara at au az ba bd be bg br brai bt bw by ca cd ch cm cn cz
     de dk dz ee epo es et fi fo fr gb ge gh gn gr hr hu id ie il in iq ir
     is it jp ke kg kh kr kz la latam lk lt lv ma mao md me mk ml mm mn mt
@@ -249,6 +250,7 @@ set_layouts () {
 
   print 8 6 "${LAYOUTS[@]}"
 
+  local LAYOUT=""
   read -p " Enter your primary keyboard layout: [us] " LAYOUT
   LAYOUT=${LAYOUT:-"us"}
   LAYOUT="$(trim "$LAYOUT")"
