@@ -4,28 +4,28 @@ trim () {
   local INPUT=""
   [[ -p /dev/stdin ]] && INPUT="$(cat -)" || INPUT="${@}"
 
-  echo -e "$INPUT" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'
+  echo "$INPUT" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'
 }
 
 no_breaks () {
   local INPUT=""
   [[ -p /dev/stdin ]] && INPUT="$(cat -)" || INPUT="${@}"
 
-  echo -e "$INPUT" | tr -d '\n'
+  echo "$INPUT" | tr -d '\n'
 }
 
 spaces_to_under () {
   local INPUT=""
   [[ -p /dev/stdin ]] && INPUT="$(cat -)" || INPUT="${@}"
 
-  echo -e "$INPUT" | awk '{gsub(/ /, "_", $0); print $0}'
+  echo "$INPUT" | awk '{gsub(/ /, "_", $0); print $0}'
 }
 
 under_to_spaces () {
   local INPUT=""
   [[ -p /dev/stdin ]] && INPUT="$(cat -)" || INPUT="${@}"
 
-  echo -e "$INPUT" | awk '{gsub(/_/, " ", $0); print $0}'
+  echo "$INPUT" | awk '{gsub(/_/, " ", $0); print $0}'
 }
 
 remove_dups () {
