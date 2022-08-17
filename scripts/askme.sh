@@ -113,20 +113,17 @@ set_mirrors () {
     awk '{split($0,a,/[A-Z]{2}/); print a[1]}' |
     trim |
     awk '{print $0","}' |
-    spaces_to_under |
     no_breaks
   ))
 
-  IFS=$OLD_IFS
-
-  print 4 true "${COUNTRIES[@]}"
+  print 4 25 "${COUNTRIES[@]}"
 
   local COUNTRY=""
   read -p " Enter the primary mirror country: [Greece] " COUNTRY
   COUNTRY=${COUNTRY:-"Greece"}
   COUNTRY="$(trim "$COUNTRY")"
 
-  while [[ ! " ${COUNTRIES[*]} " =~ " $(spaces_to_under "$COUNTRY") " ]]; do
+  while ! contains "$COUNTRY" "${COUNTRIES[@]}"; do
     read -p " Please enter a valid country: " COUNTRY
     COUNTRY="$(trim "$COUNTRY")"
   done
@@ -137,13 +134,15 @@ set_mirrors () {
     read -p " Enter another secondary mirror country (none to skip): " COUNTRY
     COUNTRY="$(trim "$COUNTRY")"
 
-    while [ ! -z "$COUNTRY" ] && [[ ! " ${COUNTRIES[*]} " =~ " $(spaces_to_under "$COUNTRY") " ]]; do
+    while [ ! -z "$COUNTRY" ] && ! contains "$COUNTRY" "${COUNTRIES[@]}"; do
       read -p " Please enter a valid country: " COUNTRY
       COUNTRY="$(trim "$COUNTRY")"
     done
 
     [[ ! -z "$COUNTRY" ]] && MIRROR_SET="$MIRROR_SET \"$COUNTRY\""
   done
+
+  IFS=$OLD_IFS
 
   MIRROR_SET="$(trim "$MIRROR_SET")"
 
@@ -157,14 +156,14 @@ set_timezone () {
     "Atlantic" "Australia" "Europe" "Indian" "Pacific"
   )
 
-  print 4 false "${CONTINENTS[@]}"
+  print 4 15 "${CONTINENTS[@]}"
 
   local CONTINENT=""
   read -p " Select your continent: [Europe] " CONTINENT
   CONTINENT=${CONTINENT:-"Europe"}
   CONTINENT=$(trim "$CONTINENT")
 
-  while [[ ! "$CONTINENT" =~ ^(Africa|America|Antarctica|Arctic|Asia|Atlantic|Australia|Europe|Indian|Pacific)$ ]]; do
+  while ! contains "$CONTINENT" "${CONTINENTS[@]}"; do
     read -p " Please enter a valid continent: " CONTINENT
     CONTINENT=$(trim "$CONTINENT")
   done
@@ -173,7 +172,7 @@ set_timezone () {
 
   local CITIES=($(ls -1 -pU /usr/share/zoneinfo/$CONTINENT | grep -v /))
 
-  print 4 false "${CITIES[@]}"
+  print 4 20 "${CITIES[@]}"
 
   local CITY=""
   read -p " Enter the city closer to your timezone? " CITY
@@ -205,7 +204,7 @@ set_keymap () {
     sed -n -E "/$extra/!p"
   ))
 
-  print 4 false "${MAPS[@]}"
+  print 4 25 "${MAPS[@]}"
 
   read -p " Enter your keyboard's keymap (extra for more maps): [us] " KEYMAP
   KEYMAP=${KEYMAP:-"us"}
@@ -220,18 +219,18 @@ set_keymap () {
     ))
 
     echo
-    print 4 false "${EXTRA[@]}"
+    print 4 30 "${EXTRA[@]}"
 
     read -p " Enter your keyboard's keymap: " KEYMAP
     KEYMAP=$(trim "$KEYMAP")
   fi
 
-  IFS=$OLD_IFS
-
   while [ -z "$(find /usr/share/kbd/keymaps/ -type f -name "$KEYMAP.map.gz")" ]; do
     read -p " Please enter a valid keyboard map: " KEYMAP
     KEYMAP=$(trim "$KEYMAP")
   done
+
+  IFS=$OLD_IFS
 
   set_option "KEYMAP" "$KEYMAP"
   echo -e " Keyboard keymap is set to $KEYMAP\n"
@@ -246,13 +245,13 @@ set_layouts () {
     tw tz ua us uz vnza
   )
 
-  print 4 false "${LAYOUTS[@]}"
+  print 8 6 "${LAYOUTS[@]}"
 
   read -p " Enter your primary keyboard layout: [us] " LAYOUT
   LAYOUT=${LAYOUT:-"us"}
   LAYOUT="$(trim "$LAYOUT")"
 
-  while [[ ! " ${LAYOUTS[*]} " =~ " $LAYOUT " ]]; do
+  while ! contains "$LAYOUT" "${LAYOUTS[@]}"; do
     read -p " Please enter a valid layout: " LAYOUT
     LAYOUT="$(trim "$LAYOUT")"
   done
@@ -263,7 +262,7 @@ set_layouts () {
     read -p " Enter another secondary layout (none to skip): " LAYOUT
     LAYOUT="$(trim "$LAYOUT")"
 
-    while [[ ! -z "$LAYOUT" ]] && [[ ! " ${LAYOUTS[*]} " =~ " $LAYOUT " ]]; do
+    while [[ ! -z "$LAYOUT" ]] && ! contains "$LAYOUT" "${LAYOUTS[@]}"; do
       read -p " Please enter a valid layout: " LAYOUT
       LAYOUT="$(trim "$LAYOUT")"
     done
