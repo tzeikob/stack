@@ -76,6 +76,7 @@ set_password () {
   local PASSWORD
   local COMFIRMED
 
+  echo -e " Setting password for ${1,,}"
   read -rs -p " Enter a new password: " PASSWORD && echo
   read -rs -p " Re-enter the password: " COMFIRMED
 
@@ -86,7 +87,8 @@ set_password () {
     read -rs -p " Re-enter the password: " COMFIRMED
   done
 
-  set_option "$1_PASSWORD" "$PASSWORD"
+  set_option "$1_PASSWORD" "\"$PASSWORD\""
+  echo -e "\n Password for ${1,,} is set successfully\n"
 }
 
 set_mirrors () {
@@ -319,7 +321,27 @@ set_locale () {
   LOCALE="\"$(trim "$LOCALE")\""
 
   set_option "LOCALE" "$LOCALE"
-  echo -e "Locale is set to $LOCALE\n"
+  echo -e " Locale is set to $LOCALE\n"
+}
+
+set_hostname () {
+  local HOSTNAME=""
+  read -p " Enter a name for your host: [arch] " HOSTNAME
+  HOSTNAME=${HOSTNAME:-"arch"}
+  HOSTNAME="\"${HOSTNAME,,}\""
+
+  set_option "HOSTNAME" "$HOSTNAME"
+  echo -e " Hostname is set to $HOSTNAME\n"
+}
+
+set_username () {
+  local USERNAME=""
+  read -p " Enter a username for your user: [bob] " USERNAME
+  USERNAME=${USERNAME:-"bob"}
+  USERNAME="\"${USERNAME,,}\""
+
+  set_option "USERNAME" "$USERNAME"
+  echo -e " Username is set to $USERNAME\n"
 }
 
 clear
@@ -331,32 +353,11 @@ echo "Languages and Locales:" &&
   set_keymap &&
   set_layouts &&
   set_locale
-
-echo -e "\nSetting users and hostname..."
-
-read -p "Enter the host name of your system: [arch] " HOSTNAME
-HOSTNAME=${HOSTNAME:-"arch"}
-HOSTNAME=${HOSTNAME,,}
-
-set_option "HOSTNAME" "$HOSTNAME"
-echo "Hostname is set to $HOSTNAME"
-
-read -p "Enter your user name: [bob] " USERNAME
-USERNAME=${USERNAME:-"bob"}
-USERNAME=${USERNAME,,}
-
-set_option "USERNAME" "$USERNAME"
-echo "User's name is set to $USERNAME"
-
-echo "Setting user's password..."
-
-set_password "USER"
-echo "User's password is set successfully"
-
-echo "Setting root user's password..."
-
-set_password "ROOT"
-echo "Root user's password is set successfully"
+echo "Users and Passwords:" &&
+  set_hostname &&
+  set_username &&
+  set_password "USER" &&
+  set_password "ROOT"
 
 echo -e "\nSelecting kernel and packages"
 
