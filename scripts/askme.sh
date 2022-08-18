@@ -397,7 +397,7 @@ echo "Locations and Timezones:" &&
 echo "Languages and Locales:" &&
   set_keymap &&
   set_layouts &&
-  set_locale
+  set_locale &&
 echo "Users and Passwords:" &&
   set_hostname &&
   set_username &&
