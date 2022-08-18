@@ -326,9 +326,23 @@ set_locale () {
 
 set_hostname () {
   local HOSTNAME=""
+  local RE="^[a-z][a-z0-9_-]+$"
+
   read -p " Enter a name for your host: [arch] " HOSTNAME
   HOSTNAME=${HOSTNAME:-"arch"}
-  HOSTNAME="\"${HOSTNAME,,}\""
+  HOSTNAME=${HOSTNAME,,}
+
+  if [[ ! "$HOSTNAME" =~ $RE ]]; then
+    echo " Hostname should be at least 2 chars of [a-z0-9_-]"
+    echo " First char must always be a latin letter"
+  fi
+
+  while [[ ! "$HOSTNAME" =~ $RE ]]; do
+    read -p " Please enter a valid hostname: " HOSTNAME
+    HOSTNAME=${HOSTNAME,,}
+  done
+
+  HOSTNAME="\"$HOSTNAME\""
 
   set_option "HOSTNAME" "$HOSTNAME"
   echo -e " Hostname is set to $HOSTNAME\n"
@@ -336,9 +350,23 @@ set_hostname () {
 
 set_username () {
   local USERNAME=""
+  local RE="^[a-z][a-z0-9_-]+$"
+
   read -p " Enter a username for your user: [bob] " USERNAME
   USERNAME=${USERNAME:-"bob"}
-  USERNAME="\"${USERNAME,,}\""
+  USERNAME=${USERNAME,,}
+
+  if [[ ! "$USERNAME" =~ $RE ]]; then
+    echo " Username should be at least 2 chars of [a-z0-9_-]"
+    echo " First char must always be a latin letter"
+  fi
+
+  while [[ ! "$USERNAME" =~ $RE ]]; do
+    read -p " Please enter a valid username: " USERNAME
+    USERNAME=${USERNAME,,}
+  done
+
+  USERNAME="\"$USERNAME\""
 
   set_option "USERNAME" "$USERNAME"
   echo -e " Username is set to $USERNAME\n"
