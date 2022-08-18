@@ -73,22 +73,39 @@ set_option () {
 }
 
 set_password () {
-  local PASSWORD
-  local COMFIRMED
+  local SUBJECT=$1
+  local RE=$2
+  local MESSAGE=$3
 
-  echo -e " Setting password for ${1,,}"
+  echo " Setting password for the ${SUBJECT,,}"
+  echo " $MESSAGE"
+
+  local PASSWORD=""
   read -rs -p " Enter a new password: " PASSWORD && echo
-  read -rs -p " Re-enter the password: " COMFIRMED
+
+  while [[ ! "$PASSWORD" =~ $RE ]]; do
+    read -rs -p " Please enter a valid password: " PASSWORD && echo
+  done
+
+  local COMFIRMED=""
+  read -rs -p " Re-enter the password: " COMFIRMED && echo
 
   # Repeat until password comfirmed 
   while [ "$PASSWORD" != "$COMFIRMED" ]; do
-    echo -e "\n Ooops, passwords do not match"
+    echo " Ooops, passwords do not match"
     read -rs -p " Please enter a new password: " PASSWORD && echo
-    read -rs -p " Re-enter the password: " COMFIRMED
+
+    while [[ ! "$PASSWORD" =~ $RE ]]; do
+      read -rs -p " Please enter a valid password: " PASSWORD && echo
+    done
+
+    read -rs -p " Re-enter the password: " COMFIRMED && echo
   done
 
-  set_option "$1_PASSWORD" "\"$PASSWORD\""
-  echo -e "\n Password for ${1,,} is set successfully\n"
+  PASSWORD="\"$PASSWORD\""
+
+  set_option "${SUBJECT}_PASSWORD" "$PASSWORD"
+  echo -e " Password for the ${SUBJECT,,} is set successfully\n"
 }
 
 set_mirrors () {
@@ -384,8 +401,12 @@ echo "Languages and Locales:" &&
 echo "Users and Passwords:" &&
   set_hostname &&
   set_username &&
-  set_password "USER" &&
-  set_password "ROOT"
+  set_password "USER" \
+    "^[a-zA-Z0-9@&!#%\$_-]{4,}$" \
+    "Password must be at least 4 chars of a-z A-Z 0-9 @&!#%\$_-" &&
+  set_password "ROOT" \
+    "^[a-zA-Z0-9@&!#%\$_-]{4,}$" \
+    "Password must be at least 4 chars of a-z A-Z 0-9 @&!#%\$_-" &&
 
 echo -e "\nSelecting kernel and packages"
 
