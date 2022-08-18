@@ -14,20 +14,6 @@ no_breaks () {
   echo "$INPUT" | tr -d '\n'
 }
 
-spaces_to_under () {
-  local INPUT=""
-  [[ -p /dev/stdin ]] && INPUT="$(cat -)" || INPUT="${@}"
-
-  echo "$INPUT" | awk '{gsub(/ /, "_", $0); print $0}'
-}
-
-under_to_spaces () {
-  local INPUT=""
-  [[ -p /dev/stdin ]] && INPUT="$(cat -)" || INPUT="${@}"
-
-  echo "$INPUT" | awk '{gsub(/_/, " ", $0); print $0}'
-}
-
 remove_dups () {
   local ARR=("${@}")
 
