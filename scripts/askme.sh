@@ -155,7 +155,7 @@ set_mirrors () {
   done
 
   set_array "MIRRORS" "$MIRROR_SET"
-  echo -e " Mirror countries set to $MIRROR_SET\n"
+  echo -e " Mirror countries are set to $MIRROR_SET\n"
 }
 
 set_timezone () {
@@ -267,7 +267,7 @@ set_layouts () {
   done
 
   set_array "LAYOUTS" "$LAYOUT_SET"
-  echo -e " Keyboard layout(s) is set to $LAYOUT_SET\n"
+  echo -e " Keyboard layouts are set to $LAYOUT_SET\n"
 }
 
 set_locale () {
@@ -461,7 +461,7 @@ set_kernels () {
   fi
 
   set_array "KERNELS" "$KERNELS"
-  echo -e " Linux kernels is set to $KERNELS\n"
+  echo -e " Linux kernels are set to $KERNELS\n"
 }
 
 clear
