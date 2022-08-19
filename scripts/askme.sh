@@ -36,7 +36,7 @@ print () {
       local INDX=$((i + (j * ROWS)))
 
       if [[ ! -z "${ARR[$INDX]}" ]]; then
-        local TEXT=$(no_breaks "${ARR[$INDX]}")
+        local TEXT="$(no_breaks "${ARR[$INDX]}")"
 
         printf " %-${PADDING}s\t" "$TEXT"
       fi
@@ -227,7 +227,6 @@ set_keymap () {
 
   while [ -z "$(find /usr/share/kbd/keymaps/ -type f -name "$KEYMAP.map.gz")" ]; do
     read -p " Please enter a valid keyboard map: " KEYMAP
-    KEYMAP="$(trim "$KEYMAP")"
   done
 
   IFS=$OLD_IFS
