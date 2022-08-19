@@ -389,6 +389,41 @@ set_username () {
   echo -e " Username is set to $USERNAME\n"
 }
 
+set_disk () {
+  lsblk -dA -o NAME,SIZE,FSUSE%,FSTYPE,TYPE,MOUNTPOINTS,LABEL | awk '{print " "$0}'
+
+  local DEVICE=""
+  read -p " Enter the installation disk: " DEVICE
+  DEVICE="/dev/$DEVICE"
+
+  while [ ! -b "$DEVICE" ]; do
+    read -p " Please enter a valid disk block device: " DEVICE
+    DEVICE="/dev/$DEVICE"
+  done
+
+  echo -e "\n CAUTION, all data in $DEVICE will be lost"
+
+  local REPLY=""
+  read -p " Proceed and use it as installation disk? [y/N] " REPLY
+  REPLY=${REPLY:-"no"}
+  REPLY=${REPLY,,}
+
+  if [[ ! $REPLY =~ ^(y|yes)$ ]]; then
+    read -p " Enter another disk block device: " DEVICE
+    DEVICE="/dev/$DEVICE"
+
+    while [ ! -b "$DEVICE" ]; do
+      read -p " Please enter a valid disk block device: " DEVICE
+      DEVICE="/dev/$DEVICE"
+    done
+  fi
+
+  DEVICE="\"$DEVICE\""
+
+  set_option "DISK" "$DEVICE"
+  echo -e " Installation disk is set to block device $DEVICE\n"
+}
+
 clear
 
 echo "Locations and Timezones:" &&
@@ -407,6 +442,8 @@ echo "Users and Passwords:" &&
   set_password "ROOT" \
     "^[a-zA-Z0-9@&!#%\$_-]{4,}$" \
     "Password must be at least 4 chars of a-z A-Z 0-9 @&!#%\$_-" &&
+echo "Disks and Partitioning:" &&
+  set_disk
 
 echo -e "\nSelecting kernel and packages"
 
@@ -423,38 +460,6 @@ done
 
 set_option "KERNEL" "$KERNEL"
 echo "Linux kernel(s) is set to $KERNEL"
-
-echo -e "\nSelect hard disk and file systems..."
-echo "Select the installation disk:"
-lsblk
-
-read -p "Enter a valid block device: " DEVICE
-DEVICE="/dev/$DEVICE"
-
-while [ ! -b "$DEVICE" ]; do
-  echo "Invalid block device: $DEVICE"
-  read -p "Please enter a valid block device: " DEVICE
-  DEVICE="/dev/$DEVICE"
-done
-
-echo -e "\nCAUTION, all data in $DEVICE will be lost"
-read -p "Do you realy want to use this device as installation disk? [y/N] " REPLY
-REPLY=${REPLY:-"no"}
-REPLY=${REPLY,,}
-
-if [[ ! $REPLY =~ ^(y|yes)$ ]]; then
-  read -p "Enter another block device: " DEVICE
-  DEVICE="/dev/$DEVICE"
-
-  while [ ! -b "$DEVICE" ]; do
-    echo "Invalid block device: $DEVICE"
-    read -p "Please enter a valid block device: " DEVICE
-    DEVICE="/dev/$DEVICE"
-  done
-fi
-
-set_option "DISK" "$DEVICE"
-echo "Installation disk is set to device $DEVICE"
 
 echo "Setting the swap size..."
 
