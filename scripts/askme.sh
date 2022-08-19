@@ -62,14 +62,17 @@ contains () {
 }
 
 set_option () {
+  local key=$1
+  local value=$2
+
   touch -f .options
 
   # Override pre-existing option
-  if grep -Eq "^$1.*" .options; then
-    sed -i -e "/^$1.*/d" .options
+  if grep -Eq "^${key}.*" .options; then
+    sed -i -e "/^${key}.*/d" .options
   fi
 
-  echo "$1=$2" >> .options
+  echo "${key}=${value}" >> .options
 }
 
 set_string () {
@@ -131,31 +134,25 @@ set_mirrors () {
 
   local COUNTRY=""
   read -p " Enter the primary mirror country: [Greece] " COUNTRY
-  COUNTRY=${COUNTRY:-"Greece"}
-  COUNTRY="$(trim "$COUNTRY")"
+  COUNTRY="${COUNTRY:-"Greece"}"
 
   while ! contains "$COUNTRY" "${COUNTRIES[@]}"; do
     read -p " Please enter a valid country: " COUNTRY
-    COUNTRY="$(trim "$COUNTRY")"
   done
 
   local MIRROR_SET="\"$COUNTRY\""
 
   while [[ ! -z "$COUNTRY" ]]; do
     read -p " Enter another secondary mirror country (none to skip): " COUNTRY
-    COUNTRY="$(trim "$COUNTRY")"
 
     while [ ! -z "$COUNTRY" ] && ! contains "$COUNTRY" "${COUNTRIES[@]}"; do
       read -p " Please enter a valid country: " COUNTRY
-      COUNTRY="$(trim "$COUNTRY")"
     done
 
     [[ ! -z "$COUNTRY" ]] && MIRROR_SET="$MIRROR_SET \"$COUNTRY\""
   done
 
   IFS=$OLD_IFS
-
-  MIRROR_SET="$(trim "$MIRROR_SET")"
 
   set_array "MIRRORS" "$MIRROR_SET"
   echo -e " Mirror countries set to $MIRROR_SET\n"
@@ -171,12 +168,10 @@ set_timezone () {
 
   local CONTINENT=""
   read -p " Select your continent: [Europe] " CONTINENT
-  CONTINENT=${CONTINENT:-"Europe"}
-  CONTINENT=$(trim "$CONTINENT")
+  CONTINENT="${CONTINENT:-"Europe"}"
 
   while ! contains "$CONTINENT" "${CONTINENTS[@]}"; do
     read -p " Please enter a valid continent: " CONTINENT
-    CONTINENT=$(trim "$CONTINENT")
   done
 
   local CITIES=($(ls -1 -pU /usr/share/zoneinfo/$CONTINENT | grep -v /))
@@ -185,11 +180,9 @@ set_timezone () {
 
   local CITY=""
   read -p " Enter the city closer to your timezone? " CITY
-  CITY=$(trim "$CITY")
 
   while [ ! -f "/usr/share/zoneinfo/$CONTINENT/$CITY" ]; do
     read -p " Please enter a valid timezone city: " CITY
-    CITY=$(trim "$CITY")
   done
 
   local TIMEZONE="$CONTINENT/$CITY"
@@ -217,8 +210,7 @@ set_keymap () {
 
   local KEYMAP=""
   read -p " Enter your keyboard's keymap (extra for more maps): [us] " KEYMAP
-  KEYMAP=${KEYMAP:-"us"}
-  KEYMAP=$(trim "$KEYMAP")
+  KEYMAP="${KEYMAP:-"us"}"
 
   if [ "$KEYMAP" == "extra" ]; then
     local EXTRA=($(
@@ -231,12 +223,11 @@ set_keymap () {
     echo && print 4 30 "${EXTRA[@]}"
 
     read -p " Enter your keyboard's keymap: " KEYMAP
-    KEYMAP=$(trim "$KEYMAP")
   fi
 
   while [ -z "$(find /usr/share/kbd/keymaps/ -type f -name "$KEYMAP.map.gz")" ]; do
     read -p " Please enter a valid keyboard map: " KEYMAP
-    KEYMAP=$(trim "$KEYMAP")
+    KEYMAP="$(trim "$KEYMAP")"
   done
 
   IFS=$OLD_IFS
@@ -258,29 +249,23 @@ set_layouts () {
 
   local LAYOUT=""
   read -p " Enter your primary keyboard layout: [us] " LAYOUT
-  LAYOUT=${LAYOUT:-"us"}
-  LAYOUT="$(trim "$LAYOUT")"
+  LAYOUT="${LAYOUT:-"us"}"
 
   while ! contains "$LAYOUT" "${LAYOUTS[@]}"; do
     read -p " Please enter a valid layout: " LAYOUT
-    LAYOUT="$(trim "$LAYOUT")"
   done
 
   local LAYOUT_SET="\"$LAYOUT\""
 
   while [[ ! -z "$LAYOUT" ]]; do
     read -p " Enter another secondary layout (none to skip): " LAYOUT
-    LAYOUT="$(trim "$LAYOUT")"
 
     while [[ ! -z "$LAYOUT" ]] && ! contains "$LAYOUT" "${LAYOUTS[@]}"; do
       read -p " Please enter a valid layout: " LAYOUT
-      LAYOUT="$(trim "$LAYOUT")"
     done
 
     [[ ! -z "$LAYOUT" ]] && LAYOUT_SET="$LAYOUT_SET \"$LAYOUT\""
   done
-
-  LAYOUT_SET="$(trim "$LAYOUT_SET")"
 
   set_array "LAYOUTS" "$LAYOUT_SET"
   echo -e " Keyboard layout(s) is set to $LAYOUT_SET\n"
@@ -306,12 +291,10 @@ set_locale () {
 
   local LANG=""
   read -p " Enter the language of your locale: [en] " LANG
-  LANG=${LANG:-"en"}
-  LANG="$(trim "$LANG")"
+  LANG="${LANG:-"en"}"
 
   while ! contains "$LANG" "${LANGS[@]}"; do
     read -p " Please enter a valid language: " LANG
-    LANG="$(trim "$LANG")"
   done
 
   IFS=","
@@ -330,16 +313,12 @@ set_locale () {
 
   local LOCALE=""
   read -p " Enter your locale: " LOCALE
-  LOCALE="$(trim "$LOCALE")"
 
   while ! contains "$LOCALE" "${LOCALES[@]}"; do
     read -p " Please enter a valid locale: " LOCALE
-    LOCALE="$(trim "$LOCALE")"
   done
 
   IFS=$OLD_IFS
-
-  LOCALE="$(trim "$LOCALE")"
 
   set_string "LOCALE" "$LOCALE"
   echo -e " Locale is set to $LOCALE\n"
@@ -350,8 +329,8 @@ set_hostname () {
   local RE="^[a-z][a-z0-9_-]+$"
 
   read -p " Enter a name for your host: [arch] " HOSTNAME
-  HOSTNAME=${HOSTNAME:-"arch"}
-  HOSTNAME=${HOSTNAME,,}
+  HOSTNAME="${HOSTNAME:-"arch"}"
+  HOSTNAME="${HOSTNAME,,}"
 
   if [[ ! "$HOSTNAME" =~ $RE ]]; then
     echo " Hostname should be at least 2 chars of [a-z0-9_-]"
@@ -360,7 +339,7 @@ set_hostname () {
 
   while [[ ! "$HOSTNAME" =~ $RE ]]; do
     read -p " Please enter a valid hostname: " HOSTNAME
-    HOSTNAME=${HOSTNAME,,}
+    HOSTNAME="${HOSTNAME,,}"
   done
 
   set_string "HOSTNAME" "$HOSTNAME"
@@ -372,8 +351,8 @@ set_username () {
   local RE="^[a-z][a-z0-9_-]+$"
 
   read -p " Enter a username for your user: [bob] " USERNAME
-  USERNAME=${USERNAME:-"bob"}
-  USERNAME=${USERNAME,,}
+  USERNAME="${USERNAME:-"bob"}"
+  USERNAME="${USERNAME,,}"
 
   if [[ ! "$USERNAME" =~ $RE ]]; then
     echo " Username should be at least 2 chars of [a-z0-9_-]"
@@ -382,7 +361,7 @@ set_username () {
 
   while [[ ! "$USERNAME" =~ $RE ]]; do
     read -p " Please enter a valid username: " USERNAME
-    USERNAME=${USERNAME,,}
+    USERNAME="${USERNAME,,}"
   done
 
   set_string "USERNAME" "$USERNAME"
@@ -405,8 +384,8 @@ set_disk () {
 
   local REPLY=""
   read -p " Proceed and use it as installation disk? [y/N] " REPLY
-  REPLY=${REPLY:-"no"}
-  REPLY=${REPLY,,}
+  REPLY="${REPLY:-"no"}"
+  REPLY="${REPLY,,}"
 
   while [[ ! $REPLY =~ ^(y|yes)$ ]]; do
     read -p " Enter another disk block device: " DEVICE
@@ -419,8 +398,8 @@ set_disk () {
 
     echo -e "\n CAUTION, all data in $DEVICE will be lost"
     read -p " Proceed and use it as installation disk? [y/N] " REPLY
-    REPLY=${REPLY:-"no"}
-    REPLY=${REPLY,,}
+    REPLY="${REPLY:-"no"}"
+    REPLY="${REPLY,,}"
   done
 
   set_string "DISK" "$DEVICE"
@@ -430,8 +409,8 @@ set_disk () {
 set_swap () {
   local REPLY=""
   read -p " Do you want to enable swap? [Y/n] " REPLY
-  REPLY=${REPLY:-"yes"}
-  REPLY=${REPLY,,}
+  REPLY="${REPLY:-"yes"}"
+  REPLY="${REPLY,,}"
 
   local SWAP="on"
 
@@ -454,12 +433,12 @@ set_swap () {
 
   local SWAP_TYPE=""
   read -p " Enter the swap type: [FILE, partition] " SWAP_TYPE
-  SWAP_TYPE=${SWAP_TYPE:-"file"}
-  SWAP_TYPE=${SWAP_TYPE,,}
+  SWAP_TYPE="${SWAP_TYPE:-"file"}"
+  SWAP_TYPE="${SWAP_TYPE,,}"
 
   while [[ ! $SWAP_TYPE =~ ^(file|partition)$ ]]; do
     read -p " Enter a valid swap type: " SWAP_TYPE
-    SWAP_TYPE=${SWAP_TYPE,,}
+    SWAP_TYPE="${SWAP_TYPE,,}"
   done
 
   set_string "SWAP_SIZE" "${SWAP_SIZE}GB"
