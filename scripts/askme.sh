@@ -403,13 +403,13 @@ set_disk () {
   REPLY="${REPLY:-"yes"}"
   REPLY="${REPLY,,}"
 
-  local IS_SSD="true"
   if [[ ! $REPLY =~ ^(y|yes)$ ]]; then
-    IS_SSD="false"
+    set_string "IS_SSD" "no"
+  else
+    set_string "IS_SSD" "yes"
   fi
 
   set_string "DISK" "$DEVICE"
-  set_string "IS_SSD" "$IS_SSD"
   echo -e " Installation disk is set to block device $DEVICE\n"
 }
 
@@ -419,16 +419,12 @@ set_swap () {
   REPLY="${REPLY:-"yes"}"
   REPLY="${REPLY,,}"
 
-  local SWAP="on"
-
   if [[ ! $REPLY =~ ^(y|yes)$ ]]; then
-    SWAP="off"
-
-    set_string "SWAP" "$SWAP"
-    echo -e " Swap is set to $SWAP"
+    set_string "SWAP" "off"
+    echo -e " Swap is set to off"
     exit 0
   else
-    set_string "SWAP" "$SWAP"
+    set_string "SWAP" "on"
   fi
 
   local SWAP_SIZE=""
