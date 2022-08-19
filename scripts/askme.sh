@@ -329,7 +329,6 @@ set_hostname () {
 
   read -p " Enter a name for your host: [arch] " HOSTNAME
   HOSTNAME="${HOSTNAME:-"arch"}"
-  HOSTNAME="${HOSTNAME,,}"
 
   if [[ ! "$HOSTNAME" =~ $RE ]]; then
     echo " Hostname should be at least 2 chars of [a-z0-9_-]"
@@ -338,7 +337,6 @@ set_hostname () {
 
   while [[ ! "$HOSTNAME" =~ $RE ]]; do
     read -p " Please enter a valid hostname: " HOSTNAME
-    HOSTNAME="${HOSTNAME,,}"
   done
 
   set_string "HOSTNAME" "$HOSTNAME"
@@ -351,7 +349,6 @@ set_username () {
 
   read -p " Enter a username for your user: [bob] " USERNAME
   USERNAME="${USERNAME:-"bob"}"
-  USERNAME="${USERNAME,,}"
 
   if [[ ! "$USERNAME" =~ $RE ]]; then
     echo " Username should be at least 2 chars of [a-z0-9_-]"
@@ -360,7 +357,6 @@ set_username () {
 
   while [[ ! "$USERNAME" =~ $RE ]]; do
     read -p " Please enter a valid username: " USERNAME
-    USERNAME="${USERNAME,,}"
   done
 
   set_string "USERNAME" "$USERNAME"
