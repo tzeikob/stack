@@ -130,6 +130,8 @@ set_mirrors () {
     no_breaks
   ))
 
+  IFS=$OLD_IFS
+
   print 4 25 "${COUNTRIES[@]}"
 
   local COUNTRY=""
@@ -151,8 +153,6 @@ set_mirrors () {
 
     [[ ! -z "$COUNTRY" ]] && MIRROR_SET="$MIRROR_SET \"$COUNTRY\""
   done
-
-  IFS=$OLD_IFS
 
   set_array "MIRRORS" "$MIRROR_SET"
   echo -e " Mirror countries set to $MIRROR_SET\n"
@@ -192,12 +192,12 @@ set_timezone () {
 }
 
 set_keymap () {
-  local OLD_IFS=$IFS
-  IFS=","
-
   local EXTRA="apple|mac|window|sun|atari|amiga|ttwin|ruwin"
   EXTRA="$EXTRA|wangbe|adnw|applkey|backspace|bashkir|bone"
   EXTRA="$EXTRA|carpalx|croat|colemak|ctrl|defkeymap|euro|keypad|koy"
+
+  local OLD_IFS=$IFS
+  IFS=","
 
   local MAPS=($(
     localectl --no-pager list-keymaps |
@@ -206,6 +206,8 @@ set_keymap () {
     sed -n -E "/$EXTRA/!p"
   ))
 
+  IFS=$OLD_IFS
+
   print 4 25 "${MAPS[@]}"
 
   local KEYMAP=""
@@ -213,12 +215,16 @@ set_keymap () {
   KEYMAP="${KEYMAP:-"us"}"
 
   if [ "$KEYMAP" == "extra" ]; then
+    IFS=","
+
     local EXTRA=($(
       localectl --no-pager list-keymaps |
       trim |
       awk '{print $0","}' |
       sed -n -E "/$EXTRA/p"
     ))
+
+    IFS=$OLD_IFS
 
     echo && print 4 30 "${EXTRA[@]}"
 
@@ -228,8 +234,6 @@ set_keymap () {
   while [ -z "$(find /usr/share/kbd/keymaps/ -type f -name "$KEYMAP.map.gz")" ]; do
     read -p " Please enter a valid keyboard map: " KEYMAP
   done
-
-  IFS=$OLD_IFS
 
   set_string "KEYMAP" "$KEYMAP"
   echo -e " Keyboard keymap is set to $KEYMAP\n"
@@ -284,6 +288,8 @@ set_locale () {
     awk '{print $0" "}'
   ))
 
+  IFS=$OLD_IFS
+
   LANGS=($(remove_dups "${LANGS[@]}"))
 
   print 8 10 "${LANGS[@]}"
@@ -308,6 +314,8 @@ set_locale () {
     no_breaks
   ))
 
+  IFS=$OLD_IFS
+
   echo && print 5 20 "${LOCALES[@]}"
 
   local LOCALE=""
@@ -316,8 +324,6 @@ set_locale () {
   while ! contains "$LOCALE" "${LOCALES[@]}"; do
     read -p " Please enter a valid locale: " LOCALE
   done
-
-  IFS=$OLD_IFS
 
   set_string "LOCALE" "$LOCALE"
   echo -e " Locale is set to $LOCALE\n"
