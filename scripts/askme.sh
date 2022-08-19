@@ -72,6 +72,14 @@ set_option () {
   echo "$1=$2" >> .options
 }
 
+set_string () {
+  set_option "$1" "\"$2\""
+}
+
+set_array () {
+  set_option "$1" "($2)"
+}
+
 set_password () {
   local SUBJECT=$1
   local RE=$2
@@ -102,9 +110,7 @@ set_password () {
     read -rs -p " Re-enter the password: " COMFIRMED && echo
   done
 
-  PASSWORD="\"$PASSWORD\""
-
-  set_option "${SUBJECT}_PASSWORD" "$PASSWORD"
+  set_string "${SUBJECT}_PASSWORD" "$PASSWORD"
   echo -e " Password for the ${SUBJECT,,} is set successfully\n"
 }
 
@@ -151,7 +157,7 @@ set_mirrors () {
 
   MIRROR_SET="$(trim "$MIRROR_SET")"
 
-  set_option "MIRRORS" "($MIRROR_SET)"
+  set_array "MIRRORS" "$MIRROR_SET"
   echo -e " Mirror countries set to $MIRROR_SET\n"
 }
 
@@ -186,9 +192,9 @@ set_timezone () {
     CITY=$(trim "$CITY")
   done
 
-  local TIMEZONE="\"$CONTINENT/$CITY\""
+  local TIMEZONE="$CONTINENT/$CITY"
 
-  set_option "TIMEZONE" "$TIMEZONE"
+  set_string "TIMEZONE" "$TIMEZONE"
   echo -e " Current timezone is set to $TIMEZONE\n"
 }
 
@@ -235,9 +241,7 @@ set_keymap () {
 
   IFS=$OLD_IFS
 
-  KEYMAP="\"$KEYMAP\""
-
-  set_option "KEYMAP" "$KEYMAP"
+  set_string "KEYMAP" "$KEYMAP"
   echo -e " Keyboard keymap is set to $KEYMAP\n"
 }
 
@@ -278,8 +282,8 @@ set_layouts () {
 
   LAYOUT_SET="$(trim "$LAYOUT_SET")"
 
-  set_option "LAYOUTS" "($LAYOUT_SET)"
-  echo -e "Keyboard layout(s) is set to $LAYOUT_SET\n"
+  set_array "LAYOUTS" "$LAYOUT_SET"
+  echo -e " Keyboard layout(s) is set to $LAYOUT_SET\n"
 }
 
 set_locale () {
@@ -335,9 +339,9 @@ set_locale () {
 
   IFS=$OLD_IFS
 
-  LOCALE="\"$(trim "$LOCALE")\""
+  LOCALE="$(trim "$LOCALE")"
 
-  set_option "LOCALE" "$LOCALE"
+  set_string "LOCALE" "$LOCALE"
   echo -e " Locale is set to $LOCALE\n"
 }
 
@@ -359,9 +363,7 @@ set_hostname () {
     HOSTNAME=${HOSTNAME,,}
   done
 
-  HOSTNAME="\"$HOSTNAME\""
-
-  set_option "HOSTNAME" "$HOSTNAME"
+  set_string "HOSTNAME" "$HOSTNAME"
   echo -e " Hostname is set to $HOSTNAME\n"
 }
 
@@ -383,9 +385,7 @@ set_username () {
     USERNAME=${USERNAME,,}
   done
 
-  USERNAME="\"$USERNAME\""
-
-  set_option "USERNAME" "$USERNAME"
+  set_string "USERNAME" "$USERNAME"
   echo -e " Username is set to $USERNAME\n"
 }
 
@@ -423,9 +423,7 @@ set_disk () {
     REPLY=${REPLY,,}
   done
 
-  DEVICE="\"$DEVICE\""
-
-  set_option "DISK" "$DEVICE"
+  set_string "DISK" "$DEVICE"
   echo -e " Installation disk is set to block device $DEVICE\n"
 }
 
@@ -435,16 +433,16 @@ set_swap () {
   REPLY=${REPLY:-"yes"}
   REPLY=${REPLY,,}
 
-  local SWAP="\"on\""
+  local SWAP="on"
 
   if [[ ! $REPLY =~ ^(y|yes)$ ]]; then
-    SWAP="\"off\""
+    SWAP="off"
 
-    set_option "SWAP" "$SWAP"
+    set_string "SWAP" "$SWAP"
     echo -e " Swap is set to $SWAP"
     exit 0
   else
-    set_option "SWAP" "$SWAP"
+    set_string "SWAP" "$SWAP"
   fi
 
   local SWAP_SIZE=""
@@ -464,11 +462,8 @@ set_swap () {
     SWAP_TYPE=${SWAP_TYPE,,}
   done
 
-  SWAP_SIZE="\"${SWAP_SIZE}GB\""
-  SWAP_TYPE="\"$SWAP_TYPE\""
-
-  set_option "SWAP_SIZE" "$SWAP_SIZE"
-  set_option "SWAP_TYPE" "$SWAP_TYPE"
+  set_string "SWAP_SIZE" "${SWAP_SIZE}GB"
+  set_string "SWAP_TYPE" "$SWAP_TYPE"
   echo -e " Swap is set to $SWAP_TYPE of $SWAP_SIZE GBytes size\n"
 }
 
