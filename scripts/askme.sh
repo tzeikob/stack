@@ -408,7 +408,7 @@ set_disk () {
   REPLY=${REPLY:-"no"}
   REPLY=${REPLY,,}
 
-  if [[ ! $REPLY =~ ^(y|yes)$ ]]; then
+  while [[ ! $REPLY =~ ^(y|yes)$ ]]; do
     read -p " Enter another disk block device: " DEVICE
     DEVICE="/dev/$DEVICE"
 
@@ -416,7 +416,12 @@ set_disk () {
       read -p " Please enter a valid disk block device: " DEVICE
       DEVICE="/dev/$DEVICE"
     done
-  fi
+
+    echo -e "\n CAUTION, all data in $DEVICE will be lost"
+    read -p " Proceed and use it as installation disk? [y/N] " REPLY
+    REPLY=${REPLY:-"no"}
+    REPLY=${REPLY,,}
+  done
 
   DEVICE="\"$DEVICE\""
 
