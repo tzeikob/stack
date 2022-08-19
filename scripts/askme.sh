@@ -443,6 +443,27 @@ set_swap () {
   echo -e " Swap is set to $SWAP_TYPE of $SWAP_SIZE GBytes size\n"
 }
 
+set_kernels () {
+  local KERNELS=""
+  read -p " Which linux kernels to install: [STABLE/lts/all] " KERNELS
+  KERNELS="${KERNELS:-"stable"}"
+  KERNELS="${KERNELS,,}"
+
+  while [[ ! $KERNELS =~ ^(stable|lts|all)$ ]]; do
+    read -p " Please enter a valid kernel option: " KERNELS
+    KERNELS="${KERNELS,,}"
+  done
+
+  if [[ $KERNELS == "all" ]]; then
+    KERNELS="\"stable\" \"lts\""
+  else
+    KERNELS="\"$KERNELS\""
+  fi
+
+  set_array "KERNELS" "$KERNELS"
+  echo -e " Linux kernels is set to $KERNELS\n"
+}
+
 clear
 
 echo "Locations and Timezones:" &&
@@ -463,23 +484,9 @@ echo "Users and Passwords:" &&
     "Password must be at least 4 chars of a-z A-Z 0-9 @&!#%\$_-" &&
 echo "Disks and Partitions:" &&
   set_disk &&
-  set_swap
-
-echo -e "\nSelecting kernel and packages"
-
-read -p "Which linux kernel to install: [STABLE/lts/all] " KERNEL
-KERNEL=${KERNEL:-"stable"}
-KERNEL=${KERNEL,,}
-
-while [[ ! $KERNEL =~ ^(stable|lts|all)$ ]]; do
-  echo -e "Invalid linux kernel: $KERNEL"
-  read -p "Please enter which linux kernel to install: [STABLE/lts/all] " KERNEL
-  KERNEL=${KERNEL:-"stable"}
-  KERNEL=${KERNEL,,}
-done
-
-set_option "KERNEL" "$KERNEL"
-echo "Linux kernel(s) is set to $KERNEL"
+  set_swap &&
+echo "Kernels and Packages:" &&
+  set_kernels
 
 echo -e "\nSetting system environment and hardware drivers..."
 
