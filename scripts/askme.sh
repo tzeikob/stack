@@ -432,7 +432,7 @@ set_swap () {
   done
 
   local SWAP_TYPE=""
-  read -p " Enter the swap type: [FILE, partition] " SWAP_TYPE
+  read -p " Enter the swap type: [FILE/partition] " SWAP_TYPE
   SWAP_TYPE="${SWAP_TYPE:-"file"}"
   SWAP_TYPE="${SWAP_TYPE,,}"
 
