@@ -399,17 +399,18 @@ set_disk () {
     REPLY="${REPLY,,}"
   done
 
+  set_string "DISK" "$DEVICE"
+
   read -p " Is this disk an SSD drive? [Y/n] " REPLY
   REPLY="${REPLY:-"yes"}"
   REPLY="${REPLY,,}"
 
   if [[ ! $REPLY =~ ^(y|yes)$ ]]; then
-    set_string "IS_SSD" "no"
+    set_string "DISK_SSD" "no"
   else
-    set_string "IS_SSD" "yes"
+    set_string "DISK_SSD" "yes"
   fi
 
-  set_string "DISK" "$DEVICE"
   echo -e " Installation disk is set to block device $DEVICE\n"
 }
 
