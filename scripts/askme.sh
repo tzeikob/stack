@@ -192,12 +192,12 @@ set_timezone () {
 }
 
 set_keymap () {
+  local OLD_IFS=$IFS
+  IFS=","
+
   local EXTRA="apple|mac|window|sun|atari|amiga|ttwin|ruwin"
   EXTRA="$EXTRA|wangbe|adnw|applkey|backspace|bashkir|bone"
   EXTRA="$EXTRA|carpalx|croat|colemak|ctrl|defkeymap|euro|keypad|koy"
-
-  local OLD_IFS=$IFS
-  IFS=","
 
   local MAPS=($(
     localectl --no-pager list-keymaps |
@@ -206,26 +206,22 @@ set_keymap () {
     sed -n -E "/$EXTRA/!p"
   ))
 
+  local EXTRA=($(
+      localectl --no-pager list-keymaps |
+      trim |
+      awk '{print $0","}' |
+      sed -n -E "/$EXTRA/p"
+  ))
+
   IFS=$OLD_IFS
 
   print 4 25 "${MAPS[@]}"
 
   local KEYMAP=""
-  read -p " Enter your keyboard's keymap (extra for more maps): [us] " KEYMAP
+  read -p " Enter your keyboard's keymap (extra for more): [us] " KEYMAP
   KEYMAP="${KEYMAP:-"us"}"
 
   if [ "$KEYMAP" == "extra" ]; then
-    IFS=","
-
-    local EXTRA=($(
-      localectl --no-pager list-keymaps |
-      trim |
-      awk '{print $0","}' |
-      sed -n -E "/$EXTRA/p"
-    ))
-
-    IFS=$OLD_IFS
-
     echo && print 4 30 "${EXTRA[@]}"
 
     read -p " Enter your keyboard's keymap: " KEYMAP
