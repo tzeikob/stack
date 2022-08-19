@@ -429,6 +429,49 @@ set_disk () {
   echo -e " Installation disk is set to block device $DEVICE\n"
 }
 
+set_swap () {
+  local REPLY=""
+  read -p " Do you want to enable swap? [Y/n] " REPLY
+  REPLY=${REPLY:-"yes"}
+  REPLY=${REPLY,,}
+
+  local SWAP="\"on\""
+
+  if [[ ! $REPLY =~ ^(y|yes)$ ]]; then
+    SWAP="\"off\""
+
+    set_option "SWAP" "$SWAP"
+    echo -e " Swap is set to $SWAP"
+    exit 0
+  else
+    set_option "SWAP" "$SWAP"
+  fi
+
+  local SWAP_SIZE=""
+  read -p " Enter the size of the swap in GBytes: " SWAP_SIZE
+
+  while [[ ! $SWAP_SIZE =~ ^[0-9]+$ ]]; do
+    read -p " Please enter a valid swap size in GBytes: " SWAP_SIZE
+  done
+
+  local SWAP_TYPE=""
+  read -p " Enter the swap type: [FILE, partition] " SWAP_TYPE
+  SWAP_TYPE=${SWAP_TYPE:-"file"}
+  SWAP_TYPE=${SWAP_TYPE,,}
+
+  while [[ ! $SWAP_TYPE =~ ^(file|partition)$ ]]; do
+    read -p " Enter a valid swap type: " SWAP_TYPE
+    SWAP_TYPE=${SWAP_TYPE,,}
+  done
+
+  SWAP_SIZE="\"${SWAP_SIZE}GB\""
+  SWAP_TYPE="\"$SWAP_TYPE\""
+
+  set_option "SWAP_SIZE" "$SWAP_SIZE"
+  set_option "SWAP_TYPE" "$SWAP_TYPE"
+  echo -e " Swap is set to $SWAP_TYPE of $SWAP_SIZE GBytes size\n"
+}
+
 clear
 
 echo "Locations and Timezones:" &&
@@ -447,8 +490,9 @@ echo "Users and Passwords:" &&
   set_password "ROOT" \
     "^[a-zA-Z0-9@&!#%\$_-]{4,}$" \
     "Password must be at least 4 chars of a-z A-Z 0-9 @&!#%\$_-" &&
-echo "Disks and Partitioning:" &&
-  set_disk
+echo "Disks and Partitions:" &&
+  set_disk &&
+  set_swap
 
 echo -e "\nSelecting kernel and packages"
 
@@ -465,20 +509,6 @@ done
 
 set_option "KERNEL" "$KERNEL"
 echo "Linux kernel(s) is set to $KERNEL"
-
-echo "Setting the swap size..."
-
-read -p "Enter the size of the swap file in GB (0 to skip): [0] " SWAPSIZE
-SWAPSIZE=${SWAPSIZE:-0}
-
-while [[ ! $SWAPSIZE =~ ^[0-9]+$ ]]; do
-  echo -e "Invalid swap file size: $SWAPSIZE"
-  read -p "Please enter a valid swap size in GB (0 to skip): [0] " SWAPSIZE
-  SWAPSIZE=${SWAPSIZE:-0}
-done
-
-set_option "SWAPSIZE" "$SWAPSIZE"
-echo "Swap size is set to $SWAPSIZE"
 
 echo -e "\nSetting system environment and hardware drivers..."
 
