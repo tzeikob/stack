@@ -486,6 +486,19 @@ set_cpu () {
   echo -e " CPU is set to $CPU\n"
 }
 
+set_gpu () {
+  read -p " What GPU is your system running? [nvidia/amd/intel/vm] " GPU
+  GPU="${GPU,,}"
+
+  while [[ ! $GPU =~ ^(nvidia|amd|intel|vm)$ ]]; do
+    read -p " Please enter a valid GPU vendor: [nvidia/amd/intel/vm] " GPU
+    GPU=${GPU,,}
+  done
+
+  set_option "GPU" "$GPU"
+  echo -e " GPU is set to $GPU\n"
+}
+
 clear
 
 echo "Locations and Timezones:" &&
@@ -509,19 +522,8 @@ echo "Disks and Partitions:" &&
   set_swap &&
 echo "Kernels and Packages:" &&
   set_kernels &&
-  set_cpu
-
-read -p "Which GPU vendor video drivers to install? [nvidia/amd/intel/nouveau/qxl/vmware/none] " GPU
-GPU=${GPU,,}
-
-while [[ ! $GPU =~ ^(nvidia|amd|intel|nouveau|qxl|vmware|none)$ ]]; do
-  echo -e "Invalid GPU driver vendor: $GPU"
-  read -p "Please enter a valid GPU driver vendor: [nvidia/amd/intel/nouveau/qxl/vmware/none] " GPU
-  GPU=${GPU,,}
-done
-
-set_option "GPU" "$GPU"
-echo "GPU is set to $GPU"
+  set_cpu &&
+  set_gpu
 
 read -p "Is this a virtual box machine? [y/N] " IS_VM
 IS_VM=${IS_VM:-"no"}
