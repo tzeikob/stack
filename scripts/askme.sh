@@ -155,7 +155,7 @@ set_mirrors () {
   done
 
   set_array "MIRRORS" "$MIRROR_SET"
-  echo -e " Mirror countries are set to $MIRROR_SET\n"
+  echo -e " Mirror countries are set to [$MIRROR_SET]\n"
 }
 
 set_timezone () {
@@ -188,7 +188,7 @@ set_timezone () {
   local TIMEZONE="$CONTINENT/$CITY"
 
   set_string "TIMEZONE" "$TIMEZONE"
-  echo -e " Current timezone is set to $TIMEZONE\n"
+  echo -e " Current timezone is set to \"$TIMEZONE\"\n"
 }
 
 set_keymap () {
@@ -232,7 +232,7 @@ set_keymap () {
   done
 
   set_string "KEYMAP" "$KEYMAP"
-  echo -e " Keyboard keymap is set to $KEYMAP\n"
+  echo -e " Keyboard keymap is set to \"$KEYMAP\"\n"
 }
 
 set_layouts () {
@@ -267,7 +267,7 @@ set_layouts () {
   done
 
   set_array "LAYOUTS" "$LAYOUT_SET"
-  echo -e " Keyboard layouts are set to $LAYOUT_SET\n"
+  echo -e " Keyboard layouts are set to [$LAYOUT_SET]\n"
 }
 
 set_locale () {
@@ -322,7 +322,7 @@ set_locale () {
   done
 
   set_string "LOCALE" "$LOCALE"
-  echo -e " Locale is set to $LOCALE\n"
+  echo -e " Locale is set to \"$LOCALE\"\n"
 }
 
 set_hostname () {
@@ -342,7 +342,7 @@ set_hostname () {
   done
 
   set_string "HOSTNAME" "$HOSTNAME"
-  echo -e " Hostname is set to $HOSTNAME\n"
+  echo -e " Hostname is set to \"$HOSTNAME\"\n"
 }
 
 set_username () {
@@ -362,7 +362,7 @@ set_username () {
   done
 
   set_string "USERNAME" "$USERNAME"
-  echo -e " Username is set to $USERNAME\n"
+  echo -e " Username is set to \"$USERNAME\"\n"
 }
 
 set_disk () {
@@ -377,7 +377,7 @@ set_disk () {
     DEVICE="/dev/$DEVICE"
   done
 
-  echo -e "\n CAUTION, all data in $DEVICE will be lost"
+  echo -e "\n CAUTION, all data in \"$DEVICE\" will be lost"
 
   local REPLY=""
   read -p " Proceed and use it as installation disk? [y/N] " REPLY
@@ -393,7 +393,7 @@ set_disk () {
       DEVICE="/dev/$DEVICE"
     done
 
-    echo -e "\n CAUTION, all data in $DEVICE will be lost"
+    echo -e "\n CAUTION, all data in \"$DEVICE\" will be lost"
     read -p " Proceed and use it as installation disk? [y/N] " REPLY
     REPLY="${REPLY:-"no"}"
     REPLY="${REPLY,,}"
@@ -411,7 +411,7 @@ set_disk () {
     set_string "DISK_SSD" "yes"
   fi
 
-  echo -e " Installation disk is set to block device $DEVICE\n"
+  echo -e " Installation disk is set to block device \"$DEVICE\"\n"
 }
 
 set_swap () {
@@ -422,7 +422,7 @@ set_swap () {
 
   if [[ ! $REPLY =~ ^(y|yes)$ ]]; then
     set_string "SWAP" "off"
-    echo -e " Swap is set to off\n"
+    echo -e " Swap is set to \"off\"\n"
     return 0
   else
     set_string "SWAP" "on"
@@ -447,7 +447,9 @@ set_swap () {
 
   set_string "SWAP_SIZE" "${SWAP_SIZE}GB"
   set_string "SWAP_TYPE" "$SWAP_TYPE"
-  echo -e " Swap is set to $SWAP_TYPE of $SWAP_SIZE GBytes size\n"
+
+  echo -e " Swap is set to \"$SWAP_TYPE\""
+  echo -e " Swap size is set to \"${SWAP_SIZE}GB\"\n"
 }
 
 is_vm () {
@@ -463,7 +465,7 @@ is_vm () {
   fi
 
   set_string "IS_VM" "$IS_VM"
-  echo -e " VM is set to $IS_VM\n"
+  echo -e " VM is set to \"$IS_VM\"\n"
 }
 
 set_cpu () {
@@ -478,7 +480,7 @@ set_cpu () {
   done
 
   set_string "CPU" "$CPU"
-  echo -e " CPU is set to $CPU\n"
+  echo -e " CPU is set to \"$CPU\"\n"
 }
 
 set_gpu () {
@@ -492,7 +494,7 @@ set_gpu () {
   done
 
   set_string "GPU" "$GPU"
-  echo -e " GPU is set to $GPU\n"
+  echo -e " GPU is set to \"$GPU\"\n"
 }
 
 set_kernels () {
@@ -513,7 +515,7 @@ set_kernels () {
   fi
 
   set_array "KERNELS" "$KERNELS"
-  echo -e " Linux kernels are set to $KERNELS\n"
+  echo -e " Linux kernels are set to [$KERNELS]\n"
 }
 
 clear
