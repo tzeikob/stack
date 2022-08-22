@@ -478,7 +478,7 @@ set_cpu () {
   CPU="${CPU,,}"
 
   while [[ ! $CPU =~ ^(amd|intel)$ ]]; do
-    read -p "Please enter a valid CPU vendor: " CPU
+    read -p " Please enter a valid CPU vendor: " CPU
     CPU="${CPU,,}"
   done
 
@@ -520,10 +520,11 @@ echo "Users and Passwords:" &&
 echo "Disks and Partitions:" &&
   set_disk &&
   set_swap &&
-echo "Kernels and Packages:" &&
-  set_kernels &&
+echo "System and Hardware:" &&
   set_cpu &&
-  set_gpu
+  set_gpu &&
+echo "Kernels and Packages:" &&
+  set_kernels
 
 read -p "Is this a virtual box machine? [y/N] " IS_VM
 IS_VM=${IS_VM:-"no"}
