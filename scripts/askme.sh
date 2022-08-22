@@ -151,7 +151,8 @@ set_mirrors () {
       read -p " Please enter a valid country: " COUNTRY
     done
 
-    [[ ! -z "$COUNTRY" ]] && MIRROR_SET="$MIRROR_SET \"$COUNTRY\""
+    [[ ! -z "$COUNTRY" ]] && [[ ! "$MIRROR_SET" =~ "$COUNTRY" ]] &&
+      MIRROR_SET="$MIRROR_SET \"$COUNTRY\""
   done
 
   set_array "MIRRORS" "$MIRROR_SET"
@@ -263,7 +264,8 @@ set_layouts () {
       read -p " Please enter a valid layout: " LAYOUT
     done
 
-    [[ ! -z "$LAYOUT" ]] && LAYOUT_SET="$LAYOUT_SET \"$LAYOUT\""
+    [[ ! -z "$LAYOUT" ]] && [[ ! "$LAYOUT_SET" =~ "$LAYOUT" ]] &&
+      LAYOUT_SET="$LAYOUT_SET \"$LAYOUT\""
   done
 
   set_array "LAYOUTS" "$LAYOUT_SET"
