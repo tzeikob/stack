@@ -103,7 +103,7 @@ set_password () {
 
   # Repeat until password comfirmed 
   while [ "$PASSWORD" != "$COMFIRMED" ]; do
-    echo -e "  Ooops, passwords do not match"
+    echo "  Ooops, passwords do not match"
     read -rs -p " Please enter a new password: " PASSWORD && echo
 
     while [[ ! "$PASSWORD" =~ $RE ]]; do
