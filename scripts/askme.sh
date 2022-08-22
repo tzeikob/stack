@@ -487,12 +487,13 @@ set_cpu () {
 }
 
 set_gpu () {
+  local GPU=""
   read -p " What GPU is your system running? [nvidia/amd/intel/vm] " GPU
   GPU="${GPU,,}"
 
   while [[ ! $GPU =~ ^(nvidia|amd|intel|vm)$ ]]; do
     read -p " Please enter a valid GPU vendor: [nvidia/amd/intel/vm] " GPU
-    GPU=${GPU,,}
+    GPU="${GPU,,}"
   done
 
   set_string "GPU" "$GPU"
