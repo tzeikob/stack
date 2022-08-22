@@ -487,7 +487,7 @@ set_gpu () {
   GPU="${GPU,,}"
 
   while [[ ! $GPU =~ ^(nvidia|amd|intel|vm)$ ]]; do
-    read -p " Please enter a valid GPU vendor: [nvidia/amd/intel/vm] " GPU
+    read -p " Please enter a valid GPU vendor: " GPU
     GPU="${GPU,,}"
   done
 
