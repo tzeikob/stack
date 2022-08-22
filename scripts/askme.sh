@@ -482,7 +482,7 @@ set_cpu () {
     CPU="${CPU,,}"
   done
 
-  set_option "CPU" "$CPU"
+  set_string "CPU" "$CPU"
   echo -e " CPU is set to $CPU\n"
 }
 
@@ -495,7 +495,7 @@ set_gpu () {
     GPU=${GPU,,}
   done
 
-  set_option "GPU" "$GPU"
+  set_string "GPU" "$GPU"
   echo -e " GPU is set to $GPU\n"
 }
 
