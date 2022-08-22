@@ -450,6 +450,22 @@ set_swap () {
   echo -e " Swap is set to $SWAP_TYPE of $SWAP_SIZE GBytes size\n"
 }
 
+is_vm () {
+  local IS_VM=""
+  read -p " Is this a virtual machine? [y/N] " IS_VM
+  IS_VM="${IS_VM:-"no"}"
+  IS_VM="${IS_VM,,}"
+
+  if [[ $IS_VM =~ ^(y|yes)$ ]]; then
+    IS_VM="yes"
+  else
+    IS_VM="no"
+  fi
+
+  set_string "IS_VM" "$IS_VM"
+  echo -e " VM is set to $IS_VM\n"
+}
+
 set_cpu () {
   local CPU=""
   read -p " What CPU is your system running on? [AMD/intel] " CPU
@@ -522,17 +538,11 @@ echo "Disks and Partitions:" &&
   set_disk &&
   set_swap &&
 echo "System and Hardware:" &&
+  is_vm &&
   set_cpu &&
   set_gpu &&
 echo "Kernels and Packages:" &&
   set_kernels
-
-read -p "Is this a virtual box machine? [y/N] " IS_VM
-IS_VM=${IS_VM:-"no"}
-IS_VM=${IS_VM,,}
-
-set_option "IS_VM" "$IS_VM"
-echo "VM is set to $IS_VM"
 
 echo -e "\nResolving the system's hardware..."
 
