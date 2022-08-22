@@ -471,6 +471,21 @@ set_kernels () {
   echo -e " Linux kernels are set to $KERNELS\n"
 }
 
+set_cpu () {
+  local CPU=""
+  read -p " What CPU is your system running on? [AMD/intel] " CPU
+  CPU="${CPU:-"amd"}"
+  CPU="${CPU,,}"
+
+  while [[ ! $CPU =~ ^(amd|intel)$ ]]; do
+    read -p "Please enter a valid CPU vendor: " CPU
+    CPU="${CPU,,}"
+  done
+
+  set_option "CPU" "$CPU"
+  echo -e " CPU is set to $CPU\n"
+}
+
 clear
 
 echo "Locations and Timezones:" &&
@@ -493,23 +508,8 @@ echo "Disks and Partitions:" &&
   set_disk &&
   set_swap &&
 echo "Kernels and Packages:" &&
-  set_kernels
-
-echo -e "\nSetting system environment and hardware drivers..."
-
-read -p "What CPU is your system running on? [AMD/intel] " CPU
-CPU=${CPU:-"amd"}
-CPU=${CPU,,}
-
-while [[ ! $CPU =~ ^(amd|intel)$ ]]; do
-  echo -e "Invalid CPU vendor: $CPU"
-  read -p "Please enter a valid CPU vendor: [AMD/intel] " CPU
-  CPU=${CPU:-"amd"}
-  CPU=${CPU,,}
-done
-
-set_option "CPU" "$CPU"
-echo "CPU is set to $CPU"
+  set_kernels &&
+  set_cpu
 
 read -p "Which GPU vendor video drivers to install? [nvidia/amd/intel/nouveau/qxl/vmware/none] " GPU
 GPU=${GPU,,}
