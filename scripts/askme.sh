@@ -95,7 +95,7 @@ set_password () {
   read -rs -p " Enter a new password: " PASSWORD && echo
 
   while [[ ! "$PASSWORD" =~ $RE ]]; do
-    read -rs -p " Please enter a valid password: " PASSWORD && echo
+    read -rs -p "  Please enter a valid password: " PASSWORD && echo
   done
 
   local COMFIRMED=""
@@ -103,11 +103,11 @@ set_password () {
 
   # Repeat until password comfirmed 
   while [ "$PASSWORD" != "$COMFIRMED" ]; do
-    echo " Ooops, passwords do not match"
+    echo -e "  Ooops, passwords do not match"
     read -rs -p " Please enter a new password: " PASSWORD && echo
 
     while [[ ! "$PASSWORD" =~ $RE ]]; do
-      read -rs -p " Please enter a valid password: " PASSWORD && echo
+      read -rs -p "  Please enter a valid password: " PASSWORD && echo
     done
 
     read -rs -p " Re-enter the password: " COMFIRMED && echo
@@ -139,7 +139,7 @@ set_mirrors () {
   COUNTRY="${COUNTRY:-"Greece"}"
 
   while ! contains "$COUNTRY" "${COUNTRIES[@]}"; do
-    read -p " Please enter a valid country: " COUNTRY
+    read -p "  Please enter a valid country: " COUNTRY
   done
 
   local MIRROR_SET="\"$COUNTRY\""
@@ -148,7 +148,7 @@ set_mirrors () {
     read -p " Enter another secondary mirror country (none to skip): " COUNTRY
 
     while [ ! -z "$COUNTRY" ] && ! contains "$COUNTRY" "${COUNTRIES[@]}"; do
-      read -p " Please enter a valid country: " COUNTRY
+      read -p "  Please enter a valid country: " COUNTRY
     done
 
     [[ ! -z "$COUNTRY" ]] && [[ ! "$MIRROR_SET" =~ "$COUNTRY" ]] &&
@@ -172,7 +172,7 @@ set_timezone () {
   CONTINENT="${CONTINENT:-"Europe"}"
 
   while ! contains "$CONTINENT" "${CONTINENTS[@]}"; do
-    read -p " Please enter a valid continent: " CONTINENT
+    read -p "  Please enter a valid continent: " CONTINENT
   done
 
   local CITIES=($(ls -1 -pU /usr/share/zoneinfo/$CONTINENT | grep -v /))
@@ -183,7 +183,7 @@ set_timezone () {
   read -p " Enter the city closer to your timezone? " CITY
 
   while [ ! -f "/usr/share/zoneinfo/$CONTINENT/$CITY" ]; do
-    read -p " Please enter a valid timezone city: " CITY
+    read -p "  Please enter a valid timezone city: " CITY
   done
 
   local TIMEZONE="$CONTINENT/$CITY"
@@ -229,7 +229,7 @@ set_keymap () {
   fi
 
   while [ -z "$(find /usr/share/kbd/keymaps/ -type f -name "$KEYMAP.map.gz")" ]; do
-    read -p " Please enter a valid keyboard map: " KEYMAP
+    read -p "  Please enter a valid keyboard map: " KEYMAP
   done
 
   set_string "KEYMAP" "$KEYMAP"
@@ -252,7 +252,7 @@ set_layouts () {
   LAYOUT="${LAYOUT:-"us"}"
 
   while ! contains "$LAYOUT" "${LAYOUTS[@]}"; do
-    read -p " Please enter a valid layout: " LAYOUT
+    read -p "  Please enter a valid layout: " LAYOUT
   done
 
   local LAYOUT_SET="\"$LAYOUT\""
@@ -261,7 +261,7 @@ set_layouts () {
     read -p " Enter another secondary layout (none to skip): " LAYOUT
 
     while [[ ! -z "$LAYOUT" ]] && ! contains "$LAYOUT" "${LAYOUTS[@]}"; do
-      read -p " Please enter a valid layout: " LAYOUT
+      read -p "  Please enter a valid layout: " LAYOUT
     done
 
     [[ ! -z "$LAYOUT" ]] && [[ ! "$LAYOUT_SET" =~ "$LAYOUT" ]] &&
@@ -297,7 +297,7 @@ set_locale () {
   LANG="${LANG:-"en"}"
 
   while ! contains "$LANG" "${LANGS[@]}"; do
-    read -p " Please enter a valid language: " LANG
+    read -p "  Please enter a valid language: " LANG
   done
 
   IFS=","
@@ -320,7 +320,7 @@ set_locale () {
   read -p " Enter your locale: " LOCALE
 
   while ! contains "$LOCALE" "${LOCALES[@]}"; do
-    read -p " Please enter a valid locale: " LOCALE
+    read -p "  Please enter a valid locale: " LOCALE
   done
 
   set_string "LOCALE" "$LOCALE"
@@ -335,12 +335,12 @@ set_hostname () {
   HOSTNAME="${HOSTNAME:-"arch"}"
 
   if [[ ! "$HOSTNAME" =~ $RE ]]; then
-    echo " Hostname should be at least 2 chars of [a-z0-9_-]"
-    echo " First char must always be a latin letter"
+    echo "  Hostname should be at least 2 chars of [a-z0-9_-]"
+    echo "  First char must always be a latin letter"
   fi
 
   while [[ ! "$HOSTNAME" =~ $RE ]]; do
-    read -p " Please enter a valid hostname: " HOSTNAME
+    read -p "  Please enter a valid hostname: " HOSTNAME
   done
 
   set_string "HOSTNAME" "$HOSTNAME"
@@ -355,12 +355,12 @@ set_username () {
   USERNAME="${USERNAME:-"bob"}"
 
   if [[ ! "$USERNAME" =~ $RE ]]; then
-    echo " Username should be at least 2 chars of [a-z0-9_-]"
-    echo " First char must always be a latin letter"
+    echo "  Username should be at least 2 chars of [a-z0-9_-]"
+    echo "  First char must always be a latin letter"
   fi
 
   while [[ ! "$USERNAME" =~ $RE ]]; do
-    read -p " Please enter a valid username: " USERNAME
+    read -p "  Please enter a valid username: " USERNAME
   done
 
   set_string "USERNAME" "$USERNAME"
@@ -375,7 +375,7 @@ set_disk () {
   DEVICE="/dev/$DEVICE"
 
   while [ ! -b "$DEVICE" ]; do
-    read -p " Please enter a valid disk block device: " DEVICE
+    read -p "  Please enter a valid disk block device: " DEVICE
     DEVICE="/dev/$DEVICE"
   done
 
@@ -391,7 +391,7 @@ set_disk () {
     DEVICE="/dev/$DEVICE"
 
     while [ ! -b "$DEVICE" ]; do
-      read -p " Please enter a valid disk block device: " DEVICE
+      read -p "  Please enter a valid disk block device: " DEVICE
       DEVICE="/dev/$DEVICE"
     done
 
@@ -434,7 +434,7 @@ set_swap () {
   read -p " Enter the size of the swap in GBytes: " SWAP_SIZE
 
   while [[ ! $SWAP_SIZE =~ ^[0-9]+$ ]]; do
-    read -p " Please enter a valid swap size in GBytes: " SWAP_SIZE
+    read -p "  Please enter a valid swap size in GBytes: " SWAP_SIZE
   done
 
   local SWAP_TYPE=""
@@ -443,7 +443,7 @@ set_swap () {
   SWAP_TYPE="${SWAP_TYPE,,}"
 
   while [[ ! $SWAP_TYPE =~ ^(file|partition)$ ]]; do
-    read -p " Enter a valid swap type: " SWAP_TYPE
+    read -p "  Enter a valid swap type: " SWAP_TYPE
     SWAP_TYPE="${SWAP_TYPE,,}"
   done
 
@@ -477,7 +477,7 @@ set_cpu () {
   CPU="${CPU,,}"
 
   while [[ ! $CPU =~ ^(amd|intel)$ ]]; do
-    read -p " Please enter a valid CPU vendor: " CPU
+    read -p "  Please enter a valid CPU vendor: " CPU
     CPU="${CPU,,}"
   done
 
@@ -491,7 +491,7 @@ set_gpu () {
   GPU="${GPU,,}"
 
   while [[ ! $GPU =~ ^(nvidia|amd|intel|vm)$ ]]; do
-    read -p " Please enter a valid GPU vendor: " GPU
+    read -p "  Please enter a valid GPU vendor: " GPU
     GPU="${GPU,,}"
   done
 
@@ -506,7 +506,7 @@ set_kernels () {
   KERNELS="${KERNELS,,}"
 
   while [[ ! $KERNELS =~ ^(stable|lts|all)$ ]]; do
-    read -p " Please enter a valid kernel option: " KERNELS
+    read -p "  Please enter a valid kernel option: " KERNELS
     KERNELS="${KERNELS,,}"
   done
 
