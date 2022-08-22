@@ -450,27 +450,6 @@ set_swap () {
   echo -e " Swap is set to $SWAP_TYPE of $SWAP_SIZE GBytes size\n"
 }
 
-set_kernels () {
-  local KERNELS=""
-  read -p " Which linux kernels to install: [STABLE/lts/all] " KERNELS
-  KERNELS="${KERNELS:-"stable"}"
-  KERNELS="${KERNELS,,}"
-
-  while [[ ! $KERNELS =~ ^(stable|lts|all)$ ]]; do
-    read -p " Please enter a valid kernel option: " KERNELS
-    KERNELS="${KERNELS,,}"
-  done
-
-  if [[ $KERNELS == "all" ]]; then
-    KERNELS="\"stable\" \"lts\""
-  else
-    KERNELS="\"$KERNELS\""
-  fi
-
-  set_array "KERNELS" "$KERNELS"
-  echo -e " Linux kernels are set to $KERNELS\n"
-}
-
 set_cpu () {
   local CPU=""
   read -p " What CPU is your system running on? [AMD/intel] " CPU
@@ -498,6 +477,27 @@ set_gpu () {
 
   set_string "GPU" "$GPU"
   echo -e " GPU is set to $GPU\n"
+}
+
+set_kernels () {
+  local KERNELS=""
+  read -p " Which linux kernels to install: [STABLE/lts/all] " KERNELS
+  KERNELS="${KERNELS:-"stable"}"
+  KERNELS="${KERNELS,,}"
+
+  while [[ ! $KERNELS =~ ^(stable|lts|all)$ ]]; do
+    read -p " Please enter a valid kernel option: " KERNELS
+    KERNELS="${KERNELS,,}"
+  done
+
+  if [[ $KERNELS == "all" ]]; then
+    KERNELS="\"stable\" \"lts\""
+  else
+    KERNELS="\"$KERNELS\""
+  fi
+
+  set_array "KERNELS" "$KERNELS"
+  echo -e " Linux kernels are set to $KERNELS\n"
 }
 
 clear
