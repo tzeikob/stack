@@ -520,6 +520,16 @@ set_kernels () {
   echo -e " Linux kernels are set to [$KERNELS]\n"
 }
 
+is_uefi () {
+  local IS_UEFI="no"
+  if [ -d "/sys/firmware/efi/efivars" ]; then
+    IS_UEFI="yes"
+  fi
+
+  set_string "IS_UEFI" "$IS_UEFI"
+  echo " UEFI is set to $IS_UEFI"
+}
+
 clear
 
 echo "Locations and Timezones:" &&
@@ -546,17 +556,7 @@ echo "System and Hardware:" &&
   set_cpu &&
   set_gpu &&
 echo "Kernels and Packages:" &&
-  set_kernels
-
-echo -e "\nResolving the system's hardware..."
-
-IS_UEFI=false
-
-if [ -d "/sys/firmware/efi/efivars" ]; then
-  IS_UEFI=true
-fi
-
-set_option "IS_UEFI" "$IS_UEFI"
-echo "UEFI is set to $IS_UEFI"
-
-echo "System hardware has been resolved"
+  set_kernels &&
+echo "Starting automatic hardware detection..." &&
+  is_uefi &&
+echo "Hardware detection has been completed"
