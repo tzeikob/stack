@@ -586,7 +586,7 @@ while true; do
     is_uefi
 
   echo -e "\nConfiguration options have been set to:"
-  cat .options | awk '{print " "$0}'
+  cat .options | awk '!/PASSWORD/ {print " "$0}'
   read -p "Do you want to re-run configuration? [y/N] " REPLY
   REPLY="${REPLY:-"no"}"
   REPLY="${REPLY,,}"
