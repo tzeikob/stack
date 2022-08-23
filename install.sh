@@ -36,7 +36,7 @@ bash scripts/askme.sh &&
   bash scripts/base.sh &&
   arch-chroot /mnt /usr/bin/runuser -u $username -- /scripts/stack.sh &&
     echo "Unmounting all partitions under '/mnt'..." &&
-    umount -R /mnt || echo "Ignoring any busy mounted points..." &&
+    umount -R /mnt &&
     echo "Rebooting the system in 15 secs (ctrl-c to skip)..." &&
     sleep 15 &&
     reboot
