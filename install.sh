@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 set -a
-HOME="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+HOME="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)"
 set +a
 
 clear
