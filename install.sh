@@ -20,7 +20,7 @@ cat << EOF
 ░░░▀▀▀░░▀░░▀░▀░▀▀▀░▀░▀░░
 EOF
 
-echo -e "\nWelcome to Stack installation"
+echo -e "\nWelcome to Stack"
 read -p "Do you want to proceed to the installation? [Y/n] " REPLY
 REPLY="${REPLY:-"yes"}"
 REPLY="${REPLY,,}"

@@ -38,7 +38,7 @@ print () {
       if [[ ! -z "${ARR[$INDX]}" ]]; then
         local TEXT="$(no_breaks "${ARR[$INDX]}")"
 
-        printf " %-${PADDING}s\t" "$TEXT"
+        printf "%-${PADDING}s\t" "$TEXT"
       fi
     done
 
@@ -88,33 +88,33 @@ set_password () {
   local RE=$2
   local MESSAGE=$3
 
-  echo " Setting password for the ${SUBJECT,,}"
-  echo " $MESSAGE"
+  echo "Setting password for the ${SUBJECT,,}"
+  echo "$MESSAGE"
 
   local PASSWORD=""
-  read -rs -p " Enter a new password: " PASSWORD && echo
+  read -rs -p "Enter a new password: " PASSWORD && echo
 
   while [[ ! "$PASSWORD" =~ $RE ]]; do
-    read -rs -p "  Please enter a valid password: " PASSWORD && echo
+    read -rs -p " Please enter a valid password: " PASSWORD && echo
   done
 
   local COMFIRMED=""
-  read -rs -p " Re-enter the password: " COMFIRMED && echo
+  read -rs -p "Re-enter the password: " COMFIRMED && echo
 
   # Repeat until password comfirmed 
   while [ "$PASSWORD" != "$COMFIRMED" ]; do
-    echo "  Ooops, passwords do not match"
-    read -rs -p " Please enter a new password: " PASSWORD && echo
+    echo " Ooops, passwords do not match"
+    read -rs -p "Please enter a new password: " PASSWORD && echo
 
     while [[ ! "$PASSWORD" =~ $RE ]]; do
-      read -rs -p "  Please enter a valid password: " PASSWORD && echo
+      read -rs -p " Please enter a valid password: " PASSWORD && echo
     done
 
-    read -rs -p " Re-enter the password: " COMFIRMED && echo
+    read -rs -p "Re-enter the password: " COMFIRMED && echo
   done
 
   set_string "${SUBJECT}_PASSWORD" "$PASSWORD"
-  echo -e " Password for the ${SUBJECT,,} is set successfully\n"
+  echo "Password for the ${SUBJECT,,} is set successfully"
 }
 
 set_mirrors () {
@@ -135,20 +135,20 @@ set_mirrors () {
   print 4 25 "${COUNTRIES[@]}"
 
   local COUNTRY=""
-  read -p " Enter the primary mirror country: [Greece] " COUNTRY
+  read -p "Enter the primary mirror country: [Greece] " COUNTRY
   COUNTRY="${COUNTRY:-"Greece"}"
 
   while ! contains "$COUNTRY" "${COUNTRIES[@]}"; do
-    read -p "  Please enter a valid country: " COUNTRY
+    read -p " Please enter a valid country: " COUNTRY
   done
 
   local MIRROR_SET="\"$COUNTRY\""
 
   while [[ ! -z "$COUNTRY" ]]; do
-    read -p " Enter another secondary mirror country (none to skip): " COUNTRY
+    read -p "Enter another secondary mirror country (none to skip): " COUNTRY
 
     while [ ! -z "$COUNTRY" ] && ! contains "$COUNTRY" "${COUNTRIES[@]}"; do
-      read -p "  Please enter a valid country: " COUNTRY
+      read -p " Please enter a valid country: " COUNTRY
     done
 
     [[ ! -z "$COUNTRY" ]] && [[ ! "$MIRROR_SET" =~ "$COUNTRY" ]] &&
@@ -156,7 +156,7 @@ set_mirrors () {
   done
 
   set_array "MIRRORS" "$MIRROR_SET"
-  echo -e " Mirror countries are set to [$MIRROR_SET]\n"
+  echo "Mirror countries are set to [$MIRROR_SET]"
 }
 
 set_timezone () {
@@ -168,11 +168,11 @@ set_timezone () {
   print 4 15 "${CONTINENTS[@]}"
 
   local CONTINENT=""
-  read -p " Select your continent: [Europe] " CONTINENT
+  read -p "Select your continent: [Europe] " CONTINENT
   CONTINENT="${CONTINENT:-"Europe"}"
 
   while ! contains "$CONTINENT" "${CONTINENTS[@]}"; do
-    read -p "  Please enter a valid continent: " CONTINENT
+    read -p " Please enter a valid continent: " CONTINENT
   done
 
   local CITIES=($(ls -1 -pU /usr/share/zoneinfo/$CONTINENT | grep -v /))
@@ -180,16 +180,16 @@ set_timezone () {
   echo && print 4 20 "${CITIES[@]}"
 
   local CITY=""
-  read -p " Enter the city closer to your timezone? " CITY
+  read -p "Enter the city closer to your timezone? " CITY
 
   while [ ! -f "/usr/share/zoneinfo/$CONTINENT/$CITY" ]; do
-    read -p "  Please enter a valid timezone city: " CITY
+    read -p " Please enter a valid timezone city: " CITY
   done
 
   local TIMEZONE="$CONTINENT/$CITY"
 
   set_string "TIMEZONE" "$TIMEZONE"
-  echo -e " Current timezone is set to \"$TIMEZONE\"\n"
+  echo "Current timezone is set to \"$TIMEZONE\""
 }
 
 set_keymap () {
@@ -219,21 +219,21 @@ set_keymap () {
   print 4 25 "${MAPS[@]}"
 
   local KEYMAP=""
-  read -p " Enter your keyboard's keymap (extra for more): [us] " KEYMAP
+  read -p "Enter your keyboard's keymap (extra for more): [us] " KEYMAP
   KEYMAP="${KEYMAP:-"us"}"
 
   if [ "$KEYMAP" == "extra" ]; then
     echo && print 4 30 "${EXTRA[@]}"
 
-    read -p " Enter your keyboard's keymap: " KEYMAP
+    read -p "Enter your keyboard's keymap: " KEYMAP
   fi
 
   while [ -z "$(find /usr/share/kbd/keymaps/ -type f -name "$KEYMAP.map.gz")" ]; do
-    read -p "  Please enter a valid keyboard map: " KEYMAP
+    read -p " Please enter a valid keyboard map: " KEYMAP
   done
 
   set_string "KEYMAP" "$KEYMAP"
-  echo -e " Keyboard keymap is set to \"$KEYMAP\"\n"
+  echo "Keyboard keymap is set to \"$KEYMAP\""
 }
 
 set_layouts () {
@@ -248,20 +248,20 @@ set_layouts () {
   print 8 6 "${LAYOUTS[@]}"
 
   local LAYOUT=""
-  read -p " Enter your primary keyboard layout: [us] " LAYOUT
+  read -p "Enter your primary keyboard layout: [us] " LAYOUT
   LAYOUT="${LAYOUT:-"us"}"
 
   while ! contains "$LAYOUT" "${LAYOUTS[@]}"; do
-    read -p "  Please enter a valid layout: " LAYOUT
+    read -p " Please enter a valid layout: " LAYOUT
   done
 
   local LAYOUT_SET="\"$LAYOUT\""
 
   while [[ ! -z "$LAYOUT" ]]; do
-    read -p " Enter another secondary layout (none to skip): " LAYOUT
+    read -p "Enter another secondary layout (none to skip): " LAYOUT
 
     while [[ ! -z "$LAYOUT" ]] && ! contains "$LAYOUT" "${LAYOUTS[@]}"; do
-      read -p "  Please enter a valid layout: " LAYOUT
+      read -p " Please enter a valid layout: " LAYOUT
     done
 
     [[ ! -z "$LAYOUT" ]] && [[ ! "$LAYOUT_SET" =~ "$LAYOUT" ]] &&
@@ -269,7 +269,7 @@ set_layouts () {
   done
 
   set_array "LAYOUTS" "$LAYOUT_SET"
-  echo -e " Keyboard layouts are set to [$LAYOUT_SET]\n"
+  echo "Keyboard layouts are set to [$LAYOUT_SET]"
 }
 
 set_locale () {
@@ -293,11 +293,11 @@ set_locale () {
   print 8 10 "${LANGS[@]}"
 
   local LANG=""
-  read -p " Enter the language of your locale: [en] " LANG
+  read -p "Enter the language of your locale: [en] " LANG
   LANG="${LANG:-"en"}"
 
   while ! contains "$LANG" "${LANGS[@]}"; do
-    read -p "  Please enter a valid language: " LANG
+    read -p " Please enter a valid language: " LANG
   done
 
   IFS=","
@@ -317,93 +317,93 @@ set_locale () {
   echo && print 5 20 "${LOCALES[@]}"
 
   local LOCALE=""
-  read -p " Enter your locale: " LOCALE
+  read -p "Enter your locale: " LOCALE
 
   while ! contains "$LOCALE" "${LOCALES[@]}"; do
-    read -p "  Please enter a valid locale: " LOCALE
+    read -p " Please enter a valid locale: " LOCALE
   done
 
   set_string "LOCALE" "$LOCALE"
-  echo -e " Locale is set to \"$LOCALE\"\n"
+  echo "Locale is set to \"$LOCALE\""
 }
 
 set_hostname () {
   local HOSTNAME=""
   local RE="^[a-z][a-z0-9_-]+$"
 
-  read -p " Enter a name for your host: [arch] " HOSTNAME
+  read -p "Enter a name for your host: [arch] " HOSTNAME
   HOSTNAME="${HOSTNAME:-"arch"}"
 
   if [[ ! "$HOSTNAME" =~ $RE ]]; then
-    echo "  Hostname should be at least 2 chars of [a-z0-9_-]"
-    echo "  First char must always be a latin letter"
+    echo " Hostname should be at least 2 chars of [a-z0-9_-]"
+    echo " First char must always be a latin letter"
   fi
 
   while [[ ! "$HOSTNAME" =~ $RE ]]; do
-    read -p "  Please enter a valid hostname: " HOSTNAME
+    read -p " Please enter a valid hostname: " HOSTNAME
   done
 
   set_string "HOSTNAME" "$HOSTNAME"
-  echo -e " Hostname is set to \"$HOSTNAME\"\n"
+  echo "Hostname is set to \"$HOSTNAME\""
 }
 
 set_username () {
   local USERNAME=""
   local RE="^[a-z][a-z0-9_-]+$"
 
-  read -p " Enter a username for your user: [bob] " USERNAME
+  read -p "Enter a username for your user: [bob] " USERNAME
   USERNAME="${USERNAME:-"bob"}"
 
   if [[ ! "$USERNAME" =~ $RE ]]; then
-    echo "  Username should be at least 2 chars of [a-z0-9_-]"
-    echo "  First char must always be a latin letter"
+    echo " Username should be at least 2 chars of [a-z0-9_-]"
+    echo " First char must always be a latin letter"
   fi
 
   while [[ ! "$USERNAME" =~ $RE ]]; do
-    read -p "  Please enter a valid username: " USERNAME
+    read -p " Please enter a valid username: " USERNAME
   done
 
   set_string "USERNAME" "$USERNAME"
-  echo -e " Username is set to \"$USERNAME\"\n"
+  echo "Username is set to \"$USERNAME\""
 }
 
 set_disk () {
-  lsblk -dA -o NAME,SIZE,FSUSE%,FSTYPE,TYPE,MOUNTPOINTS,LABEL | awk '{print " "$0}'
+  lsblk -dA -o NAME,SIZE,FSUSE%,FSTYPE,TYPE,MOUNTPOINTS,LABEL
 
   local DEVICE=""
-  read -p " Enter the installation disk: " DEVICE
+  read -p "Enter the installation disk: " DEVICE
   DEVICE="/dev/$DEVICE"
 
   while [ ! -b "$DEVICE" ]; do
-    read -p "  Please enter a valid disk block device: " DEVICE
+    read -p " Please enter a valid disk block device: " DEVICE
     DEVICE="/dev/$DEVICE"
   done
 
-  echo -e "\n CAUTION, all data in \"$DEVICE\" will be lost"
+  echo -e "\nCAUTION, all data in \"$DEVICE\" will be lost"
 
   local REPLY=""
-  read -p " Proceed and use it as installation disk? [y/N] " REPLY
+  read -p "Proceed and use it as installation disk? [y/N] " REPLY
   REPLY="${REPLY:-"no"}"
   REPLY="${REPLY,,}"
 
   while [[ ! $REPLY =~ ^(y|yes)$ ]]; do
-    read -p " Enter another disk block device: " DEVICE
+    read -p "Enter another disk block device: " DEVICE
     DEVICE="/dev/$DEVICE"
 
     while [ ! -b "$DEVICE" ]; do
-      read -p "  Please enter a valid disk block device: " DEVICE
+      read -p " Please enter a valid disk block device: " DEVICE
       DEVICE="/dev/$DEVICE"
     done
 
-    echo -e "\n CAUTION, all data in \"$DEVICE\" will be lost"
-    read -p " Proceed and use it as installation disk? [y/N] " REPLY
+    echo -e "\nCAUTION, all data in \"$DEVICE\" will be lost"
+    read -p "Proceed and use it as installation disk? [y/N] " REPLY
     REPLY="${REPLY:-"no"}"
     REPLY="${REPLY,,}"
   done
 
   set_string "DISK" "$DEVICE"
 
-  read -p " Is this disk an SSD drive? [Y/n] " REPLY
+  read -p "Is this disk an SSD drive? [Y/n] " REPLY
   REPLY="${REPLY:-"yes"}"
   REPLY="${REPLY,,}"
 
@@ -413,50 +413,50 @@ set_disk () {
     set_string "DISK_SSD" "yes"
   fi
 
-  echo -e " Installation disk is set to block device \"$DEVICE\"\n"
+  echo "Installation disk is set to block device \"$DEVICE\""
 }
 
 set_swap () {
   local REPLY=""
-  read -p " Do you want to enable swap? [Y/n] " REPLY
+  read -p "Do you want to enable swap? [Y/n] " REPLY
   REPLY="${REPLY:-"yes"}"
   REPLY="${REPLY,,}"
 
   if [[ ! $REPLY =~ ^(y|yes)$ ]]; then
     set_string "SWAP" "off"
-    echo -e " Swap is set to \"off\"\n"
+    echo -e "Swap is set to \"off\"\n"
     return 0
   else
     set_string "SWAP" "on"
   fi
 
   local SWAP_SIZE=""
-  read -p " Enter the size of the swap in GBytes: " SWAP_SIZE
+  read -p "Enter the size of the swap in GBytes: " SWAP_SIZE
 
   while [[ ! $SWAP_SIZE =~ ^[0-9]+$ ]]; do
-    read -p "  Please enter a valid swap size in GBytes: " SWAP_SIZE
+    read -p " Please enter a valid swap size in GBytes: " SWAP_SIZE
   done
 
   local SWAP_TYPE=""
-  read -p " Enter the swap type: [FILE/partition] " SWAP_TYPE
+  read -p "Enter the swap type: [FILE/partition] " SWAP_TYPE
   SWAP_TYPE="${SWAP_TYPE:-"file"}"
   SWAP_TYPE="${SWAP_TYPE,,}"
 
   while [[ ! $SWAP_TYPE =~ ^(file|partition)$ ]]; do
-    read -p "  Enter a valid swap type: " SWAP_TYPE
+    read -p " Enter a valid swap type: " SWAP_TYPE
     SWAP_TYPE="${SWAP_TYPE,,}"
   done
 
   set_string "SWAP_SIZE" "${SWAP_SIZE}GB"
   set_string "SWAP_TYPE" "$SWAP_TYPE"
 
-  echo -e " Swap is set to \"$SWAP_TYPE\""
-  echo -e " Swap size is set to \"${SWAP_SIZE}GB\"\n"
+  echo "Swap is set to \"$SWAP_TYPE\""
+  echo "Swap size is set to \"${SWAP_SIZE}GB\""
 }
 
 is_vm () {
   local IS_VM=""
-  read -p " Is this a virtual machine? [y/N] " IS_VM
+  read -p "Is this a virtual machine? [y/N] " IS_VM
   IS_VM="${IS_VM:-"no"}"
   IS_VM="${IS_VM,,}"
 
@@ -467,46 +467,46 @@ is_vm () {
   fi
 
   set_string "IS_VM" "$IS_VM"
-  echo -e " VM is set to \"$IS_VM\"\n"
+  echo "VM is set to \"$IS_VM\""
 }
 
 set_cpu () {
   local CPU=""
-  read -p " What CPU is your system running on? [AMD/intel] " CPU
+  read -p "What CPU is your system running on? [AMD/intel] " CPU
   CPU="${CPU:-"amd"}"
   CPU="${CPU,,}"
 
   while [[ ! $CPU =~ ^(amd|intel)$ ]]; do
-    read -p "  Please enter a valid CPU vendor: " CPU
+    read -p " Please enter a valid CPU vendor: " CPU
     CPU="${CPU,,}"
   done
 
   set_string "CPU" "$CPU"
-  echo -e " CPU is set to \"$CPU\"\n"
+  echo "CPU is set to \"$CPU\""
 }
 
 set_gpu () {
   local GPU=""
-  read -p " What GPU is your system running? [nvidia/amd/intel/vm] " GPU
+  read -p "What GPU is your system running? [nvidia/amd/intel/vm] " GPU
   GPU="${GPU,,}"
 
   while [[ ! $GPU =~ ^(nvidia|amd|intel|vm)$ ]]; do
-    read -p "  Please enter a valid GPU vendor: " GPU
+    read -p " Please enter a valid GPU vendor: " GPU
     GPU="${GPU,,}"
   done
 
   set_string "GPU" "$GPU"
-  echo -e " GPU is set to \"$GPU\"\n"
+  echo "GPU is set to \"$GPU\""
 }
 
 set_kernels () {
   local KERNELS=""
-  read -p " Which linux kernels to install: [STABLE/lts/all] " KERNELS
+  read -p "Which linux kernels to install: [STABLE/lts/all] " KERNELS
   KERNELS="${KERNELS:-"stable"}"
   KERNELS="${KERNELS,,}"
 
   while [[ ! $KERNELS =~ ^(stable|lts|all)$ ]]; do
-    read -p "  Please enter a valid kernel option: " KERNELS
+    read -p " Please enter a valid kernel option: " KERNELS
     KERNELS="${KERNELS,,}"
   done
 
@@ -517,7 +517,7 @@ set_kernels () {
   fi
 
   set_array "KERNELS" "$KERNELS"
-  echo -e " Linux kernels are set to [$KERNELS]\n"
+  echo "Linux kernels are set to [$KERNELS]"
 }
 
 is_uefi () {
@@ -527,36 +527,57 @@ is_uefi () {
   fi
 
   set_string "IS_UEFI" "$IS_UEFI"
-  echo " UEFI is set to $IS_UEFI"
+  echo "UEFI is set to $IS_UEFI"
 }
 
 clear
 
-echo "Locations and Timezones:" &&
-  set_mirrors &&
+echo "Let's start by collecting some information"
+echo "Any given option will be used to have your system setup"
+
+read -p "Do you want to proceed? [Y/n] " REPLY
+REPLY="${REPLY:-"yes"}"
+REPLY="${REPLY,,}"
+
+if [[ ! $REPLY =~ ^(y|yes)$ ]]; then
+  echo -e "Exiting stack installation..."
+  exit 1
+fi
+
+echo
+
+set_mirrors &&
+  echo &&
   set_timezone &&
-echo "Languages and Locales:" &&
+  echo &&
   set_keymap &&
+  echo &&
   set_layouts &&
+  echo &&
   set_locale &&
-echo "Users and Passwords:" &&
+  echo &&
   set_hostname &&
+  echo &&
   set_username &&
+  echo &&
   set_password "USER" \
     "^[a-zA-Z0-9@&!#%\$_-]{4,}$" \
     "Password must be at least 4 chars of a-z A-Z 0-9 @&!#%\$_-" &&
+  echo &&
   set_password "ROOT" \
     "^[a-zA-Z0-9@&!#%\$_-]{4,}$" \
     "Password must be at least 4 chars of a-z A-Z 0-9 @&!#%\$_-" &&
-echo "Disks and Partitions:" &&
+  echo &&
   set_disk &&
+  echo &&
   set_swap &&
-echo "System and Hardware:" &&
+  echo &&
   is_vm &&
+  echo &&
   set_cpu &&
+  echo &&
   set_gpu &&
-echo "Kernels and Packages:" &&
+  echo &&
   set_kernels &&
-echo "Starting automatic hardware detection..." &&
-  is_uefi &&
-echo "Hardware detection has been completed"
+  echo &&
+  is_uefi
