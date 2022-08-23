@@ -144,15 +144,16 @@ set_mirrors () {
 
   local MIRROR_SET="\"$COUNTRY\""
 
-  while [[ ! -z "$COUNTRY" ]]; do
+  while true; do
     read -p "Enter another secondary mirror country (none to skip): " COUNTRY
 
-    while [ ! -z "$COUNTRY" ] && ! contains "$COUNTRY" "${COUNTRIES[@]}"; do
+    [[ -z "$COUNTRY" ]] && break
+
+    while ! contains "$COUNTRY" "${COUNTRIES[@]}"; do
       read -p " Please enter a valid country: " COUNTRY
     done
 
-    [[ ! -z "$COUNTRY" ]] && [[ ! "$MIRROR_SET" =~ "$COUNTRY" ]] &&
-      MIRROR_SET="$MIRROR_SET \"$COUNTRY\""
+    [[ ! "$MIRROR_SET" =~ "$COUNTRY" ]] && MIRROR_SET="$MIRROR_SET \"$COUNTRY\""
   done
 
   set_array "MIRRORS" "$MIRROR_SET"
@@ -257,15 +258,16 @@ set_layouts () {
 
   local LAYOUT_SET="\"$LAYOUT\""
 
-  while [[ ! -z "$LAYOUT" ]]; do
+  while true; do
     read -p "Enter another secondary layout (none to skip): " LAYOUT
 
-    while [[ ! -z "$LAYOUT" ]] && ! contains "$LAYOUT" "${LAYOUTS[@]}"; do
+    [[ -z "$LAYOUT" ]] && break
+
+    while ! contains "$LAYOUT" "${LAYOUTS[@]}"; do
       read -p " Please enter a valid layout: " LAYOUT
     done
 
-    [[ ! -z "$LAYOUT" ]] && [[ ! "$LAYOUT_SET" =~ "$LAYOUT" ]] &&
-      LAYOUT_SET="$LAYOUT_SET \"$LAYOUT\""
+    [[ ! "$LAYOUT_SET" =~ "$LAYOUT" ]] && LAYOUT_SET="$LAYOUT_SET \"$LAYOUT\""
   done
 
   set_array "LAYOUTS" "$LAYOUT_SET"
