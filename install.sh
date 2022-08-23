@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 set -a
-HOME="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)"
+HOME="$(dirname "$(test -L "$0" && readlink "$0" || echo "$0")")"
 set +a
 
 clear
