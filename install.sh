@@ -22,8 +22,8 @@ EOF
 
 echo -e "\nWelcome to Stack installation"
 read -p "Do you want to proceed to the installation? [Y/n] " REPLY
-REPLY=${REPLY:-"yes"}
-REPLY=${REPLY,,}
+REPLY="${REPLY:-"yes"}"
+REPLY="${REPLY,,}"
 
 if [[ ! $REPLY =~ ^(y|yes)$ ]]; then
   echo "Exiting stack installation..."
