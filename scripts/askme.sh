@@ -582,11 +582,13 @@ while true; do
     set_gpu &&
     echo &&
     set_kernels &&
-    echo &&
-    is_uefi
+    echo -e "\nStarting automatic hardware detection..." &&
+    is_uefi &&
+    echo "Hardware detection has been completed"
 
   echo -e "\nConfiguration options have been set to:"
   cat .options | awk '!/PASSWORD/ {print " "$0}'
+
   read -p "Do you want to re-run configuration? [y/N] " REPLY
   REPLY="${REPLY:-"no"}"
   REPLY="${REPLY,,}"
