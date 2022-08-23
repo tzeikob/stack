@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+set -a
+HOME="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+set +a
+
 clear
 
 if [[ "$(id -u)" != "0" ]]; then
@@ -30,11 +34,12 @@ if [[ ! $REPLY =~ ^(y|yes)$ ]]; then
   exit 1
 fi
 
-bash scripts/askme.sh &&
-  bash scripts/bootstrap.sh &&
-  bash scripts/diskpart.sh &&
-  bash scripts/base.sh &&
-  arch-chroot /mnt /usr/bin/runuser -u $username -- /scripts/stack.sh &&
+$HOME/scripts/askme.sh &&
+  source $HOME/.options &&
+  $HOME/scripts/bootstrap.sh &&
+  $HOME/scripts/diskpart.sh &&
+  $HOME/scripts/base.sh &&
+  arch-chroot /mnt /usr/bin/runuser -u $USERNAME -- $HOME/scripts/stack.sh &&
     echo "Unmounting all partitions under '/mnt'..." &&
     umount -R /mnt &&
     echo "Rebooting the system in 15 secs (ctrl-c to skip)..." &&

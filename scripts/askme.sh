@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+OPTIONS="$HOME/.options"
+
 trim () {
   local INPUT=""
   [[ -p /dev/stdin ]] && INPUT="$(cat -)" || INPUT="${@}"
@@ -65,14 +67,14 @@ set_option () {
   local key=$1
   local value=$2
 
-  touch -f .options
+  touch -f $OPTIONS
 
   # Override pre-existing option
-  if grep -Eq "^${key}.*" .options; then
-    sed -i -e "/^${key}.*/d" .options
+  if grep -Eq "^${key}.*" $OPTIONS; then
+    sed -i -e "/^${key}.*/d" $OPTIONS
   fi
 
-  echo "${key}=${value}" >> .options
+  echo "${key}=${value}" >> $OPTIONS
 }
 
 set_string () {
@@ -587,7 +589,7 @@ while true; do
     echo "Hardware detection has been completed"
 
   echo -e "\nConfiguration options have been set to:"
-  cat .options | awk '!/PASSWORD/ {print " "$0}'
+  cat $OPTIONS | awk '!/PASSWORD/ {print " "$0}'
 
   read -p "Do you want to re-run configuration? [y/N] " REPLY
   REPLY="${REPLY:-"no"}"
