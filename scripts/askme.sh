@@ -534,8 +534,8 @@ is_uefi () {
 
 clear
 
-echo "Let's start by collecting some information"
-echo "Any given option will be used to have your system setup"
+echo "Let's start and collect some configuration options"
+echo "Any given option will be used to setup your system"
 
 read -p "Do you want to proceed? [Y/n] " REPLY
 REPLY="${REPLY:-"yes"}"
@@ -548,38 +548,48 @@ fi
 
 echo
 
-set_mirrors &&
-  echo &&
-  set_timezone &&
-  echo &&
-  set_keymap &&
-  echo &&
-  set_layouts &&
-  echo &&
-  set_locale &&
-  echo &&
-  set_hostname &&
-  echo &&
-  set_username &&
-  echo &&
-  set_password "USER" \
-    "^[a-zA-Z0-9@&!#%\$_-]{4,}$" \
-    "Password must be at least 4 chars of a-z A-Z 0-9 @&!#%\$_-" &&
-  echo &&
-  set_password "ROOT" \
-    "^[a-zA-Z0-9@&!#%\$_-]{4,}$" \
-    "Password must be at least 4 chars of a-z A-Z 0-9 @&!#%\$_-" &&
-  echo &&
-  set_disk &&
-  echo &&
-  set_swap &&
-  echo &&
-  is_vm &&
-  echo &&
-  set_cpu &&
-  echo &&
-  set_gpu &&
-  echo &&
-  set_kernels &&
-  echo &&
-  is_uefi
+while true; do
+  set_mirrors &&
+    echo &&
+    set_timezone &&
+    echo &&
+    set_keymap &&
+    echo &&
+    set_layouts &&
+    echo &&
+    set_locale &&
+    echo &&
+    set_hostname &&
+    echo &&
+    set_username &&
+    echo &&
+    set_password "USER" \
+      "^[a-zA-Z0-9@&!#%\$_-]{4,}$" \
+      "Password must be at least 4 chars of a-z A-Z 0-9 @&!#%\$_-" &&
+    echo &&
+    set_password "ROOT" \
+      "^[a-zA-Z0-9@&!#%\$_-]{4,}$" \
+      "Password must be at least 4 chars of a-z A-Z 0-9 @&!#%\$_-" &&
+    echo &&
+    set_disk &&
+    echo &&
+    set_swap &&
+    echo &&
+    is_vm &&
+    echo &&
+    set_cpu &&
+    echo &&
+    set_gpu &&
+    echo &&
+    set_kernels &&
+    echo &&
+    is_uefi
+
+  echo -e "\nConfiguration options have been set to:"
+  cat .options | awk '{print " "$0}'
+  read -p "Do you want to re-run configuration? [y/N] " REPLY
+  REPLY="${REPLY:-"no"}"
+  REPLY="${REPLY,,}"
+
+  [[ $REPLY =~ ^(n|no)$ ]] && break || clear
+done
