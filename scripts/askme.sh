@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-OPTIONS="$HOME/.options"
-
 trim () {
   local INPUT=""
   [[ -p /dev/stdin ]] && INPUT="$(cat -)" || INPUT="${@}"

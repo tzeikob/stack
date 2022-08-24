@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-source $HOME/.options
+source $OPTIONS
 
 clear
 
