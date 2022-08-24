@@ -38,7 +38,8 @@ fi
 $HOME/scripts/askme.sh && source $OPTIONS &&
   $HOME/scripts/diskpart.sh &&
   $HOME/scripts/bootstrap.sh &&
-  arch-chroot /mnt /usr/bin/runuser -u $USERNAME -- $HOME/scripts/stack.sh &&
+  cp -R $HOME /mnt/root &&
+  arch-chroot /mnt $HOME/scripts/setup.sh &&
     echo "Unmounting all partitions under '/mnt'..." &&
     umount -R /mnt &&
     echo "Rebooting the system in 15 secs (ctrl-c to skip)..." &&
