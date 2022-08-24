@@ -116,7 +116,7 @@ set_password () {
   done
 
   set_string "${SUBJECT}_PASSWORD" "$PASSWORD"
-  echo "Password for the ${SUBJECT,,} is set successfully"
+  echo -e "Password for the ${SUBJECT,,} is set successfully\n"
 }
 
 set_mirrors () {
@@ -159,7 +159,7 @@ set_mirrors () {
   done
 
   set_array "MIRRORS" "$MIRROR_SET"
-  echo "Mirror countries are set to [$MIRROR_SET]"
+  echo -e "Mirror countries are set to [$MIRROR_SET]\n"
 }
 
 set_timezone () {
@@ -192,7 +192,7 @@ set_timezone () {
   local TIMEZONE="$CONTINENT/$CITY"
 
   set_string "TIMEZONE" "$TIMEZONE"
-  echo "Current timezone is set to \"$TIMEZONE\""
+  echo -e "Current timezone is set to \"$TIMEZONE\"\n"
 }
 
 set_keymap () {
@@ -236,7 +236,7 @@ set_keymap () {
   done
 
   set_string "KEYMAP" "$KEYMAP"
-  echo "Keyboard keymap is set to \"$KEYMAP\""
+  echo -e "Keyboard keymap is set to \"$KEYMAP\"\n"
 }
 
 set_layouts () {
@@ -273,7 +273,7 @@ set_layouts () {
   done
 
   set_array "LAYOUTS" "$LAYOUT_SET"
-  echo "Keyboard layouts are set to [$LAYOUT_SET]"
+  echo -e "Keyboard layouts are set to [$LAYOUT_SET]\n"
 }
 
 set_locale () {
@@ -328,7 +328,7 @@ set_locale () {
   done
 
   set_string "LOCALE" "$LOCALE"
-  echo "Locale is set to \"$LOCALE\""
+  echo -e "Locale is set to \"$LOCALE\"\n"
 }
 
 set_hostname () {
@@ -348,7 +348,7 @@ set_hostname () {
   done
 
   set_string "HOSTNAME" "$HOSTNAME"
-  echo "Hostname is set to \"$HOSTNAME\""
+  echo -e "Hostname is set to \"$HOSTNAME\"\n"
 }
 
 set_username () {
@@ -368,7 +368,7 @@ set_username () {
   done
 
   set_string "USERNAME" "$USERNAME"
-  echo "Username is set to \"$USERNAME\""
+  echo -e "Username is set to \"$USERNAME\"\n"
 }
 
 set_disk () {
@@ -417,7 +417,7 @@ set_disk () {
     set_string "DISK_SSD" "yes"
   fi
 
-  echo "Installation disk is set to block device \"$DEVICE\""
+  echo -e "Installation disk is set to block device \"$DEVICE\"\n"
 }
 
 set_swap () {
@@ -455,7 +455,7 @@ set_swap () {
   set_string "SWAP_TYPE" "$SWAP_TYPE"
 
   echo "Swap is set to \"$SWAP_TYPE\""
-  echo "Swap size is set to \"${SWAP_SIZE}GB\""
+  echo -e "Swap size is set to \"${SWAP_SIZE}GB\"\n"
 }
 
 is_vm () {
@@ -471,7 +471,7 @@ is_vm () {
   fi
 
   set_string "IS_VM" "$IS_VM"
-  echo "VM is set to \"$IS_VM\""
+  echo -e "VM is set to \"$IS_VM\"\n"
 }
 
 set_cpu () {
@@ -486,7 +486,7 @@ set_cpu () {
   done
 
   set_string "CPU" "$CPU"
-  echo "CPU is set to \"$CPU\""
+  echo -e "CPU is set to \"$CPU\"\n"
 }
 
 set_gpu () {
@@ -500,7 +500,7 @@ set_gpu () {
   done
 
   set_string "GPU" "$GPU"
-  echo "GPU is set to \"$GPU\""
+  echo -e "GPU is set to \"$GPU\"\n"
 }
 
 set_kernels () {
@@ -521,17 +521,19 @@ set_kernels () {
   fi
 
   set_array "KERNELS" "$KERNELS"
-  echo "Linux kernels are set to [$KERNELS]"
+  echo -e "Linux kernels are set to [$KERNELS]\n"
 }
 
 is_uefi () {
+  echo "Detecting if UEFI mode is enabled..." && sleep 1
+
   local IS_UEFI="no"
   if [ -d "/sys/firmware/efi/efivars" ]; then
     IS_UEFI="yes"
   fi
 
   set_string "IS_UEFI" "$IS_UEFI"
-  echo "UEFI is set to $IS_UEFI"
+  echo -e "UEFI is set to \"$IS_UEFI\"\n"
 }
 
 clear
@@ -552,43 +554,27 @@ echo
 
 while true; do
   set_mirrors &&
-    echo &&
     set_timezone &&
-    echo &&
     set_keymap &&
-    echo &&
     set_layouts &&
-    echo &&
     set_locale &&
-    echo &&
     set_hostname &&
-    echo &&
     set_username &&
-    echo &&
     set_password "USER" \
       "^[a-zA-Z0-9@&!#%\$_-]{4,}$" \
       "Password must be at least 4 chars of a-z A-Z 0-9 @&!#%\$_-" &&
-    echo &&
     set_password "ROOT" \
       "^[a-zA-Z0-9@&!#%\$_-]{4,}$" \
       "Password must be at least 4 chars of a-z A-Z 0-9 @&!#%\$_-" &&
-    echo &&
     set_disk &&
-    echo &&
     set_swap &&
-    echo &&
     is_vm &&
-    echo &&
     set_cpu &&
-    echo &&
     set_gpu &&
-    echo &&
     set_kernels &&
-    echo -e "\nStarting automatic hardware detection..." &&
-    is_uefi &&
-    echo "Hardware detection has been completed"
+    is_uefi
 
-  echo -e "\nConfiguration options have been set to:"
+  echo "Configuration options have been set to:"
   cat $OPTIONS | awk '!/PASSWORD/ {print " "$0}'
 
   read -p "Do you want to re-run configuration? [y/N] " REPLY
