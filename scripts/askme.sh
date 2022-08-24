@@ -579,7 +579,8 @@ while true; do
   echo "Configuration options have been set to:"
   cat $OPTIONS | awk '!/PASSWORD/ {print " "$0}'
 
-  echo -e "\nCAUTION, all data in \"$DISK\" will be lost"
+  echo -e "\nCAUTION, THIS IS THE LAST WARNING!"
+  echo "ALL data in \"$DISK\" will be LOST FOREVER!"
   read -p "Do you want to re-run configuration? [y/N] " REPLY
   REPLY="${REPLY:-"no"}"
   REPLY="${REPLY,,}"
