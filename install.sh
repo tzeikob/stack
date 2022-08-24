@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 set -a
-HOME="$(dirname "$(test -L "$0" && readlink "$0" || echo "$0")")"
+HOME="$(cd $(dirname "$(test -L "$0" && readlink "$0" || echo "$0")") && pwd)"
 OPTIONS="$HOME/.options"
 set +a
 
