@@ -574,12 +574,18 @@ while true; do
     set_kernels &&
     is_uefi
 
+  source $OPTIONS
+
   echo "Configuration options have been set to:"
   cat $OPTIONS | awk '!/PASSWORD/ {print " "$0}'
 
+  echo -e "\nCAUTION, all data in \"$DISK\" will be lost"
   read -p "Do you want to re-run configuration? [y/N] " REPLY
   REPLY="${REPLY:-"no"}"
   REPLY="${REPLY,,}"
 
   [[ $REPLY =~ ^(n|no)$ ]] && break || clear
 done
+
+echo "Cool, moving to disk partitioning..."
+sleep 5

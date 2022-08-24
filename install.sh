@@ -36,8 +36,8 @@ fi
 
 $HOME/scripts/askme.sh &&
   source $HOME/.options &&
-  $HOME/scripts/bootstrap.sh &&
   $HOME/scripts/diskpart.sh &&
+  $HOME/scripts/bootstrap.sh &&
   $HOME/scripts/base.sh &&
   arch-chroot /mnt /usr/bin/runuser -u $USERNAME -- $HOME/scripts/stack.sh &&
     echo "Unmounting all partitions under '/mnt'..." &&
