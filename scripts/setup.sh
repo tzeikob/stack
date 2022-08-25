@@ -26,5 +26,13 @@ hwclock --systohc
 
 echo "System clock synchronized with the hardware clock"
 
+echo $HOSTNAME >> /etc/hostname
+echo "" >> /etc/hosts
+echo "127.0.0.1    localhost" >> /etc/hosts
+echo "::1          localhost" >> /etc/hosts
+echo "127.0.1.1    $HOSTNAME" >> /etc/hosts
+
+echo -e "Hostname has been set to $HOSTNAME"
+
 echo "Moving to the next process..."
 sleep 5
