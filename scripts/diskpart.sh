@@ -1,10 +1,6 @@
 #!/usr/bin/env bash
 
-source $OPTIONS
-
-echo -e "\nStarting disk partitioning for disk $DISK..."
-
-if [[ $IS_UEFI == "yes" ]]; then
+create_gpt () {
   echo "Creating a clean GPT partition table..."
 
   parted --script $DISK mklabel gpt
@@ -36,7 +32,9 @@ if [[ $IS_UEFI == "yes" ]]; then
 
   echo "Boot partition ${DISK}1 mounted to /mnt/boot"
   echo "Root partition ${DISK}2 mounted to /mnt"
-else
+}
+
+create_mbr () {
   echo "Creating a clean MBR partition table..."
 
   parted --script $DISK mklabel msdos
@@ -61,11 +59,20 @@ else
   mount ${DISK}1 /mnt
 
   echo "Root partition ${DISK}1 mounted to /mnt"
-fi
+}
+
+echo -e "\nStarting disk partitioning..."
+
+source $OPTIONS
+
+[[ $IS_UEFI == "yes" ]] &&
+  create_gpt ||
+  create_mbr
 
 echo -e "\nDisk layout is set to:"
 
 lsblk $DISK -o NAME,SIZE,TYPE,MOUNTPOINTS | awk '{print " "$0}'
 
+echo -e "\nDisk partitioning has been completed"
 echo "Moving to the next process..."
 sleep 5
