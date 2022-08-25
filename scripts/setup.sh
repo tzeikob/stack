@@ -3,8 +3,7 @@
 source $OPTIONS
 
 nopasswd_on () {
-  sed -i 's/^# %wheel ALL=(ALL:ALL) NOPASSWD: ALL/%wheel ALL=(ALL:ALL) NOPASSWD: ALL/' /etc/sudoers
-  echo "No password mode has been enabled"
+  
 }
 
 nopasswd_off () {
@@ -58,6 +57,26 @@ echo "User root has been given a password"
 echo "$USERNAME:$USER_PASSWORD" | chpasswd
 
 echo "User $USERNAME have been given a password"
+
+echo -e "\nSetting up pacman and mirrors list..."
+
+OLD_IFS=$IFS && IFS=","
+MIRRORS="${MIRRORS[*]}" && IFS=$OLD_IFS
+
+reflector --country "$MIRRORS" --age 8 --sort age --save /etc/pacman.d/mirrorlist
+sed -i "s/# --country.*/--country ${MIRRORS}/" /etc/xdg/reflector/reflector.conf
+
+echo "Mirror list set to ${MIRRORS[@]}"
+
+sed -i 's/^#ParallelDownloads/ParallelDownloads/' /etc/pacman.conf
+
+echo "Pacman parallel downloading has been enabled"
+
+echo -e "\nStarting synchronizing packages..."
+
+pacman -Syy
+
+echo "Packages have been synchronized with master"
 
 nopasswd_off
 

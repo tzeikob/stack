@@ -36,27 +36,6 @@ else
   echo -e "No swap file will be set"
 fi
 
-echo -e "\nRefreshing the mirror list from servers in '$country'..."
-
-reflector --country $country --age 8 --sort age --save /etc/pacman.d/mirrorlist
-pacman -Syy
-
-echo -e "The mirror list is now up to date"
-
-sed -i "s/# --country.*/--country $country/" /etc/xdg/reflector/reflector.conf
-
-echo -e "Reflector mirror country set to '$country'"
-
-echo -e "\nInstalling extra base packages..."
-
-pacman -S base-devel pacman-contrib pkgstats grub mtools dosfstools gdisk parted \
-  curl wget udisks2 udiskie gvfs gvfs-smb \
-  bash-completion man-db man-pages texinfo \
-  cups bluez bluez-utils unzip \
-  terminus-font vim nano git htop tree arch-audit \
-  atool zip xz unace p7zip gzip lzop bzip2 unrar \
-  $([ $uefi == true ] && echo 'efibootmgr')
-
 echo -e "\nInstalling the yay package..."
 
 cd /home/$username
