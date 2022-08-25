@@ -78,6 +78,18 @@ pacman -Syy
 
 echo "Packages have been synchronized with master"
 
+echo -e "\nInstalling base packages..."
+
+pacman -S --noconfirm --needed \
+  base-devel pacman-contrib pkgstats grub mtools dosfstools gdisk \
+  parted curl wget udisks2 udiskie gvfs gvfs-smb bash-completion \
+  man-db man-pages texinfo cups bluez bluez-utils unzip terminus-font \
+  vim nano git htop tree arch-audit atool zip xz unace p7zip gzip lzop \
+  bzip2 unrar \
+  $([ $IS_UEFI == "yes" ] && echo 'efibootmgr')
+
+echo "Base packages have been installed"
+
 nopasswd_off
 
 echo "Moving to the next process..."
