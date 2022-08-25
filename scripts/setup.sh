@@ -19,5 +19,12 @@ locale-gen
 
 echo "Locale has been set to $LOCALE"
 
+echo "Enabling NTP synchronization..."
+
+timedatectl set-ntp true && timedatectl status
+hwclock --systohc
+
+echo "System clock synchronized with the hardware clock"
+
 echo "Moving to the next process..."
 sleep 5
