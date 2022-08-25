@@ -90,6 +90,33 @@ pacman -S --noconfirm --needed \
 
 echo "Base packages have been installed"
 
+echo -e "\nInstalling hardware drivers..."
+
+[ $CPU == "amd" ] && CPU_PKG="amd-ucode" || CPU_PKG="intel-ucode"
+
+if [[ $GPU == "nvidia" ]]; then
+  [[ "${KERNELS[@]}" =~ "stable" ]] && GPU_PKG="nvidia"
+  [[ "${KERNELS[@]}" =~ "lts" ]] && GPU_PKG="$GPU_PKG nvidia-lts"
+
+  GPU_PKG="$GPU_PKG nvidia-utils nvidia-settings"
+elif [[ $GPU == "amd" ]]; then
+  GPU_PKG="xf86-video-amdgpu"
+elif [[ $GPU == "intel" ]]; then
+  GPU_PKG="xf86-video-intel"
+elif [[ $GPU == "vm" ]]; then
+  GPU_PKG="xf86-video-qxl"
+fi
+
+pacman -S --noconfirm --needed \
+  acpi acpid acpi_call \
+  networkmanager dialog wireless_tools netctl inetutils dnsutils \
+  wpa_supplicant openssh nfs-utils openbsd-netcat nftables iptables-nft ipset \
+  alsa-utils pipewire pipewire-alsa pipewire-pulse pipewire-jack pavucontrol \
+  xorg xorg-xinit xorg-xrandr arandr \
+  $CPU_PKG $GPU_PKGS
+
+echo "Drivers have been installed"
+
 nopasswd_off
 
 echo "Moving to the next process..."
