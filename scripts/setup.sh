@@ -2,18 +2,11 @@
 
 source $OPTIONS
 
-nopasswd_on () {
-  
-}
-
-nopasswd_off () {
-  sed -i 's/^%wheel ALL=(ALL:ALL) NOPASSWD: ALL/# %wheel ALL=(ALL:ALL) NOPASSWD: ALL/' /etc/sudoers
-  echo "No password mode has been disabled"
-}
-
 echo -e "\nStarting the setup process..."
 
-nopasswd_on
+sed -i 's/^# %wheel ALL=(ALL:ALL) NOPASSWD: ALL/%wheel ALL=(ALL:ALL) NOPASSWD: ALL/' /etc/sudoers
+
+echo "No password mode has temporarily been enabled"
 
 echo "KEYMAP=$KEYMAP" > /etc/vconsole.conf
 loadkeys $KEYMAP
@@ -118,8 +111,6 @@ pacman -S --noconfirm --needed \
   $CPU_PKGS $GPU_PKGS $VM_PKGS
 
 echo "Drivers have been installed"
-
-nopasswd_off
 
 echo "Moving to the next process..."
 sleep 5
