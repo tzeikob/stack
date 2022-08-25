@@ -11,7 +11,7 @@ timedatectl status
 
 echo "System clock has been updated"
 
-echo -e "\nSetting up pacman and mirrors list"
+echo -e "\nSetting up pacman and mirrors list..."
 
 OLD_IFS=$IFS && IFS=","
 MIRRORS="${MIRRORS[*]}" && IFS=$OLD_IFS
@@ -22,7 +22,7 @@ echo "Mirror list set to ${MIRRORS[@]}"
 
 sed -i 's/^#ParallelDownloads/ParallelDownloads/' /etc/pacman.conf
 
-echo "Package parallel downloading has been enabled"
+echo "Pacman parallel downloading has been enabled"
 
 pacman --noconfirm -Sy archlinux-keyring
 
