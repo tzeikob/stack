@@ -534,7 +534,7 @@ is_uefi () {
   echo -e "UEFI is set to \"$IS_UEFI\"\n"
 }
 
-echo "Let's start by collecting some information"
+echo -e "\nLet's start by collecting some information"
 
 read -p "Do you want to proceed? [Y/n] " REPLY
 REPLY="${REPLY:-"yes"}"
@@ -583,5 +583,5 @@ while true; do
   [[ $REPLY =~ ^(n|no)$ ]] && break || clear
 done
 
-echo -e "Super cool! Moving to the next process...\n"
+echo "Moving to the next process..."
 sleep 5

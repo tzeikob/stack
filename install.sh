@@ -26,7 +26,7 @@ cat << EOF
 EOF
 
 echo -e "\nWelcome to Stack v1.0.0"
-echo -e "Have your development environment on archlinux\n"
+echo "Have your development environment on archlinux"
 
 $HOME/scripts/askme.sh && source $OPTIONS &&
   $HOME/scripts/diskpart.sh &&

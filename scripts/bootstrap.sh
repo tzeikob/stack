@@ -2,7 +2,7 @@
 
 source $OPTIONS
 
-echo "Starting the bootstrap process..."
+echo -e "\nStarting the bootstrap process..."
 
 echo "Updating the system clock..."
 
@@ -50,5 +50,5 @@ echo -e "The file system table has been created in /mnt/etc/fstab"
 
 echo -e "\nBootstrap process has been completed successfully"
 
-echo -e "All set! Moving to the next process...\n"
+echo "Moving to the next process..."
 sleep 5
