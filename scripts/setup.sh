@@ -92,7 +92,7 @@ echo "Base packages have been installed"
 
 echo -e "\nInstalling hardware drivers..."
 
-[ $CPU == "amd" ] && CPU_PKG="amd-ucode" || CPU_PKG="intel-ucode"
+[ $CPU == "amd" ] && CPU_PKGS="amd-ucode" || CPU_PKGS="intel-ucode"
 
 if [[ $GPU == "nvidia" ]]; then
   [[ "${KERNELS[@]}" =~ "stable" ]] && GPU_PKG="nvidia"
@@ -107,13 +107,15 @@ elif [[ $GPU == "vm" ]]; then
   GPU_PKG="xf86-video-qxl"
 fi
 
+[[ $IS_VM == "yes" ]] && VM_PKGS="virtualbox-guest-utils"
+
 pacman -S --noconfirm --needed \
   acpi acpid acpi_call \
   networkmanager dialog wireless_tools netctl inetutils dnsutils \
   wpa_supplicant openssh nfs-utils openbsd-netcat nftables iptables-nft ipset \
   alsa-utils pipewire pipewire-alsa pipewire-pulse pipewire-jack pavucontrol \
   xorg xorg-xinit xorg-xrandr arandr \
-  $CPU_PKG $GPU_PKGS
+  $CPU_PKGS $GPU_PKGS $VM_PKGS
 
 echo "Drivers have been installed"
 

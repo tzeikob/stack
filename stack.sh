@@ -48,17 +48,6 @@ cd / && rm -rf /home/$username/yay
 
 echo -e "Yay has been installed"
 
-read -p "Is this a virtual box machine? [y/N] " virtual_box
-virtual_box=${virtual_box:-"no"}
-
-if [[ $virtual_box =~ ^(yes|y)$ ]]; then
-  video_pkgs="$video_pkgs virtualbox-guest-utils"
-fi
-
-pacman -S $video_pkgs
-
-echo -e "Video drivers have been installed\n"
-
 read -p "Do you want to install a desktop environment? [Y/n] " answer
 answer=${answer:-"yes"}
 
