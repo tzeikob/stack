@@ -2,8 +2,6 @@
 
 source $OPTIONS
 
-clear
-
 echo "Starting the bootstrap process..."
 
 echo "Updating the system clock..."
@@ -49,5 +47,6 @@ genfstab -U /mnt >> /mnt/etc/fstab
 echo -e "The file system table has been created in /mnt/etc/fstab"
 
 echo -e "\nBootstrap process has been completed successfully"
-echo "Moving to the system to complete the setup..."
+
+echo -e "All set! Moving to the next process...\n"
 sleep 5

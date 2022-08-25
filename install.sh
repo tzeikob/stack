@@ -5,8 +5,6 @@ HOME="$(cd $(dirname "$(test -L "$0" && readlink "$0" || echo "$0")") && pwd)"
 OPTIONS="$HOME/.options"
 set +a
 
-clear
-
 if [[ "$(id -u)" != "0" ]]; then
   echo "Error: script must be run as root"
   echo "Process exiting with code 1"
@@ -19,21 +17,16 @@ if [[ ! -e /etc/arch-release ]]; then
   exit 1
 fi
 
+clear
+
 cat << EOF
 ░░░█▀▀░▀█▀░█▀█░█▀▀░█░█░░
 ░░░▀▀█░░█░░█▀█░█░░░█▀▄░░
 ░░░▀▀▀░░▀░░▀░▀░▀▀▀░▀░▀░░
 EOF
 
-echo -e "\nWelcome to Stack"
-read -p "Do you want to proceed to the installation? [Y/n] " REPLY
-REPLY="${REPLY:-"yes"}"
-REPLY="${REPLY,,}"
-
-if [[ ! $REPLY =~ ^(y|yes)$ ]]; then
-  echo "Exiting stack installation..."
-  exit 1
-fi
+echo -e "\nWelcome to Stack v1.0.0"
+echo -e "Have your development environment on archlinux\n"
 
 $HOME/scripts/askme.sh && source $OPTIONS &&
   $HOME/scripts/diskpart.sh &&

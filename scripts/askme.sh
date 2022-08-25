@@ -534,17 +534,14 @@ is_uefi () {
   echo -e "UEFI is set to \"$IS_UEFI\"\n"
 }
 
-clear
-
-echo "Let's start and collect some configuration options"
-echo "Any given option will be used to setup your system"
+echo "Let's start by collecting some information"
 
 read -p "Do you want to proceed? [Y/n] " REPLY
 REPLY="${REPLY:-"yes"}"
 REPLY="${REPLY,,}"
 
 if [[ ! $REPLY =~ ^(y|yes)$ ]]; then
-  echo -e "Exiting stack installation..."
+  echo -e "\nExiting stack installation..."
   exit 1
 fi
 
@@ -586,5 +583,5 @@ while true; do
   [[ $REPLY =~ ^(n|no)$ ]] && break || clear
 done
 
-echo "Cool, moving to disk partitioning..."
+echo -e "Super cool! Moving to the next process...\n"
 sleep 5

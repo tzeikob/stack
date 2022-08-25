@@ -2,9 +2,7 @@
 
 source $HOME/.options
 
-clear
-
-echo "Starting disk partitioning fro $DISK..."
+echo "Starting disk partitioning for disk $DISK..."
 
 if [[ $IS_UEFI == "yes" ]]; then
   echo "Creating a clean GPT partition table..."
@@ -69,6 +67,5 @@ echo -e "\nDisk layout is set to:"
 
 lsblk $DISK -o NAME,SIZE,TYPE,MOUNTPOINTS | awk '{print " "$0}'
 
-echo -e "\nDisk partitioning has been completed"
-echo "Moving to bootstrap..."
+echo -e "Partitioning done! Moving to the next process...\n"
 sleep 5
