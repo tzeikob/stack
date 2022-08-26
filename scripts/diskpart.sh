@@ -65,7 +65,7 @@ echo -e "\nStarting disk partitioning..."
 
 source $OPTIONS
 
-[[ $IS_UEFI == "yes" ]] &&
+[ "$IS_UEFI" = "yes" ] &&
   create_gpt ||
   create_mbr
 

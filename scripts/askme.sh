@@ -35,7 +35,7 @@ print () {
       # Map the index of the item to print vertically
       local INDX=$((i + (j * ROWS)))
 
-      if [[ ! -z "${ARR[$INDX]}" ]]; then
+      if [ ! -z "${ARR[$INDX]}" ]; then
         local TEXT="$(no_breaks "${ARR[$INDX]}")"
 
         printf "%-${PADDING}s\t" "$TEXT"
@@ -53,7 +53,7 @@ contains () {
   local LEN=${#ARR[@]}
 
   for ((i = 0; i < $LEN; i++)); do
-    if [[ "$ITEM" == "${ARR[$i]}" ]]; then
+    if [ "$ITEM" = "${ARR[$i]}" ]; then
       return 0
     fi
   done
@@ -152,13 +152,13 @@ set_mirrors () {
   while true; do
     read -p "Enter another secondary mirror country (none to skip): " COUNTRY
 
-    [[ -z "$COUNTRY" ]] && break
+    [ -z "$COUNTRY" ] && break
 
     while ! contains "$COUNTRY" "${COUNTRIES[@]}"; do
       read -p " Please enter a valid country: " COUNTRY
     done
 
-    [[ ! "$MIRROR_SET" =~ "$COUNTRY" ]] && MIRROR_SET="$MIRROR_SET \"$COUNTRY\""
+    [[ ! "$MIRROR_SET" =~ $COUNTRY ]] && MIRROR_SET="$MIRROR_SET \"$COUNTRY\""
   done
 
   set_array "MIRRORS" "$MIRROR_SET"
@@ -228,7 +228,7 @@ set_keymap () {
   read -p "Enter your keyboard's keymap (extra for more): [us] " KEYMAP
   KEYMAP="${KEYMAP:-"us"}"
 
-  if [ "$KEYMAP" == "extra" ]; then
+  if [ "$KEYMAP" = "extra" ]; then
     echo && print 4 30 "${EXTRA[@]}"
 
     read -p "Enter your keyboard's keymap: " KEYMAP
@@ -266,13 +266,13 @@ set_layouts () {
   while true; do
     read -p "Enter another secondary layout (none to skip): " LAYOUT
 
-    [[ -z "$LAYOUT" ]] && break
+    [ -z "$LAYOUT" ] && break
 
     while ! contains "$LAYOUT" "${LAYOUTS[@]}"; do
       read -p " Please enter a valid layout: " LAYOUT
     done
 
-    [[ ! "$LAYOUT_SET" =~ "$LAYOUT" ]] && LAYOUT_SET="$LAYOUT_SET \"$LAYOUT\""
+    [[ ! "$LAYOUT_SET" =~ $LAYOUT ]] && LAYOUT_SET="$LAYOUT_SET \"$LAYOUT\""
   done
 
   set_array "LAYOUTS" "$LAYOUT_SET"
@@ -393,7 +393,7 @@ set_disk () {
   REPLY="${REPLY:-"no"}"
   REPLY="${REPLY,,}"
 
-  while [[ ! $REPLY =~ ^(y|yes)$ ]]; do
+  while [[ ! "$REPLY" =~ ^(y|yes)$ ]]; do
     read -p "Enter another disk block device: " DEVICE
     DEVICE="/dev/$DEVICE"
 
@@ -414,7 +414,7 @@ set_disk () {
   REPLY="${REPLY:-"yes"}"
   REPLY="${REPLY,,}"
 
-  if [[ ! $REPLY =~ ^(y|yes)$ ]]; then
+  if [[ ! "$REPLY" =~ ^(y|yes)$ ]]; then
     set_string "DISK_SSD" "no"
   else
     set_string "DISK_SSD" "yes"
@@ -429,18 +429,18 @@ set_swap () {
   REPLY="${REPLY:-"yes"}"
   REPLY="${REPLY,,}"
 
-  if [[ ! $REPLY =~ ^(y|yes)$ ]]; then
-    set_string "SWAP" "off"
-    echo -e "Swap is set to \"off\"\n"
+  if [[ ! "$REPLY" =~ ^(y|yes)$ ]]; then
+    set_string "SWAP" "no"
+    echo -e "Swap is set to \"no\"\n"
     return 0
   else
-    set_string "SWAP" "on"
+    set_string "SWAP" "yes"
   fi
 
   local SWAP_SIZE=""
   read -p "Enter the size of the swap in GBytes: " SWAP_SIZE
 
-  while [[ ! $SWAP_SIZE =~ ^[1-9][0-9]{,2}$ ]]; do
+  while [[ ! "$SWAP_SIZE" =~ ^[1-9][0-9]{,2}$ ]]; do
     read -p " Please enter a valid swap size in GBytes: " SWAP_SIZE
   done
 
@@ -449,7 +449,7 @@ set_swap () {
   SWAP_TYPE="${SWAP_TYPE:-"file"}"
   SWAP_TYPE="${SWAP_TYPE,,}"
 
-  while [[ ! $SWAP_TYPE =~ ^(file|partition)$ ]]; do
+  while [[ ! "$SWAP_TYPE" =~ ^(file|partition)$ ]]; do
     read -p " Enter a valid swap type: " SWAP_TYPE
     SWAP_TYPE="${SWAP_TYPE,,}"
   done
@@ -467,7 +467,7 @@ is_vm () {
   IS_VM="${IS_VM:-"no"}"
   IS_VM="${IS_VM,,}"
 
-  if [[ $IS_VM =~ ^(y|yes)$ ]]; then
+  if [[ "$IS_VM" =~ ^(y|yes)$ ]]; then
     IS_VM="yes"
   else
     IS_VM="no"
@@ -483,7 +483,7 @@ set_cpu () {
   CPU="${CPU:-"amd"}"
   CPU="${CPU,,}"
 
-  while [[ ! $CPU =~ ^(amd|intel)$ ]]; do
+  while [[ ! "$CPU" =~ ^(amd|intel)$ ]]; do
     read -p " Please enter a valid CPU vendor: " CPU
     CPU="${CPU,,}"
   done
@@ -497,7 +497,7 @@ set_gpu () {
   read -p "What GPU is your system running? [nvidia/amd/intel/vm] " GPU
   GPU="${GPU,,}"
 
-  while [[ ! $GPU =~ ^(nvidia|amd|intel|vm)$ ]]; do
+  while [[ ! "$GPU" =~ ^(nvidia|amd|intel|vm)$ ]]; do
     read -p " Please enter a valid GPU vendor: " GPU
     GPU="${GPU,,}"
   done
@@ -512,12 +512,12 @@ set_kernels () {
   KERNELS="${KERNELS:-"stable"}"
   KERNELS="${KERNELS,,}"
 
-  while [[ ! $KERNELS =~ ^(stable|lts|all)$ ]]; do
+  while [[ ! "$KERNELS" =~ ^(stable|lts|all)$ ]]; do
     read -p " Please enter a valid kernel option: " KERNELS
     KERNELS="${KERNELS,,}"
   done
 
-  if [[ $KERNELS == "all" ]]; then
+  if [ "$KERNELS" = "all" ]; then
     KERNELS="\"stable\" \"lts\""
   else
     KERNELS="\"$KERNELS\""
@@ -545,7 +545,7 @@ read -p "Do you want to proceed? [Y/n] " REPLY
 REPLY="${REPLY:-"yes"}"
 REPLY="${REPLY,,}"
 
-if [[ ! $REPLY =~ ^(y|yes)$ ]]; then
+if [[ ! "$REPLY" =~ ^(y|yes)$ ]]; then
   echo -e "\nExiting stack installation..."
   exit 1
 fi
@@ -586,7 +586,7 @@ while true; do
   REPLY="${REPLY:-"no"}"
   REPLY="${REPLY,,}"
 
-  [[ $REPLY =~ ^(n|no)$ ]] && break || clear
+  [[ "$REPLY" =~ ^(n|no)$ ]] && break || clear
 done
 
 echo "Moving to the next process..."

@@ -39,11 +39,11 @@ install_base () {
 
   local KERNEL_PKGS=""
 
-  if [[ "${KERNELS[@]}" =~ "stable" ]]; then
+  if [[ "${KERNELS[@]}" =~ stable ]]; then
     KERNEL_PKGS="linux linux-headers"
   fi
 
-  if [[ "${KERNELS[@]}" =~ "lts" ]]; then
+  if [[ "${KERNELS[@]}" =~ lts ]]; then
     KERNEL_PKGS="$KERNEL_PKGS linux-lts linux-lts-headers"
   fi
 

@@ -5,13 +5,13 @@ HOME="$(cd $(dirname "$(test -L "$0" && readlink "$0" || echo "$0")") && pwd)"
 OPTIONS="$HOME/.options"
 set +a
 
-if [[ "$(id -u)" != "0" ]]; then
+if [ "$(id -u)" != "0" ]; then
   echo "Error: script must be run as root"
   echo "Process exiting with code 1"
   exit 1
 fi
 
-if [[ ! -e /etc/arch-release ]]; then
+if [ ! -e /etc/arch-release ]; then
   echo "Error: script must be run in an archiso only"
   echo "Process exiting with code 1"
   exit 1

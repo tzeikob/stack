@@ -99,7 +99,7 @@ install_packages () {
     man-db man-pages texinfo cups bluez bluez-utils unzip terminus-font \
     vim nano git htop tree arch-audit atool zip xz unace p7zip gzip lzop \
     bzip2 unrar \
-    $([ $IS_UEFI == "yes" ] && echo 'efibootmgr')
+    $([ "$IS_UEFI" = "yes" ] && echo 'efibootmgr')
 
   echo "Base packages have been installed"
 }
@@ -107,22 +107,22 @@ install_packages () {
 install_drivers () {
   echo -e "\nInstalling hardware drivers..."
 
-  [ $CPU == "amd" ] && CPU_PKGS="amd-ucode" || CPU_PKGS="intel-ucode"
+  [ "$CPU" = "amd" ] && CPU_PKGS="amd-ucode" || CPU_PKGS="intel-ucode"
 
-  if [[ $GPU == "nvidia" ]]; then
-    [[ "${KERNELS[@]}" =~ "stable" ]] && GPU_PKG="nvidia"
-    [[ "${KERNELS[@]}" =~ "lts" ]] && GPU_PKG="$GPU_PKG nvidia-lts"
+  if [ "$GPU" = "nvidia" ]; then
+    [[ "${KERNELS[@]}" =~ stable ]] && GPU_PKG="nvidia"
+    [[ "${KERNELS[@]}" =~ lts ]] && GPU_PKG="$GPU_PKG nvidia-lts"
 
     GPU_PKG="$GPU_PKG nvidia-utils nvidia-settings"
-  elif [[ $GPU == "amd" ]]; then
+  elif [ "$GPU" = "amd" ]; then
     GPU_PKG="xf86-video-amdgpu"
-  elif [[ $GPU == "intel" ]]; then
+  elif [ "$GPU" = "intel" ]; then
     GPU_PKG="xf86-video-intel"
-  elif [[ $GPU == "vm" ]]; then
+  elif [ "$GPU" = "vm" ]; then
     GPU_PKG="xf86-video-qxl"
   fi
 
-  [[ $IS_VM == "yes" ]] && VM_PKGS="virtualbox-guest-utils"
+  [ "$IS_VM" = "yes" ] && VM_PKGS="virtualbox-guest-utils"
 
   pacman -S --noconfirm --needed \
     acpi acpid acpi_call \
@@ -171,7 +171,7 @@ enable_nopasswd &&
   sync_packages &&
   install_packages &&
   install_drivers &&
-  [[ $SWAP == "on" ]] && setup_swap
+  [ "$SWAP" = "yes" ] && setup_swap
 
 echo -e "\nSetting up the system has been completed"
 echo "Moving to the next process..."
