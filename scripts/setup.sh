@@ -28,13 +28,11 @@ set_locale () {
 }
 
 sync_clock () {
-  echo "Enabling NTP synchronization..."
+  echo "Synchronize hardware clock..."
 
-  timedatectl set-ntp true
-  timedatectl status
   hwclock --systohc
 
-  echo "System clock synchronized with the hardware clock"
+  echo "Hardware clock has been synchronized"
 }
 
 set_hostname () {
