@@ -20,9 +20,11 @@ set_timezone () {
 }
 
 set_locale () {
-  echo "LANG=$LOCALE" >> /etc/locale.conf
   sed -i "s/#\(${LOCALE}.*\)/\1/" /etc/locale.gen
   locale-gen
+
+  local PARTS=($LOCALE)
+  echo "LANG=${PARTS[0]}" >> /etc/locale.conf
 
   echo "Locale has been set to $LOCALE"
 }
