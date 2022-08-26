@@ -1,5 +1,14 @@
 #!/usr/bin/env bash
 
+update_clock () {
+  echo "Updating the system clock..."
+
+  timedatectl set-ntp true
+  timedatectl status
+
+  echo "System clock has been updated"
+}
+
 set_mirrors () {
   echo "Setting up pacman and mirrors list..."
 
@@ -55,7 +64,8 @@ echo -e "\nStarting the bootstrap process..."
 
 source $OPTIONS
 
-set_mirrors &&
+update_clock &&
+  set_mirrors &&
   boost_download &&
   update_keyring &&
   install_base &&
