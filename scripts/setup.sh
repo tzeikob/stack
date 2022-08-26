@@ -54,7 +54,7 @@ create_sudoer () {
   echo "Sudoer user $USERNAME has been created"
 }
 
-apply_passwds () {
+set_passwds () {
   echo "root:$ROOT_PASSWORD" | chpasswd
 
   echo "User root has been given a password"
@@ -146,7 +146,7 @@ enable_nopasswd &&
   sync_clock &&
   set_hostname &&
   create_sudoer &&
-  apply_passwds &&
+  set_passwds &&
   set_mirrors &&
   boost_download &&
   sync_packages &&
