@@ -4,38 +4,6 @@
 echo -e "Starting the stack installation process..."
 
 
-echo -e "\nSetting up the swap file..."
-
-read -p "Enter the size of the swap file in GB (0 to skip): [0] " swapsize
-swapsize=${swapsize:-0}
-
-while [[ ! $swapsize =~ ^[0-9]+$ ]]; do
-  echo -e "Invalid swap file size: '$swapsize'"
-  read -p "Please enter a valid size in GB (0 to skip): [0] " swapsize
-  swapsize=${swapsize:-0}
-done
-
-if [[ $swapsize -gt 0 ]]; then
-  echo -e "Swap file size set to '${swapsize}GB'"
-
-  echo -e "Creating the swap file..."
-
-  dd if=/dev/zero of=/swapfile bs=1M count=$(expr $swapsize \* 1024) status=progress
-  chmod 0600 /swapfile
-  mkswap -U clear /swapfile
-
-  echo -e "Enabling swap..."
-
-  swapon /swapfile && free -m
-
-  cp /etc/fstab /etc/fstab.bak
-  echo "/swapfile none swap defaults 0 0" | tee -a /etc/fstab
-
-  echo -e "Swap file has been set successfully to '/swapfile'"
-else
-  echo -e "No swap file will be set"
-fi
-
 echo -e "\nInstalling the yay package..."
 
 cd /home/$username

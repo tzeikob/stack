@@ -135,6 +135,25 @@ install_drivers () {
   echo "Drivers have been installed"
 }
 
+setup_swap () {
+  echo -e "\nSetting up the swap..."
+
+  echo "Creating the swapfile..."
+
+  dd if=/dev/zero of=/swapfile bs=1M count=$(expr $SWAP_SIZE \* 1024) status=progress
+  chmod 0600 /swapfile
+  mkswap -U clear /swapfile
+
+  echo "Enabling swap..."
+
+  swapon /swapfile && free -m
+
+  cp /etc/fstab /etc/fstab.bak
+  echo "/swapfile none swap defaults 0 0" | tee -a /etc/fstab
+
+  echo "Swap file has been set successfully to /swapfile"
+}
+
 echo -e "\nStarting the setup process..."
 
 source $OPTIONS
@@ -151,7 +170,8 @@ enable_nopasswd &&
   boost_download &&
   sync_packages &&
   install_packages &&
-  install_drivers
+  install_drivers &&
+  [[ $SWAP == "on" ]] && setup_swap
 
 echo -e "\nSetting up the system has been completed"
 echo "Moving to the next process..."

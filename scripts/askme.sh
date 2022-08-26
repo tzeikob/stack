@@ -435,7 +435,7 @@ set_swap () {
   local SWAP_SIZE=""
   read -p "Enter the size of the swap in GBytes: " SWAP_SIZE
 
-  while [[ ! $SWAP_SIZE =~ ^[0-9]+$ ]]; do
+  while [[ ! $SWAP_SIZE =~ ^[1-9][0-9]{,2}$ ]]; do
     read -p " Please enter a valid swap size in GBytes: " SWAP_SIZE
   done
 
@@ -449,7 +449,7 @@ set_swap () {
     SWAP_TYPE="${SWAP_TYPE,,}"
   done
 
-  set_string "SWAP_SIZE" "${SWAP_SIZE}GB"
+  set_string "SWAP_SIZE" "$SWAP_SIZE"
   set_string "SWAP_TYPE" "$SWAP_TYPE"
 
   echo "Swap is set to \"$SWAP_TYPE\""
