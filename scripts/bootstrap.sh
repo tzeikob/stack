@@ -56,7 +56,6 @@ create_fstab () {
   echo "Creating the file system table..."
 
   genfstab -U /mnt >> /mnt/etc/fstab
-  cat /mnt/etc/fstab
 
   echo "The file system table has been created"
 }
