@@ -117,6 +117,11 @@ set_password () {
   echo -e "Password for the ${SUBJECT,,} is set successfully\n"
 }
 
+clean_options () {
+  rm -f $OPTIONS
+  touch $OPTIONS
+}
+
 set_mirrors () {
   local OLD_IFS=$IFS
   IFS=","
@@ -548,7 +553,8 @@ fi
 echo
 
 while true; do
-  set_mirrors &&
+  clean_options &&
+    set_mirrors &&
     set_timezone &&
     set_keymap &&
     set_layouts &&
