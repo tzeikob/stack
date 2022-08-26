@@ -426,7 +426,7 @@ set_swap () {
 
   if [[ ! $REPLY =~ ^(y|yes)$ ]]; then
     set_string "SWAP" "off"
-    echo "Swap is set to \"off\""
+    echo -e "Swap is set to \"off\"\n"
     return 0
   else
     set_string "SWAP" "on"
