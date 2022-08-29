@@ -469,6 +469,17 @@ is_vm () {
 
   if [[ "$IS_VM" =~ ^(y|yes)$ ]]; then
     IS_VM="yes"
+
+    local IS_VM_VBOX=""
+    read -p "Is this a virtual box machine? [y/N] " IS_VM_VBOX
+    IS_VM_VBOX="${IS_VM_VBOX:-"no"}"
+    IS_VM_VBOX="${IS_VM_VBOX,,}"
+
+    if [[ "$IS_VM_VBOX" =~ ^(y|yes)$ ]]; then
+      IS_VM_VBOX="yes"
+    else
+      IS_VM_VBOX="no"
+    fi
   else
     IS_VM="no"
   fi

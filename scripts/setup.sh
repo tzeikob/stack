@@ -124,7 +124,13 @@ install_drivers () {
     GPU_PKG="xf86-video-qxl"
   fi
 
-  [ "$IS_VM" = "yes" ] && VM_PKGS="virtualbox-guest-utils"
+  if [ "$IS_VM" = "yes" ]; then
+    local VM_PKGS=""
+
+    if [ "$IS_VM_VBOX" = "yes" ]; then
+      VM_PKGS="$VM_PKGS virtualbox-guest-utils"
+    fi
+  fi
 
   pacman -S --noconfirm --needed \
     acpi acpid acpi_call \
