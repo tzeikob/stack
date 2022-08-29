@@ -127,10 +127,12 @@ install_drivers () {
   pacman -S --noconfirm --needed \
     acpi acpid acpi_call \
     networkmanager dialog wireless_tools netctl inetutils dnsutils \
-    wpa_supplicant openssh nfs-utils openbsd-netcat nftables iptables-nft ipset \
+    wpa_supplicant openssh nfs-utils openbsd-netcat ipset \
     alsa-utils pipewire pipewire-alsa pipewire-pulse pipewire-jack pavucontrol \
     xorg xorg-xinit xorg-xrandr arandr \
     $CPU_PKGS $GPU_PKGS $VM_PKGS
+  
+  yes | pacman -S --needed nftables iptables-nft
 
   echo "Drivers have been installed"
 }
