@@ -98,8 +98,10 @@ install_packages () {
     parted curl wget udisks2 udiskie gvfs gvfs-smb bash-completion \
     man-db man-pages texinfo cups bluez bluez-utils unzip terminus-font \
     vim nano git htop tree arch-audit atool zip xz unace p7zip gzip lzop \
-    bzip2 unrar \
+    bzip2 unrar dialog inetutils dnsutils openssh nfs-utils openbsd-netcat ipset \
     $([ "$IS_UEFI" = "yes" ] && echo 'efibootmgr')
+
+  yes | pacman -S --needed nftables iptables-nft
 
   echo "Base packages have been installed"
 }
@@ -126,13 +128,10 @@ install_drivers () {
 
   pacman -S --noconfirm --needed \
     acpi acpid acpi_call \
-    networkmanager dialog wireless_tools netctl inetutils dnsutils \
-    wpa_supplicant openssh nfs-utils openbsd-netcat ipset \
+    networkmanager wireless_tools netctl wpa_supplicant \
     alsa-utils pipewire pipewire-alsa pipewire-pulse pipewire-jack pavucontrol \
     xorg xorg-xinit xorg-xrandr arandr \
     $CPU_PKGS $GPU_PKGS $VM_PKGS
-  
-  yes | pacman -S --needed nftables iptables-nft
 
   echo "Drivers have been installed"
 }
