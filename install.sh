@@ -34,7 +34,7 @@ $HOME/scripts/askme.sh && source $OPTIONS &&
   cp -R $HOME /mnt/root &&
   arch-chroot /mnt $HOME/scripts/setup.sh &&
     echo "Unmounting all partitions under '/mnt'..." &&
-    umount -R /mnt &&
+    (umount -R /mnt || echo "Ignore busy mountings...") &&
     echo "Rebooting the system in 15 secs (ctrl-c to skip)..." &&
     sleep 15 &&
     reboot
