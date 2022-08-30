@@ -3,6 +3,7 @@
 set -a
 HOME="$(cd $(dirname "$(test -L "$0" && readlink "$0" || echo "$0")") && pwd)"
 OPTIONS="$HOME/.options"
+LOG="$HOME/all.log"
 set +a
 
 run () {
@@ -10,9 +11,9 @@ run () {
   local USER=$2
 
   if [ -z "$USER" ]; then
-    bash $HOME/scripts/${SCRIPT}.sh
+    bash $HOME/scripts/${SCRIPT}.sh 2>&1 | tee -a $LOG
   elif [ "$USER" = "root" ]; then
-    arch-chroot /mnt $HOME/scripts/${SCRIPT}.sh
+    arch-chroot /mnt $HOME/scripts/${SCRIPT}.sh 2>&1 | tee -a $LOG
   else
     echo "TODO: run $SCRIPT as $USER"
   fi
