@@ -73,7 +73,7 @@ set_mirrors () {
   reflector --country "$MIRRORS" --age 8 --sort age --save /etc/pacman.d/mirrorlist
   sed -i "s/# --country.*/--country ${MIRRORS}/" /etc/xdg/reflector/reflector.conf
 
-  echo "Mirror list set to ${MIRRORS[@]}"
+  echo "Mirror list set to $MIRRORS"
 }
 
 boost_download () {
