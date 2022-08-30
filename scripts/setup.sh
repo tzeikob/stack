@@ -61,7 +61,7 @@ set_passwds () {
 
   echo "$USERNAME:$USER_PASSWORD" | chpasswd
 
-  echo "User $USERNAME have been given a password"
+  echo "User $USERNAME has been given a password"
 }
 
 set_mirrors () {
