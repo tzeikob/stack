@@ -36,7 +36,19 @@ cat << EOF
 EOF
 
 echo -e "\nWelcome to Stack v1.0.0"
-echo "Have your development environment on archlinux"
+echo -e "Have your development environment on archlinux\n"
+
+echo "Let's start by configuring your system"
+read -p "Do you want to proceed? [Y/n] " REPLY
+REPLY="${REPLY:-"yes"}"
+REPLY="${REPLY,,}"
+
+if [[ ! "$REPLY" =~ ^(y|yes)$ ]]; then
+  echo "Exiting stack installation..."
+  exit 0
+fi
+
+echo
 
 run "askme" &&
   run "diskpart" &&

@@ -374,6 +374,27 @@ set_username () {
   echo -e "Username is set to \"$USERNAME\"\n"
 }
 
+set_kernels () {
+  local KERNELS=""
+  read -p "Which linux kernels to install: [STABLE/lts/all] " KERNELS
+  KERNELS="${KERNELS:-"stable"}"
+  KERNELS="${KERNELS,,}"
+
+  while [[ ! "$KERNELS" =~ ^(stable|lts|all)$ ]]; do
+    read -p " Please enter a valid kernel option: " KERNELS
+    KERNELS="${KERNELS,,}"
+  done
+
+  if [ "$KERNELS" = "all" ]; then
+    KERNELS="\"stable\" \"lts\""
+  else
+    KERNELS="\"$KERNELS\""
+  fi
+
+  set_array "KERNELS" "$KERNELS"
+  echo -e "Linux kernels are set to [$KERNELS]\n"
+}
+
 set_disk () {
   lsblk -dA -o NAME,SIZE,FSUSE%,FSTYPE,TYPE,MOUNTPOINTS,LABEL
 
@@ -518,27 +539,6 @@ set_hardware () {
   fi
 }
 
-set_kernels () {
-  local KERNELS=""
-  read -p "Which linux kernels to install: [STABLE/lts/all] " KERNELS
-  KERNELS="${KERNELS:-"stable"}"
-  KERNELS="${KERNELS,,}"
-
-  while [[ ! "$KERNELS" =~ ^(stable|lts|all)$ ]]; do
-    read -p " Please enter a valid kernel option: " KERNELS
-    KERNELS="${KERNELS,,}"
-  done
-
-  if [ "$KERNELS" = "all" ]; then
-    KERNELS="\"stable\" \"lts\""
-  else
-    KERNELS="\"$KERNELS\""
-  fi
-
-  set_array "KERNELS" "$KERNELS"
-  echo -e "Linux kernels are set to [$KERNELS]\n"
-}
-
 is_uefi () {
   echo "Detecting if UEFI mode is enabled..." && sleep 1
 
@@ -550,19 +550,6 @@ is_uefi () {
   set_string "IS_UEFI" "$IS_UEFI"
   echo -e "UEFI is set to \"$IS_UEFI\"\n"
 }
-
-echo -e "\nLet's start by collecting some information"
-
-read -p "Do you want to proceed? [Y/n] " REPLY
-REPLY="${REPLY:-"yes"}"
-REPLY="${REPLY,,}"
-
-if [[ ! "$REPLY" =~ ^(y|yes)$ ]]; then
-  echo -e "\nExiting stack installation..."
-  exit 1
-fi
-
-echo
 
 while true; do
   clean_options &&
@@ -579,10 +566,10 @@ while true; do
     set_password "ROOT" \
       "^[a-zA-Z0-9@&!#%\$_-]{4,}$" \
       "Password must be at least 4 chars of a-z A-Z 0-9 @&!#%\$_-" &&
+    set_kernels &&
     set_disk &&
     set_swap &&
     set_hardware &&
-    set_kernels &&
     is_uefi
 
   source $OPTIONS
