@@ -17,7 +17,7 @@ set_mirrors () {
 
   reflector --country "$MIRRORS" --age 8 --sort age --save /etc/pacman.d/mirrorlist
 
-  echo "Mirror list set to ${MIRRORS[@]}"
+  echo "Mirror list set to $MIRRORS"
 }
 
 boost_download () {
