@@ -154,7 +154,7 @@ install_yay () {
   git clone https://aur.archlinux.org/yay.git
 
   chown -R $USERNAME:$USERNAME yay && cd yay
-  sudo -u $USERNAME makepkg -si
+  sudo -u $USERNAME makepkg -si --noconfirm --needed
 
   cd /root && rm -rf /home/$USERNAME/yay
 
