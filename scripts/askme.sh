@@ -461,7 +461,7 @@ set_swap () {
   echo -e "Swap size is set to \"${SWAP_SIZE}GB\"\n"
 }
 
-is_vm () {
+set_hardware () {
   local IS_VM=""
   read -p "Is this a virtual machine? [y/N] " IS_VM
   IS_VM="${IS_VM:-"no"}"
@@ -471,8 +471,8 @@ is_vm () {
     IS_VM="yes"
 
     local IS_VM_VBOX=""
-    read -p "Is this a virtual box machine? [y/N] " IS_VM_VBOX
-    IS_VM_VBOX="${IS_VM_VBOX:-"no"}"
+    read -p "Is it hosted via virtual box? [Y/n] " IS_VM_VBOX
+    IS_VM_VBOX="${IS_VM_VBOX:-"yes"}"
     IS_VM_VBOX="${IS_VM_VBOX,,}"
 
     if [[ "$IS_VM_VBOX" =~ ^(y|yes)$ ]]; then
@@ -485,38 +485,37 @@ is_vm () {
   fi
 
   set_string "IS_VM" "$IS_VM"
-  set_string "IS_VM_VBOX" "$IS_VM_VBOX"
+  [ "$IS_VM" = "yes" ] && set_string "IS_VM_VBOX" "$IS_VM_VBOX"
 
   echo -e "VM is set to \"$IS_VM\"\n"
-}
 
-set_cpu () {
-  local CPU=""
-  read -p "What CPU is your system running on? [AMD/intel] " CPU
-  CPU="${CPU:-"amd"}"
-  CPU="${CPU,,}"
-
-  while [[ ! "$CPU" =~ ^(amd|intel)$ ]]; do
-    read -p " Please enter a valid CPU vendor: " CPU
+  if [ "$IS_VM" = "no" ]; then
+    local CPU=""
+    read -p "What CPU is your system running on? [AMD/intel] " CPU
+    CPU="${CPU:-"amd"}"
     CPU="${CPU,,}"
-  done
 
-  set_string "CPU" "$CPU"
-  echo -e "CPU is set to \"$CPU\"\n"
-}
+    while [[ ! "$CPU" =~ ^(amd|intel)$ ]]; do
+      read -p " Please enter a valid CPU vendor: " CPU
+      CPU="${CPU,,}"
+    done
 
-set_gpu () {
-  local GPU=""
-  read -p "What GPU is your system running? [nvidia/amd/intel] " GPU
-  GPU="${GPU,,}"
+    set_string "CPU" "$CPU"
+    echo -e "CPU is set to \"$CPU\"\n"
 
-  while [[ ! "$GPU" =~ ^(nvidia|amd|intel)$ ]]; do
-    read -p " Please enter a valid GPU vendor: " GPU
+    local GPU=""
+    read -p "What GPU is your system running? [NVIDIA/amd/intel] " GPU
+    GPU="${GPU:-"nvidia"}"
     GPU="${GPU,,}"
-  done
 
-  set_string "GPU" "$GPU"
-  echo -e "GPU is set to \"$GPU\"\n"
+    while [[ ! "$GPU" =~ ^(nvidia|amd|intel)$ ]]; do
+      read -p " Please enter a valid GPU vendor: " GPU
+      GPU="${GPU,,}"
+    done
+
+    set_string "GPU" "$GPU"
+    echo -e "GPU is set to \"$GPU\"\n"
+  fi
 }
 
 set_kernels () {
@@ -582,8 +581,7 @@ while true; do
       "Password must be at least 4 chars of a-z A-Z 0-9 @&!#%\$_-" &&
     set_disk &&
     set_swap &&
-    is_vm &&
-    ([ "$IS_VM" = "no" ] && set_cpu && set_gpu) &&
+    set_hardware &&
     set_kernels &&
     is_uefi
 

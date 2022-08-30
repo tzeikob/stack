@@ -3,19 +3,6 @@
 
 echo -e "Starting the stack installation process..."
 
-
-echo -e "\nInstalling the yay package..."
-
-cd /home/$username
-git clone https://aur.archlinux.org/yay.git
-
-chown -R $username:$username yay && cd yay
-sudo -u $username makepkg -si
-
-cd / && rm -rf /home/$username/yay
-
-echo -e "Yay has been installed"
-
 read -p "Do you want to install a desktop environment? [Y/n] " answer
 answer=${answer:-"yes"}
 
