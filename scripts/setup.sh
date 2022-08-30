@@ -156,7 +156,7 @@ install_yay () {
   chown -R $USERNAME:$USERNAME yay && cd yay
   sudo -u $USERNAME makepkg -si
 
-  cd / && rm -rf /home/$USERNAME/yay
+  cd /root && rm -rf /home/$USERNAME/yay
 
   echo "Yay package manager has been installed"
 }
