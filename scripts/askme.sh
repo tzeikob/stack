@@ -485,6 +485,8 @@ is_vm () {
   fi
 
   set_string "IS_VM" "$IS_VM"
+  set_string "IS_VM_VBOX" "$IS_VM_VBOX"
+
   echo -e "VM is set to \"$IS_VM\"\n"
 }
 
