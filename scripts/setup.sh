@@ -111,7 +111,7 @@ install_drivers () {
 
   if [ "$CPU" = "amd" ]; then
     CPU_PKGS="amd-ucode"
-  elif [ "$CPU" = "amd" ]; then
+  elif [ "$CPU" = "intel" ]; then
     CPU_PKGS="intel-ucode"
   fi
 
