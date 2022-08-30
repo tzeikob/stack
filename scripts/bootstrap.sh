@@ -60,6 +60,14 @@ create_fstab () {
   echo "The file system table has been created"
 }
 
+copy_files () {
+  echo "Copying installation files to the new disk..."
+
+  cp -R $HOME /mnt/root
+
+  echo -e "Files have been copied successfully"
+}
+
 echo -e "\nStarting the bootstrap process..."
 
 source $OPTIONS
@@ -69,7 +77,8 @@ update_clock &&
   boost_download &&
   update_keyring &&
   install_base &&
-  create_fstab
+  create_fstab &&
+  copy_files
 
 echo -e "\nBootstrap process has been completed successfully"
 echo "Moving to the next process..."
