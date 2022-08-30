@@ -142,6 +142,20 @@ install_drivers () {
   echo "Drivers have been installed"
 }
 
+install_yay () {
+  echo -e "\nInstalling the yay package manager..."
+
+  cd /home/$USERNAME
+  git clone https://aur.archlinux.org/yay.git
+
+  chown -R $USERNAME:$USERNAME yay && cd yay
+  sudo -u $USERNAME makepkg -si
+
+  cd / && rm -rf /home/$USERNAME/yay
+
+  echo "Yay package manager has been installed"
+}
+
 setup_swap () {
   echo -e "\nSetting up the swap..."
 
@@ -178,6 +192,7 @@ enable_nopasswd &&
   sync_packages &&
   install_packages &&
   install_drivers &&
+  install_yay &&
   [ "$SWAP" = "yes" ] && setup_swap
 
 echo -e "\nSetting up the system has been completed"
