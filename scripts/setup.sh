@@ -109,7 +109,11 @@ install_packages () {
 install_drivers () {
   echo -e "\nInstalling hardware drivers..."
 
-  [ "$CPU" = "amd" ] && CPU_PKGS="amd-ucode" || CPU_PKGS="intel-ucode"
+  if [ "$CPU" = "amd" ]; then
+    CPU_PKGS="amd-ucode"
+  elif [ "$CPU" = "amd" ]; then
+    CPU_PKGS="intel-ucode"
+  fi
 
   if [ "$GPU" = "nvidia" ]; then
     [[ "${KERNELS[@]}" =~ stable ]] && GPU_PKG="nvidia"
@@ -120,7 +124,7 @@ install_drivers () {
     GPU_PKG="xf86-video-amdgpu"
   elif [ "$GPU" = "intel" ]; then
     GPU_PKG="xf86-video-intel"
-  elif [ "$GPU" = "vm" ]; then
+  else
     GPU_PKG="xf86-video-qxl"
   fi
 

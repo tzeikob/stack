@@ -507,10 +507,10 @@ set_cpu () {
 
 set_gpu () {
   local GPU=""
-  read -p "What GPU is your system running? [nvidia/amd/intel/vm] " GPU
+  read -p "What GPU is your system running? [nvidia/amd/intel] " GPU
   GPU="${GPU,,}"
 
-  while [[ ! "$GPU" =~ ^(nvidia|amd|intel|vm)$ ]]; do
+  while [[ ! "$GPU" =~ ^(nvidia|amd|intel)$ ]]; do
     read -p " Please enter a valid GPU vendor: " GPU
     GPU="${GPU,,}"
   done
@@ -583,8 +583,7 @@ while true; do
     set_disk &&
     set_swap &&
     is_vm &&
-    set_cpu &&
-    set_gpu &&
+    ([ "$IS_VM" = "no" ] && set_cpu && set_gpu) &&
     set_kernels &&
     is_uefi
 
