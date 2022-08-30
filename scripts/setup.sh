@@ -109,28 +109,29 @@ install_packages () {
 install_drivers () {
   echo -e "\nInstalling hardware drivers..."
 
+  local CPU_PKGS=""
   if [ "$CPU" = "amd" ]; then
     CPU_PKGS="amd-ucode"
   elif [ "$CPU" = "intel" ]; then
     CPU_PKGS="intel-ucode"
   fi
 
+  local GPU_PKGS=""
   if [ "$GPU" = "nvidia" ]; then
-    [[ "${KERNELS[@]}" =~ stable ]] && GPU_PKG="nvidia"
-    [[ "${KERNELS[@]}" =~ lts ]] && GPU_PKG="$GPU_PKG nvidia-lts"
+    [[ "${KERNELS[@]}" =~ stable ]] && GPU_PKGS="nvidia"
+    [[ "${KERNELS[@]}" =~ lts ]] && GPU_PKGS="$GPU_PKGS nvidia-lts"
 
-    GPU_PKG="$GPU_PKG nvidia-utils nvidia-settings"
+    GPU_PKGS="$GPU_PKGS nvidia-utils nvidia-settings"
   elif [ "$GPU" = "amd" ]; then
-    GPU_PKG="xf86-video-amdgpu"
+    GPU_PKGS="xf86-video-amdgpu"
   elif [ "$GPU" = "intel" ]; then
-    GPU_PKG="xf86-video-intel"
+    GPU_PKGS="xf86-video-intel"
   else
-    GPU_PKG="xf86-video-qxl"
+    GPU_PKGS="xf86-video-qxl"
   fi
 
+  local VM_PKGS=""
   if [ "$IS_VM" = "yes" ]; then
-    local VM_PKGS=""
-
     if [ "$IS_VM_VBOX" = "yes" ]; then
       VM_PKGS="$VM_PKGS virtualbox-guest-utils"
     fi
