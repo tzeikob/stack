@@ -33,12 +33,6 @@ if [ "$(id -u)" != "0" ]; then
   exit 1
 fi
 
-if [ ! -e /etc/arch-release ]; then
-  echo "Error: script must be run in an archiso only"
-  echo "Process exiting with code 1"
-  exit 1
-fi
-
 clear
 
 cat << EOF
