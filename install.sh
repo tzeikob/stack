@@ -27,12 +27,6 @@ reboot () {
   reboot
 }
 
-if [ "$(id -u)" != "0" ]; then
-  echo "Error: script must be run as root"
-  echo "Process exiting with code 1"
-  exit 1
-fi
-
 clear
 
 cat << EOF
