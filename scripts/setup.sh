@@ -6,6 +6,12 @@ enable_nopasswd () {
   echo "No password mode has temporarily been enabled"
 }
 
+disable_nopasswd () {
+  sed -i 's/^%wheel ALL=(ALL:ALL) NOPASSWD: ALL/# %wheel ALL=(ALL:ALL) NOPASSWD: ALL/' /etc/sudoers
+
+  echo "No password mode has been disabled"
+}
+
 set_keymap () {
   echo "KEYMAP=$KEYMAP" > /etc/vconsole.conf
   loadkeys $KEYMAP
@@ -383,7 +389,8 @@ enable_nopasswd &&
   config_security &&
   [ "$SWAP" = "yes" ] && setup_swap &&
   install_bootloader &&
-  enable_services
+  enable_services &&
+  disable_nopasswd
 
 echo -e "\nSetting up the system has been completed"
 echo "Moving to the next process..."
