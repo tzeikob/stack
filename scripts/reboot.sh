@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-echo "Booting into the system for the first time..."
+echo -e "\nBooting into the system for the first time..."
 
 echo "Copying all installation files to the new system"
 
