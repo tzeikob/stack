@@ -294,9 +294,9 @@ config_security () {
 
   printf '%s\n' \
   '# Prevents overpassing screen locker by killing xorg or switching vt' \
-  'Section "ServerFlags"'
-  '  Option "DontVTSwitch" "True"'
-  '  Option "DontZap" "True"'
+  'Section "ServerFlags"' \
+  '  Option "DontVTSwitch" "True"' \
+  '  Option "DontZap" "True"' \
   'EndSection' > /etc/X11/xorg.conf.d/01-screenlock.conf
 
   echo "Security configuration has been completed"
