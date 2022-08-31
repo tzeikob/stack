@@ -248,6 +248,29 @@ setup_swap () {
   echo "Swap file has been set successfully to /swapfile"
 }
 
+install_bootloader () {
+  echo -e "\nInstalling the bootloader via GRUB..."
+
+  if [ "$IS_UEFI" = "yes" ]; then
+    grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
+  else
+    grub-install --target=i386-pc $DISK
+  fi
+
+  sed -i '/#GRUB_SAVEDEFAULT=true/i GRUB_DEFAULT=saved' /etc/default/grub
+  sed -i 's/#GRUB_SAVEDEFAULT=true/GRUB_SAVEDEFAULT=true/' /etc/default/grub
+  sed -i 's/#GRUB_DISABLE_SUBMENU=y/GRUB_DISABLE_SUBMENU=y/' /etc/default/grub
+
+  grub-mkconfig -o /boot/grub/grub.cfg
+
+  if [ "$IS_UEFI" = "yes" && "$IS_VM_VBOX" = "yes" ]; then
+    mkdir -p /boot/EFI/BOOT
+    cp /boot/EFI/GRUB/grubx64.efi /boot/EFI/BOOT/BOOTX64.EFI
+  fi
+
+  echo "Bootloader has been installed"
+}
+
 echo -e "\nStarting the setup process..."
 
 source $OPTIONS
@@ -268,7 +291,8 @@ enable_nopasswd &&
   install_yay &&
   set_layouts &&
   install_fonts &&
-  [ "$SWAP" = "yes" ] && setup_swap
+  [ "$SWAP" = "yes" ] && setup_swap &&
+  install_bootloader
 
 echo -e "\nSetting up the system has been completed"
 echo "Moving to the next process..."
