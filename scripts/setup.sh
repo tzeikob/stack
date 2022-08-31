@@ -39,10 +39,11 @@ sync_clock () {
 
 set_hostname () {
   echo $HOSTNAME >> /etc/hostname
-  echo "" >> /etc/hosts
-  echo "127.0.0.1    localhost" >> /etc/hosts
-  echo "::1          localhost" >> /etc/hosts
-  echo "127.0.1.1    $HOSTNAME" >> /etc/hosts
+
+  printf '%s\n' \
+    '127.0.0.1    localhost' \
+    '::1          localhost' \
+    "127.0.1.1    $HOSTNAME" > /etc/hosts
 
   echo "Hostname has been set to $HOSTNAME"
 }
