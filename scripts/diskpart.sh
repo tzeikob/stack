@@ -65,11 +65,13 @@ echo -e "\nStarting disk partitioning..."
 
 source $OPTIONS
 
-[ "$IS_UEFI" = "yes" ] &&
-  create_gpt ||
+if [ "$IS_UEFI" = "yes" ]; then
+  create_gpt
+else
   create_mbr
+fi
 
-echo -e "\nDisk layout is set to:"
+echo -e "\nDisk layout is now set to:"
 
 lsblk $DISK -o NAME,SIZE,TYPE,MOUNTPOINTS | awk '{print " "$0}'
 
