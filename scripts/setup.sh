@@ -338,6 +338,27 @@ install_bootloader () {
   echo "Bootloader has been installed"
 }
 
+enable_services () {
+  echo -e "\nEnabling various system services..."
+
+  systemctl enable systemd-timesyncd
+  systemctl enable NetworkManager
+  systemctl enable bluetooth
+  systemctl enable acpid
+  systemctl enable cups
+  systemctl enable sshd
+  systemctl enable fstrim.timer
+  systemctl enable nftables
+  systemctl enable reflector.timer
+  systemctl enable paccache.timer
+
+  if [ "$IS_VM_VBOX" = "yes" ]; then
+    systemctl enable vboxservice
+  fi
+
+  echo "System services have been enabled"
+}
+
 echo -e "\nStarting the setup process..."
 
 source $OPTIONS
@@ -361,7 +382,8 @@ enable_nopasswd &&
   config_pacman &&
   config_security &&
   [ "$SWAP" = "yes" ] && setup_swap &&
-  install_bootloader
+  install_bootloader &&
+  enable_services
 
 echo -e "\nSetting up the system has been completed"
 echo "Moving to the next process..."

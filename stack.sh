@@ -357,22 +357,5 @@ sed -ri "s;(ExecStart=-/sbin/agetty)(.*);\1 --nohostname\2;" /lib/systemd/system
 
 echo -e "Login screen has been set"
 
-echo -e "\nEnabling system services..."
-
-systemctl enable systemd-timesyncd
-systemctl enable NetworkManager
-systemctl enable bluetooth
-systemctl enable acpid
-systemctl enable cups
-systemctl enable sshd
-systemctl enable fstrim.timer
-systemctl enable nftables
-systemctl enable reflector.timer
-systemctl enable paccache.timer
-
-if [[ $virtual_box =~ ^(yes|y)$ ]]; then
-  systemctl enable vboxservice
-fi
-
 echo -e "\nThe stack script has been completed"
 echo -e "Exiting the script and prepare for reboot..."
