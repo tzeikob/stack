@@ -19,15 +19,6 @@ run () {
   fi
 }
 
-reboot () {
-  echo "Unmounting all partitions under '/mnt'..."
-  umount -R /mnt || echo "Ignore any busy mountings..."
-
-  echo "Rebooting the system in 15 secs (ctrl-c to skip)..."
-  sleep 15
-  reboot
-}
-
 clear
 
 cat << EOF
@@ -55,4 +46,4 @@ run "askme" &&
   run "diskpart" &&
   run "bootstrap" &&
   run "setup" "root" &&
-  reboot
+  run "reboot"
