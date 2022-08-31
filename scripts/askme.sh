@@ -1,5 +1,27 @@
 #!/usr/bin/env bash
 
+save_option () {
+  local key=$1
+  local value=$2
+
+  touch -f $OPTIONS
+
+  # Override pre-existing option
+  if grep -Eq "^${key}.*" $OPTIONS; then
+    sed -i -e "/^${key}.*/d" $OPTIONS
+  fi
+
+  echo "${key}=${value}" >> $OPTIONS
+}
+
+save_string () {
+  save_option "$1" "\"$2\""
+}
+
+save_array () {
+  save_option "$1" "($2)"
+}
+
 trim () {
   local INPUT=""
   [[ -p /dev/stdin ]] && INPUT="$(cat -)" || INPUT="${@}"
@@ -18,6 +40,21 @@ remove_dups () {
   local ARR=("${@}")
 
   echo "${ARR[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '
+}
+
+contains () {
+  local ITEM=$1 && shift
+
+  local ARR=("${@}")
+  local LEN=${#ARR[@]}
+
+  for ((i = 0; i < $LEN; i++)); do
+    if [ "$ITEM" = "${ARR[$i]}" ]; then
+      return 0
+    fi
+  done
+
+  return 1
 }
 
 print () {
@@ -44,77 +81,6 @@ print () {
 
     printf "\n"
   done
-}
-
-contains () {
-  local ITEM=$1 && shift
-
-  local ARR=("${@}")
-  local LEN=${#ARR[@]}
-
-  for ((i = 0; i < $LEN; i++)); do
-    if [ "$ITEM" = "${ARR[$i]}" ]; then
-      return 0
-    fi
-  done
-
-  return 1
-}
-
-save_option () {
-  local key=$1
-  local value=$2
-
-  touch -f $OPTIONS
-
-  # Override pre-existing option
-  if grep -Eq "^${key}.*" $OPTIONS; then
-    sed -i -e "/^${key}.*/d" $OPTIONS
-  fi
-
-  echo "${key}=${value}" >> $OPTIONS
-}
-
-save_string () {
-  save_option "$1" "\"$2\""
-}
-
-save_array () {
-  save_option "$1" "($2)"
-}
-
-what_password () {
-  local SUBJECT=$1
-  local RE=$2
-  local MESSAGE=$3
-
-  echo "Setting password for the ${SUBJECT,,}"
-  echo "$MESSAGE"
-
-  local PASSWORD=""
-  read -rs -p "Enter a new password: " PASSWORD && echo
-
-  while [[ ! "$PASSWORD" =~ $RE ]]; do
-    read -rs -p " Please enter a valid password: " PASSWORD && echo
-  done
-
-  local COMFIRMED=""
-  read -rs -p "Re-enter the password: " COMFIRMED && echo
-
-  # Repeat until password comfirmed 
-  while [ "$PASSWORD" != "$COMFIRMED" ]; do
-    echo " Ooops, passwords do not match"
-    read -rs -p "Please enter a new password: " PASSWORD && echo
-
-    while [[ ! "$PASSWORD" =~ $RE ]]; do
-      read -rs -p " Please enter a valid password: " PASSWORD && echo
-    done
-
-    read -rs -p "Re-enter the password: " COMFIRMED && echo
-  done
-
-  save_string "${SUBJECT}_PASSWORD" "$PASSWORD"
-  echo -e "Password for the ${SUBJECT,,} is set successfully\n"
 }
 
 clean_options () {
@@ -372,6 +338,40 @@ what_username () {
 
   save_string "USERNAME" "$USERNAME"
   echo -e "Username is set to \"$USERNAME\"\n"
+}
+
+what_password () {
+  local SUBJECT=$1
+  local RE=$2
+  local MESSAGE=$3
+
+  echo "Setting password for the ${SUBJECT,,}"
+  echo "$MESSAGE"
+
+  local PASSWORD=""
+  read -rs -p "Enter a new password: " PASSWORD && echo
+
+  while [[ ! "$PASSWORD" =~ $RE ]]; do
+    read -rs -p " Please enter a valid password: " PASSWORD && echo
+  done
+
+  local COMFIRMED=""
+  read -rs -p "Re-enter the password: " COMFIRMED && echo
+
+  # Repeat until password comfirmed 
+  while [ "$PASSWORD" != "$COMFIRMED" ]; do
+    echo " Ooops, passwords do not match"
+    read -rs -p "Please enter a new password: " PASSWORD && echo
+
+    while [[ ! "$PASSWORD" =~ $RE ]]; do
+      read -rs -p " Please enter a valid password: " PASSWORD && echo
+    done
+
+    read -rs -p "Re-enter the password: " COMFIRMED && echo
+  done
+
+  save_string "${SUBJECT}_PASSWORD" "$PASSWORD"
+  echo -e "Password for the ${SUBJECT,,} is set successfully\n"
 }
 
 which_kernels () {
