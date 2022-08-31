@@ -336,7 +336,7 @@ install_bootloader () {
 
   grub-mkconfig -o /boot/grub/grub.cfg
 
-  if [ "$IS_UEFI" = "yes" && "$IS_VM_VBOX" = "yes" ]; then
+  if [ "$IS_UEFI" = "yes" ] && [ "$IS_VM_VBOX" = "yes" ]; then
     mkdir -p /boot/EFI/BOOT
     cp /boot/EFI/GRUB/grubx64.efi /boot/EFI/BOOT/BOOTX64.EFI
   fi
