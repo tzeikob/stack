@@ -342,8 +342,8 @@ what_username () {
 
 what_password () {
   local SUBJECT=$1
-  local RE=$2
-  local MESSAGE=$3
+  local RE="^[a-zA-Z0-9@&!#%\$_-]{4,}$"
+  local MESSAGE="Password must be at least 4 chars of a-z A-Z 0-9 @&!#%\$_-"
 
   echo "Setting password for the ${SUBJECT,,}"
   echo "$MESSAGE"
@@ -560,12 +560,8 @@ while true; do
     which_locale &&
     what_hostname &&
     what_username &&
-    what_password "USER" \
-      "^[a-zA-Z0-9@&!#%\$_-]{4,}$" \
-      "Password must be at least 4 chars of a-z A-Z 0-9 @&!#%\$_-" &&
-    what_password "ROOT" \
-      "^[a-zA-Z0-9@&!#%\$_-]{4,}$" \
-      "Password must be at least 4 chars of a-z A-Z 0-9 @&!#%\$_-" &&
+    what_password "USER" &&
+    what_password "ROOT" &&
     which_kernels &&
     which_disk &&
     want_swap &&
