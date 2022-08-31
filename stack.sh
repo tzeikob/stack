@@ -331,52 +331,6 @@ else
   echo -e "Desktop environment has been skipped"
 fi
 
-echo -e "\nHardening system's security..."
-
-sed -i 's;# dir = /var/run/faillock;dir = /var/lib/faillock;' /etc/security/faillock.conf
-
-echo -e "Faillocks set to be persistent after system reboot"
-
-sed -i 's/#PermitRootLogin .*/PermitRootLogin no/' /etc/ssh/sshd_config
-
-echo -e "Disable permission for SSH with the root user"
-
-echo -e "Setting up a simple stateful firewall..."
-
-nft flush ruleset
-nft add table inet my_table
-nft add chain inet my_table my_input '{ type filter hook input priority 0 ; policy drop ; }'
-nft add chain inet my_table my_forward '{ type filter hook forward priority 0 ; policy drop ; }'
-nft add chain inet my_table my_output '{ type filter hook output priority 0 ; policy accept ; }'
-nft add chain inet my_table my_tcp_chain
-nft add chain inet my_table my_udp_chain
-nft add rule inet my_table my_input ct state related,established accept
-nft add rule inet my_table my_input iif lo accept
-nft add rule inet my_table my_input ct state invalid drop
-nft add rule inet my_table my_input meta l4proto ipv6-icmp accept
-nft add rule inet my_table my_input meta l4proto icmp accept
-nft add rule inet my_table my_input ip protocol igmp accept
-nft add rule inet my_table my_input meta l4proto udp ct state new jump my_udp_chain
-nft add rule inet my_table my_input 'meta l4proto tcp tcp flags & (fin|syn|rst|ack) == syn ct state new jump my_tcp_chain'
-nft add rule inet my_table my_input meta l4proto udp reject
-nft add rule inet my_table my_input meta l4proto tcp reject with tcp reset
-nft add rule inet my_table my_input counter reject with icmpx port-unreachable
-
-mv /etc/nftables.conf /etc/nftables.conf.bak
-nft -s list ruleset > /etc/nftables.conf
-
-echo -e "Firewall ruleset has been saved to '/etc/nftables.conf'"
-
-cat << EOF > /etc/X11/xorg.conf.d/01-screenlock.conf
-# Prevents to overpass screen locker by killing xorg or switching vt
-Section "ServerFlags"
-    Option "DontVTSwitch" "True"
-    Option "DontZap"      "True"
-EndSection
-EOF
-
-echo -e "Security configuration has been completed"
-
 echo -e "\nConfiguring pacman..."
 
 cat << 'EOF' > /usr/share/libalpm/hooks/orphan-packages.hook

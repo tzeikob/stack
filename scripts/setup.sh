@@ -229,6 +229,53 @@ install_fonts () {
   echo "Extra font glyphs have been installed"
 }
 
+config_security () {
+  echo -e "\nHardening system's security..."
+
+  sed -i 's;# dir = /var/run/faillock;dir = /var/lib/faillock;' /etc/security/faillock.conf
+
+  echo "Faillocks set to be persistent after system reboot"
+
+  sed -i 's/#PermitRootLogin .*/PermitRootLogin no/' /etc/ssh/sshd_config
+
+  echo "SSH login permission disabled for the root user"
+
+  echo "Setting up a simple stateful firewall..."
+
+  nft flush ruleset
+  nft add table inet my_table
+  nft add chain inet my_table my_input '{ type filter hook input priority 0 ; policy drop ; }'
+  nft add chain inet my_table my_forward '{ type filter hook forward priority 0 ; policy drop ; }'
+  nft add chain inet my_table my_output '{ type filter hook output priority 0 ; policy accept ; }'
+  nft add chain inet my_table my_tcp_chain
+  nft add chain inet my_table my_udp_chain
+  nft add rule inet my_table my_input ct state related,established accept
+  nft add rule inet my_table my_input iif lo accept
+  nft add rule inet my_table my_input ct state invalid drop
+  nft add rule inet my_table my_input meta l4proto ipv6-icmp accept
+  nft add rule inet my_table my_input meta l4proto icmp accept
+  nft add rule inet my_table my_input ip protocol igmp accept
+  nft add rule inet my_table my_input meta l4proto udp ct state new jump my_udp_chain
+  nft add rule inet my_table my_input 'meta l4proto tcp tcp flags & (fin|syn|rst|ack) == syn ct state new jump my_tcp_chain'
+  nft add rule inet my_table my_input meta l4proto udp reject
+  nft add rule inet my_table my_input meta l4proto tcp reject with tcp reset
+  nft add rule inet my_table my_input counter reject with icmpx port-unreachable
+
+  mv /etc/nftables.conf /etc/nftables.conf.bak
+  nft -s list ruleset > /etc/nftables.conf
+
+  echo "Firewall ruleset has been saved to /etc/nftables.conf"
+
+  printf '%s\n' \
+  '# Prevents overpassing screen locker by killing xorg or switching vt' \
+  'Section "ServerFlags"'
+  '  Option "DontVTSwitch" "True"'
+  '  Option "DontZap" "True"'
+  'EndSection' > /etc/X11/xorg.conf.d/01-screenlock.conf
+
+  echo "Security configuration has been completed"
+}
+
 setup_swap () {
   echo -e "\nSetting up the swap..."
 
@@ -291,6 +338,7 @@ enable_nopasswd &&
   install_yay &&
   set_layouts &&
   install_fonts &&
+  config_security &&
   [ "$SWAP" = "yes" ] && setup_swap &&
   install_bootloader
 
