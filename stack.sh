@@ -108,59 +108,6 @@ EOF
 
   echo -e "Power launcher has been installed"
 
-  echo -e "\nSetting the keyboard layouts..."
-
-  read -p "Enter the default keyboard layout: [us] " kb_layout
-  kb_layout=${kb_layout:-"us"}
-
-  localectl list-x11-keymap-layouts | grep "^$kb_layout$" > /dev/null 2>&1
-
-  while [ ! $? -eq 0 ]; do
-    echo -e "Invalid keyboard layout: '$kb_layout'"
-    read -p "Please re-type the keyboard layout: [us] " kb_layout
-    kb_layout=${kb_layout:-"us"}
-
-    localectl list-x11-keymap-layouts | grep "^$kb_layout$" > /dev/null 2>&1
-  done
-
-  kb_layouts="$kb_layout"
-
-  read -p "Do you want to set additional layouts? [y/N] " answer
-  answer=${answer:-"no"}
-
-  while [[ $answer =~ ^(yes|y)$ ]]; do
-    read -p "Enter a keyboard layout: " kb_layout
-
-    localectl list-x11-keymap-layouts | grep "^$kb_layout$" > /dev/null 2>&1
-
-    while [ ! $? -eq 0 ]; do
-      echo -e "Invalid keyboard layout: '$kb_layout'"
-      read -p "Please re-type the keyboard layout: " kb_layout
-
-      localectl list-x11-keymap-layouts | grep "^$kb_layout$" > /dev/null 2>&1
-    done
-
-    kb_layouts="$kb_layouts,$kb_layout"
-
-    read -p "Do you want to add another layout? [y/N] " answer
-    answer=${answer:-"no"}
-  done
-
-  cat << EOF > /etc/X11/xorg.conf.d/00-keyboard.conf
-  # Written by systemd-localed(8), read by systemd-localed and Xorg. It's
-  # probably wise not to edit this file manually. Use localectl(1) to
-  # instruct systemd-localed to update it.
-  Section "InputClass"
-          Identifier "system-keyboard"
-          MatchIsKeyboard "on"
-          Option "XkbLayout" "$kb_layouts"
-          Option "XkbModel" "pc105"
-          Option "XkbOptions" "grp:alt_shift_toggle"
-  EndSection
-EOF
-
-  echo -e "Keyboard layouts have been set"
-
   echo -e "\nInstalling extra fonts..."
 
   fonts_path="/usr/share/fonts/extra-fonts"

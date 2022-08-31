@@ -161,6 +161,24 @@ install_yay () {
   echo "Yay package manager has been installed"
 }
 
+set_layouts () {
+  echo -e "\nSetting the keyboard layouts..."
+
+  local OLD_IFS=$IFS && IFS=","
+  LAYOUTS="${LAYOUTS[*]}" && IFS=$OLD_IFS
+
+  printf '%s\n' \
+    'Section "InputClass"' \
+    '  Identifier "system-keyboard"' \
+    '  MatchIsKeyboard "on"' \
+    '  Option "XkbLayout" "'${LAYOUTS}'"' \
+    '  Option "XkbModel" "pc105"' \
+    '  Option "XkbOptions" "grp:alt_shift_toggle"' \
+    'EndSection' > /etc/X11/xorg.conf.d/00-keyboard.conf
+
+  echo "Keyboard layouts have been set to $LAYOUTS"
+}
+
 setup_swap () {
   echo -e "\nSetting up the swap..."
 
@@ -198,6 +216,7 @@ enable_nopasswd &&
   install_packages &&
   install_drivers &&
   install_yay &&
+  set_layouts &&
   [ "$SWAP" = "yes" ] && setup_swap
 
 echo -e "\nSetting up the system has been completed"
