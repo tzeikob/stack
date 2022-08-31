@@ -61,7 +61,7 @@ contains () {
   return 1
 }
 
-set_option () {
+save_option () {
   local key=$1
   local value=$2
 
@@ -75,15 +75,15 @@ set_option () {
   echo "${key}=${value}" >> $OPTIONS
 }
 
-set_string () {
-  set_option "$1" "\"$2\""
+save_string () {
+  save_option "$1" "\"$2\""
 }
 
-set_array () {
-  set_option "$1" "($2)"
+save_array () {
+  save_option "$1" "($2)"
 }
 
-set_password () {
+what_password () {
   local SUBJECT=$1
   local RE=$2
   local MESSAGE=$3
@@ -113,7 +113,7 @@ set_password () {
     read -rs -p "Re-enter the password: " COMFIRMED && echo
   done
 
-  set_string "${SUBJECT}_PASSWORD" "$PASSWORD"
+  save_string "${SUBJECT}_PASSWORD" "$PASSWORD"
   echo -e "Password for the ${SUBJECT,,} is set successfully\n"
 }
 
@@ -122,7 +122,7 @@ clean_options () {
   touch $OPTIONS
 }
 
-set_mirrors () {
+which_mirrors () {
   local OLD_IFS=$IFS
   IFS=","
 
@@ -161,11 +161,11 @@ set_mirrors () {
     [[ ! "$MIRROR_SET" =~ $COUNTRY ]] && MIRROR_SET="$MIRROR_SET \"$COUNTRY\""
   done
 
-  set_array "MIRRORS" "$MIRROR_SET"
+  save_array "MIRRORS" "$MIRROR_SET"
   echo -e "Mirror countries are set to [$MIRROR_SET]\n"
 }
 
-set_timezone () {
+which_timezone () {
   local CONTINENTS=(
     "Africa" "America" "Antarctica" "Arctic" "Asia"
     "Atlantic" "Australia" "Europe" "Indian" "Pacific"
@@ -194,11 +194,11 @@ set_timezone () {
 
   local TIMEZONE="$CONTINENT/$CITY"
 
-  set_string "TIMEZONE" "$TIMEZONE"
+  save_string "TIMEZONE" "$TIMEZONE"
   echo -e "Current timezone is set to \"$TIMEZONE\"\n"
 }
 
-set_keymap () {
+which_keymap () {
   local OLD_IFS=$IFS
   IFS=","
 
@@ -238,11 +238,11 @@ set_keymap () {
     read -p " Please enter a valid keyboard map: " KEYMAP
   done
 
-  set_string "KEYMAP" "$KEYMAP"
+  save_string "KEYMAP" "$KEYMAP"
   echo -e "Keyboard keymap is set to \"$KEYMAP\"\n"
 }
 
-set_layouts () {
+which_layouts () {
   local LAYOUTS=(
     af al am ara at au az ba bd be bg br brai bt bw by ca cd ch cm cn cz
     de dk dz ee epo es et fi fo fr gb ge gh gn gr hr hu id ie il in iq ir
@@ -275,11 +275,11 @@ set_layouts () {
     [[ ! "$LAYOUT_SET" =~ $LAYOUT ]] && LAYOUT_SET="$LAYOUT_SET \"$LAYOUT\""
   done
 
-  set_array "LAYOUTS" "$LAYOUT_SET"
+  save_array "LAYOUTS" "$LAYOUT_SET"
   echo -e "Keyboard layouts are set to [$LAYOUT_SET]\n"
 }
 
-set_locale () {
+which_locale () {
   local OLD_IFS=$IFS
   IFS=" "
 
@@ -330,11 +330,11 @@ set_locale () {
     read -p " Please enter a valid locale: " LOCALE
   done
 
-  set_string "LOCALE" "$LOCALE"
+  save_string "LOCALE" "$LOCALE"
   echo -e "Locale is set to \"$LOCALE\"\n"
 }
 
-set_hostname () {
+what_hostname () {
   local HOSTNAME=""
   local RE="^[a-z][a-z0-9_-]+$"
 
@@ -350,11 +350,11 @@ set_hostname () {
     read -p " Please enter a valid hostname: " HOSTNAME
   done
 
-  set_string "HOSTNAME" "$HOSTNAME"
+  save_string "HOSTNAME" "$HOSTNAME"
   echo -e "Hostname is set to \"$HOSTNAME\"\n"
 }
 
-set_username () {
+what_username () {
   local USERNAME=""
   local RE="^[a-z][a-z0-9_-]+$"
 
@@ -370,11 +370,11 @@ set_username () {
     read -p " Please enter a valid username: " USERNAME
   done
 
-  set_string "USERNAME" "$USERNAME"
+  save_string "USERNAME" "$USERNAME"
   echo -e "Username is set to \"$USERNAME\"\n"
 }
 
-set_kernels () {
+which_kernels () {
   local KERNELS=""
   read -p "Which linux kernels to install: [STABLE/lts/all] " KERNELS
   KERNELS="${KERNELS:-"stable"}"
@@ -391,11 +391,11 @@ set_kernels () {
     KERNELS="\"$KERNELS\""
   fi
 
-  set_array "KERNELS" "$KERNELS"
+  save_array "KERNELS" "$KERNELS"
   echo -e "Linux kernels are set to [$KERNELS]\n"
 }
 
-set_disk () {
+which_disk () {
   lsblk -dA -o NAME,SIZE,FSUSE%,FSTYPE,TYPE,MOUNTPOINTS,LABEL
 
   local DEVICE=""
@@ -429,33 +429,33 @@ set_disk () {
     REPLY="${REPLY,,}"
   done
 
-  set_string "DISK" "$DEVICE"
+  save_string "DISK" "$DEVICE"
 
   read -p "Is this disk an SSD drive? [Y/n] " REPLY
   REPLY="${REPLY:-"yes"}"
   REPLY="${REPLY,,}"
 
   if [[ ! "$REPLY" =~ ^(y|yes)$ ]]; then
-    set_string "DISK_SSD" "no"
+    save_string "DISK_SSD" "no"
   else
-    set_string "DISK_SSD" "yes"
+    save_string "DISK_SSD" "yes"
   fi
 
   echo -e "Installation disk is set to block device \"$DEVICE\"\n"
 }
 
-set_swap () {
+want_swap () {
   local REPLY=""
   read -p "Do you want to enable swap? [Y/n] " REPLY
   REPLY="${REPLY:-"yes"}"
   REPLY="${REPLY,,}"
 
   if [[ ! "$REPLY" =~ ^(y|yes)$ ]]; then
-    set_string "SWAP" "no"
+    save_string "SWAP" "no"
     echo -e "Swap is set to \"no\"\n"
     return 0
   else
-    set_string "SWAP" "yes"
+    save_string "SWAP" "yes"
   fi
 
   local SWAP_SIZE=""
@@ -475,14 +475,14 @@ set_swap () {
     SWAP_TYPE="${SWAP_TYPE,,}"
   done
 
-  set_string "SWAP_SIZE" "$SWAP_SIZE"
-  set_string "SWAP_TYPE" "$SWAP_TYPE"
+  save_string "SWAP_SIZE" "$SWAP_SIZE"
+  save_string "SWAP_TYPE" "$SWAP_TYPE"
 
   echo "Swap is set to \"$SWAP_TYPE\""
   echo -e "Swap size is set to \"${SWAP_SIZE}GB\"\n"
 }
 
-set_hardware () {
+what_hardware () {
   local IS_VM=""
   read -p "Is this a virtual machine? [y/N] " IS_VM
   IS_VM="${IS_VM:-"no"}"
@@ -505,8 +505,8 @@ set_hardware () {
     IS_VM="no"
   fi
 
-  set_string "IS_VM" "$IS_VM"
-  [ "$IS_VM" = "yes" ] && set_string "IS_VM_VBOX" "$IS_VM_VBOX"
+  save_string "IS_VM" "$IS_VM"
+  [ "$IS_VM" = "yes" ] && save_string "IS_VM_VBOX" "$IS_VM_VBOX"
 
   echo -e "VM is set to \"$IS_VM\"\n"
 
@@ -521,7 +521,7 @@ set_hardware () {
       CPU="${CPU,,}"
     done
 
-    set_string "CPU" "$CPU"
+    save_string "CPU" "$CPU"
     echo -e "CPU is set to \"$CPU\"\n"
 
     local GPU=""
@@ -534,7 +534,7 @@ set_hardware () {
       GPU="${GPU,,}"
     done
 
-    set_string "GPU" "$GPU"
+    save_string "GPU" "$GPU"
     echo -e "GPU is set to \"$GPU\"\n"
   fi
 }
@@ -547,29 +547,29 @@ is_uefi () {
     IS_UEFI="yes"
   fi
 
-  set_string "IS_UEFI" "$IS_UEFI"
+  save_string "IS_UEFI" "$IS_UEFI"
   echo -e "UEFI is set to \"$IS_UEFI\"\n"
 }
 
 while true; do
   clean_options &&
-    set_mirrors &&
-    set_timezone &&
-    set_keymap &&
-    set_layouts &&
-    set_locale &&
-    set_hostname &&
-    set_username &&
-    set_password "USER" \
+    which_mirrors &&
+    which_timezone &&
+    which_keymap &&
+    which_layouts &&
+    which_locale &&
+    what_hostname &&
+    what_username &&
+    what_password "USER" \
       "^[a-zA-Z0-9@&!#%\$_-]{4,}$" \
       "Password must be at least 4 chars of a-z A-Z 0-9 @&!#%\$_-" &&
-    set_password "ROOT" \
+    what_password "ROOT" \
       "^[a-zA-Z0-9@&!#%\$_-]{4,}$" \
       "Password must be at least 4 chars of a-z A-Z 0-9 @&!#%\$_-" &&
-    set_kernels &&
-    set_disk &&
-    set_swap &&
-    set_hardware &&
+    which_kernels &&
+    which_disk &&
+    want_swap &&
+    what_hardware &&
     is_uefi
 
   source $OPTIONS
