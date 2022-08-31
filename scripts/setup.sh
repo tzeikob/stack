@@ -212,7 +212,7 @@ install_fonts () {
     find $FONTS_HOME/$NAME/ -depth -mindepth 1 -iname "*macosx*" -exec rm -r {} +
     find $FONTS_HOME/$NAME/ -depth -type f -not -iname "*ttf*" -delete
     find $FONTS_HOME/$NAME/ -empty -type d -delete
-    rm -f $FONTS_HOME/$NAME/.zip
+    rm -f $FONTS_HOME/$NAME.zip
 
     echo "Font $NAME has been installed"
   done
