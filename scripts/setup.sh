@@ -248,7 +248,7 @@ config_pacman () {
     '[Action]' \
     'Description = Search for any left over orphan packages' \
     'When = PostTransaction' \
-    'Exec = /usr/bin/bash -c "/usr/bin/pacman -Qtd || /usr/bin/echo "No orphan packages found"' \
+    'Exec = /usr/bin/bash -c "/usr/bin/pacman -Qtd || /usr/bin/echo "No orphan packages found""' \
     > /usr/share/libalpm/hooks/orphan-packages.hook
 
   echo "Orphan packages post installation hook has been set"
