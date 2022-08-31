@@ -108,52 +108,6 @@ EOF
 
   echo -e "Power launcher has been installed"
 
-  echo -e "\nInstalling extra fonts..."
-
-  fonts_path="/usr/share/fonts/extra-fonts"
-  mkdir -p $fonts_path
-
-  fonts=(
-    "FiraCode https://github.com/tonsky/FiraCode/releases/download/6.2/Fira_Code_v6.2.zip"
-    "FantasqueSansMono https://github.com/belluzj/fantasque-sans/releases/download/v1.8.0/FantasqueSansMono-Normal.zip"
-    "Hack https://github.com/source-foundry/Hack/releases/download/v3.003/Hack-v3.003-ttf.zip"
-    "Hasklig https://github.com/i-tu/Hasklig/releases/download/v1.2/Hasklig-1.2.zip"
-    "JetBrainsMono https://github.com/JetBrains/JetBrainsMono/releases/download/v2.242/JetBrainsMono-2.242.zip"
-    "Mononoki https://github.com/madmalik/mononoki/releases/download/1.3/mononoki.zip"
-    "VictorMono https://rubjo.github.io/victor-mono/VictorMonoAll.zip"
-    "Cousine https://fonts.google.com/download?family=Cousine"
-    "RobotoMono https://fonts.google.com/download?family=Roboto%20Mono"
-    "ShareTechMono https://fonts.google.com/download?family=Share%20Tech%20Mono"
-    "SpaceMono https://fonts.google.com/download?family=Space%20Mono"
-  )
-
-  for font in "${fonts[@]}"; do
-    font_name=$(echo $font | cut -d " " -f 1)
-    font_url=$(echo $font | cut -d " " -f 2)
-
-    curl $font_url -sSLo $fonts_path/$font_name.zip \
-      --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
-    unzip -q $fonts_path/$font_name.zip -d $fonts_path/$font_name
-
-    find $fonts_path/$font_name/ -depth -mindepth 1 -iname "*windows*" -exec rm -r {} +
-    find $fonts_path/$font_name/ -depth -mindepth 1 -iname "*macosx*" -exec rm -r {} +
-    find $fonts_path/$font_name/ -depth -type f -not -iname "*ttf*" -delete
-    find $fonts_path/$font_name/ -empty -type d -delete
-    rm -f $fonts_path/$font_name.zip
-
-    echo -e "Font '$font_name' has been installed"
-  done
-
-  fc-cache -f
-
-  echo -e "Fonts have been installed under '/usr/share/fonts/nerd-fonts'"
-
-  echo -e "Installing some extra font glyphs..."
-
-  pacman -S ttf-font-awesome noto-fonts-emoji
-
-  echo -e "Extra font glyphs have been installed"
-
   cp /etc/X11/xinit/xinitrc /home/$username/.xinitrc
 
   sed -i '/twm &/d' /home/$username/.xinitrc
