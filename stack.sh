@@ -331,26 +331,6 @@ else
   echo -e "Desktop environment has been skipped"
 fi
 
-echo -e "\nConfiguring pacman..."
-
-cat << 'EOF' > /usr/share/libalpm/hooks/orphan-packages.hook
-[Trigger]
-Type = Package
-Operation = Install
-Operation = Upgrade
-Operation = Remove
-Target = *
-
-[Action]
-Description = Search for any left over orphan packages
-When = PostTransaction
-Exec = /usr/bin/bash -c "/usr/bin/pacman -Qtd || /usr/bin/echo 'No orphan packages found'"
-EOF
-
-echo -e "Orphan packages post installation hook has been set"
-
-echo -e "Pacman has been configured"
-
 echo -e "Settin up the login screen"
 
 mv /etc/issue /etc/issue.bak
