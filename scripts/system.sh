@@ -20,9 +20,15 @@ set_keymap () {
 }
 
 set_timezone () {
+  echo -e "\nSetting the system's timezone..."
+
   ln -sf /usr/share/zoneinfo/$TIMEZONE /etc/localtime
 
-  echo "Local timezone has been set to $TIMEZONE"
+  hwclock --systohc
+
+  echo "System clock has been synchronized to hardware clock"
+
+  echo "Timezone has been set to $TIMEZONE"
 }
 
 set_locale () {
@@ -33,14 +39,6 @@ set_locale () {
   echo "LANG=${PARTS[0]}" >> /etc/locale.conf
 
   echo "Locale has been set to $LOCALE"
-}
-
-sync_clock () {
-  echo "Synchronize hardware clock..."
-
-  hwclock --systohc
-
-  echo "Hardware clock has been synchronized"
 }
 
 set_hostname () {
@@ -371,7 +369,6 @@ enable_nopasswd &&
   set_keymap &&
   set_timezone &&
   set_locale &&
-  sync_clock &&
   set_hostname &&
   create_sudoer &&
   set_passwds &&
