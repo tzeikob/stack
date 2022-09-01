@@ -365,7 +365,7 @@ enable_services () {
   echo "System services have been enabled"
 }
 
-echo -e "\nStarting the setup process..."
+echo -e "\nStarting the system setup process..."
 
 source $OPTIONS
 

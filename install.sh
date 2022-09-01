@@ -7,16 +7,11 @@ LOG="$HOME/all.log"
 set +a
 
 run () {
-  local SCRIPT=$1
-  local USER=$2
+  bash $HOME/scripts/${1}.sh 2>&1 | tee -a $LOG
+}
 
-  if [ -z "$USER" ]; then
-    bash $HOME/scripts/${SCRIPT}.sh 2>&1 | tee -a $LOG
-  elif [ "$USER" = "root" ]; then
-    arch-chroot /mnt $HOME/scripts/${SCRIPT}.sh 2>&1 | tee -a $LOG
-  else
-    echo "TODO: run $SCRIPT as $USER"
-  fi
+setup () {
+  arch-chroot /mnt $HOME/scripts/${1}.sh 2>&1 | tee -a $LOG
 }
 
 clear
@@ -45,5 +40,5 @@ echo
 run "askme" &&
   run "diskpart" &&
   run "bootstrap" &&
-  run "setup" "root" &&
+  setup "system" &&
   run "reboot"
