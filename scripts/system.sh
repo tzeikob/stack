@@ -83,10 +83,28 @@ set_mirrors () {
   echo "Mirror list set to $MIRRORS"
 }
 
-boost_download () {
+config_pacman () {
+  echo -e "\nConfiguring the pacman package manager..."
+
   sed -i 's/^#ParallelDownloads/ParallelDownloads/' /etc/pacman.conf
 
-  echo "Pacman parallel downloading has been enabled"
+  echo "Parallel downloading has been enabled"
+
+  printf '%s\n' \
+    '[Trigger]' \
+    'Type = Package' \
+    'Operation = Install' \
+    'Operation = Upgrade' \
+    'Operation = Remove' \
+    'Target = *' \
+    '[Action]' \
+    'Description = Search for any left over orphan packages' \
+    'When = PostTransaction' \
+    'Exec = /usr/bin/bash -c "/usr/bin/pacman -Qtd || /usr/bin/echo "No orphan packages found""' \
+    > /usr/share/libalpm/hooks/orphan-packages.hook
+
+  echo "Orphan packages post hook has been created"
+  echo "Pacman has been configured"
 }
 
 sync_packages () {
@@ -235,26 +253,6 @@ install_fonts () {
   echo "Extra font glyphs have been installed"
 }
 
-config_pacman () {
-  echo -e "\nConfiguring the pacman package manager..."
-
-  printf '%s\n' \
-    '[Trigger]' \
-    'Type = Package' \
-    'Operation = Install' \
-    'Operation = Upgrade' \
-    'Operation = Remove' \
-    'Target = *' \
-    '[Action]' \
-    'Description = Search for any left over orphan packages' \
-    'When = PostTransaction' \
-    'Exec = /usr/bin/bash -c "/usr/bin/pacman -Qtd || /usr/bin/echo "No orphan packages found""' \
-    > /usr/share/libalpm/hooks/orphan-packages.hook
-
-  echo "Orphan packages post installation hook has been set"
-  echo "Pacman has been configured"
-}
-
 config_security () {
   echo -e "\nHardening system's security..."
 
@@ -378,14 +376,13 @@ enable_nopasswd &&
   create_sudoer &&
   set_passwds &&
   set_mirrors &&
-  boost_download &&
+  config_pacman &&
   sync_packages &&
   install_packages &&
   install_drivers &&
   install_yay &&
   set_layouts &&
   install_fonts &&
-  config_pacman &&
   config_security &&
   [ "$SWAP" = "yes" ] && setup_swap &&
   install_bootloader &&
