@@ -158,21 +158,22 @@ set_hostname () {
   echo "Hostname has been set to $HOSTNAME"
 }
 
-create_sudoer () {
+setup_users () {
+  echo -e "\nSetting up system users..."
+
   useradd -m -G wheel,audio,video,optical,storage $USERNAME
   sed -i 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
 
   echo "Sudoer user $USERNAME has been created"
-}
-
-set_passwds () {
-  echo "root:$ROOT_PASSWORD" | chpasswd
-
-  echo "User root has been given a password"
 
   echo "$USERNAME:$USER_PASSWORD" | chpasswd
 
-  echo "User $USERNAME has been given a password"
+  echo "Password has been given to user $USERNAME"
+
+  echo "root:$ROOT_PASSWORD" | chpasswd
+
+  echo "Password has been given to the root user"
+  echo "System users have been setup"
 }
 
 install_yay () {
@@ -380,8 +381,7 @@ enable_nopasswd &&
   set_keymap &&
   set_locale &&
   set_hostname &&
-  create_sudoer &&
-  set_passwds &&
+  setup_users &&
   install_yay &&
   set_layouts &&
   install_fonts &&
