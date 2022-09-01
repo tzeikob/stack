@@ -12,6 +12,57 @@ disable_nopasswd () {
   echo "No password mode has been disabled"
 }
 
+set_hostname () {
+  echo $HOSTNAME >> /etc/hostname
+
+  printf '%s\n' \
+    '127.0.0.1    localhost' \
+    '::1          localhost' \
+    "127.0.1.1    $HOSTNAME" > /etc/hosts
+
+  echo "Hostname has been set to $HOSTNAME"
+}
+
+setup_users () {
+  echo -e "\nSetting up system users..."
+
+  useradd -m -G wheel,audio,video,optical,storage $USERNAME
+  sed -i 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
+
+  echo "Sudoer user $USERNAME has been created"
+
+  echo "$USERNAME:$USER_PASSWORD" | chpasswd
+
+  echo "Password has been given to user $USERNAME"
+
+  echo "root:$ROOT_PASSWORD" | chpasswd
+
+  echo "Password has been given to the root user"
+  echo "System users have been setup"
+}
+
+set_keymap () {
+  echo -e "\nSetting keyboard keymap..."
+
+  echo "KEYMAP=$KEYMAP" > /etc/vconsole.conf
+
+  echo "Virtual console keymap set to $KEYMAP"
+
+  loadkeys $KEYMAP
+
+  echo "Keyboard's keymap has been set to $KEYMAP"
+}
+
+set_locale () {
+  sed -i "s/#\(${LOCALE}.*\)/\1/" /etc/locale.gen
+  locale-gen
+
+  local PARTS=($LOCALE)
+  echo "LANG=${PARTS[0]}" >> /etc/locale.conf
+
+  echo "Locale has been set to $LOCALE"
+}
+
 set_timezone () {
   echo -e "\nSetting the system's timezone..."
 
@@ -123,57 +174,6 @@ install_drivers () {
     $CPU_PKGS $GPU_PKGS $VM_PKGS
 
   echo "Drivers have been installed"
-}
-
-set_keymap () {
-  echo -e "\nSetting keyboard keymap..."
-
-  echo "KEYMAP=$KEYMAP" > /etc/vconsole.conf
-
-  echo "Virtual console keymap set to $KEYMAP"
-
-  loadkeys $KEYMAP
-
-  echo "Keyboard's keymap has been set to $KEYMAP"
-}
-
-set_locale () {
-  sed -i "s/#\(${LOCALE}.*\)/\1/" /etc/locale.gen
-  locale-gen
-
-  local PARTS=($LOCALE)
-  echo "LANG=${PARTS[0]}" >> /etc/locale.conf
-
-  echo "Locale has been set to $LOCALE"
-}
-
-set_hostname () {
-  echo $HOSTNAME >> /etc/hostname
-
-  printf '%s\n' \
-    '127.0.0.1    localhost' \
-    '::1          localhost' \
-    "127.0.1.1    $HOSTNAME" > /etc/hosts
-
-  echo "Hostname has been set to $HOSTNAME"
-}
-
-setup_users () {
-  echo -e "\nSetting up system users..."
-
-  useradd -m -G wheel,audio,video,optical,storage $USERNAME
-  sed -i 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
-
-  echo "Sudoer user $USERNAME has been created"
-
-  echo "$USERNAME:$USER_PASSWORD" | chpasswd
-
-  echo "Password has been given to user $USERNAME"
-
-  echo "root:$ROOT_PASSWORD" | chpasswd
-
-  echo "Password has been given to the root user"
-  echo "System users have been setup"
 }
 
 install_yay () {
@@ -372,16 +372,16 @@ echo -e "\nStarting the system setup process..."
 source $OPTIONS
 
 enable_nopasswd &&
+  set_hostname &&
+  setup_users &&
+  set_keymap &&
+  set_locale &&
   set_timezone &&
   set_mirrors &&
   config_pacman &&
   sync_packages &&
   install_packages &&
   install_drivers &&
-  set_keymap &&
-  set_locale &&
-  set_hostname &&
-  setup_users &&
   install_yay &&
   set_layouts &&
   install_fonts &&
