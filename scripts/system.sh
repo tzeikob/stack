@@ -12,15 +12,21 @@ disable_nopasswd () {
   echo "No password mode has been disabled"
 }
 
-set_hostname () {
+setup_host () {
+  echo -e "\nSetting up system host..."
+
   echo $HOSTNAME >> /etc/hostname
+
+  echo "Hostname has been set to $HOSTNAME"
 
   printf '%s\n' \
     '127.0.0.1    localhost' \
     '::1          localhost' \
     "127.0.1.1    $HOSTNAME" > /etc/hosts
+  
+  echo "Hostname has been added to hosts"
 
-  echo "Hostname has been set to $HOSTNAME"
+  echo "Host has been set successfully"
 }
 
 setup_users () {
@@ -372,7 +378,7 @@ echo -e "\nStarting the system setup process..."
 source $OPTIONS
 
 enable_nopasswd &&
-  set_hostname &&
+  setup_host &&
   setup_users &&
   set_keymap &&
   set_locale &&
