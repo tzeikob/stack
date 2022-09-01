@@ -34,8 +34,8 @@ update_keyring () {
   echo "Keyring has been updated successfully"
 }
 
-install_base () {
-  echo "Installing the kernel and base packages..."
+install_kernels () {
+  echo "Installing the linux kernels..."
 
   local KERNEL_PKGS=""
 
@@ -49,7 +49,7 @@ install_base () {
 
   pacstrap /mnt base $KERNEL_PKGS linux-firmware archlinux-keyring reflector rsync sudo
 
-  echo -e "Kernel and base packages have been installed"
+  echo -e "Kernels have been installed"
 }
 
 create_fstab () {
@@ -76,7 +76,7 @@ update_clock &&
   set_mirrors &&
   boost_download &&
   update_keyring &&
-  install_base &&
+  install_kernels &&
   create_fstab &&
   copy_files
 
