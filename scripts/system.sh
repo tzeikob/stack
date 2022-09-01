@@ -12,13 +12,6 @@ disable_nopasswd () {
   echo "No password mode has been disabled"
 }
 
-set_keymap () {
-  echo "KEYMAP=$KEYMAP" > /etc/vconsole.conf
-  loadkeys $KEYMAP
-
-  echo "Keyboard's keymap has been set to $KEYMAP"
-}
-
 set_timezone () {
   echo -e "\nSetting the system's timezone..."
 
@@ -29,44 +22,6 @@ set_timezone () {
   echo "System clock has been synchronized to hardware clock"
 
   echo "Timezone has been set to $TIMEZONE"
-}
-
-set_locale () {
-  sed -i "s/#\(${LOCALE}.*\)/\1/" /etc/locale.gen
-  locale-gen
-
-  local PARTS=($LOCALE)
-  echo "LANG=${PARTS[0]}" >> /etc/locale.conf
-
-  echo "Locale has been set to $LOCALE"
-}
-
-set_hostname () {
-  echo $HOSTNAME >> /etc/hostname
-
-  printf '%s\n' \
-    '127.0.0.1    localhost' \
-    '::1          localhost' \
-    "127.0.1.1    $HOSTNAME" > /etc/hosts
-
-  echo "Hostname has been set to $HOSTNAME"
-}
-
-create_sudoer () {
-  useradd -m -G wheel,audio,video,optical,storage $USERNAME
-  sed -i 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
-
-  echo "Sudoer user $USERNAME has been created"
-}
-
-set_passwds () {
-  echo "root:$ROOT_PASSWORD" | chpasswd
-
-  echo "User root has been given a password"
-
-  echo "$USERNAME:$USER_PASSWORD" | chpasswd
-
-  echo "User $USERNAME has been given a password"
 }
 
 set_mirrors () {
@@ -114,7 +69,7 @@ sync_packages () {
 }
 
 install_packages () {
-  echo -e "\nInstalling base packages..."
+  echo -e "\nInstalling the base packages..."
 
   pacman -S --noconfirm --needed \
     base-devel pacman-contrib pkgstats grub mtools dosfstools gdisk \
@@ -168,6 +123,56 @@ install_drivers () {
     $CPU_PKGS $GPU_PKGS $VM_PKGS
 
   echo "Drivers have been installed"
+}
+
+set_keymap () {
+  echo -e "\nSetting keyboard keymap..."
+
+  echo "KEYMAP=$KEYMAP" > /etc/vconsole.conf
+
+  echo "Virtual console keymap set to $KEYMAP"
+
+  loadkeys $KEYMAP
+
+  echo "Keyboard's keymap has been set to $KEYMAP"
+}
+
+set_locale () {
+  sed -i "s/#\(${LOCALE}.*\)/\1/" /etc/locale.gen
+  locale-gen
+
+  local PARTS=($LOCALE)
+  echo "LANG=${PARTS[0]}" >> /etc/locale.conf
+
+  echo "Locale has been set to $LOCALE"
+}
+
+set_hostname () {
+  echo $HOSTNAME >> /etc/hostname
+
+  printf '%s\n' \
+    '127.0.0.1    localhost' \
+    '::1          localhost' \
+    "127.0.1.1    $HOSTNAME" > /etc/hosts
+
+  echo "Hostname has been set to $HOSTNAME"
+}
+
+create_sudoer () {
+  useradd -m -G wheel,audio,video,optical,storage $USERNAME
+  sed -i 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
+
+  echo "Sudoer user $USERNAME has been created"
+}
+
+set_passwds () {
+  echo "root:$ROOT_PASSWORD" | chpasswd
+
+  echo "User root has been given a password"
+
+  echo "$USERNAME:$USER_PASSWORD" | chpasswd
+
+  echo "User $USERNAME has been given a password"
 }
 
 install_yay () {
@@ -366,17 +371,17 @@ echo -e "\nStarting the system setup process..."
 source $OPTIONS
 
 enable_nopasswd &&
-  set_keymap &&
   set_timezone &&
-  set_locale &&
-  set_hostname &&
-  create_sudoer &&
-  set_passwds &&
   set_mirrors &&
   config_pacman &&
   sync_packages &&
   install_packages &&
   install_drivers &&
+  set_keymap &&
+  set_locale &&
+  set_hostname &&
+  create_sudoer &&
+  set_passwds &&
   install_yay &&
   set_layouts &&
   install_fonts &&
