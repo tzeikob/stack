@@ -57,7 +57,7 @@ create_gpt () {
 
   mount --mkdir ${DISK}1 /mnt/boot
 
-  echo "Partition have been mounted successfully"
+  echo "Partitions have been mounted successfully"
 }
 
 create_mbr () {
@@ -65,26 +65,48 @@ create_mbr () {
 
   parted --script $DISK mklabel msdos
 
-  parted --script $DISK mkpart primary ext4 1Mib 100%
+  local FROM=1
+
+  if [ "$SWAP" = "yes" ] && [ "$SWAP_TYPE" = "partition" ]; then
+    local TO=$((FROM + (SWAP_SIZE * 1024)))
+
+    parted --script $DISK mkpart primary linux-swap ${FROM}Mib ${TO}Mib
+
+    echo "Swap partition created successfully"
+
+    FROM=$TO
+  fi
+
+  parted --script $DISK mkpart primary ext4 ${FROM}Mib 100%
   parted --script $DISK set 1 boot on
 
-  echo "Root partition ${DISK}1 created successfully"
+  echo "Root partition created successfully"
 
   echo -e "\nPartitioning table is set to:"
 
   parted --script $DISK print | awk '{print " "$0}'
 
-  echo "Formatting partition filesystem..."
+  echo "Starting formatting partitions..."
 
-  mkfs.ext4 -F -q ${DISK}1
+  if [ "$SWAP" = "yes" ] && [ "$SWAP_TYPE" = "partition" ]; then
+    mkswap ${DISK}1
+    mkfs.ext4 -F -q ${DISK}2
+  else
+    mkfs.ext4 -F -q ${DISK}1
+  fi
 
   echo "Formating has been completed successfully"
 
   echo -e "\nMounting the root partition..."
 
-  mount ${DISK}1 /mnt
+  if [ "$SWAP" = "yes" ] && [ "$SWAP_TYPE" = "partition" ]; then
+    swapon ${DISK}1
+    mount ${DISK}2 /mnt
+  else
+    mount ${DISK}1 /mnt
+  fi
 
-  echo "Root partition ${DISK}1 mounted to /mnt"
+  echo "Partition mounted successfully"
 }
 
 echo -e "\nStarting disk partitioning..."
