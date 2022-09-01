@@ -5,33 +5,59 @@ create_gpt () {
 
   parted --script $DISK mklabel gpt
 
-  parted --script $DISK mkpart "Boot" fat32 1MiB 501MiB
+  local FROM=1
+  local TO=501
+
+  parted --script $DISK mkpart "Boot" fat32 ${FROM}MiB ${TO}MiB
   parted --script $DISK set 1 boot on
 
-  echo "Boot partition ${DISK}1 created successfully"
+  echo "Boot partition created successfully"
 
-  parted --script $DISK mkpart "Root" ext4 501Mib 100%
+  FROM=$TO
 
-  echo "Root partition ${DISK}2 created successfully"
+  if [ "$SWAP" = "yes" ] && [ "$SWAP_TYPE" = "partition" ]; then
+    TO=$((FROM + (SWAP_SIZE * 1024)))
+
+    parted --script $DISK mkpart "Swap" linux-swap ${FROM}Mib ${TO}Mib
+
+    echo "Swap partition created successfully"
+
+    FROM=$TO
+  fi
+
+  parted --script $DISK mkpart "Root" ext4 ${FROM}Mib 100%
+
+  echo "Root partition created successfully"
 
   echo -e "\nPartitioning table is set to:"
 
   parted --script $DISK print | awk '{print " "$0}'
 
-  echo "Formating partition filesystems..."
+  echo "Starting formating partitions..."
 
   mkfs.fat -F 32 ${DISK}1
-  mkfs.ext4 -F -q ${DISK}2
+
+  if [ "$SWAP" = "yes" ] && [ "$SWAP_TYPE" = "partition" ]; then
+    mkswap ${DISK}2
+    mkfs.ext4 -F -q ${DISK}3
+  else
+    mkfs.ext4 -F -q ${DISK}2
+  fi
 
   echo "Formating has been completed successfully"
 
   echo -e "\nMounting the boot and root partitions..."
 
-  mount ${DISK}2 /mnt
+  if [ "$SWAP" = "yes" ] && [ "$SWAP_TYPE" = "partition" ]; then
+    swapon ${DISK}2
+    mount ${DISK}3 /mnt
+  else
+    mount ${DISK}2 /mnt
+  fi
+
   mount --mkdir ${DISK}1 /mnt/boot
 
-  echo "Boot partition ${DISK}1 mounted to /mnt/boot"
-  echo "Root partition ${DISK}2 mounted to /mnt"
+  echo "Partition have been mounted successfully"
 }
 
 create_mbr () {

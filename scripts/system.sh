@@ -310,8 +310,8 @@ config_security () {
   echo "Security configuration has been completed"
 }
 
-setup_swap () {
-  echo -e "\nSetting up the swap..."
+setup_swapfile () {
+  echo -e "\nSetting up the swap file..."
 
   echo "Creating the swapfile..."
 
@@ -392,7 +392,7 @@ enable_nopasswd &&
   set_layouts &&
   install_fonts &&
   config_security &&
-  [ "$SWAP" = "yes" ] && setup_swap &&
+  ([ "$SWAP" = "yes" ] && [ "$SWAP_TYPE" = "file" ] && setup_swapfile) &&
   install_bootloader &&
   enable_services &&
   disable_nopasswd
