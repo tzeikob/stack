@@ -126,10 +126,10 @@ echo -e "\nStarting disk partitioning..."
 
 source $OPTIONS
 
-create_partitions && read A &&
-  format_them && read A &&
-  mount_them && read A &&
-  report read A &&
+create_partitions &&
+  format_them &&
+  mount_them &&
+  report
 
 echo -e "\nDisk partitioning has been completed"
 echo "Moving to the next process..."
