@@ -129,16 +129,19 @@ make_swap () {
       fi
 
       echo "Swap partition has been enabled"
-    else
+    elif [ "$SWAP_TYPE" = "file" ]; then
       echo "Setting up the swap file..."
 
       dd if=/dev/zero of=/mnt/swapfile bs=1M count=$(expr $SWAP_SIZE \* 1024) status=progress
       chmod 0600 /mnt/swapfile
+
       mkswap -U clear /mnt/swapfile
       swapon /mnt/swapfile
       free -m
 
       echo "Swap file has been enabled"
+    else
+      echo "Skipping swap, unknown swap type $SWAP_TYPE"
     fi
   else
     echo "Swap has been skipped"
