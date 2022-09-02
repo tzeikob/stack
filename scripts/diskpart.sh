@@ -12,7 +12,7 @@ create_partitions () {
     parted --script $DISK mkpart "Boot" fat32 ${FROM}MiB ${TO}MiB
     parted --script $DISK set 1 boot on
 
-    echo "Boot partition created successfully"
+    echo "Boot partition has been created"
 
     FROM=$TO
 
@@ -21,14 +21,14 @@ create_partitions () {
 
       parted --script $DISK mkpart "Swap" linux-swap ${FROM}Mib ${TO}Mib
 
-      echo "Swap partition created successfully"
+      echo "Swap partition has been created"
 
       FROM=$TO
     fi
 
     parted --script $DISK mkpart "Root" ext4 ${FROM}Mib 100%
 
-    echo "Root partition created successfully"
+    echo "Root partition has been created"
   else
     echo "Creating a clean MBR partition table..."
 
@@ -41,7 +41,7 @@ create_partitions () {
 
       parted --script $DISK mkpart primary linux-swap ${FROM}Mib ${TO}Mib
 
-      echo "Swap partition created successfully"
+      echo "Swap partition has been created"
 
       FROM=$TO
     fi
@@ -49,7 +49,7 @@ create_partitions () {
     parted --script $DISK mkpart primary ext4 ${FROM}Mib 100%
     parted --script $DISK set 1 boot on
 
-    echo "Root partition created successfully"
+    echo "Root partition has been created"
   fi
 
   echo -e "\nPartitioning table is set to:"
@@ -67,20 +67,20 @@ format_them () {
 
     if [ "$SWAP" = "yes" ] && [ "$SWAP_TYPE" = "partition" ]; then
       mkswap ${DISK}2
-      mkfs.ext4 -F -q ${DISK}3
+      mkfs.ext4 -F ${DISK}3
     else
-      mkfs.ext4 -F -q ${DISK}2
+      mkfs.ext4 -F ${DISK}2
     fi
   else
     if [ "$SWAP" = "yes" ] && [ "$SWAP_TYPE" = "partition" ]; then
       mkswap ${DISK}1
-      mkfs.ext4 -F -q ${DISK}2
+      mkfs.ext4 -F ${DISK}2
     else
-      mkfs.ext4 -F -q ${DISK}1
+      mkfs.ext4 -F ${DISK}1
     fi
   fi
 
-  echo "Formating has been completed successfully"
+  echo "Formating has been completed"
 }
 
 mount_them () {
@@ -117,10 +117,10 @@ echo -e "\nStarting disk partitioning..."
 
 source $OPTIONS
 
-create_partitions &&
-  format_them &&
-  mount_them &&
-  report
+create_partitions && read A &&
+  format_them && read A &&
+  mount_them && read A &&
+  report read A &&
 
 echo -e "\nDisk partitioning has been completed"
 echo "Moving to the next process..."
