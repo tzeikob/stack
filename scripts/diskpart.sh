@@ -49,10 +49,6 @@ create_partitions () {
     echo "Root partition has been created"
   fi
 
-  echo "Partitioning table is set to:"
-
-  parted --script $DISK print | awk '{print " "$0}'
-
   echo "Disk partitioning has been completed"
 }
 
@@ -120,7 +116,9 @@ mount_them () {
 }
 
 report () {
-  echo -e "\nDisk layout is now set to:"
+  echo -e "Disk layout is now set to:\n"
+
+  parted --script $DISK print | awk '{print " "$0}'
 
   lsblk $DISK -o NAME,SIZE,TYPE,MOUNTPOINTS | awk '{print " "$0}'
 }
