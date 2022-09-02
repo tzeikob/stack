@@ -310,25 +310,6 @@ config_security () {
   echo "Security configuration has been completed"
 }
 
-setup_swapfile () {
-  echo -e "\nSetting up the swap file..."
-
-  echo "Creating the swapfile..."
-
-  dd if=/dev/zero of=/swapfile bs=1M count=$(expr $SWAP_SIZE \* 1024) status=progress
-  chmod 0600 /swapfile
-  mkswap -U clear /swapfile
-
-  echo "Enabling swap..."
-
-  swapon /swapfile && free -m
-
-  cp /etc/fstab /etc/fstab.bak
-  echo "/swapfile none swap defaults 0 0" | tee -a /etc/fstab
-
-  echo "Swap file has been set successfully to /swapfile"
-}
-
 install_bootloader () {
   echo -e "\nInstalling the bootloader via GRUB..."
 
@@ -392,7 +373,6 @@ enable_nopasswd &&
   set_layouts &&
   install_fonts &&
   config_security &&
-  ([ "$SWAP" = "yes" ] && [ "$SWAP_TYPE" = "file" ] && setup_swapfile) &&
   install_bootloader &&
   enable_services &&
   disable_nopasswd

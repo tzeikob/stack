@@ -52,14 +52,6 @@ install_kernels () {
   echo -e "Kernels have been installed"
 }
 
-create_fstab () {
-  echo "Creating the file system table..."
-
-  genfstab -U /mnt >> /mnt/etc/fstab
-
-  echo "The file system table has been created"
-}
-
 copy_files () {
   echo "Copying installation files to the new disk..."
 
@@ -77,7 +69,6 @@ update_clock &&
   boost_download &&
   update_keyring &&
   install_kernels &&
-  create_fstab &&
   copy_files
 
 echo -e "\nBootstrap process has been completed successfully"
