@@ -35,6 +35,7 @@ create_partitions () {
     parted --script $DISK mklabel msdos
 
     local FROM=1
+    local BOOT_INDEX=1
 
     if [ "$SWAP" = "yes" ] && [ "$SWAP_TYPE" = "partition" ]; then
       local TO=$((FROM + (SWAP_SIZE * 1024)))
@@ -44,10 +45,11 @@ create_partitions () {
       echo "Swap partition has been created"
 
       FROM=$TO
+      BOOT_INDEX=2
     fi
 
     parted --script $DISK mkpart primary ext4 ${FROM}Mib 100%
-    parted --script $DISK set 1 boot on
+    parted --script $DISK set $BOOT_INDEX boot on
 
     echo "Root partition has been created"
   fi
@@ -62,22 +64,26 @@ create_partitions () {
 format_them () {
   echo -e "\nStart formating partitions..."
 
+  local ROOT_INDEX=2
+
   if [ "$IS_UEFI" = "yes" ]; then
     mkfs.fat -F 32 ${DISK}1
 
     if [ "$SWAP" = "yes" ] && [ "$SWAP_TYPE" = "partition" ]; then
       mkswap ${DISK}2
-      mkfs.ext4 -F ${DISK}3
-    else
-      mkfs.ext4 -F ${DISK}2
+      ROOT_INDEX=3
     fi
+
+    mkfs.ext4 -F ${DISK}${ROOT_INDEX}
   else
+    ROOT_INDEX=1
+
     if [ "$SWAP" = "yes" ] && [ "$SWAP_TYPE" = "partition" ]; then
       mkswap ${DISK}1
-      mkfs.ext4 -F ${DISK}2
-    else
-      mkfs.ext4 -F ${DISK}1
+      ROOT_INDEX=2
     fi
+
+    mkfs.ext4 -F ${DISK}${ROOT_INDEX}
   fi
 
   echo "Formating has been completed"
@@ -86,22 +92,25 @@ format_them () {
 mount_them () {
   echo -e "\nMounting disk partitions..."
 
+  local ROOT_INDEX=2
+
   if [ "$IS_UEFI" = "yes" ]; then
     if [ "$SWAP" = "yes" ] && [ "$SWAP_TYPE" = "partition" ]; then
       swapon ${DISK}2
-      mount ${DISK}3 /mnt
-    else
-      mount ${DISK}2 /mnt
+      ROOT_INDEX=3
     fi
 
+    mount ${DISK}${ROOT_INDEX} /mnt
     mount --mkdir ${DISK}1 /mnt/boot
   else
+    ROOT_INDEX=1
+
     if [ "$SWAP" = "yes" ] && [ "$SWAP_TYPE" = "partition" ]; then
       swapon ${DISK}1
-      mount ${DISK}2 /mnt
-    else
-      mount ${DISK}1 /mnt
+      ROOT_INDEX=2
     fi
+
+    mount ${DISK}${ROOT_INDEX} /mnt
   fi
 
   echo "Mounting has been completed"
