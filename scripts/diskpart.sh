@@ -11,7 +11,6 @@ create_partitions () {
 
     parted --script $DISK mkpart "Boot" fat32 ${FROM}MiB ${TO}MiB
     parted --script $DISK set 1 boot on
-
     echo "Boot partition has been created"
 
     FROM=$TO
@@ -20,14 +19,12 @@ create_partitions () {
       TO=$((FROM + (SWAP_SIZE * 1024)))
 
       parted --script $DISK mkpart "Swap" linux-swap ${FROM}Mib ${TO}Mib
-
       echo "Swap partition has been created"
 
       FROM=$TO
     fi
 
     parted --script $DISK mkpart "Root" ext4 ${FROM}Mib 100%
-
     echo "Root partition has been created"
   else
     echo "Creating a clean MBR partition table..."
@@ -41,7 +38,6 @@ create_partitions () {
       local TO=$((FROM + (SWAP_SIZE * 1024)))
 
       parted --script $DISK mkpart primary linux-swap ${FROM}Mib ${TO}Mib
-
       echo "Swap partition has been created"
 
       FROM=$TO
@@ -50,11 +46,10 @@ create_partitions () {
 
     parted --script $DISK mkpart primary ext4 ${FROM}Mib 100%
     parted --script $DISK set $BOOT_INDEX boot on
-
     echo "Root partition has been created"
   fi
 
-  echo -e "\nPartitioning table is set to:"
+  echo "Partitioning table is set to:"
 
   parted --script $DISK print | awk '{print " "$0}'
 
@@ -62,7 +57,7 @@ create_partitions () {
 }
 
 format_them () {
-  echo -e "\nStart formating partitions..."
+  echo "Start formating disk partitions..."
 
   local ROOT_INDEX=2
 
@@ -90,27 +85,35 @@ format_them () {
 }
 
 mount_them () {
-  echo -e "\nMounting disk partitions..."
+  echo "Mounting disk partitions..."
 
   local ROOT_INDEX=2
 
   if [ "$IS_UEFI" = "yes" ]; then
     if [ "$SWAP" = "yes" ] && [ "$SWAP_TYPE" = "partition" ]; then
       swapon ${DISK}2
+      echo "Swap partition set to on"
+
       ROOT_INDEX=3
     fi
 
     mount ${DISK}${ROOT_INDEX} /mnt
+    echo "Root partition mounted"
+
     mount --mkdir ${DISK}1 /mnt/boot
+    echo "Boot partition mounted"
   else
     ROOT_INDEX=1
 
     if [ "$SWAP" = "yes" ] && [ "$SWAP_TYPE" = "partition" ]; then
       swapon ${DISK}1
+      echo "Swap partition set to on"
+
       ROOT_INDEX=2
     fi
 
     mount ${DISK}${ROOT_INDEX} /mnt
+    echo "Root partition mounted"
   fi
 
   echo "Mounting has been completed"
