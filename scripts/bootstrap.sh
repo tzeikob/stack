@@ -20,10 +20,16 @@ set_mirrors () {
   echo "Mirror list set to $MIRRORS"
 }
 
-boost_download () {
+sync_packages () {
+  echo "Starting synchronizing packages..."
+
   sed -i 's/^#ParallelDownloads/ParallelDownloads/' /etc/pacman.conf
 
   echo "Pacman parallel downloading has been enabled"
+
+  pacman -Syy
+
+  echo "Packages have been synchronized with master"
 }
 
 update_keyring () {
@@ -66,7 +72,7 @@ source $OPTIONS
 
 update_clock &&
   set_mirrors &&
-  boost_download &&
+  sync_packages &&
   update_keyring &&
   install_kernels &&
   copy_files
