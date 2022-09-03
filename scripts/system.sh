@@ -129,7 +129,7 @@ sync_packages () {
 install_packages () {
   echo -e "\nInstalling the base packages..."
 
-  pacman -S --noconfirm --needed \
+  pacman -S --noconfirm \
     base-devel pacman-contrib pkgstats grub mtools dosfstools gdisk \
     parted curl wget udisks2 udiskie gvfs gvfs-smb bash-completion \
     man-db man-pages texinfo cups bluez bluez-utils unzip terminus-font \
@@ -137,7 +137,7 @@ install_packages () {
     bzip2 unrar dialog inetutils dnsutils openssh nfs-utils openbsd-netcat ipset \
     $([ "$IS_UEFI" = "yes" ] && echo 'efibootmgr')
 
-  yes | pacman -S --needed nftables iptables-nft
+  yes | pacman -S nftables iptables-nft
 
   echo "Base packages have been installed"
 }
@@ -173,7 +173,7 @@ install_drivers () {
     fi
   fi
 
-  pacman -S --noconfirm --needed \
+  pacman -S --noconfirm \
     acpi acpid acpi_call \
     networkmanager wireless_tools netctl wpa_supplicant \
     alsa-utils pipewire pipewire-alsa pipewire-pulse pipewire-jack pavucontrol \
@@ -190,7 +190,7 @@ install_yay () {
   git clone https://aur.archlinux.org/yay.git
 
   chown -R $USERNAME:$USERNAME yay && cd yay
-  sudo -u $USERNAME makepkg -si --noconfirm --needed --noprogressbar
+  sudo -u $USERNAME makepkg -si --noconfirm
 
   cd /root && rm -rf /home/$USERNAME/yay
 
@@ -258,7 +258,7 @@ install_fonts () {
 
   echo -e "\nInstalling some extra font glyphs..."
 
-  pacman -S --noconfirm --needed \
+  pacman -S --noconfirm \
     ttf-font-awesome noto-fonts-emoji
 
   echo "Extra font glyphs have been installed"
