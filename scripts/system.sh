@@ -167,8 +167,8 @@ install_drivers () {
   fi
 
   local VM_PKGS=""
-  if [ "$IS_VM" = "yes" ]; then
-    if [ "$IS_VM_VBOX" = "yes" ]; then
+  if [ "$IS_VIRTUAL" = "yes" ]; then
+    if [ "$IS_VIRTUAL_BOX" = "yes" ]; then
       VM_PKGS="$VM_PKGS virtualbox-guest-utils"
     fi
   fi
@@ -326,7 +326,7 @@ install_bootloader () {
 
   grub-mkconfig -o /boot/grub/grub.cfg
 
-  if [ "$IS_UEFI" = "yes" ] && [ "$IS_VM_VBOX" = "yes" ]; then
+  if [ "$IS_UEFI" = "yes" ] && [ "$IS_VIRTUAL_BOX" = "yes" ]; then
     mkdir -p /boot/EFI/BOOT
     cp /boot/EFI/GRUB/grubx64.efi /boot/EFI/BOOT/BOOTX64.EFI
   fi
@@ -348,7 +348,7 @@ enable_services () {
   systemctl enable reflector.timer
   systemctl enable paccache.timer
 
-  if [ "$IS_VM_VBOX" = "yes" ]; then
+  if [ "$IS_VIRTUAL_BOX" = "yes" ]; then
     systemctl enable vboxservice
   fi
 

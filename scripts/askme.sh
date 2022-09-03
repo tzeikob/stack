@@ -482,60 +482,66 @@ want_swap () {
   echo -e "Swap size is set to \"${SWAP_SIZE}GB\"\n"
 }
 
+what_cpu () {
+  local CPU=""
+  read -p "What CPU is your system running on? [AMD/intel] " CPU
+  CPU="${CPU:-"amd"}"
+  CPU="${CPU,,}"
+
+  while [[ ! "$CPU" =~ ^(amd|intel)$ ]]; do
+    read -p " Please enter a valid CPU vendor: " CPU
+    CPU="${CPU,,}"
+  done
+
+  save_string "CPU" "$CPU"
+
+  echo -e "CPU is set to \"$CPU\"\n"
+}
+
+what_gpu () {
+  local GPU=""
+  read -p "What GPU is your system running? [NVIDIA/amd/intel] " GPU
+  GPU="${GPU:-"nvidia"}"
+  GPU="${GPU,,}"
+
+  while [[ ! "$GPU" =~ ^(nvidia|amd|intel)$ ]]; do
+    read -p " Please enter a valid GPU vendor: " GPU
+    GPU="${GPU,,}"
+  done
+
+  save_string "GPU" "$GPU"
+
+  echo -e "GPU is set to \"$GPU\"\n"
+}
+
 what_hardware () {
-  local IS_VM=""
-  read -p "Is this a virtual machine? [y/N] " IS_VM
-  IS_VM="${IS_VM:-"no"}"
-  IS_VM="${IS_VM,,}"
+  local IS_VIRTUAL="no"
 
-  if [[ "$IS_VM" =~ ^(y|yes)$ ]]; then
-    IS_VM="yes"
-
-    local IS_VM_VBOX=""
-    read -p "Is it hosted via virtual box? [Y/n] " IS_VM_VBOX
-    IS_VM_VBOX="${IS_VM_VBOX:-"yes"}"
-    IS_VM_VBOX="${IS_VM_VBOX,,}"
-
-    if [[ "$IS_VM_VBOX" =~ ^(y|yes)$ ]]; then
-      IS_VM_VBOX="yes"
-    else
-      IS_VM_VBOX="no"
-    fi
-  else
-    IS_VM="no"
+  if systemd-detect-virt; then
+    echo "It seems that the system is a virtual machine"
+    read -p "Is this true, right? [Y/n]" IS_VIRTUAL
+    IS_VIRTUAL="${IS_VIRTUAL:-"yes"}"
+    IS_VIRTUAL="${IS_VIRTUAL,,}"
   fi
 
-  save_string "IS_VM" "$IS_VM"
-  [ "$IS_VM" = "yes" ] && save_string "IS_VM_VBOX" "$IS_VM_VBOX"
+  if [[ "$IS_VIRTUAL" =~ ^(y|yes)$ ]]; then
+    save_string "IS_VIRTUAL" "yes"
+    echo -e "Virtual is set to \"yes\"\n"
 
-  echo -e "VM is set to \"$IS_VM\"\n"
+    local VENDOR="$(systemd-detect-virt)"
 
-  if [ "$IS_VM" = "no" ]; then
-    local CPU=""
-    read -p "What CPU is your system running on? [AMD/intel] " CPU
-    CPU="${CPU:-"amd"}"
-    CPU="${CPU,,}"
+    if [ "$VENDOR" = "oracle" ]; then
+      save_string "IS_VIRTUAL_BOX" "yes"
+      echo "Detected that it is running on virtual box"
+    else
+      save_string "IS_VIRTUAL_BOX" "no"
+    fi
+  else
+    save_string "IS_VIRTUAL" "no"
+    echo -e "Virtual is set to \"no\"\n"
 
-    while [[ ! "$CPU" =~ ^(amd|intel)$ ]]; do
-      read -p " Please enter a valid CPU vendor: " CPU
-      CPU="${CPU,,}"
-    done
-
-    save_string "CPU" "$CPU"
-    echo -e "CPU is set to \"$CPU\"\n"
-
-    local GPU=""
-    read -p "What GPU is your system running? [NVIDIA/amd/intel] " GPU
-    GPU="${GPU:-"nvidia"}"
-    GPU="${GPU,,}"
-
-    while [[ ! "$GPU" =~ ^(nvidia|amd|intel)$ ]]; do
-      read -p " Please enter a valid GPU vendor: " GPU
-      GPU="${GPU,,}"
-    done
-
-    save_string "GPU" "$GPU"
-    echo -e "GPU is set to \"$GPU\"\n"
+    what_cpu
+    what_gpu
   fi
 }
 
