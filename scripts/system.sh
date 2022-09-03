@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 
-enable_nopasswd () {
-  sed -i 's/^# %wheel ALL=(ALL:ALL) NOPASSWD: ALL/%wheel ALL=(ALL:ALL) NOPASSWD: ALL/' /etc/sudoers
+set_nopasswd () {
+  local STATUS=$1
 
-  echo "No password mode has temporarily been enabled"
-}
+  if [ "$STATUS" = "on" ]; then
+    sed -i 's/^# \(%wheel ALL=(ALL:ALL) NOPASSWD: ALL\)/\1/' /etc/sudoers
+  else
+    STATUS="off"
+    sed -i 's/^\(%wheel ALL=(ALL:ALL) NOPASSWD: ALL\)/# \1/' /etc/sudoers
+  fi
 
-disable_nopasswd () {
-  sed -i 's/^%wheel ALL=(ALL:ALL) NOPASSWD: ALL/# %wheel ALL=(ALL:ALL) NOPASSWD: ALL/' /etc/sudoers
-
-  echo "No password mode has been disabled"
+  echo "No password sudo mode has been set to $STATUS"
 }
 
 setup_host () {
@@ -358,7 +359,7 @@ echo -e "\nStarting the system setup process..."
 
 source $OPTIONS
 
-enable_nopasswd &&
+set_nopasswd "on" &&
   setup_host &&
   setup_users &&
   set_keymap &&
@@ -375,7 +376,7 @@ enable_nopasswd &&
   config_security &&
   install_bootloader &&
   enable_services &&
-  disable_nopasswd
+  set_nopasswd "off"
 
 echo -e "\nSetting up the system has been completed"
 echo "Moving to the next process..."
