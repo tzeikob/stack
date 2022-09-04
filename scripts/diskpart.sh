@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
 
+unmount_all () {
+  echo "Making sure everything is unmounted..."
+
+  umount -A --recursive /mnt
+
+  echo "Unmounting process has been completed"
+}
+
 create_partitions () {
   if [ "$IS_UEFI" = "yes" ]; then
     echo "Creating a clean GPT partition table..."
@@ -169,7 +177,8 @@ echo -e "\nStarting disk partitioning..."
 
 source $OPTIONS
 
-create_partitions &&
+unmount_all &&
+  create_partitions &&
   format_partitions &&
   mount_filesystem &&
   make_swap &&
