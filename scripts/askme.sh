@@ -491,6 +491,8 @@ what_cpu () {
     CPU="amd"
   elif grep -E "GenuineIntel" > /dev/null <<< ${CPU}; then
     CPU="intel"
+  else
+    CPU="generic"
   fi
 
   local REPLY=""
@@ -499,7 +501,7 @@ what_cpu () {
   REPLY="${REPLY,,}"
 
   if [[ ! "$REPLY" =~ ^(y|yes)$ ]]; then
-    read -p "Oh okay, which CPU is running then? [amd/intel] " CPU
+    read -p "Okay, which CPU is running then? [amd/intel] " CPU
     CPU="${CPU,,}"
 
     while [[ ! "$CPU" =~ ^(amd|intel)$ ]]; do
