@@ -538,7 +538,7 @@ what_gpu () {
   REPLY="${REPLY,,}"
 
   if [[ ! "$REPLY" =~ ^(y|yes)$ ]]; then
-    read -p "Okay, which GPU is it then? [nvidia/amd/intel] " GPU
+    read -p "Really? Which GPU is it then? [nvidia/amd/intel] " GPU
     GPU="${GPU,,}"
 
     while [[ ! "$GPU" =~ ^(nvidia|amd|intel)$ ]]; do
