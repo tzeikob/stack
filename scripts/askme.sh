@@ -514,19 +514,40 @@ what_cpu () {
 }
 
 what_gpu () {
-  local GPU=""
-  read -p "What GPU is your system running? [NVIDIA/amd/intel] " GPU
-  GPU="${GPU:-"nvidia"}"
-  GPU="${GPU,,}"
+  echo "Start detecting GPU vendor..."
 
-  while [[ ! "$GPU" =~ ^(nvidia|amd|intel)$ ]]; do
-    read -p " Please enter a valid GPU vendor: " GPU
+  local GPU=$(lspci)
+
+  if grep -E "NVIDIA|GeForce" > /dev/null <<< ${GPU}; then
+    GPU="nvidia"
+  elif grep -E "Radeon|AMD" > /dev/null <<< ${GPU}; then
+    GPU="amd"
+  elif grep -E "Integrated Graphics Controller" > /dev/null <<< ${GPU}; then
+    GPU="intel"
+  elif grep -E "Intel Corporation UHD" > /dev/null <<< ${GPU}; then
+    GPU="intel"
+  else
+    GPU="generic"
+  fi
+
+  local REPLY=""
+  read -p "Is your system using an ${GPU} GPU, right? [Y/n] " REPLY
+  REPLY="${REPLY:-"yes"}"
+  REPLY="${REPLY,,}"
+
+  if [[ ! "$REPLY" =~ ^(y|yes)$ ]]; then
+    read -p "Okay, which GPU is it then? [nvidia/amd/intel] " GPU
     GPU="${GPU,,}"
-  done
+
+    while [[ ! "$GPU" =~ ^(nvidia|amd|intel)$ ]]; do
+      read -p " Please enter a valid GPU vendor: " GPU
+      GPU="${GPU,,}"
+    done
+  fi
 
   save_string "GPU" "$GPU"
 
-  echo -e "GPU is set to \"$GPU\"\n"
+  echo "GPU vendor is set to \"$GPU\""
 }
 
 what_hardware () {
