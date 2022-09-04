@@ -483,19 +483,34 @@ want_swap () {
 }
 
 what_cpu () {
-  local CPU=""
-  read -p "What CPU is your system running on? [AMD/intel] " CPU
-  CPU="${CPU:-"amd"}"
-  CPU="${CPU,,}"
+  echo "Start detecting CPU vendor..."
 
-  while [[ ! "$CPU" =~ ^(amd|intel)$ ]]; do
-    read -p " Please enter a valid CPU vendor: " CPU
+  local CPU=$(lscpu)
+
+  if grep -E "AuthenticAMD" > /dev/null <<< ${CPU}; then
+    CPU="amd"
+  elif grep -E "GenuineIntel" > /dev/null <<< ${CPU}; then
+    CPU="intel"
+  fi
+
+  local REPLY=""
+  read -p "Seems your system is running an ${CPU} CPU, right? [Y/n] " REPLY
+  REPLY="${REPLY:-"yes"}"
+  REPLY="${REPLY,,}"
+
+  if [[ ! "$REPLY" =~ ^(y|yes)$ ]]; then
+    read -p "Oh okay, which CPU is running then? [amd/intel] " CPU
     CPU="${CPU,,}"
-  done
+
+    while [[ ! "$CPU" =~ ^(amd|intel)$ ]]; do
+      read -p " Please enter a valid CPU vendor: " CPU
+      CPU="${CPU,,}"
+    done
+  fi
 
   save_string "CPU" "$CPU"
 
-  echo -e "CPU is set to \"$CPU\"\n"
+  echo "CPU vendor is set to \"$CPU\""
 }
 
 what_gpu () {
