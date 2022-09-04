@@ -517,32 +517,33 @@ what_gpu () {
 what_hardware () {
   local IS_VIRTUAL="no"
 
-  if systemd-detect-virt; then
-    echo "It seems that the system is a virtual machine"
-    read -p "Is this true, right? [Y/n]" IS_VIRTUAL
+  if systemd-detect-virt > /dev/null; then
+    read -p "Seems that's a virtual machine, right? [Y/n] " IS_VIRTUAL
     IS_VIRTUAL="${IS_VIRTUAL:-"yes"}"
     IS_VIRTUAL="${IS_VIRTUAL,,}"
   fi
 
   if [[ "$IS_VIRTUAL" =~ ^(y|yes)$ ]]; then
     save_string "IS_VIRTUAL" "yes"
-    echo -e "Virtual is set to \"yes\"\n"
+    echo "Virtual is set to \"yes\""
 
     local VENDOR="$(systemd-detect-virt)"
 
     if [ "$VENDOR" = "oracle" ]; then
       save_string "IS_VIRTUAL_BOX" "yes"
-      echo "Detected that it is running on virtual box"
+      echo "Detected that's running on virtual box"
     else
       save_string "IS_VIRTUAL_BOX" "no"
     fi
   else
     save_string "IS_VIRTUAL" "no"
-    echo -e "Virtual is set to \"no\"\n"
+    echo "Virtual is set to \"no\""
 
     what_cpu
     what_gpu
   fi
+
+  echo -e "Hardware has been resolved successfully"
 }
 
 is_uefi () {
