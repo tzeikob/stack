@@ -14,6 +14,10 @@ setup () {
   arch-chroot /mnt $HOME/scripts/${1}.sh 2>&1 | tee -a $LOG
 }
 
+install () {
+  arch-chroot /mnt runuser -u $USERNAME -- /home/$USERNAME/stack/scripts/${1}/setup.sh 2>&1 | tee -a $LOG
+}
+
 clear
 
 cat << EOF
@@ -41,4 +45,6 @@ run "askme" &&
   run "diskpart" &&
   run "bootstrap" &&
   setup "system" &&
+  source "$OPTIONS" &&
+  install "desktop" &&
   run "reboot"

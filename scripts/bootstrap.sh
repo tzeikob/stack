@@ -59,11 +59,11 @@ install_kernels () {
 }
 
 copy_files () {
-  echo "Copying installation files to the new disk..."
+  echo "Copying installation files to the root folder..."
 
   cp -R $HOME /mnt/root
 
-  echo -e "Files have been copied successfully"
+  echo -e "Files have been copied to /root/stack"
 }
 
 echo -e "\nStarting the bootstrap process..."

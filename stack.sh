@@ -9,15 +9,11 @@ answer=${answer:-"yes"}
 if [[ $answer =~ ^(yes|y)$ ]]; then
   echo -e "Installing the BSPWM window manager..."
 
-  pacman -S picom bspwm sxhkd rofi rofi-emoji rofi-calc xsel polybar feh firefox sxiv mpv
+  pacman -S bspwm sxhkd rofi rofi-emoji rofi-calc xsel polybar feh firefox sxiv mpv
 
   echo -e "Setting up the desktop environment configuration..."
 
-  mkdir -p /home/$username/.config/{picom,bspwm,sxhkd,polybar,rofi}
-
-  curl $config_url/picom -sSo /home/$username/.config/picom/picom.conf \
-    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
-  chmod 644 /home/$username/.config/picom/picom.conf
+  mkdir -p /home/$username/.config/{bspwm,sxhkd,polybar,rofi}
 
   curl $config_url/bspwm -sSo /home/$username/.config/bspwm/bspwmrc \
     --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
@@ -44,12 +40,6 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
   chmod 644 /home/$username/.config/mimeapps.list
 
   chown -R $username:$username /home/$username/.config
-
-  if [[ $virtual_box =~ ^(yes|y)$ ]]; then
-    sed -i 's/vsync = true;/vsync = false;/' /home/$username/.config/picom/picom.conf
-
-    echo -e "Vsync setting in picom has been disabled"
-  fi
 
   echo -e "\nSetting up the polybar launcher..."
 
@@ -108,24 +98,12 @@ EOF
 
   echo -e "Power launcher has been installed"
 
-  cp /etc/X11/xinit/xinitrc /home/$username/.xinitrc
-
-  sed -i '/twm &/d' /home/$username/.xinitrc
-  sed -i '/xclock -geometry 50x50-1+1 &/d' /home/$username/.xinitrc
-  sed -i '/xterm -geometry 80x50+494+51 &/d' /home/$username/.xinitrc
-  sed -i '/xterm -geometry 80x20+494-0 &/d' /home/$username/.xinitrc
-  sed -i '/exec xterm -geometry 80x66+0+0 -name login/d' /home/$username/.xinitrc
-
   echo "xsetroot -cursor_name left_ptr" >> /home/$username/.xinitrc
-  echo "picom --fade-in-step=1 --fade-out-step=1 --fade-delta=0 &" >> /home/$username/.xinitrc
   echo "~/.fehbg &" >> /home/$username/.xinitrc
   echo "udiskie --notify-command \"ln -s /run/media/$USER $HOME/media/local\" &" >> /home/$username/.xinitrc
   echo "exec bspwm" >> /home/$username/.xinitrc
 
   chown -R $username:$username /home/$username/.xinitrc
-
-  echo '' >> /home/$username/.bash_profile
-  echo '[[ -z $DISPLAY && $XDG_VTNR -eq 1 ]] && exec startx' >> /home/$username/.bash_profile
 
   echo -e "Setting up the wallpaper..."
 

@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 
-copy_files () {
-  echo "Copying all installation files to the new system"
+clean_up () {
+  echo "Cleaning up installation files..."
 
-  rm -rf /mnt/root/stack
-  cp -R $HOME /mnt/root/
+  rm -rf /mnt/root/stack "/mnt/home/$USERNAME/stack"
+  cp $LOG "/mnt/home/$USERNAME/stack.log"
 
-  echo "Installation files have been copied successfully"
+  echo "Log file has been saved to /home/$USERNAME/stack.log"
+
+  echo "System has been cleaned up"
 }
 
 unmount () {
@@ -24,6 +26,8 @@ restart () {
 
 echo -e "\nBooting into the system for the first time..."
 
-copy_files &&
+source $OPTIONS
+
+clean_up &&
   unmount &&
   restart
