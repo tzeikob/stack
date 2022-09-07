@@ -23,6 +23,40 @@ setup_compositor () {
   echo "Compositor has been installed"
 }
 
+setup_window_manager () {
+  echo "Installing BSPWM as the window manager..."
+
+  sudo pacman -S --noconfirm bspwm sxhkd
+
+  local BSPWM_CONFIG_HOME="/home/$USERNAME/.config/bspwm"
+  local BSPWMRC="$BSPWM_CONFIG_HOME/bspwmrc"
+  local BSPWM_RULES="$BSPWM_CONFIG_HOME/rules"
+
+  mkdir -p BSPWM_CONFIG_HOME
+
+  cp "/home/$USERNAME/stack/scripts/desktop/bspwmrc" "$BSPWM_CONFIG_HOME"
+  chmod 755 "$BSPWMRC"
+
+  cp "/home/$USERNAME/stack/scripts/desktop/bspwm-rules" "$BSPWM_CONFIG_HOME"
+  chmod 755 "$BSPWM_RULES"
+
+  echo "Window manager has been installed"
+}
+
+setup_bindings () {
+  echo "Setting up key bindings via sxhkd..."
+
+  sudo pacman -S --noconfirm sxhkd
+
+  local SXHKD_CONFIG_HOME="/home/$USERNAME/.config/sxhkd"
+  local SXHKDRC="$SXHKD_CONFIG_HOME/sxhkdrc"
+
+  cp "/home/$USERNAME/stack/scripts/desktop/sxhkdrc" "$SXHKD_CONFIG_HOME"
+  chmod 644 "$SXHKDRC"
+
+  echo "Key bindings have been set"
+}
+
 config_xorg () {
   echo "Setting up xorg configuration..."
 
@@ -37,6 +71,7 @@ config_xorg () {
   sed -i '/exec xterm -geometry 80x66+0+0 -name login/d' "$CONFIG_FILE"
 
   echo "picom --fade-in-step=1 --fade-out-step=1 --fade-delta=0 &" >> "$CONFIG_FILE"
+  echo "exec bspwm" >> "$CONFIG_FILE"
 
   local BASH_PROFILE="/home/$USERNAME/.bash_profile"
 
@@ -53,6 +88,8 @@ echo -e "\nStarting the desktop installation process..."
 source ~/stack/.options
 
 setup_compositor &&
+  setup_window_manager &&
+  setup_bindings &&
   config_xorg
 
 echo -e "\nSetting up the desktop has been completed"

@@ -9,23 +9,11 @@ answer=${answer:-"yes"}
 if [[ $answer =~ ^(yes|y)$ ]]; then
   echo -e "Installing the BSPWM window manager..."
 
-  pacman -S bspwm sxhkd rofi rofi-emoji rofi-calc xsel polybar feh firefox sxiv mpv
+  pacman -S rofi rofi-emoji rofi-calc xsel polybar feh firefox sxiv mpv
 
   echo -e "Setting up the desktop environment configuration..."
 
-  mkdir -p /home/$username/.config/{bspwm,sxhkd,polybar,rofi}
-
-  curl $config_url/bspwm -sSo /home/$username/.config/bspwm/bspwmrc \
-    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
-  chmod 755 /home/$username/.config/bspwm/bspwmrc
-
-  curl $bin_url/bspwm -sSo /home/$username/.config/bspwm/rules \
-    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
-  chmod 755 /home/$username/.config/bspwm/rules
-
-  curl $config_url/sxhkd -sSo /home/$username/.config/sxhkd/sxhkdrc \
-    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
-  chmod 644 /home/$username/.config/sxhkd/sxhkdrc
+  mkdir -p /home/$username/.config/{polybar,rofi}
 
   curl $config_url/polybar -sSo /home/$username/.config/polybar/config.ini \
     --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
@@ -101,7 +89,6 @@ EOF
   echo "xsetroot -cursor_name left_ptr" >> /home/$username/.xinitrc
   echo "~/.fehbg &" >> /home/$username/.xinitrc
   echo "udiskie --notify-command \"ln -s /run/media/$USER $HOME/media/local\" &" >> /home/$username/.xinitrc
-  echo "exec bspwm" >> /home/$username/.xinitrc
 
   chown -R $username:$username /home/$username/.xinitrc
 
