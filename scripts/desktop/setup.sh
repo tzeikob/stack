@@ -3,7 +3,7 @@
 setup_compositor () {
   echo "Installing the picom compositor..."
 
-  pacman -S --noconfirm picom
+  sudo pacman -S --noconfirm picom
 
   local CONFIG_HOME="/home/$USERNAME/.config/picom"
   local CONFIG_FILE="$CONFIG_HOME/picom.conf"
@@ -19,7 +19,7 @@ setup_compositor () {
     echo -e "Vsync has been disabled"
   fi
 
-  echo "Configuration has been set under ~/.config/picom"
+  echo "Configuration has been set under /home/$USERNAME/.config/picom"
   echo "Compositor has been installed"
 }
 
@@ -45,13 +45,12 @@ config_xorg () {
 
   echo "Xorg session set to be started automatically after user logins"
 
-  echo "Xorg configuration set to ~/.xinitrc"
-  echo "Xorg configuration has been completed"
+  echo "Xorg configuration saved to /home/$USERNAME/.xinitrc"
 }
 
 echo -e "\nStarting the desktop installation process..."
 
-source "~/stack/.options"
+source ~/stack/.options
 
 setup_compositor &&
   config_xorg

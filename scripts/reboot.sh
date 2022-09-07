@@ -1,14 +1,17 @@
 #!/usr/bin/env bash
 
 clean_up () {
-  echo "Cleaning up installation files..."
+  echo "Cleaning up the system..."
 
-  rm -rf /mnt/root/stack "/mnt/home/$USERNAME/stack"
   cp $LOG "/mnt/home/$USERNAME/stack.log"
 
-  echo "Log file has been saved to /home/$USERNAME/stack.log"
+  echo "Log file saved to /home/$USERNAME/stack.log"
 
-  echo "System has been cleaned up"
+  rm -rf /mnt/root/stack
+  rm -rf "/mnt/home/$USERNAME/stack"
+
+  echo "Installation files have been removed"
+  echo "System clean up has been completed"
 }
 
 unmount () {

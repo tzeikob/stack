@@ -58,14 +58,6 @@ install_kernels () {
   echo -e "Kernels have been installed"
 }
 
-copy_files () {
-  echo "Copying installation files to the root folder..."
-
-  cp -R $HOME /mnt/root
-
-  echo -e "Files have been copied to /root/stack"
-}
-
 echo -e "\nStarting the bootstrap process..."
 
 source $OPTIONS
@@ -74,8 +66,7 @@ update_clock &&
   set_mirrors &&
   sync_packages &&
   update_keyring &&
-  install_kernels &&
-  copy_files
+  install_kernels
 
 echo -e "\nBootstrap process has been completed successfully"
 echo "Moving to the next process..."

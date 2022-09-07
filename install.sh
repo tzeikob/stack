@@ -11,11 +11,16 @@ run () {
 }
 
 setup () {
-  arch-chroot /mnt $HOME/scripts/${1}.sh 2>&1 | tee -a $LOG
+  arch-chroot /mnt /root/stack/scripts/${1}.sh 2>&1 | tee -a $LOG
 }
 
 install () {
+  source $OPTIONS
   arch-chroot /mnt runuser -u $USERNAME -- /home/$USERNAME/stack/scripts/${1}/setup.sh 2>&1 | tee -a $LOG
+}
+
+copy () {
+  cp -R "${1}" "${2}"
 }
 
 clear
@@ -44,7 +49,7 @@ echo
 run "askme" &&
   run "diskpart" &&
   run "bootstrap" &&
+  copy "$HOME" "/mnt/root" &&
   setup "system" &&
-  source "$OPTIONS" &&
   install "desktop" &&
   run "reboot"

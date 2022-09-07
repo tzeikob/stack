@@ -359,18 +359,18 @@ enable_services () {
   echo "System services have been enabled"
 }
 
-move_files () {
-  echo "Moving installation files to the home folder"
+copy_files () {
+  echo "Copying installation files to user's home..."
 
-  mv /root/stack "/home/$USERNAME"
+  cp -R /root/stack "/home/$USERNAME"
   chown -R $USERNAME:$USERNAME "/home/$USERNAME/stack"
 
-  echo "Installation files have been moved to /home/$USERNAME/stack"
+  echo "Installation files moved to /home/$USERNAME/stack"
 }
 
 echo -e "\nStarting the system setup process..."
 
-source "/root/stack/.options"
+source /root/stack/.options
 
 set_nopasswd "on" &&
   setup_host &&
@@ -389,8 +389,8 @@ set_nopasswd "on" &&
   config_security &&
   install_bootloader &&
   enable_services &&
-  set_nopasswd "off" &&
-  move_files
+  copy_files &&
+  set_nopasswd "off"
 
 echo -e "\nSetting up the system has been completed"
 echo "Moving to the next process..."
