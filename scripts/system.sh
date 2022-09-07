@@ -1,18 +1,5 @@
 #!/usr/bin/env bash
 
-set_nopasswd () {
-  local STATUS=$1
-
-  if [ "$STATUS" = "on" ]; then
-    sed -i 's/^# \(%wheel ALL=(ALL:ALL) NOPASSWD: ALL\)/\1/' /etc/sudoers
-  else
-    STATUS="off"
-    sed -i 's/^\(%wheel ALL=(ALL:ALL) NOPASSWD: ALL\)/# \1/' /etc/sudoers
-  fi
-
-  echo "No password sudo mode has been set to $STATUS"
-}
-
 setup_host () {
   echo -e "\nSetting up system host..."
 
@@ -372,8 +359,7 @@ echo -e "\nStarting the system setup process..."
 
 source /root/stack/.options
 
-set_nopasswd "on" &&
-  setup_host &&
+setup_host &&
   setup_users &&
   set_keymap &&
   set_locale &&
@@ -389,8 +375,7 @@ set_nopasswd "on" &&
   config_security &&
   install_bootloader &&
   enable_services &&
-  copy_files &&
-  set_nopasswd "off"
+  copy_files
 
 echo -e "\nSetting up the system has been completed"
 echo "Moving to the next process..."
