@@ -41,7 +41,6 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
 
   echo -e "Screen lock has been set"
 
-  echo "xsetroot -cursor_name left_ptr" >> /home/$username/.xinitrc
   echo "~/.fehbg &" >> /home/$username/.xinitrc
   echo "udiskie --notify-command \"ln -s /run/media/$USER $HOME/media/local\" &" >> /home/$username/.xinitrc
 
