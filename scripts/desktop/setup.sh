@@ -5,11 +5,11 @@ setup_compositor () {
 
   sudo pacman -S --noconfirm picom
 
-  local CONFIG_HOME="~/.config/picom"
+  local CONFIG_HOME=~/.config/picom
   local CONFIG_FILE="$CONFIG_HOME/picom.conf"
 
   mkdir -p "$CONFIG_HOME"
-  cp "~/stack/scripts/desktop/picom/picom.conf" "$CONFIG_HOME"
+  cp ~/stack/scripts/desktop/picom/picom.conf "$CONFIG_HOME"
 
   if [ "$IS_VIRTUAL_BOX" = "yes" ]; then
     echo "Virtual box machine detected"
@@ -28,16 +28,16 @@ setup_window_manager () {
 
   sudo pacman -S --noconfirm bspwm
 
-  local CONFIG_HOME="~/.config/bspwm"
+  local CONFIG_HOME=~/.config/bspwm
   local CONFIG_FILE="$CONFIG_HOME/bspwmrc"
   local RULES_FILE="$CONFIG_HOME/rules"
 
   mkdir -p "$CONFIG_HOME"
 
-  cp "~/stack/scripts/desktop/bspwm/bspwmrc" "$CONFIG_FILE"
+  cp ~/stack/scripts/desktop/bspwm/bspwmrc "$CONFIG_FILE"
   chmod 755 "$CONFIG_FILE"
 
-  cp "~/stack/scripts/desktop/bspwm/rules" "$RULES_FILE"
+  cp ~/stack/scripts/desktop/bspwm/rules "$RULES_FILE"
   chmod 755 "$RULES_FILE"
 
   echo "Window manager has been installed"
@@ -48,16 +48,16 @@ setup_bars () {
 
   sudo pacman -S --noconfirm polybar
 
-  local CONFIG_HOME="~/.config/polybar"
+  local CONFIG_HOME=~/.config/polybar
   local CONFIG_FILE="$CONFIG_HOME/config.ini"
   local LAUNCH_FILE="$CONFIG_HOME/launch.sh"
 
   mkdir -p "$CONFIG_HOME"
 
-  cp "~/stack/scripts/desktop/polybar/config.ini" "$CONFIG_FILE"
+  cp ~/stack/scripts/desktop/polybar/config.ini "$CONFIG_FILE"
   chmod 644 "$CONFIG_FILE"
 
-  cp "~/stack/scripts/desktop/polybar/launch.sh" "$LAUNCH_FILE"
+  cp ~/stack/scripts/desktop/polybar/launch.sh "$LAUNCH_FILE"
   chmod 755 "$LAUNCH_FILE"
 
   echo "Polybar launcher script has been installed"
@@ -69,10 +69,10 @@ setup_bindings () {
 
   sudo pacman -S --noconfirm sxhkd
 
-  local CONFIG_HOME="~/.config/sxhkd"
+  local CONFIG_HOME=~/.config/sxhkd
   local CONFIG_FILE="$CONFIG_HOME/sxhkdrc"
 
-  cp "~/stack/scripts/desktop/sxhkd/sxhkdrc" "$CONFIG_HOME"
+  cp ~/stack/scripts/desktop/sxhkd/sxhkdrc "$CONFIG_HOME"
   chmod 644 "$CONFIG_HOME"
 
   echo "Key bindings have been set"
@@ -81,7 +81,7 @@ setup_bindings () {
 config_xorg () {
   echo "Setting up xorg configuration..."
 
-  local CONFIG_FILE="~/.xinitrc"
+  local CONFIG_FILE=~/.xinitrc
 
   cp /etc/X11/xinit/xinitrc "$CONFIG_FILE"
 
@@ -94,7 +94,7 @@ config_xorg () {
   echo "picom --fade-in-step=1 --fade-out-step=1 --fade-delta=0 &" >> "$CONFIG_FILE"
   echo "exec bspwm" >> "$CONFIG_FILE"
 
-  local BASH_PROFILE="~/.bash_profile"
+  local BASH_PROFILE=~/.bash_profile
 
   echo '' >> "$BASH_PROFILE"
   echo '[[ -z $DISPLAY && $XDG_VTNR -eq 1 ]] && exec startx' >> "$BASH_PROFILE"
