@@ -9,15 +9,11 @@ answer=${answer:-"yes"}
 if [[ $answer =~ ^(yes|y)$ ]]; then
   echo -e "Installing the BSPWM window manager..."
 
-  pacman -S rofi rofi-emoji rofi-calc xsel polybar feh firefox sxiv mpv
+  pacman -S rofi rofi-emoji rofi-calc xsel feh firefox sxiv mpv
 
   echo -e "Setting up the desktop environment configuration..."
 
-  mkdir -p /home/$username/.config/{polybar,rofi}
-
-  curl $config_url/polybar -sSo /home/$username/.config/polybar/config.ini \
-    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
-  chmod 644 /home/$username/.config/polybar/config.ini
+  mkdir -p /home/$username/.config/{rofi}
 
   curl $config_url/rofi -sSo /home/$username/.config/rofi/config.rasi \
     --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
@@ -28,29 +24,6 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
   chmod 644 /home/$username/.config/mimeapps.list
 
   chown -R $username:$username /home/$username/.config
-
-  echo -e "\nSetting up the polybar launcher..."
-
-  cat << 'EOF' > /home/$username/.config/polybar/launch.sh
-  #!/usr/bin/env bash
-
-  # Terminate already running bar instances
-  # If all your bars have ipc enabled, you can use 
-  polybar-msg cmd quit
-  # Otherwise you can use the nuclear option:
-  # killall -q polybar
-
-  # Launch bar
-  echo "---" | tee -a /tmp/polybar.log
-  polybar main 2>&1 | tee -a /tmp/polybar.log & disown
-
-  echo "Bars launched..."
-EOF
-
-  chmod +x /home/$username/.config/polybar/launch.sh
-  chown $username:$username /home/$username/.config/polybar/launch.sh
-
-  echo -e "Polybar launcher has been set"
 
   echo -e "\nInstalling the screen locker..."
 

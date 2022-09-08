@@ -43,6 +43,27 @@ setup_window_manager () {
   echo "Window manager has been installed"
 }
 
+setup_bars () {
+  echo "Setting up the status bar via polybar..."
+
+  sudo pacman -S --noconfirm polybar
+
+  local CONFIG_HOME="/home/$USERNAME/.config/polybar"
+  local CONFIG_FILE="$CONFIG_HOME/config.ini"
+  local LAUNCH_FILE="$CONFIG_HOME/launch.sh"
+
+  mkdir -p CONFIG_HOME
+
+  cp "/home/$USERNAME/stack/scripts/desktop/polybar/config.ini" "$CONFIG_FILE"
+  chmod 644 "$CONFIG_FILE"
+
+  cp "/home/$USERNAME/stack/scripts/desktop/polybar/launch.sh" "$LAUNCH_FILE"
+  chmod 755 "$LAUNCH_FILE"
+
+  echo "Polybar launcher script has been installed"
+  echo "Status bars have been installed"
+}
+
 setup_bindings () {
   echo "Setting up key bindings via sxhkd..."
 
@@ -89,6 +110,7 @@ source ~/stack/.options
 
 setup_compositor &&
   setup_window_manager &&
+  setup_bars &&
   setup_bindings &&
   config_xorg
 
