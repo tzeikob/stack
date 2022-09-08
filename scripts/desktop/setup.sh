@@ -93,8 +93,10 @@ setup_bindings () {
   local CONFIG_HOME=~/.config/sxhkd
   local CONFIG_FILE="$CONFIG_HOME/sxhkdrc"
 
-  cp ~/stack/scripts/desktop/sxhkd/sxhkdrc "$CONFIG_HOME"
-  chmod 644 "$CONFIG_HOME"
+  mkdir -p "$CONFIG_HOME"
+
+  cp ~/stack/scripts/desktop/sxhkd/sxhkdrc "$CONFIG_FILE"
+  chmod 644 "$CONFIG_FILE"
 
   echo "Key bindings have been set"
 }
