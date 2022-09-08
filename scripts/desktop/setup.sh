@@ -5,11 +5,11 @@ setup_compositor () {
 
   sudo pacman -S --noconfirm picom
 
-  local CONFIG_HOME="/home/$USERNAME/.config/picom"
+  local CONFIG_HOME="~/.config/picom"
   local CONFIG_FILE="$CONFIG_HOME/picom.conf"
 
   mkdir -p "$CONFIG_HOME"
-  cp "/home/$USERNAME/stack/scripts/desktop/picom.conf" "$CONFIG_HOME"
+  cp "~/stack/scripts/desktop/picom/picom.conf" "$CONFIG_HOME"
 
   if [ "$IS_VIRTUAL_BOX" = "yes" ]; then
     echo "Virtual box machine detected"
@@ -19,7 +19,7 @@ setup_compositor () {
     echo -e "Vsync has been disabled"
   fi
 
-  echo "Configuration has been set under /home/$USERNAME/.config/picom"
+  echo "Configuration has been set under ~/.config/picom"
   echo "Compositor has been installed"
 }
 
@@ -28,17 +28,17 @@ setup_window_manager () {
 
   sudo pacman -S --noconfirm bspwm sxhkd
 
-  local BSPWM_CONFIG_HOME="/home/$USERNAME/.config/bspwm"
-  local BSPWMRC="$BSPWM_CONFIG_HOME/bspwmrc"
-  local BSPWM_RULES="$BSPWM_CONFIG_HOME/rules"
+  local CONFIG_HOME="~/.config/bspwm"
+  local CONFIG_FILE="$CONFIG_HOME/bspwmrc"
+  local RULES_FILE="$CONFIG_HOME/rules"
 
-  mkdir -p BSPWM_CONFIG_HOME
+  mkdir -p "$CONFIG_HOME"
 
-  cp "/home/$USERNAME/stack/scripts/desktop/bspwmrc" "$BSPWM_CONFIG_HOME"
-  chmod 755 "$BSPWMRC"
+  cp "~/stack/scripts/desktop/bspwm/bspwmrc" "$CONFIG_FILE"
+  chmod 755 "$CONFIG_FILE"
 
-  cp "/home/$USERNAME/stack/scripts/desktop/bspwm-rules" "$BSPWM_CONFIG_HOME"
-  chmod 755 "$BSPWM_RULES"
+  cp "~/stack/scripts/desktop/bspwm/rules" "$RULES_FILE"
+  chmod 755 "$RULES_FILE"
 
   echo "Window manager has been installed"
 }
@@ -48,16 +48,16 @@ setup_bars () {
 
   sudo pacman -S --noconfirm polybar
 
-  local CONFIG_HOME="/home/$USERNAME/.config/polybar"
+  local CONFIG_HOME="~/.config/polybar"
   local CONFIG_FILE="$CONFIG_HOME/config.ini"
   local LAUNCH_FILE="$CONFIG_HOME/launch.sh"
 
-  mkdir -p CONFIG_HOME
+  mkdir -p "$CONFIG_HOME"
 
-  cp "/home/$USERNAME/stack/scripts/desktop/polybar/config.ini" "$CONFIG_FILE"
+  cp "~/stack/scripts/desktop/polybar/config.ini" "$CONFIG_FILE"
   chmod 644 "$CONFIG_FILE"
 
-  cp "/home/$USERNAME/stack/scripts/desktop/polybar/launch.sh" "$LAUNCH_FILE"
+  cp "~/stack/scripts/desktop/polybar/launch.sh" "$LAUNCH_FILE"
   chmod 755 "$LAUNCH_FILE"
 
   echo "Polybar launcher script has been installed"
@@ -69,11 +69,11 @@ setup_bindings () {
 
   sudo pacman -S --noconfirm sxhkd
 
-  local SXHKD_CONFIG_HOME="/home/$USERNAME/.config/sxhkd"
-  local SXHKDRC="$SXHKD_CONFIG_HOME/sxhkdrc"
+  local CONFIG_HOME="~/.config/sxhkd"
+  local CONFIG_FILE="$CONFIG_HOME/sxhkdrc"
 
-  cp "/home/$USERNAME/stack/scripts/desktop/sxhkdrc" "$SXHKD_CONFIG_HOME"
-  chmod 644 "$SXHKDRC"
+  cp "~/stack/scripts/desktop/sxhkd/sxhkdrc" "$CONFIG_HOME"
+  chmod 644 "$CONFIG_HOME"
 
   echo "Key bindings have been set"
 }
@@ -81,7 +81,7 @@ setup_bindings () {
 config_xorg () {
   echo "Setting up xorg configuration..."
 
-  local CONFIG_FILE="/home/$USERNAME/.xinitrc"
+  local CONFIG_FILE="~/.xinitrc"
 
   cp /etc/X11/xinit/xinitrc "$CONFIG_FILE"
 
@@ -94,14 +94,13 @@ config_xorg () {
   echo "picom --fade-in-step=1 --fade-out-step=1 --fade-delta=0 &" >> "$CONFIG_FILE"
   echo "exec bspwm" >> "$CONFIG_FILE"
 
-  local BASH_PROFILE="/home/$USERNAME/.bash_profile"
+  local BASH_PROFILE="~/.bash_profile"
 
   echo '' >> "$BASH_PROFILE"
   echo '[[ -z $DISPLAY && $XDG_VTNR -eq 1 ]] && exec startx' >> "$BASH_PROFILE"
 
   echo "Xorg session set to be started automatically after user logins"
-
-  echo "Xorg configuration saved to /home/$USERNAME/.xinitrc"
+  echo "Xorg configuration saved to ~/.xinitrc"
 }
 
 echo -e "\nStarting the desktop installation process..."
