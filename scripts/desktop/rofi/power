@@ -11,8 +11,8 @@ exact_lines="listview {lines: 4;}"
 chosen=$(printf "$shutdown\n$reboot\n$logout\n$lock" | rofi -dmenu -i -theme-str "$hide_prompt $exact_lines")
 
 case "$chosen" in
-	"$shutdown") sudo shutdown now ;;
-	"$reboot") sudo reboot ;;
+	"$shutdown") shutdown now ;;
+	"$reboot") reboot ;;
 	"$logout") bspc quit ;;
 	"$lock") slock ;;
 	*) exit 1 ;;

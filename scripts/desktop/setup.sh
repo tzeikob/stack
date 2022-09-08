@@ -64,6 +64,27 @@ setup_bars () {
   echo "Status bars have been installed"
 }
 
+setup_launchers () {
+  echo "Setting up the launchers via rofi..."
+
+  sudo pacman -S --noconfirm rofi rofi-emoji rofi-calc xsel
+
+  local CONFIG_HOME=~/.config/rofi
+  local CONFIG_FILE="$CONFIG_HOME/rofi.rasi"
+  local POWER_FILE=/usr/local/bin/power
+
+  mkdir -p "$CONFIG_HOME"
+
+  cp ~/stack/scripts/desktop/rofi/rofi.rasi "$CONFIG_FILE"
+  chmod 644 "$CONFIG_FILE"
+
+  sudo cp ~/stack/scripts/desktop/rofi/power "$POWER_FILE"
+  sudo chmod 755 "$POWER_FILE"
+
+  echo "Power launcher has been installed"
+  echo "Launchers has been installed"
+}
+
 setup_bindings () {
   echo "Setting up key bindings via sxhkd..."
 
@@ -110,6 +131,7 @@ source ~/stack/.options
 setup_compositor &&
   setup_window_manager &&
   setup_bars &&
+  setup_launchers &&
   setup_bindings &&
   config_xorg
 

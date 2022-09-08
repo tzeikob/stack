@@ -9,15 +9,9 @@ answer=${answer:-"yes"}
 if [[ $answer =~ ^(yes|y)$ ]]; then
   echo -e "Installing the BSPWM window manager..."
 
-  pacman -S rofi rofi-emoji rofi-calc xsel feh firefox sxiv mpv
+  pacman -S feh firefox sxiv mpv
 
   echo -e "Setting up the desktop environment configuration..."
-
-  mkdir -p /home/$username/.config/{rofi}
-
-  curl $config_url/rofi -sSo /home/$username/.config/rofi/config.rasi \
-    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
-  chmod 644 /home/$username/.config/rofi/config.rasi
 
   curl $config_url/mime -sSo /home/$username/.config/mimeapps.list \
     --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
@@ -46,18 +40,6 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
   cd / && rm -rf /slock-1.4 /slock-1.4.tar.gz
 
   echo -e "Screen lock has been set"
-
-  echo -e "Installing the power launcher via rofi script..."
-
-  curl $bin_url/power -sSo /usr/local/bin/power \
-    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
-  chmod 755 /usr/local/bin/power
-
-  echo -e "\n$username $hostname =NOPASSWD: /sbin/shutdown now,/sbin/reboot" >> /etc/sudoers
-
-  echo -e "User '$username' has granted to trigger power events"
-
-  echo -e "Power launcher has been installed"
 
   echo "xsetroot -cursor_name left_ptr" >> /home/$username/.xinitrc
   echo "~/.fehbg &" >> /home/$username/.xinitrc
