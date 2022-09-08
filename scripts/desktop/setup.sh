@@ -26,7 +26,7 @@ setup_compositor () {
 setup_window_manager () {
   echo "Installing BSPWM as the window manager..."
 
-  sudo pacman -S --noconfirm bspwm sxhkd
+  sudo pacman -S --noconfirm bspwm
 
   local CONFIG_HOME="~/.config/bspwm"
   local CONFIG_FILE="$CONFIG_HOME/bspwmrc"
