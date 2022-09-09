@@ -17,7 +17,7 @@ setup_terminal () {
   local BASHRC_FILE=~/.bashrc
 
   sed -i '/PS1.*/d' "$BASHRC_FILE"
-  echo -e "\nsource $PROMPT_FILE" >> "$BASHRC_FILE"
+  echo -e "\nsource /home/$USER/.config/alacritty/prompt.sh" >> "$BASHRC_FILE"
 
   sudo cp /etc/skel/.bash_profile /root
   sudo cp /etc/skel/.bashrc /root
