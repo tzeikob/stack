@@ -23,7 +23,7 @@ setup_terminal () {
   sudo cp /etc/skel/.bashrc /root
 
   sudo sed -i '/PS1.*/d' /root/.bashrc
-  sudo echo "PS1='\[\e[1;31m\]\u\[\e[m\] \W  '" >> /root/.bashrc
+  echo "PS1='\[\e[1;31m\]\u\[\e[m\] \W  '" | sudo tee -a /root/.bashrc > /dev/null
 
   echo "Terminal prompt hooks have been set"
   echo "The terminal has been installed"
