@@ -88,8 +88,11 @@ setup_launchers () {
 setup_login_Screen () {
   echo "Setting up the getty login screen..."
 
+  sudo pacman -S --noconfirm figlet
+  yay -S --noconfirm figlet-fonts figlet-fonts-extra
+
   sudo mv /etc/issue /etc/issue.bak
-  sudo cp ~/stack/scripts/desktop/getty/issue /etc/issue
+  sudo cp ~/stack/scripts/desktop/getty/issue.sh /etc
 
   echo "Welcome screen theme has been set"
 
