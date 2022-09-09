@@ -225,31 +225,5 @@ else
   echo -e "Desktop environment has been skipped"
 fi
 
-echo -e "Settin up the login screen"
-
-mv /etc/issue /etc/issue.bak
-curl $assets_url/issue -sSo /etc/issue \
-  --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
-
-cat << 'EOF' > /etc/systemd/system/login-issue.service
-[Unit]
-Description=Set login prompt via /etc/issue
-Before=getty@tty1.service getty@tty2.service getty@tty3.service getty@tty4.service getty@tty5.service getty@tty6.service
-
-[Service]
-Type=oneshot
-ExecStart=/bin/bash -c 'sed -i "5s/.*/  $(date)/" /etc/issue'
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-systemctl enable login-issue
-
-sed -ri "s;(ExecStart=-/sbin/agetty)(.*);\1 --nohostname\2;" /lib/systemd/system/getty@.service
-sed -ri "s;(ExecStart=-/sbin/agetty)(.*);\1 --nohostname\2;" /lib/systemd/system/serial-getty@.service
-
-echo -e "Login screen has been set"
-
 echo -e "\nThe stack script has been completed"
 echo -e "Exiting the script and prepare for reboot..."

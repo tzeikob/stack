@@ -85,6 +85,24 @@ setup_launchers () {
   echo "Launchers has been installed"
 }
 
+setup_login_Screen () {
+  echo "Setting up the getty login screen..."
+
+  sudo mv /etc/issue /etc/issue.bak
+  sudo cp ~/stack/scripts/desktop/getty/issue /etc/issue
+
+  echo "Welcome screen theme has been set"
+
+  sudo cp ~/stack/scripts/desktop/getty/login-issue.service /etc/systemd/system
+  sudo systemctl enable login-issue
+
+  sudo sed -ri "s;(ExecStart=-/sbin/agetty)(.*);\1 --nohostname\2;" /lib/systemd/system/getty@.service
+  sudo sed -ri "s;(ExecStart=-/sbin/agetty)(.*);\1 --nohostname\2;" /lib/systemd/system/serial-getty@.service
+
+  echo "Login issue service has been enabled"
+  echo "Login screen has been set"
+}
+
 setup_bindings () {
   echo "Setting up key bindings via sxhkd..."
 
@@ -135,6 +153,7 @@ setup_compositor &&
   setup_window_manager &&
   setup_bars &&
   setup_launchers &&
+  setup_login_Screen &&
   setup_bindings &&
   config_xorg
 
