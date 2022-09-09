@@ -64,31 +64,6 @@ EOF
 
   echo -e "Wallpaper has been set successfully"
 
-  echo -e "Installing the virtual terminal..."
-
-  pacman -S alacritty
-
-  mkdir -p /home/$username/.config/alacritty
-
-  curl $config_url/alacritty -sSo /home/$username/.config/alacritty/alacritty.yml \
-    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
-  chown -R $username:$username /home/$username/.config/alacritty
-
-  sed -i '/PS1.*/d' /home/$username/.bashrc
-  echo -e "\nbranch () {" >> /home/$username/.bashrc
-  echo ' git branch 2> /dev/null | sed -e "/^[^*]/d" -e "s/* \(.*\)/  [\\1]/"' >> /home/$username/.bashrc
-  echo -e "}\n" >> /home/$username/.bashrc
-  echo "PS1='\W\[\e[0;35m\]\$(branch)\[\e[m\]  '" >> /home/$username/.bashrc
-
-  echo -e '\nexport EDITOR="nano"' >> /home/$username/.bashrc
-
-  cp /etc/skel/.bash_profile /root
-  cp /etc/skel/.bashrc /root
-  sed -i '/PS1.*/d' /root/.bashrc
-  echo -e "PS1='\[\e[1;31m\]\u\[\e[m\] \W  '" >> /root/.bashrc
-
-  echo -e "Virtual terminal has been installed"
-
   echo -e "Installing the theme, icons and cursors..."
 
   theme_url="https://github.com/dracula/gtk/archive/master.zip"

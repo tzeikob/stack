@@ -67,5 +67,6 @@ run "askme" &&
   grant "nopasswd" &&
   setup "system" &&
   install "desktop" &&
+  install "apps" &&
   revoke "nopasswd" &&
   run "reboot"
