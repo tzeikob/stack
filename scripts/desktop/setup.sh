@@ -106,6 +106,35 @@ setup_login_Screen () {
   echo "Login screen has been set"
 }
 
+setup_screen_locker () {
+  echo "Installing the screen locker..."
+
+  cd ~/ &&
+    curl https://dl.suckless.org/tools/slock-1.4.tar.gz -sSLo ./slock-1.4.tar.gz \
+      --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
+  tar -xzvf ./slock-1.4.tar.gz
+  
+  cd ~/slock-1.4 &&
+    curl https://tools.suckless.org/slock/patches/control-clear/slock-git-20161012-control-clear.diff -sSLo ./control-clear.diff \
+      --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
+  patch -p1 < ./control-clear.diff
+
+  echo "Control clear patch has been added"
+
+  sed -ri 's/(.*)nogroup(.*)/\1nobody\2/' ./config.def.h
+  sed -ri 's/.*INIT.*/  [INIT] = "#1a1b26",/' ./config.def.h
+  sed -ri 's/.*INPUT.*/  [INPUT] = "#383c4a",/' ./config.def.h
+  sed -ri 's/.*FAILED.*/  [FAILED] = "#ff2369"/' ./config.def.h
+  sed -ri 's/(.*)controlkeyclear.*/\1controlkeyclear = 1;/' ./config.def.h
+
+  echo "Lock screen color theme has been applied"
+
+  sudo make install
+  cd / && rm -rf ~/slock-1.4 ~/slock-1.4.tar.gz
+
+  echo -e "Screen locker has been installed"
+}
+
 setup_bindings () {
   echo "Setting up key bindings via sxhkd..."
 
@@ -157,6 +186,7 @@ setup_compositor &&
   setup_bars &&
   setup_launchers &&
   setup_login_Screen &&
+  setup_screen_locker &&
   setup_bindings &&
   config_xorg
 

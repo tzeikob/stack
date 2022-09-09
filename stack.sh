@@ -19,28 +19,6 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
 
   chown -R $username:$username /home/$username/.config
 
-  echo -e "\nInstalling the screen locker..."
-
-  curl https://dl.suckless.org/tools/slock-1.4.tar.gz -sSLo ./slock-1.4.tar.gz \
-    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
-  tar -xzvf ./slock-1.4.tar.gz
-
-  cd /slock-1.4
-
-  curl https://tools.suckless.org/slock/patches/control-clear/slock-git-20161012-control-clear.diff -sSLo ./control-clear.diff \
-    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
-  patch -p1 < ./control-clear.diff
-
-  sed -ri 's/(.*)nogroup(.*)/\1nobody\2/' ./config.def.h
-  sed -ri 's/.*INIT.*/  [INIT] = "#1a1b26",/' ./config.def.h
-  sed -ri 's/.*INPUT.*/  [INPUT] = "#383c4a",/' ./config.def.h
-  sed -ri 's/.*FAILED.*/  [FAILED] = "#ff2369"/' ./config.def.h
-  sed -ri 's/(.*)controlkeyclear.*/\1controlkeyclear = 1;/' ./config.def.h
-  make install
-  cd / && rm -rf /slock-1.4 /slock-1.4.tar.gz
-
-  echo -e "Screen lock has been set"
-
   echo "~/.fehbg &" >> /home/$username/.xinitrc
   echo "udiskie --notify-command \"ln -s /run/media/$USER $HOME/media/local\" &" >> /home/$username/.xinitrc
 
