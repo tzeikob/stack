@@ -23,14 +23,6 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
 
   chown -R $username:$username /home/$username/.xinitrc
 
-  echo -e "Installing various document viewers..."
-
-  pacman -S xournalpp poppler foliate
-
-  sudo -u $username yay -S --useask --removemake --nodiffmenu evince-no-gnome > /dev/null
-
-  echo -e "Document viewers have been installed"
-
   echo -e "Desktop environment configuration is done"
 else
   echo -e "Desktop environment has been skipped"

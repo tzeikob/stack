@@ -53,12 +53,23 @@ setup_music_player () {
   echo -e "Music player has been installed"
 }
 
+setup_document_viewers () {
+  echo "Installing various document viewers..."
+
+  sudo pacman -S --noconfirm xournalpp poppler foliate
+
+  yay -S --useask --removemake --nodiffmenu evince-no-gnome > /dev/null
+
+  echo "Document viewers have been installed"
+}
+
 echo -e "\nStarting the apps installation process..."
 
 source ~/stack/.options
 
 setup_terminal &&
-  setup_music_player
+  setup_music_player &&
+  setup_document_viewers
 
 echo -e "\nSetting up apps has been completed"
 echo "Moving to the next process..."
