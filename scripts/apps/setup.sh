@@ -58,7 +58,7 @@ setup_document_viewers () {
 
   sudo pacman -S --noconfirm xournalpp poppler foliate
 
-  yay -S --useask --removemake --nodiffmenu evince-no-gnome > /dev/null
+  yay -S --noconfirm --useask --removemake --nodiffmenu evince-no-gnome > /dev/null
 
   echo "Document viewers have been installed"
 }
