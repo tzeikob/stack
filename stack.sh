@@ -66,19 +66,6 @@ EOF
 
   echo -e "Document viewers have been installed"
 
-  echo -e "Installing the trash..."
-
-  pacman -S trash-cli
-
-  curl $bin_url/trash -sSo /usr/local/bin/trash \
-    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
-  chmod 755 /usr/local/bin/trash
-
-  echo -e '\nalias rr="rm"' >> /home/$username/.bashrc
-  echo -e 'alias tt="trash"\n' >> /home/$username/.bashrc
-
-  echo -e "Trash has been installed successfully"
-
   echo -e "Desktop environment configuration is done"
 else
   echo -e "Desktop environment has been skipped"

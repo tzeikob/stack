@@ -90,6 +90,21 @@ setup_file_manager () {
   echo "File manager has been installed"
 }
 
+setup_trash () {
+  echo "Installing the trash..."
+
+  sudo pacman -S --noconfirm trash-cli
+
+  sudo cp ~/stack/scripts/desktop/trash/cli.sh /usr/local/bin/trash
+  sudo chmod 755 /usr/local/bin/trash
+
+  echo -e '\nalias rr="rm"' >> ~/.bashrc
+  echo -e 'alias tt="trash"\n' >> ~/.bashrc
+
+  echo "Set aliases for rm and trash"
+  echo "Trash has been installed"
+}
+
 setup_bars () {
   echo "Setting up the status bar via polybar..."
 
@@ -300,6 +315,7 @@ source ~/stack/.options
 setup_compositor &&
   setup_window_manager &&
   setup_file_manager &&
+  setup_trash &&
   setup_bars &&
   setup_launchers &&
   setup_login_Screen &&
