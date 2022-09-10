@@ -135,6 +135,31 @@ setup_screen_locker () {
   echo -e "Screen locker has been installed"
 }
 
+setup_wallpaper () {
+  echo "Setting up the desktop wallpaper..."
+
+  sudo pacman -S --noconfirm feh
+
+  local WALLPAPERS_HOME=~/images/wallpapers
+  local WALLPAPERS_HOST="https://images.hdqwalls.com/wallpapers"
+  local FILE_NAME="arch-liinux-4k-t0.jpg"
+
+  mkdir -p "$WALLPAPERS_HOME"
+  curl "$WALLPAPERS_HOST/$FILE_NAME" -sSLo "$WALLPAPERS_HOME/$FILE_NAME" \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
+  
+  echo "Default wallpaper has been se to $FILE_NAME"
+
+  local CONFIG_HOME=~/.config/feh
+  local FEHBG_FILE="$CONFIG_HOME/.fehbg"
+
+  mkdir -p "$CONFIG_HOME"
+  cp ~/stack/scripts/desktop/feh/fehbg "$FEHBG_FILE"
+
+  echo "Startup background script installed"
+  echo "Desktop wallpaper has been set"
+}
+
 setup_bindings () {
   echo "Setting up key bindings via sxhkd..."
 
@@ -165,6 +190,7 @@ config_xorg () {
   sed -i '/exec xterm -geometry 80x66+0+0 -name login/d' "$CONFIG_FILE"
 
   echo "xsetroot -cursor_name left_ptr" >> "$CONFIG_FILE"
+  echo "~/.config/feh/.fehbg &" >> "$CONFIG_FILE"
   echo "picom --fade-in-step=1 --fade-out-step=1 --fade-delta=0 &" >> "$CONFIG_FILE"
   echo "exec bspwm" >> "$CONFIG_FILE"
 
@@ -187,6 +213,7 @@ setup_compositor &&
   setup_launchers &&
   setup_login_Screen &&
   setup_screen_locker &&
+  setup_wallpaper &&
   setup_bindings &&
   config_xorg
 

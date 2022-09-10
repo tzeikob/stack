@@ -9,7 +9,7 @@ answer=${answer:-"yes"}
 if [[ $answer =~ ^(yes|y)$ ]]; then
   echo -e "Installing the BSPWM window manager..."
 
-  pacman -S feh firefox sxiv mpv
+  pacman -S firefox sxiv mpv
 
   echo -e "Setting up the desktop environment configuration..."
 
@@ -19,28 +19,9 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
 
   chown -R $username:$username /home/$username/.config
 
-  echo "~/.fehbg &" >> /home/$username/.xinitrc
   echo "udiskie --notify-command \"ln -s /run/media/$USER $HOME/media/local\" &" >> /home/$username/.xinitrc
 
   chown -R $username:$username /home/$username/.xinitrc
-
-  echo -e "Setting up the wallpaper..."
-
-  mkdir -p /home/$username/images/wallpapers
-  curl https://images.hdqwalls.com/wallpapers/arch-liinux-4k-t0.jpg -sSLo /home/$username/images/wallpapers/arch-liinux-4k-t0.jpg \
-    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
-
-  chown -R $username:$username /home/$username/images/
-
-  cat << EOF > /home/$username/.fehbg
-  #!/bin/sh
-  feh --no-fehbg --bg-fill '/home/$username/images/wallpapers/arch-liinux-4k-t0.jpg'
-EOF
-
-  chown $username:$username /home/$username/.fehbg
-  chmod 754 /home/$username/.fehbg
-
-  echo -e "Wallpaper has been set successfully"
 
   echo -e "Installing the theme, icons and cursors..."
 
