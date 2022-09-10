@@ -295,8 +295,8 @@ config_xorg () {
   sed -i '/exec xterm -geometry 80x66+0+0 -name login/d' "$CONFIG_FILE"
 
   echo "xsetroot -cursor_name left_ptr" >> "$CONFIG_FILE"
-  echo "~/.config/feh/.fehbg &" >> "$CONFIG_FILE"
   echo "picom --fade-in-step=1 --fade-out-step=1 --fade-delta=0 &" >> "$CONFIG_FILE"
+  echo "~/.config/feh/.fehbg &" >> "$CONFIG_FILE"
   echo 'udiskie --notify-command "ln -s /run/media/$USER $HOME/media/local" &' >> "$CONFIG_FILE"
   echo "exec bspwm" >> "$CONFIG_FILE"
 
