@@ -43,6 +43,53 @@ setup_window_manager () {
   echo "Window manager has been installed"
 }
 
+setup_file_manager () {
+  echo "Installing the file manager..."
+
+  sudo pacman -S --noconfirm nnn fzf
+
+  local CONFIG_HOME=~/.config/nnn
+
+  mkdir -p "$CONFIG_HOME"
+  cp ~/stack/scripts/desktop/nnn/env "$CONFIG_HOME"
+
+  echo "Installing extra nnn plugins..."
+
+  local GETPLUGS_URL="https://raw.githubusercontent.com/jarun/nnn/master/plugins/getplugs"
+
+  curl "$GETPLUGS_URL" -sSLo "$CONFIG_HOME/getplugs" \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
+  HOME=~/ sh "$CONFIG_HOME/getplugs" > /dev/null
+
+  echo "Extra plugins have been installed"
+
+  cp ~/stack/scripts/desktop/nnn/remove "$CONFIG_HOME/plugins"
+  chmod 755 "$CONFIG_HOME/plugins/remove"
+
+  echo "Plugin remove have been installed"
+
+  cp ~/stack/scripts/desktop/nnn/trash "$CONFIG_HOME/plugins"
+  chmod 755 "$CONFIG_HOME/plugins/trash"
+
+  echo "Plugin trash have been installed"
+
+  cp ~/stack/scripts/desktop/nnn/mount "$CONFIG_HOME/plugins"
+  chmod 755 "$CONFIG_HOME/plugins/mount"
+
+  echo "Plugin mount have been installed"
+
+  mkdir -p ~/downloads ~/documents ~/images ~/audios ~/videos ~/virtuals ~/sources ~/data ~/media
+
+  echo -e "User home directories have been created"
+
+  echo -e '\nsource "$HOME/.config/nnn/env"' >> ~/.bashrc
+  sed -i 's/Exec=nnn/Exec=alacritty -e nnn/' /usr/share/applications/nnn.desktop
+  sed -ri 's/(.*)# mocp$/\1alacritty -e mocp \&/' "$CONFIG_HOME/plugins/mocq"
+
+  echo "File manager hooks have been installed"
+  echo "File manager has been installed"
+}
+
 setup_bars () {
   echo "Setting up the status bar via polybar..."
 
@@ -252,6 +299,7 @@ source ~/stack/.options
 
 setup_compositor &&
   setup_window_manager &&
+  setup_file_manager &&
   setup_bars &&
   setup_launchers &&
   setup_login_Screen &&

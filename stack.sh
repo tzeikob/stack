@@ -23,69 +23,6 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
 
   chown -R $username:$username /home/$username/.xinitrc
 
-  echo -e "Installing the file manager..."
-
-  pacman -S nnn fzf
-
-  mkdir -p /home/$username/.config/nnn
-  curl $config_url/nnn -sSo /home/$username/.config/nnn/.env_vars \
-    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
-  chown -R $username:$username /home/$username/.config/nnn/
-  echo -e '\nsource $HOME/.config/nnn/.env_vars' >> /home/$username/.bashrc
-
-  sed -i 's/Exec=nnn/Exec=alacritty -e nnn/' /usr/share/applications/nnn.desktop
-
-  echo -e "File manager set to get open via terminal in xdg-open calls"
-
-  echo -e "Installing extra nnn plugins..."
-
-  curl https://raw.githubusercontent.com/jarun/nnn/master/plugins/getplugs -sSLo ./nnn-getplugs \
-    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
-  HOME=/home/$username sh ./nnn-getplugs > /dev/null
-  rm -f ./nnn-getplugs
-
-  cp /home/$username/.config/nnn/plugins/mocq /home/$username/.config/nnn/plugins/mocq.bak
-  sed -ri 's/(.*)# mocp$/\1alacritty -e mocp \&/' /home/$username/.config/nnn/plugins/mocq
-
-  curl $bin_url/remove-plugin -sSo /home/$username/.config/nnn/plugins/remove \
-    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
-  chmod 755 /home/$username/.config/nnn/plugins/remove
-
-  curl $bin_url/trash-plugin -sSo /home/$username/.config/nnn/plugins/trash \
-    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
-  chmod 755 /home/$username/.config/nnn/plugins/trash
-
-  curl $bin_url/mount-plugin -sSo /home/$username/.config/nnn/plugins/mount \
-    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
-  chmod 755 /home/$username/.config/nnn/plugins/mount
-
-  chown -R $username:$username /home/$username/.config/nnn/plugins
-
-  echo -e "Creating user home directories..."
-
-  mkdir -p /home/$username/downloads \
-    /home/$username/documents \
-    /home/$username/images \
-    /home/$username/audios \
-    /home/$username/videos \
-    /home/$username/virtuals \
-    /home/$username/sources \
-    /home/$username/data \
-    /home/$username/media
-
-  chown -R $username:$username /home/$username/downloads \
-    /home/$username/documents \
-    /home/$username/images \
-    /home/$username/audios \
-    /home/$username/videos \
-    /home/$username/virtuals \
-    /home/$username/sources \
-    /home/$username/data \
-    /home/$username/media
-
-  echo -e "Main user home forders have been created"
-  echo -e "File manager has been installed"
-
   echo -e "Installing the music player..."
 
   sudo pacman -S moc
