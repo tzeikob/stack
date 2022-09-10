@@ -23,41 +23,6 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
 
   chown -R $username:$username /home/$username/.xinitrc
 
-  echo -e "Installing the music player..."
-
-  sudo pacman -S moc
-
-  echo -e "Installing codecs and various dependecies..."
-
-  sudo pacman -S --asdeps --needed faad2 ffmpeg4.4 libmodplug libmpcdec speex taglib wavpack
-
-  mkdir -p /home/$username/.moc/
-  curl $config_url/moc.config -sSo /home/$username/.moc/config \
-    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
-  chmod 644 /home/$username/.moc/config
-
-  mkdir -p /home/$username/.moc/themes
-  curl $config_url/moc.theme -sSo /home/$username/.moc/themes/dark \
-    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
-  chmod 644 /home/$username/.moc/themes/dark
-
-  chown -R $username:$username /home/$username/.moc/
-
-  cat << EOF > /usr/share/applications/moc.desktop
-[Desktop Entry]
-Type=Application
-Name=moc
-comment=Console music player
-Exec=alacritty -e mocp
-Terminal=true
-Icon=moc
-MimeType=audio/mpeg
-Catogories=Music;Player;ConsoleOnly
-Keywords=Music;Player;Audio
-EOF
-
-  echo -e "Music player has been installed"
-
   echo -e "Installing various document viewers..."
 
   pacman -S xournalpp poppler foliate

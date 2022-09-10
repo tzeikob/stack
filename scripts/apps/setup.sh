@@ -29,11 +29,36 @@ setup_terminal () {
   echo "The terminal has been installed"
 }
 
+setup_music_player () {
+  echo "Installing the music player..."
+
+  sudo pacman -S --noconfirm moc
+
+  echo "Installing codecs and various dependecies..."
+
+  sudo pacman -S --noconfirm --asdeps --needed faad2 ffmpeg4.4 libmodplug libmpcdec speex taglib wavpack
+
+  local CONFIG_HOME=~/.moc
+
+  mkdir -p "$CONFIG_HOME" "$CONFIG_HOME/themes"
+
+  cp ~/stack/scripts/apps/moc/config "$CONFIG_HOME"
+  chmod 644 "$CONFIG_HOME/config"
+
+  cp ~/stack/scripts/apps/moc/theme "$CONFIG_HOME/themes"
+  chmod 644 "$CONFIG_HOME/themes/theme"
+
+  sudo cp ~/stack/scripts/apps/moc/desktop /usr/share/applications/moc.desktop
+
+  echo -e "Music player has been installed"
+}
+
 echo -e "\nStarting the apps installation process..."
 
 source ~/stack/.options
 
-setup_terminal
+setup_terminal &&
+  setup_music_player
 
 echo -e "\nSetting up apps has been completed"
 echo "Moving to the next process..."
