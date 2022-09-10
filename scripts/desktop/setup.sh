@@ -83,7 +83,7 @@ setup_file_manager () {
   echo -e "User home directories have been created"
 
   echo -e '\nsource "$HOME/.config/nnn/env"' >> ~/.bashrc
-  sed -i 's/Exec=nnn/Exec=alacritty -e nnn/' /usr/share/applications/nnn.desktop
+  sudo sed -i 's/Exec=nnn/Exec=alacritty -e nnn/' /usr/share/applications/nnn.desktop
   sed -ri 's/(.*)# mocp$/\1alacritty -e mocp \&/' "$CONFIG_HOME/plugins/mocq"
 
   echo "File manager hooks have been installed"
