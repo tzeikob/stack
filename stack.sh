@@ -9,8 +9,6 @@ answer=${answer:-"yes"}
 if [[ $answer =~ ^(yes|y)$ ]]; then
   echo -e "Installing the BSPWM window manager..."
 
-  pacman -S firefox sxiv mpv
-
   echo -e "Setting up the desktop environment configuration..."
 
   curl $config_url/mime -sSo /home/$username/.config/mimeapps.list \
@@ -18,8 +16,6 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
   chmod 644 /home/$username/.config/mimeapps.list
 
   chown -R $username:$username /home/$username/.config
-
-  echo "udiskie --notify-command \"ln -s /run/media/$USER $HOME/media/local\" &" >> /home/$username/.xinitrc
 
   chown -R $username:$username /home/$username/.xinitrc
 

@@ -63,13 +63,22 @@ setup_document_viewers () {
   echo "Document viewers have been installed"
 }
 
+setup_other_apps () {
+  echo "Installing other apps..."
+
+  sudo pacman -S --noconfirm firefox sxiv mpv
+
+  echo "Other apps have been installed"
+}
+
 echo -e "\nStarting the apps installation process..."
 
 source ~/stack/.options
 
 setup_terminal &&
   setup_music_player &&
-  setup_document_viewers
+  setup_document_viewers &&
+  setup_other_apps
 
 echo -e "\nSetting up apps has been completed"
 echo "Moving to the next process..."
