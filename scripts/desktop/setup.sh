@@ -66,17 +66,17 @@ setup_file_manager () {
   cp ~/stack/scripts/desktop/nnn/remove "$CONFIG_HOME/plugins"
   chmod 755 "$CONFIG_HOME/plugins/remove"
 
-  echo "Plugin remove have been installed"
+  echo "Plugin remove has been installed"
 
   cp ~/stack/scripts/desktop/nnn/trash "$CONFIG_HOME/plugins"
   chmod 755 "$CONFIG_HOME/plugins/trash"
 
-  echo "Plugin trash have been installed"
+  echo "Plugin trash has been installed"
 
   cp ~/stack/scripts/desktop/nnn/mount "$CONFIG_HOME/plugins"
   chmod 755 "$CONFIG_HOME/plugins/mount"
 
-  echo "Plugin mount have been installed"
+  echo "Plugin mount has been installed"
 
   mkdir -p ~/downloads ~/documents ~/images ~/audios ~/videos ~/virtuals ~/sources ~/data ~/media
 
