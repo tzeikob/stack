@@ -160,6 +160,49 @@ setup_wallpaper () {
   echo "Desktop wallpaper has been set"
 }
 
+setup_theme () {
+  echo "Installing theme, icons and cursors..."
+
+  local THEME_URL="https://github.com/dracula/gtk/archive/master.zip"
+
+  sudo curl "$THEME_URL" -sSLo /usr/share/themes/Dracula.zip \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
+
+  sudo unzip -q /usr/share/themes/Dracula.zip -d /usr/share/themes
+  sudo mv /usr/share/themes/gtk-master /usr/share/themes/Dracula
+  sudo rm -f /usr/share/themes/Dracula.zip
+
+  echo "Theme has been installed"
+
+  local ICONS_URL="https://github.com/dracula/gtk/files/5214870/Dracula.zip"
+
+  sudo curl "$ICONS_URL" -sSLo /usr/share/icons/Dracula.zip \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
+
+  sudo unzip -q /usr/share/icons/Dracula.zip -d /usr/share/icons
+  sudo rm -f /usr/share/icons/Dracula.zip
+
+  echo "Theme icons have been installed"
+
+  local CURSORS_URL="https://www.dropbox.com/s/mqt8s1pjfgpmy66/Breeze-Snow.tgz?dl=0"
+
+  sudo curl "$CURSORS_URL" -sSLo /usr/share/icons/breeze-snow.tgz \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
+
+  sudo tar -xzf /usr/share/icons/breeze-snow.tgz -C /usr/share/icons
+  sudo sed -ri 's/Inherits=.*/Inherits=Breeze-Snow/' /usr/share/icons/default/index.theme
+  sudo rm -f /usr/share/icons/breeze-snow.tgz
+
+  echo "Cursors have been installed"
+
+  local GTK_HOME=~/.config/gtk-3.0
+
+  mkdir -p "$GTK_HOME"
+  cp ~/stack/scripts/desktop/gtk/settings.ini "$GTK_HOME"
+
+  echo "Theme has been setup"
+}
+
 setup_bindings () {
   echo "Setting up key bindings via sxhkd..."
 
@@ -214,6 +257,7 @@ setup_compositor &&
   setup_login_Screen &&
   setup_screen_locker &&
   setup_wallpaper &&
+  setup_theme &&
   setup_bindings &&
   config_xorg
 

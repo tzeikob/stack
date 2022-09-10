@@ -23,43 +23,6 @@ if [[ $answer =~ ^(yes|y)$ ]]; then
 
   chown -R $username:$username /home/$username/.xinitrc
 
-  echo -e "Installing the theme, icons and cursors..."
-
-  theme_url="https://github.com/dracula/gtk/archive/master.zip"
-  curl $theme_url -sSLo /usr/share/themes/Dracula.zip \
-    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
-  unzip -q /usr/share/themes/Dracula.zip -d /usr/share/themes
-  mv /usr/share/themes/gtk-master /usr/share/themes/Dracula
-  rm -f /usr/share/themes/Dracula.zip
-
-  echo -e "Theme files have been installed under '/usr/share/themes'"
-
-  icons_url="https://github.com/dracula/gtk/files/5214870/Dracula.zip"
-  curl $icons_url -sSLo /usr/share/icons/Dracula.zip \
-    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
-  unzip -q /usr/share/icons/Dracula.zip -d /usr/share/icons
-  rm -f /usr/share/icons/Dracula.zip
-
-  echo -e "Icon files have been installed under '/usr/share/icons'"
-
-  cursors_url="https://www.dropbox.com/s/mqt8s1pjfgpmy66/Breeze-Snow.tgz?dl=0"
-  curl $cursors_url -sSLo /usr/share/icons/breeze-snow.tgz \
-    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
-  tar -xzf /usr/share/icons/breeze-snow.tgz -C /usr/share/icons
-  rm -f /usr/share/icons/breeze-snow.tgz
-
-  sed -ri 's/Inherits=.*/Inherits=Breeze-Snow/' /usr/share/icons/default/index.theme
-
-  echo -e "Cursor files have been installed under '/usr/share/icons'"
-
-  mkdir -p /home/$username/.config/gtk-3.0
-  curl $config_url/gtk -sSo /home/$username/.config/gtk-3.0/settings.ini \
-    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
-
-  chown -R $username:$username /home/$username/.config/gtk-3.0
-
-  echo -e "Theme, icons and cursors have been installed"
-
   echo -e "Installing the file manager..."
 
   pacman -S nnn fzf
