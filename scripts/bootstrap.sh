@@ -59,12 +59,14 @@ install_kernels () {
 }
 
 grant () {
-  case "$1" in
+  local PERMISSION=$1
+
+  case "$PERMISSION" in
     "nopasswd")
       sed -i 's/^# \(%wheel ALL=(ALL:ALL) NOPASSWD: ALL\)/\1/' /mnt/etc/sudoers;;
   esac
 
-  echo "Sudoing permision $1 has been granted"
+  echo "Sudoing permision $PERMISSION has been granted"
 }
 
 copy_files () {
@@ -77,7 +79,7 @@ copy_files () {
 
 echo -e "\nStarting the bootstrap process..."
 
-source $OPTIONS
+source "$OPTIONS"
 
 update_clock &&
   set_mirrors &&

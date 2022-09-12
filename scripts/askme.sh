@@ -4,14 +4,14 @@ save_option () {
   local key=$1
   local value=$2
 
-  touch -f $OPTIONS
+  touch -f "$OPTIONS"
 
   # Override pre-existing option
-  if grep -Eq "^${key}.*" $OPTIONS; then
-    sed -i -e "/^${key}.*/d" $OPTIONS
+  if grep -Eq "^${key}.*" "$OPTIONS"; then
+    sed -i -e "/^${key}.*/d" "$OPTIONS"
   fi
 
-  echo "${key}=${value}" >> $OPTIONS
+  echo "${key}=${value}" >> "$OPTIONS"
 }
 
 save_string () {
@@ -38,7 +38,6 @@ no_breaks () {
 
 remove_dups () {
   local ARR=("${@}")
-
   echo "${ARR[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '
 }
 
@@ -84,8 +83,8 @@ print () {
 }
 
 clean_options () {
-  rm -f $OPTIONS
-  touch $OPTIONS
+  rm -f "$OPTIONS"
+  touch "$OPTIONS"
 }
 
 which_mirrors () {
@@ -147,7 +146,7 @@ which_timezone () {
     read -p " Please enter a valid continent: " CONTINENT
   done
 
-  local CITIES=($(ls -1 -pU /usr/share/zoneinfo/$CONTINENT | grep -v /))
+  local CITIES=($(ls -1 -pU "/usr/share/zoneinfo/$CONTINENT" | grep -v /))
 
   echo && print 4 20 "${CITIES[@]}"
 
@@ -613,10 +612,10 @@ while true; do
     what_hardware &&
     is_uefi
 
-  source $OPTIONS
+  source "$OPTIONS"
 
   echo "Configuration options have been set to:"
-  cat $OPTIONS | awk '!/PASSWORD/ {print " "$0}'
+  cat "$OPTIONS" | awk '!/PASSWORD/ {print " "$0}'
 
   echo -e "\nCAUTION, THIS IS THE LAST WARNING!"
   echo "ALL data in \"$DISK\" will be LOST FOREVER!"

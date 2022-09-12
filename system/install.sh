@@ -3,7 +3,7 @@
 set_host () {
   echo -e "\nSetting up system host..."
 
-  echo $HOSTNAME >> /etc/hostname
+  echo "$HOSTNAME" >> /etc/hostname
 
   echo "Hostname has been set to $HOSTNAME"
 
@@ -20,7 +20,7 @@ set_host () {
 set_users () {
   echo -e "\nSetting up system users..."
 
-  useradd -m -G wheel,audio,video,optical,storage $USERNAME
+  useradd -m -G wheel,audio,video,optical,storage "$USERNAME"
   sed -i 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
 
   echo "Sudoer user $USERNAME has been created"
@@ -42,7 +42,7 @@ set_keymap () {
 
   echo "Virtual console keymap set to $KEYMAP"
 
-  loadkeys $KEYMAP
+  loadkeys "$KEYMAP"
 
   echo "Keyboard's keymap has been set to $KEYMAP"
 }
@@ -60,7 +60,7 @@ set_locale () {
 set_timezone () {
   echo -e "\nSetting the system's timezone..."
 
-  ln -sf /usr/share/zoneinfo/$TIMEZONE /etc/localtime
+  ln -sf "/usr/share/zoneinfo/$TIMEZONE" /etc/localtime
 
   sed -i 's/^#NTP=/NTP=time.google.com/' /etc/systemd/timesyncd.conf
 
@@ -177,13 +177,13 @@ install_drivers () {
 install_yay () {
   echo -e "\nInstalling the yay package manager..."
 
-  cd /home/$USERNAME
+  cd "/home/$USERNAME"
   git clone https://aur.archlinux.org/yay.git
 
-  chown -R $USERNAME:$USERNAME yay && cd yay
-  sudo -u $USERNAME makepkg -si --noconfirm
+  chown -R "$USERNAME":"$USERNAME" yay && cd yay
+  sudo -u "$USERNAME" makepkg -si --noconfirm
 
-  cd /root && rm -rf /home/$USERNAME/yay
+  cd /root && rm -rf "/home/$USERNAME/yay"
 
   echo "Yay package manager has been installed"
 }
@@ -241,7 +241,7 @@ install_bootloader () {
   if [ "$IS_UEFI" = "yes" ]; then
     grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
   else
-    grub-install --target=i386-pc $DISK
+    grub-install --target=i386-pc "$DISK"
   fi
 
   sed -i '/#GRUB_SAVEDEFAULT=true/i GRUB_DEFAULT=saved' /etc/default/grub
@@ -283,7 +283,7 @@ copy_files () {
   echo "Start copying installation files..."
 
   cp -R /root/stack "/home/$USERNAME"
-  chown -R $USERNAME:$USERNAME "/home/$USERNAME/stack"
+  chown -R "$USERNAME":"$USERNAME" "/home/$USERNAME/stack"
 
   echo "Installation files have been moved to /home/$USERNAME"
 }
