@@ -91,12 +91,14 @@ setup_file_manager () {
 }
 
 setup_trash () {
-  echo "Installing the trash..."
+  echo "Installing the trash via the trash-cli..."
 
   sudo pacman -S --noconfirm trash-cli
 
-  sudo cp ~/stack/scripts/desktop/trash/cli.sh /usr/local/bin/trash
+  sudo cp ~/stack/scripts/desktop/trash-cli/trash.sh /usr/local/bin/trash
   sudo chmod 755 /usr/local/bin/trash
+
+  echo "Added a proxy binary to orchestrate trash-cli commands"
 
   echo -e '\nalias rr="rm"' >> ~/.bashrc
   echo -e 'alias tt="trash"\n' >> ~/.bashrc
