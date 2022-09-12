@@ -58,6 +58,23 @@ install_kernels () {
   echo -e "Kernels have been installed"
 }
 
+grant () {
+  case "$1" in
+    "nopasswd")
+      sed -i 's/^# \(%wheel ALL=(ALL:ALL) NOPASSWD: ALL\)/\1/' /mnt/etc/sudoers;;
+  esac
+
+  echo "Sudoing permision $1 has been granted"
+}
+
+copy_files () {
+  echo "Start copying installation files..."
+
+  cp -R "$HOME" /mnt/root
+
+  echo "Installation files have been copied to /root"
+}
+
 echo -e "\nStarting the bootstrap process..."
 
 source $OPTIONS
@@ -66,7 +83,9 @@ update_clock &&
   set_mirrors &&
   sync_packages &&
   update_keyring &&
-  install_kernels
+  install_kernels &&
+  grant "nopasswd" &&
+  copy_files
 
 echo -e "\nBootstrap process has been completed successfully"
 echo "Moving to the next process..."

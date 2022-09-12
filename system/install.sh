@@ -280,12 +280,12 @@ enable_services () {
 }
 
 copy_files () {
-  echo "Copying installation files to user's home..."
+  echo "Start copying installation files..."
 
   cp -R /root/stack "/home/$USERNAME"
   chown -R $USERNAME:$USERNAME "/home/$USERNAME/stack"
 
-  echo "Installation files moved to /home/$USERNAME/stack"
+  echo "Installation files have been moved to /home/$USERNAME"
 }
 
 echo -e "\nStarting the system setup process..."

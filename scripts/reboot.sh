@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+revoke () {
+  case "$1" in
+   "nopasswd")
+    sed -i 's/^\(%wheel ALL=(ALL:ALL) NOPASSWD: ALL\)/# \1/' /mnt/etc/sudoers;;
+  esac
+}
+
 clean_up () {
   echo "Cleaning up the system..."
 
@@ -31,6 +38,7 @@ echo -e "\nBooting into the system for the first time..."
 
 source $OPTIONS
 
-clean_up &&
+revoke "nopasswd" &&
+  clean_up &&
   unmount &&
   restart

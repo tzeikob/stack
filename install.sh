@@ -6,10 +6,6 @@ OPTIONS="$HOME/.options"
 LOG="$HOME/all.log"
 set +a
 
-copy () {
-  cp -R "${1}" "${2}"
-}
-
 run () {
   bash $HOME/scripts/${1}.sh 2>&1 | tee -a $LOG
 }
@@ -22,20 +18,6 @@ install () {
       arch-chroot /mnt /root/stack/${1}/install.sh 2>&1 | tee -a $LOG;;
     "desktop" | "apps")
       arch-chroot /mnt runuser -u $USERNAME -- /home/$USERNAME/stack/${1}/install.sh 2>&1 | tee -a $LOG;;
-  esac
-}
-
-grant () {
-  case "$1" in
-    "nopasswd")
-      sed -i 's/^# \(%wheel ALL=(ALL:ALL) NOPASSWD: ALL\)/\1/' /mnt/etc/sudoers;;
-  esac
-}
-
-revoke () {
-  case "$1" in
-   "nopasswd")
-    sed -i 's/^\(%wheel ALL=(ALL:ALL) NOPASSWD: ALL\)/# \1/' /mnt/etc/sudoers;;
   esac
 }
 
@@ -65,10 +47,7 @@ echo
 run "askme" &&
   run "diskpart" &&
   run "bootstrap" &&
-  copy "$HOME" "/mnt/root" &&
-  grant "nopasswd" &&
   install "system" &&
   install "desktop" &&
   install "apps" &&
-  revoke "nopasswd" &&
   run "reboot"
