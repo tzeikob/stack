@@ -322,14 +322,8 @@ setup_layouts () {
   local OLD_IFS=$IFS && IFS=","
   LAYOUTS="${LAYOUTS[*]}" && IFS=$OLD_IFS
 
-  printf '%s\n' \
-    'Section "InputClass"' \
-    '  Identifier "system-keyboard"' \
-    '  MatchIsKeyboard "on"' \
-    '  Option "XkbLayout" "'${LAYOUTS}'"' \
-    '  Option "XkbModel" "pc105"' \
-    '  Option "XkbOptions" "grp:alt_shift_toggle"' \
-    'EndSection' > /etc/X11/xorg.conf.d/00-keyboard.conf
+  sudo cp ~/stack/desktop/xorg/keyboard.conf /etc/X11/xorg.conf.d
+  sudo sed -i "/XkbLayout/ s/LAYOUTS/${LAYOUTS}/" /etc/X11/xorg.conf.d/keyboard.conf
 
   echo "Keyboard layouts have been set to $LAYOUTS"
 }

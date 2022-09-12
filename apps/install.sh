@@ -71,29 +71,7 @@ install_other_apps () {
 setup_mimes () {
   echo "Setting up application mime types..."
 
-  printf '%s\n' \
-    '[Default Applications]' \
-    'inode/directory=nnn.desktop' \
-    'image/jpeg=sxiv.desktop' \
-    'image/jpg=sxiv.desktop' \
-    'image/png=sxiv.desktop' \
-    'image/tiff=sxiv.desktop' \
-    'audio/mpeg=moc.desktop' \
-    'audio/mp3=moc.desktop' \
-    'audio/flac=moc.desktop' \
-    'audio/midi=moc.desktop' \
-    'video/mp4=mpv.desktop' \
-    'video/mkv=mpv.desktop' \
-    'video/mov=mpv.desktop' \
-    'video/mpeg=mpv.desktop' \
-    'video/avi=mpv.desktop' \
-    'application/pdf=org.gnome.Evince.desktop' \
-    'application/epub+zip=com.github.johnfactotum.Foliate.desktop' \
-    'application/x-xojpp=com.github.xournalapp.xournalapp.desktop' \
-    'application/x-xopp=com.github.xournalapp.xournalapp.desktop' \
-    'application/x-xopt=com.github.xournalapp.xournalapp.desktop' \
-    > ~/.config/mimeapps.list
-
+  cp ~/stack/apps/mimes/list ~/.config/mimeapps.list
   chmod 644 ~/.config/mimeapps.list
 
   echo "Application mime types have been set"

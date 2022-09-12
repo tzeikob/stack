@@ -214,7 +214,7 @@ config_security () {
 
   echo "Firewall ruleset has been saved to /etc/nftables.conf"
 
-  cp /root/stack/system/xorg/screenlock.conf /etc/X11/xorg.conf.d/01-screenlock.conf
+  cp /root/stack/system/xorg/screenlock.conf /etc/X11/xorg.conf.d
 
   echo "Security configuration has been completed"
 }
