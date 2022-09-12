@@ -92,18 +92,7 @@ config_pacman () {
 
   echo "Parallel downloading has been enabled"
 
-  printf '%s\n' \
-    '[Trigger]' \
-    'Type = Package' \
-    'Operation = Install' \
-    'Operation = Upgrade' \
-    'Operation = Remove' \
-    'Target = *' \
-    '[Action]' \
-    'Description = Search for any left over orphan packages' \
-    'When = PostTransaction' \
-    'Exec = /usr/bin/bash -c "/usr/bin/pacman -Qtd || /usr/bin/echo "No orphan packages found""' \
-    > /usr/share/libalpm/hooks/orphan-packages.hook
+  cp /root/stack/system/pacman/orphans.hook /usr/share/libalpm/hooks
 
   echo "Orphan packages post hook has been created"
   echo "Pacman has been configured"
@@ -225,12 +214,7 @@ config_security () {
 
   echo "Firewall ruleset has been saved to /etc/nftables.conf"
 
-  printf '%s\n' \
-  '# Prevents overpassing screen locker by killing xorg or switching vt' \
-  'Section "ServerFlags"' \
-  '  Option "DontVTSwitch" "True"' \
-  '  Option "DontZap" "True"' \
-  'EndSection' > /etc/X11/xorg.conf.d/01-screenlock.conf
+  cp /root/stack/system/xorg/screenlock.conf /etc/X11/xorg.conf.d/01-screenlock.conf
 
   echo "Security configuration has been completed"
 }
