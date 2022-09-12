@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-setup_compositor () {
+install_compositor () {
   echo "Installing the picom compositor..."
 
   sudo pacman -S --noconfirm picom
@@ -23,7 +23,7 @@ setup_compositor () {
   echo "Compositor has been installed"
 }
 
-setup_window_manager () {
+install_window_manager () {
   echo "Installing BSPWM as the window manager..."
 
   sudo pacman -S --noconfirm bspwm
@@ -43,7 +43,7 @@ setup_window_manager () {
   echo "Window manager has been installed"
 }
 
-setup_file_manager () {
+install_file_manager () {
   echo "Installing the file manager..."
 
   sudo pacman -S --noconfirm nnn fzf
@@ -90,7 +90,7 @@ setup_file_manager () {
   echo "File manager has been installed"
 }
 
-setup_trash () {
+install_trash () {
   echo "Installing the trash via the trash-cli..."
 
   sudo pacman -S --noconfirm trash-cli
@@ -107,7 +107,7 @@ setup_trash () {
   echo "Trash has been installed"
 }
 
-setup_bars () {
+install_bars () {
   echo "Setting up the status bar via polybar..."
 
   sudo pacman -S --noconfirm polybar
@@ -128,7 +128,7 @@ setup_bars () {
   echo "Status bars have been installed"
 }
 
-setup_launchers () {
+install_launchers () {
   echo "Setting up the launchers via rofi..."
 
   sudo pacman -S --noconfirm rofi rofi-emoji rofi-calc xsel
@@ -149,7 +149,7 @@ setup_launchers () {
   echo "Launchers has been installed"
 }
 
-setup_login_Screen () {
+install_login_Screen () {
   echo "Setting up the getty login screen..."
 
   sudo pacman -S --noconfirm figlet
@@ -170,7 +170,7 @@ setup_login_Screen () {
   echo "Login screen has been set"
 }
 
-setup_screen_locker () {
+install_screen_locker () {
   echo "Installing the screen locker..."
 
   cd ~/ &&
@@ -199,7 +199,7 @@ setup_screen_locker () {
   echo -e "Screen locker has been installed"
 }
 
-setup_wallpaper () {
+install_wallpaper () {
   echo "Setting up the desktop wallpaper..."
 
   sudo pacman -S --noconfirm feh
@@ -224,7 +224,7 @@ setup_wallpaper () {
   echo "Desktop wallpaper has been set"
 }
 
-setup_theme () {
+install_theme () {
   echo "Installing theme, icons and cursors..."
 
   local THEME_URL="https://github.com/dracula/gtk/archive/master.zip"
@@ -267,7 +267,7 @@ setup_theme () {
   echo "Theme has been setup"
 }
 
-setup_fonts () {
+install_fonts () {
   echo -e "\nInstalling extra fonts..."
 
   local FONTS_HOME="/usr/share/fonts/extra-fonts"
@@ -382,17 +382,17 @@ echo -e "\nStarting the desktop installation process..."
 
 source ~/stack/.options
 
-setup_compositor &&
-  setup_window_manager &&
-  setup_file_manager &&
-  setup_trash &&
-  setup_bars &&
-  setup_launchers &&
-  setup_login_Screen &&
-  setup_screen_locker &&
-  setup_wallpaper &&
-  setup_theme &&
-  setup_fonts &&
+install_compositor &&
+  install_window_manager &&
+  install_file_manager &&
+  install_trash &&
+  install_bars &&
+  install_launchers &&
+  install_login_Screen &&
+  install_screen_locker &&
+  install_wallpaper &&
+  install_theme &&
+  install_fonts &&
   setup_layouts &&
   setup_bindings &&
   config_xorg
