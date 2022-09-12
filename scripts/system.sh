@@ -188,73 +188,6 @@ install_yay () {
   echo "Yay package manager has been installed"
 }
 
-set_layouts () {
-  echo -e "\nSetting the keyboard layouts..."
-
-  local OLD_IFS=$IFS && IFS=","
-  LAYOUTS="${LAYOUTS[*]}" && IFS=$OLD_IFS
-
-  printf '%s\n' \
-    'Section "InputClass"' \
-    '  Identifier "system-keyboard"' \
-    '  MatchIsKeyboard "on"' \
-    '  Option "XkbLayout" "'${LAYOUTS}'"' \
-    '  Option "XkbModel" "pc105"' \
-    '  Option "XkbOptions" "grp:alt_shift_toggle"' \
-    'EndSection' > /etc/X11/xorg.conf.d/00-keyboard.conf
-
-  echo "Keyboard layouts have been set to $LAYOUTS"
-}
-
-install_fonts () {
-  echo -e "\nInstalling extra fonts..."
-
-  local FONTS_HOME="/usr/share/fonts/extra-fonts"
-  mkdir -p $FONTS_HOME
-
-  local FONTS=(
-    "FiraCode https://github.com/tonsky/FiraCode/releases/download/6.2/Fira_Code_v6.2.zip"
-    "FantasqueSansMono https://github.com/belluzj/fantasque-sans/releases/download/v1.8.0/FantasqueSansMono-Normal.zip"
-    "Hack https://github.com/source-foundry/Hack/releases/download/v3.003/Hack-v3.003-ttf.zip"
-    "Hasklig https://github.com/i-tu/Hasklig/releases/download/v1.2/Hasklig-1.2.zip"
-    "JetBrainsMono https://github.com/JetBrains/JetBrainsMono/releases/download/v2.242/JetBrainsMono-2.242.zip"
-    "Mononoki https://github.com/madmalik/mononoki/releases/download/1.3/mononoki.zip"
-    "VictorMono https://rubjo.github.io/victor-mono/VictorMonoAll.zip"
-    "Cousine https://fonts.google.com/download?family=Cousine"
-    "RobotoMono https://fonts.google.com/download?family=Roboto%20Mono"
-    "ShareTechMono https://fonts.google.com/download?family=Share%20Tech%20Mono"
-    "SpaceMono https://fonts.google.com/download?family=Space%20Mono"
-  )
-
-  for FONT in "${FONTS[@]}"; do
-    local NAME=$(echo $FONT | cut -d " " -f 1)
-    local URL=$(echo $FONT | cut -d " " -f 2)
-
-    curl $URL -sSLo $FONTS_HOME/$NAME.zip \
-      --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
-    unzip -q $FONTS_HOME/$NAME.zip -d $FONTS_HOME/$NAME
-
-    find $FONTS_HOME/$NAME/ -depth -mindepth 1 -iname "*windows*" -exec rm -r {} +
-    find $FONTS_HOME/$NAME/ -depth -mindepth 1 -iname "*macosx*" -exec rm -r {} +
-    find $FONTS_HOME/$NAME/ -depth -type f -not -iname "*ttf*" -delete
-    find $FONTS_HOME/$NAME/ -empty -type d -delete
-    rm -f $FONTS_HOME/$NAME.zip
-
-    echo "Font $NAME has been installed"
-  done
-
-  fc-cache -f
-
-  echo "Fonts have been installed under $FONTS_HOME"
-
-  echo -e "\nInstalling some extra font glyphs..."
-
-  pacman -S --noconfirm \
-    ttf-font-awesome noto-fonts-emoji
-
-  echo "Extra font glyphs have been installed"
-}
-
 config_security () {
   echo -e "\nHardening system's security..."
 
@@ -370,8 +303,6 @@ set_host &&
   install_packages &&
   install_drivers &&
   install_yay &&
-  set_layouts &&
-  install_fonts &&
   config_security &&
   install_bootloader &&
   enable_services &&
