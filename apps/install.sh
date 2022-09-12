@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-setup_terminal () {
+install_terminal () {
   echo "Installing the alacritty terminal..."
 
   sudo pacman -S --noconfirm alacritty
@@ -29,7 +29,7 @@ setup_terminal () {
   echo "The terminal has been installed"
 }
 
-setup_music_player () {
+install_music_player () {
   echo "Installing the music player..."
 
   sudo pacman -S --noconfirm moc
@@ -53,7 +53,7 @@ setup_music_player () {
   echo -e "Music player has been installed"
 }
 
-setup_document_viewers () {
+install_document_viewers () {
   echo "Installing various document viewers..."
 
   sudo pacman -S --noconfirm xournalpp poppler foliate
@@ -63,7 +63,7 @@ setup_document_viewers () {
   echo "Document viewers have been installed"
 }
 
-setup_other_apps () {
+install_other_apps () {
   echo "Installing other apps..."
 
   sudo pacman -S --noconfirm firefox sxiv mpv
@@ -106,10 +106,10 @@ echo -e "\nStarting the apps installation process..."
 
 source ~/stack/.options
 
-setup_terminal &&
-  setup_music_player &&
-  setup_document_viewers &&
-  setup_other_apps &&
+install_terminal &&
+  install_music_player &&
+  install_document_viewers &&
+  install_other_apps &&
   setup_mimes
 
 echo -e "\nSetting up apps has been completed"
