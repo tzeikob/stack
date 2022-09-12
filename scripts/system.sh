@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-setup_host () {
+set_host () {
   echo -e "\nSetting up system host..."
 
   echo $HOSTNAME >> /etc/hostname
@@ -17,7 +17,7 @@ setup_host () {
   echo "Host has been set successfully"
 }
 
-setup_users () {
+set_users () {
   echo -e "\nSetting up system users..."
 
   useradd -m -G wheel,audio,video,optical,storage $USERNAME
@@ -359,8 +359,8 @@ echo -e "\nStarting the system setup process..."
 
 source /root/stack/.options
 
-setup_host &&
-  setup_users &&
+set_host &&
+  set_users &&
   set_keymap &&
   set_locale &&
   set_timezone &&

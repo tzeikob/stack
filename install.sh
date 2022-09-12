@@ -14,11 +14,11 @@ run () {
   bash $HOME/scripts/${1}.sh 2>&1 | tee -a $LOG
 }
 
-setup () {
+install () {
   arch-chroot /mnt /root/stack/scripts/${1}.sh 2>&1 | tee -a $LOG
 }
 
-install () {
+setup () {
   source $OPTIONS
   arch-chroot /mnt runuser -u $USERNAME -- /home/$USERNAME/stack/scripts/${1}/setup.sh 2>&1 | tee -a $LOG
 }
@@ -65,8 +65,8 @@ run "askme" &&
   run "bootstrap" &&
   copy "$HOME" "/mnt/root" &&
   grant "nopasswd" &&
-  setup "system" &&
-  install "desktop" &&
-  install "apps" &&
+  install "system" &&
+  setup "desktop" &&
+  setup "apps" &&
   revoke "nopasswd" &&
   run "reboot"
