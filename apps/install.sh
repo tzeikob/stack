@@ -11,8 +11,8 @@ setup_terminal () {
 
   mkdir -p "$CONFIG_HOME"
 
-  cp ~/stack/scripts/apps/alacritty/alacritty.yml "$CONFIG_FILE"
-  cp ~/stack/scripts/apps/alacritty/prompt.sh "$PROMPT_FILE"
+  cp ~/stack/apps/alacritty/alacritty.yml "$CONFIG_FILE"
+  cp ~/stack/apps/alacritty/prompt.sh "$PROMPT_FILE"
 
   local BASHRC_FILE=~/.bashrc
 
@@ -42,13 +42,13 @@ setup_music_player () {
 
   mkdir -p "$CONFIG_HOME" "$CONFIG_HOME/themes"
 
-  cp ~/stack/scripts/apps/moc/config "$CONFIG_HOME"
+  cp ~/stack/apps/moc/config "$CONFIG_HOME"
   chmod 644 "$CONFIG_HOME/config"
 
-  cp ~/stack/scripts/apps/moc/theme "$CONFIG_HOME/themes"
+  cp ~/stack/apps/moc/theme "$CONFIG_HOME/themes"
   chmod 644 "$CONFIG_HOME/themes/theme"
 
-  sudo cp ~/stack/scripts/apps/moc/desktop /usr/share/applications/moc.desktop
+  sudo cp ~/stack/apps/moc/desktop /usr/share/applications/moc.desktop
 
   echo -e "Music player has been installed"
 }

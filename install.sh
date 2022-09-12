@@ -15,12 +15,14 @@ run () {
 }
 
 install () {
-  arch-chroot /mnt /root/stack/scripts/${1}.sh 2>&1 | tee -a $LOG
-}
-
-setup () {
   source $OPTIONS
-  arch-chroot /mnt runuser -u $USERNAME -- /home/$USERNAME/stack/scripts/${1}/setup.sh 2>&1 | tee -a $LOG
+
+  case "$1" in
+    "system")
+      arch-chroot /mnt /root/stack/${1}/install.sh 2>&1 | tee -a $LOG;;
+    "desktop" | "apps")
+      arch-chroot /mnt runuser -u $USERNAME -- /home/$USERNAME/stack/${1}/install.sh 2>&1 | tee -a $LOG
+  esac
 }
 
 grant () {
@@ -66,7 +68,7 @@ run "askme" &&
   copy "$HOME" "/mnt/root" &&
   grant "nopasswd" &&
   install "system" &&
-  setup "desktop" &&
-  setup "apps" &&
+  install "desktop" &&
+  install "apps" &&
   revoke "nopasswd" &&
   run "reboot"

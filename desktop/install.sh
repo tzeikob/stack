@@ -9,7 +9,7 @@ setup_compositor () {
   local CONFIG_FILE="$CONFIG_HOME/picom.conf"
 
   mkdir -p "$CONFIG_HOME"
-  cp ~/stack/scripts/desktop/picom/picom.conf "$CONFIG_HOME"
+  cp ~/stack/desktop/picom/picom.conf "$CONFIG_HOME"
 
   if [ "$IS_VIRTUAL_BOX" = "yes" ]; then
     echo "Virtual box machine detected"
@@ -34,10 +34,10 @@ setup_window_manager () {
 
   mkdir -p "$CONFIG_HOME"
 
-  cp ~/stack/scripts/desktop/bspwm/bspwmrc "$CONFIG_FILE"
+  cp ~/stack/desktop/bspwm/bspwmrc "$CONFIG_FILE"
   chmod 755 "$CONFIG_FILE"
 
-  cp ~/stack/scripts/desktop/bspwm/rules "$RULES_FILE"
+  cp ~/stack/desktop/bspwm/rules "$RULES_FILE"
   chmod 755 "$RULES_FILE"
 
   echo "Window manager has been installed"
@@ -51,7 +51,7 @@ setup_file_manager () {
   local CONFIG_HOME=~/.config/nnn
 
   mkdir -p "$CONFIG_HOME"
-  cp ~/stack/scripts/desktop/nnn/env "$CONFIG_HOME"
+  cp ~/stack/desktop/nnn/env "$CONFIG_HOME"
 
   echo "Installing extra nnn plugins..."
 
@@ -63,17 +63,17 @@ setup_file_manager () {
 
   echo "Extra plugins have been installed"
 
-  cp ~/stack/scripts/desktop/nnn/remove "$CONFIG_HOME/plugins"
+  cp ~/stack/desktop/nnn/remove "$CONFIG_HOME/plugins"
   chmod 755 "$CONFIG_HOME/plugins/remove"
 
   echo "Plugin remove has been installed"
 
-  cp ~/stack/scripts/desktop/nnn/trash "$CONFIG_HOME/plugins"
+  cp ~/stack/desktop/nnn/trash "$CONFIG_HOME/plugins"
   chmod 755 "$CONFIG_HOME/plugins/trash"
 
   echo "Plugin trash has been installed"
 
-  cp ~/stack/scripts/desktop/nnn/mount "$CONFIG_HOME/plugins"
+  cp ~/stack/desktop/nnn/mount "$CONFIG_HOME/plugins"
   chmod 755 "$CONFIG_HOME/plugins/mount"
 
   echo "Plugin mount has been installed"
@@ -95,7 +95,7 @@ setup_trash () {
 
   sudo pacman -S --noconfirm trash-cli
 
-  sudo cp ~/stack/scripts/desktop/trash-cli/trash.sh /usr/local/bin/trash
+  sudo cp ~/stack/desktop/trash-cli/trash.sh /usr/local/bin/trash
   sudo chmod 755 /usr/local/bin/trash
 
   echo "Added a proxy binary to orchestrate trash-cli commands"
@@ -118,10 +118,10 @@ setup_bars () {
 
   mkdir -p "$CONFIG_HOME"
 
-  cp ~/stack/scripts/desktop/polybar/config.ini "$CONFIG_FILE"
+  cp ~/stack/desktop/polybar/config.ini "$CONFIG_FILE"
   chmod 644 "$CONFIG_FILE"
 
-  cp ~/stack/scripts/desktop/polybar/launch.sh "$LAUNCH_FILE"
+  cp ~/stack/desktop/polybar/launch.sh "$LAUNCH_FILE"
   chmod 755 "$LAUNCH_FILE"
 
   echo "Polybar launcher script has been installed"
@@ -139,10 +139,10 @@ setup_launchers () {
 
   mkdir -p "$CONFIG_HOME"
 
-  cp ~/stack/scripts/desktop/rofi/rofi.rasi "$CONFIG_FILE"
+  cp ~/stack/desktop/rofi/rofi.rasi "$CONFIG_FILE"
   chmod 644 "$CONFIG_FILE"
 
-  sudo cp ~/stack/scripts/desktop/rofi/power "$POWER_FILE"
+  sudo cp ~/stack/desktop/rofi/power "$POWER_FILE"
   sudo chmod 755 "$POWER_FILE"
 
   echo "Power launcher has been installed"
@@ -156,11 +156,11 @@ setup_login_Screen () {
   yay -S --noconfirm figlet-fonts figlet-fonts-extra
 
   sudo mv /etc/issue /etc/issue.bak
-  sudo cp ~/stack/scripts/desktop/getty/issue.sh /etc
+  sudo cp ~/stack/desktop/getty/issue.sh /etc
 
   echo "Welcome screen theme has been set"
 
-  sudo cp ~/stack/scripts/desktop/getty/login-issue.service /etc/systemd/system
+  sudo cp ~/stack/desktop/getty/login-issue.service /etc/systemd/system
   sudo systemctl enable login-issue
 
   sudo sed -ri "s;(ExecStart=-/sbin/agetty)(.*);\1 --nohostname\2;" /lib/systemd/system/getty@.service
@@ -218,7 +218,7 @@ setup_wallpaper () {
   local FEHBG_FILE="$CONFIG_HOME/.fehbg"
 
   mkdir -p "$CONFIG_HOME"
-  cp ~/stack/scripts/desktop/feh/fehbg "$FEHBG_FILE"
+  cp ~/stack/desktop/feh/fehbg "$FEHBG_FILE"
 
   echo "Startup background script installed"
   echo "Desktop wallpaper has been set"
@@ -262,7 +262,7 @@ setup_theme () {
   local GTK_HOME=~/.config/gtk-3.0
 
   mkdir -p "$GTK_HOME"
-  cp ~/stack/scripts/desktop/gtk/settings.ini "$GTK_HOME"
+  cp ~/stack/desktop/gtk/settings.ini "$GTK_HOME"
 
   echo "Theme has been setup"
 }
@@ -344,7 +344,7 @@ setup_bindings () {
 
   mkdir -p "$CONFIG_HOME"
 
-  cp ~/stack/scripts/desktop/sxhkd/sxhkdrc "$CONFIG_FILE"
+  cp ~/stack/desktop/sxhkd/sxhkdrc "$CONFIG_FILE"
   chmod 644 "$CONFIG_FILE"
 
   echo "Key bindings have been set"
