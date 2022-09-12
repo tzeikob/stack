@@ -21,7 +21,7 @@ install () {
     "system")
       arch-chroot /mnt /root/stack/${1}/install.sh 2>&1 | tee -a $LOG;;
     "desktop" | "apps")
-      arch-chroot /mnt runuser -u $USERNAME -- /home/$USERNAME/stack/${1}/install.sh 2>&1 | tee -a $LOG
+      arch-chroot /mnt runuser -u $USERNAME -- /home/$USERNAME/stack/${1}/install.sh 2>&1 | tee -a $LOG;;
   esac
 }
 
