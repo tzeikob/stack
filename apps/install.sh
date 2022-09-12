@@ -6,24 +6,21 @@ install_terminal () {
   sudo pacman -S --noconfirm alacritty
 
   local CONFIG_HOME=~/.config/alacritty
-  local CONFIG_FILE="$CONFIG_HOME/alacritty.yml"
-  local PROMPT_FILE="$CONFIG_HOME/prompt.sh"
 
   mkdir -p "$CONFIG_HOME"
-
-  cp ~/stack/apps/alacritty/alacritty.yml "$CONFIG_FILE"
-  cp ~/stack/apps/alacritty/prompt.sh "$PROMPT_FILE"
+  cp ~/stack/apps/alacritty/alacritty.yml "$CONFIG_HOME"
+  cp ~/stack/apps/alacritty/prompt.sh "$CONFIG_HOME"
 
   local BASHRC_FILE=~/.bashrc
-
   sed -i '/PS1.*/d' "$BASHRC_FILE"
   echo -e "\nsource /home/$USER/.config/alacritty/prompt.sh" >> "$BASHRC_FILE"
 
   sudo cp /etc/skel/.bash_profile /root
   sudo cp /etc/skel/.bashrc /root
 
-  sudo sed -i '/PS1.*/d' /root/.bashrc
-  echo "PS1='\[\e[1;31m\]\u\[\e[m\] \W  '" | sudo tee -a /root/.bashrc > /dev/null
+  BASHRC_FILE=/root/.bashrc
+  sudo sed -i '/PS1.*/d' "$BASHRC_FILE"
+  echo "PS1='\[\e[1;31m\]\u\[\e[m\] \W  '" | sudo tee -a "$BASHRC_FILE" > /dev/null
 
   echo "Terminal prompt hooks have been set"
   echo "The terminal has been installed"
