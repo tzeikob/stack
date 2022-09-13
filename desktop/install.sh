@@ -260,7 +260,7 @@ install_fonts () {
   echo -e "\nInstalling extra fonts..."
 
   local FONTS_HOME="/usr/share/fonts/extra-fonts"
-  mkdir -p "$FONTS_HOME"
+  sudo mkdir -p "$FONTS_HOME"
 
   local FONTS=(
     "FiraCode https://github.com/tonsky/FiraCode/releases/download/6.2/Fira_Code_v6.2.zip"
@@ -280,15 +280,15 @@ install_fonts () {
     local NAME=$(echo "$FONT" | cut -d " " -f 1)
     local URL=$(echo "$FONT" | cut -d " " -f 2)
 
-    curl "$URL" -sSLo "$FONTS_HOME/$NAME.zip" \
+    sudo curl "$URL" -sSLo "$FONTS_HOME/$NAME.zip" \
       --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
-    unzip -q "$FONTS_HOME/$NAME.zip" -d "$FONTS_HOME/$NAME"
+    sudo unzip -q "$FONTS_HOME/$NAME.zip" -d "$FONTS_HOME/$NAME"
 
-    find "$FONTS_HOME/$NAME/" -depth -mindepth 1 -iname "*windows*" -exec rm -r {} +
-    find "$FONTS_HOME/$NAME/" -depth -mindepth 1 -iname "*macosx*" -exec rm -r {} +
-    find "$FONTS_HOME/$NAME/" -depth -type f -not -iname "*ttf*" -delete
-    find "$FONTS_HOME/$NAME/" -empty -type d -delete
-    rm -f "$FONTS_HOME/$NAME.zip"
+    sudo find "$FONTS_HOME/$NAME/" -depth -mindepth 1 -iname "*windows*" -exec rm -r {} +
+    sudo find "$FONTS_HOME/$NAME/" -depth -mindepth 1 -iname "*macosx*" -exec rm -r {} +
+    sudo find "$FONTS_HOME/$NAME/" -depth -type f -not -iname "*ttf*" -delete
+    sudo find "$FONTS_HOME/$NAME/" -empty -type d -delete
+    sudo rm -f "$FONTS_HOME/$NAME.zip"
 
     echo "Font $NAME has been installed"
   done
