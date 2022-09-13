@@ -332,9 +332,7 @@ setup_bindings () {
 }
 
 config_xorg () {
-  echo "Setting up xorg configuration..."
-
-  local CONFIG_FILE=
+  echo "Start preparing xorg configuration..."
 
   cp /etc/X11/xinit/xinitrc ~/.xinitrc
 
@@ -344,15 +342,17 @@ config_xorg () {
   sed -i '/xterm -geometry 80x20+494-0 &/d' ~/.xinitrc
   sed -i '/exec xterm -geometry 80x66+0+0 -name login/d' ~/.xinitrc
 
-  echo "xsetroot -cursor_name left_ptr" >> ~/.xinitrc
+  echo 'udiskie --notify-command "ln -s /run/media/$USER $HOME/media/local" &' >> ~/.xinitrc
   echo "picom --fade-in-step=1 --fade-out-step=1 --fade-delta=0 &" >> ~/.xinitrc
   echo "~/.config/feh/fehbg &" >> ~/.xinitrc
-  echo 'udiskie --notify-command "ln -s /run/media/$USER $HOME/media/local" &' >> ~/.xinitrc
+  echo "xsetroot -cursor_name left_ptr" ~/.xinitrc
   echo "exec bspwm" >> ~/.xinitrc
 
-  echo -e '\n[[ -z $DISPLAY && $XDG_VTNR -eq 1 ]] && exec startx' >> ~/.bash_profile
+  echo "Compositor and window manager launchers added successfully"
 
-  echo "Xorg session set to be started automatically after user logins"
+  echo '[[ -z $DISPLAY && $XDG_VTNR -eq 1 ]] && exec startx' >> ~/.bash_profile
+
+  echo "Xorg session has been set to start after login"
   echo "Xorg configuration saved to ~/.xinitrc"
 }
 
