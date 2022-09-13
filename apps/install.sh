@@ -39,8 +39,8 @@ install_music_player () {
   cp ~/stack/apps/moc/config "$CONFIG_HOME"
   chmod 644 "$CONFIG_HOME/config"
 
-  cp ~/stack/apps/moc/theme "$CONFIG_HOME/themes"
-  chmod 644 "$CONFIG_HOME/themes/theme"
+  cp ~/stack/apps/moc/dark "$CONFIG_HOME/themes"
+  chmod 644 "$CONFIG_HOME/themes/dark"
 
   sudo cp ~/stack/apps/moc/desktop /usr/share/applications/moc.desktop
 
@@ -68,7 +68,7 @@ install_other_apps () {
 setup_mimes () {
   echo "Setting up application mime types..."
 
-  cp ~/stack/apps/mimes/list ~/.config/mimeapps.list
+  cp ~/stack/apps/mimes/app.list ~/.config/mimeapps.list
   chmod 644 ~/.config/mimeapps.list
 
   echo "Application mime types have been set"

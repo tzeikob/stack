@@ -8,12 +8,12 @@ install_compositor () {
   local CONFIG_HOME=~/.config/picom
   mkdir -p "$CONFIG_HOME"
 
-  cp ~/stack/desktop/picom/picom.conf "$CONFIG_HOME"
+  cp ~/stack/desktop/picom/conf "$CONFIG_HOME"
 
   if [ "$IS_VIRTUAL_BOX" = "yes" ]; then
     echo "Virtual box machine detected"
 
-    sed -i 's/vsync = true;/vsync = false;/' "$CONFIG_HOME/picom.conf"
+    sed -i 's/vsync = true;/vsync = false;/' "$CONFIG_HOME/conf"
 
     echo -e "Vsync has been disabled"
   fi
@@ -91,7 +91,7 @@ install_trash () {
 
   sudo pacman -S --noconfirm trash-cli
 
-  sudo cp ~/stack/desktop/trash-cli/trash.sh /usr/local/bin/trash
+  sudo cp ~/stack/desktop/trash-cli/alias.sh /usr/local/bin/trash
   sudo chmod 755 /usr/local/bin/trash
 
   echo "Added a proxy binary to orchestrate trash-cli commands"
