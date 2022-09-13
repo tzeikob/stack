@@ -5,75 +5,75 @@ do
   clear
 
   echo -e "Mount/unmount a disk device"
-  read -p "(l)ocal (r)emote (q)uit: " reply
+  read -p "(l)ocal (r)emote (q)uit: " REPLY
 
   echo -e ""
 
-  if [ "$reply" = "l" ]; then
+  if [ "$REPLY" = "l" ]; then
     lsblk
 
-    read -p "Enter device name (sdbX): " device
+    read -p "Enter device name (sdbX): " DEVICE
     echo -e ""
 
-    if grep -qs "$device " /proc/mounts; then
+    if grep -qs "$DEVICE " /proc/mounts; then
       sync
 
-      if udisksctl unmount -b /dev/"$device"
+      if udisksctl unmount -b /dev/"$DEVICE"
       then
-        echo -e "Device '$device' unmounted successfully"
+        echo -e "Device '$DEVICE' unmounted successfully"
 
-        if udisksctl power-off -b /dev/"$device"
+        if udisksctl power-off -b /dev/"$DEVICE"
         then
-          echo -e "Device '$device' can now be ejected"
+          echo -e "Device '$DEVICE' can now be ejected"
         else
-          echo -e "Failed to power off device '$device'"
+          echo -e "Failed to power off device '$DEVICE'"
         fi
       else
-        echo -e "Failed to umount device '$device'"
+        echo -e "Failed to umount device '$DEVICE'"
       fi
     else
-      if udisksctl mount -b "/dev/$device"
+      if udisksctl mount -b "/dev/$DEVICE"
       then
-        echo -e "Device '$device' mounted successfully"
+        echo -e "Device '$DEVICE' mounted successfully"
 
         if [ ! -L "$HOME/media/local" ]; then
           ln -s /run/media/$USER $HOME/media/local
         fi
       else
-        echo -e "Failed to mount device '$device'"
+        echo -e "Failed to mount device '$DEVICE'"
       fi
     fi
-  elif [ "$reply" = "r" ]; then
-    read -p "Protocol: [smb] " protocol
-    protocol=${protocol:-"smb"}
+  elif [ "$REPLY" = "r" ]; then
+    read -p "Protocol: [smb] " PROTOCOL
+    PROTOCOL=${PROTOCOL:-"smb"}
 
-    read -p "Host name: " host
-    read -p "Shared folder: " shared_folder
+    read -p "Host name: " HOST
+    read -p "Shared folder: " SHARED
 
     echo -e ""
 
-    device="$protocol://$host/$shared_folder"
+    DEVICE="$PROTOCOL://$HOST/$SHARED"
 
-    if gio mount -l | grep "$device"; then
+    if gio mount -l | grep "$DEVICE"; then
       sync
 
-      if gio mount -u "$device"
+      if gio mount -u "$DEVICE"
       then
-        echo -e "Device '$device' unmounted successfully"
+        echo -e "Device '$DEVICE' unmounted successfully"
       else
-        echo -e "Failed to umount device '$device'"
+        echo -e "Failed to umount device '$DEVICE'"
       fi
     else
-      gio mount "$device"
+      gio mount "$DEVICE"
 
       if [ $? -eq 0 ]; then
-        echo -e "Device '$device' mounted successfully"
+        echo -e "Device '$DEVICE' mounted successfully"
 
         if [ ! -L "$HOME/media/remote" ]; then
           ln -s /run/user/$UID/gvfs $HOME/media/remote
         fi
       else
-        echo -e "Failed to mount device from '$device'"
+        echo -e "Failed to mount device from '$DEVICE'"
       fi
     fi
   else
@@ -82,9 +82,9 @@ do
   fi
 
   printf "Enter any char to continue (q to quit): "
-  read -r reply
+  read -r REPLY
 
-  if [ "$reply" = "q" ]; then
+  if [ "$REPLY" = "q" ]; then
     clear
     exit
   fi

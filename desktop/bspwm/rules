@@ -1,11 +1,11 @@
 #!/bin/sh
 
-wid=$1
-class=$2
+WID=$1
+CLASS=$2
 
-case "$class" in
+case "$CLASS" in
   *)
-    case "$(xprop -id "$wid" | awk '/WM_WINDOW_ROLE/ {print $3}')" in
+    case "$(xprop -id "$WID" | awk '/WM_WINDOW_ROLE/ {print $3}')" in
       '"GtkFileChooserDialog"' )
         echo rectangle=900x500+0+0;;
     esac;;

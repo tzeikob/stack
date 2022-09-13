@@ -2,12 +2,12 @@
 
 shopt -s nocasematch
 
-args=("$@")
-cmd="$1"
+ARGS=("$@")
+CMD="$1"
 
-case "$cmd" in
+case "$CMD" in
   "put")
-    trash-put "${args[@]:1}";;
+    trash-put "${ARGS[@]:1}";;
   "empty")
     trash-empty;;
   "list")
@@ -16,12 +16,12 @@ case "$cmd" in
     trash-restore;;
   "rm")
     echo -e "Selected file(s) will be gone forever:"
-    read -p "Do you want to proceed? [y/N] " reply
-    reply=${reply:-"n"}
+    read -p "Do you want to proceed? [y/N] " REPLY
+    REPLY=${REPLY:-"n"}
 
-    if [[ $reply =~ ^(yes|y)$ ]]; then
-      trash-rm "${args[@]:1}"
+    if [[ $REPLY =~ ^(yes|y)$ ]]; then
+      trash-rm "${ARGS[@]:1}"
     fi;;
   *)
-    trash-put "${args[@]}";;
+    trash-put "${ARGS[@]}";;
 esac

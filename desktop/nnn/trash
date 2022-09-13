@@ -4,38 +4,38 @@ shopt -s nocasematch
 
 clear
 
-loop="true"
+LOOP="true"
 
-while [[ $loop = "true" ]]; do
+while [[ $LOOP = "true" ]]; do
   clear
   trash-list
   echo ""
 
   echo -e "Which trash operation to apply?"
-  read -p "(r)estore re(m)ove (e)mpty (q)uit: " reply
+  read -p "(r)estore re(m)ove (e)mpty (q)uit: " REPLY
 
-  while [[ ! $reply =~ ^(r|m|e|q)$ ]]; do
-    read -p "Please enter a valid operation: " reply
+  while [[ ! $REPLY =~ ^(r|m|e|q)$ ]]; do
+    read -p "Please enter a valid operation: " REPLY
   done
 
   echo ""
 
-  if [[ $reply == "q" ]]; then
-    loop="false"
-  elif [[ $reply == "r" ]]; then
+  if [[ $REPLY == "q" ]]; then
+    LOOP="false"
+  elif [[ $REPLY == "r" ]]; then
     trash-restore
-  elif [[ $reply == "m" ]]; then
-    read -p "Enter the file(s) to remove (blank to cancel): " files
+  elif [[ $REPLY == "m" ]]; then
+    read -p "Enter the file(s) to remove (blank to cancel): " FILES
 
-    if [[ ! -z $files ]]; then
-      read -p "File(s) will be gone forever, proceed? [y/N] " reply
-      reply=${reply:-"no"}
+    if [[ ! -z $FILES ]]; then
+      read -p "File(s) will be gone forever, proceed? [y/N] " REPLY
+      REPLY=${REPLY:-"no"}
 
-      if [[ $reply =~ ^(yes|y)$ ]]; then
-        trash-rm $files
+      if [[ $REPLY =~ ^(yes|y)$ ]]; then
+        trash-rm $FILES
       fi
     fi
-  elif [[ $reply == "e" ]]; then
+  elif [[ $REPLY == "e" ]]; then
     trash-empty
   fi
 

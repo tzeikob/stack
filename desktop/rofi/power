@@ -1,19 +1,19 @@
 #!/bin/sh
 
-shutdown=" Shutdown"
-reboot=" Reboot"
-logout=" Logout"
-lock=" Lock"
+SD=" Shutdown"
+RB=" Reboot"
+LO=" Logout"
+LK=" Lock"
 
-hide_prompt="inputbar {children: [entry];}"
-exact_lines="listview {lines: 4;}"
+HIDE_PROMT="inputbar {children: [entry];}"
+EXACT_LINES="listview {lines: 4;}"
 
-chosen=$(printf "$shutdown\n$reboot\n$logout\n$lock" | rofi -dmenu -i -theme-str "$hide_prompt $exact_lines")
+CHOSEN=$(printf "$SD\n$RB\n$LO\n$LK" | rofi -dmenu -i -theme-str "${HIDE_PROMT} ${EXACT_LINES}")
 
-case "$chosen" in
-	"$shutdown") shutdown now ;;
-	"$reboot") reboot ;;
-	"$logout") bspc quit ;;
-	"$lock") slock ;;
+case "$CHOSEN" in
+	"$SD") shutdown now ;;
+	"$RB") reboot ;;
+	"$LO") bspc quit ;;
+	"$LK") slock ;;
 	*) exit 1 ;;
 esac

@@ -2,36 +2,36 @@
 
 clear
 
-selection=${NNN_SEL:-${XDG_CONFIG_HOME:-$HOME/.config}/nnn/.selection}
+SELECTION=${NNN_SEL:-${XDG_CONFIG_HOME:-$HOME/.config}/nnn/.selection}
 
 printf "(s)election/(c)urrent? [default=c] "
-read -r resp
+read -r REPLY
 
-if [ "$resp" = "s" ]; then
-  files=$(tr '\0' '\n' < "$selection")
+if [ "$REPLY" = "s" ]; then
+  FILES=$(tr '\0' '\n' < "$SELECTION")
 
   printf "\nFile(s) to remove:\n"
-  printf "%s\n" "$files"
+  printf "%s\n" "$FILES"
   printf "Do you want to proceed? [y/N] "
-  read -r confirm
+  read -r CONFIRM
 
-  if [ "$confirm" = "y" ] || [ "$confirm" = "Y" ]; then
-    sed 's|'"$PWD/"'||g' < "$selection" | xargs -0 -I {} rm -rf {}
+  if [ "$CONFIRM" = "y" ] || [ "$CONFIRM" = "Y" ]; then
+    sed 's|'"$PWD/"'||g' < "$SELECTION" | xargs -0 -I {} rm -rf {}
   fi
 else
-  file="$PWD/$1"
+  FILE="$PWD/$1"
 
   printf "\nFile to remove:\n"
-  printf "%s\n" "$file"
+  printf "%s\n" "$FILE"
   printf "Do you want to proceed? [y/N] "
-  read -r confirm
+  read -r CONFIRM
 
-  if [ "$confirm" = "y" ] || [ "$confirm" = "Y" ]; then
-    rm -rf "$file"
+  if [ "$CONFIRM" = "y" ] || [ "$CONFIRM" = "Y" ]; then
+    rm -rf "$FILE"
   fi
 fi
 
 # Clear selection
-if [ "$resp" = "s" ] && [ -p "$NNN_PIPE" ]; then
+if [ "$REPLY" = "s" ] && [ -p "$NNN_PIPE" ]; then
   printf "-" > "$NNN_PIPE"
 fi
