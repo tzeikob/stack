@@ -8,12 +8,12 @@ install_compositor () {
   local CONFIG_HOME=~/.config/picom
   mkdir -p "$CONFIG_HOME"
 
-  cp ~/stack/desktop/picom/conf "$CONFIG_HOME"
+  cp ~/stack/desktop/picom/picom.conf "$CONFIG_HOME"
 
   if [ "$IS_VIRTUAL_BOX" = "yes" ]; then
     echo "Virtual box machine detected"
 
-    sed -i 's/vsync = true;/vsync = false;/' "$CONFIG_HOME/conf"
+    sed -i 's/vsync = true;/vsync = false;/' "$CONFIG_HOME/picom.conf"
 
     echo -e "Vsync has been disabled"
   fi
