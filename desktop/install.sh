@@ -44,10 +44,15 @@ install_file_manager () {
 
   sudo pacman -S --noconfirm nnn fzf
 
+  sudo sed -i 's/Exec=nnn/Exec=bash -c "\$TERMINAL -e nnn"/' /usr/share/applications/nnn.desktop
+  echo 'alias N="sudo -E nnn -dH"' >> ~/.bashrc
+  echo 'export EDITOR=nano' >> ~/.bashrc
+
   local CONFIG_HOME=~/.config/nnn
   mkdir -p "$CONFIG_HOME"
 
   cp ~/stack/desktop/nnn/env "$CONFIG_HOME"
+  echo 'source "$HOME/.config/nnn/env"' >> ~/.bashrc
 
   echo "Installing extra nnn plugins..."
 
@@ -56,6 +61,8 @@ install_file_manager () {
   curl "$GETPLUGS_URL" -sSLo "$CONFIG_HOME/getplugs" \
     --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
   HOME=~/ sh "$CONFIG_HOME/getplugs" > /dev/null
+
+  sed -ri 's/(.*)# mocp$/\1\$TERMINAL -e mocp \&/' "$CONFIG_HOME/plugins/mocq"
 
   echo "Extra plugins have been installed"
 
@@ -76,13 +83,7 @@ install_file_manager () {
 
   mkdir -p ~/downloads ~/documents ~/images ~/audios ~/videos ~/virtuals ~/sources ~/data ~/media
 
-  echo -e "User home directories have been created"
-
-  echo -e '\nsource "$HOME/.config/nnn/env"' >> ~/.bashrc
-  sudo sed -i 's/Exec=nnn/Exec=alacritty -e nnn/' /usr/share/applications/nnn.desktop
-  sed -ri 's/(.*)# mocp$/\1alacritty -e mocp \&/' "$CONFIG_HOME/plugins/mocq"
-
-  echo "File manager hooks have been installed"
+  echo "User home directories have been created"
   echo "File manager has been installed"
 }
 
@@ -96,8 +97,8 @@ install_trash () {
 
   echo "Added a proxy binary to orchestrate trash-cli commands"
 
-  echo -e '\nalias rr="rm"' >> ~/.bashrc
-  echo -e 'alias tt="trash"\n' >> ~/.bashrc
+  echo 'alias rr=rm' >> ~/.bashrc
+  echo 'alias tt=trash' >> ~/.bashrc
 
   echo "Set aliases for rm and trash"
   echo "Trash has been installed"

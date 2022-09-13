@@ -4,7 +4,7 @@
 
 # terminal emulator
 super + Return
-	alacritty
+	$TERMINAL
 
 # program launcher
 super + @space
@@ -176,15 +176,13 @@ super + alt + Page_UP
 
 #
 # File manager
-# Todo: this binding creates hard dependency to alacritty and nnn
-# better to resolve binaries on the fly (see $TERMINAL)
 
 super + n
-	alacritty -e nnn -$NNN_OPTS
+	$TERMINAL -e nnn -$NNN_OPTS
 
 #
 # Music player
 #
 
 super + alt + m
-	alacritty -e mocp
+	$TERMINAL -e mocp

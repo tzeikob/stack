@@ -11,7 +11,7 @@ set_host () {
     '127.0.0.1    localhost' \
     '::1          localhost' \
     "127.0.1.1    $HOSTNAME" > /etc/hosts
-  
+
   echo "Hostname has been added to hosts"
 
   echo "Host has been set successfully"

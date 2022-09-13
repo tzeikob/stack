@@ -2,7 +2,7 @@
 Type=Application
 Name=moc
 comment=Console music player
-Exec=alacritty -e mocp
+Exec=bash -c "\$TERMINAL -e mocp"
 Terminal=true
 Icon=moc
 MimeType=audio/mpeg

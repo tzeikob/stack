@@ -5,14 +5,17 @@ install_terminal () {
 
   sudo pacman -S --noconfirm alacritty
 
-  local CONFIG_HOME=~/.config/alacritty
-  mkdir -p "$CONFIG_HOME"
+  echo "export TERMINAL=alacritty" >> ~/.bashrc
 
-  cp ~/stack/apps/alacritty/alacritty.yml "$CONFIG_HOME"
-  cp ~/stack/apps/alacritty/prompt.sh "$CONFIG_HOME"
+  mkdir -p ~/.config/alacritty
+  cp ~/stack/apps/alacritty/alacritty.yml ~/.config/alacritty
 
   sed -i '/PS1.*/d' ~/.bashrc
-  echo -e "\nsource /home/$USER/.config/alacritty/prompt.sh" >> ~/.bashrc
+  printf '%s\n' \
+    'branch () {' \
+    '  git branch 2> /dev/null | sed -e "/^[^*]/d" -e "s/* \(.*\)/  [\\1]/"' \
+    '}' \
+    'PS1="\W\[\e[0;35m\]\$(branch)\[\e[m\]  "' >> ~/.bashrc
 
   sudo cp /etc/skel/.bash_profile /root
   sudo cp /etc/skel/.bashrc /root
