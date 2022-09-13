@@ -10,7 +10,7 @@ revoke () {
 clean_up () {
   echo "Cleaning up the system..."
 
-  cp $LOG "/mnt/home/$USERNAME/stack.log"
+  cp "$LOG" "/mnt/home/$USERNAME/stack.log"
 
   echo "Log file saved to /home/$USERNAME/stack.log"
 
@@ -36,7 +36,7 @@ restart () {
 
 echo -e "\nBooting into the system for the first time..."
 
-source $OPTIONS
+source "$OPTIONS"
 
 revoke "nopasswd" &&
   clean_up &&
