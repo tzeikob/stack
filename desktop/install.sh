@@ -300,7 +300,7 @@ install_fonts () {
 
   echo -e "\nInstalling some extra font glyphs..."
 
-  pacman -S --noconfirm \
+  sudo pacman -S --noconfirm \
     ttf-font-awesome noto-fonts-emoji
 
   echo "Extra font glyphs have been installed"
