@@ -6,21 +6,19 @@ install_terminal () {
   sudo pacman -S --noconfirm alacritty
 
   local CONFIG_HOME=~/.config/alacritty
-
   mkdir -p "$CONFIG_HOME"
+
   cp ~/stack/apps/alacritty/alacritty.yml "$CONFIG_HOME"
   cp ~/stack/apps/alacritty/prompt.sh "$CONFIG_HOME"
 
-  local BASHRC_FILE=~/.bashrc
-  sed -i '/PS1.*/d' "$BASHRC_FILE"
-  echo -e "\nsource /home/$USER/.config/alacritty/prompt.sh" >> "$BASHRC_FILE"
+  sed -i '/PS1.*/d' ~/.bashrc
+  echo -e "\nsource /home/$USER/.config/alacritty/prompt.sh" >> ~/.bashrc
 
   sudo cp /etc/skel/.bash_profile /root
   sudo cp /etc/skel/.bashrc /root
 
-  BASHRC_FILE=/root/.bashrc
-  sudo sed -i '/PS1.*/d' "$BASHRC_FILE"
-  echo "PS1='\[\e[1;31m\]\u\[\e[m\] \W  '" | sudo tee -a "$BASHRC_FILE" > /dev/null
+  sudo sed -i '/PS1.*/d' /root/.bashrc
+  echo "PS1='\[\e[1;31m\]\u\[\e[m\] \W  '" | sudo tee -a /root/.bashrc > /dev/null
 
   echo "Terminal prompt hooks have been set"
   echo "The terminal has been installed"
@@ -36,7 +34,6 @@ install_music_player () {
   sudo pacman -S --noconfirm --asdeps --needed faad2 ffmpeg4.4 libmodplug libmpcdec speex taglib wavpack
 
   local CONFIG_HOME=~/.moc
-
   mkdir -p "$CONFIG_HOME" "$CONFIG_HOME/themes"
 
   cp ~/stack/apps/moc/config "$CONFIG_HOME"

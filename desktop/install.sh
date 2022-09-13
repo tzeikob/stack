@@ -6,15 +6,14 @@ install_compositor () {
   sudo pacman -S --noconfirm picom
 
   local CONFIG_HOME=~/.config/picom
-  local CONFIG_FILE="$CONFIG_HOME/picom.conf"
-
   mkdir -p "$CONFIG_HOME"
+
   cp ~/stack/desktop/picom/picom.conf "$CONFIG_HOME"
 
   if [ "$IS_VIRTUAL_BOX" = "yes" ]; then
     echo "Virtual box machine detected"
 
-    sed -i 's/vsync = true;/vsync = false;/' "$CONFIG_FILE"
+    sed -i 's/vsync = true;/vsync = false;/' "$CONFIG_HOME/picom.conf"
 
     echo -e "Vsync has been disabled"
   fi
@@ -29,16 +28,13 @@ install_window_manager () {
   sudo pacman -S --noconfirm bspwm
 
   local CONFIG_HOME=~/.config/bspwm
-  local CONFIG_FILE="$CONFIG_HOME/bspwmrc"
-  local RULES_FILE="$CONFIG_HOME/rules"
-
   mkdir -p "$CONFIG_HOME"
 
-  cp ~/stack/desktop/bspwm/bspwmrc "$CONFIG_FILE"
-  chmod 755 "$CONFIG_FILE"
+  cp ~/stack/desktop/bspwm/bspwmrc "$CONFIG_HOME"
+  chmod 755 "$CONFIG_HOME/bspwmrc"
 
-  cp ~/stack/desktop/bspwm/rules "$RULES_FILE"
-  chmod 755 "$RULES_FILE"
+  cp ~/stack/desktop/bspwm/rules "$CONFIG_HOME"
+  chmod 755 "$CONFIG_HOME/rules"
 
   echo "Window manager has been installed"
 }
@@ -49,8 +45,8 @@ install_file_manager () {
   sudo pacman -S --noconfirm nnn fzf
 
   local CONFIG_HOME=~/.config/nnn
-
   mkdir -p "$CONFIG_HOME"
+
   cp ~/stack/desktop/nnn/env "$CONFIG_HOME"
 
   echo "Installing extra nnn plugins..."
@@ -113,16 +109,13 @@ install_bars () {
   sudo pacman -S --noconfirm polybar
 
   local CONFIG_HOME=~/.config/polybar
-  local CONFIG_FILE="$CONFIG_HOME/config.ini"
-  local LAUNCH_FILE="$CONFIG_HOME/launch.sh"
-
   mkdir -p "$CONFIG_HOME"
 
-  cp ~/stack/desktop/polybar/config.ini "$CONFIG_FILE"
-  chmod 644 "$CONFIG_FILE"
+  cp ~/stack/desktop/polybar/config.ini "$CONFIG_HOME"
+  chmod 644 "$CONFIG_HOME/config.ini"
 
-  cp ~/stack/desktop/polybar/launch.sh "$LAUNCH_FILE"
-  chmod 755 "$LAUNCH_FILE"
+  cp ~/stack/desktop/polybar/launch.sh "$CONFIG_HOME"
+  chmod 755 "$CONFIG_HOME/launch.sh"
 
   echo "Polybar launcher script has been installed"
   echo "Status bars have been installed"
@@ -134,16 +127,13 @@ install_launchers () {
   sudo pacman -S --noconfirm rofi rofi-emoji rofi-calc xsel
 
   local CONFIG_HOME=~/.config/rofi
-  local CONFIG_FILE="$CONFIG_HOME/rofi.rasi"
-  local POWER_FILE=/usr/local/bin/power
-
   mkdir -p "$CONFIG_HOME"
 
-  cp ~/stack/desktop/rofi/rofi.rasi "$CONFIG_FILE"
-  chmod 644 "$CONFIG_FILE"
+  cp ~/stack/desktop/rofi/rofi.rasi "$CONFIG_HOME"
+  chmod 644 "$CONFIG_HOME/rofi.rasi"
 
-  sudo cp ~/stack/desktop/rofi/power "$POWER_FILE"
-  sudo chmod 755 "$POWER_FILE"
+  sudo cp ~/stack/desktop/rofi/power /usr/local/bin
+  sudo chmod 755 /usr/local/bin/power
 
   echo "Power launcher has been installed"
   echo "Launchers has been installed"
@@ -215,10 +205,9 @@ install_wallpaper () {
   echo "Default wallpaper has been se to $FILE_NAME"
 
   local CONFIG_HOME=~/.config/feh
-  local FEHBG_FILE="$CONFIG_HOME/.fehbg"
-
   mkdir -p "$CONFIG_HOME"
-  cp ~/stack/desktop/feh/fehbg "$FEHBG_FILE"
+
+  cp ~/stack/desktop/feh/fehbg "$CONFIG_HOME"
 
   echo "Startup background script installed"
   echo "Desktop wallpaper has been set"
@@ -260,8 +249,8 @@ install_theme () {
   echo "Cursors have been installed"
 
   local GTK_HOME=~/.config/gtk-3.0
-
   mkdir -p "$GTK_HOME"
+
   cp ~/stack/desktop/gtk/settings.ini "$GTK_HOME"
 
   echo "Theme has been setup"
@@ -334,12 +323,10 @@ setup_bindings () {
   sudo pacman -S --noconfirm sxhkd
 
   local CONFIG_HOME=~/.config/sxhkd
-  local CONFIG_FILE="$CONFIG_HOME/sxhkdrc"
-
   mkdir -p "$CONFIG_HOME"
 
-  cp ~/stack/desktop/sxhkd/sxhkdrc "$CONFIG_FILE"
-  chmod 644 "$CONFIG_FILE"
+  cp ~/stack/desktop/sxhkd/sxhkdrc "$CONFIG_HOME"
+  chmod 644 "$CONFIG_HOME/sxhkdrc"
 
   echo "Key bindings have been set"
 }
@@ -347,26 +334,23 @@ setup_bindings () {
 config_xorg () {
   echo "Setting up xorg configuration..."
 
-  local CONFIG_FILE=~/.xinitrc
+  local CONFIG_FILE=
 
-  cp /etc/X11/xinit/xinitrc "$CONFIG_FILE"
+  cp /etc/X11/xinit/xinitrc ~/.xinitrc
 
-  sed -i '/twm &/d' "$CONFIG_FILE"
-  sed -i '/xclock -geometry 50x50-1+1 &/d' "$CONFIG_FILE"
-  sed -i '/xterm -geometry 80x50+494+51 &/d' "$CONFIG_FILE"
-  sed -i '/xterm -geometry 80x20+494-0 &/d' "$CONFIG_FILE"
-  sed -i '/exec xterm -geometry 80x66+0+0 -name login/d' "$CONFIG_FILE"
+  sed -i '/twm &/d' ~/.xinitrc
+  sed -i '/xclock -geometry 50x50-1+1 &/d' ~/.xinitrc
+  sed -i '/xterm -geometry 80x50+494+51 &/d' ~/.xinitrc
+  sed -i '/xterm -geometry 80x20+494-0 &/d' ~/.xinitrc
+  sed -i '/exec xterm -geometry 80x66+0+0 -name login/d' ~/.xinitrc
 
-  echo "xsetroot -cursor_name left_ptr" >> "$CONFIG_FILE"
-  echo "picom --fade-in-step=1 --fade-out-step=1 --fade-delta=0 &" >> "$CONFIG_FILE"
-  echo "~/.config/feh/.fehbg &" >> "$CONFIG_FILE"
-  echo 'udiskie --notify-command "ln -s /run/media/$USER $HOME/media/local" &' >> "$CONFIG_FILE"
-  echo "exec bspwm" >> "$CONFIG_FILE"
+  echo "xsetroot -cursor_name left_ptr" >> ~/.xinitrc
+  echo "picom --fade-in-step=1 --fade-out-step=1 --fade-delta=0 &" >> ~/.xinitrc
+  echo "~/.config/feh/fehbg &" >> ~/.xinitrc
+  echo 'udiskie --notify-command "ln -s /run/media/$USER $HOME/media/local" &' >> ~/.xinitrc
+  echo "exec bspwm" >> ~/.xinitrc
 
-  local BASH_PROFILE=~/.bash_profile
-
-  echo '' >> "$BASH_PROFILE"
-  echo '[[ -z $DISPLAY && $XDG_VTNR -eq 1 ]] && exec startx' >> "$BASH_PROFILE"
+  echo -e '\n[[ -z $DISPLAY && $XDG_VTNR -eq 1 ]] && exec startx' >> ~/.bash_profile
 
   echo "Xorg session set to be started automatically after user logins"
   echo "Xorg configuration saved to ~/.xinitrc"
