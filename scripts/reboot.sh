@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
 
 revoke () {
-  case "$1" in
+  local PERMISSION=$1
+
+  case "$PERMISSION" in
    "nopasswd")
     sed -i 's/^\(%wheel ALL=(ALL:ALL) NOPASSWD: ALL\)/# \1/' /mnt/etc/sudoers;;
   esac
+
+  echo "Permission $PERMISSION has been revoked"
 }
 
 clean_up () {
