@@ -130,8 +130,8 @@ install_launchers () {
   local CONFIG_HOME=~/.config/rofi
   mkdir -p "$CONFIG_HOME"
 
-  cp ~/stack/desktop/rofi/rofi.rasi "$CONFIG_HOME"
-  chmod 644 "$CONFIG_HOME/rofi.rasi"
+  cp ~/stack/desktop/rofi/config.rasi "$CONFIG_HOME"
+  chmod 644 "$CONFIG_HOME/config.rasi"
 
   sudo cp ~/stack/desktop/rofi/power /usr/local/bin
   sudo chmod 755 /usr/local/bin/power
