@@ -44,7 +44,6 @@ install_file_manager () {
 
   sudo pacman -S --noconfirm nnn fzf
 
-  sudo sed -i 's/Exec=nnn/Exec=bash -c "\$TERMINAL -e nnn"/' /usr/share/applications/nnn.desktop
   echo 'alias N="sudo -E nnn -dH"' >> ~/.bashrc
   echo 'export EDITOR=nano' >> ~/.bashrc
 
