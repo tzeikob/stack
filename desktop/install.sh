@@ -238,9 +238,9 @@ install_theme () {
 
   echo "Theme icons have been installed"
 
-  local CURSORS_URL="https://www.dropbox.com/s/mqt8s1pjfgpmy66/Breeze-Snow.tgz?dl=0"
+  local CURSORS_URL="https://www.dropbox.com/s/mqt8s1pjfgpmy66/Breeze-Snow.tgz?dl=1"
 
-  sudo curl "$CURSORS_URL" -sSLo /usr/share/icons/breeze-snow.tgz \
+  sudo wget "$CURSORS_URL" -qO /usr/share/icons/breeze-snow.tgz \
     --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
 
   sudo tar -xzf /usr/share/icons/breeze-snow.tgz -C /usr/share/icons
