@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 SIDE=$1
-DELTA=${2:-"30"}
+DELTA=${2:-"10"}
 
 case $SIDE in
   "right")
@@ -21,11 +21,11 @@ esac
 X=0; Y=0;
 
 if [ "$DIM" = "WIDTH" ]; then
-  x=$DELTA
+  X=$DELTA
   DIRECTION="right"
   FALL="left"
-elif ["$DIM" = "HEIGHT" ]; then
-  y=$DELTA
+elif [ "$DIM" = "HEIGHT" ]; then
+  Y=$DELTA
   DIRECTION="top"
   FALL="bottom"
 fi
