@@ -79,6 +79,7 @@ iwctl
 To download the stack installation files use git to clone them like so:
 
 ```sh
+pacman -Syy
 pacman -S git
 git clone git@github.com:tzeikob/stack.git
 ```
