@@ -5,29 +5,29 @@ DELTA=${2:-"10"}
 
 case $SIDE in
   "right")
-    DIM="WIDTH";
+    ORIENTATION="horizontal"
     DELTA=$((1 * DELTA));;
   "left")
-    DIM="WIDTH";
+    ORIENTATION="horizontal"
     DELTA=$((-1 * DELTA));;
   "up")
-    DIM="HEIGHT";
+    ORIENTATION="vertical"
     DELTA=$((-1 * DELTA));;
   "down")
-    DIM="HEIGHT"
+    ORIENTATION="vertical"
     DELTA=$((1 * DELTA));;
 esac
 
 X=0; Y=0;
 
-if [ "$DIM" = "WIDTH" ]; then
+if [ "$ORIENTATION" = "horizontal" ]; then
   X=$DELTA
   DIRECTION="right"
-  FALL="left"
-elif [ "$DIM" = "HEIGHT" ]; then
+  OPPOSITE="left"
+elif [ "$ORIENTATION" = "vertical" ]; then
   Y=$DELTA
   DIRECTION="top"
-  FALL="bottom"
+  OPPOSITE="bottom"
 fi
 
-bspc node -z "$DIRECTION" "$X" "$Y" || bspc node -z "$FALL" "$X" "$Y";
+bspc node -z "$DIRECTION" "$X" "$Y" || bspc node -z "$OPPOSITE" "$X" "$Y"
