@@ -243,7 +243,7 @@ install_theme () {
   local CURSORS_URL="https://www.dropbox.com/s/mqt8s1pjfgpmy66/Breeze-Snow.tgz?dl=1"
 
   sudo wget "$CURSORS_URL" -qO /usr/share/icons/breeze-snow.tgz \
-    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
+    --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 3
 
   sudo tar -xzf /usr/share/icons/breeze-snow.tgz -C /usr/share/icons
   sudo sed -ri 's/Inherits=.*/Inherits=Breeze-Snow/' /usr/share/icons/default/index.theme
