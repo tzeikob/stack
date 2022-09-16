@@ -163,6 +163,14 @@ install_drivers () {
   echo "Drivers have been installed"
 }
 
+config_xorg () {
+  echo "Setting up the xorg configuration..."
+
+  cp /root/stack/system/xorg/xorg.conf /etc/X11
+
+  echo "Xorg configuration has been setup to /etc/X11/xorg.conf"
+}
+
 install_yay () {
   echo -e "\nInstalling the yay package manager..."
 
@@ -213,8 +221,6 @@ config_security () {
   nft -s list ruleset > /etc/nftables.conf
 
   echo "Firewall ruleset has been saved to /etc/nftables.conf"
-
-  cp /root/stack/system/xorg/screenlock.conf /etc/X11/xorg.conf.d
 
   echo "Security configuration has been completed"
 }
@@ -286,6 +292,7 @@ set_host &&
   sync_packages &&
   install_packages &&
   install_drivers &&
+  config_xorg &&
   install_yay &&
   config_security &&
   install_bootloader &&

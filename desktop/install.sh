@@ -314,8 +314,7 @@ setup_layouts () {
   local OLD_IFS=$IFS && IFS=","
   LAYOUTS="${LAYOUTS[*]}" && IFS=$OLD_IFS
 
-  sudo cp ~/stack/desktop/xorg/keyboard.conf /etc/X11/xorg.conf.d
-  sudo sed -i "/XkbLayout/ s/LAYOUTS/${LAYOUTS}/" /etc/X11/xorg.conf.d/keyboard.conf
+  sudo sed -i "/XkbLayout/ s/LAYOUTS/${LAYOUTS}/" /etc/X11/xorg.conf
 
   echo "Keyboard layouts have been set to $LAYOUTS"
 }
@@ -335,7 +334,7 @@ setup_bindings () {
 }
 
 config_xorg () {
-  echo "Start preparing xorg configuration..."
+  echo "Setting up startx configuration..."
 
   cp /etc/X11/xinit/xinitrc ~/.xinitrc
 
@@ -345,7 +344,6 @@ config_xorg () {
   sed -i '/xterm -geometry 80x20+494-0 &/d' ~/.xinitrc
   sed -i '/exec xterm -geometry 80x66+0+0 -name login/d' ~/.xinitrc
 
-  echo 'xset s 1800 1800' >>  ~/.xinitrc
   echo "xsetroot -cursor_name left_ptr" >> ~/.xinitrc
 
   echo 'udiskie --notify-command "ln -s /run/media/$USER $HOME/media/local" &' >> ~/.xinitrc
