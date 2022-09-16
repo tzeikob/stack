@@ -122,6 +122,17 @@ install_packages () {
   echo "Base packages have been installed"
 }
 
+install_display_server () {
+  echo "Installing the xorg display server..."
+
+  pacman -S --noconfirm xorg xorg-xinit xorg-xrandr arandr
+
+  cp /root/stack/system/xorg/xorg.conf /etc/X11
+
+  echo "Configuration has been saved to /etc/X11/xorg.conf"
+  echo "Xorg server has been installed"
+}
+
 install_drivers () {
   echo -e "\nInstalling hardware drivers..."
 
@@ -157,18 +168,9 @@ install_drivers () {
     acpi acpid acpi_call \
     networkmanager wireless_tools netctl wpa_supplicant \
     alsa-utils pipewire pipewire-alsa pipewire-pulse pipewire-jack pavucontrol \
-    xorg xorg-xinit xorg-xrandr arandr \
     $CPU_PKGS $GPU_PKGS $VM_PKGS
 
   echo "Drivers have been installed"
-}
-
-config_xorg () {
-  echo "Setting up the xorg configuration..."
-
-  cp /root/stack/system/xorg/xorg.conf /etc/X11
-
-  echo "Xorg configuration has been setup to /etc/X11/xorg.conf"
 }
 
 install_yay () {
@@ -291,8 +293,8 @@ set_host &&
   config_pacman &&
   sync_packages &&
   install_packages &&
+  install_display_server &&
   install_drivers &&
-  config_xorg &&
   install_yay &&
   config_security &&
   install_bootloader &&
