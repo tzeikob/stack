@@ -18,6 +18,8 @@ install_compositor () {
     echo -e "Vsync has been disabled"
   fi
 
+  echo "picom --fade-in-step=1 --fade-out-step=1 --fade-delta=0 &" >> ~/.xinitrc
+
   echo "Configuration has been set under ~/.config/picom"
   echo "Compositor has been installed"
 }
@@ -39,8 +41,7 @@ install_window_manager () {
   cp ~/stack/desktop/bspwm/resize.sh "$CONFIG_HOME"
   chmod 755 "$CONFIG_HOME/resize.sh"
 
-  sudo cp ~/stack/desktop/bspwm/launch.sh /usr/local/bin/launch
-  sudo chmod 755 /usr/local/bin/launch
+  echo "exec bspwm" >> ~/.xinitrc
 
   echo "Window manager has been installed"
 }
@@ -208,14 +209,10 @@ install_wallpaper () {
   curl "$WALLPAPERS_HOST/$FILE_NAME" -sSLo "$WALLPAPERS_HOME/$FILE_NAME" \
     --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
   
-  echo "Default wallpaper has been se to $FILE_NAME"
+  echo "Default wallpaper has been saved to $FILE_NAME"
 
-  local CONFIG_HOME=~/.config/feh
-  mkdir -p "$CONFIG_HOME"
+  echo "feh --no-fehbg --bg-fill \"~/images/wallpapers/$FILE_NAME\" &" >> ~/.xinitrc
 
-  cp ~/stack/desktop/feh/fehbg "$CONFIG_HOME"
-
-  echo "Startup background script installed"
   echo "Desktop wallpaper has been set"
 }
 

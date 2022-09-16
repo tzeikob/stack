@@ -1,3 +1,0 @@
-#!/bin/sh
-
-feh --no-fehbg --bg-fill "/home/$USER/images/wallpapers/arch-liinux-4k-t0.jpg"

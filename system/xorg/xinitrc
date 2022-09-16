@@ -31,5 +31,3 @@ fi
 
 xsetroot -cursor_name left_ptr
 udiskie --notify-command "ln -s /run/media/$USER $HOME/media/local" &
-
-launch
