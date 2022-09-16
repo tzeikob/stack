@@ -49,6 +49,7 @@ do
 
     read -p "Host name: " HOST
     read -p "Shared folder: " SHARED
+    SHARED="${SHARED,,}"
 
     echo -e ""
 
