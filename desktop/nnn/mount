@@ -12,7 +12,7 @@ do
   if [ "$REPLY" = "l" ]; then
     lsblk
 
-    read -p "Enter device name (sdbX): " DEVICE
+    read -p "Enter device name (sdXX): " DEVICE
     echo -e ""
 
     if grep -qs "$DEVICE " /proc/mounts; then
