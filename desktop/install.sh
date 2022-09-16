@@ -37,7 +37,7 @@ install_window_manager () {
   chmod 755 "$CONFIG_HOME/rules"
 
   cp ~/stack/desktop/bspwm/resize.sh "$CONFIG_HOME"
-  chmod 755 "$CONFIG_HOME/resize"
+  chmod 755 "$CONFIG_HOME/resize.sh"
 
   echo "Window manager has been installed"
 }
