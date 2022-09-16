@@ -24,6 +24,26 @@ install_compositor () {
   echo "Compositor has been installed"
 }
 
+install_wallpaper () {
+  echo "Setting up the desktop wallpaper..."
+
+  sudo pacman -S --noconfirm feh
+
+  local WALLPAPERS_HOME=~/images/wallpapers
+  local WALLPAPERS_HOST="https://images.hdqwalls.com/wallpapers"
+  local FILE_NAME="arch-liinux-4k-t0.jpg"
+
+  mkdir -p "$WALLPAPERS_HOME"
+  curl "$WALLPAPERS_HOST/$FILE_NAME" -sSLo "$WALLPAPERS_HOME/$FILE_NAME" \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
+  
+  echo "Default wallpaper has been saved to $FILE_NAME"
+
+  echo "feh --no-fehbg --bg-fill \"~/images/wallpapers/$FILE_NAME\" &" >> ~/.xinitrc
+
+  echo "Desktop wallpaper has been set"
+}
+
 install_window_manager () {
   echo "Installing BSPWM as the window manager..."
 
@@ -196,26 +216,6 @@ install_screen_locker () {
   echo -e "Screen locker has been installed"
 }
 
-install_wallpaper () {
-  echo "Setting up the desktop wallpaper..."
-
-  sudo pacman -S --noconfirm feh
-
-  local WALLPAPERS_HOME=~/images/wallpapers
-  local WALLPAPERS_HOST="https://images.hdqwalls.com/wallpapers"
-  local FILE_NAME="arch-liinux-4k-t0.jpg"
-
-  mkdir -p "$WALLPAPERS_HOME"
-  curl "$WALLPAPERS_HOST/$FILE_NAME" -sSLo "$WALLPAPERS_HOME/$FILE_NAME" \
-    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
-  
-  echo "Default wallpaper has been saved to $FILE_NAME"
-
-  echo "feh --no-fehbg --bg-fill \"~/images/wallpapers/$FILE_NAME\" &" >> ~/.xinitrc
-
-  echo "Desktop wallpaper has been set"
-}
-
 install_theme () {
   echo "Installing theme, icons and cursors..."
 
@@ -338,6 +338,7 @@ echo -e "\nStarting the desktop installation process..."
 source ~/stack/.options
 
 install_compositor &&
+  install_wallpaper &&
   install_window_manager &&
   install_file_manager &&
   install_trash &&
@@ -345,7 +346,6 @@ install_compositor &&
   install_launchers &&
   install_login_Screen &&
   install_screen_locker &&
-  install_wallpaper &&
   install_theme &&
   install_fonts &&
   setup_layouts &&
