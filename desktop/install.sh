@@ -346,6 +346,7 @@ config_xorg () {
   sed -i '/exec xterm -geometry 80x66+0+0 -name login/d' ~/.xinitrc
 
   echo 'udiskie --notify-command "ln -s /run/media/$USER $HOME/media/local" &' >> ~/.xinitrc
+  echo 'xset s 1800 1800' >>  ~/.xinitrc
   echo "picom --fade-in-step=1 --fade-out-step=1 --fade-delta=0 &" >> ~/.xinitrc
   echo "~/.config/feh/fehbg &" >> ~/.xinitrc
   echo "xsetroot -cursor_name left_ptr" >> ~/.xinitrc
