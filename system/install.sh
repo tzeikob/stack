@@ -129,7 +129,16 @@ install_display_server () {
 
   cp /root/stack/system/xorg/xorg.conf /etc/X11
 
-  echo "Configuration has been saved to /etc/X11/xorg.conf"
+  echo "Server configuration has been saved to /etc/X11/xorg.conf"
+
+  cp /root/stack/system/xorg/xinitrc "/home/$USERNAME/.xinitrc"
+  chown "$USERNAME":"$USERNAME" "/home/$USERNAME/.xinitrc"
+
+  echo "Xinitrc has been saved to /home/$USERNAME/.xinitrc"
+
+  echo '[[ -z $DISPLAY && $XDG_VTNR -eq 1 ]] && exec startx' >> "/home/$USERNAME/.bash_profile"
+
+  echo "Xorg session has been set to start after login"
   echo "Xorg server has been installed"
 }
 

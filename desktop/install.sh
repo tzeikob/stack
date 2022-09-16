@@ -39,6 +39,9 @@ install_window_manager () {
   cp ~/stack/desktop/bspwm/resize.sh "$CONFIG_HOME"
   chmod 755 "$CONFIG_HOME/resize.sh"
 
+  sudo cp ~/stack/desktop/bspwm/launch.sh /usr/local/bin/launch
+  sudo chmod 755 /usr/local/bin/launch
+
   echo "Window manager has been installed"
 }
 
@@ -333,32 +336,6 @@ setup_bindings () {
   echo "Key bindings have been set"
 }
 
-config_xorg () {
-  echo "Setting up startx configuration..."
-
-  cp /etc/X11/xinit/xinitrc ~/.xinitrc
-
-  sed -i '/twm &/d' ~/.xinitrc
-  sed -i '/xclock -geometry 50x50-1+1 &/d' ~/.xinitrc
-  sed -i '/xterm -geometry 80x50+494+51 &/d' ~/.xinitrc
-  sed -i '/xterm -geometry 80x20+494-0 &/d' ~/.xinitrc
-  sed -i '/exec xterm -geometry 80x66+0+0 -name login/d' ~/.xinitrc
-
-  echo "xsetroot -cursor_name left_ptr" >> ~/.xinitrc
-
-  echo 'udiskie --notify-command "ln -s /run/media/$USER $HOME/media/local" &' >> ~/.xinitrc
-  echo "picom --fade-in-step=1 --fade-out-step=1 --fade-delta=0 &" >> ~/.xinitrc
-  echo "~/.config/feh/fehbg &" >> ~/.xinitrc
-  echo "exec bspwm" >> ~/.xinitrc
-
-  echo "Compositor and window manager launchers added successfully"
-
-  echo '[[ -z $DISPLAY && $XDG_VTNR -eq 1 ]] && exec startx' >> ~/.bash_profile
-
-  echo "Xorg session has been set to start after login"
-  echo "Xorg configuration saved to ~/.xinitrc"
-}
-
 echo -e "\nStarting the desktop installation process..."
 
 source ~/stack/.options
@@ -375,8 +352,7 @@ install_compositor &&
   install_theme &&
   install_fonts &&
   setup_layouts &&
-  setup_bindings &&
-  config_xorg
+  setup_bindings
 
 echo -e "\nSetting up the desktop has been completed"
 echo "Moving to the next process..."
