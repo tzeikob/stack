@@ -122,6 +122,20 @@ install_packages () {
   echo "Base packages have been installed"
 }
 
+install_yay () {
+  echo -e "\nInstalling the yay package manager..."
+
+  cd "/home/$USERNAME"
+  git clone https://aur.archlinux.org/yay.git
+
+  chown -R "$USERNAME":"$USERNAME" yay && cd yay
+  sudo -u "$USERNAME" makepkg -si --noconfirm
+
+  cd /root && rm -rf "/home/$USERNAME/yay"
+
+  echo "Yay package manager has been installed"
+}
+
 install_display_server () {
   echo "Installing the xorg display server..."
 
@@ -180,20 +194,6 @@ install_drivers () {
     $CPU_PKGS $GPU_PKGS $VM_PKGS
 
   echo "Drivers have been installed"
-}
-
-install_yay () {
-  echo -e "\nInstalling the yay package manager..."
-
-  cd "/home/$USERNAME"
-  git clone https://aur.archlinux.org/yay.git
-
-  chown -R "$USERNAME":"$USERNAME" yay && cd yay
-  sudo -u "$USERNAME" makepkg -si --noconfirm
-
-  cd /root && rm -rf "/home/$USERNAME/yay"
-
-  echo "Yay package manager has been installed"
 }
 
 config_security () {
@@ -302,9 +302,9 @@ set_host &&
   config_pacman &&
   sync_packages &&
   install_packages &&
+  install_yay &&
   install_display_server &&
   install_drivers &&
-  install_yay &&
   config_security &&
   install_bootloader &&
   enable_services &&
