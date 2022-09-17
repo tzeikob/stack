@@ -113,7 +113,7 @@ install_packages () {
     base-devel pacman-contrib pkgstats grub mtools dosfstools gdisk \
     parted curl wget udisks2 udiskie gvfs gvfs-smb bash-completion \
     man-db man-pages texinfo cups bluez bluez-utils unzip terminus-font \
-    vim nano git htop tree arch-audit atool zip xz unace p7zip gzip lzop \
+    vim nano git htop tree arch-audit atool zip xz unace p7zip gzip lzop feh \
     bzip2 unrar dialog inetutils dnsutils openssh nfs-utils openbsd-netcat ipset \
     $([ "$IS_UEFI" = "yes" ] && echo 'efibootmgr')
 
