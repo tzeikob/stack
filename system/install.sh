@@ -187,6 +187,11 @@ install_drivers () {
     GPU_PKGS="xf86-video-qxl"
   fi
 
+  local OTHER_PKGS=""
+  if [ "$SYNAPTICS" = "yes" ]; then
+    OTHER_PKGS="$OTHER_PKGS xf86-input-synaptics"
+  fi
+
   local VM_PKGS=""
   if [ "$IS_VIRTUAL" = "yes" ]; then
     if [ "$IS_VIRTUAL_BOX" = "yes" ]; then
@@ -198,7 +203,7 @@ install_drivers () {
     acpi acpid acpi_call \
     networkmanager wireless_tools netctl wpa_supplicant \
     alsa-utils pipewire pipewire-alsa pipewire-pulse pipewire-jack pavucontrol \
-    $CPU_PKGS $GPU_PKGS $VM_PKGS
+    $CPU_PKGS $GPU_PKGS $OTHER_PKGS $VM_PKGS
 
   echo "Drivers have been installed"
 }

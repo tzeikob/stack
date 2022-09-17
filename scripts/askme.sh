@@ -551,6 +551,21 @@ what_gpu () {
   echo "GPU vendor is set to \"$GPU\""
 }
 
+want_synaptics () {
+  local REPLY=""
+  read -p "Do you want to install synaptic drivers? [y/N] " REPLY
+  REPLY="${REPLY:-"no"}"
+  REPLY="${REPLY,,}"
+
+  local SYNAPTICS="no"
+  if [[ "$REPLY" =~ ^(y|yes)$ ]]; then
+    SYNAPTICS="yes"
+  fi
+
+  save_string "SYNAPTICS" "$SYNAPTICS"
+  echo -e "Synaptics is set to \"$SYNAPTICS\"\n"
+}
+
 what_hardware () {
   local IS_VIRTUAL="no"
 
@@ -578,6 +593,7 @@ what_hardware () {
 
     what_cpu
     what_gpu
+    want_synaptics
   fi
 
   echo -e "Hardware has been resolved successfully"
