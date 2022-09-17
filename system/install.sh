@@ -145,6 +145,13 @@ install_display_server () {
 
   echo "Server configuration has been saved to /etc/X11/xorg.conf"
 
+  local OLD_IFS=$IFS && IFS=","
+  LAYOUTS="${LAYOUTS[*]}" && IFS=$OLD_IFS
+
+  sudo sed -i "/XkbLayout/ s/us/${LAYOUTS}/" /etc/X11/xorg.conf
+
+  echo "Keyboard layouts have been set to $LAYOUTS"
+
   cp /root/stack/system/xorg/xinitrc "/home/$USERNAME/.xinitrc"
   chown "$USERNAME":"$USERNAME" "/home/$USERNAME/.xinitrc"
 

@@ -292,17 +292,6 @@ install_fonts () {
   echo "Extra font glyphs have been installed"
 }
 
-setup_layouts () {
-  echo -e "\nSetting the keyboard layouts..."
-
-  local OLD_IFS=$IFS && IFS=","
-  LAYOUTS="${LAYOUTS[*]}" && IFS=$OLD_IFS
-
-  sudo sed -i "/XkbLayout/ s/us/${LAYOUTS}/" /etc/X11/xorg.conf
-
-  echo "Keyboard layouts have been set to $LAYOUTS"
-}
-
 setup_bindings () {
   echo "Setting up key bindings via sxhkd..."
 
@@ -331,7 +320,6 @@ install_compositor &&
   install_screen_locker &&
   install_theme &&
   install_fonts &&
-  setup_layouts &&
   setup_bindings
 
 echo -e "\nSetting up the desktop has been completed"
