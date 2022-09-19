@@ -5,14 +5,14 @@ do
   clear
 
   echo -e "Mount/unmount a disk device"
-  read -p "(l)ocal (r)emote (q)uit: " REPLY
+  read -rep "(l)ocal (r)emote (q)uit: " REPLY
 
   echo -e ""
 
   if [ "$REPLY" = "l" ]; then
     lsblk
 
-    read -p "Enter device name (sdXX): " DEVICE
+    read -rep "Enter device name (sdXX): " DEVICE
     echo -e ""
 
     if grep -qs "$DEVICE " /proc/mounts; then
@@ -44,11 +44,11 @@ do
       fi
     fi
   elif [ "$REPLY" = "r" ]; then
-    read -p "Protocol: [smb] " PROTOCOL
+    read -rep "Protocol: [smb] " PROTOCOL
     PROTOCOL=${PROTOCOL:-"smb"}
 
-    read -p "Host name: " HOST
-    read -p "Shared folder: " SHARED
+    read -rep "Host name: " HOST
+    read -rep "Shared folder: " SHARED
     SHARED="${SHARED,,}"
 
     echo -e ""
@@ -82,8 +82,7 @@ do
     exit
   fi
 
-  printf "Enter any char to continue (q to quit): "
-  read -r REPLY
+  read -rep "Enter any char to continue (q to quit): " REPLY
 
   if [ "$REPLY" = "q" ]; then
     clear

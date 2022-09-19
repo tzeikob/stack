@@ -12,10 +12,10 @@ while [[ $LOOP = "true" ]]; do
   echo ""
 
   echo -e "Which trash operation to apply?"
-  read -p "(r)estore re(m)ove (e)mpty (q)uit: " REPLY
+  read -rep "(r)estore re(m)ove (e)mpty (q)uit: " REPLY
 
   while [[ ! $REPLY =~ ^(r|m|e|q)$ ]]; do
-    read -p "Please enter a valid operation: " REPLY
+    read -rep "Please enter a valid operation: " REPLY
   done
 
   echo ""
@@ -25,10 +25,10 @@ while [[ $LOOP = "true" ]]; do
   elif [[ $REPLY == "r" ]]; then
     trash-restore
   elif [[ $REPLY == "m" ]]; then
-    read -p "Enter the file(s) to remove (blank to cancel): " FILES
+    read -rep "Enter the file(s) to remove (blank to cancel): " FILES
 
     if [[ ! -z $FILES ]]; then
-      read -p "File(s) will be gone forever, proceed? [y/N] " REPLY
+      read -rep "File(s) will be gone forever, proceed? [y/N] " REPLY
       REPLY=${REPLY:-"no"}
 
       if [[ $REPLY =~ ^(yes|y)$ ]]; then

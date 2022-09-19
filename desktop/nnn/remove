@@ -4,16 +4,14 @@ clear
 
 SELECTION=${NNN_SEL:-${XDG_CONFIG_HOME:-$HOME/.config}/nnn/.selection}
 
-printf "(s)election/(c)urrent? [default=c] "
-read -r REPLY
+read -rep "(s)election/(c)urrent? [default=c] " REPLY
 
 if [ "$REPLY" = "s" ]; then
   FILES=$(tr '\0' '\n' < "$SELECTION")
 
   printf "\nFile(s) to remove:\n"
   printf "%s\n" "$FILES"
-  printf "Do you want to proceed? [y/N] "
-  read -r CONFIRM
+  read -rep "Do you want to proceed? [y/N] " CONFIRM
 
   if [ "$CONFIRM" = "y" ] || [ "$CONFIRM" = "Y" ]; then
     sed 's|'"$PWD/"'||g' < "$SELECTION" | xargs -0 -I {} rm -rf {}
@@ -23,8 +21,7 @@ else
 
   printf "\nFile to remove:\n"
   printf "%s\n" "$FILE"
-  printf "Do you want to proceed? [y/N] "
-  read -r CONFIRM
+  read -rep "Do you want to proceed? [y/N] " CONFIRM
 
   if [ "$CONFIRM" = "y" ] || [ "$CONFIRM" = "Y" ]; then
     rm -rf "$FILE"

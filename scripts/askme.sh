@@ -105,22 +105,22 @@ which_mirrors () {
   print 4 25 "${COUNTRIES[@]}"
 
   local COUNTRY=""
-  read -p "Enter the primary mirror country: [Greece] " COUNTRY
+  read -rep "Enter the primary mirror country: [Greece] " COUNTRY
   COUNTRY="${COUNTRY:-"Greece"}"
 
   while ! contains "$COUNTRY" "${COUNTRIES[@]}"; do
-    read -p " Please enter a valid country: " COUNTRY
+    read -rep " Please enter a valid country: " COUNTRY
   done
 
   local MIRROR_SET="\"$COUNTRY\""
 
   while true; do
-    read -p "Enter another secondary mirror country (none to skip): " COUNTRY
+    read -rep "Enter another secondary mirror country (none to skip): " COUNTRY
 
     [ -z "$COUNTRY" ] && break
 
     while ! contains "$COUNTRY" "${COUNTRIES[@]}"; do
-      read -p " Please enter a valid country: " COUNTRY
+      read -rep " Please enter a valid country: " COUNTRY
     done
 
     [[ ! "$MIRROR_SET" =~ $COUNTRY ]] && MIRROR_SET="$MIRROR_SET \"$COUNTRY\""
@@ -139,11 +139,11 @@ which_timezone () {
   print 4 15 "${CONTINENTS[@]}"
 
   local CONTINENT=""
-  read -p "Select your continent: [Europe] " CONTINENT
+  read -rep "Select your continent: [Europe] " CONTINENT
   CONTINENT="${CONTINENT:-"Europe"}"
 
   while ! contains "$CONTINENT" "${CONTINENTS[@]}"; do
-    read -p " Please enter a valid continent: " CONTINENT
+    read -rep " Please enter a valid continent: " CONTINENT
   done
 
   local CITIES=($(ls -1 -pU "/usr/share/zoneinfo/$CONTINENT" | grep -v /))
@@ -151,10 +151,10 @@ which_timezone () {
   echo && print 4 20 "${CITIES[@]}"
 
   local CITY=""
-  read -p "Enter the city closer to your timezone? " CITY
+  read -rep "Enter the city closer to your timezone? " CITY
 
   while [ ! -f "/usr/share/zoneinfo/$CONTINENT/$CITY" ]; do
-    read -p " Please enter a valid timezone city: " CITY
+    read -rep " Please enter a valid timezone city: " CITY
   done
 
   local TIMEZONE="$CONTINENT/$CITY"
@@ -190,17 +190,17 @@ which_keymap () {
   print 4 25 "${MAPS[@]}"
 
   local KEYMAP=""
-  read -p "Enter your keyboard's keymap (extra for more): [us] " KEYMAP
+  read -rep "Enter your keyboard's keymap (extra for more): [us] " KEYMAP
   KEYMAP="${KEYMAP:-"us"}"
 
   if [ "$KEYMAP" = "extra" ]; then
     echo && print 4 30 "${EXTRA[@]}"
 
-    read -p "Enter your keyboard's keymap: " KEYMAP
+    read -rep "Enter your keyboard's keymap: " KEYMAP
   fi
 
   while [ -z "$(find /usr/share/kbd/keymaps/ -type f -name "$KEYMAP.map.gz")" ]; do
-    read -p " Please enter a valid keyboard map: " KEYMAP
+    read -rep " Please enter a valid keyboard map: " KEYMAP
   done
 
   save_string "KEYMAP" "$KEYMAP"
@@ -219,22 +219,22 @@ which_layouts () {
   print 8 6 "${LAYOUTS[@]}"
 
   local LAYOUT=""
-  read -p "Enter your primary keyboard layout: [us] " LAYOUT
+  read -rep "Enter your primary keyboard layout: [us] " LAYOUT
   LAYOUT="${LAYOUT:-"us"}"
 
   while ! contains "$LAYOUT" "${LAYOUTS[@]}"; do
-    read -p " Please enter a valid layout: " LAYOUT
+    read -rep " Please enter a valid layout: " LAYOUT
   done
 
   local LAYOUT_SET="\"$LAYOUT\""
 
   while true; do
-    read -p "Enter another secondary layout (none to skip): " LAYOUT
+    read -rep "Enter another secondary layout (none to skip): " LAYOUT
 
     [ -z "$LAYOUT" ] && break
 
     while ! contains "$LAYOUT" "${LAYOUTS[@]}"; do
-      read -p " Please enter a valid layout: " LAYOUT
+      read -rep " Please enter a valid layout: " LAYOUT
     done
 
     [[ ! "$LAYOUT_SET" =~ $LAYOUT ]] && LAYOUT_SET="$LAYOUT_SET \"$LAYOUT\""
@@ -265,11 +265,11 @@ which_locale () {
   print 8 10 "${LANGS[@]}"
 
   local LANG=""
-  read -p "Enter the language of your locale: [en] " LANG
+  read -rep "Enter the language of your locale: [en] " LANG
   LANG="${LANG:-"en"}"
 
   while ! contains "$LANG" "${LANGS[@]}"; do
-    read -p " Please enter a valid language: " LANG
+    read -rep " Please enter a valid language: " LANG
   done
 
   IFS=","
@@ -289,10 +289,10 @@ which_locale () {
   echo && print 5 20 "${LOCALES[@]}"
 
   local LOCALE=""
-  read -p "Enter your locale: " LOCALE
+  read -rep "Enter your locale: " LOCALE
 
   while ! contains "$LOCALE" "${LOCALES[@]}"; do
-    read -p " Please enter a valid locale: " LOCALE
+    read -rep " Please enter a valid locale: " LOCALE
   done
 
   save_string "LOCALE" "$LOCALE"
@@ -303,7 +303,7 @@ what_hostname () {
   local HOSTNAME=""
   local RE="^[a-z][a-z0-9_-]+$"
 
-  read -p "Enter a name for your host: [arch] " HOSTNAME
+  read -rep "Enter a name for your host: [arch] " HOSTNAME
   HOSTNAME="${HOSTNAME:-"arch"}"
 
   if [[ ! "$HOSTNAME" =~ $RE ]]; then
@@ -312,7 +312,7 @@ what_hostname () {
   fi
 
   while [[ ! "$HOSTNAME" =~ $RE ]]; do
-    read -p " Please enter a valid hostname: " HOSTNAME
+    read -rep " Please enter a valid hostname: " HOSTNAME
   done
 
   save_string "HOSTNAME" "$HOSTNAME"
@@ -323,7 +323,7 @@ what_username () {
   local USERNAME=""
   local RE="^[a-z][a-z0-9_-]+$"
 
-  read -p "Enter a username for your user: [bob] " USERNAME
+  read -rep "Enter a username for your user: [bob] " USERNAME
   USERNAME="${USERNAME:-"bob"}"
 
   if [[ ! "$USERNAME" =~ $RE ]]; then
@@ -332,7 +332,7 @@ what_username () {
   fi
 
   while [[ ! "$USERNAME" =~ $RE ]]; do
-    read -p " Please enter a valid username: " USERNAME
+    read -rep " Please enter a valid username: " USERNAME
   done
 
   save_string "USERNAME" "$USERNAME"
@@ -348,25 +348,25 @@ what_password () {
   echo "$MESSAGE"
 
   local PASSWORD=""
-  read -rs -p "Enter a new password: " PASSWORD && echo
+  read -rsp "Enter a new password: " PASSWORD && echo
 
   while [[ ! "$PASSWORD" =~ $RE ]]; do
-    read -rs -p " Please enter a valid password: " PASSWORD && echo
+    read -rsp " Please enter a valid password: " PASSWORD && echo
   done
 
   local COMFIRMED=""
-  read -rs -p "Re-enter the password: " COMFIRMED && echo
+  read -rsp "Re-enter the password: " COMFIRMED && echo
 
   # Repeat until password comfirmed 
   while [ "$PASSWORD" != "$COMFIRMED" ]; do
     echo " Ooops, passwords do not match"
-    read -rs -p "Please enter a new password: " PASSWORD && echo
+    read -rsp "Please enter a new password: " PASSWORD && echo
 
     while [[ ! "$PASSWORD" =~ $RE ]]; do
-      read -rs -p " Please enter a valid password: " PASSWORD && echo
+      read -rsp " Please enter a valid password: " PASSWORD && echo
     done
 
-    read -rs -p "Re-enter the password: " COMFIRMED && echo
+    read -rsp "Re-enter the password: " COMFIRMED && echo
   done
 
   save_string "${SUBJECT}_PASSWORD" "$PASSWORD"
@@ -375,12 +375,12 @@ what_password () {
 
 which_kernels () {
   local KERNELS=""
-  read -p "Which linux kernels to install: [STABLE/lts/all] " KERNELS
+  read -rep "Which linux kernels to install: [STABLE/lts/all] " KERNELS
   KERNELS="${KERNELS:-"stable"}"
   KERNELS="${KERNELS,,}"
 
   while [[ ! "$KERNELS" =~ ^(stable|lts|all)$ ]]; do
-    read -p " Please enter a valid kernel option: " KERNELS
+    read -rep " Please enter a valid kernel option: " KERNELS
     KERNELS="${KERNELS,,}"
   done
 
@@ -398,39 +398,39 @@ which_disk () {
   lsblk -dA -o NAME,SIZE,FSUSE%,FSTYPE,TYPE,MOUNTPOINTS,LABEL
 
   local DEVICE=""
-  read -p "Enter the installation disk: " DEVICE
+  read -rep "Enter the installation disk: " DEVICE
   DEVICE="/dev/$DEVICE"
 
   while [ ! -b "$DEVICE" ]; do
-    read -p " Please enter a valid disk block device: " DEVICE
+    read -rep " Please enter a valid disk block device: " DEVICE
     DEVICE="/dev/$DEVICE"
   done
 
   echo -e "\nCAUTION, all data in \"$DEVICE\" will be lost"
 
   local REPLY=""
-  read -p "Proceed and use it as installation disk? [y/N] " REPLY
+  read -rep "Proceed and use it as installation disk? [y/N] " REPLY
   REPLY="${REPLY:-"no"}"
   REPLY="${REPLY,,}"
 
   while [[ ! "$REPLY" =~ ^(y|yes)$ ]]; do
-    read -p "Enter another disk block device: " DEVICE
+    read -rep "Enter another disk block device: " DEVICE
     DEVICE="/dev/$DEVICE"
 
     while [ ! -b "$DEVICE" ]; do
-      read -p " Please enter a valid disk block device: " DEVICE
+      read -rep " Please enter a valid disk block device: " DEVICE
       DEVICE="/dev/$DEVICE"
     done
 
     echo -e "\nCAUTION, all data in \"$DEVICE\" will be lost"
-    read -p "Proceed and use it as installation disk? [y/N] " REPLY
+    read -rep "Proceed and use it as installation disk? [y/N] " REPLY
     REPLY="${REPLY:-"no"}"
     REPLY="${REPLY,,}"
   done
 
   save_string "DISK" "$DEVICE"
 
-  read -p "Is this disk an SSD drive? [Y/n] " REPLY
+  read -rep "Is this disk an SSD drive? [Y/n] " REPLY
   REPLY="${REPLY:-"yes"}"
   REPLY="${REPLY,,}"
 
@@ -445,7 +445,7 @@ which_disk () {
 
 want_swap () {
   local REPLY=""
-  read -p "Do you want to enable swap? [Y/n] " REPLY
+  read -rep "Do you want to enable swap? [Y/n] " REPLY
   REPLY="${REPLY:-"yes"}"
   REPLY="${REPLY,,}"
 
@@ -458,19 +458,19 @@ want_swap () {
   fi
 
   local SWAP_SIZE=""
-  read -p "Enter the size of the swap in GBytes: " SWAP_SIZE
+  read -rep "Enter the size of the swap in GBytes: " SWAP_SIZE
 
   while [[ ! "$SWAP_SIZE" =~ ^[1-9][0-9]{,2}$ ]]; do
-    read -p " Please enter a valid swap size in GBytes: " SWAP_SIZE
+    read -rep " Please enter a valid swap size in GBytes: " SWAP_SIZE
   done
 
   local SWAP_TYPE=""
-  read -p "Enter the swap type: [FILE/partition] " SWAP_TYPE
+  read -rep "Enter the swap type: [FILE/partition] " SWAP_TYPE
   SWAP_TYPE="${SWAP_TYPE:-"file"}"
   SWAP_TYPE="${SWAP_TYPE,,}"
 
   while [[ ! "$SWAP_TYPE" =~ ^(file|partition)$ ]]; do
-    read -p " Enter a valid swap type: " SWAP_TYPE
+    read -rep " Enter a valid swap type: " SWAP_TYPE
     SWAP_TYPE="${SWAP_TYPE,,}"
   done
 
@@ -495,16 +495,16 @@ what_cpu () {
   fi
 
   local REPLY=""
-  read -p "Seems your system is running an ${CPU} CPU, right? [Y/n] " REPLY
+  read -rep "Seems your system is running an ${CPU} CPU, right? [Y/n] " REPLY
   REPLY="${REPLY:-"yes"}"
   REPLY="${REPLY,,}"
 
   if [[ ! "$REPLY" =~ ^(y|yes)$ ]]; then
-    read -p "Okay, which CPU is running then? [amd/intel] " CPU
+    read -rep "Okay, which CPU is running then? [amd/intel] " CPU
     CPU="${CPU,,}"
 
     while [[ ! "$CPU" =~ ^(amd|intel)$ ]]; do
-      read -p " Please enter a valid CPU vendor: " CPU
+      read -rep " Please enter a valid CPU vendor: " CPU
       CPU="${CPU,,}"
     done
   fi
@@ -532,16 +532,16 @@ what_gpu () {
   fi
 
   local REPLY=""
-  read -p "Is your system using an ${GPU} GPU, right? [Y/n] " REPLY
+  read -rep "Is your system using an ${GPU} GPU, right? [Y/n] " REPLY
   REPLY="${REPLY:-"yes"}"
   REPLY="${REPLY,,}"
 
   if [[ ! "$REPLY" =~ ^(y|yes)$ ]]; then
-    read -p "Really? Which GPU is it then? [nvidia/amd/intel] " GPU
+    read -rep "Really? Which GPU is it then? [nvidia/amd/intel] " GPU
     GPU="${GPU,,}"
 
     while [[ ! "$GPU" =~ ^(nvidia|amd|intel)$ ]]; do
-      read -p " Please enter a valid GPU vendor: " GPU
+      read -rep " Please enter a valid GPU vendor: " GPU
       GPU="${GPU,,}"
     done
   fi
@@ -553,7 +553,7 @@ what_gpu () {
 
 want_synaptics () {
   local REPLY=""
-  read -p "Do you want to install synaptic drivers? [y/N] " REPLY
+  read -rep "Do you want to install synaptic drivers? [y/N] " REPLY
   REPLY="${REPLY:-"no"}"
   REPLY="${REPLY,,}"
 
@@ -570,7 +570,7 @@ what_hardware () {
   local IS_VIRTUAL="no"
 
   if systemd-detect-virt > /dev/null; then
-    read -p "Seems that's a virtual machine, right? [Y/n] " IS_VIRTUAL
+    read -rep "Seems that's a virtual machine, right? [Y/n] " IS_VIRTUAL
     IS_VIRTUAL="${IS_VIRTUAL:-"yes"}"
     IS_VIRTUAL="${IS_VIRTUAL,,}"
   fi
@@ -635,7 +635,7 @@ while true; do
 
   echo -e "\nCAUTION, THIS IS THE LAST WARNING!"
   echo "ALL data in \"$DISK\" will be LOST FOREVER!"
-  read -p "Do you want to re-run configuration? [y/N] " REPLY
+  read -rep "Do you want to re-run configuration? [y/N] " REPLY
   REPLY="${REPLY:-"no"}"
   REPLY="${REPLY,,}"
 
