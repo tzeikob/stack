@@ -79,6 +79,11 @@ setup_mimes () {
 
 echo -e "\nStarting the apps installation process..."
 
+if [[ "$(id -u)" == "0" ]]; then
+  echo "Error: process must be run as non root user"
+  exit 1
+fi
+
 source ~/stack/.options
 
 install_terminal &&
