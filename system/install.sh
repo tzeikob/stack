@@ -303,6 +303,11 @@ copy_files () {
 
 echo -e "\nStarting the system setup process..."
 
+if [[ "$(id -u)" != "0" ]]; then
+  echo "Error: script must be run as root user"
+  exit 1
+fi
+
 source /root/stack/.options
 
 set_host &&
