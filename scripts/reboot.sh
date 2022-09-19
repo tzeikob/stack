@@ -14,10 +14,6 @@ revoke () {
 clean_up () {
   echo "Cleaning up the system..."
 
-  cp "$LOG" "/mnt/home/$USERNAME/stack.log"
-
-  echo "Log file saved to /home/$USERNAME/stack.log"
-
   rm -rf /mnt/root/stack
   rm -rf "/mnt/home/$USERNAME/stack"
 
@@ -33,8 +29,9 @@ unmount () {
 
 restart () {
   echo "Rebooting the system in 15 secs (ctrl-c to skip)..."
-
   sleep 15
+
+  cp "$LOG" "/mnt/home/$USERNAME/stack.log"
   reboot
 }
 
