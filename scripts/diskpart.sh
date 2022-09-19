@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -Eeo pipefail
+
 unmount_all () {
   echo "Making sure everything is unmounted..."
 

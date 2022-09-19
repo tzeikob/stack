@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -Eeo pipefail
+
 install_compositor () {
   echo "Installing the picom compositor..."
 

@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -Eeo pipefail
+
 set_host () {
   echo -e "\nSetting up system host..."
 

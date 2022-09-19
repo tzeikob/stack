@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -Eeo pipefail
+
 update_clock () {
   echo "Updating the system clock..."
 

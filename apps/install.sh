@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -Eeo pipefail
+
 install_terminal () {
   echo "Installing the alacritty terminal..."
 

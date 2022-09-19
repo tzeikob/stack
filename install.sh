@@ -7,7 +7,7 @@ LOG="$HOME/all.log"
 set +a
 
 run () {
-  bash "$HOME/scripts/${1}.sh" 2>&1 | tee -a "$LOG"
+  bash "$HOME/scripts/${1}.sh" > >(tee -a "$LOG") 2>&1
 }
 
 install () {
@@ -15,10 +15,16 @@ install () {
 
   case "$1" in
     "system")
-      arch-chroot /mnt "/root/stack/${1}/install.sh" 2>&1 | tee -a "$LOG";;
+      arch-chroot /mnt "/root/stack/${1}/install.sh" > >(tee -a "$LOG") 2>&1;;
     "desktop" | "apps")
-      arch-chroot /mnt runuser -u "$USERNAME" -- "/home/$USERNAME/stack/${1}/install.sh" 2>&1 | tee -a "$LOG";;
+      arch-chroot /mnt runuser -u "$USERNAME" -- "/home/$USERNAME/stack/${1}/install.sh" > >(tee -a "$LOG") 2>&1;;
   esac
+}
+
+abort () {
+  echo -e "\nError: something fatal went wrong"
+  echo "Process exiting with code 1..."
+  exit 1
 }
 
 clear
@@ -56,4 +62,4 @@ run "askme" &&
   install "system" &&
   install "desktop" &&
   install "apps" &&
-  run "reboot"
+  run "reboot" || abort
