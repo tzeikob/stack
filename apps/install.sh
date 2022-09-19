@@ -80,7 +80,8 @@ setup_mimes () {
 echo -e "\nStarting the apps installation process..."
 
 if [[ "$(id -u)" == "0" ]]; then
-  echo "Error: process must be run as non root user"
+  echo -e "\nError: process must be run as non root user"
+  echo "Process exiting with code 1..."
   exit 1
 fi
 
