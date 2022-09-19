@@ -23,6 +23,14 @@ set_mirrors () {
 sync_packages () {
   echo "Starting synchronizing packages..."
 
+  if [[ -f /var/lib/pacman/db.lck ]]; then
+    echo "Pacman database seems to be blocked"
+
+    rm -f /var/lib/pacman/db.lck
+
+    echo "Lock file has been removed"
+  fi
+
   sed -i 's/^#ParallelDownloads/ParallelDownloads/' /etc/pacman.conf
 
   echo "Pacman parallel downloading has been enabled"

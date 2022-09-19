@@ -101,6 +101,14 @@ config_pacman () {
 sync_packages () {
   echo -e "\nStarting synchronizing packages..."
 
+  if [[ -f /var/lib/pacman/db.lck ]]; then
+    echo "Pacman database seems to be blocked"
+
+    rm -f /var/lib/pacman/db.lck
+
+    echo "Lock file has been removed"
+  fi
+
   pacman -Syy
 
   echo "Packages have been synchronized with master"
