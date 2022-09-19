@@ -32,6 +32,12 @@ EOF
 echo -e "\nWelcome to Stack v1.0.0"
 echo -e "Have your development environment on archlinux\n"
 
+if [[ ! -e /etc/arch-release ]]; then
+  echo "Error: this is not an archlinux media"
+  echo "Process exiting with code 1..."
+  exit 1
+fi
+
 echo "Let's start by configuring your system"
 read -rep "Do you want to proceed? [Y/n] " REPLY
 REPLY="${REPLY:-"yes"}"
