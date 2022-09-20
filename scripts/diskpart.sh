@@ -2,25 +2,40 @@
 
 set -Eeo pipefail
 
-unmount_all () {
+wipe_disk () {
+  echo "Wiping disk data and file system..."
+
   echo "Making sure everything is unmounted..."
 
-  umount -A --recursive /mnt || exit 1
+  swapoff --all
+  umount --lazy /mnt
 
   echo "Unmounting process has been completed"
+
+  echo "Start now erasing disk data..."
+
+  wipefs -a "$DISK"
+
+  if [ "$?" != "0" ]; then
+    echo "Unable to erase disk device $DISK"
+    echo "Please reboot and try again"
+    exit 1
+  fi
+
+  echo "Disk erasing has been completed"
 }
 
 create_partitions () {
   if [ "$IS_UEFI" = "yes" ]; then
     echo "Creating a clean GPT partition table..."
 
-    parted --script "$DISK" mklabel gpt
+    parted --script "$DISK" mklabel gpt || exit 1
 
     local FROM=1
     local TO=501
 
-    parted --script "$DISK" mkpart "Boot" fat32 "${FROM}MiB" "${TO}MiB"
-    parted --script "$DISK" set 1 boot on
+    parted --script "$DISK" mkpart "Boot" fat32 "${FROM}MiB" "${TO}MiB" || exit 1
+    parted --script "$DISK" set 1 boot on || exit 1
 
     echo "Boot partition has been created"
 
@@ -29,20 +44,20 @@ create_partitions () {
     if [ "$SWAP" = "yes" ] && [ "$SWAP_TYPE" = "partition" ]; then
       TO=$((FROM + (SWAP_SIZE * 1024)))
 
-      parted --script "$DISK" mkpart "Swap" linux-swap "${FROM}Mib" "${TO}Mib"
+      parted --script "$DISK" mkpart "Swap" linux-swap "${FROM}Mib" "${TO}Mib" || exit 1
 
       echo "Swap partition has been created"
 
       FROM=$TO
     fi
 
-    parted --script "$DISK" mkpart "Root" ext4 "${FROM}Mib" 100%
+    parted --script "$DISK" mkpart "Root" ext4 "${FROM}Mib" 100% || exit 1
 
     echo "Root partition has been created"
   else
     echo "Creating a clean MBR partition table..."
 
-    parted --script "$DISK" mklabel msdos
+    parted --script "$DISK" mklabel msdos || exit 1
 
     local FROM=1
     local ROOT_DEV_INDEX=1
@@ -50,7 +65,7 @@ create_partitions () {
     if [ "$SWAP" = "yes" ] && [ "$SWAP_TYPE" = "partition" ]; then
       local TO=$((FROM + (SWAP_SIZE * 1024)))
 
-      parted --script "$DISK" mkpart primary linux-swap "${FROM}Mib" "${TO}Mib"
+      parted --script "$DISK" mkpart primary linux-swap "${FROM}Mib" "${TO}Mib" || exit 1
 
       echo "Swap partition has been created"
 
@@ -58,8 +73,8 @@ create_partitions () {
       ROOT_DEV_INDEX=2
     fi
 
-    parted --script "$DISK" mkpart primary ext4 "${FROM}Mib" 100%
-    parted --script "$DISK" set "$ROOT_DEV_INDEX" boot on
+    parted --script "$DISK" mkpart primary ext4 "${FROM}Mib" 100% || exit 1
+    parted --script "$DISK" set "$ROOT_DEV_INDEX" boot on || exit 1
 
     echo "Root partition has been created"
   fi
@@ -179,7 +194,7 @@ echo -e "\nStarting disk partitioning..."
 
 source "$OPTIONS"
 
-unmount_all &&
+wipe_disk &&
   create_partitions &&
   format_partitions &&
   mount_filesystem &&
