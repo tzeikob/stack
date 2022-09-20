@@ -6,7 +6,7 @@ save_option () {
   local key=$1
   local value=$2
 
-  touch -f "$OPTIONS"
+  touch -f "$OPTIONS" || exit 1
 
   # Override pre-existing option
   if grep -Eq "^${key}.*" "$OPTIONS"; then
@@ -84,7 +84,7 @@ print () {
   done
 }
 
-clean_options () {
+init_options () {
   rm -f "$OPTIONS"
   touch "$OPTIONS"
 }
@@ -93,13 +93,15 @@ which_mirrors () {
   local OLD_IFS=$IFS
   IFS=","
 
+  reflector --list-countries > "$HOME/.mirrors" || exit 1
+
   local COUNTRIES=($(
-    reflector --list-countries |
-    tail -n +3 |
-    awk '{split($0,a,/[A-Z]{2}/); print a[1]}' |
-    trim |
-    awk '{print $0","}' |
-    no_breaks
+    cat "$HOME/.mirrors" |
+      tail -n +3 |
+      awk '{split($0,a,/[A-Z]{2}/); print a[1]}' |
+      trim |
+      awk '{print $0","}' |
+      no_breaks
   ))
 
   IFS=$OLD_IFS
@@ -614,7 +616,7 @@ is_uefi () {
 }
 
 while true; do
-  clean_options &&
+  init_options &&
     which_mirrors &&
     which_timezone &&
     which_keymap &&
@@ -628,7 +630,7 @@ while true; do
     which_disk &&
     want_swap &&
     what_hardware &&
-    is_uefi
+    is_uefi || exit 1
 
   source "$OPTIONS"
 
