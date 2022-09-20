@@ -177,15 +177,17 @@ which_keymap () {
   EXTRA="$EXTRA|wangbe|adnw|applkey|backspace|bashkir|bone"
   EXTRA="$EXTRA|carpalx|croat|colemak|ctrl|defkeymap|euro|keypad|koy"
 
+  localectl --no-pager list-keymaps > "$HOME/.keymaps" || exit 1
+
   local MAPS=($(
-    localectl --no-pager list-keymaps |
-    trim |
-    awk '{print $0","}' |
-    sed -n -E "/$EXTRA/!p"
+    cat "$HOME/.keymaps" |
+      trim |
+      awk '{print $0","}' |
+      sed -n -E "/$EXTRA/!p"
   ))
 
   local EXTRA=($(
-      localectl --no-pager list-keymaps |
+    cat "$HOME/.keymaps" |
       trim |
       awk '{print $0","}' |
       sed -n -E "/$EXTRA/p"
