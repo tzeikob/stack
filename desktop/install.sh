@@ -12,7 +12,7 @@ install_compositor () {
 
   cp ~/stack/desktop/picom/picom.conf "$CONFIG_HOME"
 
-  if [ "$IS_VIRTUAL_BOX" = "yes" ]; then
+  if [ "$VIRTUAL_VENDOR" = "oracle" ]; then
     echo "Virtual box machine detected"
 
     sed -i 's/vsync = true;/vsync = false;/' "$CONFIG_HOME/picom.conf"

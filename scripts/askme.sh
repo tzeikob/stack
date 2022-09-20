@@ -575,28 +575,16 @@ want_synaptics () {
 }
 
 what_hardware () {
-  local IS_VIRTUAL="no"
+  local VIRTUAL_VENDOR=$(systemd-detect-virt)
 
-  if systemd-detect-virt > /dev/null; then
-    read -rep "Seems that's a virtual machine, right? [Y/n] " IS_VIRTUAL
-    IS_VIRTUAL="${IS_VIRTUAL:-"yes"}"
-    IS_VIRTUAL="${IS_VIRTUAL,,}"
-  fi
+  if [ "$VIRTUAL_VENDOR" != "none" ]; then
+    save_string "VIRTUAL" "yes"
+    save_string "VIRTUAL_VENDOR" "$VIRTUAL_VENDOR"
 
-  if [[ "$IS_VIRTUAL" =~ ^(y|yes)$ ]]; then
-    save_string "IS_VIRTUAL" "yes"
     echo "Virtual is set to \"yes\""
-
-    local VENDOR="$(systemd-detect-virt)"
-
-    if [ "$VENDOR" = "oracle" ]; then
-      save_string "IS_VIRTUAL_BOX" "yes"
-      echo "Detected that's running on virtual box"
-    else
-      save_string "IS_VIRTUAL_BOX" "no"
-    fi
+    echo "Virtual vendor set to \"$VIRTUAL_VENDOR\""
   else
-    save_string "IS_VIRTUAL" "no"
+    save_string "VIRTUAL" "no"
     echo "Virtual is set to \"no\""
 
     what_cpu
