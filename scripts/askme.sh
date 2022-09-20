@@ -489,6 +489,21 @@ want_swap () {
   echo -e "Swap size is set to \"${SWAP_SIZE}GB\"\n"
 }
 
+is_uefi () {
+  local IS_UEFI="no"
+
+  if [ -d "/sys/firmware/efi/efivars" ]; then
+    IS_UEFI="yes"
+
+    echo "UEFI mode has been detected"
+  else
+    echo "No UEFI mode has been detected"
+  fi
+
+  save_stridng "IS_UEFI" "$IS_UEFI"
+  echo "UEFI is set to \"$IS_UEFI\""
+}
+
 what_cpu () {
   echo "Start detecting CPU vendor..."
 
@@ -575,6 +590,10 @@ want_synaptics () {
 }
 
 what_hardware () {
+  echo "Start resolving system hardware..."
+
+  is_uefi
+
   local VIRTUAL_VENDOR=$(systemd-detect-virt)
 
   if [ "$VIRTUAL_VENDOR" != "none" ]; then
@@ -592,19 +611,7 @@ what_hardware () {
     want_synaptics
   fi
 
-  echo -e "Hardware has been resolved successfully"
-}
-
-is_uefi () {
-  echo "Detecting if UEFI mode is enabled..." && sleep 1
-
-  local IS_UEFI="no"
-  if [ -d "/sys/firmware/efi/efivars" ]; then
-    IS_UEFI="yes"
-  fi
-
-  save_string "IS_UEFI" "$IS_UEFI"
-  echo -e "UEFI is set to \"$IS_UEFI\"\n"
+  echo -e "Hardware has been resolved successfully\n"
 }
 
 while true; do
@@ -621,8 +628,7 @@ while true; do
     which_kernels &&
     which_disk &&
     want_swap &&
-    what_hardware &&
-    is_uefi || exit 1
+    what_hardware || exit 1
 
   source "$OPTIONS"
 
