@@ -150,7 +150,9 @@ which_timezone () {
     read -rep " Please enter a valid continent: " CONTINENT
   done
 
-  local CITIES=($(ls -1 -pU "/usr/share/zoneinfo/$CONTINENT" | grep -v /))
+  ls -1 -pU "/usr/share/zoneinfo/$CONTINENT" > "$HOME/.cities" || exit 1
+
+  local CITIES=($(cat "$HOME/.cities" | grep -v /))
 
   echo && print 4 20 "${CITIES[@]}"
 
