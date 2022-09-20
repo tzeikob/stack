@@ -500,7 +500,7 @@ is_uefi () {
     echo "No UEFI mode has been detected"
   fi
 
-  save_stridng "IS_UEFI" "$IS_UEFI"
+  save_string "IS_UEFI" "$IS_UEFI"
   echo "UEFI is set to \"$IS_UEFI\""
 }
 

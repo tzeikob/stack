@@ -5,7 +5,7 @@ set -Eeo pipefail
 unmount_all () {
   echo "Making sure everything is unmounted..."
 
-  umount -A --recursive /mnt
+  umount -A --recursive /mnt || exit 1
 
   echo "Unmounting process has been completed"
 }
@@ -185,7 +185,7 @@ unmount_all &&
   mount_filesystem &&
   make_swap &&
   create_fstab &&
-  report
+  report || exit 1
 
 echo -e "\nDisk partitioning has been completed"
 echo "Moving to the next process..."
