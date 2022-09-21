@@ -70,13 +70,13 @@ set_locale () {
 set_timezone () {
   echo -e "\nSetting the system's timezone..."
 
-  ln -sf "/usr/share/zoneinfo/$TIMEZONE" /etc/localtime
+  ln -sf "/usr/share/zoneinfo/$TIMEZONE" /etc/localtime || exit 1
 
   sed -i 's/^#NTP=/NTP=time.google.com/' /etc/systemd/timesyncd.conf
 
   echo "NTP server has been set to google time"
 
-  hwclock --systohc
+  hwclock --systohc || exit 1
 
   echo "System clock has been synchronized to hardware clock"
 
