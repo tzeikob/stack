@@ -159,7 +159,7 @@ install_yay () {
 install_display_server () {
   echo "Installing the xorg display server..."
 
-  pacman -S --noconfirm xorg xorg-xinit xorg-xrandr arandr
+  pacman -S --noconfirm xorg xorg-xinit xorg-xrandr arandr || exit 1
 
   cp /root/stack/system/xorg/xorg.conf /etc/X11
 
@@ -223,7 +223,7 @@ install_drivers () {
     acpi acpid acpi_call \
     networkmanager wireless_tools netctl wpa_supplicant \
     alsa-utils pipewire pipewire-alsa pipewire-pulse pipewire-jack pavucontrol \
-    $CPU_PKGS $GPU_PKGS $OTHER_PKGS $VM_PKGS
+    $CPU_PKGS $GPU_PKGS $OTHER_PKGS $VM_PKGS || exit 1
 
   echo "Drivers have been installed"
 }
