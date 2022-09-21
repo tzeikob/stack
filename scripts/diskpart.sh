@@ -146,22 +146,22 @@ make_swap () {
       echo "Setting up the swap partition..."
 
       if [ "$UEFI" = "yes" ]; then
-        mkswap "${DISK}2"
-        swapon "${DISK}2"
+        mkswap "${DISK}2" || exit 1
+        swapon "${DISK}2" || exit 1
       else
-        mkswap "${DISK}1"
-        swapon "${DISK}1"
+        mkswap "${DISK}1" || exit 1
+        swapon "${DISK}1" || exit 1
       fi
 
       echo "Swap partition has been enabled"
     elif [ "$SWAP_TYPE" = "file" ]; then
       echo "Setting up the swap file..."
 
-      dd if=/dev/zero of=/mnt/swapfile bs=1M count=$(expr "$SWAP_SIZE" \* 1024) status=progress
+      dd if=/dev/zero of=/mnt/swapfile bs=1M count=$(expr "$SWAP_SIZE" \* 1024) status=progress || exit 1
       chmod 0600 /mnt/swapfile
 
-      mkswap -U clear /mnt/swapfile
-      swapon /mnt/swapfile
+      mkswap -U clear /mnt/swapfile || exit 1
+      swapon /mnt/swapfile || exit 1
       free -m
 
       echo "Swap file has been enabled"
