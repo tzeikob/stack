@@ -205,9 +205,9 @@ install_theme () {
   local THEME_URL="https://github.com/dracula/gtk/archive/master.zip"
 
   sudo curl "$THEME_URL" -sSLo /usr/share/themes/Dracula.zip \
-    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 || exit 1
 
-  sudo unzip -q /usr/share/themes/Dracula.zip -d /usr/share/themes
+  sudo unzip -q /usr/share/themes/Dracula.zip -d /usr/share/themes || exit 1
   sudo mv /usr/share/themes/gtk-master /usr/share/themes/Dracula
   sudo rm -f /usr/share/themes/Dracula.zip
 
@@ -216,9 +216,9 @@ install_theme () {
   local ICONS_URL="https://github.com/dracula/gtk/files/5214870/Dracula.zip"
 
   sudo curl "$ICONS_URL" -sSLo /usr/share/icons/Dracula.zip \
-    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 || exit 1
 
-  sudo unzip -q /usr/share/icons/Dracula.zip -d /usr/share/icons
+  sudo unzip -q /usr/share/icons/Dracula.zip -d /usr/share/icons || exit 1
   sudo rm -f /usr/share/icons/Dracula.zip
 
   echo "Theme icons have been installed"
@@ -226,9 +226,9 @@ install_theme () {
   local CURSORS_URL="https://www.dropbox.com/s/mqt8s1pjfgpmy66/Breeze-Snow.tgz?dl=1"
 
   sudo wget "$CURSORS_URL" -qO /usr/share/icons/breeze-snow.tgz \
-    --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 3
+    --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 3 || exit 1
 
-  sudo tar -xzf /usr/share/icons/breeze-snow.tgz -C /usr/share/icons
+  sudo tar -xzf /usr/share/icons/breeze-snow.tgz -C /usr/share/icons || exit 1
   sudo sed -ri 's/Inherits=.*/Inherits=Breeze-Snow/' /usr/share/icons/default/index.theme
   sudo rm -f /usr/share/icons/breeze-snow.tgz
 
@@ -271,8 +271,8 @@ install_fonts () {
     local URL=$(echo "$FONT" | cut -d " " -f 2)
 
     sudo curl "$URL" -sSLo "$FONTS_HOME/$NAME.zip" \
-      --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
-    sudo unzip -q "$FONTS_HOME/$NAME.zip" -d "$FONTS_HOME/$NAME"
+      --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 || exit 1
+    sudo unzip -q "$FONTS_HOME/$NAME.zip" -d "$FONTS_HOME/$NAME" || exit 1
 
     sudo find "$FONTS_HOME/$NAME/" -depth -mindepth 1 -iname "*windows*" -exec rm -r {} +
     sudo find "$FONTS_HOME/$NAME/" -depth -mindepth 1 -iname "*macosx*" -exec rm -r {} +
@@ -290,7 +290,7 @@ install_fonts () {
   echo -e "\nInstalling some extra font glyphs..."
 
   sudo pacman -S --noconfirm \
-    ttf-font-awesome noto-fonts-emoji
+    ttf-font-awesome noto-fonts-emoji || exit 1
 
   echo "Extra font glyphs have been installed"
 }
