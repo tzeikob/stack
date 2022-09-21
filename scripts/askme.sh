@@ -628,7 +628,7 @@ while true; do
     which_kernels &&
     which_disk &&
     want_swap &&
-    what_hardware || exit 1
+    what_hardware
 
   source "$OPTIONS"
 

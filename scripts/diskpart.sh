@@ -200,7 +200,7 @@ wipe_disk &&
   mount_filesystem &&
   make_swap &&
   create_fstab &&
-  report || exit 1
+  report
 
 echo -e "\nDisk partitioning has been completed"
 echo "Moving to the next process..."
