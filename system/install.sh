@@ -145,10 +145,11 @@ install_yay () {
   echo -e "\nInstalling the yay package manager..."
 
   cd "/home/$USERNAME"
-  git clone https://aur.archlinux.org/yay.git
+  git clone https://aur.archlinux.org/yay.git || exit 1
+  chown -R "$USERNAME":"$USERNAME" yay
 
-  chown -R "$USERNAME":"$USERNAME" yay && cd yay
-  sudo -u "$USERNAME" makepkg -si --noconfirm
+  cd yay
+  sudo -u "$USERNAME" makepkg -si --noconfirm || exit 1
 
   cd /root && rm -rf "/home/$USERNAME/yay"
 
