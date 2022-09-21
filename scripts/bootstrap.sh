@@ -5,7 +5,21 @@ set -Eeo pipefail
 update_clock () {
   echo "Updating the system clock..."
 
+  timedatectl set-timezone "$TIMEZONE"
+
+  echo "Timezone has been set to $TIMEZONE"
+
   timedatectl set-ntp true
+
+  echo "NTP has been enabled"
+
+  timedatectl status > "$HOME/.ntp"
+
+  while cat "$HOME/.ntp" | grep "System clock synchronized: no" > /dev/null; do
+    sleep 1
+    timedatectl status > "$HOME/.ntp"
+  done
+
   timedatectl status
 
   echo "System clock has been updated"
