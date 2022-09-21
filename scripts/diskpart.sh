@@ -88,22 +88,22 @@ format_partitions () {
   if [ "$UEFI" = "yes" ]; then
     echo "Formating boot partition..."
 
-    mkfs.fat -F 32 "${DISK}1"
+    mkfs.fat -F 32 "${DISK}1" || exit 1
 
     echo "Formating root partition..."
 
     if [ "$SWAP" = "yes" ] && [ "$SWAP_TYPE" = "partition" ]; then
-      mkfs.ext4 -F "${DISK}3"
+      mkfs.ext4 -F "${DISK}3" || exit 1
     else
-      mkfs.ext4 -F "${DISK}2"
+      mkfs.ext4 -F "${DISK}2" || exit 1
     fi
   else
     echo "Formating root partition..."
 
     if [ "$SWAP" = "yes" ] && [ "$SWAP_TYPE" = "partition" ]; then
-      mkfs.ext4 -F "${DISK}2"
+      mkfs.ext4 -F "${DISK}2" || exit 1
     else
-      mkfs.ext4 -F "${DISK}1"
+      mkfs.ext4 -F "${DISK}1" || exit 1
     fi
   fi
 
