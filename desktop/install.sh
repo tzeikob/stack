@@ -298,7 +298,7 @@ install_fonts () {
 setup_bindings () {
   echo "Setting up key bindings via sxhkd..."
 
-  sudo pacman -S --noconfirm sxhkd
+  sudo pacman -S --noconfirm sxhkd || exit 1
 
   local CONFIG_HOME=~/.config/sxhkd
   mkdir -p "$CONFIG_HOME"
