@@ -5,7 +5,7 @@ set -Eeo pipefail
 set_host () {
   echo -e "\nSetting up system host..."
 
-  echo "$HOSTNAME" >> /etc/hostname
+  echo "$HOSTNAME" > /etc/hostname
 
   echo "Hostname has been set to $HOSTNAME"
 
