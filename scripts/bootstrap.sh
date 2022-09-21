@@ -59,7 +59,7 @@ sync_packages () {
 update_keyring () {
   echo "Updating keyring package..."
 
-  pacman --noconfirm -Sy archlinux-keyring
+  pacman --noconfirm -Sy archlinux-keyring || exit 1
 
   echo "Keyring has been updated successfully"
 }
@@ -77,7 +77,7 @@ install_kernels () {
     KERNEL_PKGS="$KERNEL_PKGS linux-lts linux-lts-headers"
   fi
 
-  pacstrap /mnt base $KERNEL_PKGS linux-firmware archlinux-keyring reflector rsync sudo
+  pacstrap /mnt base $KERNEL_PKGS linux-firmware archlinux-keyring reflector rsync sudo || exit 1
 
   echo -e "Kernels have been installed"
 }
