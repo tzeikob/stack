@@ -107,7 +107,7 @@ grant () {
 copy_files () {
   echo "Start copying installation files..."
 
-  cp -R "$HOME" /mnt/root
+  cp -R "$HOME" /mnt/root || exit 1
 
   echo "Installation files have been copied to /root"
 }
