@@ -89,7 +89,8 @@ set_mirrors () {
   local OLD_IFS=$IFS && IFS=","
   MIRRORS="${MIRRORS[*]}" && IFS=$OLD_IFS
 
-  reflector --country "$MIRRORS" --age 8 --sort age --save /etc/pacman.d/mirrorlist
+  reflector --country "$MIRRORS" --age 8 --sort age --save /etc/pacman.d/mirrorlist || exit 1
+
   sed -i "s/# --country.*/--country ${MIRRORS}/" /etc/xdg/reflector/reflector.conf
 
   echo "Mirror list set to $MIRRORS"
@@ -119,7 +120,7 @@ sync_packages () {
     echo "Lock file has been removed"
   fi
 
-  pacman -Syy
+  pacman -Syy || exit 1
 
   echo "Packages have been synchronized with master"
 }
@@ -133,9 +134,9 @@ install_packages () {
     man-db man-pages texinfo cups bluez bluez-utils unzip terminus-font \
     vim nano git htop tree arch-audit atool zip xz unace p7zip gzip lzop feh \
     bzip2 unrar dialog inetutils dnsutils openssh nfs-utils openbsd-netcat ipset \
-    $([ "$UEFI" = "yes" ] && echo 'efibootmgr')
+    $([ "$UEFI" = "yes" ] && echo 'efibootmgr') || exit 1
 
-  yes | pacman -S nftables iptables-nft
+  yes | pacman -S nftables iptables-nft || exit 1
 
   echo "Base packages have been installed"
 }
