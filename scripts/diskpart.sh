@@ -177,7 +177,7 @@ create_fstab () {
   echo "Creating the file system table..."
 
   mkdir -p /mnt/etc
-  genfstab -U /mnt >> /mnt/etc/fstab
+  genfstab -U /mnt >> /mnt/etc/fstab || exit 1
 
   echo "The file system table has been created"
 }
