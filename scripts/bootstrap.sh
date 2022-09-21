@@ -92,7 +92,13 @@ grant () {
 
   case "$PERMISSION" in
     "nopasswd")
-      sed -i 's/^# \(%wheel ALL=(ALL:ALL) NOPASSWD: ALL\)/\1/' /mnt/etc/sudoers;;
+      local RULE="%wheel ALL=(AL:ALL) NOPASSWD: ALL"
+      sed -i "s/^# \($RULE\)/\1/" /mnt/etc/sudoers
+
+      if ! cat /mnt/etc/sudoers | grep "^$RULE" > /dev/null; then
+        echo "Error: failed to grant nopasswd permission to wheel group"
+        exit 1
+      fi;;
   esac
 
   echo "Sudoing permision $PERMISSION has been granted"

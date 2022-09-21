@@ -7,7 +7,13 @@ revoke () {
 
   case "$PERMISSION" in
    "nopasswd")
-    sed -i 's/^\(%wheel ALL=(ALL:ALL) NOPASSWD: ALL\)/# \1/' /mnt/etc/sudoers;;
+      local RULE="%wheel ALL=(ALL:ALL) NOPASSWD: ALL"
+      sed -i "s/^\($RULE\)/# \1/" /mnt/etc/sudoers
+
+      if ! cat /mnt/etc/sudoers | grep "^# $RULE" > /dev/null; then
+        echo "Error: failed to revoke nopasswd permission from wheel group"
+        exit 1
+      fi;;
   esac
 
   echo "Permission $PERMISSION has been revoked"
