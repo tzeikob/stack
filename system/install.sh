@@ -24,7 +24,13 @@ set_users () {
 
   useradd -m -G wheel,audio,video,optical,storage "$USERNAME" || exit 1
 
-  sed -i 's/^# \(%wheel ALL=(ALL:ALL) ALL\)/\1/' /etc/sudoers
+  local RULE="%wheel ALL=(ALL:ALL) ALL"
+  sed -i "s/^# \($RULE\)/\1/" /etc/sudoers
+
+  if ! cat /etc/sudoers | grep "^$RULE" > /dev/null; then
+    echo "Error: failed to grant wheel permissions to user $USERNAME"
+    exit 1
+  fi
 
   echo "Sudoer user $USERNAME has been created"
 
