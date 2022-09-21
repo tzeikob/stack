@@ -31,7 +31,7 @@ set_mirrors () {
   local OLD_IFS=$IFS && IFS=","
   MIRRORS="${MIRRORS[*]}" && IFS=$OLD_IFS
 
-  reflector --country "$MIRRORS" --age 8 --sort age --save /etc/pacman.d/mirrorlist
+  reflector --country "$MIRRORS" --age 8 --sort age --save /etc/pacman.d/mirrorlist || exit 1
 
   echo "Mirror list set to $MIRRORS"
 }
@@ -51,7 +51,7 @@ sync_packages () {
 
   echo "Pacman parallel downloading has been enabled"
 
-  pacman -Syy
+  pacman -Syy || exit 1
 
   echo "Packages have been synchronized with master"
 }
