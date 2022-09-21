@@ -5,7 +5,7 @@ set -Eeo pipefail
 install_compositor () {
   echo "Installing the picom compositor..."
 
-  sudo pacman -S --noconfirm picom
+  sudo pacman -S --noconfirm picom || exit 1
 
   local CONFIG_HOME=~/.config/picom
   mkdir -p "$CONFIG_HOME"
@@ -29,7 +29,7 @@ install_compositor () {
 install_window_manager () {
   echo "Installing BSPWM as the window manager..."
 
-  sudo pacman -S --noconfirm bspwm
+  sudo pacman -S --noconfirm bspwm || exit 1
 
   local CONFIG_HOME=~/.config/bspwm
   mkdir -p "$CONFIG_HOME"
@@ -51,7 +51,7 @@ install_window_manager () {
 install_file_manager () {
   echo "Installing the file manager..."
 
-  sudo pacman -S --noconfirm nnn fzf
+  sudo pacman -S --noconfirm nnn fzf || exit 1
 
   echo 'alias N="sudo -E nnn -dH"' >> ~/.bashrc
   echo 'export EDITOR=nano' >> ~/.bashrc
@@ -67,8 +67,8 @@ install_file_manager () {
   local GETPLUGS_URL="https://raw.githubusercontent.com/jarun/nnn/master/plugins/getplugs"
 
   curl "$GETPLUGS_URL" -sSLo "$CONFIG_HOME/getplugs" \
-    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
-  HOME=~/ sh "$CONFIG_HOME/getplugs" > /dev/null
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 || exit 1
+  HOME=~/ sh "$CONFIG_HOME/getplugs" > /dev/null || exit 1
 
   sed -ri 's/(.*)# mocp$/\1\$TERMINAL -e mocp \&/' "$CONFIG_HOME/plugins/mocq"
 
@@ -98,7 +98,7 @@ install_file_manager () {
 install_trash () {
   echo "Installing the trash via the trash-cli..."
 
-  sudo pacman -S --noconfirm trash-cli
+  sudo pacman -S --noconfirm trash-cli || exit 1
 
   sudo cp ~/stack/desktop/trash-cli/alias.sh /usr/local/bin/trash
   sudo chmod 755 /usr/local/bin/trash
@@ -115,7 +115,7 @@ install_trash () {
 install_bars () {
   echo "Setting up the status bar via polybar..."
 
-  sudo pacman -S --noconfirm polybar
+  sudo pacman -S --noconfirm polybar || exit 1
 
   local CONFIG_HOME=~/.config/polybar
   mkdir -p "$CONFIG_HOME"
@@ -133,7 +133,7 @@ install_bars () {
 install_launchers () {
   echo "Setting up the launchers via rofi..."
 
-  sudo pacman -S --noconfirm rofi rofi-emoji rofi-calc xsel
+  sudo pacman -S --noconfirm rofi rofi-emoji rofi-calc xsel || exit 1
 
   local CONFIG_HOME=~/.config/rofi
   mkdir -p "$CONFIG_HOME"
@@ -151,8 +151,8 @@ install_launchers () {
 install_login_Screen () {
   echo "Setting up the getty login screen..."
 
-  sudo pacman -S --noconfirm figlet
-  yay -S --noconfirm figlet-fonts figlet-fonts-extra
+  sudo pacman -S --noconfirm figlet || exit 1
+  yay -S --noconfirm figlet-fonts figlet-fonts-extra || exit 1
 
   sudo mv /etc/issue /etc/issue.bak
   sudo cp ~/stack/desktop/getty/issue.sh /etc
@@ -172,15 +172,15 @@ install_login_Screen () {
 install_screen_locker () {
   echo "Installing the screen locker..."
 
-  cd ~/ &&
-    curl https://dl.suckless.org/tools/slock-1.4.tar.gz -sSLo ./slock-1.4.tar.gz \
-      --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
-  tar -xzvf ./slock-1.4.tar.gz
-  
-  cd ~/slock-1.4 &&
-    curl https://tools.suckless.org/slock/patches/control-clear/slock-git-20161012-control-clear.diff -sSLo ./control-clear.diff \
-      --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60
-  patch -p1 < ./control-clear.diff
+  cd ~/
+  curl https://dl.suckless.org/tools/slock-1.4.tar.gz -sSLo ./slock-1.4.tar.gz \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 || exit 1
+  tar -xzvf ./slock-1.4.tar.gz || exit 1
+
+  cd ~/slock-1.4
+  curl https://tools.suckless.org/slock/patches/control-clear/slock-git-20161012-control-clear.diff -sSLo ./control-clear.diff \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 || exit 1
+  patch -p1 < ./control-clear.diff || exit 1
 
   echo "Control clear patch has been added"
 
@@ -192,7 +192,8 @@ install_screen_locker () {
 
   echo "Lock screen color theme has been applied"
 
-  sudo make install
+  sudo make install || exit 1
+
   cd / && rm -rf ~/slock-1.4 ~/slock-1.4.tar.gz
 
   echo -e "Screen locker has been installed"
