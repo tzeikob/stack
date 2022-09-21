@@ -5,7 +5,7 @@ set -Eeo pipefail
 install_terminal () {
   echo "Installing the alacritty terminal..."
 
-  sudo pacman -S --noconfirm alacritty
+  sudo pacman -S --noconfirm alacritty || exit 1
 
   echo "export TERMINAL=alacritty" >> ~/.bashrc
 
@@ -32,11 +32,12 @@ install_terminal () {
 install_music_player () {
   echo "Installing the music player..."
 
-  sudo pacman -S --noconfirm moc
+  sudo pacman -S --noconfirm moc || exit 1
 
   echo "Installing codecs and various dependecies..."
 
-  sudo pacman -S --noconfirm --asdeps --needed faad2 ffmpeg4.4 libmodplug libmpcdec speex taglib wavpack
+  sudo pacman -S --noconfirm --asdeps --needed \
+    faad2 ffmpeg4.4 libmodplug libmpcdec speex taglib wavpack || exit 1
 
   local CONFIG_HOME=~/.moc
   mkdir -p "$CONFIG_HOME" "$CONFIG_HOME/themes"
@@ -55,9 +56,9 @@ install_music_player () {
 install_document_viewers () {
   echo "Installing various document viewers..."
 
-  sudo pacman -S --noconfirm xournalpp poppler foliate
+  sudo pacman -S --noconfirm xournalpp poppler foliate || exit 1
 
-  yay -S --noconfirm --useask --removemake --nodiffmenu evince-no-gnome > /dev/null
+  yay -S --noconfirm --useask --removemake --nodiffmenu evince-no-gnome > /dev/null || exit 1
 
   echo "Document viewers have been installed"
 }
@@ -65,7 +66,7 @@ install_document_viewers () {
 install_other_apps () {
   echo "Installing other apps..."
 
-  sudo pacman -S --noconfirm firefox sxiv mpv
+  sudo pacman -S --noconfirm firefox sxiv mpv || exit 1
 
   echo "Other apps have been installed"
 }
