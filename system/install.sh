@@ -51,14 +51,15 @@ set_keymap () {
 
   echo "Virtual console keymap set to $KEYMAP"
 
-  loadkeys "$KEYMAP"
+  loadkeys "$KEYMAP" || exit 1
 
   echo "Keyboard's keymap has been set to $KEYMAP"
 }
 
 set_locale () {
   sed -i "s/#\(${LOCALE}.*\)/\1/" /etc/locale.gen
-  locale-gen
+
+  locale-gen || exit 1
 
   local PARTS=($LOCALE)
   echo "LANG=${PARTS[0]}" >> /etc/locale.conf
