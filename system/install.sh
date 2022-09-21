@@ -22,16 +22,17 @@ set_host () {
 set_users () {
   echo -e "\nSetting up system users..."
 
-  useradd -m -G wheel,audio,video,optical,storage "$USERNAME"
-  sed -i 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
+  useradd -m -G wheel,audio,video,optical,storage "$USERNAME" || exit 1
+
+  sed -i 's/^# \(%wheel ALL=(ALL:ALL) ALL\)/\1/' /etc/sudoers
 
   echo "Sudoer user $USERNAME has been created"
 
-  echo "$USERNAME:$USER_PASSWORD" | chpasswd
+  echo "$USERNAME:$USER_PASSWORD" | chpasswd || exit 1
 
   echo "Password has been given to user $USERNAME"
 
-  echo "root:$ROOT_PASSWORD" | chpasswd
+  echo "root:$ROOT_PASSWORD" | chpasswd || exit 1
 
   echo "Password has been given to the root user"
   echo "System users have been setup"
