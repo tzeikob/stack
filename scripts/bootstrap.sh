@@ -2,7 +2,7 @@
 
 set -Eeo pipefail
 
-update_clock () {
+sync_clock () {
   echo "Updating the system clock..."
 
   timedatectl set-timezone "$TIMEZONE"
@@ -105,7 +105,7 @@ echo -e "\nStarting the bootstrap process..."
 
 source "$OPTIONS"
 
-update_clock &&
+sync_clock &&
   set_mirrors &&
   sync_packages &&
   update_keyring &&
