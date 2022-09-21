@@ -115,21 +115,21 @@ mount_filesystem () {
 
   if [ "$UEFI" = "yes" ]; then
     if [ "$SWAP" = "yes" ] && [ "$SWAP_TYPE" = "partition" ]; then
-      mount "${DISK}3" /mnt
+      mount "${DISK}3" /mnt || exit 1
     else
-      mount "${DISK}2" /mnt
+      mount "${DISK}2" /mnt || exit 1
     fi
 
     echo "Root partition mounted"
 
-    mount --mkdir "${DISK}1" /mnt/boot
+    mount --mkdir "${DISK}1" /mnt/boot | exit 1
 
     echo "Boot partition mounted"
   else
     if [ "$SWAP" = "yes" ] && [ "$SWAP_TYPE" = "partition" ]; then
-      mount "${DISK}2" /mnt
+      mount "${DISK}2" /mnt || exit 1
     else
-      mount "${DISK}1" /mnt
+      mount "${DISK}1" /mnt || exit 1
     fi
 
     echo "Root partition mounted"
