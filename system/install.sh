@@ -272,16 +272,16 @@ install_bootloader () {
   echo -e "\nInstalling the bootloader via GRUB..."
 
   if [ "$UEFI" = "yes" ]; then
-    grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
+    grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB || exit 1
   else
-    grub-install --target=i386-pc "$DISK"
+    grub-install --target=i386-pc "$DISK" || exit 1
   fi
 
   sed -i '/#GRUB_SAVEDEFAULT=true/i GRUB_DEFAULT=saved' /etc/default/grub
   sed -i 's/#GRUB_SAVEDEFAULT=true/GRUB_SAVEDEFAULT=true/' /etc/default/grub
   sed -i 's/#GRUB_DISABLE_SUBMENU=y/GRUB_DISABLE_SUBMENU=y/' /etc/default/grub
 
-  grub-mkconfig -o /boot/grub/grub.cfg
+  grub-mkconfig -o /boot/grub/grub.cfg || exit 1
 
   if [ "$UEFI" = "yes" ] && [ "$VIRTUAL_VENDOR" = "oracle" ]; then
     mkdir -p /boot/EFI/BOOT
