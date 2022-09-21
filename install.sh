@@ -11,7 +11,7 @@ run () {
 }
 
 install () {
-  source "$OPTIONS"
+  source "$OPTIONS" || exit 1
 
   case "$1" in
     "system")
