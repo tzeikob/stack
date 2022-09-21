@@ -122,7 +122,7 @@ mount_filesystem () {
 
     echo "Root partition mounted"
 
-    mount --mkdir "${DISK}1" /mnt/boot | exit 1
+    mount --mkdir "${DISK}1" /mnt/boot || exit 1
 
     echo "Boot partition mounted"
   else
