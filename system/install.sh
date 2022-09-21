@@ -241,27 +241,27 @@ config_security () {
 
   echo "Setting up a simple stateful firewall..."
 
-  nft flush ruleset
-  nft add table inet my_table
-  nft add chain inet my_table my_input '{ type filter hook input priority 0 ; policy drop ; }'
-  nft add chain inet my_table my_forward '{ type filter hook forward priority 0 ; policy drop ; }'
-  nft add chain inet my_table my_output '{ type filter hook output priority 0 ; policy accept ; }'
-  nft add chain inet my_table my_tcp_chain
-  nft add chain inet my_table my_udp_chain
-  nft add rule inet my_table my_input ct state related,established accept
-  nft add rule inet my_table my_input iif lo accept
-  nft add rule inet my_table my_input ct state invalid drop
-  nft add rule inet my_table my_input meta l4proto ipv6-icmp accept
-  nft add rule inet my_table my_input meta l4proto icmp accept
-  nft add rule inet my_table my_input ip protocol igmp accept
-  nft add rule inet my_table my_input meta l4proto udp ct state new jump my_udp_chain
-  nft add rule inet my_table my_input 'meta l4proto tcp tcp flags & (fin|syn|rst|ack) == syn ct state new jump my_tcp_chain'
-  nft add rule inet my_table my_input meta l4proto udp reject
-  nft add rule inet my_table my_input meta l4proto tcp reject with tcp reset
-  nft add rule inet my_table my_input counter reject with icmpx port-unreachable
+  nft flush ruleset &&
+    nft add table inet my_table &&
+    nft add chain inet my_table my_input '{ type filter hook input priority 0 ; policy drop ; }' &&
+    nft add chain inet my_table my_forward '{ type filter hook forward priority 0 ; policy drop ; }' &&
+    nft add chain inet my_table my_output '{ type filter hook output priority 0 ; policy accept ; }' &&
+    nft add chain inet my_table my_tcp_chain &&
+    nft add chain inet my_table my_udp_chain &&
+    nft add rule inet my_table my_input ct state related,established accept &&
+    nft add rule inet my_table my_input iif lo accept &&
+    nft add rule inet my_table my_input ct state invalid drop &&
+    nft add rule inet my_table my_input meta l4proto ipv6-icmp accept &&
+    nft add rule inet my_table my_input meta l4proto icmp accept &&
+    nft add rule inet my_table my_input ip protocol igmp accept &&
+    nft add rule inet my_table my_input meta l4proto udp ct state new jump my_udp_chain &&
+    nft add rule inet my_table my_input 'meta l4proto tcp tcp flags & (fin|syn|rst|ack) == syn ct state new jump my_tcp_chain' &&
+    nft add rule inet my_table my_input meta l4proto udp reject &&
+    nft add rule inet my_table my_input meta l4proto tcp reject with tcp reset &&
+    nft add rule inet my_table my_input counter reject with icmpx port-unreachable || exit 1
 
   mv /etc/nftables.conf /etc/nftables.conf.bak
-  nft -s list ruleset > /etc/nftables.conf
+  nft -s list ruleset > /etc/nftables.conf || exit 1
 
   echo "Firewall ruleset has been saved to /etc/nftables.conf"
 
