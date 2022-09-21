@@ -125,7 +125,7 @@ install_packages () {
     man-db man-pages texinfo cups bluez bluez-utils unzip terminus-font \
     vim nano git htop tree arch-audit atool zip xz unace p7zip gzip lzop feh \
     bzip2 unrar dialog inetutils dnsutils openssh nfs-utils openbsd-netcat ipset \
-    $([ "$IS_UEFI" = "yes" ] && echo 'efibootmgr')
+    $([ "$UEFI" = "yes" ] && echo 'efibootmgr')
 
   yes | pacman -S nftables iptables-nft
 
@@ -261,7 +261,7 @@ config_security () {
 install_bootloader () {
   echo -e "\nInstalling the bootloader via GRUB..."
 
-  if [ "$IS_UEFI" = "yes" ]; then
+  if [ "$UEFI" = "yes" ]; then
     grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
   else
     grub-install --target=i386-pc "$DISK"
@@ -273,7 +273,7 @@ install_bootloader () {
 
   grub-mkconfig -o /boot/grub/grub.cfg
 
-  if [ "$IS_UEFI" = "yes" ] && [ "$VIRTUAL_VENDOR" = "oracle" ]; then
+  if [ "$UEFI" = "yes" ] && [ "$VIRTUAL_VENDOR" = "oracle" ]; then
     mkdir -p /boot/EFI/BOOT
     cp /boot/EFI/GRUB/grubx64.efi /boot/EFI/BOOT/BOOTX64.EFI
   fi

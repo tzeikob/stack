@@ -26,7 +26,7 @@ wipe_disk () {
 }
 
 create_partitions () {
-  if [ "$IS_UEFI" = "yes" ]; then
+  if [ "$UEFI" = "yes" ]; then
     echo "Creating a clean GPT partition table..."
 
     parted --script "$DISK" mklabel gpt || exit 1
@@ -85,7 +85,7 @@ create_partitions () {
 format_partitions () {
   echo "Start formating partitions..."
 
-  if [ "$IS_UEFI" = "yes" ]; then
+  if [ "$UEFI" = "yes" ]; then
     echo "Formating boot partition..."
 
     mkfs.fat -F 32 "${DISK}1"
@@ -113,7 +113,7 @@ format_partitions () {
 mount_filesystem () {
   echo "Mounting disk partitions..."
 
-  if [ "$IS_UEFI" = "yes" ]; then
+  if [ "$UEFI" = "yes" ]; then
     if [ "$SWAP" = "yes" ] && [ "$SWAP_TYPE" = "partition" ]; then
       mount "${DISK}3" /mnt
     else
@@ -145,7 +145,7 @@ make_swap () {
     if [ "$SWAP_TYPE" = "partition" ]; then
       echo "Setting up the swap partition..."
 
-      if [ "$IS_UEFI" = "yes" ]; then
+      if [ "$UEFI" = "yes" ]; then
         mkswap "${DISK}2"
         swapon "${DISK}2"
       else

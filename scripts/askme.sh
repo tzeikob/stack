@@ -490,18 +490,18 @@ want_swap () {
 }
 
 is_uefi () {
-  local IS_UEFI="no"
+  local UEFI="no"
 
   if [ -d "/sys/firmware/efi/efivars" ]; then
-    IS_UEFI="yes"
+    UEFI="yes"
 
     echo "UEFI mode has been detected"
   else
     echo "No UEFI mode has been detected"
   fi
 
-  save_string "IS_UEFI" "$IS_UEFI"
-  echo "UEFI is set to \"$IS_UEFI\""
+  save_string "UEFI" "$UEFI"
+  echo "UEFI is set to \"$UEFI\""
 }
 
 what_cpu () {
