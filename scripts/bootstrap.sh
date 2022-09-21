@@ -77,6 +77,11 @@ install_kernels () {
     KERNEL_PKGS="$KERNEL_PKGS linux-lts linux-lts-headers"
   fi
 
+  if [ -z "$KERNEL_PKGS" ]; then
+    echo "Error: no linux kernel packages set for installation"
+    exit 1
+  fi
+
   pacstrap /mnt base $KERNEL_PKGS linux-firmware archlinux-keyring reflector rsync sudo || exit 1
 
   echo -e "Kernels have been installed"
