@@ -315,7 +315,7 @@ enable_services () {
 copy_files () {
   echo "Start copying installation files..."
 
-  cp -R /root/stack "/home/$USERNAME"
+  cp -R /root/stack "/home/$USERNAME" || exit 1
   chown -R "$USERNAME":"$USERNAME" "/home/$USERNAME/stack"
 
   echo "Installation files have been moved to /home/$USERNAME"
