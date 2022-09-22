@@ -136,7 +136,10 @@ install_packages () {
     bzip2 unrar dialog inetutils dnsutils openssh nfs-utils openbsd-netcat ipset \
     $([ "$UEFI" = "yes" ] && echo 'efibootmgr') || exit 1
 
-  yes | pacman -S nftables iptables-nft || exit 1
+  echo -e "\nReplacing iptables with nft tables..."
+
+  printf '%s\n' y y |
+    pacman -S nftables iptables-nft || exit 1
 
   echo "Base packages have been installed"
 }
