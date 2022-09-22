@@ -89,9 +89,12 @@ set_mirrors () {
   local OLD_IFS=$IFS && IFS=","
   MIRRORS="${MIRRORS[*]}" && IFS=$OLD_IFS
 
-  reflector --country "$MIRRORS" --age 8 --sort age --save /etc/pacman.d/mirrorlist || exit 1
+  reflector --country "$MIRRORS" --age 48 --sort age --latest 20 \
+    --save /etc/pacman.d/mirrorlist || exit 1
 
   sed -i "s/# --country.*/--country ${MIRRORS}/" /etc/xdg/reflector/reflector.conf
+  sed -i "s/--latest.*/--latest 20/" /etc/xdg/reflector/reflector.conf
+  echo "--age 48" >> /etc/xdg/reflector/reflector.conf
 
   echo "Mirror list set to $MIRRORS"
 }

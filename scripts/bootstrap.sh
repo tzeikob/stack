@@ -31,7 +31,8 @@ set_mirrors () {
   local OLD_IFS=$IFS && IFS=","
   MIRRORS="${MIRRORS[*]}" && IFS=$OLD_IFS
 
-  reflector --country "$MIRRORS" --age 8 --sort age --save /etc/pacman.d/mirrorlist || exit 1
+  reflector --country "$MIRRORS" --age 48 --sort age --latest 20 \
+    --save /etc/pacman.d/mirrorlist || exit 1
 
   echo "Mirror list set to $MIRRORS"
 }
