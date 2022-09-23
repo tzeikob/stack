@@ -335,16 +335,16 @@ enable_services () {
   echo -e "\nEnabling various system services..."
 
   systemctl enable ntpd.service
-  systemctl enable systemd-timesyncd
+  systemctl enable systemd-timesyncd.service
   systemctl disable dhcpcd.service
   systemctl stop dhcpcd.service
-  systemctl enable NetworkManager
-  systemctl enable bluetooth
-  systemctl enable acpid
-  systemctl enable cups
-  systemctl enable sshd
+  systemctl enable NetworkManager.service
+  systemctl enable bluetooth.service
+  systemctl enable acpid.service
+  systemctl enable cups.service
+  systemctl enable sshd.service
   systemctl enable fstrim.timer
-  systemctl enable nftables
+  systemctl enable nftables.service
   systemctl enable reflector.timer
   systemctl enable paccache.timer
 
