@@ -343,10 +343,13 @@ enable_services () {
   systemctl enable acpid.service
   systemctl enable cups.service
   systemctl enable sshd.service
-  systemctl enable fstrim.timer
   systemctl enable nftables.service
   systemctl enable reflector.timer
   systemctl enable paccache.timer
+
+  if [ "$DISK_TRIM" = "yes" ]; then
+    systemctl enable fstrim.timer
+  fi
 
   if [ "$VIRTUAL_VENDOR" = "oracle" ]; then
     systemctl enable vboxservice.service

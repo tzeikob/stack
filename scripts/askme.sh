@@ -448,6 +448,20 @@ which_disk () {
     save_string "DISK_SSD" "yes"
   fi
 
+  local DISCARDS=($(lsblk -dn --discard -o DISC-GRAN,DISC-MAX $DEVICE))
+
+  if [[ "$DISCARDS[1]" =~ [1-9]+[TGMB] && "$DISCARDS[2]" =~ [1-9]+[TGMB] ]]; then
+    read -rep "Do you want to enable trim on this disk? [Y/n] " REPLY
+    REPLY="${REPLY:-"yes"}"
+    REPLY="${REPLY,,}"
+
+    if [[ "$REPLY" =~ ^(y|yes)$ ]]; then
+      save_string "DISK_TRIM" "yes"
+    else
+      save_string "DISK_TRIM" "no"
+    fi
+  fi
+
   echo -e "Installation disk is set to block device \"$DEVICE\"\n"
 }
 
