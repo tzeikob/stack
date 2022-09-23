@@ -85,25 +85,28 @@ create_partitions () {
 format_partitions () {
   echo "Start formating partitions..."
 
+  local POSTFIX=""
+  [[ "$DISK" =~ ^nvme ]] && POSTFIX="p"
+
   if [ "$UEFI" = "yes" ]; then
     echo "Formating boot partition..."
 
-    mkfs.fat -F 32 "${DISK}1" || exit 1
+    mkfs.fat -F 32 "${DISK}${POSTFIX}1" || exit 1
 
     echo "Formating root partition..."
 
     if [ "$SWAP" = "yes" ] && [ "$SWAP_TYPE" = "partition" ]; then
-      mkfs.ext4 -F "${DISK}3" || exit 1
+      mkfs.ext4 -F "${DISK}${POSTFIX}3" || exit 1
     else
-      mkfs.ext4 -F "${DISK}2" || exit 1
+      mkfs.ext4 -F "${DISK}${POSTFIX}2" || exit 1
     fi
   else
     echo "Formating root partition..."
 
     if [ "$SWAP" = "yes" ] && [ "$SWAP_TYPE" = "partition" ]; then
-      mkfs.ext4 -F "${DISK}2" || exit 1
+      mkfs.ext4 -F "${DISK}${POSTFIX}2" || exit 1
     else
-      mkfs.ext4 -F "${DISK}1" || exit 1
+      mkfs.ext4 -F "${DISK}${POSTFIX}1" || exit 1
     fi
   fi
 
@@ -113,23 +116,26 @@ format_partitions () {
 mount_filesystem () {
   echo "Mounting disk partitions..."
 
+  local POSTFIX=""
+  [[ "$DISK" =~ ^nvme ]] && POSTFIX="p"
+
   if [ "$UEFI" = "yes" ]; then
     if [ "$SWAP" = "yes" ] && [ "$SWAP_TYPE" = "partition" ]; then
-      mount "${DISK}3" /mnt || exit 1
+      mount "${DISK}${POSTFIX}3" /mnt || exit 1
     else
-      mount "${DISK}2" /mnt || exit 1
+      mount "${DISK}${POSTFIX}2" /mnt || exit 1
     fi
 
     echo "Root partition mounted"
 
-    mount --mkdir "${DISK}1" /mnt/boot || exit 1
+    mount --mkdir "${DISK}${POSTFIX}1" /mnt/boot || exit 1
 
     echo "Boot partition mounted"
   else
     if [ "$SWAP" = "yes" ] && [ "$SWAP_TYPE" = "partition" ]; then
-      mount "${DISK}2" /mnt || exit 1
+      mount "${DISK}${POSTFIX}2" /mnt || exit 1
     else
-      mount "${DISK}1" /mnt || exit 1
+      mount "${DISK}${POSTFIX}1" /mnt || exit 1
     fi
 
     echo "Root partition mounted"
@@ -139,6 +145,9 @@ mount_filesystem () {
 }
 
 make_swap () {
+  local POSTFIX=""
+  [[ "$DISK" =~ ^nvme ]] && POSTFIX="p"
+
   if [ "$SWAP" = "yes" ]; then
     echo "Setting up swap..."
 
@@ -146,11 +155,11 @@ make_swap () {
       echo "Setting up the swap partition..."
 
       if [ "$UEFI" = "yes" ]; then
-        mkswap "${DISK}2" || exit 1
-        swapon "${DISK}2" || exit 1
+        mkswap "${DISK}${POSTFIX}2" || exit 1
+        swapon "${DISK}${POSTFIX}2" || exit 1
       else
-        mkswap "${DISK}1" || exit 1
-        swapon "${DISK}1" || exit 1
+        mkswap "${DISK}${POSTFIX}1" || exit 1
+        swapon "${DISK}${POSTFIX}1" || exit 1
       fi
 
       echo "Swap partition has been enabled"
