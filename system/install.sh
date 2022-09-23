@@ -99,6 +99,28 @@ set_mirrors () {
   echo "Mirror list set to $MIRRORS"
 }
 
+boost_builds () {
+  echo "Boosting system's build performance..."
+
+  local CORES=$(grep -c ^processor /proc/cpuinfo)
+
+  if [[ "$CORES" =~ [1-9]+ ]]; then
+    echo "Detected a CPU with a total of $CORES logical cores"
+
+    sed -i "s/#MAKEFLAGS=\"-j2\"/MAKEFLAGS=\"-j${CORES}\"/g" /etc/makepkg.conf
+
+    echo "Make flags have been set to $CORES CPU cores"
+
+    sed -i "s/COMPRESSXZ=(xz -c -z -)/COMPRESSXZ=(xz -c -z --threads=$CORES -)/g" /etc/makepkg.conf
+    sed -i "s/COMPRESSZST=(zstd -c -z -q -)/COMPRESSZST=(zstd -c -z -q --threads=$CORES -))/g" /etc/makepkg.conf
+
+    echo "Compression threads has been set"
+    echo "Boosting has been completed"
+  else
+    echo "Unable to resolve CPU cores, boosting is skipped"
+  fi
+}
+
 config_pacman () {
   echo -e "\nConfiguring the pacman package manager..."
 
@@ -347,6 +369,7 @@ set_host &&
   set_locale &&
   set_timezone &&
   set_mirrors &&
+  boost_builds &&
   config_pacman &&
   sync_packages &&
   install_packages &&
