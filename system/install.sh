@@ -120,7 +120,7 @@ boost_builds () {
     echo "Make flags have been set to $CORES CPU cores"
 
     sed -i "s/COMPRESSXZ=(xz -c -z -)/COMPRESSXZ=(xz -c -z --threads=$CORES -)/g" /etc/makepkg.conf
-    sed -i "s/COMPRESSZST=(zstd -c -z -q -)/COMPRESSZST=(zstd -c -z -q --threads=$CORES -))/g" /etc/makepkg.conf
+    sed -i "s/COMPRESSZST=(zstd -c -z -q -)/COMPRESSZST=(zstd -c -z -q --threads=$CORES -)/g" /etc/makepkg.conf
 
     echo "Compression threads has been set"
     echo "Boosting has been completed"
