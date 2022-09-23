@@ -334,6 +334,7 @@ install_bootloader () {
 enable_services () {
   echo -e "\nEnabling various system services..."
 
+  systemctl enable ntpd.service
   systemctl enable systemd-timesyncd
   systemctl enable NetworkManager
   systemctl enable bluetooth
