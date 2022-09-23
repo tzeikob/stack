@@ -23,12 +23,6 @@ set_users () {
   echo -e "\nSetting up system users..."
 
   local USERGROUPS="wheel,audio,video,optical,storage"
-  
-  if [ "$VIRTUAL" = "yes" ]; then
-    groupadd "libvirt"
-    USERGROUPS="$GROUPS,libvirt"
-  fi
-
   useradd -m -G "$USERGROUPS" -s /bin/bash "$USERNAME" || exit 1
 
   local RULE="%wheel ALL=(ALL:ALL) ALL"
