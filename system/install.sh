@@ -235,7 +235,7 @@ install_drivers () {
   elif [ "$GPU" = "amd" ]; then
     GPU_PKGS="xf86-video-amdgpu"
   elif [ "$GPU" = "intel" ]; then
-    GPU_PKGS="xf86-video-intel"
+    GPU_PKGS="libva-intel-driver libvdpau-va-gl vulkan-intel libva-intel-driver libva-utils"
   else
     GPU_PKGS="xf86-video-qxl"
   fi
