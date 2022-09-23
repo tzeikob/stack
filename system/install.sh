@@ -63,6 +63,7 @@ set_locale () {
 
   local PARTS=($LOCALE)
   echo "LANG=${PARTS[0]}" >> /etc/locale.conf
+  echo "LC_TIME=${PARTS[0]}" >> /etc/locale.conf
 
   echo "Locale has been set to $LOCALE"
 }
