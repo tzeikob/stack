@@ -29,7 +29,7 @@ set_users () {
     GROUPS="$GROUPS,libvirt"
   fi
 
-  useradd -m -G "$GROUPS" "$USERNAME" || exit 1
+  useradd -m -G "$GROUPS" -s /bin/bash "$USERNAME" || exit 1
 
   local RULE="%wheel ALL=(ALL:ALL) ALL"
   sed -i "s/^# \($RULE\)/\1/" /etc/sudoers
