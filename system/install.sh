@@ -349,7 +349,7 @@ enable_services () {
   systemctl enable paccache.timer
 
   if [ "$VIRTUAL_VENDOR" = "oracle" ]; then
-    systemctl enable vboxservice
+    systemctl enable vboxservice.service
   fi
 
   echo "System services have been enabled"
