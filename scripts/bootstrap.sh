@@ -48,6 +48,10 @@ sync_packages () {
     echo "Lock file has been removed"
   fi
 
+  echo "keyserver hkp://keyserver.ubuntu.com" >> /etc/pacman.d/gnupg/gpg.conf
+
+  echo "GPG keyserver has been set to hkp://keyserver.ubuntu.com"
+
   sed -i 's/^#ParallelDownloads/ParallelDownloads/' /etc/pacman.conf
 
   echo "Pacman parallel downloading has been enabled"

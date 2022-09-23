@@ -106,6 +106,10 @@ config_pacman () {
 
   echo "Parallel downloading has been enabled"
 
+  echo "keyserver hkp://keyserver.ubuntu.com" >> /etc/pacman.d/gnupg/gpg.conf
+
+  echo "GPG keyserver has been set to hkp://keyserver.ubuntu.com"
+
   cp /root/stack/system/pacman/orphans.hook /usr/share/libalpm/hooks
 
   echo "Orphan packages post hook has been created"
