@@ -442,10 +442,10 @@ which_disk () {
   REPLY="${REPLY:-"yes"}"
   REPLY="${REPLY,,}"
 
-  if [[ ! "$REPLY" =~ ^(y|yes)$ ]]; then
-    save_string "DISK_SSD" "no"
-  else
+  if [[ "$REPLY" =~ ^(y|yes)$ ]]; then
     save_string "DISK_SSD" "yes"
+  else
+    save_string "DISK_SSD" "no"
   fi
 
   local DISCARDS=($(lsblk -dn --discard -o DISC-GRAN,DISC-MAX $DEVICE))
@@ -595,6 +595,7 @@ want_synaptics () {
   REPLY="${REPLY,,}"
 
   local SYNAPTICS="no"
+
   if [[ "$REPLY" =~ ^(y|yes)$ ]]; then
     SYNAPTICS="yes"
   fi
@@ -655,7 +656,7 @@ while true; do
   REPLY="${REPLY:-"no"}"
   REPLY="${REPLY,,}"
 
-  [[ "$REPLY" =~ ^(n|no)$ ]] && break || clear
+  [[ ! "$REPLY" =~ ^(y|yes)$ ]] && break || clear
 done
 
 echo "Moving to the next process..."
