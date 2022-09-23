@@ -460,6 +460,8 @@ which_disk () {
     else
       save_string "DISK_TRIM" "no"
     fi
+  else
+    save_string "DISK_TRIM" "no"
   fi
 
   echo -e "Installation disk is set to block device \"$DEVICE\"\n"
