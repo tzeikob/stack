@@ -22,7 +22,14 @@ set_host () {
 set_users () {
   echo -e "\nSetting up system users..."
 
-  useradd -m -G wheel,audio,video,optical,storage "$USERNAME" || exit 1
+  local GROUPS="wheel,audio,video,optical,storage"
+  
+  if [ "$VIRTUAL" = "yes" ]; then
+    groupadd "libvirt"
+    GROUPS="$GROUPS,libvirt"
+  fi
+
+  useradd -m -G "$GROUPS" "$USERNAME" || exit 1
 
   local RULE="%wheel ALL=(ALL:ALL) ALL"
   sed -i "s/^# \($RULE\)/\1/" /etc/sudoers
