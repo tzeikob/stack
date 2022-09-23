@@ -336,6 +336,8 @@ enable_services () {
 
   systemctl enable ntpd.service
   systemctl enable systemd-timesyncd
+  systemctl disable dhcpcd.service
+  systemctl stop dhcpcd.service
   systemctl enable NetworkManager
   systemctl enable bluetooth
   systemctl enable acpid
