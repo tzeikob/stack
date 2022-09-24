@@ -2,6 +2,14 @@
 
 set -Eeo pipefail
 
+install_web_browsers () {
+  echo "Installing web browsers..."
+
+  yay -S --noconfirm firefox google-chrome brave-bin tor
+
+  echo "Web browsers have been isntalled"
+}
+
 install_music_player () {
   echo "Installing the music player..."
 
@@ -39,7 +47,7 @@ install_document_viewers () {
 install_other_apps () {
   echo "Installing other apps..."
 
-  sudo pacman -S --noconfirm firefox sxiv mpv || exit 1
+  sudo pacman -S --noconfirm sxiv mpv || exit 1
   yay -S --noconfirm libqalculate kalker || exit 1
 
   echo "Other apps have been installed"
@@ -64,7 +72,8 @@ fi
 
 source ~/stack/.options
 
-install_music_player &&
+install_web_browsers &&
+  install_music_player &&
   install_document_viewers &&
   install_other_apps &&
   setup_mimes
