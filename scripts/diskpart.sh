@@ -116,14 +116,16 @@ format_partitions () {
 mount_filesystem () {
   echo "Mounting disk partitions..."
 
+  local MOUNT_OPTS="relatime,commit=60"
+
   local POSTFIX=""
   [[ "$DISK" =~ ^nvme ]] && POSTFIX="p"
 
   if [ "$UEFI" = "yes" ]; then
     if [ "$SWAP" = "yes" ] && [ "$SWAP_TYPE" = "partition" ]; then
-      mount "${DISK}${POSTFIX}3" /mnt || exit 1
+      mount -o "$MOUNT_OPTS" "${DISK}${POSTFIX}3" /mnt || exit 1
     else
-      mount "${DISK}${POSTFIX}2" /mnt || exit 1
+      mount -o "$MOUNT_OPTS" "${DISK}${POSTFIX}2" /mnt || exit 1
     fi
 
     echo "Root partition mounted"
@@ -133,9 +135,9 @@ mount_filesystem () {
     echo "Boot partition mounted"
   else
     if [ "$SWAP" = "yes" ] && [ "$SWAP_TYPE" = "partition" ]; then
-      mount "${DISK}${POSTFIX}2" /mnt || exit 1
+      mount -o "$MOUNT_OPTS" "${DISK}${POSTFIX}2" /mnt || exit 1
     else
-      mount "${DISK}${POSTFIX}1" /mnt || exit 1
+      mount -o "$MOUNT_OPTS" "${DISK}${POSTFIX}1" /mnt || exit 1
     fi
 
     echo "Root partition mounted"
