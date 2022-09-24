@@ -31,10 +31,11 @@ clean_up () {
 
 restart () {
   echo "Rebooting the system in 15 secs (ctrl-c to skip)..."
-  sleep 15
 
   cp "$LOG" "/mnt/home/$USERNAME/stack.log"
   umount -R /mnt
+
+  sleep 15
   reboot
 }
 
