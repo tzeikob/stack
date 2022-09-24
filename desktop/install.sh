@@ -48,8 +48,10 @@ install_window_manager () {
   echo "Window manager has been installed"
 }
 
-install_terminal () {
-  echo "Installing the alacritty terminal..."
+install_terminals () {
+  echo "Installing virtual terminals..."
+
+  echo "Installing alacritty as the terminal..."
 
   sudo pacman -S --noconfirm alacritty || exit 1
 
@@ -72,7 +74,12 @@ install_terminal () {
   echo "PS1='\[\e[1;31m\]\u\[\e[m\] \W  '" | sudo tee -a /root/.bashrc > /dev/null
 
   echo "Terminal prompt hooks have been set"
-  echo "The terminal has been installed"
+
+  echo "Installing the cool retro terminal..."
+
+  sudo pacman -S --noconfirm cool-retro-term || exit 1
+
+  echo "Virtual terminals have been installed"
 }
 
 install_file_manager () {
@@ -348,7 +355,7 @@ source ~/stack/.options
 
 install_compositor &&
   install_window_manager &&
-  install_terminal &&
+  install_terminals &&
   install_file_manager &&
   install_trash &&
   install_bars &&
