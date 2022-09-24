@@ -2,33 +2,6 @@
 
 set -Eeo pipefail
 
-install_terminal () {
-  echo "Installing the alacritty terminal..."
-
-  sudo pacman -S --noconfirm alacritty || exit 1
-
-  echo "export TERMINAL=alacritty" >> ~/.bashrc
-
-  mkdir -p ~/.config/alacritty
-  cp ~/stack/apps/alacritty/alacritty.yml ~/.config/alacritty
-
-  sed -i '/PS1.*/d' ~/.bashrc
-  printf '%s\n' \
-    'branch () {' \
-    '  git branch 2> /dev/null | sed -e "/^[^*]/d" -e "s/* \(.*\)/  [\\1]/"' \
-    '}' \
-    'PS1="\W\[\e[0;35m\]\$(branch)\[\e[m\]  "' >> ~/.bashrc
-
-  sudo cp /etc/skel/.bash_profile /root
-  sudo cp /etc/skel/.bashrc /root
-
-  sudo sed -i '/PS1.*/d' /root/.bashrc
-  echo "PS1='\[\e[1;31m\]\u\[\e[m\] \W  '" | sudo tee -a /root/.bashrc > /dev/null
-
-  echo "Terminal prompt hooks have been set"
-  echo "The terminal has been installed"
-}
-
 install_music_player () {
   echo "Installing the music player..."
 
@@ -90,8 +63,7 @@ fi
 
 source ~/stack/.options
 
-install_terminal &&
-  install_music_player &&
+install_music_player &&
   install_document_viewers &&
   install_other_apps &&
   setup_mimes

@@ -48,6 +48,33 @@ install_window_manager () {
   echo "Window manager has been installed"
 }
 
+install_terminal () {
+  echo "Installing the alacritty terminal..."
+
+  sudo pacman -S --noconfirm alacritty || exit 1
+
+  echo "export TERMINAL=alacritty" >> ~/.bashrc
+
+  mkdir -p ~/.config/alacritty
+  cp ~/stack/desktop/alacritty/alacritty.yml ~/.config/alacritty
+
+  sed -i '/PS1.*/d' ~/.bashrc
+  printf '%s\n' \
+    'branch () {' \
+    '  git branch 2> /dev/null | sed -e "/^[^*]/d" -e "s/* \(.*\)/  [\\1]/"' \
+    '}' \
+    'PS1="\W\[\e[0;35m\]\$(branch)\[\e[m\]  "' >> ~/.bashrc
+
+  sudo cp /etc/skel/.bash_profile /root
+  sudo cp /etc/skel/.bashrc /root
+
+  sudo sed -i '/PS1.*/d' /root/.bashrc
+  echo "PS1='\[\e[1;31m\]\u\[\e[m\] \W  '" | sudo tee -a /root/.bashrc > /dev/null
+
+  echo "Terminal prompt hooks have been set"
+  echo "The terminal has been installed"
+}
+
 install_file_manager () {
   echo "Installing the file manager..."
 
@@ -321,6 +348,7 @@ source ~/stack/.options
 
 install_compositor &&
   install_window_manager &&
+  install_terminal &&
   install_file_manager &&
   install_trash &&
   install_bars &&
