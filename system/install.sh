@@ -181,8 +181,8 @@ install_packages () {
   echo "Base packages have been installed"
 }
 
-install_yay () {
-  echo -e "\nInstalling the yay package manager..."
+install_aur () {
+  echo -e "\nInstalling the yay as AUR package manager..."
 
   cd "/home/$USERNAME"
   git clone https://aur.archlinux.org/yay.git || exit 1
@@ -387,7 +387,7 @@ set_host &&
   config_pacman &&
   sync_packages &&
   install_packages &&
-  install_yay &&
+  install_aur &&
   install_display_server &&
   install_drivers &&
   config_security &&
