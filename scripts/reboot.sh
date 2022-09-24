@@ -29,17 +29,12 @@ clean_up () {
   echo "System clean up has been completed"
 }
 
-unmount () {
-  umount -R /mnt &&
-    echo "Partitions under /mnt have been unmounted" ||
-    echo "Ignoring any busy mount points"
-}
-
 restart () {
   echo "Rebooting the system in 15 secs (ctrl-c to skip)..."
   sleep 15
 
   cp "$LOG" "/mnt/home/$USERNAME/stack.log"
+  umount -R /mnt
   reboot
 }
 
@@ -49,5 +44,4 @@ source "$OPTIONS"
 
 revoke "nopasswd" &&
   clean_up &&
-  unmount &&
   restart
