@@ -40,6 +40,7 @@ install_other_apps () {
   echo "Installing other apps..."
 
   sudo pacman -S --noconfirm firefox sxiv mpv || exit 1
+  yay -S --noconfirm libqalculate kalker || exit 1
 
   echo "Other apps have been installed"
 }
