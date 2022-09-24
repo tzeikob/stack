@@ -84,7 +84,7 @@ set_timezone () {
 
   echo "NTP server has been set to google time"
 
-  hwclock --systohc || exit 1
+  hwclock --systohc --utc || exit 1
 
   echo "System clock has been synchronized to hardware clock"
 
