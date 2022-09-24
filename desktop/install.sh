@@ -267,7 +267,7 @@ install_theme () {
   cp ~/stack/desktop/gtk/settings.ini "$GTK_HOME"
 
   mkdir -p ~/images/wallpapers
-  cp ~/stack/desktop/theme/stack.jpeg ~/images/wallpapers
+  cp ~/stack/assets/wallpaper.jpeg ~/images/wallpapers/wallpaper.jpeg
 
   echo "Default wallpaper has been saved to ~/images/wallpapers"
   echo "Theme has been setup"
