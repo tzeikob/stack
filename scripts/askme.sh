@@ -215,6 +215,109 @@ what_hardware () {
   echo -e "Hardware has been resolved successfully\n"
 }
 
+which_disk () {
+  lsblk -dA -o NAME,SIZE,FSUSE%,FSTYPE,TYPE,MOUNTPOINTS,LABEL
+
+  local DEVICE=""
+  read -rep "Enter the installation disk: " DEVICE
+  DEVICE="/dev/$DEVICE"
+
+  while [ ! -b "$DEVICE" ]; do
+    read -rep " Please enter a valid disk block device: " DEVICE
+    DEVICE="/dev/$DEVICE"
+  done
+
+  echo -e "\nCAUTION, all data in \"$DEVICE\" will be lost"
+
+  local REPLY=""
+  read -rep "Proceed and use it as installation disk? [y/N] " REPLY
+  REPLY="${REPLY:-"no"}"
+  REPLY="${REPLY,,}"
+
+  while [[ ! "$REPLY" =~ ^(y|yes)$ ]]; do
+    read -rep "Enter another disk block device: " DEVICE
+    DEVICE="/dev/$DEVICE"
+
+    while [ ! -b "$DEVICE" ]; do
+      read -rep " Please enter a valid disk block device: " DEVICE
+      DEVICE="/dev/$DEVICE"
+    done
+
+    echo -e "\nCAUTION, all data in \"$DEVICE\" will be lost"
+    read -rep "Proceed and use it as installation disk? [y/N] " REPLY
+    REPLY="${REPLY:-"no"}"
+    REPLY="${REPLY,,}"
+  done
+
+  save_string "DISK" "$DEVICE"
+
+  read -rep "Is this disk an SSD drive? [Y/n] " REPLY
+  REPLY="${REPLY:-"yes"}"
+  REPLY="${REPLY,,}"
+
+  if [[ "$REPLY" =~ ^(y|yes)$ ]]; then
+    save_string "DISK_SSD" "yes"
+  else
+    save_string "DISK_SSD" "no"
+  fi
+
+  local DISCARDS=($(lsblk -dn --discard -o DISC-GRAN,DISC-MAX $DEVICE))
+
+  if [[ "$DISCARDS[1]" =~ [1-9]+[TGMB] && "$DISCARDS[2]" =~ [1-9]+[TGMB] ]]; then
+    read -rep "Do you want to enable trim on this disk? [Y/n] " REPLY
+    REPLY="${REPLY:-"yes"}"
+    REPLY="${REPLY,,}"
+
+    if [[ "$REPLY" =~ ^(y|yes)$ ]]; then
+      save_string "DISK_TRIM" "yes"
+    else
+      save_string "DISK_TRIM" "no"
+    fi
+  else
+    save_string "DISK_TRIM" "no"
+  fi
+
+  echo -e "Installation disk is set to block device \"$DEVICE\"\n"
+}
+
+want_swap () {
+  local REPLY=""
+  read -rep "Do you want to enable swap? [Y/n] " REPLY
+  REPLY="${REPLY:-"yes"}"
+  REPLY="${REPLY,,}"
+
+  if [[ ! "$REPLY" =~ ^(y|yes)$ ]]; then
+    save_string "SWAP" "no"
+    echo -e "Swap is set to \"no\"\n"
+    return 0
+  else
+    save_string "SWAP" "yes"
+  fi
+
+  local SWAP_SIZE=""
+  read -rep "Enter the size of the swap in GBytes: " SWAP_SIZE
+
+  while [[ ! "$SWAP_SIZE" =~ ^[1-9][0-9]{,2}$ ]]; do
+    read -rep " Please enter a valid swap size in GBytes: " SWAP_SIZE
+  done
+
+  local SWAP_TYPE=""
+  read -rep "Enter the swap type: [FILE/partition] " SWAP_TYPE
+  SWAP_TYPE="${SWAP_TYPE:-"file"}"
+  SWAP_TYPE="${SWAP_TYPE,,}"
+
+  while [[ ! "$SWAP_TYPE" =~ ^(file|partition)$ ]]; do
+    read -rep " Enter a valid swap type: " SWAP_TYPE
+    SWAP_TYPE="${SWAP_TYPE,,}"
+  done
+
+  save_string "SWAP_SIZE" "$SWAP_SIZE"
+  save_string "SWAP_TYPE" "$SWAP_TYPE"
+
+  echo "Swap is set to \"$SWAP_TYPE\""
+  echo -e "Swap size is set to \"${SWAP_SIZE}GB\"\n"
+}
+
 which_mirrors () {
   local OLD_IFS=$IFS
   IFS=","
@@ -528,112 +631,11 @@ which_kernels () {
   echo -e "Linux kernels are set to [$KERNELS]\n"
 }
 
-which_disk () {
-  lsblk -dA -o NAME,SIZE,FSUSE%,FSTYPE,TYPE,MOUNTPOINTS,LABEL
-
-  local DEVICE=""
-  read -rep "Enter the installation disk: " DEVICE
-  DEVICE="/dev/$DEVICE"
-
-  while [ ! -b "$DEVICE" ]; do
-    read -rep " Please enter a valid disk block device: " DEVICE
-    DEVICE="/dev/$DEVICE"
-  done
-
-  echo -e "\nCAUTION, all data in \"$DEVICE\" will be lost"
-
-  local REPLY=""
-  read -rep "Proceed and use it as installation disk? [y/N] " REPLY
-  REPLY="${REPLY:-"no"}"
-  REPLY="${REPLY,,}"
-
-  while [[ ! "$REPLY" =~ ^(y|yes)$ ]]; do
-    read -rep "Enter another disk block device: " DEVICE
-    DEVICE="/dev/$DEVICE"
-
-    while [ ! -b "$DEVICE" ]; do
-      read -rep " Please enter a valid disk block device: " DEVICE
-      DEVICE="/dev/$DEVICE"
-    done
-
-    echo -e "\nCAUTION, all data in \"$DEVICE\" will be lost"
-    read -rep "Proceed and use it as installation disk? [y/N] " REPLY
-    REPLY="${REPLY:-"no"}"
-    REPLY="${REPLY,,}"
-  done
-
-  save_string "DISK" "$DEVICE"
-
-  read -rep "Is this disk an SSD drive? [Y/n] " REPLY
-  REPLY="${REPLY:-"yes"}"
-  REPLY="${REPLY,,}"
-
-  if [[ "$REPLY" =~ ^(y|yes)$ ]]; then
-    save_string "DISK_SSD" "yes"
-  else
-    save_string "DISK_SSD" "no"
-  fi
-
-  local DISCARDS=($(lsblk -dn --discard -o DISC-GRAN,DISC-MAX $DEVICE))
-
-  if [[ "$DISCARDS[1]" =~ [1-9]+[TGMB] && "$DISCARDS[2]" =~ [1-9]+[TGMB] ]]; then
-    read -rep "Do you want to enable trim on this disk? [Y/n] " REPLY
-    REPLY="${REPLY:-"yes"}"
-    REPLY="${REPLY,,}"
-
-    if [[ "$REPLY" =~ ^(y|yes)$ ]]; then
-      save_string "DISK_TRIM" "yes"
-    else
-      save_string "DISK_TRIM" "no"
-    fi
-  else
-    save_string "DISK_TRIM" "no"
-  fi
-
-  echo -e "Installation disk is set to block device \"$DEVICE\"\n"
-}
-
-want_swap () {
-  local REPLY=""
-  read -rep "Do you want to enable swap? [Y/n] " REPLY
-  REPLY="${REPLY:-"yes"}"
-  REPLY="${REPLY,,}"
-
-  if [[ ! "$REPLY" =~ ^(y|yes)$ ]]; then
-    save_string "SWAP" "no"
-    echo -e "Swap is set to \"no\"\n"
-    return 0
-  else
-    save_string "SWAP" "yes"
-  fi
-
-  local SWAP_SIZE=""
-  read -rep "Enter the size of the swap in GBytes: " SWAP_SIZE
-
-  while [[ ! "$SWAP_SIZE" =~ ^[1-9][0-9]{,2}$ ]]; do
-    read -rep " Please enter a valid swap size in GBytes: " SWAP_SIZE
-  done
-
-  local SWAP_TYPE=""
-  read -rep "Enter the swap type: [FILE/partition] " SWAP_TYPE
-  SWAP_TYPE="${SWAP_TYPE:-"file"}"
-  SWAP_TYPE="${SWAP_TYPE,,}"
-
-  while [[ ! "$SWAP_TYPE" =~ ^(file|partition)$ ]]; do
-    read -rep " Enter a valid swap type: " SWAP_TYPE
-    SWAP_TYPE="${SWAP_TYPE,,}"
-  done
-
-  save_string "SWAP_SIZE" "$SWAP_SIZE"
-  save_string "SWAP_TYPE" "$SWAP_TYPE"
-
-  echo "Swap is set to \"$SWAP_TYPE\""
-  echo -e "Swap size is set to \"${SWAP_SIZE}GB\"\n"
-}
-
 while true; do
   init_options &&
     what_hardware &&
+    which_disk &&
+    want_swap &&
     which_mirrors &&
     which_timezone &&
     which_keymap &&
@@ -643,9 +645,7 @@ while true; do
     what_username &&
     what_password "USER" &&
     what_password "ROOT" &&
-    which_kernels &&
-    which_disk &&
-    want_swap
+    which_kernels
 
   source "$OPTIONS"
 
