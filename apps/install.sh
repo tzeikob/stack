@@ -5,7 +5,7 @@ set -Eeo pipefail
 install_libre () {
   echo "Installing the libre office..."
 
-  sudo pacman -S --noconfirm libreoffice-fresh
+  sudo pacman -S --noconfirm libreoffice-fresh || exit 1
 
   echo -e "Libre office has been installed\n"
 }
@@ -13,7 +13,7 @@ install_libre () {
 install_xournal () {
   echo "Installing the hand write xounral++ editor..."
 
-  sudo pacman -S --noconfirm xournalpp
+  sudo pacman -S --noconfirm xournalpp || exit 1
 
   echo -e "Xounral++ has been installed\n"
 }
@@ -21,7 +21,7 @@ install_xournal () {
 install_foliate () {
   echo "Installing the epub foliate viewer..."
 
-  sudo pacman -S --noconfirm foliate
+  sudo pacman -S --noconfirm foliate || exit 1
 
   echo -e "Foliate has been installed\n"
 }
@@ -37,7 +37,7 @@ install_evince () {
 install_code () {
   echo "Installing the visual studio code..."
 
-  sudo pacman -S --noconfirm code
+  sudo pacman -S --noconfirm code || exit 1
 
   echo -e "Visual studio code has been installed\n"
 }
@@ -45,7 +45,7 @@ install_code () {
 install_atom () {
   echo "Installing the atom editor..."
 
-  yay -S --noconfirm atom
+  yay -S --noconfirm atom || exit 1
 
   echo -e "Atom has been installed\n"
 }
@@ -53,7 +53,7 @@ install_atom () {
 install_sublime () {
   echo "Installing the sublime text editor..."
 
-  yay -S --noconfirm sublime-text-4
+  yay -S --noconfirm sublime-text-4 || exit 1
 
   echo -e "Sublime text has been installed\n"
 }
@@ -61,7 +61,7 @@ install_sublime () {
 install_neovim () {
   echo "Installing the neovim editor..."
 
-  sudo pacman -S --noconfirm neovim
+  sudo pacman -S --noconfirm neovim || exit 1
 
   echo -e "Neovim has been installed\n"
 }
@@ -69,7 +69,7 @@ install_neovim () {
 install_firefox () {
   echo "Installing the firefox browser..."
 
-  sudo pacman -S --noconfirm firefox
+  sudo pacman -S --noconfirm firefox || exit 1
 
   echo -e "Firefox has been installed\n"
 }
@@ -77,7 +77,7 @@ install_firefox () {
 install_chrome () {
   echo "Installing the chrome browser..."
 
-  yay -S --noconfirm google-chrome
+  yay -S --noconfirm google-chrome || exit 1
 
   echo -e "Chrome has been installed\n"
 }
@@ -85,7 +85,7 @@ install_chrome () {
 install_brave () {
   echo "Installing the brave browser..."
 
-  yay -S --noconfirm brave-bin
+  yay -S --noconfirm brave-bin || exit 1
 
   echo -e "Brave has been installed\n"
 }
@@ -93,7 +93,7 @@ install_brave () {
 install_tor () {
   echo "Installing the tor browser..."
 
-  sudo pacman -S --noconfirm tor
+  sudo pacman -S --noconfirm tor || exit 1
 
   echo -e "Tor has been installed\n"
 }
