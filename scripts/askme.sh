@@ -6,8 +6,6 @@ save_option () {
   local key=$1
   local value=$2
 
-  touch -f "$OPTIONS" || exit 1
-
   # Override pre-existing option
   if grep -Eq "^${key}.*" "$OPTIONS"; then
     sed -i -e "/^${key}.*/d" "$OPTIONS"
