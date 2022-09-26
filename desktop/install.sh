@@ -233,6 +233,14 @@ install_screen_locker () {
   echo -e "Screen locker has been installed"
 }
 
+install_calculator () {
+  echo "Installing calculator..."
+
+  yay -S --noconfirm libqalculate kalker || exit 1
+
+  echo "Calculator has been installed"
+}
+
 install_media_apps () {
   echo "Installing media applications..."
 
@@ -386,6 +394,7 @@ install_compositor &&
   install_launchers &&
   install_login_Screen &&
   install_screen_locker &&
+  install_calculator &&
   install_media_apps &&
   install_theme &&
   install_fonts &&

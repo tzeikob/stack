@@ -12,14 +12,6 @@ install_document_viewers () {
   echo "Document viewers have been installed"
 }
 
-install_other_apps () {
-  echo "Installing other apps..."
-
-  yay -S --noconfirm libqalculate kalker || exit 1
-
-  echo "Other apps have been installed"
-}
-
 install_code () {
   echo "Installing the visual studio code..."
 
@@ -114,7 +106,6 @@ fi
 source ~/stack/.options
 
 install_document_viewers &&
-  install_other_apps &&
   install "editors" &&
   install "browsers" &&
   setup_mimes
