@@ -53,6 +53,48 @@ install_other_apps () {
   echo "Other apps have been installed"
 }
 
+install_code () {
+  echo "Installing the visual studio code..."
+
+  sudo pacman -S --noconfirm code
+
+  echo -e "Visual studio code has been installed\n"
+}
+
+install_atom () {
+  echo "Installing the atom editor..."
+
+  yay -S --noconfirm atom
+
+  echo -e "Atom has been installed\n"
+}
+
+install_sublime () {
+  echo "Installing the sublime text editor..."
+
+  yay -S --noconfirm sublime-text-4
+
+  echo -e "Sublime text has been installed\n"
+}
+
+install_neovim () {
+  echo "Installing the neovim editor..."
+
+  sudo pacman -S --noconfirm neovim
+
+  echo -e "Neovim has been installed\n"
+}
+
+install () {
+  declare -n APPS=${1^^}
+
+  for APP in "${APPS[@]}"; do
+    install_${APP} || exit 1
+  done
+
+  unset APPS
+}
+
 setup_mimes () {
   echo "Setting up application mime types..."
 
@@ -76,6 +118,7 @@ install_web_browsers &&
   install_music_player &&
   install_document_viewers &&
   install_other_apps &&
+  install "editors" &&
   setup_mimes
 
 echo -e "\nSetting up apps has been completed"
