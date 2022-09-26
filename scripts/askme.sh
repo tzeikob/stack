@@ -6,6 +6,11 @@ save_option () {
   local KEY=$1
   local VALUE=$2
 
+  if [ ! -f "$OPTIONS" ]; then
+    echo "Error: no options file found"
+    exit 1
+  fi
+
   # Override pre-existing option
   if grep -Eq "^${KEY}.*" "$OPTIONS"; then
     sed -i -e "/^${KEY}.*/d" "$OPTIONS"
