@@ -2,36 +2,36 @@
 
 set -Eeo pipefail
 
-install_libre () {
-  echo "Installing the libre office..."
+install_firefox () {
+  echo "Installing the firefox browser..."
 
-  sudo pacman -S --noconfirm libreoffice-fresh || exit 1
+  sudo pacman -S --noconfirm firefox || exit 1
 
-  echo -e "Libre office has been installed\n"
+  echo -e "Firefox has been installed\n"
 }
 
-install_xournal () {
-  echo "Installing the hand write xounral++ editor..."
+install_chrome () {
+  echo "Installing the chrome browser..."
 
-  sudo pacman -S --noconfirm xournalpp || exit 1
+  yay -S --noconfirm google-chrome || exit 1
 
-  echo -e "Xounral++ has been installed\n"
+  echo -e "Chrome has been installed\n"
 }
 
-install_foliate () {
-  echo "Installing the epub foliate viewer..."
+install_brave () {
+  echo "Installing the brave browser..."
 
-  sudo pacman -S --noconfirm foliate || exit 1
+  yay -S --noconfirm brave-bin || exit 1
 
-  echo -e "Foliate has been installed\n"
+  echo -e "Brave has been installed\n"
 }
 
-install_evince () {
-  echo "Installing the evince pdf viewer..."
+install_tor () {
+  echo "Installing the tor browser..."
 
-  yay -S --noconfirm --useask --removemake --nodiffmenu evince-no-gnome poppler > /dev/null || exit 1
+  sudo pacman -S --noconfirm tor || exit 1
 
-  echo -e "Evince viewer has been installed\n"
+  echo -e "Tor has been installed\n"
 }
 
 install_code () {
@@ -66,36 +66,36 @@ install_neovim () {
   echo -e "Neovim has been installed\n"
 }
 
-install_firefox () {
-  echo "Installing the firefox browser..."
+install_libre () {
+  echo "Installing the libre office..."
 
-  sudo pacman -S --noconfirm firefox || exit 1
+  sudo pacman -S --noconfirm libreoffice-fresh || exit 1
 
-  echo -e "Firefox has been installed\n"
+  echo -e "Libre office has been installed\n"
 }
 
-install_chrome () {
-  echo "Installing the chrome browser..."
+install_xournal () {
+  echo "Installing the hand write xounral++ editor..."
 
-  yay -S --noconfirm google-chrome || exit 1
+  sudo pacman -S --noconfirm xournalpp || exit 1
 
-  echo -e "Chrome has been installed\n"
+  echo -e "Xounral++ has been installed\n"
 }
 
-install_brave () {
-  echo "Installing the brave browser..."
+install_foliate () {
+  echo "Installing the epub foliate viewer..."
 
-  yay -S --noconfirm brave-bin || exit 1
+  sudo pacman -S --noconfirm foliate || exit 1
 
-  echo -e "Brave has been installed\n"
+  echo -e "Foliate has been installed\n"
 }
 
-install_tor () {
-  echo "Installing the tor browser..."
+install_evince () {
+  echo "Installing the evince pdf viewer..."
 
-  sudo pacman -S --noconfirm tor || exit 1
+  yay -S --noconfirm --useask --removemake --nodiffmenu evince-no-gnome poppler > /dev/null || exit 1
 
-  echo -e "Tor has been installed\n"
+  echo -e "Evince viewer has been installed\n"
 }
 
 install () {
@@ -127,9 +127,9 @@ fi
 
 source ~/stack/.options
 
-install "office" &&
+install "browsers" &&
   install "editors" &&
-  install "browsers" &&
+  install "office" &&
   setup_mimes
 
 echo -e "\nSetting up apps has been completed"

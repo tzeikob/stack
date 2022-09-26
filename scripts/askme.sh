@@ -690,8 +690,8 @@ while true; do
     what_password "USER" &&
     what_password "ROOT" &&
     which_kernels &&
-    opt_in "editors" "code" "atom" "sublime" "neovim" &&
     opt_in "browsers" "firefox" "chrome" "brave" "tor" &&
+    opt_in "editors" "code" "atom" "sublime" "neovim" &&
     opt_in "office" "libreoffice" "xournal" "foliate" "evince"
 
   echo "Configuration options have been set to:"
