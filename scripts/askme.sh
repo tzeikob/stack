@@ -83,8 +83,7 @@ print () {
 }
 
 init_options () {
-  rm -f "$OPTIONS"
-  touch "$OPTIONS"
+  rm -f "$OPTIONS" && touch "$OPTIONS" || exit 1
 }
 
 is_uefi () {
