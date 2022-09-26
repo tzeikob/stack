@@ -3,15 +3,15 @@
 set -Eeo pipefail
 
 save_option () {
-  local key=$1
-  local value=$2
+  local KEY=$1
+  local VALUE=$2
 
   # Override pre-existing option
-  if grep -Eq "^${key}.*" "$OPTIONS"; then
-    sed -i -e "/^${key}.*/d" "$OPTIONS"
+  if grep -Eq "^${KEY}.*" "$OPTIONS"; then
+    sed -i -e "/^${KEY}.*/d" "$OPTIONS"
   fi
 
-  echo "${key}=${value}" >> "$OPTIONS"
+  echo "${KEY}=${VALUE}" >> "$OPTIONS"
 }
 
 save_string () {
