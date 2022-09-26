@@ -2,14 +2,6 @@
 
 set -Eeo pipefail
 
-install_web_browsers () {
-  echo "Installing web browsers..."
-
-  yay -S --noconfirm firefox google-chrome brave-bin tor
-
-  echo "Web browsers have been isntalled"
-}
-
 install_music_player () {
   echo "Installing the music player..."
 
@@ -85,6 +77,38 @@ install_neovim () {
   echo -e "Neovim has been installed\n"
 }
 
+install_firefox () {
+  echo "Installing the firefox browser..."
+
+  sudo pacman -S --noconfirm firefox
+
+  echo -e "Firefox has been installed\n"
+}
+
+install_chrome () {
+  echo "Installing the chrome browser..."
+
+  yay -S --noconfirm google-chrome
+
+  echo -e "Chrome has been installed\n"
+}
+
+install_brave () {
+  echo "Installing the brave browser..."
+
+  yay -S --noconfirm brave-bin
+
+  echo -e "Brave has been installed\n"
+}
+
+install_tor () {
+  echo "Installing the tor browser..."
+
+  sudo pacman -S --noconfirm tor
+
+  echo -e "Tor has been installed\n"
+}
+
 install () {
   declare -n APPS=${1^^}
 
@@ -114,11 +138,11 @@ fi
 
 source ~/stack/.options
 
-install_web_browsers &&
-  install_music_player &&
+install_music_player &&
   install_document_viewers &&
   install_other_apps &&
   install "editors" &&
+  install "browsers" &&
   setup_mimes
 
 echo -e "\nSetting up apps has been completed"
