@@ -687,13 +687,11 @@ while true; do
     which_kernels &&
     opt_in "editors" "code" "atom" "sublime" "neovim"
 
-  source "$OPTIONS"
-
   echo "Configuration options have been set to:"
   cat "$OPTIONS" | awk '!/PASSWORD/ {print " "$0}'
 
   echo -e "\nCAUTION, THIS IS THE LAST WARNING!"
-  echo "ALL data in \"$DISK\" will be LOST FOREVER!"
+  echo "ALL data in the disk will be LOST FOREVER!"
   read -rep "Do you want to re-run configuration? [y/N] " REPLY
   REPLY="${REPLY:-"no"}"
   REPLY="${REPLY,,}"
