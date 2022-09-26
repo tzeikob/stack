@@ -89,6 +89,132 @@ init_options () {
   touch "$OPTIONS"
 }
 
+is_uefi () {
+  local UEFI="no"
+
+  if [ -d "/sys/firmware/efi/efivars" ]; then
+    UEFI="yes"
+
+    echo "UEFI mode has been detected"
+  else
+    echo "No UEFI mode has been detected"
+  fi
+
+  save_string "UEFI" "$UEFI"
+  echo "UEFI is set to \"$UEFI\""
+}
+
+what_cpu () {
+  echo "Start detecting CPU vendor..."
+
+  local CPU=$(lscpu)
+
+  if grep -E "AuthenticAMD" > /dev/null <<< ${CPU}; then
+    CPU="amd"
+  elif grep -E "GenuineIntel" > /dev/null <<< ${CPU}; then
+    CPU="intel"
+  else
+    CPU="generic"
+  fi
+
+  local REPLY=""
+  read -rep "Seems your system is running an ${CPU} CPU, right? [Y/n] " REPLY
+  REPLY="${REPLY:-"yes"}"
+  REPLY="${REPLY,,}"
+
+  if [[ ! "$REPLY" =~ ^(y|yes)$ ]]; then
+    read -rep "Okay, which CPU is running then? [amd/intel] " CPU
+    CPU="${CPU,,}"
+
+    while [[ ! "$CPU" =~ ^(amd|intel)$ ]]; do
+      read -rep " Please enter a valid CPU vendor: " CPU
+      CPU="${CPU,,}"
+    done
+  fi
+
+  save_string "CPU" "$CPU"
+
+  echo "CPU vendor is set to \"$CPU\""
+}
+
+what_gpu () {
+  echo "Start detecting GPU vendor..."
+
+  local GPU=$(lspci)
+
+  if grep -E "NVIDIA|GeForce" > /dev/null <<< ${GPU}; then
+    GPU="nvidia"
+  elif grep -E "Radeon|AMD" > /dev/null <<< ${GPU}; then
+    GPU="amd"
+  elif grep -E "Integrated Graphics Controller" > /dev/null <<< ${GPU}; then
+    GPU="intel"
+  elif grep -E "Intel Corporation UHD" > /dev/null <<< ${GPU}; then
+    GPU="intel"
+  else
+    GPU="generic"
+  fi
+
+  local REPLY=""
+  read -rep "Is your system using an ${GPU} GPU, right? [Y/n] " REPLY
+  REPLY="${REPLY:-"yes"}"
+  REPLY="${REPLY,,}"
+
+  if [[ ! "$REPLY" =~ ^(y|yes)$ ]]; then
+    read -rep "Really? Which GPU is it then? [nvidia/amd/intel] " GPU
+    GPU="${GPU,,}"
+
+    while [[ ! "$GPU" =~ ^(nvidia|amd|intel)$ ]]; do
+      read -rep " Please enter a valid GPU vendor: " GPU
+      GPU="${GPU,,}"
+    done
+  fi
+
+  save_string "GPU" "$GPU"
+
+  echo "GPU vendor is set to \"$GPU\""
+}
+
+want_synaptics () {
+  local REPLY=""
+  read -rep "Do you want to install synaptic drivers? [y/N] " REPLY
+  REPLY="${REPLY:-"no"}"
+  REPLY="${REPLY,,}"
+
+  local SYNAPTICS="no"
+
+  if [[ "$REPLY" =~ ^(y|yes)$ ]]; then
+    SYNAPTICS="yes"
+  fi
+
+  save_string "SYNAPTICS" "$SYNAPTICS"
+  echo -e "Synaptics is set to \"$SYNAPTICS\"\n"
+}
+
+what_hardware () {
+  echo "Started resolving system hardware..."
+
+  is_uefi
+
+  local VIRTUAL_VENDOR=$(systemd-detect-virt)
+
+  if [ "$VIRTUAL_VENDOR" != "none" ]; then
+    save_string "VIRTUAL" "yes"
+    save_string "VIRTUAL_VENDOR" "$VIRTUAL_VENDOR"
+
+    echo "Virtual is set to \"yes\""
+    echo "Virtual vendor set to \"$VIRTUAL_VENDOR\""
+  else
+    save_string "VIRTUAL" "no"
+    echo "Virtual is set to \"no\""
+
+    what_cpu
+    what_gpu
+    want_synaptics
+  fi
+
+  echo -e "Hardware has been resolved successfully\n"
+}
+
 which_mirrors () {
   local OLD_IFS=$IFS
   IFS=","
@@ -505,134 +631,9 @@ want_swap () {
   echo -e "Swap size is set to \"${SWAP_SIZE}GB\"\n"
 }
 
-is_uefi () {
-  local UEFI="no"
-
-  if [ -d "/sys/firmware/efi/efivars" ]; then
-    UEFI="yes"
-
-    echo "UEFI mode has been detected"
-  else
-    echo "No UEFI mode has been detected"
-  fi
-
-  save_string "UEFI" "$UEFI"
-  echo "UEFI is set to \"$UEFI\""
-}
-
-what_cpu () {
-  echo "Start detecting CPU vendor..."
-
-  local CPU=$(lscpu)
-
-  if grep -E "AuthenticAMD" > /dev/null <<< ${CPU}; then
-    CPU="amd"
-  elif grep -E "GenuineIntel" > /dev/null <<< ${CPU}; then
-    CPU="intel"
-  else
-    CPU="generic"
-  fi
-
-  local REPLY=""
-  read -rep "Seems your system is running an ${CPU} CPU, right? [Y/n] " REPLY
-  REPLY="${REPLY:-"yes"}"
-  REPLY="${REPLY,,}"
-
-  if [[ ! "$REPLY" =~ ^(y|yes)$ ]]; then
-    read -rep "Okay, which CPU is running then? [amd/intel] " CPU
-    CPU="${CPU,,}"
-
-    while [[ ! "$CPU" =~ ^(amd|intel)$ ]]; do
-      read -rep " Please enter a valid CPU vendor: " CPU
-      CPU="${CPU,,}"
-    done
-  fi
-
-  save_string "CPU" "$CPU"
-
-  echo "CPU vendor is set to \"$CPU\""
-}
-
-what_gpu () {
-  echo "Start detecting GPU vendor..."
-
-  local GPU=$(lspci)
-
-  if grep -E "NVIDIA|GeForce" > /dev/null <<< ${GPU}; then
-    GPU="nvidia"
-  elif grep -E "Radeon|AMD" > /dev/null <<< ${GPU}; then
-    GPU="amd"
-  elif grep -E "Integrated Graphics Controller" > /dev/null <<< ${GPU}; then
-    GPU="intel"
-  elif grep -E "Intel Corporation UHD" > /dev/null <<< ${GPU}; then
-    GPU="intel"
-  else
-    GPU="generic"
-  fi
-
-  local REPLY=""
-  read -rep "Is your system using an ${GPU} GPU, right? [Y/n] " REPLY
-  REPLY="${REPLY:-"yes"}"
-  REPLY="${REPLY,,}"
-
-  if [[ ! "$REPLY" =~ ^(y|yes)$ ]]; then
-    read -rep "Really? Which GPU is it then? [nvidia/amd/intel] " GPU
-    GPU="${GPU,,}"
-
-    while [[ ! "$GPU" =~ ^(nvidia|amd|intel)$ ]]; do
-      read -rep " Please enter a valid GPU vendor: " GPU
-      GPU="${GPU,,}"
-    done
-  fi
-
-  save_string "GPU" "$GPU"
-
-  echo "GPU vendor is set to \"$GPU\""
-}
-
-want_synaptics () {
-  local REPLY=""
-  read -rep "Do you want to install synaptic drivers? [y/N] " REPLY
-  REPLY="${REPLY:-"no"}"
-  REPLY="${REPLY,,}"
-
-  local SYNAPTICS="no"
-
-  if [[ "$REPLY" =~ ^(y|yes)$ ]]; then
-    SYNAPTICS="yes"
-  fi
-
-  save_string "SYNAPTICS" "$SYNAPTICS"
-  echo -e "Synaptics is set to \"$SYNAPTICS\"\n"
-}
-
-what_hardware () {
-  echo "Start resolving system hardware..."
-
-  is_uefi
-
-  local VIRTUAL_VENDOR=$(systemd-detect-virt)
-
-  if [ "$VIRTUAL_VENDOR" != "none" ]; then
-    save_string "VIRTUAL" "yes"
-    save_string "VIRTUAL_VENDOR" "$VIRTUAL_VENDOR"
-
-    echo "Virtual is set to \"yes\""
-    echo "Virtual vendor set to \"$VIRTUAL_VENDOR\""
-  else
-    save_string "VIRTUAL" "no"
-    echo "Virtual is set to \"no\""
-
-    what_cpu
-    what_gpu
-    want_synaptics
-  fi
-
-  echo -e "Hardware has been resolved successfully\n"
-}
-
 while true; do
   init_options &&
+    what_hardware &&
     which_mirrors &&
     which_timezone &&
     which_keymap &&
@@ -644,8 +645,7 @@ while true; do
     what_password "ROOT" &&
     which_kernels &&
     which_disk &&
-    want_swap &&
-    what_hardware
+    want_swap
 
   source "$OPTIONS"
 
