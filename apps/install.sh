@@ -2,30 +2,6 @@
 
 set -Eeo pipefail
 
-install_music_player () {
-  echo "Installing the music player..."
-
-  sudo pacman -S --noconfirm moc || exit 1
-
-  echo "Installing codecs and various dependecies..."
-
-  sudo pacman -S --noconfirm --asdeps --needed \
-    faad2 ffmpeg4.4 libmodplug libmpcdec speex taglib wavpack || exit 1
-
-  local CONFIG_HOME=~/.moc
-  mkdir -p "$CONFIG_HOME" "$CONFIG_HOME/themes"
-
-  cp ~/stack/apps/moc/config "$CONFIG_HOME"
-  chmod 644 "$CONFIG_HOME/config"
-
-  cp ~/stack/apps/moc/dark "$CONFIG_HOME/themes"
-  chmod 644 "$CONFIG_HOME/themes/dark"
-
-  sudo cp ~/stack/apps/moc/desktop /usr/share/applications/moc.desktop
-
-  echo -e "Music player has been installed"
-}
-
 install_document_viewers () {
   echo "Installing various document viewers..."
 
@@ -39,7 +15,6 @@ install_document_viewers () {
 install_other_apps () {
   echo "Installing other apps..."
 
-  sudo pacman -S --noconfirm sxiv mpv || exit 1
   yay -S --noconfirm libqalculate kalker || exit 1
 
   echo "Other apps have been installed"
@@ -138,8 +113,7 @@ fi
 
 source ~/stack/.options
 
-install_music_player &&
-  install_document_viewers &&
+install_document_viewers &&
   install_other_apps &&
   install "editors" &&
   install "browsers" &&

@@ -233,6 +233,30 @@ install_screen_locker () {
   echo -e "Screen locker has been installed"
 }
 
+install_media_apps () {
+  echo "Installing media applications..."
+
+  sudo pacman -S --noconfirm moc mpv sxiv || exit 1
+
+  echo "Installing codecs and various dependecies..."
+
+  sudo pacman -S --noconfirm --asdeps --needed \
+    faad2 ffmpeg4.4 libmodplug libmpcdec speex taglib wavpack || exit 1
+
+  local CONFIG_HOME=~/.moc
+  mkdir -p "$CONFIG_HOME" "$CONFIG_HOME/themes"
+
+  cp ~/stack/desktop/moc/config "$CONFIG_HOME"
+  chmod 644 "$CONFIG_HOME/config"
+
+  cp ~/stack/desktop/moc/dark "$CONFIG_HOME/themes"
+  chmod 644 "$CONFIG_HOME/themes/dark"
+
+  sudo cp ~/stack/desktop/moc/desktop /usr/share/applications/moc.desktop
+
+  echo -e "Media applications have been installed"
+}
+
 install_theme () {
   echo "Installing theme, icons and cursors..."
 
@@ -362,6 +386,7 @@ install_compositor &&
   install_launchers &&
   install_login_Screen &&
   install_screen_locker &&
+  install_media_apps &&
   install_theme &&
   install_fonts &&
   setup_bindings
