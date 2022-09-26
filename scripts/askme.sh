@@ -631,6 +631,48 @@ which_kernels () {
   echo -e "Linux kernels are set to [$KERNELS]\n"
 }
 
+opt_in () {
+  local APPS_CATEGORY=${1^^} && shift
+  local APPS=("${@}")
+
+  print 1 15 "${APPS[@]}"
+
+  local REPLY=""
+  read -rep "Which ${APPS_CATEGORY,,} you want to install? [All/none] " REPLY
+  REPLY="${REPLY:-"all"}"
+  REPLY="${REPLY,,}"
+
+  if [[ "$REPLY" =~ ^all$ ]]; then
+    local ALL=$(trim "$(printf " \"%s\"" "${APPS[@]}")")
+
+    save_array "$APPS_CATEGORY" "$ALL"
+    echo "You opted in for $ALL"
+  elif [[ "$REPLY" =~ ^none$ ]]; then
+    save_array "$APPS_CATEGORY" ""
+
+    echo "You opted out ${APPS_CATEGORY,,}"
+  else
+    local REPLIES=($REPLY)
+    local APPS_SET=""
+
+    for APP in "${REPLIES[@]}"; do
+      while ! contains "$APP" "${APPS[@]}"; do
+        read -rep " Unknown $APP application, enter a valid name: " APP
+        APP="${APP,,}"
+      done
+
+      [[ ! "$APPS_SET" =~ "$APP" ]] && APPS_SET="$APPS_SET \"$APP\""
+    done
+
+    APPS_SET=$(trim "$APPS_SET")
+
+    save_array "$APPS_CATEGORY" "$APPS_SET"
+    echo "You opted in for $APPS_SET"
+  fi
+
+  echo
+}
+
 while true; do
   init_options &&
     what_hardware &&
@@ -645,7 +687,8 @@ while true; do
     what_username &&
     what_password "USER" &&
     what_password "ROOT" &&
-    which_kernels
+    which_kernels &&
+    opt_in "editors" "code" "atom" "sublime" "neovim"
 
   source "$OPTIONS"
 
