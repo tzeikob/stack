@@ -2,14 +2,36 @@
 
 set -Eeo pipefail
 
-install_document_viewers () {
-  echo "Installing various document viewers..."
+install_libre () {
+  echo "Installing the libre office..."
 
-  sudo pacman -S --noconfirm xournalpp poppler foliate || exit 1
+  sudo pacman -S --noconfirm libreoffice-fresh
 
-  yay -S --noconfirm --useask --removemake --nodiffmenu evince-no-gnome > /dev/null || exit 1
+  echo -e "Libre office has been installed\n"
+}
 
-  echo "Document viewers have been installed"
+install_xournal () {
+  echo "Installing the hand write xounral++ editor..."
+
+  sudo pacman -S --noconfirm xournalpp
+
+  echo -e "Xounral++ has been installed\n"
+}
+
+install_foliate () {
+  echo "Installing the epub foliate viewer..."
+
+  sudo pacman -S --noconfirm foliate
+
+  echo -e "Foliate has been installed\n"
+}
+
+install_evince () {
+  echo "Installing the evince pdf viewer..."
+
+  yay -S --noconfirm --useask --removemake --nodiffmenu evince-no-gnome poppler > /dev/null || exit 1
+
+  echo -e "Evince viewer has been installed\n"
 }
 
 install_code () {
@@ -105,7 +127,7 @@ fi
 
 source ~/stack/.options
 
-install_document_viewers &&
+install "office" &&
   install "editors" &&
   install "browsers" &&
   setup_mimes
