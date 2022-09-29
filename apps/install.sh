@@ -42,14 +42,6 @@ install_code () {
   echo -e "Visual studio code has been installed\n"
 }
 
-install_atom () {
-  echo "Installing the atom editor..."
-
-  yay -S --noconfirm atom || exit 1
-
-  echo -e "Atom has been installed\n"
-}
-
 install_sublime () {
   echo "Installing the sublime text editor..."
 
