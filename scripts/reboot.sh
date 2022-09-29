@@ -33,7 +33,7 @@ restart () {
   echo "Rebooting the system in 15 secs (ctrl-c to skip)..."
 
   cp "$LOG" "/mnt/home/$USERNAME/stack.log"
-  umount -R /mnt
+  umount -R /mnt || echo "Ignoring busy mount points"
 
   sleep 15
   reboot
