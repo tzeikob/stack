@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=qalculate
+comment=Console Calculator
+Exec=qalc
+Terminal=true
+Icon=qalculate
+Catogories=Math;Calculator;Console
+Keywords=Calc;Math

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=kalker
+comment=Console Calculator
+Exec=kalker
+Terminal=true
+Icon=kalker
+Catogories=Math;Calculator;Console
+Keywords=Calc;Math

@@ -238,6 +238,9 @@ install_calculator () {
 
   yay -S --noconfirm libqalculate kalker || exit 1
 
+  sudo cp ~/stack/desktop/kalker/desktop /usr/share/applications/kalker.desktop
+  sudo cp ~/stack/desktop/qalculate/desktop /usr/share/applications/qalculate.desktop
+
   echo "Calculator has been installed"
 }
 
