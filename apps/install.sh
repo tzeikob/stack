@@ -58,7 +58,7 @@ install_neovim () {
   echo -e "Neovim has been installed\n"
 }
 
-install_libre () {
+install_libreoffice () {
   echo "Installing the libre office..."
 
   sudo pacman -S --noconfirm libreoffice-fresh || exit 1
