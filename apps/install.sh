@@ -29,7 +29,7 @@ install_brave () {
 install_tor () {
   echo "Installing the tor browser..."
 
-  sudo pacman -S --noconfirm tor || exit 1
+  yay -S --noconfirm tor tor-browser || exit 1
 
   echo -e "Tor has been installed\n"
 }
