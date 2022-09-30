@@ -58,6 +58,14 @@ install_neovim () {
   echo -e "Neovim has been installed\n"
 }
 
+install_eclipse () {
+  echo "Installing eclipse..."
+
+  yay -S --noconfirm eclipse-jee || exit 1
+
+  echo -e "Eclipse has been installed\n"
+}
+
 install_postman () {
   echo "Installing the postman..."
 
