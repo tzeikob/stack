@@ -58,6 +58,46 @@ install_neovim () {
   echo -e "Neovim has been installed\n"
 }
 
+install_postman () {
+  echo "Installing the postman..."
+
+  yay -S --noconfirm postman-bin || exit 1
+
+  echo -e "Postman has been installed\n"
+}
+
+install_compass () {
+  echo "Installing mongodb compass..."
+
+  yay -S --noconfirm mongodb-compass || exit 1
+
+  echo -e "MongoDB Compass has been installed\n"
+}
+
+install_robo3t () {
+  echo "Installing Robo3t..."
+
+  yay -S --noconfirm robo3t-bin || exit 1
+
+  echo -e "Robo3t has been installed\n"
+}
+
+install_studio3t () {
+  echo "Installing Studio3t..."
+
+  yay -S --noconfirm studio-3t || exit 1
+
+  echo -e "Studio3t has been installed\n"
+}
+
+install_dbeaver () {
+  echo "Installing the DBeaver..."
+
+  sudo pacman -S --noconfirm dbeaver || exit 1
+
+  echo -e "Dbeaver has been installed\n"
+}
+
 install_libreoffice () {
   echo "Installing the libre office..."
 
@@ -121,6 +161,7 @@ source ~/stack/.options
 
 install "browsers" &&
   install "editors" &&
+  install "clients" &&
   install "office" &&
   setup_mimes
 
