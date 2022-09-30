@@ -693,6 +693,7 @@ while true; do
     opt_in "browsers" "firefox" "chrome" "brave" "tor" &&
     opt_in "editors" "code" "sublime" "neovim" "eclipse" &&
     opt_in "clients" "postman" "compass" "robo3t" "studio3t" "dbeaver" &&
+    opt_in "chatters" "slack" "discord" "skype" "teams" "irssi" &&
     opt_in "office" "libreoffice" "xournal" "foliate" "evince"
 
   echo "Configuration options have been set to:"

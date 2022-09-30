@@ -106,6 +106,48 @@ install_dbeaver () {
   echo -e "Dbeaver has been installed\n"
 }
 
+install_slack () {
+  echo "Installing the slack..."
+
+  yay -S --noconfirm slack-desktop || exit 1
+
+  echo -e "Slack has been installed\n"
+}
+
+install_discord () {
+  echo "Installing the discord..."
+
+  sudo pacman -S --noconfirm discord || exit 1
+
+  echo -e "Discord has been installed\n"
+}
+
+install_skype () {
+  echo "Installing the skype..."
+
+  yay -S --noconfirm skypeforlinux-stable-bin || exit 1
+
+  echo -e "Skype has been installed\n"
+}
+
+install_teams () {
+  echo "Installing the teams..."
+
+  yay -S --noconfirm teams || exit 1
+
+  echo -e "Teams has been installed\n"
+}
+
+install_irssi () {
+  echo "Installing irssi client..."
+
+  sudo pacman -S --noconfirm irssi || exit 1
+
+  sudo cp ~/stack/apps/irssi/desktop /usr/share/applications/irssi.desktop
+
+  echo -e "Irssi clinet has been installed\n"
+}
+
 install_libreoffice () {
   echo "Installing the libre office..."
 
@@ -170,6 +212,7 @@ source ~/stack/.options
 install "browsers" &&
   install "editors" &&
   install "clients" &&
+  install "chatters" &&
   install "office" &&
   setup_mimes
 
