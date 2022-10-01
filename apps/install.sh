@@ -161,6 +161,12 @@ install_xournal () {
 
   sudo pacman -S --noconfirm xournalpp || exit 1
 
+  printf '%s\n' \
+    'application/x-xojpp=com.github.xournalapp.xournalapp.desktop' \
+    'application/x-xopp=com.github.xournalapp.xournalapp.desktop' \
+    'application/x-xopt=com.github.xournalapp.xournalapp.desktop' >> ~/.config/mimeapps.list
+
+  echo "Mime types has been added"
   echo -e "Xounral++ has been installed\n"
 }
 
@@ -169,6 +175,10 @@ install_foliate () {
 
   sudo pacman -S --noconfirm foliate || exit 1
 
+  printf '%s\n' \
+    'application/epub+zip=com.github.johnfactotum.Foliate.desktop' >> ~/.config/mimeapps.list
+
+  echo "Mime types has been added"
   echo -e "Foliate has been installed\n"
 }
 
@@ -177,16 +187,11 @@ install_evince () {
 
   yay -S --noconfirm --useask --removemake --nodiffmenu evince-no-gnome poppler > /dev/null || exit 1
 
+  printf '%s\n' \
+    'application/pdf=org.gnome.Evince.desktop' >> ~/.config/mimeapps.list
+
+  echo "Mime types has been added"
   echo -e "Evince viewer has been installed\n"
-}
-
-setup_mimes () {
-  echo "Setting up application mime types..."
-
-  cp ~/stack/apps/mimes/app.list ~/.config/mimeapps.list
-  chmod 644 ~/.config/mimeapps.list
-
-  echo "Application mime types have been set"
 }
 
 echo -e "\nStarting the apps installation process..."
@@ -202,8 +207,6 @@ source ~/stack/.options
 for APP in "${APPS[@]}"; do
   install_${APP}
 done
-
-setup_mimes
 
 echo -e "\nSetting up apps has been completed"
 echo "Moving to the next process..."

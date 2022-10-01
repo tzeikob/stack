@@ -126,6 +126,14 @@ install_file_manager () {
   mkdir -p ~/downloads ~/documents ~/images ~/audios ~/videos ~/virtuals ~/sources ~/data ~/media
 
   echo "User home directories have been created"
+
+  printf '%s\n' \
+    '[Default Applications]' \
+    'inode/directory=nnn.desktop' > ~/.config/mimeapps.list
+
+  chmod 644 ~/.config/mimeapps.list
+
+  echo "Application mime types file has been created"
   echo "File manager has been installed"
 }
 
@@ -265,6 +273,22 @@ install_media_apps () {
 
   sudo cp ~/stack/desktop/moc/desktop /usr/share/applications/moc.desktop
 
+  printf '%s\n' \
+    'image/jpeg=sxiv.desktop' \
+    'image/jpg=sxiv.desktop' \
+    'image/png=sxiv.desktop' \
+    'image/tiff=sxiv.desktop' \
+    'audio/mpeg=moc.desktop' \
+    'audio/mp3=moc.desktop' \
+    'audio/flac=moc.desktop' \
+    'audio/midi=moc.desktop' \
+    'video/mp4=mpv.desktop' \
+    'video/mkv=mpv.desktop' \
+    'video/mov=mpv.desktop' \
+    'video/mpeg=mpv.desktop' \
+    'video/avi=mpv.desktop' >> ~/.config/mimeapps.list
+  
+  echo "Mime types have been added"
   echo -e "Media applications have been installed"
 }
 
