@@ -180,16 +180,6 @@ install_evince () {
   echo -e "Evince viewer has been installed\n"
 }
 
-install () {
-  declare -n APPS=${1^^}
-
-  for APP in "${APPS[@]}"; do
-    install_${APP} || exit 1
-  done
-
-  unset APPS
-}
-
 setup_mimes () {
   echo "Setting up application mime types..."
 
@@ -209,12 +199,11 @@ fi
 
 source ~/stack/.options
 
-install "browsers" &&
-  install "editors" &&
-  install "clients" &&
-  install "chatters" &&
-  install "office" &&
-  setup_mimes
+for APP in "${APPS[@]}"; do
+  install_${APP}
+done
+
+setup_mimes
 
 echo -e "\nSetting up apps has been completed"
 echo "Moving to the next process..."

@@ -27,6 +27,21 @@ save_array () {
   save_option "$1" "($2)"
 }
 
+append_array () {
+  local KEY=$1
+  local VALUE=$2
+
+  if [ ! -f "$OPTIONS" ]; then
+    echo "Error: no options file found"
+    exit 1
+  fi
+
+  if grep -Eq "^${KEY}.*" "$OPTIONS"; then
+    sed -ri "s/^${KEY}=\((.*)\)/${KEY}=(\1 ${VALUE})/" "$OPTIONS"
+    sed -ri "s/^${KEY}=\( (.*)/${KEY}=(\1/" "$OPTIONS"
+  fi
+}
+
 trim () {
   local INPUT=""
   [[ -p /dev/stdin ]] && INPUT="$(cat -)" || INPUT="${@}"
@@ -89,6 +104,8 @@ print () {
 
 init_options () {
   rm -f "$OPTIONS" && touch "$OPTIONS" || exit 1
+
+  save_array "APPS" ""
 }
 
 is_uefi () {
@@ -634,25 +651,23 @@ which_kernels () {
 }
 
 opt_in () {
-  local APPS_CATEGORY=${1^^} && shift
+  local APPS_GROUP=${1,,} && shift
   local APPS=("${@}")
 
   print 1 15 "${APPS[@]}"
 
   local REPLY=""
-  read -rep "Which ${APPS_CATEGORY,,} you want to install? [All/none] " REPLY
+  read -rep "Which ${APPS_GROUP} apps you want to install? [All/none] " REPLY
   REPLY="${REPLY:-"all"}"
   REPLY="${REPLY,,}"
 
   if [[ "$REPLY" =~ ^all$ ]]; then
     local ALL=$(trim "$(printf " \"%s\"" "${APPS[@]}")")
 
-    save_array "$APPS_CATEGORY" "$ALL"
+    append_array "APPS" "$ALL"
     echo "You opted in for $ALL"
   elif [[ "$REPLY" =~ ^none$ ]]; then
-    save_array "$APPS_CATEGORY" ""
-
-    echo "You opted out ${APPS_CATEGORY,,}"
+    echo "You opted out all ${APPS_GROUP} apps"
   else
     local REPLIES=($REPLY)
     local APPS_SET=""
@@ -668,7 +683,7 @@ opt_in () {
 
     APPS_SET=$(trim "$APPS_SET")
 
-    save_array "$APPS_CATEGORY" "$APPS_SET"
+    append_array "APPS" "$APPS_SET"
     echo "You opted in for $APPS_SET"
   fi
 
@@ -690,10 +705,10 @@ while true; do
     what_password "USER" &&
     what_password "ROOT" &&
     which_kernels &&
-    opt_in "browsers" "firefox" "chrome" "brave" "tor" &&
-    opt_in "editors" "code" "sublime" "neovim" "eclipse" &&
-    opt_in "clients" "postman" "compass" "robo3t" "studio3t" "dbeaver" &&
-    opt_in "chatters" "slack" "discord" "skype" "teams" "irssi" &&
+    opt_in "browser" "firefox" "chrome" "brave" "tor" &&
+    opt_in "editor" "code" "sublime" "neovim" "eclipse" &&
+    opt_in "client" "postman" "compass" "robo3t" "studio3t" "dbeaver" &&
+    opt_in "chat" "slack" "discord" "skype" "teams" "irssi" &&
     opt_in "office" "libreoffice" "xournal" "foliate" "evince"
 
   echo "Configuration options have been set to:"
