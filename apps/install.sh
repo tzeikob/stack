@@ -194,6 +194,38 @@ install_evince () {
   echo -e "Evince viewer has been installed\n"
 }
 
+install_teamviewer () {
+  echo "Installing the team viewer... "
+
+  yay -S --noconfirm teamviewer || exit 1
+
+  echo -e "Team viewer has been installed\n"
+}
+
+install_anydesk () {
+  echo "Installing the AnyDesk... "
+
+  yay -S --noconfirm anydesk-bin || exit 1
+
+  echo -e "AnyDesk has been installed\n"
+}
+
+install_tightvnc () {
+  echo "Installing the TightVNC... "
+
+  yay -S --noconfirm tightvnc || exit 1
+
+  echo -e "TightVNC has been installed\n"
+}
+
+install_chromeremote () {
+  echo "Installing the chrome remote desktop... "
+
+  yay -S --noconfirm chrome-remote-desktop || exit 1
+
+  echo -e "Chrome remote desktop has been installed\n"
+}
+
 echo -e "\nStarting the apps installation process..."
 
 if [[ "$(id -u)" == "0" ]]; then

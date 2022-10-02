@@ -709,7 +709,8 @@ while true; do
     opt_in "editor" "code" "sublime" "neovim" "eclipse" &&
     opt_in "client" "postman" "compass" "robo3t" "studio3t" "dbeaver" &&
     opt_in "chat" "slack" "discord" "skype" "teams" "irssi" &&
-    opt_in "office" "libreoffice" "xournal" "foliate" "evince"
+    opt_in "office" "libreoffice" "xournal" "foliate" "evince" &&
+    opt_in "remote" "teamviewer" "anydesk" "tightvnc" "chromeremote"
 
   echo "Configuration options have been set to:"
   cat "$OPTIONS" | awk '!/PASSWORD/ {print " "$0}'
