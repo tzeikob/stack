@@ -226,6 +226,30 @@ install_chromeremote () {
   echo -e "Chrome remote desktop has been installed\n"
 }
 
+install_filezilla () {
+  echo "Installing the Filezilla... "
+
+  sudo pacman -S --noconfirm filezilla || exit 1
+
+  echo -e "Filezilla has been installed\n"
+}
+
+install_rclone () {
+  echo "Installing the RClone... "
+
+  sudo pacman -S --noconfirm rclone || exit 1
+
+  echo -e "RClone has been installed\n"
+}
+
+install_transmission () {
+  echo "Installing the Transmission... "
+
+  sudo pacman -S --noconfirm transmission-cli transmission-gtk || exit 1
+
+  echo -e "Transmission has been installed\n"
+}
+
 echo -e "\nStarting the apps installation process..."
 
 if [[ "$(id -u)" == "0" ]]; then
