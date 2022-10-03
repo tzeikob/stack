@@ -272,6 +272,27 @@ install_virtualbox () {
   echo -e "Virtual Box has been installed\n"
 }
 
+install_vmware () {
+  echo "Installing the VMware..."
+
+  sudo pacman -S --noconfirm fuse2 gtkmm pcsclite libcanberra polkit-gnome &&
+    yay -S --noconfirm --needed ncurses5-compat-libs &&
+    yay -S --noconfirm --needed vmware-workstation || exit 1
+
+  echo "Enabling vmware services..."
+
+  sudo systemctl enable vmware-networks.service || exit 1
+  sudo systemctl enable vmware-usbarbitrator.service || exit 1
+
+  echo "Services has been enabled"
+
+  sudo modprobe -a vmw_vmci vmmon || exit 1
+
+  echo "VMware modules have been loaded"
+
+  echo -e "Vmware has been installed\n"
+}
+
 echo -e "\nStarting the apps installation process..."
 
 if [[ "$(id -u)" == "0" ]]; then

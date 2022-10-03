@@ -712,7 +712,7 @@ while true; do
     opt_in "office" "libreoffice" "xournal" "foliate" "evince" &&
     opt_in "remote" "teamviewer" "anydesk" "tightvnc" "chromeremote" &&
     opt_in "file" "filezilla" "rclone" "transmission" &&
-    opt_in "virtualization" "virtualbox"
+    opt_in "virtualization" "virtualbox" "vmware"
 
   echo "Configuration options have been set to:"
   cat "$OPTIONS" | awk '!/PASSWORD/ {print " "$0}'
