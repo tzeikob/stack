@@ -263,7 +263,7 @@ install_virtualbox () {
     PKGS="$PKGS virtualbox-host-dkms"
   fi
 
-  sudo pacman -S --noconfirm "$PKGS" || exit 1
+  sudo pacman -S --noconfirm $PKGS || exit 1
 
   sudo usermod -aG vboxusers "$USERNAME"
 
