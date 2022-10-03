@@ -250,6 +250,28 @@ install_transmission () {
   echo -e "Transmission has been installed\n"
 }
 
+install_virtualbox () {
+  echo "Installing the Virtual Box..."
+
+  local PKGS="virtualbox virtualbox-guest-iso"
+
+  if [[ "${KERNELS[@]}" =~ stable ]]; then
+    PKGS="$PKGS virtualbox-host-modules-arch"
+  fi
+
+  if [[ "${KERNELS[@]}" =~ lts ]]; then
+    PKGS="$PKGS virtualbox-host-dkms"
+  fi
+
+  sudo pacman -S --noconfirm "$PKGS" || exit 1
+
+  sudo usermod -aG vboxusers "$USERNAME"
+
+  echo "User added to the vboxusers user group"
+
+  echo -e "Virtual Box has been installed\n"
+}
+
 echo -e "\nStarting the apps installation process..."
 
 if [[ "$(id -u)" == "0" ]]; then
