@@ -250,6 +250,24 @@ install_transmission () {
   echo -e "Transmission has been installed\n"
 }
 
+install_docker () {
+  echo "Installing the docker engine..."
+
+  sudo pacman -S --noconfirm docker docker-compose || exit 1
+
+  echo "Enabling the docker service..."
+
+  sudo systemctl enable docker.service || exit 1
+
+  echo "Docker service has been enabled"
+
+  sudo usermod -aG docker "$USERNAME"
+
+  echo "User added to the docker user group"
+
+  echo -e "Docker has been installed\n"
+}
+
 install_virtualbox () {
   echo "Installing the Virtual Box..."
 
