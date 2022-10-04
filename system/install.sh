@@ -346,11 +346,11 @@ enable_services () {
   systemctl enable paccache.timer || exit 1
 
   if [ "$DISK_TRIM" = "yes" ]; then
-    systemctl enable fstrim.timer
+    systemctl enable fstrim.timer || exit 1
   fi
 
   if [ "$VIRTUAL_VENDOR" = "oracle" ]; then
-    systemctl enable vboxservice.service
+    systemctl enable vboxservice.service || exit 1
   fi
 
   echo "System services have been enabled"

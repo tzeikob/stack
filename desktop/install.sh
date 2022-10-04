@@ -202,7 +202,7 @@ install_login_Screen () {
   echo "Welcome screen theme has been set"
 
   sudo cp ~/stack/desktop/getty/login-issue.service /etc/systemd/system
-  sudo systemctl enable login-issue
+  sudo systemctl enable login-issue || exit 1
 
   sudo sed -ri "s;(ExecStart=-/sbin/agetty)(.*);\1 --nohostname\2;" /lib/systemd/system/getty@.service
   sudo sed -ri "s;(ExecStart=-/sbin/agetty)(.*);\1 --nohostname\2;" /lib/systemd/system/serial-getty@.service
