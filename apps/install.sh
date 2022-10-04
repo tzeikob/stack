@@ -286,10 +286,6 @@ install_vmware () {
 
   echo "Services has been enabled"
 
-  sudo modprobe -a vmw_vmci vmmon || exit 1
-
-  echo "VMware modules have been loaded"
-
   echo -e "Vmware has been installed\n"
 }
 
