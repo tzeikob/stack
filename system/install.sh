@@ -335,15 +335,15 @@ install_bootloader () {
 enable_services () {
   echo -e "\nEnabling various system services..."
 
-  systemctl enable systemd-timesyncd.service
-  systemctl enable NetworkManager.service
-  systemctl enable bluetooth.service
-  systemctl enable acpid.service
-  systemctl enable cups.service
-  systemctl enable sshd.service
-  systemctl enable nftables.service
-  systemctl enable reflector.timer
-  systemctl enable paccache.timer
+  systemctl enable systemd-timesyncd.service &&
+  systemctl enable NetworkManager.service &&
+  systemctl enable bluetooth.service &&
+  systemctl enable acpid.service &&
+  systemctl enable cups.service &&
+  systemctl enable sshd.service &&
+  systemctl enable nftables.service &&
+  systemctl enable reflector.timer &&
+  systemctl enable paccache.timer || exit 1
 
   if [ "$DISK_TRIM" = "yes" ]; then
     systemctl enable fstrim.timer

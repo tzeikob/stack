@@ -281,7 +281,7 @@ install_vmware () {
 
   echo "Enabling vmware services..."
 
-  sudo systemctl enable vmware-networks.service || exit 1
+  sudo systemctl enable vmware-networks.service &&
   sudo systemctl enable vmware-usbarbitrator.service || exit 1
 
   echo "Services has been enabled"
