@@ -60,7 +60,7 @@ install_node () {
 
   echo "Node $(nvm current) is currently in use"
 
-  echo -e '\nexport PATH="./node_modules/.bin:$PATH"' >> ~/.bashrc
+  echo 'export PATH="./node_modules/.bin:$PATH"' >> ~/.bashrc
 
   echo "Path to global node modules has been added to PATH"
   echo -e "Node has been installed\n"
