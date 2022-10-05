@@ -199,6 +199,12 @@ install_teamviewer () {
 
   yay -S --noconfirm teamviewer || exit 1
 
+  echo "Enabling daemon service..."
+
+  sudo systemctl enable teamviewerd || exit 1
+
+  echo "Daemon service has been enabled"
+
   echo -e "Team viewer has been installed\n"
 }
 
@@ -206,6 +212,12 @@ install_anydesk () {
   echo "Installing the AnyDesk... "
 
   yay -S --noconfirm anydesk-bin || exit 1
+
+  echo "Enabling daemon service..."
+
+  sudo systemctl enable anydesk || exit 1
+
+  echo "Daemon service has been enabled"
 
   echo -e "AnyDesk has been installed\n"
 }
