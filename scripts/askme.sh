@@ -710,7 +710,7 @@ while true; do
     opt_in "client" "postman" "compass" "robo3t" "studio3t" "dbeaver" &&
     opt_in "chat" "slack" "discord" "skype" "teams" "irssi" &&
     opt_in "office" "libreoffice" "xournal" "foliate" "evince" &&
-    opt_in "remote" "teamviewer" "anydesk" "tightvnc" "chromeremote" &&
+    opt_in "remote" "teamviewer" "anydesk" "tightvnc" &&
     opt_in "file" "filezilla" "rclone" "transmission" &&
     opt_in "virtualization" "docker" "virtualbox" "vmware"
 

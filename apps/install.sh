@@ -230,14 +230,6 @@ install_tightvnc () {
   echo -e "TightVNC has been installed\n"
 }
 
-install_chromeremote () {
-  echo "Installing the chrome remote desktop... "
-
-  yay -S --noconfirm chrome-remote-desktop || exit 1
-
-  echo -e "Chrome remote desktop has been installed\n"
-}
-
 install_filezilla () {
   echo "Installing the Filezilla... "
 
