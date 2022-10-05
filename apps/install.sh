@@ -222,12 +222,12 @@ install_anydesk () {
   echo -e "AnyDesk has been installed\n"
 }
 
-install_tightvnc () {
-  echo "Installing the TightVNC... "
+install_tigervnc () {
+  echo "Installing the TigerVNC... "
 
-  yay -S --noconfirm tightvnc || exit 1
+  sudo pacman -S --noconfirm tigervnc remmina libvncserver || exit 1
 
-  echo -e "TightVNC has been installed\n"
+  echo -e "TigerVNC has been installed\n"
 }
 
 install_filezilla () {
