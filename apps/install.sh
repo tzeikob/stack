@@ -294,8 +294,7 @@ install_vmware () {
   echo "Installing the VMware..."
 
   sudo pacman -S --noconfirm fuse2 gtkmm pcsclite libcanberra &&
-    yay -S --noconfirm --needed ncurses5-compat-libs &&
-    yay -S --noconfirm --needed vmware-workstation || exit 1
+    yay -S --noconfirm --needed vmware-workstation  > /dev/null || exit 1
 
   echo "Enabling vmware services..."
 
