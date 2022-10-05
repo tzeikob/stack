@@ -66,6 +66,20 @@ install_node () {
   echo -e "Node has been installed\n"
 }
 
+install_java () {
+  echo "Installing the latest java development kit..."
+
+  sudo pacman -S --noconfirm \
+    jdk-openjdk openjdk-doc openjdk-src \
+    jdk11-openjdk openjdk11-doc openjdk11-src 
+    jdk8-openjdk openjdk8-doc openjdk8-src \
+    maven || exit 1
+
+  archlinux-java status
+
+  echo -e "Java has been installed\n"
+}
+
 install_code () {
   echo "Installing the visual studio code..."
 
