@@ -34,6 +34,38 @@ install_tor () {
   echo -e "Tor has been installed\n"
 }
 
+install_node () {
+  echo "Installing the node via NVM..."
+
+  local URL="https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh"
+  sudo curl "$URL" -sSLo ~/stack/nvm-install.sh \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 || exit 1
+
+  bash ~/stack/nvm-install.sh || exit 1
+  source ~/.bashrc
+  source ~/.nvm/nvm.sh
+
+  echo "NVM has been installed under ~/.nvm"
+  echo "Installing latest node versions..."
+
+  nvm install --no-progress --lts || exit 1
+
+  echo "LTS version has been installed"
+
+  nvm install --no-progress node || exit 1
+
+  echo "Stable version has been installed"
+
+  nvm use --lts || exit 1
+
+  echo "Node $(nvm current) is currently in use"
+
+  echo -e '\nexport PATH="./node_modules/.bin:$PATH"' >> ~/.bashrc
+
+  echo "Path to global node modules has been added to PATH"
+  echo -e "Node has been installed\n"
+}
+
 install_code () {
   echo "Installing the visual studio code..."
 
