@@ -220,7 +220,7 @@ install_display_server () {
 
   echo '[[ -z $DISPLAY && $XDG_VTNR -eq 1 ]] && exec startx' >> "/home/$USERNAME/.bash_profile"
 
-  sed -ri '/^ExecStart=.*/i Environment=XDG_SESSION_TYPE=x11' /etc/systemd/system/getty.target.wants/getty@tty1.service
+  sed -ri '/^ExecStart=.*/i Environment=XDG_SESSION_TYPE=x11' /usr/lib/systemd/system/getty@.service
 
   echo "Xorg session has been set to start after login"
   echo "Xorg server has been installed"
