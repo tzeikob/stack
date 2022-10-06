@@ -80,6 +80,23 @@ install_java () {
   echo -e "Java has been installed\n"
 }
 
+install_rust () {
+  echo "Installing the rust..."
+
+  printf '%s\n' y y |
+    sudo pacman -S rustup || exit 1
+
+  echo "Setting the default toolchain..."
+
+  rustup default stable || exit 1
+
+  echo "Rust default toolchain set to stable"
+
+  rustc -V || exit 1
+
+  echo -e "Rust has been installed\n"
+}
+
 install_code () {
   echo "Installing the visual studio code..."
 
