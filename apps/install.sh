@@ -71,7 +71,7 @@ install_java () {
 
   sudo pacman -S --noconfirm \
     jdk-openjdk openjdk-doc openjdk-src \
-    jdk11-openjdk openjdk11-doc openjdk11-src 
+    jdk11-openjdk openjdk11-doc openjdk11-src \
     jdk8-openjdk openjdk8-doc openjdk8-src \
     maven || exit 1
 
