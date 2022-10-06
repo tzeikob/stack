@@ -75,7 +75,7 @@ install_java () {
     jdk8-openjdk openjdk8-doc openjdk8-src \
     maven || exit 1
 
-  archlinux-java status
+  archlinux-java status || exit 1
 
   echo -e "Java has been installed\n"
 }
