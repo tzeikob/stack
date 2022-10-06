@@ -119,17 +119,6 @@ install_php () {
   echo -e "PHP has been installed\n"
 }
 
-install_gcc () {
-  echo "Installing the GNU compilers collection..."
-
-  sudo pacman -S --noconfirm gcc || exit 1
-
-  gcc --version &&
-  g++ --version || exit 1
-
-  echo "GNU compilers have been installed\n"
-}
-
 install_code () {
   echo "Installing the visual studio code..."
 
