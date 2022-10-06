@@ -119,6 +119,18 @@ install_php () {
   echo -e "PHP has been installed\n"
 }
 
+install_ruby () {
+  echo "Installing the ruby language..."
+
+  sudo pacman -S --noconfirm \
+    ruby ruby-irb ruby-rdoc ruby-docs rubygems || exit 1
+  
+  echo -e '\nexport GEM_HOME="$(ruby -e "puts Gem.user_dir")"' >> ~/.bashrc
+  echo 'export PATH="$PATH:$GEM_HOME/bin"' >> ~/.bashrc
+
+  echo -e "Ruby language has been installed\n"
+}
+
 install_code () {
   echo "Installing the visual studio code..."
 
