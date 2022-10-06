@@ -107,6 +107,18 @@ install_go () {
   echo -e "Go language has been installed\n"
 }
 
+install_php () {
+  echo "Installing the PHP language..."
+
+  sudo pacman -S --noconfirm \
+    php php-apache php-cgi php-fpm php-gd \
+    php-embed php-intl php-imap || exit 1
+
+  php -v || exit 1
+
+  echo -e "PHP has been installed\n"
+}
+
 install_code () {
   echo "Installing the visual studio code..."
 
