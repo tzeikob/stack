@@ -97,6 +97,16 @@ install_rust () {
   echo -e "Rust has been installed\n"
 }
 
+install_go () {
+  echo "Installing the go language..."
+
+  sudo pacman -S --noconfirm go go-tools || exit 1
+
+  go version || exit 1
+
+  echo -e "Go language has been installed\n"
+}
+
 install_code () {
   echo "Installing the visual studio code..."
 
