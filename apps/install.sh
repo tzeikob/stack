@@ -127,6 +127,9 @@ install_ruby () {
   
   echo -e '\nexport GEM_HOME="$(ruby -e "puts Gem.user_dir")"' >> ~/.bashrc
   echo 'export PATH="$PATH:$GEM_HOME/bin"' >> ~/.bashrc
+  source ~/.bashrc
+
+  ruby -v || exit 1
 
   echo -e "Ruby language has been installed\n"
 }
