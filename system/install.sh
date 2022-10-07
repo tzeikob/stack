@@ -316,6 +316,16 @@ config_security () {
   echo "Security configuration has been completed"
 }
 
+increase_watchers () {
+  echo -e "\nIncreasing the limit of inotify watchers..."
+
+  local LIMIT=524288
+  echo "fs.inotify.max_user_watches=$LIMIT" >> /etc/sysctl.conf
+  sysctl --system || exit 1
+
+  echo "Inotify watchers limit has been set to $LIMIT"
+}
+
 install_bootloader () {
   echo -e "\nInstalling the bootloader via GRUB..."
 
@@ -363,16 +373,6 @@ enable_services () {
   echo "System services have been enabled"
 }
 
-increase_watchers () {
-  echo -e "\nIncreasing the limit of inotify watchers..."
-
-  local LIMIT=524288
-  echo "fs.inotify.max_user_watches=$LIMIT" >> /etc/sysctl.conf
-  sysctl --system || exit 1
-
-  echo "Inotify watchers limit has been set to $LIMIT"
-}
-
 copy_files () {
   echo "Start copying installation files..."
 
@@ -406,9 +406,9 @@ set_host &&
   install_display_server &&
   install_drivers &&
   config_security &&
+  increase_watchers &&
   install_bootloader &&
   enable_services &&
-  increase_watchers &&
   copy_files
 
 echo -e "\nSetting up the system has been completed"
