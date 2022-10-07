@@ -653,8 +653,11 @@ which_kernels () {
 opt_in () {
   local APPS_GROUP=${1,,} && shift
   local APPS=("${@}")
+  local LEN=${#APPS[@]}
 
-  print 1 15 "${APPS[@]}"
+  local COLS=1
+  [ "$LEN" -gt 5 ] && COLS=2
+  print "$COLS" 10 "${APPS[@]}"
 
   local REPLY=""
   read -rep "Which ${APPS_GROUP} apps you want to install? [All/none] " REPLY
