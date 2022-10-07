@@ -65,12 +65,17 @@ set_keymap () {
 
 set_locale () {
   sed -i "s/#\(${LOCALE}.*\)/\1/" /etc/locale.gen
-
   locale-gen || exit 1
 
   local PARTS=($LOCALE)
-  echo "LANG=${PARTS[0]}" >> /etc/locale.conf
-  echo "LC_TIME=${PARTS[0]}" >> /etc/locale.conf
+
+  printf '%s\n' \
+    "LANG=${PARTS[0]}" \
+    "LC_TIME=${PARTS[0]}" \
+    "LC_CTYPE=${PARTS[0]}" \
+    "LC_NUMERIC=${PARTS[0]}" \
+    "LC_MONETARY=${PARTS[0]}" \
+    "LC_COLLATE=${PARTS[0]}" >> /etc/locale.conf
 
   echo "Locale has been set to $LOCALE"
 }
