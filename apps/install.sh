@@ -166,6 +166,72 @@ install_eclipse () {
   echo -e "Eclipse has been installed\n"
 }
 
+install_intellij () {
+  echo "Installing IntelliJ Idea community..."
+
+  yay -S --noconfirm intellij-idea-ce || exit 1
+
+  sudo sed -ri 's/^Exec=(.*)/Exec=env _JAVA_AWT_WM_NONREPARENTING=1 \1/' \
+    /usr/share/applications/intellij-idea-ce.desktop
+
+  echo -e "IntelliJ Idea community has been installed\n"
+}
+
+install_webstorm () {
+  echo "Installing WebStorm editor..."
+
+  yay -S --noconfirm webstorm || exit 1
+
+  sudo sed -ri 's/^Exec=(.*)/Exec=env _JAVA_AWT_WM_NONREPARENTING=1 \1/' \
+    /usr/share/applications/jetbrains-webstorm.desktop
+
+  echo -e "WebStorm editor has been installed\n"
+}
+
+install_goland () {
+  echo "Installing GoLand editor..."
+
+  yay -S --noconfirm goland || exit 1
+
+  sudo sed -ri 's/^Exec=(.*)/Exec=env _JAVA_AWT_WM_NONREPARENTING=1 \1/' \
+    /usr/share/applications/jetbrains-goland.desktop
+
+  echo -e "GoLand editor has been installed\n"
+}
+
+install_phpstorm () {
+  echo "Installing PHPStorm editor..."
+
+  yay -S --noconfirm phpstorm || exit 1
+
+  sudo sed -ri 's/^Exec=(.*)/Exec=env _JAVA_AWT_WM_NONREPARENTING=1 \1/' \
+    /usr/share/applications/jetbrains-phpstorm.desktop
+
+  echo -e "PHPStorm editor has been installed\n"
+}
+
+install_pycharm () {
+  echo "Installing PyCharm community..."
+
+  sudo pacman -S --noconfirm pycharm-community-edition || exit 1
+
+  sudo sed -ri 's/^Exec=(.*)/Exec=env _JAVA_AWT_WM_NONREPARENTING=1 \1/' \
+    /usr/share/applications/pycharm.desktop
+
+  echo -e "PyCharm community has been installed\n"
+}
+
+install_rubymine () {
+  echo "Installing RubyMine editor..."
+
+  yay -S --noconfirm rubymine || exit 1
+
+  sudo sed -ri 's/^Exec=(.*)/Exec=env _JAVA_AWT_WM_NONREPARENTING=1 \1/' \
+    /usr/share/applications/rubymine.desktop
+
+  echo -e "RubyMine editor has been installed\n"
+}
+
 install_postman () {
   echo "Installing the postman..."
 
