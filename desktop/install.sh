@@ -124,6 +124,7 @@ install_file_manager () {
   echo "Plugin mount has been installed"
 
   mkdir -p ~/downloads ~/documents ~/images ~/audios ~/videos ~/virtuals ~/sources ~/data ~/media
+  cp ~/stack/desktop/nnn/user.dirs ~/.config/user-dirs.dirs
 
   echo "User home directories have been created"
 
