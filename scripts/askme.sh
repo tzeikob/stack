@@ -709,7 +709,7 @@ while true; do
     what_password "ROOT" &&
     which_kernels &&
     opt_in "browser" "firefox" "chrome" "brave" "tor" &&
-    opt_in "langs" "node" "java" "rust" "go" "php" "ruby" &&
+    opt_in "langs" "node" "deno" "bun" "java" "rust" "go" "php" "ruby" &&
     opt_in "editor" "code" "sublime" "neovim" "eclipse" "intellij" \
                     "webstorm" "goland" "phpstorm" "pycharm" "rubymine" &&
     opt_in "client" "postman" "compass" "robo3t" "studio3t" "dbeaver" &&

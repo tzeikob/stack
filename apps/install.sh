@@ -66,6 +66,33 @@ install_node () {
   echo -e "Node has been installed\n"
 }
 
+install_deno () {
+  echo "Installing the Deno javascript runtime..."
+
+  sudo pacman -S --noconfirm deno || exit 1
+
+  deno --version || exit 1
+
+  echo -e "Deno has been installed\n"
+}
+
+install_bun () {
+  echo "Installing the Bun javascript runtime..."
+
+  local URL="https://bun.sh/install"
+  curl "$URL" -sSLo ~/stack/bun-install.sh \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 || exit 1
+
+  bash ~/stack/bun-install.sh || exit 1
+
+  echo -e '\nexport BUN_INSTALL="$HOME./bun"' >> ~/.bashrc
+  echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> ~/.bashrc
+
+  bun --version || exit 1
+
+  echo -e "Bun has been installed\n"
+}
+
 install_java () {
   echo "Installing the latest java development kit..."
 
