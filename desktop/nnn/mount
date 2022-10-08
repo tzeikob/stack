@@ -4,8 +4,8 @@ while true
 do
   clear
 
-  echo -e "Mount/unmount a disk device"
-  read -rep "(l)ocal (r)emote (q)uit: " REPLY
+  echo -e "Mount/unmount external file storages"
+  read -rep "(l)ocal (r)emote (c)loud (q)uit: " REPLY
 
   echo -e ""
 
@@ -76,6 +76,45 @@ do
       else
         echo -e "Failed to mount device from '$DEVICE'"
       fi
+    fi
+  elif [ "$REPLY" = "c" ]; then
+    if rclone version > /dev/null ; then
+      read -rep "Service: [drive] " SERVICE
+      SERVICE=${SERVICE:-"drive"}
+      SERVICE=${SERVICE,,}
+
+      while [[ ! "$SERVICE" =~ ^(drive)$ ]]; do
+        read -rep " Please enter a valid service: " SERVICE
+        SERVICE=${SERVICE,,}
+      done
+
+      read -rep "Remote name: [$SERVICE] " REMOTE_NAME
+      REMOTE_NAME=${REMOTE_NAME:-$SERVICE}
+      REMOTE_NAME=${REMOTE_NAME,,}
+
+      read -rep "Shared folder: [/] " SHARED_FOLDER
+      SHARED_FOLDER=${SHARED_FOLDER:-"/"}
+
+      read -rep "Client ID: " CLIENT_ID
+      read -rep "Client secret: " CLIENT_SECRET
+
+      MOUNT_FOLDER="$HOME/media/cloud/$REMOTE_NAME"
+
+      if [ ! -d "$MOUNT_FOLDER" ]; then
+        rclone config create "$REMOTE_NAME" "$SERVICE" \
+          client_id="$CLIENT_ID" client_secret="$CLIENT_SECRET" \
+          scope=drive service_account_file="" team_drive="" --obscure &&
+        mkdir -p "$MOUNT_FOLDER" &&
+        rclone mount "$REMOTE_NAME":"$SHARED_FOLDER" "$MOUNT_FOLDER" \
+          --umask=002 --gid=$(id -g) --uid=$(id -u) --timeout=1h \
+          --poll-interval=15s --dir-cache-time=1000h --vfs-cache-mode=full \
+          --vfs-cache-max-size=150G --vfs-cache-max-age=12h --daemon ||
+        rclone config delete "$REMOTE_NAME"; rm -rf "$MOUNT_FOLDER"
+      else
+        echo "The remote name $REMOTE_NAME seems to be taken"
+      fi
+    else
+      echo "Ooops, cannot find rclone executable"
     fi
   else
     clear
