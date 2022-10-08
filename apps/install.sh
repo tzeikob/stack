@@ -38,7 +38,7 @@ install_node () {
   echo "Installing the node via NVM..."
 
   local URL="https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh"
-  sudo curl "$URL" -sSLo ~/stack/nvm-install.sh \
+  curl "$URL" -sSLo ~/stack/nvm-install.sh \
     --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 || exit 1
 
   bash ~/stack/nvm-install.sh || exit 1
