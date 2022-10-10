@@ -26,7 +26,7 @@ mount_local_disk () {
   fi
 }
 
-mount_remote_disk () {
+mount_network_disk () {
   local PROTOCOL=""
   read -rep "Protocol: [smb] " PROTOCOL
   PROTOCOL="${PROTOCOL:-"smb"}"
@@ -84,10 +84,10 @@ mount_google_drive () {
         --umask=002 --gid=$(id -g) --uid=$(id -u) --timeout=1h \
         --poll-interval=15s --dir-cache-time=1000h --vfs-cache-mode=full \
         --vfs-cache-max-size=150G --vfs-cache-max-age=12h --daemon &&
-        echo "$REMOTE_NAME mounted successfully"
+        echo "File service $REMOTE_NAME mounted successfully"
 
     if [[ ! $? -eq 0 ]]; then
-      echo "Failed to mount $REMOTE_NAME"
+      echo "Failed to mount file service $REMOTE_NAME"
 
       rclone config delete "$REMOTE_NAME"
       rm -rf "$MOUNT_FOLDER"
@@ -101,7 +101,7 @@ while true; do
   clear
 
   echo "Mount/unmount external storage file systems"
-  read -rep "(l)ocal (r)emote (c)loud (q)uit: " REPLY
+  read -rep "(l)ocal (r)emote (q)uit: " REPLY
   REPLY="${REPLY,,}"
 
   case "$REPLY" in
@@ -109,14 +109,12 @@ while true; do
       mount_local_disk;;
 
     r|remote)
-      mount_remote_disk;;
-
-    c|cloud)
-      read -rep "Provider: [Drive] " PROVIDER
-      PROVIDER="${PROVIDER:-"drive"}"
+      read -rep "Provider: [Nas/drive] " PROVIDER
+      PROVIDER="${PROVIDER:-"nas"}"
       PROVIDER="${PROVIDER,,}"
 
       case "$PROVIDER" in
+        nas) mount_network_disk;;
         drive) mount_google_drive;;
         *) echo "Not supported provider";;
       esac;;
