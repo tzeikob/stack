@@ -31,4 +31,4 @@ fi
 
 xsetroot -solid "#000000"
 xsetroot -cursor_name left_ptr
-udiskie --notify-command "ln -s /run/media/$USER $HOME/media/local" &
+udiskie --notify-command "ln -s /run/media/$USER $HOME/mount/local" &

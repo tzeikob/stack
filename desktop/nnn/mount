@@ -1,5 +1,114 @@
 #!/usr/bin/env sh
 
+MOUNT_HOME="$HOME/mount"
+
+mount_local_disk () {
+  lsblk
+
+  local DEVICE=""
+  read -rep "Device (sdXX): " DEVICE
+  echo
+
+  if grep -qs "$DEVICE " /proc/mounts; then
+    sync
+
+    if udisksctl unmount -b "/dev/$DEVICE"; then
+      echo "Device $DEVICE unmounted successfully"
+
+      if udisksctl power-off -b "/dev/$DEVICE"; then
+        echo "Device $DEVICE can now be ejected"
+      else
+        echo "Failed to power off device $DEVICE"
+      fi
+    else
+      echo "Failed to umount device $DEVICE"
+    fi
+  else
+    if udisksctl mount -b "/dev/$DEVICE"
+    then
+      echo "Device $DEVICE mounted successfully"
+
+      if [ ! -L "$MOUNT_HOME/local" ]; then
+        ln -s "/run/media/$USER" "$MOUNT_HOME/local"
+      fi
+    else
+      echo "Failed to mount device $DEVICE"
+    fi
+  fi
+}
+
+mount_remote_disk () {
+  local PROTOCOL=""
+  read -rep "Protocol: [smb] " PROTOCOL
+  PROTOCOL="${PROTOCOL:-"smb"}"
+  PROTOCOL="${PROTOCOL,,}"
+
+  local HOST=""
+  read -rep "Host name: " HOST
+
+  local SHARED_FOLDER=""
+  read -rep "Shared folder: " SHARED_FOLDER
+  SHARED_FOLDER="${SHARED_FOLDER,,}"
+
+  echo
+
+  local DEVICE="$PROTOCOL://$HOST/$SHARED_FOLDER"
+
+  if gio mount -l | grep "$DEVICE"; then
+    sync
+
+    if gio mount -u "$DEVICE"; then
+      echo "Device $DEVICE unmounted successfully"
+    else
+      echo "Failed to umount device $DEVICE"
+    fi
+  else
+    gio mount "$DEVICE"
+
+    if [ $? -eq 0 ]; then
+      echo "Device $DEVICE mounted successfully"
+
+      if [ ! -L "$MOUNT_HOME/remote" ]; then
+        ln -s /run/user/${UID}/gvfs $MOUNT_HOME/remote
+      fi
+    else
+      echo "Failed to mount device from $DEVICE"
+    fi
+  fi
+}
+
+mount_google_drive () {
+  local REMOTE_NAME=""
+  read -rep "Remote name: [drive] " REMOTE_NAME
+  REMOTE_NAME="${REMOTE_NAME:-"drive"}"
+  REMOTE_NAME="${REMOTE_NAME,,}"
+
+  local CLIENT_ID=""
+  read -rep "Client ID: " CLIENT_ID
+
+  local CLIENT_SECRET=""
+  read -rep "Client secret: " CLIENT_SECRET
+
+  local SHARED_FOLDER=""
+  read -rep "Shared folder: [/] " SHARED_FOLDER
+  SHARED_FOLDER="${SHARED_FOLDER:-"/"}"
+
+  local MOUNT_FOLDER="$MOUNT_HOME/cloud/$REMOTE_NAME"
+
+  if [ ! -d "$MOUNT_FOLDER" ]; then
+    rclone config create "$REMOTE_NAME" "drive"
+      client_id="$CLIENT_ID" client_secret="$CLIENT_SECRET" scope=drive --obscure &&
+      mkdir -p "$MOUNT_FOLDER" &&
+      rclone mount "$REMOTE_NAME":"$SHARED_FOLDER" "$MOUNT_FOLDER" \
+        --umask=002 --gid=$(id -g) --uid=$(id -u) --timeout=1h \
+        --poll-interval=15s --dir-cache-time=1000h --vfs-cache-mode=full \
+        --vfs-cache-max-size=150G --vfs-cache-max-age=12h --daemon ||
+        rclone config delete "$REMOTE_NAME"; rm -rf "$MOUNT_FOLDER"
+  else
+    echo "The remote name $REMOTE_NAME seems to be taken"
+  fi
+}
+
 while true
 do
   clear
@@ -10,112 +119,11 @@ do
   echo -e ""
 
   if [ "$REPLY" = "l" ]; then
-    lsblk
-
-    read -rep "Enter device name (sdXX): " DEVICE
-    echo -e ""
-
-    if grep -qs "$DEVICE " /proc/mounts; then
-      sync
-
-      if udisksctl unmount -b /dev/"$DEVICE"
-      then
-        echo -e "Device '$DEVICE' unmounted successfully"
-
-        if udisksctl power-off -b /dev/"$DEVICE"
-        then
-          echo -e "Device '$DEVICE' can now be ejected"
-        else
-          echo -e "Failed to power off device '$DEVICE'"
-        fi
-      else
-        echo -e "Failed to umount device '$DEVICE'"
-      fi
-    else
-      if udisksctl mount -b "/dev/$DEVICE"
-      then
-        echo -e "Device '$DEVICE' mounted successfully"
-
-        if [ ! -L "$HOME/media/local" ]; then
-          ln -s /run/media/$USER $HOME/media/local
-        fi
-      else
-        echo -e "Failed to mount device '$DEVICE'"
-      fi
-    fi
+    mount_local_disk
   elif [ "$REPLY" = "r" ]; then
-    read -rep "Protocol: [smb] " PROTOCOL
-    PROTOCOL=${PROTOCOL:-"smb"}
-
-    read -rep "Host name: " HOST
-    read -rep "Shared folder: " SHARED
-    SHARED="${SHARED,,}"
-
-    echo -e ""
-
-    DEVICE="$PROTOCOL://$HOST/$SHARED"
-
-    if gio mount -l | grep "$DEVICE"; then
-      sync
-
-      if gio mount -u "$DEVICE"
-      then
-        echo -e "Device '$DEVICE' unmounted successfully"
-      else
-        echo -e "Failed to umount device '$DEVICE'"
-      fi
-    else
-      gio mount "$DEVICE"
-
-      if [ $? -eq 0 ]; then
-        echo -e "Device '$DEVICE' mounted successfully"
-
-        if [ ! -L "$HOME/media/remote" ]; then
-          ln -s /run/user/$UID/gvfs $HOME/media/remote
-        fi
-      else
-        echo -e "Failed to mount device from '$DEVICE'"
-      fi
-    fi
+    mount_remote_disk
   elif [ "$REPLY" = "c" ]; then
-    if rclone version > /dev/null ; then
-      read -rep "Service: [drive] " SERVICE
-      SERVICE=${SERVICE:-"drive"}
-      SERVICE=${SERVICE,,}
-
-      while [[ ! "$SERVICE" =~ ^(drive)$ ]]; do
-        read -rep " Please enter a valid service: " SERVICE
-        SERVICE=${SERVICE,,}
-      done
-
-      read -rep "Remote name: [$SERVICE] " REMOTE_NAME
-      REMOTE_NAME=${REMOTE_NAME:-$SERVICE}
-      REMOTE_NAME=${REMOTE_NAME,,}
-
-      read -rep "Shared folder: [/] " SHARED_FOLDER
-      SHARED_FOLDER=${SHARED_FOLDER:-"/"}
-
-      read -rep "Client ID: " CLIENT_ID
-      read -rep "Client secret: " CLIENT_SECRET
-
-      MOUNT_FOLDER="$HOME/media/cloud/$REMOTE_NAME"
-
-      if [ ! -d "$MOUNT_FOLDER" ]; then
-        rclone config create "$REMOTE_NAME" "$SERVICE" \
-          client_id="$CLIENT_ID" client_secret="$CLIENT_SECRET" \
-          scope=drive service_account_file="" team_drive="" --obscure &&
-        mkdir -p "$MOUNT_FOLDER" &&
-        rclone mount "$REMOTE_NAME":"$SHARED_FOLDER" "$MOUNT_FOLDER" \
-          --umask=002 --gid=$(id -g) --uid=$(id -u) --timeout=1h \
-          --poll-interval=15s --dir-cache-time=1000h --vfs-cache-mode=full \
-          --vfs-cache-max-size=150G --vfs-cache-max-age=12h --daemon ||
-        rclone config delete "$REMOTE_NAME"; rm -rf "$MOUNT_FOLDER"
-      else
-        echo "The remote name $REMOTE_NAME seems to be taken"
-      fi
-    else
-      echo "Ooops, cannot find rclone executable"
-    fi
+    mount_google_drive
   else
     clear
     exit
