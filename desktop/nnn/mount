@@ -75,7 +75,7 @@ mount_google_drive () {
   SHARED_FOLDER="${SHARED_FOLDER:-"/"}"
   echo
 
-  local MOUNT_FOLDER="$MOUNT_HOME/cloud/$REMOTE_NAME"
+  local MOUNT_FOLDER="$MOUNT_HOME/drive/$REMOTE_NAME"
 
   if [ ! -d "$MOUNT_FOLDER" ]; then
     rclone config create "$REMOTE_NAME" "drive" \
