@@ -87,6 +87,7 @@ install_bun () {
 
   echo -e '\nexport BUN_INSTALL="$HOME./bun"' >> ~/.bashrc
   echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> ~/.bashrc
+  source ~/.bashrc
 
   bun --version || exit 1
 
