@@ -164,14 +164,6 @@ install_code () {
 
   sudo pacman -S --noconfirm code || exit 1
 
-  echo "Installing various extensions..."
-
-  code --install-extension dbaeumer.vscode-eslint
-  code --install-extension yzhang.markdown-all-in-one
-  code --install-extension streetsidesoftware.code-spell-checker
-
-  echo "Extensions have been installed"
-
   echo -e "Visual studio code has been installed\n"
 }
 
