@@ -130,7 +130,7 @@ while true; do
   REPLY="${REPLY:-"yes"}"
   REPLY="${REPLY,,}"
 
-  if [[ "$REPLY" =~ ^(y|yes)$ ]; then
+  if [[ "$REPLY" =~ ^(y|yes)$ ]]; then
     clear
     exit
   fi
