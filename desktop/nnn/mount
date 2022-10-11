@@ -117,7 +117,7 @@ mount_google_drive () {
       echo -e "\nFailed to mount remote $REMOTE_NAME"
 
       rclone config delete "$REMOTE_NAME"
-      rm -rf "$MOUNT_FOLDER"
+      find "$MOUNT_FOLDER" -maxdepth 0 -empty -exec rm -rf {} \;
     fi
   fi
 }
