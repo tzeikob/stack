@@ -126,10 +126,10 @@ mount_google_drive () {
       root_folder_id="$ROOT_FOLDER" scope=drive --obscure &&
     mkdir -p "$MOUNT_FOLDER" &&
     rclone mount "$REMOTE_NAME:/" "$MOUNT_FOLDER" \
-        --umask=002 --gid=$(id -g) --uid=$(id -u) --timeout=1h \
-        --poll-interval=15s --dir-cache-time=1000h --vfs-cache-mode=full \
-        --vfs-cache-max-size=150G --vfs-cache-max-age=12h --daemon &&
-        echo "Remote $REMOTE_NAME mounted successfully"
+      --umask=002 --gid=$(id -g) --uid=$(id -u) --timeout=1h \
+      --poll-interval=15s --dir-cache-time=1000h --vfs-cache-mode=full \
+      --vfs-cache-max-size=150G --vfs-cache-max-age=12h --daemon &&
+      echo "Remote $REMOTE_NAME mounted successfully"
 
     if [[ ! "$?" -eq 0 ]]; then
       echo "Failed to mount remote $REMOTE_NAME"
