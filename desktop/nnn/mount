@@ -70,8 +70,8 @@ mount_network_disk () {
       echo "Device $DEVICE mounted successfully" ||
       echo "Failed to mount device from $DEVICE"
 
-    if [ -d "/run/user/${UID}/gvfs" ] && [ ! -L "$MOUNT_HOME/remote" ]; then
-      ln -s "/run/user/${UID}/gvfs" "$MOUNT_HOME/remote"
+    if [ -d "/run/user/${UID}/gvfs" ] && [ ! -L "$MOUNT_HOME/nas" ]; then
+      ln -s "/run/user/${UID}/gvfs" "$MOUNT_HOME/nas"
     fi
   fi
 }
