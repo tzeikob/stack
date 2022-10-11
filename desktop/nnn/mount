@@ -64,7 +64,7 @@ mount_google_drive () {
   REMOTE_NAME="${REMOTE_NAME:-"drive"}"
   REMOTE_NAME="${REMOTE_NAME,,}"
 
-  if rclone listremotes | grep -E "^$REMOTE_NAME$" > /dev/null; then
+  if rclone listremotes | grep -w "$REMOTE_NAME:" > /dev/null; then
     local REPLY=""
     read -rep "Found remote $REMOTE_NAME, do you want to unmount it? [y/N] " REPLY
     REPLY="${REPLY:-"no"}"
