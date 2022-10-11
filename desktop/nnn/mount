@@ -10,11 +10,18 @@ mount_local_disk () {
   echo
 
   if grep -qs "$DEVICE " /proc/mounts; then
-    sync &&
-    udisksctl unmount -b "/dev/$DEVICE" &&
-    udisksctl power-off -b "/dev/$DEVICE" &&
-      echo -e "\nDevice $DEVICE unmounted successfully" ||
-      echo -e "\nFailed to umount device $DEVICE"
+    local REPLY=""
+    read -rep "Found device $DEVICE, do you want to unmount it? [y/N] " REPLY
+    REPLY="${REPLY:-"no"}"
+    REPLY="${REPLY,,}"
+
+    if [[ "$REPLY" =~ ^(y|yes)$ ]]; then
+      sync &&
+      udisksctl unmount -b "/dev/$DEVICE" &&
+      udisksctl power-off -b "/dev/$DEVICE" &&
+        echo -e "\nDevice $DEVICE unmounted successfully" ||
+        echo -e "\nFailed to umount device $DEVICE"
+    fi
   else
     udisksctl mount -b "/dev/$DEVICE" &&
       echo -e "\nDevice $DEVICE mounted successfully" ||
@@ -42,10 +49,17 @@ mount_network_disk () {
   local DEVICE="$PROTOCOL://$HOST/$SHARED_FOLDER"
 
   if gio mount -l | grep "$DEVICE"; then
-    sync &&
-    gio mount -u "$DEVICE" &&
-      echo "Device $DEVICE unmounted successfully" ||
-      echo "Failed to umount device $DEVICE"
+    local REPLY=""
+    read -rep "Found remote $DEVICE, do you want to unmount it? [y/N] " REPLY
+    REPLY="${REPLY:-"no"}"
+    REPLY="${REPLY,,}"
+
+    if [[ "$REPLY" =~ ^(y|yes)$ ]]; then
+      sync &&
+      gio mount -u "$DEVICE" &&
+        echo "Device $DEVICE unmounted successfully" ||
+        echo "Failed to umount device $DEVICE"
+    fi
   else
     gio mount "$DEVICE" &&
       echo "Device $DEVICE mounted successfully" ||
