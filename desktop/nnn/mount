@@ -73,15 +73,16 @@ mount_google_drive () {
     local CLIENT_SECRET=""
     read -rep "Client secret: " CLIENT_SECRET
 
-    local SHARED_FOLDER=""
-    read -rep "Shared folder: [/] " SHARED_FOLDER
-    SHARED_FOLDER="${SHARED_FOLDER:-"/"}"
+    local ROOT_FOLDER=""
+    read -rep "Root folder: " ROOT_FOLDER
+    ROOT_FOLDER="${ROOT_FOLDER:-""}"
     echo
 
     rclone config create "$REMOTE_NAME" "drive" \
-      client_id="$CLIENT_ID" client_secret="$CLIENT_SECRET" scope=drive --obscure &&
+      client_id="$CLIENT_ID" client_secret="$CLIENT_SECRET" \
+      root_folder_id="$ROOT_FOLDER" scope=drive --obscure &&
       mkdir -p "$MOUNT_FOLDER" &&
-      rclone mount "$REMOTE_NAME":"$SHARED_FOLDER" "$MOUNT_FOLDER" \
+      rclone mount "$REMOTE_NAME:/" "$MOUNT_FOLDER" \
         --umask=002 --gid=$(id -g) --uid=$(id -u) --timeout=1h \
         --poll-interval=15s --dir-cache-time=1000h --vfs-cache-mode=full \
         --vfs-cache-max-size=150G --vfs-cache-max-age=12h --daemon &&
