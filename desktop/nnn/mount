@@ -122,6 +122,8 @@ mount_google_drive () {
   fi
 }
 
+clear
+
 echo "Mount external storage file systems"
 read -rep "(l)ocal (r)emote (q)uit: " REPLY
 REPLY="${REPLY,,}"
@@ -151,4 +153,3 @@ case "$REPLY" in
 esac
 
 read -p "Press any key to exit..."
-clear
