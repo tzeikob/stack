@@ -73,7 +73,7 @@ mount_google_drive () {
     if [[ "$REPLY" =~ ^(y|yes)$ ]]; then
       echo "Unmounting remote $REMOTE_NAME..."
 
-      local MOUNT_POINTS=($(grep -E "$REMOTE_NAME:.* fuse.rclone" /proc/mounts | awk '{print "$2"}'))
+      local MOUNT_POINTS=($(grep -E "$REMOTE_NAME:.* fuse.rclone" /proc/mounts | awk '{print $2}'))
       for MOUNT_POINT in ${MOUNT_POINTS[@]}; do
         fusermount -uz "$MOUNT_POINT"
 
