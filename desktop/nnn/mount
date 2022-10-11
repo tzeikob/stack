@@ -150,4 +150,5 @@ case "$REPLY" in
     echo -e "\nUnknown or invalid user input";;
 esac
 
-read -p "Press any key to exit..." REPLY
+read -p "Press any key to exit..."
+clear
