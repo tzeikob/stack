@@ -38,19 +38,18 @@ mount_network_disk () {
   local SHARED_FOLDER=""
   read -rep "Shared folder: " SHARED_FOLDER
   SHARED_FOLDER="${SHARED_FOLDER,,}"
-  echo
 
   local DEVICE="$PROTOCOL://$HOST/$SHARED_FOLDER"
 
   if gio mount -l | grep "$DEVICE"; then
     sync &&
     gio mount -u "$DEVICE" &&
-      echo -e "\nDevice $DEVICE unmounted successfully" ||
-      echo -e "\nFailed to umount device $DEVICE"
+      echo "Device $DEVICE unmounted successfully" ||
+      echo "Failed to umount device $DEVICE"
   else
     gio mount "$DEVICE" &&
-      echo -e "\nDevice $DEVICE mounted successfully" ||
-      echo -e "\nFailed to mount device from $DEVICE"
+      echo "Device $DEVICE mounted successfully" ||
+      echo "Failed to mount device from $DEVICE"
 
     if [ -d "/run/user/${UID}/gvfs" ] && [ ! -L "$MOUNT_HOME/remote" ]; then
       ln -s "/run/user/${UID}/gvfs" "$MOUNT_HOME/remote"
@@ -81,14 +80,14 @@ mount_google_drive () {
           find "$MOUNT_POINT" -maxdepth 0 -empty -exec rm -rf {} \;
           echo "Local folder $MOUNT_POINT has been unmounted"
         else
-          echo -e "\nFailed to unmount $MOUNT_POINT, make sure folder isn't busy"
+          echo "Failed to unmount $MOUNT_POINT, make sure folder isn't busy"
           return 1
         fi
       done
 
       rclone config delete "$REMOTE_NAME" &&
-        echo -e "\nRemote $REMOTE_NAME deleted successfully" ||
-        echo -e "\nFailed to delete remote $REMOTE_NAME"
+        echo "Remote $REMOTE_NAME deleted successfully" ||
+        echo "Failed to delete remote $REMOTE_NAME"
     fi
   else
     local CLIENT_ID=""
@@ -106,15 +105,15 @@ mount_google_drive () {
     rclone config create "$REMOTE_NAME" "drive" \
       client_id="$CLIENT_ID" client_secret="$CLIENT_SECRET" \
       root_folder_id="$ROOT_FOLDER" scope=drive --obscure &&
-      mkdir -p "$MOUNT_FOLDER" &&
-      rclone mount "$REMOTE_NAME:/" "$MOUNT_FOLDER" \
+    mkdir -p "$MOUNT_FOLDER" &&
+    rclone mount "$REMOTE_NAME:/" "$MOUNT_FOLDER" \
         --umask=002 --gid=$(id -g) --uid=$(id -u) --timeout=1h \
         --poll-interval=15s --dir-cache-time=1000h --vfs-cache-mode=full \
         --vfs-cache-max-size=150G --vfs-cache-max-age=12h --daemon &&
-        echo -e "\nRemote $REMOTE_NAME mounted successfully"
+        echo "Remote $REMOTE_NAME mounted successfully"
 
     if [[ ! "$?" -eq 0 ]]; then
-      echo -e "\nFailed to mount remote $REMOTE_NAME"
+      echo "Failed to mount remote $REMOTE_NAME"
 
       rclone config delete "$REMOTE_NAME"
       find "$MOUNT_FOLDER" -maxdepth 0 -empty -exec rm -rf {} \;
@@ -142,14 +141,14 @@ case "$REPLY" in
       drive) mount_google_drive;;
 
       *)
-        echo -e "\nProvider $PROVIDER is not supported";;
+        echo "Provider $PROVIDER is not supported";;
     esac;;
 
   q|quit)
     clear && exit;;
 
   *)
-    echo -e "\nUnknown or invalid user input";;
+    echo "Unknown or invalid user input";;
 esac
 
 read -p "Press any key to exit..."
