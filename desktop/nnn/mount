@@ -6,8 +6,7 @@ mount_local_disk () {
   lsblk
 
   local DEVICE=""
-  read -rep "Device (sdXX): " DEVICE
-  echo
+  read -rep "Device: " DEVICE
 
   if grep -qs "$DEVICE " /proc/mounts; then
     local REPLY=""
@@ -17,15 +16,21 @@ mount_local_disk () {
 
     if [[ "$REPLY" =~ ^(y|yes)$ ]]; then
       sync &&
-      udisksctl unmount -b "/dev/$DEVICE" &&
-      udisksctl power-off -b "/dev/$DEVICE" &&
-        echo -e "\nDevice $DEVICE unmounted successfully" ||
-        echo -e "\nFailed to umount device $DEVICE"
+      udisksctl unmount -b "/dev/$DEVICE"
+
+      if [[ "$?" -eq 0 ]]; then
+        echo "Device $DEVICE unmounted successfully"
+        echo "Powering device off..."
+
+        udisksctl power-off -b "/dev/$DEVICE"
+      else
+        echo "Failed to umount device $DEVICE"
+      fi
     fi
   else
     udisksctl mount -b "/dev/$DEVICE" &&
-      echo -e "\nDevice $DEVICE mounted successfully" ||
-      echo -e "\nFailed to mount device $DEVICE"
+      echo "Device $DEVICE mounted successfully" ||
+      echo "Failed to mount device $DEVICE"
 
     if [ -d "/run/media/$USER" ] && [ ! -L "$MOUNT_HOME/local" ]; then
       ln -s "/run/media/$USER" "$MOUNT_HOME/local"
