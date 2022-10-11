@@ -64,9 +64,33 @@ mount_google_drive () {
   REMOTE_NAME="${REMOTE_NAME:-"drive"}"
   REMOTE_NAME="${REMOTE_NAME,,}"
 
-  local MOUNT_FOLDER="$MOUNT_HOME/drive/$REMOTE_NAME"
+  if rclone listremotes | grep "$REMOTE_NAME" > /dev/null; then
+    local REPLY=""
+    read -rep "Found remote $REMOTE_NAME, do you want to unmount it? [y/N] " REPLY
+    REPLY="${REPLY:-"no"}"
+    REPLY="${REPLY,,}"
 
-  if [ ! -d "$MOUNT_FOLDER" ]; then
+    if [[ "$REPLY" =~ ^(y|yes)$ ]]; then
+      echo "Unmounting remote $REMOTE_NAME..."
+
+      local MOUNT_POINTS=($(grep -E "$REMOTE_NAME:.* fuse.rclone" /proc/mounts | awk '{print "$2"}'))
+      for MOUNT_POINT in ${MOUNT_POINTS[@]}; do
+        fusermount -uz "$MOUNT_POINT"
+
+        if [[ "$?" -eq 0 ]]; then
+          find "$MOUNT_POINT" -maxdepth 0 -empty -exec rm -rf {} \;
+          echo "Local folder $MOUNT_POINT has been unmounted"
+        else
+          echo -e "\nFailed to unmount $MOUNT_POINT, make sure folder isn't busy"
+          return 1
+        fi
+      done
+
+      rclone config delete "$REMOTE_NAME" &&
+        echo -e "\nRemote $REMOTE_NAME deleted successfully" ||
+        echo -e "\nFailed to delete remote $REMOTE_NAME"
+    fi
+  else
     local CLIENT_ID=""
     read -rep "Client ID: " CLIENT_ID
 
@@ -75,8 +99,9 @@ mount_google_drive () {
 
     local ROOT_FOLDER=""
     read -rep "Root folder: " ROOT_FOLDER
-    ROOT_FOLDER="${ROOT_FOLDER:-""}"
     echo
+
+    local MOUNT_FOLDER="$MOUNT_HOME/drive/$REMOTE_NAME"
 
     rclone config create "$REMOTE_NAME" "drive" \
       client_id="$CLIENT_ID" client_secret="$CLIENT_SECRET" \
@@ -88,14 +113,12 @@ mount_google_drive () {
         --vfs-cache-max-size=150G --vfs-cache-max-age=12h --daemon &&
         echo -e "\nRemote $REMOTE_NAME mounted successfully"
 
-    if [[ ! $? -eq 0 ]]; then
+    if [[ ! "$?" -eq 0 ]]; then
       echo -e "\nFailed to mount remote $REMOTE_NAME"
 
       rclone config delete "$REMOTE_NAME"
       rm -rf "$MOUNT_FOLDER"
     fi
-  else
-    echo -e "\nUnable to mount $REMOTE_NAME, name taken by another remote"
   fi
 }
 
