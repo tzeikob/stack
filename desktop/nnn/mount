@@ -122,43 +122,32 @@ mount_google_drive () {
   fi
 }
 
-while true; do
-  clear
+echo "Mount external storage file systems"
+read -rep "(l)ocal (r)emote (q)uit: " REPLY
+REPLY="${REPLY,,}"
 
-  echo "Mount external storage file systems"
-  read -rep "(l)ocal (r)emote (q)uit: " REPLY
-  REPLY="${REPLY,,}"
+case "$REPLY" in
+  l|local)
+    mount_local_disk;;
 
-  case "$REPLY" in
-    l|local)
-      mount_local_disk;;
+  r|remote)
+    read -rep "Provider: [Nas/drive] " PROVIDER
+    PROVIDER="${PROVIDER:-"nas"}"
+    PROVIDER="${PROVIDER,,}"
 
-    r|remote)
-      read -rep "Provider: [Nas/drive] " PROVIDER
-      PROVIDER="${PROVIDER:-"nas"}"
-      PROVIDER="${PROVIDER,,}"
+    case "$PROVIDER" in
+      nas) mount_network_disk;;
+      drive) mount_google_drive;;
 
-      case "$PROVIDER" in
-        nas) mount_network_disk;;
-        drive) mount_google_drive;;
+      *)
+        echo -e "\nProvider $PROVIDER is not supported";;
+    esac;;
 
-        *)
-          echo -e "\nProvider $PROVIDER is not supported";;
-      esac;;
+  q|quit)
+    clear && exit;;
 
-    q|quit)
-      clear && exit;;
+  *)
+    echo -e "\nUnknown or invalid user input";;
+esac
 
-    *)
-      echo -e "\nUnknown or invalid user input";;
-  esac
-
-  read -rep "Do you want to quit? [Y/n] " REPLY
-  REPLY="${REPLY:-"yes"}"
-  REPLY="${REPLY,,}"
-
-  if [[ "$REPLY" =~ ^(y|yes)$ ]]; then
-    clear
-    exit
-  fi
-done
+read -p "Press any key to exit..." REPLY
