@@ -2,19 +2,68 @@
 
 MOUNT_HOME="$HOME/mount"
 
+contains () {
+  local ITEM=$1 && shift
+  local ARR=("${@}")
+  local LEN=${#ARR[@]}
+
+  local INDEX=0
+  for ((INDEX = 0; INDEX < $LEN; INDEX++)); do
+    if [ "$ITEM" = "${ARR[$INDEX]}" ]; then
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+askme () {
+  local ARGS_LEN=$#
+  local PROMPT=$1 && shift
+
+  if [ $ARGS_LEN -gt 2 ]; then
+    local OPTIONS=("${@}" "quit" "q")
+
+    read -rep "$PROMPT [${OPTIONS[*]}] " REPLY
+
+    while ! contains "$REPLY" "${OPTIONS[@]}"; do
+      read -rep " Please enter a valid value: " REPLY
+    done
+  elif [ $ARGS_LEN -eq 2 ]; then
+    local RE=$1 && shift
+    local OPTIONS=("quit" "q")
+
+    read -rep "$PROMPT [${OPTIONS[*]}] " REPLY
+
+    while [[ ! "$REPLY" =~ $RE ]]; do
+      if contains "$REPLY" "${OPTIONS[@]}"; then
+        break
+      fi
+
+      read -rep " Please enter a valid value: " REPLY
+    done
+  else
+    local OPTIONS=("quit" "q")
+
+    read -rep "$PROMPT [${OPTIONS[*]}] " REPLY
+  fi
+
+  if [[ "$REPLY" =~ ^(quit|q)$ ]]; then
+    exit 0
+  fi
+}
+
 mount_local_disk () {
   lsblk
 
-  local DEVICE=""
-  read -rep "Enter the device name: " DEVICE
+  askme "Enter the device name: "
+  local DEVICE="$REPLY"
 
   if grep -qs "$DEVICE " /proc/mounts; then
-    local REPLY=""
-    read -rep "Found device $DEVICE, do you want to unmount it? [y/N] " REPLY
-    REPLY="${REPLY:-"no"}"
-    REPLY="${REPLY,,}"
+    echo "Found existing device with name $DEVICE"
+    askme "Do you want to unmount it?" "yes" "no"
 
-    if [[ "$REPLY" =~ ^(y|yes)$ ]]; then
+    if [ "$REPLY" = "yes" ]; then
       sync &&
       udisksctl unmount -b "/dev/$DEVICE"
 
@@ -39,27 +88,22 @@ mount_local_disk () {
 }
 
 mount_network_disk () {
-  local PROTOCOL=""
-  read -rep "Enter the connection protocol: [smb] " PROTOCOL
-  PROTOCOL="${PROTOCOL:-"smb"}"
-  PROTOCOL="${PROTOCOL,,}"
+  askme "Enter the connection protocol:" "smb" "nfs"
+  local PROTOCOL="$REPLY"
 
-  local HOST=""
-  read -rep "Enter the host name: " HOST
+  askme "Enter the host name:"
+  local HOST="$REPLY"
 
-  local SHARED_FOLDER=""
-  read -rep "Enter the shared folder: " SHARED_FOLDER
-  SHARED_FOLDER="${SHARED_FOLDER,,}"
+  askme "Enter the shared folder:"
+  local SHARED_FOLDER="$REPLY"
 
   local DEVICE="$PROTOCOL://$HOST/$SHARED_FOLDER"
 
   if gio mount -l | grep "$DEVICE"; then
-    local REPLY=""
-    read -rep "Found remote $DEVICE, do you want to unmount it? [y/N] " REPLY
-    REPLY="${REPLY:-"no"}"
-    REPLY="${REPLY,,}"
+    echo "Found existing network disk with name $DEVICE"
+    askme "Do you want to unmount it?" "yes" "no"
 
-    if [[ "$REPLY" =~ ^(y|yes)$ ]]; then
+    if [ "$REPLY" = "yes" ]; then
       sync &&
       gio mount -u "$DEVICE" &&
         echo "Device $DEVICE unmounted successfully" ||
@@ -92,6 +136,7 @@ unmount_remote () {
   echo "Unmounting remote $REMOTE_NAME..."
 
   local MOUNT_POINTS=($(grep -E "$REMOTE_NAME:.* fuse.rclone" /proc/mounts | awk '{print $2}'))
+
   for MOUNT_POINT in ${MOUNT_POINTS[@]}; do
     fusermount -uz "$MOUNT_POINT"
 
@@ -111,27 +156,24 @@ unmount_remote () {
 mount_remote () {
   local STORAGE=$1
 
-  local REMOTE_NAME=""
-  read -rep "Enter the name of the remote: " REMOTE_NAME
-  REMOTE_NAME="${REMOTE_NAME,,}"
+  askme "Enter the name of the remote:"
+  local REMOTE_NAME="$REPLY"
 
   if remote_exists "$REMOTE_NAME"; then
-    local REPLY=""
-    read -rep "Found remote $REMOTE_NAME, do you want to unmount it? [y/N] " REPLY
-    REPLY="${REPLY:-"no"}"
-    REPLY="${REPLY,,}"
+    echo "Found existing remote with name $REMOTE_NAME"
+    askme "Do you want to unmount it?" "yes" "no"
 
-    [[ "$REPLY" =~ ^(y|yes)$ ]] && unmount_remote "$REMOTE_NAME"
+    [ "$REPLY" = "yes" ] && unmount_remote "$REMOTE_NAME"
   else
-    local CLIENT_ID=""
-    read -rep "Client ID: " CLIENT_ID
+    askme "Enter the client ID:"
+    local CLIENT_ID="$REPLY"
 
-    local CLIENT_SECRET=""
-    read -rep "Client secret: " CLIENT_SECRET
+    askme "Enter the client secret:"
+    local CLIENT_SECRET="$REPLY"
 
     if [ "$STORAGE" = "drive" ]; then
-      local ROOT_FOLDER=""
-      read -rep "Root folder: " ROOT_FOLDER
+      askem "Enter the root folder ID:"
+      local ROOT_FOLDER="$REPLY"
     fi
 
     local MOUNT_FOLDER="$MOUNT_HOME/$REMOTE_NAME"
@@ -156,36 +198,16 @@ mount_remote () {
 
 clear
 
-read -rep "Which type of storage to mount? [local/nas/cloud] " REPLY
-REPLY="${REPLY,,}"
-
-while [[ ! "$REPLY" =~ ^(local|nas|cloud|quit|q)$ ]]; do
-  read -rep " Please enter a valid value: " REPLY
-  REPLY="${REPLY,,}"
-done
+askme "Which type of storage to mount?" "local" "nas" "cloud"
 
 if [ "$REPLY" = "local" ]; then
   mount_local_disk
 elif [ "$REPLY" = "nas" ]; then
   mount_network_disk
 elif [ "$REPLY" = "cloud" ]; then
-  read -rep "Which storage provider to sync with? [drive/dropbox] " REPLY
-  REPLY="${REPLY,,}"
-
-  while [[ ! "$REPLY" =~ ^(drive|dropbox|quit|q)$ ]]; do
-    read -rep " Please enter a valid value: " REPLY
-    REPLY="${REPLY,,}"
-  done
-
-  if [[ "$REPLY" = ^(q|quit)$ ]]; then
-    exit 0
-  fi
+  askme "Which storage provider to sync with?" "drive" "dropbox"
 
   mount_remote "$REPLY"
-elif [[ "$REPLY" = ^(q|quit)$ ]]; then
-  exit 0
-else
-  echo "Unknown or invalid user input"
 fi
 
 read -p "Press any key to exit..."
