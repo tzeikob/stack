@@ -22,30 +22,25 @@ askme () {
   local PROMPT=$1 && shift
 
   if [ $ARGS_LEN -gt 2 ]; then
-    local OPTIONS=("${@}" "quit" "q")
+    local OPTIONS=("${@}")
 
     read -rep "$PROMPT [${OPTIONS[*]}] " REPLY
 
     while ! contains "$REPLY" "${OPTIONS[@]}"; do
+      [[ "$REPLY" =~ ^(quit|q)$ ]] && break
+
       read -rep " Please enter a valid value: " REPLY
     done
   elif [ $ARGS_LEN -eq 2 ]; then
     local RE=$1 && shift
-    local OPTIONS=("quit" "q")
 
-    read -rep "$PROMPT [${OPTIONS[*]}] " REPLY
+    read -rep "$PROMPT " REPLY
 
-    while [[ ! "$REPLY" =~ $RE ]]; do
-      if contains "$REPLY" "${OPTIONS[@]}"; then
-        break
-      fi
-
+    while [[ ! "$REPLY" =~ $RE || ! "$REPLY" =~ ^(quit|q)$ ]]; do
       read -rep " Please enter a valid value: " REPLY
     done
   else
-    local OPTIONS=("quit" "q")
-
-    read -rep "$PROMPT [${OPTIONS[*]}] " REPLY
+    read -rep "$PROMPT " REPLY
   fi
 
   if [[ "$REPLY" =~ ^(quit|q)$ ]]; then
