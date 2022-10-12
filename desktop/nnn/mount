@@ -108,7 +108,9 @@ unmount_remote () {
     echo "Failed to delete remote $REMOTE_NAME"
 }
 
-mount_google_drive () {
+mount_remote () {
+  local STORAGE=$1
+
   local REMOTE_NAME=""
   read -rep "Remote name: [drive] " REMOTE_NAME
   REMOTE_NAME="${REMOTE_NAME:-"drive"}"
@@ -128,62 +130,17 @@ mount_google_drive () {
     local CLIENT_SECRET=""
     read -rep "Client secret: " CLIENT_SECRET
 
-    local ROOT_FOLDER=""
-    read -rep "Root folder: " ROOT_FOLDER
-    echo
-
-    local MOUNT_FOLDER="$MOUNT_HOME/drive/$REMOTE_NAME"
-
-    rclone config create "$REMOTE_NAME" "drive" \
-      client_id="$CLIENT_ID" client_secret="$CLIENT_SECRET" \
-      root_folder_id="$ROOT_FOLDER" scope=drive --obscure &&
-    mkdir -p "$MOUNT_FOLDER" &&
-    rclone mount "$REMOTE_NAME:/" "$MOUNT_FOLDER" \
-      --umask=002 --gid=$(id -g) --uid=$(id -u) --timeout=1h \
-      --poll-interval=15s --dir-cache-time=1000h --vfs-cache-mode=full \
-      --vfs-cache-max-size=150G --vfs-cache-max-age=12h --daemon &&
-      echo "Remote $REMOTE_NAME mounted successfully"
-
-    if [[ ! "$?" -eq 0 ]]; then
-      echo "Failed to mount remote $REMOTE_NAME"
-
-      rclone config delete "$REMOTE_NAME"
-      find "$MOUNT_FOLDER" -maxdepth 0 -empty -exec rm -rf {} \;
+    if [ "$STORAGE" = "drive" ]; then
+      local ROOT_FOLDER=""
+      read -rep "Root folder: " ROOT_FOLDER
     fi
-  fi
-}
 
-mount_dropbox () {
-  local REMOTE_NAME=""
-  read -rep "Remote name: [dropbox] " REMOTE_NAME
-  REMOTE_NAME="${REMOTE_NAME:-"dropbox"}"
-  REMOTE_NAME="${REMOTE_NAME,,}"
+    local MOUNT_FOLDER="$MOUNT_HOME/$STORAGE/$REMOTE_NAME"
 
-  if remote_exists "$REMOTE_NAME:"; then
-    local REPLY=""
-    read -rep "Found remote $REMOTE_NAME, do you want to unmount it? [y/N] " REPLY
-    REPLY="${REPLY:-"no"}"
-    REPLY="${REPLY,,}"
-
-    [[ "$REPLY" =~ ^(y|yes)$ ]] && unmount_remote "$REMOTE_NAME"
-  else
-    local CLIENT_ID=""
-    read -rep "Client ID: " CLIENT_ID
-
-    local CLIENT_SECRET=""
-    read -rep "Client secret: " CLIENT_SECRET
-
-    local ROOT_FOLDER=""
-    read -rep "Root folder: " ROOT_FOLDER
-    echo
-
-    local MOUNT_FOLDER="$MOUNT_HOME/dropbox/$REMOTE_NAME"
-
-    rclone config create "$REMOTE_NAME" "dropbox" \
-      client_id="$CLIENT_ID" client_secret="$CLIENT_SECRET" \
-      root_folder_id="$ROOT_FOLDER" scope=drive --obscure &&
+    rclone config create "$REMOTE_NAME" "$STORAGE" client_id="$CLIENT_ID" client_secret="$CLIENT_SECRET" \
+      $([ "$STORAGE" = "drive" ] && echo "root_folder_id="$ROOT_FOLDER" scope=drive") &&
     mkdir -p "$MOUNT_FOLDER" &&
-    rclone mount "$REMOTE_NAME:/" "$MOUNT_FOLDER" \
+    rclone mount "$REMOTE_NAME:" "$MOUNT_FOLDER" \
       --umask=002 --gid=$(id -g) --uid=$(id -u) --timeout=1h \
       --poll-interval=15s --dir-cache-time=1000h --vfs-cache-mode=full \
       --vfs-cache-max-size=150G --vfs-cache-max-age=12h --daemon &&
@@ -215,8 +172,8 @@ case "$REPLY" in
 
     case "$PROVIDER" in
       nas) mount_network_disk;;
-      drive) mount_google_drive;;
-      dropbox) mount_dropbox;;
+      drive) mount_remote "drive";;
+      dropbox) mount_remote "dropbox";;
 
       *)
         echo "Provider $PROVIDER is not supported";;
