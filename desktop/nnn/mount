@@ -6,7 +6,7 @@ mount_local_disk () {
   lsblk
 
   local DEVICE=""
-  read -rep "Device: " DEVICE
+  read -rep "Enter the device name: " DEVICE
 
   if grep -qs "$DEVICE " /proc/mounts; then
     local REPLY=""
@@ -40,15 +40,15 @@ mount_local_disk () {
 
 mount_network_disk () {
   local PROTOCOL=""
-  read -rep "Protocol: [smb] " PROTOCOL
+  read -rep "Enter the connection protocol: [smb] " PROTOCOL
   PROTOCOL="${PROTOCOL:-"smb"}"
   PROTOCOL="${PROTOCOL,,}"
 
   local HOST=""
-  read -rep "Host name: " HOST
+  read -rep "Enter the host name: " HOST
 
   local SHARED_FOLDER=""
-  read -rep "Shared folder: " SHARED_FOLDER
+  read -rep "Enter the shared folder: " SHARED_FOLDER
   SHARED_FOLDER="${SHARED_FOLDER,,}"
 
   local DEVICE="$PROTOCOL://$HOST/$SHARED_FOLDER"
@@ -112,8 +112,7 @@ mount_remote () {
   local STORAGE=$1
 
   local REMOTE_NAME=""
-  read -rep "Remote name: [drive] " REMOTE_NAME
-  REMOTE_NAME="${REMOTE_NAME:-"drive"}"
+  read -rep "Enter the name of the remote: " REMOTE_NAME
   REMOTE_NAME="${REMOTE_NAME,,}"
 
   if remote_exists "$REMOTE_NAME"; then
@@ -157,33 +156,36 @@ mount_remote () {
 
 clear
 
-echo "Mount external storage file systems"
-read -rep "(l)ocal (r)emote (q)uit: " REPLY
+read -rep "Which type of storage to mount? [local/nas/cloud] " REPLY
 REPLY="${REPLY,,}"
 
-case "$REPLY" in
-  l|local)
-    mount_local_disk;;
+while [[ ! "$REPLY" =~ ^(local|nas|cloud|quit|q)$ ]]; do
+  read -rep " Please enter a valid value: " REPLY
+  REPLY="${REPLY,,}"
+done
 
-  r|remote)
-    read -rep "Provider: [Nas/drive/dropbox] " PROVIDER
-    PROVIDER="${PROVIDER:-"nas"}"
-    PROVIDER="${PROVIDER,,}"
+if [ "$REPLY" = "local" ]; then
+  mount_local_disk
+elif [ "$REPLY" = "nas" ]; then
+  mount_network_disk
+elif [ "$REPLY" = "cloud" ]; then
+  read -rep "Which storage provider to sync with? [drive/dropbox] " REPLY
+  REPLY="${REPLY,,}"
 
-    case "$PROVIDER" in
-      nas) mount_network_disk;;
-      drive) mount_remote "drive";;
-      dropbox) mount_remote "dropbox";;
+  while [[ ! "$REPLY" =~ ^(drive|dropbox|quit|q)$ ]]; do
+    read -rep " Please enter a valid value: " REPLY
+    REPLY="${REPLY,,}"
+  done
 
-      *)
-        echo "Provider $PROVIDER is not supported";;
-    esac;;
+  if [[ "$REPLY" = ^(q|quit)$ ]]; then
+    exit 0
+  fi
 
-  q|quit)
-    clear && exit;;
-
-  *)
-    echo "Unknown or invalid user input";;
-esac
+  mount_remote "$REPLY"
+elif [[ "$REPLY" = ^(q|quit)$ ]]; then
+  exit 0
+else
+  echo "Unknown or invalid user input"
+fi
 
 read -p "Press any key to exit..."
