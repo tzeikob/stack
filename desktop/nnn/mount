@@ -116,7 +116,7 @@ mount_remote () {
   REMOTE_NAME="${REMOTE_NAME:-"drive"}"
   REMOTE_NAME="${REMOTE_NAME,,}"
 
-  if remote_exists "$REMOTE_NAME:"; then
+  if remote_exists "$REMOTE_NAME"; then
     local REPLY=""
     read -rep "Found remote $REMOTE_NAME, do you want to unmount it? [y/N] " REPLY
     REPLY="${REPLY:-"no"}"
