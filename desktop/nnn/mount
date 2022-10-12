@@ -76,38 +76,51 @@ mount_network_disk () {
   fi
 }
 
+remote_exists () {
+  local REMOTE_NAME=$1
+
+  if rclone listremotes | grep -w "$REMOTE_NAME:" > /dev/null; then
+    return 0
+  fi
+
+  return 1
+}
+
+unmount_remote () {
+  local REMOTE_NAME=$1
+
+  echo "Unmounting remote $REMOTE_NAME..."
+
+  local MOUNT_POINTS=($(grep -E "$REMOTE_NAME:.* fuse.rclone" /proc/mounts | awk '{print $2}'))
+  for MOUNT_POINT in ${MOUNT_POINTS[@]}; do
+    fusermount -uz "$MOUNT_POINT"
+
+    if [[ "$?" -eq 0 ]]; then
+      find "$MOUNT_POINT" -maxdepth 0 -empty -exec rm -rf {} \;
+      echo "Local folder $MOUNT_POINT has been unmounted"
+    else
+      echo "Failed to unmount $MOUNT_POINT, make sure folder isn't busy"
+    fi
+  done
+
+  rclone config delete "$REMOTE_NAME" &&
+    echo "Remote $REMOTE_NAME deleted successfully" ||
+    echo "Failed to delete remote $REMOTE_NAME"
+}
+
 mount_google_drive () {
   local REMOTE_NAME=""
   read -rep "Remote name: [drive] " REMOTE_NAME
   REMOTE_NAME="${REMOTE_NAME:-"drive"}"
   REMOTE_NAME="${REMOTE_NAME,,}"
 
-  if rclone listremotes | grep -w "$REMOTE_NAME:" > /dev/null; then
+  if remote_exists "$REMOTE_NAME:"; then
     local REPLY=""
     read -rep "Found remote $REMOTE_NAME, do you want to unmount it? [y/N] " REPLY
     REPLY="${REPLY:-"no"}"
     REPLY="${REPLY,,}"
 
-    if [[ "$REPLY" =~ ^(y|yes)$ ]]; then
-      echo "Unmounting remote $REMOTE_NAME..."
-
-      local MOUNT_POINTS=($(grep -E "$REMOTE_NAME:.* fuse.rclone" /proc/mounts | awk '{print $2}'))
-      for MOUNT_POINT in ${MOUNT_POINTS[@]}; do
-        fusermount -uz "$MOUNT_POINT"
-
-        if [[ "$?" -eq 0 ]]; then
-          find "$MOUNT_POINT" -maxdepth 0 -empty -exec rm -rf {} \;
-          echo "Local folder $MOUNT_POINT has been unmounted"
-        else
-          echo "Failed to unmount $MOUNT_POINT, make sure folder isn't busy"
-          return 1
-        fi
-      done
-
-      rclone config delete "$REMOTE_NAME" &&
-        echo "Remote $REMOTE_NAME deleted successfully" ||
-        echo "Failed to delete remote $REMOTE_NAME"
-    fi
+    [[ "$REPLY" =~ ^(y|yes)$ ]] && unmount_remote "$REMOTE_NAME"
   else
     local CLIENT_ID=""
     read -rep "Client ID: " CLIENT_ID
@@ -146,32 +159,13 @@ mount_dropbox () {
   REMOTE_NAME="${REMOTE_NAME:-"dropbox"}"
   REMOTE_NAME="${REMOTE_NAME,,}"
 
-  if rclone listremotes | grep -w "$REMOTE_NAME:" > /dev/null; then
+  if remote_exists "$REMOTE_NAME:"; then
     local REPLY=""
     read -rep "Found remote $REMOTE_NAME, do you want to unmount it? [y/N] " REPLY
     REPLY="${REPLY:-"no"}"
     REPLY="${REPLY,,}"
 
-    if [[ "$REPLY" =~ ^(y|yes)$ ]]; then
-      echo "Unmounting remote $REMOTE_NAME..."
-
-      local MOUNT_POINTS=($(grep -E "$REMOTE_NAME:.* fuse.rclone" /proc/mounts | awk '{print $2}'))
-      for MOUNT_POINT in ${MOUNT_POINTS[@]}; do
-        fusermount -uz "$MOUNT_POINT"
-
-        if [[ "$?" -eq 0 ]]; then
-          find "$MOUNT_POINT" -maxdepth 0 -empty -exec rm -rf {} \;
-          echo "Local folder $MOUNT_POINT has been unmounted"
-        else
-          echo "Failed to unmount $MOUNT_POINT, make sure folder isn't busy"
-          return 1
-        fi
-      done
-
-      rclone config delete "$REMOTE_NAME" &&
-        echo "Remote $REMOTE_NAME deleted successfully" ||
-        echo "Failed to delete remote $REMOTE_NAME"
-    fi
+    [[ "$REPLY" =~ ^(y|yes)$ ]] && unmount_remote "$REMOTE_NAME"
   else
     local CLIENT_ID=""
     read -rep "Client ID: " CLIENT_ID
