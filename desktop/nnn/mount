@@ -135,7 +135,7 @@ mount_remote () {
       read -rep "Root folder: " ROOT_FOLDER
     fi
 
-    local MOUNT_FOLDER="$MOUNT_HOME/$STORAGE/$REMOTE_NAME"
+    local MOUNT_FOLDER="$MOUNT_HOME/$REMOTE_NAME"
 
     rclone config create "$REMOTE_NAME" "$STORAGE" client_id="$CLIENT_ID" client_secret="$CLIENT_SECRET" \
       $([ "$STORAGE" = "drive" ] && echo "root_folder_id="$ROOT_FOLDER" scope=drive") &&
