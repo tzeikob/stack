@@ -153,3 +153,11 @@ super + n
 # Launch music player
 super + alt + m
   $TERMINAL -e mocp
+
+# Shot a region of the screen
+super + alt + s
+  scrot -s $HOME/images/$(date +"%Y-%m-%d-%H-%M-%S")-screenshot.png
+
+# Cast a region of the screen
+super + alt + ctrl + s
+  $TERMINAL -e screencast -S -n $HOME/videos/$(date +"%Y-%m-%d-%H-%M-%S")-screencast.mkv

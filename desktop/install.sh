@@ -242,6 +242,14 @@ install_screen_locker () {
   echo -e "Screen locker has been installed"
 }
 
+install_screencaster () {
+  echo "Installing screen casting tools..."
+
+  sudo pacman -S slop scrot screencast || exit 1
+
+  echo "Screen casting tools have been installed"
+}
+
 install_calculator () {
   echo "Installing calculator..."
 
@@ -422,6 +430,7 @@ install_compositor &&
   install_launchers &&
   install_login_Screen &&
   install_screen_locker &&
+  install_screencaster &&
   install_calculator &&
   install_media_apps &&
   install_theme &&
