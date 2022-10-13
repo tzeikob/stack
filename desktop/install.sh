@@ -182,7 +182,7 @@ install_notifier () {
   cp ~/stack/desktop/dunst/dunstrc ~/.config/dunst
   cp ~/stack/desktop/dunst/alert.sh ~/.config/dunst
 
-  sudo ~/stack/assets/drip.ogg /usr/share/sounds/dunst
+  sudo cp ~/stack/assets/drip.ogg /usr/share/sounds/dunst
 
   echo "Notifications server has been installed"
 }
