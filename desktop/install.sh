@@ -212,6 +212,16 @@ install_login_screen () {
   echo "Login screen has been set"
 }
 
+install_monitors () {
+  echo "Installing monitoring tools..."
+
+  sudo pacman -S --noconfirm htop glances || exit 1
+
+  sudo cp ~/stack/desktop/glances/desktop /usr/share/applications/glances.desktop
+
+  echo "Monitoring tools have been installed"
+}
+
 install_screen_locker () {
   echo "Installing the screen locker..."
 
