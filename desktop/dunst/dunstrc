@@ -58,8 +58,8 @@
     browser = /usr/bin/xdg-open
     always_run_script = true
 
-    title = Dunst
-    class = Dunst
+    title = Notification
+    class = Notification
 
     corner_radius = 2
 
