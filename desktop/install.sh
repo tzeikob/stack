@@ -191,7 +191,7 @@ install_launchers () {
   echo "Launchers has been installed"
 }
 
-install_login_Screen () {
+install_login_screen () {
   echo "Setting up the getty login screen..."
 
   sudo pacman -S --noconfirm figlet || exit 1
@@ -428,7 +428,7 @@ install_compositor &&
   install_trash &&
   install_bars &&
   install_launchers &&
-  install_login_Screen &&
+  install_login_screen &&
   install_screen_locker &&
   install_screencaster &&
   install_calculator &&
