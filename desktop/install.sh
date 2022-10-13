@@ -173,6 +173,20 @@ install_bars () {
   echo "Status bars have been installed"
 }
 
+install_notifier () {
+  echo "Installing notifications server..."
+
+  sudo pacman -S --noconfirm dunst || exit 1
+
+  mkdir -p ~/.config/dunst
+  cp ~/stack/desktop/dunst/dunstrc ~/.config/dunst
+  cp ~/stack/desktop/dunst/alert.sh ~/.config/dunst
+
+  sudo ~/stack/assets/drip.ogg /usr/share/sounds/dunst
+
+  echo "Notifications server has been installed"
+}
+
 install_launchers () {
   echo "Setting up the launchers via rofi..."
 
@@ -439,6 +453,7 @@ install_compositor &&
   install_file_manager &&
   install_trash &&
   install_bars &&
+  install_notifier &&
   install_launchers &&
   install_login_screen &&
   install_screen_locker &&
