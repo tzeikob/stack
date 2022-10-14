@@ -456,6 +456,7 @@ install_compositor &&
   install_notifier &&
   install_launchers &&
   install_login_screen &&
+  install_monitors &&
   install_screen_locker &&
   install_screencasters &&
   install_calculator &&
