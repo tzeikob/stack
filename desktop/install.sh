@@ -236,6 +236,16 @@ install_monitors () {
   echo "Monitoring tools have been installed"
 }
 
+install_break_timer () {
+  echo "Installing the break timer tool..."
+
+  yay -S --noconfirm --removemake breaktimer-bin || exit 1
+
+  cp ~/stack/desktop/break/config.json ~/.config/BreakTimer/config.json
+
+  echo "Break timer tool has been installed"
+}
+
 install_screen_locker () {
   echo "Installing the screen locker..."
 
@@ -457,6 +467,7 @@ install_compositor &&
   install_launchers &&
   install_login_screen &&
   install_monitors &&
+  install_break_timer &&
   install_screen_locker &&
   install_screencasters &&
   install_calculator &&
