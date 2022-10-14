@@ -8,7 +8,7 @@
     offset = 8x48
     scale = 0
 
-    notification_limit = 0
+    notification_limit = 1
 
     progress_bar = true
     progress_bar_height = 10
@@ -75,20 +75,20 @@
     per_monitor_dpi = false
 
 [urgency_low]
-    background = "#ffffff"
-    foreground = "#000000"
+    background = "#282a36"
+    foreground = "#ffffff"
     timeout = 10
     #default_icon = /path/to/icon
 
 [urgency_normal]
-    background = "#ffffff"
-    foreground = "#000000"
+    background = "#282a36"
+    foreground = "#ffffff"
     timeout = 10
     #default_icon = /path/to/icon
 
 [urgency_critical]
-    background = "#ffffff"
-    foreground = "#000000"
+    background = "#282a36"
+    foreground = "#ffffff"
     timeout = 0
     #default_icon = /path/to/icon
 
