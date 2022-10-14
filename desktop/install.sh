@@ -271,7 +271,7 @@ install_screencasters () {
 
   sudo pacman -S --noconfirm scrot || exit 1
 
-  yay -S --noconfirm slop screencast || exit 1
+  yay -S --noconfirm --mflags --nocheck slop screencast || exit 1
 
   echo "Screen casting tools have been installed"
 }
