@@ -209,7 +209,7 @@ install_login_screen () {
   echo "Setting up the getty login screen..."
 
   sudo pacman -S --noconfirm figlet || exit 1
-  yay -S --noconfirm figlet-fonts figlet-fonts-extra || exit 1
+  yay -S --noconfirm --removemake figlet-fonts figlet-fonts-extra || exit 1
 
   sudo mv /etc/issue /etc/issue.bak
   sudo cp ~/stack/desktop/getty/issue.sh /etc
@@ -281,7 +281,7 @@ install_screencasters () {
 
   sudo pacman -S --noconfirm scrot || exit 1
 
-  yay -S --noconfirm --mflags --nocheck slop screencast || exit 1
+  yay -S --noconfirm --removemake --mflags --nocheck slop screencast || exit 1
 
   echo "Screen casting tools have been installed"
 }
@@ -289,7 +289,7 @@ install_screencasters () {
 install_calculator () {
   echo "Installing calculator..."
 
-  yay -S --noconfirm libqalculate kalker || exit 1
+  yay -S --noconfirm --removemake libqalculate kalker || exit 1
 
   sudo cp ~/stack/desktop/kalker/desktop /usr/share/applications/kalker.desktop
   sudo cp ~/stack/desktop/qalculate/desktop /usr/share/applications/qalculate.desktop

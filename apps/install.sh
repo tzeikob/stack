@@ -13,7 +13,7 @@ install_firefox () {
 install_chrome () {
   echo "Installing the chrome browser..."
 
-  yay -S --noconfirm google-chrome || exit 1
+  yay -S --noconfirm --removemake google-chrome || exit 1
 
   echo -e "Chrome has been installed\n"
 }
@@ -21,7 +21,7 @@ install_chrome () {
 install_brave () {
   echo "Installing the brave browser..."
 
-  yay -S --noconfirm brave-bin || exit 1
+  yay -S --noconfirm --removemake brave-bin || exit 1
 
   echo -e "Brave has been installed\n"
 }
@@ -29,7 +29,7 @@ install_brave () {
 install_tor () {
   echo "Installing the tor browser..."
 
-  yay -S --noconfirm tor tor-browser || exit 1
+  yay -S --noconfirm --removemake tor tor-browser || exit 1
 
   echo -e "Tor has been installed\n"
 }
@@ -170,7 +170,7 @@ install_code () {
 install_sublime () {
   echo "Installing the sublime text editor..."
 
-  yay -S --noconfirm sublime-text-4 || exit 1
+  yay -S --noconfirm --removemake sublime-text-4 || exit 1
 
   echo -e "Sublime text has been installed\n"
 }
@@ -186,7 +186,7 @@ install_neovim () {
 install_eclipse () {
   echo "Installing eclipse..."
 
-  yay -S --noconfirm eclipse-jee || exit 1
+  yay -S --noconfirm --removemake eclipse-jee || exit 1
 
   echo -e "Eclipse has been installed\n"
 }
@@ -194,7 +194,7 @@ install_eclipse () {
 install_intellij () {
   echo "Installing IntelliJ Idea community..."
 
-  yay -S --noconfirm intellij-idea-ce || exit 1
+  yay -S --noconfirm --removemake intellij-idea-ce || exit 1
 
   sudo sed -ri 's/^Exec=(.*)/Exec=env _JAVA_AWT_WM_NONREPARENTING=1 \1/' \
     /usr/share/applications/intellij-idea-ce.desktop
@@ -205,7 +205,7 @@ install_intellij () {
 install_webstorm () {
   echo "Installing WebStorm editor..."
 
-  yay -S --noconfirm webstorm || exit 1
+  yay -S --noconfirm --removemake webstorm || exit 1
 
   sudo sed -ri 's/^Exec=(.*)/Exec=env _JAVA_AWT_WM_NONREPARENTING=1 \1/' \
     /usr/share/applications/jetbrains-webstorm.desktop
@@ -216,7 +216,7 @@ install_webstorm () {
 install_goland () {
   echo "Installing GoLand editor..."
 
-  yay -S --noconfirm goland || exit 1
+  yay -S --noconfirm --removemake goland || exit 1
 
   sudo sed -ri 's/^Exec=(.*)/Exec=env _JAVA_AWT_WM_NONREPARENTING=1 \1/' \
     /usr/share/applications/jetbrains-goland.desktop
@@ -227,7 +227,7 @@ install_goland () {
 install_phpstorm () {
   echo "Installing PHPStorm editor..."
 
-  yay -S --noconfirm phpstorm || exit 1
+  yay -S --noconfirm --removemake phpstorm || exit 1
 
   sudo sed -ri 's/^Exec=(.*)/Exec=env _JAVA_AWT_WM_NONREPARENTING=1 \1/' \
     /usr/share/applications/jetbrains-phpstorm.desktop
@@ -249,7 +249,7 @@ install_pycharm () {
 install_rubymine () {
   echo "Installing RubyMine editor..."
 
-  yay -S --noconfirm rubymine || exit 1
+  yay -S --noconfirm --removemake rubymine || exit 1
 
   sudo sed -ri 's/^Exec=(.*)/Exec=env _JAVA_AWT_WM_NONREPARENTING=1 \1/' \
     /usr/share/applications/rubymine.desktop
@@ -260,7 +260,7 @@ install_rubymine () {
 install_postman () {
   echo "Installing the postman..."
 
-  yay -S --noconfirm postman-bin || exit 1
+  yay -S --noconfirm --removemake postman-bin || exit 1
 
   echo -e "Postman has been installed\n"
 }
@@ -268,7 +268,7 @@ install_postman () {
 install_compass () {
   echo "Installing mongodb compass..."
 
-  yay -S --noconfirm mongodb-compass || exit 1
+  yay -S --noconfirm --removemake mongodb-compass || exit 1
 
   echo -e "MongoDB Compass has been installed\n"
 }
@@ -276,7 +276,7 @@ install_compass () {
 install_robo3t () {
   echo "Installing Robo3t..."
 
-  yay -S --noconfirm robo3t-bin || exit 1
+  yay -S --noconfirm --removemake robo3t-bin || exit 1
 
   echo -e "Robo3t has been installed\n"
 }
@@ -284,7 +284,7 @@ install_robo3t () {
 install_studio3t () {
   echo "Installing Studio3t..."
 
-  yay -S --noconfirm studio-3t || exit 1
+  yay -S --noconfirm --removemake studio-3t || exit 1
 
   echo -e "Studio3t has been installed\n"
 }
@@ -300,7 +300,7 @@ install_dbeaver () {
 install_slack () {
   echo "Installing the slack..."
 
-  yay -S --noconfirm slack-desktop || exit 1
+  yay -S --noconfirm --removemake slack-desktop || exit 1
 
   echo -e "Slack has been installed\n"
 }
@@ -316,7 +316,7 @@ install_discord () {
 install_skype () {
   echo "Installing the skype..."
 
-  yay -S --noconfirm skypeforlinux-stable-bin || exit 1
+  yay -S --noconfirm --removemake skypeforlinux-stable-bin || exit 1
 
   echo -e "Skype has been installed\n"
 }
@@ -324,7 +324,7 @@ install_skype () {
 install_teams () {
   echo "Installing the teams..."
 
-  yay -S --noconfirm teams || exit 1
+  yay -S --noconfirm --removemake teams || exit 1
 
   echo -e "Teams has been installed\n"
 }
@@ -388,7 +388,7 @@ install_evince () {
 install_teamviewer () {
   echo "Installing the team viewer... "
 
-  yay -S --noconfirm teamviewer || exit 1
+  yay -S --noconfirm --removemake teamviewer || exit 1
 
   echo "Enabling daemon service..."
 
@@ -402,7 +402,7 @@ install_teamviewer () {
 install_anydesk () {
   echo "Installing the AnyDesk... "
 
-  yay -S --noconfirm anydesk-bin || exit 1
+  yay -S --noconfirm --removemake anydesk-bin || exit 1
 
   echo "Enabling daemon service..."
 
@@ -489,7 +489,7 @@ install_vmware () {
   echo "Installing the VMware..."
 
   sudo pacman -S --noconfirm fuse2 gtkmm pcsclite libcanberra &&
-    yay -S --noconfirm --needed vmware-workstation  > /dev/null || exit 1
+    yay -S --noconfirm --needed --removemake vmware-workstation  > /dev/null || exit 1
 
   echo "Enabling vmware services..."
 
