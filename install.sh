@@ -21,7 +21,7 @@ install () {
     SCRIPT_FILE="/home/${ME}/stack/scripts/${1}.sh"
   fi
 
-  arch-chroot /mnt runuser -u "$ME" -- "$SCRIPT_FILE" > >(tee -a "$LOG") 2>&1;;
+  arch-chroot /mnt runuser -u "$ME" -- "$SCRIPT_FILE" > >(tee -a "$LOG") 2>&1
 }
 
 abort () {
