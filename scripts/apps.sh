@@ -85,7 +85,7 @@ install_bun () {
 
   bash ~/stack/bun-install.sh || exit 1
 
-  echo -e '\nexport BUN_INSTALL="$HOME./bun"' >> ~/.bashrc
+  echo -e '\nexport BUN_INSTALL="$HOME/.bun"' >> ~/.bashrc
   echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> ~/.bashrc
 
   echo -e "Bun has been installed\n"
