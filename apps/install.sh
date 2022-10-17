@@ -196,8 +196,9 @@ install_intellij () {
 
   yay -S --noconfirm --removemake intellij-idea-ce || exit 1
 
-  sudo sed -ri 's/^Exec=(.*)/Exec=env _JAVA_AWT_WM_NONREPARENTING=1 \1/' \
-    /usr/share/applications/intellij-idea-ce.desktop
+  cp /usr/share/applications/intellij-idea-ce.desktop ~/.local/share/applications
+  sed -ri 's/^Exec=(.*)/Exec=env _JAVA_AWT_WM_NONREPARENTING=1 \1/' \
+    ~/.local/share/applications/intellij-idea-ce.desktop
 
   echo -e "IntelliJ Idea community has been installed\n"
 }
@@ -207,8 +208,9 @@ install_webstorm () {
 
   yay -S --noconfirm --removemake webstorm || exit 1
 
-  sudo sed -ri 's/^Exec=(.*)/Exec=env _JAVA_AWT_WM_NONREPARENTING=1 \1/' \
-    /usr/share/applications/jetbrains-webstorm.desktop
+  cp /usr/share/applications/jetbrains-webstorm.desktop ~/.local/share/applications
+  sed -ri 's/^Exec=(.*)/Exec=env _JAVA_AWT_WM_NONREPARENTING=1 \1/' \
+    ~/.local/share/applications/jetbrains-webstorm.desktop
 
   echo -e "WebStorm editor has been installed\n"
 }
@@ -218,8 +220,9 @@ install_goland () {
 
   yay -S --noconfirm --removemake goland || exit 1
 
-  sudo sed -ri 's/^Exec=(.*)/Exec=env _JAVA_AWT_WM_NONREPARENTING=1 \1/' \
-    /usr/share/applications/jetbrains-goland.desktop
+  cp /usr/share/applications/jetbrains-goland.desktop ~/.local/share/applications
+  sed -ri 's/^Exec=(.*)/Exec=env _JAVA_AWT_WM_NONREPARENTING=1 \1/' \
+    ~/.local/share/applications/jetbrains-goland.desktop
 
   echo -e "GoLand editor has been installed\n"
 }
@@ -229,8 +232,9 @@ install_phpstorm () {
 
   yay -S --noconfirm --removemake phpstorm || exit 1
 
-  sudo sed -ri 's/^Exec=(.*)/Exec=env _JAVA_AWT_WM_NONREPARENTING=1 \1/' \
-    /usr/share/applications/jetbrains-phpstorm.desktop
+  cp /usr/share/applications/jetbrains-phpstorm.desktop ~/.local/share/applications
+  sed -ri 's/^Exec=(.*)/Exec=env _JAVA_AWT_WM_NONREPARENTING=1 \1/' \
+    ~/.local/share/applications/jetbrains-phpstorm.desktop
 
   echo -e "PHPStorm editor has been installed\n"
 }
@@ -240,8 +244,9 @@ install_pycharm () {
 
   sudo pacman -S --noconfirm pycharm-community-edition || exit 1
 
-  sudo sed -ri 's/^Exec=(.*)/Exec=env _JAVA_AWT_WM_NONREPARENTING=1 \1/' \
-    /usr/share/applications/pycharm.desktop
+  cp /usr/share/applications/pycharm.desktop ~/.local/share/applications
+  sed -ri 's/^Exec=(.*)/Exec=env _JAVA_AWT_WM_NONREPARENTING=1 \1/' \
+    ~/.local/share/applications/pycharm.desktop
 
   echo -e "PyCharm community has been installed\n"
 }
@@ -251,8 +256,9 @@ install_rubymine () {
 
   yay -S --noconfirm --removemake rubymine || exit 1
 
-  sudo sed -ri 's/^Exec=(.*)/Exec=env _JAVA_AWT_WM_NONREPARENTING=1 \1/' \
-    /usr/share/applications/rubymine.desktop
+  cp /usr/share/applications/rubymine.desktop ~/.local/share/applications
+  sed -ri 's/^Exec=(.*)/Exec=env _JAVA_AWT_WM_NONREPARENTING=1 \1/' \
+    ~/.local/share/applications/rubymine.desktop
 
   echo -e "RubyMine editor has been installed\n"
 }
@@ -334,7 +340,7 @@ install_irssi () {
 
   sudo pacman -S --noconfirm irssi || exit 1
 
-  sudo cp ~/stack/apps/irssi/desktop /usr/share/applications/irssi.desktop
+  cp ~/stack/apps/irssi/desktop ~/.local/share/applications/irssi.desktop
 
   echo -e "Irssi clinet has been installed\n"
 }

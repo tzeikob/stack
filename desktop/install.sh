@@ -231,7 +231,7 @@ install_monitors () {
 
   sudo pacman -S --noconfirm htop glances || exit 1
 
-  sudo cp ~/stack/desktop/glances/desktop /usr/share/applications/glances.desktop
+  cp ~/stack/desktop/glances/desktop ~/.local/share/applications/glances.desktop
 
   echo "Monitoring tools have been installed"
 }
@@ -291,8 +291,8 @@ install_calculator () {
 
   yay -S --noconfirm --removemake libqalculate kalker || exit 1
 
-  sudo cp ~/stack/desktop/kalker/desktop /usr/share/applications/kalker.desktop
-  sudo cp ~/stack/desktop/qalculate/desktop /usr/share/applications/qalculate.desktop
+  cp ~/stack/desktop/kalker/desktop ~/.local/share/applications/kalker.desktop
+  cp ~/stack/desktop/qalculate/desktop ~/.local/share/applications/qalculate.desktop
 
   echo "Calculator has been installed"
 }
@@ -316,7 +316,7 @@ install_media_apps () {
   cp ~/stack/desktop/moc/dark "$CONFIG_HOME/themes"
   chmod 644 "$CONFIG_HOME/themes/dark"
 
-  sudo cp ~/stack/desktop/moc/desktop /usr/share/applications/moc.desktop
+  cp ~/stack/desktop/moc/desktop ~/.local/share/applications/moc.desktop
 
   printf '%s\n' \
     'image/jpeg=sxiv.desktop' \
