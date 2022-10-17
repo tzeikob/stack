@@ -196,7 +196,9 @@ install_intellij () {
 
   yay -S --noconfirm --removemake intellij-idea-ce || exit 1
 
+  mkdir -p ~/.local/share/applications
   cp /usr/share/applications/intellij-idea-ce.desktop ~/.local/share/applications
+
   sed -ri 's/^Exec=(.*)/Exec=env _JAVA_AWT_WM_NONREPARENTING=1 \1/' \
     ~/.local/share/applications/intellij-idea-ce.desktop
 
@@ -208,7 +210,9 @@ install_webstorm () {
 
   yay -S --noconfirm --removemake webstorm || exit 1
 
+  mkdir -p ~/.local/share/applications
   cp /usr/share/applications/jetbrains-webstorm.desktop ~/.local/share/applications
+
   sed -ri 's/^Exec=(.*)/Exec=env _JAVA_AWT_WM_NONREPARENTING=1 \1/' \
     ~/.local/share/applications/jetbrains-webstorm.desktop
 
@@ -220,7 +224,9 @@ install_goland () {
 
   yay -S --noconfirm --removemake goland || exit 1
 
+  mkdir -p ~/.local/share/applications
   cp /usr/share/applications/jetbrains-goland.desktop ~/.local/share/applications
+
   sed -ri 's/^Exec=(.*)/Exec=env _JAVA_AWT_WM_NONREPARENTING=1 \1/' \
     ~/.local/share/applications/jetbrains-goland.desktop
 
@@ -232,7 +238,9 @@ install_phpstorm () {
 
   yay -S --noconfirm --removemake phpstorm || exit 1
 
+  mkdir -p ~/.local/share/applications
   cp /usr/share/applications/jetbrains-phpstorm.desktop ~/.local/share/applications
+
   sed -ri 's/^Exec=(.*)/Exec=env _JAVA_AWT_WM_NONREPARENTING=1 \1/' \
     ~/.local/share/applications/jetbrains-phpstorm.desktop
 
@@ -244,7 +252,9 @@ install_pycharm () {
 
   sudo pacman -S --noconfirm pycharm-community-edition || exit 1
 
+  mkdir -p ~/.local/share/applications
   cp /usr/share/applications/pycharm.desktop ~/.local/share/applications
+
   sed -ri 's/^Exec=(.*)/Exec=env _JAVA_AWT_WM_NONREPARENTING=1 \1/' \
     ~/.local/share/applications/pycharm.desktop
 
@@ -256,7 +266,9 @@ install_rubymine () {
 
   yay -S --noconfirm --removemake rubymine || exit 1
 
+  mkdir -p ~/.local/share/applications
   cp /usr/share/applications/rubymine.desktop ~/.local/share/applications
+
   sed -ri 's/^Exec=(.*)/Exec=env _JAVA_AWT_WM_NONREPARENTING=1 \1/' \
     ~/.local/share/applications/rubymine.desktop
 
@@ -340,6 +352,7 @@ install_irssi () {
 
   sudo pacman -S --noconfirm irssi || exit 1
 
+  mkdir -p ~/.local/share/applications
   cp ~/stack/resources/irssi/desktop ~/.local/share/applications/irssi.desktop
 
   echo -e "Irssi clinet has been installed\n"

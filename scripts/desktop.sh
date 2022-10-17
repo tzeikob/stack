@@ -231,6 +231,7 @@ install_monitors () {
 
   sudo pacman -S --noconfirm htop glances || exit 1
 
+  mkdir -p ~/.local/share/applications
   cp ~/stack/resources/glances/desktop ~/.local/share/applications/glances.desktop
 
   echo "Monitoring tools have been installed"
@@ -291,6 +292,7 @@ install_calculator () {
 
   yay -S --noconfirm --removemake libqalculate kalker || exit 1
 
+  mkdir -p ~/.local/share/applications
   cp ~/stack/resources/kalker/desktop ~/.local/share/applications/kalker.desktop
   cp ~/stack/resources/qalculate/desktop ~/.local/share/applications/qalculate.desktop
 
@@ -316,6 +318,7 @@ install_media_apps () {
   cp ~/stack/resources/moc/dark "$CONFIG_HOME/themes"
   chmod 644 "$CONFIG_HOME/themes/dark"
 
+  mkdir -p ~/.local/share/applications
   cp ~/stack/resources/moc/desktop ~/.local/share/applications/moc.desktop
 
   printf '%s\n' \
