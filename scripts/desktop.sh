@@ -10,7 +10,7 @@ install_compositor () {
   local CONFIG_HOME=~/.config/picom
   mkdir -p "$CONFIG_HOME"
 
-  cp ~/stack/desktop/picom/picom.conf "$CONFIG_HOME"
+  cp ~/stack/resources/picom/picom.conf "$CONFIG_HOME"
 
   if [ "$VIRTUAL_VENDOR" = "oracle" ]; then
     echo "Virtual box machine detected"
@@ -34,13 +34,13 @@ install_window_manager () {
   local CONFIG_HOME=~/.config/bspwm
   mkdir -p "$CONFIG_HOME"
 
-  cp ~/stack/desktop/bspwm/bspwmrc "$CONFIG_HOME"
+  cp ~/stack/resources/bspwm/bspwmrc "$CONFIG_HOME"
   chmod 755 "$CONFIG_HOME/bspwmrc"
 
-  cp ~/stack/desktop/bspwm/rules "$CONFIG_HOME"
+  cp ~/stack/resources/bspwm/rules "$CONFIG_HOME"
   chmod 755 "$CONFIG_HOME/rules"
 
-  cp ~/stack/desktop/bspwm/resize.sh "$CONFIG_HOME"
+  cp ~/stack/resources/bspwm/resize.sh "$CONFIG_HOME"
   chmod 755 "$CONFIG_HOME/resize.sh"
 
   echo "exec bspwm" >> ~/.xinitrc
@@ -58,7 +58,7 @@ install_terminals () {
   echo "export TERMINAL=alacritty" >> ~/.bashrc
 
   mkdir -p ~/.config/alacritty
-  cp ~/stack/desktop/alacritty/alacritty.yml ~/.config/alacritty
+  cp ~/stack/resources/alacritty/alacritty.yml ~/.config/alacritty
 
   sed -i '/PS1.*/d' ~/.bashrc
   printf '%s\n' \
@@ -93,7 +93,7 @@ install_file_manager () {
   local CONFIG_HOME=~/.config/nnn
   mkdir -p "$CONFIG_HOME"
 
-  cp ~/stack/desktop/nnn/env "$CONFIG_HOME"
+  cp ~/stack/resources/nnn/env "$CONFIG_HOME"
   echo 'source "$HOME/.config/nnn/env"' >> ~/.bashrc
 
   echo "Installing extra nnn plugins..."
@@ -108,23 +108,23 @@ install_file_manager () {
 
   echo "Extra plugins have been installed"
 
-  cp ~/stack/desktop/nnn/remove "$CONFIG_HOME/plugins"
+  cp ~/stack/resources/nnn/remove "$CONFIG_HOME/plugins"
   chmod 755 "$CONFIG_HOME/plugins/remove"
 
   echo "Plugin remove has been installed"
 
-  cp ~/stack/desktop/nnn/trash "$CONFIG_HOME/plugins"
+  cp ~/stack/resources/nnn/trash "$CONFIG_HOME/plugins"
   chmod 755 "$CONFIG_HOME/plugins/trash"
 
   echo "Plugin trash has been installed"
 
-  cp ~/stack/desktop/nnn/mount "$CONFIG_HOME/plugins"
+  cp ~/stack/resources/nnn/mount "$CONFIG_HOME/plugins"
   chmod 755 "$CONFIG_HOME/plugins/mount"
 
   echo "Plugin mount has been installed"
 
   mkdir -p ~/downloads ~/documents ~/images ~/audios ~/videos ~/virtuals ~/sources ~/data ~/mount
-  cp ~/stack/desktop/nnn/user.dirs ~/.config/user-dirs.dirs
+  cp ~/stack/resources/nnn/user.dirs ~/.config/user-dirs.dirs
 
   echo "User home directories have been created"
 
@@ -143,7 +143,7 @@ install_trash () {
 
   sudo pacman -S --noconfirm trash-cli || exit 1
 
-  sudo cp ~/stack/desktop/trash-cli/alias.sh /usr/local/bin/trash
+  sudo cp ~/stack/resources/trash-cli/alias.sh /usr/local/bin/trash
   sudo chmod 755 /usr/local/bin/trash
 
   echo "Added a proxy binary to orchestrate trash-cli commands"
@@ -163,10 +163,10 @@ install_bars () {
   local CONFIG_HOME=~/.config/polybar
   mkdir -p "$CONFIG_HOME"
 
-  cp ~/stack/desktop/polybar/config.ini "$CONFIG_HOME"
+  cp ~/stack/resources/polybar/config.ini "$CONFIG_HOME"
   chmod 644 "$CONFIG_HOME/config.ini"
 
-  cp ~/stack/desktop/polybar/launch.sh "$CONFIG_HOME"
+  cp ~/stack/resources/polybar/launch.sh "$CONFIG_HOME"
   chmod 755 "$CONFIG_HOME/launch.sh"
 
   echo "Polybar launcher script has been installed"
@@ -179,10 +179,10 @@ install_notifier () {
   sudo pacman -S --noconfirm dunst || exit 1
 
   mkdir -p ~/.config/dunst
-  cp ~/stack/desktop/dunst/dunstrc ~/.config/dunst
-  cp ~/stack/desktop/dunst/alert.sh ~/.config/dunst
+  cp ~/stack/resources/dunst/dunstrc ~/.config/dunst
+  cp ~/stack/resources/dunst/alert.sh ~/.config/dunst
 
-  sudo cp ~/stack/assets/drip.ogg /usr/share/sounds/dunst
+  sudo cp ~/stack/resources/dunst/drip.ogg /usr/share/sounds/dunst
 
   echo "Notifications server has been installed"
 }
@@ -195,10 +195,10 @@ install_launchers () {
   local CONFIG_HOME=~/.config/rofi
   mkdir -p "$CONFIG_HOME"
 
-  cp ~/stack/desktop/rofi/config.rasi "$CONFIG_HOME"
+  cp ~/stack/resources/rofi/config.rasi "$CONFIG_HOME"
   chmod 644 "$CONFIG_HOME/config.rasi"
 
-  sudo cp ~/stack/desktop/rofi/power /usr/local/bin
+  sudo cp ~/stack/resources/rofi/power /usr/local/bin
   sudo chmod 755 /usr/local/bin/power
 
   echo "Power launcher has been installed"
@@ -212,11 +212,11 @@ install_login_screen () {
   yay -S --noconfirm --removemake figlet-fonts figlet-fonts-extra || exit 1
 
   sudo mv /etc/issue /etc/issue.bak
-  sudo cp ~/stack/desktop/getty/issue.sh /etc
+  sudo cp ~/stack/resources/getty/issue.sh /etc
 
   echo "Welcome screen theme has been set"
 
-  sudo cp ~/stack/desktop/getty/login-issue.service /etc/systemd/system
+  sudo cp ~/stack/resources/getty/login-issue.service /etc/systemd/system
   sudo systemctl enable login-issue || exit 1
 
   sudo sed -ri "s;(ExecStart=-/sbin/agetty)(.*);\1 --nohostname\2;" /lib/systemd/system/getty@.service
@@ -231,7 +231,7 @@ install_monitors () {
 
   sudo pacman -S --noconfirm htop glances || exit 1
 
-  cp ~/stack/desktop/glances/desktop ~/.local/share/applications/glances.desktop
+  cp ~/stack/resources/glances/desktop ~/.local/share/applications/glances.desktop
 
   echo "Monitoring tools have been installed"
 }
@@ -241,7 +241,7 @@ install_break_timer () {
 
   yay -S --noconfirm --removemake breaktimer-bin || exit 1
 
-  cp ~/stack/desktop/break/config.json ~/.config/BreakTimer/config.json
+  cp ~/stack/resources/break/config.json ~/.config/BreakTimer/config.json
 
   echo "Break timer tool has been installed"
 }
@@ -291,8 +291,8 @@ install_calculator () {
 
   yay -S --noconfirm --removemake libqalculate kalker || exit 1
 
-  cp ~/stack/desktop/kalker/desktop ~/.local/share/applications/kalker.desktop
-  cp ~/stack/desktop/qalculate/desktop ~/.local/share/applications/qalculate.desktop
+  cp ~/stack/resources/kalker/desktop ~/.local/share/applications/kalker.desktop
+  cp ~/stack/resources/qalculate/desktop ~/.local/share/applications/qalculate.desktop
 
   echo "Calculator has been installed"
 }
@@ -310,13 +310,13 @@ install_media_apps () {
   local CONFIG_HOME=~/.moc
   mkdir -p "$CONFIG_HOME" "$CONFIG_HOME/themes"
 
-  cp ~/stack/desktop/moc/config "$CONFIG_HOME"
+  cp ~/stack/resources/moc/config "$CONFIG_HOME"
   chmod 644 "$CONFIG_HOME/config"
 
-  cp ~/stack/desktop/moc/dark "$CONFIG_HOME/themes"
+  cp ~/stack/resources/moc/dark "$CONFIG_HOME/themes"
   chmod 644 "$CONFIG_HOME/themes/dark"
 
-  cp ~/stack/desktop/moc/desktop ~/.local/share/applications/moc.desktop
+  cp ~/stack/resources/moc/desktop ~/.local/share/applications/moc.desktop
 
   printf '%s\n' \
     'image/jpeg=sxiv.desktop' \
@@ -375,10 +375,10 @@ install_theme () {
   local GTK_HOME=~/.config/gtk-3.0
   mkdir -p "$GTK_HOME"
 
-  cp ~/stack/desktop/gtk/settings.ini "$GTK_HOME"
+  cp ~/stack/resources/gtk/settings.ini "$GTK_HOME"
 
   mkdir -p ~/images/wallpapers
-  cp ~/stack/assets/wallpaper.jpeg ~/images/wallpapers/wallpaper.jpeg
+  cp ~/stack/resources/feh/wallpaper.jpeg ~/images/wallpapers/wallpaper.jpeg
 
   echo "Default wallpaper has been saved to ~/images/wallpapers"
   echo "Theme has been setup"
@@ -441,7 +441,7 @@ setup_bindings () {
   local CONFIG_HOME=~/.config/sxhkd
   mkdir -p "$CONFIG_HOME"
 
-  cp ~/stack/desktop/sxhkd/sxhkdrc "$CONFIG_HOME"
+  cp ~/stack/resources/sxhkd/sxhkdrc "$CONFIG_HOME"
   chmod 644 "$CONFIG_HOME/sxhkdrc"
 
   echo "Key bindings have been set"

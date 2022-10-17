@@ -15,9 +15,9 @@ install () {
 
   case "$1" in
     "system")
-      arch-chroot /mnt "/root/stack/${1}/install.sh" > >(tee -a "$LOG") 2>&1;;
+      arch-chroot /mnt "/root/stack/scripts/${1}.sh" > >(tee -a "$LOG") 2>&1;;
     "desktop" | "apps")
-      arch-chroot /mnt runuser -u "$USERNAME" -- "/home/$USERNAME/stack/${1}/install.sh" > >(tee -a "$LOG") 2>&1;;
+      arch-chroot /mnt runuser -u "$USERNAME" -- "/home/$USERNAME/stack/scripts/${1}.sh" > >(tee -a "$LOG") 2>&1;;
   esac
 }
 
