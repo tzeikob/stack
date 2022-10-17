@@ -11,14 +11,17 @@ run () {
 }
 
 install () {
-  source "$OPTIONS" || exit 1
+  local ME="root"
+  local SCRIPT_FILE="/${ME}/stack/scripts/${1}.sh"
 
-  case "$1" in
-    "system")
-      arch-chroot /mnt "/root/stack/${1}/install.sh" > >(tee -a "$LOG") 2>&1;;
-    "desktop" | "apps")
-      arch-chroot /mnt runuser -u "$USERNAME" -- "/home/$USERNAME/stack/${1}/install.sh" > >(tee -a "$LOG") 2>&1;;
-  esac
+  if [[ "$1" =~ ^(desktop|apps)$ ]]; then
+    source "$OPTIONS" || exit 1
+
+    ME="$USERNAME"
+    SCRIPT_FILE="/home/${ME}/stack/scripts/${1}.sh"
+  fi
+
+  arch-chroot /mnt runuser -u "$ME" -- "$SCRIPT_FILE" > >(tee -a "$LOG") 2>&1
 }
 
 abort () {

@@ -145,7 +145,7 @@ config_pacman () {
 
   echo "GPG keyserver has been set to hkp://keyserver.ubuntu.com"
 
-  cp /root/stack/system/pacman/orphans.hook /usr/share/libalpm/hooks
+  cp /root/stack/resources/pacman/orphans.hook /usr/share/libalpm/hooks
 
   echo "Orphan packages post hook has been created"
   echo "Pacman has been configured"
@@ -207,7 +207,7 @@ install_display_server () {
 
   pacman -S --noconfirm xorg xorg-xinit xorg-xrandr arandr || exit 1
 
-  cp /root/stack/system/xorg/xorg.conf /etc/X11
+  cp /root/stack/resources/xorg/xorg.conf /etc/X11
 
   echo "Server configuration has been saved to /etc/X11/xorg.conf"
 
@@ -218,7 +218,7 @@ install_display_server () {
 
   echo "Keyboard layouts have been set to $LAYOUTS"
 
-  cp /root/stack/system/xorg/xinitrc "/home/$USERNAME/.xinitrc"
+  cp /root/stack/resources/xorg/xinitrc "/home/$USERNAME/.xinitrc"
   chown "$USERNAME":"$USERNAME" "/home/$USERNAME/.xinitrc"
 
   echo "Xinitrc has been saved to /home/$USERNAME/.xinitrc"
