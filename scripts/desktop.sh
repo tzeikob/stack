@@ -65,13 +65,15 @@ install_terminals () {
     'branch () {' \
     '  git branch 2> /dev/null | sed -e "/^[^*]/d" -e "s/* \(.*\)/  [\\1]/"' \
     '}' \
-    'PS1="\W\[\e[0;35m\]\$(branch)\[\e[m\]  "' >> ~/.bashrc
+    'PS1="\W\[\e[0;35m\]\$(branch)\[\e[m\]  "' \
+    'PS2=" "' >> ~/.bashrc
 
   sudo cp /etc/skel/.bash_profile /root
   sudo cp /etc/skel/.bashrc /root
 
   sudo sed -i '/PS1.*/d' /root/.bashrc
   echo "PS1='\[\e[1;31m\]\u\[\e[m\] \W  '" | sudo tee -a /root/.bashrc > /dev/null
+  echo "PS2=' '" | sudo tee -a /root/.bashrc > /dev/null
 
   echo "Terminal prompt hooks have been set"
 
