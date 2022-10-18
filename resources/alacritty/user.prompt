@@ -3,5 +3,29 @@ branch () {
   git branch 2> /dev/null | sed -e "/^[^*]/d" -e "s/* \(.*\)/  [\\1]/"
 }
 
-PS1="\W\[\e[0;35m\]\$(branch)\[\e[m\]  "
+timer_start () {
+  TIMER=${TIMER:-$SECONDS}
+}
+
+timer_stop () {
+  ELLAPSED=$(($SECONDS - $TIMER))
+
+  unset TIMER
+}
+
+trap 'timer_start' DEBUG
+
+if [ "$PROMPT_COMMAND" == "" ]; then
+  PROMPT_COMMAND="timer_stop"
+else
+  PROMPT_COMMAND="$PROMPT_COMMAND; timer_stop"
+fi
+
+if [ $? = 0 ]; then
+  MARK="\[\e[0;33m\]"
+else
+  MARK="\[\e[0;31m\]"
+fi
+
+PS1="${MARK}took \${ELLAPSED}s\[\e[m\] \W\[\e[0;35m\]\$(branch)\[\e[m\]  "
 PS2=" "
