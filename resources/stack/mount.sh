@@ -123,7 +123,7 @@ mount_remote () {
     local CLIENT_SECRET="$REPLY"
 
     if [ "$STORAGE" = "drive" ]; then
-      askem "Enter the root folder ID:"
+      askme "Enter the root folder ID:"
       local ROOT_FOLDER="$REPLY"
     fi
 
