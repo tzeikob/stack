@@ -31,6 +31,10 @@ set_users () {
 
   useradd -m -G "$USERGROUPS" -s /bin/bash "$USERNAME" || exit 1
 
+  local CONFIG_HOME="/home/$USERNAME/.config"
+  mkdir -p "$CONFIG_HOME"
+  chown -R "$USERNAME":"$USERNAME" "$CONFIG_HOME"
+
   local RULE="%wheel ALL=(ALL:ALL) ALL"
   sed -i "s/^# \($RULE\)/\1/" /etc/sudoers
 
@@ -276,6 +280,22 @@ install_drivers () {
   echo "Drivers have been installed"
 }
 
+install_utilities () {
+  echo -e "\nInstalling stack utility binaries..."
+
+  local CONFIG_HOME="/home/$USERNAME/.config/stack"
+  mkdir -p "$CONFIG_HOME"
+
+  cp ~/stack/resources/stack/utils.sh "$CONFIG_HOME"
+  cp ~/stack/resources/stack/mount.sh "$CONFIG_HOME"
+
+  ln -sf "$CONFIG_HOME/mount.sh" /usr/local/bin/mmn
+
+  chown -R "$USERNAME":"$USERNAME" "$CONFIG_HOME"
+
+  echo "Stack utilities have been installed"
+}
+
 config_security () {
   echo -e "\nHardening system's security..."
 
@@ -405,6 +425,7 @@ set_host &&
   install_aur &&
   install_display_server &&
   install_drivers &&
+  install_utilities &&
   config_security &&
   increase_watchers &&
   install_bootloader &&

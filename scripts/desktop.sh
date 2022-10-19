@@ -114,11 +114,6 @@ install_file_manager () {
 
   echo "Plugin trash has been installed"
 
-  cp ~/stack/resources/nnn/mount "$CONFIG_HOME/plugins"
-  chmod 755 "$CONFIG_HOME/plugins/mount"
-
-  echo "Plugin mount has been installed"
-
   mkdir -p ~/downloads ~/documents ~/images ~/audios ~/videos ~/virtuals ~/sources ~/data ~/mount
   cp ~/stack/resources/nnn/user.dirs ~/.config/user-dirs.dirs
 
