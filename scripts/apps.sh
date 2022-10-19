@@ -448,14 +448,6 @@ install_filezilla () {
   echo -e "Filezilla has been installed\n"
 }
 
-install_rclone () {
-  echo "Installing the RClone... "
-
-  sudo pacman -S --noconfirm fuse2 rclone || exit 1
-
-  echo -e "RClone has been installed\n"
-}
-
 install_transmission () {
   echo "Installing the Transmission... "
 

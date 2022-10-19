@@ -716,7 +716,7 @@ while true; do
     opt_in "chat" "slack" "discord" "skype" "teams" "irssi" &&
     opt_in "office" "libreoffice" "xournal" "foliate" "evince" &&
     opt_in "remote" "teamviewer" "anydesk" "tigervnc" &&
-    opt_in "file" "filezilla" "rclone" "transmission" &&
+    opt_in "file" "filezilla" "transmission" &&
     opt_in "virtualization" "docker" "virtualbox" "vmware"
 
   echo "Configuration options have been set to:"
