@@ -128,9 +128,9 @@ what_cpu () {
 
   local CPU=$(lscpu)
 
-  if grep -E "AuthenticAMD" > /dev/null <<< ${CPU}; then
+  if grep -Eq "AuthenticAMD" <<< ${CPU}; then
     CPU="amd"
-  elif grep -E "GenuineIntel" > /dev/null <<< ${CPU}; then
+  elif grep -Eq "GenuineIntel" <<< ${CPU}; then
     CPU="intel"
   else
     CPU="generic"
@@ -161,13 +161,13 @@ what_gpu () {
 
   local GPU=$(lspci)
 
-  if grep -E "NVIDIA|GeForce" > /dev/null <<< ${GPU}; then
+  if grep -Eq "NVIDIA|GeForce" <<< ${GPU}; then
     GPU="nvidia"
-  elif grep -E "Radeon|AMD" > /dev/null <<< ${GPU}; then
+  elif grep -Eq "Radeon|AMD" <<< ${GPU}; then
     GPU="amd"
-  elif grep -E "Integrated Graphics Controller" > /dev/null <<< ${GPU}; then
+  elif grep -Eq "Integrated Graphics Controller" <<< ${GPU}; then
     GPU="intel"
-  elif grep -E "Intel Corporation UHD" > /dev/null <<< ${GPU}; then
+  elif grep -Eq "Intel Corporation UHD" <<< ${GPU}; then
     GPU="intel"
   else
     GPU="generic"

@@ -38,7 +38,7 @@ set_users () {
   local RULE="%wheel ALL=(ALL:ALL) ALL"
   sed -i "s/^# \($RULE\)/\1/" /etc/sudoers
 
-  if ! cat /etc/sudoers | grep "^$RULE" > /dev/null; then
+  if ! cat /etc/sudoers | grep -q "^$RULE"; then
     echo "Error: failed to grant wheel permissions to user $USERNAME"
     exit 1
   fi

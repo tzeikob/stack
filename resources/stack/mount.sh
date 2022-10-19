@@ -50,7 +50,7 @@ mount_network_disk () {
 
   local DEVICE="$PROTOCOL://$HOST/$SHARED_FOLDER"
 
-  if gio mount -l | grep "$DEVICE"; then
+  if gio mount -l | grep -q "$DEVICE"; then
     echo "Found existing network disk with name $DEVICE"
     askme "Do you want to unmount it?" "yes" "no"
 
@@ -74,7 +74,7 @@ mount_network_disk () {
 remote_exists () {
   local REMOTE_NAME=$1
 
-  if rclone listremotes | grep -w "$REMOTE_NAME:" > /dev/null; then
+  if rclone listremotes | grep -qw "$REMOTE_NAME:"; then
     return 0
   fi
 

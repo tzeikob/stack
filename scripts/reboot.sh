@@ -10,7 +10,7 @@ revoke () {
       local RULE="%wheel ALL=(ALL:ALL) NOPASSWD: ALL"
       sed -i "s/^\($RULE\)/# \1/" /mnt/etc/sudoers
 
-      if ! cat /mnt/etc/sudoers | grep "^# $RULE" > /dev/null; then
+      if ! cat /mnt/etc/sudoers | grep -q "^# $RULE"; then
         echo "Error: failed to revoke nopasswd permission from wheel group"
         exit 1
       fi;;
