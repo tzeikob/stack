@@ -5,8 +5,9 @@ source ~/.config/stack/utils.sh
 MOUNT_HOME="$HOME/mount"
 
 mount_local_disk () {
-  lsblk
+  require "udisks2"
 
+  lsblk
   askme "Enter the device name: "
   local DEVICE="$REPLY"
 
@@ -39,6 +40,8 @@ mount_local_disk () {
 }
 
 mount_network_disk () {
+  require "glib2"
+
   askme "Enter the connection protocol:" "smb" "nfs"
   local PROTOCOL="$REPLY"
 
@@ -71,17 +74,9 @@ mount_network_disk () {
   fi
 }
 
-remote_exists () {
-  local REMOTE_NAME=$1
-
-  if rclone listremotes | grep -qw "$REMOTE_NAME:"; then
-    return 0
-  fi
-
-  return 1
-}
-
 unmount_remote () {
+  require "rclone" "fuse"
+
   local REMOTE_NAME=$1
 
   echo "Unmounting remote $REMOTE_NAME..."
@@ -105,12 +100,14 @@ unmount_remote () {
 }
 
 mount_remote () {
+  require "rclone"
+
   local STORAGE=$1
 
   askme "Enter the name of the remote:"
   local REMOTE_NAME="$REPLY"
 
-  if remote_exists "$REMOTE_NAME"; then
+  if rclone listremotes | grep -qw "$REMOTE_NAME:"; then
     echo "Found existing remote with name $REMOTE_NAME"
     askme "Do you want to unmount it?" "yes" "no"
 

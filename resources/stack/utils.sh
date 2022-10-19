@@ -1,5 +1,21 @@
 #!/usr/bin/env bash
 
+abort () {
+  local MESSAGE=${1:-"Something went wrong"}
+  local CODE=${2:-1}
+
+  echo "$MESSAGE"
+  exit $CODE
+}
+
+require () {
+  local PACKAGES=("${@}")
+
+  for PKG in "${PACKAGES[@]}"; do
+    pacman -Qi "$PKG" > /dev/null || abort "Missing $PKG package"
+  done
+}
+
 contains () {
   local ITEM=$1 && shift
   local ARR=("${@}")
@@ -45,4 +61,3 @@ askme () {
     exit 0
   fi
 }
-
