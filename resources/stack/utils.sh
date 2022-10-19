@@ -1,5 +1,20 @@
 #!/usr/bin/env bash
 
+contains () {
+  local ITEM=$1 && shift
+  local ARR=("${@}")
+  local LEN=${#ARR[@]}
+
+  local INDEX=0
+  for ((INDEX = 0; INDEX < $LEN; INDEX++)); do
+    if [ "$ITEM" = "${ARR[$INDEX]}" ]; then
+      return 0
+    fi
+  done
+
+  return 1
+}
+
 askme () {
   local ARGS_LEN=$#
   local PROMPT=$1 && shift
@@ -31,17 +46,3 @@ askme () {
   fi
 }
 
-contains () {
-  local ITEM=$1 && shift
-  local ARR=("${@}")
-  local LEN=${#ARR[@]}
-
-  local INDEX=0
-  for ((INDEX = 0; INDEX < $LEN; INDEX++)); do
-    if [ "$ITEM" = "${ARR[$INDEX]}" ]; then
-      return 0
-    fi
-  done
-
-  return 1
-}
