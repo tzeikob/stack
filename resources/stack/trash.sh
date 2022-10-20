@@ -28,51 +28,33 @@ list_files () {
   trash-list | awk '{print $3}'
 }
 
-ARGS=("$@")
-ARGS_LEN=${#ARGS[@]}
-
-if [ $ARGS_LEN -gt 0 ]; then
-  BEFORE=$(list_files)
-
-  trash-put "${ARGS[@]}"
-
-  AFTER=$(list_files)
-  TRASHED=$(not_present "$AFTER" "$BEFORE")
-
-  echo "The following files are trashed:"
-  echo "$TRASHED" | awk '{print " "$1}'
-  exit 0
-fi
-
-trash-list
-
-askme "Which trash operation to apply?" "restore" "remove" "empty"
-
-if [ "$REPLY" = "restore" ]; then
-  BEFORE=$(list_files)
+restore_files () {
+  local BEFORE=$(list_files)
 
   trash-restore
 
-  AFTER=$(list_files)
-  RESTORED=$(not_present "$BEFORE" "$AFTER")
+  local AFTER=$(list_files)
+  local RESTORED=$(not_present "$BEFORE" "$AFTER")
 
   if [ ! -z "$RESTORED" ]; then
     echo "The following files are restored:"
     echo "$RESTORED" | awk '{print " "$1}'
   fi
-elif [ "$REPLY" = "remove" ]; then
+}
+
+remove_files () {
   askme "Enter a path or pattern to match files for remove:" ".+"
-  FILE_PAT="$REPLY"
+  local FILE_PAT="$REPLY"
 
   askme "ANY MATCHED FILE will be gone, proceed?" "yes" "no"
 
   if [ "$REPLY" = "yes" ]; then
-    BEFORE=$(list_files)
+    local BEFORE=$(list_files)
 
     trash-rm "$FILE_PAT"
 
-    AFTER=$(list_files)
-    GONE=$(not_present "$BEFORE" "$AFTER")
+    local AFTER=$(list_files)
+    local GONE=$(not_present "$BEFORE" "$AFTER")
 
     if [ ! -z "$GONE" ]; then
       echo "The following files are removed:"
@@ -81,19 +63,21 @@ elif [ "$REPLY" = "remove" ]; then
       echo "No matched files found, none is removed."
     fi
   fi
-elif [ "$REPLY" = "empty" ]; then
-  FILES=$(trash-list)
+}
+
+empty_files () {
+  local FILES=$(trash-list)
 
   if [[ ! -z "$FILES" ]]; then
     askme "ALL FILES in trash will be gone, proceed?" "yes" "no"
 
     if [ "$REPLY" = "yes" ]; then
-      BEFORE=$(list_files)
+      local BEFORE=$(list_files)
 
       trash-empty -f
 
-      AFTER=$(list_files)
-      GONE=$(not_present "$BEFORE" "$AFTER")
+      local AFTER=$(list_files)
+      local GONE=$(not_present "$BEFORE" "$AFTER")
 
       echo "The following files are removed:"
       echo "$GONE" | awk '{print " "$1}'
@@ -102,4 +86,16 @@ elif [ "$REPLY" = "empty" ]; then
   else
     echo "Trash is already empty, no files found."
   fi
+}
+
+trash-list
+
+askme "Which trash operation to apply?" "restore" "remove" "empty"
+
+if [ "$REPLY" = "restore" ]; then
+  restore_files
+elif [ "$REPLY" = "remove" ]; then
+  remove_files
+elif [ "$REPLY" = "empty" ]; then
+  empty_files
 fi
