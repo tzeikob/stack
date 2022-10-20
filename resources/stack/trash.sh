@@ -28,6 +28,22 @@ list_files () {
   trash-list | awk '{print $3}'
 }
 
+ARGS=("$@")
+ARGS_LEN=${#ARGS[@]}
+
+if [ $ARGS_LEN -gt 0 ]; then
+  BEFORE=$(list_files)
+
+  trash-put "${ARGS[@]}"
+
+  AFTER=$(list_files)
+  TRASHED=$(not_present "$AFTER" "$BEFORE")
+
+  echo "The following files are trashed:"
+  echo "$TRASHED" | awk '{print " "$1}'
+  exit 0
+fi
+
 trash-list
 
 askme "Which trash operation to apply?" "restore" "remove" "empty"

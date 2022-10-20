@@ -129,15 +129,6 @@ install_trash () {
 
   sudo pacman -S --noconfirm trash-cli || exit 1
 
-  sudo cp ~/stack/resources/trash-cli/alias.sh /usr/local/bin/trash
-  sudo chmod 755 /usr/local/bin/trash
-
-  echo "Added a proxy binary to orchestrate trash-cli commands"
-
-  echo 'alias rr=rm' >> ~/.bashrc
-  echo 'alias tt=trash' >> ~/.bashrc
-
-  echo "Set aliases for rm and trash"
   echo "Trash has been installed"
 }
 
