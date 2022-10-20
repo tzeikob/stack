@@ -11,14 +11,13 @@ askme "Which trash operation to apply?" "restore" "remove" "empty"
 if [ "$REPLY" = "restore" ]; then
   trash-restore
 elif [ "$REPLY" = "remove" ]; then
-  askme "Enter the file(s) to remove:" "/.*"
+  askme "Enter a path or pattern to match files for remove:" ".+"
+  FILE_PAT="$REPLY"
 
-  if [[ ! -z $REPLY ]]; then
-    askme "File(s) will be gone forever, proceed?" "yes" "no"
+  askme "MATCHED FILES will be gone forever, proceed?" "yes" "no"
 
-    if [ "$REPLY" = "yes" ]; then
-      trash-rm $REPLY
-    fi
+  if [ "$REPLY" = "yes" ]; then
+    trash-rm "$FILE_PAT"
   fi
 elif [ "$REPLY" = "empty" ]; then
   FILES=$(trash-list)
