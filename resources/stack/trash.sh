@@ -116,16 +116,21 @@ ARGS=("$@")
 ARGS_LEN=${#ARGS[@]}
 
 if [ $ARGS_LEN = 0 ]; then
-  trash-list
+  TRASHED=$(list_files)
 
-  askme "Which trash operation to apply?" "restore" "remove" "empty"
+  if [[ ! -z "$TRASHED" ]]; then
+    trash-list
+    askme "Which trash operation to apply?" "restore" "remove" "empty"
 
-  if [ "$REPLY" = "restore" ]; then
-    restore_files
-  elif [ "$REPLY" = "remove" ]; then
-    remove_files
-  elif [ "$REPLY" = "empty" ]; then
-    empty_files
+    if [ "$REPLY" = "restore" ]; then
+      restore_files
+    elif [ "$REPLY" = "remove" ]; then
+      remove_files
+    elif [ "$REPLY" = "empty" ]; then
+      empty_files
+    fi
+  else
+    echo "Trash is empty, no files found."
   fi
 else
   trash_files "${ARGS[@]}"
