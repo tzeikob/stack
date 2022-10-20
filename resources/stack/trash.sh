@@ -93,7 +93,7 @@ trash_files () {
   local FIRST_ARG=${ARGS[0]}
 
   if [ "$FIRST_ARG" = "-r" ]; then
-    echo "${ARGS[@]:1}" | awk '{print $1}'
+    printf "%s\n" "${ARGS[@]:1}"
     askme "The files will be GONE FOREVER, proceed?" "yes" "no"
 
     if [ "$REPLY" = "yes" ]; then
