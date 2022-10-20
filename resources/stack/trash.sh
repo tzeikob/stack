@@ -14,12 +14,16 @@ elif [ "$REPLY" = "remove" ]; then
   askme "Enter the file(s) to remove:" "/.*"
 
   if [[ ! -z $REPLY ]]; then
-    askme "File(s) will be gone forever, proceed?" "yes" "no"
+    askme "File(s) will be gone forever, are you sure?" "yes" "no"
 
     if [ "$REPLY" = "yes" ]; then
       trash-rm $REPLY
     fi
   fi
 elif [ "$REPLY" = "empty" ]; then
-  trash-empty
+  askme "File(s) will be gone forever, are you sure?" "yes" "no"
+
+  if [ "$REPLY" = "yes" ]; then
+    trash-empty -f
+  fi
 fi
