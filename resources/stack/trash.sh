@@ -89,15 +89,27 @@ empty_files () {
 }
 
 trash_files () {
-  local BEFORE=$(list_files)
+  local ARGS=("$@")
+  local FIRST_ARG=${ARGS[0]}
 
-  trash-put $@
+  if [ "$FIRST_ARG" = "-r" ]; then
+    echo "${ARGS[@]:1}" | awk '{print $1}'
+    askme "The files will be GONE FOREVER, proceed?" "yes" "no"
 
-  local AFTER=$(list_files)
-  local TRASHED=$(not_present "$AFTER" "$BEFORE")
+    if [ "$REPLY" = "yes" ]; then
+      rm -rf "${ARGS[@]:1}"
+    fi
+  else
+    local BEFORE=$(list_files)
 
-  echo "The following files are trashed:"
-  echo "$TRASHED" | awk '{print " "$1}'
+    trash-put "${ARGS[@]}"
+
+    local AFTER=$(list_files)
+    local TRASHED=$(not_present "$AFTER" "$BEFORE")
+
+    echo "The following files are trashed:"
+    echo "$TRASHED" | awk '{print " "$1}'
+  fi
 }
 
 ARGS=("$@")

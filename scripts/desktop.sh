@@ -104,11 +104,6 @@ install_file_manager () {
 
   echo "Extra plugins have been installed"
 
-  cp ~/stack/resources/nnn/remove "$CONFIG_HOME/plugins"
-  chmod 755 "$CONFIG_HOME/plugins/remove"
-
-  echo "Plugin remove has been installed"
-
   mkdir -p ~/downloads ~/documents ~/images ~/audios ~/videos ~/virtuals ~/sources ~/data ~/mount
   cp ~/stack/resources/nnn/user.dirs ~/.config/user-dirs.dirs
 
