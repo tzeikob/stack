@@ -50,7 +50,9 @@ askme () {
 
     read -rep "$PROMPT " REPLY
 
-    while [[ ! "$REPLY" =~ $RE || ! "$REPLY" =~ ^(quit|q)$ ]]; do
+    while [[ ! "$REPLY" =~ $RE ]]; do
+      [[ "$REPLY" =~ ^(quit|q)$ ]] && break
+
       read -rep " Please enter a valid value: " REPLY
     done
   else
