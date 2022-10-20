@@ -88,14 +88,33 @@ empty_files () {
   fi
 }
 
-trash-list
+trash_files () {
+  local BEFORE=$(list_files)
 
-askme "Which trash operation to apply?" "restore" "remove" "empty"
+  trash-put $@
 
-if [ "$REPLY" = "restore" ]; then
-  restore_files
-elif [ "$REPLY" = "remove" ]; then
-  remove_files
-elif [ "$REPLY" = "empty" ]; then
-  empty_files
+  local AFTER=$(list_files)
+  local TRASHED=$(not_present "$AFTER" "$BEFORE")
+
+  echo "The following files are trashed:"
+  echo "$TRASHED" | awk '{print " "$1}'
+}
+
+ARGS=("$@")
+ARGS_LEN=${#ARGS[@]}
+
+if [ $ARGS_LEN = 0 ]; then
+  trash-list
+
+  askme "Which trash operation to apply?" "restore" "remove" "empty"
+
+  if [ "$REPLY" = "restore" ]; then
+    restore_files
+  elif [ "$REPLY" = "remove" ]; then
+    remove_files
+  elif [ "$REPLY" = "empty" ]; then
+    empty_files
+  fi
+else
+  trash_files "${ARGS[@]}"
 fi
