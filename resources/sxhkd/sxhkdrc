@@ -98,7 +98,7 @@ super + ctrl + shift + space
 
 # Expand/contract a window by moving one of its sides inwards/outwards
 super + alt + {Left,Down,Up,Right}
-  ~/.config/bspwm/resize.sh {left,down,up,right} 20
+  ~/.config/bspwm/resize {left,down,up,right} 20
 
 # Move a floating window
 super + {Left,Down,Up,Right}

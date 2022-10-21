@@ -94,4 +94,4 @@
 
 [play_sound]
     summary = "*"
-    script = ~/.config/dunst/alert.sh
+    script = ~/.config/dunst/alert

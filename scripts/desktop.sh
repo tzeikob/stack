@@ -40,8 +40,8 @@ install_window_manager () {
   cp ~/stack/resources/bspwm/rules "$CONFIG_HOME"
   chmod 755 "$CONFIG_HOME/rules"
 
-  cp ~/stack/resources/bspwm/resize.sh "$CONFIG_HOME"
-  chmod 755 "$CONFIG_HOME/resize.sh"
+  cp ~/stack/resources/bspwm/resize "$CONFIG_HOME"
+  chmod 755 "$CONFIG_HOME/resize"
 
   echo "exec bspwm" >> ~/.xinitrc
 
@@ -138,8 +138,8 @@ install_bars () {
   cp ~/stack/resources/polybar/config.ini "$CONFIG_HOME"
   chmod 644 "$CONFIG_HOME/config.ini"
 
-  cp ~/stack/resources/polybar/launch.sh "$CONFIG_HOME"
-  chmod 755 "$CONFIG_HOME/launch.sh"
+  cp ~/stack/resources/polybar/launch "$CONFIG_HOME"
+  chmod 755 "$CONFIG_HOME/launch"
 
   echo "Polybar launcher script has been installed"
   echo "Status bars have been installed"
@@ -152,7 +152,7 @@ install_notifier () {
 
   mkdir -p ~/.config/dunst
   cp ~/stack/resources/dunst/dunstrc ~/.config/dunst
-  cp ~/stack/resources/dunst/alert.sh ~/.config/dunst
+  cp ~/stack/resources/dunst/alert ~/.config/dunst
 
   sudo cp ~/stack/resources/dunst/drip.ogg /usr/share/sounds/dunst
 
@@ -180,7 +180,7 @@ install_login_screen () {
   yay -S --noconfirm --removemake figlet-fonts figlet-fonts-extra || exit 1
 
   sudo mv /etc/issue /etc/issue.bak
-  sudo cp ~/stack/resources/getty/issue.sh /etc
+  sudo cp ~/stack/resources/getty/issue /etc
 
   echo "Welcome screen theme has been set"
 

@@ -1,6 +1,6 @@
 #!/user/bin/env bash
 
-source ~/.config/stack/utils.sh
+source ~/.config/stack/utils
 
 require "rofi"
 
