@@ -2,6 +2,8 @@
 
 source ~/.config/stack/utils
 
+require "slock"
+
 if [ "$1" = "-y" ]; then
   REPLY="yes"
 else

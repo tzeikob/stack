@@ -3,6 +3,7 @@
 source ~/.config/stack/utils
 
 require "bspwm"
+require "slock"
 require "rofi"
 require "rofi-emoji" "xsel"
 
