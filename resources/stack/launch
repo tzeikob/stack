@@ -1,5 +1,9 @@
 #!/user/bin/env bash
 
+source ~/.config/stack/utils.sh
+
+require "rofi"
+
 show_apps_menu () {
   rofi -show drun
 }
@@ -13,6 +17,8 @@ show_windows_menu () {
 }
 
 show_emoji_menu () {
+  require "rofi-emoji" "xsel"
+
   rofi -show emoji
 }
 

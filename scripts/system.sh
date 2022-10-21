@@ -293,6 +293,7 @@ install_utilities () {
   cp ~/stack/resources/stack/reboot.sh "$CONFIG_HOME"
   cp ~/stack/resources/stack/logout.sh "$CONFIG_HOME"
   cp ~/stack/resources/stack/lock.sh "$CONFIG_HOME"
+  cp ~/stack/resources/stack/launch "$CONFIG_HOME"
 
   ln -sf "$CONFIG_HOME/mount.sh" /usr/local/bin/mmn
   ln -sf "$CONFIG_HOME/trash.sh" /usr/local/bin/ttr
@@ -300,6 +301,7 @@ install_utilities () {
   ln -sf "$CONFIG_HOME/reboot.sh" /usr/local/bin/rrb
   ln -sf "$CONFIG_HOME/logout.sh" /usr/local/bin/llo
   ln -sf "$CONFIG_HOME/lock.sh" /usr/local/bin/llk
+  ln -sf "$CONFIG_HOME/launch" /usr/local/bin/launch
 
   chown -R "$USERNAME":"$USERNAME" "$CONFIG_HOME"
 
