@@ -83,14 +83,14 @@ install_file_manager () {
 
   sudo pacman -S --noconfirm nnn fzf || exit 1
 
-  echo 'alias N="sudo -E nnn -dH"' >> ~/.bashrc
-  echo 'export EDITOR=nano' >> ~/.bashrc
-
   local CONFIG_HOME=~/.config/nnn
   mkdir -p "$CONFIG_HOME"
 
   cp ~/stack/resources/nnn/env "$CONFIG_HOME"
+
   echo 'source "$HOME/.config/nnn/env"' >> ~/.bashrc
+  echo 'alias N="sudo -E nnn -dH"' >> ~/.bashrc
+  echo 'export EDITOR=nano' >> ~/.bashrc
 
   echo "Installing extra nnn plugins..."
 
