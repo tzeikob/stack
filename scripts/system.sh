@@ -289,9 +289,17 @@ install_utilities () {
   cp ~/stack/resources/stack/utils.sh "$CONFIG_HOME"
   cp ~/stack/resources/stack/mount.sh "$CONFIG_HOME"
   cp ~/stack/resources/stack/trash.sh "$CONFIG_HOME"
+  cp ~/stack/resources/stack/shutdown.sh "$CONFIG_HOME"
+  cp ~/stack/resources/stack/reboot.sh "$CONFIG_HOME"
+  cp ~/stack/resources/stack/logout.sh "$CONFIG_HOME"
+  cp ~/stack/resources/stack/lock.sh "$CONFIG_HOME"
 
   ln -sf "$CONFIG_HOME/mount.sh" /usr/local/bin/mmn
   ln -sf "$CONFIG_HOME/trash.sh" /usr/local/bin/ttr
+  ln -sf "$CONFIG_HOME/shutdown.sh" /usr/local/bin/sst
+  ln -sf "$CONFIG_HOME/reboot.sh" /usr/local/bin/rrb
+  ln -sf "$CONFIG_HOME/logout.sh" /usr/local/bin/llo
+  ln -sf "$CONFIG_HOME/lock.sh" /usr/local/bin/llk
 
   chown -R "$USERNAME":"$USERNAME" "$CONFIG_HOME"
 
