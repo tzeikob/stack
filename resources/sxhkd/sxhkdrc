@@ -4,27 +4,27 @@ super + Escape
 
 # Open applications launcher
 super + @space
-  rofi -show drun
+  ~/.config/rofi/launch apps
 
 # Open run launcher
 super + Home
-  rofi -show run
+  ~/.config/rofi/launch run
 
 # Open window launcher
 super + Insert
-  rofi -show window
+  ~/.config/rofi/launch windows
 
 # Open emoji icons launcher
 super + e
-  rofi -show emoji
+  ~/.config/rofi/launch emoji
 
 # Open calculator launcher
 super + Delete
-  rofi -show calc -no-show-match -no-sort
+  ~/.config/rofi/launch calc
 
 # Open power manager launcher
 super + End
-  power
+  ~/.config/rofi/launch power
 
 # Quit/restart bspwm
 super + alt + {q,r}

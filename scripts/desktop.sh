@@ -170,10 +170,9 @@ install_launchers () {
   cp ~/stack/resources/rofi/config.rasi "$CONFIG_HOME"
   chmod 644 "$CONFIG_HOME/config.rasi"
 
-  sudo cp ~/stack/resources/rofi/power /usr/local/bin
-  sudo chmod 755 /usr/local/bin/power
+  cp ~/stack/resources/rofi/launch "$CONFIG_HOME"
+  chmod 755 "$CONFIG_HOME/launch"
 
-  echo "Power launcher has been installed"
   echo "Launchers has been installed"
 }
 
