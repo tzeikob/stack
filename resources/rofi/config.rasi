@@ -4,10 +4,9 @@ configuration {
   display-drun: "Launch";
   display-window: "Switch";
   display-emoji: "Copy";
-  display-calc: "Calc";
   drun-display-format: "{name}";
   font: "Fira Code 10";
-  modi: "run,drun,window,emoji,calc";
+  modi: "run,drun,window,emoji";
 }
 
 /* Theme (default v1.7.3) */

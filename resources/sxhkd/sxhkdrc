@@ -18,10 +18,6 @@ super + Insert
 super + e
   ~/.config/rofi/launch emoji
 
-# Open calculator launcher
-super + Delete
-  ~/.config/rofi/launch calc
-
 # Open power manager launcher
 super + End
   ~/.config/rofi/launch power

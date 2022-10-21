@@ -162,7 +162,7 @@ install_notifier () {
 install_launchers () {
   echo "Setting up the launchers via rofi..."
 
-  sudo pacman -S --noconfirm rofi rofi-emoji rofi-calc xsel || exit 1
+  sudo pacman -S --noconfirm rofi rofi-emoji xsel || exit 1
 
   local CONFIG_HOME=~/.config/rofi
   mkdir -p "$CONFIG_HOME"

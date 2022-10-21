@@ -16,10 +16,6 @@ show_emoji_menu () {
   rofi -show emoji
 }
 
-show_calc_menu () {
-  rofi -show calc -no-show-match -no-sort
-}
-
 show_power_menu () {
   local SD=" Shutdown"
   local RB=" Reboot"
@@ -48,8 +44,6 @@ elif [ "$1" = "windows" ]; then
   show_windows_menu
 elif [ "$1" = "emoji" ]; then
   show_emoji_menu
-elif [ "$1" = "calc" ]; then
-  show_calc_menu
 elif [ "$1" = "power" ]; then
   show_power_menu
 fi
