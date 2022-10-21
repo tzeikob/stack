@@ -240,6 +240,7 @@ install_screen_locker () {
   echo "Lock screen color theme has been applied"
 
   sudo make install || exit 1
+  mv /usr/local/bin/slock /usr/bin
 
   cd / && rm -rf ~/slock-1.4 ~/slock-1.4.tar.gz
 
