@@ -8,7 +8,7 @@ mount_local_disk () {
   require "udisks2"
 
   lsblk
-  askme "Enter the device name: "
+  askme "Enter the device name:"
   local DEVICE="$REPLY"
 
   if grep -qs "$DEVICE " /proc/mounts; then
