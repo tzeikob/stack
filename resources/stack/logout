@@ -2,6 +2,8 @@
 
 source ~/.config/stack/utils
 
+require "bspwm"
+
 FIRST_ARG=$1
 
 if [ "$FIRST_ARG" = "-y" ]; then

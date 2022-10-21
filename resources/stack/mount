@@ -2,11 +2,14 @@
 
 source ~/.config/stack/utils
 
+require "udisks2"
+require "glib2"
+require "rclone"
+require "fuse2"
+
 MOUNT_HOME="$HOME/mount"
 
 mount_local_disk () {
-  require "udisks2"
-
   lsblk
   askme "Enter the device name:"
   local DEVICE="$REPLY"
@@ -41,8 +44,6 @@ mount_local_disk () {
 }
 
 mount_network_disk () {
-  require "glib2"
-
   askme "Enter the connection protocol:" "smb" "nfs"
   local PROTOCOL="$REPLY"
 
@@ -77,8 +78,6 @@ mount_network_disk () {
 }
 
 unmount_remote () {
-  require "rclone" "fuse"
-
   local REMOTE_NAME=$1
 
   echo "Unmounting remote $REMOTE_NAME..."
@@ -102,8 +101,6 @@ unmount_remote () {
 }
 
 mount_remote () {
-  require "rclone"
-
   local STORAGE=$1
 
   askme "Enter the name of the remote:"

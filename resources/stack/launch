@@ -2,7 +2,9 @@
 
 source ~/.config/stack/utils
 
+require "bspwm"
 require "rofi"
+require "rofi-emoji" "xsel"
 
 show_apps_menu () {
   rofi -show drun
@@ -17,8 +19,6 @@ show_windows_menu () {
 }
 
 show_emoji_menu () {
-  require "rofi-emoji" "xsel"
-
   rofi -show emoji
 }
 
