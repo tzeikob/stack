@@ -43,8 +43,6 @@ askme () {
     read -rep "$PROMPT [${OPTIONS[*]}] " REPLY
 
     while ! contains "$REPLY" "${OPTIONS[@]}"; do
-      [[ "$REPLY" =~ ^(quit|q)$ ]] && break
-
       read -rep " Please enter a valid value: " REPLY
     done
   elif [ $ARGS_LEN -eq 2 ]; then
@@ -53,15 +51,9 @@ askme () {
     read -rep "$PROMPT " REPLY
 
     while [[ ! "$REPLY" =~ $RE ]]; do
-      [[ "$REPLY" =~ ^(quit|q)$ ]] && break
-
       read -rep " Please enter a valid value: " REPLY
     done
   else
     read -rep "$PROMPT " REPLY
-  fi
-
-  if [[ "$REPLY" =~ ^(quit|q)$ ]]; then
-    exit 0
   fi
 }
