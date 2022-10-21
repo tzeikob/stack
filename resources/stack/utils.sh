@@ -5,6 +5,8 @@ abort () {
   local CODE=${2:-1}
 
   echo "$MESSAGE"
+  notify-send -u critical "We have problem!" "$MESSAGE"
+
   exit $CODE
 }
 
