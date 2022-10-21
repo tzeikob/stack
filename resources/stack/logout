@@ -4,9 +4,7 @@ source ~/.config/stack/utils
 
 require "bspwm"
 
-FIRST_ARG=$1
-
-if [ "$FIRST_ARG" = "-y" ]; then
+if [ "$1" = "-y" ]; then
   REPLY="yes"
 else
   askme "The user will be logged out, proceed?" "yes" "no"
