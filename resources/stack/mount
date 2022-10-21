@@ -34,6 +34,7 @@ mount_local_disk () {
       echo "Failed to mount device $DEVICE"
 
     if [ -d "/run/media/$USER" ] && [ ! -L "$MOUNT_HOME/local" ]; then
+      mkdir -p "$MOUNT_HOME/local"
       ln -s "/run/media/$USER" "$MOUNT_HOME/local"
     fi
   fi
@@ -69,6 +70,7 @@ mount_network_disk () {
       echo "Failed to mount device from $DEVICE"
 
     if [ -d "/run/user/${UID}/gvfs" ] && [ ! -L "$MOUNT_HOME/nas" ]; then
+      mkdir -p "$MOUNT_HOME/nas"
       ln -s "/run/user/${UID}/gvfs" "$MOUNT_HOME/nas"
     fi
   fi
