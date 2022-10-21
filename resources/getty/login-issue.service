@@ -4,7 +4,7 @@ Before=getty@tty1.service getty@tty2.service getty@tty3.service getty@tty4.servi
 
 [Service]
 Type=oneshot
-ExecStart=/bin/bash /etc/issue
+ExecStart=/bin/bash $HOME/.config/getty/update-issue
 
 [Install]
 WantedBy=multi-user.target

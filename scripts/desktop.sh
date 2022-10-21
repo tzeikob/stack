@@ -180,7 +180,8 @@ install_login_screen () {
   yay -S --noconfirm --removemake figlet-fonts figlet-fonts-extra || exit 1
 
   sudo mv /etc/issue /etc/issue.bak
-  sudo cp ~/stack/resources/getty/issue /etc
+  mkdir -p ~/.config/getty
+  sudo cp ~/stack/resources/getty/update-issue ~/.config/getty
 
   echo "Welcome screen theme has been set"
 
