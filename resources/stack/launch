@@ -52,4 +52,6 @@ elif [ "$1" = "emoji" ]; then
   show_emoji_menu
 elif [ "$1" = "power" ]; then
   show_power_menu
+else
+  abort "Missing or invalid launch menu"
 fi
