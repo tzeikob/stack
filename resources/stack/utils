@@ -60,3 +60,43 @@ askme () {
     read -rep "$PROMPT " REPLY
   fi
 }
+
+trim () {
+  local INPUT=""
+  [[ -p /dev/stdin ]] && INPUT="$(cat -)" || INPUT="${@}"
+
+  echo "$INPUT" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'
+}
+
+no_breaks () {
+  local INPUT=""
+  [[ -p /dev/stdin ]] && INPUT="$(cat -)" || INPUT="${@}"
+
+  echo "$INPUT" | tr -d '\n'
+}
+
+print () {
+  local COLS=$1 && shift
+  local PADDING=$1 && shift
+
+  local ARR=("${@}")
+  local LEN=${#ARR[@]}
+
+  # Calculate total rows for the given length and columns
+  local ROWS=$(((LEN + COLS - 1) / COLS))
+
+  for ((i = 0; i < $ROWS; i++)); do
+    for ((j = 0; j < $COLS; j++)); do
+      # Map the index of the item to print vertically
+      local INDX=$((i + (j * ROWS)))
+
+      if [ ! -z "${ARR[$INDX]}" ]; then
+        local TEXT="$(no_breaks "${ARR[$INDX]}")"
+
+        printf "%-${PADDING}s\t" "$TEXT"
+      fi
+    done
+
+    printf "\n"
+  done
+}

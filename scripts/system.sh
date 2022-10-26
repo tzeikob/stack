@@ -294,6 +294,7 @@ install_utilities () {
   cp ~/stack/resources/stack/logout "$CONFIG_HOME"
   cp ~/stack/resources/stack/lock "$CONFIG_HOME"
   cp ~/stack/resources/stack/launch "$CONFIG_HOME"
+  cp ~/stack/resources/stack/connect "$CONFIG_HOME"
 
   ln -sf "$CONFIG_HOME/mount" /usr/local/bin/mmn
   ln -sf "$CONFIG_HOME/trash" /usr/local/bin/ttr
@@ -302,6 +303,7 @@ install_utilities () {
   ln -sf "$CONFIG_HOME/logout" /usr/local/bin/llo
   ln -sf "$CONFIG_HOME/lock" /usr/local/bin/llk
   ln -sf "$CONFIG_HOME/launch" /usr/local/bin/launch
+  ln -sf "$CONFIG_HOME/connect" /usr/local/bin/connect
 
   chown -R "$USERNAME":"$USERNAME" "$CONFIG_HOME"
 

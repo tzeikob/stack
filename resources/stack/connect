@@ -1,0 +1,135 @@
+#!/usr/bin/env bash
+
+source ~/.config/stack/utils
+
+require "networkmanager"
+require "wpa_supplicant"
+require "wireless_tools"
+
+show_wireless () {
+  echo -e "\nDevices:"
+  nmcli device | awk '{if ($2 == "wifi" || $2 == "TYPE") {print}}'
+
+  echo -e "\nConnections:"
+  nmcli connection show | awk '{if ($3 == "wifi" || $3 == "TYPE") {print}}'
+
+  local ACTIVE_CONNECTION=$(nmcli device | awk '{if ($2 == "wifi" && $3 == "connected") {print $4}}')
+
+  if [ ! -z "$ACTIVE_CONNECTION" ]; then
+    echo
+    nmcli --fields \
+      "connection.interface-name, \
+      connection.id, \
+      connection.uuid, \
+      connection.type, \
+      connection.interface-name, \
+      connection.autoconnect, \
+      802-11-wireless.ssid, \
+      802-11-wireless.mode, \
+      802-11-wireless.band, \
+      802-11-wireless.channel, \
+      802-11-wireless.seen-bssids, \
+      802-11-wireless-security.key-mgmt, \
+      ipv4.method, \
+      ipv6.method, \
+      proxy.method, \
+      GENERAL.STATE, \
+      IP4.ADDRESS, \
+      IP4.GATEWAY, \
+      IP4.ROUTE, \
+      IP4.DNS, \
+      IP6.ADDRESS, \
+      IP6.GATEWAY, \
+      IP6.ROUTE" \
+      connection show $ACTIVE_CONNECTION
+  fi
+}
+
+scan_wireless () {
+  local OLD_IFS=$IFS
+  IFS=","
+
+  local NETWORKS=($(
+    nmcli -f IN-USE,SSID,SIGNAL -t device wifi list |
+      tail -n +1 |
+      trim |
+      awk -F: '{if (int($3) > 80) {print $1":"$2":****"} \
+        else if (int($3) > 58) {print $1":"$2":***"} \
+        else if (int($3) > 30) {print $1":"$2":**"} \
+        else {print $1":"$2":*"}}' |
+      awk -F: '{if ($1 == "*") {print "\033[32m"$2" "$3","} \
+        else {print "\033[0m"$2" "$3","}}' |
+      no_breaks
+  ))
+
+  IFS=$OLD_IFS
+
+  print 3 40 "${NETWORKS[@]}"
+}
+
+connect_wireless () {
+  askme "Do you want to create a new connection?" "yes" "no"
+
+  if [ "$REPLY" = "yes" ]; then
+    echo
+    scan_wireless
+
+    askme "Enter the SSID of the network:" ".*"
+    local SSID=$REPLY
+
+    askme "Enter the secret key:" ".*"
+    local SECRET=$REPLY
+
+    nmcli device wifi connect "$SSID" password "$SECRET" hidden yes
+  else
+    echo
+    nmcli connection show | awk '{if ($3 == "wifi" || $3 == "TYPE") {print}}'
+
+    askme "Enter the name of the connection to enable?" ".*"
+
+    nmcli connection up "$REPLY"
+  fi
+}
+
+disconnect_wireless () {
+  echo
+  nmcli device | awk '{if ($2 == "wifi" || $2 == "TYPE") {print}}'
+
+  askme "Enter the network interface (wlxxx):" ".*"
+
+  nmcli device disconnect "$REPLY"
+}
+
+set_wireless () {
+  local STATUS=$1
+
+  echo "Setting wifi device power to $STATUS..."
+
+  nmcli radio wifi $STATUS
+
+  echo "Wifi device power set to $STATUS"
+}
+
+askme "Which type of network protocol to connect?" "ethernet" "wireless" "bluetooth"
+
+if [ "$REPLY" = "ethernet" ]; then
+  echo "Not implementation found for yet"
+elif [ "$REPLY" = "wireless" ]; then
+  [ "$(nmcli radio wifi)" = "enabled" ] && TOGGLE="off" || TOGGLE="on"
+
+  askme "What operation you want to do?" "status" "connect" "disconnect" "$TOGGLE"
+
+  if [ "$REPLY" = "status" ]; then
+    show_wireless
+  elif [ "$REPLY" = "connect" ]; then
+    connect_wireless
+  elif [ "$REPLY" = "disconnect" ]; then
+    disconnect_wireless
+  elif [ "$REPLY" = "on" ]; then
+    set_wireless on
+  elif [ "$REPLY" = "off" ]; then
+    set_wireless off
+  fi
+elif [ "$REPLY" = "bluetooth" ]; then
+  echo "Not implementation found for yet"
+fi
