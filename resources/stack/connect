@@ -6,18 +6,23 @@ require "networkmanager"
 require "wpa_supplicant"
 require "wireless_tools"
 
-show_wireless () {
-  echo -e "\nDevices:"
-  nmcli device | awk '{if ($2 == "wifi" || $2 == "TYPE") {print}}'
+show_status () {
+  nmcli --colors no general status
 
-  echo -e "\nConnections:"
-  nmcli connection show | awk '{if ($3 == "wifi" || $3 == "TYPE") {print}}'
+  local OLD_IFS=$IFS && IFS=","
 
-  local ACTIVE_CONNECTION=$(nmcli device | awk '{if ($2 == "wifi" && $3 == "connected") {print $4}}')
+  local CONNECTIONS=($(
+    nmcli -g DEVICE,TYPE,STATE,CONNECTION device |
+      trim |
+      awk -v FS=':' -v OFS=':' '{if ($3 == "connected" ) {print $4","}}' |
+      no_breaks
+  ))
 
-  if [ ! -z "$ACTIVE_CONNECTION" ]; then
+  IFS=$OLD_IFS
+
+  for CONNECTION in "${CONNECTIONS[@]}"; do
     echo
-    nmcli --fields \
+    nmcli --colors no --fields \
       "connection.interface-name, \
       connection.id, \
       connection.uuid, \
@@ -41,7 +46,40 @@ show_wireless () {
       IP6.ADDRESS, \
       IP6.GATEWAY, \
       IP6.ROUTE" \
-      connection show $ACTIVE_CONNECTION
+      connection show "$CONNECTION"
+  done
+}
+
+power () {
+  local OBJECT=$1
+  local STATUS=${2:-"on"}
+
+  if [ "$OBJECT" = "network" ]; then
+    nmcli networking "$STATUS"
+  elif [ "$OBJECT" = "radio" ]; then
+    nmcli radio wifi "$STATUS"
+  fi
+
+  sleep 6
+}
+
+show_devices () {
+  local TYPE=$1
+  
+  if [ -z "$TYPE" ]; then
+    nmcli --colors no device
+  else
+    nmcli device | awk -v t=$TYPE '{if ($2 == t || $2 == "TYPE") {print}}'
+  fi
+}
+
+show_connections () {
+  local TYPE=$1
+
+  if [ -z "$TYPE" ]; then
+    nmcli --colors no connection show
+  else
+    nmcli --color no connection show | awk -v t=$TYPE '{if ($3 == t || $3 == "TYPE") {print}}'
   fi
 }
 
@@ -110,26 +148,39 @@ set_wireless () {
   echo "Wifi device power set to $STATUS"
 }
 
-askme "Which type of network protocol to connect?" "ethernet" "wireless" "bluetooth"
+while true; do
+  NETWORKING=$(nmcli n)
+  STATUS=$(nmcli general status | tail -n +2 | awk '{print $1":"$2}')
 
-if [ "$REPLY" = "ethernet" ]; then
-  echo "Not implementation found for yet"
-elif [ "$REPLY" = "wireless" ]; then
-  [ "$(nmcli radio wifi)" = "enabled" ] && TOGGLE="off" || TOGGLE="on"
+  COLOR=$WHITE
 
-  askme "What operation you want to do?" "status" "connect" "disconnect" "$TOGGLE"
-
-  if [ "$REPLY" = "status" ]; then
-    show_wireless
-  elif [ "$REPLY" = "connect" ]; then
-    connect_wireless
-  elif [ "$REPLY" = "disconnect" ]; then
-    disconnect_wireless
-  elif [ "$REPLY" = "on" ]; then
-    set_wireless on
-  elif [ "$REPLY" = "off" ]; then
-    set_wireless off
+  if [ "$NETWORKING" = "enabled" ]; then
+    if [[ "$STATUS" =~ connected ]]; then
+      COLOR=$GREEN
+    elif [[ "$STATUS" =~ disconnected ]] || [[ "$STATUS" =~ asleep ]]; then
+      COLOR=$RED
+    else
+      COLOR=$YELLOW
+    fi
   fi
-elif [ "$REPLY" = "bluetooth" ]; then
-  echo "Not implementation found for yet"
-fi
+
+  prompt "$STATUS" "$COLOR"
+
+  CMD=($(echo "$REPLY" | tr ':' '\n'))
+
+  if [ "${CMD[0]}" = "status" ]; then
+    show_status
+  elif [ "${CMD[0]}" = "power" ]; then
+    power "${CMD[@]:1}"
+  elif [ "${CMD[0]}" = "devices" ]; then
+    show_devices "${CMD[@]:1}"
+  elif [ "${CMD[0]}" = "connections" ]; then
+    show_connections "${CMD[@]:1}"
+  elif [ "${CMD[0]}" = "quit" ]; then
+    break
+  elif [ "${CMD[0]}" = "clear" ]; then
+    clear
+  else
+    echo "Unknown or invalid command: $REPLY"
+  fi
+done
