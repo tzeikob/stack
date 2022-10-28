@@ -55,11 +55,17 @@ power () {
   local STATUS=${2:-"on"}
 
   if [ "$OBJECT" = "network" ]; then
-    nmcli networking "$STATUS"
-    sleep 6
-  elif [ "$OBJECT" = "radio" ]; then
-    nmcli radio wifi "$STATUS"
-    sleep 6
+    echo "Powering network $STATUS..."
+    nmcli networking "$STATUS" &&
+      sleep 6 &&
+      echo "Network set to $STATUS status" ||
+      echo "Unable to power $STATUS the network"
+  elif [ "$OBJECT" = "wifi" ]; then
+    echo "Powering wifi $STATUS..."
+    nmcli radio wifi "$STATUS" &&
+      sleep 6 &&
+      echo "Wifi set to $STATUS status" ||
+      echo "Unable to power $STATUS the wifi"
   else
     echo "Unknown or invalid object: $OBJECT"
   fi
