@@ -56,11 +56,13 @@ power () {
 
   if [ "$OBJECT" = "network" ]; then
     nmcli networking "$STATUS"
+    sleep 6
   elif [ "$OBJECT" = "radio" ]; then
     nmcli radio wifi "$STATUS"
+    sleep 6
+  else
+    echo "Unknown or invalid object: $OBJECT"
   fi
-
-  sleep 6
 }
 
 show_devices () {
