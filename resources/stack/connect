@@ -6,7 +6,30 @@ require "networkmanager"
 require "wpa_supplicant"
 require "wireless_tools"
 
-show_status () {
+sel () {
+  local OBJECT=$1
+  local NAME=$2
+
+  if [ "$OBJECT" = "device" ]; then
+    SEL_DEVICE=$NAME
+    SEL_CONNECTION=""
+    SEL=$SEL_DEVICE
+  elif [ "$OBJECT" = "connection" ]; then
+    SEL_DEVICE=""
+    SEL_CONNECTION=$NAME
+    SEL=$SEL_CONNECTION
+  else
+    echo "Unknown or invalid object: $OBJECT"
+  fi
+}
+
+desel () {
+  SEL_DEVICE=""
+  SEL_CONNECTION=""
+  SEL=""
+}
+
+status () {
   nmcli --colors no general status
 
   local OLD_IFS=$IFS && IFS=","
@@ -50,86 +73,6 @@ show_status () {
   done
 }
 
-power () {
-  local OBJECT=$1
-  local STATUS=${2:-"on"}
-
-  if [ "$OBJECT" = "network" ]; then
-    echo "Powering network $STATUS..."
-    nmcli networking "$STATUS" &&
-      sleep 6 &&
-      echo "Network set to $STATUS status" ||
-      echo "Unable to power $STATUS the network"
-  elif [ "$OBJECT" = "wifi" ]; then
-    echo "Powering wifi $STATUS..."
-    nmcli radio wifi "$STATUS" &&
-      sleep 6 &&
-      echo "Wifi set to $STATUS status" ||
-      echo "Unable to power $STATUS the wifi"
-  else
-    echo "Unknown or invalid object: $OBJECT"
-  fi
-}
-
-show_devices () {
-  local TYPE=$1
-  
-  if [ -z "$TYPE" ]; then
-    nmcli --colors no device
-  else
-    nmcli device | awk -v t=$TYPE '{if ($2 == t || $2 == "TYPE") {print}}'
-  fi
-}
-
-show_connections () {
-  local TYPE=$1
-
-  if [ -z "$TYPE" ]; then
-    nmcli --colors no connection
-  else
-    nmcli --color no connection | awk -v t=$TYPE '{if ($3 == t || $3 == "TYPE") {print}}'
-  fi
-}
-
-scan_networks () {
-  local OLD_IFS=$IFS && IFS=","
-
-  local NETWORKS=($(
-    nmcli -f SIGNAL,SSID,IN-USE -t device wifi list |
-      trim |
-      awk -F: '{if ($3 == "*") {print "["$1"] \033[32m"$2"\033[0m,"} \
-        else {print "["$1"] \033[35m"$2"\033[0m,"}}' |
-      no_breaks
-  ))
-
-  IFS=$OLD_IFS
-
-  print 3 40 "${NETWORKS[@]}"
-}
-
-select_object () {
-  local OBJECT=$1
-  local NAME=$2
-
-  if [ "$OBJECT" = "device" ]; then
-    SEL_DEVICE=$NAME
-    SEL_CONNECTION=""
-    SEL=$SEL_DEVICE
-  elif [ "$OBJECT" = "connection" ]; then
-    SEL_DEVICE=""
-    SEL_CONNECTION=$NAME
-    SEL=$SEL_CONNECTION
-  else
-    echo "Unknown or invalid object: $OBJECT"
-  fi
-}
-
-deselect () {
-  SEL_DEVICE=""
-  SEL_CONNECTION=""
-  SEL=""
-}
-
 show () {
   local OBJECT=$1
   local NAME=$2
@@ -167,6 +110,42 @@ show () {
   fi
 }
 
+devices () {
+  local TYPE=$1
+  
+  if [ -z "$TYPE" ]; then
+    nmcli --colors no device
+  else
+    nmcli device | awk -v t=$TYPE '{if ($2 == t || $2 == "TYPE") {print}}'
+  fi
+}
+
+connections () {
+  local TYPE=$1
+
+  if [ -z "$TYPE" ]; then
+    nmcli --colors no connection
+  else
+    nmcli --color no connection | awk -v t=$TYPE '{if ($3 == t || $3 == "TYPE") {print}}'
+  fi
+}
+
+scan () {
+  local OLD_IFS=$IFS && IFS=","
+
+  local NETWORKS=($(
+    nmcli -f SIGNAL,SSID,IN-USE -t device wifi list |
+      trim |
+      awk -F: '{if ($3 == "*") {print "["$1"] \033[32m"$2"\033[0m,"} \
+        else {print "["$1"] \033[35m"$2"\033[0m,"}}' |
+      no_breaks
+  ))
+
+  IFS=$OLD_IFS
+
+  print 3 40 "${NETWORKS[@]}"
+}
+
 up () {
   local OBJECT=$1
   local NAME=$2
@@ -188,6 +167,27 @@ down () {
     nmcli device disconnect "$NAME"
   elif [ "$OBJECT" = "connection" ]; then
     nmcli connection down "$NAME"
+  else
+    echo "Unknown or invalid object: $OBJECT"
+  fi
+}
+
+power () {
+  local OBJECT=$1
+  local STATUS=${2:-"on"}
+
+  if [ "$OBJECT" = "network" ]; then
+    echo "Powering network $STATUS..."
+    nmcli networking "$STATUS" &&
+      sleep 6 &&
+      echo "Network set to $STATUS status" ||
+      echo "Unable to power $STATUS the network"
+  elif [ "$OBJECT" = "wifi" ]; then
+    echo "Powering wifi $STATUS..."
+    nmcli radio wifi "$STATUS" &&
+      sleep 6 &&
+      echo "Wifi set to $STATUS status" ||
+      echo "Unable to power $STATUS the wifi"
   else
     echo "Unknown or invalid object: $OBJECT"
   fi
@@ -215,25 +215,6 @@ connect_wireless () {
 
     nmcli connection up "$REPLY"
   fi
-}
-
-disconnect_wireless () {
-  echo
-  nmcli device | awk '{if ($2 == "wifi" || $2 == "TYPE") {print}}'
-
-  askme "Enter the network interface (wlxxx):" ".*"
-
-  nmcli device disconnect "$REPLY"
-}
-
-set_wireless () {
-  local STATUS=$1
-
-  echo "Setting wifi device power to $STATUS..."
-
-  nmcli radio wifi $STATUS
-
-  echo "Wifi device power set to $STATUS"
 }
 
 while true; do
@@ -269,20 +250,20 @@ while true; do
 
   if [ -z "$SEL" ]; then
     if [ "${CMD[0]}" = "status" ]; then
-      show_status
+      status
+    elif [ "${CMD[0]}" = "devices" ]; then
+      devices "${CMD[@]:1}"
+    elif [ "${CMD[0]}" = "connections" ]; then
+      connections "${CMD[@]:1}"
+    elif [ "${CMD[0]}" = "scan" ]; then
+      scan
     elif [ "${CMD[0]}" = "power" ]; then
       power "${CMD[@]:1}"
-    elif [ "${CMD[0]}" = "devices" ]; then
-      show_devices "${CMD[@]:1}"
-    elif [ "${CMD[0]}" = "connections" ]; then
-      show_connections "${CMD[@]:1}"
-    elif [ "${CMD[0]}" = "scan" ]; then
-      scan_networks
     elif [ "${CMD[0]}" = "select" ]; then
       if [ "${CMD[1]}" = "device" ]; then
-        select_object device "${CMD[*]:2}"
+        sel device "${CMD[*]:2}"
       elif [ "${CMD[1]}" = "connection" ]; then
-        select_object connection "${CMD[*]:2}"
+        sel connection "${CMD[*]:2}"
       else
         echo "Unknown or invalid command: $REPLY"
       fi
@@ -309,7 +290,7 @@ while true; do
         down connection "$SEL_CONNECTION"
       fi
     elif [ "${CMD[0]}" = "deselect" ]; then
-      deselect
+      desel
     elif [ ! -z "$REPLY" ]; then
       echo "Unknown or invalid command: $REPLY"
     fi
