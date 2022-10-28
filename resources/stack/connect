@@ -193,6 +193,12 @@ power () {
   fi
 }
 
+delete () {
+  local NAME=$1
+  nmcli connection delete "$NAME"
+  desel
+}
+
 connect_wireless () {
   askme "Do you want to create a new connection?" "yes" "no"
 
@@ -289,6 +295,8 @@ while true; do
       elif [ ! -z "$SEL_CONNECTION" ]; then
         down connection "$SEL_CONNECTION"
       fi
+    elif [ "${CMD[0]}" = "delete" ]; then
+      delete "$SEL"
     elif [ "${CMD[0]}" = "deselect" ]; then
       desel
     elif [ ! -z "$REPLY" ]; then
