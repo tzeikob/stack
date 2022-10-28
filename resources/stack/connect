@@ -157,8 +157,8 @@ set_wireless () {
 }
 
 while true; do
-  NETWORKING=$(nmcli n)
-  STATUS=$(nmcli general status | tail -n +2 | awk '{print $1":"$2}')
+  NETWORKING=$(nmcli networking)
+  STATUS=$(nmcli -g STATE,CONNECTIVITY general status)
 
   FOREGROUND=$WHITE
 
