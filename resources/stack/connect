@@ -165,7 +165,7 @@ while true; do
   if [ "$NETWORKING" = "enabled" ]; then
     if [[ "$STATUS" =~ ^connected ]]; then
       FOREGROUND=$GREEN
-    elif [[ "$STATUS" =~ disconnected ]] || [[ "$STATUS" =~ asleep ]]; then
+    elif [[ "$STATUS" =~ ^disconnected ]]; then
       FOREGROUND=$RED
     else
       FOREGROUND=$YELLOW
