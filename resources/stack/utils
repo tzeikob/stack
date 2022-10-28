@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
-WHITE="\e[0;37m"
-RED="\e[0;31m"
-GREEN="\e[0;32m"
-BLUE="\e[0;34m"
-YELLOW="\e[0;33m"
+WHITE=$'\e[0;37m'
+RED=$'\e[0;31m'
+GREEN=$'\e[0;32m'
+BLUE=$'\e[0;34m'
+YELLOW=$'\e[0;33m'
 
 abort () {
   local MESSAGE=${1:-"Something went wrong"}
@@ -70,9 +70,9 @@ askme () {
 prompt () {
   local TEXT=$1
   local COLOR=${2:-$WHITE}
-  local RS="\e[m"
+  local RESET=$'\e[m'
 
-  echo -en "[${COLOR}$TEXT${RS}] " && read REPLY
+  read -rep "[${COLOR}$TEXT${RESET}] " REPLY
 }
 
 trim () {
