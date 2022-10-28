@@ -85,9 +85,9 @@ show_connections () {
   local TYPE=$1
 
   if [ -z "$TYPE" ]; then
-    nmcli --colors no connection show
+    nmcli --colors no connection
   else
-    nmcli --color no connection show | awk -v t=$TYPE '{if ($3 == t || $3 == "TYPE") {print}}'
+    nmcli --color no connection | awk -v t=$TYPE '{if ($3 == t || $3 == "TYPE") {print}}'
   fi
 }
 
@@ -105,6 +105,92 @@ scan_networks () {
   IFS=$OLD_IFS
 
   print 3 40 "${NETWORKS[@]}"
+}
+
+select_object () {
+  local OBJECT=$1
+  local NAME=$2
+
+  if [ "$OBJECT" = "device" ]; then
+    SEL_DEVICE=$NAME
+    SEL_CONNECTION=""
+    SEL=$SEL_DEVICE
+  elif [ "$OBJECT" = "connection" ]; then
+    SEL_DEVICE=""
+    SEL_CONNECTION=$NAME
+    SEL=$SEL_CONNECTION
+  else
+    echo "Unknown or invalid object: $OBJECT"
+  fi
+}
+
+deselect () {
+  SEL_DEVICE=""
+  SEL_CONNECTION=""
+  SEL=""
+}
+
+show () {
+  local OBJECT=$1
+  local NAME=$2
+
+  if [ "$OBJECT" = "device" ]; then
+    nmcli --colors no device show "$NAME"
+  elif [ "$OBJECT" = "connection" ]; then
+    nmcli --colors no --fields \
+      "connection.interface-name, \
+      connection.id, \
+      connection.uuid, \
+      connection.type, \
+      connection.interface-name, \
+      connection.autoconnect, \
+      802-11-wireless.ssid, \
+      802-11-wireless.mode, \
+      802-11-wireless.band, \
+      802-11-wireless.channel, \
+      802-11-wireless.seen-bssids, \
+      802-11-wireless-security.key-mgmt, \
+      ipv4.method, \
+      ipv6.method, \
+      proxy.method, \
+      GENERAL.STATE, \
+      IP4.ADDRESS, \
+      IP4.GATEWAY, \
+      IP4.ROUTE, \
+      IP4.DNS, \
+      IP6.ADDRESS, \
+      IP6.GATEWAY, \
+      IP6.ROUTE" \
+      connection show "$NAME"
+  else
+    echo "Unknown or invalid object: $OBJECT"
+  fi
+}
+
+up () {
+  local OBJECT=$1
+  local NAME=$2
+
+  if [ "$OBJECT" = "device" ]; then
+    nmcli device connect "$NAME"
+  elif [ "$OBJECT" = "connection" ]; then
+    nmcli connection up "$NAME"
+  else
+    echo "Unknown or invalid object: $OBJECT"
+  fi
+}
+
+down () {
+  local OBJECT=$1
+  local NAME=$2
+
+  if [ "$OBJECT" = "device" ]; then
+    nmcli device disconnect "$NAME"
+  elif [ "$OBJECT" = "connection" ]; then
+    nmcli connection down "$NAME"
+  else
+    echo "Unknown or invalid object: $OBJECT"
+  fi
 }
 
 connect_wireless () {
@@ -151,42 +237,81 @@ set_wireless () {
 }
 
 while true; do
-  NETWORKING=$(nmcli networking)
-  STATUS=$(nmcli -g STATE,CONNECTIVITY general status)
+  if [ -z "$SEL" ]; then
+    NETWORKING=$(nmcli networking)
+    STATUS=$(nmcli -g STATE,CONNECTIVITY general status)
 
-  FOREGROUND=$WHITE
-
-  if [ "$NETWORKING" = "enabled" ]; then
-    if [[ "$STATUS" =~ ^connected ]]; then
-      FOREGROUND=$GREEN
-    elif [[ "$STATUS" =~ ^disconnected ]]; then
-      FOREGROUND=$RED
-    else
-      FOREGROUND=$YELLOW
+    FOREGROUND=$WHITE
+    if [ "$NETWORKING" = "enabled" ]; then
+      if [[ "$STATUS" =~ ^connected ]]; then
+        FOREGROUND=$GREEN
+      elif [[ "$STATUS" =~ ^disconnected ]]; then
+        FOREGROUND=$RED
+      else
+        FOREGROUND=$YELLOW
+      fi
     fi
+
+    prompt "$STATUS" "$FOREGROUND"
+  else
+    prompt "$SEL" "$YELLOW"
   fi
 
-  prompt "$STATUS" "$FOREGROUND"
-
+  history -s "$REPLY"
   CMD=($(echo "$REPLY" | tr ':' '\n'))
 
-  if [ "${CMD[0]}" = "status" ]; then
-    show_status
-  elif [ "${CMD[0]}" = "power" ]; then
-    power "${CMD[@]:1}"
-  elif [ "${CMD[0]}" = "devices" ]; then
-    show_devices "${CMD[@]:1}"
-  elif [ "${CMD[0]}" = "connections" ]; then
-    show_connections "${CMD[@]:1}"
-  elif [ "${CMD[0]}" = "scan" ]; then
-    scan_networks
-  elif [ "${CMD[0]}" = "quit" ]; then
+  if [ "${CMD[0]}" = "quit" ]; then
     break
   elif [ "${CMD[0]}" = "clear" ]; then
     clear
-  else
-    echo "Unknown or invalid command: $REPLY"
+    continue
   fi
 
-  history -s "${CMD[*]}"
+  if [ -z "$SEL" ]; then
+    if [ "${CMD[0]}" = "status" ]; then
+      show_status
+    elif [ "${CMD[0]}" = "power" ]; then
+      power "${CMD[@]:1}"
+    elif [ "${CMD[0]}" = "devices" ]; then
+      show_devices "${CMD[@]:1}"
+    elif [ "${CMD[0]}" = "connections" ]; then
+      show_connections "${CMD[@]:1}"
+    elif [ "${CMD[0]}" = "scan" ]; then
+      scan_networks
+    elif [ "${CMD[0]}" = "select" ]; then
+      if [ "${CMD[1]}" = "device" ]; then
+        select_object device "${CMD[*]:2}"
+      elif [ "${CMD[1]}" = "connection" ]; then
+        select_object connection "${CMD[*]:2}"
+      else
+        echo "Unknown or invalid command: $REPLY"
+      fi
+    elif [ ! -z "$REPLY" ]; then
+      echo "Unknown or invalid command: $REPLY"
+    fi
+  else
+    if [ "${CMD[0]}" = "status" ]; then
+      if [ ! -z "$SEL_DEVICE" ]; then
+        show device "$SEL_DEVICE"
+      elif [ ! -z "$SEL_CONNECTION" ]; then
+        show connection "$SEL_CONNECTION"
+      fi
+    elif [ "${CMD[0]}" = "connect" ]; then
+      if [ ! -z "$SEL_DEVICE" ]; then
+        up device "$SEL_DEVICE" 
+      elif [ ! -z "$SEL_CONNECTION" ]; then
+        up connection "$SEL_CONNECTION"
+      fi
+    elif [ "${CMD[0]}" = "disconnect" ]; then
+      if [ ! -z "$SEL_DEVICE" ]; then
+        down device "$SEL_DEVICE" 
+      elif [ ! -z "$SEL_CONNECTION" ]; then
+        down connection "$SEL_CONNECTION"
+      fi
+    elif [ "${CMD[0]}" = "deselect" ]; then
+      deselect
+    elif [ ! -z "$REPLY" ]; then
+      echo "Unknown or invalid command: $REPLY"
+    fi
+  fi
 done
