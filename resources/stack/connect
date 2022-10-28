@@ -160,19 +160,19 @@ while true; do
   NETWORKING=$(nmcli n)
   STATUS=$(nmcli general status | tail -n +2 | awk '{print $1":"$2}')
 
-  COLOR=$WHITE
+  FOREGROUND=$WHITE
 
   if [ "$NETWORKING" = "enabled" ]; then
-    if [[ "$STATUS" =~ connected ]]; then
-      COLOR=$GREEN
+    if [[ "$STATUS" =~ ^connected ]]; then
+      FOREGROUND=$GREEN
     elif [[ "$STATUS" =~ disconnected ]] || [[ "$STATUS" =~ asleep ]]; then
-      COLOR=$RED
+      FOREGROUND=$RED
     else
-      COLOR=$YELLOW
+      FOREGROUND=$YELLOW
     fi
   fi
 
-  prompt "$STATUS" "$COLOR"
+  prompt "$STATUS" "$FOREGROUND"
 
   CMD=($(echo "$REPLY" | tr ':' '\n'))
 
