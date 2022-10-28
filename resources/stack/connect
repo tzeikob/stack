@@ -199,7 +199,7 @@ delete () {
   desel
 }
 
-new () {
+connect () {
   askme "Enter the SSID of the network:" ".*"
   local SSID=$REPLY
 
@@ -251,8 +251,8 @@ while true; do
       scan
     elif [ "${CMD[0]}" = "power" ]; then
       power "${CMD[@]:1}"
-    elif [ "${CMD[0]}" = "new" ]; then
-      new
+    elif [ "${CMD[0]}" = "connect" ]; then
+      connect
     elif [ "${CMD[0]}" = "select" ]; then
       if [ "${CMD[1]}" = "device" ]; then
         sel device "${CMD[*]:2}"
