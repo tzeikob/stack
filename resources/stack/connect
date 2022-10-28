@@ -91,20 +91,14 @@ show_connections () {
   fi
 }
 
-scan_wireless () {
-  local OLD_IFS=$IFS
-  IFS=","
+scan_networks () {
+  local OLD_IFS=$IFS && IFS=","
 
   local NETWORKS=($(
-    nmcli -f IN-USE,SSID,SIGNAL -t device wifi list |
-      tail -n +1 |
+    nmcli -f SIGNAL,SSID,IN-USE -t device wifi list |
       trim |
-      awk -F: '{if (int($3) > 80) {print $1":"$2":****"} \
-        else if (int($3) > 58) {print $1":"$2":***"} \
-        else if (int($3) > 30) {print $1":"$2":**"} \
-        else {print $1":"$2":*"}}' |
-      awk -F: '{if ($1 == "*") {print "\033[32m"$2" "$3","} \
-        else {print "\033[0m"$2" "$3","}}' |
+      awk -F: '{if ($3 == "*") {print "["$1"] \033[32m"$2"\033[0m,"} \
+        else {print "["$1"] \033[35m"$2"\033[0m,"}}' |
       no_breaks
   ))
 
@@ -184,6 +178,8 @@ while true; do
     show_devices "${CMD[@]:1}"
   elif [ "${CMD[0]}" = "connections" ]; then
     show_connections "${CMD[@]:1}"
+  elif [ "${CMD[0]}" = "scan" ]; then
+    scan_networks
   elif [ "${CMD[0]}" = "quit" ]; then
     break
   elif [ "${CMD[0]}" = "clear" ]; then
