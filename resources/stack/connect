@@ -10,6 +10,11 @@ sel () {
   local OBJECT=$1
   local NAME=$2
 
+  if ! nmcli --colors no device | grep -q "$NAME"; then
+    echo "Invalid network object $NAME"
+    return 1
+  fi
+
   if [ "$OBJECT" = "device" ]; then
     SEL_DEVICE=$NAME
     SEL_CONNECTION=""
