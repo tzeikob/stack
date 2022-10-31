@@ -194,9 +194,18 @@ power () {
 }
 
 delete () {
-  local NAME=$1
-  nmcli connection delete "$NAME"
-  desel
+  local OBJECT=$1
+  local NAME=$2
+
+  if [ "$OBJECT" = "device" ]; then
+    nmcli device delete "$NAME"
+    desel
+  elif [ "$OBJECT" = "connection" ]; then
+    nmcli connection delete "$NAME"
+    desel
+  else
+    echo "Unknown or invalid object: $OBJECT"
+  fi
 }
 
 connect () {
@@ -230,11 +239,8 @@ help () {
       "status" "Show the current status of the selected device or connection" \
       "connect" "Get the selected device or connection up" \
       "disconnect" "Get the selected device or connection down" \
+      "delete" "Delete the selected device or connection" \
       "deselect" "Deselect the select device or connection"
-    if [ ! -z "$SEL_CONNECTION" ]; then
-      printf " %-25s\t%s\n" \
-        "delete" "Delete selected connection"
-    fi
   fi
 }
 
@@ -316,7 +322,11 @@ while true; do
         down connection "$SEL_CONNECTION"
       fi
     elif [ "${CMD[0]}" = "delete" ]; then
-      delete "$SEL"
+      if [ ! -z "$SEL_DEVICE" ]; then
+        delete device "$SEL_DEVICE" 
+      elif [ ! -z "$SEL_CONNECTION" ]; then
+        delete connection "$SEL_CONNECTION"
+      fi
     elif [ "${CMD[0]}" = "deselect" ]; then
       desel
     elif [ ! -z "$REPLY" ]; then
