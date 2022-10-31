@@ -252,6 +252,7 @@ help () {
       "scan" "Scan for wireless networks in your area" \
       "power network <on|off>" "Power on/off the system networking" \
       "power wifi <on|off>" "Power on/off the wifi" \
+      "airplane" "Set networking to airplane mode" \
       "connect <SSID> <secret-key>" "Connect to a wireless network" \
       "select device <name>" "Select a device by the given name" \
       "select connection <name>" "Select a connection by the given name" \
@@ -313,6 +314,8 @@ while true; do
       scan
     elif [ "${CMD[0]}" = "power" ]; then
       power "${CMD[@]:1}"
+    elif [ "${CMD[0]}" = "airplane" ]; then
+      power wifi off
     elif [ "${CMD[0]}" = "connect" ]; then
       connect "${CMD[@]:1}"
     elif [ "${CMD[0]}" = "select" ]; then
