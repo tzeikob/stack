@@ -245,8 +245,8 @@ help () {
     printf " %-25s\t%s\n" \
       "help" "Show this help message" \
       "status" "Show the current status of the selected device or connection" \
-      "connect" "Get the selected device or connection up" \
-      "disconnect" "Get the selected device or connection down" \
+      "up" "Get the selected device or connection up" \
+      "down" "Get the selected device or connection down" \
       "delete" "Delete the selected device or connection" \
       "deselect" "Deselect the select device or connection"
   fi
@@ -317,13 +317,13 @@ while true; do
       elif [ ! -z "$SEL_CONNECTION" ]; then
         show connection "$SEL_CONNECTION"
       fi
-    elif [ "${CMD[0]}" = "connect" ]; then
+    elif [ "${CMD[0]}" = "up" ]; then
       if [ ! -z "$SEL_DEVICE" ]; then
         up device "$SEL_DEVICE" 
       elif [ ! -z "$SEL_CONNECTION" ]; then
         up connection "$SEL_CONNECTION"
       fi
-    elif [ "${CMD[0]}" = "disconnect" ]; then
+    elif [ "${CMD[0]}" = "down" ]; then
       if [ ! -z "$SEL_DEVICE" ]; then
         down device "$SEL_DEVICE" 
       elif [ ! -z "$SEL_CONNECTION" ]; then
