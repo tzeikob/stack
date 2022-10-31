@@ -151,9 +151,13 @@ up () {
   local NAME=$2
 
   if [ "$OBJECT" = "device" ]; then
-    nmcli device connect "$NAME"
+    nmcli device connect "$NAME" &&
+      sleep 6 ||
+      echo "Unable to set device $NAME up"
   elif [ "$OBJECT" = "connection" ]; then
-    nmcli connection up "$NAME"
+    nmcli connection up "$NAME" &&
+      sleep 6 ||
+      echo "Unable to set connection $NAME up"
   else
     echo "Unknown or invalid object: $OBJECT"
   fi
@@ -164,9 +168,13 @@ down () {
   local NAME=$2
 
   if [ "$OBJECT" = "device" ]; then
-    nmcli device disconnect "$NAME"
+    nmcli device disconnect "$NAME" &&
+      sleep 6 ||
+      echo "Unable to set device $NAME down"
   elif [ "$OBJECT" = "connection" ]; then
-    nmcli connection down "$NAME"
+    nmcli connection down "$NAME" &&
+      sleep 6 ||
+      echo "Unable to set connection $NAME down"
   else
     echo "Unknown or invalid object: $OBJECT"
   fi
@@ -201,15 +209,19 @@ delete () {
     askme "Do you want to delete the device?" "yes" "no"
 
     if [ "$REPLY" = "yes" ]; then
-      nmcli device delete "$NAME"
-      desel
+      nmcli device delete "$NAME" &&
+        sleep 6 &&
+        desel ||
+        echo "Unable to delete device $NAME"
     fi
   elif [ "$OBJECT" = "connection" ]; then
     askme "Do you want to delete the connection?" "yes" "no"
 
     if [ "$REPLY" = "yes" ]; then
-      nmcli connection delete "$NAME"
-      desel
+      nmcli connection delete "$NAME" &&
+        sleep 6 &&
+        desel ||
+        echo "Unable to delete connection $NAME"
     fi
   else
     echo "Unknown or invalid object: $OBJECT"
@@ -220,7 +232,9 @@ connect () {
   local SSID=$1
   local SECRET_KEY=$2
 
-  nmcli device wifi connect "$SSID" password "$SECRET_KEY" hidden yes
+  nmcli device wifi connect "$SSID" password "$SECRET_KEY" hidden yes &&
+   sleep 6 ||
+   echo "Unable to connect to network $SSID"
 }
 
 help () {
