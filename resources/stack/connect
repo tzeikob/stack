@@ -154,13 +154,9 @@ up () {
   local NAME=$2
 
   if [ "$OBJECT" = "device" ]; then
-    nmcli device connect "$NAME" &&
-      sleep 6 ||
-      echo "Unable to set device $NAME up"
+    nmcli device connect "$NAME" && sleep 6
   elif [ "$OBJECT" = "connection" ]; then
-    nmcli connection up "$NAME" &&
-      sleep 6 ||
-      echo "Unable to set connection $NAME up"
+    nmcli connection up "$NAME" && sleep 6
   else
     echo "Unknown or invalid object: $OBJECT"
   fi
@@ -171,13 +167,9 @@ down () {
   local NAME=$2
 
   if [ "$OBJECT" = "device" ]; then
-    nmcli device disconnect "$NAME" &&
-      sleep 6 ||
-      echo "Unable to set device $NAME down"
+    nmcli device disconnect "$NAME" && sleep 6
   elif [ "$OBJECT" = "connection" ]; then
-    nmcli connection down "$NAME" &&
-      sleep 6 ||
-      echo "Unable to set connection $NAME down"
+    nmcli connection down "$NAME" && sleep 6
   else
     echo "Unknown or invalid object: $OBJECT"
   fi
@@ -188,13 +180,11 @@ power () {
   local STATUS=${2:-"on"}
 
   if [ "$OBJECT" = "network" ]; then
-    echo "Powering network $STATUS..."
     nmcli networking "$STATUS" &&
       sleep 6 &&
       echo "Network set to $STATUS status" ||
       echo "Unable to power $STATUS the network"
   elif [ "$OBJECT" = "wifi" ]; then
-    echo "Powering wifi $STATUS..."
     nmcli radio wifi "$STATUS" &&
       sleep 6 &&
       echo "Wifi set to $STATUS status" ||
@@ -212,19 +202,13 @@ delete () {
     askme "Do you want to delete the device?" "yes" "no"
 
     if [ "$REPLY" = "yes" ]; then
-      nmcli device delete "$NAME" &&
-        sleep 6 &&
-        desel ||
-        echo "Unable to delete device $NAME"
+      nmcli device delete "$NAME" && sleep 6 && desel
     fi
   elif [ "$OBJECT" = "connection" ]; then
     askme "Do you want to delete the connection?" "yes" "no"
 
     if [ "$REPLY" = "yes" ]; then
-      nmcli connection delete "$NAME" &&
-        sleep 6 &&
-        desel ||
-        echo "Unable to delete connection $NAME"
+      nmcli connection delete "$NAME" && sleep 6 && desel
     fi
   else
     echo "Unknown or invalid object: $OBJECT"
@@ -236,8 +220,7 @@ connect () {
   local SECRET_KEY=$2
 
   nmcli device wifi connect "$SSID" password "$SECRET_KEY" hidden yes &&
-   sleep 6 ||
-   echo "Unable to connect to network $SSID"
+   sleep 6
 }
 
 help () {
