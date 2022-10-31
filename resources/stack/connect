@@ -198,11 +198,19 @@ delete () {
   local NAME=$2
 
   if [ "$OBJECT" = "device" ]; then
-    nmcli device delete "$NAME"
-    desel
+    askme "Do you want to delete the device?" "yes" "no"
+
+    if [ "$REPLY" = "yes" ]; then
+      nmcli device delete "$NAME"
+      desel
+    fi
   elif [ "$OBJECT" = "connection" ]; then
-    nmcli connection delete "$NAME"
-    desel
+    askme "Do you want to delete the connection?" "yes" "no"
+
+    if [ "$REPLY" = "yes" ]; then
+      nmcli connection delete "$NAME"
+      desel
+    fi
   else
     echo "Unknown or invalid object: $OBJECT"
   fi
