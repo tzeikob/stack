@@ -23,8 +23,6 @@ sel () {
     SEL_DEVICE=""
     SEL_CONNECTION=$NAME
     SEL=$SEL_CONNECTION
-  else
-    echo "Unknown or invalid object: $OBJECT"
   fi
 }
 
