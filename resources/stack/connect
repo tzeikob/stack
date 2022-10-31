@@ -217,13 +217,10 @@ delete () {
 }
 
 connect () {
-  askme "Enter the SSID of the network:" ".*"
-  local SSID=$REPLY
+  local SSID=$1
+  local SECRET_KEY=$2
 
-  askme "Enter the secret key:" ".*"
-  local SECRET=$REPLY
-
-  nmcli device wifi connect "$SSID" password "$SECRET" hidden yes
+  nmcli device wifi connect "$SSID" password "$SECRET_KEY" hidden yes
 }
 
 help () {
@@ -236,7 +233,7 @@ help () {
       "scan" "Scan for wireless networks in your area" \
       "power network <on|off>" "Power on/off the system networking" \
       "power wifi <on|off>" "Power on/off the wifi" \
-      "connect" "Connect to a wireless network" \
+      "connect <SSID> <secret-key>" "Connect to a wireless network" \
       "select device <name>" "Select a device by the given name" \
       "select connection <name>" "Select a connection by the given name" \
       "help" "Show this help message"
@@ -298,7 +295,7 @@ while true; do
     elif [ "${CMD[0]}" = "power" ]; then
       power "${CMD[@]:1}"
     elif [ "${CMD[0]}" = "connect" ]; then
-      connect
+      connect "${CMD[@]:1}"
     elif [ "${CMD[0]}" = "select" ]; then
       if [ "${CMD[1]}" = "device" ]; then
         sel device "${CMD[*]:2}"
