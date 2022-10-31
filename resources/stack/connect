@@ -209,6 +209,35 @@ connect () {
   nmcli device wifi connect "$SSID" password "$SECRET" hidden yes
 }
 
+help () {
+  if [ -z "$SEL" ]; then
+    echo "COMMANDS"
+    printf " %-25s\t%s\n" \
+      "status" "Show the current status of system's networking" \
+      "devices" "List all network devices" \
+      "connections" "List all network connections" \
+      "scan" "Scan for wireless networks in your area" \
+      "power network <on|off>" "Power on/off the system networking" \
+      "power wifi <on|off>" "Power on/off the wifi" \
+      "connect" "Connect to a wireless network" \
+      "select device <name>" "Select a device by the given name" \
+      "select connection <name>" "Select a connection by the given name" \
+      "help" "Show this help message"
+  else
+    echo "COMMANDS"
+    printf " %-25s\t%s\n" \
+      "help" "Show this help message" \
+      "status" "Show the current status of the selected device or connection" \
+      "connect" "Get the selected device or connection up" \
+      "disconnect" "Get the selected device or connection down" \
+      "deselect" "Deselect the select device or connection"
+    if [ ! -z "$SEL_CONNECTION" ]; then
+      printf " %-25s\t%s\n" \
+        "delete" "Delete selected connection"
+    fi
+  fi
+}
+
 while true; do
   if [ -z "$SEL" ]; then
     NETWORKING=$(nmcli networking)
@@ -233,11 +262,14 @@ while true; do
   history -s "$REPLY"
   CMD=($(echo "$REPLY" | tr ':' '\n'))
 
-  if [ "${CMD[0]}" = "quit" ]; then
-    break
+  if [ "${CMD[0]}" = "help" ]; then
+    help
+    continue
   elif [ "${CMD[0]}" = "clear" ]; then
     clear
     continue
+  elif [ "${CMD[0]}" = "quit" ]; then
+    break
   fi
 
   if [ -z "$SEL" ]; then
