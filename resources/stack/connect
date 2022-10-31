@@ -6,12 +6,28 @@ require "networkmanager"
 require "wpa_supplicant"
 require "wireless_tools"
 
+validate () {
+  local OBJECT=$1
+  local NAME=$2
+
+  if [ "$OBJECT" = "device" ]; then
+    if ! nmcli -f DEVICE device | tail +2 | grep -q "$NAME"; then
+      echo "Invalid network object $NAME"
+      return 1
+    fi
+  elif [ "$OBJECT" = "connection" ]; then
+    if ! nmcli -f NAME connection | tail +2 | grep -q "$NAME"; then
+      echo "Invalid network object $NAME"
+      return 1
+    fi
+  fi 
+}
+
 sel () {
   local OBJECT=$1
   local NAME=$2
 
-  if ! nmcli --colors no device | grep -q "$NAME"; then
-    echo "Invalid network object $NAME"
+  if ! validate "$OBJECT" "$NAME"; then
     return 1
   fi
 
