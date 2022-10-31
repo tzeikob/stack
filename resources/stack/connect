@@ -108,8 +108,6 @@ show () {
       IP6.GATEWAY, \
       IP6.ROUTE" \
       connection show "$NAME"
-  else
-    echo "Unknown or invalid object: $OBJECT"
   fi
 }
 
@@ -157,8 +155,6 @@ up () {
     nmcli device connect "$NAME" && sleep 6
   elif [ "$OBJECT" = "connection" ]; then
     nmcli connection up "$NAME" && sleep 6
-  else
-    echo "Unknown or invalid object: $OBJECT"
   fi
 }
 
@@ -170,8 +166,6 @@ down () {
     nmcli device disconnect "$NAME" && sleep 6
   elif [ "$OBJECT" = "connection" ]; then
     nmcli connection down "$NAME" && sleep 6
-  else
-    echo "Unknown or invalid object: $OBJECT"
   fi
 }
 
@@ -189,8 +183,6 @@ power () {
       sleep 6 &&
       echo "Wifi set to $STATUS status" ||
       echo "Unable to power $STATUS the wifi"
-  else
-    echo "Unknown or invalid object: $OBJECT"
   fi
 }
 
@@ -198,20 +190,16 @@ delete () {
   local OBJECT=$1
   local NAME=$2
 
+  askme "Do you want to delete the $OBJECT?" "yes" "no"
+
+  if [ "$REPLY" = "no" ]; then
+    return 0
+  fi
+
   if [ "$OBJECT" = "device" ]; then
-    askme "Do you want to delete the device?" "yes" "no"
-
-    if [ "$REPLY" = "yes" ]; then
-      nmcli device delete "$NAME" && sleep 6 && desel
-    fi
+    nmcli device delete "$NAME" && sleep 6 && desel
   elif [ "$OBJECT" = "connection" ]; then
-    askme "Do you want to delete the connection?" "yes" "no"
-
-    if [ "$REPLY" = "yes" ]; then
-      nmcli connection delete "$NAME" && sleep 6 && desel
-    fi
-  else
-    echo "Unknown or invalid object: $OBJECT"
+    nmcli connection delete "$NAME" && sleep 6 && desel
   fi
 }
 
