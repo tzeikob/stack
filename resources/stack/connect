@@ -228,8 +228,8 @@ help () {
     echo "COMMANDS"
     printf " %-25s\t%s\n" \
       "status" "Show the current status of system's networking" \
-      "devices" "List all network devices" \
-      "connections" "List all network connections" \
+      "devices [<type>]" "List all network devices or filtered by type" \
+      "connections [<type>]" "List all network connections or filtered by type" \
       "scan" "Scan for wireless networks in your area" \
       "power network <on|off>" "Power on/off the system networking" \
       "power wifi <on|off>" "Power on/off the wifi" \
