@@ -243,8 +243,9 @@ connect () {
 }
 
 help () {
+  echo "COMMANDS"
+
   if [ -z "$SEL" ]; then
-    echo "COMMANDS"
     printf " %-25s\t%s\n" \
       "status" "Show the current status of system's networking" \
       "devices [<type>]" "List all network devices or filtered by type" \
@@ -258,7 +259,6 @@ help () {
       "select connection <name>" "Select a connection by the given name" \
       "help" "Show this help message"
   else
-    echo "COMMANDS"
     printf " %-25s\t%s\n" \
       "help" "Show this help message" \
       "status" "Show the current status of the selected device or connection" \
@@ -304,60 +304,42 @@ while true; do
   fi
 
   if [ -z "$SEL" ]; then
-    if [ "${CMD[0]}" = "status" ]; then
-      status
-    elif [ "${CMD[0]}" = "devices" ]; then
-      devices "${CMD[@]:1}"
-    elif [ "${CMD[0]}" = "connections" ]; then
-      connections "${CMD[@]:1}"
-    elif [ "${CMD[0]}" = "scan" ]; then
-      scan
-    elif [ "${CMD[0]}" = "power" ]; then
-      power "${CMD[@]:1}"
-    elif [ "${CMD[0]}" = "airplane" ]; then
-      power wifi off
-    elif [ "${CMD[0]}" = "connect" ]; then
-      connect "${CMD[@]:1}"
-    elif [ "${CMD[0]}" = "select" ]; then
-      if [ "${CMD[1]}" = "device" ]; then
-        sel device "${CMD[*]:2}"
-      elif [ "${CMD[1]}" = "connection" ]; then
-        sel connection "${CMD[*]:2}"
-      else
-        echo "Unknown or invalid command: $REPLY"
-      fi
-    elif [ ! -z "$REPLY" ]; then
-      echo "Unknown or invalid command: $REPLY"
-    fi
+    case "${CMD[0]}" in
+      "status") status;;
+      "devices") devices "${CMD[@]:1}";;
+      "connections") connections "${CMD[@]:1}";;
+      "scan") scan;;
+      "power") power "${CMD[@]:1}";;
+      "airplane") power wifi off;;
+      "connect") connect "${CMD[@]:1}";;
+      "select")
+        case "${CMD[1]}" in
+          "device") sel device "${CMD[*]:2}";;
+          "connection") sel connection "${CMD[*]:2}";;
+          *) echo "Invalid select command: $REPLY";;
+        esac;;
+      *) echo "Unknown or invalid command: $REPLY";; 
+    esac
   else
-    if [ "${CMD[0]}" = "status" ]; then
-      if [ ! -z "$SEL_DEVICE" ]; then
-        show device "$SEL_DEVICE"
-      elif [ ! -z "$SEL_CONNECTION" ]; then
-        show connection "$SEL_CONNECTION"
-      fi
-    elif [ "${CMD[0]}" = "up" ]; then
-      if [ ! -z "$SEL_DEVICE" ]; then
-        up device "$SEL_DEVICE" 
-      elif [ ! -z "$SEL_CONNECTION" ]; then
-        up connection "$SEL_CONNECTION"
-      fi
-    elif [ "${CMD[0]}" = "down" ]; then
-      if [ ! -z "$SEL_DEVICE" ]; then
-        down device "$SEL_DEVICE" 
-      elif [ ! -z "$SEL_CONNECTION" ]; then
-        down connection "$SEL_CONNECTION"
-      fi
-    elif [ "${CMD[0]}" = "delete" ]; then
-      if [ ! -z "$SEL_DEVICE" ]; then
-        delete device "$SEL_DEVICE" 
-      elif [ ! -z "$SEL_CONNECTION" ]; then
-        delete connection "$SEL_CONNECTION"
-      fi
-    elif [ "${CMD[0]}" = "deselect" ]; then
-      desel
-    elif [ ! -z "$REPLY" ]; then
-      echo "Unknown or invalid command: $REPLY"
-    fi
+    case "${CMD[0]}" in
+      "status")
+        [ ! -z "$SEL_DEVICE" ] &&
+          show device "$SEL" ||
+          show connection "$SEL";;
+      "up")
+        [ ! -z "$SEL_DEVICE" ] &&
+          up device "$SEL" ||
+          up connection "$SEL";;
+      "down")
+        [ ! -z "$SEL_DEVICE" ] &&
+          down device "$SEL" ||
+          down connection "$SEL";;
+      "delete")
+        [ ! -z "$SEL_DEVICE" ] &&
+          delete device "$SEL" ||
+          delete connection "$SEL";;
+      "deselect") desel;;
+      *) echo "Unknown or invalid command: $REPLY";;
+    esac
   fi
 done
