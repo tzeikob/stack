@@ -12,15 +12,15 @@ validate () {
 
   if [ "$OBJECT" = "device" ]; then
     if ! nmcli -f DEVICE device | tail +2 | grep -q "$NAME"; then
-      echo "Invalid network object $NAME"
+      echo "Invalid device $NAME"
       return 1
     fi
   elif [ "$OBJECT" = "connection" ]; then
     if ! nmcli -f NAME connection | tail +2 | grep -q "$NAME"; then
-      echo "Invalid network object $NAME"
+      echo "Invalid connection $NAME"
       return 1
     fi
-  fi 
+  fi
 }
 
 sel () {
