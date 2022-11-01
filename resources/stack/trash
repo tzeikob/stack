@@ -24,67 +24,82 @@ not_present () {
   done
 }
 
+count_files () {
+  trash-list | wc -l
+}
+
 list_files () {
-  trash-list | awk '{print $3}'
+  if [ $COUNTER -gt 0 ]; then
+    trash-list | awk '{print " "$3}'
+  else
+    echo "Trash is empty, no files to list"
+  fi
 }
 
 restore_files () {
-  local BEFORE=$(list_files)
+  if [ $COUNTER -gt 0 ]; then
+    local BEFORE=$(trash-list)
 
-  trash-restore
+    trash-restore
 
-  local AFTER=$(list_files)
-  local RESTORED=$(not_present "$BEFORE" "$AFTER")
+    local AFTER=$(trash-list)
+    local RESTORED=$(not_present "$BEFORE" "$AFTER")
 
-  if [ ! -z "$RESTORED" ]; then
-    echo "The following files are restored:"
-    echo "$RESTORED" | awk '{print " "$1}'
+    if [ ! -z "$RESTORED" ]; then
+      echo "Restored file(s):"
+      echo "$RESTORED" | awk '{print " "$1}'
+    else
+      echo "No file is restored"
+    fi
+  else
+    echo "Trash is empty, no files to restore"
   fi
 }
 
 remove_files () {
-  askme "Enter a path or pattern to match files for remove:" ".+"
-  local FILE_PAT="$REPLY"
+  if [ $COUNTER -gt 0 ]; then
+    askme "Enter a path pattern to match files for removal:" ".+"
+    local FILE_PAT="$REPLY"
 
-  askme "ANY MATCHED FILE will be gone, proceed?" "yes" "no"
+    askme "ANY MATCHED FILE will be gone, proceed?" "yes" "no"
 
-  if [ "$REPLY" = "yes" ]; then
-    local BEFORE=$(list_files)
+    if [ "$REPLY" = "yes" ]; then
+      local BEFORE=$(trash-list)
 
-    trash-rm "$FILE_PAT"
+      trash-rm "$FILE_PAT"
 
-    local AFTER=$(list_files)
-    local GONE=$(not_present "$BEFORE" "$AFTER")
+      local AFTER=$(trash-list)
+      local GONE=$(not_present "$BEFORE" "$AFTER")
 
-    if [ ! -z "$GONE" ]; then
-      echo "The following files are removed:"
-      echo "$GONE" | awk '{print " "$1}'
-    else
-      echo "No matched files found, none is removed."
+      if [ ! -z "$GONE" ]; then
+        echo "Removed file(s):"
+        echo "$GONE" | awk '{print " "$1}'
+      else
+        echo "No file is removed"
+      fi
     fi
+  else
+    echo "Trash is empty, no files to remove"
   fi
 }
 
 empty_files () {
-  local FILES=$(trash-list)
-
-  if [[ ! -z "$FILES" ]]; then
-    askme "ALL FILES in trash will be gone, proceed?" "yes" "no"
+  if [[ $COUNTER -gt 0 ]]; then
+    askme "ALL $COUNTER FILES will be gone, proceed?" "yes" "no"
 
     if [ "$REPLY" = "yes" ]; then
-      local BEFORE=$(list_files)
+      local BEFORE=$(trash-list)
 
       trash-empty -f
 
-      local AFTER=$(list_files)
+      local AFTER=$(trash-list)
       local GONE=$(not_present "$BEFORE" "$AFTER")
 
-      echo "The following files are removed:"
+      echo "Removed file(s):"
       echo "$GONE" | awk '{print " "$1}'
-      echo "Trash is now empty."
     fi
   else
-    echo "Trash is already empty, no files found."
+    echo "Trash is already empty, no files to remove"
   fi
 }
 
@@ -94,17 +109,17 @@ trash_files () {
 
   if [ "$FIRST_ARG" = "-r" ]; then
     printf "%s\n" "${ARGS[@]:1}"
-    askme "The files will be GONE FOREVER, proceed?" "yes" "no"
+    askme "The above files will be GONE FOREVER, proceed?" "yes" "no"
 
     if [ "$REPLY" = "yes" ]; then
       rm -rf "${ARGS[@]:1}"
     fi
   else
-    local BEFORE=$(list_files)
+    local BEFORE=$(trash-list)
 
     trash-put "${ARGS[@]}"
 
-    local AFTER=$(list_files)
+    local AFTER=$(trash-list)
     local TRASHED=$(not_present "$AFTER" "$BEFORE")
 
     echo "The following files are trashed:"
@@ -112,26 +127,52 @@ trash_files () {
   fi
 }
 
+
+help () {
+  echo "COMMANDS"
+  printf " %-25s\t%s\n" \
+    "list" "List all trashed files" \
+    "restore" "Restore trashed files" \
+    "remove" "Remove trashed files by the given pattern" \
+    "empty" "Empty trash from any trashed files if any" \
+    "help" "Show this help message"
+}
+
 ARGS=("$@")
 ARGS_LEN=${#ARGS[@]}
 
 if [ $ARGS_LEN = 0 ]; then
-  TRASHED=$(list_files)
+  while true; do
+    COUNTER=$(count_files)
 
-  if [[ ! -z "$TRASHED" ]]; then
-    trash-list
-    askme "Which trash operation to apply?" "restore" "remove" "empty"
-
-    if [ "$REPLY" = "restore" ]; then
-      restore_files
-    elif [ "$REPLY" = "remove" ]; then
-      remove_files
-    elif [ "$REPLY" = "empty" ]; then
-      empty_files
+    FOREGROUND=$WHITE
+    if [ $COUNTER -gt 0 ]; then
+      FOREGROUND=$YELLOW
     fi
-  else
-    echo "Trash is empty, no files found."
-  fi
+
+    prompt "trashed:$COUNTER" "$FOREGROUND"
+
+    history -s "$REPLY"
+    CMD=($(echo "$REPLY" | tr ':' '\n'))
+
+    if [ "${CMD[0]}" = "help" ]; then
+      help
+      continue
+    elif [ "${CMD[0]}" = "clear" ]; then
+      clear
+      continue
+    elif [ "${CMD[0]}" = "quit" ]; then
+      break
+    fi
+
+    case "${CMD[0]}" in
+      "list") list_files;;
+      "restore") restore_files;;
+      "remove") remove_files;;
+      "empty") empty_files;;
+      *) echo "Unknown or invalid command: $REPLY";; 
+    esac
+  done
 else
   trash_files "${ARGS[@]}"
 fi

@@ -297,7 +297,7 @@ install_utilities () {
   cp ~/stack/resources/stack/network "$CONFIG_HOME"
 
   ln -sf "$CONFIG_HOME/mount" /usr/local/bin/mmn
-  ln -sf "$CONFIG_HOME/trash" /usr/local/bin/ttr
+  ln -sf "$CONFIG_HOME/trash" /usr/local/bin/trash
   ln -sf "$CONFIG_HOME/shutdown" /usr/local/bin/sst
   ln -sf "$CONFIG_HOME/reboot" /usr/local/bin/rrb
   ln -sf "$CONFIG_HOME/logout" /usr/local/bin/llo
