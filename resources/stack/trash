@@ -163,6 +163,8 @@ if [ $ARGS_LEN = 0 ]; then
       continue
     elif [ "${CMD[0]}" = "quit" ]; then
       break
+    elif [ -z "${CMD[0]}" ]; then
+      continue
     fi
 
     case "${CMD[0]}" in

@@ -274,6 +274,8 @@ while true; do
     continue
   elif [ "${CMD[0]}" = "quit" ]; then
     break
+  elif [ -z "${CMD[0]}" ]; then
+    continue
   fi
 
   if [ -z "$SEL" ]; then
