@@ -104,13 +104,17 @@ empty_files () {
 }
 
 trash_files () {
-  local ARGS=("$@")
-  local ARGS_LEN=${#ARGS[@]}
+  local FILES=("$@")
+  local LEN=${#FILES[@]}
 
-  if [ $ARGS_LEN -gt 0 ]; then
+  if [ $LEN -gt 0 ]; then
     local BEFORE=$(trash-list)
 
-    trash-put "${ARGS[@]}" || abort "Unable to trash files"
+    local INDEX=0
+    while [ $INDEX -lt $LEN ]; do
+      trash-put "${FILES[$INDEX]}"
+      INDEX=$((INDEX + 1))
+    done
 
     local AFTER=$(trash-list)
     local TRASHED=$(not_present "$AFTER" "$BEFORE")
@@ -123,15 +127,18 @@ trash_files () {
 }
 
 wipe_files () {
-  local ARGS=("$@")
-  local ARGS_LEN=${#ARGS[@]}
+  local FILES=("$@")
+  local LEN=${#FILES[@]}
 
-  if [ $ARGS_LEN -gt 0 ]; then
-    printf "%s\n" "${ARGS[@]}"
-    askme "The above files will be GONE FOREVER, proceed?" "yes" "no"
+  if [ $LEN -gt 0 ]; then
+    askme "Files will be gone forever, are you sure?" "yes" "no"
 
     if [ "$REPLY" = "yes" ]; then
-      rm -rf "${ARGS[@]}"
+      local INDEX=0
+      while [ $INDEX -lt $LEN ]; do
+        rm -rf "${FILES[$INDEX]}"
+        INDEX=$((INDEX + 1))
+      done
     fi
   else
     abort "Unable to remove, no files are given"
@@ -139,26 +146,29 @@ wipe_files () {
 }
 
 help () {
-  echo "Usage: trash [OPTIONS] FILE..."
+  local MODE=$1
 
-  echo -e "\nOPTIONS"
-  printf " %-25s\t%s\n" \
-    "r" "Remove files forever" \
-    "h" "Show this help message"
+  if [ "$MODE" = "noargs" ]; then
+    echo "Usage: COMMAND"
+  
+    echo -e "\nCOMMANDS"
+    printf " %-25s\t%s\n" \
+      "list" "List all trashed files" \
+      "restore" "Restore trashed files" \
+      "remove" "Remove trashed files by the given pattern" \
+      "empty" "Empty trash from any trashed files if any" \
+      "help" "Show this help message"
+  else
+    echo "Usage: trash [OPTIONS] FILE..."
 
-  echo -e "\nCOMMANDS"
-  printf " %-25s\t%s\n" \
-    "list" "List all trashed files" \
-    "restore" "Restore trashed files" \
-    "remove" "Remove trashed files by the given pattern" \
-    "empty" "Empty trash from any trashed files if any" \
-    "help" "Show this help message"
+    echo -e "\nOPTIONS"
+    printf " %-25s\t%s\n" \
+      "r, --remove" "Remove files forever, no trash" \
+      "h, --help" "Show this help message"
+  fi
 }
 
-ARGS=("$@")
-ARGS_LEN=${#ARGS[@]}
-
-if [ $ARGS_LEN = 0 ]; then
+if [ $# = 0 ]; then
   while true; do
     COUNTER=$(count_files)
 
@@ -173,7 +183,7 @@ if [ $ARGS_LEN = 0 ]; then
     CMD=($(echo "$REPLY" | tr ':' '\n'))
 
     if [ "${CMD[0]}" = "help" ]; then
-      help
+      help "noargs"
       continue
     elif [ "${CMD[0]}" = "clear" ]; then
       clear
@@ -193,13 +203,30 @@ if [ $ARGS_LEN = 0 ]; then
     esac
   done
 else
-  while getopts ":rh" OPT; do
-    case $OPT in
-      r) wipe_files "${@##-*}"; exit 0;;
-      h) help; exit 0;;
-     \?) abort "Invalid option, try trash help";;
-    esac
+  OPTS=""
+  FILES=()
+
+  while true; do
+    if [ "$1" = "-r" ] || [ "$1" = "--remove" ]; then
+      OPTS="$OPTS remove"
+    elif [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+      OPTS="$OPTS help"
+    elif [[ "$1" =~ ^(-|--) ]]; then
+      abort "Unknown or invalid option: $1"
+    elif [ -n "$1" ]; then
+      FILES+=("$1")
+    else
+      break
+    fi
+
+    shift
   done
 
-  trash_files "${ARGS[@]}"
+  if [[ "$OPTS" =~ "help" ]]; then
+    help
+  elif [[ "$OPTS" =~ "remove" ]]; then
+    wipe_files "${FILES[@]}"
+  else
+    trash_files "${FILES[@]}"
+  fi
 fi
