@@ -4,52 +4,35 @@ source ~/.config/stack/utils
 
 require "trash-cli"
 
-not_present () {
-  local BEFORE=($1)
-  local AFTER=($2)
-
-  for EXISTED in "${BEFORE[@]}"; do
-    local IS_FOUND="false"
-
-    for REMAINED in "${AFTER[@]}"; do
-      if [ "$EXISTED" = "$REMAINED" ]; then
-        IS_FOUND="true"
-        break
-      fi
-    done
-
-    if [ "$IS_FOUND" = "false" ]; then
-      echo "$EXISTED"
-    fi
-  done
-}
-
 count_files () {
   trash-list | wc -l
 }
 
 list_files () {
+  local COUNTER=$(count_files)
+
   if [ $COUNTER -gt 0 ]; then
-    trash-list | awk '{print " "$3}'
+    trash-list
   else
     echo "Trash is empty, no files to list"
   fi
 }
 
 restore_files () {
-  if [ $COUNTER -gt 0 ]; then
-    local BEFORE=$(trash-list)
+  local COUNTER=$(count_files)
 
+  if [ $COUNTER -gt 0 ]; then
     trash-restore
 
-    local AFTER=$(trash-list)
-    local RESTORED=$(not_present "$BEFORE" "$AFTER")
+    local NEW_COUNTER=$(count_files)
+    local RESTORED=$((COUNTER - NEW_COUNTER))
 
-    if [ ! -z "$RESTORED" ]; then
-      echo "Restored file(s):"
-      echo "$RESTORED" | awk '{print " "$1}'
+    if [ $RESTORED -gt 1 ]; then
+      echo "$RESTORED files have been restored"
+    elif [ $RESTORED -gt 0 ]; then
+      echo "$RESTORED file has been restored"
     else
-      echo "No file is restored"
+      echo "No file has been restored"
     fi
   else
     echo "Trash is empty, no files to restore"
@@ -57,23 +40,24 @@ restore_files () {
 }
 
 remove_files () {
+  local COUNTER=$(count_files)
+
   if [ $COUNTER -gt 0 ]; then
     askme "Enter a path pattern to match files for removal:" ".+"
     local FILE_PAT="$REPLY"
 
-    askme "ANY MATCHED FILE will be gone, proceed?" "yes" "no"
+    askme "Matched files will be gone forever, proceed?" "yes" "no"
 
     if [ "$REPLY" = "yes" ]; then
-      local BEFORE=$(trash-list)
-
       trash-rm "$FILE_PAT"
 
-      local AFTER=$(trash-list)
-      local GONE=$(not_present "$BEFORE" "$AFTER")
+      local NEW_COUNTER=$(count_files)
+      local GONE=$((COUNTER - NEW_COUNTER))
 
-      if [ ! -z "$GONE" ]; then
-        echo "Removed file(s):"
-        echo "$GONE" | awk '{print " "$1}'
+      if [ $GONE -gt 1 ]; then
+        echo "$GONE files have been removed"
+      elif [ $GONE -gt 0 ]; then
+        echo "$GONE file has been removed"
       else
         echo "No file is removed"
       fi
@@ -84,22 +68,27 @@ remove_files () {
 }
 
 empty_files () {
+  local COUNTER=$(count_files)
+
   if [[ $COUNTER -gt 0 ]]; then
-    askme "ALL $COUNTER FILES will be gone, proceed?" "yes" "no"
+    askme "$COUNTER files will be gone forever, proceed?" "yes" "no"
 
     if [ "$REPLY" = "yes" ]; then
-      local BEFORE=$(trash-list)
-
       trash-empty -f
 
-      local AFTER=$(trash-list)
-      local GONE=$(not_present "$BEFORE" "$AFTER")
+      local NEW_COUNTER=$(count_files)
+      local GONE=$((COUNTER - NEW_COUNTER))
 
-      echo "Removed file(s):"
-      echo "$GONE" | awk '{print " "$1}'
+      if [ $GONE -gt 1 ]; then
+        echo "$GONE files have been removed"
+      elif [ $GONE -gt 0 ]; then
+        echo "$GONE file has been removed"
+      else
+        echo "No file is removed"
+      fi
     fi
   else
-    echo "Trash is already empty, no files to remove"
+    echo "Trash is empty, no files to remove"
   fi
 }
 
@@ -108,7 +97,7 @@ trash_files () {
   local LEN=${#FILES[@]}
 
   if [ $LEN -gt 0 ]; then
-    local BEFORE=$(trash-list)
+    local COUNTER=$(count_files)
 
     local INDEX=0
     while [ $INDEX -lt $LEN ]; do
@@ -116,11 +105,16 @@ trash_files () {
       INDEX=$((INDEX + 1))
     done
 
-    local AFTER=$(trash-list)
-    local TRASHED=$(not_present "$AFTER" "$BEFORE")
+    local NEW_COUNTER=$(count_files)
+    local TRASHED=$((NEW_COUNTER - COUNTER))
 
-    echo "The following files are trashed:"
-    echo "$TRASHED" | awk '{print " "$1}'
+    if [ $TRASHED -gt 1 ]; then
+      echo "$TRASHED files have been trashed"
+    elif [ $TRASHED -gt 0 ]; then
+      echo "$TRASHED file has been trashed"
+    else
+      echo "No file is trashed"
+    fi
   else
     abort "Unable to trash, no files are given"
   fi
@@ -131,7 +125,7 @@ wipe_files () {
   local LEN=${#FILES[@]}
 
   if [ $LEN -gt 0 ]; then
-    askme "Files will be gone forever, are you sure?" "yes" "no"
+    askme "Files will be gone forever, proceed?" "yes" "no"
 
     if [ "$REPLY" = "yes" ]; then
       local INDEX=0
