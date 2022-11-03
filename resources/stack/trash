@@ -116,13 +116,14 @@ trash_files () {
     abort "Unable to trash, no files are given"
   fi
 
+  local COUNTER=$(count_files)
+
   local INDEX=0
   while [ $INDEX -lt $LEN ]; do
     trash-put "${FILES[$INDEX]}"
     INDEX=$((INDEX + 1))
   done
 
-  local COUNTER=$(count_files)
   local NEW_COUNTER=$(count_files)
   local TRASHED=$((NEW_COUNTER - COUNTER))
 
