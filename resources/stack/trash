@@ -162,6 +162,8 @@ help () {
 }
 
 if [ $# = 0 ]; then
+  CURRENT_PATH=${PWD/*\//}
+
   while true; do
     COUNTER=$(count_files)
 
@@ -170,7 +172,7 @@ if [ $# = 0 ]; then
       FOREGROUND=$YELLOW
     fi
 
-    prompt "trashed:$COUNTER" "$FOREGROUND"
+    prompt "$CURRENT_PATH:$COUNTER" "$FOREGROUND"
 
     history -s "$REPLY"
     CMD=($(echo "$REPLY" | tr ':' '\n'))
