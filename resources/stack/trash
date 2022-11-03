@@ -112,27 +112,26 @@ trash_files () {
   local FILES=("$@")
   local LEN=${#FILES[@]}
 
-  if [ $LEN -gt 0 ]; then
-    local COUNTER=$(count_files)
-
-    local INDEX=0
-    while [ $INDEX -lt $LEN ]; do
-      trash-put "${FILES[$INDEX]}"
-      INDEX=$((INDEX + 1))
-    done
-
-    local NEW_COUNTER=$(count_files)
-    local TRASHED=$((NEW_COUNTER - COUNTER))
-
-    if [ $TRASHED -gt 1 ]; then
-      echo "$TRASHED files have been trashed"
-    elif [ $TRASHED -gt 0 ]; then
-      echo "$TRASHED file has been trashed"
-    else
-      echo "No file is trashed"
-    fi
-  else
+  if [ $LEN -eq 0 ]; then
     abort "Unable to trash, no files are given"
+  fi
+
+  local INDEX=0
+  while [ $INDEX -lt $LEN ]; do
+    trash-put "${FILES[$INDEX]}"
+    INDEX=$((INDEX + 1))
+  done
+
+  local COUNTER=$(count_files)
+  local NEW_COUNTER=$(count_files)
+  local TRASHED=$((NEW_COUNTER - COUNTER))
+
+  if [ $TRASHED -gt 1 ]; then
+    echo "$TRASHED files have been trashed"
+  elif [ $TRASHED -eq 1 ]; then
+    echo "$TRASHED file has been trashed"
+  else
+    echo "No file is trashed"
   fi
 }
 
@@ -140,18 +139,18 @@ wipe_files () {
   local FILES=("$@")
   local LEN=${#FILES[@]}
 
-  if [ $LEN -gt 0 ]; then
-    askme "Files will be gone forever, proceed?" "yes" "no"
-
-    if [ "$REPLY" = "yes" ]; then
-      local INDEX=0
-      while [ $INDEX -lt $LEN ]; do
-        rm -rf "${FILES[$INDEX]}"
-        INDEX=$((INDEX + 1))
-      done
-    fi
-  else
+  if [ $LEN -eq 0 ]; then
     abort "Unable to remove, no files are given"
+  fi
+
+  askme "Files will be removed forever, proceed?" "yes" "no"
+
+  if [ "$REPLY" = "yes" ]; then
+    local INDEX=0
+    while [ $INDEX -lt $LEN ]; do
+      rm -rf "${FILES[$INDEX]}"
+      INDEX=$((INDEX + 1))
+    done
   fi
 }
 
@@ -173,7 +172,7 @@ help () {
 
     echo -e "\nOPTIONS"
     printf " %-25s\t%s\n" \
-      "r, --remove" "Remove files forever, no trash" \
+      "r, --remove" "Remove files permanently" \
       "h, --help" "Show this help message"
   fi
 }
