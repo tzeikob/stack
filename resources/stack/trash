@@ -48,7 +48,7 @@ remove_files () {
 
   if [ $COUNTER -eq 0 ]; then
     echo "Trash is empty, no files to remove"
-    return 0;
+    return 0
   fi
   
   askme "Any files matched by the pattern will be removed, proceed?" "yes" "no"
