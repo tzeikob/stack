@@ -124,7 +124,11 @@ trash_files () {
 
   local INDEX=0
   while [ $INDEX -lt $LEN ]; do
-    trash-put "${FILES[$INDEX]}"
+    local FILE=${FILES[$INDEX]}
+
+    trash-put "$FILE" &> /dev/null ||
+      echo "Unable to trash file $FILE"
+
     INDEX=$((INDEX + 1))
   done
 
