@@ -9,6 +9,7 @@ count_files () {
 }
 
 list_files () {
+  local DAYS=$1
   local COUNTER=$(count_files)
 
   if [ $COUNTER -eq 0 ]; then
@@ -16,7 +17,16 @@ list_files () {
     return 0
   fi
 
-  trash-list
+  if [ -n "$DAYS" ]; then
+    if [[ "$DAYS" =~ ^[0-9]+$ ]]; then
+      trash-list | awk -v days=$DAYS -v today=$(date +%s) \
+        '{"date -d "$1" +%s"|getline day; if (((today-day)/ 86400) < days + 1) {print}}'
+    else
+      echo "Invalid days argument: '$DAYS'"
+    fi
+  else
+    trash-list
+  fi
 }
 
 restore_files () {
@@ -171,7 +181,7 @@ help () {
   
     echo -e "\nCOMMANDS"
     printf " %-25s\t%s\n" \
-      "list" "List all trashed files." \
+      "list <days>" "List files aged by the given days, default all files." \
       "restore <path>" "Restore files from the given path, default current directory." \
       "remove <pattern>" "Remove files matched by the given pattern." \
       "empty <days>" "Empty trash from files aged by the given days, default all files." \
@@ -215,7 +225,7 @@ if [ $# = 0 ]; then
     fi
 
     case "${CMD[0]}" in
-      "list") list_files;;
+      "list") list_files "${CMD[@]:1}";;
       "restore") restore_files "${CMD[@]:1}";;
       "remove") remove_files "${CMD[@]:1}";;
       "empty") empty_files "${CMD[@]:1}";;
