@@ -67,27 +67,41 @@ remove_files () {
 }
 
 empty_files () {
+  local DAYS=$1
   local COUNTER=$(count_files)
 
-  if [[ $COUNTER -gt 0 ]]; then
-    askme "$COUNTER files will be gone forever, proceed?" "yes" "no"
+  if [[ $COUNTER -eq 0 ]]; then
+    echo "Trash is empty, no files to remove"
+    return 0
+  fi
+  
+  if [ -n "$DAYS" ]; then
+    if [[ "$DAYS" =~ ^[0-9]+$ ]]; then
+      askme "Files older than $DAYS day(s) will be removed, proceed?" "yes" "no"
+
+      if [ "$REPLY" = "yes" ]; then
+        trash-empty -f "$DAYS"
+      fi
+    else
+      echo "Error: days should be a positive integer value"
+    fi
+  else
+    askme "All trashed files will be removed, proceed?" "yes" "no"
 
     if [ "$REPLY" = "yes" ]; then
       trash-empty -f
-
-      local NEW_COUNTER=$(count_files)
-      local GONE=$((COUNTER - NEW_COUNTER))
-
-      if [ $GONE -gt 1 ]; then
-        echo "$GONE files have been removed"
-      elif [ $GONE -gt 0 ]; then
-        echo "$GONE file has been removed"
-      else
-        echo "No file is removed"
-      fi
     fi
+  fi
+
+  local NEW_COUNTER=$(count_files)
+  local GONE=$((COUNTER - NEW_COUNTER))
+
+  if [ $GONE -gt 1 ]; then
+    echo "$GONE files have been removed"
+  elif [ $GONE -eq 1 ]; then
+    echo "$GONE file has been removed"
   else
-    echo "Trash is empty, no files to remove"
+    echo "No file is removed"
   fi
 }
 
@@ -149,7 +163,7 @@ help () {
       "list" "List all trashed files" \
       "restore <path>" "Restore files from the given path or the current directory" \
       "remove <path>" "Remove trashed files matched by the given path pattern" \
-      "empty" "Empty trash from any trashed files if any" \
+      "empty <days>" "Empty trash from files aged by the given days or all files" \
       "help" "Show this help message"
   else
     echo "Usage: trash [OPTIONS] FILE..."
@@ -193,7 +207,7 @@ if [ $# = 0 ]; then
       "list") list_files;;
       "restore") restore_files "${CMD[@]:1}";;
       "remove") remove_files "${CMD[@]:1}";;
-      "empty") empty_files;;
+      "empty") empty_files "${CMD[@]:1}";;
       *) echo "Unknown or invalid command: $REPLY";; 
     esac
   done
