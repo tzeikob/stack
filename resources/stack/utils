@@ -28,6 +28,8 @@ require () {
     [ -f "/usr/bin/$DEP" ] ||
     [ -f "/usr/local/bin/$DEP" ] ||
       abort "Missing $DEP dependency"
+    
+    INDEX=$((INDEX + 1))
   done
 }
 
