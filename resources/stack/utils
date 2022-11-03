@@ -17,13 +17,17 @@ abort () {
 }
 
 require () {
-  local PACKAGES=("${@}")
+  local DEPS=("${@}")
+  local LEN=${#DEPS[@]}
 
-  for PKG in "${PACKAGES[@]}"; do
-    pacman -Qi "$PKG" &>/dev/null ||
-    [ -f "/usr/bin/$PKG" ] ||
-    [ -f "/usr/local/bin/$PKG" ] ||
-      abort "Missing $PKG package"
+  local INDEX=0
+  while [ $INDEX -lt $LEN ]; do
+    local DEP=${DEPS[$INDEX]}
+
+    pacman -Qi "$DEP" &>/dev/null ||
+    [ -f "/usr/bin/$DEP" ] ||
+    [ -f "/usr/local/bin/$DEP" ] ||
+      abort "Missing $DEP dependency"
   done
 }
 
