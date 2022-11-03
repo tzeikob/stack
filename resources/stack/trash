@@ -19,10 +19,11 @@ list_files () {
 }
 
 restore_files () {
+  local RESTORE_PATH=$1
   local COUNTER=$(count_files)
 
   if [ $COUNTER -gt 0 ]; then
-    trash-restore
+    trash-restore "$RESTORE_PATH"
 
     local NEW_COUNTER=$(count_files)
     local RESTORED=$((COUNTER - NEW_COUNTER))
@@ -146,7 +147,7 @@ help () {
     echo -e "\nCOMMANDS"
     printf " %-25s\t%s\n" \
       "list" "List all trashed files" \
-      "restore" "Restore trashed files" \
+      "restore <path>" "Restore files from the given path or the current directory" \
       "remove <path>" "Remove trashed files matched by the given path pattern" \
       "empty" "Empty trash from any trashed files if any" \
       "help" "Show this help message"
@@ -188,7 +189,7 @@ if [ $# = 0 ]; then
 
     case "${CMD[0]}" in
       "list") list_files;;
-      "restore") restore_files;;
+      "restore") restore_files "${CMD[@]:1}";;
       "remove") remove_files "${CMD[@]:1}";;
       "empty") empty_files;;
       *) echo "Unknown or invalid command: $REPLY";; 
