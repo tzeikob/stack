@@ -54,7 +54,11 @@ remove_files () {
   askme "Any files matched by the pattern will be removed, proceed?" "yes" "no"
 
   if [ "$REPLY" = "yes" ]; then
-    trash-rm "$FILE_PATTERN"
+    if [ -n "$FILE_PATTERN" ]; then
+      trash-rm "$FILE_PATTERN"
+    else
+      echo "Pattern should be a non empty value"
+    fi
   fi
 
   local NEW_COUNTER=$(count_files)
