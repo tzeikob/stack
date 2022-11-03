@@ -12,7 +12,7 @@ list_files () {
   local COUNTER=$(count_files)
 
   if [ $COUNTER -eq 0 ]; then
-    echo "Trash is empty, no files to list"
+    echo "Trash is empty, no files to list."
     return 0
   fi
 
@@ -24,7 +24,7 @@ restore_files () {
   local COUNTER=$(count_files)
 
   if [ $COUNTER -eq 0 ]; then
-    echo "Trash is empty, no files to restore"
+    echo "Trash is empty, no files to restore."
     return 0
   fi
 
@@ -34,11 +34,11 @@ restore_files () {
   local RESTORED=$((COUNTER - NEW_COUNTER))
 
   if [ $RESTORED -gt 1 ]; then
-    echo "$RESTORED files have been restored"
+    echo "$RESTORED files have been restored."
   elif [ $RESTORED -eq 1 ]; then
-    echo "$RESTORED file has been restored"
+    echo "$RESTORED file has been restored."
   else
-    echo "No file has been restored"
+    echo "No file has been restored."
   fi
 }
 
@@ -47,7 +47,7 @@ remove_files () {
   local COUNTER=$(count_files)
 
   if [ $COUNTER -eq 0 ]; then
-    echo "Trash is empty, no files to remove"
+    echo "Trash is empty, no files to remove."
     return 0
   fi
   
@@ -57,7 +57,7 @@ remove_files () {
     if [ -n "$FILE_PATTERN" ]; then
       trash-rm "$FILE_PATTERN"
     else
-      echo "Pattern should be a non empty value"
+      echo "Invalid pattern argument: '$FILE_PATTERN'"
     fi
   fi
 
@@ -65,11 +65,11 @@ remove_files () {
   local GONE=$((COUNTER - NEW_COUNTER))
 
   if [ $GONE -gt 1 ]; then
-    echo "$GONE files have been removed"
+    echo "$GONE files have been removed."
   elif [ $GONE -eq 1 ]; then
-    echo "$GONE file has been removed"
+    echo "$GONE file has been removed."
   else
-    echo "No file is removed"
+    echo "No file is removed."
   fi
 }
 
@@ -78,7 +78,7 @@ empty_files () {
   local COUNTER=$(count_files)
 
   if [[ $COUNTER -eq 0 ]]; then
-    echo "Trash is empty, no files to remove"
+    echo "Trash is empty, no files to remove."
     return 0
   fi
   
@@ -90,7 +90,7 @@ empty_files () {
         trash-empty -f "$DAYS"
       fi
     else
-      echo "Error: days should be a positive integer value"
+      echo "Invalid days argument: '$DAYS'"
     fi
   else
     askme "All trashed files will be removed, proceed?" "yes" "no"
@@ -104,11 +104,11 @@ empty_files () {
   local GONE=$((COUNTER - NEW_COUNTER))
 
   if [ $GONE -gt 1 ]; then
-    echo "$GONE files have been removed"
+    echo "$GONE files have been removed."
   elif [ $GONE -eq 1 ]; then
-    echo "$GONE file has been removed"
+    echo "$GONE file has been removed."
   else
-    echo "No file is removed"
+    echo "No file is removed."
   fi
 }
 
@@ -117,7 +117,7 @@ trash_files () {
   local LEN=${#FILES[@]}
 
   if [ $LEN -eq 0 ]; then
-    abort "Unable to trash, no files are given"
+    abort "Unable to trash, no files are given."
   fi
 
   local COUNTER=$(count_files)
@@ -127,7 +127,7 @@ trash_files () {
     local FILE=${FILES[$INDEX]}
 
     trash-put "$FILE" &> /dev/null ||
-      echo "Unable to trash file $FILE"
+      echo "Cannot trash the file: '$FILE'"
 
     INDEX=$((INDEX + 1))
   done
@@ -136,11 +136,11 @@ trash_files () {
   local TRASHED=$((NEW_COUNTER - COUNTER))
 
   if [ $TRASHED -gt 1 ]; then
-    echo "$TRASHED files have been trashed"
+    echo "$TRASHED files have been trashed."
   elif [ $TRASHED -eq 1 ]; then
-    echo "$TRASHED file has been trashed"
+    echo "$TRASHED file has been trashed."
   else
-    echo "No file is trashed"
+    echo "No file is trashed."
   fi
 }
 
@@ -149,7 +149,7 @@ wipe_files () {
   local LEN=${#FILES[@]}
 
   if [ $LEN -eq 0 ]; then
-    abort "Unable to remove, no files are given"
+    abort "Unable to remove, no files are given."
   fi
 
   askme "Files will be removed forever, proceed?" "yes" "no"
@@ -171,18 +171,18 @@ help () {
   
     echo -e "\nCOMMANDS"
     printf " %-25s\t%s\n" \
-      "list" "List all trashed files" \
-      "restore <path>" "Restore files from the given path or the current directory" \
-      "remove <pattern>" "Remove files matched by the given path pattern" \
-      "empty <days>" "Empty trash from files aged by the given days or all files" \
-      "help" "Show this help message"
+      "list" "List all trashed files." \
+      "restore <path>" "Restore files from the given path, default current directory." \
+      "remove <pattern>" "Remove files matched by the given pattern." \
+      "empty <days>" "Empty trash from files aged by the given days, default all files." \
+      "help" "Show this help message."
   else
     echo "Usage: trash [OPTIONS] FILE..."
 
     echo -e "\nOPTIONS"
     printf " %-25s\t%s\n" \
-      "r, --remove" "Remove files permanently" \
-      "h, --help" "Show this help message"
+      "r, --remove" "Remove given files permanently." \
+      "h, --help" "Show this help message."
   fi
 }
 
@@ -219,7 +219,7 @@ if [ $# = 0 ]; then
       "restore") restore_files "${CMD[@]:1}";;
       "remove") remove_files "${CMD[@]:1}";;
       "empty") empty_files "${CMD[@]:1}";;
-      *) echo "Unknown or invalid command: $REPLY";; 
+      *) echo "Unknown or invalid command: '$REPLY'";; 
     esac
   done
 else
@@ -232,7 +232,7 @@ else
     elif [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
       OPTS="$OPTS help"
     elif [[ "$1" =~ ^(-|--) ]]; then
-      abort "Unknown or invalid option: $1"
+      abort "Unknown or invalid option: '$1'"
     elif [ -n "$1" ]; then
       FILES+=("$1")
     else
