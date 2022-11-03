@@ -11,58 +11,61 @@ count_files () {
 list_files () {
   local COUNTER=$(count_files)
 
-  if [ $COUNTER -gt 0 ]; then
-    trash-list
-  else
+  if [ $COUNTER -eq 0 ]; then
     echo "Trash is empty, no files to list"
+    return 0
   fi
+
+  trash-list
 }
 
 restore_files () {
   local RESTORE_PATH=$1
   local COUNTER=$(count_files)
 
-  if [ $COUNTER -gt 0 ]; then
-    trash-restore "$RESTORE_PATH"
-
-    local NEW_COUNTER=$(count_files)
-    local RESTORED=$((COUNTER - NEW_COUNTER))
-
-    if [ $RESTORED -gt 1 ]; then
-      echo "$RESTORED files have been restored"
-    elif [ $RESTORED -gt 0 ]; then
-      echo "$RESTORED file has been restored"
-    else
-      echo "No file has been restored"
-    fi
-  else
+  if [ $COUNTER -eq 0 ]; then
     echo "Trash is empty, no files to restore"
+    return 0
+  fi
+
+  trash-restore "$RESTORE_PATH"
+
+  local NEW_COUNTER=$(count_files)
+  local RESTORED=$((COUNTER - NEW_COUNTER))
+
+  if [ $RESTORED -gt 1 ]; then
+    echo "$RESTORED files have been restored"
+  elif [ $RESTORED -eq 1 ]; then
+    echo "$RESTORED file has been restored"
+  else
+    echo "No file has been restored"
   fi
 }
 
 remove_files () {
-  local FILE_PAT=$1
+  local FILE_PATTERN=$1
   local COUNTER=$(count_files)
 
-  if [ $COUNTER -gt 0 ]; then
-    askme "Matched files will be gone forever, proceed?" "yes" "no"
-
-    if [ "$REPLY" = "yes" ]; then
-      trash-rm "$FILE_PAT"
-
-      local NEW_COUNTER=$(count_files)
-      local GONE=$((COUNTER - NEW_COUNTER))
-
-      if [ $GONE -gt 1 ]; then
-        echo "$GONE files have been removed"
-      elif [ $GONE -gt 0 ]; then
-        echo "$GONE file has been removed"
-      else
-        echo "No file is removed"
-      fi
-    fi
-  else
+  if [ $COUNTER -eq 0 ]; then
     echo "Trash is empty, no files to remove"
+    return 0;
+  fi
+  
+  askme "Any files matched by the pattern will be removed, proceed?" "yes" "no"
+
+  if [ "$REPLY" = "yes" ]; then
+    trash-rm "$FILE_PATTERN"
+  fi
+
+  local NEW_COUNTER=$(count_files)
+  local GONE=$((COUNTER - NEW_COUNTER))
+
+  if [ $GONE -gt 1 ]; then
+    echo "$GONE files have been removed"
+  elif [ $GONE -eq 1 ]; then
+    echo "$GONE file has been removed"
+  else
+    echo "No file is removed"
   fi
 }
 
@@ -162,7 +165,7 @@ help () {
     printf " %-25s\t%s\n" \
       "list" "List all trashed files" \
       "restore <path>" "Restore files from the given path or the current directory" \
-      "remove <path>" "Remove trashed files matched by the given path pattern" \
+      "remove <pattern>" "Remove files matched by the given path pattern" \
       "empty <days>" "Empty trash from files aged by the given days or all files" \
       "help" "Show this help message"
   else
