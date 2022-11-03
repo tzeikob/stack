@@ -40,12 +40,10 @@ restore_files () {
 }
 
 remove_files () {
+  local FILE_PAT=$1
   local COUNTER=$(count_files)
 
   if [ $COUNTER -gt 0 ]; then
-    askme "Enter a path pattern to match files for removal:" ".+"
-    local FILE_PAT="$REPLY"
-
     askme "Matched files will be gone forever, proceed?" "yes" "no"
 
     if [ "$REPLY" = "yes" ]; then
@@ -143,13 +141,13 @@ help () {
   local MODE=$1
 
   if [ "$MODE" = "noargs" ]; then
-    echo "Usage: COMMAND"
+    echo "Usage: COMMAND [ARGUMENTS]..."
   
     echo -e "\nCOMMANDS"
     printf " %-25s\t%s\n" \
       "list" "List all trashed files" \
       "restore" "Restore trashed files" \
-      "remove" "Remove trashed files by the given pattern" \
+      "remove <path>" "Remove trashed files matched by the given path pattern" \
       "empty" "Empty trash from any trashed files if any" \
       "help" "Show this help message"
   else
@@ -191,7 +189,7 @@ if [ $# = 0 ]; then
     case "${CMD[0]}" in
       "list") list_files;;
       "restore") restore_files;;
-      "remove") remove_files;;
+      "remove") remove_files "${CMD[@]:1}";;
       "empty") empty_files;;
       *) echo "Unknown or invalid command: $REPLY";; 
     esac
