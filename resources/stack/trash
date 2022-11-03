@@ -79,7 +79,7 @@ remove_files () {
   elif [ $GONE -eq 1 ]; then
     echo "$GONE file has been removed."
   else
-    echo "No file is removed."
+    echo "No file has been removed."
   fi
 }
 
@@ -118,7 +118,7 @@ empty_files () {
   elif [ $GONE -eq 1 ]; then
     echo "$GONE file has been removed."
   else
-    echo "No file is removed."
+    echo "No file has been removed."
   fi
 }
 
@@ -150,7 +150,7 @@ trash_files () {
   elif [ $TRASHED -eq 1 ]; then
     echo "$TRASHED file has been trashed."
   else
-    echo "No file is trashed."
+    echo "No file has been trashed."
   fi
 }
 
