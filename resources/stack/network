@@ -253,6 +253,8 @@ help () {
   fi
 }
 
+clear
+
 while true; do
   if [ -z "$SEL" ]; then
     NETWORKING=$(nmcli networking)
