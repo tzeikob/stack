@@ -20,7 +20,8 @@ list_files () {
   if [ -n "$DAYS" ]; then
     if [[ "$DAYS" =~ ^[0-9]+$ ]]; then
       trash-list | awk -v days=$DAYS -v today=$(date +%s) \
-        '{"date -d "$1" +%s"|getline day; if (((today-day)/ 86400) < days + 1) {print}}'
+        '{cmd="date -d" $1 " +%s"; cmd | getline day; close(cmd); \
+          if (((today-day)/ 86400) < days + 1) {print}}'
     else
       echo "Invalid days argument: '$DAYS'"
     fi
@@ -181,7 +182,7 @@ help () {
   
     echo -e "\nCOMMANDS"
     printf " %-25s\t%s\n" \
-      "list <days>" "List files aged by the given days, default all files." \
+      "list <days>" "List files trashed within the given days, default all files." \
       "restore <path>" "Restore files from the given path, default current directory." \
       "remove <pattern>" "Remove files matched by the given pattern." \
       "empty <days>" "Empty trash from files aged by the given days, default all files." \
