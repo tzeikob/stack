@@ -7,45 +7,25 @@ require "wpa_supplicant"
 require "wireless_tools"
 
 validate () {
-  local OBJECT=$1
-  local NAME=$2
+  local SEL=$1
+
+  local OBJECT=$(echo "$SEL" | cut -d ":" -f 1)
+  local NAME=$(echo "$SEL" | cut -d ":" -f 2-)
 
   if [ "$OBJECT" = "device" ]; then
     if ! nmcli -f DEVICE device | tail +2 | grep -q "$NAME"; then
-      echo "Invalid device $NAME"
+      echo "Invalid or unknown device $NAME"
       return 1
     fi
   elif [ "$OBJECT" = "connection" ]; then
     if ! nmcli -f NAME connection | tail +2 | grep -q "$NAME"; then
-      echo "Invalid connection $NAME"
+      echo "Invalid or unknown connection $NAME"
       return 1
     fi
-  fi
-}
-
-sel () {
-  local OBJECT=$1
-  local NAME=$2
-
-  if ! validate "$OBJECT" "$NAME"; then
+  else
+    echo "Invalid or unknown network object: '$OBJECT'"
     return 1
   fi
-
-  if [ "$OBJECT" = "device" ]; then
-    SEL_DEVICE=$NAME
-    SEL_CONNECTION=""
-    SEL=$SEL_DEVICE
-  elif [ "$OBJECT" = "connection" ]; then
-    SEL_DEVICE=""
-    SEL_CONNECTION=$NAME
-    SEL=$SEL_CONNECTION
-  fi
-}
-
-desel () {
-  SEL_DEVICE=""
-  SEL_CONNECTION=""
-  SEL=""
 }
 
 status () {
@@ -87,8 +67,10 @@ status () {
 }
 
 show () {
-  local OBJECT=$1
-  local NAME=$2
+  local SEL=$1
+
+  local OBJECT=$(echo "$SEL" | cut -d ":" -f 1)
+  local NAME=$(echo "$SEL" | cut -d ":" -f 2-)
 
   if [ "$OBJECT" = "device" ]; then
     nmcli --colors no device show "$NAME"
@@ -112,6 +94,9 @@ show () {
       IP6.GATEWAY, \
       IP6.ROUTE" \
       connection show "$NAME"
+  else
+    echo "Invalid or unknown network object: '$OBJECT'"
+    return 1
   fi
 }
 
@@ -152,24 +137,34 @@ scan () {
 }
 
 up () {
-  local OBJECT=$1
-  local NAME=$2
+  local SEL=$1
+
+  local OBJECT=$(echo "$SEL" | cut -d ":" -f 1)
+  local NAME=$(echo "$SEL" | cut -d ":" -f 2-)
 
   if [ "$OBJECT" = "device" ]; then
     nmcli device connect "$NAME" && sleep 6
   elif [ "$OBJECT" = "connection" ]; then
     nmcli connection up "$NAME" && sleep 6
+  else
+    echo "Invalid or unknown network object: '$OBJECT'"
+    return 1
   fi
 }
 
 down () {
-  local OBJECT=$1
-  local NAME=$2
+  local SEL=$1
+
+  local OBJECT=$(echo "$SEL" | cut -d ":" -f 1)
+  local NAME=$(echo "$SEL" | cut -d ":" -f 2-)
 
   if [ "$OBJECT" = "device" ]; then
     nmcli device disconnect "$NAME" && sleep 6
   elif [ "$OBJECT" = "connection" ]; then
     nmcli connection down "$NAME" && sleep 6
+  else
+    echo "Invalid or unknown network object: '$OBJECT'"
+    return 1
   fi
 }
 
@@ -191,19 +186,18 @@ power () {
 }
 
 delete () {
-  local OBJECT=$1
-  local NAME=$2
+  local SEL=$1
 
-  askme "Do you want to delete the $OBJECT?" "yes" "no"
-
-  if [ "$REPLY" = "no" ]; then
-    return
-  fi
+  local OBJECT=$(echo "$SEL" | cut -d ":" -f 1)
+  local NAME=$(echo "$SEL" | cut -d ":" -f 2-)
 
   if [ "$OBJECT" = "device" ]; then
-    nmcli device delete "$NAME" && sleep 6 && desel
+    nmcli device delete "$NAME" && sleep 6
   elif [ "$OBJECT" = "connection" ]; then
-    nmcli connection delete "$NAME" && sleep 6 && desel
+    nmcli connection delete "$NAME" && sleep 6
+  else
+    echo "Invalid or unknown network object: '$OBJECT'"
+    return 1
   fi
 }
 
@@ -258,6 +252,8 @@ help () {
 main () {
   clear
 
+  local SEL=""
+
   while true; do
     if [ -z "$SEL" ]; then
       NETWORKING=$(nmcli networking)
@@ -283,7 +279,7 @@ main () {
     local CMD=($(echo "$REPLY" | tr ':' '\n'))
 
     if [ "${CMD[0]}" = "help" ]; then
-      help
+      [ -z "$SEL" ] && help || help "sel"
       continue
     elif [ "${CMD[0]}" = "clear" ]; then
       clear
@@ -304,34 +300,18 @@ main () {
         "airplane") power wifi off;;
         "connect") connect "${CMD[@]:1}";;
         "select")
-          case "${CMD[1]}" in
-            "device") sel device "${CMD[*]:2}";;
-            "connection") sel connection "${CMD[*]:2}";;
-            *) echo "Invalid select command: $REPLY";;
-          esac;;
-        *) echo "Unknown or invalid command: $REPLY";; 
-      *) echo "Unknown or invalid command: $REPLY";; 
+          if validate "${CMD[1]}:${CMD[2]}"; then
+            SEL="${CMD[1]}:${CMD[2]}"
+          fi;;
         *) echo "Unknown or invalid command: $REPLY";; 
       esac
     else
       case "${CMD[0]}" in
-        "status")
-        [ ! -z "$SEL_DEVICE" ] &&
-          show device "$SEL" ||
-          show connection "$SEL";;
-        "up")
-          [ ! -z "$SEL_DEVICE" ] &&
-            up device "$SEL" ||
-            up connection "$SEL";;
-        "down")
-          [ ! -z "$SEL_DEVICE" ] &&
-            down device "$SEL" ||
-            down connection "$SEL";;
-        "delete")
-          [ ! -z "$SEL_DEVICE" ] &&
-            delete device "$SEL" ||
-            delete connection "$SEL";;
-        "deselect") desel;;
+        "status") show "$SEL";;
+        "up") up "$SEL";;
+        "down") down "$SEL";;
+        "delete") delete "$SEL"; SEL="";;
+        "deselect") SEL="";;
         *) echo "Unknown or invalid command: $REPLY";;
       esac
     fi

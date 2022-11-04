@@ -1,0 +1,20 @@
+prompt () {
+  local NETWORKING=$1
+  local STATUS=$2
+  local NAME=$3
+
+  local RESET=$'\e[m'
+  local COLOR=$WHITE
+
+  if [ "$NETWORKING" = "enabled" ]; then
+    if [[ "$STATUS" =~ ^connected ]]; then
+      COLOR=$GREEN
+    elif [[ "$STATUS" =~ ^disconnected ]]; then
+      COLOR=$RED
+    else
+      COLOR=$YELLOW
+    fi
+  fi
+
+  read -rep "[${WHITE}network:$RESET$YELLOW$NAME${RESET} ${COLOR}■$RESET] " REPLY
+}
