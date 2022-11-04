@@ -216,7 +216,9 @@ help () {
 if [ $# = 0 ]; then
   clear
 
-  CURRENT_PATH=${PWD/*\//}
+  [ "$PWD" = "$HOME" ] &&
+    CURRENT_PATH="~" ||
+    CURRENT_PATH="${PWD/*\//}"
 
   while true; do
     COUNTER=$(count_files)
@@ -226,7 +228,7 @@ if [ $# = 0 ]; then
       FOREGROUND=$YELLOW
     fi
 
-    prompt "$CURRENT_PATH:$COUNTER" "$FOREGROUND"
+    prompt "$USER $CURRENT_PATH:$COUNTER" "$FOREGROUND"
 
     history -s "$REPLY"
     CMD=($(echo "$REPLY" | tr ':' '\n'))
