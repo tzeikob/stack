@@ -31,7 +31,7 @@ list_files () {
         '{cmd="date -d" $1 " +%s"; cmd | getline trashed_day; close(cmd); \
           if (day-trashed_day == 0) {print}}'
     else
-      echo "Invalid filter argument: '$FILTER'"
+      echo "Invalid days or date filter argument: '$FILTER'"
     fi
   else
     trash-list
