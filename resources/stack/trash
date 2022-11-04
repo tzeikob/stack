@@ -4,6 +4,15 @@ source /opt/stack/utils
 
 require "trash-cli"
 
+prompt () {
+  local USERNAME=$1
+  local CURRENT_PATH=$2
+  local COUNTER=$3
+  local RESET=$'\e[m'
+
+  read -rep "[${WHITE}trash:$USERNAME${RESET} $YELLOW$CURRENT_PATH:$COUNTER$RESET] " REPLY
+}
+
 count_files () {
   trash-list | wc -l
 }
@@ -216,19 +225,12 @@ help () {
 if [ $# = 0 ]; then
   clear
 
-  [ "$PWD" = "$HOME" ] &&
-    CURRENT_PATH="~" ||
-    CURRENT_PATH="${PWD/*\//}"
-
   while true; do
-    COUNTER=$(count_files)
+    [ "$PWD" = "$HOME" ] &&
+      CURRENT_PATH="~" ||
+      CURRENT_PATH="${PWD/*\//}"
 
-    FOREGROUND=$WHITE
-    if [ $COUNTER -gt 0 ]; then
-      FOREGROUND=$YELLOW
-    fi
-
-    prompt "$USER $CURRENT_PATH:$COUNTER" "$FOREGROUND"
+    prompt "$USER" "$CURRENT_PATH" "$(count_files)"
 
     history -s "$REPLY"
     CMD=($(echo "$REPLY" | tr ':' '\n'))
