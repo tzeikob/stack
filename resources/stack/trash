@@ -22,6 +22,10 @@ list_files () {
       trash-list | awk -v days=$FILTER -v today=$(date +%s) \
         '{cmd="date -d" $1 " +%s"; cmd | getline day; close(cmd); \
           if (((today-day) / 86400) < days + 1) {print}}'
+    elif [[ "$FILTER" =~ ^\+[0-9]+$ ]]; then
+      trash-list | awk -v days=$FILTER -v today=$(date +%s) \
+        '{cmd="date -d" $1 " +%s"; cmd | getline day; close(cmd); \
+          if (((today-day) / 86400) > days + 1) {print}}'
     elif [[ "$FILTER" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] && date -d "$FILTER" >/dev/null 2>&1; then
       trash-list | awk -v day="$(date -d $FILTER +%s)" \
         '{cmd="date -d" $1 " +%s"; cmd | getline trashed_day; close(cmd); \
@@ -186,12 +190,13 @@ help () {
   
     echo -e "\nCOMMANDS"
     printf " %-20s\t%s\n" \
-      "list <days>|<date>" "List files trashed within the given days or at a" \
-      "" "specific date (YYYY-mm-dd), default is all files." \
+      "list <days>|+<days>" "List files trashed within the given days or more" \
+      "" "than the given days (+), default is all files." \
+      "list <date>" "List files trashed at a specific date (YYYY-mm-dd)." \
       "restore <path>" "Restore files from the given path, default is the" \
       "" "current directory." \
       "remove <pattern>" "Remove files matched by the given pattern." \
-      "empty <days>" "Remove files deleted more than the given days ago," \
+      "empty <days>" "Remove files trashed more than the given days ago," \
       "" "default is all files." \
       "help" "Show this help message."
   else
