@@ -198,6 +198,8 @@ help () {
 }
 
 if [ $# = 0 ]; then
+  clear
+
   CURRENT_PATH=${PWD/*\//}
 
   while true; do
