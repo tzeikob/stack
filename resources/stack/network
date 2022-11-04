@@ -33,7 +33,7 @@ prompt () {
     fi
   fi
 
-  read -rep "[network:$YELLOW$OBJECT${RESET} ${COLOR}$STATUS$RESET] " REPLY
+  read -rep "[network:$OBJECT ${COLOR}$STATUS$RESET] " REPLY
 }
 
 validate () {
