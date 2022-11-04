@@ -6,6 +6,36 @@ require "networkmanager"
 require "wpa_supplicant"
 require "wireless_tools"
 
+prompt () {
+  local NETWORKING=$1
+  local STATUS=$2
+  local SEL=$3
+
+  local OBJECT="none"
+  if [ -n "$SEL" ]; then
+    OBJECT=$(echo "$SEL" | cut -d ":" -f 2-)
+  fi
+
+  local WHITE=$'\e[0;37m'
+  local RED=$'\e[0;31m'
+  local GREEN=$'\e[0;32m'
+  local YELLOW=$'\e[0;33m'
+  local RESET=$'\e[m'
+
+  local COLOR=$WHITE
+  if [ "$NETWORKING" = "enabled" ]; then
+    if [[ "$STATUS" =~ ^connected ]]; then
+      COLOR=$GREEN
+    elif [[ "$STATUS" =~ ^disconnected ]]; then
+      COLOR=$RED
+    else
+      COLOR=$YELLOW
+    fi
+  fi
+
+  read -rep "[network:$YELLOW$OBJECT${RESET} ${COLOR}$STATUS$RESET] " REPLY
+}
+
 validate () {
   local SEL=$1
 
@@ -255,25 +285,10 @@ main () {
   local SEL=""
 
   while true; do
-    if [ -z "$SEL" ]; then
-      NETWORKING=$(nmcli networking)
-      STATUS=$(nmcli -g STATE,CONNECTIVITY general status)
+    local NETWORKING=$(nmcli networking)
+    local STATUS=$(nmcli -g STATE general status)
 
-      FOREGROUND=$WHITE
-      if [ "$NETWORKING" = "enabled" ]; then
-        if [[ "$STATUS" =~ ^connected ]]; then
-          FOREGROUND=$GREEN
-        elif [[ "$STATUS" =~ ^disconnected ]]; then
-          FOREGROUND=$RED
-        else
-          FOREGROUND=$YELLOW
-        fi
-      fi
-
-      prompt "$STATUS" "$FOREGROUND"
-    else
-      prompt "$SEL" "$YELLOW"
-    fi
+    prompt "$NETWORKING" "$STATUS" "$SEL"
 
     history -s "$REPLY"
     local CMD=($(echo "$REPLY" | tr ':' '\n'))
