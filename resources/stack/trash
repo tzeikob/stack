@@ -14,7 +14,7 @@ list_files () {
 
   if [ $COUNTER -eq 0 ]; then
     echo "Trash is empty, no files to list."
-    return 0
+    return
   fi
 
   if [ -n "$DAYS" ]; then
@@ -35,7 +35,7 @@ restore_files () {
 
   if [ $COUNTER -eq 0 ]; then
     echo "Trash is empty, no files to restore."
-    return 0
+    return
   fi
 
   trash-restore "$RESTORE_PATH"
@@ -58,7 +58,7 @@ remove_files () {
 
   if [ $COUNTER -eq 0 ]; then
     echo "Trash is empty, no files to remove."
-    return 0
+    return
   fi
   
   askme "Any files matched by the pattern will be removed, proceed?" "yes" "no"
@@ -89,7 +89,7 @@ empty_files () {
 
   if [[ $COUNTER -eq 0 ]]; then
     echo "Trash is empty, no files to remove."
-    return 0
+    return
   fi
   
   if [ -n "$DAYS" ]; then
