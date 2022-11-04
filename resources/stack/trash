@@ -176,7 +176,11 @@ wipe_files () {
   if [ "$REPLY" = "yes" ]; then
     local INDEX=0
     while [ $INDEX -lt $LEN ]; do
-      rm -rf "${FILES[$INDEX]}"
+      local FILE=${FILES[$INDEX]}
+
+      rm -rf "$FILE" &> /dev/null ||
+        echo "Cannot remove file: '$FILE'"
+
       INDEX=$((INDEX + 1))
     done
   fi
