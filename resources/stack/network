@@ -216,7 +216,9 @@ connect () {
 }
 
 help () {
-  if [ -z "$SEL" ]; then
+  local MODE=$1
+
+  if [ ! "$MODE" = "sel" ]; then
     echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
     echo -e "\nOBJECTS"
@@ -253,81 +255,87 @@ help () {
   fi
 }
 
-clear
+main () {
+  clear
 
-while true; do
-  if [ -z "$SEL" ]; then
-    NETWORKING=$(nmcli networking)
-    STATUS=$(nmcli -g STATE,CONNECTIVITY general status)
+  while true; do
+    if [ -z "$SEL" ]; then
+      NETWORKING=$(nmcli networking)
+      STATUS=$(nmcli -g STATE,CONNECTIVITY general status)
 
-    FOREGROUND=$WHITE
-    if [ "$NETWORKING" = "enabled" ]; then
-      if [[ "$STATUS" =~ ^connected ]]; then
-        FOREGROUND=$GREEN
-      elif [[ "$STATUS" =~ ^disconnected ]]; then
-        FOREGROUND=$RED
-      else
-        FOREGROUND=$YELLOW
+      FOREGROUND=$WHITE
+      if [ "$NETWORKING" = "enabled" ]; then
+        if [[ "$STATUS" =~ ^connected ]]; then
+          FOREGROUND=$GREEN
+        elif [[ "$STATUS" =~ ^disconnected ]]; then
+          FOREGROUND=$RED
+        else
+          FOREGROUND=$YELLOW
+        fi
       fi
+
+      prompt "$STATUS" "$FOREGROUND"
+    else
+      prompt "$SEL" "$YELLOW"
     fi
 
-    prompt "$STATUS" "$FOREGROUND"
-  else
-    prompt "$SEL" "$YELLOW"
-  fi
+    history -s "$REPLY"
+    local CMD=($(echo "$REPLY" | tr ':' '\n'))
 
-  history -s "$REPLY"
-  CMD=($(echo "$REPLY" | tr ':' '\n'))
+    if [ "${CMD[0]}" = "help" ]; then
+      help
+      continue
+    elif [ "${CMD[0]}" = "clear" ]; then
+      clear
+      continue
+    elif [ "${CMD[0]}" = "quit" ]; then
+      break
+    elif [ -z "${CMD[0]}" ]; then
+      continue
+    fi
 
-  if [ "${CMD[0]}" = "help" ]; then
-    help
-    continue
-  elif [ "${CMD[0]}" = "clear" ]; then
-    clear
-    continue
-  elif [ "${CMD[0]}" = "quit" ]; then
-    break
-  elif [ -z "${CMD[0]}" ]; then
-    continue
-  fi
-
-  if [ -z "$SEL" ]; then
-    case "${CMD[0]}" in
-      "status") status;;
-      "devices") devices "${CMD[@]:1}";;
-      "connections") connections "${CMD[@]:1}";;
-      "scan") scan;;
-      "power") power "${CMD[@]:1}";;
-      "airplane") power wifi off;;
-      "connect") connect "${CMD[@]:1}";;
-      "select")
-        case "${CMD[1]}" in
-          "device") sel device "${CMD[*]:2}";;
-          "connection") sel connection "${CMD[*]:2}";;
-          *) echo "Invalid select command: $REPLY";;
-        esac;;
+    if [ -z "$SEL" ]; then
+      case "${CMD[0]}" in
+        "status") status;;
+        "devices") devices "${CMD[@]:1}";;
+        "connections") connections "${CMD[@]:1}";;
+        "scan") scan;;
+        "power") power "${CMD[@]:1}";;
+        "airplane") power wifi off;;
+        "connect") connect "${CMD[@]:1}";;
+        "select")
+          case "${CMD[1]}" in
+            "device") sel device "${CMD[*]:2}";;
+            "connection") sel connection "${CMD[*]:2}";;
+            *) echo "Invalid select command: $REPLY";;
+          esac;;
+        *) echo "Unknown or invalid command: $REPLY";; 
       *) echo "Unknown or invalid command: $REPLY";; 
-    esac
-  else
-    case "${CMD[0]}" in
-      "status")
+        *) echo "Unknown or invalid command: $REPLY";; 
+      esac
+    else
+      case "${CMD[0]}" in
+        "status")
         [ ! -z "$SEL_DEVICE" ] &&
           show device "$SEL" ||
           show connection "$SEL";;
-      "up")
-        [ ! -z "$SEL_DEVICE" ] &&
-          up device "$SEL" ||
-          up connection "$SEL";;
-      "down")
-        [ ! -z "$SEL_DEVICE" ] &&
-          down device "$SEL" ||
-          down connection "$SEL";;
-      "delete")
-        [ ! -z "$SEL_DEVICE" ] &&
-          delete device "$SEL" ||
-          delete connection "$SEL";;
-      "deselect") desel;;
-      *) echo "Unknown or invalid command: $REPLY";;
-    esac
-  fi
-done
+        "up")
+          [ ! -z "$SEL_DEVICE" ] &&
+            up device "$SEL" ||
+            up connection "$SEL";;
+        "down")
+          [ ! -z "$SEL_DEVICE" ] &&
+            down device "$SEL" ||
+            down connection "$SEL";;
+        "delete")
+          [ ! -z "$SEL_DEVICE" ] &&
+            delete device "$SEL" ||
+            delete connection "$SEL";;
+        "deselect") desel;;
+        *) echo "Unknown or invalid command: $REPLY";;
+      esac
+    fi
+  done
+}
+
+main "$@"
