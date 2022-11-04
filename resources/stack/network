@@ -197,7 +197,7 @@ delete () {
   askme "Do you want to delete the $OBJECT?" "yes" "no"
 
   if [ "$REPLY" = "no" ]; then
-    return 0
+    return
   fi
 
   if [ "$OBJECT" = "device" ]; then
