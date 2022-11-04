@@ -216,29 +216,40 @@ connect () {
 }
 
 help () {
-  echo "COMMANDS"
-
   if [ -z "$SEL" ]; then
+    echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
+
+    echo -e "\nOBJECTS"
+    printf " %-25s\t%s\n" \
+        "device" "An object to handle network devices" \
+        "connection" "An object to handle network connections" \
+        "network" "Refers to the networking setup of your system" \
+        "wifi" "Refers to the WiFi device of your system"
+
+    echo -e "\nCOMMANDS"
     printf " %-25s\t%s\n" \
       "status" "Show the current status of system's networking" \
-      "devices [<type>]" "List all network devices or filtered by type" \
-      "connections [<type>]" "List all network connections or filtered by type" \
+      "devices [<type>]" "List network devices of the given type, default is all" \
+      "connections [<type>]" "List network connections of the given type, default is all" \
       "scan" "Scan for wireless networks in your area" \
-      "power network <on|off>" "Power on/off the system networking" \
-      "power wifi <on|off>" "Power on/off the wifi" \
+      "power network [on|off]" "Power on/off the system networking, default is on" \
+      "power wifi [on|off]" "Power on/off the wifi, default is on" \
       "airplane" "Set networking to airplane mode" \
-      "connect <SSID> <secret-key>" "Connect to a wireless network" \
-      "select device <name>" "Select a device by the given name" \
-      "select connection <name>" "Select a connection by the given name" \
+      "connect <SSID> <secret-key>" "Connect to a wireless network with the given SSID" \
+      "select device <name>" "Select a device with the given name" \
+      "select connection <name>" "Select a connection with the given name" \
       "help" "Show this help message"
   else
+    echo "Usage: COMMAND"
+
+    echo -e "\nCOMMANDS"
     printf " %-25s\t%s\n" \
-      "help" "Show this help message" \
       "status" "Show the current status of the selected device or connection" \
       "up" "Get the selected device or connection up" \
       "down" "Get the selected device or connection down" \
       "delete" "Delete the selected device or connection" \
-      "deselect" "Deselect the select device or connection"
+      "deselect" "Deselect the select device or connection" \
+      "help" "Show this help message"
   fi
 }
 
