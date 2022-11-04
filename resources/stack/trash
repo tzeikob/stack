@@ -10,7 +10,7 @@ prompt () {
   local COUNTER=$3
   local RESET=$'\e[m'
 
-  read -rep "[${WHITE}trash:$USERNAME${RESET} $YELLOW$CURRENT_PATH:$COUNTER$RESET] " REPLY
+  read -rep "[trash:$USERNAME $YELLOW$CURRENT_PATH:$COUNTER$RESET] " REPLY
 }
 
 count_files () {
