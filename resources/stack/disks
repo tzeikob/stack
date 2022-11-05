@@ -1,0 +1,129 @@
+#!/usr/bin/env bash
+
+source /opt/stack/utils
+
+require "udisks2"
+
+prompt () {
+  read -rep "[disks] " REPLY
+}
+
+list_disks () {
+  local TYPE=$1
+
+  if [ "$TYPE" = "local" ]; then
+    lsblk
+  elif [ "$TYPE" = "remote" ]; then
+    echo "No implementation found."
+  else
+    echo "Invalid or unknown disk type: '$TYPE'"
+    return 1
+  fi
+}
+
+mount_local_disk () {
+  local NAME=$1
+
+  if [ ! -b "/dev/$NAME" ]; then
+    echo "Invalid disk device: $NAME"
+    return 1
+  elif grep -qs "$NAME " /proc/mounts; then
+    echo "Disk $NAME is already mounted"
+    return 1
+  fi
+  
+  udisksctl mount -b "/dev/$NAME" &&
+    echo "Disk $NAME mounted successfully" ||
+    echo "Failed to mount disk $NAME"
+
+  if [ -d "/run/media/$USER" ] && [ ! -L "$HOME/mount/local" ]; then
+    mkdir -p "$HOME/mount/local"
+    ln -s "/run/media/$USER" "$HOME/mount/local"
+  fi
+}
+
+unmount_local_disk () {
+  local NAME=$1
+
+  if [ ! -b "/dev/$NAME" ]; then
+    echo "Invalid disk device: $NAME"
+    return 1
+  elif ! grep -qs "$NAME " /proc/mounts; then
+    echo "No disk $NAME is mounted"
+    return 1
+  fi  
+
+  sync &&
+  udisksctl unmount -b "/dev/$NAME"
+
+  if [[ "$?" -eq 0 ]]; then
+    echo "Disk $NAME unmounted successfully"
+
+    udisksctl power-off -b "/dev/$NAME" &&
+      echo "Disk power set to off" ||
+      echo "Unable to power off the disk"
+  else
+    echo "Failed to unmount disk $NAME"
+  fi
+}
+
+mount_remote_disk () {
+  echo "No implementation found."
+}
+
+unmount_remote_disk () {
+  echo "No implementation found."
+}
+
+help () {
+  echo "Usage: COMMAND [ARGUMENTS]..."
+
+  echo -e "\nCOMMANDS"
+  printf " %-20s\t%s\n" \
+    "list local|remote" "List disks..." \
+    "mount local|remote <name>" "Mount..." \
+    "unmount local|remote <name>" "Unmount..." \
+    "help" "Show this help message."
+}
+
+main () {
+  clear
+
+  while true; do
+    prompt
+
+    history -s "$REPLY"
+    local CMD=($(echo "$REPLY" | tr ':' '\n'))
+
+    if [ "${CMD[0]}" = "help" ]; then
+      help
+      continue
+    elif [ "${CMD[0]}" = "clear" ]; then
+      clear
+      continue
+    elif [ "${CMD[0]}" = "quit" ]; then
+      break
+    elif [ -z "${CMD[0]}" ]; then
+      continue
+    fi
+
+    case "${CMD[0]}" in
+      "list") list_disks "${CMD[1]}";;
+      "mount")
+        case "${CMD[1]}" in
+          "local") mount_local_disk "${CMD[2]}";;
+          "remote") mount_remote_disk "${CMD[2]}";;
+          *) echo "Invalid disk type: '${CMD[1]}'";;
+        esac;;
+      "unmount")
+        case "${CMD[1]}" in
+          "local") unmount_local_disk "${CMD[2]}";;
+          "remote") unmount_remote_disk "${CMD[2]}";;
+          *) echo "Invalid disk type: '${CMD[1]}'";;
+        esac;;
+      *) echo "Unknown or invalid command: '$REPLY'";; 
+    esac
+  done
+}
+
+main "$@"

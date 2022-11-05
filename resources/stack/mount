@@ -9,40 +9,6 @@ require "fuse2"
 
 MOUNT_HOME="$HOME/mount"
 
-mount_local_disk () {
-  lsblk
-  askme "Enter the device name:"
-  local DEVICE="$REPLY"
-
-  if grep -qs "$DEVICE " /proc/mounts; then
-    echo "Found existing device with name $DEVICE"
-    askme "Do you want to unmount it?" "yes" "no"
-
-    if [ "$REPLY" = "yes" ]; then
-      sync &&
-      udisksctl unmount -b "/dev/$DEVICE"
-
-      if [[ "$?" -eq 0 ]]; then
-        echo "Device $DEVICE unmounted successfully"
-        echo "Powering device off..."
-
-        udisksctl power-off -b "/dev/$DEVICE"
-      else
-        echo "Failed to umount device $DEVICE"
-      fi
-    fi
-  else
-    udisksctl mount -b "/dev/$DEVICE" &&
-      echo "Device $DEVICE mounted successfully" ||
-      echo "Failed to mount device $DEVICE"
-
-    if [ -d "/run/media/$USER" ] && [ ! -L "$MOUNT_HOME/local" ]; then
-      mkdir -p "$MOUNT_HOME/local"
-      ln -s "/run/media/$USER" "$MOUNT_HOME/local"
-    fi
-  fi
-}
-
 mount_network_disk () {
   askme "Enter the connection protocol:" "smb" "nfs"
   local PROTOCOL="$REPLY"
@@ -143,11 +109,9 @@ mount_remote () {
   fi
 }
 
-askme "Which type of storage to mount?" "local" "nas" "cloud"
+askme "Which type of storage to mount?" "nas" "cloud"
 
-if [ "$REPLY" = "local" ]; then
-  mount_local_disk
-elif [ "$REPLY" = "nas" ]; then
+if [ "$REPLY" = "nas" ]; then
   mount_network_disk
 elif [ "$REPLY" = "cloud" ]; then
   askme "Which storage provider to sync with?" "drive" "dropbox"
