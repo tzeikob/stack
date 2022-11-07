@@ -14,7 +14,29 @@ locals () {
 }
 
 remotes () {
-  echo "No implementation found."
+  local LOCAL_HOSTS=($(nmap -n -sn 192.168.1.0/24 -oG - | awk '/Up$/{print $2}'))
+
+  printf "%-15s\t%s\n" "HOST" "NAME"
+
+  local INDEX=0
+  local LEN=${#LOCAL_HOSTS[@]}
+
+  while [ $INDEX -lt $LEN ]; do
+    nmap "${LOCAL_HOSTS[$INDEX]}" -oG - |
+      awk '/Host/{printf "%-15s\t%s\n", $2, $3}' |
+      tail -n -1 |
+      tr -d '()'
+
+    INDEX=$((INDEX + 1))
+  done
+
+  if [ $LEN -gt 1 ]; then
+    echo "$LEN local hosts have been discovered"
+  elif [ $LEN -eq 1 ]; then
+    echo "$LEN local host has been discovered"
+  else
+    echo "No local hosts have been discovered"
+  fi
 }
 
 mount_local_disk () {
