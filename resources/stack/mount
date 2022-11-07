@@ -9,40 +9,6 @@ require "fuse2"
 
 MOUNT_HOME="$HOME/mount"
 
-mount_network_disk () {
-  askme "Enter the connection protocol:" "smb" "nfs"
-  local PROTOCOL="$REPLY"
-
-  askme "Enter the host name:"
-  local HOST="$REPLY"
-
-  askme "Enter the shared folder:"
-  local SHARED_FOLDER="$REPLY"
-
-  local DEVICE="$PROTOCOL://$HOST/$SHARED_FOLDER"
-
-  if gio mount -l | grep -q "$DEVICE"; then
-    echo "Found existing network disk with name $DEVICE"
-    askme "Do you want to unmount it?" "yes" "no"
-
-    if [ "$REPLY" = "yes" ]; then
-      sync &&
-      gio mount -u "$DEVICE" &&
-        echo "Device $DEVICE unmounted successfully" ||
-        echo "Failed to umount device $DEVICE"
-    fi
-  else
-    gio mount "$DEVICE" &&
-      echo "Device $DEVICE mounted successfully" ||
-      echo "Failed to mount device from $DEVICE"
-
-    if [ -d "/run/user/${UID}/gvfs" ] && [ ! -L "$MOUNT_HOME/nas" ]; then
-      mkdir -p "$MOUNT_HOME/nas"
-      ln -s "/run/user/${UID}/gvfs" "$MOUNT_HOME/nas"
-    fi
-  fi
-}
-
 unmount_remote () {
   local REMOTE_NAME=$1
 
@@ -109,11 +75,9 @@ mount_remote () {
   fi
 }
 
-askme "Which type of storage to mount?" "nas" "cloud"
+askme "Which type of storage to mount?" "cloud"
 
-if [ "$REPLY" = "nas" ]; then
-  mount_network_disk
-elif [ "$REPLY" = "cloud" ]; then
+if [ "$REPLY" = "cloud" ]; then
   askme "Which storage provider to sync with?" "drive" "dropbox"
 
   mount_remote "$REPLY"
