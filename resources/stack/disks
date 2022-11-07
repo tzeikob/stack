@@ -9,17 +9,12 @@ prompt () {
   read -rep "[disks] " REPLY
 }
 
-list_disks () {
-  local TYPE=$1
+locals () {
+  lsblk -o NAME,TYPE,LABEL,SIZE,FSTYPE,MOUNTPOINTS
+}
 
-  if [ "$TYPE" = "local" ]; then
-    lsblk
-  elif [ "$TYPE" = "remote" ]; then
-    echo "No implementation found."
-  else
-    echo "Invalid or unknown disk type: '$TYPE'"
-    return 1
-  fi
+remotes () {
+  echo "No implementation found."
 }
 
 mount_local_disk () {
@@ -105,7 +100,8 @@ help () {
 
   echo -e "\nCOMMANDS"
   printf " %-20s\t%s\n" \
-    "list local|remote" "List disks..." \
+    "locals" "List all local block disk devices." \
+    "remotes" "Scan local network for available remote disks." \
     "mount local <name>" "Mount..." \
     "mount remote <uri>" "Mount..." \
     "unmount local <name>" "Unmount..." \
@@ -135,7 +131,8 @@ main () {
     fi
 
     case "${CMD[0]}" in
-      "list") list_disks "${CMD[1]}";;
+      "locals") locals;;
+      "remotes") remotes;;
       "mount")
         case "${CMD[1]}" in
           "local") mount_local_disk "${CMD[2]}";;
