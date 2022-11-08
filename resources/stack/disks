@@ -38,7 +38,7 @@ list_hosts () {
 }
 
 mount_device () {
-  local DEVICE="/dev/$1"
+  local DEVICE="$1"
 
   if [ ! -b "$DEVICE" ]; then
     echo "Invalid block device: $DEVICE"
@@ -59,7 +59,7 @@ mount_device () {
 }
 
 unmount_device () {
-  local DEVICE="/dev/$1"
+  local DEVICE="$1"
 
   if [ ! -b "$DEVICE" ]; then
     echo "Invalid block device: $DEVICE"
@@ -131,9 +131,9 @@ help () {
   printf " %-20s\t%s\n" \
     "list devices" "List any block devices of the system." \
     "list hosts" "Discover any available hosts at the local network." \
-    "mount device <name>" "Mount a block device with the given name." \
+    "mount device <path>" "Mount a block device with the given path." \
     "mount host <ip>|<domain> <share>" "Mount a shared folder on host with the given ip or domain." \
-    "unmount device <name>" "Unmount a block device with the given name." \
+    "unmount device <path>" "Unmount a block device with the given path." \
     "unmount host <ip>|<domain> <share>" "Unmount a shared folder on host with the given ip or domain." \
     "help" "Show this help message."
 }
