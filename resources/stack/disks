@@ -49,7 +49,7 @@ mount_device () {
   fi
   
   udisksctl mount -b "$DEVICE" &&
-    echo "Block device $DEVICE mounted successfully" ||
+    echo "Block device $DEVICE mounted under ~/mount/local" ||
     echo "Failed to mount block device $DEVICE"
 
   if [ -d "/run/media/$USER" ] && [ ! -L "$HOME/mount/local" ]; then
@@ -94,7 +94,7 @@ mount_host () {
   fi
 
   gio mount "$URI" &&
-    echo "Host $URI mounted successfully" ||
+    echo "Host $URI mounted under ~/mount/remote" ||
     echo "Failed to mount host: $URI"
 
   if [ -d "/run/user/${UID}/gvfs" ] && [ ! -L "$HOME/mount/remote/gvfs" ]; then
