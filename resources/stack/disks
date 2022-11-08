@@ -37,6 +37,19 @@ list_hosts () {
   fi
 }
 
+list_mounts () {
+  local FRMT="%-30s%s\n"
+
+  printf "$FRMT" "DISK" "MOUNTPOINT"
+
+  lsblk -n -o PATH,MOUNTPOINTS |
+    awk -v f=$FRMT '{if ($2 != "") {printf f, $1, $2}}'
+
+  ls /run/user/1000/gvfs |
+    awk -v id=$UID -v f=$FRMT 'match($0, /server=(.*),share=(.*)/, a) \
+      {printf f,a[1]"/"a[2],"/run/user/"id"/gvfs/"$0}'
+}
+
 mount_device () {
   local DEVICE="$1"
 
@@ -131,6 +144,7 @@ help () {
   printf " %-20s\t%s\n" \
     "list devices" "List any block devices of the system." \
     "list hosts" "Discover any available hosts at the local network." \
+    "list mounts" "List all the current mounted devices and shared folders." \
     "mount device <path>" "Mount a block device with the given path." \
     "mount host <ip>|<domain> <share>" "Mount a shared folder on host with the given ip or domain." \
     "unmount device <path>" "Unmount a block device with the given path." \
@@ -164,6 +178,7 @@ main () {
         case "${CMD[1]}" in
           "devices") list_devices;;
           "hosts") list_hosts;;
+          "mounts") list_mounts;;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
       "mount")
