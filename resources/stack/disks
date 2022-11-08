@@ -10,22 +10,22 @@ prompt () {
   read -rep "[disks] " REPLY
 }
 
-locals () {
-  lsblk -o NAME,TYPE,LABEL,SIZE,FSTYPE,MOUNTPOINTS
+list_devices () {
+  lsblk -o NAME,PATH,TYPE,SIZE,FSTYPE,LABEL
 }
 
-remotes () {
+list_hosts () {
   local GATEWAY=$(ip route get 1.1.1.1 | awk '/via/{print $3}' | head -n 1)
   local CIDR=$(echo "$GATEWAY" | sed -r 's/(\.[0-9]{1,3}$)/.0\/24/')
-  local LOCAL_HOSTS=($(nmap -n -sn "$CIDR" -oG - | awk '/Up$/{print $2}'))
-  local LEN=${#LOCAL_HOSTS[@]}
+  local HOSTS=($(nmap -n -sn "$CIDR" -oG - | awk '/Up$/{print $2}'))
+  local LEN=${#HOSTS[@]}
 
   if [ $LEN -gt 0 ]; then
     printf "%-15s\t%s\n" "HOST" "NAME"
 
     local INDEX=0
     while [ $INDEX -lt $LEN ]; do
-      nmap "${LOCAL_HOSTS[$INDEX]}" -oG - |
+      nmap "${HOSTS[$INDEX]}" -oG - |
         awk '/Host/{printf "%-15s\t%s\n", $2, $3}' |
         head -n 1 |
         tr -d '()'
@@ -37,20 +37,20 @@ remotes () {
   fi
 }
 
-mount_local_disk () {
-  local NAME=$1
+mount_device () {
+  local DEVICE="/dev/$1"
 
-  if [ ! -b "/dev/$NAME" ]; then
-    echo "Invalid disk device: $NAME"
+  if [ ! -b "$DEVICE" ]; then
+    echo "Invalid block device: $DEVICE"
     return 1
-  elif grep -qs "$NAME " /proc/mounts; then
-    echo "Disk $NAME is already mounted"
+  elif grep -qs "$DEVICE " /proc/mounts; then
+    echo "Block device $DEVICE is already mounted"
     return 1
   fi
   
-  udisksctl mount -b "/dev/$NAME" &&
-    echo "Disk $NAME mounted successfully" ||
-    echo "Failed to mount disk $NAME"
+  udisksctl mount -b "$DEVICE" &&
+    echo "Block device $DEVICE mounted successfully" ||
+    echo "Failed to mount block device $DEVICE"
 
   if [ -d "/run/media/$USER" ] && [ ! -L "$HOME/mount/local" ]; then
     mkdir -p "$HOME/mount/local"
@@ -58,42 +58,44 @@ mount_local_disk () {
   fi
 }
 
-unmount_local_disk () {
-  local NAME=$1
+unmount_device () {
+  local DEVICE="/dev/$1"
 
-  if [ ! -b "/dev/$NAME" ]; then
-    echo "Invalid disk device: $NAME"
+  if [ ! -b "$DEVICE" ]; then
+    echo "Invalid block device: $DEVICE"
     return 1
-  elif ! grep -qs "$NAME " /proc/mounts; then
-    echo "No disk $NAME is mounted"
+  elif ! grep -qs "$DEVICE " /proc/mounts; then
+    echo "Block device $DEVICE is not mounted"
     return 1
-  fi  
+  fi
 
   sync &&
-  udisksctl unmount -b "/dev/$NAME"
+  udisksctl unmount -b "$DEVICE"
 
   if [[ "$?" -eq 0 ]]; then
-    echo "Disk $NAME unmounted successfully"
+    echo "Block device $DEVICE unmounted successfully"
 
-    udisksctl power-off -b "/dev/$NAME" &&
-      echo "Disk power set to off" ||
-      echo "Unable to power off the disk"
+    udisksctl power-off -b "$DEVICE" &&
+      echo "Device power set to off" ||
+      echo "Unable to power off the device"
   else
-    echo "Failed to unmount disk $NAME"
+    echo "Failed to unmount block device $DEVICE"
   fi
 }
 
-mount_remote_disk () {
-  local URI=$1
+mount_host () {
+  local HOST=$1
+  local SHARE=$2
+  local URI="smb://$HOST/$SHARE"
 
   if gio mount -l | grep -q "$URI"; then
-    echo "Device $URI is already mounted"
+    echo "Host $URI is already mounted"
     return 1
   fi
 
   gio mount "$URI" &&
-    echo "Device $URI mounted successfully" ||
-    echo "Failed to mount device from $URI"
+    echo "Host $URI mounted successfully" ||
+    echo "Failed to mount host: $URI"
 
   if [ -d "/run/user/${UID}/gvfs" ] && [ ! -L "$HOME/mount/remote" ]; then
     mkdir -p "$HOME/mount/remote"
@@ -101,31 +103,38 @@ mount_remote_disk () {
   fi
 }
 
-unmount_remote_disk () {
-  local URI=$1
+unmount_host () {
+  local HOST=$1
+  local SHARE=$2
+  local URI="smb://$HOST/$SHARE"
 
   if ! gio mount -l | grep -q "$URI"; then
-    echo "No remote disk $URI is mounted"
+    echo "Host $URI is not mounted"
     return 1
   fi
 
   sync &&
   gio mount -u "$URI" &&
-    echo "Device $URI unmounted successfully" ||
-    echo "Failed to umount device $URI"
+    echo "Host $URI unmounted successfully" ||
+    echo "Failed to umount host $URI"
 }
 
 help () {
-  echo "Usage: COMMAND [ARGUMENTS]..."
+  echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
+
+  echo -e "\nOBJECTS"
+  printf " %-20s\t%s\n" \
+      "device" "An object to handle a block device." \
+      "host" "An object to handle a host of shared folders."
 
   echo -e "\nCOMMANDS"
   printf " %-20s\t%s\n" \
-    "locals" "List all local block disk devices." \
-    "remotes" "Scan local network for available remote disks." \
-    "mount local <name>" "Mount..." \
-    "mount remote <uri>" "Mount..." \
-    "unmount local <name>" "Unmount..." \
-    "unmount remote <uri>" "Unmount..." \
+    "list devices" "List any block devices of the system." \
+    "list hosts" "Discover any available hosts at the local network." \
+    "mount device <name>" "Mount a block device with the given name." \
+    "mount host <ip>|<domain> <share>" "Mount a shared folder on host with the given ip or domain." \
+    "unmount device <name>" "Unmount a block device with the given name." \
+    "unmount host <ip>|<domain> <share>" "Unmount a shared folder on host with the given ip or domain." \
     "help" "Show this help message."
 }
 
@@ -151,19 +160,23 @@ main () {
     fi
 
     case "${CMD[0]}" in
-      "locals") locals;;
-      "remotes") remotes;;
+      "list")
+        case "${CMD[1]}" in
+          "devices") list_devices;;
+          "hosts") list_hosts;;
+          *) echo "Unknown or invalid command: '$REPLY'";;
+        esac;;
       "mount")
         case "${CMD[1]}" in
-          "local") mount_local_disk "${CMD[2]}";;
-          "remote") mount_remote_disk "${CMD[2]}://${CMD[3]}/${CMD[4]}";;
-          *) echo "Invalid disk type: '${CMD[1]}'";;
+          "device") mount_device "${CMD[2]}";;
+          "host") mount_host "${CMD[2]}" "${CMD[3]}";;
+          *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
       "unmount")
         case "${CMD[1]}" in
-          "local") unmount_local_disk "${CMD[2]}";;
-          "remote") unmount_remote_disk "${CMD[2]}://${CMD[3]}/${CMD[4]}";;
-          *) echo "Invalid disk type: '${CMD[1]}'";;
+          "device") unmount_device "${CMD[2]}";;
+          "host") unmount_host "${CMD[2]}" "${CMD[3]}";;
+          *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
       *) echo "Unknown or invalid command: '$REPLY'";; 
     esac
