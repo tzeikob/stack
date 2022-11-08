@@ -21,12 +21,13 @@ list_hosts () {
   local LEN=${#HOSTS[@]}
 
   if [ $LEN -gt 0 ]; then
-    printf "%-15s\t%s\n" "HOST" "NAME"
+    local FRMT="%-15s\t%s\n"
+    printf "$FRMT" "HOST" "NAME"
 
     local INDEX=0
     while [ $INDEX -lt $LEN ]; do
       nmap "${HOSTS[$INDEX]}" -oG - |
-        awk '/Host/{printf "%-15s\t%s\n", $2, $3}' |
+        awk -v f=$FRMT '/Host/{printf f, $2, $3}' |
         head -n 1 |
         tr -d '()'
 
@@ -39,7 +40,6 @@ list_hosts () {
 
 list_mounts () {
   local FRMT="%-30s%s\n"
-
   printf "$FRMT" "DISK" "MOUNTPOINT"
 
   lsblk -n -o PATH,MOUNTPOINTS |
