@@ -4,6 +4,7 @@ source /opt/stack/utils
 
 require "udisks2"
 require "glib2"
+require "nmap"
 
 prompt () {
   read -rep "[disks] " REPLY
