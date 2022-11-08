@@ -15,7 +15,9 @@ locals () {
 }
 
 remotes () {
-  local LOCAL_HOSTS=($(nmap -n -sn 192.168.1.0/24 -oG - | awk '/Up$/{print $2}'))
+  local GATEWAY=$(ip route get 1.1.1.1 | awk '/via/{print $3}' | head -n 1)
+  local CIDR=$(echo "$GATEWAY" | sed -r 's/(\.[0-9]{1,3}$)/.0\/24/')
+  local LOCAL_HOSTS=($(nmap -n -sn "$CIDR" -oG - | awk '/Up$/{print $2}'))
 
   printf "%-15s\t%s\n" "HOST" "NAME"
 
