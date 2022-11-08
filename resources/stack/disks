@@ -11,7 +11,7 @@ prompt () {
 }
 
 list_devices () {
-  lsblk -o NAME,PATH,TYPE,SIZE,FSTYPE,LABEL,MODEL
+  lsblk -o NAME,PATH,TYPE,SIZE,FSTYPE,LABEL,VENDOR,MODEL
 }
 
 list_hosts () {
