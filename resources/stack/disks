@@ -136,19 +136,19 @@ help () {
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
   echo -e "\nOBJECTS"
-  printf " %-20s\t%s\n" \
+  printf " %-25s\t%s\n" \
       "device" "An object to handle a block device." \
       "host" "An object to handle a host of shared folders."
 
   echo -e "\nCOMMANDS"
-  printf " %-20s\t%s\n" \
-    "list devices" "List any block devices of the system." \
-    "list hosts" "Discover any available hosts at the local network." \
+  printf " %-25s\t%s\n" \
+    "list devices" "List all the block devices of the system." \
+    "list hosts" "Discover all the available hosts at the local network." \
     "list mounts" "List all the current mounted devices and shared folders." \
     "mount device <path>" "Mount a block device with the given path." \
-    "mount host <ip>|<domain> <share>" "Mount a shared folder on host with the given ip or domain." \
+    "mount host <ip> <share>" "Mount a shared folder on host with the given ip or domain." \
     "unmount device <path>" "Unmount a block device with the given path." \
-    "unmount host <ip>|<domain> <share>" "Unmount a shared folder on host with the given ip or domain." \
+    "unmount host <ip> <share>" "Unmount a shared folder on host with the given ip or domain." \
     "help" "Show this help message."
 }
 
