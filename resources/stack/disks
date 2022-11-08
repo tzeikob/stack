@@ -27,7 +27,7 @@ remotes () {
     while [ $INDEX -lt $LEN ]; do
       nmap "${LOCAL_HOSTS[$INDEX]}" -oG - |
         awk '/Host/{printf "%-15s\t%s\n", $2, $3}' |
-        tail -n -1 |
+        head -n 1 |
         tr -d '()'
 
       INDEX=$((INDEX + 1))
