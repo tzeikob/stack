@@ -97,7 +97,7 @@ mount_host () {
     echo "Host $URI mounted successfully" ||
     echo "Failed to mount host: $URI"
 
-  if [ -d "/run/user/${UID}/gvfs" ] && [ ! -L "$HOME/mount/remote" ]; then
+  if [ -d "/run/user/${UID}/gvfs" ] && [ ! -L "$HOME/mount/remote/gvfs" ]; then
     mkdir -p "$HOME/mount/remote"
     ln -s "/run/user/${UID}/gvfs" "$HOME/mount/remote"
   fi
