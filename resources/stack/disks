@@ -44,15 +44,15 @@ list_hosts () {
 }
 
 list_mounts () {
-  local FRMT="%-30s%s\n"
-  printf "$FRMT" "DISK" "MOUNTPOINT"
+  local FRMT="%-22s\t%s\n"
+  printf "$FRMT" "NAME" "MOUNT POINT"
 
   lsblk -n -o PATH,MOUNTPOINTS |
     awk -v f=$FRMT '{if ($2 != "") {printf f, $1, $2}}'
 
   ls /run/user/1000/gvfs |
     awk -v id=$UID -v f=$FRMT 'match($0, /server=(.*),share=(.*)/, a) \
-      {printf f,a[1]"/"a[2],"/run/user/"id"/gvfs/"$0}'
+      {printf f, a[1]"/"a[2], "/run/user/"id"/gvfs/"$0}'
 }
 
 show_device () {
