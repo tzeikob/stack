@@ -5,12 +5,18 @@ source /opt/stack/utils
 require "trash-cli"
 
 prompt () {
-  local USERNAME=$1
-  local CURRENT_PATH=$2
-  local COUNTER=$3
-  local RESET=$'\e[m'
+  local Y=$'\e[0;33m'
+  local R=$'\e[m'
 
-  read -rep "[trash:$USERNAME $YELLOW$CURRENT_PATH:$COUNTER$RESET] " REPLY
+  local CURRENT_PATH="${PWD/*\//}"
+
+  if [ "$PWD" = "$HOME" ]; then
+    CURRENT_PATH="~"
+  fi
+
+  local COUNTER=$(count_files)
+
+  read -rep "[trash:$USER $Y$CURRENT_PATH$R:$Y$COUNTER$R] " REPLY
 }
 
 count_files () {
@@ -228,13 +234,7 @@ main () {
     clear
 
     while true; do
-      local CURRENT_PATH="${PWD/*\//}"
-
-      if [ "$PWD" = "$HOME" ]; then
-        CURRENT_PATH="~"
-      fi
-
-      prompt "$USER" "$CURRENT_PATH" "$(count_files)"
+      prompt
 
       history -s "$REPLY"
       local CMD=($(echo "$REPLY" | tr ':' '\n'))

@@ -102,7 +102,7 @@ show_device () {
     local FIELD=${FIELDS[$INDEX]}
 
     if [ "$FIELD" = "ln" ]; then
-      INDEX=$((INDEX+1))
+      INDEX=$((INDEX + 1))
       echo
       continue
     fi
@@ -116,7 +116,7 @@ show_device () {
       printf "%-18s %s\n" "$LABEL:" "$VALUE"
     fi
 
-    INDEX=$((INDEX+1))
+    INDEX=$((INDEX + 1))
   done
 
   if sudo smartctl -i "$DEVICE" &> /dev/null; then
