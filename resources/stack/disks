@@ -5,6 +5,8 @@ source /opt/stack/utils
 require "udisks2"
 require "glib2"
 require "nmap"
+require "smbclient"
+require "smartmontools"
 
 prompt () {
   local Y=$'\e[0;33m'

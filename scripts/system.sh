@@ -180,7 +180,7 @@ install_packages () {
     man-db man-pages texinfo cups bluez bluez-utils unzip terminus-font \
     vim nano git tree arch-audit atool zip xz unace p7zip gzip lzop feh \
     bzip2 unrar dialog inetutils dnsutils openssh nfs-utils openbsd-netcat ipset \
-    neofetch age polkit-gnome imagemagick gpick fuse2 rclone \
+    neofetch age polkit-gnome imagemagick gpick fuse2 rclone smartmontools \
     $([ "$UEFI" = "yes" ] && echo 'efibootmgr') || exit 1
 
   echo -e "\nReplacing iptables with nft tables..."
@@ -273,7 +273,7 @@ install_drivers () {
 
   pacman -S --noconfirm \
     acpi acpid acpi_call \
-    networkmanager wireless_tools netctl wpa_supplicant nmap dhclient \
+    networkmanager wireless_tools netctl wpa_supplicant nmap dhclient smbclient \
     alsa-utils pipewire pipewire-alsa pipewire-pulse pipewire-jack pavucontrol \
     $CPU_PKGS $GPU_PKGS $OTHER_PKGS $VM_PKGS || exit 1
 
