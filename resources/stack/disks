@@ -87,12 +87,16 @@ show_device () {
   while [ $INDEX -lt ${#FIELDS[@]} ]; do
     local FIELD=${FIELDS[$INDEX]}
 
-    [ "$FIELD" = "ln" ] && INDEX=$((INDEX+1)) && echo && continue
+    if [ "$FIELD" = "ln" ]; then
+      INDEX=$((INDEX+1))
+      echo
+      continue
+    fi
 
     local KEY=$(echo "$FIELD" | cut -d ";" -f 1)
     local LABEL=$(echo "$FIELD" | cut -d ";" -f 2)
 
-    local VALUE=$(lsblk -dP -o "$KEY" "$DEVICE" | sed "s/^$KEY=\"\(.*\)\"$/\1/")
+    local VALUE=$(sudo lsblk -dP -o "$KEY" "$DEVICE" | sed "s/^$KEY=\"\(.*\)\"$/\1/")
 
     if [ -n "$VALUE" ]; then
       printf "%-18s %s\n" "$LABEL:" "$VALUE"
@@ -100,6 +104,12 @@ show_device () {
 
     INDEX=$((INDEX+1))
   done
+
+  if sudo smartctl -i "$DEVICE" &> /dev/null; then
+    echo
+    sudo smartctl -i "$DEVICE" | tail -n +5
+    sudo smartctl -H "$DEVICE" | tail -n +5
+  fi
 }
 
 mount_device () {
