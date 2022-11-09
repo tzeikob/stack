@@ -43,6 +43,13 @@ list_hosts () {
   fi
 }
 
+list_shares () {
+  local HOST=$1
+  local USERNAME=$2
+
+  smbclient -L "$HOST" -U "$USERNAME"
+}
+
 list_mounts () {
   local FRMT="%-22s\t%s\n"
   printf "$FRMT" "NAME" "MOUNT POINT"
@@ -211,6 +218,7 @@ help () {
   printf " %-25s\t%s\n" \
     "list devices" "List all the block devices of the system." \
     "list hosts" "Discover all the available hosts at the local network." \
+    "list shares <ip> <username>" "Fetch any shared folder on the given host." \
     "list mounts" "List all the current mounted devices and shared folders." \
     "show device <path>" "Show details of the block device with the given path" \
     "mount device <path>" "Mount a block device with the given path." \
@@ -246,6 +254,7 @@ main () {
         case "${CMD[1]}" in
           "devices") list_devices;;
           "hosts") list_hosts;;
+          "shares") list_shares "${CMD[2]}" "${CMD[3]}";;
           "mounts") list_mounts;;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
