@@ -10,9 +10,9 @@ prompt () {
   local Y=$'\e[0;33m'
   local R=$'\e[m'
 
-  local DEVICES=$(lsblk -dn | wc -l)
+  local DEVICES_COUNTER=$(lsblk -dn | wc -l)
 
-  read -rep "[disks:$Y${DEVICES}$R] " REPLY
+  read -rep "[disks:$Y${DEVICES_COUNTER}$R] " REPLY
 }
 
 list_devices () {
