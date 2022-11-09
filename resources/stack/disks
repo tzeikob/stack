@@ -7,7 +7,12 @@ require "glib2"
 require "nmap"
 
 prompt () {
-  read -rep "[disks] " REPLY
+  local Y=$'\e[0;33m'
+  local R=$'\e[m'
+
+  local DEVICES=$(lsblk -dn | wc -l)
+
+  read -rep "[disks:$Y${DEVICES}$R] " REPLY
 }
 
 list_devices () {
