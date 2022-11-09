@@ -50,6 +50,58 @@ list_mounts () {
       {printf f,a[1]"/"a[2],"/run/user/"id"/gvfs/"$0}'
 }
 
+show_device () {
+  local DEVICE=$1
+
+  if [ ! -b "$DEVICE" ]; then
+    echo "Invalid block device: $DEVICE"
+    return 1
+  fi
+
+  local FIELDS=(
+    "NAME;Device Name"
+    "PATH;Device Path"
+    "LABEL;Label"
+    "UUID;ID Number"
+    "VENDOR;Vendor Name"
+    "MODEL;Model Name"
+    "REV;Revision"
+    "SERIAL;Serial Number"
+    "TYPE;Device Type"
+    "TRAN;Transfer"
+    "RM;Removable"
+    "RO;Read Only"
+    "HOTPLUG;Hot Plugable"
+    "ln"
+    "FSTYPE;File Type"
+    "FSVER;Version"
+    "SIZE;Total Size"
+    "FSAVAIL;Free Space"
+    "FSUSED;Used Space"
+    "FSUSE%;Usage"
+    "MOUNTPOINTS;Mount Points"
+    "STATE;Device State"
+    )
+  
+  local INDEX=0
+  while [ $INDEX -lt ${#FIELDS[@]} ]; do
+    local FIELD=${FIELDS[$INDEX]}
+
+    [ "$FIELD" = "ln" ] && INDEX=$((INDEX+1)) && echo && continue
+
+    local KEY=$(echo "$FIELD" | cut -d ";" -f 1)
+    local LABEL=$(echo "$FIELD" | cut -d ";" -f 2)
+
+    local VALUE=$(lsblk -dP -o "$KEY" "$DEVICE" | sed "s/^$KEY=\"\(.*\)\"$/\1/")
+
+    if [ -n "$VALUE" ]; then
+      printf "%-18s %s\n" "$LABEL:" "$VALUE"
+    fi
+
+    INDEX=$((INDEX+1))
+  done
+}
+
 mount_device () {
   local DEVICE="$1"
 
@@ -145,6 +197,7 @@ help () {
     "list devices" "List all the block devices of the system." \
     "list hosts" "Discover all the available hosts at the local network." \
     "list mounts" "List all the current mounted devices and shared folders." \
+    "show device <path>" "Show details of the block device with the given path" \
     "mount device <path>" "Mount a block device with the given path." \
     "mount host <ip> <share>" "Mount a shared folder on host with the given ip or domain." \
     "unmount device <path>" "Unmount a block device with the given path." \
@@ -179,6 +232,11 @@ main () {
           "devices") list_devices;;
           "hosts") list_hosts;;
           "mounts") list_mounts;;
+          *) echo "Unknown or invalid command: '$REPLY'";;
+        esac;;
+      "show")
+        case "${CMD[1]}" in
+          "device") show_device "${CMD[2]}";;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
       "mount")
