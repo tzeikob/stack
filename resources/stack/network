@@ -279,9 +279,7 @@ help () {
   fi
 }
 
-main () {
-  clear
-
+loop () {
   local SEL=""
 
   while true; do
@@ -333,4 +331,4 @@ main () {
   done
 }
 
-main "$@"
+clear && loop
