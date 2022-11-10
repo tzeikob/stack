@@ -6,17 +6,18 @@ require "trash-cli"
 
 prompt () {
   local Y=$'\e[0;33m'
+  local M=$'\e[0;35m'
   local R=$'\e[m'
 
-  local CURRENT_PATH="${PWD/*\//}"
-
-  if [ "$PWD" = "$HOME" ]; then
-    CURRENT_PATH="~"
+  local C=$Y
+  if [[ "$(id -u)" == "0" ]]; then
+    C=$M
   fi
 
+  local CURRENT_PATH="../${PWD/*\//}"
   local COUNTER=$(count_files)
 
-  read -rep "[trash:$USER $Y$CURRENT_PATH$R:$Y$COUNTER$R] " REPLY
+  read -rep "[trash:$C$COUNTER$R $C$CURRENT_PATH$R] " REPLY
 }
 
 count_files () {
