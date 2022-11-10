@@ -31,15 +31,17 @@ validate () {
   local OBJECT=$1
   local NAME=$2
 
+  if [[ ! "$OBJECT" =~ ^(device|connection)$ ]]; then
+    echo "Missing or invalid object argument: $OBJECT"
+    return 1
+  fi
+
   if [ "$OBJECT" = "device" ]; then
     nmcli -f DEVICE device | tail -n +2 | grep -wq "$NAME" ||
       (echo "Invalid or unknown device: $NAME" && return 1)
   elif [ "$OBJECT" = "connection" ]; then
     nmcli -f NAME connection | tail -n +2 | grep -wq "$NAME" ||
       (echo "Invalid or unknown connection: $NAME" && return 1)
-  else
-    echo "Invalid network object: $OBJECT"
-    return 1
   fi
 }
 
@@ -176,7 +178,17 @@ down () {
 
 power () {
   local OBJECT=$1
-  local STATUS=${2:-"on"}
+  local STATUS=$2
+
+  if [[ ! "$OBJECT" =~ ^(network|wifi)$ ]]; then
+    echo "Missing or invalid object argument: $OBJECT"
+    return 1
+  fi
+
+  if [[ ! "$STATUS" =~ ^(on|off)$ ]]; then
+    echo "Missing or invalid status argument: $STATUS"
+    return 1
+  fi
 
   if [ "$OBJECT" = "network" ]; then
     nmcli networking "$STATUS" &&
@@ -208,6 +220,16 @@ connect () {
   local SSID=$1
   local SECRET_KEY=$2
 
+  if [ -z "$SSID" ]; then
+    echo "Missing SSID argument"
+    return 1
+  fi
+
+  if [ -z "$SECRET_KEY" ]; then
+    echo "Missing secret key argument"
+    return 1
+  fi
+
   nmcli device wifi connect "$SSID" password "$SECRET_KEY" hidden yes &&
    sleep 6
 }
@@ -216,22 +238,22 @@ help () {
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
   echo -e "\nOBJECTS"
-  printf " %-25s\t%s\n" \
+  printf " %-35s\t%s\n" \
       "device" "An object to handle network devices" \
       "connection" "An object to handle network connections" \
       "network" "Refers to the networking setup of your system" \
       "wifi" "Refers to the WiFi device of your system"
 
   echo -e "\nCOMMANDS"
-  printf " %-25s\t%s\n" \
+  printf " %-35s\t%s\n" \
     "status" "Show the current status of system's networking" \
     "devices [<type>]" "List network devices of the given type, default is all" \
     "connections [<type>]" "List network connections of the given type, default is all" \
     "scan" "Scan for wireless networks in your area" \
-    "power network [on|off]" "Power on/off the system networking, default is on" \
-    "power wifi [on|off]" "Power on/off the wifi, default is on" \
+    "power network on|off" "Power on/off the system networking" \
+    "power wifi on|off" "Power on/off the wifi" \
     "airplane" "Set networking to airplane mode" \
-    "connect <SSID> <secret-key>" "Connect to a wireless network with the given SSID" \
+    "connect <ssid> <secret-key>" "Connect to a wireless network with the given ssid" \
     "show device|connection <name>" "Show the status of the device or connection" \
     "up device|connection <name>" "Get the given device or connection up" \
     "down device|connection <name>" "Get the given device or connection down" \
