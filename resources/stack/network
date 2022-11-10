@@ -10,20 +10,17 @@ prompt () {
   local NETWORKING=$(nmcli networking)
   local STATUS=$(nmcli -g STATE general status)
 
-  local W=$'\e[0;37m'
-  local R=$'\e[0;31m'
-  local G=$'\e[0;32m'
   local Y=$'\e[0;33m'
+  local G=$'\e[0;32m'
+  local R=$'\e[0;31m'
   local R=$'\e[m'
 
-  local C=$W
+  local C=$Y
   if [ "$NETWORKING" = "enabled" ]; then
     if [[ "$STATUS" =~ ^connected ]]; then
       C=$G
     elif [[ "$STATUS" =~ ^disconnected ]]; then
       C=$R
-    else
-      C=$Y
     fi
   fi
 
@@ -35,17 +32,13 @@ validate () {
   local NAME=$2
 
   if [ "$OBJECT" = "device" ]; then
-    if ! nmcli -f DEVICE device | tail -n +2 | grep -wq "$NAME"; then
-      echo "Invalid or unknown device $NAME"
-      return 1
-    fi
+    nmcli -f DEVICE device | tail -n +2 | grep -wq "$NAME" ||
+      (echo "Invalid or unknown device: $NAME" && return 1)
   elif [ "$OBJECT" = "connection" ]; then
-    if ! nmcli -f NAME connection | tail -n +2 | grep -wq "$NAME"; then
-      echo "Invalid or unknown connection $NAME"
-      return 1
-    fi
+    nmcli -f NAME connection | tail -n +2 | grep -wq "$NAME" ||
+      (echo "Invalid or unknown connection: $NAME" && return 1)
   else
-    echo "Invalid network object: '$OBJECT'"
+    echo "Invalid network object: $OBJECT"
     return 1
   fi
 }
@@ -92,9 +85,7 @@ show () {
   local OBJECT=$1
   local NAME=$2
 
-  if ! validate "$OBJECT" "$NAME"; then
-    return 1
-  fi
+  validate "$OBJECT" "$NAME" || return 1
 
   if [ "$OBJECT" = "device" ]; then
     nmcli --colors no device show "$NAME"
@@ -161,9 +152,7 @@ up () {
   local OBJECT=$1
   local NAME=$2
 
-  if ! validate "$OBJECT" "$NAME"; then
-    return 1
-  fi
+  validate "$OBJECT" "$NAME" || return 1
 
   if [ "$OBJECT" = "device" ]; then
     nmcli device connect "$NAME" && sleep 6
@@ -176,9 +165,7 @@ down () {
   local OBJECT=$1
   local NAME=$2
 
-  if ! validate "$OBJECT" "$NAME"; then
-    return 1
-  fi
+  validate "$OBJECT" "$NAME" || return 1
 
   if [ "$OBJECT" = "device" ]; then
     nmcli device disconnect "$NAME" && sleep 6
@@ -208,9 +195,7 @@ delete () {
   local OBJECT=$1
   local NAME=$2
 
-  if ! validate "$OBJECT" "$NAME"; then
-    return 1
-  fi
+  validate "$OBJECT" "$NAME" || return 1
 
   if [ "$OBJECT" = "device" ]; then
     nmcli device delete "$NAME" && sleep 6
