@@ -230,9 +230,7 @@ help () {
     "help" "Show this help message."
 }
 
-main () {
-  clear
-
+loop () {
   while true; do
     prompt
 
@@ -282,4 +280,4 @@ main () {
   done
 }
 
-main "$@"
+clear && loop
