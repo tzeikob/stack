@@ -35,12 +35,12 @@ validate () {
   local NAME=$2
 
   if [ "$OBJECT" = "device" ]; then
-    if ! nmcli -f DEVICE device | tail +2 | grep -q "$NAME"; then
+    if ! nmcli -f DEVICE device | tail -n +2 | grep -wq "$NAME"; then
       echo "Invalid or unknown device $NAME"
       return 1
     fi
   elif [ "$OBJECT" = "connection" ]; then
-    if ! nmcli -f NAME connection | tail +2 | grep -q "$NAME"; then
+    if ! nmcli -f NAME connection | tail -n +2 | grep -wq "$NAME"; then
       echo "Invalid or unknown connection $NAME"
       return 1
     fi
