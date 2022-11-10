@@ -239,10 +239,10 @@ loop () {
     fi
 
     case "${CMD[0]}" in
-      "list") list_files "${CMD[@]:1}";;
-      "restore") restore_files "${CMD[@]:1}";;
-      "remove") remove_files "${CMD[@]:1}";;
-      "empty") empty_files "${CMD[@]:1}";;
+      "list") list_files "${CMD[1]}";;
+      "restore") restore_files "${CMD[1]}";;
+      "remove") remove_files "${CMD[1]}";;
+      "empty") empty_files "${CMD[1]}";;
       *) echo "Unknown or invalid command: '$REPLY'";; 
     esac
   done

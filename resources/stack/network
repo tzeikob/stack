@@ -292,14 +292,14 @@ loop () {
           *) echo "Unknown or invalid command: $REPLY";;
       "list")
         case "${CMD[1]}" in
-          "devices") list_devices "${CMD[@]:2}";;
-          "connections") list_connections "${CMD[@]:2}";;
+          "devices") list_devices "${CMD[2]}";;
+          "connections") list_connections "${CMD[2]}";;
           *) echo "Unknown or invalid command: $REPLY";;
         esac;;
       "scan") scan;;
-      "power") power "${CMD[@]:1}";;
+      "power") power "${CMD[1]}" "${CMD[2]}";;
       "airplane") power wifi off;;
-      "connect") connect "${CMD[@]:1}";; 
+      "connect") connect "${CMD[1]}" "${CMD[2]}";; 
       "up") up "${CMD[1]}" "${CMD[2]}";;
       "down") down "${CMD[1]}" "${CMD[2]}";;
       "delete") delete "${CMD[1]}" "${CMD[2]}";;
