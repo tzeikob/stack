@@ -45,7 +45,7 @@ validate () {
   fi
 }
 
-status () {
+show_status () {
   nmcli --colors no general status
 
   local OLD_IFS=$IFS && IFS=","
@@ -114,7 +114,7 @@ show () {
   fi
 }
 
-devices () {
+list_devices () {
   local TYPE=$1
   
   if [ -z "$TYPE" ]; then
@@ -124,7 +124,7 @@ devices () {
   fi
 }
 
-connections () {
+list_connections () {
   local TYPE=$1
 
   if [ -z "$TYPE" ]; then
@@ -134,7 +134,7 @@ connections () {
   fi
 }
 
-scan () {
+scan_networks () {
   local OLD_IFS=$IFS && IFS=","
 
   local NETWORKS=($(
@@ -246,9 +246,9 @@ help () {
 
   echo -e "\nCOMMANDS"
   printf " %-35s\t%s\n" \
-    "status" "Show the current status of system's networking" \
-    "devices [<type>]" "List network devices of the given type, default is all" \
-    "connections [<type>]" "List network connections of the given type, default is all" \
+    "show status" "Show the current status of system's networking" \
+    "list devices [<type>]" "List network devices of the given type, default is all" \
+    "list connections [<type>]" "List network connections of the given type, default is all" \
     "scan" "Scan for wireless networks in your area" \
     "power network on|off" "Power on/off the system networking" \
     "power wifi on|off" "Power on/off the wifi" \
@@ -281,15 +281,19 @@ loop () {
     fi
 
     case "${CMD[0]}" in
-      "status") status;;
-      "devices") devices "${CMD[@]:1}";;
-      "connections") connections "${CMD[@]:1}";;
-      "scan") scan;;
+      "list")
+        case "${CMD[1]}" in
+          "devices") list_devices "${CMD[@]:2}";;
+          "connections") list_connections "${CMD[@]:2}";;
+          *) echo "Unknown or invalid command: $REPLY";;
+        esac;;
+      "scan") scan_networks;;
       "power") power "${CMD[@]:1}";;
       "airplane") power wifi off;;
       "connect") connect "${CMD[@]:1}";;
       "show")
         case "${CMD[1]}" in
+          "status") show_status;;
           "device") show device "${CMD[2]}";;
           "connection") show connection "${CMD[2]}";;
           *) echo "Unknown or invalid command: $REPLY";; 
