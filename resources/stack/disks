@@ -27,22 +27,23 @@ list_hosts () {
   local HOSTS=($(nmap -n -sn "$CIDR" -oG - | awk '/Up$/{print $2}'))
   local LEN=${#HOSTS[@]}
 
-  if [ $LEN -gt 0 ]; then
-    local FRMT="%-15s\t%s\n"
-    printf "$FRMT" "HOST" "NAME"
-
-    local INDEX=0
-    while [ $INDEX -lt $LEN ]; do
-      nmap "${HOSTS[$INDEX]}" -oG - |
-        awk -v f=$FRMT '/Host/{printf f, $2, $3}' |
-        head -n 1 |
-        tr -d '()'
-
-      INDEX=$((INDEX + 1))
-    done
-  else
+  if [ $LEN -eq 0 ]; then
     echo "No local hosts have been discovered"
+    return
   fi
+
+  local FRMT="%-15s\t%s\n"
+  printf "$FRMT" "HOST" "NAME"
+
+  local INDEX=0
+  while [ $INDEX -lt $LEN ]; do
+    nmap "${HOSTS[$INDEX]}" -oG - |
+      awk -v f=$FRMT '/Host/{printf f, $2, $3}' |
+      head -n 1 |
+      tr -d '()'
+
+    INDEX=$((INDEX + 1))
+  done
 }
 
 list_shares () {
@@ -102,8 +103,8 @@ show_device () {
     local FIELD=${FIELDS[$INDEX]}
 
     if [ "$FIELD" = "ln" ]; then
-      INDEX=$((INDEX + 1))
       echo
+      INDEX=$((INDEX + 1))
       continue
     fi
 
@@ -112,9 +113,8 @@ show_device () {
 
     local VALUE=$(sudo lsblk -dP -o "$KEY" "$DEVICE" | sed "s/^$KEY=\"\(.*\)\"$/\1/")
 
-    if [ -n "$VALUE" ]; then
+    [ -n "$VALUE" ] &&
       printf "%-18s %s\n" "$LABEL:" "$VALUE"
-    fi
 
     INDEX=$((INDEX + 1))
   done
