@@ -85,7 +85,7 @@ remove_files () {
   fi
 
   if [ -z "$FILE_PATTERN" ]; then
-    echo "Invalid pattern argument: '$FILE_PATTERN'"
+    echo "Missing pattern argument"
     return 1
   fi
   

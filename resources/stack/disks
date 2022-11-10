@@ -51,6 +51,16 @@ list_shares () {
   local USERNAME=$2
   local WORKGROUP=${3:-"WORKGROUP"}
 
+  if [ -z "$HOST" ]; then
+    echo "Missing host argument"
+    return 1
+  fi
+
+  if [ -z "$USERNAME" ]; then
+    echo "Missing username argument"
+    return 1
+  fi
+
   smbclient -L "$HOST" -U "$USERNAME" -W "$WORKGROUP"
 }
 
@@ -176,6 +186,17 @@ unmount_device () {
 mount_host () {
   local HOST=$1
   local SHARE=$2
+
+  if [ -z "$HOST" ]; then
+    echo "Missing host argument"
+    return 1
+  fi
+
+  if [ -z "$SHARE" ]; then
+    echo "Missing shared folder argument"
+    return 1
+  fi
+
   local URI="smb://$HOST/$SHARE"
 
   if gio mount -l | grep -q "$URI"; then
@@ -196,6 +217,17 @@ mount_host () {
 unmount_host () {
   local HOST=$1
   local SHARE=$2
+
+  if [ -z "$HOST" ]; then
+    echo "Missing host argument"
+    return 1
+  fi
+
+  if [ -z "$SHARE" ]; then
+    echo "Missing shared folder argument"
+    return 1
+  fi
+
   local URI="smb://$HOST/$SHARE"
 
   if ! gio mount -l | grep -q "$URI"; then
