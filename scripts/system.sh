@@ -290,10 +290,12 @@ install_utilities () {
   cp ~/stack/resources/stack/mount "$STACK_HOME"
   cp ~/stack/resources/stack/trash "$STACK_HOME"
   cp ~/stack/resources/stack/networks "$STACK_HOME"
+  cp ~/stack/resources/stack/disks "$STACK_HOME"
 
   ln -sf "$STACK_HOME/mount" /usr/local/bin/mmn
   ln -sf "$STACK_HOME/trash" /usr/local/bin/trash
   ln -sf "$STACK_HOME/networks" /usr/local/bin/networks
+  ln -sf "$STACK_HOME/disks" /usr/local/bin/disks
 
   echo "Stack utilities have been installed"
 }
