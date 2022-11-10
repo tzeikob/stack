@@ -134,7 +134,7 @@ list_connections () {
   fi
 }
 
-scan_networks () {
+scan () {
   local OLD_IFS=$IFS && IFS=","
 
   local NETWORKS=($(
