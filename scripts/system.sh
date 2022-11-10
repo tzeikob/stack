@@ -294,7 +294,7 @@ install_utilities () {
   cp ~/stack/resources/stack/logout "$STACK_HOME"
   cp ~/stack/resources/stack/lock "$STACK_HOME"
   cp ~/stack/resources/stack/launch "$STACK_HOME"
-  cp ~/stack/resources/stack/network "$STACK_HOME"
+  cp ~/stack/resources/stack/networks "$STACK_HOME"
 
   ln -sf "$STACK_HOME/mount" /usr/local/bin/mmn
   ln -sf "$STACK_HOME/trash" /usr/local/bin/trash
@@ -303,7 +303,7 @@ install_utilities () {
   ln -sf "$STACK_HOME/logout" /usr/local/bin/llo
   ln -sf "$STACK_HOME/lock" /usr/local/bin/llk
   ln -sf "$STACK_HOME/launch" /usr/local/bin/launch
-  ln -sf "$STACK_HOME/network" /usr/local/bin/network
+  ln -sf "$STACK_HOME/networks" /usr/local/bin/networks
 
   echo "Stack utilities have been installed"
 }
