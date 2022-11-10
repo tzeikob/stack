@@ -167,14 +167,18 @@ wipe_files () {
   fi
 
   local INDEX=0
+  local REMOVED=0
   while [ $INDEX -lt $LEN ]; do
     local FILE=${FILES[$INDEX]}
 
-    rm -rf "$FILE" &> /dev/null ||
-      echo "Cannot remove file: '$FILE'"
+    rm -r --interactive=never "$FILE" &> /dev/null &&
+      REMOVED=$((REMOVED + 1)) ||
+      echo "Cannot remove the file: '$FILE'"
 
     INDEX=$((INDEX + 1))
   done
+
+  echo "$REMOVED files have been removed."
 }
 
 help () {
