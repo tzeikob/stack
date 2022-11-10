@@ -21,7 +21,9 @@ prompt () {
 }
 
 count_files () {
-  trash-list | wc -l
+  trash-list |
+    awk '/[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} \/.*/{print}' |
+    wc -l
 }
 
 list_files () {
