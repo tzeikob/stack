@@ -83,35 +83,38 @@ show_status () {
   done
 }
 
-show () {
-  local OBJECT=$1
-  local NAME=$2
+show_device () {
+  local NAME=$1
 
-  validate "$OBJECT" "$NAME" || return 1
+  validate "device" "$NAME" || return 1
 
-  if [ "$OBJECT" = "device" ]; then
-    nmcli --colors no device show "$NAME"
-  elif [ "$OBJECT" = "connection" ]; then
-    nmcli --colors no --fields \
-      "connection.interface-name, \
-      connection.id, \
-      connection.uuid, \
-      connection.type, \
-      connection.autoconnect, \
-      802-11-wireless.ssid, \
-      802-11-wireless.channel, \
-      802-11-wireless.seen-bssids, \
-      802-11-wireless-security.key-mgmt, \
-      GENERAL.STATE, \
-      IP4.ADDRESS, \
-      IP4.GATEWAY, \
-      IP4.ROUTE, \
-      IP4.DNS, \
-      IP6.ADDRESS, \
-      IP6.GATEWAY, \
-      IP6.ROUTE" \
-      connection show "$NAME"
-  fi
+  nmcli --colors no device show "$NAME"
+}
+
+show_connection () {
+  local NAME=$1
+
+  validate "connection" "$NAME" || return 1
+
+  nmcli --colors no --fields \
+    "connection.interface-name, \
+    connection.id, \
+    connection.uuid, \
+    connection.type, \
+    connection.autoconnect, \
+    802-11-wireless.ssid, \
+    802-11-wireless.channel, \
+    802-11-wireless.seen-bssids, \
+    802-11-wireless-security.key-mgmt, \
+    GENERAL.STATE, \
+    IP4.ADDRESS, \
+    IP4.GATEWAY, \
+    IP4.ROUTE, \
+    IP4.DNS, \
+    IP6.ADDRESS, \
+    IP6.GATEWAY, \
+    IP6.ROUTE" \
+    connection show "$NAME"
 }
 
 list_devices () {
@@ -247,6 +250,7 @@ help () {
   echo -e "\nCOMMANDS"
   printf " %-35s\t%s\n" \
     "show status" "Show the current status of system's networking" \
+    "show device|connection <name>" "Show the status of the device or connection" \
     "list devices [<type>]" "List network devices of the given type, default is all" \
     "list connections [<type>]" "List network connections of the given type, default is all" \
     "scan" "Scan for wireless networks in your area" \
@@ -254,7 +258,6 @@ help () {
     "power wifi on|off" "Power on/off the wifi" \
     "airplane" "Set networking to airplane mode" \
     "connect <ssid> <secret-key>" "Connect to a wireless network with the given ssid" \
-    "show device|connection <name>" "Show the status of the device or connection" \
     "up device|connection <name>" "Get the given device or connection up" \
     "down device|connection <name>" "Get the given device or connection down" \
     "delete device|connection <name>" "Delete the given device or connection" \
@@ -281,6 +284,12 @@ loop () {
     fi
 
     case "${CMD[0]}" in
+      "show")
+        case "${CMD[1]}" in
+          "status") show_status;;
+          "device") show_device "${CMD[2]}";;
+          "connection") show_connection "${CMD[2]}";;
+          *) echo "Unknown or invalid command: $REPLY";;
       "list")
         case "${CMD[1]}" in
           "devices") list_devices "${CMD[@]:2}";;
@@ -290,32 +299,10 @@ loop () {
       "scan") scan;;
       "power") power "${CMD[@]:1}";;
       "airplane") power wifi off;;
-      "connect") connect "${CMD[@]:1}";;
-      "show")
-        case "${CMD[1]}" in
-          "status") show_status;;
-          "device") show device "${CMD[2]}";;
-          "connection") show connection "${CMD[2]}";;
-          *) echo "Unknown or invalid command: $REPLY";; 
-        esac;;
-      "up")
-        case "${CMD[1]}" in
-          "device") up device "${CMD[2]}";;
-          "connection") up connection "${CMD[2]}";;
-          *) echo "Unknown or invalid command: $REPLY";; 
-        esac;;
-      "down")
-        case "${CMD[1]}" in
-          "device") down device "${CMD[2]}";;
-          "connection") down connection "${CMD[2]}";;
-          *) echo "Unknown or invalid command: $REPLY";; 
-        esac;;
-      "delete")
-        case "${CMD[1]}" in
-          "device") delete device "${CMD[2]}";;
-          "connection") delete connection "${CMD[2]}";;
-          *) echo "Unknown or invalid command: $REPLY";; 
-        esac;;
+      "connect") connect "${CMD[@]:1}";; 
+      "up") up "${CMD[1]}" "${CMD[2]}";;
+      "down") down "${CMD[1]}" "${CMD[2]}";;
+      "delete") delete "${CMD[1]}" "${CMD[2]}";;
       *) echo "Unknown or invalid command: $REPLY";; 
     esac
   done
