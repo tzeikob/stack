@@ -9,12 +9,6 @@ require "wireless_tools"
 prompt () {
   local NETWORKING=$(nmcli networking)
   local STATUS=$(nmcli -g STATE general status)
-  local SEL=$3
-
-  local OBJECT="none"
-  if [ -n "$SEL" ]; then
-    OBJECT=$(echo "$SEL" | cut -d ":" -f 2-)
-  fi
 
   local W=$'\e[0;37m'
   local R=$'\e[0;31m'
@@ -33,14 +27,12 @@ prompt () {
     fi
   fi
 
-  read -rep "[network:$OBJECT $C$STATUS$R] " REPLY
+  read -rep "[network:$C$STATUS$R] " REPLY
 }
 
 validate () {
-  local SEL=$1
-
-  local OBJECT=$(echo "$SEL" | cut -d ":" -f 1)
-  local NAME=$(echo "$SEL" | cut -d ":" -f 2-)
+  local OBJECT=$1
+  local NAME=$2
 
   if [ "$OBJECT" = "device" ]; then
     if ! nmcli -f DEVICE device | tail +2 | grep -q "$NAME"; then
@@ -53,7 +45,7 @@ validate () {
       return 1
     fi
   else
-    echo "Invalid or unknown network object: '$OBJECT'"
+    echo "Invalid network object: '$OBJECT'"
     return 1
   fi
 }
@@ -97,10 +89,12 @@ status () {
 }
 
 show () {
-  local SEL=$1
+  local OBJECT=$1
+  local NAME=$2
 
-  local OBJECT=$(echo "$SEL" | cut -d ":" -f 1)
-  local NAME=$(echo "$SEL" | cut -d ":" -f 2-)
+  if ! validate "$OBJECT" "$NAME"; then
+    return 1
+  fi
 
   if [ "$OBJECT" = "device" ]; then
     nmcli --colors no device show "$NAME"
@@ -124,9 +118,6 @@ show () {
       IP6.GATEWAY, \
       IP6.ROUTE" \
       connection show "$NAME"
-  else
-    echo "Invalid or unknown network object: '$OBJECT'"
-    return 1
   fi
 }
 
@@ -167,34 +158,32 @@ scan () {
 }
 
 up () {
-  local SEL=$1
+  local OBJECT=$1
+  local NAME=$2
 
-  local OBJECT=$(echo "$SEL" | cut -d ":" -f 1)
-  local NAME=$(echo "$SEL" | cut -d ":" -f 2-)
+  if ! validate "$OBJECT" "$NAME"; then
+    return 1
+  fi
 
   if [ "$OBJECT" = "device" ]; then
     nmcli device connect "$NAME" && sleep 6
   elif [ "$OBJECT" = "connection" ]; then
     nmcli connection up "$NAME" && sleep 6
-  else
-    echo "Invalid or unknown network object: '$OBJECT'"
-    return 1
   fi
 }
 
 down () {
-  local SEL=$1
+  local OBJECT=$1
+  local NAME=$2
 
-  local OBJECT=$(echo "$SEL" | cut -d ":" -f 1)
-  local NAME=$(echo "$SEL" | cut -d ":" -f 2-)
+  if ! validate "$OBJECT" "$NAME"; then
+    return 1
+  fi
 
   if [ "$OBJECT" = "device" ]; then
     nmcli device disconnect "$NAME" && sleep 6
   elif [ "$OBJECT" = "connection" ]; then
     nmcli connection down "$NAME" && sleep 6
-  else
-    echo "Invalid or unknown network object: '$OBJECT'"
-    return 1
   fi
 }
 
@@ -216,18 +205,17 @@ power () {
 }
 
 delete () {
-  local SEL=$1
+  local OBJECT=$1
+  local NAME=$2
 
-  local OBJECT=$(echo "$SEL" | cut -d ":" -f 1)
-  local NAME=$(echo "$SEL" | cut -d ":" -f 2-)
+  if ! validate "$OBJECT" "$NAME"; then
+    return 1
+  fi
 
   if [ "$OBJECT" = "device" ]; then
     nmcli device delete "$NAME" && sleep 6
   elif [ "$OBJECT" = "connection" ]; then
     nmcli connection delete "$NAME" && sleep 6
-  else
-    echo "Invalid or unknown network object: '$OBJECT'"
-    return 1
   fi
 }
 
@@ -240,56 +228,41 @@ connect () {
 }
 
 help () {
-  local MODE=$1
+  echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
-  if [ ! "$MODE" = "sel" ]; then
-    echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
+  echo -e "\nOBJECTS"
+  printf " %-25s\t%s\n" \
+      "device" "An object to handle network devices" \
+      "connection" "An object to handle network connections" \
+      "network" "Refers to the networking setup of your system" \
+      "wifi" "Refers to the WiFi device of your system"
 
-    echo -e "\nOBJECTS"
-    printf " %-25s\t%s\n" \
-        "device" "An object to handle network devices" \
-        "connection" "An object to handle network connections" \
-        "network" "Refers to the networking setup of your system" \
-        "wifi" "Refers to the WiFi device of your system"
-
-    echo -e "\nCOMMANDS"
-    printf " %-25s\t%s\n" \
-      "status" "Show the current status of system's networking" \
-      "devices [<type>]" "List network devices of the given type, default is all" \
-      "connections [<type>]" "List network connections of the given type, default is all" \
-      "scan" "Scan for wireless networks in your area" \
-      "power network [on|off]" "Power on/off the system networking, default is on" \
-      "power wifi [on|off]" "Power on/off the wifi, default is on" \
-      "airplane" "Set networking to airplane mode" \
-      "connect <SSID> <secret-key>" "Connect to a wireless network with the given SSID" \
-      "select device <name>" "Select a device with the given name" \
-      "select connection <name>" "Select a connection with the given name" \
-      "help" "Show this help message"
-  else
-    echo "Usage: COMMAND"
-
-    echo -e "\nCOMMANDS"
-    printf " %-25s\t%s\n" \
-      "status" "Show the current status of the selected device or connection" \
-      "up" "Get the selected device or connection up" \
-      "down" "Get the selected device or connection down" \
-      "delete" "Delete the selected device or connection" \
-      "deselect" "Deselect the select device or connection" \
-      "help" "Show this help message"
-  fi
+  echo -e "\nCOMMANDS"
+  printf " %-25s\t%s\n" \
+    "status" "Show the current status of system's networking" \
+    "devices [<type>]" "List network devices of the given type, default is all" \
+    "connections [<type>]" "List network connections of the given type, default is all" \
+    "scan" "Scan for wireless networks in your area" \
+    "power network [on|off]" "Power on/off the system networking, default is on" \
+    "power wifi [on|off]" "Power on/off the wifi, default is on" \
+    "airplane" "Set networking to airplane mode" \
+    "connect <SSID> <secret-key>" "Connect to a wireless network with the given SSID" \
+    "show device|connection <name>" "Show the status of the device or connection" \
+    "up device|connection <name>" "Get the given device or connection up" \
+    "down device|connection <name>" "Get the given device or connection down" \
+    "delete device|connection <name>" "Delete the given device or connection" \
+    "help" "Show this help message"
 }
 
 loop () {
-  local SEL=""
-
   while true; do
-    prompt "$SEL"
+    prompt
 
     history -s "$REPLY"
     local CMD=($(echo "$REPLY" | tr ':' '\n'))
 
     if [ "${CMD[0]}" = "help" ]; then
-      [ -z "$SEL" ] && help || help "sel"
+      help
       continue
     elif [ "${CMD[0]}" = "clear" ]; then
       clear
@@ -300,31 +273,40 @@ loop () {
       continue
     fi
 
-    if [ -z "$SEL" ]; then
-      case "${CMD[0]}" in
-        "status") status;;
-        "devices") devices "${CMD[@]:1}";;
-        "connections") connections "${CMD[@]:1}";;
-        "scan") scan;;
-        "power") power "${CMD[@]:1}";;
-        "airplane") power wifi off;;
-        "connect") connect "${CMD[@]:1}";;
-        "select")
-          if validate "${CMD[1]}:${CMD[2]}"; then
-            SEL="${CMD[1]}:${CMD[2]}"
-          fi;;
-        *) echo "Unknown or invalid command: $REPLY";; 
-      esac
-    else
-      case "${CMD[0]}" in
-        "status") show "$SEL";;
-        "up") up "$SEL";;
-        "down") down "$SEL";;
-        "delete") delete "$SEL"; SEL="";;
-        "deselect") SEL="";;
-        *) echo "Unknown or invalid command: $REPLY";;
-      esac
-    fi
+    case "${CMD[0]}" in
+      "status") status;;
+      "devices") devices "${CMD[@]:1}";;
+      "connections") connections "${CMD[@]:1}";;
+      "scan") scan;;
+      "power") power "${CMD[@]:1}";;
+      "airplane") power wifi off;;
+      "connect") connect "${CMD[@]:1}";;
+      "show")
+        case "${CMD[1]}" in
+          "device") show device "${CMD[2]}";;
+          "connection") show connection "${CMD[2]}";;
+          *) echo "Unknown or invalid command: $REPLY";; 
+        esac;;
+      "up")
+        case "${CMD[1]}" in
+          "device") up device "${CMD[2]}";;
+          "connection") up connection "${CMD[2]}";;
+          *) echo "Unknown or invalid command: $REPLY";; 
+        esac;;
+      "down")
+        case "${CMD[1]}" in
+          "device") down device "${CMD[2]}";;
+          "connection") down connection "${CMD[2]}";;
+          *) echo "Unknown or invalid command: $REPLY";; 
+        esac;;
+      "delete")
+        case "${CMD[1]}" in
+          "device") delete device "${CMD[2]}";;
+          "connection") delete connection "${CMD[2]}";;
+          *) echo "Unknown or invalid command: $REPLY";; 
+        esac;;
+      *) echo "Unknown or invalid command: $REPLY";; 
+    esac
   done
 }
 
