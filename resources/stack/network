@@ -17,9 +17,9 @@ prompt () {
 
   local C=$Y
   if [ "$NETWORKING" = "enabled" ]; then
-    if [[ "$STATUS" =~ ^connected ]]; then
+    if [[ "$STATUS" =~ connected ]]; then
       C=$G
-    elif [[ "$STATUS" =~ ^disconnected ]]; then
+    elif [[ "$STATUS" =~ disconnected ]]; then
       C=$R
     fi
   fi
@@ -287,7 +287,7 @@ loop () {
           "connections") list_connections "${CMD[@]:2}";;
           *) echo "Unknown or invalid command: $REPLY";;
         esac;;
-      "scan") scan_networks;;
+      "scan") scan;;
       "power") power "${CMD[@]:1}";;
       "airplane") power wifi off;;
       "connect") connect "${CMD[@]:1}";;
