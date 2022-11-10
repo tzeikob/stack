@@ -70,13 +70,7 @@ restore_files () {
   local NEW_COUNTER=$(count_files)
   local RESTORED=$((COUNTER - NEW_COUNTER))
 
-  if [ $RESTORED -gt 1 ]; then
-    echo "$RESTORED files have been restored."
-  elif [ $RESTORED -eq 1 ]; then
-    echo "$RESTORED file has been restored."
-  else
-    echo "No file has been restored."
-  fi
+  echo "$RESTORED files have been restored."
 }
 
 remove_files () {
@@ -101,13 +95,7 @@ remove_files () {
   local NEW_COUNTER=$(count_files)
   local GONE=$((COUNTER - NEW_COUNTER))
 
-  if [ $GONE -gt 1 ]; then
-    echo "$GONE files have been removed."
-  elif [ $GONE -eq 1 ]; then
-    echo "$GONE file has been removed."
-  else
-    echo "No file has been removed."
-  fi
+  echo "$GONE files have been removed."
 }
 
 empty_files () {
@@ -140,13 +128,7 @@ empty_files () {
   local NEW_COUNTER=$(count_files)
   local GONE=$((COUNTER - NEW_COUNTER))
 
-  if [ $GONE -gt 1 ]; then
-    echo "$GONE files have been removed."
-  elif [ $GONE -eq 1 ]; then
-    echo "$GONE file has been removed."
-  else
-    echo "No file has been removed."
-  fi
+  echo "$GONE files have been removed."
 }
 
 trash_files () {
@@ -172,13 +154,7 @@ trash_files () {
   local NEW_COUNTER=$(count_files)
   local TRASHED=$((NEW_COUNTER - COUNTER))
 
-  if [ $TRASHED -gt 1 ]; then
-    echo "$TRASHED files have been trashed."
-  elif [ $TRASHED -eq 1 ]; then
-    echo "$TRASHED file has been trashed."
-  else
-    echo "No file has been trashed."
-  fi
+  echo "$TRASHED files have been trashed."
 }
 
 wipe_files () {
