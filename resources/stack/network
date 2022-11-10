@@ -7,8 +7,8 @@ require "wpa_supplicant"
 require "wireless_tools"
 
 prompt () {
-  local NETWORKING=$1
-  local STATUS=$2
+  local NETWORKING=$(nmcli networking)
+  local STATUS=$(nmcli -g STATE general status)
   local SEL=$3
 
   local OBJECT="none"
@@ -16,24 +16,24 @@ prompt () {
     OBJECT=$(echo "$SEL" | cut -d ":" -f 2-)
   fi
 
-  local WHITE=$'\e[0;37m'
-  local RED=$'\e[0;31m'
-  local GREEN=$'\e[0;32m'
-  local YELLOW=$'\e[0;33m'
-  local RESET=$'\e[m'
+  local W=$'\e[0;37m'
+  local R=$'\e[0;31m'
+  local G=$'\e[0;32m'
+  local Y=$'\e[0;33m'
+  local R=$'\e[m'
 
-  local COLOR=$WHITE
+  local C=$W
   if [ "$NETWORKING" = "enabled" ]; then
     if [[ "$STATUS" =~ ^connected ]]; then
-      COLOR=$GREEN
+      C=$G
     elif [[ "$STATUS" =~ ^disconnected ]]; then
-      COLOR=$RED
+      C=$R
     else
-      COLOR=$YELLOW
+      C=$Y
     fi
   fi
 
-  read -rep "[network:$OBJECT $COLOR$STATUS$RESET] " REPLY
+  read -rep "[network:$OBJECT $C$STATUS$R] " REPLY
 }
 
 validate () {
@@ -283,10 +283,7 @@ loop () {
   local SEL=""
 
   while true; do
-    local NETWORKING=$(nmcli networking)
-    local STATUS=$(nmcli -g STATE general status)
-
-    prompt "$NETWORKING" "$STATUS" "$SEL"
+    prompt "$SEL"
 
     history -s "$REPLY"
     local CMD=($(echo "$REPLY" | tr ':' '\n'))
