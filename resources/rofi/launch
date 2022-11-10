@@ -43,16 +43,11 @@ show_power_menu () {
   esac
 }
 
-if [ "$1" = "apps" ]; then
-  show_apps_menu
-elif [ "$1" = "run" ]; then
-  show_run_menu
-elif [ "$1" = "windows" ]; then
-  show_windows_menu
-elif [ "$1" = "emoji" ]; then
-  show_emoji_menu
-elif [ "$1" = "power" ]; then
-  show_power_menu
-else
-  abort "Missing or invalid launch menu"
-fi
+case "$1" in
+ "apps") show_apps_menu;;
+ "run") show_run_menu;;
+ "windows") show_windows_menu;;
+ "emoji") show_emoji_menu;;
+ "power") show_power_menu;;
+ *) abort "Missing or invalid launch menu";;
+esac

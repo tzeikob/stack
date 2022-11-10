@@ -170,6 +170,8 @@ install_launchers () {
   cp ~/stack/resources/rofi/config.rasi "$CONFIG_HOME"
   chmod 644 "$CONFIG_HOME/config.rasi"
 
+  cp ~/stack/resources/rofi/launch "$CONFIG_HOME"
+
   echo "Launchers has been installed"
 }
 

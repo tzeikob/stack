@@ -4,23 +4,23 @@ super + Escape
 
 # Open applications launcher
 super + @space
-  launch apps
+  ~/.config/rofi/launch apps
 
 # Open run launcher
 super + Home
-  launch run
+  ~/.config/rofi/launch run
 
 # Open window launcher
 super + Insert
-  launch windows
+  ~/.config/rofi/launch windows
 
 # Open emoji icons launcher
 super + e
-  launch emoji
+  ~/.config/rofi/launch emoji
 
 # Open power manager launcher
 super + End
-  launch power
+  ~/.config/rofi/launch power
 
 # Quit/restart bspwm
 super + alt + {q,r}
