@@ -89,7 +89,9 @@ remove_files () {
     return 1
   fi
   
-  askme "Any files matched by the pattern will be removed, proceed?" "yes" "no"
+  echo "CAUTION: Any trashed files or directories matched"
+  echo "by the given pattern will be removed forever."
+  askme "Do you want to proceed?" "yes" "no"
 
   if [ "$REPLY" = "yes" ]; then
     trash-rm "$FILE_PATTERN"
@@ -111,10 +113,16 @@ empty_files () {
   fi
   
   if [ -n "$DAYS" ] && [[ "$DAYS" =~ ^[0-9]+$ ]]; then
-    askme "Files trashed more than $DAYS day(s) ago will be removed, proceed?" "yes" "no"
+    echo "CAUTION: Any files or directories trashed more"
+    echo "than $DAYS day(s) ago will be removed forever."
+    askme "Do you want to proceed?" "yes" "no"
+
     [ "$REPLY" = "yes" ] && trash-empty -f "$DAYS"
   elif [ -z "$DAYS" ]; then
-    askme "All trashed files will be removed, proceed?" "yes" "no"
+    echo "CAUTION: ALL files and directories trashed"
+    echo "until this day will be removed forever."
+    askme "Do you want to proceed?" "yes" "no"
+
     [ "$REPLY" = "yes" ] && trash-empty -f
   else
       echo "Invalid days argument: '$DAYS'"
@@ -160,7 +168,9 @@ wipe_files () {
     abort "Unable to remove, no files are given."
   fi
 
-  askme "Files will be removed forever, proceed?" "yes" "no"
+  echo "CAUTION: Any given file or directory passed"
+  echo "as argument will be removed forever."
+  askme "Do you want to proceed?" "yes" "no"
 
   if [ "$REPLY" = "no" ]; then
     return
