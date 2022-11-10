@@ -256,7 +256,6 @@ help () {
     "scan" "Scan for wireless networks in your area" \
     "power network on|off" "Power on/off the system networking" \
     "power wifi on|off" "Power on/off the wifi" \
-    "airplane" "Set networking to airplane mode" \
     "connect <ssid> <secret-key>" "Connect to a wireless network with the given ssid" \
     "up device|connection <name>" "Get the given device or connection up" \
     "down device|connection <name>" "Get the given device or connection down" \
@@ -298,7 +297,6 @@ loop () {
         esac;;
       "scan") scan;;
       "power") power "${CMD[1]}" "${CMD[2]}";;
-      "airplane") power wifi off;;
       "connect") connect "${CMD[1]}" "${CMD[2]}";; 
       "up") up "${CMD[1]}" "${CMD[2]}";;
       "down") down "${CMD[1]}" "${CMD[2]}";;
