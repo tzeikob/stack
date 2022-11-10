@@ -49,8 +49,9 @@ list_hosts () {
 list_shares () {
   local HOST=$1
   local USERNAME=$2
+  local WORKGROUP=${3:-"WORKGROUP"}
 
-  smbclient -L "$HOST" -U "$USERNAME"
+  smbclient -L "$HOST" -U "$USERNAME" -W "$WORKGROUP"
 }
 
 list_mounts () {
@@ -212,15 +213,15 @@ help () {
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
   echo -e "\nOBJECTS"
-  printf " %-25s\t%s\n" \
+  printf " %-35s\t%s\n" \
       "device" "An object to handle a block device." \
       "host" "An object to handle a host of shared folders."
 
   echo -e "\nCOMMANDS"
-  printf " %-25s\t%s\n" \
+  printf " %-35s\t%s\n" \
     "list devices" "List all the block devices of the system." \
     "list hosts" "Discover all the available hosts at the local network." \
-    "list shares <ip> <username>" "Fetch any shared folder on the given host." \
+    "list shares <ip> <username> [<group>]" "Fetch any shared folder on the given host." \
     "list mounts" "List all the current mounted devices and shared folders." \
     "show device <path>" "Show details of the block device with the given path" \
     "mount device <path>" "Mount a block device with the given path." \
@@ -254,7 +255,7 @@ loop () {
         case "${CMD[1]}" in
           "devices") list_devices;;
           "hosts") list_hosts;;
-          "shares") list_shares "${CMD[2]}" "${CMD[3]}";;
+          "shares") list_shares "${CMD[2]}" "${CMD[3]}" "${CMD[4]}";;
           "mounts") list_mounts;;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
