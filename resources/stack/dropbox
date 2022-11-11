@@ -9,6 +9,10 @@ prompt () {
   read -rep "[dropbox] " REPLY
 }
 
+list_remotes () {
+  rclone listremotes --long | awk '/dropbox/{print $1}'
+}
+
 mount_remote () {
   local REMOTE_NAME=$1
 
@@ -86,6 +90,7 @@ help () {
   
   echo -e "\nCOMMANDS"
   printf " %-20s\t%s\n" \
+    "list" "List all the mounted dropbox remotes." \
     "mount <name>" "Mount a new dropbox remote with the given name." \
     "unmount <name>" "Unmount the dropbox remote with the given name." \
     "help" "Show this help message."
@@ -113,6 +118,7 @@ loop () {
     fi
 
     case "${CMD[0]}" in
+      "list") list_remotes;;
       "mount") mount_remote "${CMD[1]}";;
       "unmount") unmount_remote "${CMD[1]}";;
       *) echo "Unknown or invalid command: '$REPLY'";; 

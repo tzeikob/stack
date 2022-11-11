@@ -9,6 +9,10 @@ prompt () {
   read -rep "[drive] " REPLY
 }
 
+list_remotes () {
+  rclone listremotes --long | awk '/drive/{print $1}'
+}
+
 mount_remote () {
   local REMOTE_NAME=$1
 
@@ -89,6 +93,7 @@ help () {
   
   echo -e "\nCOMMANDS"
   printf " %-20s\t%s\n" \
+    "list" "List all the mounted google drive remotes." \
     "mount <name>" "Mount a new google drive remote with the given name." \
     "unmount <name>" "Unmount the google drive remote with the given name." \
     "help" "Show this help message."
@@ -116,6 +121,7 @@ loop () {
     fi
 
     case "${CMD[0]}" in
+      "list") list_remotes;;
       "mount") mount_remote "${CMD[1]}";;
       "unmount") unmount_remote "${CMD[1]}";;
       *) echo "Unknown or invalid command: '$REPLY'";; 
