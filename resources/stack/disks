@@ -9,12 +9,13 @@ require "smbclient"
 require "smartmontools"
 
 prompt () {
-  local Y=$'\e[0;33m'
-  local R=$'\e[m'
+  local YELLOW=$'\e[0;33m'
+  local RS=$'\e[m'
+  local FG=$YELLOW
 
   local DEVICES_COUNTER=$(lsblk -dn | wc -l)
 
-  read -rep "[disks:$Y${DEVICES_COUNTER}$R] " REPLY
+  read -rep "[disks:$FG${DEVICES_COUNTER}$RS] " REPLY
 }
 
 list_devices () {

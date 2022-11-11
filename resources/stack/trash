@@ -5,19 +5,19 @@ source /opt/stack/utils
 require "trash-cli"
 
 prompt () {
-  local Y=$'\e[0;33m'
-  local M=$'\e[0;35m'
-  local R=$'\e[m'
+  local YELLOW=$'\e[0;33m'
+  local MAGENTA=$'\e[0;35m'
+  local RS=$'\e[m'
 
-  local C=$Y
+  local FG=$YELLOW
   if [[ "$(id -u)" == "0" ]]; then
-    C=$M
+    FG=$MAGENTA
   fi
 
   local CURRENT_PATH="../${PWD/*\//}"
   local COUNTER=$(count_files)
 
-  read -rep "[trash:$C$COUNTER$R $C$CURRENT_PATH$R] " REPLY
+  read -rep "[trash:$FG${COUNTER}$RS $FG${CURRENT_PATH}$RS] " REPLY
 }
 
 count_files () {
