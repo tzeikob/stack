@@ -6,11 +6,21 @@ require "rclone"
 require "fuse2"
 
 prompt () {
-  read -rep "[drive] " REPLY
+  local YELLOW=$'\e[0;33m'
+  local RS=$'\e[m'
+  local FG=$YELLOW
+
+  local REMOTES_COUNTER=$(count_remotes)
+
+  read -rep "[drive:$FG${REMOTES_COUNTER}$RS] " REPLY
 }
 
 list_remotes () {
   rclone listremotes --long | awk '/drive/{print $1}'
+}
+
+count_remotes () {
+  list_remotes | wc -l
 }
 
 mount_remote () {
