@@ -220,6 +220,8 @@ help () {
 }
 
 loop () {
+  clear
+
   while true; do
     prompt
 
@@ -246,6 +248,8 @@ loop () {
       *) echo "Unknown or invalid command: '$REPLY'";; 
     esac
   done
+
+  clear
 }
 
 once () {
@@ -278,7 +282,7 @@ once () {
 }
 
 if [ $# = 0 ]; then
-  clear && loop
+  loop
 else
   once "$@"
 fi

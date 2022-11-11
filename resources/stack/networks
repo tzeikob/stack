@@ -264,6 +264,8 @@ help () {
 }
 
 loop () {
+  clear
+
   while true; do
     prompt
 
@@ -304,6 +306,8 @@ loop () {
       *) echo "Unknown or invalid command: $REPLY";; 
     esac
   done
+
+  clear
 }
 
-clear && loop
+loop
