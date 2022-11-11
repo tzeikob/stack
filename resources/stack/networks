@@ -291,6 +291,7 @@ loop () {
           "device") show_device "${CMD[2]}";;
           "connection") show_connection "${CMD[2]}";;
           *) echo "Unknown or invalid command: $REPLY";;
+        esac;;
       "list")
         case "${CMD[1]}" in
           "devices") list_devices "${CMD[2]}";;
