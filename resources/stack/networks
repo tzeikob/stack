@@ -24,7 +24,29 @@ prompt () {
     fi
   fi
 
-  read -rep "[network:$FG${STATUS}$RS] " REPLY
+  local DEVICES=($(nmcli device | awk '{\
+    if ( $3 == "connected" && ($2 == "ethernet" || $2 == "wifi")) {print $2":"$1}'}))
+  local LEN=${#DEVICES[@]}
+  
+  local INTERFACE=""
+  if [ $LEN -gt 0 ]; then
+    INTERFACE="${DEVICES[0]}"
+    
+    local INDEX=0
+    while [ $INDEX -lt $LEN ]; do
+      local DEVICE=${DEVICES[$INDEX]}
+
+      [[ "$DEVICE" =~ ^ethernet ]] &&
+        INTERFACE="$DEVICE" && break
+      
+      INDEX=$((INDEX + 1))
+    done
+  fi
+
+  [ -n "$INTERFACE" ] &&
+    INTERFACE=" $(echo "$INTERFACE" | cut -d ":" -f 2)"
+
+  read -rep "[network:$FG${STATUS}$RS$YELLOW${INTERFACE}$RS] " REPLY
 }
 
 wait_progress () {
