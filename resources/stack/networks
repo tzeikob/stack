@@ -44,9 +44,9 @@ prompt () {
   fi
 
   [ -n "$INTERFACE" ] &&
-    INTERFACE=" $(echo "$INTERFACE" | cut -d ":" -f 2)"
+    STATUS=$(echo "$INTERFACE" | cut -d ":" -f 2)
 
-  read -rep "[network:$FG${STATUS}$RS$YELLOW${INTERFACE}$RS] " REPLY
+  read -rep "[networks:$FG${STATUS}$RS] " REPLY
 }
 
 wait_progress () {
