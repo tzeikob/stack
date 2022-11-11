@@ -287,15 +287,17 @@ install_utilities () {
   mkdir -p "$STACK_HOME"
 
   cp ~/stack/resources/stack/utils "$STACK_HOME"
-  cp ~/stack/resources/stack/mount "$STACK_HOME"
   cp ~/stack/resources/stack/trash "$STACK_HOME"
   cp ~/stack/resources/stack/networks "$STACK_HOME"
   cp ~/stack/resources/stack/disks "$STACK_HOME"
+  cp ~/stack/resources/stack/drive "$STACK_HOME"
+  cp ~/stack/resources/stack/dropbox "$STACK_HOME"
 
-  ln -sf "$STACK_HOME/mount" /usr/local/bin/mmn
   ln -sf "$STACK_HOME/trash" /usr/local/bin/trash
   ln -sf "$STACK_HOME/networks" /usr/local/bin/networks
   ln -sf "$STACK_HOME/disks" /usr/local/bin/disks
+  ln -sf "$STACK_HOME/drive" /usr/local/bin/drive
+  ln -sf "$STACK_HOME/dropbox" /usr/local/bin/dropbox
 
   echo "Stack utilities have been installed"
 }

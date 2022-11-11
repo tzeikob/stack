@@ -1,0 +1,128 @@
+#!/usr/bin/env bash
+
+source /opt/stack/utils
+
+require "rclone"
+require "fuse2"
+
+prompt () {
+  read -rep "[drive] " REPLY
+}
+
+mount_remote () {
+  local REMOTE_NAME=$1
+
+  if [ -z "$REMOTE_NAME" ]; then
+    echo "Missing the remote name argument"
+    return 1
+  elif rclone listremotes | grep -qw "$REMOTE_NAME:"; then
+    echo "Found existing remote with name $REMOTE_NAME"
+    return 1
+  fi
+
+  askme "Enter the client ID:" ".+"
+  local CLIENT_ID="$REPLY"
+
+  askme "Enter the client secret:" ".+"
+  local CLIENT_SECRET="$REPLY"
+
+  askme "Enter the root folder ID (blank to skip):"
+  local ROOT_FOLDER="$REPLY"
+
+  local MOUNT_FOLDER="$HOME/mount/drive/$REMOTE_NAME"
+
+  rclone config create "$REMOTE_NAME" drive scope=drive \
+    client_id="$CLIENT_ID" client_secret="$CLIENT_SECRET" root_folder_id="$ROOT_FOLDER" &&
+  mkdir -p "$MOUNT_FOLDER" &&
+  rclone mount "$REMOTE_NAME:" "$MOUNT_FOLDER" \
+    --umask=002 --gid=$(id -g) --uid=$(id -u) --timeout=1h \
+    --poll-interval=15s --dir-cache-time=1000h --vfs-cache-mode=full \
+    --vfs-cache-max-size=150G --vfs-cache-max-age=12h --daemon &&
+    echo "Remote $REMOTE_NAME mounted successfully"
+
+  if [[ ! "$?" -eq 0 ]]; then
+    echo "Failed to mount remote $REMOTE_NAME"
+
+    rclone config delete "$REMOTE_NAME"
+    find "$MOUNT_FOLDER" -maxdepth 0 -empty -exec rm -rf {} \;
+  fi
+}
+
+unmount_remote () {
+  local REMOTE_NAME=$1
+
+  if [ -z "$REMOTE_NAME" ]; then
+    echo "Missing the remote name argument"
+    return 1
+  elif ! rclone listremotes | grep -qw "$REMOTE_NAME:"; then
+    echo "No remote $REMOTE_NAME has been found"
+    return 1
+  fi
+
+  echo "Unmounting remote $REMOTE_NAME..."
+
+  local MOUNT_POINTS=($(grep -E "$REMOTE_NAME:.* fuse.rclone" /proc/mounts | awk '{print $2}'))
+
+  local INDEX=0
+  while [ $INDEX -lt ${#MOUNT_POINTS[@]} ]; do
+    local MOUNT_POINT=${MOUNT_POINTS[$INDEX]}
+
+    fusermount -uz "$MOUNT_POINT"
+
+    if [[ "$?" -eq 0 ]]; then
+      find "$MOUNT_POINT" -maxdepth 0 -empty -exec rm -rf {} \;
+      echo "Local folder $MOUNT_POINT has been unmounted"
+    else
+      echo "Failed to unmount $MOUNT_POINT, make sure folder isn't busy"
+    fi
+
+    INDEX=$((INDEX + 1))
+  done
+
+  rclone config delete "$REMOTE_NAME" &&
+    echo "Remote $REMOTE_NAME deleted successfully" ||
+    echo "Failed to delete remote $REMOTE_NAME"
+}
+
+help () {
+  echo "Usage: COMMAND [ARGUMENTS]..."
+  
+  echo -e "\nCOMMANDS"
+  printf " %-20s\t%s\n" \
+    "mount <name>" "Mount a new google drive remote with the given name." \
+    "unmount <name>" "Unmount the google drive remote with the given name." \
+    "help" "Show this help message."
+}
+
+loop () {
+  clear
+
+  while true; do
+    prompt
+
+    history -s "$REPLY"
+    local CMD=($(echo "$REPLY" | tr ':' '\n'))
+
+    if [ "${CMD[0]}" = "help" ]; then
+      help
+      continue
+    elif [ "${CMD[0]}" = "clear" ]; then
+      clear
+      continue
+    elif [ "${CMD[0]}" = "quit" ]; then
+      break
+    elif [ -z "${CMD[0]}" ]; then
+      continue
+    fi
+
+    case "${CMD[0]}" in
+      "mount") mount_remote "${CMD[1]}";;
+      "unmount") unmount_remote "${CMD[1]}";;
+      *) echo "Unknown or invalid command: '$REPLY'";; 
+    esac
+  done
+
+  clear
+}
+
+loop
