@@ -10,21 +10,21 @@ prompt () {
   local NETWORKING=$(nmcli networking)
   local STATUS=$(nmcli -g STATE general status)
 
-  local Y=$'\e[0;33m'
-  local G=$'\e[0;32m'
-  local R=$'\e[0;31m'
-  local R=$'\e[m'
+  local YELLOW=$'\e[0;33m'
+  local GREEN=$'\e[0;32m'
+  local RED=$'\e[0;31m'
+  local RS=$'\e[m'
 
-  local C=$Y
+  local FG=$YELLOW
   if [ "$NETWORKING" = "enabled" ]; then
     if [[ "$STATUS" =~ disconnected ]]; then
-      C=$R
+      FG=$RED
     elif [[ "$STATUS" =~ connected ]]; then
-      C=$G
+      FG=$GREEN
     fi
   fi
 
-  read -rep "[network:$C$STATUS$R] " REPLY
+  read -rep "[network:$FG${STATUS}$RS] " REPLY
 }
 
 wait_progress () {
