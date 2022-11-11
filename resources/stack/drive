@@ -16,11 +16,14 @@ prompt () {
 }
 
 list_remotes () {
-  rclone listremotes --long | awk '/drive/{print $1}'
+  local REMOTES=$(rclone listremotes --long | awk '/drive/{print $1}')
+
+  [ -n "$REMOTES" ] && echo "$REMOTES" ||
+    echo "No remotes have been found"
 }
 
 count_remotes () {
-  list_remotes | wc -l
+  rclone listremotes --long | awk '/drive/{print}' | wc -l
 }
 
 mount_remote () {
