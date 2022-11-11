@@ -17,14 +17,32 @@ prompt () {
 
   local C=$Y
   if [ "$NETWORKING" = "enabled" ]; then
-    if [[ "$STATUS" =~ connected ]]; then
-      C=$G
-    elif [[ "$STATUS" =~ disconnected ]]; then
+    if [[ "$STATUS" =~ disconnected ]]; then
       C=$R
+    elif [[ "$STATUS" =~ connected ]]; then
+      C=$G
     fi
   fi
 
   read -rep "[network:$C$STATUS$R] " REPLY
+}
+
+wait_progress () {
+  local STATUS=$(nmcli -g STATE,CONNECTIVITY general status)
+  local SECS_STILL=0
+
+  while true; do
+    [ $SECS_STILL -lt 3 ] && sleep 1 || break
+
+    local NEW_STATUS=$(nmcli -g STATE,CONNECTIVITY general status)
+
+    if [ ! "$STATUS" = "$NEW_STATUS" ]; then
+      STATUS=$NEW_STATUS
+      echo "Network state set to $STATUS"
+    else
+      SECS_STILL=$((SECS_STILL + 1))
+    fi
+  done
 }
 
 validate () {
@@ -160,9 +178,9 @@ up () {
   validate "$OBJECT" "$NAME" || return 1
 
   if [ "$OBJECT" = "device" ]; then
-    nmcli device connect "$NAME" && sleep 6
+    nmcli device connect "$NAME" && wait_progress
   elif [ "$OBJECT" = "connection" ]; then
-    nmcli connection up "$NAME" && sleep 6
+    nmcli connection up "$NAME" && wait_progress
   fi
 }
 
@@ -173,37 +191,36 @@ down () {
   validate "$OBJECT" "$NAME" || return 1
 
   if [ "$OBJECT" = "device" ]; then
-    nmcli device disconnect "$NAME" && sleep 6
+    nmcli device disconnect "$NAME" && wait_progress
   elif [ "$OBJECT" = "connection" ]; then
-    nmcli connection down "$NAME" && sleep 6
+    nmcli connection down "$NAME" && wait_progress
   fi
 }
 
-power () {
-  local OBJECT=$1
-  local STATUS=$2
-
-  if [[ ! "$OBJECT" =~ ^(network|wifi)$ ]]; then
-    echo "Missing or invalid object argument: $OBJECT"
-    return 1
-  fi
+power_network () {
+  local STATUS=$1
 
   if [[ ! "$STATUS" =~ ^(on|off)$ ]]; then
     echo "Missing or invalid status argument: $STATUS"
     return 1
   fi
 
-  if [ "$OBJECT" = "network" ]; then
-    nmcli networking "$STATUS" &&
-      sleep 6 &&
-      echo "Network set to $STATUS status" ||
-      echo "Unable to power $STATUS the network"
-  elif [ "$OBJECT" = "wifi" ]; then
-    nmcli radio wifi "$STATUS" &&
-      sleep 6 &&
-      echo "Wifi set to $STATUS status" ||
-      echo "Unable to power $STATUS the wifi"
+  nmcli networking "$STATUS" && wait_progress &&
+    echo "Network has been powered $STATUS" ||
+    echo "Something went wrong powering network $STATUS"
+}
+
+power_wifi () {
+  local STATUS=$1
+
+  if [[ ! "$STATUS" =~ ^(on|off)$ ]]; then
+    echo "Missing or invalid status argument: $STATUS"
+    return 1
   fi
+
+  nmcli radio wifi "$STATUS" && wait_progress &&
+    echo "Wifi has been powered $STATUS" ||
+    echo "Something went wrong powering wifi $STATUS"
 }
 
 delete () {
@@ -213,9 +230,9 @@ delete () {
   validate "$OBJECT" "$NAME" || return 1
 
   if [ "$OBJECT" = "device" ]; then
-    nmcli device delete "$NAME" && sleep 6
+    nmcli device delete "$NAME" && wait_progress
   elif [ "$OBJECT" = "connection" ]; then
-    nmcli connection delete "$NAME" && sleep 6
+    nmcli connection delete "$NAME" && wait_progress
   fi
 }
 
@@ -234,7 +251,7 @@ connect () {
   fi
 
   nmcli device wifi connect "$SSID" password "$SECRET_KEY" hidden yes &&
-   sleep 6
+   wait_progress
 }
 
 help () {
@@ -299,7 +316,12 @@ loop () {
           *) echo "Unknown or invalid command: $REPLY";;
         esac;;
       "scan") scan;;
-      "power") power "${CMD[1]}" "${CMD[2]}";;
+      "power")
+        case "${CMD[1]}" in
+          "network") power_network "${CMD[2]}";;
+          "wifi") power_wifi "${CMD[2]}";;
+          *) echo "Unknown or invalid command: $REPLY";;
+        esac;;
       "connect") connect "${CMD[1]}" "${CMD[2]}";; 
       "up") up "${CMD[1]}" "${CMD[2]}";;
       "down") down "${CMD[1]}" "${CMD[2]}";;
