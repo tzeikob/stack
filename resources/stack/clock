@@ -34,17 +34,35 @@ set_ntp () {
     echo "Something went wrong setting NTP"
 }
 
+set_timezone () {
+  local TIMEZONE=$1
+
+  timedatectl set-timezone "$TIMEZONE" &&
+    echo "Timezone has been set to $TIMEZONE" ||
+    echo "Something went wrong setting the timezone"
+}
+
+set_time () {
+  local TIME=$1
+
+  timedatectl set-time "$TIME" &&
+    echo "Time has been set successfully" ||
+    echo "Something went wrong setting the time"
+}
+
 help () {
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
   echo -e "\nOBJECTS"
-  printf " %-35s\t%s\n" \
+  printf " %-25s\t%s\n" \
       "..." "An object to handle ..."
 
   echo -e "\nCOMMANDS"
-  printf " %-35s\t%s\n" \
+  printf " %-25s\t%s\n" \
     "show status" "Show the current date time status of the system." \
-    "set ntp on|off" "Enable or disable the NTP service."
+    "set ntp on|off" "Enable or disable the NTP service." \
+    "set timezone <Region/City>" "Set the timezone to the given region." \
+    "set time <HH:MM:SS>" "Set the system local time to the given time." \
     "help" "Show this help message."
 }
 
@@ -78,6 +96,8 @@ loop () {
       "set")
         case "${CMD[1]}" in
           "ntp") set_ntp "${CMD[2]}";;
+          "timezone") set_timezone "${CMD[2]}";;
+          "time") set_time "${CMD[2]}";;
           *) echo "Unknown or invalid command: '$REPLY'";; 
         esac;;
       *) echo "Unknown or invalid command: '$REPLY'";; 
