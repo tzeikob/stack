@@ -10,8 +10,9 @@ prompt () {
   local FG=$YELLOW
 
   local NOW=$(date +"%H:%M")
+  local TZ=$(timedatectl show | grep Timezone | awk -F/ '{print $2}')
 
-  read -rep "[clock:$FG${NOW}$RS] " REPLY
+  read -rep "[clock:$FG${TZ}$RS $FG${NOW}$RS] " REPLY
 }
 
 show_status () {
