@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+
+source /opt/stack/utils
+
+# require "?"
+
+prompt () {
+  local YELLOW=$'\e[0;33m'
+  local RS=$'\e[m'
+  local FG=$YELLOW
+
+  local NOW=$(date +"%H:%M")
+
+  read -rep "[clock:$FG${NOW}$RS] " REPLY
+}
+
+show_status () {
+  timedatectl status | awk -F: '{ \
+    i=index($0,":"); l=$1; \
+    gsub(/^[ \t]+|[ \t]+$/, "", l); \
+    printf "%-28s\t%s\n", l":", substr($0, i+1)}'
+}
+
+set_ntp () {
+  local STATUS=$1
+
+  if [[ ! "$STATUS" =~ ^(on|off)$ ]]; then
+    echo "Invalid NTP status argument"
+    return 1
+  fi
+
+  timedatectl set-ntp "$STATUS"
+
+  echo "NTP set to $STATUS"
+}
+
+help () {
+  echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
+
+  echo -e "\nOBJECTS"
+  printf " %-35s\t%s\n" \
+      "..." "An object to handle ..."
+
+  echo -e "\nCOMMANDS"
+  printf " %-35s\t%s\n" \
+    "show status" "Show the current date time status of the system." \
+    "set ntp on|off" "Enable or disable the NTP service."
+    "help" "Show this help message."
+}
+
+loop () {
+  clear
+
+  while true; do
+    prompt
+
+    history -s "$REPLY"
+    local CMD=($(echo "$REPLY" | tr ':' '\n'))
+
+    if [ "${CMD[0]}" = "help" ]; then
+      help
+      continue
+    elif [ "${CMD[0]}" = "clear" ]; then
+      clear
+      continue
+    elif [ "${CMD[0]}" = "quit" ]; then
+      break
+    elif [ -z "${CMD[0]}" ]; then
+      continue
+    fi
+
+    case "${CMD[0]}" in
+      "show")
+        case "${CMD[1]}" in
+          "status") show_status;;
+          *) echo "Unknown or invalid command: '$REPLY'";;
+        esac;;
+      "set")
+        case "${CMD[1]}" in
+          "ntp") set_ntp "${CMD[2]}";;
+          *) echo "Unknown or invalid command: '$REPLY'";; 
+        esac;;
+      *) echo "Unknown or invalid command: '$REPLY'";; 
+    esac
+  done
+
+  clear
+}
+
+loop
