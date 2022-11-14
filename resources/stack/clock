@@ -25,13 +25,13 @@ set_ntp () {
   local STATUS=$1
 
   if [[ ! "$STATUS" =~ ^(on|off)$ ]]; then
-    echo "Invalid NTP status argument"
+    echo "Invalid NTP status argument: '$STATUS'"
     return 1
   fi
 
-  timedatectl set-ntp "$STATUS"
-
-  echo "NTP set to $STATUS"
+  timedatectl set-ntp "$STATUS" &&
+    echo "NTP set to $STATUS" ||
+    echo "Something went wrong setting NTP"
 }
 
 help () {
