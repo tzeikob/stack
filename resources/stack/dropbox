@@ -74,6 +74,9 @@ unmount_remote () {
   elif ! rclone listremotes | grep -qw "$REMOTE_NAME:"; then
     echo "No remote $REMOTE_NAME has been found"
     return 1
+  elif ! rclone listremotes --long | awk '/dropbox/{print}' | grep -qw "$REMOTE_NAME:"; then
+    echo "$REMOTE_NAME is not a dropbox remote"
+    return 1
   fi
 
   echo "Unmounting remote $REMOTE_NAME..."
