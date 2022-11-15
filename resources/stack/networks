@@ -186,14 +186,15 @@ scan () {
   local NETWORKS=($(
     nmcli -f SIGNAL,SSID,IN-USE -t device wifi list |
       trim |
-      awk -F: '{if ($3 == "*") {print "["$1"] \033[32m"$2"\033[0m,"} \
-        else {print "["$1"] \033[35m"$2"\033[0m,"}}' |
+      awk -F: '{ \
+        if ($3 == "*") {printf "[%03d] %s", $1, "\033[32m"$2"\033[0m,"} \
+        else {printf "[%03d] %s", $1, "\033[35m"$2"\033[0m,"}}' |
       no_breaks
   ))
 
   IFS=$OLD_IFS
 
-  print 3 40 "${NETWORKS[@]}"
+  print 3 45 "${NETWORKS[@]}"
 }
 
 up () {
