@@ -2,8 +2,6 @@
 
 source /opt/stack/utils
 
-# require "?"
-
 prompt () {
   local YELLOW=$'\e[0;33m'
   local RS=$'\e[m'
@@ -71,10 +69,9 @@ loop () {
   clear
 
   while true; do
-    prompt
+    prompt && history -s "$REPLY"
 
-    history -s "$REPLY"
-    local CMD=($(echo "$REPLY" | tr ':' '\n'))
+    local CMD=($(echo "$REPLY"))
 
     if [ "${CMD[0]}" = "help" ]; then
       help
