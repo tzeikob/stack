@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 set -f
-IFS=$'\n'
 
 source /opt/stack/utils
 
@@ -74,7 +73,9 @@ loop () {
   while true; do
     prompt && history -s "$REPLY"
 
+    local OLD_IFS=$IFS && IFS=$'\n'
     local CMD=($(xargs -n1 <<< "$REPLY"))
+    IFS=$OLD_IFS
 
     if [ "${CMD[0]}" = "help" ]; then
       help
