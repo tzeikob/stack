@@ -20,6 +20,13 @@ show_status () {
     i=index($0,":"); l=$1; \
     gsub(/^[ \t]+|[ \t]+$/, "", l); \
     printf "%-28s\t%s\n", l":", substr($0, i+1)}'
+  
+  echo
+  
+  timedatectl timesync-status | awk -F: '{ \
+    i=index($0,":"); l=$1; \
+    gsub(/^[ \t]+|[ \t]+$/, "", l); \
+    printf "%-28s\t%s\n", l":", substr($0, i+1)}'
 }
 
 set_ntp () {
