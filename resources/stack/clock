@@ -60,6 +60,25 @@ set_date () {
     echo "Something went wrong setting the date"
 }
 
+set_rtc () {
+  local MODE=$1
+
+  if [[ ! "$MODE" =~ ^(local|utc)$ ]]; then
+    echo "Invalid rtc mode argument: '$MODE'"
+    return 1
+  fi
+
+  if [ "$MODE" = "local" ]; then
+    timedatectl set-local-rtc on &&
+      echo "RTC set to local time" ||
+      echo "Something went wrong setting RTC to local time"
+  else
+    timedatectl set-local-rtc off &&
+      echo "RTC set to UTC time" ||
+      echo "Something went wrong setting RTC to UTC time"
+  fi
+}
+
 help () {
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
@@ -74,6 +93,7 @@ help () {
     "set timezone <Region/City>" "Set the timezone to the given region." \
     "set time <HH:MM:SS>" "Set the system local time to the given time." \
     "set date <YYYY-mm-dd>" "Set the system date to the given date." \
+    "set rtc local|utc" "Set the RTC (hardware clock) to local or UTC time" \
     "help" "Show this help message."
 }
 
@@ -111,6 +131,7 @@ loop () {
           "timezone") set_timezone "${CMD[2]}";;
           "time") set_time "${CMD[2]}";;
           "date") set_date "${CMD[2]}";;
+          "rtc") set_rtc "${CMD[2]}";;
           *) echo "Unknown or invalid command: '$REPLY'";; 
         esac;;
       *) echo "Unknown or invalid command: '$REPLY'";; 
