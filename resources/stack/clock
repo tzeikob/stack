@@ -79,6 +79,12 @@ set_rtc () {
   fi
 }
 
+sync_rtc () {
+  sudo hwclock --systohc --utc &&
+    echo "RTC hardware clock synced from the system clock" ||
+    echo "Something went wrong synchronizing the hardware clock"
+}
+
 help () {
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
@@ -94,6 +100,7 @@ help () {
     "set time <HH:MM:SS>" "Set the system local time to the given time." \
     "set date <YYYY-mm-dd>" "Set the system date to the given date." \
     "set rtc local|utc" "Set the RTC (hardware clock) to local or UTC time" \
+    "sync rtc" "Sync the RTC (hardware clock) from the system clock" \
     "help" "Show this help message."
 }
 
@@ -132,6 +139,11 @@ loop () {
           "time") set_time "${CMD[2]}";;
           "date") set_date "${CMD[2]}";;
           "rtc") set_rtc "${CMD[2]}";;
+          *) echo "Unknown or invalid command: '$REPLY'";; 
+        esac;;
+      "sync")
+        case "${CMD[1]}" in
+          "rtc") sync_rtc;;
           *) echo "Unknown or invalid command: '$REPLY'";; 
         esac;;
       *) echo "Unknown or invalid command: '$REPLY'";; 

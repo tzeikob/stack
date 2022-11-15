@@ -95,7 +95,7 @@ set_timezone () {
 
   hwclock --systohc --utc || exit 1
 
-  echo "System clock has been synchronized to hardware clock"
+  echo "Hardware clock has been synchronized to system clock"
 
   echo "Timezone has been set to $TIMEZONE"
 }
