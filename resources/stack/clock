@@ -16,7 +16,7 @@ prompt () {
 }
 
 show_status () {
-  timedatectl status | awk -F: '{ \
+  timedatectl status | head -n 7 | awk -F: '{ \
     i=index($0,":"); l=$1; \
     gsub(/^[ \t]+|[ \t]+$/, "", l); \
     printf "%-28s\t%s\n", l":", substr($0, i+1)}'
