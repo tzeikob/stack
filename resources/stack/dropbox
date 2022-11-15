@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+set -f
+IFS=$'\n'
+
 source /opt/stack/utils
 
 require "rclone"
@@ -113,10 +116,9 @@ loop () {
   clear
 
   while true; do
-    prompt
+    prompt && history -s "$REPLY"
 
-    history -s "$REPLY"
-    local CMD=($(echo "$REPLY" | tr ':' '\n'))
+    local CMD=($(xargs -n1 <<< "$REPLY"))
 
     if [ "${CMD[0]}" = "help" ]; then
       help

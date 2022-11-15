@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+set -f
+IFS=$'\n'
+
 source /opt/stack/utils
 
 prompt () {
@@ -71,7 +74,7 @@ loop () {
   while true; do
     prompt && history -s "$REPLY"
 
-    local CMD=($(echo "$REPLY"))
+    local CMD=($(xargs -n1 <<< "$REPLY"))
 
     if [ "${CMD[0]}" = "help" ]; then
       help
