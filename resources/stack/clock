@@ -51,6 +51,15 @@ set_time () {
     echo "Something went wrong setting the time"
 }
 
+set_date () {
+  local DATE=$1
+  local TIME=$(date +"%H:%M:%S")
+
+  timedatectl set-time "$DATE $TIME" &&
+    echo "Date has been set successfully" ||
+    echo "Something went wrong setting the date"
+}
+
 help () {
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
@@ -64,6 +73,7 @@ help () {
     "set ntp on|off" "Enable or disable the NTP service." \
     "set timezone <Region/City>" "Set the timezone to the given region." \
     "set time <HH:MM:SS>" "Set the system local time to the given time." \
+    "set date <YYYY-mm-dd>" "Set the system date to the given date." \
     "help" "Show this help message."
 }
 
@@ -100,6 +110,7 @@ loop () {
           "ntp") set_ntp "${CMD[2]}";;
           "timezone") set_timezone "${CMD[2]}";;
           "time") set_time "${CMD[2]}";;
+          "date") set_date "${CMD[2]}";;
           *) echo "Unknown or invalid command: '$REPLY'";; 
         esac;;
       *) echo "Unknown or invalid command: '$REPLY'";; 
