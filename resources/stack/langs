@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+
+set -f
+
+source /opt/stack/utils
+
+prompt () {
+  local YELLOW=$'\e[0;33m'
+  local RS=$'\e[m'
+  local FG=$YELLOW
+
+  local LOCALE=$(show_status | awk -F= '/System Locale/{print $2}')
+
+  read -rep "[langs:$FG${LOCALE}$RS] " REPLY
+}
+
+show_status () {
+  localectl status | head -n 5 | awk -F: '{ \
+    i=index($0,":"); l=$1; \
+    gsub(/^[ \t]+|[ \t]+$/, "", l); \
+    printf "%-12s\t%s\n", l":", substr($0, i+1)}'
+}
+
+help () {
+  echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
+
+  echo -e "\nOBJECTS"
+  printf " %-25s\t%s\n" \
+      "..." "An object to handle..."
+
+  echo -e "\nCOMMANDS"
+  printf " %-25s\t%s\n" \
+    "show status" "Show the locale and languages status of the system." \
+    "help" "Show this help message."
+}
+
+loop () {
+  clear
+
+  while true; do
+    prompt && history -s "$REPLY"
+
+    local OLD_IFS=$IFS && IFS=$'\n'
+    local CMD=($(xargs -n1 <<< "$REPLY"))
+    IFS=$OLD_IFS
+
+    if [ "${CMD[0]}" = "help" ]; then
+      help
+      continue
+    elif [ "${CMD[0]}" = "clear" ]; then
+      clear
+      continue
+    elif [ "${CMD[0]}" = "quit" ]; then
+      break
+    elif [ -z "${CMD[0]}" ]; then
+      continue
+    fi
+
+    case "${CMD[0]}" in
+      "show")
+        case "${CMD[1]}" in
+          "status") show_status;;
+          *) echo "Unknown or invalid command: '$REPLY'";;
+        esac;;
+      *) echo "Unknown or invalid command: '$REPLY'";; 
+    esac
+  done
+
+  clear
+}
+
+loop
