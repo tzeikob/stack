@@ -34,17 +34,54 @@ set_keymap () {
     echo "Something went setting up the keymap"
 }
 
+add_locale () {
+  local LOCALE=$1
+
+  if grep -qE "^\s*${LOCALE}\s*$" /etc/locale.gen; then
+    echo "Locale is already added"
+    return 1
+  elif ! grep -qE "^\s*#\s*${LOCALE}\s*$" /etc/locale.gen; then
+    echo "Invalid locale argument: '$LOCALE'"
+    return 1
+  fi
+
+  sudo sed -i "s/\s*#\s*\(${LOCALE}\)\s*/\1/" /etc/locale.gen &&
+    sudo locale-gen &&
+    echo "Locale $LOCALE generated successfully" ||
+    echo "Something went wrong generating locale"
+}
+
+remove_locale () {
+  local LOCALE=$1
+
+  if grep -qE "^\s*#\s*${LOCALE}\s*$" /etc/locale.gen; then
+    echo "Locale is already removed"
+    return 1
+  elif ! grep -qE "^\s*${LOCALE}\s*$" /etc/locale.gen; then
+    echo "Invalid locale argument: '$LOCALE'"
+    return 1
+  fi
+
+  sudo sed -i "s/\s*\(${LOCALE}\)\s*/#\1/" /etc/locale.gen &&
+    sudo locale-gen &&
+    echo "Locale $LOCALE removed successfully" ||
+    echo "Something went wrong removing locale"
+}
+
 help () {
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
   echo -e "\nOBJECTS"
   printf " %-25s\t%s\n" \
-      "keymap" "An object to handle the keyboard keymap."
+      "keymap" "An object to handle the keyboard keymap." \
+      "locale" "An object to manage system locales."
 
   echo -e "\nCOMMANDS"
   printf " %-25s\t%s\n" \
     "show status" "Show the locale and languages status of the system." \
     "set keymap <keymap>" "Set the keyboard's console keymap." \
+    "add locale <locale>" "Add and generate the given locale." \
+    "remove locale <locale>" "Remove the given locale from the system." \
     "help" "Show this help message."
 }
 
@@ -79,6 +116,16 @@ loop () {
       "set")
         case "${CMD[1]}" in
           "keymap") set_keymap "${CMD[2]}";;
+          *) echo "Unknown or invalid command: '$REPLY'";; 
+        esac;;
+      "add")
+        case "${CMD[1]}" in
+          "locale") add_locale "${CMD[2]}";;
+          *) echo "Unknown or invalid command: '$REPLY'";; 
+        esac;;
+      "remove")
+        case "${CMD[1]}" in
+          "locale") remove_locale "${CMD[2]}";;
           *) echo "Unknown or invalid command: '$REPLY'";; 
         esac;;
       *) echo "Unknown or invalid command: '$REPLY'";; 
