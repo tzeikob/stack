@@ -29,8 +29,7 @@ set_keymap () {
     return 1
   fi
 
-  echo "KEYMAP=$KEYMAP" | sudo tee /etc/vconsole.conf > /dev/null &&
-    sudo loadkeys "$KEYMAP" &&
+  localectl set-keymap --no-convert "$KEYMAP" &&
     echo "Keyboard keymap set to $KEYMAP" ||
     echo "Something went setting up the keymap"
 }
