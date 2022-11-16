@@ -9,7 +9,7 @@ prompt () {
   local RS=$'\e[m'
   local FG=$YELLOW
 
-  local LOCALE=$(show_status | awk -F= '/System Locale/{print $2}')
+  local LOCALE=$(localectl status | awk -F= '/System Locale/{print $2}')
 
   read -rep "[langs:$FG${LOCALE}$RS] " REPLY
 }
