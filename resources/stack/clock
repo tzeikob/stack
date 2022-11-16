@@ -96,7 +96,11 @@ help () {
 
   echo -e "\nOBJECTS"
   printf " %-25s\t%s\n" \
-      "..." "An object to handle ..."
+      "ntp" "An object to handle time synchronization." \
+      "timezone" "An object to manage timezone regions." \
+      "time" "An object refering to the system's time." \
+      "date" "An object refering to the system's date." \
+      "rtc" "An object refering to the system hardware clock."
 
   echo -e "\nCOMMANDS"
   printf " %-25s\t%s\n" \
