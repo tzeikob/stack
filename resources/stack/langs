@@ -96,7 +96,31 @@ remove_locale () {
 }
 
 list_locales () {
-  locale -a
+  local LANGUAGE=$1
+
+  local OLD_IFS=$IFS && IFS=","
+
+  local LOCALES=($(
+    cat /etc/locale.gen |
+    tail -n +24 |
+    tr -d '#' |
+    awk "/^$LANGUAGE/{print}" |
+    trim |
+    awk '{print $0","}' |
+    no_breaks
+  ))
+
+  IFS=$OLD_IFS
+
+  print 5 20 "${LOCALES[@]}"
+}
+
+list_keymaps () {
+  local FILTER=$1
+
+  local KEYMAPS=($(localectl --no-pager list-keymaps | awk "/$FILTER/{print}"))
+
+  print 3 35 "${KEYMAPS[@]}"
 }
 
 help () {
@@ -117,7 +141,10 @@ help () {
     "" "  name, address, telephone, measurement, identification." \
     "add locale <locale>" "Add and generate the given locale." \
     "remove locale <locale>" "Remove the given locale from the system." \
-    "list locales" "List all the locales installed in the system." \
+    "list locales [<language>]" "List all the available locales for the given language," \
+    "" "default is all the available locales." \
+    "list keymaps [<filter>]" "List all the available keymaps filtered by the given term," \
+    "" "default is all the keymaps."
     "help" "Show this help message."
 }
 
@@ -167,7 +194,8 @@ loop () {
         esac;;
       "list")
         case "${CMD[1]}" in
-          "locales") list_locales;;
+          "locales") list_locales "${CMD[2]}";;
+          "keymaps") list_keymaps "${CMD[2]}";;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
       *) echo "Unknown or invalid command: '$REPLY'";; 
