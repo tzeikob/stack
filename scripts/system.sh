@@ -75,11 +75,19 @@ set_locale () {
 
   printf '%s\n' \
     "LANG=${PARTS[0]}" \
-    "LC_TIME=${PARTS[0]}" \
     "LC_CTYPE=${PARTS[0]}" \
     "LC_NUMERIC=${PARTS[0]}" \
+    "LC_TIME=${PARTS[0]}" \
+    "LC_COLLATE=${PARTS[0]}" \
     "LC_MONETARY=${PARTS[0]}" \
-    "LC_COLLATE=${PARTS[0]}" >> /etc/locale.conf
+    "LC_MESSAGES=${PARTS[0]}" \
+    "LC_PAPER=${PARTS[0]}" \
+    "LC_NAME=${PARTS[0]}" \
+    "LC_ADDRESS=${PARTS[0]}" \
+    "LC_TELEPHONE=${PARTS[0]}" \
+    "LC_MEASUREMENT=${PARTS[0]}" \
+    "LC_IDENTIFICATION=${PARTS[0]}" \
+    "LC_ALL=" >> /etc/locale.conf
 
   echo "Locale has been set to $LOCALE"
 }
