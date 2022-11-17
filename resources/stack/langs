@@ -24,6 +24,9 @@ show_status () {
     else { \
       gsub(/ /,""); printf "%-12s\t%s\n", "", " "$0} \
     }'
+  
+  echo -e "\nInstalled Locales:"
+  locale -a | awk '{print " "$0}'
 }
 
 set_keymap () {
