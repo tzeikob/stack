@@ -46,9 +46,10 @@ set_locale () {
   if [ -z "$KEY" ]; then
     echo "Missing locale variable key argument"
     return 1
-  fi
-
-  if [ -z "$VALUE" ]; then
+  elif ! grep -qE "$KEY" /etc/locale.conf; then
+    echo "Invalid locale variable key: '$KEY'"
+    return 1
+  elif [ -z "$VALUE" ]; then
     echo "Missing locale variable value argument"
     return 1
   fi
@@ -110,9 +111,10 @@ help () {
   printf " %-25s\t%s\n" \
     "show status" "Show the locale and languages status of the system." \
     "set keymap <keymap>" "Set the keyboard's console keymap." \
-    "set locale <key> <value>" "Set the locale variable with the given key name" \
-    "" "where key could be anything from lang, numeric, time, collate, monetary," \
-    "" "messages, paper, name, address, telephone, measurement, identification." \
+    "set locale <key> <locale>" "Set the locale variable with the given key name" \
+    "" "where key could be anything from the following values:" \
+    "" "  lang, numeric, time, collate, monetary, messages, paper," \
+    "" "  name, address, telephone, measurement, identification." \
     "add locale <locale>" "Add and generate the given locale." \
     "remove locale <locale>" "Remove the given locale from the system." \
     "list locales" "List all the locales installed in the system." \
