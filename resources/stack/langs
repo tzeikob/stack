@@ -15,10 +15,15 @@ prompt () {
 }
 
 show_status () {
-  localectl status | head -n 5 | awk -F: '{ \
-    i=index($0,":"); l=$1; \
-    gsub(/^[ \t]+|[ \t]+$/, "", l); \
-    printf "%-12s\t%s\n", l":", substr($0, i+1)}'
+  localectl status | awk -F: '{ \
+    i=index($0,":"); \
+    if (i > 0) { \
+      l=$1; \
+      gsub(/^[ \t]+|[ \t]+$/, "", l); \
+      printf "%-12s\t%s\n", l":", substr($0, i+1)} \
+    else { \
+      gsub(/ /,""); printf "%-12s\t%s\n", "", " "$0} \
+    }'
 }
 
 set_keymap () {
