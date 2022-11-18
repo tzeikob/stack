@@ -469,7 +469,7 @@ which_layouts () {
     de dk dz ee epo es et fi fo fr gb ge gh gn gr hr hu id ie il in iq ir
     is it jp ke kg kh kr kz la latam lk lt lv ma mao md me mk ml mm mn mt
     mv my ng nl no np ph pk pl pt ro rs ru se si sk sn sy tg th tj tm tr
-    tw tz ua us uz vnza
+    tw tz ua uz vnza
   )
 
   print 8 6 "${LAYOUTS[@]}"

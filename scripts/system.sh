@@ -227,7 +227,7 @@ install_display_server () {
   local OLD_IFS=$IFS && IFS=","
   LAYOUTS="${LAYOUTS[*]}" && IFS=$OLD_IFS
 
-  sed -i "/XkbLayout/ s/us/${LAYOUTS}/" /etc/X11/xorg.conf.d/00-keyboard.conf
+  sed -i "/XkbLayout/ s/us/us,${LAYOUTS}/" /etc/X11/xorg.conf.d/00-keyboard.conf
 
   echo "Keyboard layouts have been set to $LAYOUTS"
 

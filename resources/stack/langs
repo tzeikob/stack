@@ -155,6 +155,9 @@ remove_layout () {
   elif ! localectl list-x11-keymap-layouts | grep -qw "$LAYOUT"; then
     echo "Invalid layout argument: '$LAYOUT'"
     return 1
+  elif [ "$LAYOUT" = "us" ]; then
+    echo "The us layout cannot be removed"
+    return 1
   fi
 
   local LAYOUTS=$(
