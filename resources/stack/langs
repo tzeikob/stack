@@ -89,6 +89,9 @@ add_layout () {
   if [ -z "$LAYOUT" ]; then
     echo "Missing layout argument"
     return 1
+  elif ! localectl list-x11-keymap-layouts | grep -qw "$LAYOUT"; then
+    echo "Invalid layout argument"
+    return 1
   fi
 
   local LAYOUTS=$(
