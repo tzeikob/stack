@@ -105,6 +105,11 @@ add_layout () {
     awk '/XkbLayout/{print $3}' | tr -d '"'
   )
 
+  if [[ "$LAYOUTS" =~ "$LAYOUT" ]]; then
+    echo "Layout $LAYOUT is already in the kayboard layouts"
+    return 1
+  fi
+
   if [ -n "$LAYOUTS" ]; then
     [ "$ORDER" = "default" ] &&
       LAYOUTS="$LAYOUT,$LAYOUTS" ||
