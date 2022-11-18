@@ -215,6 +215,14 @@ remove_locale () {
     echo "Something went wrong removing locale"
 }
 
+list_layouts () {
+  local FILTER=$1
+
+  local KEYMAPS=($(localectl --no-pager list-x11-keymap-layouts | awk "/$FILTER/{print}"))
+
+  print 5 10 "${KEYMAPS[@]}"
+}
+
 list_locales () {
   local LANGUAGE=$1
 
@@ -265,6 +273,8 @@ help () {
     "add locale <locale>" "Add and generate the given locale." \
     "remove layout <language>" "Remove the given language from the keyboard layouts." \
     "remove locale <locale>" "Remove the given locale from the system." \
+    "list layouts [<filter>]" "List all the available keyboard layouts filtered by" \
+    "" "the given term, default is all the layouts." \
     "list locales [<language>]" "List all the available locales for the given language," \
     "" "default is all the available locales." \
     "list keymaps [<filter>]" "List all the available keymaps filtered by the given term," \
@@ -321,6 +331,7 @@ loop () {
         esac;;
       "list")
         case "${CMD[1]}" in
+          "layouts") list_layouts "${CMD[2]}";;
           "locales") list_locales "${CMD[2]}";;
           "keymaps") list_keymaps "${CMD[2]}";;
           *) echo "Unknown or invalid command: '$REPLY'";;
