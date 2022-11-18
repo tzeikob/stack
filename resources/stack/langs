@@ -223,9 +223,9 @@ remove_locale () {
 list_layouts () {
   local FILTER=$1
 
-  local KEYMAPS=($(localectl --no-pager list-x11-keymap-layouts | awk "/$FILTER/{print}"))
+  local LAYOUTS=($(localectl --no-pager list-x11-keymap-layouts | awk "/$FILTER/{print}"))
 
-  print 5 10 "${KEYMAPS[@]}"
+  print 5 10 "${LAYOUTS[@]}"
 }
 
 list_locales () {
