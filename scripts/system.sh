@@ -220,13 +220,14 @@ install_display_server () {
   pacman -S --noconfirm xorg xorg-xinit xorg-xrandr arandr || exit 1
 
   cp /root/stack/resources/xorg/xorg.conf /etc/X11
+  cp /root/stack/resources/xorg/keyboard.conf /etc/X11/xorg.conf.d/00-keyboard.conf
 
-  echo "Server configuration has been saved to /etc/X11/xorg.conf"
+  echo "Server configurations have been saved under /etc/X11"
 
   local OLD_IFS=$IFS && IFS=","
   LAYOUTS="${LAYOUTS[*]}" && IFS=$OLD_IFS
 
-  sed -i "/XkbLayout/ s/us/${LAYOUTS}/" /etc/X11/xorg.conf
+  sed -i "/XkbLayout/ s/us/${LAYOUTS}/" /etc/X11/xorg.conf.d/00-keyboard.conf
 
   echo "Keyboard layouts have been set to $LAYOUTS"
 

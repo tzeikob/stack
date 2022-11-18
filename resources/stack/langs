@@ -83,6 +83,41 @@ set_locale () {
     echo "Something went wrong setting the $KEY locale variable"
 }
 
+add_layout () {
+  local LAYOUT=$1
+
+  if [ -z "$LAYOUT" ]; then
+    echo "Missing layout argument"
+    return 1
+  fi
+
+  local LAYOUTS=$(
+    cat /etc/X11/xorg.conf.d/00-keyboard.conf |
+    awk '/XkbLayout/{print $3}' | tr -d '"'
+  )
+
+  if [ -n "$LAYOUTS" ]; then
+    LAYOUTS="$LAYOUTS,$LAYOUT"
+  else
+    LAYOUTS="$LAYOUT"
+  fi
+
+  local MODEL=$(
+    cat /etc/X11/xorg.conf.d/00-keyboard.conf |
+    awk '/XkbModel/{print $3}' | tr -d '"'
+  )
+
+  local OPTIONS=$(
+    cat /etc/X11/xorg.conf.d/00-keyboard.conf |
+    awk '/XkbOptions/{print $3}' | tr -d '"'
+  )
+
+  localectl --no-convert set-x11-keymap "$LAYOUTS" "$MODEL" "" "$OPTIONS" &&
+    setxkbmap -layout "$LAYOUTS" -model "$MODEL" -option "$OPTIONS" &&
+    echo "Keyboard layout $LAYOUT added" ||
+    echo "Something went wrong adding keyboard layout"
+}
+
 add_locale () {
   local LOCALE=$1
 
@@ -162,6 +197,7 @@ help () {
     "" "where key could be anything from the following values:" \
     "" "  ctype, numeric, time, collate, monetary, messages, paper," \
     "" "  name, address, telephone, measurement, identification." \
+    "add layout <language>" "Add the given language to the keyboard layouts." \
     "add locale <locale>" "Add and generate the given locale." \
     "remove locale <locale>" "Remove the given locale from the system." \
     "list locales [<language>]" "List all the available locales for the given language," \
@@ -208,6 +244,7 @@ loop () {
         esac;;
       "add")
         case "${CMD[1]}" in
+          "layout") add_layout "${CMD[2]}";;
           "locale") add_locale "${CMD[2]}";;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
