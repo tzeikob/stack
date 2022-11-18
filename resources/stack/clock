@@ -4,6 +4,10 @@ set -f
 
 source /opt/stack/utils
 
+
+require "systemd"
+require "util-linux"
+
 prompt () {
   local YELLOW=$'\e[0;33m'
   local RS=$'\e[m'
