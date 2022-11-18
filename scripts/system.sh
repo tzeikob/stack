@@ -87,8 +87,7 @@ set_locale () {
     "LC_ADDRESS=${PARTS[0]}" \
     "LC_TELEPHONE=${PARTS[0]}" \
     "LC_MEASUREMENT=${PARTS[0]}" \
-    "LC_IDENTIFICATION=${PARTS[0]}" \
-    "LC_ALL=" >> /etc/locale.conf
+    "LC_IDENTIFICATION=${PARTS[0]}" >> /etc/locale.conf
 
   echo "Locale has been set to $LOCALE"
 }
