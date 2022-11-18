@@ -146,6 +146,55 @@ add_locale () {
     echo "Something went wrong generating locale"
 }
 
+remove_layout () {
+  local LAYOUT=$1
+
+  if [ -z "$LAYOUT" ]; then
+    echo "Missing layout argument"
+    return 1
+  elif ! localectl list-x11-keymap-layouts | grep -qw "$LAYOUT"; then
+    echo "Invalid layout argument: '$LAYOUT'"
+    return 1
+  fi
+
+  local LAYOUTS=$(
+    cat /etc/X11/xorg.conf.d/00-keyboard.conf |
+    awk '/XkbLayout/{print $3}' | tr -d '"'
+  )
+
+  if [ -z "$LAYOUTS" ]; then
+    echo "No keyboard layouts found"
+    return 1
+  elif [ "$LAYOUTS" = "$LAYOUT" ]; then
+    echo "Cannot leave keyboard layouts empty"
+    return 1
+  elif [[ ! "$LAYOUTS" =~ "$LAYOUT" ]]; then
+    echo "Layout $LAYOUT not found in keyboard layouts"
+    return 1
+  fi
+
+  if [[ "$LAYOUTS" =~ "${LAYOUT}," ]]; then
+    LAYOUTS=${LAYOUTS//${LAYOUT},/}
+  else
+    LAYOUTS=${LAYOUTS//,${LAYOUT}/}
+  fi
+
+  local MODEL=$(
+    cat /etc/X11/xorg.conf.d/00-keyboard.conf |
+    awk '/XkbModel/{print $3}' | tr -d '"'
+  )
+
+  local OPTIONS=$(
+    cat /etc/X11/xorg.conf.d/00-keyboard.conf |
+    awk '/XkbOptions/{print $3}' | tr -d '"'
+  )
+
+  localectl --no-convert set-x11-keymap "$LAYOUTS" "$MODEL" "" "$OPTIONS" &&
+    setxkbmap -layout "$LAYOUTS" -model "$MODEL" -option "$OPTIONS" &&
+    echo "Keyboard layout $LAYOUT has been removed" ||
+    echo "Something went wrong removing keyboard layout"
+}
+
 remove_locale () {
   local LOCALE=$1
 
@@ -211,6 +260,7 @@ help () {
     "add layout <language> [default]" "Add the given language to the keyboard layouts," \
     "" "where you can use the default argument to set it as default layout." \
     "add locale <locale>" "Add and generate the given locale." \
+    "remove layout <language>" "Remove the given language from the keyboard layouts," \
     "remove locale <locale>" "Remove the given locale from the system." \
     "list locales [<language>]" "List all the available locales for the given language," \
     "" "default is all the available locales." \
@@ -262,6 +312,7 @@ loop () {
         esac;;
       "remove")
         case "${CMD[1]}" in
+          "layout") remove_layout "${CMD[2]}";;
           "locale") remove_locale "${CMD[2]}";;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
