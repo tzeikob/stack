@@ -247,12 +247,12 @@ help () {
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
   echo -e "\nOBJECTS"
-  printf " %-25s\t%s\n" \
+  printf " %-35s\t%s\n" \
       "keymap" "An object to handle the keyboard keymap." \
       "locale" "An object to manage system locales."
 
   echo -e "\nCOMMANDS"
-  printf " %-25s\t%s\n" \
+  printf " %-35s\t%s\n" \
     "show status" "Show the locale and languages status of the system." \
     "set keymap <keymap>" "Set the keyboard's console keymap." \
     "set language <language>" "Set the system language." \
@@ -263,7 +263,7 @@ help () {
     "add layout <language> [default]" "Add the given language to the keyboard layouts," \
     "" "where you can use the default argument to set it as default layout." \
     "add locale <locale>" "Add and generate the given locale." \
-    "remove layout <language>" "Remove the given language from the keyboard layouts," \
+    "remove layout <language>" "Remove the given language from the keyboard layouts." \
     "remove locale <locale>" "Remove the given locale from the system." \
     "list locales [<language>]" "List all the available locales for the given language," \
     "" "default is all the available locales." \
