@@ -75,6 +75,7 @@ set_locale () {
 
   printf '%s\n' \
     "LANG=${PARTS[0]}" \
+    "LANGUAGE=${PARTS[0]}:en:C" \
     "LC_CTYPE=${PARTS[0]}" \
     "LC_NUMERIC=${PARTS[0]}" \
     "LC_TIME=${PARTS[0]}" \
