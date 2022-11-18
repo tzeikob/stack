@@ -85,12 +85,18 @@ set_locale () {
 
 add_layout () {
   local LAYOUT=$1
+  local ORDER=$2
 
   if [ -z "$LAYOUT" ]; then
     echo "Missing layout argument"
     return 1
   elif ! localectl list-x11-keymap-layouts | grep -qw "$LAYOUT"; then
-    echo "Invalid layout argument"
+    echo "Invalid layout argument: '$LAYOUT'"
+    return 1
+  fi
+
+  if [ -n "$ORDER" ] && [[ ! "$ORDER" =~ ^default$ ]]; then
+    echo "Invalid order argument: '$ORDER'"
     return 1
   fi
 
@@ -100,7 +106,9 @@ add_layout () {
   )
 
   if [ -n "$LAYOUTS" ]; then
-    LAYOUTS="$LAYOUTS,$LAYOUT"
+    [ "$ORDER" = "default" ] &&
+      LAYOUTS="$LAYOUT,$LAYOUTS" ||
+      LAYOUTS="$LAYOUTS,$LAYOUT"
   else
     LAYOUTS="$LAYOUT"
   fi
@@ -200,7 +208,8 @@ help () {
     "" "where key could be anything from the following values:" \
     "" "  ctype, numeric, time, collate, monetary, messages, paper," \
     "" "  name, address, telephone, measurement, identification." \
-    "add layout <language>" "Add the given language to the keyboard layouts." \
+    "add layout <language> [default]" "Add the given language to the keyboard layouts," \
+    "" "where you can use the default argument to set it as default layout." \
     "add locale <locale>" "Add and generate the given locale." \
     "remove locale <locale>" "Remove the given locale from the system." \
     "list locales [<language>]" "List all the available locales for the given language," \
@@ -247,7 +256,7 @@ loop () {
         esac;;
       "add")
         case "${CMD[1]}" in
-          "layout") add_layout "${CMD[2]}";;
+          "layout") add_layout "${CMD[2]}" "${CMD[3]}";;
           "locale") add_locale "${CMD[2]}";;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
