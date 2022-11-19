@@ -34,7 +34,7 @@ show_status () {
 set_keymap () {
   local KEYMAP=$1
 
-  if ! localectl list-keymaps | grep -qE "^${KEYMAP}$"; then
+  if ! localectl --no-pager list-keymaps | grep -qE "^${KEYMAP}$"; then
     echo "Invalid keymap value: '$KEYMAP'"
     return 1
   fi
@@ -117,7 +117,7 @@ add_layout () {
   if [ -z "$LAYOUT" ]; then
     echo "Missing layout argument"
     return 1
-  elif ! localectl list-x11-keymap-layouts | grep -qw "$LAYOUT"; then
+  elif ! localectl --no-pager list-x11-keymap-layouts | grep -qw "$LAYOUT"; then
     echo "Invalid layout argument: '$LAYOUT'"
     return 1
   fi
@@ -184,7 +184,7 @@ remove_layout () {
   if [ -z "$LAYOUT" ]; then
     echo "Missing layout argument"
     return 1
-  elif ! localectl list-x11-keymap-layouts | grep -qw "$LAYOUT"; then
+  elif ! localectl --no-pager list-x11-keymap-layouts | grep -qw "$LAYOUT"; then
     echo "Invalid layout argument: '$LAYOUT'"
     return 1
   elif [ "$LAYOUT" = "us" ]; then
