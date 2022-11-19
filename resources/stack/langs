@@ -110,6 +110,33 @@ set_options () {
     echo "Something went wrong setting keyboard options"
 }
 
+set_model () {
+  local MODEL=$1
+
+  if [ -z "$MODEL" ]; then
+    echo "Missing the keyboard model argument"
+    return 1
+  elif ! localectl --no-pager list-x11-keymap-models | grep -qw "$MODEL"; then
+    echo "Invalid keyboard model: '$MODEL'"
+    return 1
+  fi
+
+  local LAYOUTS=$(
+    cat /etc/X11/xorg.conf.d/00-keyboard.conf |
+    awk '/XkbLayout/{print $3}' | tr -d '"'
+  )
+
+  local OPTIONS=$(
+    cat /etc/X11/xorg.conf.d/00-keyboard.conf |
+    awk '/XkbOptions/{print $3}' | tr -d '"'
+  )
+
+  localectl --no-convert set-x11-keymap "$LAYOUTS" "$MODEL" "" "$OPTIONS" &&
+    setxkbmap -layout "$LAYOUTS" -model "$MODEL" -option "$OPTIONS" &&
+    echo "Keyboard model $MODEL has been set" ||
+    echo "Something went wrong setting keyboard model"
+}
+
 add_layout () {
   local LAYOUT=$1
   local ORDER=$2
@@ -291,6 +318,14 @@ list_keymaps () {
   print 3 35 "${KEYMAPS[@]}"
 }
 
+list_models () {
+  local FILTER=$1
+
+  local MODELS=($(localectl --no-pager list-x11-keymap-models | awk "/$FILTER/{print}"))
+
+  print 3 34 "${MODELS[@]}"
+}
+
 help () {
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
@@ -305,6 +340,7 @@ help () {
     "" " name, address, telephone, measurement, identification" \
     "set keymap <keymap>" "Set the keyboard's virtual console keymap." \
     "set options <options>" "Set the keyboard's layout options." \
+    "set model <model>" "Set the keyboard's model." \
     "" "" \
     "add locale <locale>" "Add a locale to the system's locales." \
     "add layout <language> [default]" "Add a language to the keyboard's layouts." \
@@ -314,7 +350,8 @@ help () {
     "list locales [<filter>]" "Get the list of available locales." \
     "list keymaps [<filter>]" "Get the list of available keyboard keymaps." \
     "list options [<filter>]" "Get the list of available keyboard options." \
-    "list layouts [<filter>]" "Get the list of available keyboard layouts."
+    "list layouts [<filter>]" "Get the list of available keyboard layouts." \
+    "list models [<filter>]" "Get the list of available keyboard models."
 
   echo -e "\nOBJECTS"
   printf " %-33s\t%s\n" \
@@ -323,6 +360,7 @@ help () {
     "locale" "A system's locale or locale variable." \
     "keymap" "The keyboard's virtual console keymap." \
     "options" "The keyboard's layout options." \
+    "model" "The keyboard's model." \
     "layout" "A keyboard layout language."
 }
 
@@ -360,6 +398,7 @@ loop () {
           "language") set_language "${CMD[2]}";;
           "locale") set_locale "${CMD[2]}" "${CMD[3]}";;
           "options") set_options "${CMD[2]}";;
+          "model") set_model "${CMD[2]}";;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
       "add")
@@ -380,6 +419,7 @@ loop () {
           "options") list_options "${CMD[2]}";;
           "locales") list_locales "${CMD[2]}";;
           "keymaps") list_keymaps "${CMD[2]}";;
+          "models") list_models "${CMD[2]}";;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
       *) echo "Unknown or invalid command: '$REPLY'";; 
