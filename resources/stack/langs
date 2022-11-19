@@ -294,35 +294,36 @@ list_keymaps () {
 help () {
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
-  echo -e "\nOBJECTS"
-  printf " %-35s\t%s\n" \
-      "keymap" "An object to handle the keyboard keymap." \
-      "locale" "An object to manage system locales."
-
   echo -e "\nCOMMANDS"
-  printf " %-35s\t%s\n" \
-    "show status" "Show the locale and languages status of the system." \
-    "set keymap <keymap>" "Set the keyboard's console keymap." \
-    "set language <language>" "Set the system language." \
-    "set locale <key> <value>" "Set the locale variable with the given key name" \
-    "" "where key could be anything from the following values:" \
-    "" "  ctype, numeric, time, collate, monetary, messages, paper," \
-    "" "  name, address, telephone, measurement, identification." \
-    "set options <options>" "Set the keyboard options." \
-    "add layout <language> [default]" "Add the given language to the keyboard layouts," \
-    "" "where you can use the default argument to set it as default layout." \
-    "add locale <locale>" "Add and generate the given locale." \
-    "remove layout <language>" "Remove the given language from the keyboard layouts." \
-    "remove locale <locale>" "Remove the given locale from the system." \
-    "list layouts [<filter>]" "List all the available keyboard layouts filtered by" \
-    "" "the given term, default is all the layouts." \
-    "list options [<filter>]" "List all the available keyboard options filtered by the given" \
-    "" "term, default is all the options." \
-    "list locales [<language>]" "List all the available locales for the given language," \
-    "" "default is all the available locales." \
-    "list keymaps [<filter>]" "List all the available keymaps filtered by the given term," \
-    "" "default is all the keymaps." \
-    "help" "Show this help message."
+  printf " %-33s\t%s\n" \
+    "help" "Show this help message." \
+    "show status" "Show the system locale and keyboard status." \
+    "" "" \
+    "set language <language>" "Set the system's language." \
+    "set locale <key> <locale>" "Set a locale variable where key could any of:" \
+    "" " ctype, numeric, time, collate, monetary, messages, paper," \
+    "" " name, address, telephone, measurement, identification" \
+    "set keymap <keymap>" "Set the keyboard's virtual console keymap." \
+    "set options <options>" "Set the keyboard's layout options." \
+    "" "" \
+    "add locale <locale>" "Add a locale to the system's locales." \
+    "add layout <language> [default]" "Add a language to the keyboard's layouts." \
+    "remove locale <locale>" "Remove a locale from the system's locales." \
+    "remove layout <language>" "Remove a language from the keyboard's layouts." \
+    "" "" \
+    "list locales [<filter>]" "Get the list of available locales." \
+    "list keymaps [<filter>]" "Get the list of available keyboard keymaps." \
+    "list options [<filter>]" "Get the list of available keyboard options." \
+    "list layouts [<filter>]" "Get the list of available keyboard layouts."
+
+  echo -e "\nOBJECTS"
+  printf " %-33s\t%s\n" \
+    "status" "The locale and keyboard status." \
+    "language" "The language of the system." \
+    "locale" "A system's locale or locale variable." \
+    "keymap" "The keyboard's virtual console keymap." \
+    "options" "The keyboard's layout options." \
+    "layout" "A keyboard layout language."
 }
 
 loop () {

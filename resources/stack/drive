@@ -111,10 +111,11 @@ help () {
   
   echo -e "\nCOMMANDS"
   printf " %-20s\t%s\n" \
+    "help" "Show this help message." \
+    "" "" \
     "list" "List all the mounted google drive remotes." \
-    "mount <name>" "Mount a new google drive remote with the given name." \
-    "unmount <name>" "Unmount the google drive remote with the given name." \
-    "help" "Show this help message."
+    "mount <name>" "Mount a new drive remote." \
+    "unmount <name>" "Unmount an existing drive remote."
 }
 
 loop () {

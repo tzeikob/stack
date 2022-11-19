@@ -108,10 +108,11 @@ help () {
   
   echo -e "\nCOMMANDS"
   printf " %-20s\t%s\n" \
+    "help" "Show this help message." \
+    "" "" \
     "list" "List all the mounted dropbox remotes." \
-    "mount <name>" "Mount a new dropbox remote with the given name." \
-    "unmount <name>" "Unmount the dropbox remote with the given name." \
-    "help" "Show this help message."
+    "mount <name>" "Mount a new dropbox remote." \
+    "unmount <name>" "Unmount an existing dropbox remote."
 }
 
 loop () {

@@ -247,23 +247,25 @@ unmount_host () {
 help () {
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
-  echo -e "\nOBJECTS"
-  printf " %-35s\t%s\n" \
-      "device" "An object to handle a block device." \
-      "host" "An object to handle a host of shared folders."
-
   echo -e "\nCOMMANDS"
   printf " %-35s\t%s\n" \
+    "help" "Show this help message." \
+    "show device <path>" "Show details of the block device with the given path." \
+    "" "" \
     "list devices" "List all the block devices of the system." \
     "list hosts" "Discover all the available hosts at the local network." \
     "list shares <ip> <username> [<group>]" "Fetch any shared folder on the given host." \
     "list mounts" "List all the current mounted devices and shared folders." \
-    "show device <path>" "Show details of the block device with the given path" \
+    "" "" \
     "mount device <path>" "Mount a block device with the given path." \
     "mount host <ip> <share>" "Mount a shared folder on host with the given ip or domain." \
     "unmount device <path>" "Unmount a block device with the given path." \
-    "unmount host <ip> <share>" "Unmount a shared folder on host with the given ip or domain." \
-    "help" "Show this help message."
+    "unmount host <ip> <share>" "Unmount a shared folder on host with the given ip or domain."
+
+  echo -e "\nOBJECTS"
+  printf " %-35s\t%s\n" \
+    "device" "A block device." \
+    "host" "A local network host sharing folders."
 }
 
 loop () {

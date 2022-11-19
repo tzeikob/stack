@@ -209,16 +209,17 @@ help () {
   
   echo -e "\nCOMMANDS"
   printf " %-20s\t%s\n" \
-    "list [<days>]" "List files trashed within the given days, default" \
-    "" "is all files." \
-    "list [+<days>]" "List files trashed more than the given days ago." \
-    "list [<date>]" "List files trashed at a specific date (YYYY-mm-dd)." \
-    "restore [<path>]" "Restore files from the given path, default is the" \
-    "" "current directory." \
+    "help" "Show this help message." \
+    "" "" \
+    "list" "List all trashed files." \
+    "list <days>" "List files trashed within the given days." \
+    "list +<days>" "List files trashed more than the given days ago." \
+    "list <date>" "List files trashed at a specific date, given as YYYY-mm-dd." \
+    "" "" \
+    "restore [<path>]" "Restore files from the current directory or given path." \
     "remove <pattern>" "Remove files matched by the given pattern." \
-    "empty [<days>]" "Remove files trashed more than the given days ago," \
-    "" "default is all files." \
-    "help" "Show this help message."
+    "empty" "Remove all trashed files." \
+    "empty <days>" "Remove files trashed more than the given days ago."
 }
 
 loop () {

@@ -282,27 +282,35 @@ connect () {
 help () {
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
-  echo -e "\nOBJECTS"
-  printf " %-35s\t%s\n" \
-      "device" "An object to handle network devices" \
-      "connection" "An object to handle network connections" \
-      "network" "Refers to the networking setup of your system" \
-      "wifi" "Refers to the WiFi device of your system"
-
   echo -e "\nCOMMANDS"
-  printf " %-35s\t%s\n" \
-    "show status" "Show the current status of system's networking" \
-    "show device|connection <name>" "Show the status of the device or connection" \
-    "list devices [<type>]" "List network devices of the given type, default is all" \
-    "list connections [<type>]" "List network connections of the given type, default is all" \
-    "scan" "Scan for wireless networks in your area" \
-    "power network on|off" "Power on/off the system networking" \
-    "power wifi on|off" "Power on/off the wifi" \
-    "connect <ssid> <secret-key>" "Connect to a wireless network with the given ssid" \
-    "up device|connection <name>" "Get the given device or connection up" \
-    "down device|connection <name>" "Get the given device or connection down" \
-    "delete device|connection <name>" "Delete the given device or connection" \
-    "help" "Show this help message"
+  printf " %-30s\t%s\n" \
+    "help" "Show this help message." \
+    "show status" "Show the current status of system's networking." \
+    "show device <name>" "Show the status of the device." \
+    "show connection <name>" "Show the status of the connection." \
+    "" "" \
+    "list devices [<type>]" "List the network devices of the system." \
+    "list connections [<type>]" "List network connections." \
+    "scan" "Scan for wireless networks in your area." \
+    "" "" \
+    "connect <ssid> <secret-key>" "Connect to a wireless network with the given ssid." \
+    "up device <name>" "Get the given device up." \
+    "up connection <name>" "Get the given connection up." \
+    "down device <name>" "Get the given device down." \
+    "down connection <name>" "Get the given connection down." \
+    "" "" \
+    "power network on|off" "Power on/off the system networking." \
+    "power wifi on|off" "Power on/off the wifi device." \
+    "delete device <name>" "Delete the given device." \
+    "delete connection <name>" "Delete the given connection."
+
+  echo -e "\nOBJECTS"
+  printf " %-30s\t%s\n" \
+    "status" "The status of the system's networking." \
+    "device" "A network device." \
+    "connection" "A network connection." \
+    "network" "The system's networking." \
+    "wifi" "The wireless network device."
 }
 
 loop () {

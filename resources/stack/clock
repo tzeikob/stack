@@ -98,24 +98,27 @@ sync_rtc () {
 help () {
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
-  echo -e "\nOBJECTS"
-  printf " %-25s\t%s\n" \
-      "ntp" "An object to handle time synchronization." \
-      "timezone" "An object to manage timezone regions." \
-      "time" "An object refering to the system's time." \
-      "date" "An object refering to the system's date." \
-      "rtc" "An object refering to the system hardware clock."
-
   echo -e "\nCOMMANDS"
   printf " %-25s\t%s\n" \
-    "show status" "Show the current date time status of the system." \
+    "help" "Show this help message." \
+    "show status" "Show the date time status of the system." \
+    "" "" \
     "set ntp on|off" "Enable or disable the NTP service." \
     "set timezone <Region/City>" "Set the timezone to the given region." \
     "set time <HH:MM:SS>" "Set the system local time to the given time." \
     "set date <YYYY-mm-dd>" "Set the system date to the given date." \
-    "set rtc local|utc" "Set the RTC (hardware clock) to local or UTC time" \
-    "sync rtc" "Sync the RTC (hardware clock) from the system clock" \
-    "help" "Show this help message."
+    "set rtc local|utc" "Set the hardware clock to local or UTC time." \
+    "" "" \
+    "sync rtc" "Sync the RTC hardware clock from the system clock."
+
+  echo -e "\nOBJECTS"
+  printf " %-25s\t%s\n" \
+    "status" "The system's date and time status." \
+    "ntp" "The system's time synchronization service." \
+    "timezone" "A Region/City pair where a standar time is used." \
+    "time" "The time part of the system's clock." \
+    "date" "The date part of the system's clock." \
+    "rtc" "The hardware clock of the system."
 }
 
 loop () {
