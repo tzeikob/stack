@@ -299,7 +299,7 @@ list_locales () {
     cat /etc/locale.gen |
     tail -n +24 |
     tr -d '#' |
-    awk "/^$LANGUAGE/{print}" |
+    awk "/$LANGUAGE/{print}" |
     trim |
     awk '{print $0","}' |
     no_breaks
