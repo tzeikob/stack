@@ -83,6 +83,33 @@ set_locale () {
     echo "Something went wrong setting the $KEY locale variable"
 }
 
+set_options () {
+  local OPTIONS=$1
+
+  if [ -z "$OPTIONS" ]; then
+    echo "Missing the keyboard options argument"
+    return 1
+  elif ! localectl --no-pager list-x11-keymap-options | grep -qw "$OPTIONS"; then
+    echo "Invalid keyboard options: '$OPTIONS'"
+    return 1
+  fi
+
+  local LAYOUTS=$(
+    cat /etc/X11/xorg.conf.d/00-keyboard.conf |
+    awk '/XkbLayout/{print $3}' | tr -d '"'
+  )
+
+  local MODEL=$(
+    cat /etc/X11/xorg.conf.d/00-keyboard.conf |
+    awk '/XkbModel/{print $3}' | tr -d '"'
+  )
+
+  localectl --no-convert set-x11-keymap "$LAYOUTS" "$MODEL" "" "$OPTIONS" &&
+    setxkbmap -layout "$LAYOUTS" -model "$MODEL" -option "$OPTIONS" &&
+    echo "Keyboard options $OPTIONS have been set" ||
+    echo "Something went wrong setting keyboard options"
+}
+
 add_layout () {
   local LAYOUT=$1
   local ORDER=$2
@@ -228,6 +255,14 @@ list_layouts () {
   print 5 10 "${LAYOUTS[@]}"
 }
 
+list_options () {
+  local FILTER=$1
+
+  local OPTIONS=($(localectl --no-pager list-x11-keymap-options | awk "/$FILTER/{print}"))
+
+  print 3 34 "${OPTIONS[@]}"
+}
+
 list_locales () {
   local LANGUAGE=$1
 
@@ -273,6 +308,7 @@ help () {
     "" "where key could be anything from the following values:" \
     "" "  ctype, numeric, time, collate, monetary, messages, paper," \
     "" "  name, address, telephone, measurement, identification." \
+    "set options <options>" "Set the keyboard options." \
     "add layout <language> [default]" "Add the given language to the keyboard layouts," \
     "" "where you can use the default argument to set it as default layout." \
     "add locale <locale>" "Add and generate the given locale." \
@@ -280,6 +316,8 @@ help () {
     "remove locale <locale>" "Remove the given locale from the system." \
     "list layouts [<filter>]" "List all the available keyboard layouts filtered by" \
     "" "the given term, default is all the layouts." \
+    "list options [<filter>]" "List all the available keyboard options filtered by the given" \
+    "" "term, default is all the options." \
     "list locales [<language>]" "List all the available locales for the given language," \
     "" "default is all the available locales." \
     "list keymaps [<filter>]" "List all the available keymaps filtered by the given term," \
@@ -320,6 +358,7 @@ loop () {
           "keymap") set_keymap "${CMD[2]}";;
           "language") set_language "${CMD[2]}";;
           "locale") set_locale "${CMD[2]}" "${CMD[3]}";;
+          "options") set_options "${CMD[2]}";;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
       "add")
@@ -337,6 +376,7 @@ loop () {
       "list")
         case "${CMD[1]}" in
           "layouts") list_layouts "${CMD[2]}";;
+          "options") list_options "${CMD[2]}";;
           "locales") list_locales "${CMD[2]}";;
           "keymaps") list_keymaps "${CMD[2]}";;
           *) echo "Unknown or invalid command: '$REPLY'";;
