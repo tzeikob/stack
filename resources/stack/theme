@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+
+set -f
+
+source /opt/stack/utils
+
+prompt () {
+  local YELLOW=$'\e[0;33m'
+  local RS=$'\e[m'
+  local FG=$YELLOW
+
+  local THEME_NAME=$(cat ~/.config/gtk-3.0/settings.ini |
+    awk -F= '/gtk-theme-name/{print tolower($2)}')
+  
+  [ -z "$THEME_NAME" ] && THEME_NAME="none"
+
+  read -rep "[theme:$FG${THEME_NAME}$RS] " REPLY
+}
+
+show_status () {
+  local GTK_SETTINGS=$(cat ~/.config/gtk-3.0/settings.ini)
+
+  local NAME=$(awk -F= '/gtk-theme-name/{print $2}' <<< "$GTK_SETTINGS")
+  local ICON_THEME=$(awk -F= '/gtk-icon-theme-name/{print $2}' <<< "$GTK_SETTINGS")
+  local FONT_NAME=$(awk -F= '/gtk-font-name/{print $2}' <<< "$GTK_SETTINGS")
+  local CURSOR_THEME=$(awk -F= '/gtk-cursor-theme-name/{print $2}' <<< "$GTK_SETTINGS")
+  local DARK_MODE=$(awk -F= '/gtk-application-prefer-dark-theme/{print $2}' <<< "$GTK_SETTINGS")
+  [ "$DARK_MODE" = "1" ] && DARK_MODE="on" || DARK_MODE="off"
+  
+  printf '%-10s\t%s\n' \
+    "Theme Name:" "$NAME" \
+    "Icon Set:" "$ICON_THEME" \
+    "Font Name:" "$FONT_NAME" \
+    "Cursor Set:" "$CURSOR_THEME" \
+    "Dark Mode:" "$DARK_MODE"
+}
+
+help () {
+  echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
+
+  echo -e "\nCOMMANDS"
+  printf " %-33s\t%s\n" \
+    "help" "Show this help message." \
+    "show status" "Show an overall report of the theme."
+
+  echo -e "\nOBJECTS"
+  printf " %-33s\t%s\n" \
+    "status" "The status of the status."
+}
+
+loop () {
+  clear
+
+  while true; do
+    prompt && history -s "$REPLY"
+
+    local OLD_IFS=$IFS && IFS=$'\n'
+    local CMD=($(xargs -n1 <<< "$REPLY"))
+    IFS=$OLD_IFS
+
+    if [ "${CMD[0]}" = "help" ]; then
+      help
+      continue
+    elif [ "${CMD[0]}" = "clear" ]; then
+      clear
+      continue
+    elif [ "${CMD[0]}" = "quit" ]; then
+      break
+    elif [ -z "${CMD[0]}" ]; then
+      continue
+    fi
+
+    case "${CMD[0]}" in
+      "show")
+        case "${CMD[1]}" in
+          "status") show_status;;
+          *) echo "Unknown or invalid command: '$REPLY'";;
+        esac;;
+      *) echo "Unknown or invalid command: '$REPLY'";; 
+    esac
+  done
+
+  clear
+}
+
+loop

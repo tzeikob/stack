@@ -301,6 +301,7 @@ install_utilities () {
   cp ~/stack/resources/stack/networks "$STACK_HOME"
   cp ~/stack/resources/stack/disks "$STACK_HOME"
   cp ~/stack/resources/stack/langs "$STACK_HOME"
+  cp ~/stack/resources/stack/theme "$STACK_HOME"
   cp ~/stack/resources/stack/drive "$STACK_HOME"
   cp ~/stack/resources/stack/dropbox "$STACK_HOME"
 
@@ -309,6 +310,7 @@ install_utilities () {
   ln -sf "$STACK_HOME/networks" /usr/local/bin/networks
   ln -sf "$STACK_HOME/disks" /usr/local/bin/disks
   ln -sf "$STACK_HOME/langs" /usr/local/bin/langs
+  ln -sf "$STACK_HOME/theme" /usr/local/bin/theme
   ln -sf "$STACK_HOME/drive" /usr/local/bin/drive
   ln -sf "$STACK_HOME/dropbox" /usr/local/bin/dropbox
 
