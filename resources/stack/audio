@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+
+set -f
+
+source /opt/stack/utils
+
+prompt () {
+  local YELLOW=$'\e[0;33m'
+  local RS=$'\e[m'
+  local FG=$YELLOW
+
+  read -rep "[audio:${FG}none$RS] " REPLY
+}
+
+show_status () {
+  pactl info | awk -F: '{printf "%-32s\t%s\n", $1":", $2}'
+  pactl stat | awk -F: '{printf "%-32s\t%s\n", $1":", $2}'
+}
+
+help () {
+  echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
+
+  echo -e "\nCOMMANDS"
+  printf " %-33s\t%s\n" \
+    "help" "Show this help message." \
+    "show status" "Show an overall report of the system's audio."
+
+  echo -e "\nOBJECTS"
+  printf " %-33s\t%s\n" \
+    "status" "The status of the system's audio."
+}
+
+loop () {
+  clear
+
+  while true; do
+    prompt && history -s "$REPLY"
+
+    local OLD_IFS=$IFS && IFS=$'\n'
+    local CMD=($(xargs -n1 <<< "$REPLY"))
+    IFS=$OLD_IFS
+
+    if [ "${CMD[0]}" = "help" ]; then
+      help
+      continue
+    elif [ "${CMD[0]}" = "clear" ]; then
+      clear
+      continue
+    elif [ "${CMD[0]}" = "quit" ]; then
+      break
+    elif [ -z "${CMD[0]}" ]; then
+      continue
+    fi
+
+    case "${CMD[0]}" in
+      "show")
+        case "${CMD[1]}" in
+          "status") show_status;;
+          *) echo "Unknown or invalid command: '$REPLY'";;
+        esac;;
+      *) echo "Unknown or invalid command: '$REPLY'";; 
+    esac
+  done
+
+  clear
+}
+
+loop
