@@ -37,9 +37,9 @@ list_profiles () {
 
   local INDEX=0
   while [ $INDEX -lt ${#PROFILES[@]} ]; do
-    local NAME=${PROFILES[INDEX]}
+    local NAME=${PROFILES[$INDEX]}
     local DESC=$(echo "$CARD" | jq -r ".profiles.${NAME}.description")
-    NAME=$(echo $NAME | tr -d "\"")
+    NAME=$(echo "$NAME" | tr -d "\"")
 
     printf "%-45s\t%s\n" "$NAME" "$DESC"
     INDEX=$((INDEX + 1))
