@@ -17,17 +17,26 @@ show_status () {
   pactl stat | awk -F: '{printf "%-32s\t%s\n", $1":", $2}'
 }
 
+list_cards () {
+  printf "%-5s\t%-35s\t%s\n" \
+    "INDEX" "NAME" "DRIVER"
+
+  pactl list short cards | awk '{printf "%-5s\t%-35s\t%s\n",$1,$2,$3}'
+}
+
 help () {
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
   echo -e "\nCOMMANDS"
   printf " %-33s\t%s\n" \
     "help" "Show this help message." \
-    "show status" "Show an overall report of the system's audio."
+    "show status" "Show an overall report of the system's audio." \
+    "list cards" "List all the audio cards plugged to the system."
 
   echo -e "\nOBJECTS"
   printf " %-33s\t%s\n" \
-    "status" "The status of the system's audio."
+    "status" "The status of the system's audio." \
+    "card" "An audio card."
 }
 
 loop () {
@@ -56,6 +65,11 @@ loop () {
       "show")
         case "${CMD[1]}" in
           "status") show_status;;
+          *) echo "Unknown or invalid command: '$REPLY'";;
+        esac;;
+      "list")
+        case "${CMD[1]}" in
+          "cards") list_cards;;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
       *) echo "Unknown or invalid command: '$REPLY'";; 
