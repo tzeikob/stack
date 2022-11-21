@@ -9,7 +9,9 @@ prompt () {
   local RS=$'\e[m'
   local FG=$YELLOW
 
-  read -rep "[audio:${FG}none$RS] " REPLY
+  local SINK=$(pactl info | awk -F: '/Default Sink/{print $2}')
+
+  read -rep "[audio:$FG${SINK}$RS] " REPLY
 }
 
 show_status () {
