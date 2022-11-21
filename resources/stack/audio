@@ -4,6 +4,9 @@ set -f
 
 source /opt/stack/utils
 
+require "libpulse"
+require "jq"
+
 prompt () {
   local YELLOW=$'\e[0;33m'
   local RS=$'\e[m'
@@ -26,19 +29,39 @@ list_cards () {
   pactl list short cards | awk '{printf "%-5s\t%-35s\t%s\n",$1,$2,$3}'
 }
 
+list_profiles () {
+  local CARD=$(pactl --format=json list cards | jq '.[0]')
+  local PROFILES=($(echo "$CARD" | jq '.profiles | keys[]'))
+  
+  printf "%-45s\t%s\n" "NAME" "DESCIPTION"
+
+  local INDEX=0
+  while [ $INDEX -lt ${#PROFILES[@]} ]; do
+    local NAME=${PROFILES[INDEX]}
+    local DESC=$(echo "$CARD" | jq -r ".profiles.${NAME}.description")
+    NAME=$(echo $NAME | tr -d "\"")
+
+    printf "%-45s\t%s\n" "$NAME" "$DESC"
+    INDEX=$((INDEX + 1))
+  done
+}
+
 help () {
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
   echo -e "\nCOMMANDS"
-  printf " %-33s\t%s\n" \
+  printf " %-15s\t%s\n" \
     "help" "Show this help message." \
     "show status" "Show an overall report of the system's audio." \
-    "list cards" "List all the audio cards plugged to the system."
+    "" "" \
+    "list cards" "List all the audio cards plugged to the system." \
+    "list profiles" "List the profiles of the active audio card."
 
   echo -e "\nOBJECTS"
-  printf " %-33s\t%s\n" \
+  printf " %-15s\t%s\n" \
     "status" "The status of the system's audio." \
-    "card" "An audio card."
+    "card" "An audio card." \
+    "profile" "An audio profile of a card."
 }
 
 loop () {
@@ -72,6 +95,7 @@ loop () {
       "list")
         case "${CMD[1]}" in
           "cards") list_cards;;
+          "profiles") list_profiles;;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
       *) echo "Unknown or invalid command: '$REPLY'";; 
