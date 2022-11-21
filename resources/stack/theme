@@ -72,7 +72,7 @@ help () {
 
   echo -e "\nOBJECTS"
   printf " %-33s\t%s\n" \
-    "status" "The status of the status." \
+    "status" "The status of the theme and desktop." \
     "wallpaper" "The desktop wallpaper image."
 }
 
