@@ -23,10 +23,16 @@ show_status () {
 }
 
 list_cards () {
-  printf "%-5s\t%-35s\t%s\n" \
-    "INDEX" "NAME" "DRIVER"
+  printf "%-3s %-35s %-4s %-15s %s\n" "ID" "NAME" "BUS" "MODEL" "VENDOR"
 
-  pactl list short cards | awk '{printf "%-5s\t%-35s\t%s\n",$1,$2,$3}'
+  local QUERY='.[]|"\(.index),'
+  QUERY+='\(.name),'
+  QUERY+='\(.properties."device.bus"),'
+  QUERY+='\(.properties."device.nick"),'
+  QUERY+='\(.properties."device.vendor.name")"'
+
+  pactl --format=json list cards | jq -r "$QUERY" |
+    awk -F, '{printf "%-3s %-35s %-4s %-15s %s\n",$1,$2,$3,$4,$5}'
 }
 
 list_profiles () {
