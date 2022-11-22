@@ -278,10 +278,12 @@ connect () {
 }
 
 help () {
+  local FRM=" %-30s\t%s\n"
+
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
   echo -e "\nCOMMANDS"
-  printf " %-30s\t%s\n" \
+  printf "$FRM" \
     "help" "Show this help message." \
     "show status" "Show the current status of system's networking." \
     "show device <name>" "Show the status of the device." \
@@ -303,7 +305,7 @@ help () {
     "delete connection <name>" "Delete the given connection."
 
   echo -e "\nOBJECTS"
-  printf " %-30s\t%s\n" \
+  printf "$FRM" \
     "status" "The status of the system's networking." \
     "device" "A network device." \
     "connection" "A network connection." \

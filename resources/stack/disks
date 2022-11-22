@@ -243,10 +243,12 @@ unmount_host () {
 }
 
 help () {
+  local FRM=" %-35s\t%s\n"
+
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
   echo -e "\nCOMMANDS"
-  printf " %-35s\t%s\n" \
+  printf "$FRM" \
     "help" "Show this help message." \
     "show device <path>" "Show details of the block device with the given path." \
     "" "" \
@@ -261,7 +263,7 @@ help () {
     "unmount host <ip> <share>" "Unmount a shared folder on host with the given ip or domain."
 
   echo -e "\nOBJECTS"
-  printf " %-35s\t%s\n" \
+  printf "$FRM" \
     "device" "A block device." \
     "host" "A local network host sharing folders."
 }

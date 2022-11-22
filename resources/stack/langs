@@ -325,10 +325,12 @@ list_models () {
 }
 
 help () {
+  local FRM=" %-33s\t%s\n"
+
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
   echo -e "\nCOMMANDS"
-  printf " %-33s\t%s\n" \
+  printf "$FRM" \
     "help" "Show this help message." \
     "show status" "Show the system locale and keyboard status." \
     "" "" \
@@ -352,7 +354,7 @@ help () {
     "list models [<filter>]" "Get the list of available keyboard models."
 
   echo -e "\nOBJECTS"
-  printf " %-33s\t%s\n" \
+  printf "$FRM" \
     "status" "The locale and keyboard status." \
     "language" "The language of the system." \
     "locale" "A system's locale or locale variable." \

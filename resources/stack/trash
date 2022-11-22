@@ -192,11 +192,13 @@ wipe_files () {
 }
 
 help () {
+  local FRM=" %-20s\t%s\n"
+
   if [ "$1" = "args" ]; then
     echo "Usage: trash [OPTIONS] FILE..."
 
     echo -e "\nOPTIONS"
-    printf " %-20s\t%s\n" \
+    printf "$FRM" \
       "r, --remove" "Remove given files permanently." \
       "h, --help" "Show this help message."
     
@@ -206,7 +208,7 @@ help () {
   echo "Usage: COMMAND [ARGUMENTS]..."
   
   echo -e "\nCOMMANDS"
-  printf " %-20s\t%s\n" \
+  printf "$FRM" \
     "help" "Show this help message." \
     "" "" \
     "list" "List all trashed files." \

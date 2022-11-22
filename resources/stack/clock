@@ -93,10 +93,12 @@ sync_rtc () {
 }
 
 help () {
+  local FRM=" %-25s\t%s\n"
+
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
   echo -e "\nCOMMANDS"
-  printf " %-25s\t%s\n" \
+  printf "$FRM" \
     "help" "Show this help message." \
     "show status" "Show the date time status of the system." \
     "" "" \
@@ -109,7 +111,7 @@ help () {
     "sync rtc" "Sync the RTC hardware clock from the system clock."
 
   echo -e "\nOBJECTS"
-  printf " %-25s\t%s\n" \
+  printf "$FRM" \
     "status" "The system's date and time status." \
     "ntp" "The system's time synchronization service." \
     "timezone" "A Region/City pair where a standar time is used." \

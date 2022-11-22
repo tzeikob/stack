@@ -16,8 +16,10 @@ prompt () {
 }
 
 show_status () {
-  pactl info | awk -F: '{printf "%-32s\t%s\n", $1":", $2}'
-  pactl stat | awk -F: '{printf "%-32s\t%s\n", $1":", $2}'
+  local FRM="%-32s\t%s\n"
+
+  pactl info | awk -v f="$FRM" -F: '{printf f, $1":", $2}'
+  pactl stat | awk -v f="$FRM" -F: '{printf f, $1":", $2}'
 }
 
 show_card () {
@@ -36,12 +38,15 @@ show_card () {
     VALUE=$CARD
   fi
 
-  pactl --format=json list cards | jq -e -M ".[] | select(.${FIELD}==${VALUE})" ||
+  local QUERY=".[] | select(.${FIELD}==${VALUE})"
+
+  pactl --format=json list cards | jq -e -M "$QUERY" ||
     echo "Cannot find audio card with $FIELD $CARD"
 }
 
 list_cards () {
-  printf "%-3s %-35s %-4s %-15s %s\n" "ID" "NAME" "BUS" "MODEL" "VENDOR"
+  local FRM="%-3s %-35s %-4s %-15s %s\n"
+  printf "$FRM" "ID" "NAME" "BUS" "MODEL" "VENDOR"
 
   local QUERY='.[]|"\(.index),'
   QUERY+='\(.name),'
@@ -50,7 +55,7 @@ list_cards () {
   QUERY+='\(.properties."device.vendor.name")"'
 
   pactl --format=json list cards | jq -r "$QUERY" |
-    awk -F, '{printf "%-3s %-35s %-4s %-15s %s\n",$1,$2,$3,$4,$5}'
+    awk -v f="$FRM" -F, '{printf f,$1,$2,$3,$4,$5}'
 }
 
 list_profiles () {
@@ -75,7 +80,6 @@ list_profiles () {
   QUERY+='| "\(.key),\(.value.description)"'
 
   local FRM="%-46s %s\n"
-
   printf "$FRM" "KEY" "DESCRIPTION"
 
   pactl --format=json list cards | jq -e -M -r "$QUERY" |
@@ -103,10 +107,12 @@ set_profile () {
 }
 
 help () {
+  local FRM=" %-28s\t%s\n"
+
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
   echo -e "\nCOMMANDS"
-  printf " %-28s\t%s\n" \
+  printf "$FRM" \
     "help" "Show this help message." \
     "show status" "Show an overall report of the system's audio." \
     "show card <name|id>" "Show data for the card with the given name or id." \
@@ -117,7 +123,7 @@ help () {
     "set profile <card> <profile>" "Set the audio profile of the given card."
 
   echo -e "\nOBJECTS"
-  printf " %-28s\t%s\n" \
+  printf "$FRM" \
     "status" "The status of the system's audio." \
     "card" "An audio card." \
     "profile" "An audio profile of a card."

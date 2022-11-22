@@ -105,10 +105,12 @@ unmount_remote () {
 }
 
 help () {
+  local FRM=" %-20s\t%s\n"
+
   echo "Usage: COMMAND [ARGUMENTS]..."
   
   echo -e "\nCOMMANDS"
-  printf " %-20s\t%s\n" \
+  printf "$FRM" \
     "help" "Show this help message." \
     "" "" \
     "list" "List all the mounted google drive remotes." \

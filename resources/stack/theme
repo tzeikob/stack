@@ -59,17 +59,19 @@ set_wallpaper () {
 }
 
 help () {
+  local FRM=" %-33s\t%s\n"
+
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
   echo -e "\nCOMMANDS"
-  printf " %-33s\t%s\n" \
+  printf "$FRM" \
     "help" "Show this help message." \
     "show status" "Show an overall report of the theme." \
     "" "" \
     "set wallpaper <file-path>" "Set the desktop wallpaper image."
 
   echo -e "\nOBJECTS"
-  printf " %-33s\t%s\n" \
+  printf "$FRM" \
     "status" "The status of the theme and desktop." \
     "wallpaper" "The desktop wallpaper image."
 }
