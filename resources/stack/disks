@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-set -f
-
 source /opt/stack/utils
 
 require "udisks2"
@@ -274,9 +272,10 @@ loop () {
   while true; do
     prompt && history -s "$REPLY"
 
+    set -f
     local OLD_IFS=$IFS && IFS=$'\n'
     local CMD=($(xargs -n1 <<< "$REPLY"))
-    IFS=$OLD_IFS
+    IFS=$OLD_IFS && set +f
 
     if [ "${CMD[0]}" = "help" ]; then
       help
