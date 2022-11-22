@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-set -f
-
 source /opt/stack/utils
 
 require "libpulse"
@@ -20,6 +18,26 @@ prompt () {
 show_status () {
   pactl info | awk -F: '{printf "%-32s\t%s\n", $1":", $2}'
   pactl stat | awk -F: '{printf "%-32s\t%s\n", $1":", $2}'
+}
+
+show_card () {
+  local CARD=$1
+
+  if [ -z "$CARD" ]; then
+    echo "Missing card name or id argument"
+    return 1
+  fi
+
+  local FIELD="name"
+  local VALUE="\"${CARD}\""
+
+  if [[ "$CARD" =~ ^[0-9]+$ ]]; then
+    FIELD="index"
+    VALUE=$CARD
+  fi
+
+  pactl --format=json list cards | jq -e -M ".[] | select(.${FIELD}==${VALUE})" ||
+    echo "Cannot find audio card with $FIELD $CARD"
 }
 
 list_cards () {
@@ -75,9 +93,10 @@ help () {
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
   echo -e "\nCOMMANDS"
-  printf " %-15s\t%s\n" \
+  printf " %-28s\t%s\n" \
     "help" "Show this help message." \
     "show status" "Show an overall report of the system's audio." \
+    "show card <name|id>" "Show data for the card with the given name or id." \
     "" "" \
     "list cards" "List all the audio cards plugged to the system." \
     "list profiles" "List the profiles of the active audio card." \
@@ -85,7 +104,7 @@ help () {
     "set profile <card> <profile>" "Set the audio profile of the given card."
 
   echo -e "\nOBJECTS"
-  printf " %-15s\t%s\n" \
+  printf " %-28s\t%s\n" \
     "status" "The status of the system's audio." \
     "card" "An audio card." \
     "profile" "An audio profile of a card."
@@ -97,9 +116,10 @@ loop () {
   while true; do
     prompt && history -s "$REPLY"
 
+    set -f
     local OLD_IFS=$IFS && IFS=$'\n'
     local CMD=($(xargs -n1 <<< "$REPLY"))
-    IFS=$OLD_IFS
+    IFS=$OLD_IFS && set +f
 
     if [ "${CMD[0]}" = "help" ]; then
       help
@@ -117,6 +137,7 @@ loop () {
       "show")
         case "${CMD[1]}" in
           "status") show_status;;
+          "card") show_card "${CMD[2]}";;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
       "list")
