@@ -54,20 +54,33 @@ list_cards () {
 }
 
 list_profiles () {
-  local CARD=$(pactl --format=json list cards | jq '.[0]')
-  local PROFILES=($(echo "$CARD" | jq '.profiles | keys[]'))
-  
-  printf "%-45s\t%s\n" "NAME" "DESCIPTION"
+  local CARD=$1
 
-  local INDEX=0
-  while [ $INDEX -lt ${#PROFILES[@]} ]; do
-    local NAME=${PROFILES[$INDEX]}
-    local DESC=$(echo "$CARD" | jq -r ".profiles.${NAME}.description")
-    NAME=$(echo "$NAME" | tr -d "\"")
+  if [ -z "$CARD" ]; then
+    echo "Missing card name or id argument"
+    return 1
+  fi
 
-    printf "%-45s\t%s\n" "$NAME" "$DESC"
-    INDEX=$((INDEX + 1))
-  done
+  local FIELD="name"
+  local VALUE="\"${CARD}\""
+
+  if [[ "$CARD" =~ ^[0-9]+$ ]]; then
+    FIELD="index"
+    VALUE=$CARD
+  fi
+
+  local QUERY=".[] | select(.${FIELD}==${VALUE})"
+  QUERY+='| .profiles'
+  QUERY+='| to_entries[]'
+  QUERY+='| "\(.key),\(.value.description)"'
+
+  local FRM="%-46s %s\n"
+
+  printf "$FRM" "KEY" "DESCRIPTION"
+
+  pactl --format=json list cards | jq -e -M -r "$QUERY" |
+    awk -v f="$FRM" -F, '{printf f,$1,$2}' ||
+    echo "Cannot find audio card with $FIELD $CARD"
 }
 
 set_profile () {
@@ -99,7 +112,7 @@ help () {
     "show card <name|id>" "Show data for the card with the given name or id." \
     "" "" \
     "list cards" "List all the audio cards plugged to the system." \
-    "list profiles" "List the profiles of the active audio card." \
+    "list profiles <name|id>" "List the profiles of the given audio card." \
     "" "" \
     "set profile <card> <profile>" "Set the audio profile of the given card."
 
@@ -143,7 +156,7 @@ loop () {
       "list")
         case "${CMD[1]}" in
           "cards") list_cards;;
-          "profiles") list_profiles;;
+          "profiles") list_profiles "${CMD[2]}";;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
       "set")
