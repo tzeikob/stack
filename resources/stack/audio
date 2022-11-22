@@ -46,6 +46,25 @@ list_profiles () {
   done
 }
 
+set_profile () {
+  local CARD=$1
+  local PROFILE=$2
+
+  if [ -z "$CARD" ]; then
+    echo "Missing the card argument"
+    return 1
+  fi
+
+  if [ -z "$PROFILE" ]; then
+    echo "Missing the profile argument"
+    return 1
+  fi
+
+  pactl set-card-profile "$CARD" "$PROFILE" &&
+    echo "Audio profile has be set to $PROFILE" ||
+    echo "Something went wrong setting the audio profile"
+}
+
 help () {
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
@@ -55,7 +74,9 @@ help () {
     "show status" "Show an overall report of the system's audio." \
     "" "" \
     "list cards" "List all the audio cards plugged to the system." \
-    "list profiles" "List the profiles of the active audio card."
+    "list profiles" "List the profiles of the active audio card." \
+    "" "" \
+    "set profile <card> <profile>" "Set the audio profile of the given card."
 
   echo -e "\nOBJECTS"
   printf " %-15s\t%s\n" \
@@ -96,6 +117,11 @@ loop () {
         case "${CMD[1]}" in
           "cards") list_cards;;
           "profiles") list_profiles;;
+          *) echo "Unknown or invalid command: '$REPLY'";;
+        esac;;
+      "set")
+        case "${CMD[1]}" in
+          "profile") set_profile "${CMD[2]}" "${CMD[3]}";;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
       *) echo "Unknown or invalid command: '$REPLY'";; 
