@@ -75,16 +75,20 @@ list_profiles () {
   fi
 
   local QUERY=".[] | select(.${FIELD}==${VALUE})"
-  QUERY+='| .profiles'
-  QUERY+='| to_entries[]'
-  QUERY+='| "\(.key),\(.value.description)"'
 
-  local FRM="%-46s %s\n"
-  printf "$FRM" "KEY" "DESCRIPTION"
+  if pactl --format=json list cards | jq -e "$QUERY" > /dev/null; then
+    QUERY+='| .profiles'
+    QUERY+='| to_entries[]'
+    QUERY+='| "\(.key),\(.value.description)"'
 
-  pactl --format=json list cards | jq -e -M -r "$QUERY" |
-    awk -v f="$FRM" -F, '{printf f,$1,$2}' ||
+    local FRM="%-46s %s\n"
+    printf "$FRM" "KEY" "DESCRIPTION"
+
+    pactl --format=json list cards | jq -M -r "$QUERY" |
+      awk -v f="$FRM" -F, '{printf f,$1,$2}'
+  else
     echo "Cannot find audio card with $FIELD $CARD"
+  fi
 }
 
 set_profile () {
