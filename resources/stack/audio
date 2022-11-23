@@ -13,12 +13,20 @@ prompt () {
   local FG=$YELLOW
 
   local SINK=$(pactl --format=json list sinks | jq -r -M ".[0].active_port")
-  local DB=$(pactl --format=json list sinks | jq -r -M '.[0].volume | keys[0] as $k | (.[$k].db)' | awk '{print $1$2}')
+  local MUTE=$(pactl --format=json list sinks | jq -r -M ".[0].mute")
+
+  local VOLUME=""
+  if [ "$MUTE" = "true" ]; then
+    VOLUME="muted"
+  else
+    VOLUME=$(pactl --format=json list sinks |
+      jq -r -M '.[0].volume | keys[0] as $k | (.[$k].db)' | awk '{print $1$2}')
+  fi
   
   local SC="$MAGENTA"
-  [[ "$DB" =~ ^(-|0.00) ]] && SC="$GREEN"
+  [[ "$VOLUME" =~ ^(-|0.00) ]] && SC="$GREEN"
 
-  read -rep "[audio:$FG${SINK}$RS $SC${DB}$RS] " REPLY
+  read -rep "[audio:$FG${SINK}$RS $SC${VOLUME}$RS] " REPLY
 }
 
 show_status () {
