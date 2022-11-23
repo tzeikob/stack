@@ -124,6 +124,47 @@ set_profile () {
     echo "Something went wrong setting the audio profile"
 }
 
+set_mute () {
+  local SUBJECT=$1
+  local MUTE=$2
+
+  if [ -z "$SUBJECT" ]; then
+    echo "Missing subject argument"
+    return 1
+  elif [[ ! "$SUBJECT" =~ ^(all|output|input)$ ]]; then
+    echo "Invalid subject argument: '$SUBJECT'"
+    return 1
+  fi
+
+  if [ -z "$MUTE" ]; then
+    echo "Missing mute argument"
+    return 1
+  elif [[ ! "$MUTE" =~ ^(1|0)$ ]]; then
+    echo "Invalid mute argument: '$MUTE'"
+    return 1
+  fi
+
+  if [[ "$SUBJECT" =~ (all|output) ]]; then
+    local SINKS=($(pactl --format=json list sinks | jq -r .[].name))
+
+    local INDEX=0
+    while [ $INDEX -lt ${#SINKS[@]} ]; do
+      pactl set-sink-mute ${SINKS[INDEX]} "$MUTE"
+      INDEX=$((INDEX + 1))
+    done
+  fi
+
+  if [[ "$SUBJECT" =~ (all|input) ]]; then
+    local SOURCES=($(pactl --format=json list sources | jq -r .[].name))
+
+    local INDEX=0
+    while [ $INDEX -lt ${#SOURCES[@]} ]; do
+      pactl set-source-mute ${SOURCES[INDEX]} "$MUTE"
+      INDEX=$((INDEX + 1))
+    done
+  fi
+}
+
 help () {
   local FRM=" %-28s\t%s\n"
 
@@ -138,13 +179,19 @@ help () {
     "list cards" "List all the audio cards plugged to the system." \
     "list profiles <name|id>" "List the profiles of the given audio card." \
     "" "" \
-    "set profile <card> <profile>" "Set the audio profile of the given card."
+    "set profile <card> <profile>" "Set the audio profile of the given card." \
+    "mute all" "Mute all audio streams." \
+    "unmute all" "Unmute all audio streams." \
+    "mute output|input" "Mute all output or input audio streams." \
+    "unmute output|input" "Unmute all output or input audio streams."
 
   echo -e "\nOBJECTS"
   printf "$FRM" \
     "status" "The status of the system's audio." \
     "card" "An audio card." \
-    "profile" "An audio profile of a card."
+    "profile" "An audio profile of a card." \
+    "output" "An output audio stream (speaker)." \
+    "input" "An input audio stream (microphone)."
 }
 
 loop () {
@@ -186,6 +233,20 @@ loop () {
       "set")
         case "${CMD[1]}" in
           "profile") set_profile "${CMD[2]}" "${CMD[3]}";;
+          *) echo "Unknown or invalid command: '$REPLY'";;
+        esac;;
+      "mute")
+        case "${CMD[1]}" in
+          "all") set_mute "all" 1;;
+          "output") set_mute "output" 1;;
+          "input") set_mute "input" 1;;
+          *) echo "Unknown or invalid command: '$REPLY'";;
+        esac;;
+      "unmute")
+        case "${CMD[1]}" in
+          "all") set_mute "all" 0;;
+          "output") set_mute "output" 0;;
+          "input") set_mute "input" 0;;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
       *) echo "Unknown or invalid command: '$REPLY'";; 
