@@ -7,12 +7,18 @@ require "jq"
 
 prompt () {
   local YELLOW=$'\e[0;33m'
+  local GREEN=$'\e[0;32m'
+  local MAGENTA=$'\e[0;35m'
   local RS=$'\e[m'
   local FG=$YELLOW
 
-  local SINK=$(pactl info | awk -F: '/Default Sink/{print $2}')
+  local SINK=$(pactl --format=json list sinks | jq -r -M ".[0].active_port")
+  local DB=$(pactl --format=json list sinks | jq -r -M '.[0].volume | keys[0] as $k | (.[$k].db)' | awk '{print $1$2}')
+  
+  local SC="$MAGENTA"
+  [[ "$DB" =~ ^(-|0.00) ]] && SC="$GREEN"
 
-  read -rep "[audio:$FG${SINK}$RS] " REPLY
+  read -rep "[audio:$FG${SINK}$RS $SC${DB}$RS] " REPLY
 }
 
 show_status () {
