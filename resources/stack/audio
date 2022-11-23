@@ -105,8 +105,8 @@ set_profile () {
     return 1
   fi
 
-  pactl set-card-profile "$CARD" "$PROFILE" &&
-    echo "Audio profile has be set to $PROFILE" ||
+  pactl set-card-profile "$CARD" "$PROFILE" &> /dev/null &&
+    echo "Audio profile has been set to $PROFILE" ||
     echo "Something went wrong setting the audio profile"
 }
 
