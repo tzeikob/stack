@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+
+source /opt/stack/utils
+
+require "xorg-xrandr"
+
+prompt () {
+  local YELLOW=$'\e[0;33m'
+  local GREEN=$'\e[0;32m'
+  local MAGENTA=$'\e[0;35m'
+  local RS=$'\e[m'
+  local FG=$YELLOW
+
+  read -rep "[screens:${FG}none$RS] " REPLY
+}
+
+show_status () {
+  xrandr --current | awk '{ \
+    if ($0 ~ /^Screen/) {printf "%s-%s %s%s%s\n",$1,$2,$8,$9,substr($10,1,length($10)-1)}
+    else if ($0 !~ /^\s+/) {print " "$0}
+  }'
+}
+
+help () {
+  local FRM=" %-28s\t%s\n"
+
+  echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
+
+  echo -e "\nCOMMANDS"
+  printf "$FRM" \
+    "help" "Show this help message." \
+    "show status" "Show a report of all screen layouts."
+
+  echo -e "\nOBJECTS"
+  printf "$FRM" \
+    "status" "The status of all screen layouts."
+}
+
+loop () {
+  clear
+
+  while true; do
+    prompt && history -s "$REPLY"
+
+    set -f
+    local OLD_IFS=$IFS && IFS=$'\n'
+    local CMD=($(xargs -n1 <<< "$REPLY"))
+    IFS=$OLD_IFS && set +f
+
+    if [ "${CMD[0]}" = "help" ]; then
+      help
+      continue
+    elif [ "${CMD[0]}" = "clear" ]; then
+      clear
+      continue
+    elif [ "${CMD[0]}" = "quit" ]; then
+      break
+    elif [ -z "${CMD[0]}" ]; then
+      continue
+    fi
+
+    case "${CMD[0]}" in
+      "show")
+        case "${CMD[1]}" in
+          "status") show_status;;
+          *) echo "Unknown or invalid command: '$REPLY'";;
+        esac;;
+      *) echo "Unknown or invalid command: '$REPLY'";; 
+    esac
+  done
+
+  clear
+}
+
+loop
