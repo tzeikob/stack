@@ -30,10 +30,65 @@ prompt () {
 }
 
 show_status () {
-  local FRM="%-32s\t%s\n"
+  local QUERY='("\(.server_name)&;'
+  QUERY+='\(.server_string)&;'
+  QUERY+='\(.server_version)&;'
+  QUERY+='\(.is_local)&;'
+  QUERY+='\(.client_index)&;'
+  QUERY+='\(.default_sample_specification)&;'
+  QUERY+='\(.default_channel_map)&;'
+  QUERY+='\(.default_sink_name)&;'
+  QUERY+='\(.default_source_name)&;'
+  QUERY+='\(.cookie)")'
 
-  pactl info | awk -v f="$FRM" -F: '{printf f, $1":", $2}'
-  pactl stat | awk -v f="$FRM" -F: '{printf f, $1":", $2}'
+  local FRM=''
+  FRM+='Server:       %s\n'
+  FRM+='Path:         %s\n'
+  FRM+='Version:      %s\n'
+  FRM+='Local:        %s\n'
+  FRM+='Client:       %s\n'
+  FRM+='Sample:       %s\n'
+  FRM+='Channel:      %s\n'
+  FRM+='Sink:         %s\n'
+  FRM+='Source:       %s\n'
+  FRM+='Cookie:       %s\n'
+
+  pactl --format=json info | jq -r "$QUERY" |
+    awk -v f="$FRM" -F'&;' '{printf f,$1,$2,$3,$4,$5,$6,$7,$8,$9,$10}'
+  
+  QUERY='.[0] |'
+  QUERY+='("\(.name)&;'
+  QUERY+='\(.properties."device.name")&;'
+  QUERY+='\(.properties."device.nick")&;'
+  QUERY+='\(.properties."device.vendor.name")&;'
+  QUERY+='\(.properties."device.product.name")&;'
+  QUERY+='\(.driver)&;'
+  QUERY+='\(.properties."device.api")&;'
+  QUERY+='\(.properties."device.form_factor")&;'
+  QUERY+='\(.properties."device.bus")&;'
+  QUERY+='\(.properties."api.alsa.use-acp")&;'
+  QUERY+='\(.properties."api.acp.auto-profile")&;'
+  QUERY+='\(.properties."api.acp.auto-port")&;'
+  QUERY+='\(.active_profile)")'
+
+  FRM=''
+  FRM+='Name:         %s\n'
+  FRM+='Device:       %s\n'
+  FRM+='Model:        %s\n'
+  FRM+='Vendor:       %s\n'
+  FRM+='Product:      %s\n'
+  FRM+='Driver:       %s\n'
+  FRM+='API:          %s\n'
+  FRM+='Form:         %s\n'
+  FRM+='Bus:          %s\n'
+  FRM+='ACP:          %s\n'
+  FRM+='Auto Profile: %s\n'
+  FRM+='Auto Port:    %s\n'
+  FRM+='Profile:      %s\n'
+  
+  echo
+  pactl --format=json list cards | jq -r "$QUERY" |
+    awk -v f="$FRM" -F'&;' '{printf f,$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13}'
 }
 
 show_card () {
