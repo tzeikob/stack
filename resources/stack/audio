@@ -115,12 +115,12 @@ list_outputs () {
   QUERY+='\(.mute),'
   QUERY+='\(.availability)"'
 
-  local OUTPUTS="$(pactl --format=json list sinks | jq -r -M "$QUERY")"
+  local SINKS="$(pactl --format=json list sinks | jq -r -M "$QUERY")"
 
-  if [ -n "$OUTPUTS" ]; then
+  if [ -n "$SINKS" ]; then
     local FRM="%-4s %-28s %-15s %-20s %-6s %s\n"
     printf "$FRM" "ID" "NAME" "TYPE" "MODEL" "MUTE" "AVAILABILITY"
-    echo "$OUTPUTS" | awk -v f="$FRM" -F, '{printf f,$1,$2,$3,$4,$5,$6,$7}'
+    echo "$SINKS" | awk -v f="$FRM" -F, '{printf f,$1,$2,$3,$4,$5,$6}'
   else
     echo "No outputs have been found"
   fi
@@ -136,12 +136,12 @@ list_inputs () {
   QUERY+='\(.mute),'
   QUERY+='\(.availability)"'
 
-  local INPUTS="$(pactl --format=json list sources | jq -r -M "$QUERY")"
+  local SOURCES="$(pactl --format=json list sources | jq -r -M "$QUERY")"
 
-  if [ -n "$INPUTS" ]; then
+  if [ -n "$SOURCES" ]; then
     local FRM="%-4s %-28s %-15s %-20s %-6s %s\n"
     printf "$FRM" "ID" "NAME" "TYPE" "MODEL" "MUTE" "AVAILABILITY"
-    echo "$INPUTS" | awk -v f="$FRM" -F, '{printf f,$1,$2,$3,$4,$5,$6,$7}'
+    echo "$SOURCES" | awk -v f="$FRM" -F, '{printf f,$1,$2,$3,$4,$5,$6}'
   else
     echo "No inputs have been found"
   fi
