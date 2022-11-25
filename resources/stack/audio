@@ -126,6 +126,27 @@ list_outputs () {
   fi
 }
 
+list_inputs () {
+  local QUERY='map((.ports[] + {index, mute, properties})) |'
+  QUERY+='.[] |'
+  QUERY+='"\(.index),'
+  QUERY+='\(.name),'
+  QUERY+='\(.type),'
+  QUERY+='\(.properties."device.nick"),'
+  QUERY+='\(.mute),'
+  QUERY+='\(.availability)"'
+
+  local INPUTS="$(pactl --format=json list sources | jq -r -M "$QUERY")"
+
+  if [ -n "$INPUTS" ]; then
+    local FRM="%-4s %-28s %-15s %-20s %-6s %s\n"
+    printf "$FRM" "ID" "NAME" "TYPE" "MODEL" "MUTE" "AVAILABILITY"
+    echo "$INPUTS" | awk -v f="$FRM" -F, '{printf f,$1,$2,$3,$4,$5,$6,$7}'
+  else
+    echo "No inputs have been found"
+  fi
+}
+
 list_clients () {
   local FILTER=$1
 
@@ -174,7 +195,7 @@ set_mute () {
   if [ -z "$SUBJECT" ]; then
     echo "Missing subject argument"
     return 1
-  elif [[ ! "$SUBJECT" =~ ^(all|outputs|input)$ ]]; then
+  elif [[ ! "$SUBJECT" =~ ^(all|outputs|inputs)$ ]]; then
     echo "Invalid subject argument: '$SUBJECT'"
     return 1
   fi
@@ -197,12 +218,12 @@ set_mute () {
     done
   fi
 
-  if [[ "$SUBJECT" =~ (all|input) ]]; then
+  if [[ "$SUBJECT" =~ (all|inputs) ]]; then
     local SOURCES=($(pactl --format=json list sources | jq -r .[].name))
 
     local INDEX=0
     while [ $INDEX -lt ${#SOURCES[@]} ]; do
-      pactl set-source-mute ${SOURCES[INDEX]} "$MUTE"
+      pactl set-source-mute "${SOURCES[INDEX]}" "$MUTE"
       INDEX=$((INDEX + 1))
     done
   fi
@@ -222,13 +243,14 @@ help () {
     "list cards" "List all the audio cards plugged to the system." \
     "list profiles <name|id>" "List the profiles of the given audio card." \
     "list outputs" "List all output audio streams." \
+    "list inputs" "List all input audio streams." \
     "list clients [<filter>]" "List any active audio clients." \
     "" "" \
     "set profile <card> <profile>" "Set the audio profile of the given card." \
     "mute all" "Mute all audio streams." \
     "unmute all" "Unmute all audio streams." \
-    "mute outputs|input" "Mute all output or input audio streams." \
-    "unmute outputs|input" "Unmute all output or input audio streams."
+    "mute outputs|inputs" "Mute all output or input audio streams." \
+    "unmute outputs|inputs" "Unmute all output or input audio streams."
 
   echo -e "\nOBJECTS"
   printf "$FRM" \
@@ -275,6 +297,7 @@ loop () {
           "cards") list_cards;;
           "profiles") list_profiles "${CMD[2]}";;
           "outputs") list_outputs;;
+          "inputs") list_inputs;;
           "clients") list_clients "${CMD[2]}";;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
@@ -287,14 +310,14 @@ loop () {
         case "${CMD[1]}" in
           "all") set_mute "all" 1;;
           "outputs") set_mute "outputs" 1;;
-          "input") set_mute "input" 1;;
+          "inputs") set_mute "inputs" 1;;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
       "unmute")
         case "${CMD[1]}" in
           "all") set_mute "all" 0;;
           "outputs") set_mute "outputs" 0;;
-          "input") set_mute "input" 0;;
+          "inputs") set_mute "inputs" 0;;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
       *) echo "Unknown or invalid command: '$REPLY'";; 
