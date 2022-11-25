@@ -105,6 +105,28 @@ list_profiles () {
   fi
 }
 
+list_clients () {
+  local FILTER=$1
+
+  local QUERY='.[] |'
+  QUERY+='select(.properties."application.name"|test("'$FILTER'"; "i")) |'
+  QUERY+='"\(.index),'
+  QUERY+='\(.properties."application.name"),'
+  QUERY+='\(.properties."application.process.id"),'
+  QUERY+='\(.properties."media.name"),'
+  QUERY+='\(.mute)"'
+
+  local CLIENTS="$(pactl --format=json list sink-inputs | jq -r -M "$QUERY")"
+
+  if [ -n "$CLIENTS" ]; then
+    local FRM="%-4s %-18s %-8s %-10s %s\n"
+    printf "$FRM" "ID" "NAME" "PROCESS" "MEDIA" "MUTE"
+    echo "$CLIENTS" | awk -v f="$FRM" -F, '{printf f,$1,$2,$3,$4,$5}'
+  else
+    echo "No clients have been found"
+  fi
+}
+
 set_profile () {
   local CARD=$1
   local PROFILE=$2
@@ -178,6 +200,7 @@ help () {
     "" "" \
     "list cards" "List all the audio cards plugged to the system." \
     "list profiles <name|id>" "List the profiles of the given audio card." \
+    "list clients [<filter>]" "List any active audio clients." \
     "" "" \
     "set profile <card> <profile>" "Set the audio profile of the given card." \
     "mute all" "Mute all audio streams." \
@@ -190,6 +213,7 @@ help () {
     "status" "The status of the system's audio." \
     "card" "An audio card." \
     "profile" "An audio profile of a card." \
+    "client" "An application or process connected to the audio server." \
     "output" "An output audio stream (speaker)." \
     "input" "An input audio stream (microphone)."
 }
@@ -228,6 +252,7 @@ loop () {
         case "${CMD[1]}" in
           "cards") list_cards;;
           "profiles") list_profiles "${CMD[2]}";;
+          "clients") list_clients "${CMD[2]}";;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
       "set")
