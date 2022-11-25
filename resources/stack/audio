@@ -244,13 +244,11 @@ help () {
     "list profiles <name|id>" "List the profiles of the given audio card." \
     "list outputs" "List all output audio streams." \
     "list inputs" "List all input audio streams." \
-    "list playbacks [<filter>]" "List any active client streaming audio." \
+    "list playbacks [<filter>]" "List any active audio playbacks." \
     "" "" \
     "set profile <card> <profile>" "Set the audio profile of the given card." \
-    "mute all" "Mute all audio streams." \
-    "unmute all" "Unmute all audio streams." \
-    "mute outputs|inputs" "Mute all output or input audio streams." \
-    "unmute outputs|inputs" "Unmute all output or input audio streams."
+    "mute all|outputs|inputs" "Mute all, output or input audio streams." \
+    "unmute all|outputs|inputs" "Unmute all, outputs or inputs audio streams."
 
   echo -e "\nOBJECTS"
   printf "$FRM" \
