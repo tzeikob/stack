@@ -109,10 +109,60 @@ show_card () {
     VALUE=$CARD
   fi
 
-  local QUERY=".[] | select(.${FIELD}==${VALUE})"
+  local CARDS=$(pactl --format=json list cards)
 
-  pactl --format=json list cards | jq -e "$QUERY" ||
+  local QUERY=".[] | select(.${FIELD}==${VALUE}) |"
+  QUERY+='("Index:              \(.index)\n'
+  QUERY+='Name:               \(.name)\n'
+  QUERY+='Driver:             \(.driver)\n'
+  QUERY+='Owner:              \(.owner_module)\n'
+  QUERY+='Enum API:           \(.properties."device.enum.api")\n'
+  QUERY+='Device API:         \(.properties."device.api")\n'
+  QUERY+='Media Class:        \(.properties."media.class")\n'
+  QUERY+='API Alsa Path:      \(.properties."api.alsa.path")\n'
+  QUERY+='API Alsa Card:      \(.properties."api.alsa.card")\n'
+  QUERY+='API Alsa Card Name: \(.properties."api.alsa.card.name")\n'
+  QUERY+='Card Long Name:     \(.properties."api.alsa.card.longname")\n'
+  QUERY+='Usec:               \(.properties."device.plugged.usec")\n'
+  QUERY+='Bus Path:           \(.properties."device.bus_path")\n'
+  QUERY+='SysFS Path:         \(.properties."sysfs.path")\n'
+  QUERY+='Bus:                \(.properties."device.bus")\n'
+  QUERY+='Subsystem:          \(.properties."device.subsystem")\n'
+  QUERY+='Vendor ID:          \(.properties."device.vendor.id")\n'
+  QUERY+='Vendor Name:        \(.properties."device.vendor.name")\n'
+  QUERY+='Product ID:         \(.properties."device.product.id")\n'
+  QUERY+='Product Name:       \(.properties."device.product.name")\n'
+  QUERY+='Form Factor:        \(.properties."device.form_factor")\n'
+  QUERY+='Device Name:        \(.properties."device.name")\n'
+  QUERY+='Description:        \(.properties."device.description")\n'
+  QUERY+='Nick:               \(.properties."device.nick")\n'
+  QUERY+='Use ACP:            \(.properties."api.alsa.use-acp")\n'
+  QUERY+='Auto Profile:       \(.properties."api.acp.auto-profile")\n'
+  QUERY+='Auto Port:          \(.properties."api.acp.auto-port")\n'
+  QUERY+='Reserve Devicel:    \(.properties."api.dbus.ReserveDevice1")\n'
+  QUERY+='Factory:            \(.properties."factory.id")\n'
+  QUERY+='Client ID:          \(.properties."client.id")\n'
+  QUERY+='Object ID:          \(.properties."object.id")\n'
+  QUERY+='Object Serial:      \(.properties."object.serial")\n'
+  QUERY+='Object Path:        \(.properties."object.path")\n'
+  QUERY+='Alsa Card:          \(.properties."alsa.card")\n'
+  QUERY+='Active Profile:     \(.active_profile)")'
+
+  if echo "$CARDS" | jq -er "$QUERY"; then
+    QUERY=".[] | select(.${FIELD}==${VALUE}) |"
+    QUERY+='.profiles | " \(keys[])"'
+
+    echo -e "\nProfiles:"
+    echo "$CARDS" | jq -er "$QUERY"
+
+    QUERY=".[] | select(.${FIELD}==${VALUE}) |"
+    QUERY+='.ports | to_entries[] | " \(.key) [\(.value.type)]"'
+
+    echo -e "\nPorts:"
+    echo "$CARDS" | jq -er "$QUERY"
+  else
     echo "Cannot find audio card with $FIELD $CARD"
+  fi
 }
 
 list_cards () {
