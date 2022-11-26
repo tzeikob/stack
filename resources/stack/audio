@@ -6,27 +6,28 @@ require "libpulse"
 require "jq"
 
 prompt () {
-  local YELLOW=$'\e[0;33m'
-  local GREEN=$'\e[0;32m'
-  local MAGENTA=$'\e[0;35m'
-  local RS=$'\e[m'
-  local FG=$YELLOW
+  local SINKS=$(pactl --format=json list sinks)
 
-  local SINK=$(pactl --format=json list sinks | jq -r ".[0].active_port")
-  local MUTE=$(pactl --format=json list sinks | jq -r ".[0].mute")
+  local QUERY='.[0] | .active_port'
+  local PORT=$(echo "$SINKS" | jq -r "$QUERY")
 
-  local VOLUME=""
+  QUERY='.[0] | .mute'
+  local MUTE=$(echo "$SINKS" | jq -r "$QUERY")
+
+  QUERY='.[0] | .volume | keys[0] as $k | .[$k].db'
+  local DB=$(echo "$SINKS" | jq -r "$QUERY" | awk '{print $1$2}')
+
+  local STATUS="$YE${PORT}$RS"
+
   if [ "$MUTE" = "true" ]; then
-    VOLUME="muted"
+    STATUS+=" ${MA}muted$RS"
+  elif [[ "$DB" =~ ^(-|0.00) ]]; then
+    STATUS+=" $GR${DB}$RS"
   else
-    VOLUME=$(pactl --format=json list sinks |
-      jq -r '.[0].volume | keys[0] as $k | (.[$k].db)' | awk '{print $1$2}')
+    STATUS+=" $MA${DB}$RS"
   fi
-  
-  local SC="$MAGENTA"
-  [[ "$VOLUME" =~ ^(-|0.00) ]] && SC="$GREEN"
 
-  read -rep "[audio:$FG${SINK}$RS $SC${VOLUME}$RS] " REPLY
+  read -rep "[audio:${STATUS}] " REPLY
 }
 
 show_status () {

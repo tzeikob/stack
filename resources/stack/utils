@@ -6,6 +6,11 @@ GREEN=$'\e[0;32m'
 BLUE=$'\e[0;34m'
 YELLOW=$'\e[0;33m'
 
+YE=$'\e[0;33m'
+GR=$'\e[0;32m'
+MA=$'\e[0;35m'
+RS=$'\e[m'
+
 abort () {
   local MESSAGE=${1:-"Something went wrong"}
   local CODE=${2:-1}
