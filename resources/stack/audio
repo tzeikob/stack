@@ -12,15 +12,15 @@ prompt () {
   local RS=$'\e[m'
   local FG=$YELLOW
 
-  local SINK=$(pactl --format=json list sinks | jq -r -M ".[0].active_port")
-  local MUTE=$(pactl --format=json list sinks | jq -r -M ".[0].mute")
+  local SINK=$(pactl --format=json list sinks | jq -r ".[0].active_port")
+  local MUTE=$(pactl --format=json list sinks | jq -r ".[0].mute")
 
   local VOLUME=""
   if [ "$MUTE" = "true" ]; then
     VOLUME="muted"
   else
     VOLUME=$(pactl --format=json list sinks |
-      jq -r -M '.[0].volume | keys[0] as $k | (.[$k].db)' | awk '{print $1$2}')
+      jq -r '.[0].volume | keys[0] as $k | (.[$k].db)' | awk '{print $1$2}')
   fi
   
   local SC="$MAGENTA"
@@ -109,7 +109,7 @@ show_card () {
 
   local QUERY=".[] | select(.${FIELD}==${VALUE})"
 
-  pactl --format=json list cards | jq -e -M "$QUERY" ||
+  pactl --format=json list cards | jq -e "$QUERY" ||
     echo "Cannot find audio card with $FIELD $CARD"
 }
 
@@ -153,7 +153,7 @@ list_profiles () {
     local FRM="%-46s %s\n"
     printf "$FRM" "KEY" "DESCRIPTION"
 
-    pactl --format=json list cards | jq -M -r "$QUERY" |
+    pactl --format=json list cards | jq -r "$QUERY" |
       awk -v f="$FRM" -F, '{printf f,$1,$2}'
   else
     echo "Cannot find audio card with $FIELD $CARD"
@@ -170,7 +170,7 @@ list_outputs () {
   QUERY+='\(.mute),'
   QUERY+='\(.availability)"'
 
-  local SINKS="$(pactl --format=json list sinks | jq -r -M "$QUERY")"
+  local SINKS="$(pactl --format=json list sinks | jq -r "$QUERY")"
 
   if [ -n "$SINKS" ]; then
     local FRM="%-4s %-28s %-15s %-20s %-6s %s\n"
@@ -191,7 +191,7 @@ list_inputs () {
   QUERY+='\(.mute),'
   QUERY+='\(.availability)"'
 
-  local SOURCES="$(pactl --format=json list sources | jq -r -M "$QUERY")"
+  local SOURCES="$(pactl --format=json list sources | jq -r "$QUERY")"
 
   if [ -n "$SOURCES" ]; then
     local FRM="%-4s %-28s %-15s %-20s %-6s %s\n"
@@ -213,7 +213,7 @@ list_playbacks () {
   QUERY+='\(.properties."media.name"),'
   QUERY+='\(.mute)"'
 
-  local SINK_INPUTS="$(pactl --format=json list sink-inputs | jq -r -M "$QUERY")"
+  local SINK_INPUTS="$(pactl --format=json list sink-inputs | jq -r "$QUERY")"
 
   if [ -n "$SINK_INPUTS" ]; then
     local FRM="%-4s %-18s %-8s %-10s %s\n"
