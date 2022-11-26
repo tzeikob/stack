@@ -57,8 +57,9 @@ show_status () {
   pactl --format=json info | jq -r "$QUERY" |
     awk -v f="$FRM" -F'&;' '{printf f,$1,$2,$3,$4,$5,$6,$7,$8,$9,$10}'
   
-  QUERY='.[0] |'
-  QUERY+='("\(.name)&;'
+  QUERY='.[] |'
+  QUERY+='("\(.index)&;'
+  QUERY+='\(.name)&;'
   QUERY+='\(.properties."device.name")&;'
   QUERY+='\(.properties."device.nick")&;'
   QUERY+='\(.properties."device.vendor.name")&;'
@@ -72,7 +73,8 @@ show_status () {
   QUERY+='\(.properties."api.acp.auto-port")&;'
   QUERY+='\(.active_profile)")'
 
-  FRM=''
+  FRM='\n'
+  FRM+='Card:         %s\n'
   FRM+='Name:         %s\n'
   FRM+='Device:       %s\n'
   FRM+='Model:        %s\n'
@@ -86,10 +88,9 @@ show_status () {
   FRM+='Auto Profile: %s\n'
   FRM+='Auto Port:    %s\n'
   FRM+='Profile:      %s\n'
-  
-  echo
+
   pactl --format=json list cards | jq -r "$QUERY" |
-    awk -v f="$FRM" -F'&;' '{printf f,$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13}'
+    awk -v f="$FRM" -F'&;' '{printf f,$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14}'
 }
 
 show_card () {
