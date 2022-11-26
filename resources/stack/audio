@@ -109,10 +109,15 @@ show_card () {
     VALUE=$CARD
   fi
 
-  local CARDS=$(pactl --format=json list cards)
+  local QUERY=".[] | select(.${FIELD}==${VALUE})"
+  CARD=$(pactl --format=json list cards | jq -er "$QUERY" || echo "$?")
 
-  local QUERY=".[] | select(.${FIELD}==${VALUE}) |"
-  QUERY+='("Index:              \(.index)\n'
+  if [[ "$CARD" =~ ^[0-9]+$ ]]; then
+    echo "Unable to find the card with $FIELD $VALUE"
+    return 1
+  fi
+
+  QUERY='("Index:              \(.index)\n'
   QUERY+='Name:               \(.name)\n'
   QUERY+='Driver:             \(.driver)\n'
   QUERY+='Owner:              \(.owner_module)\n'
@@ -147,22 +152,15 @@ show_card () {
   QUERY+='Object Path:        \(.properties."object.path")\n'
   QUERY+='Alsa Card:          \(.properties."alsa.card")\n'
   QUERY+='Active Profile:     \(.active_profile)")'
+  echo "$CARD" | jq -r "$QUERY"
 
-  if echo "$CARDS" | jq -er "$QUERY"; then
-    QUERY=".[] | select(.${FIELD}==${VALUE}) |"
-    QUERY+='.profiles | " \(keys[])"'
+  echo -e "\nProfiles:"
+  QUERY='.profiles | " \(keys[])"'
+  echo "$CARD" | jq -r "$QUERY"
 
-    echo -e "\nProfiles:"
-    echo "$CARDS" | jq -er "$QUERY"
-
-    QUERY=".[] | select(.${FIELD}==${VALUE}) |"
-    QUERY+='.ports | to_entries[] | " \(.key) [\(.value.type)]"'
-
-    echo -e "\nPorts:"
-    echo "$CARDS" | jq -er "$QUERY"
-  else
-    echo "Cannot find audio card with $FIELD $CARD"
-  fi
+  echo -e "\nPorts:"
+  QUERY='.ports | to_entries[] | " \(.key) [\(.value.type)]"'
+  echo "$CARD" | jq -r "$QUERY"
 }
 
 list_cards () {
