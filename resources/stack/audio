@@ -279,9 +279,16 @@ set_output () {
     return 1
   fi
 
-  pactl set-sink-volume "$INDEX" "$VOLUME%" &&
+  if [ $VOLUME -gt 0 ]; then
+    pactl set-sink-mute "$INDEX" 0 &&
+    pactl set-sink-volume "$INDEX" "$VOLUME%" &&
       echo "Volume set to $VOLUME for the output $INDEX" ||
       echo "Unable to set the volume"
+  else
+    pactl set-sink-mute "$INDEX" 1 &&
+      echo "Output $INDEX set to mute" ||
+      echo "Unable to set output to mute"
+  fi
 }
 
 set_input () {
@@ -303,10 +310,17 @@ set_input () {
     echo "Volume is out of the valid range: '$VOLUME'"
     return 1
   fi
-
-  pactl set-source-volume "$INDEX" "$VOLUME%" &&
+  
+  if [ $VOLUME -gt 0 ]; then
+    pactl set-source-mute "$INDEX" 0 &&
+    pactl set-source-volume "$INDEX" "$VOLUME%" &&
       echo "Volume set to $VOLUME for the input $INDEX" ||
       echo "Unable to set the volume"
+  else
+    pactl set-source-mute "$INDEX" 1 &&
+      echo "Input $INDEX set to mute" ||
+      echo "Unable to set input to mute"
+  fi
 }
 
 set_mute () {
