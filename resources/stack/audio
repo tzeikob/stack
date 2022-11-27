@@ -259,6 +259,46 @@ set_profile () {
     echo "Unable to set the audio profile"
 }
 
+set_volume () {
+  local OBJECT=$1
+  local INDEX=$2
+  local VOLUME=$3
+
+  if [ -z "$OBJECT" ]; then
+    echo "Missing the object argument"
+    return 1
+  elif [[ ! "$OBJECT" =~ ^(output|input)$ ]]; then
+    echo "Invalid object argument: '$OBJECT'"
+    return 1
+  fi
+
+  if [ -z "$INDEX" ]; then
+    echo "Missing the object name or id argument"
+    return 1
+  fi
+
+  if [ -z "$VOLUME" ]; then
+    echo "Missing the volume argument"
+    return 1
+  elif [[ ! "$VOLUME" =~ ^[0-9]{1,3}$ ]]; then
+    echo "Invalid volume argument: '$VOLUME'"
+    return 1
+  elif ! (($VOLUME >= 0 && $VOLUME <= 150)); then
+    echo "Volume is out of the valid range: '$VOLUME'"
+    return 1
+  fi
+
+  if [ "$OBJECT" = "output" ]; then
+    pactl set-sink-volume "$INDEX" "$VOLUME%" &&
+      echo "Volume set to $VOLUME for the output $INDEX" ||
+      echo "Unable to set the volume"
+  else
+    pactl set-source-volume "$INDEX" "$VOLUME%" &&
+      echo "Volume set to $VOLUME for the input $INDEX" ||
+      echo "Unable to set the volume"
+  fi
+}
+
 set_mute () {
   local SUBJECT=$1
   local MUTE=$2
@@ -318,6 +358,8 @@ help () {
     "list playbacks [<filter>]" "List any active audio playbacks." \
     "" "" \
     "set profile <card> <profile>" "Set the audio profile of the given card." \
+    "set volume output <name|id> <percent>" "Set the volume of the given output." \
+    "set volume input <name|id> <percent>" "Set the volume of the given input." \
     "mute all|outputs|inputs" "Mute all, output or input audio streams." \
     "unmute all|outputs|inputs" "Unmute all, outputs or inputs audio streams."
 
@@ -373,6 +415,7 @@ loop () {
       "set")
         case "${CMD[1]}" in
           "profile") set_profile "${CMD[2]}" "${CMD[3]}";;
+          "volume") set_volume "${CMD[2]}" "${CMD[3]}" "${CMD[4]}";;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
       "mute")
