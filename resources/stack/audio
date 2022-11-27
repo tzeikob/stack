@@ -163,84 +163,77 @@ list_profiles () {
   fi
 
   local QUERY=".[] | select(.${FIELD}==${VALUE})"
+  CARD=$(pactl --format=json list cards | jq -er "$QUERY" || echo "$?")
 
-  if pactl --format=json list cards | jq -e "$QUERY" > /dev/null; then
-    QUERY+='| .profiles'
-    QUERY+='| to_entries[]'
-    QUERY+='| "\(.key),\(.value.description)"'
-
-    local FRM="%-46s %s\n"
-    printf "$FRM" "KEY" "DESCRIPTION"
-
-    pactl --format=json list cards | jq -r "$QUERY" |
-      awk -v f="$FRM" -F, '{printf f,$1,$2}'
-  else
-    echo "Cannot find audio card with $FIELD $CARD"
+  if [[ "$CARD" =~ ^[0-9]+$ ]]; then
+    echo "Unable to find the card with $FIELD $VALUE"
+    return 1
   fi
+
+  QUERY='.profiles | keys[]'
+  echo "$CARD" | jq -r "$QUERY"
 }
 
 list_outputs () {
-  local QUERY='map((.ports[] + {index, mute, properties})) |'
-  QUERY+='.[] |'
-  QUERY+='"\(.index),'
-  QUERY+='\(.name),'
-  QUERY+='\(.type),'
-  QUERY+='\(.properties."device.nick"),'
-  QUERY+='\(.mute),'
-  QUERY+='\(.availability)"'
+  local SINKS=$(pactl --format=json list sinks)
 
-  local SINKS="$(pactl --format=json list sinks | jq -r "$QUERY")"
-
-  if [ -n "$SINKS" ]; then
-    local FRM="%-4s %-28s %-15s %-20s %-6s %s\n"
-    printf "$FRM" "ID" "NAME" "TYPE" "MODEL" "MUTE" "AVAILABILITY"
-    echo "$SINKS" | awk -v f="$FRM" -F, '{printf f,$1,$2,$3,$4,$5,$6}'
-  else
+  if [ -z "$SINKS" ]; then
     echo "No outputs have been found"
+    return 1
   fi
+
+  local QUERY='map((.ports[] + {index, mute, properties})) |'
+  QUERY+='.[] | ("\n'
+  QUERY+='Sink:      \(.index)\n'
+  QUERY+='Name:      \(.name)\n'
+  QUERY+='Type:      \(.type)\n'
+  QUERY+='Nick:      \(.properties."device.nick")\n'
+  QUERY+='Mute:      \(.mute)\n'
+  QUERY+='Available: \(.availability)")'
+
+  echo "$SINKS" | jq -r "$QUERY" | tail -n +2
 }
 
 list_inputs () {
-  local QUERY='map((.ports[] + {index, mute, properties})) |'
-  QUERY+='.[] |'
-  QUERY+='"\(.index),'
-  QUERY+='\(.name),'
-  QUERY+='\(.type),'
-  QUERY+='\(.properties."device.nick"),'
-  QUERY+='\(.mute),'
-  QUERY+='\(.availability)"'
+  local SOURCES=$(pactl --format=json list sources)
 
-  local SOURCES="$(pactl --format=json list sources | jq -r "$QUERY")"
-
-  if [ -n "$SOURCES" ]; then
-    local FRM="%-4s %-28s %-15s %-20s %-6s %s\n"
-    printf "$FRM" "ID" "NAME" "TYPE" "MODEL" "MUTE" "AVAILABILITY"
-    echo "$SOURCES" | awk -v f="$FRM" -F, '{printf f,$1,$2,$3,$4,$5,$6}'
-  else
+  if [ -z "$SOURCES" ]; then
     echo "No inputs have been found"
+    return 1
   fi
+
+  local QUERY='map((.ports[] + {index, mute, properties})) |'
+  QUERY+='.[] | ("\n'
+  QUERY+='Source:    \(.index)\n'
+  QUERY+='Name:      \(.name)\n'
+  QUERY+='Type:      \(.type)\n'
+  QUERY+='Nick:      \(.properties."device.nick")\n'
+  QUERY+='Mute:      \(.mute)\n'
+  QUERY+='Available: \(.availability)")'
+
+  echo "$SOURCES" | jq -r "$QUERY" | tail -n +2
 }
 
 list_playbacks () {
   local FILTER=$1
 
+  local SINK_INPUTS=$(pactl --format=json list sink-inputs)
+
+  if [ -z "$SINK_INPUTS" ]; then
+    echo "No playbacks have been found"
+    return 1
+  fi
+
   local QUERY='.[] |'
   QUERY+='select(.properties."application.name"|test("'$FILTER'"; "i")) |'
-  QUERY+='"\(.index),'
-  QUERY+='\(.properties."application.name"),'
-  QUERY+='\(.properties."application.process.id"),'
-  QUERY+='\(.properties."media.name"),'
-  QUERY+='\(.mute)"'
+  QUERY+='("\n'
+  QUERY+='Sink:        \(.index)\n'
+  QUERY+='Application: \(.properties."application.name")\n'
+  QUERY+='Process:     \(.properties."application.process.id")\n'
+  QUERY+='Media:       \(.properties."media.name")\n'
+  QUERY+='Mute:        \(.mute)")'
 
-  local SINK_INPUTS="$(pactl --format=json list sink-inputs | jq -r "$QUERY")"
-
-  if [ -n "$SINK_INPUTS" ]; then
-    local FRM="%-4s %-18s %-8s %-10s %s\n"
-    printf "$FRM" "ID" "NAME" "PROCESS" "MEDIA" "MUTE"
-    echo "$SINK_INPUTS" | awk -v f="$FRM" -F, '{printf f,$1,$2,$3,$4,$5}'
-  else
-    echo "No playbacks have been found"
-  fi
+  echo "$SINK_INPUTS" | jq -r "$QUERY" | tail -n +2
 }
 
 set_profile () {
