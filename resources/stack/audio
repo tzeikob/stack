@@ -68,7 +68,7 @@ show_card () {
   local CARD=$1
 
   if [ -z "$CARD" ]; then
-    echo "Missing card name or id argument"
+    echo "Missing name or id argument"
     return 1
   fi
 
@@ -150,7 +150,7 @@ list_profiles () {
   local CARD=$1
 
   if [ -z "$CARD" ]; then
-    echo "Missing card name or id argument"
+    echo "Missing name or id argument"
     return 1
   fi
 
@@ -252,7 +252,7 @@ set_profile () {
 
   pactl set-card-profile "$CARD" "$PROFILE" &> /dev/null &&
     echo "Audio profile has been set to $PROFILE" ||
-    echo "Something went wrong setting the audio profile"
+    echo "Unable to set the audio profile"
 }
 
 set_mute () {
@@ -260,7 +260,7 @@ set_mute () {
   local MUTE=$2
 
   if [ -z "$SUBJECT" ]; then
-    echo "Missing subject argument"
+    echo "Missing the subject argument"
     return 1
   elif [[ ! "$SUBJECT" =~ ^(all|outputs|inputs)$ ]]; then
     echo "Invalid subject argument: '$SUBJECT'"
@@ -268,7 +268,7 @@ set_mute () {
   fi
 
   if [ -z "$MUTE" ]; then
-    echo "Missing mute argument"
+    echo "Missing the mute argument"
     return 1
   elif [[ ! "$MUTE" =~ ^(1|0)$ ]]; then
     echo "Invalid mute argument: '$MUTE'"
