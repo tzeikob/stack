@@ -135,17 +135,15 @@ show_card () {
 }
 
 list_cards () {
-  local FRM="%-3s %-35s %-4s %-15s %s\n"
-  printf "$FRM" "ID" "NAME" "BUS" "MODEL" "VENDOR"
-
-  local QUERY='.[]|"\(.index),'
-  QUERY+='\(.name),'
-  QUERY+='\(.properties."device.bus"),'
-  QUERY+='\(.properties."device.nick"),'
-  QUERY+='\(.properties."device.vendor.name")"'
-
-  pactl --format=json list cards | jq -r "$QUERY" |
-    awk -v f="$FRM" -F, '{printf f,$1,$2,$3,$4,$5}'
+  local CARDS=$(pactl --format=json list cards)
+  
+  local QUERY='.[] | ("\n'
+  QUERY+='ID:     \(.index)\n'
+  QUERY+='Name:   \(.name)\n'
+  QUERY+='Bus:    \(.properties."device.bus")\n'
+  QUERY+='Nick:   \(.properties."device.nick")\n'
+  QUERY+='Vendor: \(.properties."device.vendor.name")")'
+  echo "$CARDS" | jq -r "$QUERY" | tail -n +2
 }
 
 list_profiles () {
