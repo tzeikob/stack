@@ -186,9 +186,11 @@ list_outputs () {
     return 1
   fi
 
-  local QUERY='map((.ports[] + {index, mute, properties})) |'
+  local QUERY='.[] |= . + {"sink": .name} |'
+  QUERY+='map((.ports[] + {index, sink, mute, properties})) |'
   QUERY+='.[] | ("\n'
-  QUERY+='Sink:      \(.index)\n'
+  QUERY+='ID:        \(.index)\n'
+  QUERY+='Sink:      \(.sink)\n'
   QUERY+='Name:      \(.name)\n'
   QUERY+='Type:      \(.type)\n'
   QUERY+='Nick:      \(.properties."device.nick")\n'
@@ -206,9 +208,11 @@ list_inputs () {
     return 1
   fi
 
-  local QUERY='map((.ports[] + {index, mute, properties})) |'
+  local QUERY='.[] |= . + {"source": .name} |'
+  QUERY+='map((.ports[] + {index, source, mute, properties})) |'
   QUERY+='.[] | ("\n'
-  QUERY+='Source:    \(.index)\n'
+  QUERY+='ID:        \(.index)\n'
+  QUERY+='Source:    \(.source)\n'
   QUERY+='Name:      \(.name)\n'
   QUERY+='Type:      \(.type)\n'
   QUERY+='Nick:      \(.properties."device.nick")\n'
@@ -231,11 +235,11 @@ list_playbacks () {
   local QUERY='.[] |'
   QUERY+='select(.properties."application.name"|test("'$FILTER'"; "i")) |'
   QUERY+='("\n'
-  QUERY+='Sink:        \(.index)\n'
-  QUERY+='Application: \(.properties."application.name")\n'
-  QUERY+='Process:     \(.properties."application.process.id")\n'
-  QUERY+='Media:       \(.properties."media.name")\n'
-  QUERY+='Mute:        \(.mute)")'
+  QUERY+='Sink:    \(.index)\n'
+  QUERY+='Name:    \(.properties."application.name")\n'
+  QUERY+='Process: \(.properties."application.process.id")\n'
+  QUERY+='Media:   \(.properties."media.name")\n'
+  QUERY+='Mute:    \(.mute)")'
 
   echo "$SINK_INPUTS" | jq -r "$QUERY" | tail -n +2
 }
