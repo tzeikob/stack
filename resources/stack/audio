@@ -123,14 +123,17 @@ show_card () {
   QUERY+='Object Path:        \(.properties."object.path")\n'
   QUERY+='Alsa Card:          \(.properties."alsa.card")\n'
   QUERY+='Active Profile:     \(.active_profile)")'
+
   echo "$CARD" | jq -r "$QUERY"
 
   echo -e "\nProfiles:"
   QUERY='.profiles | " \(keys[])"'
+
   echo "$CARD" | jq -r "$QUERY"
 
   echo -e "\nPorts:"
   QUERY='.ports | to_entries[] | " \(.key) [\(.value.type)]"'
+
   echo "$CARD" | jq -r "$QUERY"
 }
 
@@ -143,6 +146,7 @@ list_cards () {
   QUERY+='Bus:    \(.properties."device.bus")\n'
   QUERY+='Nick:   \(.properties."device.nick")\n'
   QUERY+='Vendor: \(.properties."device.vendor.name")")'
+
   echo "$CARDS" | jq -r "$QUERY" | tail -n +2
 }
 
