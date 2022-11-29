@@ -153,13 +153,19 @@ show_card () {
 }
 
 list_cards () {
-  local CARDS=$(pactl --format=json list short cards | jq -cer ".|length" || echo "err:$?")
+  local CARDS=$(pactl --format=json list cards || echo "err:$?")
 
   [[ "$CARDS" =~ ^err: ]] &&
     echo "Unable to retieve audio cards" &&
     return 1
+
+  local COUNT=$(echo "$CARDS" | jq -cer ".|length" || echo "err:$?")
+
+  [[ "$COUNT" =~ ^err: ]] &&
+    echo "Unable to count audio cards" &&
+    return 1
   
-  [ ! $CARDS -gt 0 ] &&
+  [ ! $COUNT -gt 0 ] &&
     echo "No audio cards have found" &&
     return 1
 
@@ -170,10 +176,10 @@ list_cards () {
   QUERY+='Vendor:  \(.properties."device.vendor.name")\n'
   QUERY+='Bus:     \(.properties."device.bus")")'
 
-  local CARDS=$(pactl --format=json list cards | jq -cer "$QUERY" || echo "err:$?")
+  CARDS=$(echo "$CARDS" | jq -cer "$QUERY" || echo "err:$?")
 
   [[ "$CARDS" =~ ^err: ]] &&
-    echo "Unable to retieve audio cards" &&
+    echo "Unable to retieve audio card data" &&
     return 1
 
   echo "$CARDS" | tail -n +2
@@ -215,13 +221,19 @@ list_profiles () {
 }
 
 list_outputs () {
-  local SINKS=$(pactl --format=json list short sinks | jq -cer ".|length" || echo "err:$?")
+  local SINKS=$(pactl --format=json list sinks || echo "err:$?")
 
   [[ "$SINKS" =~ ^err: ]] &&
     echo "Unable to retieve audio outputs" &&
     return 1
 
-  [ ! $SINKS -gt 0 ] &&
+  local COUNT=$(echo "$SINKS" | jq -cer ".|length" || echo "err:$?")
+
+  [[ "$COUNT" =~ ^err: ]] &&
+    echo "Unable to counts audio outputs" &&
+    return 1
+
+  [ ! $COUNT -gt 0 ] &&
     echo "No audio outputs have found" &&
     return 1
 
@@ -236,23 +248,29 @@ list_outputs () {
   QUERY+='Mute:    \(.mute)\n'
   QUERY+='Status:  \(.availability)")'
 
-  local SINKS=$(pactl --format=json list sinks | jq -cer "$QUERY" || echo "err:$?")
+  SINKS=$(echo "$SINKS" | jq -cer "$QUERY" || echo "err:$?")
 
   [[ "$SINKS" =~ ^err: ]] &&
-    echo "Unable to retieve audio outputs" &&
+    echo "Unable to retieve audio output data" &&
     return 1
   
   echo "$SINKS" | tail -n +2
 }
 
 list_inputs () {
-  local SOURCES=$(pactl --format=json list short sources | jq -cer ".|length" || echo "err:$?")
+  local SOURCES=$(pactl --format=json list sources || echo "err:$?")
 
   [[ "$SOURCES" =~ ^err: ]] &&
     echo "Unable to retieve audio inputs" &&
     return 1
 
-  [ ! $SOURCES -gt 0 ] &&
+  local COUNT=$(echo "$SOURCES" | jq -cer ".|length" || echo "err:$?")
+
+  [[ "$COUNT" =~ ^err: ]] &&
+    echo "Unable to retieve audio inputs" &&
+    return 1
+
+  [ ! $COUNT -gt 0 ] &&
     echo "No audio inputs have found" &&
     return 1
 
@@ -267,10 +285,10 @@ list_inputs () {
   QUERY+='Mute:    \(.mute)\n'
   QUERY+='Status:  \(.availability)")'
 
-  local SOURCES=$(pactl --format=json list sources | jq -cer "$QUERY" || echo "err:$?")
+  SOURCES=$(echo "$SOURCES" | jq -cer "$QUERY" || echo "err:$?")
   
   [[ "$SOURCES" =~ ^err: ]] &&
-    echo "Unable to retieve audio inputs" &&
+    echo "Unable to retieve audio input data" &&
     return 1
   
   echo "$SOURCES" | tail -n +2
@@ -279,13 +297,19 @@ list_inputs () {
 list_playbacks () {
   local FILTER=$1
 
-  local SINK_INPUTS=$(pactl --format=json list short sink-inputs | jq -cer ".|length" || echo "err:$?")
+  local SINK_INPUTS=$(pactl --format=json list sink-inputs || echo "err:$?")
 
   [[ "$SINK_INPUTS" =~ ^err: ]] &&
     echo "Unable to retieve audio playbacks" &&
     return 1
 
-  [ ! $SINK_INPUTS -gt 0 ] &&
+  local COUNT=$(echo "$SINK_INPUTS" | jq -cer ".|length" || echo "err:$?")
+
+  [[ "$COUNT" =~ ^err: ]] &&
+    echo "Unable to COUNT audio playbacks" &&
+    return 1
+
+  [ ! $COUNT -gt 0 ] &&
     echo "No audio playbacks have found" &&
     return 1
 
@@ -298,10 +322,10 @@ list_playbacks () {
   QUERY+='Media:    \(.properties."media.name")\n'
   QUERY+='Mute:     \(.mute)")'
 
-  local SINK_INPUTS=$(pactl --format=json list sink-inputs | jq -cr "$QUERY" || echo "err:$?")
+  SINK_INPUTS=$(echo "$SINK_INPUTS" | jq -cr "$QUERY" || echo "err:$?")
 
   [[ "$SINK_INPUTS" =~ ^err: ]] &&
-    echo "Unable to retieve audio playbacks" &&
+    echo "Unable to retieve audio playback data" &&
     return 1
 
   echo "$SINK_INPUTS" | tail -n +2
