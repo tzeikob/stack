@@ -19,7 +19,7 @@ prompt () {
     read -rep "[audio:${YE}none$RS] " REPLY &&
     return 1
 
-  local DEFAULT=$(pactl --format=json info | jq -cer ".default_sink_name" || echo "err:$?")
+  local DEFAULT=$(pactl --format=json info | jq -cer '.default_sink_name' || echo "err:$?")
 
   [[ "$DEFAULT" =~ ^err: ]] &&
     echo "Unable to resolve default output" &&
@@ -144,11 +144,11 @@ show_card () {
   echo "$CARD" | jq -cr "$QUERY"
 
   echo -e "\nProfiles:"
-  echo "$CARD" | jq -cr '.profiles | " \(keys[])"' ||
+  echo "$CARD" | jq -cer '.profiles | " \(keys[])"' ||
     echo " Unable to resolve audio profiles"
 
   echo -e "\nPorts:"
-  echo "$CARD" | jq -cr '.ports | to_entries[] | " \(.key) [\(.value.type)]"' ||
+  echo "$CARD" | jq -cer '.ports | to_entries[] | " \(.key) [\(.value.type)]"' ||
     echo " Unable to resolve audio ports"
 }
 
