@@ -303,7 +303,8 @@ list_playbacks () {
     echo "Unable to retieve audio playbacks" &&
     return 1
 
-  local COUNT=$(echo "$SINK_INPUTS" | jq -cer ".|length" || echo "err:$?")
+  local QUERY='[.[] | select(.properties."application.name"|test("'$FILTER'"; "i"))]'
+  local COUNT=$(echo "$SINK_INPUTS" | jq -cr "$QUERY | length" || echo "err:$?")
 
   [[ "$COUNT" =~ ^err: ]] &&
     echo "Unable to COUNT audio playbacks" &&
@@ -313,9 +314,7 @@ list_playbacks () {
     echo "No audio playbacks have found" &&
     return 1
 
-  local QUERY='.[] |'
-  QUERY+='select(.properties."application.name"|test("'$FILTER'"; "i")) |'
-  QUERY+='("\n'
+  QUERY+='|.[]|("\n'
   QUERY+='Sink:     \(.index)\n'
   QUERY+='Process:  \(.properties."application.process.id")\n'
   QUERY+='Name:     \(.properties."application.name")\n'
