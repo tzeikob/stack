@@ -201,8 +201,17 @@ list_profiles () {
   [[ "$CARD" =~ ^err: ]] &&
     echo "Unable to retieve card with $FIELD $VALUE" &&
     return 1
+  
+  QUERY='.profiles | length'
+  local PROFILES=$(echo "$CARD" | jq -cer "$QUERY" || echo "err:$?")
 
-  echo "$CARD" | jq -cr '.profiles | keys[]'
+  [[ "$PROFILES" =~ ^err: ]] &&
+    echo "Unable to resolve audio profiles" &&
+    return 1
+
+  [ $PROFILES -gt 0 ] &&
+    echo "$CARD" | jq -cr '.profiles | keys[]' ||
+    echo "No audio profiles have found"
 }
 
 list_outputs () {
