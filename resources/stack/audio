@@ -489,6 +489,17 @@ set_mute () {
 help () {
   local FRM=" %-32s\t%s\n"
 
+  if [ "$1" = "once" ]; then
+    echo "Usage: audio COMMAND"
+
+    echo -e "\nCOMMANDS"
+    printf "$FRM" \
+      "mute" "Mute all output audio streams." \
+      "unmute" "Unmute all output audio streams."
+    
+    return
+  fi
+
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
   echo -e "\nCOMMANDS"
@@ -588,4 +599,19 @@ loop () {
   clear
 }
 
-loop
+once () {
+  local CMD=$1
+
+  case "$CMD" in
+    "help") help "once";;
+    "mute") set_mute "outputs" 1;;
+    "unmute") set_mute "outputs" 0;;
+    *) abort "Unknown or invalid command: '$1'";; 
+  esac
+}
+
+if [ $# = 0 ]; then
+  loop
+else
+  once "$@"
+fi
