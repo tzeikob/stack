@@ -449,39 +449,41 @@ set_mute () {
   if [[ "$SUBJECT" =~ (all|outputs) ]]; then
     local SINKS=$(pactl --format=json list sinks | jq -cer '.[].name' || echo "err:$?")
 
-    [[ "$SINKS" =~ ^err: ]] &&
-      echo "Unable to retieve audio outputs" &&
-      return 1
-    
-    SINKS=($SINKS)
+    if [[ ! "$SINKS" =~ ^err: ]]; then
+      SINKS=($SINKS)
 
-    local INDEX=0
-    while [ $INDEX -lt ${#SINKS[@]} ]; do
-      local SINK=${SINKS[INDEX]}
-      pactl set-sink-mute "$SINK" "$MUTE" && sleep 0.1 &&
-        echo "Output $SINK set mute to $MUTE" ||
-        echo "Unable to set mute for output $SINK"
-      INDEX=$((INDEX + 1))
-    done
+      local INDEX=0
+      while [ $INDEX -lt ${#SINKS[@]} ]; do
+        local SINK=${SINKS[INDEX]}
+        pactl set-sink-mute "$SINK" "$MUTE" && sleep 0.1 &&
+          echo "Output $SINK set mute to $MUTE" ||
+          echo "Unable to set mute for output $SINK"
+
+        INDEX=$((INDEX + 1))
+      done
+    else
+      echo "Unable to retieve audio outputs"
+    fi
   fi
 
   if [[ "$SUBJECT" =~ (all|inputs) ]]; then
     local SOURCES=$(pactl --format=json list sources | jq -cer '.[].name' || echo "err:$?")
 
-    [[ "$SOURCES" =~ ^err: ]] &&
-      echo "Unable to retieve audio inputs" &&
-      return 1
-    
-    SOURCES=($SOURCES)
+    if [[ ! "$SOURCES" =~ ^err: ]]; then
+      SOURCES=($SOURCES)
 
-    local INDEX=0
-    while [ $INDEX -lt ${#SOURCES[@]} ]; do
-      local SOURCE=${SOURCES[INDEX]}
-      pactl set-source-mute "$SOURCE" "$MUTE" && sleep 0.1 &&
-        echo "Output $SOURCE set mute to $MUTE" ||
-        echo "Unable to set mute for input $SOURCE"
-      INDEX=$((INDEX + 1))
-    done
+      local INDEX=0
+      while [ $INDEX -lt ${#SOURCES[@]} ]; do
+        local SOURCE=${SOURCES[INDEX]}
+        pactl set-source-mute "$SOURCE" "$MUTE" && sleep 0.1 &&
+          echo "Output $SOURCE set mute to $MUTE" ||
+          echo "Unable to set mute for input $SOURCE"
+
+        INDEX=$((INDEX + 1))
+      done
+    else
+      echo "Unable to retieve audio inputs"
+    fi
   fi
 }
 
