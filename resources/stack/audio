@@ -8,6 +8,17 @@ require "libpulse"
 require "jq"
 
 prompt () {
+  local CARDS=$(pactl --format=json list short cards | jq -cer '.|length' || echo $?)
+
+  [[ "$CARDS" =~ ^[0-9]+$ ]] &&
+    echo "Unable to find audio cards" &&
+    read -rep "[audio:${RE}failed$RS] " REPLY &&
+    return 1
+  
+  [ ! $CARDS -gt 0 ] &&
+    read -rep "[audio:${YE}none$RS] " REPLY &&
+    return 1
+
   local DEFAULT=$(pactl --format=json info | jq -cer ".default_sink_name" || echo $?)
 
   [[ "$DEFAULT" =~ ^[0-9]+$ ]] &&
