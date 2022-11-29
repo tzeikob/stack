@@ -153,6 +153,16 @@ show_card () {
 }
 
 list_cards () {
+  local CARDS=$(pactl --format=json list short cards | jq -cer ".|length" || echo "err:$?")
+
+  [[ "$CARDS" =~ ^err: ]] &&
+    echo "Unable to retieve audio cards" &&
+    return 1
+  
+  [ ! $CARDS -gt 0 ] &&
+    echo "No audio cards have found" &&
+    return 1
+
   local QUERY='.[] | ("\n'
   QUERY+='ID:      \(.index)\n'
   QUERY+='Name:    \(.name)\n'
