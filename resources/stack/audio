@@ -215,6 +215,16 @@ list_profiles () {
 }
 
 list_outputs () {
+  local SINKS=$(pactl --format=json list short sinks | jq -cer ".|length" || echo "err:$?")
+
+  [[ "$SINKS" =~ ^err: ]] &&
+    echo "Unable to retieve audio outputs" &&
+    return 1
+
+  [ ! $SINKS -gt 0 ] &&
+    echo "No audio outputs have found" &&
+    return 1
+
   local QUERY='.[] |= . + {"sink": .name} |'
   QUERY+='map((.ports[] + {index, sink, mute, properties})) |'
   QUERY+='.[] | ("\n'
@@ -236,6 +246,16 @@ list_outputs () {
 }
 
 list_inputs () {
+  local SOURCES=$(pactl --format=json list short sources | jq -cer ".|length" || echo "err:$?")
+
+  [[ "$SOURCES" =~ ^err: ]] &&
+    echo "Unable to retieve audio inputs" &&
+    return 1
+
+  [ ! $SOURCES -gt 0 ] &&
+    echo "No audio inputs have found" &&
+    return 1
+
   local QUERY='.[] |= . + {"source": .name} |'
   QUERY+='map((.ports[] + {index, source, mute, properties})) |'
   QUERY+='.[] | ("\n'
@@ -259,6 +279,16 @@ list_inputs () {
 list_playbacks () {
   local FILTER=$1
 
+  local SINK_INPUTS=$(pactl --format=json list short sink-inputs | jq -cer ".|length" || echo "err:$?")
+
+  [[ "$SINK_INPUTS" =~ ^err: ]] &&
+    echo "Unable to retieve audio playbacks" &&
+    return 1
+
+  [ ! $SINK_INPUTS -gt 0 ] &&
+    echo "No audio playbacks have found" &&
+    return 1
+
   local QUERY='.[] |'
   QUERY+='select(.properties."application.name"|test("'$FILTER'"; "i")) |'
   QUERY+='("\n'
@@ -274,8 +304,7 @@ list_playbacks () {
     echo "Unable to retieve audio playbacks" &&
     return 1
 
-  [ -n "$SINK_INPUTS" ] && echo "$SINK_INPUTS" | tail -n +2 ||
-    echo "No audio playbacks found"
+  echo "$SINK_INPUTS" | tail -n +2
 }
 
 set_profile () {
