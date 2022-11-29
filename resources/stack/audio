@@ -393,7 +393,7 @@ set_mute () {
     local INDEX=0
     while [ $INDEX -lt ${#SOURCES[@]} ]; do
       local SOURCE=${SOURCES[INDEX]}
-      pactl set-source-mute "$SOURCES" "$MUTE" && sleep 0.1 &&
+      pactl set-source-mute "$SOURCE" "$MUTE" && sleep 0.1 &&
         echo "Output $SOURCE set mute to $MUTE" ||
         echo "Unable to set mute for input $SOURCE"
       INDEX=$((INDEX + 1))
