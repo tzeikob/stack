@@ -8,7 +8,7 @@ require "libpulse"
 require "jq"
 
 prompt () {
-  local DEFAULT=$(pactl --format=json info | jq -er ".default_sink_name" || echo $?)
+  local DEFAULT=$(pactl --format=json info | jq -cer ".default_sink_name" || echo $?)
 
   [[ "$DEFAULT" =~ ^[0-9]+$ ]] &&
     echo "Unable to resolve default output" &&
@@ -16,16 +16,16 @@ prompt () {
     return 1
 
   local QUERY='.[] | select(.name == "'$DEFAULT'")'
-  local SINK=$(pactl --format=json list sinks | jq -er "$QUERY" || echo $?)
+  local SINK=$(pactl --format=json list sinks | jq -cer "$QUERY" || echo $?)
 
   [[ "$SINK" =~ ^[0-9]+$ ]] &&
     echo "Unable to retrieve default output data" &&
     read -rep "[audio:${RE}failed$RS] " REPLY &&
     return 1
 
-  local PORT=$(echo "$SINK" | jq -r '.active_port')
-  local MUTE=$(echo "$SINK" | jq -r '.mute')
-  local DB=$(echo "$SINK" | jq -r '.volume | keys[0] as $k | .[$k].db' | awk '{print $1$2}')
+  local PORT=$(echo "$SINK" | jq -cr '.active_port')
+  local MUTE=$(echo "$SINK" | jq -cr '.mute')
+  local DB=$(echo "$SINK" | jq -cr '.volume | keys[0] as $k | .[$k].db' | awk '{print $1$2}')
 
   local STATUS="$YE${PORT}$RS"
 
@@ -53,7 +53,7 @@ show_status () {
   QUERY+='Sources:   \(.default_source_name)\n'
   QUERY+='Cookie:    \(.cookie)\n")'
 
-  pactl --format=json info | jq -er "$QUERY" ||
+  pactl --format=json info | jq -cer "$QUERY" ||
     echo -e "Unable to retrieve audio server info\n"
   
   QUERY='.[] | ("'
@@ -67,7 +67,7 @@ show_status () {
   QUERY+='Bus:       \(.properties."device.bus")\n'
   QUERY+='Profile:   \(.active_profile)\n")'
 
-  pactl --format=json list cards | jq -er "$QUERY" | head -n -1 ||
+  pactl --format=json list cards | jq -cer "$QUERY" | head -n -1 ||
     echo "Unable to retrieve audio cards"
 }
 
@@ -88,13 +88,13 @@ show_card () {
   fi
 
   local QUERY=".[] | select(.${FIELD}==${VALUE})"
-  CARD=$(pactl --format=json list cards | jq -er "$QUERY" || echo $?)
+  CARD=$(pactl --format=json list cards | jq -cer "$QUERY" || echo $?)
 
   [[ "$CARD" =~ ^[0-9]+$ ]] &&
     echo "Unable to get data for card with $FIELD $VALUE" &&
     return 1
 
-  QUERY='("ID:              \(.index)\n'
+  QUERY='("ID:                 \(.index)\n'
   QUERY+='Name:               \(.name)\n'
   QUERY+='Driver:             \(.driver)\n'
   QUERY+='Owner:              \(.owner_module)\n'
@@ -130,13 +130,13 @@ show_card () {
   QUERY+='Alsa Card:          \(.properties."alsa.card")\n'
   QUERY+='Active Profile:     \(.active_profile)")'
 
-  echo "$CARD" | jq -r "$QUERY"
+  echo "$CARD" | jq -cr "$QUERY"
 
   echo -e "\nProfiles:"
-  echo "$CARD" | jq -r '.profiles | " \(keys[])"'
+  echo "$CARD" | jq -cr '.profiles | " \(keys[])"'
 
   echo -e "\nPorts:"
-  echo "$CARD" | jq -r '.ports | to_entries[] | " \(.key) [\(.value.type)]"'
+  echo "$CARD" | jq -cr '.ports | to_entries[] | " \(.key) [\(.value.type)]"'
 }
 
 list_cards () {
@@ -147,7 +147,7 @@ list_cards () {
   QUERY+='Vendor:  \(.properties."device.vendor.name")\n'
   QUERY+='Bus:     \(.properties."device.bus")")'
 
-  local CARDS=$(pactl --format=json list cards | jq -er "$QUERY" || echo $?)
+  local CARDS=$(pactl --format=json list cards | jq -cer "$QUERY" || echo $?)
 
   [[ "$CARDS" =~ ^[0-9]+$ ]] &&
     echo "Unable to retieve audio cards" &&
@@ -173,13 +173,13 @@ list_profiles () {
   fi
 
   local QUERY=".[] | select(.${FIELD}==${VALUE})"
-  CARD=$(pactl --format=json list cards | jq -er "$QUERY" || echo $?)
+  CARD=$(pactl --format=json list cards | jq -cer "$QUERY" || echo $?)
 
   [[ "$CARD" =~ ^[0-9]+$ ]] &&
     echo "Unable to retieve card with $FIELD $VALUE" &&
     return 1
 
-  echo "$CARD" | jq -r '.profiles | keys[]'
+  echo "$CARD" | jq -cr '.profiles | keys[]'
 }
 
 list_outputs () {
@@ -194,7 +194,7 @@ list_outputs () {
   QUERY+='Mute:    \(.mute)\n'
   QUERY+='Status:  \(.availability)")'
 
-  local SINKS=$(pactl --format=json list sinks | jq -er "$QUERY" || echo $?)
+  local SINKS=$(pactl --format=json list sinks | jq -cer "$QUERY" || echo $?)
 
   [[ "$SINKS" =~ ^[0-9]+$ ]] &&
     echo "Unable to retieve audio outputs" &&
@@ -215,7 +215,7 @@ list_inputs () {
   QUERY+='Mute:    \(.mute)\n'
   QUERY+='Status:  \(.availability)")'
 
-  local SOURCES=$(pactl --format=json list sources | jq -er "$QUERY" || echo $?)
+  local SOURCES=$(pactl --format=json list sources | jq -cer "$QUERY" || echo $?)
   
   [[ "$SOURCES" =~ ^[0-9]+$ ]] &&
     echo "Unable to retieve audio inputs" &&
@@ -236,7 +236,7 @@ list_playbacks () {
   QUERY+='Media:    \(.properties."media.name")\n'
   QUERY+='Mute:     \(.mute)")'
 
-  local SINK_INPUTS=$(pactl --format=json list sink-inputs | jq -r "$QUERY" || echo $?)
+  local SINK_INPUTS=$(pactl --format=json list sink-inputs | jq -cr "$QUERY" || echo $?)
 
   [[ "$SINK_INPUTS" =~ ^[0-9]+$ ]] &&
     echo "Unable to retieve audio playbacks" &&
@@ -363,7 +363,7 @@ set_mute () {
   fi
 
   if [[ "$SUBJECT" =~ (all|outputs) ]]; then
-    local SINKS=$(pactl --format=json list sinks | jq -er '.[].name' || echo $?)
+    local SINKS=$(pactl --format=json list sinks | jq -cer '.[].name' || echo $?)
 
     [[ "$SINKS" =~ ^[0-9]+$ ]] &&
       echo "Unable to retieve audio outputs" &&
@@ -382,7 +382,7 @@ set_mute () {
   fi
 
   if [[ "$SUBJECT" =~ (all|inputs) ]]; then
-    local SOURCES=$(pactl --format=json list sources | jq -er '.[].name' || echo $?)
+    local SOURCES=$(pactl --format=json list sources | jq -cer '.[].name' || echo $?)
 
     [[ "$SOURCES" =~ ^[0-9]+$ ]] &&
       echo "Unable to retieve audio inputs" &&
