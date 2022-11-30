@@ -383,10 +383,16 @@ turn_default () {
   [ $VOLUME -lt 0 ] && VOLUME=0
   [ $VOLUME -gt 150 ] && VOLUME=150
 
-  pactl set-${TYPE}-mute "$MODULE" 0 &&
-  pactl set-${TYPE}-volume "$MODULE" "${VOLUME}%" && sleep 0.1 &&
-    echo "Module volume set to ${VOLUME}%" ||
-    echo "Unable to set the module volume"
+  if [ $VOLUME -gt 0 ]; then
+    pactl set-${TYPE}-mute "$MODULE" 0 &&
+    pactl set-${TYPE}-volume "$MODULE" "${VOLUME}%" && sleep 0.1 &&
+      echo "Module volume set to ${VOLUME}%" ||
+      echo "Unable to set the module volume"
+  else
+    pactl set-${TYPE}-mute "$MODULE" 1 && sleep 0.1 &&
+      echo "Module volume set to mute" ||
+      echo "Unable to set the module to mute"
+  fi
 }
 
 set_mute () {
@@ -458,6 +464,8 @@ help () {
     "set input <input>" "Set current input to the given input." \
     "turn output up|down|<volume>" "Turn the volume of the current output." \
     "turn input up|down|<volume>" "Turn the volume of the current input." \
+    "mute output|input" "Mute the current output or input." \
+    "unmute output|input" "Unmute the current output or input." \
     "mute outputs|inputs" "Mute all output or input audio modules." \
     "unmute outputs|inputs" "Unmute all output or input audio modules."
 
@@ -525,13 +533,17 @@ loop () {
         esac;;
       "mute")
         case "${CMD[1]}" in
+          "output") turn_default "sink" 0;;
           "outputs") set_mute "sinks" 1;;
+          "input") turn_default "source" 0;;
           "inputs") set_mute "sources" 1;;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
       "unmute")
         case "${CMD[1]}" in
+          "output") turn_default "sink" "up";;
           "outputs") set_mute "sinks" 0;;
+          "input") turn_default "source" "up";;
           "inputs") set_mute "sources" 0;;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
