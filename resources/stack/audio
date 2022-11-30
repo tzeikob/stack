@@ -390,64 +390,37 @@ turn_default () {
 }
 
 set_mute () {
-  local SUBJECT=$1
+  local TYPE=$1
   local MUTE=$2
 
-  if [ -z "$SUBJECT" ]; then
-    echo "Missing the subject argument"
-    return 1
-  elif [[ ! "$SUBJECT" =~ ^(all|outputs|inputs)$ ]]; then
-    echo "Invalid subject argument: '$SUBJECT'"
+  if [[ ! "$TYPE" =~ ^(sinks|sources)$ ]]; then
+    echo "Invalid module type argument: '$TYPE'"
     return 1
   fi
 
-  if [ -z "$MUTE" ]; then
-    echo "Missing the mute argument"
-    return 1
-  elif [[ ! "$MUTE" =~ ^(1|0)$ ]]; then
+  if [[ ! "$MUTE" =~ ^(1|0)$ ]]; then
     echo "Invalid mute argument: '$MUTE'"
     return 1
   fi
 
-  if [[ "$SUBJECT" =~ (all|outputs) ]]; then
-    local SINKS=$(pactl --format=json list sinks | jq -cer '.[].name' || echo "err:$?")
+  local MODULES=$(pactl --format=json list "$TYPE" | jq -cer '.[].name' || echo "err:$?")
 
-    if [[ ! "$SINKS" =~ ^err: ]]; then
-      SINKS=($SINKS)
-
-      local INDEX=0
-      while [ $INDEX -lt ${#SINKS[@]} ]; do
-        local SINK=${SINKS[INDEX]}
-        pactl set-sink-mute "$SINK" "$MUTE" && sleep 0.1 &&
-          echo "Output $SINK set mute to $MUTE" ||
-          echo "Unable to set mute for output $SINK"
-
-        INDEX=$((INDEX + 1))
-      done
-    else
-      echo "Unable to retieve audio outputs"
-    fi
+  if [[ "$MODULES" =~ ^err: ]]; then
+    echo "Unable to retieve audio modules"
+    return 1
   fi
 
-  if [[ "$SUBJECT" =~ (all|inputs) ]]; then
-    local SOURCES=$(pactl --format=json list sources | jq -cer '.[].name' || echo "err:$?")
+  MODULES=($MODULES)
 
-    if [[ ! "$SOURCES" =~ ^err: ]]; then
-      SOURCES=($SOURCES)
+  local INDEX=0
+  while [ $INDEX -lt ${#MODULES[@]} ]; do
+    local MODULE=${MODULES[INDEX]}
+    pactl set-${TYPE::-1}-mute "$MODULE" "$MUTE" && sleep 0.1 &&
+      echo "Module $MODULE set mute to $MUTE" ||
+      echo "Unable to set mute for module $MODULE"
 
-      local INDEX=0
-      while [ $INDEX -lt ${#SOURCES[@]} ]; do
-        local SOURCE=${SOURCES[INDEX]}
-        pactl set-source-mute "$SOURCE" "$MUTE" && sleep 0.1 &&
-          echo "Output $SOURCE set mute to $MUTE" ||
-          echo "Unable to set mute for input $SOURCE"
-
-        INDEX=$((INDEX + 1))
-      done
-    else
-      echo "Unable to retieve audio inputs"
-    fi
-  fi
+    INDEX=$((INDEX + 1))
+  done
 }
 
 help () {
@@ -483,12 +456,10 @@ help () {
     "set profile <card> <profile>" "Set the profile of the given card." \
     "set output <output>" "Set current output to the given output." \
     "set input <input>" "Set current input to the given input." \
-    "" "" \
     "turn output up|down|<volume>" "Turn the volume of the current output." \
     "turn input up|down|<volume>" "Turn the volume of the current input." \
-    "" "" \
-    "mute all|outputs|inputs" "Mute all, output or input audio modules." \
-    "unmute all|outputs|inputs" "Unmute all, output or input audio modules."
+    "mute outputs|inputs" "Mute all output or input audio modules." \
+    "unmute outputs|inputs" "Unmute all output or input audio modules."
 
   echo -e "\nOBJECTS"
   printf "$FRM" \
@@ -554,16 +525,14 @@ loop () {
         esac;;
       "mute")
         case "${CMD[1]}" in
-          "all") set_mute "all" 1;;
-          "outputs") set_mute "outputs" 1;;
-          "inputs") set_mute "inputs" 1;;
+          "outputs") set_mute "sinks" 1;;
+          "inputs") set_mute "sources" 1;;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
       "unmute")
         case "${CMD[1]}" in
-          "all") set_mute "all" 0;;
-          "outputs") set_mute "outputs" 0;;
-          "inputs") set_mute "inputs" 0;;
+          "outputs") set_mute "sinks" 0;;
+          "inputs") set_mute "sources" 0;;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
       *) echo "Unknown or invalid command: '$REPLY'";; 
