@@ -481,14 +481,14 @@ help () {
     "" "which contain the given name filter." \
     "" "" \
     "set profile <card> <profile>" "Set the profile of the given card." \
-    "set output <output>" "Set the current output to the given output." \
-    "set input <input>" "Set the current input to the given input." \
+    "set output <output>" "Set current output to the given output." \
+    "set input <input>" "Set current input to the given input." \
     "" "" \
-    "turn output up|down|<volume>" "Set the volume of the current output." \
-    "turn input up|down|<volume>" "Set the volume of the current input." \
+    "turn output up|down|<volume>" "Turn the volume of the current output." \
+    "turn input up|down|<volume>" "Turn the volume of the current input." \
     "" "" \
-    "mute all|outputs|inputs" "Mute all, output or input audio streams." \
-    "unmute all|outputs|inputs" "Unmute all, output or input audio streams."
+    "mute all|outputs|inputs" "Mute all, output or input audio modules." \
+    "unmute all|outputs|inputs" "Unmute all, output or input audio modules."
 
   echo -e "\nOBJECTS"
   printf "$FRM" \
