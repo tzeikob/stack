@@ -347,7 +347,7 @@ turn_default () {
     return 1
   fi
 
-  if [[ ! "$TO" =~ ^(up|down|[0-9]+)$ ]]; then
+  if [[ ! "$TO" =~ ^(up|down|mute|unmute|[0-9]+)$ ]]; then
     echo "Invalid volume argument: '$TO'"
     return 1
   elif [[ "$TO" =~ ^[0-9]+$ ]] && ! (($TO >= 0 && $TO <= 150)); then
@@ -360,6 +360,18 @@ turn_default () {
   [[ "$MODULE" =~ ^err: ]] &&
     echo "Unable to resolve the current module" &&
     return 1
+  
+  if [ "$TO" = "mute" ]; then
+    pactl set-${TYPE}-mute "$MODULE" 1 && sleep 0.1 &&
+      echo "Module volume set to mute" ||
+      echo "Unable to set the module to mute"
+    return
+  elif [ "$TO" = "unmute" ]; then
+    pactl set-${TYPE}-mute "$MODULE" 0 && sleep 0.1 &&
+      echo "Module volume set to unmute" ||
+      echo "Unable to set the module to unmute"
+    return
+  fi
 
   local VOLUME=$TO
 
@@ -462,6 +474,7 @@ help () {
     "set profile <card> <profile>" "Set the profile of the given card." \
     "set output <output>" "Set current output to the given output." \
     "set input <input>" "Set current input to the given input." \
+    "" "" \
     "turn output up|down|<volume>" "Turn the volume of the current output." \
     "turn input up|down|<volume>" "Turn the volume of the current input." \
     "mute output|input" "Mute the current output or input." \
@@ -533,17 +546,17 @@ loop () {
         esac;;
       "mute")
         case "${CMD[1]}" in
-          "output") turn_default "sink" 0;;
+          "output") turn_default "sink" "mute";;
           "outputs") set_mute "sinks" 1;;
-          "input") turn_default "source" 0;;
+          "input") turn_default "source" "mute";;
           "inputs") set_mute "sources" 1;;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
       "unmute")
         case "${CMD[1]}" in
-          "output") turn_default "sink" "up";;
+          "output") turn_default "sink" "unmute";;
           "outputs") set_mute "sinks" 0;;
-          "input") turn_default "source" "up";;
+          "input") turn_default "source" "unmute";;
           "inputs") set_mute "sources" 0;;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
