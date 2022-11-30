@@ -86,23 +86,23 @@ show_card () {
   local CARD=$1
 
   if [ -z "$CARD" ]; then
-    echo "Missing name or id argument"
+    echo "Missing the card argument"
     return 1
   fi
 
-  local FIELD="name"
-  local VALUE="\"${CARD}\""
+  local KEY="index"
+  local VALUE=$CARD
 
-  if [[ "$CARD" =~ ^[0-9]+$ ]]; then
-    FIELD="index"
-    VALUE=$CARD
+  if [[ ! "$CARD" =~ ^[0-9]+$ ]]; then
+    KEY="name"
+    VALUE="\"${CARD}\""
   fi
 
-  local QUERY=".[] | select(.${FIELD}==${VALUE})"
+  local QUERY=".[] | select(.${KEY}==${VALUE})"
   CARD=$(pactl --format=json list cards | jq -cer "$QUERY" || echo "err:$?")
 
   [[ "$CARD" =~ ^err: ]] &&
-    echo "Unable to get data for card with $FIELD $VALUE" &&
+    echo "Unable to get data for the given card" &&
     return 1
 
   QUERY='("ID:                 \(.index)\n'
@@ -189,23 +189,23 @@ list_profiles () {
   local CARD=$1
 
   if [ -z "$CARD" ]; then
-    echo "Missing name or id argument"
+    echo "Missing the card argument"
     return 1
   fi
 
-  local FIELD="name"
-  local VALUE="\"${CARD}\""
+  local KEY="index"
+  local VALUE=$CARD
 
-  if [[ "$CARD" =~ ^[0-9]+$ ]]; then
-    FIELD="index"
-    VALUE=$CARD
+  if [[ ! "$CARD" =~ ^[0-9]+$ ]]; then
+    KEY="name"
+    VALUE="\"${CARD}\""
   fi
 
-  local QUERY=".[] | select(.${FIELD}==${VALUE})"
+  local QUERY=".[] | select(.${KEY}==${VALUE})"
   CARD=$(pactl --format=json list cards | jq -cer "$QUERY" || echo "err:$?")
 
   [[ "$CARD" =~ ^err: ]] &&
-    echo "Unable to retieve card with $FIELD $VALUE" &&
+    echo "Unable to find the given card" &&
     return 1
   
   QUERY='.profiles | length'
@@ -295,7 +295,7 @@ list_inputs () {
 }
 
 list_playbacks () {
-  local FILTER=$1
+  local NAME=$1
 
   local SINK_INPUTS=$(pactl --format=json list sink-inputs || echo "err:$?")
 
@@ -303,7 +303,7 @@ list_playbacks () {
     echo "Unable to retieve audio playbacks" &&
     return 1
 
-  local QUERY='[.[] | select(.properties."application.name"|test("'$FILTER'"; "i"))]'
+  local QUERY='[.[] | select(.properties."application.name"|test("'${NAME}'"; "i"))]'
   local COUNT=$(echo "$SINK_INPUTS" | jq -cr "$QUERY | length" || echo "err:$?")
 
   [[ "$COUNT" =~ ^err: ]] &&
@@ -354,7 +354,7 @@ set_output () {
   local VOLUME=$2
 
   if [ -z "$SINK" ]; then
-    echo "Missing the output name or id argument"
+    echo "Missing the output argument"
     return 1
   fi
 
@@ -392,7 +392,7 @@ set_input () {
   local VOLUME=$2
 
   if [ -z "$SOURCE" ]; then
-    echo "Missing the input name or id argument"
+    echo "Missing the input argument"
     return 1
   fi
 
@@ -506,20 +506,22 @@ help () {
   echo -e "\nCOMMANDS"
   printf "$FRM" \
     "help" "Show this help message." \
-    "show status" "Show an overall report of the system's audio." \
-    "show card <name|id>" "Show data for the card with the given name or id." \
+    "show status" "Show an overall report of the audio." \
+    "show card <card>" "Show the data of the given card." \
     "" "" \
-    "list cards" "List all the audio cards plugged to the system." \
-    "list profiles <name|id>" "List the profiles of the given audio card." \
-    "list outputs" "List all output audio streams." \
-    "list inputs" "List all input audio streams." \
-    "list playbacks [<filter>]" "List any active audio playbacks." \
+    "list cards" "List the cards plugged to the system." \
+    "list profiles <card>" "List the profiles of the given card." \
+    "list outputs" "List all output streams." \
+    "list inputs" "List all input streams." \
+    "list playbacks [<name>]" "List all active playbacks or those" \
+    "" "which contain the given name filter." \
     "" "" \
-    "set profile <name|id> <profile>" "Set the audio profile of the given card." \
-    "set output <name|id>" "Set the default output." \
-    "set output <name|id> <volume>" "Set the volume of the given output, 0 to mute." \
-    "set input <name|id>" "Set the default input." \
-    "set input <name|id> <volume>" "Set the volume of the given input, 0 to mute." \
+    "set profile <card> <profile>" "Set the profile of the given card." \
+    "set output <output>" "Set the default output to the given output." \
+    "set output <output> <volume>" "Set the volume of the given output, 0 to mute." \
+    "set input <input>" "Set the default input to the given input." \
+    "set input <input> <volume>" "Set the volume of the given input, 0 to mute." \
+    "" "" \
     "mute all|outputs|inputs" "Mute all, output or input audio streams." \
     "unmute all|outputs|inputs" "Unmute all, output or input audio streams."
 
