@@ -321,13 +321,12 @@ set_profile () {
 
 set_default () {
   local TYPE=$1
+  local MODULE=$2
 
   if [[ ! "$TYPE" =~ ^(sink|source)$ ]]; then
     echo "Invalid module type argument"
     return 1
   fi
-
-  local MODULE=$2
 
   if [ -z "$MODULE" ]; then
     echo "Missing the module argument"
@@ -339,8 +338,14 @@ set_default () {
     echo "Unable to set the default $TYPE"
 }
 
-turn_output () {
-  local TO=$1
+turn_default () {
+  local TYPE=$1
+  local TO=$2
+
+  if [[ ! "$TYPE" =~ ^(sink|source)$ ]]; then
+    echo "Invalid module type argument"
+    return 1
+  fi
 
   if [[ ! "$TO" =~ ^(up|down|[0-9]+)$ ]]; then
     echo "Invalid volume argument: '$TO'"
@@ -350,19 +355,19 @@ turn_output () {
     return 1
   fi
 
-  local SINK=$(pactl get-default-sink || echo "err:$?")
+  local MODULE=$(pactl get-default-$TYPE || echo "err:$?")
 
-  [[ "$SINK" =~ ^err: ]] &&
-    echo "Unable to resolve the current output" &&
+  [[ "$MODULE" =~ ^err: ]] &&
+    echo "Unable to resolve the current module" &&
     return 1
 
   local VOLUME=$TO
 
   if [[ "$TO" =~ ^(up|down)$ ]]; then
-    local QUERY='.[] | select(.name=="'${SINK}'")'
+    local QUERY='.[] | select(.name=="'${MODULE}'")'
     QUERY+='|.volume."front-left".value_percent'
 
-    VOLUME=$(pactl --format=json list sinks | jq -cer "$QUERY" | cut -d "%" -f 1 || echo "err:$?")
+    VOLUME=$(pactl --format=json list ${TYPE}s | jq -cer "$QUERY" | cut -d "%" -f 1 || echo "err:$?")
 
     [[ "$VOLUME" =~ ^err: ]] &&
       echo "Unable to resolve the current volume" &&
@@ -378,55 +383,10 @@ turn_output () {
   [ $VOLUME -lt 0 ] && VOLUME=0
   [ $VOLUME -gt 150 ] && VOLUME=150
 
-  pactl set-sink-mute "$SINK" 0 &&
-  pactl set-sink-volume "$SINK" "${VOLUME}%" && sleep 0.1 &&
-    echo "Output volume set to ${VOLUME}%" ||
-    echo "Unable to set the output volume"
-}
-
-turn_input () {
-  local TO=$1
-
-  if [[ ! "$TO" =~ ^(up|down|[0-9]+)$ ]]; then
-    echo "Invalid volume argument: '$TO'"
-    return 1
-  elif [[ "$TO" =~ ^[0-9]+$ ]] && ! (($TO >= 0 && $TO <= 150)); then
-    echo "Volume is out of the valid range: '$TO'"
-    return 1
-  fi
-
-  local SOURCE=$(pactl get-default-source || echo "err:$?")
-
-  [[ "$SOURCE" =~ ^err: ]] &&
-    echo "Unable to resolve the current input" &&
-    return 1
-
-  local VOLUME=$TO
-
-  if [[ "$TO" =~ ^(up|down)$ ]]; then
-    local QUERY='.[] | select(.name=="'${SOURCE}'")'
-    QUERY+='|.volume."front-left".value_percent'
-
-    VOLUME=$(pactl --format=json list sources | jq -cer "$QUERY" | cut -d "%" -f 1 || echo "err:$?")
-
-    [[ "$VOLUME" =~ ^err: ]] &&
-      echo "Unable to resolve the current volume" &&
-      return 1
-    
-    if [ "$TO" = "up" ]; then
-      VOLUME=$((VOLUME + 5))
-    else
-      VOLUME=$((VOLUME - 5))
-    fi
-  fi
-
-  [ $VOLUME -lt 0 ] && VOLUME=0
-  [ $VOLUME -gt 150 ] && VOLUME=150
-
-  pactl set-source-mute "$SOURCE" 0 &&
-  pactl set-source-volume "$SOURCE" "${VOLUME}%" && sleep 0.1 &&
-    echo "Input volume set to ${VOLUME}%" ||
-    echo "Unable to set the input volume"
+  pactl set-${TYPE}-mute "$MODULE" 0 &&
+  pactl set-${TYPE}-volume "$MODULE" "${VOLUME}%" && sleep 0.1 &&
+    echo "Module volume set to ${VOLUME}%" ||
+    echo "Unable to set the module volume"
 }
 
 set_mute () {
@@ -588,8 +548,8 @@ loop () {
         esac;;
       "turn")
         case "${CMD[1]}" in
-          "output") turn_output "${CMD[2]}";;
-          "input") turn_input "${CMD[2]}";;
+          "output") turn_default "sink" "${CMD[2]}";;
+          "input") turn_default "source" "${CMD[2]}";;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
       "mute")
