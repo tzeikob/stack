@@ -450,9 +450,9 @@ help () {
     echo -e "\nCOMMANDS"
     printf "$FRM" \
       "help" "Show this message." \
-      "mute" "Mute all output audio streams." \
-      "unmute" "Unmute all output audio streams."
-    
+      "mute" "Mute current output audio." \
+      "unmute" "Unmute current output audio."
+
     return
   fi
 
@@ -572,8 +572,8 @@ once () {
 
   case "$CMD" in
     "help") help "once";;
-    "mute") set_mute "outputs" 1;;
-    "unmute") set_mute "outputs" 0;;
+    "mute") turn_default "sink" "mute";;
+    "unmute") turn_default "sink" "unmute";;
     *) abort "Unknown or invalid command: '$1'";; 
   esac
 }
