@@ -351,78 +351,118 @@ set_profile () {
 
 set_output () {
   local SINK=$1
-  local VOLUME=$2
 
   if [ -z "$SINK" ]; then
     echo "Missing the output argument"
     return 1
   fi
 
-  if [ -n "$VOLUME" ]; then
-    if [[ ! "$VOLUME" =~ ^[0-9]{1,3}$ ]]; then
-      echo "Invalid volume argument: '$VOLUME'"
-      return 1
-    elif ! (($VOLUME >= 0 && $VOLUME <= 150)); then
-      echo "Volume is out of the valid range: '$VOLUME'"
-      return 1
-    fi
-  fi
-
-  if [ -z "$VOLUME" ]; then
-    pactl set-default-sink "$SINK" && sleep 0.1 &&
-      echo "Default output set to $SINK" ||
-      echo "Unable to set the default output"
-    return 1
-  fi
-
-  if [ $VOLUME -gt 0 ]; then
-    pactl set-sink-mute "$SINK" 0 &&
-    pactl set-sink-volume "$SINK" "$VOLUME%" && sleep 0.1 &&
-      echo "Output $SINK volume set to $VOLUME" ||
-      echo "Unable to set the output volume"
-  else
-    pactl set-sink-mute "$SINK" 1 && sleep 0.1 &&
-      echo "Output $SINK set to mute" ||
-      echo "Unable to set the output to mute"
-  fi
+  pactl set-default-sink "$SINK" && sleep 0.1 &&
+    echo "Default output set to $SINK" ||
+    echo "Unable to set the default output"
 }
 
 set_input () {
   local SOURCE=$1
-  local VOLUME=$2
 
   if [ -z "$SOURCE" ]; then
     echo "Missing the input argument"
     return 1
   fi
 
-  if [ -n "$VOLUME" ]; then
-    if [[ ! "$VOLUME" =~ ^[0-9]{1,3}$ ]]; then
-      echo "Invalid volume argument: '$VOLUME'"
+  pactl set-default-source "$SOURCE" && sleep 0.1 &&
+    echo "Default input set to $SOURCE" ||
+    echo "Unable to set the default input"
+}
+
+turn_output () {
+  local TO=$1
+
+  if [[ ! "$TO" =~ ^(up|down|[0-9]+)$ ]]; then
+    echo "Invalid volume argument: '$TO'"
+    return 1
+  elif [[ "$TO" =~ ^[0-9]+$ ]] && ! (($TO >= 0 && $TO <= 150)); then
+    echo "Volume is out of the valid range: '$TO'"
+    return 1
+  fi
+
+  local SINK=$(pactl get-default-sink || echo "err:$?")
+
+  [[ "$SINK" =~ ^err: ]] &&
+    echo "Unable to resolve the current output" &&
+    return 1
+
+  local VOLUME=$TO
+
+  if [[ "$TO" =~ ^(up|down)$ ]]; then
+    local QUERY='.[] | select(.name=="'${SINK}'")'
+    QUERY+='|.volume."front-left".value_percent'
+
+    VOLUME=$(pactl --format=json list sinks | jq -cer "$QUERY" | cut -d "%" -f 1 || echo "err:$?")
+
+    [[ "$VOLUME" =~ ^err: ]] &&
+      echo "Unable to resolve the current volume" &&
       return 1
-    elif ! (($VOLUME >= 0 && $VOLUME <= 150)); then
-      echo "Volume is out of the valid range: '$VOLUME'"
-      return 1
+    
+    if [ "$TO" = "up" ]; then
+      VOLUME=$((VOLUME + 5))
+    else
+      VOLUME=$((VOLUME - 5))
     fi
   fi
 
-  if [ -z "$VOLUME" ]; then
-    pactl set-default-source "$SOURCE" && sleep 0.1 &&
-      echo "Default input set to $SOURCE" ||
-      echo "Unable to set the default input"
+  [ $VOLUME -lt 0 ] && VOLUME=0
+  [ $VOLUME -gt 150 ] && VOLUME=150
+
+  pactl set-sink-mute "$SINK" 0 &&
+  pactl set-sink-volume "$SINK" "${VOLUME}%" && sleep 0.1 &&
+    echo "Output volume set to ${VOLUME}%" ||
+    echo "Unable to set the output volume"
+}
+
+turn_input () {
+  local TO=$1
+
+  if [[ ! "$TO" =~ ^(up|down|[0-9]+)$ ]]; then
+    echo "Invalid volume argument: '$TO'"
+    return 1
+  elif [[ "$TO" =~ ^[0-9]+$ ]] && ! (($TO >= 0 && $TO <= 150)); then
+    echo "Volume is out of the valid range: '$TO'"
     return 1
   fi
-  
-  if [ $VOLUME -gt 0 ]; then
-    pactl set-source-mute "$SOURCE" 0 &&
-    pactl set-source-volume "$SOURCE" "$VOLUME%" && sleep 0.1 &&
-      echo "Input $SOURCE volume set to $VOLUME" ||
-      echo "Unable to set the input volume"
-  else
-    pactl set-source-mute "$SOURCE" 1 && sleep 0.1 &&
-      echo "Input $SOURCE set to mute" ||
-      echo "Unable to set input to mute"
+
+  local SOURCE=$(pactl get-default-source || echo "err:$?")
+
+  [[ "$SOURCE" =~ ^err: ]] &&
+    echo "Unable to resolve the current input" &&
+    return 1
+
+  local VOLUME=$TO
+
+  if [[ "$TO" =~ ^(up|down)$ ]]; then
+    local QUERY='.[] | select(.name=="'${SOURCE}'")'
+    QUERY+='|.volume."front-left".value_percent'
+
+    VOLUME=$(pactl --format=json list sources | jq -cer "$QUERY" | cut -d "%" -f 1 || echo "err:$?")
+
+    [[ "$VOLUME" =~ ^err: ]] &&
+      echo "Unable to resolve the current volume" &&
+      return 1
+    
+    if [ "$TO" = "up" ]; then
+      VOLUME=$((VOLUME + 5))
+    else
+      VOLUME=$((VOLUME - 5))
+    fi
   fi
+
+  [ $VOLUME -lt 0 ] && VOLUME=0
+  [ $VOLUME -gt 150 ] && VOLUME=150
+
+  pactl set-source-mute "$SOURCE" 0 &&
+  pactl set-source-volume "$SOURCE" "${VOLUME}%" && sleep 0.1 &&
+    echo "Input volume set to ${VOLUME}%" ||
+    echo "Unable to set the input volume"
 }
 
 set_mute () {
@@ -511,16 +551,17 @@ help () {
     "" "" \
     "list cards" "List the cards plugged to the system." \
     "list profiles <card>" "List the profiles of the given card." \
-    "list outputs" "List all output streams." \
-    "list inputs" "List all input streams." \
+    "list outputs" "List all output audio ports." \
+    "list inputs" "List all input audio ports." \
     "list playbacks [<name>]" "List all active playbacks or those" \
     "" "which contain the given name filter." \
     "" "" \
     "set profile <card> <profile>" "Set the profile of the given card." \
-    "set output <output>" "Set the default output to the given output." \
-    "set output <output> <volume>" "Set the volume of the given output, 0 to mute." \
-    "set input <input>" "Set the default input to the given input." \
-    "set input <input> <volume>" "Set the volume of the given input, 0 to mute." \
+    "set output <output>" "Set the current output to the given output." \
+    "set input <input>" "Set the current input to the given input." \
+    "" "" \
+    "turn output up|down|<volume>" "Set the volume of the current output." \
+    "turn input up|down|<volume>" "Set the volume of the current input." \
     "" "" \
     "mute all|outputs|inputs" "Mute all, output or input audio streams." \
     "unmute all|outputs|inputs" "Unmute all, output or input audio streams."
@@ -530,8 +571,8 @@ help () {
     "status" "The status of the system's audio." \
     "card" "An audio card." \
     "profile" "An audio profile of a card." \
-    "output" "An output audio stream (speaker)." \
-    "input" "An input audio stream (microphone)." \
+    "output" "An output audio port (speaker)." \
+    "input" "An input audio port (microphone)." \
     "playback" "An application or process streaming audio."
 }
 
@@ -577,8 +618,14 @@ loop () {
       "set")
         case "${CMD[1]}" in
           "profile") set_profile "${CMD[2]}" "${CMD[3]}";;
-          "output") set_output "${CMD[2]}" "${CMD[3]}";;
-          "input") set_input "${CMD[2]}" "${CMD[3]}";;
+          "output") set_output "${CMD[2]}";;
+          "input") set_input "${CMD[2]}";;
+          *) echo "Unknown or invalid command: '$REPLY'";;
+        esac;;
+      "turn")
+        case "${CMD[1]}" in
+          "output") turn_output "${CMD[2]}";;
+          "input") turn_input "${CMD[2]}";;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
       "mute")
