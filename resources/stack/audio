@@ -319,30 +319,24 @@ set_profile () {
     echo "Unable to set the audio profile"
 }
 
-set_output () {
-  local SINK=$1
+set_default () {
+  local TYPE=$1
 
-  if [ -z "$SINK" ]; then
-    echo "Missing the output argument"
+  if [[ ! "$TYPE" =~ ^(sink|source)$ ]]; then
+    echo "Invalid module type argument"
     return 1
   fi
 
-  pactl set-default-sink "$SINK" && sleep 0.1 &&
-    echo "Default output set to $SINK" ||
-    echo "Unable to set the default output"
-}
+  local MODULE=$2
 
-set_input () {
-  local SOURCE=$1
-
-  if [ -z "$SOURCE" ]; then
-    echo "Missing the input argument"
+  if [ -z "$MODULE" ]; then
+    echo "Missing the module argument"
     return 1
   fi
 
-  pactl set-default-source "$SOURCE" && sleep 0.1 &&
-    echo "Default input set to $SOURCE" ||
-    echo "Unable to set the default input"
+  pactl set-default-$TYPE "$MODULE" && sleep 0.1 &&
+    echo "Default $TYPE set to $MODULE" ||
+    echo "Unable to set the default $TYPE"
 }
 
 turn_output () {
@@ -588,8 +582,8 @@ loop () {
       "set")
         case "${CMD[1]}" in
           "profile") set_profile "${CMD[2]}" "${CMD[3]}";;
-          "output") set_output "${CMD[2]}";;
-          "input") set_input "${CMD[2]}";;
+          "output") set_default "sink" "${CMD[2]}";;
+          "input") set_default "source" "${CMD[2]}";;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
       "turn")
