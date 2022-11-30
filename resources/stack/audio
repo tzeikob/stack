@@ -494,6 +494,7 @@ help () {
 
     echo -e "\nCOMMANDS"
     printf "$FRM" \
+      "help" "Show this message." \
       "mute" "Mute all output audio streams." \
       "unmute" "Unmute all output audio streams."
     
