@@ -220,78 +220,48 @@ list_profiles () {
     echo "No audio profiles have found"
 }
 
-list_outputs () {
-  local SINKS=$(pactl --format=json list sinks || echo "err:$?")
+list_ports () {
+  local TYPE=$1
 
-  [[ "$SINKS" =~ ^err: ]] &&
-    echo "Unable to retieve audio outputs" &&
+  if [[ ! "$TYPE" =~ ^(sinks|sources)$ ]]; then
+    echo "Invalid module type argument"
+    return 1
+  fi
+
+  local MODULES=$(pactl --format=json list "$TYPE" || echo "err:$?")
+
+  [[ "$MODULES" =~ ^err: ]] &&
+    echo "Unable to retieve audio modules" &&
     return 1
 
-  local COUNT=$(echo "$SINKS" | jq -cer ".|length" || echo "err:$?")
+  local COUNT=$(echo "$MODULES" | jq -cer ".|length" || echo "err:$?")
 
   [[ "$COUNT" =~ ^err: ]] &&
-    echo "Unable to counts audio outputs" &&
+    echo "Unable to count audio modules" &&
     return 1
 
   [ ! $COUNT -gt 0 ] &&
-    echo "No audio outputs have found" &&
+    echo "No audio modules have found" &&
     return 1
 
-  local QUERY='.[] |= . + {"sink": .name} |'
-  QUERY+='map((.ports[] + {index, sink, mute, properties})) |'
+  local QUERY='.[] |= . + {"module_name": .name} |'
+  QUERY+='map((.ports[] + {index, module_name, mute, properties})) |'
   QUERY+='.[] | ("\n'
   QUERY+='ID:      \(.index)\n'
-  QUERY+='Sink:    \(.sink)\n'
-  QUERY+='Name:    \(.name)\n'
-  QUERY+='Model:   \(.properties."device.nick")\n'
+  QUERY+='Name:    \(.module_name)\n'
+  QUERY+='Handle:  \(.name)\n'
   QUERY+='Type:    \(.type)\n'
+  QUERY+='Model:   \(.properties."device.nick")\n'
   QUERY+='Mute:    \(.mute)\n'
   QUERY+='Status:  \(.availability)")'
 
-  SINKS=$(echo "$SINKS" | jq -cer "$QUERY" || echo "err:$?")
+  local PORTS=$(echo "$MODULES" | jq -cer "$QUERY" || echo "err:$?")
 
-  [[ "$SINKS" =~ ^err: ]] &&
-    echo "Unable to retieve audio output data" &&
+  [[ "$PORTS" =~ ^err: ]] &&
+    echo "Unable to retieve audio port data" &&
     return 1
   
-  echo "$SINKS" | tail -n +2
-}
-
-list_inputs () {
-  local SOURCES=$(pactl --format=json list sources || echo "err:$?")
-
-  [[ "$SOURCES" =~ ^err: ]] &&
-    echo "Unable to retieve audio inputs" &&
-    return 1
-
-  local COUNT=$(echo "$SOURCES" | jq -cer ".|length" || echo "err:$?")
-
-  [[ "$COUNT" =~ ^err: ]] &&
-    echo "Unable to retieve audio inputs" &&
-    return 1
-
-  [ ! $COUNT -gt 0 ] &&
-    echo "No audio inputs have found" &&
-    return 1
-
-  local QUERY='.[] |= . + {"source": .name} |'
-  QUERY+='map((.ports[] + {index, source, mute, properties})) |'
-  QUERY+='.[] | ("\n'
-  QUERY+='ID:      \(.index)\n'
-  QUERY+='Source:  \(.source)\n'
-  QUERY+='Name:    \(.name)\n'
-  QUERY+='Model:   \(.properties."device.nick")\n'
-  QUERY+='Type:    \(.type)\n'
-  QUERY+='Mute:    \(.mute)\n'
-  QUERY+='Status:  \(.availability)")'
-
-  SOURCES=$(echo "$SOURCES" | jq -cer "$QUERY" || echo "err:$?")
-  
-  [[ "$SOURCES" =~ ^err: ]] &&
-    echo "Unable to retieve audio input data" &&
-    return 1
-  
-  echo "$SOURCES" | tail -n +2
+  echo "$PORTS" | tail -n +2
 }
 
 list_playbacks () {
@@ -551,8 +521,8 @@ help () {
     "" "" \
     "list cards" "List the cards plugged to the system." \
     "list profiles <card>" "List the profiles of the given card." \
-    "list outputs" "List all output audio ports." \
-    "list inputs" "List all input audio ports." \
+    "list outputs" "List the ports of output modules." \
+    "list inputs" "List the ports of input modules." \
     "list playbacks [<name>]" "List all active playbacks or those" \
     "" "which contain the given name filter." \
     "" "" \
@@ -610,8 +580,8 @@ loop () {
         case "${CMD[1]}" in
           "cards") list_cards;;
           "profiles") list_profiles "${CMD[2]}";;
-          "outputs") list_outputs;;
-          "inputs") list_inputs;;
+          "outputs") list_ports "sinks";;
+          "inputs") list_ports "sources";;
           "playbacks") list_playbacks "${CMD[2]}";;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
