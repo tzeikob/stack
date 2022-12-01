@@ -73,6 +73,16 @@ show_status () {
     awk '{printf "Cards:     %s\n",$0}'
 }
 
+show_logs () {
+  echo "Pipewire Service:"
+  echo "-----------------"
+  systemctl --user status pipewire.service | tail -n 10
+
+  echo -e "\nPulse Service:"
+  echo "--------------"
+  systemctl --user status pipewire-pulse.service | tail -n 10
+}
+
 show_card () {
   local CARD=$1
 
@@ -439,7 +449,8 @@ help () {
   echo -e "\nCOMMANDS"
   printf "$FRM" \
     "help" "Show this help message." \
-    "show status" "Show an overall report of the audio." \
+    "show status" "Show a report of the audio services." \
+    "show logs" "Show the journal logs of audio services." \
     "show card <card>" "Show the data of the given card." \
     "" "" \
     "list cards" "List the cards plugged to the system." \
@@ -497,6 +508,7 @@ loop () {
       "show")
         case "${CMD[1]}" in
           "status") show_status;;
+          "logs") show_logs;;
           "card") show_card "${CMD[2]}";;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
