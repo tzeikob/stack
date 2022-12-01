@@ -153,6 +153,21 @@ show_card () {
     echo " Unable to resolve audio ports"
 }
 
+restart () {
+  systemctl --user restart pipewire.socket && sleep 0.5 &&
+  echo "Pipewire socket restarted." &&
+  systemctl --user restart pipewire.service && sleep 0.5 &&
+  echo "Pipewire service restarted." &&
+  systemctl --user restart pipewire-session-manager.service && sleep 0.5 &&
+  systemctl --user restart pipewire-media-session && sleep 0.5 &&
+  systemctl --user restart pipewire-pulse.socket && sleep 0.5 &&
+  echo "Pulse socket restarted." &&
+  systemctl --user restart pipewire-pulse.service && sleep 0.5 &&
+  echo "Pulse service restarted." &&
+    echo "Audio server has been restarted." ||
+    echo "An error occurred restarting the audio server."
+}
+
 list_cards () {
   local CARDS=$(pactl --format=json list cards || echo "err:$?")
 
@@ -452,6 +467,7 @@ help () {
     "show status" "Show a report of the audio services." \
     "show logs" "Show the journal logs of audio services." \
     "show card <card>" "Show the data of the given card." \
+    "restart" "Restart the audio server." \
     "" "" \
     "list cards" "List the cards plugged to the system." \
     "list profiles <card>" "List the profiles of the given card." \
@@ -512,6 +528,7 @@ loop () {
           "card") show_card "${CMD[2]}";;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
+      "restart") restart;;
       "list")
         case "${CMD[1]}" in
           "cards") list_cards;;
