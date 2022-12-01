@@ -452,6 +452,8 @@ help () {
     echo -e "\nCOMMANDS"
     printf "$FRM" \
       "help" "Show this message." \
+      "restart" "Restart the audio server." \
+      "" "" \
       "mute" "Mute current output audio." \
       "unmute" "Unmute current output audio." \
       "up" "Increase output audio volume." \
@@ -580,6 +582,7 @@ once () {
 
   case "$CMD" in
     "help") help "once";;
+    "restart") restart;;
     "mute") turn_default "sink" "mute";;
     "unmute") turn_default "sink" "unmute";;
     "up") turn_default "sink" "up";;
