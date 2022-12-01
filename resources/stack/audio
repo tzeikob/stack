@@ -375,36 +375,16 @@ turn_default () {
 
   local VOLUME=$TO
 
-  if [[ "$TO" =~ ^(up|down)$ ]]; then
-    local QUERY='.[] | select(.name=="'${MODULE}'")'
-    QUERY+='|.volume."front-left".value_percent'
-
-    VOLUME=$(pactl --format=json list ${TYPE}s | jq -cer "$QUERY" | cut -d "%" -f 1 || echo "err:$?")
-
-    [[ "$VOLUME" =~ ^err: ]] &&
-      echo "Unable to resolve the current volume" &&
-      return 1
-    
-    if [ "$TO" = "up" ]; then
-      VOLUME=$((VOLUME + 5))
-    else
-      VOLUME=$((VOLUME - 5))
-    fi
+  if [ "$TO" = "up" ]; then
+    VOLUME="+5"
+  elif [ "$TO" = "down" ]; then
+    VOLUME="-5"
   fi
 
-  [ $VOLUME -lt 0 ] && VOLUME=0
-  [ $VOLUME -gt 150 ] && VOLUME=150
-
-  if [ $VOLUME -gt 0 ]; then
-    pactl set-${TYPE}-mute "$MODULE" 0 &&
-    pactl set-${TYPE}-volume "$MODULE" "${VOLUME}%" && sleep 0.1 &&
-      echo "Module volume set to ${VOLUME}%" ||
-      echo "Unable to set the module volume"
-  else
-    pactl set-${TYPE}-mute "$MODULE" 1 && sleep 0.1 &&
-      echo "Module volume set to mute" ||
-      echo "Unable to set the module to mute"
-  fi
+  pactl set-${TYPE}-mute "$MODULE" 0 &&
+  pactl set-${TYPE}-volume "$MODULE" "${VOLUME}%" && sleep 0.1 &&
+    echo "Module volume set to ${VOLUME}%" ||
+    echo "Unable to set the module volume"
 }
 
 set_mute () {
