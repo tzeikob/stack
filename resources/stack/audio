@@ -355,6 +355,47 @@ set_default () {
     echo "Unable to set the default $TYPE"
 }
 
+switch_default () {
+  local DEFAULT_SINK=$(pactl get-default-sink || echo "err:$?")
+
+  [[ "$DEFAULT_SINK" =~ ^err: ]] &&
+    echo "Unable to resolve the current output" &&
+    return 1
+  
+  local SINKS=$(pactl --format=json list sinks || echo "err:$?")
+
+  [[ "$SINKS" =~ ^err: ]] &&
+    echo "Unable to retrieve the list of outputs" &&
+    return 1
+  
+  local QUERY='.[] | sort_by(.name) | .[] | .name'
+  SINKS=$(echo "$SINKS" | jq -scer "$QUERY" || echo "err:$?")
+
+  [[ "$SINKS" =~ ^err: ]] &&
+    echo "Unable to sort the output names" &&
+    return 1
+  
+  SINKS=($SINKS)
+
+  [ ! ${#SINKS} -gt 0 ] &&
+    echo "No outputs have found" &&
+    return 1
+
+  local POS=0
+  local INDEX=0
+  while [ $INDEX -lt ${#SINKS[@]} ]; do
+    [ "${SINKS[INDEX]}" = "$DEFAULT_SINK" ] &&
+      POS=$INDEX &&
+      break
+
+    INDEX=$((INDEX + 1))
+  done
+
+  local NEXT_POS=$(((POS+1) % ${#SINKS[@]}))
+
+  set_default "sink" "${SINKS[NEXT_POS]}"
+}
+
 turn_default () {
   local TYPE=$1
   local TO=$2
@@ -453,6 +494,7 @@ help () {
     printf "$FRM" \
       "help" "Show this message." \
       "restart" "Restart the audio server." \
+      "next" "Switch to the next audio output." \
       "" "" \
       "mute" "Mute current output audio." \
       "unmute" "Unmute current output audio." \
@@ -471,6 +513,7 @@ help () {
     "show logs" "Show the journal logs of audio services." \
     "show card <card>" "Show the data of the given card." \
     "restart" "Restart the audio server." \
+    "next" "Switch the current output to the next output." \
     "" "" \
     "list cards" "List the cards plugged to the system." \
     "list profiles <card>" "List the profiles of the given card." \
@@ -548,6 +591,7 @@ loop () {
           "input") set_default "source" "${CMD[2]}";;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
+      "next") switch_default;;
       "turn")
         case "${CMD[1]}" in
           "output") turn_default "sink" "${CMD[2]}";;
@@ -583,6 +627,7 @@ once () {
   case "$CMD" in
     "help") help "once";;
     "restart") restart;;
+    "next") switch_default;;
     "mute") turn_default "sink" "mute";;
     "unmute") turn_default "sink" "unmute";;
     "up") turn_default "sink" "up";;
