@@ -52,7 +52,10 @@ prompt () {
 }
 
 show_status () {
-  local QUERY='("'
+  systemctl --user status --lines 0 pipewire.service && echo
+  systemctl --user status --lines 0 pipewire-pulse.service
+
+  local QUERY='("\n'
   QUERY+='Server:    \(.server_name)\n'
   QUERY+='Path:      \(.server_string)\n'
   QUERY+='Version:   \(.server_version)\n'
@@ -61,25 +64,13 @@ show_status () {
   QUERY+='Sample:    \(.default_sample_specification)\n'
   QUERY+='Channels:  \(.default_channel_map)\n'
   QUERY+='Sink:      \(.default_sink_name)\n'
-  QUERY+='Sources:   \(.default_source_name)\n'
-  QUERY+='Cookie:    \(.cookie)\n")'
+  QUERY+='Source:    \(.default_source_name)")'
 
-  pactl --format=json info | jq -cer "$QUERY" ||
-    echo -e "Unable to retrieve audio server info\n"
-  
-  QUERY='.[] | ("'
-  QUERY+='Card:      \(.index)\n'
-  QUERY+='Name:      \(.name)\n'
-  QUERY+='Model:     \(.properties."device.nick")\n'
-  QUERY+='Vendor:    \(.properties."device.vendor.name")\n'
-  QUERY+='Product:   \(.properties."device.product.name")\n'
-  QUERY+='Driver:    \(.driver)\n'
-  QUERY+='Form:      \(.properties."device.form_factor")\n'
-  QUERY+='Bus:       \(.properties."device.bus")\n'
-  QUERY+='Profile:   \(.active_profile)\n")'
+  pactl --format=json info | jq -cer "$QUERY"
 
-  pactl --format=json list cards | jq -cer "$QUERY" | head -n -1 ||
-    echo "Unable to retrieve audio cards"
+  QUERY='[.[] | ("\(.properties."device.nick")")] | join(", ")'
+  pactl --format=json list cards | jq -cer "$QUERY" |
+    awk '{printf "Cards:     %s\n",$0}'
 }
 
 show_card () {
