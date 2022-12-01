@@ -410,6 +410,11 @@ set_mute () {
 
   MODULES=($MODULES)
 
+  if [ ! ${#MODULES[@]} -gt 0 ]; then
+    echo "No $TYPE audio modules have found"
+    return 1
+  fi
+
   local INDEX=0
   while [ $INDEX -lt ${#MODULES[@]} ]; do
     local MODULE=${MODULES[INDEX]}
