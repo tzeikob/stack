@@ -19,7 +19,7 @@ prompt () {
     read -rep "[audio:${YE}none$RS] " REPLY &&
     return 1
 
-  local DEFAULT=$(pactl --format=json info | jq -cer '.default_sink_name' || echo "err:$?")
+  local DEFAULT=$(pactl get-default-sink || echo "err:$?")
 
   [[ "$DEFAULT" =~ ^err: ]] &&
     echo "Unable to resolve default output" &&
