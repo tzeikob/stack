@@ -164,6 +164,7 @@ restart () {
   echo "Pulse socket restarted." &&
   systemctl --user restart pipewire-pulse.service && sleep 0.5 &&
   echo "Pulse service restarted." &&
+  polybar-msg cmd restart &&
     echo "Audio server has been restarted." ||
     echo "An error occurred restarting the audio server."
 }
