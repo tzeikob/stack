@@ -322,13 +322,48 @@ set_profile () {
   local PROFILE=$2
 
   if [ -z "$CARD" ]; then
-    echo "Missing the card argument"
-    return 1
+    local QUERY='sort_by(.name) | to_entries | .[] | ("\(.key)|\(.value.name)")'
+    local CARDS=$(pactl --format=json list cards | jq -cer "$QUERY" || echo "err:$?")
+    
+    [[ "$CARDS" =~ ^err: ]] &&
+      echo "Unable to retrieve audio cards" &&
+      return 1
+    
+    CARDS=($CARDS)
+
+    [ ! ${#CARDS[@]} -gt 0 ] &&
+      echo "No audio cards have found" &&
+      return 1
+    
+    pick "Which audio card's profile to set?" "${CARDS[@]}"
+    CARD=$(echo "${CARDS[$REPLY]}" | cut -d '|' -f 2)
   fi
 
   if [ -z "$PROFILE" ]; then
-    echo "Missing the profile argument"
-    return 1
+    local KEY="index"
+    local VALUE=$CARD
+
+    if [[ ! "$CARD" =~ ^[0-9]+$ ]]; then
+      KEY="name"
+      VALUE="\"${CARD}\""
+    fi
+
+    local QUERY=".[] | select(.${KEY}==${VALUE}) | .profiles"
+    QUERY+='| keys | to_entries | .[] | ("\(.key)|\(.value)")'
+    local PROFILES=$(pactl --format=json list cards | jq -cer "$QUERY" || echo "err:$?")
+    
+    [[ "$PROFILES" =~ ^err: ]] &&
+      echo "Unable to retrieve audio profiles" &&
+      return 1
+    
+    PROFILES=($PROFILES)
+
+    [ ! ${#PROFILES[@]} -gt 0 ] &&
+      echo "No audio profiles have found" &&
+      return 1
+    
+    pick "Which audio profile to set:" "${PROFILES[@]}"
+    PROFILE=$(echo "${PROFILES[$REPLY]}" | cut -d '|' -f 2)
   fi
 
   pactl set-card-profile "$CARD" "$PROFILE" && sleep 0.1 &&
@@ -495,6 +530,7 @@ help () {
       "help" "Show this message." \
       "restart" "Restart the audio server." \
       "next" "Switch to the next audio output." \
+      "profile" "Set the profile of an audio card." \
       "" "" \
       "mute" "Mute current output audio." \
       "unmute" "Unmute current output audio." \
@@ -522,7 +558,7 @@ help () {
     "list playbacks [<name>]" "List all active playbacks or those" \
     "" "which contain the given name filter." \
     "" "" \
-    "set profile <card> <profile>" "Set the profile of the given card." \
+    "set profile [<card> [<profile>]]" "Set the profile of the given card." \
     "set output <output>" "Set current output to the given output." \
     "set input <input>" "Set current input to the given input." \
     "" "" \
@@ -628,6 +664,7 @@ once () {
     "help") help "once";;
     "restart") restart;;
     "next") switch_default;;
+    "profile") set_profile;;
     "mute") turn_default "sink" "mute";;
     "unmute") turn_default "sink" "unmute";;
     "up") turn_default "sink" "up";;

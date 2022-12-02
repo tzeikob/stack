@@ -79,6 +79,19 @@ askme () {
   fi
 }
 
+pick () {
+  local PROMPT=$1 && shift
+  local OPTIONS=("${@}")
+  local LEN=${#OPTIONS[@]}
+
+  print 1 30 "${OPTIONS[@]}"
+  read -rep "$PROMPT " REPLY
+
+  while [[ ! $REPLY =~ ^[0-9]+$ ]] || (( $REPLY < 0 || $REPLY >= $LEN )); do
+    read -rep " Please enter a valid value: " REPLY
+  done
+}
+
 prompt () {
   local TEXT=$1
   local COLOR=${2:-$WHITE}
