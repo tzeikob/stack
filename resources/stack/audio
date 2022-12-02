@@ -52,8 +52,8 @@ prompt () {
 }
 
 show_status () {
-  systemctl --user status --lines 0 pipewire.service && echo
-  systemctl --user status --lines 0 pipewire-pulse.service
+  systemctl --user status --lines 0 --no-pager pipewire.service && echo
+  systemctl --user status --lines 0 --no-pager pipewire-pulse.service
 
   local QUERY='("\n'
   QUERY+='Server:    \(.server_name)\n'
@@ -76,11 +76,11 @@ show_status () {
 show_logs () {
   echo "Pipewire Service:"
   echo "-----------------"
-  systemctl --user status pipewire.service | tail -n 10
+  systemctl --user status --no-pager pipewire.service | tail -n 10
 
   echo -e "\nPulse Service:"
   echo "--------------"
-  systemctl --user status pipewire-pulse.service | tail -n 10
+  systemctl --user status --no-pager pipewire-pulse.service | tail -n 10
 }
 
 show_card () {
