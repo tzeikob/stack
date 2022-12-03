@@ -358,8 +358,27 @@ set_default () {
   fi
 
   if [ -z "$MODULE" ]; then
-    echo "Missing the module argument"
-    return 1
+    local QUERY='[.[] |= . | map((.ports[] + {index, properties}))'
+    QUERY+='| .[] | {index: .index, type: .type, device: .properties."device.nick"}]'
+    QUERY+='| sort_by(.index) | to_entries | .[]'
+    QUERY+='| ("\(.key)|\(.value.index)|\(.value.device)_[\(.value.type)]")'
+
+    local MODULES=$(pactl --format=json list "$TYPE"s | jq -cer "$QUERY" | sed -r 's/\s+/_/g' || echo "err:$?")
+    
+    if [[ "$MODULES" =~ ^err: ]]; then
+      echo "Unable to retrieve audio modules"
+      return 1
+    fi
+    
+    MODULES=($MODULES)
+
+    if [ ! ${#MODULES[@]} -gt 0 ]; then
+      echo "No audio modules have found"
+      return 1
+    fi
+    
+    pick "Which audio module to set as default?" "${MODULES[@]}"
+    MODULE=$(echo "${MODULES[$REPLY]}" | cut -d '|' -f 2)
   fi
 
   pactl set-default-$TYPE "$MODULE" && sleep 0.1 &&
