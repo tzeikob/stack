@@ -71,11 +71,11 @@ show_status () {
 show_logs () {
   echo "Pipewire Service:"
   echo "-----------------"
-  systemctl --user status --no-pager pipewire.service | tail -n 10
+  systemctl --user status --no-pager pipewire.service | tail -n +12
 
   echo -e "\nPulse Service:"
   echo "--------------"
-  systemctl --user status --no-pager pipewire-pulse.service | tail -n 10
+  systemctl --user status --no-pager pipewire-pulse.service | tail -n +12
 }
 
 show_card () {
