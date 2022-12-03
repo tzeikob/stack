@@ -9,30 +9,23 @@ require "jq"
 
 prompt () {
   local CARDS=$(pactl --format=json list short cards | jq -cer '.|length' || echo "err:$?")
-
-  [[ "$CARDS" =~ ^err: ]] &&
-    echo "Unable to find audio cards" &&
-    read -rep "[audio:${RE}failed$RS] " REPLY &&
+  if [[ "$CARDS" =~ ^err: ]] || [ $CARDS = 0 ]; then
+    read -rep "[audio:${RE}none$RS] " REPLY
     return 1
-  
-  [ ! $CARDS -gt 0 ] &&
-    read -rep "[audio:${YE}none$RS] " REPLY &&
-    return 1
+  fi
 
   local DEFAULT=$(pactl get-default-sink || echo "err:$?")
-
-  [[ "$DEFAULT" =~ ^err: ]] &&
-    echo "Unable to resolve default output" &&
-    read -rep "[audio:${RE}failed$RS] " REPLY &&
+  if [[ "$DEFAULT" =~ ^err: ]]; then
+    read -rep "[audio:${RE}none$RS] " REPLY
     return 1
+  fi
 
   local QUERY='.[] | select(.name == "'$DEFAULT'")'
   local SINK=$(pactl --format=json list sinks | jq -cer "$QUERY" || echo "err:$?")
-
-  [[ "$SINK" =~ ^err: ]] &&
-    echo "Unable to retrieve default output data" &&
-    read -rep "[audio:${RE}failed$RS] " REPLY &&
+  if [[ "$SINK" =~ ^err: ]]; then
+    read -rep "[audio:${RE}none$RS] " REPLY
     return 1
+  fi
 
   local PORT=$(echo "$SINK" | jq -cr '.active_port')
   local MUTE=$(echo "$SINK" | jq -cr '.mute')
@@ -52,10 +45,12 @@ prompt () {
 }
 
 show_status () {
-  systemctl --user status --lines 0 --no-pager pipewire.service && echo
+  systemctl --user status --lines 0 --no-pager pipewire.service
+  echo
   systemctl --user status --lines 0 --no-pager pipewire-pulse.service
+  echo
 
-  local QUERY='("\n'
+  local QUERY='("'
   QUERY+='Server:    \(.server_name)\n'
   QUERY+='Path:      \(.server_string)\n'
   QUERY+='Version:   \(.server_version)\n'
@@ -66,10 +61,10 @@ show_status () {
   QUERY+='Sink:      \(.default_sink_name)\n'
   QUERY+='Source:    \(.default_source_name)")'
 
-  pactl --format=json info | jq -cer "$QUERY"
+  pactl --format=json info | jq -cr "$QUERY"
 
   QUERY='[.[] | ("\(.properties."device.nick")")] | join(", ")'
-  pactl --format=json list cards | jq -cer "$QUERY" |
+  pactl --format=json list cards | jq -cr "$QUERY" |
     awk '{printf "Cards:     %s\n",$0}'
 }
 
@@ -101,10 +96,10 @@ show_card () {
 
   local QUERY=".[] | select(.${KEY}==${VALUE})"
   CARD=$(pactl --format=json list cards | jq -cer "$QUERY" || echo "err:$?")
-
-  [[ "$CARD" =~ ^err: ]] &&
-    echo "Unable to get data for the given card" &&
+  if [[ "$CARD" =~ ^err: ]]; then
+    echo "Unable to get data for the given card"
     return 1
+  fi
 
   QUERY='("ID:                 \(.index)\n'
   QUERY+='Name:               \(.name)\n'
@@ -145,12 +140,10 @@ show_card () {
   echo "$CARD" | jq -cr "$QUERY"
 
   echo -e "\nProfiles:"
-  echo "$CARD" | jq -cer '.profiles | " \(keys[])"' ||
-    echo " Unable to resolve audio profiles"
+  echo "$CARD" | jq -cr '.profiles | " \(keys[])"'
 
   echo -e "\nPorts:"
-  echo "$CARD" | jq -cer '.ports | to_entries[] | " \(.key) [\(.value.type)]"' ||
-    echo " Unable to resolve audio ports"
+  echo "$CARD" | jq -cr '.ports | to_entries[] | " \(.key) [\(.value.type)]"'
 }
 
 restart () {
@@ -159,7 +152,7 @@ restart () {
   systemctl --user restart pipewire.service && sleep 0.5 &&
   echo "Pipewire service restarted." &&
   systemctl --user restart pipewire-session-manager.service && sleep 0.5 &&
-  systemctl --user restart pipewire-media-session && sleep 0.5 &&
+  systemctl --user restart pipewire-media-session.service && sleep 0.5 &&
   systemctl --user restart pipewire-pulse.socket && sleep 0.5 &&
   echo "Pulse socket restarted." &&
   systemctl --user restart pipewire-pulse.service && sleep 0.5 &&
@@ -171,20 +164,16 @@ restart () {
 
 list_cards () {
   local CARDS=$(pactl --format=json list cards || echo "err:$?")
-
-  [[ "$CARDS" =~ ^err: ]] &&
-    echo "Unable to retieve audio cards" &&
+  if [[ "$CARDS" =~ ^err: ]]; then
+    echo "Unable to retieve audio cards"
     return 1
+  fi
 
-  local COUNT=$(echo "$CARDS" | jq -cer ".|length" || echo "err:$?")
-
-  [[ "$COUNT" =~ ^err: ]] &&
-    echo "Unable to count audio cards" &&
+  local COUNT=$(echo "$CARDS" | jq -cer ".|length")
+  if [ ! $COUNT -gt 0 ]; then
+    echo "No audio cards have found"
     return 1
-  
-  [ ! $COUNT -gt 0 ] &&
-    echo "No audio cards have found" &&
-    return 1
+  fi
 
   local QUERY='.[] | ("\n'
   QUERY+='ID:      \(.index)\n'
@@ -193,13 +182,7 @@ list_cards () {
   QUERY+='Vendor:  \(.properties."device.vendor.name")\n'
   QUERY+='Bus:     \(.properties."device.bus")")'
 
-  CARDS=$(echo "$CARDS" | jq -cer "$QUERY" || echo "err:$?")
-
-  [[ "$CARDS" =~ ^err: ]] &&
-    echo "Unable to retieve audio card data" &&
-    return 1
-
-  echo "$CARDS" | tail -n +2
+  echo "$CARDS" | jq -cr "$QUERY" | tail -n +2
 }
 
 list_profiles () {
@@ -220,21 +203,18 @@ list_profiles () {
 
   local QUERY=".[] | select(.${KEY}==${VALUE})"
   CARD=$(pactl --format=json list cards | jq -cer "$QUERY" || echo "err:$?")
-
-  [[ "$CARD" =~ ^err: ]] &&
-    echo "Unable to find the given card" &&
+  if [[ "$CARD" =~ ^err: ]]; then
+    echo "Unable to find the given card"
     return 1
-  
-  QUERY='.profiles | length'
-  local PROFILES=$(echo "$CARD" | jq -cer "$QUERY" || echo "err:$?")
+  fi
 
-  [[ "$PROFILES" =~ ^err: ]] &&
-    echo "Unable to resolve audio profiles" &&
-    return 1
-
-  [ $PROFILES -gt 0 ] &&
-    echo "$CARD" | jq -cr '.profiles | keys[]' ||
+  local PROFILES=$(echo "$CARD" | jq -cr '.profiles | length')
+  if [ ! $PROFILES -gt 0 ]; then
     echo "No audio profiles have found"
+    return
+  fi
+
+  echo "$CARD" | jq -cr '.profiles | keys[]'
 }
 
 list_ports () {
@@ -246,20 +226,16 @@ list_ports () {
   fi
 
   local MODULES=$(pactl --format=json list "$TYPE" || echo "err:$?")
-
-  [[ "$MODULES" =~ ^err: ]] &&
-    echo "Unable to retieve audio modules" &&
+  if [[ "$MODULES" =~ ^err: ]]; then
+    echo "Unable to retieve audio modules"
     return 1
+  fi
 
-  local COUNT=$(echo "$MODULES" | jq -cer ".|length" || echo "err:$?")
-
-  [[ "$COUNT" =~ ^err: ]] &&
-    echo "Unable to count audio modules" &&
+  local COUNT=$(echo "$MODULES" | jq -cer ".|length")
+  if [ ! $COUNT -gt 0 ]; then
+    echo "No audio modules have found"
     return 1
-
-  [ ! $COUNT -gt 0 ] &&
-    echo "No audio modules have found" &&
-    return 1
+  fi
 
   local QUERY='.[] |= . + {"module_name": .name} |'
   QUERY+='map((.ports[] + {index, module_name, mute, properties})) |'
@@ -272,34 +248,24 @@ list_ports () {
   QUERY+='Mute:    \(.mute)\n'
   QUERY+='Status:  \(.availability)")'
 
-  local PORTS=$(echo "$MODULES" | jq -cer "$QUERY" || echo "err:$?")
-
-  [[ "$PORTS" =~ ^err: ]] &&
-    echo "Unable to retieve audio port data" &&
-    return 1
-  
-  echo "$PORTS" | tail -n +2
+  echo "$MODULES" | jq -cer "$QUERY" | tail -n +2
 }
 
 list_playbacks () {
   local NAME=$1
 
   local SINK_INPUTS=$(pactl --format=json list sink-inputs || echo "err:$?")
-
-  [[ "$SINK_INPUTS" =~ ^err: ]] &&
-    echo "Unable to retieve audio playbacks" &&
+  if [[ "$SINK_INPUTS" =~ ^err: ]]; then
+    echo "Unable to retieve audio playbacks"
     return 1
+  fi
 
   local QUERY='[.[] | select(.properties."application.name"|test("'${NAME}'"; "i"))]'
-  local COUNT=$(echo "$SINK_INPUTS" | jq -cr "$QUERY | length" || echo "err:$?")
-
-  [[ "$COUNT" =~ ^err: ]] &&
-    echo "Unable to COUNT audio playbacks" &&
+  local COUNT=$(echo "$SINK_INPUTS" | jq -cr "$QUERY | length")
+  if [ ! $COUNT -gt 0 ]; then
+    echo "No audio playbacks have found"
     return 1
-
-  [ ! $COUNT -gt 0 ] &&
-    echo "No audio playbacks have found" &&
-    return 1
+  fi
 
   QUERY+='|.[]|("\n'
   QUERY+='Sink:     \(.index)\n'
@@ -308,13 +274,7 @@ list_playbacks () {
   QUERY+='Media:    \(.properties."media.name")\n'
   QUERY+='Mute:     \(.mute)")'
 
-  SINK_INPUTS=$(echo "$SINK_INPUTS" | jq -cr "$QUERY" || echo "err:$?")
-
-  [[ "$SINK_INPUTS" =~ ^err: ]] &&
-    echo "Unable to retieve audio playback data" &&
-    return 1
-
-  echo "$SINK_INPUTS" | tail -n +2
+  echo "$SINK_INPUTS" | jq -cr "$QUERY" | tail -n +2
 }
 
 set_profile () {
@@ -325,15 +285,17 @@ set_profile () {
     local QUERY='sort_by(.name) | to_entries | .[] | ("\(.key)|\(.value.name)")'
     local CARDS=$(pactl --format=json list cards | jq -cer "$QUERY" || echo "err:$?")
     
-    [[ "$CARDS" =~ ^err: ]] &&
-      echo "Unable to retrieve audio cards" &&
+    if [[ "$CARDS" =~ ^err: ]]; then
+      echo "Unable to retrieve audio cards"
       return 1
+    fi
     
     CARDS=($CARDS)
 
-    [ ! ${#CARDS[@]} -gt 0 ] &&
-      echo "No audio cards have found" &&
+    if [ ! ${#CARDS[@]} -gt 0 ]; then
+      echo "No audio cards have found"
       return 1
+    fi
     
     pick "Which audio card's profile to set?" "${CARDS[@]}"
     CARD=$(echo "${CARDS[$REPLY]}" | cut -d '|' -f 2)
@@ -352,15 +314,17 @@ set_profile () {
     QUERY+='| keys | to_entries | .[] | ("\(.key)|\(.value)")'
     local PROFILES=$(pactl --format=json list cards | jq -cer "$QUERY" || echo "err:$?")
     
-    [[ "$PROFILES" =~ ^err: ]] &&
-      echo "Unable to retrieve audio profiles" &&
+    if [[ "$PROFILES" =~ ^err: ]]; then
+      echo "Unable to retrieve audio profiles"
       return 1
+    fi
     
     PROFILES=($PROFILES)
 
-    [ ! ${#PROFILES[@]} -gt 0 ] &&
-      echo "No audio profiles have found" &&
+    if [ ! ${#PROFILES[@]} -gt 0 ]; then
+      echo "No audio profiles have found"
       return 1
+    fi
     
     pick "Which audio profile to set:" "${PROFILES[@]}"
     PROFILE=$(echo "${PROFILES[$REPLY]}" | cut -d '|' -f 2)
@@ -393,42 +357,38 @@ set_default () {
 switch_default () {
   local DEFAULT_SINK=$(pactl get-default-sink || echo "err:$?")
 
-  [[ "$DEFAULT_SINK" =~ ^err: ]] &&
-    echo "Unable to resolve the current output" &&
+  if [[ "$DEFAULT_SINK" =~ ^err: ]]; then
+    echo "Unable to resolve the current output"
     return 1
+  fi
   
   local SINKS=$(pactl --format=json list sinks || echo "err:$?")
 
-  [[ "$SINKS" =~ ^err: ]] &&
-    echo "Unable to retrieve the list of outputs" &&
+  if [[ "$SINKS" =~ ^err: ]]; then
+    echo "Unable to retrieve the list of outputs"
     return 1
+  fi
   
   local QUERY='.[] | sort_by(.name) | .[] | .name'
-  SINKS=$(echo "$SINKS" | jq -scer "$QUERY" || echo "err:$?")
+  SINKS=($(echo "$SINKS" | jq -scer "$QUERY"))
 
-  [[ "$SINKS" =~ ^err: ]] &&
-    echo "Unable to sort the output names" &&
+  if [ ! ${#SINKS} -gt 0 ]; then
+    echo "No outputs have found"
     return 1
-  
-  SINKS=($SINKS)
-
-  [ ! ${#SINKS} -gt 0 ] &&
-    echo "No outputs have found" &&
-    return 1
+  fi
 
   local POS=0
   local INDEX=0
   while [ $INDEX -lt ${#SINKS[@]} ]; do
-    [ "${SINKS[INDEX]}" = "$DEFAULT_SINK" ] &&
-      POS=$INDEX &&
+    if [ "${SINKS[INDEX]}" = "$DEFAULT_SINK" ]; then
+      POS=$((($INDEX+1) % ${#SINKS[@]}))
       break
+    fi
 
     INDEX=$((INDEX + 1))
   done
 
-  local NEXT_POS=$(((POS+1) % ${#SINKS[@]}))
-
-  set_default "sink" "${SINKS[NEXT_POS]}"
+  set_default "sink" "${SINKS[POS]}"
 }
 
 turn_default () {
@@ -450,9 +410,10 @@ turn_default () {
 
   local MODULE=$(pactl get-default-$TYPE || echo "err:$?")
 
-  [[ "$MODULE" =~ ^err: ]] &&
-    echo "Unable to resolve the current module" &&
+  if [[ "$MODULE" =~ ^err: ]]; then
+    echo "Unable to resolve the current module"
     return 1
+  fi
   
   if [ "$TO" = "mute" ]; then
     pactl set-${TYPE}-mute "$MODULE" 1 && sleep 0.1 &&
@@ -511,6 +472,7 @@ set_mute () {
   local INDEX=0
   while [ $INDEX -lt ${#MODULES[@]} ]; do
     local MODULE=${MODULES[INDEX]}
+
     pactl set-${TYPE::-1}-mute "$MODULE" "$MUTE" && sleep 0.1 &&
       echo "Module $MODULE set mute to $MUTE" ||
       echo "Unable to set mute for module $MODULE"
