@@ -176,7 +176,7 @@ list_cards () {
 
   if [ ! $COUNT -gt 0 ]; then
     echo "No audio cards have found"
-    return 1
+    return
   fi
 
   local QUERY='.[] | ("\n'
@@ -242,7 +242,7 @@ list_ports () {
 
   if [ ! $COUNT -gt 0 ]; then
     echo "No audio modules have found"
-    return 1
+    return
   fi
 
   local QUERY='.[] |= . + {"module_name": .name} |'
@@ -274,7 +274,7 @@ list_playbacks () {
 
   if [ ! $COUNT -gt 0 ]; then
     echo "No audio playbacks have found"
-    return 1
+    return
   fi
 
   QUERY+='|.[]|("\n'
