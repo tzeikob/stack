@@ -292,8 +292,10 @@ set_profile () {
   local PROFILE=$2
 
   if [ -z "$CARD" ]; then
-    local QUERY='sort_by(.name) | to_entries | .[] | ("\(.key)|\(.value.name)")'
-    local CARDS=$(pactl --format=json list cards | jq -cer "$QUERY" || echo "err:$?")
+
+    local QUERY='sort_by(.index) | to_entries | .[]'
+    QUERY+='| ("\(.key)|\(.value.index)|\(.value.properties."device.nick")")'
+    local CARDS=$(pactl --format=json list cards | jq -cer "$QUERY" | sed -r 's/\s+/_/g' || echo "err:$?")
     
     if [[ "$CARDS" =~ ^err: ]]; then
       echo "Unable to retrieve audio cards"
@@ -320,9 +322,10 @@ set_profile () {
       VALUE="\"${CARD}\""
     fi
 
-    local QUERY=".[] | select(.${KEY}==${VALUE}) | .profiles"
-    QUERY+='| keys | to_entries | .[] | ("\(.key)|\(.value)")'
-    local PROFILES=$(pactl --format=json list cards | jq -cer "$QUERY" || echo "err:$?")
+    local QUERY="[.[] | select(.${KEY}==${VALUE}) | .profiles | to_entries | .[]"
+    QUERY+='| {name: .key, desc: .value.description}] | to_entries | .[]'
+    QUERY+='| ("\(.key)|\(.value.name)|\(.value.desc)")'
+    local PROFILES=$(pactl --format=json list cards | jq -cer "$QUERY" | sed -r 's/\s+/_/g' || echo "err:$?")
     
     if [[ "$PROFILES" =~ ^err: ]]; then
       echo "Unable to retrieve audio profiles"
