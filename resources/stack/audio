@@ -9,12 +9,14 @@ require "jq"
 
 prompt () {
   local CARDS=$(pactl --format=json list short cards | jq -cer '.|length' || echo "err:$?")
+
   if [[ "$CARDS" =~ ^err: ]] || [ $CARDS = 0 ]; then
     read -rep "[audio:${RE}none$RS] " REPLY
     return 1
   fi
 
   local DEFAULT=$(pactl get-default-sink || echo "err:$?")
+
   if [[ "$DEFAULT" =~ ^err: ]]; then
     read -rep "[audio:${RE}none$RS] " REPLY
     return 1
@@ -22,6 +24,7 @@ prompt () {
 
   local QUERY='.[] | select(.name == "'$DEFAULT'")'
   local SINK=$(pactl --format=json list sinks | jq -cer "$QUERY" || echo "err:$?")
+
   if [[ "$SINK" =~ ^err: ]]; then
     read -rep "[audio:${RE}none$RS] " REPLY
     return 1
@@ -60,7 +63,6 @@ show_status () {
   QUERY+='Channels:  \(.default_channel_map)\n'
   QUERY+='Sink:      \(.default_sink_name)\n'
   QUERY+='Source:    \(.default_source_name)")'
-
   pactl --format=json info | jq -cr "$QUERY"
 
   QUERY='[.[] | ("\(.properties."device.nick")")] | join(", ")'
@@ -96,6 +98,7 @@ show_card () {
 
   local QUERY=".[] | select(.${KEY}==${VALUE})"
   CARD=$(pactl --format=json list cards | jq -cer "$QUERY" || echo "err:$?")
+
   if [[ "$CARD" =~ ^err: ]]; then
     echo "Unable to get data for the given card"
     return 1
@@ -136,7 +139,6 @@ show_card () {
   QUERY+='Object Path:        \(.properties."object.path")\n'
   QUERY+='Alsa Card:          \(.properties."alsa.card")\n'
   QUERY+='Active Profile:     \(.active_profile)")'
-
   echo "$CARD" | jq -cr "$QUERY"
 
   echo -e "\nProfiles:"
@@ -164,12 +166,14 @@ restart () {
 
 list_cards () {
   local CARDS=$(pactl --format=json list cards || echo "err:$?")
+
   if [[ "$CARDS" =~ ^err: ]]; then
     echo "Unable to retieve audio cards"
     return 1
   fi
 
-  local COUNT=$(echo "$CARDS" | jq -cer ".|length")
+  local COUNT=$(echo "$CARDS" | jq -cer '.|length')
+
   if [ ! $COUNT -gt 0 ]; then
     echo "No audio cards have found"
     return 1
@@ -203,12 +207,14 @@ list_profiles () {
 
   local QUERY=".[] | select(.${KEY}==${VALUE})"
   CARD=$(pactl --format=json list cards | jq -cer "$QUERY" || echo "err:$?")
+
   if [[ "$CARD" =~ ^err: ]]; then
     echo "Unable to find the given card"
     return 1
   fi
 
   local PROFILES=$(echo "$CARD" | jq -cr '.profiles | length')
+
   if [ ! $PROFILES -gt 0 ]; then
     echo "No audio profiles have found"
     return
@@ -226,12 +232,14 @@ list_ports () {
   fi
 
   local MODULES=$(pactl --format=json list "$TYPE" || echo "err:$?")
+
   if [[ "$MODULES" =~ ^err: ]]; then
     echo "Unable to retieve audio modules"
     return 1
   fi
 
-  local COUNT=$(echo "$MODULES" | jq -cer ".|length")
+  local COUNT=$(echo "$MODULES" | jq -cer '.|length')
+
   if [ ! $COUNT -gt 0 ]; then
     echo "No audio modules have found"
     return 1
@@ -255,6 +263,7 @@ list_playbacks () {
   local NAME=$1
 
   local SINK_INPUTS=$(pactl --format=json list sink-inputs || echo "err:$?")
+
   if [[ "$SINK_INPUTS" =~ ^err: ]]; then
     echo "Unable to retieve audio playbacks"
     return 1
@@ -262,6 +271,7 @@ list_playbacks () {
 
   local QUERY='[.[] | select(.properties."application.name"|test("'${NAME}'"; "i"))]'
   local COUNT=$(echo "$SINK_INPUTS" | jq -cr "$QUERY | length")
+
   if [ ! $COUNT -gt 0 ]; then
     echo "No audio playbacks have found"
     return 1
