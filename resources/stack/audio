@@ -28,6 +28,38 @@ pick_card () {
   REPLY=$(echo "${CARDS[$REPLY]}" | cut -d '|' -f 2)
 }
 
+pick_profile () {
+  local CARD=$1
+
+  local KEY="index"
+  local VALUE=$CARD
+
+  if [[ ! "$CARD" =~ ^[0-9]+$ ]]; then
+    KEY="name"
+    VALUE="\"${CARD}\""
+  fi
+
+  local QUERY="[.[] | select(.${KEY}==${VALUE}) | .profiles | to_entries | .[]"
+  QUERY+='| {name: .key, desc: .value.description}] | to_entries | .[]'
+  QUERY+='| ("\(.key)|\(.value.name)|\(.value.desc)")'
+  local PROFILES=$(pactl --format=json list cards | jq -cer "$QUERY" | sed -r 's/\s+/_/g' || echo "err:$?")
+  
+  if [[ "$PROFILES" =~ ^err: ]]; then
+    echo "Unable to retrieve audio profiles"
+    return 1
+  fi
+  
+  PROFILES=($PROFILES)
+
+  if [ ! ${#PROFILES[@]} -gt 0 ]; then
+    echo "No audio profiles have found"
+    return 1
+  fi
+  
+  pick "Which audio profile to set:" "${PROFILES[@]}"
+  REPLY=$(echo "${PROFILES[$REPLY]}" | cut -d '|' -f 2)
+}
+
 prompt () {
   local CARDS=$(pactl --format=json list short cards | jq -cer '.|length' || echo "err:$?")
 
@@ -332,33 +364,8 @@ set_profile () {
   fi
 
   if [ -z "$PROFILE" ]; then
-    local KEY="index"
-    local VALUE=$CARD
-
-    if [[ ! "$CARD" =~ ^[0-9]+$ ]]; then
-      KEY="name"
-      VALUE="\"${CARD}\""
-    fi
-
-    local QUERY="[.[] | select(.${KEY}==${VALUE}) | .profiles | to_entries | .[]"
-    QUERY+='| {name: .key, desc: .value.description}] | to_entries | .[]'
-    QUERY+='| ("\(.key)|\(.value.name)|\(.value.desc)")'
-    local PROFILES=$(pactl --format=json list cards | jq -cer "$QUERY" | sed -r 's/\s+/_/g' || echo "err:$?")
-    
-    if [[ "$PROFILES" =~ ^err: ]]; then
-      echo "Unable to retrieve audio profiles"
-      return 1
-    fi
-    
-    PROFILES=($PROFILES)
-
-    if [ ! ${#PROFILES[@]} -gt 0 ]; then
-      echo "No audio profiles have found"
-      return 1
-    fi
-    
-    pick "Which audio profile to set:" "${PROFILES[@]}"
-    PROFILE=$(echo "${PROFILES[$REPLY]}" | cut -d '|' -f 2)
+    pick_profile "$CARD" || return 1
+    PROFILE=$REPLY
   fi
 
   pactl set-card-profile "$CARD" "$PROFILE" && sleep 0.1 &&
