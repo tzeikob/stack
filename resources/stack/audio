@@ -498,7 +498,6 @@ help () {
     printf "$FRM" \
       "help" "Show this message." \
       "restart" "Restart the audio server." \
-      "next" "Switch to the next audio output." \
       "profile" "Set the profile of an audio card." \
       "output" "Set the current audio output." \
       "" "" \
@@ -519,7 +518,6 @@ help () {
     "show logs" "Show the journal logs of audio services." \
     "show card <card>" "Show the data of the given card." \
     "restart" "Restart the audio server." \
-    "next" "Switch the current output to the next output." \
     "" "" \
     "list cards" "List the cards plugged to the system." \
     "list profiles <card>" "List the profiles of the given card." \
