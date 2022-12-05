@@ -7,6 +7,27 @@ source /opt/stack/utils
 require "libpulse"
 require "jq"
 
+pick_card () {
+  local QUERY='sort_by(.index) | to_entries | .[]'
+  QUERY+='| ("\(.key)|\(.value.index)|\(.value.properties."device.nick")")'
+  local CARDS=$(pactl --format=json list cards | jq -cer "$QUERY" | sed -r 's/\s+/_/g' || echo "err:$?")
+  
+  if [[ "$CARDS" =~ ^err: ]]; then
+    echo "Unable to retrieve audio cards"
+    return 1
+  fi
+  
+  CARDS=($CARDS)
+
+  if [ ! ${#CARDS[@]} -gt 0 ]; then
+    echo "No audio cards have found"
+    return 1
+  fi
+  
+  pick "Which audio card's profile to set?" "${CARDS[@]}"
+  REPLY=$(echo "${CARDS[$REPLY]}" | cut -d '|' -f 2)
+}
+
 prompt () {
   local CARDS=$(pactl --format=json list short cards | jq -cer '.|length' || echo "err:$?")
 
@@ -63,6 +84,7 @@ show_status () {
   QUERY+='Channels:  \(.default_channel_map)\n'
   QUERY+='Sink:      \(.default_sink_name)\n'
   QUERY+='Source:    \(.default_source_name)")'
+
   pactl --format=json info | jq -cr "$QUERY"
 
   echo -n "Cards:     "
@@ -70,6 +92,7 @@ show_status () {
   QUERY+='{device: .properties."device.nick",'
   QUERY+='profile: (.profiles | to_entries | .[] | select(.key==$p) | .value.description)}'
   QUERY+='| ("\(.device) [\(.profile)]")] | join("\n           ")'
+
   pactl --format=json list cards | jq -cr "$QUERY"
 }
 
@@ -199,24 +222,8 @@ list_profiles () {
   local CARD=$1
 
   if [ -z "$CARD" ]; then
-    local QUERY='sort_by(.index) | to_entries | .[]'
-    QUERY+='| ("\(.key)|\(.value.index)|\(.value.properties."device.nick")")'
-    local CARDS=$(pactl --format=json list cards | jq -cer "$QUERY" | sed -r 's/\s+/_/g' || echo "err:$?")
-    
-    if [[ "$CARDS" =~ ^err: ]]; then
-      echo "Unable to retrieve audio cards"
-      return 1
-    fi
-    
-    CARDS=($CARDS)
-
-    if [ ! ${#CARDS[@]} -gt 0 ]; then
-      echo "No audio cards have found"
-      return 1
-    fi
-    
-    pick "Which audio card's profiles to list?" "${CARDS[@]}"
-    CARD=$(echo "${CARDS[$REPLY]}" | cut -d '|' -f 2)
+    pick_card || return 1
+    CARD=$REPLY
   fi
 
   local KEY="index"
@@ -320,24 +327,8 @@ set_profile () {
   local PROFILE=$2
 
   if [ -z "$CARD" ]; then
-    local QUERY='sort_by(.index) | to_entries | .[]'
-    QUERY+='| ("\(.key)|\(.value.index)|\(.value.properties."device.nick")")'
-    local CARDS=$(pactl --format=json list cards | jq -cer "$QUERY" | sed -r 's/\s+/_/g' || echo "err:$?")
-    
-    if [[ "$CARDS" =~ ^err: ]]; then
-      echo "Unable to retrieve audio cards"
-      return 1
-    fi
-    
-    CARDS=($CARDS)
-
-    if [ ! ${#CARDS[@]} -gt 0 ]; then
-      echo "No audio cards have found"
-      return 1
-    fi
-    
-    pick "Which audio card's profile to set?" "${CARDS[@]}"
-    CARD=$(echo "${CARDS[$REPLY]}" | cut -d '|' -f 2)
+    pick_card || return 1
+    CARD=$REPLY
   fi
 
   if [ -z "$PROFILE" ]; then
