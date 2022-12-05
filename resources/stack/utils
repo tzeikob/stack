@@ -84,9 +84,9 @@ pick () {
   local OPTIONS=("${@}")
   local LEN=${#OPTIONS[@]}
 
-  local FRM='%01d|%s\n'
+  local FRM='%01d %s\n'
   if [ $LEN -gt 10 ]; then
-    FRM='%02d|%s\n'
+    FRM='%02d %s\n'
   fi
 
   print 1 30 "${OPTIONS[@]}" | sed -r 's/_+/ /g' | awk -v f="$FRM" -F'|' '{printf f,$1,$3}'

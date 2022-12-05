@@ -13,7 +13,7 @@ pick_card () {
   local CARDS=$(pactl --format=json list cards | jq -cer "$QUERY" | sed -r 's/\s+/_/g' || echo "err:$?")
   
   if [[ "$CARDS" =~ ^err: ]]; then
-    echo "Unable to retrieve audio cards"
+    echo "Unable to find audio cards"
     return 1
   fi
   
@@ -24,7 +24,7 @@ pick_card () {
     return 1
   fi
   
-  pick "Which audio card's profile to set?" "${CARDS[@]}"
+  pick "Select an audio card:" "${CARDS[@]}"
   REPLY=$(echo "${CARDS[$REPLY]}" | cut -d '|' -f 2)
 }
 
@@ -45,7 +45,7 @@ pick_profile () {
   local PROFILES=$(pactl --format=json list cards | jq -cer "$QUERY" | sed -r 's/\s+/_/g' || echo "err:$?")
   
   if [[ "$PROFILES" =~ ^err: ]]; then
-    echo "Unable to retrieve audio profiles"
+    echo "Unable to find audio profiles for card: '$CARD'"
     return 1
   fi
   
@@ -56,7 +56,7 @@ pick_profile () {
     return 1
   fi
   
-  pick "Which audio profile to set:" "${PROFILES[@]}"
+  pick "Select an audio profile:" "${PROFILES[@]}"
   REPLY=$(echo "${PROFILES[$REPLY]}" | cut -d '|' -f 2)
 }
 
@@ -71,18 +71,18 @@ pick_module () {
   local MODULES=$(pactl --format=json list "$TYPE"s | jq -cer "$QUERY" | sed -r 's/\s+/_/g' || echo "err:$?")
   
   if [[ "$MODULES" =~ ^err: ]]; then
-    echo "Unable to retrieve audio modules"
+    echo "Unable to find audio $TYPE modules"
     return 1
   fi
   
   MODULES=($MODULES)
 
   if [ ! ${#MODULES[@]} -gt 0 ]; then
-    echo "No audio modules have found"
+    echo "No audio $TYPE modules have found"
     return 1
   fi
   
-  pick "Which audio module to set as default?" "${MODULES[@]}"
+  pick "Select an audio module:" "${MODULES[@]}"
   REPLY=$(echo "${MODULES[$REPLY]}" | cut -d '|' -f 2)
 }
 
@@ -184,7 +184,7 @@ show_card () {
   CARD=$(pactl --format=json list cards | jq -cer "$QUERY" || echo "err:$?")
 
   if [[ "$CARD" =~ ^err: ]]; then
-    echo "Unable to get data for the given card"
+    echo "Unable to find audio cards"
     return 1
   fi
 
@@ -202,7 +202,7 @@ show_card () {
   QUERY+='Usec:               \(.properties."device.plugged.usec")\n'
   QUERY+='Bus Path:           \(.properties."device.bus_path")\n'
   QUERY+='SysFS Path:         \(.properties."sysfs.path")\n'
-  QUERY+='Bus:                \(.properties."device.bus")\n'
+  QUERY+='Bus:                \(.properties."device.bus" | ascii_upcase)\n'
   QUERY+='Subsystem:          \(.properties."device.subsystem")\n'
   QUERY+='Vendor ID:          \(.properties."device.vendor.id")\n'
   QUERY+='Vendor Name:        \(.properties."device.vendor.name")\n'
@@ -233,26 +233,27 @@ show_card () {
 }
 
 restart () {
+  echo "Restarting the audio server..."
   systemctl --user restart pipewire.socket && sleep 0.5 &&
-  echo "Pipewire socket restarted." &&
+  echo " Pipewire socket restarted" &&
   systemctl --user restart pipewire.service && sleep 0.5 &&
-  echo "Pipewire service restarted." &&
+  echo " Pipewire service restarted" &&
   systemctl --user restart pipewire-session-manager.service && sleep 0.5 &&
   systemctl --user restart pipewire-media-session.service && sleep 0.5 &&
   systemctl --user restart pipewire-pulse.socket && sleep 0.5 &&
-  echo "Pulse socket restarted." &&
+  echo " Pulse socket restarted" &&
   systemctl --user restart pipewire-pulse.service && sleep 0.5 &&
-  echo "Pulse service restarted." &&
-  echo "Audio server has been restarted." &&
+  echo " Pulse service restarted" &&
+  echo "Audio server has been restarted" &&
   polybar-msg cmd restart ||
-    echo "An error occurred restarting the audio server."
+    echo "An error occurred restarting the audio server"
 }
 
 list_cards () {
   local CARDS=$(pactl --format=json list cards || echo "err:$?")
 
   if [[ "$CARDS" =~ ^err: ]]; then
-    echo "Unable to retieve audio cards"
+    echo "Unable to find audio cards"
     return 1
   fi
 
@@ -270,7 +271,7 @@ list_cards () {
   QUERY+='Name:    \(.name)\n'
   QUERY+='Device:  \(.properties."device.nick")\n'
   QUERY+='Vendor:  \(.properties."device.vendor.name")\n'
-  QUERY+='Bus:     \(.properties."device.bus")\n'
+  QUERY+='Bus:     \(.properties."device.bus" | ascii_upcase)\n'
   QUERY+='Profile: \(.profile)")'
 
   echo "$CARDS" | jq -cr "$QUERY" | tail -n +2
@@ -296,7 +297,8 @@ list_profiles () {
   CARD=$(pactl --format=json list cards | jq -cer "$QUERY" || echo "err:$?")
 
   if [[ "$CARD" =~ ^err: ]]; then
-    echo "Unable to find the given card"
+    VALUE=$(echo $VALUE | tr -d '"')
+    echo "Unable to find audio card: '$VALUE'"
     return 1
   fi
 
@@ -325,14 +327,14 @@ list_ports () {
   local MODULES=$(pactl --format=json list "$TYPE" || echo "err:$?")
 
   if [[ "$MODULES" =~ ^err: ]]; then
-    echo "Unable to retieve audio modules"
+    echo "Unable to find audio $TYPE modules"
     return 1
   fi
 
   local COUNT=$(echo "$MODULES" | jq -cer '.|length')
 
   if [ ! $COUNT -gt 0 ]; then
-    echo "No audio modules have found"
+    echo "No audio $TYPE modules have found"
     return
   fi
 
@@ -358,7 +360,7 @@ list_playbacks () {
   local SINK_INPUTS=$(pactl --format=json list sink-inputs || echo "err:$?")
 
   if [[ "$SINK_INPUTS" =~ ^err: ]]; then
-    echo "Unable to retieve audio playbacks"
+    echo "Unable to find audio playbacks"
     return 1
   fi
 
@@ -395,7 +397,7 @@ set_profile () {
   fi
 
   pactl set-card-profile "$CARD" "$PROFILE" && sleep 0.1 &&
-    echo "Audio profile has been set to $PROFILE" ||
+    echo "Audio profile has been set successfully" ||
     echo "Unable to set the audio profile"
 }
 
@@ -414,8 +416,8 @@ set_default () {
   fi
 
   pactl set-default-$TYPE "$MODULE" && sleep 0.1 &&
-    echo "Default $TYPE set to $MODULE" ||
-    echo "Unable to set the default $TYPE"
+    echo "Current $TYPE has been set successfully" ||
+    echo "Unable to set the current $TYPE"
 }
 
 turn_default () {
@@ -438,19 +440,19 @@ turn_default () {
   local MODULE=$(pactl get-default-$TYPE || echo "err:$?")
 
   if [[ "$MODULE" =~ ^err: ]]; then
-    echo "Unable to resolve the current module"
+    echo "Unable to resolve current $TYPE module"
     return 1
   fi
   
   if [ "$TO" = "mute" ]; then
     pactl set-${TYPE}-mute "$MODULE" 1 && sleep 0.1 &&
-      echo "Module volume set to mute" ||
-      echo "Unable to set the module to mute"
+      echo "Current $TYPE volume set to mute" ||
+      echo "Unable to set current $TYPE to mute"
     return
   elif [ "$TO" = "unmute" ]; then
     pactl set-${TYPE}-mute "$MODULE" 0 && sleep 0.1 &&
-      echo "Module volume set to unmute" ||
-      echo "Unable to set the module to unmute"
+      echo "Current $TYPE volume set to unmute" ||
+      echo "Unable to set current $TYPE to unmute"
     return
   fi
 
@@ -464,8 +466,8 @@ turn_default () {
 
   pactl set-${TYPE}-mute "$MODULE" 0 &&
   pactl set-${TYPE}-volume "$MODULE" "${VOLUME}%" && sleep 0.1 &&
-    echo "Module volume set to ${VOLUME}%" ||
-    echo "Unable to set the module volume"
+    echo "Current $TYPE volume set to ${VOLUME}%" ||
+    echo "Unable to set current $TYPE volume"
 }
 
 set_mute () {
@@ -485,27 +487,38 @@ set_mute () {
   local MODULES=$(pactl --format=json list "$TYPE" | jq -cer '.[].name' || echo "err:$?")
 
   if [[ "$MODULES" =~ ^err: ]]; then
-    echo "Unable to retieve audio modules"
+    echo "Unable to find audio $TYPE modules"
     return 1
   fi
 
   MODULES=($MODULES)
+  local LEN=${#MODULES[@]}
 
-  if [ ! ${#MODULES[@]} -gt 0 ]; then
+  if [ ! $LEN -gt 0 ]; then
     echo "No $TYPE audio modules have found"
     return 1
   fi
 
+  local MUTE_TEXT="mute"
+  [ $MUTE = 0 ] && MUTE_TEXT="unmute"
+
   local INDEX=0
-  while [ $INDEX -lt ${#MODULES[@]} ]; do
+  local SUCCEED=0
+  while [ $INDEX -lt $LEN ]; do
     local MODULE=${MODULES[INDEX]}
 
     pactl set-${TYPE::-1}-mute "$MODULE" "$MUTE" && sleep 0.1 &&
-      echo "Module $MODULE set mute to $MUTE" ||
-      echo "Unable to set mute for module $MODULE"
+      SUCCEED=$((SUCCEED + 1)) ||
+      echo "Unable to $MUTE_TEXT $TYPE module: '$MODULE'"
 
     INDEX=$((INDEX + 1))
   done
+
+  if [ $SUCCEED = $LEN ]; then
+    echo "All $TYPE audio modules set to $MUTE_TEXT"
+  else
+    echo "$TYPE audio modules have been partially $MUTE_TEXT"
+  fi
 }
 
 help () {
