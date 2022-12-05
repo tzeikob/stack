@@ -110,8 +110,8 @@ show_card () {
   local CARD=$1
 
   if [ -z "$CARD" ]; then
-    echo "Missing the card argument"
-    return 1
+    pick_card || return 1
+    CARD=$REPLY
   fi
 
   local KEY="index"
