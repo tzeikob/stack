@@ -8,7 +8,7 @@ require "libpulse"
 require "jq"
 
 pick_card () {
-  local QUERY='sort_by(.index) | to_entries | .[]'
+  local QUERY='sort_by(.properties."device.nick") | to_entries | .[]'
   QUERY+='| ("\(.key)|\(.value.index)|\(.value.properties."device.nick")")'
   local CARDS=$(pactl --format=json list cards | jq -cer "$QUERY" | sed -r 's/\s+/_/g' || echo "err:$?")
   
@@ -39,7 +39,8 @@ pick_profile () {
     VALUE="\"${CARD}\""
   fi
 
-  local QUERY="[.[] | select(.${KEY}==${VALUE}) | .profiles | to_entries | .[]"
+  local QUERY='[sort_by(.properties."device.nick") | .[]'
+  QUERY+="| select(.${KEY}==${VALUE}) | .profiles | to_entries | .[]"
   QUERY+='| {name: .key, desc: .value.description}] | to_entries | .[]'
   QUERY+='| ("\(.key)|\(.value.name)|\(.value.desc)")'
   local PROFILES=$(pactl --format=json list cards | jq -cer "$QUERY" | sed -r 's/\s+/_/g' || echo "err:$?")
@@ -63,9 +64,10 @@ pick_profile () {
 pick_module () {
   local TYPE=$1
 
-  local QUERY='[.[] |= . | map((.ports[] + {index, properties}))'
+  local QUERY='[sort_by(.properties."device.nick")'
+  QUERY+='| .[] |= . | map((.ports[] + {index, properties}))'
   QUERY+='| .[] | {index: .index, type: .type, device: .properties."device.nick"}]'
-  QUERY+='| sort_by(.index) | to_entries | .[]'
+  QUERY+='| to_entries | .[]'
   QUERY+='| ("\(.key)|\(.value.index)|\(.value.device)_[\(.value.type)]")'
 
   local MODULES=$(pactl --format=json list "$TYPE"s | jq -cer "$QUERY" | sed -r 's/\s+/_/g' || echo "err:$?")
@@ -276,7 +278,7 @@ list_cards () {
     return
   fi
 
-  local QUERY='.[] | .active_profile as $p'
+  local QUERY='sort_by(.properties."device.nick") | .[] | .active_profile as $p'
   QUERY+='| . + {profile: (.profiles | to_entries | .[] | select(.key==$p) | .value.description)}'
   QUERY+='| ("\n'
   QUERY+='ID:      \(.index)\n'
@@ -350,7 +352,8 @@ list_ports () {
     return
   fi
 
-  local QUERY='.[] |= . + {"module_name": .name} |'
+  local QUERY='sort_by(.properties."device.nick") |'
+  QUERY+='.[] |= . + {"module_name": .name} |'
   QUERY+='map((.ports[] + {index, module_name, description, state, mute, properties})) |'
   QUERY+='.[] | ("\n'
   QUERY+='ID:      \(.index)\n'
@@ -376,7 +379,8 @@ list_playbacks () {
     return 1
   fi
 
-  local QUERY='[.[] | select(.properties."application.name"|test("'${NAME}'"; "i"))]'
+  local QUERY='[sort_by(.properties."application.name")'
+  QUERY+='| .[] | select(.properties."application.name"|test("'${NAME}'"; "i"))]'
   local COUNT=$(echo "$SINK_INPUTS" | jq -cr "$QUERY | length")
 
   if [ ! $COUNT -gt 0 ]; then
