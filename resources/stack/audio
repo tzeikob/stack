@@ -518,8 +518,8 @@ help () {
     printf "$FRM" \
       "help" "Show this message." \
       "restart" "Restart the audio server." \
-      "profile" "Set the profile of an audio card." \
-      "output" "Set the current audio output." \
+      "set profile" "Set the profile of an audio card." \
+      "set output" "Set the current audio output." \
       "" "" \
       "mute" "Mute current output audio." \
       "unmute" "Unmute current output audio." \
@@ -650,8 +650,12 @@ once () {
   case "$CMD" in
     "help") help "once";;
     "restart") restart;;
-    "profile") set_profile;;
-    "output") set_default "sink";;
+    "set")
+      case "$2" in
+        "profile") set_profile;;
+        "output") set_default "sink";;
+        *) abort "Unknown or invalid command: '$1'";; 
+      esac;;
     "mute") turn_default "sink" "mute";;
     "unmute") turn_default "sink" "unmute";;
     "up") turn_default "sink" "up";;
