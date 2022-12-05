@@ -71,14 +71,14 @@ pick_module () {
   local MODULES=$(pactl --format=json list "$TYPE"s | jq -cer "$QUERY" | sed -r 's/\s+/_/g' || echo "err:$?")
   
   if [[ "$MODULES" =~ ^err: ]]; then
-    echo "Unable to find audio $TYPE modules"
+    echo "Unable to find $TYPE audio modules"
     return 1
   fi
   
   MODULES=($MODULES)
 
   if [ ! ${#MODULES[@]} -gt 0 ]; then
-    echo "No audio $TYPE modules have found"
+    echo "No $TYPE audio modules have found"
     return 1
   fi
   
@@ -319,22 +319,22 @@ list_profiles () {
 list_ports () {
   local TYPE=$1
 
-  if [[ ! "$TYPE" =~ ^(sinks|sources)$ ]]; then
+  if [[ ! "$TYPE" =~ ^(sink|source)$ ]]; then
     echo "Invalid module type argument"
     return 1
   fi
 
-  local MODULES=$(pactl --format=json list "$TYPE" || echo "err:$?")
+  local MODULES=$(pactl --format=json list "$TYPE"s || echo "err:$?")
 
   if [[ "$MODULES" =~ ^err: ]]; then
-    echo "Unable to find audio $TYPE modules"
+    echo "Unable to find $TYPE audio modules"
     return 1
   fi
 
   local COUNT=$(echo "$MODULES" | jq -cer '.|length')
 
   if [ ! $COUNT -gt 0 ]; then
-    echo "No audio $TYPE modules have found"
+    echo "No $TYPE audio modules have found"
     return
   fi
 
@@ -474,7 +474,7 @@ set_mute () {
   local TYPE=$1
   local MUTE=$2
 
-  if [[ ! "$TYPE" =~ ^(sinks|sources)$ ]]; then
+  if [[ ! "$TYPE" =~ ^(sink|source)$ ]]; then
     echo "Invalid module type argument: '$TYPE'"
     return 1
   fi
@@ -484,10 +484,10 @@ set_mute () {
     return 1
   fi
 
-  local MODULES=$(pactl --format=json list "$TYPE" | jq -cer '.[].name' || echo "err:$?")
+  local MODULES=$(pactl --format=json list "$TYPE"s | jq -cer '.[].name' || echo "err:$?")
 
   if [[ "$MODULES" =~ ^err: ]]; then
-    echo "Unable to find audio $TYPE modules"
+    echo "Unable to find $TYPE audio modules"
     return 1
   fi
 
@@ -507,7 +507,7 @@ set_mute () {
   while [ $INDEX -lt $LEN ]; do
     local MODULE=${MODULES[INDEX]}
 
-    pactl set-${TYPE::-1}-mute "$MODULE" "$MUTE" && sleep 0.1 &&
+    pactl set-$TYPE-mute "$MODULE" "$MUTE" && sleep 0.1 &&
       SUCCEED=$((SUCCEED + 1)) ||
       echo "Unable to $MUTE_TEXT $TYPE module: '$MODULE'"
 
@@ -517,7 +517,7 @@ set_mute () {
   if [ $SUCCEED = $LEN ]; then
     echo "All $TYPE audio modules set to $MUTE_TEXT"
   else
-    echo "$TYPE audio modules have been partially $MUTE_TEXT"
+    echo "Some $TYPE audio modules failed to set to $MUTE_TEXT"
   fi
 }
 
@@ -616,8 +616,8 @@ loop () {
         case "${CMD[1]}" in
           "cards") list_cards;;
           "profiles") list_profiles "${CMD[2]}";;
-          "outputs") list_ports "sinks";;
-          "inputs") list_ports "sources";;
+          "outputs") list_ports "sink";;
+          "inputs") list_ports "source";;
           "playbacks") list_playbacks "${CMD[2]}";;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
@@ -637,17 +637,17 @@ loop () {
       "mute")
         case "${CMD[1]}" in
           "output") turn_default "sink" "mute";;
-          "outputs") set_mute "sinks" 1;;
+          "outputs") set_mute "sink" 1;;
           "input") turn_default "source" "mute";;
-          "inputs") set_mute "sources" 1;;
+          "inputs") set_mute "source" 1;;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
       "unmute")
         case "${CMD[1]}" in
           "output") turn_default "sink" "unmute";;
-          "outputs") set_mute "sinks" 0;;
+          "outputs") set_mute "sink" 0;;
           "input") turn_default "source" "unmute";;
-          "inputs") set_mute "sources" 0;;
+          "inputs") set_mute "source" 0;;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
       *) echo "Unknown or invalid command: '$REPLY'";; 
