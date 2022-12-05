@@ -65,9 +65,12 @@ show_status () {
   QUERY+='Source:    \(.default_source_name)")'
   pactl --format=json info | jq -cr "$QUERY"
 
-  QUERY='[.[] | ("\(.properties."device.nick")")] | join(", ")'
-  pactl --format=json list cards | jq -cr "$QUERY" |
-    awk '{printf "Cards:     %s\n",$0}'
+  echo -n "Cards:     "
+  QUERY='[.[] | .active_profile as $p |'
+  QUERY+='{device: .properties."device.nick",'
+  QUERY+='profile: (.profiles | to_entries | .[] | select(.key==$p) | .value.description)}'
+  QUERY+='| ("\(.device) [\(.profile)]")] | join("\n           ")'
+  pactl --format=json list cards | jq -cr "$QUERY"
 }
 
 show_logs () {
@@ -179,12 +182,15 @@ list_cards () {
     return
   fi
 
-  local QUERY='.[] | ("\n'
+  local QUERY='.[] | .active_profile as $p'
+  QUERY+='| . + {profile: (.profiles | to_entries | .[] | select(.key==$p) | .value.description)}'
+  QUERY+='| ("\n'
   QUERY+='ID:      \(.index)\n'
   QUERY+='Name:    \(.name)\n'
-  QUERY+='Model:   \(.properties."device.nick")\n'
+  QUERY+='Device:  \(.properties."device.nick")\n'
   QUERY+='Vendor:  \(.properties."device.vendor.name")\n'
-  QUERY+='Bus:     \(.properties."device.bus")")'
+  QUERY+='Bus:     \(.properties."device.bus")\n'
+  QUERY+='Profile: \(.profile)")'
 
   echo "$CARDS" | jq -cr "$QUERY" | tail -n +2
 }
@@ -220,7 +226,11 @@ list_profiles () {
     return
   fi
 
-  echo "$CARD" | jq -cr '.profiles | keys[]'
+  QUERY='.profiles | to_entries | .[] | ("\n'
+  QUERY+='ID:     \(.key)\n'
+  QUERY+='Desc:   \(.value.description)")'
+
+  echo "$CARD" | jq -cr "$QUERY" | tail -n +2
 }
 
 list_ports () {
@@ -246,14 +256,16 @@ list_ports () {
   fi
 
   local QUERY='.[] |= . + {"module_name": .name} |'
-  QUERY+='map((.ports[] + {index, module_name, mute, properties})) |'
+  QUERY+='map((.ports[] + {index, module_name, description, state, mute, properties})) |'
   QUERY+='.[] | ("\n'
   QUERY+='ID:      \(.index)\n'
   QUERY+='Name:    \(.module_name)\n'
+  QUERY+='Desc:    \(.description)\n'
   QUERY+='Handle:  \(.name)\n'
   QUERY+='Type:    \(.type)\n'
-  QUERY+='Model:   \(.properties."device.nick")\n'
+  QUERY+='Device:  \(.properties."device.nick")\n'
   QUERY+='Mute:    \(.mute)\n'
+  QUERY+='State:   \(.state | ascii_downcase)\n'
   QUERY+='Status:  \(.availability)")'
 
   echo "$MODULES" | jq -cer "$QUERY" | tail -n +2
@@ -278,7 +290,7 @@ list_playbacks () {
   fi
 
   QUERY+='|.[]|("\n'
-  QUERY+='Sink:     \(.index)\n'
+  QUERY+='ID:       \(.index)\n'
   QUERY+='Process:  \(.properties."application.process.id")\n'
   QUERY+='Name:     \(.properties."application.name")\n'
   QUERY+='Media:    \(.properties."media.name")\n'
