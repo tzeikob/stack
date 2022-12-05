@@ -674,9 +674,7 @@ loop () {
 }
 
 once () {
-  local CMD=$1
-
-  case "$CMD" in
+  case "$1" in
     "help") help "once";;
     "restart") restart;;
     "set")
