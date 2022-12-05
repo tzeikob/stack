@@ -199,8 +199,24 @@ list_profiles () {
   local CARD=$1
 
   if [ -z "$CARD" ]; then
-    echo "Missing the card argument"
-    return 1
+    local QUERY='sort_by(.index) | to_entries | .[]'
+    QUERY+='| ("\(.key)|\(.value.index)|\(.value.properties."device.nick")")'
+    local CARDS=$(pactl --format=json list cards | jq -cer "$QUERY" | sed -r 's/\s+/_/g' || echo "err:$?")
+    
+    if [[ "$CARDS" =~ ^err: ]]; then
+      echo "Unable to retrieve audio cards"
+      return 1
+    fi
+    
+    CARDS=($CARDS)
+
+    if [ ! ${#CARDS[@]} -gt 0 ]; then
+      echo "No audio cards have found"
+      return 1
+    fi
+    
+    pick "Which audio card's profiles to list?" "${CARDS[@]}"
+    CARD=$(echo "${CARDS[$REPLY]}" | cut -d '|' -f 2)
   fi
 
   local KEY="index"
@@ -304,7 +320,6 @@ set_profile () {
   local PROFILE=$2
 
   if [ -z "$CARD" ]; then
-
     local QUERY='sort_by(.index) | to_entries | .[]'
     QUERY+='| ("\(.key)|\(.value.index)|\(.value.properties."device.nick")")'
     local CARDS=$(pactl --format=json list cards | jq -cer "$QUERY" | sed -r 's/\s+/_/g' || echo "err:$?")
