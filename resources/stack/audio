@@ -139,11 +139,23 @@ show_status () {
   QUERY+='Local:     \(.is_local)\n'
   QUERY+='Client:    \(.client_index)\n'
   QUERY+='Sample:    \(.default_sample_specification)\n'
-  QUERY+='Channels:  \(.default_channel_map)\n'
-  QUERY+='Sink:      \(.default_sink_name)\n'
-  QUERY+='Source:    \(.default_source_name)")'
+  QUERY+='Channels:  \(.default_channel_map)")'
 
   pactl --format=json info | jq -cr "$QUERY"
+
+  local SINK=$(pactl get-default-sink)
+
+  QUERY='.[] | select(.name == "'$SINK'")'
+  QUERY+='| ("Output:    \(.description)")'
+
+  pactl --format=json list sinks | jq -cr "$QUERY"
+
+  local SOURCE=$(pactl get-default-source)
+
+  QUERY='.[] | select(.name == "'$SOURCE'")'
+  QUERY+='| ("Input:     \(.description)")'
+
+  pactl --format=json list sources | jq -cr "$QUERY"
 
   echo -n "Cards:     "
   QUERY='[.[] | .active_profile as $p |'
