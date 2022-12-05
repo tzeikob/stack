@@ -398,43 +398,6 @@ set_default () {
     echo "Unable to set the default $TYPE"
 }
 
-switch_default () {
-  local DEFAULT_SINK=$(pactl get-default-sink || echo "err:$?")
-
-  if [[ "$DEFAULT_SINK" =~ ^err: ]]; then
-    echo "Unable to resolve the current output"
-    return 1
-  fi
-  
-  local SINKS=$(pactl --format=json list sinks || echo "err:$?")
-
-  if [[ "$SINKS" =~ ^err: ]]; then
-    echo "Unable to retrieve the list of outputs"
-    return 1
-  fi
-  
-  local QUERY='.[] | sort_by(.name) | .[] | .name'
-  SINKS=($(echo "$SINKS" | jq -scer "$QUERY"))
-
-  if [ ! ${#SINKS} -gt 0 ]; then
-    echo "No outputs have found"
-    return 1
-  fi
-
-  local POS=0
-  local INDEX=0
-  while [ $INDEX -lt ${#SINKS[@]} ]; do
-    if [ "${SINKS[INDEX]}" = "$DEFAULT_SINK" ]; then
-      POS=$((($INDEX+1) % ${#SINKS[@]}))
-      break
-    fi
-
-    INDEX=$((INDEX + 1))
-  done
-
-  set_default "sink" "${SINKS[POS]}"
-}
-
 turn_default () {
   local TYPE=$1
   local TO=$2
@@ -634,7 +597,6 @@ loop () {
           "input") set_default "source" "${CMD[2]}";;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
-      "next") switch_default;;
       "turn")
         case "${CMD[1]}" in
           "output") turn_default "sink" "${CMD[2]}";;
@@ -670,7 +632,6 @@ once () {
   case "$CMD" in
     "help") help "once";;
     "restart") restart;;
-    "next") switch_default;;
     "profile") set_profile;;
     "output") set_default "sink";;
     "mute") turn_default "sink" "mute";;
