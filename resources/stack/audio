@@ -160,7 +160,7 @@ show_status () {
   pactl --format=json list sources | jq -cr "$QUERY"
 
   echo -n "Cards:     "
-  QUERY='[.[] | .active_profile as $p |'
+  QUERY='[sort_by(.properties."device.nick") | .[] | .active_profile as $p |'
   QUERY+='{device: .properties."device.nick",'
   QUERY+='profile: (.profiles | to_entries | .[] | select(.key==$p) | .value.description)}'
   QUERY+='| ("\(.device) [\(.profile)]")] | join("\n           ")'
