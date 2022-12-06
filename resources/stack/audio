@@ -247,17 +247,17 @@ show_card () {
 restart () {
   echo "Restarting the audio server..."
   systemctl --user restart pipewire.socket && sleep 0.5 &&
-  echo " Pipewire socket restarted" &&
+  echo "Pipewire socket restarted" &&
   systemctl --user restart pipewire.service && sleep 0.5 &&
-  echo " Pipewire service restarted" &&
+  echo "Pipewire service restarted" &&
   systemctl --user restart pipewire-session-manager.service && sleep 0.5 &&
   systemctl --user restart pipewire-media-session.service && sleep 0.5 &&
   systemctl --user restart pipewire-pulse.socket && sleep 0.5 &&
-  echo " Pulse socket restarted" &&
+  echo "Pulse socket restarted" &&
   systemctl --user restart pipewire-pulse.service && sleep 0.5 &&
-  echo " Pulse service restarted" &&
+  echo "Pulse service restarted" &&
   echo "Audio server has been restarted" &&
-  polybar-msg cmd restart ||
+  (~/.config/polybar/launch &> /dev/null &) ||
     echo "An error occurred restarting the audio server"
 }
 
