@@ -565,19 +565,19 @@ help () {
     "help" "Show this help message." \
     "show status" "Show a report of the audio services." \
     "show logs" "Show the journal logs of audio services." \
-    "show card <card>" "Show the data of the given card." \
+    "show card [<card>]" "Show the data of the given card." \
     "restart" "Restart the audio server." \
     "" "" \
     "list cards" "List the cards plugged to the system." \
-    "list profiles <card>" "List the profiles of the given card." \
+    "list profiles [<card>]" "List the profiles of the given card." \
     "list outputs" "List the ports of output modules." \
     "list inputs" "List the ports of input modules." \
     "list playbacks [<name>]" "List all active playbacks or those" \
     "" "which contain the given name filter." \
     "" "" \
     "set profile [<card> [<profile>]]" "Set the profile of the given card." \
-    "set output <output>" "Set current output to the given output." \
-    "set input <input>" "Set current input to the given input." \
+    "set output [<output>]" "Set current output to the given output." \
+    "set input [<input>]" "Set current input to the given input." \
     "" "" \
     "turn output up|down|<volume>" "Turn the volume of the current output." \
     "turn input up|down|<volume>" "Turn the volume of the current input." \
@@ -589,6 +589,7 @@ help () {
   echo -e "\nOBJECTS"
   printf "$FRM" \
     "status" "The status of the system's audio." \
+    "logs" "The journal logs of the audio services." \
     "card" "An audio card." \
     "profile" "An audio profile of a card." \
     "output" "An output audio port (speaker)." \
