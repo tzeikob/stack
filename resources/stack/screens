@@ -5,13 +5,12 @@ source /opt/stack/utils
 require "xorg-xrandr"
 
 prompt () {
-  local YELLOW=$'\e[0;33m'
-  local GREEN=$'\e[0;32m'
-  local MAGENTA=$'\e[0;35m'
-  local RS=$'\e[m'
-  local FG=$YELLOW
+  local PRIMARY=$(xrandr --current |
+    awk 'match($0, /(.*) connected primary ([0-9]+x[0-9]+)\+.*/, a) {print a[1]" "a[2]}')
 
-  read -rep "[screens:${FG}none$RS] " REPLY
+  local STATUS=$YE${PRIMARY}$RS
+
+  read -rep "[screens:$STATUS] " REPLY
 }
 
 show_status () {
