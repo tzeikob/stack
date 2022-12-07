@@ -7,8 +7,12 @@ require "xorg-xrandr"
 prompt () {
   local PRIMARY=$(xrandr --current |
     awk 'match($0, /(.*) connected primary ([0-9]+x[0-9]+)\+.*/, a) {print a[1]" "a[2]}')
+  
+  local RATE=$(xrandr --current |
+    sed -n '/.* connected primary .*/{:a;N;/\*/!ba;/\*/p}' |
+    awk 'match($0, /.* ([0-9]{2}).[0-9]{2}\*.*/, a) {print a[1]}')
 
-  local STATUS=$YE${PRIMARY}$RS
+  local STATUS=$YE${PRIMARY}@${RATE}Hz$RS
 
   read -rep "[screens:$STATUS] " REPLY
 }
