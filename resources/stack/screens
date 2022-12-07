@@ -1,25 +1,65 @@
 #!/usr/bin/env bash
 
+set -o pipefail
+
 source /opt/stack/utils
 
 require "xorg-xrandr"
 
-prompt () {
-  local SCREEN=$(xrandr --current | sed '/^Screen 0:/,/^Screen/!d;//d' || echo "err:$?")
+get_screen () {
+  local INDEX=${1:-"0"}
+
+  local SCREEN=$(xrandr --current | sed "/^Screen ${INDEX}:/,/^Screen/!d;//d" || echo "err:$?")
 
   if [[ "$SCREEN" =~ ^err: ]]; then
+    return 1
+  fi
+
+  echo "$SCREEN"
+}
+
+get_primary () {
+  local PRIMARY=$(get_screen 0 |
+    awk 'match($0, /(.*) connected primary ([0-9]+x[0-9]+)\+.*/, a) {print a[1]";"a[2]}' || echo "err:$?")
+  
+  if [[ "$PRIMARY" =~ ^err: ]]; then
+    return 1
+  fi
+
+  local RATE="$(get_screen 0 |
+    sed -n '/.* connected primary .*/{:a;N;/\*/!ba;/\*/p}' |
+    awk 'match($0, /.* ([0-9]{2}).[0-9]{2}\*.*/, a) {print a[1]"Hz"}' || echo "err:$?")"
+
+  if [[ "$RATE" =~ ^err: ]]; then
+    return 1
+  fi
+
+  echo "${PRIMARY};$RATE"
+}
+
+get_outputs () {
+  local OUTPUTS=$(get_screen 0 | awk '/^[A-Z]/{print $1}' || echo "err:$?")
+
+  if [[ "$OUTPUTS" =~ ^err: ]]; then
+    return 1
+  fi
+
+  echo "$OUTPUTS"
+}
+
+prompt () {
+  local PRIMARY=$(get_primary || echo "err:$?")
+
+  if [[ "$PRIMARY" =~ ^err: ]]; then
     read -rep "[screens:${RE}none$RS] " REPLY
     return 1
   fi
 
-  local PRIMARY=$(echo "$SCREEN" |
-    awk 'match($0, /(.*) connected primary ([0-9]+x[0-9]+)\+.*/, a) {print a[1]" "a[2]}')
-  
-  local RATE=$(echo "$SCREEN" |
-    sed -n '/.* connected primary .*/{:a;N;/\*/!ba;/\*/p}' |
-    awk 'match($0, /.* ([0-9]{2}).[0-9]{2}\*.*/, a) {print a[1]}')
+  local NAME=$(echo "$PRIMARY" | cut -d ';' -f 1)
+  local RESOLUTION=$(echo "$PRIMARY" | cut -d ';' -f 2)
+  local RATE=$(echo "$PRIMARY" | cut -d ';' -f 3)
 
-  local STATUS=$YE${PRIMARY}@${RATE}Hz$RS
+  local STATUS="$YE${NAME} ${RESOLUTION}@${RATE}$RS"
 
   read -rep "[screens:$STATUS] " REPLY
 }
@@ -39,17 +79,24 @@ show_output () {
     return 1
   fi
 
-  local SCREEN=$(xrandr --current | sed '/^Screen 0:/,/^Screen/!d;//d' || echo "err:$?")
+  local OUTPUTS=$(get_outputs || echo "err:$?")
 
-  if [[ "$SCREEN" =~ ^err: ]]; then
-    echo "Unable to find the default screen"
+  if [[ "$OUTPUTS" =~ ^err: ]]; then
+    echo "Unable to retrieve the list of outputs"
     return 1
   fi
 
-  local OUTPUTS=($(echo "$SCREEN" | awk '/^[A-Z]/{print $1}'))
+  OUTPUTS=($OUTPUTS)
 
   if ! contains "$OUTPUT" "${OUTPUTS[@]}"; then
     echo "Unable to find output: '$OUTPUT'"
+    return 1
+  fi
+
+  local SCREEN=$(get_screen 0 || echo "err:$?")
+
+  if [[ "$SCREEN" =~ ^err: ]]; then
+    echo "Unable to find the default screen"
     return 1
   fi
 
