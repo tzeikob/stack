@@ -127,6 +127,10 @@ show_output () {
     awk 'match($0, /.* ([0-9]{2}).[0-9]{2}\*.*/, a) {print a[1]"Hz"}')"
   [ -z "$RATE" ] && RATE="N/A"
 
+  local PROFILES="$(echo "$SCREEN" | awk /^$OUTPUT/,!// | tail -n +2 |
+    awk '{if ($0 ~ /^\s+[0-9]+x[0-9]+/) {print "          "$0} else {exit}}')"
+  [ -n "$PROFILES" ] && PROFILES="${PROFILES:13}" || PROFILES="N/A"
+
   local FRM=""
   FRM+="Name:        %s\n"
   FRM+="Primary:     %s\n"
@@ -136,13 +140,10 @@ show_output () {
   FRM+="Position:    %s\n"
   FRM+="Dimensions:  %s\n"
   FRM+="Orientation: %s\n"
+  FRM+="Profiles:    %s\n"
 
   printf "$FRM" \
-    "$NAME" "$PRIMARY" "$STATUS" "$RESOLUTION" "$RATE" "$POSITION" "$DIMS" "$ORIENTATION"
-  
-  echo "Resolutions:"
-  echo "$SCREEN" | awk /^$OUTPUT/,!// | tail -n +2 |
-    awk '{if ($0 ~ /^\s+[0-9]+x[0-9]+/) {print "          "$0} else {exit}}'
+    "$NAME" "$PRIMARY" "$STATUS" "$RESOLUTION" "$RATE" "$POSITION" "$DIMS" "$ORIENTATION" "$PROFILES"
 }
 
 help () {
