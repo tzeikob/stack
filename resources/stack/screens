@@ -165,7 +165,7 @@ help () {
   printf "$FRM" \
     "help" "Show this help message." \
     "show status" "Show a report of all screen layouts." \
-    "show output <output>" "Show the data of the given output."
+    "show output [<output>]" "Show the data of the given output."
 
   echo -e "\nOBJECTS"
   printf "$FRM" \
