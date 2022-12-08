@@ -100,10 +100,29 @@ prompt () {
 }
 
 show_status () {
-  xrandr --current | awk '{ \
-    if ($0 ~ /^Screen/) {printf "%s-%s %s%s%s\n",$1,$2,$8,$9,substr($10,1,length($10)-1)}
-    else if ($0 !~ /^\s+/) {print " "$0}
-  }'
+  if [ -z "$DISPLAY" ]; then
+    echo "Unable to resolve the xorg server"
+    return 1
+  fi
+
+  local PATTERN='/^('
+  PATTERN+='name\sof\sdisplay|'
+  PATTERN+='version\snumber|'
+  PATTERN+='vendor\sstring|'
+  PATTERN+='vendor\srelease\snumber|'
+  PATTERN+='X.Org\sversion|'
+  PATTERN+='motion\sbuffer\ssize|'
+  PATTERN+='image\sbyte\sorder|'
+  PATTERN+='default\sscreen\snumber|'
+  PATTERN+='number\sof\sscreens'
+  PATTERN+=')/'
+
+  xdpyinfo -display "$DISPLAY" |
+    awk -F': ' $PATTERN'{ \
+      gsub(/[ \t]+$/, "", $1); \
+      gsub(/^[ \t]+/, "", $2); \
+      printf "%-23s %s\n",$1":",$2 \
+    }' | sed -r 's/\<./\U&/g'
 }
 
 show_output () {
@@ -202,14 +221,14 @@ help () {
   echo -e "\nCOMMANDS"
   printf "$FRM" \
     "help" "Show this help message." \
-    "show status" "Show a report of all screen layouts." \
+    "show status" "Show a report of the xorg server and screens." \
     "show output [<output>]" "Show the data of the given output." \
     "" "" \
     "list outputs [[dis]connected]" "List all outputs or by status."
 
   echo -e "\nOBJECTS"
   printf "$FRM" \
-    "status" "The status of all screen layouts." \
+    "status" "The status of xorg server and screen layouts." \
     "output" "An output display device."
 }
 
