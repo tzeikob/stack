@@ -50,6 +50,25 @@ get_outputs () {
   echo "$OUTPUTS"
 }
 
+pick_output () {
+  local OUTPUTS=$(get_outputs | awk '{print NR-1"|"$0"|"$0}' || echo "err:$?")
+  
+  if [[ "$OUTPUTS" =~ ^err: ]]; then
+    echo "Unable to find outputs"
+    return 1
+  fi
+  
+  OUTPUTS=($OUTPUTS)
+
+  if [ ! ${#OUTPUTS[@]} -gt 0 ]; then
+    echo "No outputs have found"
+    return 1
+  fi
+  
+  pick "Select an output:" "${OUTPUTS[@]}"
+  REPLY=$(echo "${OUTPUTS[$REPLY]}" | cut -d '|' -f 2)
+}
+
 prompt () {
   local PRIMARY=$(get_primary || echo "err:$?")
 
@@ -78,8 +97,8 @@ show_output () {
   local OUTPUT=$1
 
   if [ -z "$OUTPUT" ]; then
-    echo "Missing the output argument"
-    return 1
+    pick_output || return 1
+    OUTPUT=$REPLY
   fi
 
   local SCREEN=$(get_screen 0 || echo "err:$?")
