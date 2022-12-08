@@ -82,20 +82,6 @@ show_output () {
     return 1
   fi
 
-  local OUTPUTS=$(get_outputs || echo "err:$?")
-
-  if [[ "$OUTPUTS" =~ ^err: ]]; then
-    echo "Unable to retrieve outputs"
-    return 1
-  fi
-
-  OUTPUTS=($OUTPUTS)
-
-  if ! contains "$OUTPUT" "${OUTPUTS[@]}"; then
-    echo "Unable to find output: '$OUTPUT'"
-    return 1
-  fi
-
   local SCREEN=$(get_screen 0 || echo "err:$?")
 
   if [[ "$SCREEN" =~ ^err: ]]; then
@@ -103,7 +89,12 @@ show_output () {
     return 1
   fi
 
-  local HEAD=$(echo "$SCREEN" | awk /^$OUTPUT/)
+  local HEAD=$(echo "$SCREEN" | awk "/^${OUTPUT} /")
+
+  if [ -z "$HEAD" ]; then
+    echo "Unable to find output: '$OUTPUT'"
+    return 1
+  fi
 
   local NAME="$(echo "$HEAD" | awk 'match($0, /(.*) ((dis)?connected) .*/, a) {print a[1]}')"
   local STATUS="$(echo "$HEAD" | awk 'match($0, /.* ((dis)?connected) .*/, a) {print a[1]}')"
