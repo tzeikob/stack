@@ -41,11 +41,24 @@ get_primary () {
 }
 
 get_outputs () {
-  local OUTPUTS=$(get_screen 0 | awk '/^[A-Z]/{print $1}' || echo "err:$?")
+  local STATUS=$1
 
-  if [[ "$OUTPUTS" =~ ^err: ]]; then
+  if [ -n "$STATUS" ] && [[ ! "$STATUS" =~ ^(connected|disconnected)$ ]]; then
     return 1
   fi
+
+  local SCREEN=$(get_screen 0 || echo "err:$?")
+
+  if [[ "$SCREEN" =~ ^err: ]]; then
+    return 1
+  fi
+
+  local PATTERN='/^[A-Z]+-[0-9]+/'
+  if [ -n "$STATUS" ]; then
+    PATTERN="/^[A-Z]+-[0-9]+\s${STATUS}/"
+  fi
+
+  local OUTPUTS=$(echo "$SCREEN" | awk ${PATTERN}'{print $1}')
 
   echo "$OUTPUTS"
 }
@@ -156,6 +169,31 @@ show_output () {
     "$NAME" "$PRIMARY" "$STATUS" "$RESOLUTION" "$RATE" "$POSITION" "$DIMS" "$ORIENTATION" "$PROFILES"
 }
 
+list_outputs () {
+  local STATUS=$1
+
+  local OUTPUTS=$(get_outputs "$STATUS" || echo "err:$?")
+
+  if [[ "$OUTPUTS" =~ ^err: ]]; then
+    echo "Unable to get outputs"
+    return 1
+  fi
+
+  OUTPUTS=($OUTPUTS)
+  local LEN=${#OUTPUTS[@]}
+
+  if [ ! $LEN -gt 0 ]; then
+    echo "No outputs have been found"
+    return
+  fi
+
+  local INDEX=0
+  for ((INDEX = 0; INDEX < $LEN; INDEX++)); do
+    [ $INDEX -gt 0 ] && echo
+    show_output "${OUTPUTS[$INDEX]}" | head -n 6
+  done
+}
+
 help () {
   local FRM=" %-28s\t%s\n"
 
@@ -165,7 +203,9 @@ help () {
   printf "$FRM" \
     "help" "Show this help message." \
     "show status" "Show a report of all screen layouts." \
-    "show output [<output>]" "Show the data of the given output."
+    "show output [<output>]" "Show the data of the given output." \
+    "" "" \
+    "list outputs [[dis]connected]" "List all outputs or by status."
 
   echo -e "\nOBJECTS"
   printf "$FRM" \
@@ -201,6 +241,11 @@ loop () {
         case "${CMD[1]}" in
           "status") show_status;;
           "output") show_output "${CMD[2]}";;
+          *) echo "Unknown or invalid command: '$REPLY'";;
+        esac;;
+      "list")
+        case "${CMD[1]}" in
+          "outputs") list_outputs "${CMD[2]}";;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
       *) echo "Unknown or invalid command: '$REPLY'";; 
