@@ -85,7 +85,7 @@ show_output () {
   local OUTPUTS=$(get_outputs || echo "err:$?")
 
   if [[ "$OUTPUTS" =~ ^err: ]]; then
-    echo "Unable to retrieve the list of outputs"
+    echo "Unable to retrieve outputs"
     return 1
   fi
 
@@ -103,10 +103,46 @@ show_output () {
     return 1
   fi
 
-  echo "$SCREEN" | awk /^$OUTPUT/
-  echo "$SCREEN" |
-    awk /^$OUTPUT/,!// | tail -n +2 |
-    awk '{if ($0 ~ /^\s+[0-9]+x[0-9]+/) {print} else {exit}}' 
+  local HEAD=$(echo "$SCREEN" | awk /^$OUTPUT/)
+
+  local NAME="$(echo "$HEAD" | awk 'match($0, /(.*) ((dis)?connected) .*/, a) {print a[1]}')"
+  local STATUS="$(echo "$HEAD" | awk 'match($0, /.* ((dis)?connected) .*/, a) {print a[1]}')"
+  
+  local PRIMARY="$(echo "$HEAD" | awk 'match($0, /.* connected (primary) .*/, a) {print a[1]}')"
+  [ "$PRIMARY" = "primary" ] && PRIMARY="yes" || PRIMARY="no"
+  
+  local RESOLUTION="$(echo "$HEAD" | awk 'match($0, /.* ([0-9]+x[0-9]+)\+.*/, a) {print a[1]}')"
+  [ -z "$RESOLUTION" ] && RESOLUTION="N/A"
+
+  local POSITION="$(echo "$HEAD" | awk 'match($0, /.* [0-9]+x[0-9]+\+([0-9]+\+[0-9]+) .*/, a) {print a[1]}')"
+  [ -n "$POSITION" ] && POSITION="[$(echo "$POSITION" | tr '+' ",")]" || POSITION="N/A"
+
+  local ORIENTATION="$(echo "$HEAD" | awk 'match($0, /.* (\(.*\)).*/, a) {print a[1]}')"
+  [ -n "$ORIENTATION" ] && ORIENTATION="$(echo "$ORIENTATION" | tr -d "(,)")"
+
+  local DIMS="$(echo "$HEAD" | awk 'match($0, /.* ([0-9]+mm x [0-9]+mm).*/, a) {print a[1]}')"
+  [ -z "$DIMS" ] && DIMS="N/A"
+
+  local RATE="$(echo "$SCREEN" | sed -n "/$OUTPUT .*/{:a;N;/\*/!ba;/\*/p}" |
+    awk 'match($0, /.* ([0-9]{2}).[0-9]{2}\*.*/, a) {print a[1]"Hz"}')"
+  [ -z "$RATE" ] && RATE="N/A"
+
+  local FRM=""
+  FRM+="Name:        %s\n"
+  FRM+="Primary:     %s\n"
+  FRM+="Status:      %s\n"
+  FRM+="Resolution:  %s\n"
+  FRM+="Frequency:   %s\n"
+  FRM+="Position:    %s\n"
+  FRM+="Dimensions:  %s\n"
+  FRM+="Orientation: %s\n"
+
+  printf "$FRM" \
+    "$NAME" "$PRIMARY" "$STATUS" "$RESOLUTION" "$RATE" "$POSITION" "$DIMS" "$ORIENTATION"
+  
+  echo "Resolutions:"
+  echo "$SCREEN" | awk /^$OUTPUT/,!// | tail -n +2 |
+    awk '{if ($0 ~ /^\s+[0-9]+x[0-9]+/) {print "          "$0} else {exit}}'
 }
 
 help () {
