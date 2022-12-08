@@ -62,7 +62,7 @@ prompt () {
   local RESOLUTION=$(echo "$PRIMARY" | cut -d '|' -f 2)
   local RATE=$(echo "$PRIMARY" | cut -d '|' -f 3)
 
-  local STATUS="$YE${NAME} ${RESOLUTION}@${RATE}$RS"
+  local STATUS="$YE${NAME} ${RESOLUTION}$RS$GR@${RATE}$RS"
 
   read -rep "[screens:$STATUS] " REPLY
 }
