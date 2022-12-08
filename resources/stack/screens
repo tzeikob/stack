@@ -19,22 +19,25 @@ get_screen () {
 }
 
 get_primary () {
-  local PRIMARY=$(get_screen 0 |
-    awk 'match($0, /(.*) connected primary ([0-9]+x[0-9]+)\+.*/, a) {print a[1]"|"a[2]}' || echo "err:$?")
+  local SCREEN=$(get_screen 0 || echo "err:$?")
   
-  if [[ "$PRIMARY" =~ ^err: ]]; then
+  if [[ "$SCREEN" =~ ^err: ]]; then
     return 1
   fi
 
-  local RATE="$(get_screen 0 |
+  local NAME=$(echo "$SCREEN" |
+    awk 'match($0, /(.*) connected primary .*/, a) {print a[1]}')
+  
+  local RESOLUTION=$(echo "$SCREEN" |
+    awk 'match($0, /.* connected primary ([0-9]+x[0-9]+)\+.*/, a) {print a[1]}')
+
+  local RATE=$(echo "$SCREEN" |
     sed -n '/.* connected primary .*/{:a;N;/\*/!ba;/\*/p}' |
-    awk 'match($0, /.* ([0-9]{2}).[0-9]{2}\*.*/, a) {print a[1]"Hz"}' || echo "err:$?")"
+    awk 'match($0, /.* ([0-9]{2}).[0-9]{2}\*.*/, a) {print a[1]"Hz"}')
+  
+  local PRIMARY="${NAME}|${RESOLUTION}|${RATE}"
 
-  if [[ "$RATE" =~ ^err: ]]; then
-    return 1
-  fi
-
-  echo "${PRIMARY}|$RATE"
+  echo "$PRIMARY"
 }
 
 get_outputs () {
