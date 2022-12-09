@@ -205,6 +205,9 @@ show_output () {
   local RESOLUTION="$(echo "$HEAD" | awk 'match($0, /.* ([0-9]+x[0-9]+)\+.*/, a) {print a[1]}')"
   [ -z "$RESOLUTION" ] && RESOLUTION="N/A"
 
+  local ACTIVE="no"
+  [ "$STATUS" = "connected" ] && [ -n "$RESOLUTION" ] && [ ! "$RESOLUTION" = "N/A" ] && ACTIVE="yes"
+
   local POSITION="$(echo "$HEAD" | awk 'match($0, /.* [0-9]+x[0-9]+\+([0-9]+\+[0-9]+) .*/, a) {print a[1]}')"
   [ -n "$POSITION" ] && POSITION="[$(echo "$POSITION" | tr '+' ",")]" || POSITION="N/A"
 
@@ -225,6 +228,7 @@ show_output () {
   local FRM=""
   FRM+="Name:        %s\n"
   FRM+="Primary:     %s\n"
+  FRM+="Active:      %s\n"
   FRM+="Status:      %s\n"
   FRM+="Resolution:  %s\n"
   FRM+="Frequency:   %s\n"
@@ -234,7 +238,7 @@ show_output () {
   FRM+="Profiles:    %s\n"
 
   printf "$FRM" \
-    "$NAME" "$PRIMARY" "$STATUS" "$RESOLUTION" "$RATE" "$POSITION" "$DIMS" "$ORIENTATION" "$PROFILES"
+    "$NAME" "$PRIMARY" "$ACTIVE" "$STATUS" "$RESOLUTION" "$RATE" "$POSITION" "$DIMS" "$ORIENTATION" "$PROFILES"
 }
 
 list_outputs () {
@@ -258,7 +262,7 @@ list_outputs () {
   local INDEX=0
   for ((INDEX = 0; INDEX < $LEN; INDEX++)); do
     [ $INDEX -gt 0 ] && echo
-    show_output "${OUTPUTS[$INDEX]}" | head -n 6
+    show_output "${OUTPUTS[$INDEX]}" | head -n 7
   done
 }
 
