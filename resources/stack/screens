@@ -201,9 +201,9 @@ show_status () {
       awk 'match($0, /.* ([0-9]{2}).[0-9]{2}\*.*/, a) {print "@"a[1]"Hz"}')"
 
     if [ $INDEX = 0 ]; then
-      CONNECTED+="$NAME [${RESOLUTION}$RATE]$PRIMARY\n"
+      CONNECTED+="$NAME [${RESOLUTION}$RATE]$PRIMARY"
     else
-      CONNECTED+="                        $NAME [${RESOLUTION}$RATE]$PRIMARY\n"
+      CONNECTED+="\n                        $NAME [${RESOLUTION}$RATE]$PRIMARY"
     fi
   done
 
