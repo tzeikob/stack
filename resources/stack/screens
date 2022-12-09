@@ -383,6 +383,11 @@ set_active () {
     return 1
   fi
 
+  if ! exists "$OUTPUT"; then
+    echo "Unable to find output: '$OUTPUT'"
+    return 1
+  fi
+
   if [[ ! "$ACTIVE" =~ ^(on|off)$ ]]; then
     echo "Invalid active argument: '$ACTIVE'"
     return 1
@@ -395,11 +400,6 @@ set_active () {
 
   if [ "$ACTIVE" = "off" ] && ! is_active "$OUTPUT"; then
     echo "Output is already inactive"
-    return 1
-  fi
-
-  if ! exists "$OUTPUT"; then
-    echo "Unable to find output: '$OUTPUT'"
     return 1
   fi
 
