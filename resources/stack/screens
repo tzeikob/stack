@@ -123,6 +123,55 @@ show_status () {
       gsub(/^[ \t]+/, "", $2); \
       printf "%-23s %s\n",$1":",$2 \
     }' | sed -r 's/\<./\U&/g'
+  
+  local SCREEN=$(get_screen 0 || echo "err:$?")
+
+  if [[ "$SCREEN" =~ ^err: ]]; then
+    echo "Unable to find the default screen"
+    return 1
+  fi
+
+  local OUTPUTS=$(get_outputs connected || echo "err:$?")
+
+  if [[ "$OUTPUTS" =~ ^err ]]; then
+    echo "Unable to get connected outputs"
+    return 1
+  fi
+
+  OUTPUTS=($OUTPUTS)
+  LEN=${#OUTPUTS[@]}
+
+  if [ $LEN = 0 ]; then
+    echo "Connected Outputs:      none"
+    return
+  fi
+
+  local CONNECTED="Connected Outputs:      "
+
+  local INDEX=0
+  for ((INDEX = 0; INDEX < $LEN; INDEX++)); do
+    local OUTPUT=${OUTPUTS[$INDEX]}
+    local HEAD=$(echo "$SCREEN" | awk "/^$OUTPUT /")
+
+    local NAME="$(echo "$HEAD" | awk 'match($0, /(.*) connected .*/, a) {print a[1]}')"
+
+    local RESOLUTION="$(echo "$HEAD" | awk 'match($0, /.* ([0-9]+x[0-9]+)\+.*/, a) {print a[1]}')"
+    [ -z "$RESOLUTION" ] && RESOLUTION="inactive"
+
+    local PRIMARY="$(echo "$HEAD" | awk 'match($0, /.* connected (primary) .*/, a) {print a[1]}')"
+    [ -n "$PRIMARY" ] && PRIMARY="*"
+
+    local RATE="$(echo "$SCREEN" | sed -n "/$OUTPUT .*/{:a;N;/^[A-Z]/!ba;/\*/p}" |
+      awk 'match($0, /.* ([0-9]{2}).[0-9]{2}\*.*/, a) {print "@"a[1]"Hz"}')"
+
+    if [ $INDEX = 0 ]; then
+      CONNECTED+="$NAME [${RESOLUTION}$RATE]$PRIMARY\n"
+    else
+      CONNECTED+="                        $NAME [${RESOLUTION}$RATE]$PRIMARY\n"
+    fi
+  done
+
+  echo -e "$CONNECTED"
 }
 
 show_output () {
