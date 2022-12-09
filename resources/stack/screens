@@ -302,6 +302,18 @@ restore () {
     echo "Unable to restore the output resolution"
 }
 
+set_primary () {
+  local OUTPUT=$1
+
+  if [ -z "$OUTPUT" ]; then
+    echo "Missing the output argument"
+    return 1
+  fi
+
+  xrandr --output "$OUTPUT" --primary ||
+    echo "Unable to set the primary output"
+}
+
 help () {
   local FRM=" %-28s\t%s\n"
 
@@ -315,13 +327,15 @@ help () {
     "" "" \
     "list outputs [[dis]connected]" "List all outputs or by status." \
     "set mode <output> <res> <rate>" "Set the mode of the given output." \
+    "set primary <output>" "Set the primary output." \
     "restore <output>" "Restore the given output to auto mode."
 
   echo -e "\nOBJECTS"
   printf "$FRM" \
     "status" "The status of xorg server and screen layouts." \
     "output" "An output display device." \
-    "mode" "The resolution and rate of an output."
+    "mode" "The resolution and rate of an output." \
+    "primary" "The main output in a multihead layout."
 }
 
 loop () {
@@ -362,6 +376,7 @@ loop () {
       "set")
         case "${CMD[1]}" in
           "mode") set_mode "${CMD[2]}" "${CMD[3]}" "${CMD[4]}";;
+          "primary") set_primary "${CMD[2]}";;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
       "restore") restore "${CMD[1]}";;
