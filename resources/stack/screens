@@ -320,7 +320,8 @@ help () {
   echo -e "\nOBJECTS"
   printf "$FRM" \
     "status" "The status of xorg server and screen layouts." \
-    "output" "An output display device."
+    "output" "An output display device." \
+    "mode" "The resolution and rate of an output."
 }
 
 loop () {
