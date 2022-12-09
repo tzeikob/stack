@@ -290,6 +290,18 @@ set_mode () {
     echo "Unable to set resolution"
 }
 
+restore () {
+  local OUTPUT=$1
+
+  if [ -z "$OUTPUT" ]; then
+    echo "Missing the output argument"
+    return 1
+  fi
+
+  xrandr --output "$OUTPUT" --auto ||
+    echo "Unable to restore the output resolution"
+}
+
 help () {
   local FRM=" %-28s\t%s\n"
 
@@ -302,7 +314,8 @@ help () {
     "show output [<output>]" "Show the data of the given output." \
     "" "" \
     "list outputs [[dis]connected]" "List all outputs or by status." \
-    "set mode <output> <res> <rate>" "Set the mode of the given output."
+    "set mode <output> <res> <rate>" "Set the mode of the given output." \
+    "restore <output>" "Restore the given output to auto mode."
 
   echo -e "\nOBJECTS"
   printf "$FRM" \
@@ -350,6 +363,7 @@ loop () {
           "mode") set_mode "${CMD[2]}" "${CMD[3]}" "${CMD[4]}";;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
+      "restore") restore "${CMD[1]}";;
       *) echo "Unknown or invalid command: '$REPLY'";; 
     esac
   done
