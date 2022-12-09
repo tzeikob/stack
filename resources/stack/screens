@@ -266,6 +266,30 @@ list_outputs () {
   done
 }
 
+set_mode () {
+  local OUTPUT=$1
+  local RESOLUTION=$2
+  local RATE=$3
+
+  if [ -z "$OUTPUT" ]; then
+    echo "Missing the output argument"
+    return 1
+  fi
+
+  if [ -z "$RESOLUTION" ]; then
+    echo "Missing the resolution argument"
+    return 1
+  fi
+
+  if [ -z "$RATE" ]; then
+    echo "Missing the rate argument"
+    return 1
+  fi
+
+  xrandr --output "$OUTPUT" --mode "$RESOLUTION" --rate "$RATE" ||
+    echo "Unable to set resolution"
+}
+
 help () {
   local FRM=" %-28s\t%s\n"
 
@@ -277,7 +301,8 @@ help () {
     "show status" "Show a report of the xorg server and screens." \
     "show output [<output>]" "Show the data of the given output." \
     "" "" \
-    "list outputs [[dis]connected]" "List all outputs or by status."
+    "list outputs [[dis]connected]" "List all outputs or by status." \
+    "set mode <output> <res> <rate>" "Set the mode of the given output."
 
   echo -e "\nOBJECTS"
   printf "$FRM" \
@@ -318,6 +343,11 @@ loop () {
       "list")
         case "${CMD[1]}" in
           "outputs") list_outputs "${CMD[2]}";;
+          *) echo "Unknown or invalid command: '$REPLY'";;
+        esac;;
+      "set")
+        case "${CMD[1]}" in
+          "mode") set_mode "${CMD[2]}" "${CMD[3]}" "${CMD[4]}";;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
       *) echo "Unknown or invalid command: '$REPLY'";; 
