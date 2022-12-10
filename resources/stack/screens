@@ -356,7 +356,7 @@ set_mode () {
     echo "Cannot set mode of a disconnected output"
     return 1
   elif ! is_active "$OUTPUT"; then
-    echo "Cannot set mode of an inactive output"
+    echo "Cannot set mode of an inactive"
     return 1
   fi
 
@@ -370,8 +370,9 @@ set_mode () {
     return 1
   fi
 
-  xrandr --output "$OUTPUT" --mode "$RESOLUTION" --rate "$RATE" ||
-    echo "Unable to set resolution"
+  xrandr --output "$OUTPUT" --mode "$RESOLUTION" --rate "$RATE" &&
+    echo "Output $OUTPUT mode set to $RESOLUTION@${RATE}Hz" ||
+    echo "Unable to set mode for output $OUTPUT"
 }
 
 restore () {
@@ -391,8 +392,9 @@ restore () {
     return 1
   fi
 
-  xrandr --output "$OUTPUT" --auto ||
-    echo "Unable to restore the output resolution"
+  xrandr --output "$OUTPUT" --auto &&
+    echo "Output $OUTPUT has been set to auto mode" ||
+    echo "Unable to restore the output $OUTPUT"
 }
 
 set_primary () {
@@ -411,12 +413,13 @@ set_primary () {
     echo "Cannot set primary an inactive output"
     return 1
   elif is_primary "$OUTPUT"; then
-    echo "Output is already the primary"
+    echo "Output $OUTPUT is already the primary"
     return 1
   fi
 
-  xrandr --output "$OUTPUT" --primary ||
-    echo "Unable to set the primary output"
+  xrandr --output "$OUTPUT" --primary &&
+    echo "Output $OUTPUT has been set as primary" ||
+    echo "Unable to set the primary output $OUTPUT"
 }
 
 set_active () {
@@ -430,7 +433,7 @@ set_active () {
     echo "Unable to find output: '$OUTPUT'"
     return 1
   elif ! is_connected "$OUTPUT"; then
-    echo "Cannot activate or deactivate a disconnected output"
+    echo "Cannot (de)activate a disconnected output"
     return 1
   fi
 
@@ -440,26 +443,28 @@ set_active () {
   fi
 
   if [ "$ACTIVE" = "on" ] && is_active "$OUTPUT"; then
-    echo "Output is already active"
+    echo "Output $OUTPUT is already active"
     return 1
   fi
 
   if [ "$ACTIVE" = "off" ] && ! is_active "$OUTPUT"; then
-    echo "Output is already inactive"
+    echo "Output $OUTPUT is already inactive"
     return 1
   fi
 
   if [ "$ACTIVE" = "off" ] && is_primary "$OUTPUT"; then
-    echo "The primary output cannot be deactivated"
+    echo "Cannot deactivate the primary output"
     return 1
   fi
 
   if [ "$ACTIVE" = "on" ]; then
-    xrandr --output "$OUTPUT" --auto ||
-      echo "Unable to activate the output"
+    xrandr --output "$OUTPUT" --auto &&
+      echo "Output $OUTPUT has been activated" ||
+      echo "Unable to activate the output $OUTPUT"
   else
-    xrandr --output "$OUTPUT" --off ||
-      echo "Unable to deactivate the output"
+    xrandr --output "$OUTPUT" --off &&
+      echo "Output $OUTPUT has been deactivated" ||
+      echo "Unable to deactivate the output $OUTPUT"
   fi
 }
 
