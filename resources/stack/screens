@@ -99,6 +99,19 @@ is_active () {
     return 0 || return 1
 }
 
+is_primary () {
+  local OUTPUT=$1
+
+  local PRIMARY=$(get_primary || echo "err:$?")
+
+  if [[ "$PRIMARY" =~ ^err: ]]; then
+    return 1
+  fi
+  
+  [[ "$PRIMARY" =~ ^$OUTPUT ]] &&
+    return 0 || return 1
+}
+
 pick_output () {
   local OUTPUTS=$(get_outputs | awk '{print NR-1"|"$0"|"$0}' || echo "err:$?")
   
@@ -399,12 +412,17 @@ set_active () {
   fi
 
   if [ "$ACTIVE" = "on" ] && is_active "$OUTPUT"; then
-    echo "Output is already activate"
+    echo "Output is already active"
     return 1
   fi
 
   if [ "$ACTIVE" = "off" ] && ! is_active "$OUTPUT"; then
     echo "Output is already inactive"
+    return 1
+  fi
+
+  if [ "$ACTIVE" = "off" ] && is_primary "$OUTPUT"; then
+    echo "The primary output cannot be deactivated"
     return 1
   fi
 
