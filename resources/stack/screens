@@ -410,6 +410,9 @@ set_primary () {
   elif ! is_active "$OUTPUT"; then
     echo "Cannot set primary an inactive output"
     return 1
+  elif is_primary "$OUTPUT"; then
+    echo "Output is already the primary"
+    return 1
   fi
 
   xrandr --output "$OUTPUT" --primary ||
