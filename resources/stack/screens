@@ -32,7 +32,7 @@ get_primary () {
     awk 'match($0, /.* connected primary ([0-9]+x[0-9]+)\+.*/, a) {print a[1]}')
 
   local RATE=$(echo "$SCREEN" |
-    sed -n '/.* connected primary .*/{:a;N;/^[A-Z]/!ba;/\*/p}' |
+    sed -n '/.* connected primary .*/{:a;N;/\*/!ba;/\*/p}' |
     awk 'match($0, /.* ([0-9]{2}).[0-9]{2}\*.*/, a) {print a[1]"Hz"}')
   
   local PRIMARY="${NAME}|${RESOLUTION}|${RATE}"
@@ -236,7 +236,7 @@ show_status () {
     local PRIMARY="$(echo "$HEAD" | awk 'match($0, /.* connected (primary) .*/, a) {print a[1]}')"
     [ -n "$PRIMARY" ] && PRIMARY="*"
 
-    local RATE="$(echo "$SCREEN" | sed -n "/$OUTPUT .*/{:a;N;/^[A-Z]/!ba;/\*/p}" |
+    local RATE="$(echo "$SCREEN" | sed -n "/$OUTPUT .*/{:a;N;/\*/!ba;/\*/p}" |
       awk 'match($0, /.* ([0-9]{2}).[0-9]{2}\*.*/, a) {print "@"a[1]"Hz"}')"
 
     if [ $INDEX = 0 ]; then
@@ -273,28 +273,37 @@ show_output () {
 
   local NAME="$(echo "$HEAD" | awk 'match($0, /(.*) ((dis)?connected) .*/, a) {print a[1]}')"
   local STATUS="$(echo "$HEAD" | awk 'match($0, /.* ((dis)?connected) .*/, a) {print a[1]}')"
-  
-  local PRIMARY="$(echo "$HEAD" | awk 'match($0, /.* connected (primary) .*/, a) {print a[1]}')"
-  [ "$PRIMARY" = "primary" ] && PRIMARY="yes" || PRIMARY="no"
-  
-  local RESOLUTION="$(echo "$HEAD" | awk 'match($0, /.* ([0-9]+x[0-9]+)\+.*/, a) {print a[1]}')"
-  [ -z "$RESOLUTION" ] && RESOLUTION="N/A"
+
+  local PRIMARY="no"
+  if is_primary "$OUTPUT"; then
+    PRIMARY="yes"
+  fi
 
   local ACTIVE="no"
-  [ "$STATUS" = "connected" ] && [ -n "$RESOLUTION" ] && [ ! "$RESOLUTION" = "N/A" ] && ACTIVE="yes"
+  local RESOLUTION="N/A"
+  local RATE="N/A"
+  local POSITION="N/A"
+  local DIMS="N/A"
 
-  local POSITION="$(echo "$HEAD" | awk 'match($0, /.* [0-9]+x[0-9]+\+([0-9]+\+[0-9]+) .*/, a) {print a[1]}')"
-  [ -n "$POSITION" ] && POSITION="[$(echo "$POSITION" | tr '+' ",")]" || POSITION="N/A"
+  if is_active "$OUTPUT"; then
+    ACTIVE="yes"
+  
+    RESOLUTION="$(echo "$HEAD" | awk 'match($0, /.* ([0-9]+x[0-9]+)\+.*/, a) {print a[1]}')"
+    [ -z "$RESOLUTION" ] && RESOLUTION="N/A"
+
+    RATE="$(echo "$SCREEN" | sed -n "/$OUTPUT .*/{:a;N;/\*/!ba;/\*/p}" |
+      awk 'match($0, /.* ([0-9]{2}).[0-9]{2}\*.*/, a) {print a[1]"Hz"}')"
+    [ -z "$RATE" ] && RATE="N/A"
+
+    POSITION="$(echo "$HEAD" | awk 'match($0, /.* [0-9]+x[0-9]+\+([0-9]+\+[0-9]+) .*/, a) {print a[1]}')"
+    [ -n "$POSITION" ] && POSITION="[$(echo "$POSITION" | tr '+' ",")]" || POSITION="N/A"
+
+    DIMS="$(echo "$HEAD" | awk 'match($0, /.* ([0-9]+mm x [0-9]+mm).*/, a) {print a[1]}')"
+    [ -z "$DIMS" ] && DIMS="N/A"
+  fi
 
   local ORIENTATION="$(echo "$HEAD" | awk 'match($0, /.* (\(.*\)).*/, a) {print a[1]}')"
   [ -n "$ORIENTATION" ] && ORIENTATION="$(echo "$ORIENTATION" | tr -d "(,)")"
-
-  local DIMS="$(echo "$HEAD" | awk 'match($0, /.* ([0-9]+mm x [0-9]+mm).*/, a) {print a[1]}')"
-  [ -z "$DIMS" ] && DIMS="N/A"
-
-  local RATE="$(echo "$SCREEN" | sed -n "/$OUTPUT .*/{:a;N;/^[A-Z]/!ba;/\*/p}" |
-    awk 'match($0, /.* ([0-9]{2}).[0-9]{2}\*.*/, a) {print a[1]"Hz"}')"
-  [ -z "$RATE" ] && RATE="N/A"
 
   local PROFILES="$(echo "$SCREEN" | awk /^$OUTPUT/,!// | tail -n +2 |
     awk '{if ($0 ~ /^\s+[0-9]+x[0-9]+/) {print "          "$0} else {exit}}')"
