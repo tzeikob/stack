@@ -77,6 +77,27 @@ exists () {
   [ -n "$HEAD" ] && return 0 || return 1
 }
 
+is_connected () {
+  local OUTPUT=$1
+
+  local SCREEN=$(get_screen 0 || echo "err:$?")
+
+  if [[ "$SCREEN" =~ ^err: ]]; then
+    return 1
+  fi
+
+  local HEAD=$(echo "$SCREEN" | awk "/^${OUTPUT} /")
+
+  if [ -z "$HEAD" ]; then
+    return 1
+  fi
+
+  local STATUS="$(echo "$HEAD" | awk 'match($0, /.* ((dis)?connected) .*/, a) {print a[1]}')"
+
+  [ "$STATUS" = "connected" ] &&
+    return 0 || return 1
+}
+
 is_active () {
   local OUTPUT=$1
 
@@ -328,6 +349,15 @@ set_mode () {
   if [ -z "$OUTPUT" ]; then
     echo "Missing the output argument"
     return 1
+  elif ! exists "$OUTPUT"; then
+    echo "Unable to find output: '$OUTPUT'"
+    return 1
+  elif ! is_connected "$OUTPUT"; then
+    echo "Cannot set mode of a disconnected output"
+    return 1
+  elif ! is_active "$OUTPUT"; then
+    echo "Cannot set mode of an inactive output"
+    return 1
   fi
 
   if [ -z "$RESOLUTION" ]; then
@@ -337,14 +367,6 @@ set_mode () {
 
   if [ -z "$RATE" ]; then
     echo "Missing the rate argument"
-    return 1
-  fi
-
-  if ! exists "$OUTPUT"; then
-    echo "Unable to find output: '$OUTPUT'"
-    return 1
-  elif ! is_active "$OUTPUT"; then
-    echo "Unable to set mode of an inactive output"
     return 1
   fi
 
@@ -358,13 +380,14 @@ restore () {
   if [ -z "$OUTPUT" ]; then
     echo "Missing the output argument"
     return 1
-  fi
-
-  if ! exists "$OUTPUT"; then
+  elif ! exists "$OUTPUT"; then
     echo "Unable to find output: '$OUTPUT'"
     return 1
+  elif ! is_connected "$OUTPUT"; then
+    echo "Cannot restore a disconnected output"
+    return 1
   elif ! is_active "$OUTPUT"; then
-    echo "Unable to restore an inactive output"
+    echo "Cannot restore an inactive output"
     return 1
   fi
 
@@ -378,13 +401,14 @@ set_primary () {
   if [ -z "$OUTPUT" ]; then
     echo "Missing the output argument"
     return 1
-  fi
-
-  if ! exists "$OUTPUT"; then
+  elif ! exists "$OUTPUT"; then
     echo "Unable to find output: '$OUTPUT'"
     return 1
+  elif ! is_connected "$OUTPUT"; then
+    echo "Cannot set primary a disconnected output"
+    return 1
   elif ! is_active "$OUTPUT"; then
-    echo "Unable to set primary an inactive output"
+    echo "Cannot set primary an inactive output"
     return 1
   fi
 
@@ -399,10 +423,11 @@ set_active () {
   if [ -z "$OUTPUT" ]; then
     echo "Missing the output argument"
     return 1
-  fi
-
-  if ! exists "$OUTPUT"; then
+  elif ! exists "$OUTPUT"; then
     echo "Unable to find output: '$OUTPUT'"
+    return 1
+  elif ! is_connected "$OUTPUT"; then
+    echo "Cannot activate or deactivate a disconnected output"
     return 1
   fi
 
