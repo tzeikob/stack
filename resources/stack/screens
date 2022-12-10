@@ -130,7 +130,12 @@ prompt () {
   local RESOLUTION=$(echo "$PRIMARY" | cut -d '|' -f 2)
   local RATE=$(echo "$PRIMARY" | cut -d '|' -f 3)
 
-  local STATUS="$YE${NAME} ${RESOLUTION}$RS$GR@${RATE}$RS"
+  local STATUS="$YE${NAME}$RS"
+
+  if [ -n "$RESOLUTION" ]; then
+    STATUS+=" $YE${RESOLUTION}$RS"
+    [ -n "$RATE" ] && STATUS+="$GR@${RATE}$RS"
+  fi
 
   read -rep "[screens:$STATUS] " REPLY
 }
