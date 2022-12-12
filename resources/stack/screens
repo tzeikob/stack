@@ -102,8 +102,7 @@ is_connected () {
 
   local STATUS="$(echo "$HEAD" | awk 'match($0, /.* ((dis)?connected) .*/, a) {print a[1]}')"
 
-  [ "$STATUS" = "connected" ] &&
-    return 0 || return 1
+  [ "$STATUS" = "connected" ] && return 0 || return 1
 }
 
 is_active () {
@@ -137,8 +136,7 @@ is_primary () {
     return 1
   fi
   
-  [[ "$PRIMARY" =~ ^$OUTPUT ]] &&
-    return 0 || return 1
+  [[ "$PRIMARY" =~ ^$OUTPUT ]] && return 0 || return 1
 }
 
 pick_output () {
@@ -344,7 +342,7 @@ list_outputs () {
   local OUTPUTS=$(get_outputs "$STATUS" || echo "err:$?")
 
   if [[ "$OUTPUTS" =~ ^err: ]]; then
-    echo "Unable to get outputs"
+    echo "Unable to retrieve outputs"
     return 1
   fi
 
