@@ -144,7 +144,7 @@ is_primary () {
 pick_output () {
   local STATUS=$1
 
-  local OUTPUTS=$(get_outputs "$STATUS" | awk '{print NR-1"|"$0"|"$0}' || echo "err:$?")
+  local OUTPUTS=$(get_outputs "$STATUS" | awk '{if ($0) {print NR-1"|"$0"|"$0}}' || echo "err:$?")
   
   if [[ "$OUTPUTS" =~ ^err: ]]; then
     echo "Unable to find outputs"
