@@ -442,9 +442,8 @@ set_primary () {
     echo "Unable to set the primary output $OUTPUT"
 }
 
-set_active () {
+set_on () {
   local OUTPUT=$1
-  local ACTIVE=$2
 
   if [ -z "$OUTPUT" ]; then
     echo "Missing the output argument"
@@ -453,44 +452,44 @@ set_active () {
     echo "Unable to find output: '$OUTPUT'"
     return 1
   elif ! is_connected "$OUTPUT"; then
-    echo "Cannot (de)activate a disconnected output"
+    echo "Cannot activate a disconnected output"
     return 1
-  fi
-
-  if [[ ! "$ACTIVE" =~ ^(on|off)$ ]]; then
-    echo "Invalid active argument: '$ACTIVE'"
-    return 1
-  fi
-
-  if [ "$ACTIVE" = "on" ] && is_active "$OUTPUT"; then
+  elif is_active "$OUTPUT"; then
     echo "Output $OUTPUT is already active"
     return 1
   fi
 
-  if [ "$ACTIVE" = "off" ] && ! is_active "$OUTPUT"; then
+  xrandr --output "$OUTPUT" --auto &&
+    echo "Output $OUTPUT has been activated" ||
+    echo "Unable to activate the output $OUTPUT"
+}
+
+set_off () {
+  local OUTPUT=$1
+
+  if [ -z "$OUTPUT" ]; then
+    echo "Missing the output argument"
+    return 1
+  elif ! exists "$OUTPUT"; then
+    echo "Unable to find output: '$OUTPUT'"
+    return 1
+  elif ! is_connected "$OUTPUT"; then
+    echo "Cannot deactivate a disconnected output"
+    return 1
+  elif ! is_active "$OUTPUT"; then
     echo "Output $OUTPUT is already inactive"
     return 1
-  fi
-
-  if [ "$ACTIVE" = "off" ] && is_primary "$OUTPUT"; then
+  elif is_primary "$OUTPUT"; then
     echo "Cannot deactivate the primary output"
     return 1
-  fi
-
-  if [ "$ACTIVE" = "off" ] && [ $(count_outputs "active") -lt 2 ]; then
+  elif [ $(count_outputs "active") -lt 2 ]; then
     echo "Cannot deactivate the only active output"
     return 1
   fi
 
-  if [ "$ACTIVE" = "on" ]; then
-    xrandr --output "$OUTPUT" --auto &&
-      echo "Output $OUTPUT has been activated" ||
-      echo "Unable to activate the output $OUTPUT"
-  else
-    xrandr --output "$OUTPUT" --off &&
-      echo "Output $OUTPUT has been deactivated" ||
-      echo "Unable to deactivate the output $OUTPUT"
-  fi
+  xrandr --output "$OUTPUT" --off &&
+    echo "Output $OUTPUT has been deactivated" ||
+    echo "Unable to deactivate the output $OUTPUT"
 }
 
 help () {
@@ -509,7 +508,7 @@ help () {
     "" "" \
     "set mode <output> <res> <rate>" "Set the mode of the given output." \
     "set primary <output>" "Set the primary output." \
-    "set active <output> on|off" "Set active or inactive the given output." \
+    "set on|off <output>" "Set active or inactive the given output." \
     "restore <output>" "Restore the given output to auto mode."
 
   echo -e "\nOBJECTS"
@@ -517,8 +516,7 @@ help () {
     "status" "The status of xorg server and screen layouts." \
     "output" "An output display device." \
     "mode" "The resolution and rate of an output." \
-    "primary" "The main output in a multihead layout." \
-    "active" "The status of an output if is active or not."
+    "primary" "The main output in a multihead layout."
 }
 
 loop () {
@@ -560,11 +558,12 @@ loop () {
         case "${CMD[1]}" in
           "mode") set_mode "${CMD[2]}" "${CMD[3]}" "${CMD[4]}";;
           "primary") set_primary "${CMD[2]}";;
-          "active") set_active "${CMD[2]}" "${CMD[3]}";;
+          "on") set_on "${CMD[2]}";;
+          "off") set_off "${CMD[2]}";;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
       "restore") restore "${CMD[1]}";;
-      *) echo "Unknown or invalid command: '$REPLY'";; 
+      *) echo "Unknown or invalid command: '$REPLY'";;
     esac
   done
 
