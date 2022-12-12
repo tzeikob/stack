@@ -336,6 +336,11 @@ show_output () {
 list_outputs () {
   local STATUS=$1
 
+  if [ -n "$STATUS" ] && [[ ! "$STATUS" =~ ^(connected|disconnected|active)$ ]]; then
+    echo "Invalid status argument: '$STATUS'"
+    return 1
+  fi
+
   local OUTPUTS=$(get_outputs "$STATUS" || echo "err:$?")
 
   if [[ "$OUTPUTS" =~ ^err: ]]; then
@@ -501,7 +506,9 @@ help () {
     "show status" "Show a report of the xorg server and screens." \
     "show output [<output>]" "Show the data of the given output." \
     "" "" \
-    "list outputs [[dis]connected]" "List all outputs or by status." \
+    "list outputs [<status>]" "List all outputs or by the given status," \
+    "" "connected, disconnected or active." \
+    "" "" \
     "set mode <output> <res> <rate>" "Set the mode of the given output." \
     "set primary <output>" "Set the primary output." \
     "set active <output> on|off" "Set active or inactive the given output." \
