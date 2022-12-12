@@ -147,14 +147,16 @@ pick_output () {
   local OUTPUTS=$(get_outputs "$STATUS" | awk '{if ($0) {print NR-1"|"$0"|"$0}}' || echo "err:$?")
   
   if [[ "$OUTPUTS" =~ ^err: ]]; then
-    echo "Unable to find outputs"
+    [ -n "$STATUS" ] && echo "Unable to find $STATUS outputs" ||
+      echo "Unable to find outputs"
     return 1
   fi
   
   OUTPUTS=($OUTPUTS)
 
   if [ ! ${#OUTPUTS[@]} -gt 0 ]; then
-    echo "No outputs have found"
+    [ -n "$STATUS" ] && echo "No $STATUS outputs have found" ||
+      echo "No outputs have found"
     return 1
   fi
   
@@ -346,7 +348,8 @@ list_outputs () {
   local OUTPUTS=$(get_outputs "$STATUS" || echo "err:$?")
 
   if [[ "$OUTPUTS" =~ ^err: ]]; then
-    echo "Unable to retrieve outputs"
+    [ -n "$STATUS" ] && echo "Unable to retrieve $STATUS outputs" ||
+      echo "Unable to retrieve outputs"
     return 1
   fi
 
@@ -354,7 +357,8 @@ list_outputs () {
   local LEN=${#OUTPUTS[@]}
 
   if [ ! $LEN -gt 0 ]; then
-    echo "No outputs have been found"
+    [ -n "$STATUS" ] && echo "No $STATUS outputs have been found" ||
+      echo "No outputs have been found"
     return
   fi
 
