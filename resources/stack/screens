@@ -43,7 +43,7 @@ get_primary () {
 get_outputs () {
   local STATUS=$1
 
-  if [ -n "$STATUS" ] && [[ ! "$STATUS" =~ ^(connected|disconnected)$ ]]; then
+  if [ -n "$STATUS" ] && [[ ! "$STATUS" =~ ^(connected|disconnected|active)$ ]]; then
     return 1
   fi
 
@@ -53,14 +53,22 @@ get_outputs () {
     return 1
   fi
 
-  local PATTERN='/^[A-Z]+-[0-9]+/'
-  if [ -n "$STATUS" ]; then
-    PATTERN="/^[A-Z]+-[0-9]+\s${STATUS}/"
+  local PATTERN='^[A-Z]+-[0-9]+'
+  if [[ "$STATUS" =~ (dis)?connected ]]; then
+    PATTERN+="\s${STATUS}"
+  elif [ "$STATUS" = "active" ]; then
+    PATTERN+='\sconnected.*\s([0-9]+x[0-9]+)\+.*'
   fi
 
-  local OUTPUTS=$(echo "$SCREEN" | awk ${PATTERN}'{print $1}')
+  local OUTPUTS=$(echo "$SCREEN" | awk '/'${PATTERN}'/{print $1}')
 
   echo "$OUTPUTS"
+}
+
+count_outputs () {
+  local STATUS=$1
+
+  get_outputs "$STATUS" | wc -l
 }
 
 exists () {
@@ -463,6 +471,11 @@ set_active () {
 
   if [ "$ACTIVE" = "off" ] && is_primary "$OUTPUT"; then
     echo "Cannot deactivate the primary output"
+    return 1
+  fi
+
+  if [ "$ACTIVE" = "off" ] && [ $(count_outputs "active") -lt 2 ]; then
+    echo "Cannot deactivate the only active output"
     return 1
   fi
 
