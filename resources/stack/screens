@@ -70,7 +70,13 @@ get_outputs () {
 count_outputs () {
   local STATUS=$1
 
-  get_outputs "$STATUS" | wc -l
+  local OUTPUTS=$(get_outputs "$STATUS")
+
+  if [ -z "$OUTPUTS" ]; then
+    return 0
+  fi
+
+  echo "$OUTPUTS" | wc -l
 }
 
 exists () {
