@@ -79,6 +79,38 @@ count_outputs () {
   echo "$OUTPUTS" | wc -l
 }
 
+get_resolutions () {
+  local OUTPUT=$1
+
+  local SCREEN=$(get_screen 0 || echo "err:$?")
+
+  if [[ "$SCREEN" =~ ^err: ]]; then
+    return 1
+  fi
+
+  local RESOLUTIONS="$(echo "$SCREEN" | awk /^$OUTPUT/,!// | tail -n +2 |
+    awk '{if ($0 ~ /^\s+[0-9]+x[0-9]+/) {print $1} else {exit}}')"
+
+  echo "$RESOLUTIONS"
+}
+
+get_rates () {
+  local OUTPUT=$1
+  local RESOLUTION=$2
+
+  local SCREEN=$(get_screen 0 || echo "err:$?")
+
+  if [[ "$SCREEN" =~ ^err: ]]; then
+    return 1
+  fi
+
+  local RATES="$(echo "$SCREEN" | awk /^$OUTPUT/,!// | tail -n +2 |
+    awk '{if ($0 ~ /\s'$RESOLUTION'\s/) {print $0; exit}}' |
+    sed 's/'$RESOLUTION'//' | trim | tr -d '+*' | sed 's/ \{1,\}/\n/g')"
+
+  echo "$RATES"
+}
+
 exists () {
   local OUTPUT=$1
 
@@ -168,6 +200,49 @@ pick_output () {
   
   pick "Select an output:" "${OUTPUTS[@]}"
   REPLY=$(echo "${OUTPUTS[$REPLY]}" | cut -d '|' -f 2)
+}
+
+pick_resolution () {
+  local OUTPUT=$1
+
+  local RESOLUTIONS=$(get_resolutions "$OUTPUT" | awk '{if ($0) {print NR-1"|"$0"|"$0}}' || echo "err:$?")
+  
+  if [[ "$RESOLUTIONS" =~ ^err: ]]; then
+    echo "Unable to find resolutions for $OUTPUT output"
+    return 1
+  fi
+  
+  RESOLUTIONS=($RESOLUTIONS)
+
+  if [ ! ${#RESOLUTIONS[@]} -gt 0 ]; then
+    echo "No resolutions have been found for $OUTPUT output"
+    return 1
+  fi
+  
+  pick "Select a resolution:" "${RESOLUTIONS[@]}"
+  REPLY=$(echo "${RESOLUTIONS[$REPLY]}" | cut -d '|' -f 2)
+}
+
+pick_rate () {
+  local OUTPUT=$1
+  local RESOLUTION=$2
+
+  local RATES=$(get_rates "$OUTPUT" "$RESOLUTION" | awk '{if ($0) {print NR-1"|"$0"|"$0}}' || echo "err:$?")
+
+  if [[ "$RATES" =~ ^err: ]]; then
+    echo "Unable to find rates for $OUTPUT output"
+    return 1
+  fi
+  
+  RATES=($RATES)
+
+  if [ ! ${#RATES[@]} -gt 0 ]; then
+    echo "No rates have been found for $OUTPUT output"
+    return 1
+  fi
+  
+  pick "Select a rate:" "${RATES[@]}"
+  REPLY=$(echo "${RATES[$REPLY]}" | cut -d '|' -f 2)
 }
 
 prompt () {
@@ -381,9 +456,11 @@ set_mode () {
   local RATE=$3
 
   if [ -z "$OUTPUT" ]; then
-    echo "Missing the output argument"
-    return 1
-  elif ! exists "$OUTPUT"; then
+    pick_output "active" || return 1
+    OUTPUT=$REPLY
+  fi
+  
+  if ! exists "$OUTPUT"; then
     echo "Unable to find output: '$OUTPUT'"
     return 1
   elif ! is_connected "$OUTPUT"; then
@@ -395,13 +472,13 @@ set_mode () {
   fi
 
   if [ -z "$RESOLUTION" ]; then
-    echo "Missing the resolution argument"
-    return 1
+    pick_resolution "$OUTPUT" || return 1
+    RESOLUTION=$REPLY
   fi
 
   if [ -z "$RATE" ]; then
-    echo "Missing the rate argument"
-    return 1
+    pick_rate "$OUTPUT" "$RESOLUTION" || return 1
+    RATE=$REPLY
   fi
 
   xrandr --output "$OUTPUT" --mode "$RESOLUTION" --rate "$RATE" &&
@@ -515,7 +592,7 @@ set_off () {
 }
 
 help () {
-  local FRM=" %-28s\t%s\n"
+  local FRM=" %-34s\t%s\n"
 
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
@@ -528,7 +605,7 @@ help () {
     "list outputs [<status>]" "List all outputs or by the given status," \
     "" "connected, disconnected or active." \
     "" "" \
-    "set mode <output> <res> <rate>" "Set the mode of the given output." \
+    "set mode [<output> [<res> [<rate>]]]" "Set the mode of the given output." \
     "set primary <output>" "Set the primary output." \
     "set on|off <output>" "Set active or inactive the given output." \
     "restore <output>" "Restore the given output to auto mode."
