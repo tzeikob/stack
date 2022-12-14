@@ -591,6 +591,41 @@ set_off () {
     echo "Unable to deactivate the output $OUTPUT"
 }
 
+reflect () {
+  local OUTPUT=$1
+  local MODE=$2
+
+  if [ -z "$OUTPUT" ]; then
+    pick_output "active" || return 1
+    OUTPUT=$REPLY
+  fi
+  
+  if ! exists "$OUTPUT"; then
+    echo "Unable to find output: '$OUTPUT'"
+    return 1
+  elif ! is_connected "$OUTPUT"; then
+    echo "Cannot reflect a disconnected output"
+    return 1
+  elif ! is_active "$OUTPUT"; then
+    echo "Cannot reflect an inactive output"
+    return 1
+  fi
+
+  if [ -z "$MODE" ]; then
+    local MODES=("0|normal|normal" "1|x|x" "2|y|y" "3|xy|xy")
+
+    pick "Select a reflection mode:" "${MODES[@]}"
+    MODE=$(echo "${MODES[$REPLY]}" | cut -d '|' -f 2)
+  elif [[ ! "$MODE" =~ ^(normal|x|y|xy)$ ]]; then
+    echo "Invalid reflection mode argument: '$MODE'"
+    return 1
+  fi
+
+  xrandr --output "$OUTPUT" --reflect "$MODE" &&
+    echo "Output $OUTPUT has been reflected to $MODE mode" ||
+    echo "Unable to reflect the output $OUTPUT"
+}
+
 help () {
   local FRM=" %-34s\t%s\n"
 
@@ -608,6 +643,8 @@ help () {
     "set mode [<output> [<res> [<rate>]]]" "Set the mode of the given output." \
     "set primary <output>" "Set the primary output." \
     "set on|off <output>" "Set active or inactive the given output." \
+    "" "" \
+    "reflect [<output> normal|x|y|xy]" "Set output reflection to normal or x/y axes." \
     "restore <output>" "Restore the given output to auto mode."
 
   echo -e "\nOBJECTS"
@@ -661,6 +698,7 @@ loop () {
           "off") set_off "${CMD[2]}";;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
+      "reflect") reflect "${CMD[1]}" "${CMD[2]}";;
       "restore") restore "${CMD[1]}";;
       *) echo "Unknown or invalid command: '$REPLY'";;
     esac
