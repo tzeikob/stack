@@ -612,7 +612,7 @@ reflect () {
   fi
 
   if [ -z "$MODE" ]; then
-    local MODES=("0|normal|normal" "1|x|x" "2|y|y" "3|xy|xy")
+    local MODES=("0|normal|Normal" "1|x|x" "2|y|y" "3|xy|xy")
 
     pick "Select a reflection mode:" "${MODES[@]}"
     MODE=$(echo "${MODES[$REPLY]}" | cut -d '|' -f 2)
@@ -647,11 +647,11 @@ rotate () {
   fi
 
   if [ -z "$MODE" ]; then
-    local MODES=("0|normal|Normal" "1|right|Right" "2|left|Left")
+    local MODES=("0|normal|Normal" "1|inverted|Inverted" "2|right|Right" "3|left|Left")
 
     pick "Select a rotation mode:" "${MODES[@]}"
     MODE=$(echo "${MODES[$REPLY]}" | cut -d '|' -f 2)
-  elif [[ ! "$MODE" =~ ^(normal|right|left)$ ]]; then
+  elif [[ ! "$MODE" =~ ^(normal|inverted|right|left)$ ]]; then
     echo "Invalid rotation mode argument: '$MODE'"
     return 1
   fi
