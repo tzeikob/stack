@@ -662,7 +662,7 @@ rotate () {
 }
 
 help () {
-  local FRM=" %-34s\t%s\n"
+  local FRM=" %-45s\t%s\n"
 
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
@@ -679,7 +679,7 @@ help () {
     "set primary <output>" "Set the primary output." \
     "set on|off <output>" "Set active or inactive the given output." \
     "" "" \
-    "rotate [<output> normal|left|right]" "Set output rotation to normal, right or left." \
+    "rotate [<output> normal|right|left|inverted]" "Set output rotation to normal, right, left or inverted." \
     "reflect [<output> normal|x|y|xy]" "Set output reflection to normal or x/y axes." \
     "restore <output>" "Restore the given output to auto mode."
 
