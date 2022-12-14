@@ -676,12 +676,12 @@ help () {
     "" "connected, disconnected or active." \
     "" "" \
     "set mode [<output> [<res> [<rate>]]]" "Set the mode of the given output." \
-    "set primary <output>" "Set the primary output." \
-    "set on|off <output>" "Set active or inactive the given output." \
+    "set primary [<output>]" "Set the primary output." \
+    "set on|off [<output>]" "Set active or inactive the given output." \
     "" "" \
     "rotate [<output> normal|right|left|inverted]" "Set output rotation to normal, right, left or inverted." \
     "reflect [<output> normal|x|y|xy]" "Set output reflection to normal, x, y or xy axes." \
-    "restore <output>" "Restore the given output to auto mode."
+    "restore [<output>]" "Restore the given output to auto mode."
 
   echo -e "\nOBJECTS"
   printf "$FRM" \
