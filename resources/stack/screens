@@ -626,6 +626,41 @@ reflect () {
     echo "Unable to reflect the output $OUTPUT"
 }
 
+rotate () {
+  local OUTPUT=$1
+  local MODE=$2
+
+  if [ -z "$OUTPUT" ]; then
+    pick_output "active" || return 1
+    OUTPUT=$REPLY
+  fi
+  
+  if ! exists "$OUTPUT"; then
+    echo "Unable to find output: '$OUTPUT'"
+    return 1
+  elif ! is_connected "$OUTPUT"; then
+    echo "Cannot reflect a disconnected output"
+    return 1
+  elif ! is_active "$OUTPUT"; then
+    echo "Cannot reflect an inactive output"
+    return 1
+  fi
+
+  if [ -z "$MODE" ]; then
+    local MODES=("0|normal|Normal" "1|right|Right" "2|left|Left")
+
+    pick "Select a rotation mode:" "${MODES[@]}"
+    MODE=$(echo "${MODES[$REPLY]}" | cut -d '|' -f 2)
+  elif [[ ! "$MODE" =~ ^(normal|right|left)$ ]]; then
+    echo "Invalid rotation mode argument: '$MODE'"
+    return 1
+  fi
+
+  xrandr --output "$OUTPUT" --rotate "$MODE" &&
+    echo "Output $OUTPUT has been rotated to $MODE mode" ||
+    echo "Unable to rotate the output $OUTPUT"
+}
+
 help () {
   local FRM=" %-34s\t%s\n"
 
@@ -644,6 +679,7 @@ help () {
     "set primary <output>" "Set the primary output." \
     "set on|off <output>" "Set active or inactive the given output." \
     "" "" \
+    "rotate [<output> normal|left|right]" "Set output rotation to normal, right or left." \
     "reflect [<output> normal|x|y|xy]" "Set output reflection to normal or x/y axes." \
     "restore <output>" "Restore the given output to auto mode."
 
@@ -698,6 +734,7 @@ loop () {
           "off") set_off "${CMD[2]}";;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
+      "rotate") rotate "${CMD[1]}" "${CMD[2]}";;
       "reflect") reflect "${CMD[1]}" "${CMD[2]}";;
       "restore") restore "${CMD[1]}";;
       *) echo "Unknown or invalid command: '$REPLY'";;
