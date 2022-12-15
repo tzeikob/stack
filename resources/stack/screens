@@ -450,6 +450,167 @@ list_outputs () {
   done
 }
 
+set_layout () {
+  local OUTPUTS=$(get_outputs "active" || echo "err:$?")
+
+  if [[ "$OUTPUTS" =~ ^err: ]]; then
+    echo "Unable to retrieve outputs"
+    return 1
+  elif [ -z "$OUTPUTS" ]; then
+    echo "No outputs have been found"
+    return 1
+  fi
+
+  OUTPUTS=($OUTPUTS)
+  local LEN=${#OUTPUTS[@]}
+
+  local LAYOUTS=()
+
+  if [ $LEN = 1 ]; then
+    LAYOUTS=("row-1")
+
+    echo -e "0 [A]"
+  elif [ $LEN = 2 ]; then
+    LAYOUTS=("row-2" "col-2")
+
+    echo -e "0 [A][B]"
+    echo -e "1 [A]\n  [B]"
+  elif [ $LEN = 3 ]; then
+    LAYOUTS=("row-3" "col-3" "gamma-3" "gamma-rev-3" "lambda-3" "lambda-rev-3")
+
+    echo -e "0 [A][B][C]"
+    echo -e "1 [A]\n  [B]\n  [C]"
+    echo -e "2 [A][B]\n  [C]"
+    echo -e "3 [A][B]\n     [C]"
+    echo -e "4 [A]\n  [B][C]"
+    echo -e "5    [A]\n  [B][C]"
+  elif [ $LEN = 4 ]; then
+    LAYOUTS=("row-4" "grid-4" "tahf-4" "tahf-rev-4" "gamma-4" "gamma-rev-4")
+
+    echo -e "0 [A][B][C][D]"
+    echo -e "1 [A][B]\n  [C][D]"
+    echo -e "2 [A][B][C]\n     [D]"
+    echo -e "3    [A]\n  [B][C][D]"
+    echo -e "4 [A][B][C]\n  [D]"
+    echo -e "5 [A][B][C]\n        [D]"
+  else
+    LAYOUTS=("row-$LEN")
+
+    echo -n "0 "
+    echo "$LEN" | awk '{for(i=65; i<65+$0; i++) printf "[%c]",i}'
+    echo
+  fi
+
+  read -rep "Select a layout: " REPLY
+  while [[ ! $REPLY =~ ^[0-9]+$ ]] || (( $REPLY < 0 || $REPLY >= ${#LAYOUTS[@]} )); do
+    read -rep " Please enter a valid value: " REPLY
+  done
+
+  local LAYOUT=${LAYOUTS[$REPLY]}
+
+  local SPOTS=$(echo "$LEN" | awk '{for(i=65; i<65+$0; i++) printf "%c,",i}')
+  set_in_order "Match outputs to ${SPOTS::-1}:" "${OUTPUTS[@]}"
+
+  local INDEXES=($REPLY)
+  local ORDERED=()
+
+  local INDEX=0
+  for INDEX in "${INDEXES[@]}"; do
+    ORDERED+=(${OUTPUTS[INDEX]})
+  done
+
+  case "$LAYOUT" in
+    "row-1") echo "Output is already laid out as primary";;
+    "row-2")
+      xrandr --output "${ORDERED[0]}" --left-of "${ORDERED[1]}" &&
+        echo "Outputs laid out in side by side mode" ||
+        echo "Unable to lay out outputs in side by side mode";;
+    "col-2")
+      xrandr --output "${ORDERED[0]}" --above "${ORDERED[1]}" &&
+        echo "Outputs laid out in top bottom mode" ||
+        echo "Unable to lay out outputs in top bottom mode";;
+    "row-3")
+      xrandr --output "${ORDERED[0]}" --left-of "${ORDERED[1]}" \
+        --output "${ORDERED[1]}" --left-of "${ORDERED[2]}" &&
+        echo "Outputs laid out in side by side mode" ||
+        echo "Unable to lay out outputs in side by side mode";;
+    "col-3")
+      xrandr --output "${ORDERED[0]}" --above "${ORDERED[1]}" \
+        --output "${ORDERED[1]}" --above "${ORDERED[2]}" &&
+        echo "Outputs laid out in top bottom mode" ||
+        echo "Unable to lay out outputs in top bottom mode";;
+    "gamma-3")
+      xrandr --output "${ORDERED[0]}" --left-of "${ORDERED[1]}" \
+        --output "${ORDERED[2]}" --below "${ORDERED[0]}" &&
+        echo "Outputs laid out in gamma mode" ||
+        echo "Unable to lay out outputs in gamma mode";;
+    "gamma-rev-3")
+      xrandr --output "${ORDERED[0]}" --left-of "${ORDERED[1]}" \
+        --output "${ORDERED[2]}" --below "${ORDERED[1]}" &&
+        echo "Outputs laid out in reverse gamma mode" ||
+        echo "Unable to lay out outputs in reverse gamma mode";;
+    "lambda-3")
+      xrandr --output "${ORDERED[0]}" --above "${ORDERED[1]}" \
+        --output "${ORDERED[1]}" --left-of "${ORDERED[2]}" &&
+        echo "Outputs laid out in lambda mode" ||
+        echo "Unable to lay out outputs in lambda mode";;
+    "lambda-rev-3")
+      xrandr --output "${ORDERED[1]}" --left-of "${ORDERED[2]}" \
+        --output "${ORDERED[0]}" --above "${ORDERED[2]}" &&
+        echo "Outputs laid out in reverse lambda mode" ||
+        echo "Unable to lay out outputs in reverse lambda mode";;
+    "row-4")
+      xrandr --output "${ORDERED[0]}" --left-of "${ORDERED[1]}" \
+        --output "${ORDERED[1]}" --left-of "${ORDERED[2]}" \
+        --output "${ORDERED[2]}" --left-of "${ORDERED[3]}" &&
+        echo "Outputs laid out in side by side mode" ||
+        echo "Unable to lay out outputs in side by side mode";;
+    "grid-4")
+      xrandr --output "${ORDERED[0]}" --left-of "${ORDERED[1]}" \
+        --output "${ORDERED[2]}" --below "${ORDERED[0]}" \
+        --output "${ORDERED[3]}" --right-of "${ORDERED[2]}" &&
+        echo "Outputs laid out in grid mode" ||
+        echo "Unable to lay out outputs in grid mode";;
+    "tahf-4")
+      xrandr --output "${ORDERED[0]}" --left-of "${ORDERED[1]}" \
+        --output "${ORDERED[1]}" --left-of "${ORDERED[2]}" \
+        --output "${ORDERED[3]}" --below "${ORDERED[1]}" &&
+        echo "Outputs laid out in tahf mode" ||
+        echo "Unable to lay out outputs in tahf mode";;
+    "tahf-rev-4")
+      xrandr --output "${ORDERED[1]}" --left-of "${ORDERED[2]}" \
+        --output "${ORDERED[2]}" --left-of "${ORDERED[3]}" \
+        --output "${ORDERED[0]}" --above "${ORDERED[2]}" &&
+        echo "Outputs laid out in reverse tahf mode" ||
+        echo "Unable to lay out outputs in reverse tahf mode";;
+    "gamma-4")
+      xrandr --output "${ORDERED[0]}" --left-of "${ORDERED[1]}" \
+        --output "${ORDERED[1]}" --left-of "${ORDERED[2]}" \
+        --output "${ORDERED[3]}" --below "${ORDERED[0]}" &&
+        echo "Outputs laid out in gamma mode" ||
+        echo "Unable to lay out outputs in gamma mode";;
+    "gamma-rev-4")
+      xrandr --output "${ORDERED[0]}" --left-of "${ORDERED[1]}" \
+        --output "${ORDERED[1]}" --left-of "${ORDERED[2]}" \
+        --output "${ORDERED[3]}" --below "${ORDERED[2]}" &&
+        echo "Outputs laid out in reverse gamma mode" ||
+        echo "Unable to lay out outputs in reverse gamma mode";;
+    "row-$LEN")
+      local ARGS=""
+
+      local INDEX=0
+      for ((INDEX=0; INDEX<$LEN-1; INDEX++)); do
+        local NEXT=((INDEX + 1))
+        ARGS+="--output \"${ORDERED[INDEX]}\" --left-of \"${ORDERED[NEXT]}\" "
+      done
+      
+      xrandr "$ARGS" &&
+        echo "Outputs laid out in side by side mode" ||
+        echo "Unable to lay out outputs in side by side mode";;
+    *) echo "Unable to set the layout: '$LAYOUT'"; return 1;;
+  esac
+}
+
 set_mode () {
   local OUTPUT=$1
   local RESOLUTION=$2
@@ -675,6 +836,7 @@ help () {
     "list outputs [<status>]" "List all outputs or by the given status," \
     "" "connected, disconnected or active." \
     "" "" \
+    "set layout" "Set the layout of active outputs." \
     "set mode [<output> [<res> [<rate>]]]" "Set the mode of the given output." \
     "set primary [<output>]" "Set the primary output." \
     "set on|off [<output>]" "Set active or inactive the given output." \
@@ -687,6 +849,7 @@ help () {
   printf "$FRM" \
     "status" "The status of xorg server and screen layouts." \
     "output" "An output display device." \
+    "layout" "The layout of multiple outputs setup." \
     "mode" "The resolution and rate of an output." \
     "primary" "The main output in a multihead layout."
 }
@@ -728,6 +891,7 @@ loop () {
         esac;;
       "set")
         case "${CMD[1]}" in
+          "layout") set_layout;;
           "mode") set_mode "${CMD[2]}" "${CMD[3]}" "${CMD[4]}";;
           "primary") set_primary "${CMD[2]}";;
           "on") set_on "${CMD[2]}";;

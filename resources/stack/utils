@@ -97,6 +97,32 @@ pick () {
   done
 }
 
+set_in_order () {
+  local PROMPT=$1 && shift
+  local OPTIONS=("${@}")
+  local LEN=${#OPTIONS[@]}
+
+  local FRM='%01d %s\n'
+  if [ $LEN -gt 10 ]; then
+    FRM='%02d %s\n'
+  fi
+
+  print 1 30 "${OPTIONS[@]}" | sed -r 's/_+/ /g' |
+    awk -v f="$FRM" -F'|' '{if ($2) {printf f,NR-1,$2} else {printf f,NR-1,$0}}'
+  
+  read -rep "$PROMPT " REPLY
+
+  local INDEX_SUM=$(echo "$LEN" | awk '{for(i=0;i<$0;i++) s+=i; print s; s=0}')
+  local INPUT_SUM=$(echo "$REPLY" | awk '{for(i=1;i<=NF;i++) s+=$i; print s; s=0}')
+
+  while [[ ! $REPLY =~ ^[0-9]+( +[0-9]+){$((LEN-1))}$ ]] || !(($INDEX_SUM == $INPUT_SUM)); do
+    read -rep " Please enter a valid input: " REPLY
+    INPUT_SUM=$(echo "$REPLY" | awk '{for(i=1;i<=NF;i++) s+=$i; print s; s=0}')
+  done
+
+  REPLY=$(echo "$REPLY" | sed 's/ \{1,\}/ /g')
+}
+
 prompt () {
   local TEXT=$1
   local COLOR=${2:-$WHITE}
