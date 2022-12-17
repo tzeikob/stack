@@ -600,7 +600,7 @@ set_layout () {
 
       local INDEX=0
       for ((INDEX=0; INDEX<$LEN-1; INDEX++)); do
-        local NEXT=((INDEX + 1))
+        local NEXT=$((INDEX + 1))
         ARGS+="--output \"${ORDERED[INDEX]}\" --left-of \"${ORDERED[NEXT]}\" "
       done
       
