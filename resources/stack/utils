@@ -54,6 +54,20 @@ contains () {
   return 1
 }
 
+uniques () {
+  local INPUT=""
+  [[ -p /dev/stdin ]] && INPUT="$(cat -)" || INPUT="${@}"
+
+  echo "$INPUT" | awk -vRS='[ \n]' -vORS=' ' '!x[$0]++' | clean_spaces
+}
+
+clean_spaces () {
+  local INPUT=""
+  [[ -p /dev/stdin ]] && INPUT="$(cat -)" || INPUT="${@}"
+
+  echo "$INPUT" | sed 's/ \{1,\}/ /g' | trim
+}
+
 askme () {
   local ARGS_LEN=$#
   local PROMPT=$1 && shift
@@ -111,16 +125,21 @@ set_in_order () {
     awk -v f="$FRM" -F'|' '{if ($2) {printf f,NR-1,$2} else {printf f,NR-1,$0}}'
   
   read -rep "$PROMPT " REPLY
+  REPLY=$(clean_spaces "$REPLY")
 
-  local INDEX_SUM=$(echo "$LEN" | awk '{for(i=0;i<$0;i++) s+=i; print s; s=0}')
-  local INPUT_SUM=$(echo "$REPLY" | awk '{for(i=1;i<=NF;i++) s+=$i; print s; s=0}')
-
-  while [[ ! $REPLY =~ ^[0-9]+( +[0-9]+){$((LEN-1))}$ ]] || !(($INDEX_SUM == $INPUT_SUM)); do
+  while true; do
+    if [[ $REPLY =~ ^(0|[1-9][0-9]*)( +(0|[1-9][0-9]*)){$((LEN-1))}$ ]]; then
+      if echo "$REPLY" | uniques | awk -v l="$LEN" '{ \
+        if (l != NF) exit 1; \
+        for(i=1; i<=NF; i++) \
+          if ($i < 0 || $i >= l) exit 1}'; then
+        break
+      fi
+    fi
+  
     read -rep " Please enter a valid input: " REPLY
-    INPUT_SUM=$(echo "$REPLY" | awk '{for(i=1;i<=NF;i++) s+=$i; print s; s=0}')
+    REPLY=$(clean_spaces "$REPLY")
   done
-
-  REPLY=$(echo "$REPLY" | sed 's/ \{1,\}/ /g')
 }
 
 prompt () {
