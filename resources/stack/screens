@@ -462,14 +462,18 @@ set_layout () {
   fi
 
   local LEN=$(count "$OUTPUTS")
-  local LAYOUTS=""
 
   if [ $LEN = 1 ]; then
-    LAYOUTS="Side by Side${LS}row-1"
+    echo "Cannot set layout for one active output"
+    return
+  elif [ $LEN -gt 4 ]; then
+    echo "No layouts found for more than four outputs"
+    return
+  fi
 
-    echo "Side by Side"
-    echo "[A]"
-  elif [ $LEN = 2 ]; then
+  local LAYOUTS=""
+
+  if [ $LEN = 2 ]; then
     LAYOUTS+="Side by Side${LS}row-2${ES}"
     LAYOUTS+="Top Bottom${LS}col-2"
 
@@ -499,12 +503,6 @@ set_layout () {
     echo "Side by Side | Square Grid | Top Tahf | Bottom Tahf | Left Gamma | Right Gamma"
     echo "[A][B][C][D]   [A][B]        [A][B][C]     [A]        [A][B][C]    [A][B][C]"
     echo "               [C][D]           [D]     [B][C][D]     [D]                [D]"
-  else
-    LAYOUTS=("row-$LEN")
-
-    echo -n "0 "
-    echo "$LEN" | awk '{for(i=65; i<65+$0; i++) printf "[%c]",i}'
-    echo
   fi
 
   local MODE="vertical-6"
@@ -524,7 +522,6 @@ set_layout () {
   restore_separator
 
   case "$LAYOUT" in
-    "row-1") echo "Output is already laid out as primary";;
     "row-2")
       xrandr --output "${OUTPUTS[0]}" --left-of "${OUTPUTS[1]}" &&
         echo "Outputs laid out in side by side mode" ||
@@ -599,18 +596,6 @@ set_layout () {
         --output "${OUTPUTS[3]}" --below "${OUTPUTS[2]}" &&
         echo "Outputs laid out in reverse gamma mode" ||
         echo "Unable to lay out outputs in reverse gamma mode";;
-    "row-$LEN")
-      local ARGS=""
-
-      local INDEX=0
-      for ((INDEX=0; INDEX<$LEN-1; INDEX++)); do
-        local NEXT=$((INDEX + 1))
-        ARGS+="--output \"${OUTPUTS[INDEX]}\" --left-of \"${OUTPUTS[NEXT]}\" "
-      done
-      
-      xrandr "$ARGS" &&
-        echo "Outputs laid out in side by side mode" ||
-        echo "Unable to lay out outputs in side by side mode";;
     *) echo "Unable to set the layout: '$LAYOUT'"; return 1;;
   esac
 }
