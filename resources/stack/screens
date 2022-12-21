@@ -466,8 +466,8 @@ set_layout () {
   if [ $LEN = 1 ]; then
     echo "No layout can be set for one active output"
     return
-  elif [ $LEN -gt 4 ]; then
-    echo "No layouts found for more than four outputs"
+  elif [ $LEN -gt 3 ]; then
+    echo "No layouts found for more than three outputs"
     return
   fi
 
@@ -492,17 +492,6 @@ set_layout () {
     echo "[A][B][C]      [A]          [A][B]       [A][B]        [A]              [A]"
     echo "               [B]          [C]             [C]        [B][C]        [B][C]"
     echo "               [C]"
-  elif [ $LEN = 4 ]; then
-    LAYOUTS+="Side by Side${LS}row-4${ES}"
-    LAYOUTS+="Square Grid${LS}grid-4${ES}"
-    LAYOUTS+="Top Tahf${LS}tahf-4${ES}"
-    LAYOUTS+="Bottom Tahf${LS}tahf-rev-4${ES}"
-    LAYOUTS+="Left Gamma${LS}gamma-4${ES}"
-    LAYOUTS+="Right Gamma${LS}gamma-rev-4${ES}"
-
-    echo "Side by Side | Square Grid | Top Tahf | Bottom Tahf | Left Gamma | Right Gamma"
-    echo "[A][B][C][D]   [A][B]        [A][B][C]     [A]        [A][B][C]    [A][B][C]"
-    echo "               [C][D]           [D]     [B][C][D]     [D]                [D]"
   fi
 
   local MODE="vertical-6"
@@ -568,42 +557,6 @@ set_layout () {
         --output "${OUTPUTS[0]}" --above "${OUTPUTS[2]}" &&
         echo "Outputs laid out in reverse lambda mode" ||
         echo "Unable to lay out outputs in reverse lambda mode";;
-    "row-4")
-      xrandr --output "${OUTPUTS[0]}" --left-of "${OUTPUTS[1]}" \
-        --output "${OUTPUTS[1]}" --left-of "${OUTPUTS[2]}" \
-        --output "${OUTPUTS[2]}" --left-of "${OUTPUTS[3]}" &&
-        echo "Outputs laid out in side by side mode" ||
-        echo "Unable to lay out outputs in side by side mode";;
-    "grid-4")
-      xrandr --output "${OUTPUTS[0]}" --left-of "${OUTPUTS[1]}" \
-        --output "${OUTPUTS[2]}" --below "${OUTPUTS[0]}" \
-        --output "${OUTPUTS[3]}" --right-of "${OUTPUTS[2]}" &&
-        echo "Outputs laid out in grid mode" ||
-        echo "Unable to lay out outputs in grid mode";;
-    "tahf-4")
-      xrandr --output "${OUTPUTS[0]}" --left-of "${OUTPUTS[1]}" \
-        --output "${OUTPUTS[1]}" --left-of "${OUTPUTS[2]}" \
-        --output "${OUTPUTS[3]}" --below "${OUTPUTS[1]}" &&
-        echo "Outputs laid out in tahf mode" ||
-        echo "Unable to lay out outputs in tahf mode";;
-    "tahf-rev-4")
-      xrandr --output "${OUTPUTS[1]}" --left-of "${OUTPUTS[2]}" \
-        --output "${OUTPUTS[2]}" --left-of "${OUTPUTS[3]}" \
-        --output "${OUTPUTS[0]}" --above "${OUTPUTS[2]}" &&
-        echo "Outputs laid out in reverse tahf mode" ||
-        echo "Unable to lay out outputs in reverse tahf mode";;
-    "gamma-4")
-      xrandr --output "${OUTPUTS[0]}" --left-of "${OUTPUTS[1]}" \
-        --output "${OUTPUTS[1]}" --left-of "${OUTPUTS[2]}" \
-        --output "${OUTPUTS[3]}" --below "${OUTPUTS[0]}" &&
-        echo "Outputs laid out in gamma mode" ||
-        echo "Unable to lay out outputs in gamma mode";;
-    "gamma-rev-4")
-      xrandr --output "${OUTPUTS[0]}" --left-of "${OUTPUTS[1]}" \
-        --output "${OUTPUTS[1]}" --left-of "${OUTPUTS[2]}" \
-        --output "${OUTPUTS[3]}" --below "${OUTPUTS[2]}" &&
-        echo "Outputs laid out in reverse gamma mode" ||
-        echo "Unable to lay out outputs in reverse gamma mode";;
     *) echo "Unable to set the layout: '$LAYOUT'"; return 1;;
   esac
 }
