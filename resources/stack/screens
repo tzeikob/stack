@@ -35,9 +35,7 @@ get_primary () {
     sed -n '/.* connected primary .*/{:a;N;/\*/!ba;/\*/p}' |
     awk 'match($0, /.* ([0-9]{2}).[0-9]{2}\*.*/, a) {print a[1]"Hz"}')
   
-  local PRIMARY="${NAME}|${RESOLUTION}|${RATE}"
-
-  echo "$PRIMARY"
+  echo "${NAME}${ES}${RESOLUTION}${ES}${RATE}"
 }
 
 get_outputs () {
@@ -71,12 +69,9 @@ count_outputs () {
   local STATUS=$1
 
   local OUTPUTS=$(get_outputs "$STATUS")
-
-  if [ -z "$OUTPUTS" ]; then
-    return 0
-  fi
-
-  echo "$OUTPUTS" | wc -l
+  local COUNT=$(count "$OUTPUTS")
+  
+  echo "$COUNT"
 }
 
 get_resolutions () {
@@ -91,7 +86,7 @@ get_resolutions () {
   local RESOLUTIONS="$(echo "$SCREEN" | awk /^$OUTPUT/,!// | tail -n +2 |
     awk '{if ($0 ~ /^\s+[0-9]+x[0-9]+/) {print $1} else {exit}}')"
 
-  echo "$RESOLUTIONS"
+  echo "$RESOLUTIONS" | tr $'\n' "$ES"
 }
 
 get_rates () {
@@ -108,7 +103,7 @@ get_rates () {
     awk '{if ($0 ~ /\s'$RESOLUTION'\s/) {print $0; exit}}' |
     sed 's/'$RESOLUTION'//' | trim | tr -d '+*' | sed 's/ \{1,\}/\n/g')"
 
-  echo "$RATES"
+  echo "$RATES" | tr $'\n' "$ES"
 }
 
 exists () {
@@ -182,67 +177,73 @@ is_primary () {
 pick_output () {
   local STATUS=$1
 
-  local OUTPUTS=$(get_outputs "$STATUS" | awk '{if ($0) {print NR-1"|"$0"|"$0}}' || echo "err:$?")
+  local OUTPUTS=$(get_outputs "$STATUS" || echo "err:$?")
   
   if [[ "$OUTPUTS" =~ ^err: ]]; then
     [ -n "$STATUS" ] && echo "Unable to find $STATUS outputs" ||
       echo "Unable to find outputs"
     return 1
   fi
-  
-  OUTPUTS=($OUTPUTS)
 
-  if [ ! ${#OUTPUTS[@]} -gt 0 ]; then
+  local LEN=$(count "$OUTPUTS")
+  if [ ! $LEN -gt 0 ]; then
     [ -n "$STATUS" ] && echo "No $STATUS outputs have been found" ||
       echo "No outputs have been found"
     return 1
   fi
+
+  local MODE="vertical-6"
+  [ $LEN -lt 3 ] && MODE="horizontal"
   
-  pick "Select an output:" "${OUTPUTS[@]}"
-  REPLY=$(echo "${OUTPUTS[$REPLY]}" | cut -d '|' -f 2)
+  pick_one "Select an output:" "$OUTPUTS" "$MODE"
+  REPLY=$(echo "$REPLY" | cut -d "$LS" -f 2)
 }
 
 pick_resolution () {
   local OUTPUT=$1
 
-  local RESOLUTIONS=$(get_resolutions "$OUTPUT" | awk '{if ($0) {print NR-1"|"$0"|"$0}}' || echo "err:$?")
+  local RESOLUTIONS=$(get_resolutions "$OUTPUT" || echo "err:$?")
   
   if [[ "$RESOLUTIONS" =~ ^err: ]]; then
     echo "Unable to find resolutions for $OUTPUT output"
     return 1
   fi
-  
-  RESOLUTIONS=($RESOLUTIONS)
 
-  if [ ! ${#RESOLUTIONS[@]} -gt 0 ]; then
+  local LEN=$(count "$RESOLUTIONS")
+  if [ ! $LEN -gt 0 ]; then
     echo "No resolutions have been found for $OUTPUT output"
     return 1
   fi
+
+  local MODE="vertical-6"
+  [ $LEN -lt 3 ] && MODE="horizontal"
   
-  pick "Select a resolution:" "${RESOLUTIONS[@]}"
-  REPLY=$(echo "${RESOLUTIONS[$REPLY]}" | cut -d '|' -f 2)
+  pick_one "Select a resolution:" "$RESOLUTIONS" "$MODE"
+  REPLY=$(echo "$REPLY" | cut -d "$LS" -f 2)
 }
 
 pick_rate () {
   local OUTPUT=$1
   local RESOLUTION=$2
 
-  local RATES=$(get_rates "$OUTPUT" "$RESOLUTION" | awk '{if ($0) {print NR-1"|"$0"|"$0}}' || echo "err:$?")
+  local RATES=$(get_rates "$OUTPUT" "$RESOLUTION" || echo "err:$?")
 
   if [[ "$RATES" =~ ^err: ]]; then
     echo "Unable to find rates for $OUTPUT output"
     return 1
   fi
-  
-  RATES=($RATES)
 
-  if [ ! ${#RATES[@]} -gt 0 ]; then
+  local LEN=$(count "$RATES")
+  if [ ! $LEN -gt 0 ]; then
     echo "No rates have been found for $OUTPUT output"
     return 1
   fi
+
+  local MODE="vertical-6"
+  [ $LEN -lt 3 ] && MODE="horizontal"
   
-  pick "Select a rate:" "${RATES[@]}"
-  REPLY=$(echo "${RATES[$REPLY]}" | cut -d '|' -f 2)
+  pick_one "Select a rate:" "$RATES" "$MODE"
+  REPLY=$(echo "$REPLY" | cut -d "$LS" -f 2)
 }
 
 prompt () {
@@ -253,9 +254,9 @@ prompt () {
     return 1
   fi
 
-  local NAME=$(echo "$PRIMARY" | cut -d '|' -f 1)
-  local RESOLUTION=$(echo "$PRIMARY" | cut -d '|' -f 2)
-  local RATE=$(echo "$PRIMARY" | cut -d '|' -f 3)
+  local NAME=$(echo "$PRIMARY" | cut -d "$ES" -f 1)
+  local RESOLUTION=$(echo "$PRIMARY" | cut -d "$ES" -f 2)
+  local RATE=$(echo "$PRIMARY" | cut -d "$ES" -f 3)
 
   local STATUS="$YE${NAME}$RS"
 
@@ -306,13 +307,15 @@ show_status () {
     return 1
   fi
 
-  OUTPUTS=($OUTPUTS)
-  LEN=${#OUTPUTS[@]}
-
+  LEN=$(count "$OUTPUTS")
   if [ $LEN = 0 ]; then
     echo "Connected Outputs:      none"
     return
   fi
+
+  set_separator "$ES"
+  OUTPUTS=($OUTPUTS)
+  restore_separator
 
   local CONNECTED="Connected Outputs:      "
 
@@ -434,14 +437,16 @@ list_outputs () {
     return 1
   fi
 
-  OUTPUTS=($OUTPUTS)
-  local LEN=${#OUTPUTS[@]}
-
+  local LEN=$(count "$OUTPUTS")
   if [ ! $LEN -gt 0 ]; then
     [ -n "$STATUS" ] && echo "No $STATUS outputs have been found" ||
       echo "No outputs have been found"
     return
   fi
+
+  set_separator "$ES"
+  OUTPUTS=($OUTPUTS)
+  restore_separator
 
   local INDEX=0
   for ((INDEX = 0; INDEX < $LEN; INDEX++)); do
@@ -723,10 +728,14 @@ reflect () {
   fi
 
   if [ -z "$MODE" ]; then
-    local MODES=("0|normal|Normal" "1|x|X Axis" "2|y|Y Axis" "3|xy|XY Axes")
+    local MODES=""
+    MODES+="Normal${LS}normal${ES}"
+    MODES+="X Axis${LS}x${ES}"
+    MODES+="Y Axis${LS}y${ES}"
+    MODES+="XY Axes${LS}xy"
 
-    pick "Select a reflection mode:" "${MODES[@]}"
-    MODE=$(echo "${MODES[$REPLY]}" | cut -d '|' -f 2)
+    pick_one "Select a reflection mode:" "$MODES" "vertical-4"
+    MODE=$(echo "$REPLY" | cut -d "$LS" -f 2)
   elif [[ ! "$MODE" =~ ^(normal|x|y|xy)$ ]]; then
     echo "Invalid reflection mode argument: '$MODE'"
     return 1
@@ -758,10 +767,14 @@ rotate () {
   fi
 
   if [ -z "$MODE" ]; then
-    local MODES=("0|normal|Normal" "1|right|Right 90°" "2|left|Left 90°" "3|inverted|Inverted 180°")
+    local MODES=""
+    MODES+="Normal${LS}normal${ES}"
+    MODES+="Right 90°${LS}right${ES}"
+    MODES+="Left 90°${LS}left${ES}"
+    MODES+="Inverted 180°${LS}inverted"
 
-    pick "Select a rotation mode:" "${MODES[@]}"
-    MODE=$(echo "${MODES[$REPLY]}" | cut -d '|' -f 2)
+    pick_one "Select a rotation mode:" "$MODES" "vertical-6"
+    MODE=$(echo "$REPLY" | cut -d "$LS" -f 2)
   elif [[ ! "$MODE" =~ ^(normal|right|left|inverted)$ ]]; then
     echo "Invalid rotation mode argument: '$MODE'"
     return 1
@@ -811,9 +824,9 @@ loop () {
     prompt && history -s "$REPLY"
 
     set -f
-    local OLD_IFS=$IFS && IFS=$'\n'
+    set_separator "line"
     local CMD=($(xargs -n1 <<< "$REPLY"))
-    IFS=$OLD_IFS && set +f
+    restore_separator && set +f
 
     if [ "${CMD[0]}" = "help" ]; then
       help
