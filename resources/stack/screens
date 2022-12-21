@@ -464,7 +464,7 @@ set_layout () {
   local LEN=$(count "$OUTPUTS")
 
   if [ $LEN = 1 ]; then
-    echo "Cannot set layout for one active output"
+    echo "No layout can be set for one active output"
     return
   elif [ $LEN -gt 4 ]; then
     echo "No layouts found for more than four outputs"
@@ -507,8 +507,12 @@ set_layout () {
 
   local MODE="vertical-6"
   [ $(count "$LAYOUTS") -lt 3 ] && MODE="horizontal"
-
   pick_one "Select a layout mode:" "$LAYOUTS" "$MODE"
+  
+  if [ -z "$REPLY" ]; then
+    return
+  fi
+
   local LAYOUT=$(get_value "$REPLY")
 
   MODE="vertical-6"
@@ -516,6 +520,10 @@ set_layout () {
 
   local SPOTS=$(echo "$LEN" | awk '{for(i=65; i<65+$0; i++) printf "%c,",i}')
   pick_by_order "Pick outputs by order to match ${SPOTS::-1}:" "$OUTPUTS" "$LEN" "$MODE"
+
+  if [ -z "$REPLY" ]; then
+    return
+  fi
 
   set_separator "$ES"
   OUTPUTS=($REPLY)
