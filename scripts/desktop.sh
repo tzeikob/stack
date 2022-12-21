@@ -75,6 +75,10 @@ install_terminals () {
 
   sudo pacman -S --noconfirm cool-retro-term || exit 1
 
+  echo "Installing various terminal utilities..."
+
+  yay -S --noconfirm --removemake smenu || exit 1
+
   echo "Virtual terminals have been installed"
 }
 

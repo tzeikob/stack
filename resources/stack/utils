@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+ES=$';'
+ES_LN=$';\n'
+LS=$'~'
+
 WHITE=$'\e[0;37m'
 RED=$'\e[0;31m'
 GREEN=$'\e[0;32m'
@@ -111,37 +115,6 @@ pick () {
   done
 }
 
-set_in_order () {
-  local PROMPT=$1 && shift
-  local OPTIONS=("${@}")
-  local LEN=${#OPTIONS[@]}
-
-  local FRM='%01d %s\n'
-  if [ $LEN -gt 10 ]; then
-    FRM='%02d %s\n'
-  fi
-
-  print 1 30 "${OPTIONS[@]}" | sed -r 's/_+/ /g' |
-    awk -v f="$FRM" -F'|' '{if ($2) {printf f,NR-1,$2} else {printf f,NR-1,$0}}'
-  
-  read -rep "$PROMPT " REPLY
-  REPLY=$(clean_spaces "$REPLY")
-
-  while true; do
-    if [[ $REPLY =~ ^(0|[1-9][0-9]*)( +(0|[1-9][0-9]*)){$((LEN-1))}$ ]]; then
-      if echo "$REPLY" | uniques | awk -v l="$LEN" '{ \
-        if (l != NF) exit 1; \
-        for(i=1; i<=NF; i++) \
-          if ($i < 0 || $i >= l) exit 1}'; then
-        break
-      fi
-    fi
-  
-    read -rep " Please enter a valid input: " REPLY
-    REPLY=$(clean_spaces "$REPLY")
-  done
-}
-
 prompt () {
   local TEXT=$1
   local COLOR=${2:-$WHITE}
@@ -188,4 +161,106 @@ print () {
 
     printf "\n"
   done
+}
+
+pick_one () {
+  local PROMPT=$1
+  local OPTIONS=$2
+  local MODE=$3
+
+  echo "$PROMPT"
+
+  if [[ "$MODE" =~ ^vertical-[1-9][0-9]*$ ]]; then
+    local LINES=$(echo "$MODE" | cut -d '-' -f 2)
+    REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$ES_LN" -l -L "$ES" -n "$LINES" -S /\($LS.*\)//v)
+    return
+  fi
+  
+  if [[ "$MODE" =~ ^tabular-[1-9][0-9]*$ ]]; then
+    local TABS=$(echo "$MODE" | cut -d '-' -f 2)
+    REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$ES_LN" -t "$TABS" -S /\($LS.*\)//v)
+    return
+  fi
+  
+  REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$ES_LN" -S /\($LS.*\)//v)
+}
+
+pick_by_order () {
+  local PROMPT=$1
+  local OPTIONS=$2
+  local COUNT=$3
+  local MODE=$4
+
+  echo "$PROMPT"
+
+  if [[ "$MODE" =~ ^vertical-[1-9][0-9]*$ ]]; then
+    local LINES=$(echo "$MODE" | cut -d '-' -f 2)
+    REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$ES_LN" -l -L "$ES" -n "$LINES" -S /\($LS.*\)//v -P "$ES")
+
+    while [ -n "$REPLY" ] && [ ! $(count "$REPLY") == $COUNT ]; do
+      echo -e "\nPlease select exactly $COUNT items:"
+      REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$ES_LN" -l -L "$ES" -n "$LINES" -S /\($LS.*\)//v -P "$ES")
+    done
+
+    return
+  fi
+  
+  if [[ "$MODE" =~ ^tabular-[1-9][0-9]*$ ]]; then
+    local TABS=$(echo "$MODE" | cut -d '-' -f 2)
+    REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$ES_LN" -t "$TABS" -S /\($LS.*\)//v -P "$ES")
+
+    while [ -n "$REPLY" ] && [ ! $(count "$REPLY") == $COUNT ]; do
+      echo -e "\nPlease select exactly $COUNT items:"
+      REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$ES_LN" -t "$TABS" -S /\($LS.*\)//v -P "$ES")
+    done
+
+    return
+  fi
+
+  
+  REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$ES_LN" -S /\($LS.*\)//v -P "$ES")
+
+  while [ -n "$REPLY" ] && [ ! $(count "$REPLY") == $COUNT ]; do
+    echo -e "\nPlease select exactly $COUNT items:"
+    REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$ES_LN" -S /\($LS.*\)//v -P "$ES")
+  done
+}
+
+set_separator () {
+  DEFAULT_IFS=$IFS
+
+  case "$1" in
+    "space") IFS=$' ';;
+    "line") IFS=$'\n';;
+    "tab") IFS=$'\t';;
+    *) IFS="$1"
+  esac
+}
+
+restore_separator () {
+  if [ -n "$DEFAULT_IFS" ]; then
+    IFS=$DEFAULT_IFS
+  else
+    IFS=$' \n\t'
+  fi
+}
+
+count () {
+  local ELEMENTS="$1"
+
+  if [ -z "$ELEMENTS" ]; then
+    echo 0
+  fi
+
+  set_separator "$ES"
+  local ARRAY=($ELEMENTS)
+  restore_separator
+
+  echo "${#ARRAY[@]}"
+}
+
+get_value () {
+  local ELEMENT="$1"
+
+  echo "$ELEMENT" | cut -d "$LS" -f 2
 }

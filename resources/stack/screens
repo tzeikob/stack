@@ -64,7 +64,7 @@ get_outputs () {
 
   local OUTPUTS=$(echo "$SCREEN" | awk '/'${PATTERN}'/{print $1}')
 
-  echo "$OUTPUTS"
+  echo "$OUTPUTS" | tr $'\n' "$ES"
 }
 
 count_outputs () {
@@ -461,38 +461,44 @@ set_layout () {
     return 1
   fi
 
-  OUTPUTS=($OUTPUTS)
-  local LEN=${#OUTPUTS[@]}
-
-  local LAYOUTS=()
+  local LEN=$(count "$OUTPUTS")
+  local LAYOUTS=""
 
   if [ $LEN = 1 ]; then
-    LAYOUTS=("row-1")
+    LAYOUTS="Side by Side${LS}row-1"
 
-    echo -e "0 [A]"
+    echo "Side by Side"
+    echo "[A]"
   elif [ $LEN = 2 ]; then
-    LAYOUTS=("row-2" "col-2")
+    LAYOUTS+="Side by Side${LS}row-2${ES}"
+    LAYOUTS+="Top Bottom${LS}col-2"
 
-    echo -e "0 [A][B]"
-    echo -e "1 [A]\n  [B]"
+    echo "Side by Side | Top Bottom"
+    echo "[A][B]         [A]"
+    echo "               [B]"
   elif [ $LEN = 3 ]; then
-    LAYOUTS=("row-3" "col-3" "gamma-3" "gamma-rev-3" "lambda-3" "lambda-rev-3")
+    LAYOUTS+="Side by Side${LS}row-3${ES}"
+    LAYOUTS+="Top Bottom${LS}col-3${ES}"
+    LAYOUTS+="Left Gamma${LS}gamma-3${ES}"
+    LAYOUTS+="Right Gamma${LS}gamma-rev-3${ES}"
+    LAYOUTS+="Left Lambda${LS}lambda-3${ES}"
+    LAYOUTS+="Right Lambda${LS}lambda-rev-3"
 
-    echo -e "0 [A][B][C]"
-    echo -e "1 [A]\n  [B]\n  [C]"
-    echo -e "2 [A][B]\n  [C]"
-    echo -e "3 [A][B]\n     [C]"
-    echo -e "4 [A]\n  [B][C]"
-    echo -e "5    [A]\n  [B][C]"
+    echo "Side by Side | Top Bottom | Left Gamma | Right Gamma | Left Lambda | Right Lambda"
+    echo "[A][B][C]      [A]          [A][B]       [A][B]        [A]              [A]"
+    echo "               [B]          [C]             [C]        [B][C]        [B][C]"
+    echo "               [C]"
   elif [ $LEN = 4 ]; then
-    LAYOUTS=("row-4" "grid-4" "tahf-4" "tahf-rev-4" "gamma-4" "gamma-rev-4")
+    LAYOUTS+="Side by Side${LS}row-4${ES}"
+    LAYOUTS+="Square Grid${LS}grid-4${ES}"
+    LAYOUTS+="Top Tahf${LS}tahf-4${ES}"
+    LAYOUTS+="Bottom Tahf${LS}tahf-rev-4${ES}"
+    LAYOUTS+="Left Gamma${LS}gamma-4${ES}"
+    LAYOUTS+="Right Gamma${LS}gamma-rev-4${ES}"
 
-    echo -e "0 [A][B][C][D]"
-    echo -e "1 [A][B]\n  [C][D]"
-    echo -e "2 [A][B][C]\n     [D]"
-    echo -e "3    [A]\n  [B][C][D]"
-    echo -e "4 [A][B][C]\n  [D]"
-    echo -e "5 [A][B][C]\n        [D]"
+    echo "Side by Side | Square Grid | Top Tahf | Bottom Tahf | Left Gamma | Right Gamma"
+    echo "[A][B][C][D]   [A][B]        [A][B][C]     [A]        [A][B][C]    [A][B][C]"
+    echo "               [C][D]           [D]     [B][C][D]     [D]                [D]"
   else
     LAYOUTS=("row-$LEN")
 
@@ -501,98 +507,96 @@ set_layout () {
     echo
   fi
 
-  read -rep "Select a layout: " REPLY
-  while [[ ! $REPLY =~ ^[0-9]+$ ]] || (( $REPLY < 0 || $REPLY >= ${#LAYOUTS[@]} )); do
-    read -rep " Please enter a valid value: " REPLY
-  done
+  local MODE="vertical-6"
+  [ $(count "$LAYOUTS") -lt 3 ] && MODE="horizontal"
 
-  local LAYOUT=${LAYOUTS[$REPLY]}
+  pick_one "Select a layout mode:" "$LAYOUTS" "$MODE"
+  local LAYOUT=$(get_value "$REPLY")
+
+  MODE="vertical-6"
+  [ $LEN -lt 3 ] && MODE="horizontal"
 
   local SPOTS=$(echo "$LEN" | awk '{for(i=65; i<65+$0; i++) printf "%c,",i}')
-  set_in_order "Match outputs to ${SPOTS::-1}:" "${OUTPUTS[@]}"
+  pick_by_order "Pick outputs by order to match ${SPOTS::-1}:" "$OUTPUTS" "$LEN" "$MODE"
 
-  local INDEXES=($REPLY)
-  local ORDERED=()
-
-  local INDEX=0
-  for INDEX in "${INDEXES[@]}"; do
-    ORDERED+=(${OUTPUTS[INDEX]})
-  done
+  set_separator "$ES"
+  OUTPUTS=($REPLY)
+  restore_separator
 
   case "$LAYOUT" in
     "row-1") echo "Output is already laid out as primary";;
     "row-2")
-      xrandr --output "${ORDERED[0]}" --left-of "${ORDERED[1]}" &&
+      xrandr --output "${OUTPUTS[0]}" --left-of "${OUTPUTS[1]}" &&
         echo "Outputs laid out in side by side mode" ||
         echo "Unable to lay out outputs in side by side mode";;
     "col-2")
-      xrandr --output "${ORDERED[0]}" --above "${ORDERED[1]}" &&
+      xrandr --output "${OUTPUTS[0]}" --above "${OUTPUTS[1]}" &&
         echo "Outputs laid out in top bottom mode" ||
         echo "Unable to lay out outputs in top bottom mode";;
     "row-3")
-      xrandr --output "${ORDERED[0]}" --left-of "${ORDERED[1]}" \
-        --output "${ORDERED[1]}" --left-of "${ORDERED[2]}" &&
+      xrandr --output "${OUTPUTS[0]}" --left-of "${OUTPUTS[1]}" \
+        --output "${OUTPUTS[1]}" --left-of "${OUTPUTS[2]}" &&
         echo "Outputs laid out in side by side mode" ||
         echo "Unable to lay out outputs in side by side mode";;
     "col-3")
-      xrandr --output "${ORDERED[0]}" --above "${ORDERED[1]}" \
-        --output "${ORDERED[1]}" --above "${ORDERED[2]}" &&
+      xrandr --output "${OUTPUTS[0]}" --above "${OUTPUTS[1]}" \
+        --output "${OUTPUTS[1]}" --above "${OUTPUTS[2]}" &&
         echo "Outputs laid out in top bottom mode" ||
         echo "Unable to lay out outputs in top bottom mode";;
     "gamma-3")
-      xrandr --output "${ORDERED[0]}" --left-of "${ORDERED[1]}" \
-        --output "${ORDERED[2]}" --below "${ORDERED[0]}" &&
+      xrandr --output "${OUTPUTS[0]}" --left-of "${OUTPUTS[1]}" \
+        --output "${OUTPUTS[2]}" --below "${OUTPUTS[0]}" &&
         echo "Outputs laid out in gamma mode" ||
         echo "Unable to lay out outputs in gamma mode";;
     "gamma-rev-3")
-      xrandr --output "${ORDERED[0]}" --left-of "${ORDERED[1]}" \
-        --output "${ORDERED[2]}" --below "${ORDERED[1]}" &&
+      xrandr --output "${OUTPUTS[0]}" --left-of "${OUTPUTS[1]}" \
+        --output "${OUTPUTS[2]}" --below "${OUTPUTS[1]}" &&
         echo "Outputs laid out in reverse gamma mode" ||
         echo "Unable to lay out outputs in reverse gamma mode";;
     "lambda-3")
-      xrandr --output "${ORDERED[0]}" --above "${ORDERED[1]}" \
-        --output "${ORDERED[1]}" --left-of "${ORDERED[2]}" &&
+      xrandr --output "${OUTPUTS[0]}" --above "${OUTPUTS[1]}" \
+        --output "${OUTPUTS[1]}" --left-of "${OUTPUTS[2]}" &&
         echo "Outputs laid out in lambda mode" ||
         echo "Unable to lay out outputs in lambda mode";;
     "lambda-rev-3")
-      xrandr --output "${ORDERED[1]}" --left-of "${ORDERED[2]}" \
-        --output "${ORDERED[0]}" --above "${ORDERED[2]}" &&
+      xrandr --output "${OUTPUTS[1]}" --left-of "${OUTPUTS[2]}" \
+        --output "${OUTPUTS[0]}" --above "${OUTPUTS[2]}" &&
         echo "Outputs laid out in reverse lambda mode" ||
         echo "Unable to lay out outputs in reverse lambda mode";;
     "row-4")
-      xrandr --output "${ORDERED[0]}" --left-of "${ORDERED[1]}" \
-        --output "${ORDERED[1]}" --left-of "${ORDERED[2]}" \
-        --output "${ORDERED[2]}" --left-of "${ORDERED[3]}" &&
+      xrandr --output "${OUTPUTS[0]}" --left-of "${OUTPUTS[1]}" \
+        --output "${OUTPUTS[1]}" --left-of "${OUTPUTS[2]}" \
+        --output "${OUTPUTS[2]}" --left-of "${OUTPUTS[3]}" &&
         echo "Outputs laid out in side by side mode" ||
         echo "Unable to lay out outputs in side by side mode";;
     "grid-4")
-      xrandr --output "${ORDERED[0]}" --left-of "${ORDERED[1]}" \
-        --output "${ORDERED[2]}" --below "${ORDERED[0]}" \
-        --output "${ORDERED[3]}" --right-of "${ORDERED[2]}" &&
+      xrandr --output "${OUTPUTS[0]}" --left-of "${OUTPUTS[1]}" \
+        --output "${OUTPUTS[2]}" --below "${OUTPUTS[0]}" \
+        --output "${OUTPUTS[3]}" --right-of "${OUTPUTS[2]}" &&
         echo "Outputs laid out in grid mode" ||
         echo "Unable to lay out outputs in grid mode";;
     "tahf-4")
-      xrandr --output "${ORDERED[0]}" --left-of "${ORDERED[1]}" \
-        --output "${ORDERED[1]}" --left-of "${ORDERED[2]}" \
-        --output "${ORDERED[3]}" --below "${ORDERED[1]}" &&
+      xrandr --output "${OUTPUTS[0]}" --left-of "${OUTPUTS[1]}" \
+        --output "${OUTPUTS[1]}" --left-of "${OUTPUTS[2]}" \
+        --output "${OUTPUTS[3]}" --below "${OUTPUTS[1]}" &&
         echo "Outputs laid out in tahf mode" ||
         echo "Unable to lay out outputs in tahf mode";;
     "tahf-rev-4")
-      xrandr --output "${ORDERED[1]}" --left-of "${ORDERED[2]}" \
-        --output "${ORDERED[2]}" --left-of "${ORDERED[3]}" \
-        --output "${ORDERED[0]}" --above "${ORDERED[2]}" &&
+      xrandr --output "${OUTPUTS[1]}" --left-of "${OUTPUTS[2]}" \
+        --output "${OUTPUTS[2]}" --left-of "${OUTPUTS[3]}" \
+        --output "${OUTPUTS[0]}" --above "${OUTPUTS[2]}" &&
         echo "Outputs laid out in reverse tahf mode" ||
         echo "Unable to lay out outputs in reverse tahf mode";;
     "gamma-4")
-      xrandr --output "${ORDERED[0]}" --left-of "${ORDERED[1]}" \
-        --output "${ORDERED[1]}" --left-of "${ORDERED[2]}" \
-        --output "${ORDERED[3]}" --below "${ORDERED[0]}" &&
+      xrandr --output "${OUTPUTS[0]}" --left-of "${OUTPUTS[1]}" \
+        --output "${OUTPUTS[1]}" --left-of "${OUTPUTS[2]}" \
+        --output "${OUTPUTS[3]}" --below "${OUTPUTS[0]}" &&
         echo "Outputs laid out in gamma mode" ||
         echo "Unable to lay out outputs in gamma mode";;
     "gamma-rev-4")
-      xrandr --output "${ORDERED[0]}" --left-of "${ORDERED[1]}" \
-        --output "${ORDERED[1]}" --left-of "${ORDERED[2]}" \
-        --output "${ORDERED[3]}" --below "${ORDERED[2]}" &&
+      xrandr --output "${OUTPUTS[0]}" --left-of "${OUTPUTS[1]}" \
+        --output "${OUTPUTS[1]}" --left-of "${OUTPUTS[2]}" \
+        --output "${OUTPUTS[3]}" --below "${OUTPUTS[2]}" &&
         echo "Outputs laid out in reverse gamma mode" ||
         echo "Unable to lay out outputs in reverse gamma mode";;
     "row-$LEN")
@@ -601,7 +605,7 @@ set_layout () {
       local INDEX=0
       for ((INDEX=0; INDEX<$LEN-1; INDEX++)); do
         local NEXT=$((INDEX + 1))
-        ARGS+="--output \"${ORDERED[INDEX]}\" --left-of \"${ORDERED[NEXT]}\" "
+        ARGS+="--output \"${OUTPUTS[INDEX]}\" --left-of \"${OUTPUTS[NEXT]}\" "
       done
       
       xrandr "$ARGS" &&
