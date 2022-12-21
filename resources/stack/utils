@@ -248,8 +248,9 @@ restore_separator () {
 count () {
   local ELEMENTS="$1"
 
-  if [ -z "$ELEMENTS" ]; then
+  if [ -z "$ELEMENTS" ] || [[ "$ELEMENTS" =~ ^${ES}+$ ]]; then
     echo 0
+    return
   fi
 
   set_separator "$ES"
