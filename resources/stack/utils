@@ -198,7 +198,7 @@ pick_by_order () {
     REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$ES_LN" -l -L "$ES" -n "$LINES" -S /\($LS.*\)//v -P "$ES")
 
     while [ -n "$REPLY" ] && [ ! $(count "$REPLY") == $COUNT ]; do
-      echo -e "\nPlease select exactly $COUNT items:"
+      echo "Please select exactly $COUNT items:"
       REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$ES_LN" -l -L "$ES" -n "$LINES" -S /\($LS.*\)//v -P "$ES")
     done
 
@@ -210,7 +210,7 @@ pick_by_order () {
     REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$ES_LN" -t "$TABS" -S /\($LS.*\)//v -P "$ES")
 
     while [ -n "$REPLY" ] && [ ! $(count "$REPLY") == $COUNT ]; do
-      echo -e "\nPlease select exactly $COUNT items:"
+      echo "Please select exactly $COUNT items:"
       REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$ES_LN" -t "$TABS" -S /\($LS.*\)//v -P "$ES")
     done
 
@@ -221,7 +221,7 @@ pick_by_order () {
   REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$ES_LN" -S /\($LS.*\)//v -P "$ES")
 
   while [ -n "$REPLY" ] && [ ! $(count "$REPLY") == $COUNT ]; do
-    echo -e "\nPlease select exactly $COUNT items:"
+    echo "Please select exactly $COUNT items:"
     REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$ES_LN" -S /\($LS.*\)//v -P "$ES")
   done
 }
