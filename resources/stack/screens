@@ -837,8 +837,42 @@ rotate () {
     echo "Unable to rotate the output $OUTPUT"
 }
 
+load_layout () {
+  if [ ! -f ~/.config/stack/layout ]; then
+    echo "No layout config file found, fallback to auto"
+    return
+  fi
+
+  local ARGS=$(awk '{
+    if ($2 == "off") {
+      print "--output "$1" --off"
+    } else {
+      opts="--output "$1" --mode "$3" --pos "$4" --rate "$5" --reflect "$6" --rotate "$7
+      if ($2 == "primary") ops=opts" --primary"
+      print opts
+    }
+  }' ~/.config/stack/layout)
+
+  ARGS=$(echo "$ARGS" | tr $'\n' ' ')
+
+  xrandr $ARGS &&
+    echo "Layout configuration has been loaded" ||
+    echo "Unable to load layout configuration"
+}
+
 help () {
   local FRM=" %-45s\t%s\n"
+
+  if [ "$1" = "once" ]; then
+    echo "Usage: screens COMMAND"
+
+    echo -e "\nCOMMANDS"
+    printf "$FRM" \
+      "help" "Show this message" \
+      "load layout" "Load screens output layout"
+
+    return
+  fi
 
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
@@ -923,4 +957,20 @@ loop () {
   clear
 }
 
-loop
+once () {
+  case "$1" in
+    "help") help "once";;
+    "load")
+      case "$2" in
+        "layout") load_layout;;
+        *) abort "Unknown or invalid command: '$1'";; 
+      esac;;
+    *) abort "Unknown or invalid command: '$1'";; 
+  esac
+}
+
+if [ $# = 0 ]; then
+  loop
+else
+  once "$@"
+fi
