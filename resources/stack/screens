@@ -527,20 +527,20 @@ set_layout () {
         echo "Unable to lay out outputs in top bottom mode";;
     "gamma-3")
       xrandr --output "$A" --left-of "$B" --output "$C" --below "$A" &&
-        echo "Outputs laid out in gamma mode" ||
-        echo "Unable to lay out outputs in gamma mode";;
+        echo "Outputs laid out in left gamma mode" ||
+        echo "Unable to lay out outputs in left gamma mode";;
     "gamma-rev-3")
       xrandr --output "$A" --left-of "$B" --output "$C" --below "$B" &&
-        echo "Outputs laid out in reverse gamma mode" ||
-        echo "Unable to lay out outputs in reverse gamma mode";;
+        echo "Outputs laid out in right gamma mode" ||
+        echo "Unable to lay out outputs in right gamma mode";;
     "lambda-3")
       xrandr --output "$A" --above "$B" --output "$B" --left-of "$C" &&
-        echo "Outputs laid out in lambda mode" ||
-        echo "Unable to lay out outputs in lambda mode";;
+        echo "Outputs laid out in left lambda mode" ||
+        echo "Unable to lay out outputs in left lambda mode";;
     "lambda-rev-3")
       xrandr --output "$A" --left-of "$C" --output "$A" --above "$C" &&
-        echo "Outputs laid out in reverse lambda mode" ||
-        echo "Unable to lay out outputs in reverse lambda mode";;
+        echo "Outputs laid out in right lambda mode" ||
+        echo "Unable to lay out outputs in right lambda mode";;
     *) echo "Unable to set the layout: '$LAYOUT'"; return 1;;
   esac
 }
@@ -724,7 +724,9 @@ reflect () {
 
     pick_one "Select a reflection mode:" "$MODES" "vertical-4"
     MODE=$(value "$REPLY")
-  elif [[ ! "$MODE" =~ ^(normal|x|y|xy)$ ]]; then
+  fi
+  
+  if [[ ! "$MODE" =~ ^(normal|x|y|xy)$ ]]; then
     echo "Invalid reflection mode argument: '$MODE'"
     return 1
   fi
@@ -763,7 +765,9 @@ rotate () {
 
     pick_one "Select a rotation mode:" "$MODES" "vertical-6"
     MODE=$(value "$REPLY")
-  elif [[ ! "$MODE" =~ ^(normal|right|left|inverted)$ ]]; then
+  fi
+  
+  if [[ ! "$MODE" =~ ^(normal|right|left|inverted)$ ]]; then
     echo "Invalid rotation mode argument: '$MODE'"
     return 1
   fi
