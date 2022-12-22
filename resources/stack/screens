@@ -448,7 +448,7 @@ set_layout () {
   local LEN=$(count "$OUTPUTS")
 
   if [ $LEN = 0 ]; then
-    echo "No outputs have been found"
+    echo "No active outputs have been found"
     return
   elif [ $LEN = 1 ]; then
     echo "No layout can be set for one active output"

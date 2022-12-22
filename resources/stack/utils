@@ -168,6 +168,10 @@ pick_one () {
   local OPTIONS=$2
   local MODE=$3
 
+  if [ ! $(count "$OPTIONS") -gt 0 ]; then
+    return 1
+  fi
+
   echo "$PROMPT"
 
   if [[ "$MODE" =~ ^vertical-[1-9][0-9]*$ ]]; then
@@ -190,6 +194,10 @@ pick_by_order () {
   local OPTIONS=$2
   local COUNT=$3
   local MODE=$4
+
+  if [ ! $(count "$OPTIONS") -gt 0 ]; then
+    return 1
+  fi
 
   echo "$PROMPT"
 
@@ -216,7 +224,6 @@ pick_by_order () {
 
     return
   fi
-
   
   REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$ES_LN" -S /\($LS.*\)//v -P "$ES")
 
