@@ -65,15 +65,6 @@ get_outputs () {
   echo "$OUTPUTS" | tr $'\n' "$ES"
 }
 
-count_outputs () {
-  local STATUS=$1
-
-  local OUTPUTS=$(get_outputs "$STATUS")
-  local COUNT=$(count "$OUTPUTS")
-  
-  echo "$COUNT"
-}
-
 get_resolutions () {
   local OUTPUT=$1
 
@@ -685,7 +676,16 @@ set_off () {
   elif is_primary "$OUTPUT"; then
     echo "Cannot deactivate the primary output"
     return 1
-  elif [ $(count_outputs "active") -lt 2 ]; then
+  fi
+
+  local OUTPUTS=$(get_outputs "active" || echo "err:$?")
+
+  if [[ "$OUTPUTS" =~ ^err: ]]; then
+    return 1
+  fi
+
+  local LEN=$(count "$OUTPUTS")
+  if [ $LEN -lt 2 ]; then
     echo "Cannot deactivate the only active output"
     return 1
   fi
