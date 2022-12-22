@@ -250,14 +250,13 @@ count () {
 
   if [ -z "$ELEMENTS" ] || [[ "$ELEMENTS" =~ ^${ES}+$ ]]; then
     echo 0
-    return
+  else
+    set_separator "$ES"
+    local ARRAY=($ELEMENTS)
+    restore_separator
+
+    echo "${#ARRAY[@]}"
   fi
-
-  set_separator "$ES"
-  local ARRAY=($ELEMENTS)
-  restore_separator
-
-  echo "${#ARRAY[@]}"
 }
 
 element () {
