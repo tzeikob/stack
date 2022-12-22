@@ -260,7 +260,34 @@ count () {
   echo "${#ARRAY[@]}"
 }
 
-get_value () {
+element () {
+  local INDEX=$1
+  local ELEMENTS=$2
+  local EXTRACT=$3
+
+  if [ -z "$ELEMENTS" ] || [[ "$ELEMENTS" =~ ^${ES}+$ ]]; then
+    echo ""
+  else
+    INDEX=$((INDEX + 1))
+    local ELEMENT=$(echo "$ELEMENTS" | cut -d "$ES" -f "$INDEX")
+
+    if [ "$EXTRACT" = "value" ];then
+      value "$ELEMENT"
+    elif [ "$EXTRACT" = "label" ];then
+      label "$ELEMENT"
+    else
+      echo "$ELEMENT"
+    fi
+  fi
+}
+
+label () {
+  local ELEMENT="$1"
+
+  echo "$ELEMENT" | cut -d "$LS" -f 1
+}
+
+value () {
   local ELEMENT="$1"
 
   echo "$ELEMENT" | cut -d "$LS" -f 2

@@ -196,7 +196,6 @@ pick_output () {
   [ $LEN -lt 3 ] && MODE="horizontal"
   
   pick_one "Select an output:" "$OUTPUTS" "$MODE"
-  REPLY=$(echo "$REPLY" | cut -d "$LS" -f 2)
 }
 
 pick_resolution () {
@@ -219,7 +218,6 @@ pick_resolution () {
   [ $LEN -lt 3 ] && MODE="horizontal"
   
   pick_one "Select a resolution:" "$RESOLUTIONS" "$MODE"
-  REPLY=$(echo "$REPLY" | cut -d "$LS" -f 2)
 }
 
 pick_rate () {
@@ -243,7 +241,6 @@ pick_rate () {
   [ $LEN -lt 3 ] && MODE="horizontal"
   
   pick_one "Select a rate:" "$RATES" "$MODE"
-  REPLY=$(echo "$REPLY" | cut -d "$LS" -f 2)
 }
 
 prompt () {
@@ -254,9 +251,9 @@ prompt () {
     return 1
   fi
 
-  local NAME=$(echo "$PRIMARY" | cut -d "$ES" -f 1)
-  local RESOLUTION=$(echo "$PRIMARY" | cut -d "$ES" -f 2)
-  local RATE=$(echo "$PRIMARY" | cut -d "$ES" -f 3)
+  local NAME=$(element 0 "$PRIMARY")
+  local RESOLUTION=$(element 1 "$PRIMARY")
+  local RATE=$(element 2 "$PRIMARY")
 
   local STATUS="$YE${NAME}$RS"
 
@@ -313,15 +310,11 @@ show_status () {
     return
   fi
 
-  set_separator "$ES"
-  OUTPUTS=($OUTPUTS)
-  restore_separator
-
   local CONNECTED="Connected Outputs:      "
 
   local INDEX=0
   for ((INDEX = 0; INDEX < $LEN; INDEX++)); do
-    local OUTPUT=${OUTPUTS[$INDEX]}
+    local OUTPUT=$(element "$INDEX" "$OUTPUTS" "value")
     local HEAD=$(echo "$SCREEN" | awk "/^$OUTPUT /")
 
     local NAME="$(echo "$HEAD" | awk 'match($0, /(.*) connected .*/, a) {print a[1]}')"
@@ -350,7 +343,7 @@ show_output () {
 
   if [ -z "$OUTPUT" ]; then
     pick_output || return 1
-    OUTPUT=$REPLY
+    OUTPUT=$(value "$REPLY")
   fi
 
   local SCREEN=$(get_screen 0 || echo "err:$?")
@@ -444,14 +437,12 @@ list_outputs () {
     return
   fi
 
-  set_separator "$ES"
-  OUTPUTS=($OUTPUTS)
-  restore_separator
-
   local INDEX=0
   for ((INDEX = 0; INDEX < $LEN; INDEX++)); do
+    local OUTPUT=$(element "$INDEX" "$OUTPUTS" "value")
+
     [ $INDEX -gt 0 ] && echo
-    show_output "${OUTPUTS[$INDEX]}" | head -n 7
+    show_output "$OUTPUT" | head -n 7
   done
 }
 
@@ -461,14 +452,14 @@ set_layout () {
   if [[ "$OUTPUTS" =~ ^err: ]]; then
     echo "Unable to retrieve outputs"
     return 1
-  elif [ -z "$OUTPUTS" ]; then
-    echo "No outputs have been found"
-    return 1
   fi
 
   local LEN=$(count "$OUTPUTS")
 
-  if [ $LEN = 1 ]; then
+  if [ $LEN = 0 ]; then
+    echo "No outputs have been found"
+    return
+  elif [ $LEN = 1 ]; then
     echo "No layout can be set for one active output"
     return
   elif [ $LEN -gt 3 ]; then
@@ -501,13 +492,14 @@ set_layout () {
 
   local MODE="vertical-6"
   [ $(count "$LAYOUTS") -lt 3 ] && MODE="horizontal"
+
   pick_one "Select a layout mode:" "$LAYOUTS" "$MODE"
   
   if [ -z "$REPLY" ]; then
     return
   fi
 
-  local LAYOUT=$(get_value "$REPLY")
+  local LAYOUT=$(value "$REPLY")
 
   MODE="vertical-6"
   [ $LEN -lt 3 ] && MODE="horizontal"
@@ -519,47 +511,43 @@ set_layout () {
     return
   fi
 
-  set_separator "$ES"
-  OUTPUTS=($REPLY)
-  restore_separator
+  local A=$(element 0 "$REPLY" "value")
+  local B=$(element 1 "$REPLY" "value")
+  if [ $LEN = 3 ]; then
+    local C=$(element 2 "$REPLY" "value")
+  fi
 
   case "$LAYOUT" in
     "row-2")
-      xrandr --output "${OUTPUTS[0]}" --left-of "${OUTPUTS[1]}" &&
+      xrandr --output "$A" --left-of "$B" &&
         echo "Outputs laid out in side by side mode" ||
         echo "Unable to lay out outputs in side by side mode";;
     "col-2")
-      xrandr --output "${OUTPUTS[0]}" --above "${OUTPUTS[1]}" &&
+      xrandr --output "$A" --above "$B" &&
         echo "Outputs laid out in top bottom mode" ||
         echo "Unable to lay out outputs in top bottom mode";;
     "row-3")
-      xrandr --output "${OUTPUTS[0]}" --left-of "${OUTPUTS[1]}" \
-        --output "${OUTPUTS[1]}" --left-of "${OUTPUTS[2]}" &&
+      xrandr --output "$A" --left-of "$B" --output "$B" --left-of "$C" &&
         echo "Outputs laid out in side by side mode" ||
         echo "Unable to lay out outputs in side by side mode";;
     "col-3")
-      xrandr --output "${OUTPUTS[0]}" --above "${OUTPUTS[1]}" \
-        --output "${OUTPUTS[1]}" --above "${OUTPUTS[2]}" &&
+      xrandr --output "$A" --above "$B" --output "$B" --above "$C" &&
         echo "Outputs laid out in top bottom mode" ||
         echo "Unable to lay out outputs in top bottom mode";;
     "gamma-3")
-      xrandr --output "${OUTPUTS[0]}" --left-of "${OUTPUTS[1]}" \
-        --output "${OUTPUTS[2]}" --below "${OUTPUTS[0]}" &&
+      xrandr --output "$A" --left-of "$B" --output "$C" --below "$A" &&
         echo "Outputs laid out in gamma mode" ||
         echo "Unable to lay out outputs in gamma mode";;
     "gamma-rev-3")
-      xrandr --output "${OUTPUTS[0]}" --left-of "${OUTPUTS[1]}" \
-        --output "${OUTPUTS[2]}" --below "${OUTPUTS[1]}" &&
+      xrandr --output "$A" --left-of "$B" --output "$C" --below "$B" &&
         echo "Outputs laid out in reverse gamma mode" ||
         echo "Unable to lay out outputs in reverse gamma mode";;
     "lambda-3")
-      xrandr --output "${OUTPUTS[0]}" --above "${OUTPUTS[1]}" \
-        --output "${OUTPUTS[1]}" --left-of "${OUTPUTS[2]}" &&
+      xrandr --output "$A" --above "$B" --output "$B" --left-of "$C" &&
         echo "Outputs laid out in lambda mode" ||
         echo "Unable to lay out outputs in lambda mode";;
     "lambda-rev-3")
-      xrandr --output "${OUTPUTS[1]}" --left-of "${OUTPUTS[2]}" \
-        --output "${OUTPUTS[0]}" --above "${OUTPUTS[2]}" &&
+      xrandr --output "$A" --left-of "$C" --output "$A" --above "$C" &&
         echo "Outputs laid out in reverse lambda mode" ||
         echo "Unable to lay out outputs in reverse lambda mode";;
     *) echo "Unable to set the layout: '$LAYOUT'"; return 1;;
@@ -573,7 +561,7 @@ set_mode () {
 
   if [ -z "$OUTPUT" ]; then
     pick_output "active" || return 1
-    OUTPUT=$REPLY
+    OUTPUT=$(value "$REPLY")
   fi
   
   if ! exists "$OUTPUT"; then
@@ -589,12 +577,12 @@ set_mode () {
 
   if [ -z "$RESOLUTION" ]; then
     pick_resolution "$OUTPUT" || return 1
-    RESOLUTION=$REPLY
+    RESOLUTION=$(value "$REPLY")
   fi
 
   if [ -z "$RATE" ]; then
     pick_rate "$OUTPUT" "$RESOLUTION" || return 1
-    RATE=$REPLY
+    RATE=$(value "$REPLY")
   fi
 
   xrandr --output "$OUTPUT" --mode "$RESOLUTION" --rate "$RATE" &&
@@ -607,7 +595,7 @@ restore () {
 
   if [ -z "$OUTPUT" ]; then
     pick_output "active" || return 1
-    OUTPUT=$REPLY
+    OUTPUT=$(value "$REPLY")
   fi
   
   if ! exists "$OUTPUT"; then
@@ -631,7 +619,7 @@ set_primary () {
 
   if [ -z "$OUTPUT" ]; then
     pick_output "active" || return 1
-    OUTPUT=$REPLY
+    OUTPUT=$(value "$REPLY")
   fi
   
   if ! exists "$OUTPUT"; then
@@ -658,7 +646,7 @@ set_on () {
 
   if [ -z "$OUTPUT" ]; then
     pick_output "inactive" || return 1
-    OUTPUT=$REPLY
+    OUTPUT=$(value "$REPLY")
   fi
   
   if ! exists "$OUTPUT"; then
@@ -682,7 +670,7 @@ set_off () {
 
   if [ -z "$OUTPUT" ]; then
     pick_output "active" || return 1
-    OUTPUT=$REPLY
+    OUTPUT=$(value "$REPLY")
   fi
   
   if ! exists "$OUTPUT"; then
@@ -713,7 +701,7 @@ reflect () {
 
   if [ -z "$OUTPUT" ]; then
     pick_output "active" || return 1
-    OUTPUT=$REPLY
+    OUTPUT=$(value "$REPLY")
   fi
   
   if ! exists "$OUTPUT"; then
@@ -735,7 +723,7 @@ reflect () {
     MODES+="XY Axes${LS}xy"
 
     pick_one "Select a reflection mode:" "$MODES" "vertical-4"
-    MODE=$(echo "$REPLY" | cut -d "$LS" -f 2)
+    MODE=$(value "$REPLY")
   elif [[ ! "$MODE" =~ ^(normal|x|y|xy)$ ]]; then
     echo "Invalid reflection mode argument: '$MODE'"
     return 1
@@ -752,7 +740,7 @@ rotate () {
 
   if [ -z "$OUTPUT" ]; then
     pick_output "active" || return 1
-    OUTPUT=$REPLY
+    OUTPUT=$(value "$REPLY")
   fi
   
   if ! exists "$OUTPUT"; then
@@ -774,7 +762,7 @@ rotate () {
     MODES+="Inverted 180°${LS}inverted"
 
     pick_one "Select a rotation mode:" "$MODES" "vertical-6"
-    MODE=$(echo "$REPLY" | cut -d "$LS" -f 2)
+    MODE=$(value "$REPLY")
   elif [[ ! "$MODE" =~ ^(normal|right|left|inverted)$ ]]; then
     echo "Invalid rotation mode argument: '$MODE'"
     return 1
