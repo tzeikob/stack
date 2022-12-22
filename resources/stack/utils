@@ -187,6 +187,7 @@ pick_one () {
   fi
   
   REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$ES_LN" -S /\($LS.*\)//v)
+  echo "R: <$REPLY>"
 }
 
 pick_by_order () {

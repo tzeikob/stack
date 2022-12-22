@@ -334,6 +334,11 @@ show_output () {
 
   if [ -z "$OUTPUT" ]; then
     pick_output || return 1
+
+    if [ -z "$REPLY" ]; then
+      return
+    fi
+
     OUTPUT=$(value "$REPLY")
   fi
 
@@ -552,6 +557,11 @@ set_mode () {
 
   if [ -z "$OUTPUT" ]; then
     pick_output "active" || return 1
+
+    if [ -z "$REPLY" ]; then
+      return
+    fi
+
     OUTPUT=$(value "$REPLY")
   fi
   
@@ -568,11 +578,21 @@ set_mode () {
 
   if [ -z "$RESOLUTION" ]; then
     pick_resolution "$OUTPUT" || return 1
+
+    if [ -z "$REPLY" ]; then
+      return
+    fi
+
     RESOLUTION=$(value "$REPLY")
   fi
 
   if [ -z "$RATE" ]; then
     pick_rate "$OUTPUT" "$RESOLUTION" || return 1
+
+    if [ -z "$REPLY" ]; then
+      return
+    fi
+
     RATE=$(value "$REPLY")
   fi
 
@@ -586,6 +606,11 @@ restore () {
 
   if [ -z "$OUTPUT" ]; then
     pick_output "active" || return 1
+
+    if [ -z "$REPLY" ]; then
+      return
+    fi
+
     OUTPUT=$(value "$REPLY")
   fi
   
@@ -610,6 +635,11 @@ set_primary () {
 
   if [ -z "$OUTPUT" ]; then
     pick_output "active" || return 1
+
+    if [ -z "$REPLY" ]; then
+      return
+    fi
+
     OUTPUT=$(value "$REPLY")
   fi
   
@@ -637,6 +667,11 @@ set_on () {
 
   if [ -z "$OUTPUT" ]; then
     pick_output "inactive" || return 1
+
+    if [ -z "$REPLY" ]; then
+      return
+    fi
+
     OUTPUT=$(value "$REPLY")
   fi
   
@@ -661,6 +696,11 @@ set_off () {
 
   if [ -z "$OUTPUT" ]; then
     pick_output "active" || return 1
+
+    if [ -z "$REPLY" ]; then
+      return
+    fi
+
     OUTPUT=$(value "$REPLY")
   fi
   
@@ -701,6 +741,11 @@ reflect () {
 
   if [ -z "$OUTPUT" ]; then
     pick_output "active" || return 1
+
+    if [ -z "$REPLY" ]; then
+      return
+    fi
+
     OUTPUT=$(value "$REPLY")
   fi
   
@@ -723,6 +768,11 @@ reflect () {
     MODES+="XY Axes${LS}xy"
 
     pick_one "Select a reflection mode:" "$MODES" "vertical-4"
+
+    if [ -z "$REPLY" ]; then
+      return
+    fi
+
     MODE=$(value "$REPLY")
   fi
   
@@ -742,6 +792,11 @@ rotate () {
 
   if [ -z "$OUTPUT" ]; then
     pick_output "active" || return 1
+
+    if [ -z "$REPLY" ]; then
+      return
+    fi
+
     OUTPUT=$(value "$REPLY")
   fi
   
@@ -764,6 +819,11 @@ rotate () {
     MODES+="Inverted 180°${LS}inverted"
 
     pick_one "Select a rotation mode:" "$MODES" "vertical-6"
+
+    if [ -z "$REPLY" ]; then
+      return
+    fi
+    
     MODE=$(value "$REPLY")
   fi
   
