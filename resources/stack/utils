@@ -298,3 +298,24 @@ value () {
 
   echo "$ELEMENT" | cut -d "$LS" -f 2
 }
+
+property () {
+  local PROPERTIES=$1
+  local KEY=$2
+
+  echo "$PROPERTIES" | awk '/^'$KEY'/'
+}
+
+key () {
+  local INPUT=""
+  [[ -p /dev/stdin ]] && INPUT="$(cat -)" || INPUT="${@}"
+
+  echo "$INPUT" | awk 'match($0, /(.*)'$LS'(.*)/, a) {print a[1]}'
+}
+
+val () {
+  local INPUT=""
+  [[ -p /dev/stdin ]] && INPUT="$(cat -)" || INPUT="${@}"
+
+  echo "$INPUT" | awk 'match($0, /(.*)'$LS'(.*)/, a) {print a[2]}'
+}

@@ -10,12 +10,72 @@ get_screen () {
   local INDEX=${1:-"0"}
 
   local SCREEN=$(xrandr --current | sed "/^Screen ${INDEX}:/,/^Screen/!d;//d" || echo "err:$?")
-
-  if [[ "$SCREEN" =~ ^err: ]]; then
-    return 1
-  fi
+  [[ "$SCREEN" =~ ^err: ]] && return 1
 
   echo "$SCREEN"
+}
+
+get_output () {
+  local OUTPUT=$1
+
+  [ -z "$OUTPUT" ] && return 1
+
+  local SCREEN=$(get_screen 0 || echo "err:$?")
+  [[ "$SCREEN" =~ ^err: ]] && return 1
+
+  local RATE="$(echo "$SCREEN" | sed -n "/$OUTPUT .*/{:a;N;/\*/!ba;/\*/p}" |
+    awk 'match($0, /.* ([0-9]{2}.[0-9]{2})\*.*/, a) {print a[1]}')"
+
+  local RESOLUTION="$(echo "$SCREEN" | sed -n "/$OUTPUT .*/{:a;N;/\*/!ba;/\*/p}" |
+      awk 'match($0, /.* ([0-9]+x[0-9]+) .*\*.*/, a) {print a[1]}')"
+
+  local PROFILES=""
+  PROFILES="$(echo "$SCREEN" | awk /^$OUTPUT/,!// | tail -n +2 |
+    awk -v ES="$ES" -v KVS="$LS" '{
+      if ($0 ~ /^\s+[0-9]+x[0-9]+/) {
+        rates=""
+        for(i=2;i<=NF;i++) rates=rates $i ES
+        print "profile" KVS $1 KVS rates
+      } else exit
+    }' | tr -d '+*')"
+
+  local HEAD=$(echo "$SCREEN" | awk "/^${OUTPUT} /")
+  [ -z "$HEAD" ] && return 1
+
+  local NAME="$(echo "$HEAD" | awk 'match($0, /(.*) ((dis)?connected) .*/, a) {print a[1]}')"
+  local STATUS="$(echo "$HEAD" | awk 'match($0, /.* ((dis)?connected) .*/, a) {print a[1]}')"
+  local AREA="$(echo "$HEAD" | awk 'match($0, /.* ([0-9]+x[0-9]+)\+.*/, a) {print a[1]}')"
+  local POSITION="$(echo "$HEAD" | awk 'match($0, /.* [0-9]+x[0-9]+\+([0-9]+\+[0-9]+) .*/, a) {print a[1]}' | tr '+' ",")"
+  local DIMS="$(echo "$HEAD" | awk 'match($0, /.* ([0-9]+mm x [0-9]+mm).*/, a) {print a[1]}' | tr -d ' m')"
+
+  local PRIMARY="$(echo "$HEAD" | awk 'match($0, /.* (primary) .*/, a) {print a[1]}')"
+  [ -n "$PRIMARY" ] && PRIMARY="true" || PRIMARY="false"
+
+  local ACTIVE="false"
+  [ "$STATUS" = "connected" ] && [[ "$AREA" =~ ^[0-9]+x[0-9]+$ ]] && ACTIVE="true"
+
+  local ROTATE="$(echo "$HEAD" | awk 'match($0, /.* (normal|right|left|inverted) .*\(.*/, a) {print a[1]}')"
+  [ -z "$ROTATE" ] && [ "$ACTIVE" = "true" ] && ROTATE="normal"
+
+  local REFLECT="$(echo "$HEAD" | awk 'match($0, /.* (X) .*\(.*/, a) {print tolower(a[1])}')"
+  REFLECT+="$(echo "$HEAD" | awk 'match($0, /.* (Y) .*\(.*/, a) {print tolower(a[1])}')"
+  [ -z "$REFLECT" ] && [ "$ACTIVE" = "true" ] && REFLECT="normal"
+
+  echo "name${LS}$NAME"
+  echo "status${LS}$STATUS"
+  echo "active${LS}$ACTIVE"
+
+  if [ "$ACTIVE" = "true" ]; then
+    echo "primary${LS}$PRIMARY"
+    echo "resolution${LS}$RESOLUTION"
+    echo "rate${LS}$RATE"
+    echo "rotate${LS}$ROTATE"
+    echo "reflect${LS}$REFLECT"
+    echo "area${LS}$AREA"
+    echo "position${LS}$POSITION"
+    echo "dims${LS}$DIMS"
+    echo "$PROFILES"
+  fi
 }
 
 get_primary () {
@@ -837,6 +897,42 @@ rotate () {
     echo "Unable to rotate the output $OUTPUT"
 }
 
+save_layout () {
+  local OUTPUTS=$(get_outputs || echo "err:$?")
+  [[ "$OUTPUTS" =~ ^err: ]] && echo "Unable to retrieve outputs" && return 1
+
+  local LEN=$(count "$OUTPUTS")
+  [ $LEN = 0 ] && echo "No outputs have found" && return 1
+
+  local LAYOUT=""
+
+  local INDEX=0
+  for ((INDEX = 0; INDEX < $LEN; INDEX++)); do
+    [ $INDEX -gt 0 ] && LAYOUT+=$'\n'
+
+    local NAME=$(element "$INDEX" "$OUTPUTS" "value")
+
+    local OUTPUT=$(get_output "$NAME" || echo "err$?")
+    [[ "$OUTPUT" =~ ^err: ]] && continue
+
+    local ACTIVE=$(property "$OUTPUT" "active" | val)
+    [ "$ACTIVE" = "false" ] && LAYOUT+="$NAME off" && continue
+
+    local PRIMARY=$(property "$OUTPUT" "primary" | val)
+    [ "$PRIMARY" = "true" ] && LAYOUT+="$NAME primary" || LAYOUT+="$NAME secondary"
+
+    local RESOLUTION=$(property "$OUTPUT" "resolution" | val)
+    local RATE=$(property "$OUTPUT" "rate" | val)
+    local POSITION=$(property "$OUTPUT" "position" | val | tr ',' 'x')
+    local ROTATE=$(property "$OUTPUT" "rotate" | val)
+    local REFLECT=$(property "$OUTPUT" "reflect" | val)
+
+    LAYOUT+=" $RESOLUTION $RATE $POSITION $ROTATE $REFLECT"
+  done
+
+  echo -e "$LAYOUT" > ~/.config/stack/layout
+}
+
 load_layout () {
   if [ ! -f ~/.config/stack/layout ]; then
     echo "No layout config file found, fallback to auto"
@@ -847,13 +943,11 @@ load_layout () {
     if ($2 == "off") {
       print "--output "$1" --off"
     } else {
-      opts="--output "$1" --mode "$3" --pos "$4" --rate "$5" --reflect "$6" --rotate "$7
-      if ($2 == "primary") ops=opts" --primary"
-      print opts
+      args="--output "$1" --mode "$3" --rate "$4" --pos "$5" --rotate "$6" --reflect "$7
+      if ($2 == "primary") args=args" --primary"
+      print args
     }
-  }' ~/.config/stack/layout)
-
-  ARGS=$(echo "$ARGS" | tr $'\n' ' ')
+  }' ~/.config/stack/layout | tr $'\n' ' ')
 
   xrandr $ARGS &&
     echo "Layout configuration has been loaded" ||
@@ -889,6 +983,7 @@ help () {
     "set mode [<output> [<res> [<rate>]]]" "Set the mode of the given output." \
     "set primary [<output>]" "Set the primary output." \
     "set on|off [<output>]" "Set active or inactive the given output." \
+    "save layout" "Persist the current screen layout to be applied in next boot." \
     "" "" \
     "rotate [<output> normal|right|left|inverted]" "Set output rotation to normal, right, left or inverted." \
     "reflect [<output> normal|x|y|xy]" "Set output reflection to normal, x, y or xy axes." \
@@ -945,6 +1040,11 @@ loop () {
           "primary") set_primary "${CMD[2]}";;
           "on") set_on "${CMD[2]}";;
           "off") set_off "${CMD[2]}";;
+          *) echo "Unknown or invalid command: '$REPLY'";;
+        esac;;
+      "save")
+        case "${CMD[1]}" in
+          "layout") save_layout;;
           *) echo "Unknown or invalid command: '$REPLY'";;
         esac;;
       "rotate") rotate "${CMD[1]}" "${CMD[2]}";;
