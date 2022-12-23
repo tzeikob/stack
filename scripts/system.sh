@@ -318,6 +318,8 @@ install_utilities () {
   ln -sf "$STACK_HOME/drive" /usr/local/bin/drive
   ln -sf "$STACK_HOME/dropbox" /usr/local/bin/dropbox
 
+  echo "screens load layout" >> ~/.xinitrc
+
   echo "Stack utilities have been installed"
 }
 
