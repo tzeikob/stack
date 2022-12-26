@@ -31,10 +31,10 @@ get_output () {
 
   local PROFILES=""
   PROFILES="$(echo "$SCREEN" | awk /^$OUTPUT/,!// | tail -n +2 |
-    awk -v ES="$ES" -v KVS="$LS" '{
+    awk -v AES="$AES" -v KVS="$KVS" '{
       if ($0 ~ /^\s+[0-9]+x[0-9]+/) {
         rates=""
-        for(i=2;i<=NF;i++) rates=rates $i ES
+        for(i=2;i<=NF;i++) rates=rates $i AES
         print "profile" KVS $1 KVS rates
       } else exit
     }' | tr -d '+*')"
@@ -61,19 +61,19 @@ get_output () {
   REFLECT+="$(echo "$HEAD" | awk 'match($0, /.* (Y) .*\(.*/, a) {print tolower(a[1])}')"
   [ -z "$REFLECT" ] && [ "$ACTIVE" = "true" ] && REFLECT="normal"
 
-  echo "name${LS}$NAME"
-  echo "status${LS}$STATUS"
-  echo "active${LS}$ACTIVE"
+  echo "name${KVS}$NAME"
+  echo "status${KVS}$STATUS"
+  echo "active${KVS}$ACTIVE"
 
   if [ "$ACTIVE" = "true" ]; then
-    echo "primary${LS}$PRIMARY"
-    echo "resolution${LS}$RESOLUTION"
-    echo "rate${LS}$RATE"
-    echo "rotate${LS}$ROTATE"
-    echo "reflect${LS}$REFLECT"
-    echo "area${LS}$AREA"
-    echo "position${LS}$POSITION"
-    echo "dims${LS}$DIMS"
+    echo "primary${KVS}$PRIMARY"
+    echo "resolution${KVS}$RESOLUTION"
+    echo "rate${KVS}$RATE"
+    echo "rotate${KVS}$ROTATE"
+    echo "reflect${KVS}$REFLECT"
+    echo "area${KVS}$AREA"
+    echo "position${KVS}$POSITION"
+    echo "dims${KVS}$DIMS"
     echo "$PROFILES"
   fi
 }
@@ -95,7 +95,7 @@ get_primary () {
     sed -n '/.* connected primary .*/{:a;N;/\*/!ba;/\*/p}' |
     awk 'match($0, /.* ([0-9]{2}).[0-9]{2}\*.*/, a) {print a[1]"Hz"}')
   
-  echo "${NAME}${ES}${RESOLUTION}${ES}${RATE}"
+  echo "${NAME}${AES}${RESOLUTION}${AES}${RATE}"
 }
 
 get_outputs () {
@@ -122,7 +122,7 @@ get_outputs () {
 
   local OUTPUTS=$(echo "$SCREEN" | awk '/'${PATTERN}'/{print $1}')
 
-  echo "$OUTPUTS" | tr $'\n' "$ES"
+  echo "$OUTPUTS" | tr $'\n' "$AES"
 }
 
 get_resolutions () {
@@ -137,7 +137,7 @@ get_resolutions () {
   local RESOLUTIONS="$(echo "$SCREEN" | awk /^$OUTPUT/,!// | tail -n +2 |
     awk '{if ($0 ~ /^\s+[0-9]+x[0-9]+/) {print $1} else {exit}}')"
 
-  echo "$RESOLUTIONS" | tr $'\n' "$ES"
+  echo "$RESOLUTIONS" | tr $'\n' "$AES"
 }
 
 get_rates () {
@@ -154,7 +154,7 @@ get_rates () {
     awk '{if ($0 ~ /\s'$RESOLUTION'\s/) {print $0; exit}}' |
     sed 's/'$RESOLUTION'//' | trim | tr -d '+*' | sed 's/ \{1,\}/\n/g')"
 
-  echo "$RATES" | tr $'\n' "$ES"
+  echo "$RATES" | tr $'\n' "$AES"
 }
 
 exists () {
@@ -302,9 +302,9 @@ prompt () {
     return 1
   fi
 
-  local NAME=$(element 0 "$PRIMARY")
-  local RESOLUTION=$(element 1 "$PRIMARY")
-  local RATE=$(element 2 "$PRIMARY")
+  local NAME=$(element "$PRIMARY" 0)
+  local RESOLUTION=$(element "$PRIMARY" 1)
+  local RATE=$(element "$PRIMARY" 2)
 
   local STATUS="$YE${NAME}$RS"
 
@@ -365,7 +365,7 @@ show_status () {
 
   local INDEX=0
   for ((INDEX = 0; INDEX < $LEN; INDEX++)); do
-    local OUTPUT=$(element "$INDEX" "$OUTPUTS" "value")
+    local OUTPUT=$(element "$OUTPUTS" "$INDEX" | value)
     local HEAD=$(echo "$SCREEN" | awk "/^$OUTPUT /")
 
     local NAME="$(echo "$HEAD" | awk 'match($0, /(.*) connected .*/, a) {print a[1]}')"
@@ -495,7 +495,7 @@ list_outputs () {
 
   local INDEX=0
   for ((INDEX = 0; INDEX < $LEN; INDEX++)); do
-    local OUTPUT=$(element "$INDEX" "$OUTPUTS" "value")
+    local OUTPUT=$(element "$OUTPUTS" "$INDEX" | value)
 
     [ $INDEX -gt 0 ] && echo
     show_output "$OUTPUT" | head -n 7
@@ -526,19 +526,19 @@ set_layout () {
   local LAYOUTS=""
 
   if [ $LEN = 2 ]; then
-    LAYOUTS+="Side by Side${LS}row-2${ES}"
-    LAYOUTS+="Top Bottom${LS}col-2"
+    LAYOUTS+="Side by Side${KVS}row-2${AES}"
+    LAYOUTS+="Top Bottom${KVS}col-2"
 
     echo "Side by Side | Top Bottom"
     echo "[A][B]         [A]"
     echo "               [B]"
   elif [ $LEN = 3 ]; then
-    LAYOUTS+="Side by Side${LS}row-3${ES}"
-    LAYOUTS+="Top Bottom${LS}col-3${ES}"
-    LAYOUTS+="Left Gamma${LS}gamma-3${ES}"
-    LAYOUTS+="Right Gamma${LS}gamma-rev-3${ES}"
-    LAYOUTS+="Left Lambda${LS}lambda-3${ES}"
-    LAYOUTS+="Right Lambda${LS}lambda-rev-3"
+    LAYOUTS+="Side by Side${KVS}row-3${AES}"
+    LAYOUTS+="Top Bottom${KVS}col-3${AES}"
+    LAYOUTS+="Left Gamma${KVS}gamma-3${AES}"
+    LAYOUTS+="Right Gamma${KVS}gamma-rev-3${AES}"
+    LAYOUTS+="Left Lambda${KVS}lambda-3${AES}"
+    LAYOUTS+="Right Lambda${KVS}lambda-rev-3"
 
     echo "Side by Side | Top Bottom | Left Gamma | Right Gamma | Left Lambda | Right Lambda"
     echo "[A][B][C]      [A]          [A][B]       [A][B]        [A]              [A]"
@@ -567,10 +567,10 @@ set_layout () {
     return
   fi
 
-  local A=$(element 0 "$REPLY" "value")
-  local B=$(element 1 "$REPLY" "value")
+  local A=$(element "$REPLY" 0 | value)
+  local B=$(element "$REPLY" 1 | value)
   if [ $LEN = 3 ]; then
-    local C=$(element 2 "$REPLY" "value")
+    local C=$(element "$REPLY" 2 | value)
   fi
 
   case "$LAYOUT" in
@@ -822,10 +822,10 @@ reflect () {
 
   if [ -z "$MODE" ]; then
     local MODES=""
-    MODES+="Normal${LS}normal${ES}"
-    MODES+="X Axis${LS}x${ES}"
-    MODES+="Y Axis${LS}y${ES}"
-    MODES+="XY Axes${LS}xy"
+    MODES+="Normal${KVS}normal${AES}"
+    MODES+="X Axis${KVS}x${AES}"
+    MODES+="Y Axis${KVS}y${AES}"
+    MODES+="XY Axes${KVS}xy"
 
     pick_one "Select a reflection mode:" "$MODES" "vertical-4"
 
@@ -873,10 +873,10 @@ rotate () {
 
   if [ -z "$MODE" ]; then
     local MODES=""
-    MODES+="Normal${LS}normal${ES}"
-    MODES+="Right 90°${LS}right${ES}"
-    MODES+="Left 90°${LS}left${ES}"
-    MODES+="Inverted 180°${LS}inverted"
+    MODES+="Normal${KVS}normal${AES}"
+    MODES+="Right 90°${KVS}right${AES}"
+    MODES+="Left 90°${KVS}left${AES}"
+    MODES+="Inverted 180°${KVS}inverted"
 
     pick_one "Select a rotation mode:" "$MODES" "vertical-6"
 
@@ -910,22 +910,22 @@ save_layout () {
   for ((INDEX = 0; INDEX < $LEN; INDEX++)); do
     [ $INDEX -gt 0 ] && LAYOUT+=$'\n'
 
-    local NAME=$(element "$INDEX" "$OUTPUTS" "value")
+    local NAME=$(element "$OUTPUTS" "$INDEX" | value)
 
     local OUTPUT=$(get_output "$NAME" || echo "err$?")
     [[ "$OUTPUT" =~ ^err: ]] && continue
 
-    local ACTIVE=$(property "$OUTPUT" "active" | val)
+    local ACTIVE=$(property "$OUTPUT" "active" | value)
     [ "$ACTIVE" = "false" ] && LAYOUT+="$NAME off" && continue
 
-    local PRIMARY=$(property "$OUTPUT" "primary" | val)
+    local PRIMARY=$(property "$OUTPUT" "primary" | value)
     [ "$PRIMARY" = "true" ] && LAYOUT+="$NAME primary" || LAYOUT+="$NAME secondary"
 
-    local RESOLUTION=$(property "$OUTPUT" "resolution" | val)
-    local RATE=$(property "$OUTPUT" "rate" | val)
-    local POSITION=$(property "$OUTPUT" "position" | val | tr ',' 'x')
-    local ROTATE=$(property "$OUTPUT" "rotate" | val)
-    local REFLECT=$(property "$OUTPUT" "reflect" | val)
+    local RESOLUTION=$(property "$OUTPUT" "resolution" | value)
+    local RATE=$(property "$OUTPUT" "rate" | value)
+    local POSITION=$(property "$OUTPUT" "position" | value | tr ',' 'x')
+    local ROTATE=$(property "$OUTPUT" "rotate" | value)
+    local REFLECT=$(property "$OUTPUT" "reflect" | value)
 
     LAYOUT+=" $RESOLUTION $RATE $POSITION $ROTATE $REFLECT"
   done

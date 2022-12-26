@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-ES=$';'
-ES_LN=$';\n'
-LS=$'~'
+AES=$',,'
+AES_LN=$',,\n'
+KVS=$'::'
 
 WHITE=$'\e[0;37m'
 RED=$'\e[0;31m'
@@ -168,7 +168,9 @@ pick_one () {
   local OPTIONS=$2
   local MODE=$3
 
-  if [ ! $(count "$OPTIONS") -gt 0 ]; then
+  if [[ "$OPTIONS" =~ ^($AES)*$ ]]; then
+    return 1
+  elif [ ! $(count "$OPTIONS") -gt 0 ]; then
     return 1
   fi
 
@@ -176,17 +178,17 @@ pick_one () {
 
   if [[ "$MODE" =~ ^vertical-[1-9][0-9]*$ ]]; then
     local LINES=$(echo "$MODE" | cut -d '-' -f 2)
-    REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$ES_LN" -l -L "$ES" -n "$LINES" -S /\($LS.*\)//v)
+    REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$AES_LN" -l -L "$AES" -n "$LINES" -S /\($KVS.*\)//v)
     return
   fi
   
   if [[ "$MODE" =~ ^tabular-[1-9][0-9]*$ ]]; then
     local TABS=$(echo "$MODE" | cut -d '-' -f 2)
-    REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$ES_LN" -t "$TABS" -S /\($LS.*\)//v)
+    REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$AES_LN" -t "$TABS" -S /\($KVS.*\)//v)
     return
   fi
   
-  REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$ES_LN" -S /\($LS.*\)//v)
+  REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$AES_LN" -S /\($KVS.*\)//v)
 }
 
 pick_by_order () {
@@ -195,7 +197,9 @@ pick_by_order () {
   local COUNT=$3
   local MODE=$4
 
-  if [ ! $(count "$OPTIONS") -gt 0 ]; then
+  if [[ "$OPTIONS" =~ ^($AES)*$ ]]; then
+    return 1
+  elif [ ! $(count "$OPTIONS") -gt 0 ]; then
     return 1
   fi
 
@@ -203,11 +207,11 @@ pick_by_order () {
 
   if [[ "$MODE" =~ ^vertical-[1-9][0-9]*$ ]]; then
     local LINES=$(echo "$MODE" | cut -d '-' -f 2)
-    REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$ES_LN" -l -L "$ES" -n "$LINES" -S /\($LS.*\)//v -P "$ES")
+    REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$AES_LN" -l -L "$AES" -n "$LINES" -S /\($KVS.*\)//v -P "$AES")
 
     while [ -n "$REPLY" ] && [ ! $(count "$REPLY") == $COUNT ]; do
       echo "Please select exactly $COUNT items:"
-      REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$ES_LN" -l -L "$ES" -n "$LINES" -S /\($LS.*\)//v -P "$ES")
+      REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$AES_LN" -l -L "$AES" -n "$LINES" -S /\($KVS.*\)//v -P "$AES")
     done
 
     return
@@ -215,21 +219,21 @@ pick_by_order () {
   
   if [[ "$MODE" =~ ^tabular-[1-9][0-9]*$ ]]; then
     local TABS=$(echo "$MODE" | cut -d '-' -f 2)
-    REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$ES_LN" -t "$TABS" -S /\($LS.*\)//v -P "$ES")
+    REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$AES_LN" -t "$TABS" -S /\($KVS.*\)//v -P "$AES")
 
     while [ -n "$REPLY" ] && [ ! $(count "$REPLY") == $COUNT ]; do
       echo "Please select exactly $COUNT items:"
-      REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$ES_LN" -t "$TABS" -S /\($LS.*\)//v -P "$ES")
+      REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$AES_LN" -t "$TABS" -S /\($KVS.*\)//v -P "$AES")
     done
 
     return
   fi
   
-  REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$ES_LN" -S /\($LS.*\)//v -P "$ES")
+  REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$AES_LN" -S /\($KVS.*\)//v -P "$AES")
 
   while [ -n "$REPLY" ] && [ ! $(count "$REPLY") == $COUNT ]; do
     echo "Please select exactly $COUNT items:"
-    REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$ES_LN" -S /\($LS.*\)//v -P "$ES")
+    REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$AES_LN" -S /\($KVS.*\)//v -P "$AES")
   done
 }
 
@@ -255,48 +259,15 @@ restore_separator () {
 count () {
   local ELEMENTS="$1"
 
-  if [ -z "$ELEMENTS" ] || [[ "$ELEMENTS" =~ ^${ES}+$ ]]; then
-    echo 0
-  else
-    set_separator "$ES"
-    local ARRAY=($ELEMENTS)
-    restore_separator
-
-    echo "${#ARRAY[@]}"
-  fi
+  echo "$ELEMENTS" | awk -F "$AES" '{print NF}'
 }
 
 element () {
-  local INDEX=$1
-  local ELEMENTS=$2
-  local EXTRACT=$3
+  local ELEMENTS=$1
+  local INDEX=$2
 
-  if [ -z "$ELEMENTS" ] || [[ "$ELEMENTS" =~ ^${ES}+$ ]]; then
-    echo ""
-  else
-    INDEX=$((INDEX + 1))
-    local ELEMENT=$(echo "$ELEMENTS" | cut -d "$ES" -f "$INDEX")
-
-    if [ "$EXTRACT" = "value" ];then
-      value "$ELEMENT"
-    elif [ "$EXTRACT" = "label" ];then
-      label "$ELEMENT"
-    else
-      echo "$ELEMENT"
-    fi
-  fi
-}
-
-label () {
-  local ELEMENT="$1"
-
-  echo "$ELEMENT" | cut -d "$LS" -f 1
-}
-
-value () {
-  local ELEMENT="$1"
-
-  echo "$ELEMENT" | cut -d "$LS" -f 2
+  INDEX=$((INDEX + 1))
+  echo "$ELEMENTS" | awk -F "$AES" '{print $'$INDEX'}'
 }
 
 property () {
@@ -307,15 +278,15 @@ property () {
 }
 
 key () {
-  local INPUT=""
-  [[ -p /dev/stdin ]] && INPUT="$(cat -)" || INPUT="${@}"
+  local PROPERTY=""
+  [[ -p /dev/stdin ]] && PROPERTY="$(cat -)" || PROPERTY="${@}"
 
-  echo "$INPUT" | awk 'match($0, /(.*)'$LS'(.*)/, a) {print a[1]}'
+  echo "$PROPERTY" | awk -F "$KVS" '{print $1}'
 }
 
-val () {
-  local INPUT=""
-  [[ -p /dev/stdin ]] && INPUT="$(cat -)" || INPUT="${@}"
+value () {
+  local PROPERTY=""
+  [[ -p /dev/stdin ]] && PROPERTY="$(cat -)" || PROPERTY="${@}"
 
-  echo "$INPUT" | awk 'match($0, /(.*)'$LS'(.*)/, a) {print a[2]}'
+  echo "$PROPERTY" | awk -F "$KVS" '{print $2}'
 }
