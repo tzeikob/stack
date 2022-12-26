@@ -281,12 +281,12 @@ key () {
   local PROPERTY=""
   [[ -p /dev/stdin ]] && PROPERTY="$(cat -)" || PROPERTY="${@}"
 
-  echo "$PROPERTY" | awk -F "$KVS" '{print $1}'
+  echo "$PROPERTY" | awk -F "$KVS" '{if ($1) {print $1} else {print $0}}'
 }
 
 value () {
   local PROPERTY=""
   [[ -p /dev/stdin ]] && PROPERTY="$(cat -)" || PROPERTY="${@}"
 
-  echo "$PROPERTY" | awk -F "$KVS" '{print $2}'
+  echo "$PROPERTY" | awk -F "$KVS" '{if ($2) {print $2} else {print $0}}'
 }
