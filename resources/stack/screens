@@ -15,6 +15,77 @@ screen () {
   echo "$SCREEN"
 }
 
+exists () {
+  local NAME=$1
+
+  if [ -z "$NAME" ]; then
+    return 1
+  fi
+
+  local SCREEN=$(screen || echo "err:$?")
+  [[ "$SCREEN" =~ ^err: ]] && return 1
+
+  local HEAD=$(echo "$SCREEN" | awk "/^${NAME} /")
+
+  [ -n "$HEAD" ] && return 0 || return 1
+}
+
+is_connected () {
+  local NAME=$1
+
+  if [ -z "$NAME" ]; then
+    return 1
+  fi
+
+  local SCREEN=$(screen || echo "err:$?")
+  [[ "$SCREEN" =~ ^err: ]] && return 1
+
+  local HEAD=$(echo "$SCREEN" | awk "/^${NAME} /")
+  [ -z "$HEAD" ] && return 1
+
+  local STATUS="$(echo "$HEAD" | awk 'match($0, /.* ((dis)?connected) .*/, a) {print a[1]}')"
+
+  [ "$STATUS" = "connected" ] && return 0 || return 1
+}
+
+is_active () {
+  local NAME=$1
+
+  if [ -z "$NAME" ]; then
+    return 1
+  fi
+
+  local SCREEN=$(screen || echo "err:$?")
+  [[ "$SCREEN" =~ ^err: ]] && return 1
+
+  local HEAD=$(echo "$SCREEN" | awk "/^${NAME} /")
+  [ -z "$HEAD" ] && return 1
+
+  local STATUS="$(echo "$HEAD" | awk 'match($0, /.* ((dis)?connected) .*/, a) {print a[1]}')"
+  local RESOLUTION="$(echo "$HEAD" | awk 'match($0, /.* ([0-9]+x[0-9]+)\+.*/, a) {print a[1]}')"
+
+  [ "$STATUS" = "connected" ] && [[ "$RESOLUTION" =~ ^[0-9]+x[0-9]+$ ]] &&
+    return 0 || return 1
+}
+
+is_primary () {
+  local NAME=$1
+
+  if [ -z "$NAME" ]; then
+    return 1
+  fi
+
+  local SCREEN=$(screen || echo "err:$?")
+  [[ "$SCREEN" =~ ^err: ]] && return 1
+
+  local HEAD=$(echo "$SCREEN" | awk "/^${NAME} /")
+  [ -z "$HEAD" ] && return 1
+
+  local PRIMARY="$(echo "$HEAD" | awk 'match($0, /.* (primary) .*/, a) {print a[1]}')"
+
+  [ -n "$PRIMARY" ] && return 0 || return 1
+}
+
 names () {
   local STATUS=$1
 
@@ -165,77 +236,6 @@ rates () {
   else
     echo "$RATES"
   fi
-}
-
-exists () {
-  local NAME=$1
-
-  if [ -z "$NAME" ]; then
-    return 1
-  fi
-
-  local SCREEN=$(screen || echo "err:$?")
-  [[ "$SCREEN" =~ ^err: ]] && return 1
-
-  local HEAD=$(echo "$SCREEN" | awk "/^${NAME} /")
-
-  [ -n "$HEAD" ] && return 0 || return 1
-}
-
-is_connected () {
-  local NAME=$1
-
-  if [ -z "$NAME" ]; then
-    return 1
-  fi
-
-  local SCREEN=$(screen || echo "err:$?")
-  [[ "$SCREEN" =~ ^err: ]] && return 1
-
-  local HEAD=$(echo "$SCREEN" | awk "/^${NAME} /")
-  [ -z "$HEAD" ] && return 1
-
-  local STATUS="$(echo "$HEAD" | awk 'match($0, /.* ((dis)?connected) .*/, a) {print a[1]}')"
-
-  [ "$STATUS" = "connected" ] && return 0 || return 1
-}
-
-is_active () {
-  local NAME=$1
-
-  if [ -z "$NAME" ]; then
-    return 1
-  fi
-
-  local SCREEN=$(screen || echo "err:$?")
-  [[ "$SCREEN" =~ ^err: ]] && return 1
-
-  local HEAD=$(echo "$SCREEN" | awk "/^${NAME} /")
-  [ -z "$HEAD" ] && return 1
-
-  local STATUS="$(echo "$HEAD" | awk 'match($0, /.* ((dis)?connected) .*/, a) {print a[1]}')"
-  local RESOLUTION="$(echo "$HEAD" | awk 'match($0, /.* ([0-9]+x[0-9]+)\+.*/, a) {print a[1]}')"
-
-  [ "$STATUS" = "connected" ] && [[ "$RESOLUTION" =~ ^[0-9]+x[0-9]+$ ]] &&
-    return 0 || return 1
-}
-
-is_primary () {
-  local NAME=$1
-
-  if [ -z "$NAME" ]; then
-    return 1
-  fi
-
-  local SCREEN=$(screen || echo "err:$?")
-  [[ "$SCREEN" =~ ^err: ]] && return 1
-
-  local HEAD=$(echo "$SCREEN" | awk "/^${NAME} /")
-  [ -z "$HEAD" ] && return 1
-
-  local PRIMARY="$(echo "$HEAD" | awk 'match($0, /.* (primary) .*/, a) {print a[1]}')"
-
-  [ -n "$PRIMARY" ] && return 0 || return 1
 }
 
 pick_output () {
