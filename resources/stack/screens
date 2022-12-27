@@ -104,13 +104,13 @@ names () {
   elif [ "$STATUS" = "inactive" ]; then
     PATTERN+='\sconnected\s\(.*'
   elif [ "$STATUS" = "primary" ]; then
-    PATTERN+='.* primary .*'
+    PATTERN+='\s.*\sprimary\s.*'
   fi
 
-  local NAMES=$(echo "$SCREEN" | awk '/'${PATTERN}'/{print $1}' | tr $'\n' "$AES")
+  local NAMES=$(echo "$SCREEN" | awk '{ORS="'$AES'";} /'${PATTERN}'/{print $1}')
 
   if [[ "$NAMES" =~ .*${AES}$ ]]; then
-    echo "${NAMES::-1}"
+    echo "${NAMES::-${#AES}}"
   else
     echo "$NAMES"
   fi
@@ -139,18 +139,16 @@ output () {
   local RESOLUTION="$(echo "$SCREEN" | sed -n "/$NAME .*/{:a;N;/\*/!ba;/\*/p}" |
       awk 'match($0, /.* ([0-9]+x[0-9]+) .*\*.*/, a) {print a[1]}')"
 
-  local PROFILES=""
-  PROFILES="$(echo "$SCREEN" | awk /^$NAME/,!// | tail -n +2 |
+  local PROFILES="$(echo "$SCREEN" | awk /^$NAME/,!// | tail -n +2 |
     awk -v AES="$AES" -v KVS="$KVS" '{
       if ($0 ~ /^\s+[0-9]+x[0-9]+/) {
         rates=""
         for (i=2; i<=NF; i++) rates=rates $i AES
-        print "profile" KVS $1 KVS rates
+        print "profile" KVS $1 AES rates
       } else exit
     }' | tr -d '+*')"
 
   local HEAD=$(echo "$SCREEN" | awk "/^${NAME} /")
-  [ -z "$HEAD" ] && return 1
 
   local NAME="$(echo "$HEAD" | awk 'match($0, /(.*) ((dis)?connected) .*/, a) {print a[1]}')"
   local STATUS="$(echo "$HEAD" | awk 'match($0, /.* ((dis)?connected) .*/, a) {print a[1]}')"
@@ -178,7 +176,7 @@ output () {
   if [ "$ACTIVE" = "true" ]; then
     echo "primary${KVS}$PRIMARY"
     echo "resolution${KVS}$RESOLUTION"
-    echo "rate${KVS}$RATE"
+    echo "rate${KVS}${RATE}Hz"
     echo "rotate${KVS}$ROTATE"
     echo "reflect${KVS}$REFLECT"
     echo "area${KVS}$AREA"
@@ -201,10 +199,10 @@ resolutions () {
   [[ "$SCREEN" =~ ^err: ]] && return 1
 
   local RESOLUTIONS="$(echo "$SCREEN" | awk /^$NAME/,!// | tail -n +2 |
-    awk '{if ($0 ~ /^\s+[0-9]+x[0-9]+/) {print $1} else {exit}}' | tr $'\n' "$AES")"
+    awk '{ORS="'$AES'";} {if ($0 ~ /^\s+[0-9]+x[0-9]+/) {print $1} else {exit}}')"
 
   if [[ "$RESOLUTIONS" =~ .*${AES}$ ]]; then
-    echo "${RESOLUTIONS::-1}"
+    echo "${RESOLUTIONS::-${#AES}}"
   else
     echo "$RESOLUTIONS"
   fi
@@ -229,10 +227,11 @@ rates () {
 
   local RATES="$(echo "$SCREEN" | awk /^$NAME/,!// | tail -n +2 |
     awk '{if ($0 ~ /\s'$RESOLUTION'\s/) {print $0; exit}}' |
-    sed 's/'$RESOLUTION'//' | trim | tr -d '+*' | sed 's/ \{1,\}/\n/g' | tr $'\n' "$AES")"
+    sed 's/'$RESOLUTION'//' | trim | tr -d '+*' | sed 's/ \{1,\}/\n/g' |
+    awk '{ORS="'$AES'";} {print}')"
 
   if [[ "$RATES" =~ .*${AES}$ ]]; then
-    echo "${RATES::-1}"
+    echo "${RATES::-${#AES}}"
   else
     echo "$RATES"
   fi
@@ -384,12 +383,12 @@ show_status () {
     local RATE="$(property "$OUTPUT" rate | value)"
 
     local PRIMARY="$(property "$OUTPUT" primary | value)"
-    [ "$PRIMARY" = "true" ] && PRIMARY="*"
+    [ "$PRIMARY" = "true" ] && PRIMARY="*" || PRIMARY=""
 
     if [ $INDEX = 0 ]; then
-      CONNECTED+="$NAME [${RESOLUTION}$RATE]$PRIMARY"
+      CONNECTED+="$NAME [${RESOLUTION}@$RATE]$PRIMARY"
     else
-      CONNECTED+="\n                        $NAME [${RESOLUTION}$RATE]$PRIMARY"
+      CONNECTED+="\n                        $NAME [${RESOLUTION}@$RATE]$PRIMARY"
     fi
   done
 
@@ -424,21 +423,36 @@ show_output () {
   local POSITION="$(property "$OUTPUT" position | value)"
   local AREA="$(property "$OUTPUT" area | value)"
   local DIMS="$(property "$OUTPUT" dims | value)"
-  local PROFILES="$(property "$OUTPUT" profiles | value)"
+  local PROFILES="$(property "$OUTPUT" profile | value)"
 
-  echo -e \
-    "Name:       $NAME\n" \
-    "Status:     $STATUS\n" \
-    "Active:     $ACTIVE\n" \
-    "Primary:    $PRIMARY\n" \
-    "Resolution: $RESOLUTION\n" \
-    "Rate:       $RATE\n" \
-    "Rotate:     $ROTATE\n" \
-    "Reflect:    $REFLECT\n" \
-    "Position:   $POSITION\n" \
-    "Area:       $AREA\n" \
-    "Dimensions: $DIMS\n" \
-    "Profiles:   $PROFILES"
+  printf "%s\n" \
+    "Name:       $NAME" \
+    "Status:     $STATUS" \
+    "Active:     $ACTIVE" \
+  
+  if [ "$ACTIVE" = "true" ]; then
+    printf "%s\n" \
+      "Primary:    $PRIMARY" \
+      "Resolution: $RESOLUTION" \
+      "Rate:       $RATE" \
+      "Rotate:     $ROTATE" \
+      "Reflect:    $REFLECT" \
+      "Position:   $POSITION" \
+      "Area:       $AREA" \
+      "Dimensions: $DIMS"
+  
+    echo -n "Profiles:   "
+    echo "$PROFILES" | head -n 1 |
+      awk -F"$AES" '{
+        printf("%-9s ", $1);
+        for(i=2; i<=NF; i++) {if (i==NF) {print($i)} else {printf("%-5s ", $i)}}
+      }'
+    echo "$PROFILES" | tail -n +2 |
+      awk -F"$AES" '{
+        printf("            %-9s ", $1);
+        for(i=2; i<=NF; i++) {if (i==NF) {print($i)} else {printf("%-5s ",$i)}}
+      }'
+  fi
 }
 
 list_outputs () {
