@@ -9,194 +9,96 @@ require "xorg-xrandr"
 screen () {
   local INDEX=${1:-"0"}
 
-  local SCREEN=$(xrandr --current | sed "/^Screen ${INDEX}:/,/^Screen/!d;//d" || echo "err:$?")
-  [[ "$SCREEN" =~ ^err: ]] && return 1
-
-  echo "$SCREEN"
-}
-
-exists () {
-  local NAME=$1
-
-  if [ -z "$NAME" ]; then
+  SCREEN=$(xrandr --current | sed "/^Screen ${INDEX}:/,/^Screen/!d;//d" || echo "err:$?")
+  
+  if [[ "$SCREEN" =~ ^err: ]]; then
     return 1
   fi
-
-  local SCREEN=$(screen || echo "err:$?")
-  [[ "$SCREEN" =~ ^err: ]] && return 1
-
-  local HEAD=$(echo "$SCREEN" | awk "/^${NAME} /")
-
-  [ -n "$HEAD" ] && return 0 || return 1
 }
 
-is_connected () {
-  local NAME=$1
-
-  if [ -z "$NAME" ]; then
-    return 1
-  fi
-
-  local SCREEN=$(screen || echo "err:$?")
-  [[ "$SCREEN" =~ ^err: ]] && return 1
-
-  local HEAD=$(echo "$SCREEN" | awk "/^${NAME} /")
-  [ -z "$HEAD" ] && return 1
-
-  local STATUS="$(echo "$HEAD" | awk 'match($0, /.* ((dis)?connected) .*/, a) {print a[1]}')"
-
-  [ "$STATUS" = "connected" ] && return 0 || return 1
-}
-
-is_active () {
-  local NAME=$1
-
-  if [ -z "$NAME" ]; then
-    return 1
-  fi
-
-  local SCREEN=$(screen || echo "err:$?")
-  [[ "$SCREEN" =~ ^err: ]] && return 1
-
-  local HEAD=$(echo "$SCREEN" | awk "/^${NAME} /")
-  [ -z "$HEAD" ] && return 1
-
-  local STATUS="$(echo "$HEAD" | awk 'match($0, /.* ((dis)?connected) .*/, a) {print a[1]}')"
-  local RESOLUTION="$(echo "$HEAD" | awk 'match($0, /.* ([0-9]+x[0-9]+)\+.*/, a) {print a[1]}')"
-
-  [ "$STATUS" = "connected" ] && [[ "$RESOLUTION" =~ ^[0-9]+x[0-9]+$ ]] &&
-    return 0 || return 1
-}
-
-is_primary () {
-  local NAME=$1
-
-  if [ -z "$NAME" ]; then
-    return 1
-  fi
-
-  local SCREEN=$(screen || echo "err:$?")
-  [[ "$SCREEN" =~ ^err: ]] && return 1
-
-  local HEAD=$(echo "$SCREEN" | awk "/^${NAME} /")
-  [ -z "$HEAD" ] && return 1
-
-  local PRIMARY="$(echo "$HEAD" | awk 'match($0, /.* (primary) .*/, a) {print a[1]}')"
-
-  [ -n "$PRIMARY" ] && return 0 || return 1
-}
-
-names () {
+outputs () {
   local STATUS=$1
 
-  if [[ ! "$STATUS" =~ ^( *|connected|disconnected|active|inactive|primary)$ ]]; then
-    return 1
-  fi
-
-  local SCREEN=$(screen || echo "err:$?")
-  [[ "$SCREEN" =~ ^err: ]] && return 1
-
-  local PATTERN='^[A-Z]+-[0-9]+'
-  if [[ "$STATUS" =~ (dis)?connected ]]; then
-    PATTERN+="\s${STATUS}"
+  local RE='^[A-Z]+-[0-9]+'
+  if [[ "$STATUS" =~ ^(dis)?connected$ ]]; then
+    RE+="\s$STATUS"
   elif [ "$STATUS" = "active" ]; then
-    PATTERN+='\sconnected.*\s([0-9]+x[0-9]+)\+.*'
+    RE+='\sconnected.*\s([0-9]+x[0-9]+)\+.*'
   elif [ "$STATUS" = "inactive" ]; then
-    PATTERN+='\sconnected\s\(.*'
+    RE+='\sconnected\s\(.*'
   elif [ "$STATUS" = "primary" ]; then
-    PATTERN+='\s.*\sprimary\s.*'
+    RE+='\s.*\sprimary\s.*'
   fi
 
-  local NAMES=$(echo "$SCREEN" | awk '{ORS="'$AES'";} /'${PATTERN}'/{print $1}')
+  local OUTPUTS=$(echo "$SCREEN" | awk '{ORS="'$AES'";} /'${RE}'/{print $1}')
 
-  if [[ "$NAMES" =~ .*${AES}$ ]]; then
-    echo "${NAMES::-${#AES}}"
+  if [[ "$OUTPUTS" =~ .*${AES}$ ]]; then
+    echo "${OUTPUTS::-${#AES}}"
   else
-    echo "$NAMES"
+    echo "$OUTPUTS"
   fi
 }
 
 output () {
   local NAME=$1
 
-  if [ -z "$NAME" ]; then
-   return 1
-  elif [ "$NAME" = "primary" ]; then
-    local NAMES=$(names primary || echo "err:$?")
-    [[ "$NAMES" =~ ^err: ]] && return 1
-    
-    NAME=$(element "$NAMES" 0 | value)
-  elif ! exists "$NAME"; then
+  local HEAD=$(echo "$SCREEN" | awk "/^${NAME} /")
+  
+  if [ -z "$HEAD" ]; then
     return 1
   fi
 
-  local SCREEN=$(screen || echo "err:$?")
-  [[ "$SCREEN" =~ ^err: ]] && return 1
+  local RE='^(.*)\s(connected|disconnected)\s?(primary)?\s?'
+  RE+='([0-9]+x[0-9]+)?(\+[0-9]+\+[0-9]+)?\s?'
+  RE+='(normal|right|left|inverted)?\s?(X\saxis|Y\saxis|X\sand\sY\saxis)?\s.*'
 
-  local RATE="$(echo "$SCREEN" | sed -n "/$NAME .*/{:a;N;/\*/!ba;/\*/p}" |
-    awk 'match($0, /.* ([0-9]{2}.[0-9]{2})\*.*/, a) {print a[1]}')"
+  local PROPS="$(echo "$HEAD" | awk 'match($0,/'$RE'/,a) {
+    a[5]=gensub(/\+(.*)\+(.*)/,"\\1x\\2","g",a[5]);
+    a[7]=tolower(a[7]); gsub(/( |and|axis)/,"",a[7]);
+    print a[1]"'$AES'"a[2]"'$AES'"a[3]"'$AES'"a[4]"'$AES'"a[5]"'$AES'"a[6]"'$AES'"a[7]}')"
 
-  local RESOLUTION="$(echo "$SCREEN" | sed -n "/$NAME .*/{:a;N;/\*/!ba;/\*/p}" |
-      awk 'match($0, /.* ([0-9]+x[0-9]+) .*\*.*/, a) {print a[1]}')"
+  RE='^\s+([0-9]+x[0-9]+)\s.*\s([0-9]{2}.[0-9]{2})\*.*'
+
+  local MODE="$(echo "$SCREEN" | sed -n "/$NAME .*/{:a;N;/\*/!ba;/\*/p}" |
+    awk 'match($0,/'$RE'/,a) {print a[1]"'$AES'"a[2]}')"
+
+  [ -n "$MODE" ] && PROPS+="$AES$MODE" || PROPS+="$AES$AES"
 
   local PROFILES="$(echo "$SCREEN" | awk /^$NAME/,!// | tail -n +2 |
     awk -v AES="$AES" -v KVS="$KVS" '{
       if ($0 ~ /^\s+[0-9]+x[0-9]+/) {
         rates=""
         for (i=2; i<=NF; i++) rates=rates $i AES
-        print "profile" KVS $1 AES rates
+        print $1 KVS rates
       } else exit
     }' | tr -d '+*')"
+  
+  echo -e "$PROPS\n$PROFILES"
+}
 
-  local HEAD=$(echo "$SCREEN" | awk "/^${NAME} /")
+is_connected () {
+  local OUTPUT=$1
 
-  local NAME="$(echo "$HEAD" | awk 'match($0, /(.*) ((dis)?connected) .*/, a) {print a[1]}')"
-  local STATUS="$(echo "$HEAD" | awk 'match($0, /.* ((dis)?connected) .*/, a) {print a[1]}')"
-  local AREA="$(echo "$HEAD" | awk 'match($0, /.* ([0-9]+x[0-9]+)\+.*/, a) {print a[1]}')"
-  local POSITION="$(echo "$HEAD" | awk 'match($0, /.* [0-9]+x[0-9]+\+([0-9]+\+[0-9]+) .*/, a) {print a[1]}' | tr '+' ",")"
-  local DIMS="$(echo "$HEAD" | awk 'match($0, /.* ([0-9]+mm x [0-9]+mm).*/, a) {print a[1]}' | tr -d ' m')"
+  echo "$OUTPUT" | head -n 1 |
+    awk '/'$AES'connected'$AES'/ {c=0;next} {c=1} END {exit c}'
+}
 
-  local PRIMARY="$(echo "$HEAD" | awk 'match($0, /.* (primary) .*/, a) {print a[1]}')"
-  [ -n "$PRIMARY" ] && PRIMARY="true" || PRIMARY="false"
+is_active () {
+  local OUTPUT=$1
 
-  local ACTIVE="false"
-  [ "$STATUS" = "connected" ] && [[ "$AREA" =~ ^[0-9]+x[0-9]+$ ]] && ACTIVE="true"
+  echo "$OUTPUT" | head -n 1 |
+    awk '/'$AES'connected'$AES'.*'$AES'[0-9]+x[0-9]+'$AES'/ {c=0;next} {c=1} END {exit c}'
+}
 
-  local ROTATE="$(echo "$HEAD" | awk 'match($0, /.* (normal|right|left|inverted) .*\(.*/, a) {print a[1]}')"
-  [ -z "$ROTATE" ] && [ "$ACTIVE" = "true" ] && ROTATE="normal"
+is_primary () {
+  local OUTPUT=$1
 
-  local REFLECT="$(echo "$HEAD" | awk 'match($0, /.* (X) .*\(.*/, a) {print tolower(a[1])}')"
-  REFLECT+="$(echo "$HEAD" | awk 'match($0, /.* (Y) .*\(.*/, a) {print tolower(a[1])}')"
-  [ -z "$REFLECT" ] && [ "$ACTIVE" = "true" ] && REFLECT="normal"
-
-  echo "name${KVS}$NAME"
-  echo "status${KVS}$STATUS"
-  echo "active${KVS}$ACTIVE"
-
-  if [ "$ACTIVE" = "true" ]; then
-    echo "primary${KVS}$PRIMARY"
-    echo "resolution${KVS}$RESOLUTION"
-    echo "rate${KVS}${RATE}Hz"
-    echo "rotate${KVS}$ROTATE"
-    echo "reflect${KVS}$REFLECT"
-    echo "area${KVS}$AREA"
-    echo "position${KVS}$POSITION"
-    echo "dims${KVS}$DIMS"
-    echo "$PROFILES"
-  fi
+  echo "$OUTPUT" | head -n 1 |
+    awk '/'$AES'primary'$AES'/ {c=0;next} {c=1} END {exit c}'
 }
 
 resolutions () {
   local NAME=$1
-
-  if [ -z "$NAME" ]; then
-    return 1
-  elif ! exists "$NAME"; then
-    return 1
-  fi
-
-  local SCREEN=$(screen || echo "err:$?")
-  [[ "$SCREEN" =~ ^err: ]] && return 1
 
   local RESOLUTIONS="$(echo "$SCREEN" | awk /^$NAME/,!// | tail -n +2 |
     awk '{ORS="'$AES'";} {if ($0 ~ /^\s+[0-9]+x[0-9]+/) {print $1} else {exit}}')"
@@ -211,19 +113,6 @@ resolutions () {
 rates () {
   local NAME=$1
   local RESOLUTION=$2
-
-  if [ -z "$NAME" ]; then
-    return 1
-  elif ! exists "$NAME"; then
-    return 1
-  fi
-
-  if [ -z "$RESOLUTION" ]; then
-    return 1
-  fi
-
-  local SCREEN=$(screen || echo "err:$?")
-  [[ "$SCREEN" =~ ^err: ]] && return 1
 
   local RATES="$(echo "$SCREEN" | awk /^$NAME/,!// | tail -n +2 |
     awk '{if ($0 ~ /\s'$RESOLUTION'\s/) {print $0; exit}}' |
@@ -240,14 +129,8 @@ rates () {
 pick_output () {
   local STATUS=$1
 
-  local NAMES=$(names "$STATUS" || echo "err:$?")
-  
-  if [[ "$NAMES" =~ ^err: ]]; then
-    echo "Unable to find ${STATUS:-\b} outputs"
-    return 1
-  fi
-
-  local LEN=$(count "$NAMES")
+  local OUTPUTS=$(outputs "$STATUS")
+  local LEN=$(count "$OUTPUTS")
 
   if [ ! $LEN -gt 0 ]; then
     echo "No ${STATUS:-\b} outputs have been found"
@@ -257,19 +140,13 @@ pick_output () {
   local MODE="vertical-6"
   [ $LEN -lt 3 ] && MODE="horizontal"
   
-  pick_one "Select an output:" "$NAMES" "$MODE"
+  pick_one "Select an output:" "$OUTPUTS" "$MODE"
 }
 
 pick_resolution () {
   local NAME=$1
 
-  local RESOLUTIONS=$(resolutions "$NAME" || echo "err:$?")
-  
-  if [[ "$RESOLUTIONS" =~ ^err: ]]; then
-    echo "Unable to find resolutions for $NAME output"
-    return 1
-  fi
-
+  local RESOLUTIONS=$(resolutions "$NAME")
   local LEN=$(count "$RESOLUTIONS")
 
   if [ ! $LEN -gt 0 ]; then
@@ -287,13 +164,7 @@ pick_rate () {
   local NAME=$1
   local RESOLUTION=$2
 
-  local RATES=$(rates "$NAME" "$RESOLUTION" || echo "err:$?")
-  
-  if [[ "$RATES" =~ ^err: ]]; then
-    echo "Unable to find rates for $NAME output"
-    return 1
-  fi
-
+  local RATES=$(rates "$NAME" "$RESOLUTION")
   local LEN=$(count "$RATES")
 
   if [ ! $LEN -gt 0 ]; then
@@ -308,25 +179,14 @@ pick_rate () {
 }
 
 prompt () {
-  local PRIMARY=$(output primary || echo "err:$?")
-  
-  if [[ "$PRIMARY" =~ ^err: ]]; then
-    read -rep "[screens:${RE}none$RS] " REPLY
-    return 1
-  fi
+  local NAME="$(outputs primary)"
+  local PRIMARY="$(output "$NAME")"
 
-  local NAME=$(property "$PRIMARY" name | value)
-  local RESOLUTION=$(property "$PRIMARY" resolution | value)
-  local RATE=$(property "$PRIMARY" rate | value)
+  local STATUS="$(echo "$PRIMARY" | head -n 1 | awk -F$AES '{
+    out=$1; if ($8 && $9) out=out " "$8"@"int($9)"Hz"; print out
+  }')"
 
-  local STATUS="$YE${NAME}$RS"
-
-  if [ -n "$RESOLUTION" ]; then
-    STATUS+=" $YE${RESOLUTION}$RS"
-    [ -n "$RATE" ] && STATUS+="$GR@${RATE}$RS"
-  fi
-
-  read -rep "[screens:$STATUS] " REPLY
+  read -rep "[screens:$YE${STATUS}$RS] " REPLY
 }
 
 show_status () {
@@ -354,45 +214,17 @@ show_status () {
       printf "%-23s %s\n",$1":",$2 \
     }' | sed -r 's/\<./\U&/g'
 
-  local NAMES=$(names connected || echo "err:$?")
-
-  if [[ "$NAMES" =~ ^err ]]; then
-    echo "Unable to find connected outputs"
-    return 1
-  fi
-
-  local LEN=$(count "$NAMES")
+  local OUTPUTS=$(outputs connected)
+  local LEN=$(count "$OUTPUTS")
 
   if [ $LEN = 0 ]; then
     echo "Connected Outputs:      none"
-    return
+  else
+    echo "$OUTPUTS" | awk -F$AES '{
+      out=$1; for(i=2;i<=NF;i++) out=out ","$i;
+      print "Connected Outputs:      "out
+    }'
   fi
-
-  local CONNECTED="Connected Outputs:      "
-
-  local INDEX=0
-  for ((INDEX = 0; INDEX < $LEN; INDEX++)); do
-    local NAME=$(element "$NAMES" "$INDEX" | value)
-    local OUTPUT=$(output "$NAME")
-
-    local NAME="$(property "$OUTPUT" name | value)"
-
-    local RESOLUTION="$(property "$OUTPUT" resolution | value)"
-    [ -z "$RESOLUTION" ] && RESOLUTION="inactive"
-
-    local RATE="$(property "$OUTPUT" rate | value)"
-
-    local PRIMARY="$(property "$OUTPUT" primary | value)"
-    [ "$PRIMARY" = "true" ] && PRIMARY="*" || PRIMARY=""
-
-    if [ $INDEX = 0 ]; then
-      CONNECTED+="$NAME [${RESOLUTION}@$RATE]$PRIMARY"
-    else
-      CONNECTED+="\n                        $NAME [${RESOLUTION}@$RATE]$PRIMARY"
-    fi
-  done
-
-  echo -e "$CONNECTED"
 }
 
 show_output () {
@@ -412,60 +244,44 @@ show_output () {
     return 1
   fi
 
-  local NAME="$(property "$OUTPUT" name | value)"
-  local STATUS="$(property "$OUTPUT" status | value)"
-  local ACTIVE="$(property "$OUTPUT" active | value)"
-  local PRIMARY="$(property "$OUTPUT" primary | value)"
-  local RESOLUTION="$(property "$OUTPUT" resolution | value)"
-  local RATE="$(property "$OUTPUT" rate | value)"
-  local ROTATE="$(property "$OUTPUT" rotate | value)"
-  local REFLECT="$(property "$OUTPUT" reflect | value)"
-  local POSITION="$(property "$OUTPUT" position | value)"
-  local AREA="$(property "$OUTPUT" area | value)"
-  local DIMS="$(property "$OUTPUT" dims | value)"
-  local PROFILES="$(property "$OUTPUT" profile | value)"
+  if ! is_active "$OUTPUT"; then
+    local FRM=""
+    FRM+="Name:       %s\n"
+    FRM+="Status:     %s\n"
 
-  printf "%s\n" \
-    "Name:       $NAME" \
-    "Status:     $STATUS" \
-    "Active:     $ACTIVE" \
-  
-  if [ "$ACTIVE" = "true" ]; then
-    printf "%s\n" \
-      "Primary:    $PRIMARY" \
-      "Resolution: $RESOLUTION" \
-      "Rate:       $RATE" \
-      "Rotate:     $ROTATE" \
-      "Reflect:    $REFLECT" \
-      "Position:   $POSITION" \
-      "Area:       $AREA" \
-      "Dimensions: $DIMS"
-  
-    echo -n "Profiles:   "
-    echo "$PROFILES" | head -n 1 |
-      awk -F"$AES" '{
-        printf("%-9s ", $1);
-        for(i=2; i<=NF; i++) {if (i==NF) {print($i)} else {printf("%-5s ", $i)}}
-      }'
-    echo "$PROFILES" | tail -n +2 |
-      awk -F"$AES" '{
-        printf("            %-9s ", $1);
-        for(i=2; i<=NF; i++) {if (i==NF) {print($i)} else {printf("%-5s ",$i)}}
-      }'
+    echo "$OUTPUT" | head -n 1 | awk -F$AES -v FRM="$FRM" '{printf FRM,$1,$2}'
+    return
   fi
+
+  local FRM=""
+  FRM+="Name:       %s\n"
+  FRM+="Status:     %s\n"
+  FRM+="Primary:    %s\n"
+  FRM+="Resolution: %s\n"
+  FRM+="Rate:       %sHz\n"
+  FRM+="Rotate:     %s\n"
+  FRM+="Reflect:    %s\n"
+  FRM+="Area:       %s\n"
+  FRM+="Position:   %s\n"
+
+  echo "$OUTPUT" | head -n 1 | awk -F$AES -v FRM="$FRM" '{
+    if ($3) {$3="true"} else {$3="false"};
+    if (!$6) $6="normal";
+    if (!$7) $7="normal";
+    printf FRM,$1,$2,$3,$8,$9,$6,$7,$4,$5
+  }'
+
+  echo "$OUTPUT" | tail -n +2 | head -n 1 |
+    awk -F$KVS '{gsub(/'$AES'/," ",$2); printf "Profiles:   %-9s %s\n",$1,$2}'
+  echo "$OUTPUT" | tail -n +3 |
+    awk -F$KVS '{gsub(/'$AES'/," ",$2); printf "            %-9s %s\n",$1,$2}'
 }
 
 list_outputs () {
   local STATUS=$1
 
-  local NAMES=$(names "$STATUS" || echo "err:$?")
-
-  if [[ "$NAMES" =~ ^err: ]]; then
-    echo -e "Unable to retrieve ${STATUS:-\b} outputs"
-    return 1
-  fi
-
-  local LEN=$(count "$NAMES")
+  local OUTPUTS=$(outputs "$STATUS")
+  local LEN=$(count "$OUTPUTS")
 
   if [ ! $LEN -gt 0 ]; then
     echo "No ${STATUS:-\b} outputs have been found"
@@ -474,22 +290,16 @@ list_outputs () {
 
   local INDEX=0
   for ((INDEX = 0; INDEX < $LEN; INDEX++)); do
-    local NAME=$(element "$NAMES" "$INDEX" | value)
-
     [ $INDEX -gt 0 ] && echo
-    show_output "$NAME" | head -n 11
+
+    local NAME=$(element "$OUTPUTS" "$INDEX" | value)
+    show_output "$NAME"
   done
 }
 
 set_layout () {
-  local NAMES=$(names active || echo "err:$?")
-
-  if [[ "$NAMES" =~ ^err: ]]; then
-    echo "Unable to retrieve active outputs"
-    return 1
-  fi
-
-  local LEN=$(count "$NAMES")
+  local OUTPUTS=$(outputs active)
+  local LEN=$(count "$OUTPUTS")
 
   if [ $LEN = 0 ]; then
     echo "No active outputs have been found"
@@ -537,7 +347,7 @@ set_layout () {
   [ $LEN -lt 3 ] && MODE="horizontal"
 
   local SPOTS=$(echo "$LEN" | awk '{for(i=65; i<65+$0; i++) printf "%c,",i}')
-  pick_by_order "Pick outputs by order to match ${SPOTS::-1}:" "$NAMES" "$LEN" "$MODE"
+  pick_by_order "Pick outputs by order to match ${SPOTS::-1}:" "$OUTPUTS" "$LEN" "$MODE"
   [ -z "$REPLY" ] && return
 
   local A=$(element "$REPLY" 0 | value)
@@ -594,14 +404,16 @@ set_mode () {
     
     NAME=$(value "$REPLY")
   fi
-  
-  if ! exists "$NAME"; then
+
+  local OUTPUT=$(output "$NAME" || echo "err:$?")
+
+  if [[ "$OUTPUT" =~ ^err: ]]; then
     echo "Unable to find $NAME output"
     return 1
-  elif ! is_connected "$NAME"; then
+  elif ! is_connected "$OUTPUT"; then
     echo "Cannot set mode of a disconnected output"
     return 1
-  elif ! is_active "$NAME"; then
+  elif ! is_active "$OUTPUT"; then
     echo "Cannot set mode of an inactive"
     return 1
   fi
@@ -635,13 +447,15 @@ restore () {
     NAME=$(value "$REPLY")
   fi
   
-  if ! exists "$NAME"; then
+  local OUTPUT=$(output "$NAME" || echo "err:$?")
+
+  if [[ "$OUTPUT" =~ ^err: ]]; then
     echo "Unable to find $NAME output"
     return 1
-  elif ! is_connected "$NAME"; then
+  elif ! is_connected "$OUTPUT"; then
     echo "Cannot restore a disconnected output"
     return 1
-  elif ! is_active "$NAME"; then
+  elif ! is_active "$OUTPUT"; then
     echo "Cannot restore an inactive output"
     return 1
   fi
@@ -661,16 +475,18 @@ set_primary () {
     NAME=$(value "$REPLY")
   fi
   
-  if ! exists "$NAME"; then
+  local OUTPUT=$(output "$NAME" || echo "err:$?")
+
+  if [[ "$OUTPUT" =~ ^err: ]]; then
     echo "Unable to find $NAME output"
     return 1
-  elif ! is_connected "$NAME"; then
+  elif ! is_connected "$OUTPUT"; then
     echo "Cannot set primary a disconnected output"
     return 1
-  elif ! is_active "$NAME"; then
+  elif ! is_active "$OUTPUT"; then
     echo "Cannot set primary an inactive output"
     return 1
-  elif is_primary "$NAME"; then
+  elif is_primary "$OUTPUT"; then
     echo "Output $NAME is already the primary"
     return 1
   fi
@@ -690,13 +506,15 @@ set_on () {
     NAME=$(value "$REPLY")
   fi
   
-  if ! exists "$NAME"; then
+  local OUTPUT=$(output "$NAME" || echo "err:$?")
+
+  if [[ "$OUTPUT" =~ ^err: ]]; then
     echo "Unable to find $NAME output"
     return 1
-  elif ! is_connected "$NAME"; then
+  elif ! is_connected "$OUTPUT"; then
     echo "Cannot activate a disconnected output"
     return 1
-  elif is_active "$NAME"; then
+  elif is_active "$OUTPUT"; then
     echo "Output $NAME is already active"
     return 1
   fi
@@ -716,16 +534,18 @@ set_off () {
     NAME=$(value "$REPLY")
   fi
   
-  if ! exists "$NAME"; then
+  local OUTPUT=$(output "$NAME" || echo "err:$?")
+
+  if [[ "$OUTPUT" =~ ^err: ]]; then
     echo "Unable to find $NAME output"
     return 1
-  elif ! is_connected "$NAME"; then
+  elif ! is_connected "$OUTPUT"; then
     echo "Cannot deactivate a disconnected output"
     return 1
-  elif ! is_active "$NAME"; then
+  elif ! is_active "$OUTPUT"; then
     echo "Output $NAME is already inactive"
     return 1
-  elif is_primary "$NAME"; then
+  elif is_primary "$OUTPUT"; then
     echo "Cannot deactivate the primary output"
     return 1
   fi
@@ -746,13 +566,15 @@ reflect () {
     NAME=$(value "$REPLY")
   fi
   
-  if ! exists "$NAME"; then
+  local OUTPUT=$(output "$NAME" || echo "err:$?")
+
+  if [[ "$OUTPUT" =~ ^err: ]]; then
     echo "Unable to find $NAME output"
     return 1
-  elif ! is_connected "$NAME"; then
+  elif ! is_connected "$OUTPUT"; then
     echo "Cannot reflect a disconnected output"
     return 1
-  elif ! is_active "$NAME"; then
+  elif ! is_active "$OUTPUT"; then
     echo "Cannot reflect an inactive output"
     return 1
   fi
@@ -791,13 +613,15 @@ rotate () {
     NAME=$(value "$REPLY")
   fi
   
-  if ! exists "$NAME"; then
+  local OUTPUT=$(output "$NAME" || echo "err:$?")
+
+  if [[ "$OUTPUT" =~ ^err: ]]; then
     echo "Unable to find $NAME output"
     return 1
-  elif ! is_connected "$NAME"; then
+  elif ! is_connected "$OUTPUT"; then
     echo "Cannot reflect a disconnected output"
     return 1
-  elif ! is_active "$NAME"; then
+  elif ! is_active "$OUTPUT"; then
     echo "Cannot reflect an inactive output"
     return 1
   fi
@@ -826,54 +650,23 @@ rotate () {
 }
 
 save_layout () {
-  local NAMES=$(names || echo "err:$?")
-  
-  if [[ "$NAMES" =~ ^err: ]]; then
-   echo "Unable to retrieve outputs"
-   return 1
-  fi
-
-  local LEN=$(count "$NAMES")
+  local OUTPUTS=$(outputs)
+  local LEN=$(count "$OUTPUTS")
   
   if [ $LEN = 0 ]; then
     echo "No outputs have found"
     return 1
   fi
 
-  local LAYOUT=""
+  rm -f ~/.config/stack/layout
 
   local INDEX=0
   for ((INDEX = 0; INDEX < $LEN; INDEX++)); do
-    [ $INDEX -gt 0 ] && LAYOUT+=$'\n'
-
-    local NAME=$(element "$NAMES" "$INDEX" | value)
+    local NAME=$(element "$OUTPUTS" "$INDEX" | value)
     local OUTPUT=$(output "$NAME")
 
-    local ACTIVE=$(property "$OUTPUT" active | value)
-  
-    if [ "$ACTIVE" = "false" ]; then
-      LAYOUT+="$NAME off"
-      continue
-    fi
-
-    local PRIMARY=$(property "$OUTPUT" primary | value)
-
-    if [ "$PRIMARY" = "true" ]; then
-      LAYOUT+="$NAME primary"
-    else
-      LAYOUT+="$NAME secondary"
-    fi
-
-    local RESOLUTION=$(property "$OUTPUT" resolution | value)
-    local RATE=$(property "$OUTPUT" rate | value)
-    local POSITION=$(property "$OUTPUT" position | value | tr ',' 'x')
-    local ROTATE=$(property "$OUTPUT" rotate | value)
-    local REFLECT=$(property "$OUTPUT" reflect | value)
-
-    LAYOUT+=" $RESOLUTION $RATE $POSITION $ROTATE $REFLECT"
+    echo "$OUTPUT" | head -n 1 >> ~/.config/stack/layout
   done
-
-  echo -e "$LAYOUT" > ~/.config/stack/layout
 }
 
 load_layout () {
@@ -882,13 +675,15 @@ load_layout () {
     return
   fi
 
-  local ARGS=$(awk '{
-    if ($2 == "off") {
-      print "--output "$1" --off"
-    } else {
-      args="--output "$1" --mode "$3" --rate "$4" --pos "$5" --rotate "$6" --reflect "$7
-      if ($2 == "primary") args=args" --primary"
+  local ARGS=$(awk -F$AES '{
+    if ($8) {
+      if (!$6) $6="normal";
+      if (!$7) $7="normal";
+      args="--output "$1" --mode "$8" --rate "$9" --pos "$5" --rotate "$6" --reflect "$7
+      if ($3 == "primary") args=args" --primary"
       print args
+    } else {
+      print "--output "$1" --off"
     }
   }' ~/.config/stack/layout | tr $'\n' ' ')
 
@@ -945,6 +740,8 @@ loop () {
   clear
 
   while true; do
+    screen || abort "Unable to resolve screen"
+
     prompt && history -s "$REPLY"
 
     set -f
@@ -1001,6 +798,8 @@ loop () {
 }
 
 once () {
+  screen || abort "Unable to resolve screen"
+
   case "$1" in
     "help") help "once";;
     "load")

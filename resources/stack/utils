@@ -270,23 +270,16 @@ element () {
   echo "$ELEMENTS" | awk -F "$AES" '{print $'$INDEX'}'
 }
 
-property () {
-  local PROPERTIES=$1
-  local KEY=$2
-
-  echo "$PROPERTIES" | awk '/^'$KEY'/'
-}
-
 key () {
-  local PROPERTY=""
-  [[ -p /dev/stdin ]] && PROPERTY="$(cat -)" || PROPERTY="${@}"
+  local INPUT=""
+  [[ -p /dev/stdin ]] && INPUT="$(cat -)" || INPUT="${@}"
 
-  echo "$PROPERTY" | awk -F "$KVS" '{if ($1) {print $1} else {print $0}}'
+  echo "$INPUT" | awk -F "$KVS" '{if ($1) {print $1} else {print $0}}'
 }
 
 value () {
-  local PROPERTY=""
-  [[ -p /dev/stdin ]] && PROPERTY="$(cat -)" || PROPERTY="${@}"
+  local INPUT=""
+  [[ -p /dev/stdin ]] && INPUT="$(cat -)" || INPUT="${@}"
 
-  echo "$PROPERTY" | awk -F "$KVS" '{if ($2) {print $2} else {print $0}}'
+  echo "$INPUT" | awk -F "$KVS" '{if ($2) {print $2} else {print $0}}'
 }
