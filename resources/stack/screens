@@ -52,7 +52,7 @@ output () {
   RE+='([0-9]+x[0-9]+)?(\+[0-9]+\+[0-9]+)?\s?'
   RE+='(normal|right|left|inverted)?\s?(X\saxis|Y\saxis|X\sand\sY\saxis)?\s.*'
 
-  local PROPS="$(echo "$HEAD" | awk 'match($0,/'$RE'/,a) {
+  local STATE="$(echo "$HEAD" | awk 'match($0,/'$RE'/,a) {
     a[5]=gensub(/\+(.*)\+(.*)/,"\\1x\\2","g",a[5]);
     a[7]=tolower(a[7]); gsub(/( |and|axis)/,"",a[7]);
     print a[1]"'$AES'"a[2]"'$AES'"a[3]"'$AES'"a[4]"'$AES'"a[5]"'$AES'"a[6]"'$AES'"a[7]}')"
@@ -62,7 +62,7 @@ output () {
   local MODE="$(echo "$SCREEN" | sed -n "/$NAME .*/{:a;N;/\*/!ba;/\*/p}" |
     awk 'match($0,/'$RE'/,a) {print a[1]"'$AES'"a[2]}')"
 
-  [ -n "$MODE" ] && PROPS+="$AES$MODE" || PROPS+="$AES$AES"
+  [ -n "$MODE" ] && STATE+="$AES$MODE" || STATE+="$AES$AES"
 
   local PROFILES="$(echo "$SCREEN" | awk /^$NAME/,!// | tail -n +2 |
     awk -v AES="$AES" -v KVS="$KVS" '{
@@ -76,7 +76,7 @@ output () {
       } else exit
     }' | tr -d '+*')"
   
-  echo -e "$PROPS\n$PROFILES"
+  echo -e "$STATE\n$PROFILES"
 }
 
 is_connected () {
