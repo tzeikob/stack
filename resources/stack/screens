@@ -9,11 +9,13 @@ require "xorg-xrandr"
 screen () {
   local INDEX=${1:-"0"}
 
-  SCREEN=$(xrandr --current | sed "/^Screen ${INDEX}:/,/^Screen/!d;//d" || echo "err:$?")
+  local SCREEN=$(xrand --current | sed "/^Screen ${INDEX}:/,/^Screen/!d;//d" || echo "err:$?")
   
   if [[ "$SCREEN" =~ ^err: ]]; then
     return 1
   fi
+
+  echo "$SCREEN"
 }
 
 outputs () {
@@ -30,7 +32,7 @@ outputs () {
     RE+='\s.*\sprimary\s.*'
   fi
 
-  local OUTPUTS=$(echo "$SCREEN" | awk '{ORS="'$AES'";} /'${RE}'/{print $1}')
+  local OUTPUTS=$(screen | awk '{ORS="'$AES'";} /'${RE}'/{print $1}')
 
   if [[ "$OUTPUTS" =~ .*${AES}$ ]]; then
     echo "${OUTPUTS::-${#AES}}"
@@ -47,6 +49,8 @@ output () {
   if [ "$NAME" = "primary" ]; then
     CRITERION='.*\sprimary\s.*'
   fi
+
+  local SCREEN="$(screen)"
 
   local HEAD=$(echo "$SCREEN" | awk '/'$CRITERION'/')
   
@@ -727,8 +731,6 @@ loop () {
   clear
 
   while true; do
-    screen || abort "Unable to resolve screen"
-
     prompt && history -s "$REPLY"
 
     set -f
@@ -785,8 +787,6 @@ loop () {
 }
 
 once () {
-  screen || abort "Unable to resolve screen"
-
   case "$1" in
     "help") help "once";;
     "load")
