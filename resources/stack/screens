@@ -204,12 +204,34 @@ show_status () {
 
   if [ $LEN = 0 ]; then
     echo "Connected Outputs:      none"
-  else
-    echo "$OUTPUTS" | awk -F$AES '{
-      out=$1; for(i=2;i<=NF;i++) out=out ","$i;
-      print "Connected Outputs:      "out
-    }'
+    return
   fi
+
+  echo "$OUTPUTS" | awk -F$AES '{
+    out=$1; for(i=2;i<=NF;i++) out=out ","$i;
+    print "Connected Outputs:      "out}'
+
+  local INDEX=0
+  for ((INDEX = 0; INDEX < $LEN; INDEX++)); do
+    echo
+
+    local NAME="$(element "$OUTPUTS" "$INDEX" | value)"
+    local OUTPUT="$(output "$NAME")"
+
+    local FRM=""
+    FRM+="Output: %s\n"
+    FRM+="Mode:   %s@%sHz\n"
+    FRM+="Area:   %s\n"
+    FRM+="Pos:    %s\n"
+    FRM+="RoRe:   %s %s\n"
+
+    echo "$OUTPUT" | head -n 1 | awk -F$AES -v FRM="$FRM" '{
+      if ($3) {$1=$1"*"};
+      if (!$6) $6="normal";
+      if (!$7) $7="normal";
+      printf FRM,$1,$8,$9,$4,$5,$6,$7
+    }'
+  done
 }
 
 show_output () {
