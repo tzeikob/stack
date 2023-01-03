@@ -42,7 +42,13 @@ outputs () {
 output () {
   local NAME=$1
 
-  local HEAD=$(echo "$SCREEN" | awk "/^${NAME} /")
+  local CRITERION="^$NAME\s.*"
+
+  if [ "$NAME" = "primary" ]; then
+    CRITERION='.*\sprimary\s.*'
+  fi
+
+  local HEAD=$(echo "$SCREEN" | awk '/'$CRITERION'/')
   
   if [ -z "$HEAD" ]; then
     return 1
@@ -59,12 +65,12 @@ output () {
 
   RE='^\s+([0-9]+x[0-9]+)\s.*\s([0-9]{2}.[0-9]{2})\*.*'
 
-  local MODE="$(echo "$SCREEN" | sed -n "/$NAME .*/{:a;N;/\*/!ba;/\*/p}" |
+  local MODE="$(echo "$SCREEN" | sed -n "/$CRITERION/{:a;N;/\*/!ba;/\*/p}" |
     awk 'match($0,/'$RE'/,a) {print a[1]"'$AES'"a[2]}')"
 
   [ -n "$MODE" ] && STATE+="$AES$MODE" || STATE+="$AES$AES"
 
-  local PROFILES="$(echo "$SCREEN" | awk /^$NAME/,!// | tail -n +2 |
+  local PROFILES="$(echo "$SCREEN" | awk '/'$CRITERION'/,!//' | tail -n +2 |
     awk -v AES="$AES" -v KVS="$KVS" '{
       if ($0 ~ /^\s+[0-9]+x[0-9]+/) {
         rates=""
@@ -161,8 +167,7 @@ pick_rate () {
 }
 
 prompt () {
-  local NAME="$(outputs primary)"
-  local PRIMARY="$(output "$NAME")"
+  local PRIMARY="$(output primary)"
 
   local STATUS="$(echo "$PRIMARY" | head -n 1 | awk -F$AES '{
     out=$1; if ($8 && $9) out=out " "$8"@"int($9)"Hz"; print out
