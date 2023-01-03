@@ -9,13 +9,7 @@ require "xorg-xrandr"
 screen () {
   local INDEX=${1:-"0"}
 
-  local SCREEN=$(xrand --current | sed "/^Screen ${INDEX}:/,/^Screen/!d;//d" || echo "err:$?")
-  
-  if [[ "$SCREEN" =~ ^err: ]]; then
-    return 1
-  fi
-
-  echo "$SCREEN"
+  xrandr --current | sed "/^Screen ${INDEX}:/,/^Screen/!d;//d"
 }
 
 outputs () {
