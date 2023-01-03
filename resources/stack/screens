@@ -209,7 +209,8 @@ show_status () {
 
   echo "$OUTPUTS" | awk -F$AES '{
     out=$1; for(i=2;i<=NF;i++) out=out ","$i;
-    print "Connected Outputs:      "out}'
+    print "Connected Outputs:      "out
+  }'
 
   local INDEX=0
   for ((INDEX = 0; INDEX < $LEN; INDEX++)); do
