@@ -97,35 +97,6 @@ is_primary () {
     awk '/'$AES'primary'$AES'/ {c=0;next} {c=1} END {exit c}'
 }
 
-resolutions () {
-  local NAME=$1
-
-  local RESOLUTIONS="$(echo "$SCREEN" | awk /^$NAME/,!// | tail -n +2 |
-    awk '{ORS="'$AES'";} {if ($0 ~ /^\s+[0-9]+x[0-9]+/) {print $1} else {exit}}')"
-
-  if [[ "$RESOLUTIONS" =~ .*${AES}$ ]]; then
-    echo "${RESOLUTIONS::-${#AES}}"
-  else
-    echo "$RESOLUTIONS"
-  fi
-}
-
-rates () {
-  local NAME=$1
-  local RESOLUTION=$2
-
-  local RATES="$(echo "$SCREEN" | awk /^$NAME/,!// | tail -n +2 |
-    awk '{if ($0 ~ /\s'$RESOLUTION'\s/) {print $0; exit}}' |
-    sed 's/'$RESOLUTION'//' | trim | tr -d '+*' | sed 's/ \{1,\}/\n/g' |
-    awk '{ORS="'$AES'";} {print}')"
-
-  if [[ "$RATES" =~ .*${AES}$ ]]; then
-    echo "${RATES::-${#AES}}"
-  else
-    echo "$RATES"
-  fi
-}
-
 pick_output () {
   local STATUS=$1
 
@@ -144,13 +115,19 @@ pick_output () {
 }
 
 pick_resolution () {
-  local NAME=$1
+  local OUTPUT=$1
 
-  local RESOLUTIONS=$(resolutions "$NAME")
+  local RESOLUTIONS="$(echo "$OUTPUT" |
+    awk -F$KVS '{ORS="'$AES'";} {if ($0 ~ /^[0-9]+x[0-9]+/) {print $1}}')"
+
+  if [[ "$RESOLUTIONS" =~ .*${AES}$ ]]; then
+    RESOLUTIONS="${RESOLUTIONS::-${#AES}}"
+  fi
+
   local LEN=$(count "$RESOLUTIONS")
 
   if [ ! $LEN -gt 0 ]; then
-    echo "No resolutions have been found for $NAME output"
+    echo "No available resolutions have been found"
     return 1
   fi
 
@@ -161,14 +138,16 @@ pick_resolution () {
 }
 
 pick_rate () {
-  local NAME=$1
+  local OUTPUT=$1
   local RESOLUTION=$2
 
-  local RATES=$(rates "$NAME" "$RESOLUTION")
+  local RATES="$(echo "$OUTPUT" |
+    awk -F$KVS '{if ($0 ~ /^'$RESOLUTION'/) {print $2; exit}}')"
+
   local LEN=$(count "$RATES")
 
   if [ ! $LEN -gt 0 ]; then
-    echo "No rates have been found for $NAME output"
+    echo "No rates have been found"
     return 1
   fi
 
@@ -419,14 +398,14 @@ set_mode () {
   fi
 
   if [ -z "$RESOLUTION" ]; then
-    pick_resolution "$NAME" || return 1
+    pick_resolution "$OUTPUT" || return 1
     [ -z "$REPLY" ] && return
     
     RESOLUTION=$(value "$REPLY")
   fi
 
   if [ -z "$RATE" ]; then
-    pick_rate "$NAME" "$RESOLUTION" || return 1
+    pick_rate "$OUTPUT" "$RESOLUTION" || return 1
     [ -z "$REPLY" ] && return
     
     RATE=$(value "$REPLY")
