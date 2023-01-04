@@ -68,7 +68,15 @@ output () {
 
   [ -n "$MODE" ] && STATE+="$AES$MODE" || STATE+="$AES$AES"
 
+  RE='^\s+([0-9]+x[0-9]+)\s.*\s([0-9]{2}.[0-9]{2})\*?\s?\+.*'
+
+  local NATIVE="$(echo "$SCREEN" | sed -n "/$CRITERION/{:a;N;/\+/!ba;/\+/p}" |
+    awk 'match($0,/'$RE'/,a) {print a[1]"@"a[2]"Hz"}')"
+  
+  [ -n "$NATIVE" ] && STATE+="$AES$NATIVE" || STATE+="$AES"
+
   local PROFILES="$(echo "$SCREEN" | awk '/'$CRITERION'/,!//' | tail -n +2 |
+    sed -E 's/(\*|\+)//g' |
     awk -v AES="$AES" -v KVS="$KVS" '{
       if ($0 ~ /^\s+[0-9]+x[0-9]+/) {
         rates=""
@@ -78,7 +86,7 @@ output () {
         }
         print $1 KVS rates
       } else exit
-    }' | tr -d '+*')"
+    }')"
   
   echo -e "$STATE\n$PROFILES"
 }
@@ -271,12 +279,13 @@ show_output () {
   FRM+="Reflect:    %s\n"
   FRM+="Area:       %s\n"
   FRM+="Position:   %s\n"
+  FRM+="Native:     %s\n"
 
   echo "$OUTPUT" | head -n 1 | awk -F$AES -v FRM="$FRM" '{
     if ($3) {$3="true"} else {$3="false"};
     if (!$6) $6="normal";
     if (!$7) $7="normal";
-    printf FRM,$1,$2,$3,$8,$9,$6,$7,$4,$5
+    printf FRM,$1,$2,$3,$8,$9,$6,$7,$4,$5,$10
   }'
 
   echo "$OUTPUT" | tail -n +2 | head -n 1 |
