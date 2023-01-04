@@ -199,7 +199,7 @@ show_status () {
       printf "%-23s %s\n",$1":",$2 \
     }' | sed -r 's/\<./\U&/g'
 
-  local OUTPUTS=$(outputs connected)
+  local OUTPUTS=$(outputs active)
   local LEN=$(count "$OUTPUTS")
 
   if [ $LEN = 0 ]; then
