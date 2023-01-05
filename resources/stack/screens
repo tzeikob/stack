@@ -544,6 +544,40 @@ rotate () {
     echo "Unable to rotate the output $NAME"
 }
 
+pick_layout () {
+  local OUTPUTS=$1
+
+  local LAYOUTS=""
+
+  if [ $OUTPUTS = 2 ]; then
+    LAYOUTS+="Side by Side${KVS}row-2${AES}"
+    LAYOUTS+="Top Bottom${KVS}col-2"
+
+    echo "Side by Side | Top Bottom"
+    echo "[A][B]         [A]"
+    echo "               [B]"
+  elif [ $OUTPUTS = 3 ]; then
+    LAYOUTS+="Side by Side${KVS}row-3${AES}"
+    LAYOUTS+="Top Bottom${KVS}col-3${AES}"
+    LAYOUTS+="Left Gamma${KVS}gamma-3${AES}"
+    LAYOUTS+="Right Gamma${KVS}gamma-rev-3${AES}"
+    LAYOUTS+="Left Lambda${KVS}lambda-3${AES}"
+    LAYOUTS+="Right Lambda${KVS}lambda-rev-3"
+
+    echo "Side by Side | Top Bottom | Left Gamma | Right Gamma | Left Lambda | Right Lambda"
+    echo "[A][B][C]      [A]          [A][B]       [A][B]        [A]              [A]"
+    echo "               [B]          [C]             [C]        [B][C]        [B][C]"
+    echo "               [C]"
+  else
+    return 1
+  fi
+
+  local MODE="vertical-6"
+  [ $(count "$LAYOUTS") -lt 3 ] && MODE="horizontal"
+
+  pick_one "Select a layout mode:" "$LAYOUTS" "$MODE"
+}
+
 set_layout () {
   local OUTPUTS=$(outputs active)
   local LEN=$(count "$OUTPUTS")
@@ -559,33 +593,7 @@ set_layout () {
     return
   fi
 
-  local LAYOUTS=""
-
-  if [ $LEN = 2 ]; then
-    LAYOUTS+="Side by Side${KVS}row-2${AES}"
-    LAYOUTS+="Top Bottom${KVS}col-2"
-
-    echo "Side by Side | Top Bottom"
-    echo "[A][B]         [A]"
-    echo "               [B]"
-  elif [ $LEN = 3 ]; then
-    LAYOUTS+="Side by Side${KVS}row-3${AES}"
-    LAYOUTS+="Top Bottom${KVS}col-3${AES}"
-    LAYOUTS+="Left Gamma${KVS}gamma-3${AES}"
-    LAYOUTS+="Right Gamma${KVS}gamma-rev-3${AES}"
-    LAYOUTS+="Left Lambda${KVS}lambda-3${AES}"
-    LAYOUTS+="Right Lambda${KVS}lambda-rev-3"
-
-    echo "Side by Side | Top Bottom | Left Gamma | Right Gamma | Left Lambda | Right Lambda"
-    echo "[A][B][C]      [A]          [A][B]       [A][B]        [A]              [A]"
-    echo "               [B]          [C]             [C]        [B][C]        [B][C]"
-    echo "               [C]"
-  fi
-
-  local MODE="vertical-6"
-  [ $(count "$LAYOUTS") -lt 3 ] && MODE="horizontal"
-
-  pick_one "Select a layout mode:" "$LAYOUTS" "$MODE"
+  pick_layout "$LEN" || return 1
   [ -z "$REPLY" ] && return
 
   local LAYOUT=$(value "$REPLY")
@@ -594,6 +602,7 @@ set_layout () {
   [ $LEN -lt 3 ] && MODE="horizontal"
 
   local SPOTS=$(echo "$LEN" | awk '{for(i=65; i<65+$0; i++) printf "%c,",i}')
+
   pick_by_order "Pick outputs by order to match ${SPOTS::-1}:" "$OUTPUTS" "$LEN" "$MODE"
   [ -z "$REPLY" ] && return
 
@@ -605,39 +614,29 @@ set_layout () {
 
   case "$LAYOUT" in
     "row-2")
-      xrandr --output "$A" --left-of "$B" &&
-        echo "Outputs laid out in side by side mode" ||
-        echo "Unable to lay out outputs in side by side mode";;
+      xrandr --output "$A" --left-of "$B";;
     "col-2")
-      xrandr --output "$A" --above "$B" &&
-        echo "Outputs laid out in top bottom mode" ||
-        echo "Unable to lay out outputs in top bottom mode";;
+      xrandr --output "$A" --above "$B";;
     "row-3")
-      xrandr --output "$A" --left-of "$B" --output "$B" --left-of "$C" &&
-        echo "Outputs laid out in side by side mode" ||
-        echo "Unable to lay out outputs in side by side mode";;
+      xrandr --output "$A" --left-of "$B" --output "$B" --left-of "$C";;
     "col-3")
-      xrandr --output "$A" --above "$B" --output "$B" --above "$C" &&
-        echo "Outputs laid out in top bottom mode" ||
-        echo "Unable to lay out outputs in top bottom mode";;
+      xrandr --output "$A" --above "$B" --output "$B" --above "$C";;
     "gamma-3")
-      xrandr --output "$A" --left-of "$B" --output "$C" --below "$A" &&
-        echo "Outputs laid out in left gamma mode" ||
-        echo "Unable to lay out outputs in left gamma mode";;
+      xrandr --output "$A" --left-of "$B" --output "$C" --below "$A";;
     "gamma-rev-3")
-      xrandr --output "$A" --left-of "$B" --output "$C" --below "$B" &&
-        echo "Outputs laid out in right gamma mode" ||
-        echo "Unable to lay out outputs in right gamma mode";;
+      xrandr --output "$A" --left-of "$B" --output "$C" --below "$B";;
     "lambda-3")
-      xrandr --output "$A" --above "$B" --output "$B" --left-of "$C" &&
-        echo "Outputs laid out in left lambda mode" ||
-        echo "Unable to lay out outputs in left lambda mode";;
+      xrandr --output "$A" --above "$B" --output "$B" --left-of "$C";;
     "lambda-rev-3")
-      xrandr --output "$A" --left-of "$C" --output "$A" --above "$C" &&
-        echo "Outputs laid out in right lambda mode" ||
-        echo "Unable to lay out outputs in right lambda mode";;
-    *) echo "Unable to set the layout: '$LAYOUT'"; return 1;;
+      xrandr --output "$A" --left-of "$C" --output "$A" --above "$C";;
   esac
+
+  if [ ! $? = 0 ]; then
+    echo "Unable to set the layout"
+    return 1
+  fi
+
+  echo "Layout has been set successfully"
 }
 
 save_layout () {
