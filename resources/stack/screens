@@ -262,7 +262,7 @@ show_output () {
     return 1
   fi
 
-  if ! is_active "$OUTPUT"; then
+  if ! is_connected "$OUTPUT"; then
     local FRM=""
     FRM+="Name:       %s\n"
     FRM+="Status:     %s\n"
@@ -271,24 +271,33 @@ show_output () {
     return
   fi
 
-  local FRM=""
-  FRM+="Name:       %s\n"
-  FRM+="Status:     %s\n"
-  FRM+="Primary:    %s\n"
-  FRM+="Resolution: %s\n"
-  FRM+="Rate:       %sHz\n"
-  FRM+="Rotate:     %s\n"
-  FRM+="Reflect:    %s\n"
-  FRM+="Area:       %s\n"
-  FRM+="Position:   %s\n"
-  FRM+="Native:     %s\n"
+  if ! is_active "$OUTPUT"; then
+    local FRM=""
+    FRM+="Name:       %s\n"
+    FRM+="Status:     %s\n"
+    FRM+="Native:     %s\n"
 
-  echo "$OUTPUT" | head -n 1 | awk -F$AES -v FRM="$FRM" '{
-    if ($3) {$3="true"} else {$3="false"};
-    if (!$6) $6="normal";
-    if (!$7) $7="normal";
-    printf FRM,$1,$2,$3,$8,$9,$6,$7,$4,$5,$10
-  }'
+    echo "$OUTPUT" | head -n 1 | awk -F$AES -v FRM="$FRM" '{printf FRM,$1,$2,$10}'
+  else
+    local FRM=""
+    FRM+="Name:       %s\n"
+    FRM+="Status:     %s\n"
+    FRM+="Primary:    %s\n"
+    FRM+="Resolution: %s\n"
+    FRM+="Rate:       %sHz\n"
+    FRM+="Rotate:     %s\n"
+    FRM+="Reflect:    %s\n"
+    FRM+="Area:       %s\n"
+    FRM+="Position:   %s\n"
+    FRM+="Native:     %s\n"
+
+    echo "$OUTPUT" | head -n 1 | awk -F$AES -v FRM="$FRM" '{
+      if ($3) {$3="true"} else {$3="false"};
+      if (!$6) $6="normal";
+      if (!$7) $7="normal";
+      printf FRM,$1,$2,$3,$8,$9,$6,$7,$4,$5,$10
+    }'
+  fi
 
   echo "$OUTPUT" | tail -n +2 | head -n 1 |
     awk -F$KVS '{gsub(/'$AES'/," ",$2); printf "Profiles:   %-9s %s\n",$1,$2}'
