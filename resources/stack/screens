@@ -175,11 +175,8 @@ pick_rate () {
 }
 
 prompt () {
-  local PRIMARY="$(output primary)"
-
-  local STATUS="$(echo "$PRIMARY" | head -n 1 | awk -F$AES '{
-    out=$1; if ($8 && $9) out=out " "$8"@"int($9)"Hz"; print out
-  }')"
+  local OUTPUTS="$(outputs primary)"
+  local STATUS="$(element "$OUTPUTS" 0)"
 
   read -rep "[screens:$YE${STATUS}$RS] " REPLY
 }
