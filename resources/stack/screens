@@ -161,7 +161,7 @@ pick_rate () {
   local LEN=$(count "$RATES")
 
   if [ ! $LEN -gt 0 ]; then
-    echo "No rates have been found"
+    echo "No available rates have been found"
     return 1
   fi
 
@@ -180,7 +180,7 @@ prompt () {
 
 show_status () {
   if [ -z "$DISPLAY" ]; then
-    echo "Unable to resolve the xorg server"
+    echo "Unable to resolve the display of xorg server"
     return 1
   fi
 
@@ -252,7 +252,7 @@ show_output () {
   local OUTPUT=$(output "$NAME" || echo "err:$?")
 
   if [[ "$OUTPUT" =~ ^err: ]]; then
-    echo "Unable to find $NAME output"
+    echo "Unable to find the $NAME output"
     return 1
   fi
 
@@ -334,7 +334,7 @@ set_mode () {
   local OUTPUT=$(output "$NAME" || echo "err:$?")
 
   if [[ "$OUTPUT" =~ ^err: ]]; then
-    echo "Unable to find $NAME output"
+    echo "Unable to find the $NAME output"
     return 1
   elif ! is_connected "$OUTPUT"; then
     echo "Cannot set mode of a disconnected output"
@@ -360,7 +360,7 @@ set_mode () {
 
   xrandr --output "$NAME" --mode "$RESOLUTION" --rate "$RATE" &&
     echo "Output $NAME mode set to $RESOLUTION@${RATE}Hz" ||
-    echo "Unable to set mode for output $NAME"
+    echo "Unable to set mode of the $NAME output"
 }
 
 set_primary () {
@@ -376,7 +376,7 @@ set_primary () {
   local OUTPUT=$(output "$NAME" || echo "err:$?")
 
   if [[ "$OUTPUT" =~ ^err: ]]; then
-    echo "Unable to find $NAME output"
+    echo "Unable to find the $NAME output"
     return 1
   elif ! is_connected "$OUTPUT"; then
     echo "Cannot set primary a disconnected output"
@@ -391,7 +391,7 @@ set_primary () {
 
   xrandr --output "$NAME" --primary &&
     echo "Output $NAME has been set as primary" ||
-    echo "Unable to set the primary output $NAME"
+    echo "Unable to set the $NAME output as primary"
 }
 
 set_on () {
@@ -407,7 +407,7 @@ set_on () {
   local OUTPUT=$(output "$NAME" || echo "err:$?")
 
   if [[ "$OUTPUT" =~ ^err: ]]; then
-    echo "Unable to find $NAME output"
+    echo "Unable to find the $NAME output"
     return 1
   elif ! is_connected "$OUTPUT"; then
     echo "Cannot activate a disconnected output"
@@ -419,7 +419,7 @@ set_on () {
 
   xrandr --output "$NAME" --auto &&
     echo "Output $NAME has been activated" ||
-    echo "Unable to activate the output $NAME"
+    echo "Unable to activate the $NAME output"
 }
 
 set_off () {
@@ -435,7 +435,7 @@ set_off () {
   local OUTPUT=$(output "$NAME" || echo "err:$?")
 
   if [[ "$OUTPUT" =~ ^err: ]]; then
-    echo "Unable to find $NAME output"
+    echo "Unable to find the $NAME output"
     return 1
   elif ! is_connected "$OUTPUT"; then
     echo "Cannot deactivate a disconnected output"
@@ -450,7 +450,7 @@ set_off () {
 
   xrandr --output "$NAME" --off &&
     echo "Output $NAME has been deactivated" ||
-    echo "Unable to deactivate the output $NAME"
+    echo "Unable to deactivate the $NAME output"
 }
 
 reflect () {
@@ -467,7 +467,7 @@ reflect () {
   local OUTPUT=$(output "$NAME" || echo "err:$?")
 
   if [[ "$OUTPUT" =~ ^err: ]]; then
-    echo "Unable to find $NAME output"
+    echo "Unable to find the $NAME output"
     return 1
   elif ! is_connected "$OUTPUT"; then
     echo "Cannot reflect a disconnected output"
@@ -491,13 +491,13 @@ reflect () {
   fi
   
   if [[ ! "$MODE" =~ ^(normal|x|y|xy)$ ]]; then
-    echo "Invalid reflection mode argument: '$MODE'"
+    echo "Unable to reflect, invalid reflection mode"
     return 1
   fi
 
   xrandr --output "$NAME" --reflect "$MODE" &&
     echo "Output $NAME has been reflected to $MODE mode" ||
-    echo "Unable to reflect the output $NAME"
+    echo "Unable to reflect the $NAME output"
 }
 
 rotate () {
@@ -514,7 +514,7 @@ rotate () {
   local OUTPUT=$(output "$NAME" || echo "err:$?")
 
   if [[ "$OUTPUT" =~ ^err: ]]; then
-    echo "Unable to find $NAME output"
+    echo "Unable to find the $NAME output"
     return 1
   elif ! is_connected "$OUTPUT"; then
     echo "Cannot reflect a disconnected output"
@@ -538,13 +538,13 @@ rotate () {
   fi
   
   if [[ ! "$MODE" =~ ^(normal|right|left|inverted)$ ]]; then
-    echo "Invalid rotation mode argument: '$MODE'"
+    echo "Unable to rotate, invalid rotation mode"
     return 1
   fi
 
   xrandr --output "$NAME" --rotate "$MODE" &&
     echo "Output $NAME has been rotated to $MODE mode" ||
-    echo "Unable to rotate the output $NAME"
+    echo "Unable to rotate the $NAME output"
 }
 
 pick_layout () {
@@ -556,9 +556,12 @@ pick_layout () {
     LAYOUTS+="Side by Side${KVS}row-2${AES}"
     LAYOUTS+="Top Bottom${KVS}col-2"
 
-    echo "Side by Side | Top Bottom"
-    echo "[A][B]         [A]"
-    echo "               [B]"
+    echo
+    echo "Side by Side  Top Bottom"
+    echo "------------  ----------"
+    echo "[A][B]        [A]"
+    echo "              [B]"
+    echo
   elif [ $OUTPUTS = 3 ]; then
     LAYOUTS+="Side by Side${KVS}row-3${AES}"
     LAYOUTS+="Top Bottom${KVS}col-3${AES}"
@@ -567,10 +570,18 @@ pick_layout () {
     LAYOUTS+="Left Lambda${KVS}lambda-3${AES}"
     LAYOUTS+="Right Lambda${KVS}lambda-rev-3"
 
-    echo "Side by Side | Top Bottom | Left Gamma | Right Gamma | Left Lambda | Right Lambda"
-    echo "[A][B][C]      [A]          [A][B]       [A][B]        [A]              [A]"
-    echo "               [B]          [C]             [C]        [B][C]        [B][C]"
-    echo "               [C]"
+    echo
+    echo "Side by Side  Top Bottom   Left Gamma"
+    echo "------------  ----------   ----------"
+    echo "[A][B][C]     [A]          [A][B]"
+    echo "              [B]          [C]"
+    echo "              [C]"
+    echo
+    echo "Right Gamma   Left Lambda  Right Lambda"
+    echo "------------  -----------  ------------"
+    echo "[A][B]        [A]             [A]"
+    echo "   [C]        [B][C]       [B][C]"
+    echo
   else
     return 1
   fi
@@ -589,10 +600,10 @@ set_layout () {
     echo "No active outputs have been found"
     return
   elif [ $LEN = 1 ]; then
-    echo "No layout can be set for one active output"
+    echo "No layout can be set on a single output setup"
     return
   elif [ $LEN -gt 3 ]; then
-    echo "No layouts found for more than three outputs"
+    echo "No layout presets found for setups with 4+ outputs"
     return
   fi
 
@@ -635,7 +646,7 @@ set_layout () {
   esac
 
   if [ ! $? = 0 ]; then
-    echo "Unable to set the layout"
+    echo "Unable to set layout, unknown error occurred"
     return 1
   fi
 
@@ -647,7 +658,7 @@ save_layout () {
   local LEN=$(count "$OUTPUTS")
   
   if [ $LEN = 0 ]; then
-    echo "No outputs have found"
+    echo "Unable to save layout, no outputs have found"
     return 1
   fi
 
@@ -670,12 +681,12 @@ save_layout () {
     echo "$OUTPUT" | head -n 1 >> "$LAYOUT_FILE"
   done
 
-  echo "Layout file saved successfully"
+  echo "Layout saved successfully"
 }
 
 load_layout () {
   if [ ! -f "$LAYOUT_FILE" ]; then
-    echo "No layout file found, falling back to auto"
+    echo "Unable to load layout, file not found"
     return
   fi
 
@@ -692,8 +703,8 @@ load_layout () {
   }' "$LAYOUT_FILE" | tr $'\n' ' ')
 
   xrandr $ARGS &&
-    echo "Layout configuration has been loaded" ||
-    echo "Unable to load layout configuration"
+    echo "Layout has been loaded successfully" ||
+    echo "Unable to load layout, unknown error occurred"
 }
 
 help () {
@@ -715,25 +726,25 @@ help () {
   echo -e "\nCOMMANDS"
   printf "$FRM" \
     "help" "Show this help message." \
-    "show status" "Show a report of the xorg server and screens." \
+    "show status" "Show a report of the xorg server and active outputs." \
     "show output [<name>]" "Show the data of the given output." \
     "" "" \
     "list outputs [<status>]" "List all outputs or by the given status," \
-    "" "connected, disconnected, active, or primary." \
+    "" "connected, disconnected, active, inactive or primary." \
     "" "" \
-    "set layout" "Set the layout of active outputs." \
     "set mode [<name> [<res> [<rate>]]]" "Set the mode of the given output." \
-    "set primary [<name>]" "Set the primary output." \
+    "set primary [<name>]" "Set the given output as primary." \
     "set on|off [<name>]" "Set active or inactive the given output." \
-    "save layout" "Persist the current screen layout to be applied in next boot." \
+    "set layout" "Set the layout of active outputs." \
+    "save layout" "Persist the current screen layout for next boots." \
     "" "" \
     "rotate [<name> normal|right|left|inverted]" "Set output rotation to normal, right, left or inverted." \
     "reflect [<name> normal|x|y|xy]" "Set output reflection to normal, x, y or xy axes."
 
   echo -e "\nOBJECTS"
   printf "$FRM" \
-    "status" "The status of xorg server and screen layouts." \
-    "output" "An output display device." \
+    "status" "The status of xorg server and outputs." \
+    "output" "An output port attached to display devices." \
     "layout" "The layout of multiple outputs setup." \
     "mode" "The resolution and rate of an output." \
     "primary" "The main output in a multihead layout."
@@ -767,12 +778,12 @@ loop () {
         case "${CMD[1]}" in
           "status") show_status;;
           "output") show_output "${CMD[2]}";;
-          *) echo "Unknown or invalid command: '$REPLY'";;
+          *) echo "Invalid or unknown command";;
         esac;;
       "list")
         case "${CMD[1]}" in
           "outputs") list_outputs "${CMD[2]}";;
-          *) echo "Unknown or invalid command: '$REPLY'";;
+          *) echo "Invalid or unknown command";;
         esac;;
       "set")
         case "${CMD[1]}" in
@@ -781,16 +792,16 @@ loop () {
           "primary") set_primary "${CMD[2]}";;
           "on") set_on "${CMD[2]}";;
           "off") set_off "${CMD[2]}";;
-          *) echo "Unknown or invalid command: '$REPLY'";;
+          *) echo "Invalid or unknown command";;
         esac;;
       "save")
         case "${CMD[1]}" in
           "layout") save_layout;;
-          *) echo "Unknown or invalid command: '$REPLY'";;
+          *) echo "Invalid or unknown command";;
         esac;;
       "rotate") rotate "${CMD[1]}" "${CMD[2]}";;
       "reflect") reflect "${CMD[1]}" "${CMD[2]}";;
-      *) echo "Unknown or invalid command: '$REPLY'";;
+      *) echo "Invalid or unknown command";;
     esac
   done
 
@@ -803,9 +814,9 @@ once () {
     "load")
       case "$2" in
         "layout") load_layout;;
-        *) abort "Unknown or invalid command: '$1'";; 
+        *) echo "Invalid or unknown command";; 
       esac;;
-    *) abort "Unknown or invalid command: '$1'";; 
+    *) echo "Invalid or unknown command";; 
   esac
 }
 
