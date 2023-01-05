@@ -3,7 +3,7 @@
 set -o pipefail
 source /opt/stack/utils
 
-LAYOUT_FILE=$CONFIG_HOME/screens.layout
+LAYOUT_FILE=$CONFIG_HOME/displays.layout
 
 require "xorg-xrandr"
 
@@ -175,7 +175,7 @@ prompt () {
   local OUTPUTS="$(outputs primary)"
   local STATUS="$(element "$OUTPUTS" 0)"
 
-  read -rep "[screens:$YE${STATUS}$RS] " REPLY
+  read -rep "[displays:$YE${STATUS}$RS] " REPLY
 }
 
 show_status () {
@@ -711,12 +711,12 @@ help () {
   local FRM=" %-45s\t%s\n"
 
   if [ "$1" = "once" ]; then
-    echo "Usage: screens COMMAND"
+    echo "Usage: displays COMMAND"
 
     echo -e "\nCOMMANDS"
     printf "$FRM" \
       "help" "Show this message" \
-      "load layout" "Load screens output layout"
+      "load layout" "Load displays layout"
 
     return
   fi
@@ -736,7 +736,7 @@ help () {
     "set primary [<name>]" "Set the given output as primary." \
     "set on|off [<name>]" "Set active or inactive the given output." \
     "set layout" "Set the layout of active outputs." \
-    "save layout" "Persist the current screen layout for next boots." \
+    "save layout" "Persist the current displays layout for next boots." \
     "" "" \
     "rotate [<name> normal|right|left|inverted]" "Set output rotation to normal, right, left or inverted." \
     "reflect [<name> normal|x|y|xy]" "Set output reflection to normal, x, y or xy axes."
