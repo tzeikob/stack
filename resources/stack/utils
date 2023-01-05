@@ -4,6 +4,8 @@ AES=$',,'
 AES_LN=$',,\n'
 KVS=$'::'
 
+CONFIG_HOME=~/.config/stack
+
 WHITE=$'\e[0;37m'
 RED=$'\e[0;31m'
 GREEN=$'\e[0;32m'
@@ -161,6 +163,15 @@ print () {
 
     printf "\n"
   done
+}
+
+confirm () {
+  local PROMPT=$1
+
+  echo "$PROMPT"
+  
+  local OPTIONS="Yes${KVS}yes${AES}No${KVS}no"
+  REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$AES_LN" -S /\($KVS.*\)//v)
 }
 
 pick_one () {

@@ -4,6 +4,8 @@ set -o pipefail
 
 source /opt/stack/utils
 
+LAYOUT_FILE=$CONFIG_HOME/screens.layout
+
 require "xorg-xrandr"
 
 screen () {
@@ -314,102 +316,6 @@ list_outputs () {
   done
 }
 
-set_layout () {
-  local OUTPUTS=$(outputs active)
-  local LEN=$(count "$OUTPUTS")
-
-  if [ $LEN = 0 ]; then
-    echo "No active outputs have been found"
-    return
-  elif [ $LEN = 1 ]; then
-    echo "No layout can be set for one active output"
-    return
-  elif [ $LEN -gt 3 ]; then
-    echo "No layouts found for more than three outputs"
-    return
-  fi
-
-  local LAYOUTS=""
-
-  if [ $LEN = 2 ]; then
-    LAYOUTS+="Side by Side${KVS}row-2${AES}"
-    LAYOUTS+="Top Bottom${KVS}col-2"
-
-    echo "Side by Side | Top Bottom"
-    echo "[A][B]         [A]"
-    echo "               [B]"
-  elif [ $LEN = 3 ]; then
-    LAYOUTS+="Side by Side${KVS}row-3${AES}"
-    LAYOUTS+="Top Bottom${KVS}col-3${AES}"
-    LAYOUTS+="Left Gamma${KVS}gamma-3${AES}"
-    LAYOUTS+="Right Gamma${KVS}gamma-rev-3${AES}"
-    LAYOUTS+="Left Lambda${KVS}lambda-3${AES}"
-    LAYOUTS+="Right Lambda${KVS}lambda-rev-3"
-
-    echo "Side by Side | Top Bottom | Left Gamma | Right Gamma | Left Lambda | Right Lambda"
-    echo "[A][B][C]      [A]          [A][B]       [A][B]        [A]              [A]"
-    echo "               [B]          [C]             [C]        [B][C]        [B][C]"
-    echo "               [C]"
-  fi
-
-  local MODE="vertical-6"
-  [ $(count "$LAYOUTS") -lt 3 ] && MODE="horizontal"
-
-  pick_one "Select a layout mode:" "$LAYOUTS" "$MODE"
-  [ -z "$REPLY" ] && return
-
-  local LAYOUT=$(value "$REPLY")
-
-  MODE="vertical-6"
-  [ $LEN -lt 3 ] && MODE="horizontal"
-
-  local SPOTS=$(echo "$LEN" | awk '{for(i=65; i<65+$0; i++) printf "%c,",i}')
-  pick_by_order "Pick outputs by order to match ${SPOTS::-1}:" "$OUTPUTS" "$LEN" "$MODE"
-  [ -z "$REPLY" ] && return
-
-  local A=$(element "$REPLY" 0 | value)
-  local B=$(element "$REPLY" 1 | value)
-  if [ $LEN = 3 ]; then
-    local C=$(element "$REPLY" 2 | value)
-  fi
-
-  case "$LAYOUT" in
-    "row-2")
-      xrandr --output "$A" --left-of "$B" &&
-        echo "Outputs laid out in side by side mode" ||
-        echo "Unable to lay out outputs in side by side mode";;
-    "col-2")
-      xrandr --output "$A" --above "$B" &&
-        echo "Outputs laid out in top bottom mode" ||
-        echo "Unable to lay out outputs in top bottom mode";;
-    "row-3")
-      xrandr --output "$A" --left-of "$B" --output "$B" --left-of "$C" &&
-        echo "Outputs laid out in side by side mode" ||
-        echo "Unable to lay out outputs in side by side mode";;
-    "col-3")
-      xrandr --output "$A" --above "$B" --output "$B" --above "$C" &&
-        echo "Outputs laid out in top bottom mode" ||
-        echo "Unable to lay out outputs in top bottom mode";;
-    "gamma-3")
-      xrandr --output "$A" --left-of "$B" --output "$C" --below "$A" &&
-        echo "Outputs laid out in left gamma mode" ||
-        echo "Unable to lay out outputs in left gamma mode";;
-    "gamma-rev-3")
-      xrandr --output "$A" --left-of "$B" --output "$C" --below "$B" &&
-        echo "Outputs laid out in right gamma mode" ||
-        echo "Unable to lay out outputs in right gamma mode";;
-    "lambda-3")
-      xrandr --output "$A" --above "$B" --output "$B" --left-of "$C" &&
-        echo "Outputs laid out in left lambda mode" ||
-        echo "Unable to lay out outputs in left lambda mode";;
-    "lambda-rev-3")
-      xrandr --output "$A" --left-of "$C" --output "$A" --above "$C" &&
-        echo "Outputs laid out in right lambda mode" ||
-        echo "Unable to lay out outputs in right lambda mode";;
-    *) echo "Unable to set the layout: '$LAYOUT'"; return 1;;
-  esac
-}
-
 set_mode () {
   local NAME=$1
   local RESOLUTION=$2
@@ -638,6 +544,102 @@ rotate () {
     echo "Unable to rotate the output $NAME"
 }
 
+set_layout () {
+  local OUTPUTS=$(outputs active)
+  local LEN=$(count "$OUTPUTS")
+
+  if [ $LEN = 0 ]; then
+    echo "No active outputs have been found"
+    return
+  elif [ $LEN = 1 ]; then
+    echo "No layout can be set for one active output"
+    return
+  elif [ $LEN -gt 3 ]; then
+    echo "No layouts found for more than three outputs"
+    return
+  fi
+
+  local LAYOUTS=""
+
+  if [ $LEN = 2 ]; then
+    LAYOUTS+="Side by Side${KVS}row-2${AES}"
+    LAYOUTS+="Top Bottom${KVS}col-2"
+
+    echo "Side by Side | Top Bottom"
+    echo "[A][B]         [A]"
+    echo "               [B]"
+  elif [ $LEN = 3 ]; then
+    LAYOUTS+="Side by Side${KVS}row-3${AES}"
+    LAYOUTS+="Top Bottom${KVS}col-3${AES}"
+    LAYOUTS+="Left Gamma${KVS}gamma-3${AES}"
+    LAYOUTS+="Right Gamma${KVS}gamma-rev-3${AES}"
+    LAYOUTS+="Left Lambda${KVS}lambda-3${AES}"
+    LAYOUTS+="Right Lambda${KVS}lambda-rev-3"
+
+    echo "Side by Side | Top Bottom | Left Gamma | Right Gamma | Left Lambda | Right Lambda"
+    echo "[A][B][C]      [A]          [A][B]       [A][B]        [A]              [A]"
+    echo "               [B]          [C]             [C]        [B][C]        [B][C]"
+    echo "               [C]"
+  fi
+
+  local MODE="vertical-6"
+  [ $(count "$LAYOUTS") -lt 3 ] && MODE="horizontal"
+
+  pick_one "Select a layout mode:" "$LAYOUTS" "$MODE"
+  [ -z "$REPLY" ] && return
+
+  local LAYOUT=$(value "$REPLY")
+
+  MODE="vertical-6"
+  [ $LEN -lt 3 ] && MODE="horizontal"
+
+  local SPOTS=$(echo "$LEN" | awk '{for(i=65; i<65+$0; i++) printf "%c,",i}')
+  pick_by_order "Pick outputs by order to match ${SPOTS::-1}:" "$OUTPUTS" "$LEN" "$MODE"
+  [ -z "$REPLY" ] && return
+
+  local A=$(element "$REPLY" 0 | value)
+  local B=$(element "$REPLY" 1 | value)
+  if [ $LEN = 3 ]; then
+    local C=$(element "$REPLY" 2 | value)
+  fi
+
+  case "$LAYOUT" in
+    "row-2")
+      xrandr --output "$A" --left-of "$B" &&
+        echo "Outputs laid out in side by side mode" ||
+        echo "Unable to lay out outputs in side by side mode";;
+    "col-2")
+      xrandr --output "$A" --above "$B" &&
+        echo "Outputs laid out in top bottom mode" ||
+        echo "Unable to lay out outputs in top bottom mode";;
+    "row-3")
+      xrandr --output "$A" --left-of "$B" --output "$B" --left-of "$C" &&
+        echo "Outputs laid out in side by side mode" ||
+        echo "Unable to lay out outputs in side by side mode";;
+    "col-3")
+      xrandr --output "$A" --above "$B" --output "$B" --above "$C" &&
+        echo "Outputs laid out in top bottom mode" ||
+        echo "Unable to lay out outputs in top bottom mode";;
+    "gamma-3")
+      xrandr --output "$A" --left-of "$B" --output "$C" --below "$A" &&
+        echo "Outputs laid out in left gamma mode" ||
+        echo "Unable to lay out outputs in left gamma mode";;
+    "gamma-rev-3")
+      xrandr --output "$A" --left-of "$B" --output "$C" --below "$B" &&
+        echo "Outputs laid out in right gamma mode" ||
+        echo "Unable to lay out outputs in right gamma mode";;
+    "lambda-3")
+      xrandr --output "$A" --above "$B" --output "$B" --left-of "$C" &&
+        echo "Outputs laid out in left lambda mode" ||
+        echo "Unable to lay out outputs in left lambda mode";;
+    "lambda-rev-3")
+      xrandr --output "$A" --left-of "$C" --output "$A" --above "$C" &&
+        echo "Outputs laid out in right lambda mode" ||
+        echo "Unable to lay out outputs in right lambda mode";;
+    *) echo "Unable to set the layout: '$LAYOUT'"; return 1;;
+  esac
+}
+
 save_layout () {
   local OUTPUTS=$(outputs)
   local LEN=$(count "$OUTPUTS")
@@ -647,20 +649,31 @@ save_layout () {
     return 1
   fi
 
-  rm -f ~/.config/stack/layout
+  echo "CAUTION, this operation will overwrite any"
+  echo "existing layout configuration set before."
+  confirm "Do you want to proceed?"
+  
+  if [ -z "$REPLY" ] || [ "$(value "$REPLY")" = "no" ]; then
+    return
+  fi
+
+  mkdir -p $CONFIG_HOME
+  rm -f "$LAYOUT_FILE"
 
   local INDEX=0
   for ((INDEX = 0; INDEX < $LEN; INDEX++)); do
     local NAME=$(element "$OUTPUTS" "$INDEX" | value)
     local OUTPUT=$(output "$NAME")
 
-    echo "$OUTPUT" | head -n 1 >> ~/.config/stack/layout
+    echo "$OUTPUT" | head -n 1 >> "$LAYOUT_FILE"
   done
+
+  echo "Layout file saved successfully"
 }
 
 load_layout () {
-  if [ ! -f ~/.config/stack/layout ]; then
-    echo "No layout config file found, fallback to auto"
+  if [ ! -f "$LAYOUT_FILE" ]; then
+    echo "No layout file found, falling back to auto"
     return
   fi
 
@@ -674,7 +687,7 @@ load_layout () {
     } else {
       print "--output "$1" --off"
     }
-  }' ~/.config/stack/layout | tr $'\n' ' ')
+  }' "$LAYOUT_FILE" | tr $'\n' ' ')
 
   xrandr $ARGS &&
     echo "Layout configuration has been loaded" ||
