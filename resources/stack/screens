@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 set -o pipefail
-
 source /opt/stack/utils
 
 LAYOUT_FILE=$CONFIG_HOME/screens.layout
@@ -9,9 +8,7 @@ LAYOUT_FILE=$CONFIG_HOME/screens.layout
 require "xorg-xrandr"
 
 screen () {
-  local INDEX=${1:-"0"}
-
-  xrandr --current | sed "/^Screen ${INDEX}:/,/^Screen/!d;//d"
+  xrandr --current | sed "/^Screen 0:/,/^Screen/!d;//d"
 }
 
 outputs () {
@@ -722,7 +719,7 @@ help () {
     "show output [<name>]" "Show the data of the given output." \
     "" "" \
     "list outputs [<status>]" "List all outputs or by the given status," \
-    "" "connected, disconnected, active or primary." \
+    "" "connected, disconnected, active, or primary." \
     "" "" \
     "set layout" "Set the layout of active outputs." \
     "set mode [<name> [<res> [<rate>]]]" "Set the mode of the given output." \
