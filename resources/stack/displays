@@ -600,10 +600,10 @@ set_layout () {
     echo "No active outputs have been found"
     return
   elif [ $LEN = 1 ]; then
-    echo "No layout can be set on a single output setup"
+    echo "No layout options found for setups with one active output"
     return
   elif [ $LEN -gt 3 ]; then
-    echo "No layout presets found for setups with 4+ outputs"
+    echo "No layout options found for setups with more than 3 active outputs"
     return
   fi
 
@@ -686,7 +686,7 @@ save_layout () {
 
 load_layout () {
   if [ ! -f "$LAYOUT_FILE" ]; then
-    echo "Unable to load the display layout, file not found"
+    echo "No layout file found, load is skipped"
     return
   fi
 
@@ -711,15 +711,13 @@ load_layout () {
 }
 
 help () {
-  local FRM=" %-45s\t%s\n"
-
   if [ "$1" = "once" ]; then
     echo "Usage: displays COMMAND"
 
     echo -e "\nCOMMANDS"
-    printf "$FRM" \
+    printf " %-12s\t%s\n" \
       "help" "Show this message" \
-      "load layout" "Load displays layout"
+      "load layout" "Load display layout"
 
     return
   fi
@@ -727,7 +725,7 @@ help () {
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
   echo -e "\nCOMMANDS"
-  printf "$FRM" \
+  printf " %-32s\t%s\n" \
     "help" "Show this help message." \
     "show status" "Show a report of the xorg server and active outputs." \
     "show output [<name>]" "Show the data of the given output." \
@@ -739,18 +737,11 @@ help () {
     "set primary [<name>]" "Set the given output as primary." \
     "set on|off [<name>]" "Set active or inactive the given output." \
     "set layout" "Set the layout of active outputs." \
-    "save layout" "Persist the current displays layout for next boots." \
     "" "" \
-    "rotate [<name> normal|right|left|inverted]" "Set output rotation to normal, right, left or inverted." \
-    "reflect [<name> normal|x|y|xy]" "Set output reflection to normal, x, y or xy axes."
-
-  echo -e "\nOBJECTS"
-  printf "$FRM" \
-    "status" "The status of xorg server and outputs." \
-    "output" "An output port attached to display devices." \
-    "layout" "The layout of multiple outputs setup." \
-    "mode" "The resolution and rate of an output." \
-    "primary" "The main output in a multihead layout."
+    "rotate [<name> [<mode>]]" "Set output rotation to normal, right, left or inverted." \
+    "reflect [<name> [<mode>]]" "Set output reflection to normal, x, y or xy axes." \
+    "" "" \
+    "save layout" "Persist the current display layout for next boots."
 }
 
 loop () {
