@@ -121,11 +121,8 @@ pick_output () {
     echo "No ${STATUS:-\b} outputs have been found"
     return 1
   fi
-
-  local MODE="vertical-6"
-  [ $LEN -lt 3 ] && MODE="horizontal"
   
-  pick_one "Select an output:" "$OUTPUTS" "$MODE"
+  pick_one "Select an output:" "$OUTPUTS"
 }
 
 pick_resolution () {
@@ -144,11 +141,8 @@ pick_resolution () {
     echo "No available resolutions have been found"
     return 1
   fi
-
-  local MODE="vertical-6"
-  [ $LEN -lt 3 ] && MODE="horizontal"
   
-  pick_one "Select a resolution:" "$RESOLUTIONS" "$MODE"
+  pick_one "Select a resolution:" "$RESOLUTIONS" "tabular-4"
 }
 
 pick_rate () {
@@ -164,11 +158,8 @@ pick_rate () {
     echo "No available rates have been found"
     return 1
   fi
-
-  local MODE="vertical-6"
-  [ $LEN -lt 3 ] && MODE="horizontal"
   
-  pick_one "Select a rate:" "$RATES" "$MODE"
+  pick_one "Select a rate:" "$RATES" "tabular-4"
 }
 
 prompt () {
@@ -480,11 +471,11 @@ reflect () {
   if [ -z "$MODE" ]; then
     local MODES=""
     MODES+="Normal${KVS}normal${AES}"
-    MODES+="X Axis${KVS}x${AES}"
-    MODES+="Y Axis${KVS}y${AES}"
-    MODES+="XY Axes${KVS}xy"
+    MODES+="X${KVS}x${AES}"
+    MODES+="Y${KVS}y${AES}"
+    MODES+="XY${KVS}xy"
 
-    pick_one "Select a reflection mode:" "$MODES" "vertical-4"
+    pick_one "Select a reflection mode:" "$MODES"
     [ -z "$REPLY" ] && return
     
     MODE=$(value "$REPLY")
@@ -527,11 +518,11 @@ rotate () {
   if [ -z "$MODE" ]; then
     local MODES=""
     MODES+="Normal${KVS}normal${AES}"
-    MODES+="Right 90°${KVS}right${AES}"
-    MODES+="Left 90°${KVS}left${AES}"
-    MODES+="Inverted 180°${KVS}inverted"
+    MODES+="Right${KVS}right${AES}"
+    MODES+="Left${KVS}left${AES}"
+    MODES+="Inverted${KVS}inverted"
 
-    pick_one "Select a rotation mode:" "$MODES" "vertical-6"
+    pick_one "Select a rotation mode:" "$MODES"
     [ -z "$REPLY" ] && return
     
     MODE=$(value "$REPLY")
@@ -553,43 +544,38 @@ pick_layout () {
   local LAYOUTS=""
 
   if [ $OUTPUTS = 2 ]; then
-    LAYOUTS+="Side by Side${KVS}row-2${AES}"
-    LAYOUTS+="Top Bottom${KVS}col-2"
+    LAYOUTS+="SideBySide${KVS}row-2${AES}"
+    LAYOUTS+="TopBottom${KVS}col-2"
 
-    echo
-    echo "Side by Side  Top Bottom"
-    echo "------------  ----------"
-    echo "[A][B]        [A]"
-    echo "              [B]"
+    echo "SideBySide  TopBottom"
+    echo "----------  ----------"
+    echo "[A][B]      [A]"
+    echo "            [B]"
     echo
   elif [ $OUTPUTS = 3 ]; then
-    LAYOUTS+="Side by Side${KVS}row-3${AES}"
-    LAYOUTS+="Top Bottom${KVS}col-3${AES}"
-    LAYOUTS+="Left Gamma${KVS}gamma-3${AES}"
-    LAYOUTS+="Right Gamma${KVS}gamma-rev-3${AES}"
-    LAYOUTS+="Left Lambda${KVS}lambda-3${AES}"
-    LAYOUTS+="Right Lambda${KVS}lambda-rev-3"
+    LAYOUTS+="SideBySide${KVS}row-3${AES}"
+    LAYOUTS+="TopBottom${KVS}col-3${AES}"
+    LAYOUTS+="LeftGamma${KVS}gamma-3${AES}"
+    LAYOUTS+="RightGamma${KVS}gamma-rev-3${AES}"
+    LAYOUTS+="LeftLambda${KVS}lambda-3${AES}"
+    LAYOUTS+="RightLambda${KVS}lambda-rev-3"
 
+    echo "SideBySide  TopBottom   LeftGamma"
+    echo "----------  ----------  -----------"
+    echo "[A][B][C]   [A]         [A][B]"
+    echo "            [B]         [C]"
+    echo "            [C]"
     echo
-    echo "Side by Side  Top Bottom   Left Gamma"
-    echo "------------  ----------   ----------"
-    echo "[A][B][C]     [A]          [A][B]"
-    echo "              [B]          [C]"
-    echo "              [C]"
-    echo
-    echo "Right Gamma   Left Lambda  Right Lambda"
-    echo "------------  -----------  ------------"
-    echo "[A][B]        [A]             [A]"
-    echo "   [C]        [B][C]       [B][C]"
+    echo "RightGamma  LeftLambda  RightLambda"
+    echo "----------  ----------  -----------"
+    echo "[A][B]      [A]            [A]"
+    echo "   [C]      [B][C]      [B][C]"
     echo
   else
     return 1
   fi
 
-  local MODE="vertical-6"
-  [ $(count "$LAYOUTS") -lt 3 ] && MODE="horizontal"
-
-  pick_one "Select a layout mode:" "$LAYOUTS" "$MODE"
+  pick_one "Select a layout mode:" "$LAYOUTS" "tabular-3"
 }
 
 set_layout () {
@@ -612,12 +598,9 @@ set_layout () {
 
   local LAYOUT=$(value "$REPLY")
 
-  MODE="vertical-6"
-  [ $LEN -lt 3 ] && MODE="horizontal"
-
   local SPOTS=$(echo "$LEN" | awk '{for(i=65; i<65+$0; i++) printf "%c,",i}')
 
-  pick_by_order "Pick outputs by order to match ${SPOTS::-1}:" "$OUTPUTS" "$LEN" "$MODE"
+  pick_by_order "Pick outputs by order to match ${SPOTS::-1}:" "$OUTPUTS" "$LEN"
   [ -z "$REPLY" ] && return
 
   local A=$(element "$REPLY" 0 | value)
@@ -662,12 +645,10 @@ save_layout () {
     return 1
   fi
 
-  echo "CAUTION, this operation will overwrite any"
-  echo "existing layout configuration set before."
-  confirm "Do you want to proceed?"
-  
-  if [ -z "$REPLY" ] || [ "$(value "$REPLY")" = "no" ]; then
-    return
+  if [ -f "$LAYOUT_FILE" ]; then
+    confirm "Should overwrite existing layout?"
+    [ -z "$REPLY" ] && return
+    [ "$(value "$REPLY")" = "no" ] && return
   fi
 
   mkdir -p $CONFIG_HOME
@@ -681,7 +662,7 @@ save_layout () {
     echo "$OUTPUT" | head -n 1 >> "$LAYOUT_FILE"
   done
 
-  echo "Layout saved successfully"
+  echo "Layout has been saved successfully"
 }
 
 load_layout () {
