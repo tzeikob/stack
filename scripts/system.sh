@@ -306,6 +306,7 @@ install_utilities () {
   cp ~/stack/resources/stack/displays "$STACK_HOME"
   cp ~/stack/resources/stack/drive "$STACK_HOME"
   cp ~/stack/resources/stack/dropbox "$STACK_HOME"
+  cp ~/stack/resources/stack/notifications "$STACK_HOME"
 
   ln -sf "$STACK_HOME/clock" /usr/local/bin/clock
   ln -sf "$STACK_HOME/trash" /usr/local/bin/trash
@@ -317,8 +318,9 @@ install_utilities () {
   ln -sf "$STACK_HOME/displays" /usr/local/bin/displays
   ln -sf "$STACK_HOME/drive" /usr/local/bin/drive
   ln -sf "$STACK_HOME/dropbox" /usr/local/bin/dropbox
+  ln -sf "$STACK_HOME/notifications" /usr/local/bin/notifications
 
-  echo "displays load layout" >> ~/.xinitrc
+  echo 'displays load layout || notifications push "Display Layout" "Unable to load display layout, falling back to auto"' >> ~/.xinitrc
 
   echo "Stack utilities have been installed"
 }

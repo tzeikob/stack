@@ -702,9 +702,14 @@ load_layout () {
     }
   }' "$LAYOUT_FILE" | tr $'\n' ' ')
 
-  xrandr $ARGS &&
-    echo "Layout has been loaded successfully" ||
+  xrandr $ARGS
+
+  if [ ! $? = 0 ]; then
     echo "Unable to load layout, unknown error occurred"
+    return 1
+  fi
+
+  echo "Layout has been loaded successfully"  
 }
 
 help () {
@@ -813,7 +818,7 @@ once () {
     "help") help "once";;
     "load")
       case "$2" in
-        "layout") load_layout;;
+        "layout") load_layout || return 1;;
         *) echo "Invalid or unknown command";; 
       esac;;
     *) echo "Invalid or unknown command";; 
