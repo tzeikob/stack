@@ -19,13 +19,13 @@ MA=$'\e[0;35m'
 RS=$'\e[m'
 
 abort () {
-  local MESSAGE=${1:-"Something went wrong"}
-  local CODE=${2:-1}
+  local MESSAGE=$1
 
-  echo "$MESSAGE"
-  notify-send -u critical -t 5000 "We have problem!" "$MESSAGE"
+  if [ -n "$MESSAGE" ]; then
+    echo "$MESSAGE"
+  fi
 
-  exit $CODE
+  exit 1
 }
 
 require () {

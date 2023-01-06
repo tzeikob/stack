@@ -686,7 +686,7 @@ save_layout () {
 
 load_layout () {
   if [ ! -f "$LAYOUT_FILE" ]; then
-    echo "Unable to load layout, file not found"
+    echo "Unable to load the display layout, file not found"
     return
   fi
 
@@ -702,14 +702,12 @@ load_layout () {
     }
   }' "$LAYOUT_FILE" | tr $'\n' ' ')
 
-  xrandr $ARGS
+  xrandr $ARGS && echo "Display layout loaded successfully"
 
   if [ ! $? = 0 ]; then
-    echo "Unable to load layout, unknown error occurred"
+    echo "Unable to load the display layout"
     return 1
   fi
-
-  echo "Layout has been loaded successfully"  
 }
 
 help () {
@@ -815,13 +813,13 @@ loop () {
 
 once () {
   case "$1" in
-    "help") help "once";;
+    "help") help once;;
     "load")
       case "$2" in
-        "layout") load_layout || return 1;;
-        *) echo "Invalid or unknown command";; 
+        "layout") load_layout || abort;;
+        *) abort "Invalid or unknown command";;
       esac;;
-    *) echo "Invalid or unknown command";; 
+    *) abort "Invalid or unknown command";;
   esac
 }
 
