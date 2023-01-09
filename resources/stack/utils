@@ -202,11 +202,12 @@ pick_one () {
   REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$AES_LN" -S /\($KVS.*\)//v)
 }
 
-pick_by_order () {
+pick_many () {
   local PROMPT=$1
   local OPTIONS=$2
-  local COUNT=$3
-  local MODE=$4
+  local MIN=$3
+  local MAX=$4
+  local MODE=$5
 
   if [[ "$OPTIONS" =~ ^($AES)*$ ]]; then
     return 1
@@ -219,10 +220,14 @@ pick_by_order () {
   if [[ "$MODE" =~ ^vertical-[1-9][0-9]*$ ]]; then
     local LINES=$(echo "$MODE" | cut -d '-' -f 2)
     REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$AES_LN" -l -L "$AES" -n "$LINES" -S /\($KVS.*\)//v -P "$AES")
+    local COUNT=$(count "$REPLY")
 
-    while [ -n "$REPLY" ] && [ ! $(count "$REPLY") == $COUNT ]; do
-      echo "Please select exactly $COUNT items:"
+    while [ -n "$REPLY" ] && (( $COUNT < $MIN )) || (( $COUNT > $MAX )); do
+      [ $MIN = $MAX ] && echo "Please select exactly $MAX items:" ||
+        echo "Please select at least $MIN or up to $MAX items:"
+
       REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$AES_LN" -l -L "$AES" -n "$LINES" -S /\($KVS.*\)//v -P "$AES")
+      COUNT=$(count "$REPLY")
     done
 
     return
@@ -231,20 +236,28 @@ pick_by_order () {
   if [[ "$MODE" =~ ^tabular-[1-9][0-9]*$ ]]; then
     local TABS=$(echo "$MODE" | cut -d '-' -f 2)
     REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$AES_LN" -t "$TABS" -S /\($KVS.*\)//v -P "$AES")
+    local COUNT=$(count "$REPLY")
 
-    while [ -n "$REPLY" ] && [ ! $(count "$REPLY") == $COUNT ]; do
-      echo "Please select exactly $COUNT items:"
+    while [ -n "$REPLY" ] && (( $COUNT < $MIN )) || (( $COUNT > $MAX )); do
+      [ $MIN = $MAX ] && echo "Please select exactly $MAX items:" ||
+        echo "Please select at least $MIN or up to $MAX items:"
+
       REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$AES_LN" -t "$TABS" -S /\($KVS.*\)//v -P "$AES")
+      COUNT=$(count "$REPLY")
     done
 
     return
   fi
   
   REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$AES_LN" -S /\($KVS.*\)//v -P "$AES")
+  local COUNT=$(count "$REPLY")
 
-  while [ -n "$REPLY" ] && [ ! $(count "$REPLY") == $COUNT ]; do
-    echo "Please select exactly $COUNT items:"
+  while [ -n "$REPLY" ] && (( $COUNT < $MIN )) || (( $COUNT > $MAX )); do
+    [ $MIN = $MAX ] && echo "Please select exactly $MAX items:" ||
+      echo "Please select at least $MIN or up to $MAX items:"
+
     REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$AES_LN" -S /\($KVS.*\)//v -P "$AES")
+    COUNT=$(count "$REPLY")
   done
 }
 

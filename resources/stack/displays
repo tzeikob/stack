@@ -538,6 +538,110 @@ rotate () {
     echo "Unable to rotate the $NAME output"
 }
 
+mirror () {
+  local NAME=$1
+
+  if [ -z "$NAME" ]; then
+    local ACTIVE="$(outputs active)"
+    local ACTIVE_LEN="$(count "$ACTIVE")"
+    
+    if [ $ACTIVE_LEN = 0 ]; then
+      echo "Unable to find active outptus"
+      return 1
+    elif [ $ACTIVE_LEN = 1 ]; then
+      echo "Cannot set mirror for one active output"
+      return 1
+    fi
+
+    pick_one "Select which output to mirror:" "$ACTIVE" || return 1
+    [ -z "$REPLY" ] && return
+    
+    NAME=$(value "$REPLY")
+  fi
+
+  local OUTPUT=$(output "$NAME" || echo "err:$?")
+
+  if [[ "$OUTPUT" =~ ^err: ]]; then
+    echo "Unable to find the $NAME output"
+    return 1
+  elif ! is_connected "$OUTPUT"; then
+    echo "Cannot mirror a disconnected output"
+    return 1
+  elif ! is_active "$OUTPUT"; then
+    echo "Cannot mirror an inactive output"
+    return 1
+  fi
+
+  local OTHERS="$(outputs active | sed -E "s/${NAME}(${AES})?//g" | sed -E "s/(.*)${AES}$/\1/g")"
+  local OTHERS_LEN=$(count "$OTHERS")
+
+  local MIRRORS=""
+
+  if [ $OTHERS_LEN = 0 ]; then
+    echo "Cannot set mirror mode for one active output"
+    return 1
+  elif [ $OTHERS_LEN = 1 ]; then
+    MIRRORS="$OTHERS"
+  else
+    pick_many "Select on which outputs to mirror the $NAME:" "${OTHERS}" 1 "$OTHERS_LEN" || return 1
+    [ -z "$REPLY" ] && return
+
+    MIRRORS="$REPLY"
+  fi
+
+  local MODES="$(echo "$OUTPUT" | tail -n +2 | awk -F$KVS '{ORS="'$AES'";} {print $1}')"
+  [[ "$MODES" =~ .*${AES}$ ]] && MODES="$(echo "${MODES::-${#AES}}")"
+
+  local I=0
+  local MIRRORS_LEN=$(count "$MIRRORS")
+  for ((I=0; I<$MIRRORS_LEN; I++)); do
+    local MIRROR_NAME="$(element "$MIRRORS" "$I")"
+    local MIRROR="$(output "$MIRROR_NAME")"
+    local MIRROR_MODES="$(echo "$MIRROR" | tail -n +2 | awk -F$KVS '{ORS="'$AES'";} {print $1}')"
+
+    local SHARED=""
+    local K=0
+    local MODES_LEN=$(count "$MODES")
+    for ((K=0; K<$MODES_LEN; K++)); do
+      local MODE=$(element "$MODES" "$K")
+
+      if [[ "$MIRROR_MODES" =~ "$MODE" ]]; then
+        SHARED+=$MODE$AES
+      fi
+    done
+
+    MODES=$SHARED
+    [[ "$MODES" =~ .*${AES}$ ]] && MODES="$(echo "${MODES::-${#AES}}")"
+  done
+
+  local MODES_LEN=$(count "$MODES")
+  local MODE=""
+
+  if [ $MODES_LEN = 0 ]; then
+    echo "Unable to mirror outputs, do not share common modes"
+    return 1
+  elif [ $MODES_LEN = 1 ]; then
+    MODE=$MODES
+  else
+    pick_one "Select the mirroring resolution:" "$MODES" "tabular-4" || return 1
+    [ -z "$REPLY" ] && return
+
+    MODE="$(value "$REPLY")"
+  fi
+
+  local POS=$(echo "$OUTPUT" | head -n 1 | awk -F$AES '{print $5}')
+  local ARGS="--output $NAME --mode $MODE --pos $POS --rotate normal --reflect normal"
+
+  local I=0
+  for ((I=0; I<$MIRRORS_LEN; I++)); do
+    local MIRROR_NAME="$(element "$MIRRORS" "$I")"
+    ARGS+=" --output $MIRROR_NAME --mode $MODE --pos $POS --rotate normal --reflect normal"
+  done
+
+  xrandr $ARGS && echo "Output $NAME has been mirrored successfully" ||
+    echo "Unable to set $NAME output into mirror mode"
+}
+
 pick_layout () {
   local OUTPUTS=$1
 
@@ -600,7 +704,7 @@ set_layout () {
 
   local SPOTS=$(echo "$LEN" | awk '{for(i=65; i<65+$0; i++) printf "%c,",i}')
 
-  pick_by_order "Pick outputs by order to match ${SPOTS::-1}:" "$OUTPUTS" "$LEN"
+  pick_many "Pick outputs by order to match ${SPOTS::-1}:" "$OUTPUTS" "$LEN" "$LEN"
   [ -z "$REPLY" ] && return
 
   local A=$(element "$REPLY" 0 | value)
@@ -721,6 +825,7 @@ help () {
     "" "" \
     "rotate [<name> [<mode>]]" "Set output rotation to normal, right, left or inverted." \
     "reflect [<name> [<mode>]]" "Set output reflection to normal, x, y or xy axes." \
+    "mirror [<name>]" "Mirror the given active output to other outputs." \
     "" "" \
     "save layout" "Persist the current display layout for next boots."
 }
@@ -776,6 +881,7 @@ loop () {
         esac;;
       "rotate") rotate "${CMD[1]}" "${CMD[2]}";;
       "reflect") reflect "${CMD[1]}" "${CMD[2]}";;
+      "mirror") mirror "${CMD[1]}";;
       *) echo "Invalid or unknown command";;
     esac
   done
