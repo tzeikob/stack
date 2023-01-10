@@ -25,13 +25,7 @@ outputs () {
     RE+='\s.*\sprimary\s.*'
   fi
 
-  local OUTPUTS=$(screen | awk '{ORS="'$AES'";} /'${RE}'/{print $1}')
-
-  if [[ "$OUTPUTS" =~ .*${AES}$ ]]; then
-    echo "${OUTPUTS::-${#AES}}"
-  else
-    echo "$OUTPUTS"
-  fi
+  screen | awk '{ORS="'$AES'";} /'${RE}'/{print $1}'
 }
 
 output () {
@@ -80,8 +74,7 @@ output () {
       if ($0 ~ /^\s+[0-9]+x[0-9]+/) {
         rates=""
         for (i=2; i<=NF; i++) {
-          rates=rates $i
-          if (i<NF) rates=rates AES
+          rates=rates $i AES
         }
         print $1 KVS rates
       } else exit
@@ -130,10 +123,6 @@ pick_resolution () {
 
   local RESOLUTIONS="$(echo "$OUTPUT" |
     awk -F$KVS '{ORS="'$AES'";} {if ($0 ~ /^[0-9]+x[0-9]+/) {print $1}}')"
-
-  if [[ "$RESOLUTIONS" =~ .*${AES}$ ]]; then
-    RESOLUTIONS="${RESOLUTIONS::-${#AES}}"
-  fi
 
   local LEN=$(count "$RESOLUTIONS")
 
@@ -203,7 +192,7 @@ show_status () {
   fi
 
   echo "$OUTPUTS" | awk -F$AES '{
-    out=$1; for(i=2;i<=NF;i++) out=out ","$i;
+    out=$1; for(i=2;i<=NF;i++) if ($i) out=out ","$i;
     print "Connected Outputs:      "out
   }'
 
@@ -572,7 +561,7 @@ mirror () {
     return 1
   fi
 
-  local OTHERS="$(outputs active | sed -E "s/${NAME}(${AES})?//g" | sed -E "s/(.*)${AES}$/\1/g")"
+  local OTHERS="$(outputs active | sed -E "s/${NAME}(${AES})?//g")"
   local OTHERS_LEN=$(count "$OTHERS")
 
   local MIRRORS=""
@@ -590,7 +579,6 @@ mirror () {
   fi
 
   local MODES="$(echo "$OUTPUT" | tail -n +2 | awk -F$KVS '{ORS="'$AES'";} {print $1}')"
-  [[ "$MODES" =~ .*${AES}$ ]] && MODES="$(echo "${MODES::-${#AES}}")"
 
   local I=0
   local MIRRORS_LEN=$(count "$MIRRORS")
@@ -611,7 +599,6 @@ mirror () {
     done
 
     MODES=$SHARED
-    [[ "$MODES" =~ .*${AES}$ ]] && MODES="$(echo "${MODES::-${#AES}}")"
   done
 
   local MODES_LEN=$(count "$MODES")

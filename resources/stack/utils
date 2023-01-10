@@ -179,6 +179,10 @@ pick_one () {
   local OPTIONS=$2
   local MODE=$3
 
+  if [[ "$OPTIONS" =~ .*${AES}$ ]]; then
+    OPTIONS="${OPTIONS::-${#AES}}"
+  fi
+
   if [[ "$OPTIONS" =~ ^($AES)*$ ]]; then
     return 1
   elif [ ! $(count "$OPTIONS") -gt 0 ]; then
@@ -208,6 +212,10 @@ pick_many () {
   local MIN=$3
   local MAX=$4
   local MODE=$5
+
+  if [[ "$OPTIONS" =~ .*${AES}$ ]]; then
+    OPTIONS="${OPTIONS::-${#AES}}"
+  fi
 
   if [[ "$OPTIONS" =~ ^($AES)*$ ]]; then
     return 1
@@ -283,12 +291,20 @@ restore_separator () {
 count () {
   local ELEMENTS="$1"
 
+  if [[ "$ELEMENTS" =~ .*${AES}$ ]]; then
+    ELEMENTS="${ELEMENTS::-${#AES}}"
+  fi
+
   echo "$ELEMENTS" | awk -F "$AES" '{print NF}'
 }
 
 element () {
   local ELEMENTS=$1
   local INDEX=$2
+
+  if [[ "$ELEMENTS" =~ .*${AES}$ ]]; then
+    ELEMENTS="${ELEMENTS::-${#AES}}"
+  fi
 
   INDEX=$((INDEX + 1))
   echo "$ELEMENTS" | awk -F "$AES" '{print $'$INDEX'}'
