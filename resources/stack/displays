@@ -94,7 +94,7 @@ is_active () {
   local OUTPUT=$1
 
   echo "$OUTPUT" | head -n 1 |
-    awk '/'$AES'connected'$AES'.*'$AES'[0-9]+x[0-9]+'$AES'/ {c=0;next} {c=1} END {exit c}'
+    awk '/'$AES'connected'$AES'(primary)?'$AES'[0-9]+x[0-9]+'$AES'/ {c=0;next} {c=1} END {exit c}'
 }
 
 is_primary () {
