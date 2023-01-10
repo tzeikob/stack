@@ -771,7 +771,7 @@ save_layout () {
 
 load_layout () {
   if [ ! -f "$LAYOUT_FILE" ]; then
-    echo "No layout file found, load is skipped"
+    echo "No layout file found, operation is skipped"
     return
   fi
 
@@ -790,7 +790,7 @@ load_layout () {
   xrandr $ARGS && echo "Display layout loaded successfully"
 
   if [ ! $? = 0 ]; then
-    echo "Unable to load the display layout"
+    echo "Failed to load the display layout"
     return 1
   fi
 }
@@ -827,7 +827,8 @@ help () {
     "reflect [<name> [<mode>]]" "Set output reflection to normal, x, y or xy axes." \
     "mirror [<name>]" "Mirror the given active output to other outputs." \
     "" "" \
-    "save layout" "Persist the current display layout for next boots."
+    "save layout" "Persist the current display layout for next boots." \
+    "restore layout" "Restores the display layout."
 }
 
 loop () {
@@ -877,6 +878,11 @@ loop () {
       "save")
         case "${CMD[1]}" in
           "layout") save_layout;;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "restore")
+        case "${CMD[1]}" in
+          "layout") load_layout;;
           *) echo "Invalid or unknown command";;
         esac;;
       "rotate") rotate "${CMD[1]}" "${CMD[2]}";;
