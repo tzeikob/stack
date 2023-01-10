@@ -763,7 +763,7 @@ load_layout () {
   fi
 
   local ARGS=$(awk -F$AES '{
-    if ($8) {
+    if ($4) {
       if (!$6) $6="normal";
       if (!$7) $7="normal";
       args="--output "$1" --mode "$8" --rate "$9" --pos "$5" --rotate "$6" --reflect "$7
