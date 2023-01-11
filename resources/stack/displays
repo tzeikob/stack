@@ -61,7 +61,7 @@ output () {
 
   [ -n "$MODE" ] && STATE+="$AES$MODE" || STATE+="$AES$AES"
 
-  RE='^\s+([0-9]+x[0-9]+)\s.*\s([0-9]{2}.[0-9]{2})\*?\s?\+.*'
+  RE='^\s+([0-9]+x[0-9]+)\s.*\s([0-9][0-9]+.[0-9]{2})\*?\s?\+.*'
 
   local NATIVE="$(echo "$SCREEN" | sed -n "/$CRITERION/{:a;N;/\+/!ba;/\+/p}" |
     awk 'match($0,/'$RE'/,a) {print a[1]"@"a[2]"Hz"}')"
@@ -139,21 +139,21 @@ pick_rate () {
   local RESOLUTION=$2
 
   local RATES="$(echo "$OUTPUT" |
-    awk -F$KVS '{if ($0 ~ /^'$RESOLUTION'/) {print $2; exit}}')"
+    awk -F$KVS '/^[0-9]+x[0-9]+/{if ($1 == "'$RESOLUTION'") {print $2; exit}}')"
 
   local LEN=$(count "$RATES")
 
   if [ ! $LEN -gt 0 ]; then
-    echo "No available rates have been found"
+    echo "No available refresh rates have been found"
     return 1
   fi
   
-  pick_one "Select a rate:" "$RATES" "tabular-4"
+  pick_one "Select a refresh rate:" "$RATES" "tabular-4"
 }
 
 prompt () {
   local OUTPUTS="$(outputs primary)"
-  local STATUS="$(element "$OUTPUTS" 0)"
+  local STATUS="$(element "$OUTPUTS" 0 | value)"
 
   read -rep "[displays:$YE${STATUS}$RS] " REPLY
 }
@@ -187,13 +187,13 @@ show_status () {
   local LEN=$(count "$OUTPUTS")
 
   if [ $LEN = 0 ]; then
-    echo "Connected Outputs:      none"
+    echo "Active Outputs:         none"
     return
   fi
 
   echo "$OUTPUTS" | awk -F$AES '{
     out=$1; for(i=2;i<=NF;i++) if ($i) out=out ","$i;
-    print "Connected Outputs:      "out
+    print "Active Outputs:         "out
   }'
 
   local INDEX=0
@@ -232,7 +232,7 @@ show_output () {
   local OUTPUT=$(output "$NAME" || echo "err:$?")
 
   if [[ "$OUTPUT" =~ ^err: ]]; then
-    echo "Unable to find the $NAME output"
+    echo "Unable to find output $NAME"
     return 1
   fi
 
@@ -282,6 +282,11 @@ show_output () {
 list_outputs () {
   local STATUS=$1
 
+  if [[ ! "$STATUS" =~ ^(|connected|disconnected|active|inactive|primary)$ ]]; then
+    echo "Invalid output status argument"
+    return 1
+  fi
+
   local OUTPUTS=$(outputs "$STATUS")
   local LEN=$(count "$OUTPUTS")
 
@@ -314,7 +319,7 @@ set_mode () {
   local OUTPUT=$(output "$NAME" || echo "err:$?")
 
   if [[ "$OUTPUT" =~ ^err: ]]; then
-    echo "Unable to find the $NAME output"
+    echo "Unable to find output $NAME"
     return 1
   elif ! is_connected "$OUTPUT"; then
     echo "Cannot set mode of a disconnected output"
@@ -329,6 +334,9 @@ set_mode () {
     [ -z "$REPLY" ] && return
     
     RESOLUTION=$(value "$REPLY")
+  elif [[ ! "$RESOLUTION" =~ ^[0-9]+x[0-9]+$ ]]; then
+    echo "Invalid resolution argument"
+    return 1
   fi
 
   if [ -z "$RATE" ]; then
@@ -336,11 +344,14 @@ set_mode () {
     [ -z "$REPLY" ] && return
     
     RATE=$(value "$REPLY")
+  elif [[ ! "$RATE" =~ ^[0-9][0-9]+.[0-9][0-9]$ ]]; then
+    echo "Invalid refresh rate argument"
+    return 1
   fi
 
   xrandr --output "$NAME" --mode "$RESOLUTION" --rate "$RATE" &&
-    echo "Output $NAME mode set to $RESOLUTION@${RATE}Hz" ||
-    echo "Unable to set mode of the $NAME output"
+    echo "Output $NAME mode set to $RESOLUTION" ||
+    echo "Failed to set mode of output $NAME"
 }
 
 set_primary () {
@@ -356,7 +367,7 @@ set_primary () {
   local OUTPUT=$(output "$NAME" || echo "err:$?")
 
   if [[ "$OUTPUT" =~ ^err: ]]; then
-    echo "Unable to find the $NAME output"
+    echo "Unable to find output $NAME"
     return 1
   elif ! is_connected "$OUTPUT"; then
     echo "Cannot set primary a disconnected output"
@@ -371,7 +382,7 @@ set_primary () {
 
   xrandr --output "$NAME" --primary &&
     echo "Output $NAME has been set as primary" ||
-    echo "Unable to set the $NAME output as primary"
+    echo "Failed to set output $NAME as primary"
 }
 
 set_on () {
@@ -387,7 +398,7 @@ set_on () {
   local OUTPUT=$(output "$NAME" || echo "err:$?")
 
   if [[ "$OUTPUT" =~ ^err: ]]; then
-    echo "Unable to find the $NAME output"
+    echo "Unable to find output $NAME"
     return 1
   elif ! is_connected "$OUTPUT"; then
     echo "Cannot activate a disconnected output"
@@ -399,7 +410,7 @@ set_on () {
 
   xrandr --output "$NAME" --auto &&
     echo "Output $NAME has been activated" ||
-    echo "Unable to activate the $NAME output"
+    echo "Failed to activate output $NAME"
 }
 
 set_off () {
@@ -415,7 +426,7 @@ set_off () {
   local OUTPUT=$(output "$NAME" || echo "err:$?")
 
   if [[ "$OUTPUT" =~ ^err: ]]; then
-    echo "Unable to find the $NAME output"
+    echo "Unable to find output $NAME"
     return 1
   elif ! is_connected "$OUTPUT"; then
     echo "Cannot deactivate a disconnected output"
@@ -430,7 +441,7 @@ set_off () {
 
   xrandr --output "$NAME" --off &&
     echo "Output $NAME has been deactivated" ||
-    echo "Unable to deactivate the $NAME output"
+    echo "Failed to deactivate output $NAME"
 }
 
 reflect () {
@@ -447,7 +458,7 @@ reflect () {
   local OUTPUT=$(output "$NAME" || echo "err:$?")
 
   if [[ "$OUTPUT" =~ ^err: ]]; then
-    echo "Unable to find the $NAME output"
+    echo "Unable to find output $NAME"
     return 1
   elif ! is_connected "$OUTPUT"; then
     echo "Cannot reflect a disconnected output"
@@ -471,13 +482,13 @@ reflect () {
   fi
   
   if [[ ! "$MODE" =~ ^(normal|x|y|xy)$ ]]; then
-    echo "Unable to reflect, invalid reflection mode"
+    echo "Invalid reflection mode argument"
     return 1
   fi
 
   xrandr --output "$NAME" --reflect "$MODE" &&
     echo "Output $NAME has been reflected to $MODE mode" ||
-    echo "Unable to reflect the $NAME output"
+    echo "Failed to reflect output $NAME"
 }
 
 rotate () {
@@ -494,7 +505,7 @@ rotate () {
   local OUTPUT=$(output "$NAME" || echo "err:$?")
 
   if [[ "$OUTPUT" =~ ^err: ]]; then
-    echo "Unable to find the $NAME output"
+    echo "Unable to find output $NAME"
     return 1
   elif ! is_connected "$OUTPUT"; then
     echo "Cannot reflect a disconnected output"
@@ -518,13 +529,13 @@ rotate () {
   fi
   
   if [[ ! "$MODE" =~ ^(normal|right|left|inverted)$ ]]; then
-    echo "Unable to rotate, invalid rotation mode"
+    echo "Invalid rotation mode argument"
     return 1
   fi
 
   xrandr --output "$NAME" --rotate "$MODE" &&
     echo "Output $NAME has been rotated to $MODE mode" ||
-    echo "Unable to rotate the $NAME output"
+    echo "Failed to rotate output $NAME"
 }
 
 mirror () {
@@ -551,7 +562,7 @@ mirror () {
   local OUTPUT=$(output "$NAME" || echo "err:$?")
 
   if [[ "$OUTPUT" =~ ^err: ]]; then
-    echo "Unable to find the $NAME output"
+    echo "Unable to find output $NAME"
     return 1
   elif ! is_connected "$OUTPUT"; then
     echo "Cannot mirror a disconnected output"
@@ -572,7 +583,7 @@ mirror () {
   elif [ $OTHERS_LEN = 1 ]; then
     MIRRORS="$OTHERS"
   else
-    pick_many "Select on which outputs to mirror the $NAME:" "${OTHERS}" 1 "$OTHERS_LEN" || return 1
+    pick_many "Select on which outputs to mirror $NAME:" "${OTHERS}" 1 "$OTHERS_LEN" || return 1
     [ -z "$REPLY" ] && return
 
     MIRRORS="$REPLY"
@@ -583,7 +594,7 @@ mirror () {
   local I=0
   local MIRRORS_LEN=$(count "$MIRRORS")
   for ((I=0; I<$MIRRORS_LEN; I++)); do
-    local MIRROR_NAME="$(element "$MIRRORS" "$I")"
+    local MIRROR_NAME="$(element "$MIRRORS" "$I" | value)"
     local MIRROR="$(output "$MIRROR_NAME")"
     local MIRROR_MODES="$(echo "$MIRROR" | tail -n +2 | awk -F$KVS '{ORS="'$AES'";} {print $1}')"
 
@@ -591,7 +602,7 @@ mirror () {
     local K=0
     local MODES_LEN=$(count "$MODES")
     for ((K=0; K<$MODES_LEN; K++)); do
-      local MODE=$(element "$MODES" "$K")
+      local MODE=$(element "$MODES" "$K" | value)
 
       if [[ "$MIRROR_MODES" =~ "$MODE" ]]; then
         SHARED+=$MODE$AES
@@ -605,10 +616,11 @@ mirror () {
   local MODE=""
 
   if [ $MODES_LEN = 0 ]; then
-    echo "Unable to mirror outputs, do not share common modes"
+    echo "Unable to mirror, mirrors do not share common modes"
     return 1
   elif [ $MODES_LEN = 1 ]; then
     MODE=$MODES
+    [[ "$MODE" =~ .*${AES}$ ]] && MODE="${MODE::-${#AES}}"
   else
     pick_one "Select the mirroring resolution:" "$MODES" "tabular-4" || return 1
     [ -z "$REPLY" ] && return
@@ -621,12 +633,13 @@ mirror () {
 
   local I=0
   for ((I=0; I<$MIRRORS_LEN; I++)); do
-    local MIRROR_NAME="$(element "$MIRRORS" "$I")"
+    local MIRROR_NAME="$(element "$MIRRORS" "$I" | value)"
     ARGS+=" --output $MIRROR_NAME --mode $MODE --pos $POS --rotate normal --reflect normal"
   done
 
-  xrandr $ARGS && echo "Output $NAME has been mirrored successfully" ||
-    echo "Unable to set $NAME output into mirror mode"
+  xrandr $ARGS &&
+    echo "Output $NAME has been mirrored successfully" ||
+    echo "Failed to mirror output $NAME"
 }
 
 pick_layout () {
@@ -677,10 +690,10 @@ set_layout () {
     echo "No active outputs have been found"
     return
   elif [ $LEN = 1 ]; then
-    echo "No layout options found for setups with one active output"
+    echo "Cannot set layout for one active output"
     return
   elif [ $LEN -gt 3 ]; then
-    echo "No layout options found for setups with more than 3 active outputs"
+    echo "No layout options found for more than 3 active outputs"
     return
   fi
 
@@ -720,7 +733,7 @@ set_layout () {
   esac
 
   if [ ! $? = 0 ]; then
-    echo "Unable to set layout, unknown error occurred"
+    echo "Failed to set layout mode"
     return 1
   fi
 
@@ -758,12 +771,12 @@ save_layout () {
 
 load_layout () {
   if [ ! -f "$LAYOUT_FILE" ]; then
-    echo "No layout file found, operation is skipped"
+    echo "Unable to load layout, no layout file found"
     return
   fi
 
   local ARGS=$(awk -F$AES '{
-    if ($4) {
+    if ($2 == "connected" && $4) {
       if (!$6) $6="normal";
       if (!$7) $7="normal";
       args="--output "$1" --mode "$8" --rate "$9" --pos "$5" --rotate "$6" --reflect "$7
@@ -774,22 +787,22 @@ load_layout () {
     }
   }' "$LAYOUT_FILE" | tr $'\n' ' ')
 
-  xrandr $ARGS && echo "Display layout loaded successfully"
+  xrandr $ARGS && echo "Displays layout loaded successfully"
 
   if [ ! $? = 0 ]; then
-    echo "Failed to load the display layout"
+    echo "Failed to load the displays layout"
     return 1
   fi
 }
 
 help () {
   if [ "$1" = "once" ]; then
-    echo "Usage: displays COMMAND"
+    echo "Usage: displays COMMAND [OBJECT] [ARGUMENTS]..."
 
     echo -e "\nCOMMANDS"
     printf " %-12s\t%s\n" \
-      "help" "Show this message" \
-      "load layout" "Load display layout"
+      "help" "Show this message." \
+      "load layout" "Load the default displays layout."
 
     return
   fi
@@ -808,14 +821,14 @@ help () {
     "set mode [<name> [<res> [<rate>]]]" "Set the mode of the given output." \
     "set primary [<name>]" "Set the given output as primary." \
     "set on|off [<name>]" "Set active or inactive the given output." \
-    "set layout" "Set the layout of active outputs." \
     "" "" \
     "rotate [<name> [<mode>]]" "Set output rotation to normal, right, left or inverted." \
     "reflect [<name> [<mode>]]" "Set output reflection to normal, x, y or xy axes." \
     "mirror [<name>]" "Mirror the given active output to other outputs." \
     "" "" \
-    "save layout" "Persist the current display layout for next boots." \
-    "restore layout" "Restores the display layout."
+    "set layout" "Set the layout of active outputs." \
+    "save layout" "Persist the current displays layout to disk." \
+    "restore layout" "Restore the displays layout from disk."
 }
 
 loop () {

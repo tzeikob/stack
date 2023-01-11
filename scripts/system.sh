@@ -320,7 +320,7 @@ install_utilities () {
   ln -sf "$STACK_HOME/dropbox" /usr/local/bin/dropbox
   ln -sf "$STACK_HOME/notifications" /usr/local/bin/notifications
 
-  echo 'displays load layout || notifications push "Display Layout" "Unable to load display layout, falling back to auto"' >> ~/.xinitrc
+  echo 'displays load layout || notifications push "Displays Layout" "Unable to load the displays layout"' >> ~/.xinitrc
 
   echo "Stack utilities have been installed"
 }
