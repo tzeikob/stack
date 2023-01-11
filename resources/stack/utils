@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-AES=$',,'
-AES_LN=$',,\n'
+AES=$';;'
+AES_LN=$';;\n'
 KVS=$'::'
 
 CONFIG_HOME=~/.config/stack
@@ -167,10 +167,14 @@ print () {
 
 confirm () {
   local PROMPT=$1
+  local OPTIONS=$2
 
   echo "$PROMPT"
-  
-  local OPTIONS="Yes${KVS}yes${AES}No${KVS}no"
+
+  if [ -z "$OPTIONS" ]; then
+    OPTIONS="Yes${KVS}yes${AES}No${KVS}no"
+  fi
+
   REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$AES_LN" -S /\($KVS.*\)//v)
 }
 
