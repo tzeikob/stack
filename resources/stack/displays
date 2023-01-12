@@ -6,6 +6,7 @@ source /opt/stack/utils
 LAYOUT_FILE=$CONFIG_HOME/displays.layout
 
 require "xorg-xrandr"
+require "xcalib"
 
 screen () {
   xrandr --current | sed "/^Screen 0:/,/^Screen/!d;//d"
@@ -81,6 +82,25 @@ output () {
     }')"
   
   echo -e "$STATE\n$PROFILES"
+}
+
+index () {
+  local NAME=$1
+
+  local OUTPUTS="$(outputs)"
+  local LEN=$(count "$OUTPUTS")
+
+  local INDEX=""
+  local I=0
+  for ((I=0; I<$LEN; I++)); do
+    local OUTPUT_NAME="$(element "$OUTPUTS" "$I" | value)"
+    if [ "$NAME" = "$OUTPUT_NAME" ]; then
+      INDEX=$I
+      break
+    fi
+  done
+
+  echo "$INDEX"
 }
 
 is_connected () {
@@ -795,6 +815,88 @@ load_layout () {
   fi
 }
 
+set_color () {
+  local NAME=$1
+  local COLOR=$2
+
+  if [ -z "$NAME" ]; then
+    pick_output active || return 1
+    [ -z "$REPLY" ] && return
+    
+    NAME=$(value "$REPLY")
+  fi
+  
+  local OUTPUT=$(output "$NAME" || echo "err:$?")
+
+  if [[ "$OUTPUT" =~ ^err: ]]; then
+    echo "Unable to find output $NAME"
+    return 1
+  elif ! is_connected "$OUTPUT"; then
+    echo "Cannot set color profile of a disconnected output"
+    return 1
+  elif ! is_active "$OUTPUT"; then
+    echo "Cannot set color profile of an inactive output"
+    return 1
+  fi
+
+  if [ -z "$COLOR" ]; then
+    local COLORS="$(ls /usr/share/color/ | awk '{ORS="'$AES'";} /.ic(c|m)$/')"
+    local COLORS_LEN=$(count "$COLORS")
+
+    if [ ! $COLORS_LEN -gt 0 ]; then
+      echo "No available color profiles have found"
+      return 1
+    fi
+
+    pick_one "Select a color profile:" "$COLORS" "vertical-4" || return 1
+    [ -z "$REPLY" ] && return
+
+    COLOR="$(value "$REPLY")"
+  fi
+
+  local INDEX="$(index "$NAME")"
+  local RESULT="$(xcalib -d "$DISPLAY" -s 0 -o "$INDEX" "/usr/share/color/$COLOR")"
+
+  if [[ ! "$RESULT" =~ ^(Warning|Err) ]]; then
+    echo "Color profile of $NAME set to $COLOR"
+  else
+    echo "Failed to set color profile $COLOR"
+  fi
+}
+
+reset_color () {
+  local NAME=$1
+
+  if [ -z "$NAME" ]; then
+    pick_output active || return 1
+    [ -z "$REPLY" ] && return
+    
+    NAME=$(value "$REPLY")
+  fi
+  
+  local OUTPUT=$(output "$NAME" || echo "err:$?")
+
+  if [[ "$OUTPUT" =~ ^err: ]]; then
+    echo "Unable to find output $NAME"
+    return 1
+  elif ! is_connected "$OUTPUT"; then
+    echo "Cannot reset color profile of a disconnected output"
+    return 1
+  elif ! is_active "$OUTPUT"; then
+    echo "Cannot reset color profile of an inactive output"
+    return 1
+  fi
+
+  local INDEX="$(index "$NAME")"
+  local RESULT="$(xcalib -d "$DISPLAY" -s 0 -o "$INDEX" -c)"
+
+  if [[ ! "$RESULT" =~ ^(Warning|Err) ]]; then
+    echo "Color profile of $NAME reset to default"
+  else
+    echo "Failed to reset color profile"
+  fi
+}
+
 help () {
   if [ "$1" = "once" ]; then
     echo "Usage: displays COMMAND [OBJECT] [ARGUMENTS]..."
@@ -825,6 +927,9 @@ help () {
     "rotate [<name> [<mode>]]" "Set output rotation to normal, right, left or inverted." \
     "reflect [<name> [<mode>]]" "Set output reflection to normal, x, y or xy axes." \
     "mirror [<name>]" "Mirror the given active output to other outputs." \
+    "" "" \
+    "set color [<name> [<profile>]]" "Set the color profile of the given output." \
+    "reset color [<name>]" "Reset the color profile of the given output." \
     "" "" \
     "set layout" "Set the layout of active outputs." \
     "save layout" "Persist the current displays layout to disk." \
@@ -873,6 +978,12 @@ loop () {
           "primary") set_primary "${CMD[2]}";;
           "on") set_on "${CMD[2]}";;
           "off") set_off "${CMD[2]}";;
+          "color") set_color "${CMD[2]}" "${CMD[3]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "reset")
+        case "${CMD[1]}" in
+          "color") reset_color "${CMD[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       "save")
