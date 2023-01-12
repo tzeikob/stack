@@ -318,12 +318,12 @@ key () {
   local INPUT=""
   [[ -p /dev/stdin ]] && INPUT="$(cat -)" || INPUT="${@}"
 
-  echo "$INPUT" | awk -F "$KVS" '{if ($1) {print $1} else {print $0}}'
+  echo "$INPUT" | awk -F "$KVS" '{if ($1 != "") {print $1} else {print $0}}'
 }
 
 value () {
   local INPUT=""
   [[ -p /dev/stdin ]] && INPUT="$(cat -)" || INPUT="${@}"
 
-  echo "$INPUT" | awk -F "$KVS" '{if ($2) {print $2} else {print $0}}'
+  echo "$INPUT" | awk -F "$KVS" '{if ($2 != "") {print $2} else {print $0}}'
 }

@@ -3,8 +3,6 @@
 set -o pipefail
 source /opt/stack/utils
 
-LAYOUT_FILE=$CONFIG_HOME/displays.layout
-
 require "xorg-xrandr"
 require "xcalib"
 
@@ -769,13 +767,16 @@ save_layout () {
     return 1
   fi
 
+  local LAYOUT_HOME="$CONFIG_HOME/displays"
+  local LAYOUT_FILE="$LAYOUT_HOME/layout"
+
   if [ -f "$LAYOUT_FILE" ]; then
     confirm "Should overwrite existing layout?"
     [ -z "$REPLY" ] && return
     [ "$(value "$REPLY")" = "no" ] && return
   fi
 
-  mkdir -p $CONFIG_HOME
+  mkdir -p $LAYOUT_HOME
   rm -f "$LAYOUT_FILE"
 
   local INDEX=0
@@ -790,6 +791,8 @@ save_layout () {
 }
 
 load_layout () {
+  local LAYOUT_FILE="$CONFIG_HOME/displays/layout"
+
   if [ ! -f "$LAYOUT_FILE" ]; then
     echo "Unable to load layout, no layout file found"
     return
@@ -857,11 +860,14 @@ set_color () {
   local INDEX="$(index "$NAME")"
   local RESULT="$(xcalib -d "$DISPLAY" -s 0 -o "$INDEX" "/usr/share/color/$COLOR")"
 
-  if [[ ! "$RESULT" =~ ^(Warning|Err) ]]; then
-    echo "Color profile of $NAME set to $COLOR"
-  else
+  if [[ "$RESULT" =~ ^(Warning|Err) ]]; then
     echo "Failed to set color profile $COLOR"
+    return 1
   fi
+
+  mkdir -p "$CONFIG_HOME/displays"
+  echo "$INDEX${KVS}$COLOR" > "$CONFIG_HOME/displays/$NAME.color"
+  echo "Color profile of $NAME set to $COLOR"
 }
 
 reset_color () {
@@ -890,11 +896,40 @@ reset_color () {
   local INDEX="$(index "$NAME")"
   local RESULT="$(xcalib -d "$DISPLAY" -s 0 -o "$INDEX" -c)"
 
-  if [[ ! "$RESULT" =~ ^(Warning|Err) ]]; then
-    echo "Color profile of $NAME reset to default"
-  else
+  if [[ "$RESULT" =~ ^(Warning|Err) ]]; then
     echo "Failed to reset color profile"
+    return 1
   fi
+
+  rm -f "$CONFIG_HOME/displays/$NAME.color"
+  echo "Color profile of $NAME reset to default"
+}
+
+load_colors () {
+  local COUNT=$(ls -1 $CONFIG_HOME/displays/*.color 2>/dev/null | wc -l)
+
+  if [ ! $COUNT -gt 0 ]; then
+    echo "No color files found, operation is skipped"
+    return
+  fi
+
+  local COLORS=($(ls $CONFIG_HOME/displays/*.color))
+
+  local I=0
+  for ((I=0; I<${#COLORS[@]}; I++)); do
+    local COLOR_FILE="${COLORS[I]}"
+    local COLOR=`cat "$COLOR_FILE"`
+    local INDEX="$(key "$COLOR")"
+    local FILE_NAME="$(value "$COLOR")"
+
+    local RESULT="$(xcalib -d "$DISPLAY" -s 0 -o "$INDEX" "/usr/share/color/$FILE_NAME")"
+
+    if [[ "$RESULT" =~ ^(Warning|Err) ]]; then
+      echo "Failed to load color profile $COLOR_FILE"
+    else
+      echo "Color profile $COLOR_FILE has been loaded"
+    fi
+  done
 }
 
 help () {
@@ -904,7 +939,8 @@ help () {
     echo -e "\nCOMMANDS"
     printf " %-12s\t%s\n" \
       "help" "Show this message." \
-      "load layout" "Load the default displays layout."
+      "load layout" "Load the default displays layout." \
+      "load colors" "Load displays profile colors."
 
     return
   fi
@@ -1012,6 +1048,7 @@ once () {
     "load")
       case "$2" in
         "layout") load_layout || abort;;
+        "colors") load_colors || abort;;
         *) abort "Invalid or unknown command";;
       esac;;
     *) abort "Invalid or unknown command";;
