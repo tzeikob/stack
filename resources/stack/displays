@@ -3,6 +3,9 @@
 set -o pipefail
 source /opt/stack/utils
 
+CONFIG_HOME=$HOME/.config/stack/displays
+LAYOUT_FILE=$CONFIG_HOME/layout
+
 require "xorg-xrandr"
 require "xcalib"
 
@@ -767,16 +770,13 @@ save_layout () {
     return 1
   fi
 
-  local LAYOUT_HOME="$CONFIG_HOME/displays"
-  local LAYOUT_FILE="$LAYOUT_HOME/layout"
-
   if [ -f "$LAYOUT_FILE" ]; then
     confirm "Should overwrite existing layout?"
     [ -z "$REPLY" ] && return
     [ "$(value "$REPLY")" = "no" ] && return
   fi
 
-  mkdir -p $LAYOUT_HOME
+  mkdir -p "$CONFIG_HOME"
   rm -f "$LAYOUT_FILE"
 
   local INDEX=0
@@ -791,8 +791,6 @@ save_layout () {
 }
 
 load_layout () {
-  local LAYOUT_FILE="$CONFIG_HOME/displays/layout"
-
   if [ ! -f "$LAYOUT_FILE" ]; then
     echo "Unable to load layout, no layout file found"
     return
@@ -871,9 +869,9 @@ set_color () {
   [ -z "$REPLY" ] && return
   [ "$(value "$REPLY")" = "no" ] && return
 
-  mkdir -p "$CONFIG_HOME/displays"
-  echo "$INDEX${KVS}$COLOR" > "$CONFIG_HOME/displays/$NAME.color"
-  echo "Profile saved to $CONFIG_HOME/displays/$NAME.color"
+  mkdir -p "$CONFIG_HOME"
+  echo "$INDEX${KVS}$COLOR" > "$CONFIG_HOME/$NAME.color"
+  echo "Profile saved to $CONFIG_HOME/$NAME.color"
 }
 
 reset_color () {
@@ -907,19 +905,19 @@ reset_color () {
     return 1
   fi
 
-  rm -f "$CONFIG_HOME/displays/$NAME.color"
+  rm -f "$CONFIG_HOME/$NAME.color"
   echo "Color profile of $NAME reset to default"
 }
 
 load_colors () {
-  local COUNT=$(ls -1 $CONFIG_HOME/displays/*.color 2>/dev/null | wc -l)
+  local COUNT=$(ls -1 $CONFIG_HOME/*.color 2>/dev/null | wc -l)
 
   if [ ! $COUNT -gt 0 ]; then
     echo "No color files found, operation is skipped"
     return
   fi
 
-  local COLORS=($(ls $CONFIG_HOME/displays/*.color))
+  local COLORS=($(ls $CONFIG_HOME/*.color))
 
   local FAILURES=()
   local I=0
