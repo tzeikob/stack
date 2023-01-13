@@ -237,6 +237,13 @@ show_status () {
       if (!$7) $7="normal";
       printf FRM,$1,$8,$9,$4,$5,$6,$7
     }'
+
+    local NAME="$(echo "$OUTPUT" | head -n 1 | awk -F$AES '{print $1}')"
+    if [ -f "$CONFIG_HOME/$NAME.color" ]; then
+      local COLOR=`cat "$CONFIG_HOME/$NAME.color"`
+      COLOR="$(value "$COLOR")"
+      echo "Color:  $COLOR"
+    fi
   done
 }
 
@@ -292,6 +299,13 @@ show_output () {
       if (!$7) $7="normal";
       printf FRM,$1,$2,$3,$8,$9,$6,$7,$4,$5,$10
     }'
+  fi
+
+  local NAME="$(echo "$OUTPUT" | head -n 1 | awk -F$AES '{print $1}')"
+  if [ -f "$CONFIG_HOME/$NAME.color" ]; then
+    local COLOR=`cat "$CONFIG_HOME/$NAME.color"`
+    COLOR="$(value "$COLOR")"
+    echo "Color:      $COLOR"
   fi
 
   echo "$OUTPUT" | tail -n +2 | head -n 1 |
