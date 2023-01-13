@@ -858,9 +858,9 @@ set_color () {
   fi
 
   local INDEX="$(index "$NAME")"
-  local RESULT="$(xcalib -d "$DISPLAY" -s 0 -o "$INDEX" "/usr/share/color/$COLOR")"
+  local RESULT="$(xcalib -d "$DISPLAY" -s 0 -o "$INDEX" "/usr/share/color/$COLOR" 2>&1)"
 
-  if [[ "$RESULT" =~ ^(Warning|Err) ]]; then
+  if [ -n "$RESULT" ]; then
     echo "Failed to set color profile $COLOR"
     return 1
   fi
@@ -900,9 +900,9 @@ reset_color () {
   fi
 
   local INDEX="$(index "$NAME")"
-  local RESULT="$(xcalib -d "$DISPLAY" -s 0 -o "$INDEX" -c)"
+  local RESULT="$(xcalib -d "$DISPLAY" -s 0 -o "$INDEX" -c 2>&1)"
 
-  if [[ "$RESULT" =~ ^(Warning|Err) ]]; then
+  if [ -n "$RESULT" ]; then
     echo "Failed to reset color profile"
     return 1
   fi
@@ -928,9 +928,9 @@ load_colors () {
     local INDEX="$(key "$COLOR")"
     local FILE_NAME="$(value "$COLOR")"
 
-    local RESULT="$(xcalib -d "$DISPLAY" -s 0 -o "$INDEX" "/usr/share/color/$FILE_NAME")"
+    local RESULT="$(xcalib -d "$DISPLAY" -s 0 -o "$INDEX" "/usr/share/color/$FILE_NAME" 2>&1)"
 
-    if [[ "$RESULT" =~ ^(Warning|Err) ]]; then
+    if [ -n "$RESULT" ]; then
       echo "Failed to load color profile $COLOR_FILE"
     else
       echo "Color profile $COLOR_FILE has been loaded"
