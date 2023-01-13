@@ -865,9 +865,15 @@ set_color () {
     return 1
   fi
 
+  confirm "Do you want to persist color profile?"
+  if [ -z "$REPLY" ] || [ "$(value "$REPLY")" = "no" ]; then
+    echo "Color profile of $NAME set to $COLOR"
+    return
+  fi
+
   mkdir -p "$CONFIG_HOME/displays"
   echo "$INDEX${KVS}$COLOR" > "$CONFIG_HOME/displays/$NAME.color"
-  echo "Color profile of $NAME set to $COLOR"
+  echo "Color profile of $NAME saved to $COLOR"
 }
 
 reset_color () {
