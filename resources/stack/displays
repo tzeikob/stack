@@ -843,7 +843,7 @@ set_color () {
   fi
 
   if [ -z "$COLOR" ]; then
-    local COLORS="$(ls /usr/share/color/ | awk '{ORS="'$AES'";} /.ic(c|m)$/')"
+    local COLORS="$(ls /usr/share/color 2>/dev/null | awk '{ORS="'$AES'";} /.ic(c|m)$/')"
     local COLORS_LEN=$(count "$COLORS")
 
     if [ ! $COLORS_LEN -gt 0 ]; then
