@@ -129,7 +129,7 @@ is_primary () {
 pick_output () {
   local STATUS=$1
 
-  local OUTPUTS=$(outputs "$STATUS")
+  local OUTPUTS="$(outputs "$STATUS")"
   local LEN=$(count "$OUTPUTS")
 
   if [ ! $LEN -gt 0 ]; then
@@ -205,7 +205,7 @@ show_status () {
       printf "%-23s %s\n",$1":",$2 \
     }' | sed -r 's/\<./\U&/g'
 
-  local OUTPUTS=$(outputs active)
+  local OUTPUTS="$(outputs active)"
   local LEN=$(count "$OUTPUTS")
 
   if [ $LEN = 0 ]; then
@@ -323,7 +323,7 @@ list_outputs () {
     return 1
   fi
 
-  local OUTPUTS=$(outputs "$STATUS")
+  local OUTPUTS="$(outputs "$STATUS")"
   local LEN=$(count "$OUTPUTS")
 
   if [ ! $LEN -gt 0 ]; then
@@ -719,7 +719,7 @@ pick_layout () {
 }
 
 set_layout () {
-  local OUTPUTS=$(outputs active)
+  local OUTPUTS="$(outputs active)"
   local LEN=$(count "$OUTPUTS")
 
   if [ $LEN = 0 ]; then
@@ -777,7 +777,7 @@ set_layout () {
 }
 
 save_layout () {
-  local OUTPUTS=$(outputs)
+  local OUTPUTS="$(outputs)"
   local LEN=$(count "$OUTPUTS")
   
   if [ $LEN = 0 ]; then
@@ -797,7 +797,7 @@ save_layout () {
   local INDEX=0
   for ((INDEX = 0; INDEX < $LEN; INDEX++)); do
     local NAME=$(element "$OUTPUTS" "$INDEX" | value)
-    local OUTPUT=$(output "$NAME")
+    local OUTPUT="$(output "$NAME")"
 
     echo "$OUTPUT" | head -n 1 >> "$LAYOUT_FILE"
   done
