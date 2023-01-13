@@ -921,6 +921,7 @@ load_colors () {
 
   local COLORS=($(ls $CONFIG_HOME/displays/*.color))
 
+  local FAILURES=()
   local I=0
   for ((I=0; I<${#COLORS[@]}; I++)); do
     local COLOR_FILE="${COLORS[I]}"
@@ -932,10 +933,15 @@ load_colors () {
 
     if [ -n "$RESULT" ]; then
       echo "Failed to load color profile $COLOR_FILE"
+      FAILURES+=("$COLOR_FILE")
     else
       echo "Color profile $COLOR_FILE has been loaded"
     fi
   done
+
+  if [ ${#FAILURES[@]} -gt 0 ]; then
+    return 1
+  fi
 }
 
 help () {

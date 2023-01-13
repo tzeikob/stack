@@ -321,7 +321,7 @@ install_utilities () {
   ln -sf "$STACK_HOME/notifications" /usr/local/bin/notifications
 
   echo 'displays load layout || notifications push "Displays Layout" "Unable to load the displays layout"' >> ~/.xinitrc
-  echo 'displays load colors' >> ~/.xinitrc
+  echo 'displays load colors || notifications push "Displays Colors" "Some color profiles failed to load"' >> ~/.xinitrc
 
   echo "Stack utilities have been installed"
 }
