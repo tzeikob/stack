@@ -3,8 +3,8 @@
 set -o pipefail
 source /opt/stack/utils
 
-CONFIG_HOME=$HOME/.config/stack/displays
-LAYOUT_FILE=$CONFIG_HOME/layout
+CONFIG_HOME="$HOME/.config/stack/displays"
+LAYOUT_FILE="$CONFIG_HOME/layout"
 
 require "xorg-xrandr"
 require "xcalib"
