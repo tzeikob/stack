@@ -3,6 +3,7 @@
 set -o pipefail
 source /opt/stack/utils
 
+COLOR_HOME="/usr/local/color"
 CONFIG_HOME="$HOME/.config/stack/displays"
 LAYOUT_FILE="$CONFIG_HOME/layout"
 
@@ -855,7 +856,7 @@ set_color () {
   fi
 
   if [ -z "$COLOR" ]; then
-    local COLORS="$(ls /usr/share/color 2>/dev/null | awk '{ORS="'$AES'";} /.ic(c|m)$/')"
+    local COLORS="$(ls $COLOR_HOME 2>/dev/null | awk '{ORS="'$AES'";} /.ic(c|m)$/')"
     local COLORS_LEN=$(count "$COLORS")
 
     if [ ! $COLORS_LEN -gt 0 ]; then
@@ -870,7 +871,7 @@ set_color () {
   fi
 
   local INDEX="$(index "$NAME")"
-  local RESULT="$(xcalib -d "$DISPLAY" -s 0 -o "$INDEX" "/usr/share/color/$COLOR" 2>&1)"
+  local RESULT="$(xcalib -d "$DISPLAY" -s 0 -o "$INDEX" "$COLOR_HOME/$COLOR" 2>&1)"
 
   if [ -n "$RESULT" ]; then
     echo "Failed to set color profile $COLOR"
@@ -941,7 +942,7 @@ load_colors () {
     local INDEX="$(key "$COLOR")"
     local FILE_NAME="$(value "$COLOR")"
 
-    local RESULT="$(xcalib -d "$DISPLAY" -s 0 -o "$INDEX" "/usr/share/color/$FILE_NAME" 2>&1)"
+    local RESULT="$(xcalib -d "$DISPLAY" -s 0 -o "$INDEX" "$COLOR_HOME/$FILE_NAME" 2>&1)"
 
     if [ -n "$RESULT" ]; then
       echo "Failed to load color profile $COLOR_FILE"
