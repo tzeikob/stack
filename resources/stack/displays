@@ -963,7 +963,7 @@ help () {
 
     echo -e "\nCOMMANDS"
     printf " %-12s\t%s\n" \
-      "help" "Show this message." \
+      "help" "Show this help message." \
       "load layout" "Load the default displays layout." \
       "load colors" "Load displays profile colors."
 
@@ -981,16 +981,16 @@ help () {
     "list outputs [<status>]" "List all outputs or by the given status," \
     "" "connected, disconnected, active, inactive or primary." \
     "" "" \
-    "set mode [<name> [<res> [<rate>]]]" "Set the mode of the given output." \
-    "set primary [<name>]" "Set the given output as primary." \
-    "set on|off [<name>]" "Set active or inactive the given output." \
+    "set mode [<output> [<res> [<rate>]]]" "Set the mode of the given output." \
+    "set primary [<output>]" "Set the given output as primary." \
+    "set on|off [<output>]" "Set active or inactive the given output." \
     "" "" \
-    "rotate [<name> [<mode>]]" "Set output rotation to normal, right, left or inverted." \
-    "reflect [<name> [<mode>]]" "Set output reflection to normal, x, y or xy axes." \
-    "mirror [<name>]" "Mirror the given active output to other outputs." \
+    "rotate [<output> [<mode>]]" "Set output rotation to normal, right, left or inverted." \
+    "reflect [<output> [<mode>]]" "Set output reflection to normal, x, y or xy axes." \
+    "mirror [<output>]" "Mirror the given active output to other outputs." \
     "" "" \
-    "set color [<name> [<profile>]]" "Set the color profile of the given output." \
-    "reset color [<name>]" "Reset the color profile of the given output." \
+    "set color [<output> [<profile>]]" "Set the color profile of the given output." \
+    "reset color [<output>]" "Reset the color profile of the given output." \
     "" "" \
     "set layout" "Set the layout of active outputs." \
     "save layout" "Persist the current displays layout to disk." \
