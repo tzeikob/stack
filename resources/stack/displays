@@ -248,6 +248,18 @@ show_status () {
   done
 }
 
+show_logs () {
+  local ID=$(echo "$DISPLAY" | cut -d ':' -f 2)
+  local LOG_FILE="$HOME/.local/share/xorg/Xorg.$ID.log"
+
+  if [ ! -f "$LOG_FILE" ]; then
+    echo "Unable to find the log file $LOG_FILE"
+    return 1
+  fi
+
+  cat "$LOG_FILE"
+}
+
 show_output () {
   local NAME=$1
 
@@ -975,7 +987,8 @@ help () {
   echo -e "\nCOMMANDS"
   printf " %-32s\t%s\n" \
     "help" "Show this help message." \
-    "show status" "Show a report of the xorg server and active outputs." \
+    "show status" "Show a report of the Xorg server and active outputs." \
+    "show logs" "Show the logs of the Xorg server." \
     "show output [<name>]" "Show the data of the given output." \
     "" "" \
     "list outputs [<status>]" "List all outputs or by the given status," \
@@ -1024,6 +1037,7 @@ loop () {
       "show")
         case "${CMD[1]}" in
           "status") show_status;;
+          "logs") show_logs;;
           "output") show_output "${CMD[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
