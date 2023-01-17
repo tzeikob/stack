@@ -1,123 +1,165 @@
 #!/usr/bin/env bash
 
+set -o pipefail
 source /opt/stack/utils
 
 require "systemd"
 require "util-linux"
 
 prompt () {
-  local YELLOW=$'\e[0;33m'
-  local RS=$'\e[m'
-  local FG=$YELLOW
+  local STATUS="$(timedatectl status | awk '/Time zone/{print $3}')"
 
-  local NOW=$(date +"%H:%M")
-
-  read -rep "[clock $FG${NOW}$RS] " REPLY
+  read -rep "[clock:$YE${STATUS}$RS] " REPLY
 }
 
 show_status () {
-  timedatectl status | head -n 7 | awk -F: '{ \
-    i=index($0,":"); l=$1; \
-    gsub(/^[ \t]+|[ \t]+$/, "", l); \
-    printf "%-28s\t%s\n", l":", substr($0, i+1)}'
+  timedatectl status | head -n 7 | awk -F: '{
+    i=index($0,":"); l=$1;
+    gsub(/^[ \t]+|[ \t]+$/, "", l);
+    gsub(/System clock synchronized/, "Synced", l);
+    printf "%-16s  %s\n", l":", substr($0, i+1)
+  }'
   
   echo
   
-  timedatectl timesync-status | awk -F: '{ \
-    i=index($0,":"); l=$1; \
-    gsub(/^[ \t]+|[ \t]+$/, "", l); \
-    printf "%-28s\t%s\n", l":", substr($0, i+1)}'
+  timedatectl timesync-status | awk -F: '{
+    i=index($0,":"); l=$1;
+    gsub(/^[ \t]+|[ \t]+$/, "", l);
+    printf "%-16s  %s\n", l":", substr($0, i+1)
+  }'
 }
 
 set_ntp () {
   local STATUS=$1
 
   if [[ ! "$STATUS" =~ ^(on|off)$ ]]; then
-    echo "Invalid NTP status argument: '$STATUS'"
+    echo "Invalid status argument"
     return 1
   fi
 
   timedatectl set-ntp "$STATUS" &&
-    echo "NTP set to $STATUS" ||
-    echo "Something went wrong setting NTP"
+    echo "NTP has been $([ "$STATUS" = "on" ] && echo 'enabled' || echo 'disabled')" ||
+    echo "Failed to $([ "$STATUS" = "on" ] && echo 'enable' || echo 'disable') NTP service"
 }
 
 set_timezone () {
   local TIMEZONE=$1
 
+  local RE='^[A-Za-z_]+\/[A-Za-z_]+$'
+  local TIMEZONES="$(timedatectl list-timezones | awk '{ORS="'$AES'";} /'$RE'/')"
+
+  if [ -z "$TIMEZONE" ]; then
+    pick_one "Select a timezone:" "$TIMEZONES" "vertical-8" || return 1
+    [ -z "$REPLY" ] && return
+
+    TIMEZONE="$(value "$REPLY")"
+  fi
+
+  if [[ ! "$TIMEZONE" =~ $RE ]] || [[ ! "$TIMEZONES" =~ ${AES}$TIMEZONE${AES} ]]; then
+    echo "Invalid timezone argument"
+    return 1
+  fi
+
   timedatectl set-timezone "$TIMEZONE" &&
     echo "Timezone has been set to $TIMEZONE" ||
-    echo "Something went wrong setting the timezone"
+    echo "Failed to set the timezone"
 }
 
 set_time () {
   local TIME=$1
 
+  if [[ ! "$TIME" =~ ^[0-9][0-9]:[0-9][0-9]$ ]]; then
+    echo "Invalid time argument"
+    return 1
+  fi
+
+  local HOUR=$(echo "$TIME" | cut -d ':' -f 1)
+  local MIN=$(echo "$TIME" | cut -d ':' -f 2)
+
+  if (($HOUR > 23)); then
+    echo "Invalid time argument"
+    return 1
+  fi
+
+  if (($MIN > 59)); then
+    echo "Invalid time argument"
+    return 1
+  fi
+
   timedatectl set-time "$TIME" &&
     echo "Time has been set successfully" ||
-    echo "Something went wrong setting the time"
+    echo "Failed to set the time"
 }
 
 set_date () {
   local DATE=$1
+
+  if [[ ! "$DATE" =~ ^[0-9][0-9]([0-9][0-9])?-[0-9][0-9]-[0-9][0-9]$ ]]; then
+    echo "Invalid date argument"
+    return 1
+  fi
+
+  local YEAR=$(echo "$DATE" | cut -d '-' -f 1)
+  local MONTH=$(echo "$DATE" | cut -d '-' -f 2)
+  local DAY=$(echo "$DATE" | cut -d '-' -f 3)
+
+  if (($MONTH == 0 || $MONTH > 12)) ; then
+    echo "Invalid date argument"
+    return 1
+  fi
+
+  if (($DAY == 0 || $DAY > 31)); then
+    echo "Invalid date argument"
+    return 1
+  fi
+
   local TIME=$(date +"%H:%M:%S")
 
   timedatectl set-time "$DATE $TIME" &&
     echo "Date has been set successfully" ||
-    echo "Something went wrong setting the date"
+    echo "Failed to set the date"
 }
 
 set_rtc () {
   local MODE=$1
 
   if [[ ! "$MODE" =~ ^(local|utc)$ ]]; then
-    echo "Invalid rtc mode argument: '$MODE'"
+    echo "Invalid rtc mode argument"
     return 1
   fi
 
   if [ "$MODE" = "local" ]; then
     timedatectl set-local-rtc on &&
       echo "RTC set to local time" ||
-      echo "Something went wrong setting RTC to local time"
+      echo "Failed to set RTC to local time"
   else
     timedatectl set-local-rtc off &&
       echo "RTC set to UTC time" ||
-      echo "Something went wrong setting RTC to UTC time"
+      echo "Failed to set RTC to UTC time"
   fi
 }
 
 sync_rtc () {
   sudo hwclock --systohc --utc &&
     echo "RTC hardware clock synced from the system clock" ||
-    echo "Something went wrong synchronizing the hardware clock"
+    echo "Failed to sync the hardware clock"
 }
 
 help () {
-  local FRM=" %-25s\t%s\n"
-
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
   echo -e "\nCOMMANDS"
-  printf "$FRM" \
+  printf " %-25s\t%s\n" \
     "help" "Show this help message." \
-    "show status" "Show the date time status of the system." \
+    "show status" "Show the system's date time status." \
     "" "" \
-    "set ntp on|off" "Enable or disable the NTP service." \
-    "set timezone <Region/City>" "Set the timezone to the given region." \
+    "set timezone [<Region/City>]" "Set the timezone to the given region." \
     "set time <HH:MM:SS>" "Set the system local time to the given time." \
     "set date <YYYY-mm-dd>" "Set the system date to the given date." \
-    "set rtc local|utc" "Set the hardware clock to local or UTC time." \
     "" "" \
-    "sync rtc" "Sync the RTC hardware clock from the system clock."
-
-  echo -e "\nOBJECTS"
-  printf "$FRM" \
-    "status" "The system's date and time status." \
-    "ntp" "The system's time synchronization service." \
-    "timezone" "A Region/City pair where a standar time is used." \
-    "time" "The time part of the system's clock." \
-    "date" "The date part of the system's clock." \
-    "rtc" "The hardware clock of the system."
+    "set ntp on|off" "Enable or disable the NTP service." \
+    "set rtc local|utc" "Set the hardware clock to local or UTC time." \
+    "sync rtc" "Sync the hardware clock from the system clock."
 }
 
 loop () {
@@ -127,9 +169,9 @@ loop () {
     prompt && history -s "$REPLY"
 
     set -f
-    local OLD_IFS=$IFS && IFS=$'\n'
+    set_separator "line"
     local CMD=($(xargs -n1 <<< "$REPLY"))
-    IFS=$OLD_IFS && set +f
+    restore_separator && set +f
 
     if [ "${CMD[0]}" = "help" ]; then
       help
@@ -147,7 +189,7 @@ loop () {
       "show")
         case "${CMD[1]}" in
           "status") show_status;;
-          *) echo "Unknown or invalid command: '$REPLY'";;
+          *) echo "Unknown or invalid command";;
         esac;;
       "set")
         case "${CMD[1]}" in
@@ -156,14 +198,14 @@ loop () {
           "time") set_time "${CMD[2]}";;
           "date") set_date "${CMD[2]}";;
           "rtc") set_rtc "${CMD[2]}";;
-          *) echo "Unknown or invalid command: '$REPLY'";; 
+          *) echo "Unknown or invalid command";; 
         esac;;
       "sync")
         case "${CMD[1]}" in
           "rtc") sync_rtc;;
-          *) echo "Unknown or invalid command: '$REPLY'";; 
+          *) echo "Unknown or invalid command";; 
         esac;;
-      *) echo "Unknown or invalid command: '$REPLY'";; 
+      *) echo "Unknown or invalid command";; 
     esac
   done
 

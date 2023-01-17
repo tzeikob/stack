@@ -188,7 +188,7 @@ install_packages () {
     man-db man-pages texinfo cups bluez bluez-utils unzip terminus-font \
     vim nano git tree arch-audit atool zip xz unace p7zip gzip lzop feh \
     bzip2 unrar dialog inetutils dnsutils openssh nfs-utils openbsd-netcat ipset \
-    neofetch age polkit-gnome imagemagick gpick fuse2 rclone smartmontools jq \
+    neofetch age imagemagick gpick fuse2 rclone smartmontools jq \
     $([ "$UEFI" = "yes" ] && echo 'efibootmgr') || exit 1
 
   echo -e "\nReplacing iptables with nft tables..."
