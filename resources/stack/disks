@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 
+set -o pipefail
 source /opt/stack/utils
+
+LOCAL_HOME="$HOME/mount/local"
+REMOTE_HOME="$HOME/mount/remote"
 
 require "udisks2"
 require "glib2"
@@ -8,165 +12,353 @@ require "nmap"
 require "smbclient"
 require "smartmontools"
 
-prompt () {
-  local YELLOW=$'\e[0;33m'
-  local RS=$'\e[m'
-  local FG=$YELLOW
+devices () {
+  local TYPE=$1
+  local STATUS=$2
 
-  local DEVICES_COUNTER=$(lsblk -dn | wc -l)
+  local QUERY='[.blockdevices[]|'
 
-  read -rep "[disks:$FG${DEVICES_COUNTER}$RS] " REPLY
-}
-
-list_devices () {
-  lsblk -o NAME,PATH,TYPE,RM,SIZE,FSTYPE,LABEL,VENDOR,MODEL
-}
-
-list_hosts () {
-  local GATEWAY=$(ip route get 1.1.1.1 | awk '/via/{print $3}' | head -n 1)
-  local CIDR=$(echo "$GATEWAY" | sed -r 's/(\.[0-9]{1,3}$)/.0\/24/')
-  local HOSTS=($(nmap -n -sn "$CIDR" -oG - | awk '/Up$/{print $2}'))
-  local LEN=${#HOSTS[@]}
-
-  if [ $LEN -eq 0 ]; then
-    echo "No local hosts have been discovered"
-    return
+  if [ -n "$TYPE" ]; then
+    QUERY+="$(echo "$TYPE" | awk -F',' '{
+        criteria=""
+        for (i=1; i<=NF; i++) {
+          if (i > 1) criteria=criteria " or "
+          criteria=criteria "(.type == \"" $i "\")"
+        }
+        print "select(" criteria ")|"
+      }'
+    )"
+  fi
+  
+  if [ "$STATUS" = "mount" ]; then
+    QUERY+='select(.mountpoints != [null])|'
+  elif [ "$STATUS" = "unmount" ]; then
+    QUERY+='select(.mountpoints == [null])|'
   fi
 
-  local FRMT="%-15s\t%s\n"
-  printf "$FRMT" "HOST" "NAME"
+  QUERY+='("\(.path)\(.path|tostring|(" " * (10 - length)))['
+  QUERY+='\(if (.vendor) then ("\(.vendor|gsub("^\\s+|\\s+$";"")) ") else "" end)'
+  QUERY+='\(if (.label) then ("\(.label) ") else "" end)'
+  QUERY+='\(.size)]'$KVS'\(.path)")]|join("'$AES'")'
 
-  local INDEX=0
-  while [ $INDEX -lt $LEN ]; do
-    nmap "${HOSTS[$INDEX]}" -oG - |
-      awk -v f=$FRMT '/Host/{printf f, $2, $3}' |
-      head -n 1 |
-      tr -d '()'
-
-    INDEX=$((INDEX + 1))
-  done
+  lsblk -J -o PATH,TYPE,VENDOR,LABEL,SIZE,MOUNTPOINTS | jq -cer "$QUERY"
 }
 
-list_shares () {
+hosts () {
+  local ROUTE="$(ip route get 1.1.1.1 || echo "err:$?")"
+  [[ "$ROUTE" =~ ^err: ]] && return 1
+
+  local CIDR="$(echo "$ROUTE" | awk '/via/{print $3}' |
+    head -n 1 | sed -r 's/(\.[0-9]{1,3}$)/.0\/24/')"
+
+  local MAP="$(nmap -n -sn "$CIDR" -oG - || echo "err:$?")"
+  [[ "$MAP" =~ ^err: ]] && return 1
+
+  local IPS="$(echo "$MAP" | awk '{ORS="'$AES'";} /Up$/{print $2}')"
+  local LEN=$(count "$IPS")
+
+  local HOSTS=""
+  local I=0
+  for ((I=0; I<$LEN; I++)); do
+    local IP="$(element "$IPS" "$I" | value)"
+    local HOST_MAP="$(nmap --host-timeout 5 "$IP" -oG - || echo "err:$?")"
+    [[ "$HOST_MAP" =~ ^err: ]] && continue
+
+    HOSTS+="$(echo "$HOST_MAP" |
+        awk '/Host.*Up/{gsub(/(\(|\))/,"",$3); printf "%-15s [%s]'$KVS'%s", $2,$3,$2}')$AES"
+  done
+
+  echo "$HOSTS"
+}
+
+shared_folders () {
   local HOST=$1
   local USERNAME=$2
-  local WORKGROUP=${3:-"WORKGROUP"}
+  local WORKGROUP=$3
+  local PASSWORD=$4
 
-  if [ -z "$HOST" ]; then
-    echo "Missing host argument"
-    return 1
-  fi
-
-  if [ -z "$USERNAME" ]; then
-    echo "Missing username argument"
-    return 1
-  fi
-
-  smbclient -L "$HOST" -U "$USERNAME" -W "$WORKGROUP"
+  local FOLDERS="$(smbclient -L "$HOST" -U "$USERNAME" -W "$WORKGROUP" --password="$PASSWORD" || echo "err:$?")"
+  [[ "$FOLDERS" =~ err: ]] && return 1
+  
+  echo "$FOLDERS" | awk '/Disk/{ORS="'$AES'";} {print $1" "[$2]"'$KVS'"$1}'
 }
 
-list_mounts () {
-  local FRMT="%-22s\t%s\n"
-  printf "$FRMT" "NAME" "MOUNT POINT"
+pick_host () {
+  echo "Searching for hosts in local network..."
 
-  lsblk -n -o PATH,MOUNTPOINTS |
-    awk -v f=$FRMT '{if ($2 != "") {printf f, $1, $2}}'
+  local HOSTS="$(hosts || echo "err:$?")"
+  
+  if [[ "$HOSTS" =~ ^err: ]]; then
+    echo "Unable to retrieve hosts"
+    return 1
+  fi
 
-  ls /run/user/1000/gvfs |
-    awk -v id=$UID -v f=$FRMT 'match($0, /server=(.*),share=(.*)/, a) \
-      {printf f, a[1]"/"a[2], "/run/user/"id"/gvfs/"$0}'
+  local LEN=$(count "$HOSTS")
+
+  if [ $LEN -eq 0 ]; then
+    echo "No available hosts have been found"
+    return 1
+  fi
+
+  pick_one "Select a host:" "$HOSTS" "vertical-5"
+}
+
+pick_shared_folder () {
+  local HOST=$1
+  local USERNAME=$2
+  local WORKGROUP=$3
+  local PASSWORD=$4
+
+  local FOLDERS="$(shared_folders "$HOST" "$USERNAME" "$WORKGROUP" "$PASSWORD" || echo "err:$?")"
+
+  if [[ "$FOLDERS" =~ ^err: ]]; then
+    echo "Unable to retrieve shared folders"
+    return 1
+  fi
+
+  local LEN=$(count "$FOLDERS")
+
+  if [ $LEN -eq 0 ]; then
+    echo "No available shared folders have been found"
+    return 1
+  fi
+
+  pick_one "Select a shared folder:" "$FOLDERS" "vertical-5"
+}
+
+prompt () {
+  local QUERY='.blockdevices[]|select(.mountpoint == "/")|.path'
+  local STATUS=$(lsblk -J -o PATH,MOUNTPOINT | jq -cer "$QUERY")
+
+  read -rep "[disks:$YE${STATUS}$RS] " REPLY
 }
 
 show_device () {
   local DEVICE=$1
 
+  if [ -z "$DEVICE" ]; then
+    local DEVICES="$(devices)"
+    pick_one "Select a block device:" "$DEVICES" "vertical-5" || return 1
+    [ -z "$REPLY" ] && return
+
+    DEVICE="$(value "$REPLY")"
+  fi
+
   if [ ! -b "$DEVICE" ]; then
-    echo "Invalid block device: $DEVICE"
+    echo "Invalid block device"
+    return 1
+  fi
+  
+  local QUERY='[.blockdevices[]|("'
+  QUERY+='Name:         \(.name)\n'
+  QUERY+='Path:         \(.path)\n'
+  QUERY+='Type:         \(.type)\n'
+  QUERY+='\(if (.fstype != null) then ("File System:  \(.fstype|ascii_upcase)\n") else "" end)'
+  QUERY+='\(if (.fsver != null) then ("File Version: \(.fsver)\n") else "" end)'
+  QUERY+='Removable:    \(.rm)\n'
+  QUERY+='Read Only:    \(.ro)\n'
+  QUERY+='\(if (.tran != null) then ("Transfer:     \(.tran)\n") else "" end)'
+  QUERY+='HotPlug:      \(.hotplug)\n'
+  QUERY+='Size:         \(.size)\n'
+  QUERY+='\(if (.fsavail != null) then ("Free Space:   \(.fsavail)\n") else "" end)'
+  QUERY+='\(if (.fsused != null) then ("Used Space:   \(.fsused) [\(."fsuse%")]\n") else "" end)'
+  QUERY+='\(if (.label != null) then ("Label:        \(.label)\n") else "" end)'
+  QUERY+='\(if (.uuid != null) then ("UUID:         \(.uuid)\n") else "" end)'
+  QUERY+='\(if (.vendor != null) then ("Vendor:       \(.vendor)\n") else "" end)'
+  QUERY+='\(if (.model != null) then ("Model:        \(.model)\n") else "" end)'
+  QUERY+='\(if (.rev != null) then ("Revision:     \(.rev)\n") else "" end)'
+  QUERY+='\(if (.serial != null) then ("Serial:       \(.serial)\n") else "" end)'
+  QUERY+='\(if (.state != null) then ("State:        \(.state)\n") else "" end)'
+  QUERY+='\(if (.children != null) then [.children[]|'
+  QUERY+='("Parts:        \(.path) \(if(.mountpoints!=[null]) then ("\(.mountpoints) ") else "" end)\(.fstype|ascii_upcase) '
+  QUERY+='\(if (.label != null) then .label else "" end)")]|join("\n              ")'
+  QUERY+='else "" end)'
+  QUERY+='")]|join("\n\n")'
+
+  local COLS='NAME,PATH,LABEL,UUID,VENDOR,MODEL,REV,'
+  COLS+='SERIAL,TYPE,TRAN,RM,RO,HOTPLUG,FSTYPE,FSVER,'
+  COLS+='SIZE,FSAVAIL,FSUSED,FSUSE%,MOUNTPOINTS,STATE'
+
+  lsblk -J -o "$COLS" "$DEVICE" | jq -cer "$QUERY" | awk '{if ($0 != "") print}'
+}
+
+scan_device () {
+  local DEVICE=$1
+
+  if [ -z "$DEVICE" ]; then
+    local DEVICES="$(devices)"
+    pick_one "Select a blobk device:" "$DEVICES" "vertical-5" || return 1
+    [ -z "$REPLY" ] && return
+
+    DEVICE="$(value "$REPLY")"
+  fi
+
+  if [ ! -b "$DEVICE" ]; then
+    echo "Invalid block device"
     return 1
   fi
 
-  local FIELDS=(
-    "NAME;Device Name"
-    "PATH;Device Path"
-    "LABEL;Label"
-    "UUID;ID Number"
-    "VENDOR;Vendor Name"
-    "MODEL;Model Name"
-    "REV;Revision"
-    "SERIAL;Serial Number"
-    "TYPE;Device Type"
-    "TRAN;Transfer"
-    "RM;Removable"
-    "RO;Read Only"
-    "HOTPLUG;Hot Plugable"
-    "ln"
-    "FSTYPE;File Type"
-    "FSVER;Version"
-    "SIZE;Total Size"
-    "FSAVAIL;Free Space"
-    "FSUSED;Used Space"
-    "FSUSE%;Usage"
-    "MOUNTPOINTS;Mount Points"
-    "STATE;Device State"
-    )
-  
-  local INDEX=0
-  while [ $INDEX -lt ${#FIELDS[@]} ]; do
-    local FIELD=${FIELDS[$INDEX]}
-
-    if [ "$FIELD" = "ln" ]; then
-      echo
-      INDEX=$((INDEX + 1))
-      continue
-    fi
-
-    local KEY=$(echo "$FIELD" | cut -d ";" -f 1)
-    local LABEL=$(echo "$FIELD" | cut -d ";" -f 2)
-
-    local VALUE=$(sudo lsblk -dP -o "$KEY" "$DEVICE" | sed "s/^$KEY=\"\(.*\)\"$/\1/")
-
-    [ -n "$VALUE" ] &&
-      printf "%-18s %s\n" "$LABEL:" "$VALUE"
-
-    INDEX=$((INDEX + 1))
-  done
-
-  if sudo smartctl -i "$DEVICE" &> /dev/null; then
-    echo
-    sudo smartctl -i "$DEVICE" | tail -n +5
-    sudo smartctl -H "$DEVICE" | tail -n +5
+  if ! sudo smartctl -i "$DEVICE" &> /dev/null; then
+    echo "Unable to retrieve SMART data"
+    return 1
   fi
+
+  sudo smartctl -i "$DEVICE" | tail -n +5
+  sudo smartctl -H "$DEVICE" | tail -n +5 | awk '{if ($0 != "") print}'
+}
+
+list_devices () {
+  local TYPE=$1
+
+  if [ -n "$TYPE" ] && [[ ! "$TYPE" =~ ^(disk|rom)$ ]]; then
+    echo "Invalid type argument"
+    return 1
+  fi
+
+  local QUERY='[.blockdevices[]|'
+
+  if [ -n "$TYPE" ]; then
+    QUERY+='select(.type == "'$TYPE'")|'
+  fi
+
+  QUERY+='("'
+  QUERY+='Name:    \(.name)\n'
+  QUERY+='Path:    \(.path)\n'
+  QUERY+='Type:    \(.type)\n'
+  QUERY+='Size:    \(.size)\n'
+  QUERY+='Vendor:  \(.vendor)\n'
+  QUERY+='Model:   \(.model)\n'
+  QUERY+='\(if (.label != null) then ("Label:   \(.label)\n") else "" end)'
+  QUERY+='Parts:   \(if (.children != null) then [.children[]|("\(.path)")] else "[]" end)'
+  QUERY+='")]|join("\n\n")'
+
+  local COLS='NAME,PATH,TYPE,RM,RO,SIZE,FSTYPE,'
+  COLS+='LABEL,VENDOR,MODEL,MOUNTPOINTS'
+
+  local DEVICES="$(lsblk -J -o "$COLS" | jq -cer "$QUERY")"
+
+  if [ -z "$DEVICES" ]; then
+    echo "No $TYPE block devices have found"
+    return
+  fi
+
+  echo "$DEVICES"
+}
+
+list_shares () {
+  local HOST=$1
+
+  if [ -z "$HOST" ]; then
+    pick_host || return 1
+    [ -z "$REPLY" ] && return
+
+    HOST="$(value "$REPLY")"
+  fi
+
+  ask "Give the username:"
+  local USERNAME="$REPLY"
+
+  ask "Give the workgroup [WORKGROUP]:"
+  local WORKGROUP="${REPLY:-"WORKGROUP"}"
+
+  ask_password "Give the password:"
+  local PASSWORD="$REPLY"
+
+  local FOLDERS="$(shared_folders "$HOST" "$USERNAME" "$WORKGROUP" "$PASSWORD" || echo "err:$?")"
+
+  if [[ "$FOLDERS" =~ ^err: ]]; then
+    echo "Unable to retrieve shared folders"
+    return 1
+  fi
+
+  local LEN=$(count "$FOLDERS")
+
+  if [ ! $LEN -gt 0 ]; then
+    echo "No available shared folders have found"
+    return
+  fi
+
+  local I=0
+  for ((I=0; i<$LEN; I++)); do
+    [ $I -gt 0 ] && echo
+
+    local FOLDER="$(element "$FOLDERS" "$I" | key)"
+    echo "$FOLDER" | awk '{gsub(/(\[|\])/,"",$2); print "Name: "$1"\nType: "$2}'
+  done
+}
+
+list_mounts () {
+  local QUERY='[.blockdevices[]|select(.mountpoints != [null])|("'
+  QUERY+='Device:  \(.path)\n'
+  QUERY+='\(if (.label != null) then ("Label:   \(.label)\n") else "" end)'
+  QUERY+='Points:  \(.mountpoints)'
+  QUERY+='")]|join("\n\n")'
+
+  lsblk -J -o PATH,MOUNTPOINTS,LABEL | jq -cer "$QUERY"
+
+  ls /run/user/1000/gvfs | awk -v id=$UID 'match($0, /server=(.*),share=(.*)/, a)
+    {print "Device:  "a[1]"/"a[2]"\nPoints:  [/run/user/"id"/gvfs/"$0"]"}'
 }
 
 mount_device () {
-  local DEVICE="$1"
+  local DEVICE=$1
+
+  if [ -z "$DEVICE" ]; then
+    local DEVICES="$(devices 'rom,part' unmount)"
+    local LEN=$(count "$DEVICES")
+
+    if [ ! $LEN -gt 0 ]; then
+      echo "No available devices found to mount"
+      return
+    fi
+
+    pick_one "Select a block device:" "$DEVICES" "vertical-5" || return 1
+    [ -z "$REPLY" ] && return
+
+    DEVICE="$(value "$REPLY")"
+  fi
 
   if [ ! -b "$DEVICE" ]; then
-    echo "Invalid block device: $DEVICE"
+    echo "Invalid block device"
     return 1
   elif grep -qs "$DEVICE " /proc/mounts; then
-    echo "Block device $DEVICE is already mounted"
+    echo "Block device is already mounted"
     return 1
   fi
   
   udisksctl mount -b "$DEVICE" &&
-    echo "Block device $DEVICE mounted successfully" ||
-    echo "Failed to mount block device $DEVICE"
+    echo "Block device mounted successfully" ||
+    echo "Failed to mount block device"
 
-  if [ -d "/run/media/$USER" ] && [ ! -L "$HOME/mount/local" ]; then
-    mkdir -p "$HOME/mount/local"
-    ln -s "/run/media/$USER" "$HOME/mount/local"
+  if [ -d "/run/media/$USER" ] && [ ! -L "$LOCAL_HOME" ]; then
+    mkdir -p "$LOCAL_HOME"
+    ln -s "/run/media/$USER" "$LOCAL_HOME"
   fi
 }
 
 unmount_device () {
-  local DEVICE="$1"
+  local DEVICE=$1
+
+  if [ -z "$DEVICE" ]; then
+    local DEVICES="$(devices 'rom,part' mount)"
+    local LEN=$(count "$DEVICES")
+
+    if [ ! $LEN -gt 0 ]; then
+      echo "No available devices found to unmount"
+      return
+    fi
+
+    pick_one "Select a block device:" "$DEVICES" "vertical-5" || return 1
+    [ -z "$REPLY" ] && return
+
+    DEVICE="$(value "$REPLY")"
+  fi
 
   if [ ! -b "$DEVICE" ]; then
-    echo "Invalid block device: $DEVICE"
+    echo "Invalid block device"
     return 1
   elif ! grep -qs "$DEVICE " /proc/mounts; then
-    echo "Block device $DEVICE is not mounted"
+    echo "Block device is not mounted"
     return 1
   fi
 
@@ -174,98 +366,100 @@ unmount_device () {
   udisksctl unmount -b "$DEVICE"
 
   if [[ "$?" -eq 0 ]]; then
-    echo "Block device $DEVICE unmounted successfully"
-
     udisksctl power-off -b "$DEVICE" &&
       echo "Device power set to off" ||
       echo "Unable to power off the device"
+    echo "Block device unmounted successfully"
   else
-    echo "Failed to unmount block device $DEVICE"
+    echo "Failed to unmount block device"
   fi
 }
 
-mount_host () {
+mount_shared_folder () {
   local HOST=$1
-  local SHARE=$2
+  local FOLDER=$2
 
   if [ -z "$HOST" ]; then
-    echo "Missing host argument"
-    return 1
+    pick_host || return 1
+    [ -z "$REPLY" ] && return
+
+    HOST="$(value "$REPLY")"
   fi
 
-  if [ -z "$SHARE" ]; then
-    echo "Missing shared folder argument"
-    return 1
+  if [ -z "$FOLDER" ]; then
+    pick_shared_folder || return 1
+    [ -z "$REPLY" ] && return
+
+    FOLDER="$(value "$REPLY")"
   fi
 
-  local URI="smb://$HOST/$SHARE"
+  local URI="smb://$HOST/$FOLDER"
 
   if gio mount -l | grep -q "$URI"; then
-    echo "Host $URI is already mounted"
+    echo "Shared folder is already mounted"
     return 1
   fi
 
   gio mount "$URI" &&
-    echo "Host $URI mounted successfully" ||
-    echo "Failed to mount host: $URI"
+    echo "Shared folder mounted successfully" ||
+    echo "Failed to mount shared folder"
 
-  if [ -d "/run/user/${UID}/gvfs" ] && [ ! -L "$HOME/mount/remote/gvfs" ]; then
-    mkdir -p "$HOME/mount/remote"
-    ln -s "/run/user/${UID}/gvfs" "$HOME/mount/remote"
+  if [ -d "/run/user/${UID}/gvfs" ] && [ ! -L "$REMOTE_HOME/gvfs" ]; then
+    mkdir -p "$REMOTE_HOME"
+    ln -s "/run/user/${UID}/gvfs" "$REMOTE_HOME"
   fi
 }
 
-unmount_host () {
+unmount_shared_folder () {
   local HOST=$1
-  local SHARE=$2
+  local FOLDER=$2
 
   if [ -z "$HOST" ]; then
-    echo "Missing host argument"
-    return 1
+    pick_host || return 1
+    [ -z "$REPLY" ] && return
+
+    HOST="$(value "$REPLY")"
   fi
 
-  if [ -z "$SHARE" ]; then
-    echo "Missing shared folder argument"
-    return 1
+  if [ -z "$FOLDER" ]; then
+    pick_shared_folder || return 1
+    [ -z "$REPLY" ] && return
+
+    FOLDER="$(value "$REPLY")"
   fi
 
-  local URI="smb://$HOST/$SHARE"
+  local URI="smb://$HOST/$FOLDER"
 
   if ! gio mount -l | grep -q "$URI"; then
-    echo "Host $URI is not mounted"
+    echo "Shared folder is not mounted"
     return 1
   fi
 
   sync &&
   gio mount -u "$URI" &&
-    echo "Host $URI unmounted successfully" ||
-    echo "Failed to umount host $URI"
+    echo "Shared folder unmounted successfully" ||
+    echo "Failed to umount shared folder"
 }
 
 help () {
-  local FRM=" %-35s\t%s\n"
-
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
   echo -e "\nCOMMANDS"
-  printf "$FRM" \
+  printf " %-35s\t%s\n" \
     "help" "Show this help message." \
-    "show device <path>" "Show details of the block device with the given path." \
+    "show device [<path>]" "Show the data of a block device." \
+    "scan device [<path>]" "Scan a block device for SMART data." \
     "" "" \
-    "list devices" "List all the block devices of the system." \
-    "list hosts" "Discover all the available hosts at the local network." \
-    "list shares <ip> <username> [<group>]" "Fetch any shared folder on the given host." \
-    "list mounts" "List all the current mounted devices and shared folders." \
+    "list devices [<type>]" "List all the block devices or by type," \
+    "" "where type could be disk or rom." \
+    "list shares [<host>]" "Fetch the shared folders of a host." \
+    "list mounts" "List all mounted block devices and shared folders." \
     "" "" \
-    "mount device <path>" "Mount a block device with the given path." \
-    "mount host <ip> <share>" "Mount a shared folder on host with the given ip or domain." \
-    "unmount device <path>" "Unmount a block device with the given path." \
-    "unmount host <ip> <share>" "Unmount a shared folder on host with the given ip or domain."
-
-  echo -e "\nOBJECTS"
-  printf "$FRM" \
-    "device" "A block device." \
-    "host" "A local network host sharing folders."
+    "mount device [<path>]" "Mount a block device." \
+    "unmount device [<path>]" "Unmount a block device." \
+    "" "" \
+    "mount share [<host> [<folder>]]" "Mount a shared folder of a host." \
+    "unmount share [<host> [<folder>]]" "Unmount a shared folder of a host."
 }
 
 loop () {
@@ -275,9 +469,9 @@ loop () {
     prompt && history -s "$REPLY"
 
     set -f
-    local OLD_IFS=$IFS && IFS=$'\n'
+    set_separator "line"
     local CMD=($(xargs -n1 <<< "$REPLY"))
-    IFS=$OLD_IFS && set +f
+    restore_separator && set +f
 
     if [ "${CMD[0]}" = "help" ]; then
       help
@@ -294,30 +488,34 @@ loop () {
     case "${CMD[0]}" in
       "list")
         case "${CMD[1]}" in
-          "devices") list_devices;;
-          "hosts") list_hosts;;
-          "shares") list_shares "${CMD[2]}" "${CMD[3]}" "${CMD[4]}";;
+          "devices") list_devices "${CMD[2]}";;
+          "shares") list_shares "${CMD[2]}";;
           "mounts") list_mounts;;
-          *) echo "Unknown or invalid command: '$REPLY'";;
+          *) echo "Unknown or invalid command";;
         esac;;
       "show")
         case "${CMD[1]}" in
           "device") show_device "${CMD[2]}";;
-          *) echo "Unknown or invalid command: '$REPLY'";;
+          *) echo "Unknown or invalid command";;
+        esac;;
+      "scan")
+        case "${CMD[1]}" in
+          "device") scan_device "${CMD[2]}";;
+          *) echo "Unknown or invalid command";;
         esac;;
       "mount")
         case "${CMD[1]}" in
           "device") mount_device "${CMD[2]}";;
-          "host") mount_host "${CMD[2]}" "${CMD[3]}";;
-          *) echo "Unknown or invalid command: '$REPLY'";;
+          "share") mount_shared_folder "${CMD[2]}" "${CMD[3]}";;
+          *) echo "Unknown or invalid command";;
         esac;;
       "unmount")
         case "${CMD[1]}" in
           "device") unmount_device "${CMD[2]}";;
-          "host") unmount_host "${CMD[2]}" "${CMD[3]}";;
-          *) echo "Unknown or invalid command: '$REPLY'";;
+          "share") unmount_shared_folder "${CMD[2]}" "${CMD[3]}";;
+          *) echo "Unknown or invalid command";;
         esac;;
-      *) echo "Unknown or invalid command: '$REPLY'";; 
+      *) echo "Unknown or invalid command";; 
     esac
   done
 

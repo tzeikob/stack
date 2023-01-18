@@ -165,6 +165,27 @@ print () {
   done
 }
 
+ask () {
+  local PROMPT=$1
+  local RE=$2
+
+  if [ -n "$RE" ]; then
+    read -rep "$PROMPT " REPLY
+
+    while [[ ! "$REPLY" =~ $RE ]]; do
+      read -rep " Please enter a valid value: " REPLY
+    done
+  else
+    read -rep "$PROMPT " REPLY
+  fi
+}
+
+ask_password () {
+  local PROMPT=$1
+
+  read -srep "$PROMPT " REPLY
+}
+
 confirm () {
   local PROMPT=$1
   local OPTIONS=$2
