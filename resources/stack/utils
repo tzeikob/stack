@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-AES=$';;'
-AES_LN=$';;\n'
-KVS=$'::'
+AES=$'╬'
+AES_LN=$'╬\n'
+KVS=$'▒'
 
 CONFIG_HOME=~/.config/stack
 

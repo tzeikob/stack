@@ -80,7 +80,7 @@ shared_folders () {
   local FOLDERS="$(smbclient -L "$HOST" -U "$USERNAME" -W "$WORKGROUP" --password="$PASSWORD" || echo "err:$?")"
   [[ "$FOLDERS" =~ err: ]] && return 1
   
-  echo "$FOLDERS" | awk '/Disk/{ORS="'$AES'";} {print $1" "[$2]"'$KVS'"$1}'
+  echo "$FOLDERS" | awk '{ORS="'$AES'";} /Disk/{print $1" ["$2"]'$KVS'"$1}'
 }
 
 pick_host () {
@@ -138,6 +138,7 @@ show_device () {
 
   if [ -z "$DEVICE" ]; then
     local DEVICES="$(devices)"
+
     pick_one "Select a block device:" "$DEVICES" "vertical-5" || return 1
     [ -z "$REPLY" ] && return
 
@@ -187,6 +188,7 @@ scan_device () {
 
   if [ -z "$DEVICE" ]; then
     local DEVICES="$(devices)"
+
     pick_one "Select a blobk device:" "$DEVICES" "vertical-5" || return 1
     [ -z "$REPLY" ] && return
 
@@ -196,9 +198,7 @@ scan_device () {
   if [ ! -b "$DEVICE" ]; then
     echo "Invalid block device"
     return 1
-  fi
-
-  if ! sudo smartctl -i "$DEVICE" &> /dev/null; then
+  elif ! sudo smartctl -i "$DEVICE" &> /dev/null; then
     echo "Unable to retrieve SMART data"
     return 1
   fi
@@ -238,7 +238,7 @@ list_devices () {
   local DEVICES="$(lsblk -J -o "$COLS" | jq -cer "$QUERY")"
 
   if [ -z "$DEVICES" ]; then
-    echo "No $TYPE block devices have found"
+    echo "No ${TYPE:-\b} block devices have found"
     return
   fi
 
@@ -273,13 +273,13 @@ list_shares () {
 
   local LEN=$(count "$FOLDERS")
 
-  if [ ! $LEN -gt 0 ]; then
+  if [ $LEN -eq 0 ]; then
     echo "No available shared folders have found"
     return
   fi
 
   local I=0
-  for ((I=0; i<$LEN; I++)); do
+  for ((I=0; I<$LEN; I++)); do
     [ $I -gt 0 ] && echo
 
     local FOLDER="$(element "$FOLDERS" "$I" | key)"
@@ -296,8 +296,10 @@ list_mounts () {
 
   lsblk -J -o PATH,MOUNTPOINTS,LABEL | jq -cer "$QUERY"
 
-  ls /run/user/1000/gvfs | awk -v id=$UID 'match($0, /server=(.*),share=(.*)/, a)
-    {print "Device:  "a[1]"/"a[2]"\nPoints:  [/run/user/"id"/gvfs/"$0"]"}'
+  ls /run/user/$UID/gvfs | awk -v id=$UID '{
+    match($0,/server=(.*),share=(.*),/,a);
+    print "\nDevice:  "a[1]"/"a[2]"\nPoints:  [/run/user/"id"/gvfs/"$0"]"
+  }'
 }
 
 mount_device () {
@@ -386,14 +388,23 @@ mount_shared_folder () {
     HOST="$(value "$REPLY")"
   fi
 
+  ask "Give the username:"
+  local USERNAME="$REPLY"
+
+  ask "Give the workgroup [WORKGROUP]:"
+  local WORKGROUP="${REPLY:-"WORKGROUP"}"
+
+  ask_password "Give the password:"
+  local PASSWORD="$REPLY"
+
   if [ -z "$FOLDER" ]; then
-    pick_shared_folder || return 1
+    pick_shared_folder "$HOST" "$USERNAME" "$WORKGROUP" "$PASSWORD" || return 1
     [ -z "$REPLY" ] && return
 
     FOLDER="$(value "$REPLY")"
   fi
 
-  local URI="smb://$HOST/$FOLDER"
+  local URI="smb://$WORKGROUP;$USERNAME@$HOST/${FOLDER,,}"
 
   if gio mount -l | grep -q "$URI"; then
     echo "Shared folder is already mounted"
@@ -411,24 +422,26 @@ mount_shared_folder () {
 }
 
 unmount_shared_folder () {
-  local HOST=$1
-  local FOLDER=$2
+  local URI=$1
 
-  if [ -z "$HOST" ]; then
-    pick_host || return 1
+  if [ -z "$URI" ]; then
+    local URIS="$(ls /run/user/$UID/gvfs | awk -v id=$UID '{
+      match($0,/domain=(.*),server=(.*),share=(.*),user=(.*)/,a);
+      print "smb://"a[1]";"a[4]"@"a[2]"/"a[3]"'$AES'"
+    }')"
+
+    local LEN=$(count "$URIS")
+
+    if [ $LEN -eq 0 ]; then
+      echo "No mounted shared folders have been found"
+      return
+    fi
+
+    pick_one "Select a shared folder:" "$URIS" "vertical-6" || return 1
     [ -z "$REPLY" ] && return
 
-    HOST="$(value "$REPLY")"
+    URI="$(value "$REPLY")"
   fi
-
-  if [ -z "$FOLDER" ]; then
-    pick_shared_folder || return 1
-    [ -z "$REPLY" ] && return
-
-    FOLDER="$(value "$REPLY")"
-  fi
-
-  local URI="smb://$HOST/$FOLDER"
 
   if ! gio mount -l | grep -q "$URI"; then
     echo "Shared folder is not mounted"
@@ -459,7 +472,7 @@ help () {
     "unmount device [<path>]" "Unmount a block device." \
     "" "" \
     "mount share [<host> [<folder>]]" "Mount a shared folder of a host." \
-    "unmount share [<host> [<folder>]]" "Unmount a shared folder of a host."
+    "unmount share [<uri>]" "Unmount a shared folder of a host."
 }
 
 loop () {
@@ -512,7 +525,7 @@ loop () {
       "unmount")
         case "${CMD[1]}" in
           "device") unmount_device "${CMD[2]}";;
-          "share") unmount_shared_folder "${CMD[2]}" "${CMD[3]}";;
+          "share") unmount_shared_folder "${CMD[2]}";;
           *) echo "Unknown or invalid command";;
         esac;;
       *) echo "Unknown or invalid command";; 
