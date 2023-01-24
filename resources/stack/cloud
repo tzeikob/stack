@@ -1,0 +1,326 @@
+#!/usr/bin/env bash
+
+set -o pipefail
+source /opt/stack/utils
+
+CLOUD_HOME="$HOME/mount/cloud"
+
+require "rclone"
+require "fuse2"
+
+exists () {
+  local NAME=$1
+
+  rclone listremotes | grep -Eq "^$NAME:"
+}
+
+is_mounted () {
+  local NAME=$1
+
+  grep -Eq "$NAME:.* fuse.rclone" /proc/mounts
+}
+
+remotes () {
+  local STATUS=$1
+
+  local REMOTES="$(rclone listremotes --long |
+    awk '{ORS="'$AES'";} {gsub(/:/,"",$1); print $1" ["$2"]'$KVS'"$1}')"
+  
+  if [[ ! "$STATUS" =~ ^(mounted|unmounted)$ ]]; then
+    echo "$REMOTES"
+    return
+  fi
+
+  local FILTERED=""
+
+  local LEN=$(count "$REMOTES")
+  local I=0
+  for ((I=0; I<$LEN; I++)); do
+    local REMOTE="$(element "$REMOTES" "$I")"
+    local NAME=$(value "$REMOTE")
+
+    if [ "$STATUS" = "mounted" ]; then
+      is_mounted "$NAME" && FILTERED+="${REMOTE}$AES"
+    elif [ "$STATUS" = "unmounted" ]; then
+      ! is_mounted "$NAME" && FILTERED+="${REMOTE}$AES"
+    fi
+  done
+
+  echo "$FILTERED"
+}
+
+pick_remote () {
+  local STATUS=$1
+
+  local REMOTES="$(remotes "$STATUS")"
+  local LEN=$(count "$REMOTES")
+
+  if [ $LEN -eq 0 ]; then
+    echo -e "No ${STATUS:-\b} remotes have found"
+    return 1
+  fi
+
+  pick_one "Select a remote:" "$REMOTES" "vertical-6" || return 1
+}
+
+prompt () {
+  local REMOTES="$(remotes)"
+  local LEN=$(count "$REMOTES")
+
+  local STATUS="none"
+  if [ $LEN -gt 0 ]; then
+    STATUS="synced"
+  fi
+
+  read -rep "[cloud:$YE${STATUS}$RS] " REPLY
+}
+
+list_remotes () {
+  local SERVICE=$1
+
+  local REMOTES="$(rclone listremotes --long |
+    awk '/'$SERVICE'/{
+      gsub(/:/,"",$1);
+      print "Name:    "$1"\nService: "$2"\n"
+    }'
+  )"
+
+  # Todo: Include the mounting point if mounted
+
+  if [ -z "$REMOTES" ]; then
+    echo -e "No ${SERVICE:-\b} remotes have been found"
+    return
+  fi
+
+  echo "$REMOTES"
+}
+
+sync_drive () {
+  local NAME=$1
+
+  if [ -z "$NAME" ]; then
+    echo "Missing the remote name"
+    return 1
+  elif exists "$NAME"; then
+    echo "Remote name $NAME is taken by another remote"
+    return 1
+  fi
+
+  ask "Enter the client ID:" ".+"
+  local CLIENT_ID="$REPLY"
+
+  ask "Enter the client secret:" ".+"
+  local CLIENT_SECRET="$REPLY"
+
+  ask "Enter the root folder ID (blank to skip):"
+  local ROOT_FOLDER="$REPLY"
+
+  rclone config create "$NAME" drive scope=drive \
+    client_id="$CLIENT_ID" client_secret="$CLIENT_SECRET" root_folder_id="$ROOT_FOLDER" &&
+    echo "Drive remote $NAME has been synced"
+
+  if [ ! $? -eq 0 ]; then
+    echo "Failed to sync drive remote"
+    rclone config delete "$NAME"
+  fi
+}
+
+sync_dropbox () {
+  local NAME=$1
+
+  if [ -z "$NAME" ]; then
+    echo "Missing the remote name"
+    return 1
+  elif exists "$NAME"; then
+    echo "Remote name $NAME is taken by another remote"
+    return 1
+  fi
+
+  ask "Enter the client ID:" ".+"
+  local CLIENT_ID="$REPLY"
+
+  ask "Enter the client secret:" ".+"
+  local CLIENT_SECRET="$REPLY"
+
+  rclone config create "$NAME" "dropbox" \
+    client_id="$CLIENT_ID" client_secret="$CLIENT_SECRET" &&
+    echo "Dropbox remote $NAME has been synced"
+
+  if [ ! "$?" -eq 0 ]; then
+    echo "Failed to sync dropbox remote"
+    rclone config delete "$NAME"
+  fi
+}
+
+delete_remote () {
+  local NAME=$1
+  
+  if [ -z "$NAME" ]; then
+    pick_remote || return 1
+    [ -z "$REPLY" ] && return
+
+    NAME="$(value "$REPLY")"
+  elif ! exists "$NAME"; then
+    echo "No remote $NAME has been found"
+    return 1
+  fi
+
+  if is_mounted "$NAME"; then
+    unmount_remote "$NAME"
+  fi
+
+  rclone config delete "$NAME" &&
+    echo "Remote $NAME deleted successfully" ||
+    echo "Failed to delete remote"
+}
+
+mount_remote () {
+  local NAME=$1
+
+  if [ -z "$NAME" ]; then
+    pick_remote "unmounted" || return 1
+    [ -z "$REPLY" ] && return
+
+    NAME="$(value "$REPLY")"
+  elif ! exists "$NAME"; then
+    echo "No remote $NAME has been found"
+    return 1
+  elif is_mounted "$NAME"; then
+    echo "Remote $NAME is already mounted"
+    return 1
+  fi
+
+  echo "Mounting remote $NAME..."
+
+  local SERVICE="$(rclone listremotes --long | awk '/^'$NAME':/{print $2}')"
+
+  local MOUNT_FOLDER="$CLOUD_HOME/$SERVICE/$NAME"
+
+  mkdir -p "$MOUNT_FOLDER" &&
+  rclone mount "$NAME:" "$MOUNT_FOLDER" \
+    --umask=002 --gid=$(id -g) --uid=$(id -u) --timeout=1h \
+    --poll-interval=15s --dir-cache-time=1000h --vfs-cache-mode=full \
+    --vfs-cache-max-size=150G --vfs-cache-max-age=12h --daemon &&
+    echo "Remote $NAME mounted successfully"
+  
+  if [ ! $? -eq 0 ]; then
+    echo "Failed to mount remote $NAME"
+    find "$MOUNT_FOLDER" -maxdepth 0 -empty -exec rm -rf {} \;
+  fi
+}
+
+unmount_remote () {
+  local NAME=$1
+
+  if [ -z "$NAME" ]; then
+    pick_remote "mounted" || return 1
+    [ -z "$REPLY" ] && return
+
+    NAME="$(value "$REPLY")"
+  elif ! exists "$NAME"; then
+    echo "No remote $NAME has been found"
+    return 1
+  elif ! is_mounted "$NAME"; then
+    echo "Remote $NAME is not mounted"
+    return 1
+  fi
+
+  echo "Unmounting remote $NAME..."
+
+  local MOUNT_POINTS=($(grep -E "$NAME:.* fuse.rclone" /proc/mounts | awk '{print $2}'))
+
+  local INDEX=0
+  while [ $INDEX -lt ${#MOUNT_POINTS[@]} ]; do
+    local MOUNT_POINT=${MOUNT_POINTS[$INDEX]}
+
+    fusermount -uz "$MOUNT_POINT"
+
+    if [[ "$?" -eq 0 ]]; then
+      find "$MOUNT_POINT" -maxdepth 0 -empty -exec rm -rf {} \;
+      echo "Local folder $MOUNT_POINT has been unmounted"
+    else
+      echo "Unable to unmount local folder $MOUNT_POINT"
+    fi
+
+    INDEX=$((INDEX + 1))
+  done
+}
+
+help () {
+  echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
+  
+  echo -e "\nCOMMANDS"
+  printf " %-26s\t%s\n" \
+    "help" "Show this help message." \
+    "" "" \
+    "list remotes [service]" "List all synced remotes or by service." \
+    "sync remote <service> <name>" "Sync a remote service, where service" \
+    "" "could be drive or dropbox." \
+    "delete remote [<name>]" "Delete a synced remote service." \
+    "" "" \
+    "mount remote [<name>]" "Mount an already synced remote." \
+    "unmount remote [<name>]" "Unmount an already mounted remote."
+}
+
+loop () {
+  clear
+
+  while true; do
+    prompt && history -s "$REPLY"
+
+    set -f
+    set_separator "line"
+    local CMD=($(xargs -n1 <<< "$REPLY"))
+    restore_separator && set +f
+
+    if [ "${CMD[0]}" = "help" ]; then
+      help
+      continue
+    elif [ "${CMD[0]}" = "clear" ]; then
+      clear
+      continue
+    elif [ "${CMD[0]}" = "quit" ]; then
+      break
+    elif [ -z "${CMD[0]}" ]; then
+      continue
+    fi
+
+    case "${CMD[0]}" in
+      "list")
+        case "${CMD[1]}" in
+          "remotes") list_remotes "${CMD[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "sync")
+        case "${CMD[1]}" in
+          "remote")
+            case "${CMD[2]}" in
+              "drive") sync_drive "${CMD[3]}";;
+              "dropbox") sync_dropbox "${CMD[3]}";;
+              *) echo "Invalid or unknown service";;
+            esac;;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "delete")
+        case "${CMD[1]}" in
+          "remote") delete_remote "${CMD[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "mount")
+        case "${CMD[1]}" in
+          "remote") mount_remote "${CMD[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "unmount")
+        case "${CMD[1]}" in
+          "remote") unmount_remote "${CMD[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      *) echo "Unknown or invalid command";; 
+    esac
+  done
+
+  clear
+}
+
+loop

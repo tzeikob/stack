@@ -304,8 +304,7 @@ install_utilities () {
   cp ~/stack/resources/stack/theme "$STACK_HOME"
   cp ~/stack/resources/stack/audio "$STACK_HOME"
   cp ~/stack/resources/stack/displays "$STACK_HOME"
-  cp ~/stack/resources/stack/drive "$STACK_HOME"
-  cp ~/stack/resources/stack/dropbox "$STACK_HOME"
+  cp ~/stack/resources/stack/cloud "$STACK_HOME"
   cp ~/stack/resources/stack/notifications "$STACK_HOME"
 
   ln -sf "$STACK_HOME/clock" /usr/local/bin/clock
@@ -316,8 +315,7 @@ install_utilities () {
   ln -sf "$STACK_HOME/theme" /usr/local/bin/theme
   ln -sf "$STACK_HOME/audio" /usr/local/bin/audio
   ln -sf "$STACK_HOME/displays" /usr/local/bin/displays
-  ln -sf "$STACK_HOME/drive" /usr/local/bin/drive
-  ln -sf "$STACK_HOME/dropbox" /usr/local/bin/dropbox
+  ln -sf "$STACK_HOME/cloud" /usr/local/bin/cloud
   ln -sf "$STACK_HOME/notifications" /usr/local/bin/notifications
 
   echo 'displays load layout || notifications push "Displays Layout" "Unable to load the displays layout"' >> ~/.xinitrc
