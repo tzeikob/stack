@@ -17,13 +17,13 @@ show_status () {
     if (i > 0) {
       l=$1;
       gsub(/^[ \t]+|[ \t]+$/, "", l);
-      printf "%-14s %s\n", l":", substr($0, i+1)}
-    else {
-      gsub(/ /,""); printf "%-14s %s\n", "", " "$0}
+      printf "%-14s %s\n", l":", substr($0, i+1)
+    } else {
+      gsub(/ /,""); printf "%-14s %s\n", "", " "$0
+    }
   }'
 
   local LOCALES="$(locale -a | awk '{ORS=", ";} {print $0}')"
-
   echo "Locales:        [${LOCALES::-2}]"
 }
 
@@ -44,8 +44,8 @@ set_keymap () {
     return 1
   fi
 
-  localectl set-keymap --no-convert "$KEYMAP" &&
-    echo "Keyboard map set to $KEYMAP" ||
+  localectl set-keymap --no-convert "$MAP" &&
+    echo "Keyboard map set to $MAP" ||
     echo "Failed to set keyboard map"
 }
 
@@ -61,7 +61,10 @@ set_language () {
     LANG_ARG="$(value "$REPLY")"
   fi
 
-  if ! cat /etc/locale.gen | grep -qE "^#?$LANG_ARG .*$"; then
+  if [[ ! "$LANG_ARG" =~ ^[a-zA-Z0-9_.-]+$ ]]; then
+    echo "Invalid language value"
+    return 1
+  elif ! cat /etc/locale.gen | grep -qE "^#?$LANG_ARG .*$"; then
     echo "Invalid language value"
     return 1
   fi
@@ -78,11 +81,10 @@ set_locale () {
   local NAME=${1^^}
   local LOCALE=$2
 
-  if [ -z "$NAME" ]; then
-    echo "Missing locale variable name argument"
-    return 1
-  elif [[ ! "$NAME" =~ (CTYPE|NUMERIC|TIME|COLLATE|MONETARY|MESSAGES|PAPER| \
-    NAME|ADDRESS|TELEPHONE|MEASUREMENT|IDENTIFICATION) ]]; then
+  local RE='(CTYPE|NUMERIC|TIME|COLLATE|MONETARY|MESSAGES|PAPER|'
+  RE+='NAME|ADDRESS|TELEPHONE|MEASUREMENT|IDENTIFICATION)'
+
+  if [[ ! "$NAME" =~ $RE ]]; then
     echo "Invalid locale variable name"
     return 1
   fi
@@ -96,7 +98,10 @@ set_locale () {
     LOCALE="$(value "$REPLY")"
   fi
 
-  if ! cat /etc/locale.gen | grep -qE "^#?$LOCALE .*$"; then
+  if [[ ! "$LOCALE" =~ ^[a-zA-Z0-9_.-]+$ ]]; then
+    echo "Invalid locale value"
+    return 1
+  elif ! cat /etc/locale.gen | grep -qE "^#?$LOCALE .*$"; then
     echo "Invalid locale value"
     return 1
   fi
@@ -306,7 +311,7 @@ remove_layout () {
   if [ -z "$LANG_ARG" ]; then
     local LANGUAGES="$(echo "$LAYOUTS" | tr ',' '\n' | awk '{ORS="'$AES'";} {print $0}')"
 
-    pick_one "Select a language:" "$LANGUAGES" "vertical-6" || return 1
+    pick_one "Select a language:" "$LANGUAGES" "horizontal" || return 1
     [ -z "$REPLY" ] && return
 
     LANG_ARG="$(value "$REPLY")"
