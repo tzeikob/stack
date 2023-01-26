@@ -78,21 +78,32 @@ prompt () {
 list_remotes () {
   local SERVICE=$1
 
-  local REMOTES="$(rclone listremotes --long |
-    awk '/'$SERVICE'/{
-      gsub(/:/,"",$1);
-      print "Name:    "$1"\nService: "$2"\n"
-    }'
-  )"
-
-  # Todo: Include the mounting point if mounted
-
+  local REMOTES="$(remotes)"
+  local LEN=$(count "$REMOTES")
+    
   if [ -z "$REMOTES" ]; then
     echo -e "No ${SERVICE:-\b} remotes have been found"
     return
   fi
 
-  echo "$REMOTES"
+  local I=0
+  for ((I=0; I<$LEN; I++)); do
+    local REMOTE="$(element "$REMOTES" "$I")"
+
+    local NAME="$(value "$REMOTE")"
+    local SERVICE="$(key "$REMOTE" | awk '{gsub(/(\[|\])/,"",$2); print $2}')"
+
+    local MOUNTPOINT=""
+    if is_mounted "$NAME"; then
+      MOUNTPOINT="$(awk '/^'$NAME':/{print $2}' /proc/mounts)"
+    fi
+
+    [ $I -gt 0 ] && echo
+
+    echo "Name:    $NAME"
+    echo "Service: $SERVICE"
+    [ -n "$MOUNTPOINT" ] && echo "Mount:   $MOUNTPOINT" 
+  done
 }
 
 sync_drive () {
