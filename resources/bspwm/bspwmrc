@@ -1,6 +1,6 @@
 #!/bin/sh
 
-feh --no-fehbg --bg-fill ~/images/wallpapers/wallpaper.jpeg &
+theme load wallpaper &
 pgrep -x sxhkd > /dev/null || sxhkd &
 $HOME/.config/polybar/launch &
 dunst &

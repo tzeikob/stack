@@ -1,79 +1,104 @@
 #!/usr/bin/env bash
 
+set -o pipefail
 source /opt/stack/utils
+
+WALLPAPERS_HOME=$HOME/images/wallpapers
+SETTINGS=$HOME/.config/gtk-3.0/settings.ini
 
 require "feh"
 
 prompt () {
-  local YELLOW=$'\e[0;33m'
-  local RS=$'\e[m'
-  local FG=$YELLOW
-
-  local THEME_NAME=$(cat ~/.config/gtk-3.0/settings.ini |
-    awk -F= '/gtk-theme-name/{print tolower($2)}')
+  local THEME="$(cat "$SETTINGS" | awk -F'=' '/gtk-theme-name/{print $2}')"
   
-  [ -z "$THEME_NAME" ] && THEME_NAME="none"
+  local STATUS="default"
+  [ -n "$THEME" ] && STATUS="${THEME,,}"
 
-  read -rep "[theme:$FG${THEME_NAME}$RS] " REPLY
+  read -rep "[theme:$YE${STATUS}$RS] " REPLY
 }
 
 show_status () {
-  local GTK_SETTINGS=$(cat ~/.config/gtk-3.0/settings.ini)
+  cat "$SETTINGS" | awk -F'=' '{
+      key=""
+      if ($1 ~ /^gtk-theme-name/) key="Theme Name:"
+      else if ($1 ~ /^gtk-icon-theme-name/) key="Icon Set:"
+      else if ($1 ~ /^gtk-font-name/) key="Font Name:"
+      else if ($1 ~ /^gtk-cursor-theme-name/) key="Cursor Set:"
+      else if ($1 ~ /^gtk-application-prefer-dark-theme/) key="Dark Mode:"
+      else if ($1 ~ /^wallpaper/) key="Wallpaper:"
 
-  local NAME=$(awk -F= '/gtk-theme-name/{print $2}' <<< "$GTK_SETTINGS")
-  local ICON_THEME=$(awk -F= '/gtk-icon-theme-name/{print $2}' <<< "$GTK_SETTINGS")
-  local FONT_NAME=$(awk -F= '/gtk-font-name/{print $2}' <<< "$GTK_SETTINGS")
-  local CURSOR_THEME=$(awk -F= '/gtk-cursor-theme-name/{print $2}' <<< "$GTK_SETTINGS")
-  local DARK_MODE=$(awk -F= '/gtk-application-prefer-dark-theme/{print $2}' <<< "$GTK_SETTINGS")
-  [ "$DARK_MODE" = "1" ] && DARK_MODE="on" || DARK_MODE="off"
-
-  local WALLPAPER=$(awk '/feh/{print $4}' ~/.config/bspwm/bspwmrc)
-  
-  printf '%-10s\t%s\n' \
-    "Theme Name:" "$NAME" \
-    "Icon Set:" "$ICON_THEME" \
-    "Font Name:" "$FONT_NAME" \
-    "Cursor Set:" "$CURSOR_THEME" \
-    "Dark Mode:" "$DARK_MODE" \
-    "Wallpaper:" "$WALLPAPER"
+      if (key) {
+        if (key == "Dark Mode:") {
+          if ($2 == 0) {$2="false"} else {$2="true"}
+        }
+        printf "%-14s %s\n", key, $2
+      }
+    }'
 }
 
 set_wallpaper () {
-  local FILE_PATH=$1
+  local IMAGE=$1
 
-  if [ -z "$FILE_PATH" ]; then
-    echo "Missing file path argument"
-    return 1
-  elif [[ ! "$FILE_PATH" =~ ^/ ]]; then
+  if [ -z "$IMAGE" ]; then
+    local WALLPAPERS="$(ls -1 "$WALLPAPERS_HOME" |
+      awk '{ORS="'$AES'";} /.+\.(jpg|jpeg|png)/{print}')"
+
+    pick_one "Select an image file:" "$WALLPAPERS" "vertical-6" || return 1
+    [ -z "$REPLY" ] && return
+
+    IMAGE="$WALLPAPERS_HOME/$(value "$REPLY")"
+  fi
+  
+  if [[ ! "$IMAGE" =~ ^/ ]]; then
     echo "File path should be an absolute path"
     return 1
-  elif [ ! -f "$FILE_PATH" ]; then
-    echo "Invalid file path: '$FILE_PATH'"
+  elif [ ! -f "$IMAGE" ]; then
+    echo "Invalid or unknown file path"
+    return 1
+  elif [[ ! "$IMAGE" =~ .+\.(jpg|jpeg|png)$ ]]; then
+    echo "Only jpeg or png files are supported"
     return 1
   fi
 
-  feh --no-fehbg --bg-fill "$FILE_PATH" &&
-    sed -i "s;.*feh.*;feh --no-fehbg --bg-fill "$FILE_PATH" \&;" ~/.config/bspwm/bspwmrc &&
-    echo "Wallpaper has been set to $FILE_PATH" ||
-    echo "Something went wrong setting the wallpaper"
+  feh --no-fehbg --bg-fill "$IMAGE" &&
+    sed -i "s;^wallpaper=.*;wallpaper=$IMAGE;" "$SETTINGS" &&
+    echo "Wallpaper set to $IMAGE" ||
+    echo "Failed to set the wallpaper"
+}
+
+load_wallpaper () {
+  local IMAGE="$(cat "$SETTINGS" | awk -F'=' '/^wallpaper=/{print $2}')"
+
+  set_wallpaper "$IMAGE" &&
+    echo "Wallpaper has been loaded"
+
+  if [ ! $? -eq 0 ]; then
+    echo "Failed to load the wallpaper"
+    return 1
+  fi
 }
 
 help () {
-  local FRM=" %-33s\t%s\n"
+  if [ "$1" = "once" ]; then
+    echo "Usage: theme COMMAND [OBJECT] [ARGUMENTS]..."
+
+    echo -e "\nCOMMANDS"
+    printf " %-16s %s\n" \
+      "help" "Show this help message." \
+      "" "" \
+      "load wallpaper" "Load the desktop wallpaper."
+
+    return
+  fi
 
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
   echo -e "\nCOMMANDS"
-  printf "$FRM" \
+  printf " %-25s %s\n" \
     "help" "Show this help message." \
-    "show status" "Show an overall report of the theme." \
     "" "" \
-    "set wallpaper <file-path>" "Set the desktop wallpaper image."
-
-  echo -e "\nOBJECTS"
-  printf "$FRM" \
-    "status" "The status of the theme and desktop." \
-    "wallpaper" "The desktop wallpaper image."
+    "show status" "Show information and status related to theme." \
+    "set wallpaper [<image>]" "Set the desktop wallpaper to the given image file."
 }
 
 loop () {
@@ -83,9 +108,9 @@ loop () {
     prompt && history -s "$REPLY"
 
     set -f
-    local OLD_IFS=$IFS && IFS=$'\n'
+    set_separator "line"
     local CMD=($(xargs -n1 <<< "$REPLY"))
-    IFS=$OLD_IFS && set +f
+    restore_separator && set +f
 
     if [ "${CMD[0]}" = "help" ]; then
       help
@@ -103,18 +128,34 @@ loop () {
       "show")
         case "${CMD[1]}" in
           "status") show_status;;
-          *) echo "Unknown or invalid command: '$REPLY'";;
+          *) echo "Unknown or invalid command";;
         esac;;
       "set")
         case "${CMD[1]}" in
           "wallpaper") set_wallpaper "${CMD[2]}";;
-          *) echo "Unknown or invalid command: '$REPLY'";;
+          *) echo "Unknown or invalid command";;
         esac;;
-      *) echo "Unknown or invalid command: '$REPLY'";; 
+      *) echo "Unknown or invalid command";; 
     esac
   done
 
   clear
 }
 
-loop
+once () {
+  case "$1" in
+    "help") help once;;
+    "load")
+      case "$2" in
+        "wallpaper") load_wallpaper || abort;;
+        *) abort "Invalid or unknown command";;
+      esac;;
+    *) abort "Invalid or unknown command";;
+  esac
+}
+
+if [ $# = 0 ]; then
+  loop
+else
+  once "$@"
+fi

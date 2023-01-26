@@ -357,7 +357,9 @@ install_theme () {
   cp ~/stack/resources/gtk/settings.ini "$GTK_HOME"
 
   mkdir -p ~/images/wallpapers
-  cp ~/stack/resources/feh/wallpaper.jpeg ~/images/wallpapers/wallpaper.jpeg
+  local WALLPAPER_PATH=~/images/wallpapers/wallpaper.jpeg
+  cp ~/stack/resources/feh/wallpaper.jpeg "$WALLPAPER_PATH"
+  echo "wallpaper=$WALLPAPER_PATH" >> "$GTK_HOME/settings.ini"
 
   echo "Default wallpaper has been saved to ~/images/wallpapers"
   echo "Theme has been setup"
