@@ -320,6 +320,7 @@ install_utilities () {
 
   echo 'displays load layout || notifications push "Displays Layout" "Unable to load the displays layout"' >> ~/.xinitrc
   echo 'displays load colors || notifications push "Displays Colors" "Some color profiles failed to load"' >> ~/.xinitrc
+  echo 'cloud mount remotes || notifications push "Cloud Services" "Some remotes failed to be mounted"' >> ~/.xinitrc
 
   echo "Stack utilities have been installed"
 }

@@ -217,6 +217,7 @@ mount_remote () {
   if [ ! $? -eq 0 ]; then
     echo "Failed to mount remote $NAME"
     find "$MOUNT_FOLDER" -maxdepth 0 -empty -exec rm -rf {} \;
+    return 1
   fi
 }
 
@@ -257,7 +258,42 @@ unmount_remote () {
   done
 }
 
+mount_all () {
+  local REMOTES="$(remotes)"
+  local LEN=$(count "$REMOTES")
+
+  if [ $LEN -eq 0 ]; then
+    echo "No remotes have been found to mount"
+    return
+  fi
+
+  local FAILURES=()
+  local I=0
+  for ((I=0; I<$LEN; I++)); do
+    local NAME="$(element "$REMOTES" "$I" | value)"
+
+    if ! is_mounted "$NAME"; then
+      mount_remote "$NAME" || FAILURES+=("$NAME")
+    fi
+  done
+
+  if [ ${#FAILURES[@]} -gt 0 ]; then
+    return 1
+  fi
+}
+
 help () {
+  if [ "$1" = "once" ]; then
+    echo "Usage: cloud COMMAND [OBJECT] [ARGUMENTS]..."
+
+    echo -e "\nCOMMANDS"
+    printf " %-12s\t%s\n" \
+      "help" "Show this help message." \
+      "mount remotes" "Mount all synced cloud remotes."
+
+    return
+  fi
+
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
   
   echo -e "\nCOMMANDS"
@@ -334,4 +370,20 @@ loop () {
   clear
 }
 
-loop
+once () {
+  case "$1" in
+    "help") help once;;
+    "mount")
+      case "$2" in
+        "remotes") mount_all || abort;;
+        *) abort "Invalid or unknown command";;
+      esac;;
+    *) abort "Invalid or unknown command";;
+  esac
+}
+
+if [ $# = 0 ]; then
+  loop
+else
+  once "$@"
+fi
