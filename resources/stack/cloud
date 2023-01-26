@@ -67,7 +67,7 @@ prompt () {
   local REMOTES="$(remotes)"
   local LEN=$(count "$REMOTES")
 
-  local STATUS="none"
+  local STATUS="offline"
   if [ $LEN -gt 0 ]; then
     STATUS="synced"
   fi
