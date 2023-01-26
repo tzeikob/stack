@@ -305,7 +305,6 @@ install_utilities () {
   cp ~/stack/resources/stack/audio "$STACK_HOME"
   cp ~/stack/resources/stack/displays "$STACK_HOME"
   cp ~/stack/resources/stack/cloud "$STACK_HOME"
-  cp ~/stack/resources/stack/notifications "$STACK_HOME"
 
   ln -sf "$STACK_HOME/clock" /usr/local/bin/clock
   ln -sf "$STACK_HOME/trash" /usr/local/bin/trash
@@ -316,11 +315,10 @@ install_utilities () {
   ln -sf "$STACK_HOME/audio" /usr/local/bin/audio
   ln -sf "$STACK_HOME/displays" /usr/local/bin/displays
   ln -sf "$STACK_HOME/cloud" /usr/local/bin/cloud
-  ln -sf "$STACK_HOME/notifications" /usr/local/bin/notifications
 
-  echo 'displays load layout || notifications push "Displays Layout" "Unable to load the displays layout"' >> ~/.xinitrc
-  echo 'displays load colors || notifications push "Displays Colors" "Some color profiles failed to load"' >> ~/.xinitrc
-  echo 'cloud mount remotes || notifications push "Cloud Services" "Some remotes failed to be mounted"' >> ~/.xinitrc
+  echo 'displays load layout || notify-send "Failed to load displays layout"' >> ~/.xinitrc
+  echo 'displays load colors || notify-send "Failed to load some color profiles"' >> ~/.xinitrc
+  echo 'cloud mount remotes || notify-send "Failed to mount some cloud remotes"' >> ~/.xinitrc
 
   echo "Stack utilities have been installed"
 }
