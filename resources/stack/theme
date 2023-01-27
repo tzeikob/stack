@@ -4,6 +4,7 @@ set -o pipefail
 source /opt/stack/utils
 
 WALLPAPERS_HOME=$HOME/images/wallpapers
+THEMES_HOME=/usr/share/themes
 SETTINGS=$HOME/.config/gtk-3.0/settings.ini
 
 require "feh"
@@ -34,6 +35,9 @@ show_status () {
         printf "%-14s %s\n", key, $2
       }
     }'
+  
+  local THEMES="$(ls -1 $THEMES_HOME/*/index.theme | awk -F'/' '{ORS=",";} {print $5}')"
+  echo "Themes:        [${THEMES::-1}]"
 }
 
 set_wallpaper () {
@@ -64,6 +68,113 @@ set_wallpaper () {
     sed -i "s;^wallpaper=.*;wallpaper=$IMAGE;" "$SETTINGS" &&
     echo "Wallpaper set to $IMAGE" ||
     echo "Failed to set the wallpaper"
+}
+
+install_theme () {
+  local ARCHIVE=$1
+
+  if [ -z "$ARCHIVE" ]; then
+    echo "Missing archive file path"
+    return 1
+  elif [[ ! "$ARCHIVE" =~ ^/ ]]; then
+    echo "File path should be an absolute path"
+    return 1
+  elif [ ! -f "$ARCHIVE" ]; then
+    echo "Invalid or unknown archive file path"
+    return 1
+  elif [[ ! "$ARCHIVE" =~ .+\.(zip|tar|tar\.gz)$ ]]; then
+    echo "Invalid archive file type"
+    return 1
+  fi
+
+  local FILE_LIST=""
+  if [[ "$ARCHIVE" =~ .+\.zip$ ]]; then
+    FILE_LIST="$(unzip -qql "$ARCHIVE" || echo "err:$?")"
+  else
+    FILE_LIST="$(tar -tf "$ARCHIVE" || echo "err:$?")"
+  fi
+
+  [[ "$FILE_LIST" =~ ^err: ]] &&
+    echo "Unable to read the archive file" && return 1
+  
+  local ROOT=""
+  if [[ "$ARCHIVE" =~ .+\.zip$ ]]; then
+    ROOT="$(echo "$FILE_LIST" | head -n 1 | awk '{print substr($4,1,length($4)-1)}')"
+  else
+    ROOT="$(echo "$FILE_LIST" | head -n 1 | awk '{print substr($0,1,length($0)-1)}')"
+  fi
+
+  local INDEX=""
+  if [[ "$ARCHIVE" =~ .+\.zip$ ]]; then
+    INDEX="$(unzip -p "$ARCHIVE" "$ROOT/index.theme" 2>/dev/null || echo "err:$?")"
+  else
+    INDEX="$(tar -xf "$ARCHIVE" "$ROOT/index.theme" -O 2>/dev/null || echo "err:$?")"
+  fi
+
+  [[ "$INDEX" =~ ^err: ]] &&
+    echo "Missing or invalid index.theme file" && return 1
+
+  local NAME="$(echo "$INDEX" | awk -F'=' '/^Name=/{print $2; exit}')"
+  [ -z "$NAME" ] &&
+    echo "Malformed or corrupted index.theme file" && return 1
+
+  if [ -d "$THEMES_HOME/$NAME" ]; then
+    echo "Theme with name $NAME already exists"
+    return 1
+  elif [ -d "$THEMES_HOME/$ROOT" ]; then
+    echo "Unable to extract archive, root folder exists"
+    return 1
+  fi
+  
+  if [[ "$ARCHIVE" =~ .+\.zip$ ]]; then
+    sudo unzip -qq "$ARCHIVE" -d "$THEMES_HOME"
+  else
+    sudo tar -xf "$ARCHIVE" --directory "$THEMES_HOME"
+  fi
+
+  if [ ! "$ROOT" = "$NAME" ]; then
+    sudo mv "$THEMES_HOME/$ROOT" "$THEMES_HOME/$NAME"
+  fi
+
+  echo "Theme $NAME has been installed"
+}
+
+uninstall_theme () {
+  local NAME=$1
+
+  if [ -z "$NAME" ]; then
+    local THEMES="$(ls -1 $THEMES_HOME/*/index.theme | awk -F'/' '{ORS="'$AES'";} {print $5}')"
+    local LEN=$(count "$THEMES")
+
+    if [ $LEN -eq 0 ]; then
+      echo "No installed themes have found"
+      return
+    fi
+
+    pick_one "Select a theme:" "$THEMES" "vertical-6" || return 1
+    [ -z "$REPLY" ] && return
+
+    NAME="$(value "$REPLY")"
+  fi
+
+  local THEME_HOME=$THEMES_HOME/$NAME
+
+  if [ "$THEME_HOME" = "/" ] || [ "$THEME_HOME" = "$THEMES_HOME" ]; then
+    echo "Name should not be empty or null"
+    return 1
+  fi
+
+  if [ ! -d "$THEME_HOME" ]; then
+    echo "No theme $NAME has been found"
+    return 1
+  elif grep -qE "^gtk-theme-name=$NAME$" "$SETTINGS"; then
+    echo "Cannot uninstall the current active theme"
+    return 1
+  fi
+
+  sudo rm -rf "$THEME_HOME" &&
+    echo "Theme $NAME has been uninstalled" ||
+    echo "Failed to unistall the theme"
 }
 
 load_wallpaper () {
@@ -98,7 +209,11 @@ help () {
     "help" "Show this help message." \
     "" "" \
     "show status" "Show information and status related to theme." \
-    "set wallpaper [<image>]" "Set the desktop wallpaper to the given image file."
+    "set wallpaper [<image>]" "Set the desktop wallpaper to the given image file." \
+    "" "" \
+    "set theme [<name>]" "Set the current active desktop theme." \
+    "install theme <archive>" "Install a desktop theme given as a zip file." \
+    "uninstall theme [<name>]" "Uninstall a desktop theme."
 }
 
 loop () {
@@ -133,6 +248,17 @@ loop () {
       "set")
         case "${CMD[1]}" in
           "wallpaper") set_wallpaper "${CMD[2]}";;
+          "theme") set_theme "${CMD[2]}";;
+          *) echo "Unknown or invalid command";;
+        esac;;
+      "install")
+        case "${CMD[1]}" in
+          "theme") install_theme "${CMD[2]}";;
+          *) echo "Unknown or invalid command";;
+        esac;;
+      "uninstall")
+        case "${CMD[1]}" in
+          "theme") uninstall_theme "${CMD[2]}";;
           *) echo "Unknown or invalid command";;
         esac;;
       *) echo "Unknown or invalid command";; 
