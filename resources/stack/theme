@@ -70,6 +70,45 @@ set_wallpaper () {
     echo "Failed to set the wallpaper"
 }
 
+set_theme () {
+  local NAME=$1
+
+  if [ -z "$NAME" ]; then
+    local THEMES="$(ls -1 $THEMES_HOME/*/index.theme | awk -F'/' '{ORS="'$AES'";} {print $5}')"
+    local LEN=$(count "$THEMES")
+
+    if [ $LEN -eq 0 ]; then
+      echo "No installed themes have found"
+      return
+    fi
+
+    pick_one "Select a theme:" "$THEMES" "vertical-6" || return 1
+    [ -z "$REPLY" ] && return
+
+    NAME="$(value "$REPLY")"
+  fi
+
+  if [ ! -d "$THEMES_HOME/$NAME" ]; then
+    echo "No theme $NAME has been found"
+    return 1
+  elif [ ! -f "$THEMES_HOME/$NAME/index.theme" ]; then
+    echo "Theme $NAME has no index.theme file"
+    return 1
+  fi
+  
+  if grep -qE "^gtk-theme-name=.*" "$SETTINGS"; then
+    sed -i "s;^gtk-theme-name=.*;gtk-theme-name=$NAME;" "$SETTINGS"
+  else
+    echo "gtk-theme-name=$NAME" >> "$SETTINGS"
+  fi
+
+  if [ $? = 0 ]; then
+    echo "Theme $NAME has been set"
+  else
+    echo "Failed to set the active theme"
+  fi
+}
+
 install_theme () {
   local ARCHIVE=$1
 
@@ -166,6 +205,9 @@ uninstall_theme () {
 
   if [ ! -d "$THEME_HOME" ]; then
     echo "No theme $NAME has been found"
+    return 1
+  elif [ ! -f "$THEME_HOME/index.theme" ]; then
+    echo "Theme $NAME has no index.theme file"
     return 1
   elif grep -qE "^gtk-theme-name=$NAME$" "$SETTINGS"; then
     echo "Cannot uninstall the current active theme"
