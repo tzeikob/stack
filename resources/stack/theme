@@ -94,6 +94,9 @@ set_theme () {
   elif [ ! -f "$THEMES_HOME/$NAME/index.theme" ]; then
     echo "Theme $NAME has no index.theme file"
     return 1
+  elif grep -qE "^gtk-theme-name=$NAME$" "$SETTINGS"; then
+    echo "Theme $NAME is already the active theme"
+    return 1
   fi
   
   if grep -qE "^gtk-theme-name=.*" "$SETTINGS"; then
