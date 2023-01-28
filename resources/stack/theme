@@ -3,9 +3,9 @@
 set -o pipefail
 source /opt/stack/utils
 
-WALLPAPERS_HOME=$HOME/images/wallpapers
-THEMES_HOME=/usr/share/themes
-SETTINGS=$HOME/.config/gtk-3.0/settings.ini
+WALLPAPERS_HOME="$HOME/images/wallpapers"
+THEMES_HOME="/usr/share/themes"
+SETTINGS="$HOME/.config/gtk-3.0/settings.ini"
 
 require "feh"
 
@@ -20,21 +20,21 @@ prompt () {
 
 show_status () {
   cat "$SETTINGS" | awk -F'=' '{
-      key=""
-      if ($1 ~ /^gtk-theme-name/) key="Theme Name:"
-      else if ($1 ~ /^gtk-icon-theme-name/) key="Icon Set:"
-      else if ($1 ~ /^gtk-font-name/) key="Font Name:"
-      else if ($1 ~ /^gtk-cursor-theme-name/) key="Cursor Set:"
-      else if ($1 ~ /^gtk-application-prefer-dark-theme/) key="Dark Mode:"
-      else if ($1 ~ /^wallpaper/) key="Wallpaper:"
+    key=""
+    if ($1 ~ /^gtk-theme-name/) key="Theme Name:"
+    else if ($1 ~ /^gtk-icon-theme-name/) key="Icon Set:"
+    else if ($1 ~ /^gtk-font-name/) key="Font Name:"
+    else if ($1 ~ /^gtk-cursor-theme-name/) key="Cursor Set:"
+    else if ($1 ~ /^gtk-application-prefer-dark-theme/) key="Dark Mode:"
+    else if ($1 ~ /^wallpaper/) key="Wallpaper:"
 
-      if (key) {
-        if (key == "Dark Mode:") {
-          if ($2 == 0) {$2="false"} else {$2="true"}
-        }
-        printf "%-14s %s\n", key, $2
+    if (key) {
+      if (key == "Dark Mode:") {
+        if ($2 == 0) {$2="false"} else {$2="true"}
       }
-    }'
+      printf "%-14s %s\n", key, $2
+    }
+  }'
   
   local THEMES="$(ls -1 $THEMES_HOME/*/index.theme | awk -F'/' '{ORS=",";} {print $5}')"
   echo "Themes:        [${THEMES::-1}]"
@@ -42,32 +42,59 @@ show_status () {
 
 set_wallpaper () {
   local IMAGE=$1
+  local TYPES='.+\.(jpg|jpeg|png)$'
 
   if [ -z "$IMAGE" ]; then
-    local WALLPAPERS="$(ls -1 "$WALLPAPERS_HOME" |
-      awk '{ORS="'$AES'";} /.+\.(jpg|jpeg|png)/{print}')"
+    local IMAGES="$(ls -1 "$WALLPAPERS_HOME" | awk '{ORS="'$AES'";} /'$TYPES'/{print}')"
+    local LEN=$(count "$IMAGES")
 
-    pick_one "Select an image file:" "$WALLPAPERS" "vertical-6" || return 1
+    if [ $LEN = 0 ]; then
+      echo "No wallpaper images have found"
+      return
+    fi
+
+    pick_one "Select an image file:" "$IMAGES" "vertical-6" || return 1
     [ -z "$REPLY" ] && return
 
     IMAGE="$WALLPAPERS_HOME/$(value "$REPLY")"
   fi
-  
+
   if [[ ! "$IMAGE" =~ ^/ ]]; then
     echo "File path should be an absolute path"
     return 1
   elif [ ! -f "$IMAGE" ]; then
     echo "Invalid or unknown file path"
     return 1
-  elif [[ ! "$IMAGE" =~ .+\.(jpg|jpeg|png)$ ]]; then
+  elif [[ ! "$IMAGE" =~ $TYPES ]]; then
     echo "Only jpeg or png files are supported"
     return 1
   fi
 
-  feh --no-fehbg --bg-fill "$IMAGE" &&
-    sed -i "s;^wallpaper=.*;wallpaper=$IMAGE;" "$SETTINGS" &&
-    echo "Wallpaper set to $IMAGE" ||
+  feh --no-fehbg --bg-fill "$IMAGE"
+
+  if [ ! $? = 0 ]; then
     echo "Failed to set the wallpaper"
+    return 1
+  fi
+
+  local IMAGE_NAME="$(basename "$IMAGE")"
+
+  if [ ! "$IMAGE" = "$WALLPAPERS_HOME/$IMAGE_NAME" ]; then
+    if [ -f "$WALLPAPERS_HOME/$IMAGE_NAME" ]; then
+      IMAGE_NAME="copy_${IMAGE_NAME}"
+    fi
+
+    cp "$IMAGE" "$WALLPAPERS_HOME/$IMAGE_NAME"
+    IMAGE="$WALLPAPERS_HOME/$IMAGE_NAME"
+  fi
+
+  if grep -qE "^wallpaper=.*" "$SETTINGS"; then
+    sed -i "s;^wallpaper=.*;wallpaper=$IMAGE;" "$SETTINGS"
+  else
+    echo "wallpaper=$IMAGE" >> "$SETTINGS"
+  fi
+
+  echo "Wallpaper set to $IMAGE"    
 }
 
 set_theme () {
