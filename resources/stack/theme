@@ -80,9 +80,9 @@ set_wallpaper () {
   local IMAGE_NAME="$(basename "$IMAGE")"
 
   if [ ! "$IMAGE" = "$WALLPAPERS_HOME/$IMAGE_NAME" ]; then
-    if [ -f "$WALLPAPERS_HOME/$IMAGE_NAME" ]; then
+    while [ -f "$WALLPAPERS_HOME/$IMAGE_NAME" ]; do
       IMAGE_NAME="copy_${IMAGE_NAME}"
-    fi
+    done
 
     cp "$IMAGE" "$WALLPAPERS_HOME/$IMAGE_NAME"
     IMAGE="$WALLPAPERS_HOME/$IMAGE_NAME"
