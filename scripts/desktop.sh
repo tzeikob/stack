@@ -363,7 +363,9 @@ install_theme () {
   mkdir -p "$WALLPAPERS_HOME"
 
   cp ~/stack/resources/feh/wallpaper.jpeg "$WALLPAPERS_HOME/default.jpeg"
-  echo "file=$WALLPAPERS_HOME/default.jpeg" > "$CONFIG_HOME/wallpaper"
+  printf "%s\n" \
+    "file=$WALLPAPERS_HOME/default.jpeg" \
+    "mode=fill" > "$CONFIG_HOME/wallpaper"
 
   echo "Default wallpaper has been set"
   echo "Theme has been setup"

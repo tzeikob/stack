@@ -7,6 +7,9 @@ CONFIG_HOME="$HOME/.config/stack/theme"
 WALLPAPERS_HOME="$CONFIG_HOME/wallpapers"
 WALLPAPER_CONFIG="$CONFIG_HOME/wallpaper"
 
+WALLPAPER_TYPES='jpg|jpeg|png'
+WALLPAPER_MODES='center|fill|max|scale|tile'
+
 require "feh"
 
 prompt () {
@@ -15,11 +18,10 @@ prompt () {
 
 set_wallpaper () {
   local IMAGE=$1
-
-  local TYPES='jpg|jpeg|png'
+  local MODE=$2
 
   if [ -z "$IMAGE" ]; then
-    local IMAGES="$(ls -1 "$WALLPAPERS_HOME" | awk '{ORS="'$AES'";} /.+\.('$TYPES')$/{print}')"
+    local IMAGES="$(ls -1 "$WALLPAPERS_HOME" | awk '{ORS="'$AES'";} /.+\.('$WALLPAPER_TYPES')$/{print}')"
     local LEN=$(count "$IMAGES")
 
     if [ $LEN = 0 ]; then
@@ -39,8 +41,24 @@ set_wallpaper () {
   elif [ ! -f "$IMAGE" ]; then
     echo "Invalid or unknown file path"
     return 1
-  elif [[ ! "$IMAGE" =~ .+\.($TYPES)$ ]]; then
+  elif [[ ! "$IMAGE" =~ .+\.($WALLPAPER_TYPES)$ ]]; then
     echo "Only jpeg or png files are supported"
+    return 1
+  fi
+
+  if [ -z "$MODE" ]; then
+    local MODES="$(echo "$WALLPAPER_MODES" | awk -F'|' '{
+      out="";
+      for (i=1; i<NF; i++) {out=out $i "'${AES}'"};
+      print out
+    }')"
+
+    pick_one "Select a mode:" "$MODES" "horizontal" || return 1
+    [ -z "$REPLY" ] && return
+
+    MODE="$(value "$REPLY")"
+  elif [[ ! "$MODE" =~ ^${WALLPAPER_MODES}$ ]]; then
+    echo "Invalid wallpaper mode"
     return 1
   fi
 
@@ -55,7 +73,9 @@ set_wallpaper () {
     IMAGE="$WALLPAPERS_HOME/$IMAGE_NAME"
   fi
 
-  printf "file=$IMAGE" > "$WALLPAPER_CONFIG"
+  printf "%s\n" \
+    "file=$IMAGE" \
+    "mode=$MODE" > "$WALLPAPER_CONFIG"
 
   load_wallpaper
 }
@@ -68,7 +88,25 @@ load_wallpaper () {
 
   local FILE="$(cat "$WALLPAPER_CONFIG" | awk -F'=' '/^file=/{print $2}')"
 
-  feh --no-fehbg --bg-fill "$FILE"
+  if [[ ! "$FILE" =~ ^/ ]]; then
+    echo "File path should be an absolute path"
+    return 1
+  elif [ ! -f "$FILE" ]; then
+    echo "Invalid or unknown file path"
+    return 1
+  elif [[ ! "$FILE" =~ .+\.($WALLPAPER_TYPES)$ ]]; then
+    echo "Only jpeg or png files are supported"
+    return 1
+  fi
+
+  local MODE="$(cat "$WALLPAPER_CONFIG" | awk -F'=' '/^mode=/{print $2}')"
+
+  if [[ ! "$MODE" =~ ^${WALLPAPER_MODES}$ ]]; then
+    echo "Invalid wallpaper mode"
+    return 1
+  fi
+
+  feh --no-fehbg --bg-$MODE "$FILE"
 
   if [ ! $? -eq 0 ]; then
     echo "Failed to load the wallpaper"
@@ -94,10 +132,11 @@ help () {
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
   echo -e "\nCOMMANDS"
-  printf " %-25s %s\n" \
+  printf " %-34s %s\n" \
     "help" "Show this help message." \
     "" "" \
-    "set wallpaper [<image>]" "Set the desktop wallpaper to the given image file."
+    "set wallpaper [<image> [<mode>]]" "Set the desktop wallpaper, where mode" \
+    "" "could be center, fill, scale, max or tile."
 }
 
 loop () {
@@ -126,7 +165,7 @@ loop () {
     case "${CMD[0]}" in
       "set")
         case "${CMD[1]}" in
-          "wallpaper") set_wallpaper "${CMD[2]}";;
+          "wallpaper") set_wallpaper "${CMD[2]}" "${CMD[3]}";;
           *) echo "Unknown or invalid command";;
         esac;;
       *) echo "Unknown or invalid command";; 
