@@ -5,6 +5,7 @@ source /opt/stack/utils
 
 CONFIG_HOME="$HOME/.config/stack/theme"
 WALLPAPERS_HOME="$CONFIG_HOME/wallpapers"
+WALLPAPER_CONFIG="$CONFIG_HOME/wallpaper"
 
 require "feh"
 
@@ -14,10 +15,11 @@ prompt () {
 
 set_wallpaper () {
   local IMAGE=$1
-  local TYPES='.+\.(jpg|jpeg|png)$'
+
+  local TYPES='jpg|jpeg|png'
 
   if [ -z "$IMAGE" ]; then
-    local IMAGES="$(ls -1 "$WALLPAPERS_HOME" | awk '{ORS="'$AES'";} /'$TYPES'/{print}')"
+    local IMAGES="$(ls -1 "$WALLPAPERS_HOME" | awk '{ORS="'$AES'";} /.+\.('$TYPES')$/{print}')"
     local LEN=$(count "$IMAGES")
 
     if [ $LEN = 0 ]; then
@@ -37,15 +39,8 @@ set_wallpaper () {
   elif [ ! -f "$IMAGE" ]; then
     echo "Invalid or unknown file path"
     return 1
-  elif [[ ! "$IMAGE" =~ $TYPES ]]; then
+  elif [[ ! "$IMAGE" =~ .+\.($TYPES)$ ]]; then
     echo "Only jpeg or png files are supported"
-    return 1
-  fi
-
-  feh --no-fehbg --bg-fill "$IMAGE"
-
-  if [ ! $? = 0 ]; then
-    echo "Failed to set the wallpaper"
     return 1
   fi
 
@@ -60,25 +55,27 @@ set_wallpaper () {
     IMAGE="$WALLPAPERS_HOME/$IMAGE_NAME"
   fi
 
-  if grep -qE "^wallpaper=.*" "$SETTINGS"; then
-    sed -i "s;^wallpaper=.*;wallpaper=$IMAGE;" "$SETTINGS"
-  else
-    echo "wallpaper=$IMAGE" >> "$SETTINGS"
-  fi
+  printf "file=$IMAGE" > "$WALLPAPER_CONFIG"
 
-  echo "Wallpaper set to $IMAGE"    
+  load_wallpaper
 }
 
 load_wallpaper () {
-  local IMAGE="$(cat "$SETTINGS" | awk -F'=' '/^wallpaper=/{print $2}')"
+  if [ ! -f "$WALLPAPER_CONFIG" ]; then
+    echo "No wallpaper config file found"
+    return 1
+  fi
 
-  set_wallpaper "$IMAGE" &&
-    echo "Wallpaper has been loaded"
+  local FILE="$(cat "$WALLPAPER_CONFIG" | awk -F'=' '/^file=/{print $2}')"
+
+  feh --no-fehbg --bg-fill "$FILE"
 
   if [ ! $? -eq 0 ]; then
     echo "Failed to load the wallpaper"
     return 1
   fi
+
+  echo "Wallpaper has been loaded"
 }
 
 help () {
