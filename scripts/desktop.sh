@@ -326,8 +326,6 @@ install_theme () {
   sudo unzip -q /usr/share/themes/Dracula.zip -d /usr/share/themes || exit 1
   
   sudo mv /usr/share/themes/gtk-master /usr/share/themes/Dracula
-  echo "gtk-theme-name=Dracula" >> ~/.config/gtk-3.0/settings.ini
-
   sudo rm -f /usr/share/themes/Dracula.zip
 
   echo "Theme has been installed"
