@@ -80,6 +80,39 @@ set_wallpaper () {
   load_wallpaper
 }
 
+remove_wallpaper () {
+  local IMAGE=$1
+
+  if [ -z "$IMAGE" ]; then
+    local IMAGES="$(ls -1 "$WALLPAPERS_HOME" | awk '{ORS="'$AES'";} /.+\.('$WALLPAPER_TYPES')$/{print}')"
+    local LEN=$(count "$IMAGES")
+
+    if [ $LEN = 0 ]; then
+      echo "No wallpaper images have found"
+      return
+    fi
+
+    pick_one "Select an image file:" "$IMAGES" "vertical-6" || return 1
+    [ -z "$REPLY" ] && return
+
+    IMAGE="$(value "$REPLY")"
+  fi
+
+  IMAGE="$WALLPAPERS_HOME/$IMAGE"
+
+  if [ ! -f "$IMAGE" ]; then
+    echo "No wallpaper $IMAGE has found"
+    return 1
+  elif grep -qE "^file=$IMAGE" "$WALLPAPER_CONFIG"; then
+    echo "Cannot delete the active wallpaper"
+    return 1
+  fi
+
+  rm -f "$IMAGE" &&
+    echo "Wallpaper $IMAGE has been removed" ||
+    echo "Failed to remove wallpaper"
+}
+
 load_wallpaper () {
   if [ ! -f "$WALLPAPER_CONFIG" ]; then
     echo "No wallpaper config file found"
@@ -136,7 +169,8 @@ help () {
     "help" "Show this help message." \
     "" "" \
     "set wallpaper [<image> [<mode>]]" "Set the desktop wallpaper, where mode" \
-    "" "could be center, fill, scale, max or tile."
+    "" "could be center, fill, scale, max or tile." \
+    "remove wallpaper [<image>]" "Remove a wallpaper."
 }
 
 loop () {
@@ -166,6 +200,11 @@ loop () {
       "set")
         case "${CMD[1]}" in
           "wallpaper") set_wallpaper "${CMD[2]}" "${CMD[3]}";;
+          *) echo "Unknown or invalid command";;
+        esac;;
+      "remove")
+        case "${CMD[1]}" in
+          "wallpaper") remove_wallpaper "${CMD[2]}";;
           *) echo "Unknown or invalid command";;
         esac;;
       *) echo "Unknown or invalid command";; 
