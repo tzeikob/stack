@@ -16,20 +16,25 @@ prompt () {
   read -rep "[theme:${YE}ready$RS] " REPLY
 }
 
+pick_wallpaper () {
+  local NAMES="$(ls -1 "$WALLPAPERS_HOME" | awk '{ORS="'$AES'";} /.+\.('$WALLPAPER_TYPES')$/{print}')"
+
+  local LEN=$(count "$NAMES")
+
+  if [ $LEN = 0 ]; then
+    echo "No wallpapers have found"
+    return 1
+  fi
+
+  pick_one "Select a wallpaper:" "$NAMES" "vertical-6"
+}
+
 set_wallpaper () {
   local NAME=$1
   local MODE=$2
 
   if [ -z "$NAME" ]; then
-    local NAMES="$(ls -1 "$WALLPAPERS_HOME" | awk '{ORS="'$AES'";} /.+\.('$WALLPAPER_TYPES')$/{print}')"
-    local LEN=$(count "$NAMES")
-
-    if [ $LEN = 0 ]; then
-      echo "No wallpapers have found"
-      return
-    fi
-
-    pick_one "Select a wallpaper:" "$NAMES" "vertical-6" || return 1
+    pick_wallpaper || return 1
     [ -z "$REPLY" ] && return
 
     NAME="$(value "$REPLY")"
@@ -112,15 +117,7 @@ remove_wallpaper () {
   local NAME=$1
 
   if [ -z "$NAME" ]; then
-    local NAMES="$(ls -1 "$WALLPAPERS_HOME" | awk '{ORS="'$AES'";} /.+\.('$WALLPAPER_TYPES')$/{print}')"
-    local LEN=$(count "$NAMES")
-
-    if [ $LEN = 0 ]; then
-      echo "No wallpapers have found"
-      return
-    fi
-
-    pick_one "Select a wallpaper:" "$NAMES" "vertical-6" || return 1
+    pick_wallpaper || return 1
     [ -z "$REPLY" ] && return
 
     NAME="$(value "$REPLY")"
