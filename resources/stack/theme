@@ -104,13 +104,11 @@ add_wallpaper () {
   cp "$IMAGE" "$WALLPAPERS_HOME/$IMAGE_NAME" &&
     echo "Image has been added to wallpapers set"
 
-  IMAGE="$WALLPAPERS_HOME/$IMAGE_NAME"
-
   confirm "Want to set this as wallpaper?" || return 1
   [ -z "$REPLY" ] && return
   [ "$(value "$REPLY")" = "no" ] && return
 
-  set_wallpaper "$IMAGE"
+  set_wallpaper "$IMAGE_NAME"
 }
 
 remove_wallpaper () {
