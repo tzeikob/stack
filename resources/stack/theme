@@ -17,32 +17,31 @@ prompt () {
 }
 
 set_wallpaper () {
-  local IMAGE=$1
+  local NAME=$1
   local MODE=$2
 
-  if [ -z "$IMAGE" ]; then
-    local IMAGES="$(ls -1 "$WALLPAPERS_HOME" | awk '{ORS="'$AES'";} /.+\.('$WALLPAPER_TYPES')$/{print}')"
-    local LEN=$(count "$IMAGES")
+  if [ -z "$NAME" ]; then
+    local NAMES="$(ls -1 "$WALLPAPERS_HOME" | awk '{ORS="'$AES'";} /.+\.('$WALLPAPER_TYPES')$/{print}')"
+    local LEN=$(count "$NAMES")
 
     if [ $LEN = 0 ]; then
-      echo "No wallpaper images have found"
+      echo "No wallpapers have found"
       return
     fi
 
-    pick_one "Select an image file:" "$IMAGES" "vertical-6" || return 1
+    pick_one "Select a wallpaper:" "$NAMES" "vertical-6" || return 1
     [ -z "$REPLY" ] && return
 
-    IMAGE="$WALLPAPERS_HOME/$(value "$REPLY")"
+    NAME="$(value "$REPLY")"
   fi
 
-  if [[ ! "$IMAGE" =~ ^/ ]]; then
-    echo "File path should be an absolute path"
+  local WALLPAPER="$WALLPAPERS_HOME/$NAME"
+
+  if [ ! -f "$WALLPAPER" ]; then
+    echo "No wallpaper $NAME has found"
     return 1
-  elif [ ! -f "$IMAGE" ]; then
-    echo "Invalid or unknown file path"
-    return 1
-  elif [[ ! "$IMAGE" =~ .+\.($WALLPAPER_TYPES)$ ]]; then
-    echo "Only jpeg or png files are supported"
+  elif [[ ! "$WALLPAPER" =~ .+\.($WALLPAPER_TYPES)$ ]]; then
+    echo "Invalid wallpaper type"
     return 1
   fi
 
@@ -62,54 +61,83 @@ set_wallpaper () {
     return 1
   fi
 
-  local IMAGE_NAME="$(basename "$IMAGE")"
-
-  if [ ! "$IMAGE" = "$WALLPAPERS_HOME/$IMAGE_NAME" ]; then
-    while [ -f "$WALLPAPERS_HOME/$IMAGE_NAME" ]; do
-      IMAGE_NAME="copy_${IMAGE_NAME}"
-    done
-
-    cp "$IMAGE" "$WALLPAPERS_HOME/$IMAGE_NAME"
-    IMAGE="$WALLPAPERS_HOME/$IMAGE_NAME"
-  fi
-
   printf "%s\n" \
-    "file=$IMAGE" \
+    "file=$WALLPAPER" \
     "mode=$MODE" > "$WALLPAPER_CONFIG"
 
   load_wallpaper
 }
 
-remove_wallpaper () {
+add_wallpaper () {
   local IMAGE=$1
 
   if [ -z "$IMAGE" ]; then
-    local IMAGES="$(ls -1 "$WALLPAPERS_HOME" | awk '{ORS="'$AES'";} /.+\.('$WALLPAPER_TYPES')$/{print}')"
-    local LEN=$(count "$IMAGES")
+    echo "Missing the image file argument"
+    return 1
+  elif [[ ! "$IMAGE" =~ ^/ ]]; then
+    echo "File path should be an absolute path"
+    return 1
+  elif [ ! -f "$IMAGE" ]; then
+    echo "Invalid or unknown file path"
+    return 1
+  elif [[ ! "$IMAGE" =~ .+\.($WALLPAPER_TYPES)$ ]]; then
+    echo "Only jpeg or png files are supported"
+    return 1
+  fi
+
+  local IMAGE_NAME="$(basename "$IMAGE")"
+
+  if [ "$IMAGE" = "$WALLPAPERS_HOME/$IMAGE_NAME" ]; then
+   echo "Image file is already in wallpapers set"
+   return 1
+  fi
+
+  while [ -f "$WALLPAPERS_HOME/$IMAGE_NAME" ]; do
+    IMAGE_NAME="copy_${IMAGE_NAME}"
+  done
+
+  cp "$IMAGE" "$WALLPAPERS_HOME/$IMAGE_NAME" &&
+    echo "Image has been added to wallpapers set"
+
+  IMAGE="$WALLPAPERS_HOME/$IMAGE_NAME"
+
+  confirm "Want to set this as wallpaper?" || return 1
+  [ -z "$REPLY" ] && return
+  [ "$(value "$REPLY")" = "no" ] && return
+
+  set_wallpaper "$IMAGE"
+}
+
+remove_wallpaper () {
+  local NAME=$1
+
+  if [ -z "$NAME" ]; then
+    local NAMES="$(ls -1 "$WALLPAPERS_HOME" | awk '{ORS="'$AES'";} /.+\.('$WALLPAPER_TYPES')$/{print}')"
+    local LEN=$(count "$NAMES")
 
     if [ $LEN = 0 ]; then
-      echo "No wallpaper images have found"
+      echo "No wallpapers have found"
       return
     fi
 
-    pick_one "Select an image file:" "$IMAGES" "vertical-6" || return 1
+    pick_one "Select a wallpaper:" "$NAMES" "vertical-6" || return 1
     [ -z "$REPLY" ] && return
 
-    IMAGE="$(value "$REPLY")"
+    NAME="$(value "$REPLY")"
   fi
 
-  IMAGE="$WALLPAPERS_HOME/$IMAGE"
+  local WALLPAPER="$WALLPAPERS_HOME/$NAME"
 
-  if [ ! -f "$IMAGE" ]; then
-    echo "No wallpaper $IMAGE has found"
+  if [ ! -f "$WALLPAPER" ]; then
+    echo "No wallpaper $NAME has found"
     return 1
-  elif grep -qE "^file=$IMAGE" "$WALLPAPER_CONFIG"; then
+  elif grep -qE "^file=$WALLPAPER" "$WALLPAPER_CONFIG"; then
     echo "Cannot delete the active wallpaper"
     return 1
   fi
 
-  rm -f "$IMAGE" &&
-    echo "Wallpaper $IMAGE has been removed" ||
+  rm "$WALLPAPER" &&
+    echo "Wallpaper $WALLPAPER has been removed" ||
     echo "Failed to remove wallpaper"
 }
 
@@ -168,9 +196,10 @@ help () {
   printf " %-34s %s\n" \
     "help" "Show this help message." \
     "" "" \
-    "set wallpaper [<image> [<mode>]]" "Set the desktop wallpaper, where mode" \
+    "set wallpaper [<name> [<mode>]]" "Set the desktop wallpaper, where mode" \
     "" "could be center, fill, scale, max or tile." \
-    "remove wallpaper [<image>]" "Remove a wallpaper."
+    "add wallpaper <image>" "Add an image to the wallpapers set." \
+    "remove wallpaper [<name>]" "Remove a wallpaper from the wallpapers set."
 }
 
 loop () {
@@ -200,6 +229,11 @@ loop () {
       "set")
         case "${CMD[1]}" in
           "wallpaper") set_wallpaper "${CMD[2]}" "${CMD[3]}";;
+          *) echo "Unknown or invalid command";;
+        esac;;
+      "add")
+        case "${CMD[1]}" in
+          "wallpaper") add_wallpaper "${CMD[2]}";;
           *) echo "Unknown or invalid command";;
         esac;;
       "remove")
