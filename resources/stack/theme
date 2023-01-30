@@ -77,14 +77,21 @@ set_wallpaper () {
     return 1
   fi
 
-  if [ -f "$SETTINGS" ]; then
-    set_prop '.wallpaper.file' "$WALLPAPER" "$SETTINGS"
-    set_prop '.wallpaper.mode' "$MODE" "$SETTINGS"
-  else
-    echo '{"wallpaper": {"file": "'$WALLPAPER'", "mode": "'$MODE'"}}' > "$SETTINGS"
+  feh --no-fehbg --bg-$MODE "$WALLPAPER"
+
+  if [ ! $? = 0 ]; then
+    echo "Failed to set wallpaper"
+    return 1
   fi
 
-  load_wallpaper
+  echo "Wallpaper has been set to $NAME"
+
+  if [ -f "$SETTINGS" ]; then
+    set_prop '.wallpaper.file' "$NAME" "$SETTINGS"
+    set_prop '.wallpaper.mode' "$MODE" "$SETTINGS"
+  else
+    echo '{"wallpaper": {"file": "'$NAME'", "mode": "'$MODE'"}}' > "$SETTINGS"
+  fi
 }
 
 add_wallpaper () {
@@ -155,7 +162,7 @@ remove_wallpaper () {
   if [ -f "$SETTINGS" ]; then
     local ACTIVE="$(get_prop '.wallpaper.file' "$SETTINGS")"
 
-    if [ "$ACTIVE" = "$WALLPAPER" ]; then
+    if [ "$WALLPAPER" = "$WALLPAPERS_HOME/$ACTIVE" ]; then
       echo "Cannot delete the active wallpaper"
       return 1
     fi
@@ -168,7 +175,7 @@ remove_wallpaper () {
 
 load_wallpaper () {
   if [ ! -f "$SETTINGS" ]; then
-    echo "No wallpaper config has found"
+    echo "Unable to find wallpaper configuration"
     return 1
   fi
 
@@ -177,14 +184,14 @@ load_wallpaper () {
   if [ -z "$FILE" ]; then
     echo "Missing wallpaper file"
     return 1
-  elif [[ ! "$FILE" =~ ^/ ]]; then
-    echo "File path should be an absolute path"
+  elif [[ "$FILE" =~ /+ ]]; then
+    echo "Invalid wallpaper file name"
     return 1
   elif [[ ! "$FILE" =~ .+\.($WALLPAPER_TYPES)$ ]]; then
     echo "Invalid wallpaper file type"
     return 1
-  elif [ ! -f "$FILE" ]; then
-    echo "No wallpaper found with path $FILE"
+  elif [ ! -f "$WALLPAPERS_HOME/$FILE" ]; then
+    echo "Wallpaper $FILE does not exists"
     return 1
   fi
 
@@ -198,7 +205,7 @@ load_wallpaper () {
     return 1
   fi
 
-  feh --no-fehbg --bg-$MODE "$FILE"
+  set_wallpaper "$FILE" "$MODE"
 
   if [ ! $? -eq 0 ]; then
     echo "Failed to load the wallpaper"
