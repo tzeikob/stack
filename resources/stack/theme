@@ -17,11 +17,15 @@ prompt () {
 }
 
 pick_wallpaper () {
-  local NAMES="$(ls -1 "$WALLPAPERS_HOME" | awk '{ORS="'$AES'";} /.+\.('$WALLPAPER_TYPES')$/{print}')"
+  if [ ! -d  "$WALLPAPERS_HOME" ]; then
+    echo "No wallpapers have found"
+    return 1
+  fi
 
-  local LEN=$(count "$NAMES")
+  local NAMES="$(ls -1 "$WALLPAPERS_HOME" |
+    awk '{ORS="'$AES'";} /.+\.('$WALLPAPER_TYPES')$/{print}')"
 
-  if [ $LEN = 0 ]; then
+  if [ $(count "$NAMES") = 0 ]; then
     echo "No wallpapers have found"
     return 1
   fi
@@ -40,13 +44,19 @@ set_wallpaper () {
     NAME="$(value "$REPLY")"
   fi
 
+  if [[ "$NAME" =~ /+ ]]; then
+    echo "Invalid name argument"
+    return 1
+  fi
+
+  NAME="$(basename "$NAME")"
   local WALLPAPER="$WALLPAPERS_HOME/$NAME"
 
-  if [ ! -f "$WALLPAPER" ]; then
-    echo "No wallpaper $NAME has found"
+  if [[ ! "$WALLPAPER" =~ .+\.($WALLPAPER_TYPES)$ ]]; then
+    echo "Invalid wallpaper file type"
     return 1
-  elif [[ ! "$WALLPAPER" =~ .+\.($WALLPAPER_TYPES)$ ]]; then
-    echo "Invalid wallpaper type"
+  elif [ ! -f "$WALLPAPER" ]; then
+    echo "No wallpaper found with name $NAME"
     return 1
   fi
 
@@ -77,23 +87,23 @@ add_wallpaper () {
   local IMAGE=$1
 
   if [ -z "$IMAGE" ]; then
-    echo "Missing the image file argument"
+    echo "Missing image file argument"
     return 1
   elif [[ ! "$IMAGE" =~ ^/ ]]; then
     echo "File path should be an absolute path"
     return 1
-  elif [ ! -f "$IMAGE" ]; then
-    echo "Invalid or unknown file path"
-    return 1
   elif [[ ! "$IMAGE" =~ .+\.($WALLPAPER_TYPES)$ ]]; then
-    echo "Only jpeg or png files are supported"
+    echo "Invalid image file type"
+    return 1
+  elif [ ! -f "$IMAGE" ]; then
+    echo "No image found with path $IMAGE"
     return 1
   fi
 
   local IMAGE_NAME="$(basename "$IMAGE")"
 
   if [ "$IMAGE" = "$WALLPAPERS_HOME/$IMAGE_NAME" ]; then
-   echo "Image file is already in wallpapers set"
+   echo "Image file is already in wallpapers"
    return 1
   fi
 
@@ -101,8 +111,9 @@ add_wallpaper () {
     IMAGE_NAME="copy_${IMAGE_NAME}"
   done
 
+  mkdir -p "$WALLPAPERS_HOME"
   cp "$IMAGE" "$WALLPAPERS_HOME/$IMAGE_NAME" &&
-    echo "Image has been added to wallpapers set"
+    echo "Image has been added to wallpapers"
 
   confirm "Want to set this as wallpaper?" || return 1
   [ -z "$REPLY" ] && return
@@ -121,10 +132,19 @@ remove_wallpaper () {
     NAME="$(value "$REPLY")"
   fi
 
+  if [[ "$NAME" =~ /+ ]]; then
+    echo "Invalid name argument"
+    return 1
+  fi
+
+  NAME="$(basename "$NAME")"
   local WALLPAPER="$WALLPAPERS_HOME/$NAME"
 
-  if [ ! -f "$WALLPAPER" ]; then
-    echo "No wallpaper $NAME has found"
+  if [[ ! "$WALLPAPER" =~ .+\.($WALLPAPER_TYPES)$ ]]; then
+    echo "Invalid wallpaper file type"
+    return 1
+  elif [ ! -f "$WALLPAPER" ]; then
+    echo "No wallpaper found with name $NAME"
     return 1
   elif grep -qE "^file=$WALLPAPER" "$WALLPAPER_CONFIG"; then
     echo "Cannot delete the active wallpaper"
@@ -132,7 +152,7 @@ remove_wallpaper () {
   fi
 
   rm "$WALLPAPER" &&
-    echo "Wallpaper $WALLPAPER has been removed" ||
+    echo "Wallpaper $NAME has been removed" ||
     echo "Failed to remove wallpaper"
 }
 
