@@ -78,8 +78,8 @@ set_wallpaper () {
   fi
 
   if [ -f "$SETTINGS" ]; then
-    echo $(jq '.wallpaper.file = "'$WALLPAPER'"' "$SETTINGS") > "$SETTINGS"
-    echo $(jq '.wallpaper.mode = "'$MODE'"' "$SETTINGS") > "$SETTINGS"
+    set_prop '.wallpaper.file' "$WALLPAPER" "$SETTINGS"
+    set_prop '.wallpaper.mode' "$MODE" "$SETTINGS"
   else
     echo '{"wallpaper": {"file": "'$WALLPAPER'", "mode": "'$MODE'"}}' > "$SETTINGS"
   fi
@@ -153,7 +153,7 @@ remove_wallpaper () {
   fi
   
   if [ -f "$SETTINGS" ]; then
-    local ACTIVE="$(jq -r '.wallpaper.file' "$SETTINGS")"
+    local ACTIVE="$(get_prop '.wallpaper.file' "$SETTINGS")"
 
     if [ "$ACTIVE" = "$WALLPAPER" ]; then
       echo "Cannot delete the active wallpaper"
@@ -172,7 +172,7 @@ load_wallpaper () {
     return 1
   fi
 
-  local FILE="$(jq -r '.wallpaper.file' "$SETTINGS")"
+  local FILE="$(get_prop '.wallpaper.file' "$SETTINGS")"
 
   if [ -z "$FILE" ]; then
     echo "Missing wallpaper file"
@@ -188,7 +188,7 @@ load_wallpaper () {
     return 1
   fi
 
-  local MODE="$(jq -r '.wallpaper.mode' "$SETTINGS")"
+  local MODE="$(get_prop '.wallpaper.mode' "$SETTINGS")"
 
   if [ -z "$MODE" ]; then
     echo "Missing wallpaper mode"

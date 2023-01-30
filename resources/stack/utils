@@ -346,3 +346,34 @@ value () {
 
   echo "$INPUT" | awk -F "$KVS" '{if ($2 != "") {print $2} else {print $0}}'
 }
+
+set_prop () {
+  local KEY=$1
+  local VALUE=$2
+  local FILE=$3
+
+  if [ -z "$KEY" ]; then
+    return 1
+  fi
+
+  if [ ! -f "$FILE" ]; then
+    return 1
+  fi
+
+  echo "$(jq "$KEY = \"$VALUE\"" "$FILE")" > "$FILE"
+}
+
+get_prop () {
+  local KEY=$1
+  local FILE=$2
+
+  if [ -z "$KEY" ]; then
+    return 1
+  fi
+
+  if [ ! -f "$FILE" ]; then
+    return 1
+  fi
+
+  jq -r "$KEY" "$FILE"
+}
