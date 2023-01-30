@@ -17,14 +17,21 @@ prompt () {
   read -rep "[theme:${YE}ready$RS] " REPLY
 }
 
-pick_wallpaper () {
+wallpapers () {
   if [ ! -d  "$WALLPAPERS_HOME" ]; then
-    echo "No wallpapers have found"
     return 1
   fi
 
-  local NAMES="$(ls -1 "$WALLPAPERS_HOME" |
-    awk '{ORS="'$AES'";} /.+\.('$WALLPAPER_TYPES')$/{print}')"
+  ls -1 "$WALLPAPERS_HOME" | awk '{ORS="'$AES'";} /.+\.('$WALLPAPER_TYPES')$/{print}'
+}
+
+pick_wallpaper () {
+  local NAMES="$(wallpapers || echo "err:$?")"
+
+  if [[ "$NAMES" =~ ^err: ]]; then
+    echo "Unable to find wallpapers"
+    return 1
+  fi
 
   if [ $(count "$NAMES") = 0 ]; then
     echo "No wallpapers have found"
@@ -32,6 +39,31 @@ pick_wallpaper () {
   fi
 
   pick_one "Select a wallpaper:" "$NAMES" "vertical-6"
+}
+
+list_wallpapers () {
+  local NAMES="$(wallpapers || echo "err:$?")"
+
+  if [[ "$NAMES" =~ ^err: ]]; then
+    echo "Unable to find wallpapers"
+    return 1
+  fi
+
+  local LEN=$(count "$NAMES")
+
+  if [ $LEN = 0 ]; then
+    echo "No wallpapers have found"
+    return 1
+  fi
+
+  local I=0
+  for ((I=0; I<$LEN; I++)); do
+    local NAME="$(element "$NAMES" "$I" | value)"
+
+    [ $I -gt 0 ] && echo
+    echo "Name: ${NAME}"
+    echo "Size: $(du -h "$WALLPAPERS_HOME/$NAME" | awk '{print $1}')"
+  done
 }
 
 set_wallpaper () {
@@ -234,6 +266,7 @@ help () {
   printf " %-34s %s\n" \
     "help" "Show this help message." \
     "" "" \
+    "list wallpapers" "List all the wallapers." \
     "set wallpaper [<name> [<mode>]]" "Set the desktop wallpaper, where mode" \
     "" "could be center, fill, scale, max or tile." \
     "add wallpaper <image>" "Add an image to the wallpapers set." \
@@ -267,6 +300,11 @@ loop () {
       "set")
         case "${CMD[1]}" in
           "wallpaper") set_wallpaper "${CMD[2]}" "${CMD[3]}";;
+          *) echo "Unknown or invalid command";;
+        esac;;
+      "list")
+        case "${CMD[1]}" in
+          "wallpapers") list_wallpapers;;
           *) echo "Unknown or invalid command";;
         esac;;
       "add")
