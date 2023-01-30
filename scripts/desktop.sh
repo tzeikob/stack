@@ -358,12 +358,10 @@ install_theme () {
 
   local CONFIG_HOME=~/.config/stack/theme
   local WALLPAPERS_HOME="$CONFIG_HOME/wallpapers"
-  mkdir -p "$WALLPAPERS_HOME"
 
+  mkdir -p "$WALLPAPERS_HOME"
   cp ~/stack/resources/feh/wallpaper.jpeg "$WALLPAPERS_HOME/default.jpeg"
-  printf "%s\n" \
-    "file=$WALLPAPERS_HOME/default.jpeg" \
-    "mode=fill" > "$CONFIG_HOME/wallpaper"
+  echo '{"wallpaper": {"file": "'$WALLPAPERS_HOME/default.jpeg'", "mode": "fill"}}' > "$CONFIG_HOME/.settings"
 
   echo "Default wallpaper has been set"
   echo "Theme has been setup"

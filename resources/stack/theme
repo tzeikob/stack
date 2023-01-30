@@ -5,7 +5,8 @@ source /opt/stack/utils
 
 CONFIG_HOME="$HOME/.config/stack/theme"
 WALLPAPERS_HOME="$CONFIG_HOME/wallpapers"
-WALLPAPER_CONFIG="$CONFIG_HOME/wallpaper"
+
+SETTINGS="$CONFIG_HOME/.settings"
 
 WALLPAPER_TYPES='jpg|jpeg|png'
 WALLPAPER_MODES='center|fill|max|scale|tile'
@@ -76,9 +77,12 @@ set_wallpaper () {
     return 1
   fi
 
-  printf "%s\n" \
-    "file=$WALLPAPER" \
-    "mode=$MODE" > "$WALLPAPER_CONFIG"
+  if [ -f "$SETTINGS" ]; then
+    echo $(jq '.wallpaper.file = "'$WALLPAPER'"' "$SETTINGS") > "$SETTINGS"
+    echo $(jq '.wallpaper.mode = "'$MODE'"' "$SETTINGS") > "$SETTINGS"
+  else
+    echo '{"wallpaper": {"file": "'$WALLPAPER'", "mode": "'$MODE'"}}' > "$SETTINGS"
+  fi
 
   load_wallpaper
 }
@@ -146,9 +150,15 @@ remove_wallpaper () {
   elif [ ! -f "$WALLPAPER" ]; then
     echo "No wallpaper found with name $NAME"
     return 1
-  elif grep -qE "^file=$WALLPAPER" "$WALLPAPER_CONFIG"; then
-    echo "Cannot delete the active wallpaper"
-    return 1
+  fi
+  
+  if [ -f "$SETTINGS" ]; then
+    local ACTIVE="$(jq -r '.wallpaper.file' "$SETTINGS")"
+
+    if [ "$ACTIVE" = "$WALLPAPER" ]; then
+      echo "Cannot delete the active wallpaper"
+      return 1
+    fi
   fi
 
   rm "$WALLPAPER" &&
@@ -157,27 +167,33 @@ remove_wallpaper () {
 }
 
 load_wallpaper () {
-  if [ ! -f "$WALLPAPER_CONFIG" ]; then
-    echo "No wallpaper config file found"
+  if [ ! -f "$SETTINGS" ]; then
+    echo "No wallpaper config has found"
     return 1
   fi
 
-  local FILE="$(cat "$WALLPAPER_CONFIG" | awk -F'=' '/^file=/{print $2}')"
+  local FILE="$(jq -r '.wallpaper.file' "$SETTINGS")"
 
-  if [[ ! "$FILE" =~ ^/ ]]; then
+  if [ -z "$FILE" ]; then
+    echo "Missing wallpaper file"
+    return 1
+  elif [[ ! "$FILE" =~ ^/ ]]; then
     echo "File path should be an absolute path"
     return 1
-  elif [ ! -f "$FILE" ]; then
-    echo "Invalid or unknown file path"
-    return 1
   elif [[ ! "$FILE" =~ .+\.($WALLPAPER_TYPES)$ ]]; then
-    echo "Only jpeg or png files are supported"
+    echo "Invalid wallpaper file type"
+    return 1
+  elif [ ! -f "$FILE" ]; then
+    echo "No wallpaper found with path $FILE"
     return 1
   fi
 
-  local MODE="$(cat "$WALLPAPER_CONFIG" | awk -F'=' '/^mode=/{print $2}')"
+  local MODE="$(jq -r '.wallpaper.mode' "$SETTINGS")"
 
-  if [[ ! "$MODE" =~ ^${WALLPAPER_MODES}$ ]]; then
+  if [ -z "$MODE" ]; then
+    echo "Missing wallpaper mode"
+    return 1
+  elif [[ ! "$MODE" =~ ^${WALLPAPER_MODES}$ ]]; then
     echo "Invalid wallpaper mode"
     return 1
   fi
