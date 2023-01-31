@@ -3,8 +3,6 @@
 set -o pipefail
 source /opt/stack/utils
 
-COLOR_HOME="/usr/local/color"
-CONFIG_HOME="$HOME/.config/stack/displays"
 LAYOUT_FILE="$CONFIG_HOME/layout"
 
 require "xorg-xrandr"

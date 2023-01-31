@@ -3,11 +3,6 @@
 set -o pipefail
 source /opt/stack/utils
 
-CONFIG_HOME="$HOME/.config/stack/theme"
-WALLPAPERS_HOME="$CONFIG_HOME/wallpapers"
-
-SETTINGS="$CONFIG_HOME/.settings"
-
 WALLPAPER_TYPES='jpg|jpeg|png'
 WALLPAPER_MODES='center|fill|max|scale|tile'
 
@@ -18,11 +13,11 @@ prompt () {
 }
 
 wallpapers () {
-  if [ ! -d  "$WALLPAPERS_HOME" ]; then
+  if [ ! -d  "$WALLPAPERS" ]; then
     return 1
   fi
 
-  ls -1 "$WALLPAPERS_HOME" | awk '{ORS="'$AES'";} /.+\.('$WALLPAPER_TYPES')$/{print}'
+  ls -1 "$WALLPAPERS" | awk '{ORS="'$AES'";} /.+\.('$WALLPAPER_TYPES')$/{print}'
 }
 
 pick_wallpaper () {
@@ -62,7 +57,7 @@ list_wallpapers () {
 
     [ $I -gt 0 ] && echo
     echo "Name: ${NAME}"
-    echo "Size: $(du -h "$WALLPAPERS_HOME/$NAME" | awk '{print $1}')"
+    echo "Size: $(du -h "$WALLPAPERS/$NAME" | awk '{print $1}')"
   done
 }
 
@@ -83,7 +78,7 @@ set_wallpaper () {
   fi
 
   NAME="$(basename "$NAME")"
-  local WALLPAPER="$WALLPAPERS_HOME/$NAME"
+  local WALLPAPER="$WALLPAPERS/$NAME"
 
   if [[ ! "$WALLPAPER" =~ .+\.($WALLPAPER_TYPES)$ ]]; then
     echo "Invalid wallpaper file type"
@@ -119,10 +114,11 @@ set_wallpaper () {
   echo "Wallpaper has been set to $NAME"
 
   if [ -f "$SETTINGS" ]; then
-    set_prop '.wallpaper.file' "$NAME" "$SETTINGS"
-    set_prop '.wallpaper.mode' "$MODE" "$SETTINGS"
+    set_prop '.theme.wallpaper.file' "$NAME" "$SETTINGS"
+    set_prop '.theme.wallpaper.mode' "$MODE" "$SETTINGS"
   else
-    echo '{"wallpaper": {"file": "'$NAME'", "mode": "'$MODE'"}}' > "$SETTINGS"
+    mkdir -p "$CONFIG_HOME"
+    echo '{"theme": {"wallpaper": {"file": "'$NAME'", "mode": "'$MODE'"}}}' > "$SETTINGS"
   fi
 }
 
@@ -145,17 +141,17 @@ add_wallpaper () {
 
   local IMAGE_NAME="$(basename "$IMAGE")"
 
-  if [ "$IMAGE" = "$WALLPAPERS_HOME/$IMAGE_NAME" ]; then
+  if [ "$IMAGE" = "$WALLPAPERS/$IMAGE_NAME" ]; then
    echo "Image file is already in wallpapers"
    return 1
   fi
 
-  while [ -f "$WALLPAPERS_HOME/$IMAGE_NAME" ]; do
+  while [ -f "$WALLPAPERS/$IMAGE_NAME" ]; do
     IMAGE_NAME="copy_${IMAGE_NAME}"
   done
 
-  mkdir -p "$WALLPAPERS_HOME"
-  cp "$IMAGE" "$WALLPAPERS_HOME/$IMAGE_NAME" &&
+  mkdir -p "$WALLPAPERS"
+  cp "$IMAGE" "$WALLPAPERS/$IMAGE_NAME" &&
     echo "Image has been added to wallpapers"
 
   confirm "Want to set this as wallpaper?" || return 1
@@ -181,7 +177,7 @@ remove_wallpaper () {
   fi
 
   NAME="$(basename "$NAME")"
-  local WALLPAPER="$WALLPAPERS_HOME/$NAME"
+  local WALLPAPER="$WALLPAPERS/$NAME"
 
   if [[ ! "$WALLPAPER" =~ .+\.($WALLPAPER_TYPES)$ ]]; then
     echo "Invalid wallpaper file type"
@@ -192,9 +188,9 @@ remove_wallpaper () {
   fi
   
   if [ -f "$SETTINGS" ]; then
-    local ACTIVE="$(get_prop '.wallpaper.file' "$SETTINGS")"
+    local ACTIVE="$(get_prop '.theme.wallpaper.file' "$SETTINGS")"
 
-    if [ "$WALLPAPER" = "$WALLPAPERS_HOME/$ACTIVE" ]; then
+    if [ "$WALLPAPER" = "$WALLPAPERS/$ACTIVE" ]; then
       echo "Cannot delete the active wallpaper"
       return 1
     fi
@@ -211,7 +207,7 @@ load_wallpaper () {
     return 1
   fi
 
-  local FILE="$(get_prop '.wallpaper.file' "$SETTINGS")"
+  local FILE="$(get_prop '.theme.wallpaper.file' "$SETTINGS")"
 
   if [ -z "$FILE" ]; then
     echo "Missing wallpaper file"
@@ -222,12 +218,12 @@ load_wallpaper () {
   elif [[ ! "$FILE" =~ .+\.($WALLPAPER_TYPES)$ ]]; then
     echo "Invalid wallpaper file type"
     return 1
-  elif [ ! -f "$WALLPAPERS_HOME/$FILE" ]; then
+  elif [ ! -f "$WALLPAPERS/$FILE" ]; then
     echo "Wallpaper $FILE does not exists"
     return 1
   fi
 
-  local MODE="$(get_prop '.wallpaper.mode' "$SETTINGS")"
+  local MODE="$(get_prop '.theme.wallpaper.mode' "$SETTINGS")"
 
   if [ -z "$MODE" ]; then
     echo "Missing wallpaper mode"

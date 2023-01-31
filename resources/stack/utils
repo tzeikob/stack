@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+CONFIG_HOME="$HOME/.config/stack"
+SETTINGS="$CONFIG_HOME/.settings"
+
+RESOURCES="$HOME/.local/share"
+COLORS="$RESOURCES/colors"
+WALLPAPERS="$RESOURCES/wallpapers"
+
 AES=$'╬'
 AES_LN=$'╬\n'
 KVS=$'▒'

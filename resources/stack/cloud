@@ -3,8 +3,6 @@
 set -o pipefail
 source /opt/stack/utils
 
-CLOUD_HOME="$HOME/mount/cloud"
-
 require "rclone"
 require "fuse2"
 
@@ -205,7 +203,7 @@ mount_remote () {
 
   local SERVICE="$(rclone listremotes --long | awk '/^'$NAME':/{print $2}')"
 
-  local MOUNT_FOLDER="$CLOUD_HOME/$SERVICE/$NAME"
+  local MOUNT_FOLDER="$HOME/mount/cloud/$SERVICE/$NAME"
 
   mkdir -p "$MOUNT_FOLDER" &&
   rclone mount "$NAME:" "$MOUNT_FOLDER" \

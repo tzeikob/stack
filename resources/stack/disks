@@ -3,9 +3,6 @@
 set -o pipefail
 source /opt/stack/utils
 
-LOCAL_HOME="$HOME/mount/local"
-REMOTE_HOME="$HOME/mount/remote"
-
 require "udisks2"
 require "glib2"
 require "nmap"
@@ -332,6 +329,8 @@ mount_device () {
     echo "Block device mounted successfully" ||
     echo "Failed to mount block device"
 
+  local LOCAL_HOME="$HOME/mount/local"
+
   if [ -d "/run/media/$USER" ] && [ ! -L "$LOCAL_HOME" ]; then
     mkdir -p "$LOCAL_HOME"
     ln -s "/run/media/$USER" "$LOCAL_HOME"
@@ -414,6 +413,8 @@ mount_shared_folder () {
   gio mount "$URI" &&
     echo "Shared folder mounted successfully" ||
     echo "Failed to mount shared folder"
+
+  local REMOTE_HOME="$HOME/mount/remote"
 
   if [ -d "/run/user/${UID}/gvfs" ] && [ ! -L "$REMOTE_HOME/gvfs" ]; then
     mkdir -p "$REMOTE_HOME"
