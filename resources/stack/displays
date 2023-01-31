@@ -1,714 +1,310 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 set -o pipefail
 source /opt/stack/utils
 
-LAYOUT_FILE="$CONFIG_HOME/layout"
+# The settings file should have the following schema:
+# {
+#   "layout": {
+#    "DP-1": "--mode <mode>...",
+#    "DP-2": "--mode <mode>...",
+#    "DP-3": "--off"
+#   },
+#   "colors": {
+#     "DP-1": {
+#       "index": "0",
+#       "profile": "*.icc"
+#     },
+#     "DP-2": {
+#       "index": "1",
+#       "profile": "*.icc"
+#     }
+#   }
+# }
+
+SETTINGS_FILE="${CONFIG_HOME}/displays.json"
 
 require "xorg-xrandr"
 require "xcalib"
 
-screen () {
-  xrandr --current | sed "/^Screen 0:/,/^Screen/!d;//d"
-}
+# Returns a list of outputs having the given status.
+# Arguments:
+#  status: all, connected, disconnected,
+#          active, inactive, primary
+# Outputs:
+#  A JSON array of outputs.
+find_outputs () {
+  local status="${1:-"all"}"
 
-outputs () {
-  local STATUS=$1
-
-  local RE='^[A-Z]+-[0-9]+'
-  if [[ "$STATUS" =~ ^(dis)?connected$ ]]; then
-    RE+="\s$STATUS"
-  elif [ "$STATUS" = "active" ]; then
-    RE+='\sconnected.*\s([0-9]+x[0-9]+)\+.*'
-  elif [ "$STATUS" = "inactive" ]; then
-    RE+='\sconnected\s\(.*'
-  elif [ "$STATUS" = "primary" ]; then
-    RE+='\s.*\sprimary\s.*'
-  fi
-
-  screen | awk '{ORS="'$AES'";} /'${RE}'/{print $1}'
-}
-
-output () {
-  local NAME=$1
-
-  local CRITERION="^$NAME\s.*"
-
-  if [ "$NAME" = "primary" ]; then
-    CRITERION='.*\sprimary\s.*'
-  fi
-
-  local SCREEN="$(screen)"
-
-  local HEAD=$(echo "$SCREEN" | awk '/'$CRITERION'/')
-  
-  if [ -z "$HEAD" ]; then
+  local states='all|connected|disconnected|active|inactive|primary'
+  if [[ ! "${status}" =~ ^(${states})$ ]]; then
     return 1
   fi
 
-  local RE='^(.*)\s(connected|disconnected)\s?(primary)?\s?'
-  RE+='([0-9]+x[0-9]+)?(\+[0-9]+\+[0-9]+)?\s?'
-  RE+='(normal|right|left|inverted)?\s?(X\saxis|Y\saxis|X\sand\sY\saxis)?\s.*'
+  local criteria='true'
+  if [[ "${status}" == "connected" ]]; then
+    criteria='.is_connected == true'
+  elif [[ "${status}" == "disconnected" ]]; then
+    criteria='.is_connected == false'
+  elif [[ "${status}" == "active" ]]; then
+    criteria='.is_connected == true and .resolution_width != null'
+  elif [[ "${status}" == "inactive" ]]; then
+    criteria='.is_connected == true and .resolution_width == null'
+  elif [[ "${status}" == "primary" ]]; then
+    criteria='.is_primary == true'
+  fi
 
-  local STATE="$(echo "$HEAD" | awk 'match($0,/'$RE'/,a) {
-    a[5]=gensub(/\+(.*)\+(.*)/,"\\1x\\2","g",a[5]);
-    a[7]=tolower(a[7]); gsub(/( |and|axis)/,"",a[7]);
-    print a[1]"'$AES'"a[2]"'$AES'"a[3]"'$AES'"a[4]"'$AES'"a[5]"'$AES'"a[6]"'$AES'"a[7]}')"
+  local a
+  a+='.screens[]|select(.screen_number==0)'
+  a+=" |.associated_device|select(${criteria})"
+  a="[${a}]"
 
-  RE='^\s+([0-9]+x[0-9]+)\s.*\s([0-9]{2}.[0-9]{2})\*.*'
+  local b
+  b+=".unassociated_devices[]|select(${criteria})"
+  b="[${b}]"
 
-  local MODE="$(echo "$SCREEN" | sed -n "/$CRITERION/{:a;N;/\*/!ba;/\*/p}" |
-    awk 'match($0,/'$RE'/,a) {print a[1]"'$AES'"a[2]}')"
+  local query="${a}+${b}"
 
-  [ -n "$MODE" ] && STATE+="$AES$MODE" || STATE+="$AES$AES"
-
-  RE='^\s+([0-9]+x[0-9]+)\s.*\s([0-9][0-9]+.[0-9]{2})\*?\s?\+.*'
-
-  local NATIVE="$(echo "$SCREEN" | sed -n "/$CRITERION/{:a;N;/\+/!ba;/\+/p}" |
-    awk 'match($0,/'$RE'/,a) {print a[1]"@"a[2]"Hz"}')"
-  
-  [ -n "$NATIVE" ] && STATE+="$AES$NATIVE" || STATE+="$AES"
-
-  local PROFILES="$(echo "$SCREEN" | awk '/'$CRITERION'/,!//' | tail -n +2 |
-    sed -E 's/(\*|\+)//g' |
-    awk -v AES="$AES" -v KVS="$KVS" '{
-      if ($0 ~ /^\s+[0-9]+x[0-9]+/) {
-        rates=""
-        for (i=2; i<=NF; i++) {
-          rates=rates $i AES
-        }
-        print $1 KVS rates
-      } else exit
-    }')"
-  
-  echo -e "$STATE\n$PROFILES"
+  xrandr | jc --xrandr | jq -cer "${query}" || return 1
 }
 
-index () {
-  local NAME=$1
+# Returns the output with the given name.
+# Arguments:
+#  name: any string
+# Outputs:
+#  A JSON object of output.
+find_output () {
+  local name="$1"
 
-  local OUTPUTS="$(outputs)"
-  local LEN=$(count "$OUTPUTS")
+  local query=".[]|select(.device_name == \"${name}\")"
 
-  local INDEX=""
-  local I=0
-  for ((I=0; I<$LEN; I++)); do
-    local OUTPUT_NAME="$(element "$OUTPUTS" "$I" | value)"
-    if [ "$NAME" = "$OUTPUT_NAME" ]; then
-      INDEX=$I
-      break
-    fi
-  done
-
-  echo "$INDEX"
+  find_outputs "all" | jq -cer "${query}" || return 1
 }
 
+# Finds the index of the output with the given name.
+# Arguments:
+#  name: any string
+# Outputs:
+#  The index number of the output.
+find_index () {
+  local name="$1"
+
+  local query
+  query+="to_entries|.[]|select(.value.device_name == \"${name}\")|.key"
+
+  find_outputs "all" | jq -cer "${query}" || return 1
+}
+
+# Asserts if the given output is connected.
+# Arguments:
+#  output: a JSON object output
+# Returns:
+#  0 if is connected otherwise 1.
 is_connected () {
-  local OUTPUT=$1
+  local output="${1}"
 
-  echo "$OUTPUT" | head -n 1 |
-    awk '/'$AES'connected'$AES'/ {c=0;next} {c=1} END {exit c}'
+  local query='select(.is_connected)'
+
+  echo "${output}" | jq -cer "${query}" &>/dev/null || return 1
 }
 
+# Asserts if the given output is active.
+# Arguments:
+#  output: a JSON object output
+# Returns:
+#  0 if is active otherwise 1.
 is_active () {
-  local OUTPUT=$1
+  local output="${1}"
 
-  echo "$OUTPUT" | head -n 1 |
-    awk '/'$AES'connected'$AES'(primary)?'$AES'[0-9]+x[0-9]+'$AES'/ {c=0;next} {c=1} END {exit c}'
+  local query='select(.is_connected and .resolution_width != null)'
+
+  echo "${output}" | jq -cer "${query}" &>/dev/null || return 1
 }
 
+# Asserts if the given output is primary.
+# Arguments:
+#  output: a JSON object output
+# Returns:
+#  0 if is primary otherwise 1.
 is_primary () {
-  local OUTPUT=$1
+  local output="${1}"
 
-  echo "$OUTPUT" | head -n 1 |
-    awk '/'$AES'primary'$AES'/ {c=0;next} {c=1} END {exit c}'
+  local query='select(.is_primary)'
+
+  echo "${output}" | jq -cer "${query}" &>/dev/null || return 1
 }
 
+# Shows a menu asking the user to select one output, where the
+# answer is kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  prompt:  a prompt text line
+#  status: all, connected, disconnected,
+#          active, inactive, primary
+# Outputs:
+#  A menu of output names.
 pick_output () {
-  local STATUS=$1
+  local prompt="$1"
+  local status="$2"
 
-  local OUTPUTS="$(outputs "$STATUS")"
-  local LEN=$(count "$OUTPUTS")
+  # Convert outputs list into an array of {key, value} options
+  local query
+  query+='[.[]|{key: "\(.device_name)", value: "\(.device_name)"}]'
 
-  if [ ! $LEN -gt 0 ]; then
-    echo "No ${STATUS:-\b} outputs have been found"
+  local options
+  options="$(find_outputs "${status}" | jq -cer "${query}")" || return 1
+
+  if [[ "${options}" == "[]" ]]; then
+    echo "No ${status:-\b} outputs have been found"
     return 1
   fi
-  
-  pick_one "Select an output:" "$OUTPUTS"
+
+  pick_one "${prompt}" "${options}" "horizontal" || return 1
 }
 
+# Shows a menu asking the user to select many outputs,
+# where the answer is kept in the global var REPLY as
+# a JSON array of output names.
+# Globals:
+#  REPLY
+# Arguments:
+#  prompt:  a prompt text line
+#  status:  all, connected, disconnected,
+#           active, inactive, primary
+#  size:    the number of items must be selected
+#  skip:    the output to except from selection
+# Outputs:
+#  A menu of output names.
+pick_outputs () {
+  local prompt="$1"
+  local status="$2"
+  local size="$3"
+  local skip="$4"
+
+  local except='select(true)'
+  if [[ -n "${skip}" ]]; then
+    except="select(.device_name != \"${skip}\")"
+  fi
+
+  # Convert outputs list into an array of {key, value} options
+  local query
+  query='{key: "\(.device_name)", value: "\(.device_name)"}'
+  query="[.[]|${except}|${query}]"
+
+  local options
+  options="$(find_outputs "${status}" | jq -cer "${query}")" || return 1
+
+  if [[ "${options}" == "[]" ]]; then
+    echo "No ${status:-\b} outputs have been found"
+    return 1
+  fi
+
+  pick_many "${prompt}" "${options}" "${size}" "horizontal" || return 1
+}
+
+# Shows a menu of resolutions of the given output and waits
+# the user to pick one option. The selected option is kept
+# in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  output: a JSON object output
+# Outputs:
+#  A menu of resolutions.
 pick_resolution () {
-  local OUTPUT=$1
+  local output="$1"
 
-  local RESOLUTIONS="$(echo "$OUTPUT" |
-    awk -F$KVS '{ORS="'$AES'";} {if ($0 ~ /^[0-9]+x[0-9]+/) {print $1}}')"
+  # Convert resolutions list into an array of {key, value} options
+  local query
+  query+='.associated_modes[]'
+  query+=' |"\(.resolution_width)x\(.resolution_height)" as $res'
+  query+=' |{key: "\($res)", value: "\($res)"}'
 
-  local LEN=$(count "$RESOLUTIONS")
+  query="[${query}]"
 
-  if [ ! $LEN -gt 0 ]; then
-    echo "No available resolutions have been found"
+  local options
+  options="$(echo "${output}" | jq -cer "${query}")" || return 1
+
+  if [[ "${options}" == "[]" ]]; then
+    echo "No resolutions have been found"
     return 1
   fi
-  
-  pick_one "Select a resolution:" "$RESOLUTIONS" "tabular-4"
+
+  pick_one "Select a resolution:" "${options}" "vertical" "6" || return 1
 }
 
+# Shows a menu of resolution rates of the given output and
+# waits the user to pick one option. The selected option is
+# kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  output: a JSON object output
+# Outputs:
+#  A menu of resolution rates.
 pick_rate () {
-  local OUTPUT=$1
-  local RESOLUTION=$2
+  local output="$1"
+  local resolution="$2"
 
-  local RATES="$(echo "$OUTPUT" |
-    awk -F$KVS '/^[0-9]+x[0-9]+/{if ($1 == "'$RESOLUTION'") {print $2; exit}}')"
+  # Convert rates list into an array of {key, value} options
+  local query
+  query+='.associated_modes[]'
+  query+=' |"\(.resolution_width)x\(.resolution_height)" as $res'
+  query+=" |select(\$res == \"${resolution}\")"
+  query+=' |"\(.frequencies[].frequency)" as $freq'
+  query+=' |{key: "\($freq)", value: "\($freq)"}'
 
-  local LEN=$(count "$RATES")
+  query="[${query}]"
 
-  if [ ! $LEN -gt 0 ]; then
-    echo "No available refresh rates have been found"
+  local options
+  options="$(echo "${output}" | jq -cer "${query}")" || return 1
+
+  if [[ "${options}" == "[]" ]]; then
+    echo "No refresh rates have been found"
     return 1
   fi
-  
-  pick_one "Select a refresh rate:" "$RATES" "tabular-4"
+
+  pick_one "Select a refresh rate:" "${options}" "horizontal" || return 1
 }
 
-prompt () {
-  local OUTPUTS="$(outputs primary)"
-  local STATUS="$(element "$OUTPUTS" 0 | value)"
-
-  read -rep "[displays:$YE${STATUS}$RS] " REPLY
-}
-
-show_status () {
-  if [ -z "$DISPLAY" ]; then
-    echo "Unable to resolve the display of xorg server"
-    return 1
-  fi
-
-  local PATTERN='/^('
-  PATTERN+='name\sof\sdisplay|'
-  PATTERN+='version\snumber|'
-  PATTERN+='vendor\sstring|'
-  PATTERN+='vendor\srelease\snumber|'
-  PATTERN+='X.Org\sversion|'
-  PATTERN+='motion\sbuffer\ssize|'
-  PATTERN+='image\sbyte\sorder|'
-  PATTERN+='default\sscreen\snumber|'
-  PATTERN+='number\sof\sscreens'
-  PATTERN+=')/'
-
-  xdpyinfo -display "$DISPLAY" |
-    awk -F': ' $PATTERN'{ \
-      gsub(/[ \t]+$/, "", $1); \
-      gsub(/^[ \t]+/, "", $2); \
-      printf "%-23s %s\n",$1":",$2 \
-    }' | sed -r 's/\<./\U&/g'
-
-  local OUTPUTS="$(outputs active)"
-  local LEN=$(count "$OUTPUTS")
-
-  if [ $LEN = 0 ]; then
-    echo "Active Outputs:         none"
-    return
-  fi
-
-  echo "$OUTPUTS" | awk -F$AES '{
-    out=$1; for(i=2;i<=NF;i++) if ($i) out=out ","$i;
-    print "Active Outputs:         "out
-  }'
-
-  local INDEX=0
-  for ((INDEX = 0; INDEX < $LEN; INDEX++)); do
-    echo
-
-    local NAME="$(element "$OUTPUTS" "$INDEX" | value)"
-    local OUTPUT="$(output "$NAME")"
-
-    local FRM=""
-    FRM+="Output: %s\n"
-    FRM+="Mode:   %s@%sHz\n"
-    FRM+="Area:   %s\n"
-    FRM+="Pos:    %s\n"
-    FRM+="RoRe:   %s %s\n"
-
-    echo "$OUTPUT" | head -n 1 | awk -F$AES -v FRM="$FRM" '{
-      if ($3) {$1=$1"*"};
-      if (!$6) $6="normal";
-      if (!$7) $7="normal";
-      printf FRM,$1,$8,$9,$4,$5,$6,$7
-    }'
-
-    local NAME="$(echo "$OUTPUT" | head -n 1 | awk -F$AES '{print $1}')"
-    if [ -f "$CONFIG_HOME/$NAME.color" ]; then
-      local COLOR=`cat "$CONFIG_HOME/$NAME.color"`
-      COLOR="$(value "$COLOR")"
-      echo "Color:  $COLOR"
-    fi
-  done
-}
-
-show_logs () {
-  local ID=$(echo "$DISPLAY" | cut -d ':' -f 2)
-  local LOG_FILE="$HOME/.local/share/xorg/Xorg.$ID.log"
-
-  if [ ! -f "$LOG_FILE" ]; then
-    echo "Unable to find the log file $LOG_FILE"
-    return 1
-  fi
-
-  cat "$LOG_FILE"
-}
-
-show_output () {
-  local NAME=$1
-
-  if [ -z "$NAME" ]; then
-    pick_output || return 1
-    [ -z "$REPLY" ] && return
-    
-    NAME=$(value "$REPLY")
-  fi
-
-  local OUTPUT=$(output "$NAME" || echo "err:$?")
-
-  if [[ "$OUTPUT" =~ ^err: ]]; then
-    echo "Unable to find output $NAME"
-    return 1
-  fi
-
-  if ! is_connected "$OUTPUT"; then
-    local FRM=""
-    FRM+="Name:       %s\n"
-    FRM+="Status:     %s\n"
-
-    echo "$OUTPUT" | head -n 1 | awk -F$AES -v FRM="$FRM" '{printf FRM,$1,$2}'
-    return
-  fi
-
-  if ! is_active "$OUTPUT"; then
-    local FRM=""
-    FRM+="Name:       %s\n"
-    FRM+="Status:     %s\n"
-    FRM+="Native:     %s\n"
-
-    echo "$OUTPUT" | head -n 1 | awk -F$AES -v FRM="$FRM" '{printf FRM,$1,$2,$10}'
-  else
-    local FRM=""
-    FRM+="Name:       %s\n"
-    FRM+="Status:     %s\n"
-    FRM+="Primary:    %s\n"
-    FRM+="Resolution: %s\n"
-    FRM+="Rate:       %sHz\n"
-    FRM+="Rotate:     %s\n"
-    FRM+="Reflect:    %s\n"
-    FRM+="Area:       %s\n"
-    FRM+="Position:   %s\n"
-    FRM+="Native:     %s\n"
-
-    echo "$OUTPUT" | head -n 1 | awk -F$AES -v FRM="$FRM" '{
-      if ($3) {$3="true"} else {$3="false"};
-      if (!$6) $6="normal";
-      if (!$7) $7="normal";
-      printf FRM,$1,$2,$3,$8,$9,$6,$7,$4,$5,$10
-    }'
-  fi
-
-  local NAME="$(echo "$OUTPUT" | head -n 1 | awk -F$AES '{print $1}')"
-  if [ -f "$CONFIG_HOME/$NAME.color" ]; then
-    local COLOR=`cat "$CONFIG_HOME/$NAME.color"`
-    COLOR="$(value "$COLOR")"
-    echo "Color:      $COLOR"
-  fi
-
-  echo "$OUTPUT" | tail -n +2 | head -n 1 |
-    awk -F$KVS '{gsub(/'$AES'/," ",$2); printf "Profiles:   %-9s %s\n",$1,$2}'
-  echo "$OUTPUT" | tail -n +3 |
-    awk -F$KVS '{gsub(/'$AES'/," ",$2); printf "            %-9s %s\n",$1,$2}'
-}
-
-list_outputs () {
-  local STATUS=$1
-
-  if [[ ! "$STATUS" =~ ^(|connected|disconnected|active|inactive|primary)$ ]]; then
-    echo "Invalid output status argument"
-    return 1
-  fi
-
-  local OUTPUTS="$(outputs "$STATUS")"
-  local LEN=$(count "$OUTPUTS")
-
-  if [ ! $LEN -gt 0 ]; then
-    echo "No ${STATUS:-\b} outputs have been found"
-    return
-  fi
-
-  local INDEX=0
-  for ((INDEX = 0; INDEX < $LEN; INDEX++)); do
-    [ $INDEX -gt 0 ] && echo
-
-    local NAME=$(element "$OUTPUTS" "$INDEX" | value)
-    show_output "$NAME"
-  done
-}
-
-set_mode () {
-  local NAME=$1
-  local RESOLUTION=$2
-  local RATE=$3
-
-  if [ -z "$NAME" ]; then
-    pick_output active || return 1
-    [ -z "$REPLY" ] && return
-    
-    NAME=$(value "$REPLY")
-  fi
-
-  local OUTPUT=$(output "$NAME" || echo "err:$?")
-
-  if [[ "$OUTPUT" =~ ^err: ]]; then
-    echo "Unable to find output $NAME"
-    return 1
-  elif ! is_connected "$OUTPUT"; then
-    echo "Cannot set mode of a disconnected output"
-    return 1
-  elif ! is_active "$OUTPUT"; then
-    echo "Cannot set mode of an inactive"
-    return 1
-  fi
-
-  if [ -z "$RESOLUTION" ]; then
-    pick_resolution "$OUTPUT" || return 1
-    [ -z "$REPLY" ] && return
-    
-    RESOLUTION=$(value "$REPLY")
-  elif [[ ! "$RESOLUTION" =~ ^[0-9]+x[0-9]+$ ]]; then
-    echo "Invalid resolution argument"
-    return 1
-  fi
-
-  if [ -z "$RATE" ]; then
-    pick_rate "$OUTPUT" "$RESOLUTION" || return 1
-    [ -z "$REPLY" ] && return
-    
-    RATE=$(value "$REPLY")
-  elif [[ ! "$RATE" =~ ^[0-9][0-9]+.[0-9][0-9]$ ]]; then
-    echo "Invalid refresh rate argument"
-    return 1
-  fi
-
-  xrandr --output "$NAME" --mode "$RESOLUTION" --rate "$RATE" &&
-    echo "Output $NAME mode set to $RESOLUTION" ||
-    echo "Failed to set mode of output $NAME"
-}
-
-set_primary () {
-  local NAME=$1
-
-  if [ -z "$NAME" ]; then
-    pick_output active || return 1
-    [ -z "$REPLY" ] && return
-    
-    NAME=$(value "$REPLY")
-  fi
-  
-  local OUTPUT=$(output "$NAME" || echo "err:$?")
-
-  if [[ "$OUTPUT" =~ ^err: ]]; then
-    echo "Unable to find output $NAME"
-    return 1
-  elif ! is_connected "$OUTPUT"; then
-    echo "Cannot set primary a disconnected output"
-    return 1
-  elif ! is_active "$OUTPUT"; then
-    echo "Cannot set primary an inactive output"
-    return 1
-  elif is_primary "$OUTPUT"; then
-    echo "Output $NAME is already the primary"
-    return 1
-  fi
-
-  xrandr --output "$NAME" --primary &&
-    echo "Output $NAME has been set as primary" ||
-    echo "Failed to set output $NAME as primary"
-}
-
-set_on () {
-  local NAME=$1
-
-  if [ -z "$NAME" ]; then
-    pick_output inactive || return 1
-    [ -z "$REPLY" ] && return
-    
-    NAME=$(value "$REPLY")
-  fi
-  
-  local OUTPUT=$(output "$NAME" || echo "err:$?")
-
-  if [[ "$OUTPUT" =~ ^err: ]]; then
-    echo "Unable to find output $NAME"
-    return 1
-  elif ! is_connected "$OUTPUT"; then
-    echo "Cannot activate a disconnected output"
-    return 1
-  elif is_active "$OUTPUT"; then
-    echo "Output $NAME is already active"
-    return 1
-  fi
-
-  xrandr --output "$NAME" --auto &&
-    echo "Output $NAME has been activated" ||
-    echo "Failed to activate output $NAME"
-}
-
-set_off () {
-  local NAME=$1
-
-  if [ -z "$NAME" ]; then
-    pick_output active || return 1
-    [ -z "$REPLY" ] && return
-    
-    NAME=$(value "$REPLY")
-  fi
-  
-  local OUTPUT=$(output "$NAME" || echo "err:$?")
-
-  if [[ "$OUTPUT" =~ ^err: ]]; then
-    echo "Unable to find output $NAME"
-    return 1
-  elif ! is_connected "$OUTPUT"; then
-    echo "Cannot deactivate a disconnected output"
-    return 1
-  elif ! is_active "$OUTPUT"; then
-    echo "Output $NAME is already inactive"
-    return 1
-  elif is_primary "$OUTPUT"; then
-    echo "Cannot deactivate the primary output"
-    return 1
-  fi
-
-  xrandr --output "$NAME" --off &&
-    echo "Output $NAME has been deactivated" ||
-    echo "Failed to deactivate output $NAME"
-}
-
-reflect () {
-  local NAME=$1
-  local MODE=$2
-
-  if [ -z "$NAME" ]; then
-    pick_output active || return 1
-    [ -z "$REPLY" ] && return
-    
-    NAME=$(value "$REPLY")
-  fi
-  
-  local OUTPUT=$(output "$NAME" || echo "err:$?")
-
-  if [[ "$OUTPUT" =~ ^err: ]]; then
-    echo "Unable to find output $NAME"
-    return 1
-  elif ! is_connected "$OUTPUT"; then
-    echo "Cannot reflect a disconnected output"
-    return 1
-  elif ! is_active "$OUTPUT"; then
-    echo "Cannot reflect an inactive output"
-    return 1
-  fi
-
-  if [ -z "$MODE" ]; then
-    local MODES=""
-    MODES+="Normal${KVS}normal${AES}"
-    MODES+="X${KVS}x${AES}"
-    MODES+="Y${KVS}y${AES}"
-    MODES+="XY${KVS}xy"
-
-    pick_one "Select a reflection mode:" "$MODES"
-    [ -z "$REPLY" ] && return
-    
-    MODE=$(value "$REPLY")
-  fi
-  
-  if [[ ! "$MODE" =~ ^(normal|x|y|xy)$ ]]; then
-    echo "Invalid reflection mode argument"
-    return 1
-  fi
-
-  xrandr --output "$NAME" --reflect "$MODE" &&
-    echo "Output $NAME has been reflected to $MODE mode" ||
-    echo "Failed to reflect output $NAME"
-}
-
-rotate () {
-  local NAME=$1
-  local MODE=$2
-
-  if [ -z "$NAME" ]; then
-    pick_output active || return 1
-    [ -z "$REPLY" ] && return
-    
-    NAME=$(value "$REPLY")
-  fi
-  
-  local OUTPUT=$(output "$NAME" || echo "err:$?")
-
-  if [[ "$OUTPUT" =~ ^err: ]]; then
-    echo "Unable to find output $NAME"
-    return 1
-  elif ! is_connected "$OUTPUT"; then
-    echo "Cannot reflect a disconnected output"
-    return 1
-  elif ! is_active "$OUTPUT"; then
-    echo "Cannot reflect an inactive output"
-    return 1
-  fi
-
-  if [ -z "$MODE" ]; then
-    local MODES=""
-    MODES+="Normal${KVS}normal${AES}"
-    MODES+="Right${KVS}right${AES}"
-    MODES+="Left${KVS}left${AES}"
-    MODES+="Inverted${KVS}inverted"
-
-    pick_one "Select a rotation mode:" "$MODES"
-    [ -z "$REPLY" ] && return
-    
-    MODE=$(value "$REPLY")
-  fi
-  
-  if [[ ! "$MODE" =~ ^(normal|right|left|inverted)$ ]]; then
-    echo "Invalid rotation mode argument"
-    return 1
-  fi
-
-  xrandr --output "$NAME" --rotate "$MODE" &&
-    echo "Output $NAME has been rotated to $MODE mode" ||
-    echo "Failed to rotate output $NAME"
-}
-
-mirror () {
-  local NAME=$1
-
-  if [ -z "$NAME" ]; then
-    local ACTIVE="$(outputs active)"
-    local ACTIVE_LEN="$(count "$ACTIVE")"
-    
-    if [ $ACTIVE_LEN = 0 ]; then
-      echo "Unable to find active outptus"
-      return 1
-    elif [ $ACTIVE_LEN = 1 ]; then
-      echo "Cannot set mirror for one active output"
-      return 1
-    fi
-
-    pick_one "Select which output to mirror:" "$ACTIVE" || return 1
-    [ -z "$REPLY" ] && return
-    
-    NAME=$(value "$REPLY")
-  fi
-
-  local OUTPUT=$(output "$NAME" || echo "err:$?")
-
-  if [[ "$OUTPUT" =~ ^err: ]]; then
-    echo "Unable to find output $NAME"
-    return 1
-  elif ! is_connected "$OUTPUT"; then
-    echo "Cannot mirror a disconnected output"
-    return 1
-  elif ! is_active "$OUTPUT"; then
-    echo "Cannot mirror an inactive output"
-    return 1
-  fi
-
-  local OTHERS="$(outputs active | sed -E "s/${NAME}(${AES})?//g")"
-  local OTHERS_LEN=$(count "$OTHERS")
-
-  local MIRRORS=""
-
-  if [ $OTHERS_LEN = 0 ]; then
-    echo "Cannot set mirror mode for one active output"
-    return 1
-  elif [ $OTHERS_LEN = 1 ]; then
-    MIRRORS="$OTHERS"
-  else
-    pick_many "Select on which outputs to mirror $NAME:" "${OTHERS}" 1 "$OTHERS_LEN" || return 1
-    [ -z "$REPLY" ] && return
-
-    MIRRORS="$REPLY"
-  fi
-
-  local MODES="$(echo "$OUTPUT" | tail -n +2 | awk -F$KVS '{ORS="'$AES'";} {print $1}')"
-
-  local I=0
-  local MIRRORS_LEN=$(count "$MIRRORS")
-  for ((I=0; I<$MIRRORS_LEN; I++)); do
-    local MIRROR_NAME="$(element "$MIRRORS" "$I" | value)"
-    local MIRROR="$(output "$MIRROR_NAME")"
-    local MIRROR_MODES="$(echo "$MIRROR" | tail -n +2 | awk -F$KVS '{ORS="'$AES'";} {print $1}')"
-
-    local SHARED=""
-    local K=0
-    local MODES_LEN=$(count "$MODES")
-    for ((K=0; K<$MODES_LEN; K++)); do
-      local MODE=$(element "$MODES" "$K" | value)
-
-      if [[ "$MIRROR_MODES" =~ "$MODE" ]]; then
-        SHARED+=$MODE$AES
-      fi
-    done
-
-    MODES=$SHARED
-  done
-
-  local MODES_LEN=$(count "$MODES")
-  local MODE=""
-
-  if [ $MODES_LEN = 0 ]; then
-    echo "Unable to mirror, mirrors do not share common modes"
-    return 1
-  elif [ $MODES_LEN = 1 ]; then
-    MODE=$MODES
-    [[ "$MODE" =~ .*${AES}$ ]] && MODE="${MODE::-${#AES}}"
-  else
-    pick_one "Select the mirroring resolution:" "$MODES" "tabular-4" || return 1
-    [ -z "$REPLY" ] && return
-
-    MODE="$(value "$REPLY")"
-  fi
-
-  local POS=$(echo "$OUTPUT" | head -n 1 | awk -F$AES '{print $5}')
-  local ARGS="--output $NAME --mode $MODE --pos $POS --rotate normal --reflect normal"
-
-  local I=0
-  for ((I=0; I<$MIRRORS_LEN; I++)); do
-    local MIRROR_NAME="$(element "$MIRRORS" "$I" | value)"
-    ARGS+=" --output $MIRROR_NAME --mode $MODE --pos $POS --rotate normal --reflect normal"
-  done
-
-  xrandr $ARGS &&
-    echo "Output $NAME has been mirrored successfully" ||
-    echo "Failed to mirror output $NAME"
-}
-
+# Shows a menu of layout modes and waits the user to pick
+# one. The selected option is kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  None
+# Outputs:
+#  A menu of layout modes.
 pick_layout () {
-  local OUTPUTS=$1
+  local len
+  len="$(find_outputs "active" | jq -cer 'length')" || return 1
 
-  local LAYOUTS=""
+  if [[ ${len} -lt 2 ]] || [[ ${len} -gt 3 ]]; then
+    echo "No layout options found for ${len} display setups"
+    return 1
+  fi
 
-  if [ $OUTPUTS = 2 ]; then
-    LAYOUTS+="SideBySide${KVS}row-2${AES}"
-    LAYOUTS+="TopBottom${KVS}col-2"
+  local layouts
+
+  if [[ ${len} == 2 ]]; then
+    layouts='{"key": "row-2", "value": "SideBySide"},'
+    layouts+='{"key": "col-2", "value": "TopBottom"}'
+    layouts="[${layouts}]"
 
     echo "SideBySide  TopBottom"
     echo "----------  ----------"
     echo "[A][B]      [A]"
     echo "            [B]"
     echo
-  elif [ $OUTPUTS = 3 ]; then
-    LAYOUTS+="SideBySide${KVS}row-3${AES}"
-    LAYOUTS+="TopBottom${KVS}col-3${AES}"
-    LAYOUTS+="LeftGamma${KVS}gamma-3${AES}"
-    LAYOUTS+="RightGamma${KVS}gamma-rev-3${AES}"
-    LAYOUTS+="LeftLambda${KVS}lambda-3${AES}"
-    LAYOUTS+="RightLambda${KVS}lambda-rev-3"
+  elif [[ ${len} == 3 ]]; then
+    layouts='{"key": "row-3", "value": "SideBySide"},'
+    layouts+='{"key": "col-3", "value": "TopBottom"},'
+    layouts+='{"key": "gamma-3", "value": "LeftGamma"},'
+    layouts+='{"key": "gamma-rev-3", "value": "RightGamma"},'
+    layouts+='{"key": "lambda-3", "value": "LeftLambda"},'
+    layouts+='{"key": "lambda-rev-3", "value": "RightLambda"}'
+    layouts="[${layouts}]"
 
     echo "SideBySide  TopBottom   LeftGamma"
     echo "----------  ----------  -----------"
@@ -721,64 +317,588 @@ pick_layout () {
     echo "[A][B]      [A]            [A]"
     echo "   [C]      [B][C]      [B][C]"
     echo
-  else
+  fi
+
+  pick_one "Select a layout mode:" "${layouts}" "tabular" "${len}" || return 1
+}
+
+# Shows a prompt status and asks user to enter the
+# next command, which is kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  None
+# Outputs:
+#  A minimal prompt status line.
+prompt () {
+  local status
+  status="$(find_outputs "primary" | jq -cer '.[0].device_name')"
+
+  if [[ $? -ne 0 ]]; then
+    status='error'
+  fi
+
+  read -rep "[displays:${status}] " REPLY
+}
+
+# Shows the current status of Xorg and active displays.
+# Globals:
+#  DISPLAY, COLORS
+# Arguments:
+#  None
+# Outputs:
+#  A verbose list of text data.
+show_status () {
+  local re='/^('
+  re+='name\sof\sdisplay|'
+  re+='version\snumber|'
+  re+='vendor\sstring|'
+  re+='vendor\srelease\snumber|'
+  re+='X.Org\sversion|'
+  re+='motion\sbuffer\ssize|'
+  re+='image\sbyte\sorder|'
+  re+='default\sscreen\snumber|'
+  re+='number\sof\sscreens'
+  re+=')/'
+
+  xdpyinfo -display "${DISPLAY}" | awk -F': ' "${re}"'{
+    gsub(/[ \t]+$/, "", $1);
+    gsub(/^[ \t]+/, "", $2);
+    printf "%-23s %s\n",$1":",$2
+  }' | sed -r 's/\<./\U&/g' || echo "Unable to retrieve xdpy info"
+
+  local rate
+  rate+='[.associated_modes[].frequencies]|flatten'
+  rate+=' |[.[]|select(.is_current==true)]'
+  rate+=' |.[0].frequency'
+
+  local query
+  query+='Output:   \(.device_name)\(if .is_primary then "*" else "" end)\n'
+  query+='Mode:     \(.resolution_width)x\(.resolution_height)\n'
+  query+="Rate:     \(${rate})Hz\n"
+  query+='Offset:   [\(.offset_width),\(.offset_height)]\n'
+  query+='Rotate:   \(.rotation)\n'
+  query+='Reflect:  \(.reflection|ascii_downcase)'
+
+  query=".[]|(\"\n${query}\")"
+
+  find_outputs "active" | jq -cer "${query}"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to retrieve outputs"
     return 1
   fi
 
-  pick_one "Select a layout mode:" "$LAYOUTS" "tabular-3"
+  # TODO: show color profile
 }
 
+# Shows the Xorg displays log file.
+# Globals:
+#  HOME, DISPLAY
+# Arguments:
+#  None
+# Outputs:
+#  The log file of the xorg display.
+show_logs () {
+  local display="$(echo "${DISPLAY}" | cut -d ':' -f 2)"
+  local log_file="${HOME}/.local/share/xorg/Xorg.${display}.log"
+
+  if [[ ! -f "${log_file}" ]]; then
+    echo "Unable to find the log file ${log_file}"
+    return 1
+  fi
+
+  cat "${log_file}"
+}
+
+# Shows the data of the output with the given name.
+# Globals:
+#  REPLY
+# Arguments:
+#  name: any string
+# Outputs:
+#  A verbose list of text data.
+show_output () {
+  local name="$1"
+
+  if [[ -z "${name}" ]]; then
+    pick_output "Select an output:" "all" || return 1
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return
+  fi
+
+  local base
+  base+='Name:      \(.device_name)\n'
+  base+='Connected: \(.is_connected)\n'
+  base+='Primary:   \(.is_primary)'
+
+  local rate
+  rate+='[.associated_modes[].frequencies]|flatten'
+  rate+=' |[.[]|select(.is_current==true)]'
+  rate+=' |.[0].frequency'
+
+  local extra
+  extra+='Mode:      \(.resolution_width)x\(.resolution_height)\n'
+  extra+="Rate:      \(${rate})Hz\n"
+  extra+='Offset:    [\(.offset_width),\(.offset_height)]\n'
+  extra+='Rotate:    \(.rotation)\n'
+  extra+='Reflect:   \(.reflection|ascii_downcase)'
+
+  local modes
+  modes+='.associated_modes[]|'
+  modes+='"\(.resolution_width)x\(.resolution_height)" as $mode|"'
+  modes+='\($mode)'
+  modes+='\($mode|if (9-length)>0 then (" "*(9-length)) else "" end)'
+  modes+=' \([.frequencies[]|.frequency]|join(" "))"'
+
+  modes="[${modes}]|join(\"\n           \")"
+
+  local query
+  query+="${base}"
+  query+='\(if .is_connected and .resolution_width != null'
+  query+=" then \"\n${extra}\""
+  query+=' else "" end)'
+  query+='\(if .associated_modes|length != 0'
+  query+=" then \"\nModes:     \(${modes})\""
+  query+=' else "" end)'
+
+  query=".[]|select(.device_name==\"${name}\")|(\"${query}\")"
+
+  find_outputs "all" | jq -cer "${query}"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to find output ${name}"
+    return 1
+  fi
+
+  # TODO: show color profile
+}
+
+# Shows the list of outputs matching the given status.
+# Arguments:
+#  status: all, connected, disconnected,
+#          active, inactive, primary
+# Outputs:
+#  A list of outputs.
+list_outputs () {
+  local status="${1:-"all"}"
+
+  local states='all|connected|disconnected|active|inactive|primary'
+  if [[ ! "${status}" =~ ^(${states})$ ]]; then
+    echo "Invalid status value"
+    return 1
+  fi
+
+  local query
+  query+='Name:      \(.device_name)\n'
+  query+='Connected: \(.is_connected)\n'
+  query+='Primary:   \(.is_primary)\n'
+
+  query=".[]|(\"${query}\")"
+
+  local outputs
+  outputs="$(find_outputs "${status}" | jq -cr "${query}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to retrieve outputs"
+    return 1
+  fi
+
+  if [[ -z "${outputs}" ]]; then
+    echo "No ${status:-\b} outputs have been found"
+    return 1
+  fi
+
+  echo "${outputs}"
+}
+
+# Sets the resolution and rate of the output with the
+# given name.
+# Globals:
+#  REPLY
+# Arguments:
+#  name:       any string
+#  resolution: a resolution string, e.g. 600x800
+#  rate:       a decimal number, e.g. 60.00
+set_mode () {
+  local name="${1}"
+  local resolution="${2}"
+  local rate="${3}"
+
+  if [[ -z "${name}" ]]; then
+    pick_output "Select an output:" "active" || return 1
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return
+  fi
+
+  local output
+  output="$(find_output "${name}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to find output ${name}"
+    return 1
+  elif ! is_connected "${output}"; then
+    echo "Cannot set mode of a disconnected output"
+    return 1
+  elif ! is_active "${output}"; then
+    echo "Cannot set mode of an inactive output"
+    return 1
+  fi
+
+  if [[ -z "$resolution" ]]; then
+    pick_resolution "${output}" || return 1
+    [[ -n "${REPLY}" ]] && resolution="${REPLY}" || return
+  fi
+  
+  if [[ ! "${resolution}" =~ ^[0-9]+x[0-9]+$ ]]; then
+    echo "Invalid resolution value"
+    return 1
+  fi
+
+  if [[ -z "${rate}" ]]; then
+    pick_rate "${output}" "${resolution}" || return 1
+    [[ -n "${REPLY}" ]] && rate="${REPLY}" || return
+  fi
+  
+  if [[ ! "${rate}" =~ ^[0-9][0-9]+(.[0-9][0-9])?$ ]]; then
+    echo "Invalid refresh rate value"
+    return 1
+  fi
+
+  xrandr --output "${name}" --mode "${resolution}" --rate "${rate}" &&
+    echo "Output ${name} mode set to ${resolution}" ||
+    echo "Failed to set mode of output ${name}"
+}
+
+# Sets the output with the given name as primary.
+# Globals:
+#  REPLY
+# Arguments:
+#  name: any string
+set_primary () {
+  local name="$1"
+
+  if [[ -z "${name}" ]]; then
+    pick_output "Select an output:" "active" || return 1
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return
+  fi
+
+  local output
+  output="$(find_output "${name}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to find output ${name}"
+    return 1
+  elif ! is_connected "${output}"; then
+    echo "Cannot set primary a disconnected output"
+    return 1
+  elif ! is_active "${output}"; then
+    echo "Cannot set primary an inactive output"
+    return 1
+  elif is_primary "${output}"; then
+    echo "Output ${name} is already the primary"
+    return 1
+  fi
+
+  xrandr --output "${name}" --primary &&
+    echo "Output ${name} has been set as primary" ||
+    echo "Failed to set output ${name} as primary"
+}
+
+# Sets the output with the given name on.
+# Globals:
+#  REPLY
+# Arguments:
+#  name: any string
+set_on () {
+  local name="$1"
+
+  if [[ -z "${name}" ]]; then
+    pick_output "Select an output:" "inactive" || return 1
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return
+  fi
+
+  local output
+  output="$(find_output "${name}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to find output ${name}"
+    return 1
+  elif ! is_connected "${output}"; then
+    echo "Cannot activate a disconnected output"
+    return 1
+  elif is_active "${output}"; then
+    echo "Output ${name} is already active"
+    return 1
+  fi
+
+  xrandr --output "${name}" --auto &&
+    echo "Output ${name} has been activated" ||
+    echo "Failed to activate output ${name}"
+}
+
+# Sets the output with the given name off.
+# Globals:
+#  REPLY
+# Arguments:
+#  name: any string
+set_off () {
+  local name="$1"
+
+  if [[ -z "${name}" ]]; then
+    pick_output "Select an output:" "active" || return 1
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return
+  fi
+
+  local output
+  output="$(find_output "${name}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to find output ${name}"
+    return 1
+  elif ! is_connected "${output}"; then
+    echo "Cannot deactivate a disconnected output"
+    return 1
+  elif ! is_active "${output}"; then
+    echo "Output ${output} is already inactive"
+    return 1
+  elif is_primary "${output}"; then
+    echo "Cannot deactivate the primary output"
+    return 1
+  fi
+
+  xrandr --output "${name}" --off &&
+    echo "Output ${name} has been deactivated" ||
+    echo "Failed to deactivate output ${name}"
+}
+
+# Sets the reflection of the output with the given name.
+# Globals:
+#  REPLY
+# Arguments:
+#  name: any string
+#  mode: normal, x, y, xy
+reflect () {
+  local name="$1"
+  local mode="$2"
+  
+  if [[ -z "${name}" ]]; then
+    pick_output "Select an output:" "active" || return 1
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return
+  fi
+
+  local output
+  output="$(find_output "${name}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to find output ${name}"
+    return 1
+  elif ! is_connected "${output}"; then
+    echo "Cannot reflect a disconnected output"
+    return 1
+  elif ! is_active "${output}"; then
+    echo "Cannot reflect an inactive output"
+    return 1
+  fi
+
+  if [[ -z "${mode}" ]]; then
+    local modes
+    modes+='{"key": "normal", "value": "Normal"},'
+    modes+='{"key": "x", "value": "X Axis"},'
+    modes+='{"key": "y", "value": "Y Axis"},'
+    modes+='{"key": "xy", "value": "XY Axis"}'
+
+    pick_one "Select a reflection mode:" "[${modes}]" "horizontal" || return 1
+    [[ -n "${REPLY}" ]] && mode="${REPLY}" || return
+  fi
+  
+  if [[ ! "${mode}" =~ ^(normal|x|y|xy)$ ]]; then
+    echo "Invalid reflection mode value"
+    return 1
+  fi
+
+  xrandr --output "${name}" --reflect "${mode}" &&
+    echo "Output ${name} has been reflected to ${mode} mode" ||
+    echo "Failed to reflect output ${name}"
+}
+
+# Sets the rotation of the output with the given name.
+# Globals:
+#  REPLY
+# Arguments:
+#  name: any string
+#  mode: normal, right, left, inverted
+rotate () {
+  local name="$1"
+  local mode="$2"
+
+  if [[ -z "${name}" ]]; then
+    pick_output "Select an output:" "active" || return 1
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return
+  fi
+
+  local output
+  output="$(find_output "${name}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to find output ${name}"
+    return 1
+  elif ! is_connected "${output}"; then
+    echo "Cannot rotate a disconnected output"
+    return 1
+  elif ! is_active "${output}"; then
+    echo "Cannot rotate an inactive output"
+    return 1
+  fi
+
+  if [[ -z "${mode}" ]]; then
+    local modes
+    modes+='{"key": "normal", "value": "Normal"},'
+    modes+='{"key": "right", "value": "Right"},'
+    modes+='{"key": "left", "value": "Left"},'
+    modes+='{"key": "inverted", "value": "Inverted"}'
+
+    pick_one "Select a rotation mode:" "[${modes}]" "horizontal" || return 1
+    [[ -n "${REPLY}" ]] && mode="${REPLY}" || return
+  fi
+  
+  if [[ ! "${mode}" =~ ^(normal|right|left|inverted)$ ]]; then
+    echo "Invalid rotation mode value"
+    return 1
+  fi
+
+  xrandr --output "${name}" --rotate "${mode}" &&
+    echo "Output ${name} has been rotated to ${mode} mode" ||
+    echo "Failed to rotate output ${name}"
+}
+
+# Mirrors the output with the given name to other outputs,
+# having all mirrors run at a common resolution shared among
+# the source output and the mirrors. All outputs will move to
+# position equal to the position of the source output and
+# inherit the rotation and reflection modes.
+# Globals:
+#  REPLY
+# Arguments:
+#  name: any string
+mirror () {
+  local name="$1"
+
+  if [[ -z "${name}" ]]; then
+    pick_output "Select an output:" "active" || return 1
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return
+  fi
+
+  local output
+  output="$(find_output "${name}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to find output ${name}"
+    return 1
+  elif ! is_connected "${output}"; then
+    echo "Cannot mirror a disconnected output"
+    return 1
+  elif ! is_active "${output}"; then
+    echo "Cannot mirror an inactive output"
+    return 1
+  fi
+
+  local len
+  len="$(find_outputs "active" | jq -cr 'length')"
+  
+  if [[ ${len} -lt 2 ]]; then
+    echo "No other outputs have found to mirror"
+    return 1
+  fi
+
+  local mirrors
+  pick_outputs "Select on which outputs to mirror:" "active" "1," "${name}" || return 1
+  [[ -n "${REPLY}" ]] && mirrors="${REPLY}" || return
+
+  # Find the common resolution modes among output and mirrors
+  local names
+  names="$(echo "${mirrors}" | jq -cer '.|join("|")')" || return 1
+  names+="|${name}"
+
+  local query
+  query+="select(.device_name | match(\"(${names})\"))"
+  query+=' |.associated_modes[]'
+  query+=' |"\(.resolution_width)x\(.resolution_height)"'
+
+  query="[.[]|${query}]"
+  query+=' |[group_by(.)|map(select(length>1))|.[]|.[0]'
+  query+=' |{key: "\(.)", value: "\(.)"}]'
+
+  local modes
+  modes="$(find_outputs "active" | jq -cer "${query}")" || return 1
+
+  if [[ "${modes}" == "[]" ]]; then
+    echo "No common resolutions found among mirrors"
+    return 1
+  fi
+
+  local mode
+  pick_one "Select the mirroring resolution:" "${modes}" "vertical" || return 1
+  [[ -n "${REPLY}" ]] && mode="${REPLY}" || return
+
+  # Have mirrors inherit the position and rotate/reflect of output
+  local pos="$(echo "${output}" | jq -r '"\(.offset_width)x\(.offset_height)"')"
+  local rot="$(echo "${output}" | jq -r '.rotation')"
+  local ref="$(echo "${output}" | jq -r '.reflection|ascii_downcase' |
+    awk '{gsub(/( |and|axis)/,"",$0); print}')"
+
+  query="[\"--output \(.[]) --mode ${mode} --pos ${pos} --rotate ${rot} --reflect ${ref}\"]"
+  query+='|join(" ")'
+
+  local others="$(echo "${mirrors}" | jq -cr "${query}")"
+
+  xrandr --output ${name} --mode ${mode} ${others} &&
+    echo "Output ${name} mirrored successfully" ||
+    echo "Failed to mirror output ${name}"
+}
+
+# Sets the layout of currently active outputs.
+# Globals:
+#  REPLY
+# Arguments:
+#  None
 set_layout () {
-  local OUTPUTS="$(outputs active)"
-  local LEN=$(count "$OUTPUTS")
+  local layout
+  pick_layout || return 1
+  [[ -n "$REPLY" ]] && layout="${REPLY}" || return
 
-  if [ $LEN = 0 ]; then
-    echo "No active outputs have been found"
-    return
-  elif [ $LEN = 1 ]; then
-    echo "Cannot set layout for one active output"
-    return
-  elif [ $LEN -gt 3 ]; then
-    echo "No layout options found for more than 3 active outputs"
-    return
-  fi
+  local outputs
+  pick_outputs "Pick outputs by order:" "active" "all" || return 1
+  [[ -n "$REPLY" ]] && outputs="${REPLY}" || return
 
-  pick_layout "$LEN" || return 1
-  [ -z "$REPLY" ] && return
+  local a="$(echo "${outputs}" | jq -cr '.[0]')"
+  local b="$(echo "${outputs}" | jq -cr '.[1]')"
+  local c="$(echo "${outputs}" | jq -cr '.[2]')"
 
-  local LAYOUT=$(value "$REPLY")
-
-  local SPOTS=$(echo "$LEN" | awk '{for(i=65; i<65+$0; i++) printf "%c,",i}')
-
-  pick_many "Pick outputs by order to match ${SPOTS::-1}:" "$OUTPUTS" "$LEN" "$LEN"
-  [ -z "$REPLY" ] && return
-
-  local A=$(element "$REPLY" 0 | value)
-  local B=$(element "$REPLY" 1 | value)
-  if [ $LEN = 3 ]; then
-    local C=$(element "$REPLY" 2 | value)
-  fi
-
-  case "$LAYOUT" in
+  local args
+  case "${layout}" in
     "row-2")
-      xrandr --output "$A" --left-of "$B";;
+      args="--output ${a} --left-of ${b}";;
     "col-2")
-      xrandr --output "$A" --above "$B";;
+      args="--output ${a} --above ${b}";;
     "row-3")
-      xrandr --output "$A" --left-of "$B" --output "$B" --left-of "$C";;
+      args="--output ${a} --left-of ${b} --output ${b} --left-of ${c}";;
     "col-3")
-      xrandr --output "$A" --above "$B" --output "$B" --above "$C";;
+      args="--output ${a} --above ${b} --output ${b} --above ${c}";;
     "gamma-3")
-      xrandr --output "$A" --left-of "$B" --output "$C" --below "$A";;
+      args="--output ${a} --left-of ${b} --output ${c} --below ${a}";;
     "gamma-rev-3")
-      xrandr --output "$A" --left-of "$B" --output "$C" --below "$B";;
+      args="--output ${a} --left-of ${b} --output ${c} --below ${b}";;
     "lambda-3")
-      xrandr --output "$A" --above "$B" --output "$B" --left-of "$C";;
+      args="--output ${a} --above ${b} --output ${b} --left-of ${c}";;
     "lambda-rev-3")
-      xrandr --output "$A" --left-of "$C" --output "$A" --above "$C";;
+      args="--output ${a} --left-of ${c} --output ${a} --above ${c}";;
+    *)
+      echo "Unknown or invalid layout mode"
+      return 1;;
   esac
 
-  if [ ! $? = 0 ]; then
+  xrandr ${args}
+
+  if [[ $? -ne 0 ]]; then
     echo "Failed to set layout mode"
     return 1
   fi
@@ -786,196 +906,300 @@ set_layout () {
   echo "Layout has been set successfully"
 }
 
+# Saves the current state of each output to a line of
+# xrandr compatible options ready to be used in xrandr
+# calls. The state of an output is considered the mode,
+# rate, offset (position), rotate, reflect and primary.
+# Globals:
+#  REPLY
+# Arguments:
+#  None
 save_layout () {
-  local OUTPUTS="$(outputs)"
-  local LEN=$(count "$OUTPUTS")
-  
-  if [ $LEN = 0 ]; then
-    echo "Unable to save layout, no outputs have found"
+  local outputs
+  outputs="$(find_outputs "all")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to find outputs"
     return 1
   fi
 
-  if [ -f "$LAYOUT_FILE" ]; then
-    confirm "Should overwrite existing layout?"
-    [ -z "$REPLY" ] && return
-    [ "$(value "$REPLY")" = "no" ] && return
+  confirm "Should overwrite existing layout?"
+  [[ -z "${REPLY}" ]] && return
+  [[ "${REPLY}" == "no" ]] && return
+
+  # Parse each output state to a line of xrandr options
+  local mode
+  mode+='.associated_modes[]'
+  mode+=' |"\(.resolution_width)x\(.resolution_height)" as $res'
+  mode+=' |.frequencies[]|select(.is_current)'
+  mode+=' |"--mode \($res) --rate \(.frequency)"'
+
+  local pos='--pos \(.offset_width)x\(.offset_height)'
+  local rotate='--rotate \(.rotation)'
+  local reflect='--reflect \(.reflection|ascii_downcase|gsub("( |and|axis)";""))'
+  local primary='if .is_primary then " --primary" else "" end'
+
+  local query
+  query+='if .resolution_width'
+  query+=" then \"\(${mode}) ${pos} ${rotate} ${reflect}\(${primary})\""
+  query+=' else "--off"'
+  query+='end'
+
+  query="map({(.device_name|tostring): \"\(${query})\"})|add"
+
+  local layout
+  layout="$(echo "${outputs}" | jq -cer "${query}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to parse modes to layout"
+    return 1
   fi
 
-  mkdir -p "$CONFIG_HOME"
-  rm -f "$LAYOUT_FILE"
+  local settings
+  if [[ -f "${SETTINGS_FILE}" ]]; then
+    settings="$(jq -e ".|.layout = ${layout}" "${SETTINGS_FILE}")"
+  else
+    settings="$(echo "{\"layout\": ${layout}}" | jq -e '.')"
+  fi
 
-  local INDEX=0
-  for ((INDEX = 0; INDEX < $LEN; INDEX++)); do
-    local NAME=$(element "$OUTPUTS" "$INDEX" | value)
-    local OUTPUT="$(output "$NAME")"
+  if [[ $? -eq 0 ]]; then
+    mkdir -p "${CONFIG_HOME}"
+    echo "${settings}" > "${SETTINGS_FILE}"
 
-    echo "$OUTPUT" | head -n 1 >> "$LAYOUT_FILE"
-  done
-
-  echo "Layout has been saved successfully"
+    echo "Layout has been saved successfully"
+  else
+    echo "Failed to save the layout"
+    return 1
+  fi
 }
 
-load_layout () {
-  if [ ! -f "$LAYOUT_FILE" ]; then
-    echo "Unable to load layout, no layout file found"
+# Restores the displays layout by calling xrandr on every
+# output, where its mode, rate, pos, rotate, reflect and
+# primary settings have been saved in the settings file.
+# Arguments:
+#  None
+restore_layout () {
+  if [[ ! -f "${SETTINGS_FILE}" ]]; then
+    echo "No layout settings have been found"
     return
   fi
 
-  local ARGS=$(awk -F$AES '{
-    if ($2 == "connected" && $4) {
-      if (!$6) $6="normal";
-      if (!$7) $7="normal";
-      args="--output "$1" --mode "$8" --rate "$9" --pos "$5" --rotate "$6" --reflect "$7
-      if ($3 == "primary") args=args" --primary"
-      print args
-    } else {
-      print "--output "$1" --off"
-    }
-  }' "$LAYOUT_FILE" | tr $'\n' ' ')
+  # Collect all output xrandr options in a single line
+  local query='"--output \(.key) \(.value)"'
+  query="[.layout|to_entries|.[]|${query}]|join(\" \")"
 
-  xrandr $ARGS && echo "Displays layout loaded successfully"
+  local args
+  args="$(jq -cer "${query}" "${SETTINGS_FILE}")"
 
-  if [ ! $? = 0 ]; then
-    echo "Failed to load the displays layout"
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to read layout settings"
+    return
+  fi
+
+  xrandr ${args} && echo "Layout has been restored"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to restore the layout"
     return 1
   fi
 }
 
+# Sets the color profile of the output witht he given name
+# where profile should be the filename of any .icc or .icm
+# color calibration file.
+# Globals:
+#  REPLY
+# Arguments:
+#  name:    any string
+#  profile: filename of a color profile
 set_color () {
-  local NAME=$1
-  local COLOR=$2
+  local name="$1"
+  local profile="$2"
 
-  if [ -z "$NAME" ]; then
-    pick_output active || return 1
-    [ -z "$REPLY" ] && return
-    
-    NAME=$(value "$REPLY")
+  if [[ -z "${name}" ]]; then
+    pick_output "Select an output:" "active" || return 1
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return
   fi
   
-  local OUTPUT=$(output "$NAME" || echo "err:$?")
+  local output
+  output="$(find_output "${name}")"
 
-  if [[ "$OUTPUT" =~ ^err: ]]; then
-    echo "Unable to find output $NAME"
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to find output ${name}"
     return 1
-  elif ! is_connected "$OUTPUT"; then
-    echo "Cannot set color profile of a disconnected output"
+  elif ! is_connected "${output}"; then
+    echo "Cannot set color of a disconnected output"
     return 1
-  elif ! is_active "$OUTPUT"; then
-    echo "Cannot set color profile of an inactive output"
+  elif ! is_active "${output}"; then
+    echo "Cannot set color of an inactive output"
     return 1
   fi
 
-  if [ -z "$COLOR" ]; then
-    local COLORS="$(ls $COLOR_HOME 2>/dev/null | awk '{ORS="'$AES'";} /.ic(c|m)$/')"
-    local COLORS_LEN=$(count "$COLORS")
+  if [[ -z "${profile}" ]]; then
+    local query='[.[]|select(.filename|test(".ic(c|m)$"))'
+    query+='|{key: .filename, value: .filename}]'
+  
+    local profiles="$(ls "${COLORS_HOME}" 2>/dev/null | jc --ls | jq -cer "${query}")"
 
-    if [ ! $COLORS_LEN -gt 0 ]; then
+    if [[ "${profiles}" == "[]" ]]; then
       echo "No available color profiles have found"
       return 1
     fi
 
-    pick_one "Select a color profile:" "$COLORS" "vertical-4" || return 1
-    [ -z "$REPLY" ] && return
-
-    COLOR="$(value "$REPLY")"
+    pick_one "Select a color profile:" "${profiles}" "vertical" || return 1
+    [[ -n "${REPLY}" ]] && profile="${REPLY}" || return
   fi
 
-  local INDEX="$(index "$NAME")"
-  local RESULT="$(xcalib -d "$DISPLAY" -s 0 -o "$INDEX" "$COLOR_HOME/$COLOR" 2>&1)"
+  local index="$(find_index "${name}")"
 
-  if [ -n "$RESULT" ]; then
-    echo "Failed to set color profile $COLOR"
+  local result
+  result="$(xcalib -d "${DISPLAY}" -s 0 -o "${index}" "${COLORS_HOME}/${profile}" 2>&1)"
+
+  if [[ $? -ne 0 ]] || [[ -n "${result}" ]]; then
+    echo "Failed to set color profile"
     return 1
   fi
 
-  echo "Color profile of $NAME set to $COLOR"
+  echo "Color profile of ${name} set to ${profile}"
 
-  confirm "Do you want to persist color profile?"
-  [ -z "$REPLY" ] && return
-  [ "$(value "$REPLY")" = "no" ] && return
+  confirm "Should persist color profile?"
+  [[ -z "${REPLY}" ]] && return
+  [[ "${REPLY}" == "no" ]] && return
 
-  mkdir -p "$CONFIG_HOME"
-  echo "$INDEX${KVS}$COLOR" > "$CONFIG_HOME/$NAME.color"
-  echo "Profile saved to $CONFIG_HOME/$NAME.color"
+  local setting="{\"index\": \"${index}\", \"profile\": \"${profile}\"}"
+
+  local settings
+  if [[ -f "${SETTINGS_FILE}" ]]; then
+    settings="$(jq -e ".colors.\"${name}\" = ${setting}" "${SETTINGS_FILE}")"
+  else
+    settings="$(echo "{\"colors\": {\"${name}\": ${setting}}}" | jq -e '.')"
+  fi
+
+  if [[ $? -eq 0 ]]; then
+    mkdir -p "${CONFIG_HOME}"
+    echo "${settings}" > "${SETTINGS_FILE}"
+
+    echo "Color profile has been persisted"
+  else
+    echo "Failed to persist the color profile"
+    return 1
+  fi
 }
 
+# Removes any color profile applied to the output with
+# the given name.
+# Globals:
+#  REPLY
+# Arguments:
+#  name: any string
 reset_color () {
-  local NAME=$1
+  local name="$1"
 
-  if [ -z "$NAME" ]; then
-    pick_output active || return 1
-    [ -z "$REPLY" ] && return
-    
-    NAME=$(value "$REPLY")
+  if [[ -z "${name}" ]]; then
+    pick_output "Select an output:" "active" || return 1
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return
   fi
   
-  local OUTPUT=$(output "$NAME" || echo "err:$?")
+  local output
+  output="$(find_output "${name}")"
 
-  if [[ "$OUTPUT" =~ ^err: ]]; then
-    echo "Unable to find output $NAME"
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to find output ${name}"
     return 1
-  elif ! is_connected "$OUTPUT"; then
+  elif ! is_connected "${output}"; then
     echo "Cannot reset color profile of a disconnected output"
     return 1
-  elif ! is_active "$OUTPUT"; then
+  elif ! is_active "${output}"; then
     echo "Cannot reset color profile of an inactive output"
     return 1
   fi
 
-  local INDEX="$(index "$NAME")"
-  local RESULT="$(xcalib -d "$DISPLAY" -s 0 -o "$INDEX" -c 2>&1)"
+  local index="$(find_index "${name}")"
 
-  if [ -n "$RESULT" ]; then
+  local result
+  result="$(xcalib -d "${DISPLAY}" -s 0 -o "${index}" -c 2>&1)"
+
+  if [[ $? -ne 0 ]] || [[ -n "${result}" ]]; then
     echo "Failed to reset color profile"
     return 1
   fi
 
-  rm -f "$CONFIG_HOME/$NAME.color"
-  echo "Color profile of $NAME reset to default"
+  echo "Color profile of ${name} reset to default"
+
+  # Remove color setting if such setting has been set
+  if [[ -f "${SETTINGS_FILE}" ]]; then
+    local key=".colors.\"${name}\""
+    local query="if ${key} != null then del(${key}) else . end"
+
+    local settings
+    settings="$(jq -e "${query}" "${SETTINGS_FILE}")"
+    echo "${settings}" > "${SETTINGS_FILE}"
+  fi
 }
 
-load_colors () {
-  local COUNT=$(ls -1 $CONFIG_HOME/*.color 2>/dev/null | wc -l)
-
-  if [ ! $COUNT -gt 0 ]; then
-    echo "No color files found, operation is skipped"
+# Restores the displays color profiles by calling multiple
+# xcalib commands on every output its name has been set in
+# the colors settings.
+# Arguments:
+#  None
+restore_colors () {
+  if [[ ! -f "${SETTINGS_FILE}" ]]; then
+    echo "No color settings have been found"
     return
   fi
 
-  local COLORS=($(ls $CONFIG_HOME/*.color))
+  # Collect all output colors in index,profile tuples
+  local query="\(.value.index),${COLORS_HOME}/\(.value.profile)"
+  query="[.colors|to_entries|.[]|\"${query}\"]|join(\"\n\")"
 
-  local FAILURES=()
-  local I=0
-  for ((I=0; I<${#COLORS[@]}; I++)); do
-    local COLOR_FILE="${COLORS[I]}"
-    local COLOR=`cat "$COLOR_FILE"`
-    local INDEX="$(key "$COLOR")"
-    local FILE_NAME="$(value "$COLOR")"
+  local tuples
+  tuples="$(jq -cer "${query}" "${SETTINGS_FILE}")"
 
-    local RESULT="$(xcalib -d "$DISPLAY" -s 0 -o "$INDEX" "$COLOR_HOME/$FILE_NAME" 2>&1)"
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to read color settings"
+    return
+  elif [[ -z "${tuples}" ]]; then
+    echo "No color settings have been found"
+    return
+  fi
 
-    if [ -n "$RESULT" ]; then
-      echo "Failed to load color profile $COLOR_FILE"
-      FAILURES+=("$COLOR_FILE")
-    else
-      echo "Color profile $COLOR_FILE has been loaded"
+  local failed='false'
+  local tuple
+  while read -r tuple ; do  
+    local index="$(echo "${tuple}" | cut -d ',' -f 1)"
+    local profile="$(echo "${tuple}" | cut -d ',' -f 2)"
+
+    local result="$(xcalib -d "${DISPLAY}" -s 0 -o "${index}" "${profile}" 2>&1)"
+
+    if [[ $? -ne 0 ]] || [[ -n "${result}" ]]; then
+      echo "Failed to restore profile ${profile} for output ${index}"
+      failed='true'
     fi
-  done
+  done <<< "${tuples}"
 
-  if [ ${#FAILURES[@]} -gt 0 ]; then
+  if [[ "${failed}" == "true" ]]; then
+    echo "Color profiles have been restored partially"
     return 1
   fi
+
+  echo "Color profiles have been restored"
 }
 
+# Show the help message.
+# Arguments:
+#  None
+# Outputs:
+#  A long help message.
 help () {
-  if [ "$1" = "once" ]; then
+  if [[ "$1" == "once" ]]; then
     echo "Usage: displays COMMAND [OBJECT] [ARGUMENTS]..."
 
     echo -e "\nCOMMANDS"
-    printf " %-12s\t%s\n" \
+    printf " %-16s %s\n" \
       "help" "Show this help message." \
-      "load layout" "Load the default displays layout." \
-      "load colors" "Load displays profile colors."
+      "" "" \
+      "restore layout" "Restore the layout." \
+      "restore colors" "Restore color profiles."
 
     return
   fi
@@ -983,16 +1207,16 @@ help () {
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
   echo -e "\nCOMMANDS"
-  printf " %-32s\t%s\n" \
+  printf " %-44s %s\n" \
     "help" "Show this help message." \
     "show status" "Show a report of the Xorg server and active outputs." \
     "show logs" "Show the logs of the Xorg server." \
     "show output [<name>]" "Show the data of the given output." \
     "" "" \
     "list outputs [<status>]" "List all outputs or by the given status," \
-    "" "connected, disconnected, active, inactive or primary." \
+    "" "all, connected, disconnected, active, inactive or primary." \
     "" "" \
-    "set mode [<output> [<res> [<rate>]]]" "Set the mode of the given output." \
+    "set mode [<output> [<resolution> [<rate>]]]" "Set the mode of the given output." \
     "set primary [<output>]" "Set the given output as primary." \
     "set on|off [<output>]" "Set active or inactive the given output." \
     "" "" \
@@ -1000,78 +1224,82 @@ help () {
     "reflect [<output> [<mode>]]" "Set output reflection to normal, x, y or xy axes." \
     "mirror [<output>]" "Mirror the given active output to other outputs." \
     "" "" \
-    "set color [<output> [<profile>]]" "Set the color profile of the given output." \
+    "set color [<output> [<profile>]]" "Set the color profile of the given output, where profile" \
+    "" "should be the filename of any .icc or .icm calibration" \
+    "" "files stored under ${COLORS_HOME}." \
     "reset color [<output>]" "Reset the color profile of the given output." \
+    "restore colors" "Restore the color profiles saved in settings." \
     "" "" \
     "set layout" "Set the layout of active outputs." \
-    "save layout" "Persist the current displays layout to disk." \
-    "restore layout" "Restore the displays layout from disk."
+    "save layout" "Persist the current layout." \
+    "restore layout" "Restore the layout saved in settings."
 }
 
 loop () {
   clear
 
   while true; do
-    prompt && history -s "$REPLY"
+    prompt && history -s "${REPLY}"
 
     set -f
     set_separator "line"
-    local CMD=($(xargs -n1 <<< "$REPLY"))
+    local cmd=($(xargs -n1 <<< "${REPLY}"))
     restore_separator && set +f
 
-    if [ "${CMD[0]}" = "help" ]; then
+    if [[ "${cmd[0]}" == "help" ]]; then
       help
       continue
-    elif [ "${CMD[0]}" = "clear" ]; then
+    elif [[ "${cmd[0]}" == "clear" ]]; then
       clear
       continue
-    elif [ "${CMD[0]}" = "quit" ]; then
+    elif [[ "${cmd[0]}" == "quit" ]]; then
       break
-    elif [ -z "${CMD[0]}" ]; then
+    elif [[ -z "${cmd[0]}" ]]; then
       continue
     fi
 
-    case "${CMD[0]}" in
+    case "${cmd[0]}" in
       "show")
-        case "${CMD[1]}" in
+        case "${cmd[1]}" in
           "status") show_status;;
           "logs") show_logs;;
-          "output") show_output "${CMD[2]}";;
+          "output") show_output "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       "list")
-        case "${CMD[1]}" in
-          "outputs") list_outputs "${CMD[2]}";;
+        case "${cmd[1]}" in
+          "outputs") list_outputs "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       "set")
-        case "${CMD[1]}" in
+        case "${cmd[1]}" in
           "layout") set_layout;;
-          "mode") set_mode "${CMD[2]}" "${CMD[3]}" "${CMD[4]}";;
-          "primary") set_primary "${CMD[2]}";;
-          "on") set_on "${CMD[2]}";;
-          "off") set_off "${CMD[2]}";;
-          "color") set_color "${CMD[2]}" "${CMD[3]}";;
+          "mode") set_mode "${cmd[2]}" "${cmd[3]}" "${cmd[4]}";;
+          "primary") set_primary "${cmd[2]}";;
+          "on") set_on "${cmd[2]}";;
+          "off") set_off "${cmd[2]}";;
+          "color") set_color "${cmd[2]}" "${cmd[3]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       "reset")
-        case "${CMD[1]}" in
-          "color") reset_color "${CMD[2]}";;
+        case "${cmd[1]}" in
+          "color") reset_color "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       "save")
-        case "${CMD[1]}" in
+        case "${cmd[1]}" in
           "layout") save_layout;;
           *) echo "Invalid or unknown command";;
         esac;;
       "restore")
-        case "${CMD[1]}" in
-          "layout") load_layout;;
+        case "${cmd[1]}" in
+          "layout") restore_layout;;
+          "colors") restore_colors;;
           *) echo "Invalid or unknown command";;
         esac;;
-      "rotate") rotate "${CMD[1]}" "${CMD[2]}";;
-      "reflect") reflect "${CMD[1]}" "${CMD[2]}";;
-      "mirror") mirror "${CMD[1]}";;
+      "rotate") rotate "${cmd[1]}" "${cmd[2]}";;
+      "reflect") reflect "${cmd[1]}" "${cmd[2]}";;
+      "mirror") mirror "${cmd[1]}";;
       *) echo "Invalid or unknown command";;
     esac
   done
@@ -1082,17 +1310,17 @@ loop () {
 once () {
   case "$1" in
     "help") help once;;
-    "load")
+    "restore")
       case "$2" in
-        "layout") load_layout || abort;;
-        "colors") load_colors || abort;;
+        "layout") restore_layout || abort;;
+        "colors") restore_colors || abort;;
         *) abort "Invalid or unknown command";;
       esac;;
     *) abort "Invalid or unknown command";;
   esac
 }
 
-if [ $# = 0 ]; then
+if [[ $# -eq 0 ]]; then
   loop
 else
   once "$@"

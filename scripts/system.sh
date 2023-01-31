@@ -188,7 +188,7 @@ install_packages () {
     man-db man-pages texinfo cups bluez bluez-utils unzip terminus-font \
     vim nano git tree arch-audit atool zip xz unace p7zip gzip lzop feh \
     bzip2 unrar dialog inetutils dnsutils openssh nfs-utils openbsd-netcat ipset \
-    neofetch age imagemagick gpick fuse2 rclone smartmontools jq \
+    neofetch age imagemagick gpick fuse2 rclone smartmontools jq jc \
     $([ "$UEFI" = "yes" ] && echo 'efibootmgr') || exit 1
 
   echo -e "\nReplacing iptables with nft tables..."
@@ -316,8 +316,8 @@ install_utilities () {
   ln -sf "$STACK_HOME/displays" /usr/local/bin/displays
   ln -sf "$STACK_HOME/cloud" /usr/local/bin/cloud
 
-  echo 'displays load layout || notify-send "Failed to load displays layout"' >> ~/.xinitrc
-  echo 'displays load colors || notify-send "Failed to load some color profiles"' >> ~/.xinitrc
+  echo 'displays restore layout || notify-send "Failed to load displays layout"' >> ~/.xinitrc
+  echo 'displays restore colors || notify-send "Failed to load some color profiles"' >> ~/.xinitrc
   echo 'cloud mount remotes || notify-send "Failed to mount some cloud remotes"' >> ~/.xinitrc
 
   echo "Stack utilities have been installed"

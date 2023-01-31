@@ -1,33 +1,51 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
-CONFIG_HOME="$HOME/.config/stack"
-SETTINGS="$CONFIG_HOME/.settings"
+CONFIG_HOME="${HOME}/.config/stack"
 
-RESOURCES="$HOME/.local/share"
-COLORS="$RESOURCES/colors"
-WALLPAPERS="$RESOURCES/wallpapers"
+RESOURCES_HOME="${HOME}/.local/share"
+COLORS_HOME="${RESOURCES_HOME}/colors"
+WALLPAPERS_HOME="${RESOURCES_HOME}/wallpapers"
 
 AES=$'╬'
 AES_LN=$'╬\n'
 KVS=$'▒'
 
-WHITE=$'\e[0;37m'
-RED=$'\e[0;31m'
-GREEN=$'\e[0;32m'
-BLUE=$'\e[0;34m'
-YELLOW=$'\e[0;33m'
+# Sets the IFS to the given value.
+# Globals:
+#  IFS
+# Arguments:
+#  value: space, line, tab or any character
+set_separator () {
+  local value="$1"
 
-YE=$'\e[0;33m'
-RE=$'\e[0;31m'
-GR=$'\e[0;32m'
-MA=$'\e[0;35m'
-RS=$'\e[m'
+  case "${value}" in
+    "space") IFS=$' ';;
+    "line") IFS=$'\n';;
+    "tab") IFS=$'\t';;
+    *) IFS="${value}";;
+  esac
+}
 
+# Restores the IFS to the default value.
+# Globals:
+#  IFS
+# Arguments:
+#  None
+restore_separator () {
+  IFS=$' \n\t'
+}
+
+# Exits the process printing the given message
+# to stderr.
+# Arguments:
+#  message: an optional error message
+# Outputs:
+#  An optional error message.
 abort () {
-  local MESSAGE=$1
+  local message="$1"
 
-  if [ -n "$MESSAGE" ]; then
-    echo "$MESSAGE"
+  if [[ -n "${message}" ]]; then
+    echo "${message}" >&2
   fi
 
   exit 1
@@ -170,188 +188,267 @@ print () {
   done
 }
 
+# Asks the user to enter a value, which is validated
+# by the optional regular expression. The answer is
+# kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  prompt: a text line
+#  re:     an optional regular expression
+# Outputs:
+#  A prompt text line.
 ask () {
-  local PROMPT=$1
-  local RE=$2
+  local prompt="$1"
+  local re="$2"
 
-  if [ -n "$RE" ]; then
-    read -rep "$PROMPT " REPLY
+  if [[ -n "${re}" ]]; then
+    read -rep "${prompt} " REPLY
 
-    while [[ ! "$REPLY" =~ $RE ]]; do
-      read -rep " Please enter a valid value: " REPLY
+    while [[ ! "${REPLY}" =~ ${re} ]]; do
+      read -rep "Please enter a valid value: " REPLY
     done
   else
-    read -rep "$PROMPT " REPLY
+    read -rep "${prompt} " REPLY
   fi
 }
 
+# Asks the user to enter a password, the answer is
+# kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  prompt: a text line
+# Outputs:
+#  A prompt text line.
 ask_password () {
-  local PROMPT=$1
+  local prompt="$1"
 
-  read -srep "$PROMPT " REPLY
+  read -srep "${prompt} " REPLY
 }
 
+# Shows a Yes/No menu and asks user to select an option,
+# where the selection is kept in the global var REPLY
+# either as a yes or no value.
+# Globals:
+#  REPLY, AES, AES_LN, KVS
+# Arguments:
+#  prompt: a text line
+# Outputs:
+#  A menu of yes or no options.
 confirm () {
-  local PROMPT=$1
-  local OPTIONS=$2
+  local prompt="$1"
+  
+  local options="yes${KVS}Yes${AES}no${KVS}No"
 
-  echo "$PROMPT"
+  echo "${prompt}"
+  REPLY="$(echo "${options}" |
+    smenu -nm -/ prefix -W "${AES_LN}" -S /\(.*"${KVS}"\)//v)" || return 1
 
-  if [ -z "$OPTIONS" ]; then
-    OPTIONS="Yes${KVS}yes${AES}No${KVS}no"
+  if [[ -n "${REPLY}" ]]; then
+    # Remove the value part from the selected option
+    REPLY="$(echo "${REPLY}" | sed -r "s/(.*)${KVS}.*/\1/")"
   fi
-
-  REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$AES_LN" -S /\($KVS.*\)//v)
 }
 
+# Shows a menu and asks user to pick one option, where
+# the selection is kept in the global var REPLY as a
+# value equal to the key property of the selected option.
+# Globals:
+#  REPLY, AES, AES_LN, KVS
+# Arguments:
+#  prompt:  a text line
+#  options: a JSON array of {key, value} pairs
+#  mode:    horizontal, vertical, tabular
+#  slots:   number of vertical or tabular slots
+# Outputs:
+#  A menu of the given options.
 pick_one () {
-  local PROMPT=$1
-  local OPTIONS=$2
-  local MODE=$3
+  local prompt="$1"
+  local options="$2"
+  local mode="$3"
+  local slots="${4:-6}"
 
-  if [[ "$OPTIONS" =~ .*${AES}$ ]]; then
-    OPTIONS="${OPTIONS::-${#AES}}"
+  local len
+  len="$(count "${options}")" || return 1
+  [[ ${len} -eq 0 ]] && return 1
+
+  local args=()
+  if [[ "${mode}" == "vertical" ]]; then
+    args+=(-l -L "${AES}" -n "${slots}")
+  elif [[ "${mode}" == "tabular" ]]; then
+    args+=(-t "${slots}")
   fi
 
-  if [[ "$OPTIONS" =~ ^($AES)*$ ]]; then
-    return 1
-  elif [ ! $(count "$OPTIONS") -gt 0 ]; then
-    return 1
-  fi
+  # Convert options to a line of key${KVS}value${AES} pairs
+  options="$(echo "${options}" |
+    jq -cer '[.[]|("\(.key)'"${KVS}"'\(.value)")]|join("'"${AES}"'")')" || return 1
 
-  echo "$PROMPT"
+  echo "${prompt}"
+  REPLY="$(echo "${options}" |
+    smenu -nm -/ prefix -W "${AES_LN}" "${args[@]}" -S /\(.*"${KVS}"\)//v)" || return 1
 
-  if [[ "$MODE" =~ ^vertical-[1-9][0-9]*$ ]]; then
-    local LINES=$(echo "$MODE" | cut -d '-' -f 2)
-    REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$AES_LN" -l -L "$AES" -n "$LINES" -S /\($KVS.*\)//v)
-    return
+  if [[ -n "${REPLY}" ]]; then
+    # Remove the value part from the selected option
+    REPLY="$(echo "${REPLY}" | sed -r "s/(.*)${KVS}.*/\1/")"
   fi
-  
-  if [[ "$MODE" =~ ^tabular-[1-9][0-9]*$ ]]; then
-    local TABS=$(echo "$MODE" | cut -d '-' -f 2)
-    REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$AES_LN" -t "$TABS" -S /\($KVS.*\)//v)
-    return
-  fi
-  
-  REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$AES_LN" -S /\($KVS.*\)//v)
 }
 
+# Shows a menu and asks user to pick many options, where
+# the selection is kept in the global var REPLY as a JSON
+# array with elements equal to the key property of every
+# selected option.
+# Globals:
+#  REPLY, AES, AES_LN, KVS
+# Arguments:
+#  prompt:  a text line
+#  options: a JSON array of {key, value} pairs
+#  size:    how many options must be selected
+#           all all must be selected
+#           a,b at least a and up to b
+#           a,  at least a
+#           ,b  up to b
+#  mode:    horizontal, vertical, tabular
+#  slots:   number of vertical or tabular slots
+# Outputs:
+#  A menu of the given options.
 pick_many () {
-  local PROMPT=$1
-  local OPTIONS=$2
-  local MIN=$3
-  local MAX=$4
-  local MODE=$5
+  local prompt="$1"
+  local options="$2"
+  local size="$3"
+  local mode="$4"
+  local slots="${5:-6}"
 
-  if [[ "$OPTIONS" =~ .*${AES}$ ]]; then
-    OPTIONS="${OPTIONS::-${#AES}}"
-  fi
+  local len
+  len="$(count "${options}")" || return 1
+  [[ ${len} -eq 0 ]] && return 1
 
-  if [[ "$OPTIONS" =~ ^($AES)*$ ]]; then
+  local min
+  local max
+  if [[ "${size}" =~ ^all$ ]]; then
+    min=${len}
+    max=${len}
+  elif [[ "${size}" =~ ^[1-9][0-9]*,$ ]]; then
+    min="$(echo "${size}" | cut -d ',' -f 1)"
+    max=${len}
+  elif [[ "${size}" =~ ^,[1-9][0-9]*$ ]]; then
+    min=1
+    max="$(echo "${size}" | cut -d ',' -f 2)"
+  elif [[ "${size}" =~ ^[1-9][0-9]*,[1-9][0-9]*$ ]]; then
+    min="$(echo "${size}" | cut -d ',' -f 1)"
+    max="$(echo "${size}" | cut -d ',' -f 2)"
+  else
     return 1
-  elif [ ! $(count "$OPTIONS") -gt 0 ]; then
-    return 1
   fi
 
-  echo "$PROMPT"
-
-  if [[ "$MODE" =~ ^vertical-[1-9][0-9]*$ ]]; then
-    local LINES=$(echo "$MODE" | cut -d '-' -f 2)
-    REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$AES_LN" -l -L "$AES" -n "$LINES" -S /\($KVS.*\)//v -P "$AES")
-    local COUNT=$(count "$REPLY")
-
-    while [ -n "$REPLY" ] && (( $COUNT < $MIN )) || (( $COUNT > $MAX )); do
-      [ $MIN = $MAX ] && echo "Please select exactly $MAX items:" ||
-        echo "Please select at least $MIN or up to $MAX items:"
-
-      REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$AES_LN" -l -L "$AES" -n "$LINES" -S /\($KVS.*\)//v -P "$AES")
-      COUNT=$(count "$REPLY")
-    done
-
-    return
+  local args=()
+  if [[ "${mode}" == "vertical" ]]; then
+    args+=(-l -L "${AES}" -n "${slots}")
+  elif [[ "${mode}" == "tabular" ]]; then
+    args+=(-t "${slots}")
   fi
-  
-  if [[ "$MODE" =~ ^tabular-[1-9][0-9]*$ ]]; then
-    local TABS=$(echo "$MODE" | cut -d '-' -f 2)
-    REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$AES_LN" -t "$TABS" -S /\($KVS.*\)//v -P "$AES")
-    local COUNT=$(count "$REPLY")
 
-    while [ -n "$REPLY" ] && (( $COUNT < $MIN )) || (( $COUNT > $MAX )); do
-      [ $MIN = $MAX ] && echo "Please select exactly $MAX items:" ||
-        echo "Please select at least $MIN or up to $MAX items:"
+  # Convert options to a line of key${KVS}value${AES} pairs
+  options="$(echo "${options}" |
+    jq -cer '[.[]|("\(.key)'"${KVS}"'\(.value)")]|join("'"${AES}"'")')" || return 1
 
-      REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$AES_LN" -t "$TABS" -S /\($KVS.*\)//v -P "$AES")
-      COUNT=$(count "$REPLY")
-    done
+  while true; do
+    echo "${prompt}"
+    REPLY="$(echo "${options}" |
+      smenu -nm -/ prefix -W "${AES_LN}" "${args[@]}" -S /\(.*"${KVS}"\)//v -P "${AES}")" || return 1
 
-    return
-  fi
-  
-  REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$AES_LN" -S /\($KVS.*\)//v -P "$AES")
-  local COUNT=$(count "$REPLY")
+    [[ -z "${REPLY}" ]] && return
 
-  while [ -n "$REPLY" ] && (( $COUNT < $MIN )) || (( $COUNT > $MAX )); do
-    [ $MIN = $MAX ] && echo "Please select exactly $MAX items:" ||
-      echo "Please select at least $MIN or up to $MAX items:"
+    # Validate the selection size matching the min/max limits
+    local selected="$(echo "${REPLY}" | awk -F"${AES}" '{print NF}')"
 
-    REPLY=$(echo "$OPTIONS" | smenu -nm -/ prefix -W "$AES_LN" -S /\($KVS.*\)//v -P "$AES")
-    COUNT=$(count "$REPLY")
+    if [[ ${selected} -ge ${min} ]] && [[ ${selected} -le ${max} ]]; then
+      # Convert selected options to a JSON array of their keys
+      REPLY="$(echo "${REPLY}" | awk -F"${AES}" '{
+        out=""
+        for (i=1;i<=NF;i++) {
+          gsub(/('"${KVS}"'.*$)/, "", $i);
+          out=out "\""$i"\","
+        }
+        print out
+      }')"
+
+      # Remove last post fixed comma
+      [[ "${REPLY}" =~ ,$ ]] && REPLY="[${REPLY::-1}]"
+      return
+    fi
+
+    [[ ${min} -eq ${max} ]] &&
+      prompt="Please select exactly ${max} items:" ||
+      prompt="Please select at least ${min} or up to ${max} items:"
   done
 }
 
-set_separator () {
-  DEFAULT_IFS=$IFS
+# Gets a JSON object's property its key matching the
+# given query, where query could be any valid jq query.
+# Arguments:
+#  object: a JSON object
+#  query:  a jq query
+# Outputs:
+#  The value of the given key.
+get () {
+  local object="$1"
+  local query="$2"
 
-  case "$1" in
-    "space") IFS=$' ';;
-    "line") IFS=$'\n';;
-    "tab") IFS=$'\t';;
-    *) IFS="$1"
-  esac
+  local result
+  result="$(echo "${object}" | jq -cer "${query}")" || return 1
+
+  echo "${result}"
 }
 
-restore_separator () {
-  if [ -n "$DEFAULT_IFS" ]; then
-    IFS=$DEFAULT_IFS
-  else
-    IFS=$' \n\t'
-  fi
+# Asserts if the given JSON object has a property with
+# a key matching the given query, where query could be
+# any valid jq query.
+# Arguments:
+#  object: a JSON object
+#  query:    a jq query
+#  value:  a string value
+# Returns:
+#  0 if succeeds otherwise 1.
+assert () {
+  local object="$1"
+  local query="$2"
+  local value="$3"
+
+  local result
+  result="$(echo "${object}" | jq -cer "${query}")" || return 1
+
+  [[ "${result}" == "${value}" ]] && return 0 || return 1
 }
 
+# Counts the number of elements in the given JSON array.
+# Arguments:
+#  array: a JSON array object
+# Outputs:
+#  The number of array elements.
 count () {
-  local ELEMENTS="$1"
+  local array="$1"
 
-  if [[ "$ELEMENTS" =~ .*${AES}$ ]]; then
-    ELEMENTS="${ELEMENTS::-${#AES}}"
-  fi
+  local result
+  result="$(echo "${array}" | jq -cer '.|length')" || return 1
 
-  echo "$ELEMENTS" | awk -F "$AES" '{print NF}'
+  echo "${result}"
 }
 
+# Returns the i-th element of the given JSON array.
+# Arguments:
+#  array: a JSON array object
+#  index: a zero-based integer
+# Outputs:
+#  The i-th element of the array.
 element () {
-  local ELEMENTS=$1
-  local INDEX=$2
+  local array="$1"
+  local index="$2"
 
-  if [[ "$ELEMENTS" =~ .*${AES}$ ]]; then
-    ELEMENTS="${ELEMENTS::-${#AES}}"
-  fi
+  local result
+  result="$(echo "${array}" | jq -cer ".[${index}]")" || return 1
 
-  INDEX=$((INDEX + 1))
-  echo "$ELEMENTS" | awk -F "$AES" '{print $'$INDEX'}'
-}
-
-key () {
-  local INPUT=""
-  [[ -p /dev/stdin ]] && INPUT="$(cat -)" || INPUT="${@}"
-
-  echo "$INPUT" | awk -F "$KVS" '{if ($1 != "") {print $1} else {print $0}}'
-}
-
-value () {
-  local INPUT=""
-  [[ -p /dev/stdin ]] && INPUT="$(cat -)" || INPUT="${@}"
-
-  echo "$INPUT" | awk -F "$KVS" '{if ($2 != "") {print $2} else {print $0}}'
+  [[ "${result}" != "null" ]] && echo "${result}" || echo ""
 }
 
 set_prop () {
