@@ -3,7 +3,7 @@
 set -o pipefail
 source /opt/stack/utils
 
-# The settings file should have the following schema:
+# The settings file should has the following schema:
 # {
 #   "layout": {
 #    "DP-1": "--mode <mode>...",
@@ -426,37 +426,47 @@ show_output () {
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return
   fi
 
-  local base
+  local color='Color:     none'
+  if [[ -f "${SETTINGS_FILE}" ]]; then
+    local settings="$(<"${SETTINGS_FILE}")"
+
+    local query=''
+    query=".colors.\"${name}\"|if . != null then .profile else \"none\" end"
+    color="Color:     $(echo "${settings}" | jq -cr "${query}")"
+  fi
+
+  local base=''
   base+='Name:      \(.device_name)\n'
   base+='Connected: \(.is_connected)\n'
   base+='Primary:   \(.is_primary)'
 
-  local rate
+  local rate=''
   rate+='[.associated_modes[].frequencies]|flatten'
   rate+=' |[.[]|select(.is_current==true)]'
   rate+=' |.[0].frequency'
 
-  local extra
+  local extra=''
   extra+='Mode:      \(.resolution_width)x\(.resolution_height)\n'
   extra+="Rate:      \(${rate})Hz\n"
   extra+='Offset:    [\(.offset_width),\(.offset_height)]\n'
   extra+='Rotate:    \(.rotation)\n'
   extra+='Reflect:   \(.reflection|ascii_downcase)'
 
-  local modes
+  local modes=''
   modes+='.associated_modes[]|'
   modes+='"\(.resolution_width)x\(.resolution_height)" as $mode|"'
   modes+='\($mode)'
   modes+='\($mode|if (9-length)>0 then (" "*(9-length)) else "" end)'
-  modes+=' \([.frequencies[]|.frequency]|join(" "))"'
+  modes+=' [\([.frequencies[]|.frequency]|join(", "))]"'
 
   modes="[${modes}]|join(\"\n           \")"
 
-  local query
+  local query=''
   query+="${base}"
   query+='\(if .is_connected and .resolution_width != null'
   query+=" then \"\n${extra}\""
   query+=' else "" end)'
+  query+="\n${color}"
   query+='\(if .associated_modes|length != 0'
   query+=" then \"\nModes:     \(${modes})\""
   query+=' else "" end)'
@@ -469,8 +479,6 @@ show_output () {
     echo "Unable to find output ${name}"
     return 1
   fi
-
-  # TODO: show color profile
 }
 
 # Shows the list of outputs matching the given status.
@@ -1060,12 +1068,6 @@ set_color () {
     return 1
   fi
 
-  echo "Color profile of ${name} set to ${profile}"
-
-  confirm "Should persist color profile?"
-  [[ -z "${REPLY}" ]] && return
-  [[ "${REPLY}" == "no" ]] && return
-
   local setting="{\"index\": \"${index}\", \"profile\": \"${profile}\"}"
 
   local settings
@@ -1075,15 +1077,15 @@ set_color () {
     settings="$(echo "{\"colors\": {\"${name}\": ${setting}}}" | jq -e '.')"
   fi
 
-  if [[ $? -eq 0 ]]; then
-    mkdir -p "${CONFIG_HOME}"
-    echo "${settings}" > "${SETTINGS_FILE}"
-
-    echo "Color profile has been persisted"
-  else
+  if [[ $? -ne 0 ]]; then
     echo "Failed to persist the color profile"
     return 1
   fi
+
+  mkdir -p "${CONFIG_HOME}"
+  echo "${settings}" > "${SETTINGS_FILE}"
+
+  echo "Color of ${name} set to ${profile}"
 }
 
 # Removes any color profile applied to the output with
