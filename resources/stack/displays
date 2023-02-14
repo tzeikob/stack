@@ -367,29 +367,36 @@ show_status () {
     printf "%-23s %s\n",$1":",$2
   }' | sed -r 's/\<./\U&/g' || echo "Unable to retrieve xdpy info"
 
+  local colors='{}'
+  if [[ -f "${SETTINGS_FILE}" ]]; then
+    local settings="$(<"${SETTINGS_FILE}")"
+    colors="$(echo "${settings}" |
+      jq -cr 'if .colors != null then .colors else "{}" end')"
+  fi
+
   local rate
   rate+='[.associated_modes[].frequencies]|flatten'
   rate+=' |[.[]|select(.is_current==true)]'
   rate+=' |.[0].frequency'
 
+  local offset='[\(.offset_width),\(.offset_height)]'
+  local trans='\(.rotation) \(.reflection|ascii_downcase)'
+
   local query
   query+='Output:   \(.device_name)\(if .is_primary then "*" else "" end)\n'
-  query+='Mode:     \(.resolution_width)x\(.resolution_height)\n'
-  query+="Rate:     \(${rate})Hz\n"
-  query+='Offset:   [\(.offset_width),\(.offset_height)]\n'
-  query+='Rotate:   \(.rotation)\n'
-  query+='Reflect:  \(.reflection|ascii_downcase)'
+  query+="Mode:     \(.resolution_width)x\(.resolution_height)@\(${rate})Hz\n"
+  query+="Pos:      ${offset} ${trans}\n"
+  query+='Color:    \(.colors|.[$dn]|if . != null then .profile else "none" end)'
 
-  query=".[]|(\"\n${query}\")"
+  # Merge colors setting to extract the color profile per output
+  query=".[]|.+{colors:\$c}|.device_name as \$dn|(\"\n${query}\")"
 
-  find_outputs "active" | jq -cer "${query}"
+  find_outputs "active" | jq -cer --argjson c "${colors}" "${query}"
 
   if [[ $? -ne 0 ]]; then
     echo "Unable to retrieve outputs"
     return 1
   fi
-
-  # TODO: show color profile
 }
 
 # Shows the Xorg displays log file.
