@@ -269,7 +269,7 @@ pick_one () {
   local mode="$3"
   local slots="${4:-6}"
 
-  local len
+  local len=0
   len="$(count "${options}")" || return 1
   [[ ${len} -eq 0 ]] && return 1
 
@@ -294,9 +294,9 @@ pick_one () {
   fi
 }
 
-# Shows a menu and asks user to pick many options, where
-# the selection is kept in the global var REPLY as a JSON
-# array with elements equal to the key property of every
+# Shows a menu and asks user to pick many options in order,
+# where the selection is kept in the global var REPLY as a
+# JSON array with elements equal to the key property of every
 # selected option.
 # Globals:
 #  REPLY, AES, AES_LN, KVS
@@ -319,18 +319,18 @@ pick_many () {
   local mode="$4"
   local slots="${5:-6}"
 
-  local len
+  local len=0
   len="$(count "${options}")" || return 1
   [[ ${len} -eq 0 ]] && return 1
 
-  local min
-  local max
+  local min=0
+  local max=0
   if [[ "${size}" =~ ^all$ ]]; then
-    min=${len}
-    max=${len}
+    min="${len}"
+    max="${len}"
   elif [[ "${size}" =~ ^[1-9][0-9]*,$ ]]; then
     min="$(echo "${size}" | cut -d ',' -f 1)"
-    max=${len}
+    max="${len}"
   elif [[ "${size}" =~ ^,[1-9][0-9]*$ ]]; then
     min=1
     max="$(echo "${size}" | cut -d ',' -f 2)"
@@ -375,6 +375,7 @@ pick_many () {
 
       # Remove last post fixed comma
       [[ "${REPLY}" =~ ,$ ]] && REPLY="[${REPLY::-1}]"
+
       return
     fi
 
@@ -429,7 +430,7 @@ assert () {
 count () {
   local array="$1"
 
-  local result
+  local result=0
   result="$(echo "${array}" | jq -cer '.|length')" || return 1
 
   echo "${result}"

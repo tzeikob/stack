@@ -54,12 +54,12 @@ find_outputs () {
     criteria='.is_primary == true'
   fi
 
-  local a
+  local a=''
   a+='.screens[]|select(.screen_number==0)'
   a+=" |.associated_device|select(${criteria})"
   a="[${a}]"
 
-  local b
+  local b=''
   b+=".unassociated_devices[]|select(${criteria})"
   b="[${b}]"
 
@@ -89,8 +89,8 @@ find_output () {
 find_index () {
   local name="$1"
 
-  local query
-  query+="to_entries|.[]|select(.value.device_name == \"${name}\")|.key"
+  local query=".value.device_name == \"${name}\""
+  query="to_entries[]|select(${query})|.key"
 
   find_outputs "all" | jq -cer "${query}" || return 1
 }
@@ -149,16 +149,16 @@ pick_output () {
   local status="$2"
 
   # Convert outputs list into an array of {key, value} options
-  local query
+  local query=''
   query+='[.[]|{key: "\(.device_name)", value: "\(.device_name)"}]'
 
-  local options
+  local options=''
   options="$(find_outputs "${status}" | jq -cer "${query}")" || return 1
 
-  if [[ "${options}" == "[]" ]]; then
-    echo "No ${status:-\b} outputs have been found"
-    return 1
-  fi
+  local len=0
+  len="$(count "${options}")" || return 1
+  [[ ${len} -eq 0 ]] &&
+    echo "No ${status:-\b} outputs have found" && return 1
 
   pick_one "${prompt}" "${options}" "horizontal" || return 1
 }
@@ -188,17 +188,16 @@ pick_outputs () {
   fi
 
   # Convert outputs list into an array of {key, value} options
-  local query
-  query='{key: "\(.device_name)", value: "\(.device_name)"}'
+  local query='{key: "\(.device_name)", value: "\(.device_name)"}'
   query="[.[]|${except}|${query}]"
 
-  local options
+  local options=''
   options="$(find_outputs "${status}" | jq -cer "${query}")" || return 1
 
-  if [[ "${options}" == "[]" ]]; then
-    echo "No ${status:-\b} outputs have been found"
-    return 1
-  fi
+  local len=0
+  len="$(count "${options}")" || return 1
+  [[ ${len} -eq 0 ]] &&
+    echo "No ${status:-\b} outputs have found" && return 1
 
   pick_many "${prompt}" "${options}" "${size}" "horizontal" || return 1
 }
@@ -216,22 +215,21 @@ pick_resolution () {
   local output="$1"
 
   # Convert resolutions list into an array of {key, value} options
-  local query
+  local query=''
   query+='.associated_modes[]'
   query+=' |"\(.resolution_width)x\(.resolution_height)" as $res'
   query+=' |{key: "\($res)", value: "\($res)"}'
-
   query="[${query}]"
 
-  local options
+  local options=''
   options="$(echo "${output}" | jq -cer "${query}")" || return 1
 
-  if [[ "${options}" == "[]" ]]; then
-    echo "No resolutions have been found"
-    return 1
-  fi
+  local len=0
+  len="$(count "${options}")" || return 1
+  [[ ${len} -eq 0 ]] &&
+    echo "No resolutions have found" && return 1
 
-  pick_one "Select a resolution:" "${options}" "vertical" "6" || return 1
+  pick_one "Select a resolution:" "${options}" "vertical" || return 1
 }
 
 # Shows a menu of resolution rates of the given output and
@@ -248,22 +246,21 @@ pick_rate () {
   local resolution="$2"
 
   # Convert rates list into an array of {key, value} options
-  local query
+  local query=''
   query+='.associated_modes[]'
   query+=' |"\(.resolution_width)x\(.resolution_height)" as $res'
   query+=" |select(\$res == \"${resolution}\")"
   query+=' |"\(.frequencies[].frequency)" as $freq'
   query+=' |{key: "\($freq)", value: "\($freq)"}'
-
   query="[${query}]"
 
-  local options
+  local options=''
   options="$(echo "${output}" | jq -cer "${query}")" || return 1
 
-  if [[ "${options}" == "[]" ]]; then
-    echo "No refresh rates have been found"
-    return 1
-  fi
+  local len=0
+  len="$(count "${options}")" || return 1
+  [[ ${len} -eq 0 ]] &&
+    echo "No refresh rates have found" && return 1
 
   pick_one "Select a refresh rate:" "${options}" "horizontal" || return 1
 }
@@ -277,18 +274,18 @@ pick_rate () {
 # Outputs:
 #  A menu of layout modes.
 pick_layout () {
-  local len
-  len="$(find_outputs "active" | jq -cer 'length')" || return 1
+  local len=0
+  len="$(count "$(find_outputs "active")")" || return 1
 
   if [[ ${len} -lt 2 ]] || [[ ${len} -gt 3 ]]; then
     echo "No layout options found for ${len} display setups"
     return 1
   fi
 
-  local layouts
+  local layouts=''
 
   if [[ ${len} == 2 ]]; then
-    layouts='{"key": "row-2", "value": "SideBySide"},'
+    layouts+='{"key": "row-2", "value": "SideBySide"},'
     layouts+='{"key": "col-2", "value": "TopBottom"}'
     layouts="[${layouts}]"
 
@@ -298,7 +295,7 @@ pick_layout () {
     echo "            [B]"
     echo
   elif [[ ${len} == 3 ]]; then
-    layouts='{"key": "row-3", "value": "SideBySide"},'
+    layouts+='{"key": "row-3", "value": "SideBySide"},'
     layouts+='{"key": "col-3", "value": "TopBottom"},'
     layouts+='{"key": "gamma-3", "value": "LeftGamma"},'
     layouts+='{"key": "gamma-rev-3", "value": "RightGamma"},'
@@ -331,19 +328,17 @@ pick_layout () {
 # Outputs:
 #  A minimal prompt status line.
 prompt () {
-  local status
-  status="$(find_outputs "primary" | jq -cer '.[0].device_name')"
+  local status=''
 
-  if [[ $? -ne 0 ]]; then
-    status='error'
-  fi
+  status="$(find_outputs "primary" | jq -cer '.[0].device_name')"
+  [[ $? -ne 0 ]] && status='failure'
 
   read -rep "[displays:${status}] " REPLY
 }
 
 # Shows the current status of Xorg and active displays.
 # Globals:
-#  DISPLAY, COLORS
+#  DISPLAY, COLORS, SETTINGS_FILE
 # Arguments:
 #  None
 # Outputs:
@@ -374,7 +369,7 @@ show_status () {
       jq -cr 'if .colors != null then .colors else "{}" end')"
   fi
 
-  local rate
+  local rate=''
   rate+='[.associated_modes[].frequencies]|flatten'
   rate+=' |[.[]|select(.is_current==true)]'
   rate+=' |.[0].frequency'
@@ -382,7 +377,7 @@ show_status () {
   local offset='[\(.offset_width),\(.offset_height)]'
   local trans='\(.rotation) \(.reflection|ascii_downcase)'
 
-  local query
+  local query=''
   query+='Output:   \(.device_name)\(if .is_primary then "*" else "" end)\n'
   query+="Mode:     \(.resolution_width)x\(.resolution_height)@\(${rate})Hz\n"
   query+="Pos:      ${offset} ${trans}\n"
@@ -407,8 +402,8 @@ show_status () {
 # Outputs:
 #  The log file of the xorg display.
 show_logs () {
-  local display="$(echo "${DISPLAY}" | cut -d ':' -f 2)"
-  local log_file="${HOME}/.local/share/xorg/Xorg.${display}.log"
+  local id="$(echo "${DISPLAY}" | cut -d ':' -f 2)"
+  local log_file="${HOME}/.local/share/xorg/Xorg.${id}.log"
 
   if [[ ! -f "${log_file}" ]]; then
     echo "Unable to find the log file ${log_file}"
@@ -420,7 +415,7 @@ show_logs () {
 
 # Shows the data of the output with the given name.
 # Globals:
-#  REPLY
+#  REPLY, SETTINGS_FILE
 # Arguments:
 #  name: any string
 # Outputs:
@@ -503,14 +498,14 @@ list_outputs () {
     return 1
   fi
 
-  local query
+  local query=''
   query+='Name:      \(.device_name)\n'
   query+='Connected: \(.is_connected)\n'
   query+='Primary:   \(.is_primary)\n'
 
   query=".[]|(\"${query}\")"
 
-  local outputs
+  local outputs=''
   outputs="$(find_outputs "${status}" | jq -cr "${query}")"
 
   if [[ $? -ne 0 ]]; then
@@ -519,7 +514,7 @@ list_outputs () {
   fi
 
   if [[ -z "${outputs}" ]]; then
-    echo "No ${status:-\b} outputs have been found"
+    echo "No ${status:-\b} outputs have found"
     return 1
   fi
 
@@ -544,7 +539,7 @@ set_mode () {
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return
   fi
 
-  local output
+  local output=''
   output="$(find_output "${name}")"
 
   if [[ $? -ne 0 ]]; then
@@ -596,7 +591,7 @@ set_primary () {
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return
   fi
 
-  local output
+  local output=''
   output="$(find_output "${name}")"
 
   if [[ $? -ne 0 ]]; then
@@ -631,7 +626,7 @@ set_on () {
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return
   fi
 
-  local output
+  local output=''
   output="$(find_output "${name}")"
 
   if [[ $? -ne 0 ]]; then
@@ -663,7 +658,7 @@ set_off () {
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return
   fi
 
-  local output
+  local output=''
   output="$(find_output "${name}")"
 
   if [[ $? -ne 0 ]]; then
@@ -700,7 +695,7 @@ reflect () {
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return
   fi
 
-  local output
+  local output=''
   output="$(find_output "${name}")"
 
   if [[ $? -ne 0 ]]; then
@@ -715,23 +710,24 @@ reflect () {
   fi
 
   if [[ -z "${mode}" ]]; then
-    local modes
+    local modes=''
     modes+='{"key": "normal", "value": "Normal"},'
     modes+='{"key": "x", "value": "X Axis"},'
     modes+='{"key": "y", "value": "Y Axis"},'
     modes+='{"key": "xy", "value": "XY Axis"}'
+    modes="[${modes}]"
 
-    pick_one "Select a reflection mode:" "[${modes}]" "horizontal" || return 1
+    pick_one "Select a reflection mode:" "${modes}" "horizontal" || return 1
     [[ -n "${REPLY}" ]] && mode="${REPLY}" || return
   fi
   
   if [[ ! "${mode}" =~ ^(normal|x|y|xy)$ ]]; then
-    echo "Invalid reflection mode value"
+    echo "Invalid reflection value"
     return 1
   fi
 
   xrandr --output "${name}" --reflect "${mode}" &&
-    echo "Output ${name} has been reflected to ${mode} mode" ||
+    echo "Output ${name} reflected to ${mode} mode" ||
     echo "Failed to reflect output ${name}"
 }
 
@@ -750,7 +746,7 @@ rotate () {
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return
   fi
 
-  local output
+  local output=''
   output="$(find_output "${name}")"
 
   if [[ $? -ne 0 ]]; then
@@ -765,23 +761,24 @@ rotate () {
   fi
 
   if [[ -z "${mode}" ]]; then
-    local modes
+    local modes=''
     modes+='{"key": "normal", "value": "Normal"},'
     modes+='{"key": "right", "value": "Right"},'
     modes+='{"key": "left", "value": "Left"},'
     modes+='{"key": "inverted", "value": "Inverted"}'
+    modes="[${modes}]"
 
-    pick_one "Select a rotation mode:" "[${modes}]" "horizontal" || return 1
+    pick_one "Select a rotation mode:" "${modes}" "horizontal" || return 1
     [[ -n "${REPLY}" ]] && mode="${REPLY}" || return
   fi
   
   if [[ ! "${mode}" =~ ^(normal|right|left|inverted)$ ]]; then
-    echo "Invalid rotation mode value"
+    echo "Invalid rotation value"
     return 1
   fi
 
   xrandr --output "${name}" --rotate "${mode}" &&
-    echo "Output ${name} has been rotated to ${mode} mode" ||
+    echo "Output ${name} rotated to ${mode} mode" ||
     echo "Failed to rotate output ${name}"
 }
 
@@ -802,7 +799,7 @@ mirror () {
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return
   fi
 
-  local output
+  local output=''
   output="$(find_output "${name}")"
 
   if [[ $? -ne 0 ]]; then
@@ -816,24 +813,25 @@ mirror () {
     return 1
   fi
 
-  local len
-  len="$(find_outputs "active" | jq -cr 'length')"
-  
-  if [[ ${len} -lt 2 ]]; then
-    echo "No other outputs have found to mirror"
-    return 1
-  fi
+  local outputs=''
+  outputs="$(find_outputs "active")" || return 1
 
-  local mirrors
+  local len=0
+  len="$(count "${outputs}")" || return 1
+  [[ ${len} -lt 2 ]] &&
+    echo "No other outputs have found to mirror" &&
+    return 1
+
+  local mirrors=''
   pick_outputs "Select on which outputs to mirror:" "active" "1," "${name}" || return 1
   [[ -n "${REPLY}" ]] && mirrors="${REPLY}" || return
 
   # Find the common resolution modes among output and mirrors
-  local names
+  local names=''
   names="$(echo "${mirrors}" | jq -cer '.|join("|")')" || return 1
   names+="|${name}"
 
-  local query
+  local query=''
   query+="select(.device_name | match(\"(${names})\"))"
   query+=' |.associated_modes[]'
   query+=' |"\(.resolution_width)x\(.resolution_height)"'
@@ -842,19 +840,19 @@ mirror () {
   query+=' |[group_by(.)|map(select(length>1))|.[]|.[0]'
   query+=' |{key: "\(.)", value: "\(.)"}]'
 
-  local modes
-  modes="$(find_outputs "active" | jq -cer "${query}")" || return 1
+  local modes=''
+  modes="$(echo "${outputs}" | jq -cer "${query}")" || return 1
 
-  if [[ "${modes}" == "[]" ]]; then
+  if [[ "$(count "${modes}")" -eq 0 ]]; then
     echo "No common resolutions found among mirrors"
     return 1
   fi
 
-  local mode
+  local mode=''
   pick_one "Select the mirroring resolution:" "${modes}" "vertical" || return 1
   [[ -n "${REPLY}" ]] && mode="${REPLY}" || return
 
-  # Have mirrors inherit the position and rotate/reflect of output
+  # Have mirrors inherit the position and rotate/reflect of the source output
   local pos="$(echo "${output}" | jq -r '"\(.offset_width)x\(.offset_height)"')"
   local rot="$(echo "${output}" | jq -r '.rotation')"
   local ref="$(echo "${output}" | jq -r '.reflection|ascii_downcase' |
@@ -865,7 +863,7 @@ mirror () {
 
   local others="$(echo "${mirrors}" | jq -cr "${query}")"
 
-  xrandr --output ${name} --mode ${mode} ${others} &&
+  xrandr --output "${name}" --mode "${mode}" ${others} &&
     echo "Output ${name} mirrored successfully" ||
     echo "Failed to mirror output ${name}"
 }
@@ -876,11 +874,11 @@ mirror () {
 # Arguments:
 #  None
 set_layout () {
-  local layout
+  local layout=''
   pick_layout || return 1
   [[ -n "$REPLY" ]] && layout="${REPLY}" || return
 
-  local outputs
+  local outputs=''
   pick_outputs "Pick outputs by order:" "active" "all" || return 1
   [[ -n "$REPLY" ]] && outputs="${REPLY}" || return
 
@@ -888,7 +886,7 @@ set_layout () {
   local b="$(echo "${outputs}" | jq -cr '.[1]')"
   local c="$(echo "${outputs}" | jq -cr '.[2]')"
 
-  local args
+  local args=''
   case "${layout}" in
     "row-2")
       args="--output ${a} --left-of ${b}";;
@@ -907,7 +905,7 @@ set_layout () {
     "lambda-rev-3")
       args="--output ${a} --left-of ${c} --output ${a} --above ${c}";;
     *)
-      echo "Unknown or invalid layout mode"
+      echo "Invalid layout mode"
       return 1;;
   esac
 
@@ -926,11 +924,11 @@ set_layout () {
 # calls. The state of an output is considered the mode,
 # rate, offset (position), rotate, reflect and primary.
 # Globals:
-#  REPLY
+#  REPLY, CONFIG_HOME, SETTINGS_FILE
 # Arguments:
 #  None
 save_layout () {
-  local outputs
+  local outputs=''
   outputs="$(find_outputs "all")"
 
   if [[ $? -ne 0 ]]; then
@@ -943,7 +941,7 @@ save_layout () {
   [[ "${REPLY}" == "no" ]] && return
 
   # Parse each output state to a line of xrandr options
-  local mode
+  local mode=''
   mode+='.associated_modes[]'
   mode+=' |"\(.resolution_width)x\(.resolution_height)" as $res'
   mode+=' |.frequencies[]|select(.is_current)'
@@ -954,7 +952,7 @@ save_layout () {
   local reflect='--reflect \(.reflection|ascii_downcase|gsub("( |and|axis)";""))'
   local primary='if .is_primary then " --primary" else "" end'
 
-  local query
+  local query=''
   query+='if .resolution_width'
   query+=" then \"\(${mode}) ${pos} ${rotate} ${reflect}\(${primary})\""
   query+=' else "--off"'
@@ -962,7 +960,7 @@ save_layout () {
 
   query="map({(.device_name|tostring): \"\(${query})\"})|add"
 
-  local layout
+  local layout=''
   layout="$(echo "${outputs}" | jq -cer "${query}")"
 
   if [[ $? -ne 0 ]]; then
@@ -970,40 +968,42 @@ save_layout () {
     return 1
   fi
 
-  local settings
+  local settings='{}'
   if [[ -f "${SETTINGS_FILE}" ]]; then
     settings="$(jq -e ".|.layout = ${layout}" "${SETTINGS_FILE}")"
   else
     settings="$(echo "{\"layout\": ${layout}}" | jq -e '.')"
   fi
 
-  if [[ $? -eq 0 ]]; then
-    mkdir -p "${CONFIG_HOME}"
-    echo "${settings}" > "${SETTINGS_FILE}"
-
-    echo "Layout has been saved successfully"
-  else
-    echo "Failed to save the layout"
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to parse the layout settings"
     return 1
   fi
+
+  mkdir -p "${CONFIG_HOME}"
+  echo "${settings}" > "${SETTINGS_FILE}" &&
+    echo "Layout has been saved successfully" ||
+    echo "Failed to save the layout settings"
 }
 
 # Restores the displays layout by calling xrandr on every
 # output, where its mode, rate, pos, rotate, reflect and
 # primary settings have been saved in the settings file.
+# Globals:
+#  SETTINGS_FILE
 # Arguments:
 #  None
 restore_layout () {
   if [[ ! -f "${SETTINGS_FILE}" ]]; then
-    echo "No layout settings have been found"
+    echo "No layout settings have found"
     return
   fi
 
   # Collect all output xrandr options in a single line
   local query='"--output \(.key) \(.value)"'
-  query="[.layout|to_entries|.[]|${query}]|join(\" \")"
+  query="[.layout|to_entries[]|${query}]|join(\" \")"
 
-  local args
+  local args=''
   args="$(jq -cer "${query}" "${SETTINGS_FILE}")"
 
   if [[ $? -ne 0 ]]; then
@@ -1019,11 +1019,11 @@ restore_layout () {
   fi
 }
 
-# Sets the color profile of the output witht he given name
+# Sets the color profile of the output with the given name
 # where profile should be the filename of any .icc or .icm
-# color calibration file.
+# color calibration files saved in the $COLORS_HOME.
 # Globals:
-#  REPLY
+#  REPLY, COLORS_HOME, DISPLAY, CONFIG_HOME, SETTINGS_FILE
 # Arguments:
 #  name:    any string
 #  profile: filename of a color profile
@@ -1036,7 +1036,7 @@ set_color () {
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return
   fi
   
-  local output
+  local output=''
   output="$(find_output "${name}")"
 
   if [[ $? -ne 0 ]]; then
@@ -1054,10 +1054,15 @@ set_color () {
     local query='[.[]|select(.filename|test(".ic(c|m)$"))'
     query+='|{key: .filename, value: .filename}]'
   
-    local profiles="$(ls "${COLORS_HOME}" 2>/dev/null | jc --ls | jq -cer "${query}")"
+    local profiles=''
+    profiles"$(ls "${COLORS_HOME}" 2>/dev/null | jc --ls |
+      jq -cer "${query}")" || return 1
+    
+    local len=0
+    len="$(count "${profiles}")" || return 1
 
-    if [[ "${profiles}" == "[]" ]]; then
-      echo "No available color profiles have found"
+    if [[ ${len} -eq 0 ]]; then
+      echo "No color profiles have found"
       return 1
     fi
 
@@ -1065,9 +1070,10 @@ set_color () {
     [[ -n "${REPLY}" ]] && profile="${REPLY}" || return
   fi
 
-  local index="$(find_index "${name}")"
+  local index=''
+  index="$(find_index "${name}")" || return 1
 
-  local result
+  local result=''
   result="$(xcalib -d "${DISPLAY}" -s 0 -o "${index}" "${COLORS_HOME}/${profile}" 2>&1)"
 
   if [[ $? -ne 0 ]] || [[ -n "${result}" ]]; then
@@ -1077,7 +1083,7 @@ set_color () {
 
   local setting="{\"index\": \"${index}\", \"profile\": \"${profile}\"}"
 
-  local settings
+  local settings='{}'
   if [[ -f "${SETTINGS_FILE}" ]]; then
     settings="$(jq -e ".colors.\"${name}\" = ${setting}" "${SETTINGS_FILE}")"
   else
@@ -1085,20 +1091,20 @@ set_color () {
   fi
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to persist the color profile"
+    echo "Failed to parse the colors settings"
     return 1
   fi
 
   mkdir -p "${CONFIG_HOME}"
-  echo "${settings}" > "${SETTINGS_FILE}"
-
-  echo "Color of ${name} set to ${profile}"
+  echo "${settings}" > "${SETTINGS_FILE}" &&
+    echo "Color of ${name} set to ${profile}" ||
+    echo "Failed to persist color profile"
 }
 
 # Removes any color profile applied to the output with
 # the given name.
 # Globals:
-#  REPLY
+#  REPLY, DISPLAY, SETTINGS_FILE
 # Arguments:
 #  name: any string
 reset_color () {
@@ -1109,7 +1115,7 @@ reset_color () {
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return
   fi
   
-  local output
+  local output=''
   output="$(find_output "${name}")"
 
   if [[ $? -ne 0 ]]; then
@@ -1123,9 +1129,10 @@ reset_color () {
     return 1
   fi
 
-  local index="$(find_index "${name}")"
+  local index=''
+  index="$(find_index "${name}")" || return 1
 
-  local result
+  local result=''
   result="$(xcalib -d "${DISPLAY}" -s 0 -o "${index}" -c 2>&1)"
 
   if [[ $? -ne 0 ]] || [[ -n "${result}" ]]; then
@@ -1140,7 +1147,7 @@ reset_color () {
     local key=".colors.\"${name}\""
     local query="if ${key} != null then del(${key}) else . end"
 
-    local settings
+    local settings=''
     settings="$(jq -e "${query}" "${SETTINGS_FILE}")"
     echo "${settings}" > "${SETTINGS_FILE}"
   fi
@@ -1149,19 +1156,21 @@ reset_color () {
 # Restores the displays color profiles by calling multiple
 # xcalib commands on every output its name has been set in
 # the colors settings.
+# Globals:
+#  COLORS_HOME, SETTINGS_FILE, DISPLAY
 # Arguments:
 #  None
 restore_colors () {
   if [[ ! -f "${SETTINGS_FILE}" ]]; then
-    echo "No color settings have been found"
+    echo "No color settings have found"
     return
   fi
 
   # Collect all output colors in index,profile tuples
   local query="\(.value.index),${COLORS_HOME}/\(.value.profile)"
-  query="[.colors|to_entries|.[]|\"${query}\"]|join(\"\n\")"
+  query="[.colors|to_entries[]|\"${query}\"]|join(\"\n\")"
 
-  local tuples
+  local tuples=''
   tuples="$(jq -cer "${query}" "${SETTINGS_FILE}")"
 
   if [[ $? -ne 0 ]]; then
@@ -1173,8 +1182,8 @@ restore_colors () {
   fi
 
   local failed='false'
-  local tuple
-  while read -r tuple ; do  
+  local tuple=''
+  while read -r tuple; do  
     local index="$(echo "${tuple}" | cut -d ',' -f 1)"
     local profile="$(echo "${tuple}" | cut -d ',' -f 2)"
 
@@ -1195,6 +1204,8 @@ restore_colors () {
 }
 
 # Show the help message.
+# Globals:
+#  COLORS_HOME
 # Arguments:
 #  None
 # Outputs:
@@ -1218,6 +1229,7 @@ help () {
   echo -e "\nCOMMANDS"
   printf " %-44s %s\n" \
     "help" "Show this help message." \
+    "" "" \
     "show status" "Show a report of the Xorg server and active outputs." \
     "show logs" "Show the logs of the Xorg server." \
     "show output [<name>]" "Show the data of the given output." \
@@ -1318,7 +1330,7 @@ loop () {
 
 once () {
   case "$1" in
-    "help") help once;;
+    "help") help "once";;
     "restore")
       case "$2" in
         "layout") restore_layout || abort;;

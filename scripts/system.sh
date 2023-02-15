@@ -217,7 +217,7 @@ install_aur () {
 install_display_server () {
   echo "Installing the xorg display server..."
 
-  pacman -S --noconfirm xorg xorg-xinit xorg-xrandr arandr || exit 1
+  pacman -S --noconfirm xorg xorg-xinit xorg-xrandr xorg-xdpyinfo arandr || exit 1
 
   cp /root/stack/resources/xorg/xorg.conf /etc/X11
   cp /root/stack/resources/xorg/keyboard.conf /etc/X11/xorg.conf.d/00-keyboard.conf
