@@ -1191,7 +1191,7 @@ reset_color () {
     local key=".colors.\"${name}\""
     local query="if ${key} != null then del(${key}) else . end"
 
-    local settings=''
+    local settings='{}'
     settings="$(jq -e "${query}" "${SETTINGS_FILE}")" || return 1
 
     echo "${settings}" > "${SETTINGS_FILE}"
