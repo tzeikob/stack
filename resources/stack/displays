@@ -46,7 +46,7 @@ find_outputs () {
 
   local query="${a}+${b}"
 
-  xrandr | jc --xrandr | jq -cer "${query}" || return 1
+  xrandr --props | jc --xrandr | jq -cer "${query}" || return 1
 }
 
 # Returns the output with the given name.
@@ -130,8 +130,10 @@ pick_output () {
   local status="$2"
 
   # Convert outputs list into an array of {key, value} options
-  local query=''
-  query+='[.[]|{key: "\(.device_name)", value: "\(.device_name)"}]'
+  local key='\(.device_name)'
+  local value='\(.device_name) [\(if .model_name then .model_name else "NA" end)]'
+
+  local query="[.[]|{key: \"${key}\", value: \"${value}\"}]"
 
   local options=''
   options="$(find_outputs "${status}" | jq -cer "${query}")" || return 1
@@ -144,7 +146,7 @@ pick_output () {
     return 2
   fi
 
-  pick_one "${prompt}" "${options}" "horizontal" || return 1
+  pick_one "${prompt}" "${options}" "vertical" || return 1
 }
 
 # Shows a menu asking the user to select many outputs,
@@ -170,7 +172,10 @@ pick_outputs () {
   [[ -n "${skip}" ]] && except="select(.device_name != \"${skip}\")"
 
   # Convert outputs list into an array of {key, value} options
-  local query='{key: "\(.device_name)", value: "\(.device_name)"}'
+  local key='\(.device_name)'
+  local value='\(.device_name) [\(if .model_name then .model_name else "NA" end)]'
+
+  local query="{key: \"${key}\", value: \"${value}\"}"
   query="[.[]|${except}|${query}]"
 
   local options=''
@@ -184,7 +189,7 @@ pick_outputs () {
     return 2
   fi
 
-  pick_many "${prompt}" "${options}" "${size}" "horizontal" || return 1
+  pick_many "${prompt}" "${options}" "${size}" "vertical" || return 1
 }
 
 # Shows a menu of resolutions of the given output and waits
@@ -379,6 +384,7 @@ show_status () {
 
   local query=''
   query+='Output:   \(.device_name)\(if .is_primary then "*" else "" end)\n'
+  query+='Device:   \(.model_name)\n'
   query+="Mode:     \(.resolution_width)x\(.resolution_height)@\(${rate})Hz\n"
   query+="Pos:      ${offset} ${trans}\n"
   query+='Color:    \(.colors|.[$dn]|if . != null then .profile else "none" end)'
@@ -438,6 +444,7 @@ show_output () {
 
   local base=''
   base+='Name:      \(.device_name)\n'
+  base+='\(if .model_name then "Device:    \(.model_name)\n" else "" end)'
   base+='Connected: \(.is_connected)\n'
   base+='Primary:   \(.is_primary)'
 
@@ -499,6 +506,7 @@ list_outputs () {
 
   local query=''
   query+='Name:      \(.device_name)\n'
+  query+='\(if .model_name then "Device:    \(.model_name)\n" else "" end)'
   query+='Connected: \(.is_connected)\n'
   query+='Primary:   \(.is_primary)\n'
 
