@@ -76,6 +76,29 @@ find_index () {
   find_outputs "all" | jq -cer "${query}" || return 1
 }
 
+# Returns a unique hashed signature of the current
+# mapping between outputs and devices.
+# Arguments:
+#  outputs: a JSON array of outputs
+# Outputs:
+#  A hashed signature value.
+get_sig () {
+  local outputs="$1"
+
+  local model=''
+  model+='if .model_name'
+  model+=' then "_\(.model_name)_\(.product_id)_\(.serial_number)"'
+  model+=' else ""'
+  model+='end'
+
+  local query="[.[]|\"\(.device_name)\(${model})\"]|join(\",\")"
+
+  local sig=''
+  sig="$(echo "${outputs}" | jq -cer "${query}")" || return 1
+
+  get_hash "${sig}" "6" || return 1
+}
+
 # Asserts if the given output is connected.
 # Arguments:
 #  output: a JSON object output
@@ -961,10 +984,8 @@ set_layout () {
   echo "Layout has been set successfully"
 }
 
-# Saves the current state of each output to a line of
-# xrandr compatible options ready to be used in xrandr
-# calls. The state of an output is considered the mode,
-# rate, offset (position), rotate, reflect and primary.
+# Saves the current layout under a unique hashed signature
+# which is based on the mapping between outputs and devices.
 # Globals:
 #  REPLY, CONFIG_HOME, SETTINGS_FILE
 # Arguments:
@@ -978,29 +999,32 @@ save_layout () {
     return 2
   fi
 
-  confirm "Should overwrite existing layout?"
-  [[ -z "${REPLY}" ]] && return
-  [[ "${REPLY}" == "no" ]] && return
+  # Parse each output to an object with device and xrandr mode options
+  local device=''
+  device+='if .model_name'
+  device+=' then "\(.model_name)_\(.product_id)_\(.serial_number)"'
+  device+=' else "NA"'
+  device+='end'
 
-  # Parse each output state to a line of xrandr options
-  local mode=''
-  mode+='.associated_modes[]'
-  mode+=' |"\(.resolution_width)x\(.resolution_height)" as $res'
-  mode+=' |.frequencies[]|select(.is_current)'
-  mode+=' |"--mode \($res) --rate \(.frequency)"'
+  local res=''
+  res+='.associated_modes[]'
+  res+=' |"\(.resolution_width)x\(.resolution_height)" as $res'
+  res+=' |.frequencies[]|select(.is_current)'
+  res+=' |"--mode \($res) --rate \(.frequency)"'
 
   local pos='--pos \(.offset_width)x\(.offset_height)'
   local rotate='--rotate \(.rotation)'
   local reflect='--reflect \(.reflection|ascii_downcase|gsub("( |and|axis)";""))'
   local primary='if .is_primary then " --primary" else "" end'
 
-  local query=''
-  query+='if .resolution_width'
-  query+=" then \"\(${mode}) ${pos} ${rotate} ${reflect}\(${primary})\""
-  query+=' else "--off"'
-  query+='end'
+  local mode=''
+  mode+='if .resolution_width'
+  mode+=" then \"\(${res}) ${pos} ${rotate} ${reflect}\(${primary})\""
+  mode+=' else "--off"'
+  mode+='end'
 
-  query="map({(.device_name|tostring): \"\(${query})\"})|add"
+  local query="{\"device\": \"\(${device})\", \"mode\": \"\(${mode})\"}"
+  query="map({(.device_name|tostring): ${query}})|add"
 
   local layout=''
   layout="$(echo "${outputs}" | jq -cer "${query}")"
@@ -1010,11 +1034,14 @@ save_layout () {
     return 2
   fi
 
+  # Calculate the hashed signature of the current mapping
+  local sig="$(get_sig "${outputs}")" || return 1
+
   local settings='{}'
   if [[ -f "${SETTINGS_FILE}" ]]; then
-    settings="$(jq -e ".|.layout = ${layout}" "${SETTINGS_FILE}")"
+    settings="$(jq -e ".layouts.\"${sig}\" = ${layout}" "${SETTINGS_FILE}")"
   else
-    settings="$(echo "{\"layout\": ${layout}}" | jq -e '.')"
+    settings="$(echo "{\"layouts\": {\"${sig}\": ${layout}}}" | jq -e '.')"
   fi
 
   if [[ $? -ne 0 ]]; then
@@ -1024,7 +1051,7 @@ save_layout () {
 
   mkdir -p "${CONFIG_HOME}"
   echo "${settings}" > "${SETTINGS_FILE}"
-    
+
   if [[ $? -ne 0 ]]; then
     echo "Failed to save the layout settings"
     return 2
@@ -1033,9 +1060,9 @@ save_layout () {
   echo "Layout has been saved successfully"
 }
 
-# Restores the displays layout by calling xrandr on every
-# output, where its mode, rate, pos, rotate, reflect and
-# primary settings have been saved in the settings file.
+# Restores the layout with the signature matching the
+# signature of the current mapping between outputs and
+# devices.
 # Globals:
 #  SETTINGS_FILE
 # Arguments:
@@ -1046,15 +1073,29 @@ restore_layout () {
     return
   fi
 
-  # Collect all output xrandr options in a single line
-  local query='"--output \(.key) \(.value)"'
-  query="[.layout|to_entries[]|${query}]|join(\" \")"
+  local outputs=''
+  outputs="$(find_outputs "all")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to read outputs"
+    return 2
+  fi
+
+  # Calculate the hashed signature of the current mapping
+  local sig="$(get_sig "${outputs}")" || return 1
+
+  # Collect all output xrandr mode options matching the sig
+  local query='"--output \(.key) \(.value.mode)"'
+  query="[.layouts|select(.\"${sig}\")|.\"${sig}\"|to_entries[]|${query}]|join(\" \")"
 
   local args=''
   args="$(jq -cer "${query}" "${SETTINGS_FILE}")"
 
   if [[ $? -ne 0 ]]; then
     echo "Unable to read layout settings"
+    return 2
+  elif [[ -z "${args}" ]]; then
+    echo "No layout found for the current setup"
     return 2
   fi
 
