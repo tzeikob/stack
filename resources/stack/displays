@@ -446,6 +446,7 @@ show_output () {
   base+='Name:      \(.device_name)\n'
   base+='\(if .model_name then "Device:    \(.model_name)\n" else "" end)'
   base+='Connected: \(.is_connected)\n'
+  base+='Active:    \(.is_connected and .resolution_width)\n'
   base+='Primary:   \(.is_primary)'
 
   local rate=''
@@ -508,6 +509,7 @@ list_outputs () {
   query+='Name:      \(.device_name)\n'
   query+='\(if .model_name then "Device:    \(.model_name)\n" else "" end)'
   query+='Connected: \(.is_connected)\n'
+  query+='Active:    \(.is_connected and .resolution_width)\n'
   query+='Primary:   \(.is_primary)\n'
 
   query=".[]|(\"${query}\")"
