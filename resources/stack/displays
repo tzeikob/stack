@@ -1150,6 +1150,78 @@ restore_layout () {
   echo "Layout has been restored"
 }
 
+# Delete the layout with the given signature.
+# Globals:
+#  REPLY, SETTINGS_FILE
+# Arguments;
+#  sig: the signature of a layout
+delete_layout () {
+  local sig="$1"
+
+  if [[ ! -f "${SETTINGS_FILE}" ]]; then
+    echo "No layout settings have found"
+    return 2
+  fi
+
+  local layouts=''
+  layouts="$(jq '.layouts' "${SETTINGS_FILE}" 2>/dev/null)"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to read layout settings"
+    return 2
+  elif [[ "${layouts}" == "null" ]]; then
+    echo "No layout settings have found"
+    return 2
+  fi
+
+  if [[ -z "${sig}" ]]; then
+    local sigs=''
+    sigs="$(jq -cr '[.layouts[]|{key: .sig, value: .sig}]' "${SETTINGS_FILE}" 2>/dev/null)"
+
+    if [[ $? -ne 0 ]] || [[ -z "${sigs}" ]]; then
+      echo "Unable to read layout settings"
+      return 2
+    elif [[ "${sigs}" == "[]" ]]; then
+      echo "No layout settings have found"
+      return 2
+    fi
+
+    # Show a help report of layout mappings per signature
+    local query="\(.sig)\n \([.map|to_entries[]|\"\(.key) [\(.value.device)]\"]|join(\"\n \"))"
+    query="[.layouts[]|\"${query}\"]|join(\"\n\n\")"
+
+    jq -r "${query}" "${SETTINGS_FILE}"
+
+    pick_one "Select a layout:" "${sigs}" "vertical" || return 1
+    [[ -n "${REPLY}" ]] && sig="${REPLY}" || return
+  fi
+
+  local exists=''
+  exists="$(jq -e ".layouts[]|select(.sig == \"${sig}\")" "${SETTINGS_FILE}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Cannot find layout ${sig}"
+    return 2
+  fi
+
+  local settings=''
+  settings="$(jq -e "del(.layouts[]|select(.sig == \"${sig}\"))" "${SETTINGS_FILE}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to delete layout ${sig}"
+    return 2
+  fi
+
+  echo "${settings}" > "${SETTINGS_FILE}"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to update layout settings"
+    return 2
+  fi
+  
+  echo "Layout ${sig} has been deleted"
+}
+
 # Sets the color profile of the output with the given name
 # where profile should be the filename of any .icc or .icm
 # color calibration files saved in the $COLORS_HOME.
@@ -1389,7 +1461,8 @@ help () {
     "restore colors" "Restore the color profiles saved in settings." \
     "" "" \
     "set layout" "Set the layout of active outputs." \
-    "save layout" "Persist the current layout." \
+    "save layout" "Save the current layout." \
+    "delete layout [<sig>]" "Delete the layout with the given signature." \
     "restore layout" "Restore the layout saved in settings."
 }
 
@@ -1447,6 +1520,11 @@ loop () {
       "save")
         case "${cmd[1]}" in
           "layout") save_layout;;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "delete")
+        case "${cmd[1]}" in
+          "layout") delete_layout "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       "restore")
