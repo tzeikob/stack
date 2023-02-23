@@ -77,7 +77,11 @@ find_index () {
 }
 
 # Returns a unique hashed signature of the current
-# mapping between outputs and devices.
+# mapping between outputs and devices. The signature
+# is a hash of the list of outputs each one is followed
+# by its connected device, if any. We assume that xrandr
+# works deterministically and returns the outputs always
+# in the same order.
 # Arguments:
 #  outputs: a JSON array of outputs
 # Outputs:
@@ -1026,22 +1030,48 @@ save_layout () {
   local query="{\"device\": \"\(${device})\", \"mode\": \"\(${mode})\"}"
   query="map({(.device_name|tostring): ${query}})|add"
 
-  local layout=''
-  layout="$(echo "${outputs}" | jq -cer "${query}")"
+  local map=''
+  map="$(echo "${outputs}" | jq -cer "${query}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to parse modes to layout"
+    echo "Unable to parse the layout mapping"
     return 2
   fi
 
-  # Calculate the hashed signature of the current mapping
+  # Assign a signature to the current layout mapping
   local sig="$(get_sig "${outputs}")" || return 1
+  local layout="{\"sig\": \"${sig}\", \"map\": ${map}}"
 
   local settings='{}'
+
   if [[ -f "${SETTINGS_FILE}" ]]; then
-    settings="$(jq -e ".layouts.\"${sig}\" = ${layout}" "${SETTINGS_FILE}")"
+    local layouts=''
+    layouts="$(jq '.layouts' "${SETTINGS_FILE}" 2>/dev/null)"
+
+    if [[ $? -ne 0 ]]; then
+      echo "Unable to read the layout settings"
+      return 2
+    fi
+
+    if [[ "${layouts}" != "null" ]]; then
+      local exists=''
+      exists="$(jq ".layouts[]|select(.sig == \"${sig}\")" "${SETTINGS_FILE}" 2>/dev/null)"
+
+      if [[ $? -ne 0 ]]; then
+        echo "Failed to read the layout settings"
+        return 2
+      fi
+
+      if [[ -n "${exists}" ]]; then
+        settings="$(jq -e "(.layouts[]|select(.sig == \"${sig}\")|.map)|= ${map}" "${SETTINGS_FILE}")"
+      else
+        settings="$(jq -e ".layouts += [${layout}] " "${SETTINGS_FILE}")"
+      fi
+    else
+      settings="$(jq -e ".layouts = [${layout}] " "${SETTINGS_FILE}")"
+    fi
   else
-    settings="$(echo "{\"layouts\": {\"${sig}\": ${layout}}}" | jq -e '.')"
+    settings="$(echo "{\"layouts\": [${layout}]}" | jq -e '.')"
   fi
 
   if [[ $? -ne 0 ]]; then
@@ -1073,6 +1103,17 @@ restore_layout () {
     return
   fi
 
+  local layouts=''
+  layouts="$(jq ".layouts" "${SETTINGS_FILE}" 2>/dev/null)"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to read layout settings"
+    return 2
+  elif [[ "${layouts}" == "null" ]]; then
+    echo "No layout settings have found"
+    return
+  fi
+
   local outputs=''
   outputs="$(find_outputs "all")"
 
@@ -1086,10 +1127,10 @@ restore_layout () {
 
   # Collect all output xrandr mode options matching the sig
   local query='"--output \(.key) \(.value.mode)"'
-  query="[.layouts|select(.\"${sig}\")|.\"${sig}\"|to_entries[]|${query}]|join(\" \")"
+  query="[.layouts[]|select(.sig == \"${sig}\")|.map|to_entries[]|${query}]|join(\" \")"
 
   local args=''
-  args="$(jq -cer "${query}" "${SETTINGS_FILE}")"
+  args="$(jq -cer "${query}" "${SETTINGS_FILE}" 2>/dev/null)"
 
   if [[ $? -ne 0 ]]; then
     echo "Unable to read layout settings"
