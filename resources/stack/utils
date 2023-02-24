@@ -396,7 +396,7 @@ get () {
   local object="$1"
   local query="$2"
 
-  local result
+  local result=''
   result="$(echo "${object}" | jq -cer "${query}")" || return 1
 
   echo "${result}"

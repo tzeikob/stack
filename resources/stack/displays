@@ -44,7 +44,7 @@ find_outputs () {
   b+=".unassociated_devices[]|select(${criteria})"
   b="[${b}]"
 
-  local query="${a}+${b}"
+  local query="[${a}+${b}|to_entries[]|{index: .key} + .value]"
 
   xrandr --props | jc --xrandr | jq -cer "${query}" || return 1
 }
@@ -58,20 +58,6 @@ find_output () {
   local name="$1"
 
   local query=".[]|select(.device_name == \"${name}\")"
-
-  find_outputs "all" | jq -cer "${query}" || return 1
-}
-
-# Finds the index of the output with the given name.
-# Arguments:
-#  name: any string
-# Outputs:
-#  The index number of the output.
-find_index () {
-  local name="$1"
-
-  local query=".value.device_name == \"${name}\""
-  query="to_entries[]|select(${query})|.key"
 
   find_outputs "all" | jq -cer "${query}" || return 1
 }
@@ -1222,14 +1208,15 @@ delete_layout () {
   echo "Layout ${sig} has been deleted"
 }
 
-# Sets the color profile of the output with the given name
-# where profile should be the filename of any .icc or .icm
-# color calibration files saved in the $COLORS_HOME.
+# Sets the color profile of the device connected to the output
+# with the given name and save it to the color settings. The
+# profile should be the filename of any .icc or .icm color
+# calibration files stored in $COLORS_HOME.
 # Globals:
 #  REPLY, COLORS_HOME, DISPLAY, CONFIG_HOME, SETTINGS_FILE
 # Arguments:
-#  name:    any string
-#  profile: filename of a color profile
+#  name:    the name of an output
+#  profile: the file name of a color profile
 set_color () {
   local name="$1"
   local profile="$2"
@@ -1254,12 +1241,11 @@ set_color () {
   fi
 
   if [[ -z "${profile}" ]]; then
-    local query='[.[]|select(.filename|test(".ic(c|m)$"))'
-    query+='|{key: .filename, value: .filename}]'
+    local query='{key: .filename, value: .filename}'
+    query="[.[]|select(.filename|test(\".ic(c|m)$\"))|${query}]"
   
     local profiles=''
-    profiles"$(ls "${COLORS_HOME}" 2>/dev/null | jc --ls |
-      jq -cer "${query}")" || return 1
+    profiles="$(ls "${COLORS_HOME}" 2>/dev/null | jc --ls | jq -cer "${query}")"
     
     local len=0
     len="$(count "${profiles}")" || return 1
@@ -1273,8 +1259,13 @@ set_color () {
     [[ -n "${REPLY}" ]] && profile="${REPLY}" || return
   fi
 
+  if [[ ! -f "${COLORS_HOME}/${profile}" ]]; then
+    echo "Cannot find color profile file"
+    return 2
+  fi
+
   local index=''
-  index="$(find_index "${name}")" || return 1
+  index="$(get "${output}" ".index")" || return 1
 
   local result=''
   result="$(xcalib -d "${DISPLAY}" -s 0 -o "${index}" "${COLORS_HOME}/${profile}" 2>&1)"
@@ -1284,37 +1275,60 @@ set_color () {
     return 2
   fi
 
-  local setting="{\"index\": \"${index}\", \"profile\": \"${profile}\"}"
+  echo "Color profile has been set"
+
+  # Save color profile to color settings
+  local query=''
+  query+='model_name: .model_name,'
+  query+='product_id: .product_id,'
+  query+='serial_number: .serial_number,'
+  query+="profile: \"${profile}\""
+  query="{${query}}"
+
+  local color=''
+  color="$(echo "${output}" | jq -cr "${query}")"
 
   local settings='{}'
-  if [[ -f "${SETTINGS_FILE}" ]]; then
-    settings="$(jq -e ".colors.\"${name}\" = ${setting}" "${SETTINGS_FILE}")"
-  else
-    settings="$(echo "{\"colors\": {\"${name}\": ${setting}}}" | jq -e '.')"
-  fi
 
-  if [[ $? -ne 0 ]]; then
-    echo "Failed to parse the colors settings"
-    return 2
+  if [[ -f "${SETTINGS_FILE}" ]]; then
+    local colors=''
+    colors="$(jq 'if .colors then .colors else empty end' "${SETTINGS_FILE}")"
+
+    if [[ -n "${colors}" ]]; then
+      local query=''
+      query+='.model_name == $c.model_name and '
+      query+='.product_id == $c.product_id and '
+      query+='.serial_number == $c.serial_number'
+      query=".colors[]|select(${query})"
+
+      local exists=''
+      exists="$(jq --argjson c "${color}" "${query}" "${SETTINGS_FILE}")"
+
+      if [[ -n "${exists}" ]]; then
+        query="(${query}|.profile)|=\"${profile}\""
+      else
+        query=".colors += [${color}]"
+      fi
+
+      settings="$(jq --argjson c "${color}" "${query}" "${SETTINGS_FILE}")"
+    else
+      settings="$(jq ".colors = [${color}]" "${SETTINGS_FILE}")"
+    fi
+  else
+    settings="$(echo "{\"colors\": [${color}]}" | jq '.')"
   fi
 
   mkdir -p "${CONFIG_HOME}"
   echo "${settings}" > "${SETTINGS_FILE}"
-    
-  if [[ $? -ne 0 ]]; then
-    echo "Failed to persist color profile"
-    return 2
-  fi
-  
-  echo "Color of ${name} set to ${profile}"
 }
 
-# Removes any color profile applied to the output with
-# the given name.
+# Resets the color profile of the device connected to the
+# output with the given name and removes it from the color
+# settings.
 # Globals:
 #  REPLY, DISPLAY, SETTINGS_FILE
 # Arguments:
-#  name: any string
+#  name: the name of an output
 reset_color () {
   local name="$1"
 
@@ -1322,7 +1336,7 @@ reset_color () {
     pick_output "Select an output:" "active" || return 1
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return
   fi
-  
+
   local output=''
   output="$(find_output "${name}")"
 
@@ -1330,15 +1344,15 @@ reset_color () {
     echo "Unable to find output ${name}"
     return 2
   elif ! is_connected "${output}"; then
-    echo "Cannot reset color profile of a disconnected output"
+    echo "Cannot reset color of a disconnected output"
     return 2
   elif ! is_active "${output}"; then
-    echo "Cannot reset color profile of an inactive output"
+    echo "Cannot reset color of an inactive output"
     return 2
   fi
 
   local index=''
-  index="$(find_index "${name}")" || return 1
+  index="$(get "${output}" ".index")" || return 1
 
   local result=''
   result="$(xcalib -d "${DISPLAY}" -s 0 -o "${index}" -c 2>&1)"
@@ -1348,23 +1362,28 @@ reset_color () {
     return 2
   fi
 
-  echo "Color profile of ${name} reset to default"
+  echo "Color profile has been reset"
 
-  # Remove color setting if such setting has been set
-  if [[ -f "${SETTINGS_FILE}" ]]; then
-    local key=".colors.\"${name}\""
-    local query="if ${key} != null then del(${key}) else . end"
-
-    local settings='{}'
-    settings="$(jq -e "${query}" "${SETTINGS_FILE}")" || return 1
-
-    echo "${settings}" > "${SETTINGS_FILE}"
+  # Try to remove color profile from color settings
+  if [[ ! -f "${SETTINGS_FILE}" ]]; then
+    return
   fi
+
+  local query=''
+  query+='.model_name == $o.model_name and '
+  query+='.product_id == $o.product_id and '
+  query+='.serial_number == $o.serial_number'
+  query="if .colors then .colors[]|select(${query}) else empty end"
+
+  local settings=''
+  settings="$(jq --argjson o "${output}" "del(${query})" "${SETTINGS_FILE}")"
+
+  echo "${settings}" > "${SETTINGS_FILE}"
 }
 
-# Restores the displays color profiles by calling multiple
-# xcalib commands on every output its name has been set in
-# the colors settings.
+# Restores the color profiles of any devices currently
+# connected to an output, only if such profile is stored
+# in the settings file.
 # Globals:
 #  COLORS_HOME, SETTINGS_FILE, DISPLAY
 # Arguments:
@@ -1375,37 +1394,42 @@ restore_colors () {
     return
   fi
 
-  # Collect all output colors in index,profile tuples
-  local query="\(.value.index),${COLORS_HOME}/\(.value.profile)"
-  query="[.colors|to_entries[]|\"${query}\"]|join(\"\n\")"
+  local colors=''
+  colors="$(jq -cr 'if .colors then .colors else [] end' "${SETTINGS_FILE}")"
 
-  local tuples=''
-  tuples="$(jq -cer "${query}" "${SETTINGS_FILE}")"
+  local len=0
+  len="$(count "${colors}")" || return 1
 
-  if [[ $? -ne 0 ]]; then
-    echo "Unable to read color settings"
-    return 2
-  elif [[ -z "${tuples}" ]]; then
-    echo "No color settings have been found"
-    return 2
+  if [[ ${len} -eq 0 ]]; then
+    echo "No color settings have found"
+    return
   fi
 
-  local failed='false'
-  local tuple=''
-  while read -r tuple; do  
-    local index="$(echo "${tuple}" | cut -d ',' -f 1)"
-    local profile="$(echo "${tuple}" | cut -d ',' -f 2)"
+  local outputs=''
+  outputs="$(find_outputs "active")" || return 1
 
-    local result="$(xcalib -d "${DISPLAY}" -s 0 -o "${index}" "${profile}" 2>&1)"
+  local query=''
+  query+='. + $c'
+  query+=' |group_by([.model_name, .product_id, .serial_number])'
+  query+=" |map({index: (.[0].index), profile: (.[].profile|select(.))})[]"
+  query+=" |\"xcalib -d ${DISPLAY} -s 0 -o \(.index) ${COLORS_HOME}/\(.profile)\""
+
+  local xcalib_cmds=''
+  xcalib_cmds="$(echo "${outputs}" | jq -cr --argjson c "${colors}" "${query}")" || return 1
+
+  # Iterate over xcalib commands and execute
+  local failed='false'
+  local xcalib_cmd=''
+  while read -r xcalib_cmd; do
+    local result="$(${xcalib_cmd} 2>&1)"
 
     if [[ $? -ne 0 ]] || [[ -n "${result}" ]]; then
-      echo "Failed to restore profile ${profile} for output ${index}"
       failed='true'
     fi
-  done <<< "${tuples}"
+  done <<< "${xcalib_cmds}"
 
   if [[ "${failed}" == "true" ]]; then
-    echo "Color profiles restored partially"
+    echo "Failed to restore all color profiles"
     return 2
   fi
 
@@ -1454,11 +1478,11 @@ help () {
     "reflect [<output> [<mode>]]" "Set output reflection to normal, x, y or xy axes." \
     "mirror [<output>]" "Mirror the given active output to other outputs." \
     "" "" \
-    "set color [<output> [<profile>]]" "Set the color profile of the given output, where profile" \
-    "" "should be the filename of any .icc or .icm calibration" \
-    "" "files stored under ${COLORS_HOME}." \
-    "reset color [<output>]" "Reset the color profile of the given output." \
-    "restore colors" "Restore the color profiles saved in settings." \
+    "set color [<output> [<profile>]]" "Set color profile of the device connected to output," \
+    "" "where profile should be any calibration files" \
+    "" "stored under ${COLORS_HOME}." \
+    "reset color [<output>]" "Reset color profile of the device connected to output." \
+    "restore colors" "Restore color profiles saved in settings." \
     "" "" \
     "set layout" "Set the layout of active outputs." \
     "save layout" "Save the current layout." \
