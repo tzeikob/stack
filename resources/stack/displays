@@ -379,12 +379,9 @@ show_status () {
     return 2
   fi
 
-  local colors='{}'
+  local colors='[]'
   if [[ -f "${SETTINGS_FILE}" ]]; then
-    local settings="$(<"${SETTINGS_FILE}")"
-
-    local query='if .colors != null then .colors else "{}" end'
-    colors="$(echo "${settings}" | jq -cer "${query}")" || return 1
+    colors="$(jq -cr "if .colors then .colors else [] end" "${SETTINGS_FILE}")"
   fi
 
   local rate=''
@@ -395,15 +392,22 @@ show_status () {
   local offset='[\(.offset_width),\(.offset_height)]'
   local trans='\(.rotation) \(.reflection|ascii_downcase)'
 
+  local color=''
+  color+='reduce $c[] as $i ({};'
+  color+='if $i.model_name == $m and $i.product_id == $p and $i.serial_number == $s'
+  color+=' then . + {profile: $i.profile}'
+  color+=' else . '
+  color+='end)|if .profile then .profile else "none" end'
+
   local query=''
   query+='Output:   \(.device_name)\(if .is_primary then "*" else "" end)\n'
   query+='Device:   \(.model_name)\n'
   query+="Mode:     \(.resolution_width)x\(.resolution_height)@\(${rate})Hz\n"
   query+="Pos:      ${offset} ${trans}\n"
-  query+='Color:    \(.colors|.[$dn]|if . != null then .profile else "none" end)'
+  query+="Color:    \(if \$c|length > 0 then (${color}) else \"none\" end)"
 
   # Merge colors setting to extract the color profile per output
-  query=".[]|.+{colors:\$c}|.device_name as \$dn|(\"\n${query}\")"
+  query=".[]|.model_name as \$m|.product_id as \$p|.serial_number as \$s|(\"\n${query}\")"
 
   find_outputs "active" | jq -cer --argjson c "${colors}" "${query}"
 
