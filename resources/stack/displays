@@ -392,6 +392,7 @@ show_status () {
   local offset='[\(.offset_width),\(.offset_height)]'
   local trans='\(.rotation) \(.reflection|ascii_downcase)'
 
+  # Reduce over color settings to match any devices have a profile set
   local color=''
   color+='reduce $c[] as $i ({};'
   color+='if $i.model_name == $m and $i.product_id == $p and $i.serial_number == $s'
@@ -406,8 +407,9 @@ show_status () {
   query+="Pos:      ${offset} ${trans}\n"
   query+="Color:    \(if \$c|length > 0 then (${color}) else \"none\" end)"
 
-  # Merge colors setting to extract the color profile per output
-  query=".[]|.model_name as \$m|.product_id as \$p|.serial_number as \$s|(\"\n${query}\")"
+  local alias='.model_name as $m|.product_id as $p|.serial_number as $s'
+
+  query=".[]|${alias}|(\"\n${query}\")"
 
   find_outputs "active" | jq -cer --argjson c "${colors}" "${query}"
 
@@ -451,12 +453,9 @@ show_output () {
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return
   fi
 
-  local color='none'
+  local colors='[]'
   if [[ -f "${SETTINGS_FILE}" ]]; then
-    local settings="$(<"${SETTINGS_FILE}")"
-
-    local query=".colors.\"${name}\"|if . != null then .profile else \"none\" end"
-    color="$(echo "${settings}" | jq -cer "${query}")" || return 1
+    colors="$(jq -cr "if .colors then .colors else [] end" "${SETTINGS_FILE}")"
   fi
 
   local base=''
@@ -478,6 +477,14 @@ show_output () {
   extra+='Rotate:    \(.rotation)\n'
   extra+='Reflect:   \(.reflection|ascii_downcase)'
 
+  # Reduce over color settings to match any devices have a profile set
+  local color=''
+  color+='reduce $c[] as $i ({};'
+  color+='if $i.model_name == $m and $i.product_id == $p and $i.serial_number == $s'
+  color+=' then . + {profile: $i.profile}'
+  color+=' else . '
+  color+='end)|if .profile then .profile else "none" end'
+
   local modes=''
   modes+='.associated_modes[]|'
   modes+='"\(.resolution_width)x\(.resolution_height)" as $mode|"'
@@ -492,14 +499,18 @@ show_output () {
   query+='\(if .is_connected and .resolution_width != null'
   query+=" then \"\n${extra}\""
   query+=' else "" end)'
-  query+="\nColor:     ${color}"
+  query+='\(if .is_connected'
+  query+=" then \"\nColor:     \(if \$c|length > 0 then (${color}) else \"none\" end)\""
+  query+=' else "" end)'
   query+='\(if .associated_modes|length != 0'
   query+=" then \"\nModes:     \(${modes})\""
   query+=' else "" end)'
 
-  query=".[]|select(.device_name==\"${name}\")|(\"${query}\")"
+  local alias='.model_name as $m|.product_id as $p|.serial_number as $s'
 
-  find_outputs "all" | jq -cer "${query}"
+  query=".[]|${alias}|select(.device_name==\"${name}\")|(\"${query}\")"
+
+  find_outputs "all" | jq -cer --argjson c "${colors}" "${query}"
 
   if [[ $? -ne 0 ]]; then
     echo "Unable to find output ${name}"
