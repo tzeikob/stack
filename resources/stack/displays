@@ -1396,6 +1396,94 @@ reset_color () {
   echo "${settings}" > "${SETTINGS_FILE}"
 }
 
+# Deletes the color setting with the given index.
+# Globals:
+#  SETTINGS_FILE, REPLY
+# Arguments:
+#  index: the index of a color setting
+delete_color () {
+  local index="$1"
+
+  if [[ ! -f "${SETTINGS_FILE}" ]]; then
+    echo "No colors settings have found"
+    return 2
+  fi
+
+  if [[ -z "${index}" ]]; then
+    local query=''
+    query+='{key: .key, value: "\(.key):\(.value.model_name) [\(.value.profile)]"}'
+    query="if .colors|length > 0 then [.colors|to_entries[]|${query}] else [] end"
+
+    local colors=''
+    colors="$(jq -cer "${query}" "${SETTINGS_FILE}")" || return 1
+    
+    local len=0
+    len="$(count "${colors}")" || return 1
+
+    if [[ ${len} -eq 0 ]]; then
+      echo "No colors settings have found"
+      return 2
+    fi
+
+    pick_one "Select a color setting:" "${colors}" "tabular" || return 1
+    [[ -n "${REPLY}" ]] && index="${REPLY}" || return
+  fi
+
+  local exists=''
+  exists="$(jq "select(.colors[${index}])" "${SETTINGS_FILE}")"
+
+  if [[ -z "${exists}" ]]; then
+    echo "Cannot find color setting"
+    return 2
+  fi
+
+  local settings='{}'
+  settings="$(jq -e "del(.colors|.[${index}])" "${SETTINGS_FILE}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to delete color setting"
+    return 2
+  fi
+
+  echo "${settings}" > "${SETTINGS_FILE}"
+
+  echo "Color setting has been deleted"
+}
+
+# List all the colors per device have stored in settings.
+# Globals:
+#  SETTINGS_FILE
+# Arguments:
+#  none
+list_colors () {
+  if [[ ! -f "${SETTINGS_FILE}" ]]; then
+    echo "No colors have found"
+    return
+  fi
+
+  local color=''
+  color+='Index:   \(.key)\n'
+  color+='Device:  \(.value.model_name)\n'
+  color+='Product: \(.value.product_id)\n'
+  color+='Serial:  \(.value.serial_number)\n'
+  color+='Profile: \(.value.profile)'
+
+  local query=''
+  query+='if .colors|length > 0'
+  query+=" then .colors|to_entries[]|\"${color}\""
+  query+=' else "No colors have found"'
+  query+='end'
+
+  query="[${query}]|join(\"\n\n\")"
+
+  jq -cer "${query}" "${SETTINGS_FILE}"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to list colors"
+    return 2
+  fi
+}
+
 # Restores the color profiles of any devices currently
 # connected to an output, only if such profile is stored
 # in the settings file.
@@ -1497,6 +1585,8 @@ help () {
     "" "where profile should be any calibration files" \
     "" "stored under ${COLORS_HOME}." \
     "reset color [<output>]" "Reset color profile of the device connected to output." \
+    "delete color [<index>]" "Delete the color setting with the given index." \
+    "list colors" "List any colors have set per device." \
     "restore colors" "Restore color profiles saved in settings." \
     "" "" \
     "set layout" "Set the layout of active outputs." \
@@ -1539,6 +1629,7 @@ loop () {
       "list")
         case "${cmd[1]}" in
           "outputs") list_outputs "${cmd[2]}";;
+          "colors") list_colors;;
           *) echo "Invalid or unknown command";;
         esac;;
       "set")
@@ -1564,6 +1655,7 @@ loop () {
       "delete")
         case "${cmd[1]}" in
           "layout") delete_layout "${cmd[2]}";;
+          "color") delete_color "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       "restore")
