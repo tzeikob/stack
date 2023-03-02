@@ -1260,7 +1260,7 @@ set_color () {
     query="[.[]|select(.filename|test(\".ic(c|m)$\"))|${query}]"
   
     local profiles=''
-    profiles="$(ls "${COLORS_HOME}" 2>/dev/null | jc --ls | jq -cer "${query}")"
+    profiles="$(ls "${COLORS_HOME}" 2>/dev/null | jc --ls | jq -cer "${query}")" || return 1
     
     local len=0
     len="$(count "${profiles}")" || return 1
@@ -1274,7 +1274,10 @@ set_color () {
     [[ -n "${REPLY}" ]] && profile="${REPLY}" || return
   fi
 
-  if [[ ! -f "${COLORS_HOME}/${profile}" ]]; then
+  if [[ ! "${profile}" =~ .ic(c|m)$ ]]; then
+    echo "Invalid color profile file"
+    return 2
+  elif [[ ! -f "${COLORS_HOME}/${profile}" ]]; then
     echo "Cannot find color profile file"
     return 2
   fi
