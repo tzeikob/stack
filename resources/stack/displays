@@ -274,60 +274,6 @@ pick_rate () {
   pick_one "Select a refresh rate:" "${options}" "horizontal" || return 1
 }
 
-# Shows a menu of layout modes and waits the user to pick
-# one. The selected option is kept in the global var REPLY.
-# Globals:
-#  REPLY
-# Arguments:
-#  None
-# Outputs:
-#  A menu of layout modes.
-pick_layout () {
-  local len=0
-  len="$(count "$(find_outputs "active")")" || return 1
-
-  if [[ ${len} -lt 2 ]] || [[ ${len} -gt 3 ]]; then
-    echo "No layouts found for ${len} display setups"
-    return 2
-  fi
-
-  local layouts=''
-
-  if [[ ${len} == 2 ]]; then
-    layouts+='{"key": "row-2", "value": "SideBySide"},'
-    layouts+='{"key": "col-2", "value": "TopBottom"}'
-    layouts="[${layouts}]"
-
-    echo "SideBySide  TopBottom"
-    echo "----------  ----------"
-    echo "[A][B]      [A]"
-    echo "            [B]"
-    echo
-  elif [[ ${len} == 3 ]]; then
-    layouts+='{"key": "row-3", "value": "SideBySide"},'
-    layouts+='{"key": "col-3", "value": "TopBottom"},'
-    layouts+='{"key": "gamma-3", "value": "LeftGamma"},'
-    layouts+='{"key": "gamma-rev-3", "value": "RightGamma"},'
-    layouts+='{"key": "lambda-3", "value": "LeftLambda"},'
-    layouts+='{"key": "lambda-rev-3", "value": "RightLambda"}'
-    layouts="[${layouts}]"
-
-    echo "SideBySide  TopBottom   LeftGamma"
-    echo "----------  ----------  -----------"
-    echo "[A][B][C]   [A]         [A][B]"
-    echo "            [B]         [C]"
-    echo "            [C]"
-    echo
-    echo "RightGamma  LeftLambda  RightLambda"
-    echo "----------  ----------  -----------"
-    echo "[A][B]      [A]            [A]"
-    echo "   [C]      [B][C]      [B][C]"
-    echo
-  fi
-
-  pick_one "Select a layout mode:" "${layouts}" "tabular" "${len}" || return 1
-}
-
 # Shows a prompt status and asks user to enter the
 # next command, which is kept in the global var REPLY.
 # Globals:
@@ -938,51 +884,79 @@ mirror () {
   echo "Output ${name} mirrored successfully"
 }
 
-# Sets the layout of currently active outputs.
+# Sets the layout of currently active outputs to the given
+# mode, where mode is limited to only 2 and 3 display setups.
 # Globals:
 #  REPLY
 # Arguments:
-#  None
+#  mode: a layout mode option between row-2, col-2, row-3,
+#        col-3, gamma-3, gamma-rev-3, lambda-3, lambda-rev-3
 set_layout () {
-  local layout=''
-  pick_layout || return 1
-  [[ -n "$REPLY" ]] && layout="${REPLY}" || return
+  local mode="$1"
+
+  if [[ -z "${mode}" ]]; then
+    local modes=''
+    modes+='{"key": "row-2", "value": "row-2"},'
+    modes+='{"key": "col-2", "value": "col-2"},'
+    modes+='{"key": "row-3", "value": "row-3"},'
+    modes+='{"key": "col-3", "value": "col-3"},'
+    modes+='{"key": "gamma-3", "value": "gamma-3"},'
+    modes+='{"key": "gamma-rev-3", "value": "gamma-rev-3"},'
+    modes+='{"key": "lambda-3", "value": "lambda-3"},'
+    modes+='{"key": "lambda-rev-3", "value": "lambda-rev-3"}'
+
+    pick_one "Select a layout mode:" "[${modes}]" "vertical" || return 1
+    [[ -n "$REPLY" ]] && mode="${REPLY}" || return
+  fi
+
+  local modes='(row-2|col-2|row-3|col-3|gamma-3|gamma-rev-3|lambda-3|lambda-rev-3)'
+  if [[ ! "${mode}" =~ ^${modes}$ ]]; then
+    echo "Invalid layout mode"
+    return 2
+  fi
 
   local outputs=''
   pick_outputs "Pick outputs by order:" "active" "all" || return 1
   [[ -n "$REPLY" ]] && outputs="${REPLY}" || return
 
-  local a="$(echo "${outputs}" | jq -cr '.[0]')"
-  local b="$(echo "${outputs}" | jq -cr '.[1]')"
-  local c="$(echo "${outputs}" | jq -cr '.[2]')"
+  local len=0
+  len="$(count "${outputs}")" || return 1
 
-  local args=''
-  case "${layout}" in
-    "row-2")
-      args="--output ${a} --left-of ${b}";;
-    "col-2")
-      args="--output ${a} --above ${b}";;
-    "row-3")
-      args="--output ${a} --left-of ${b} --output ${b} --left-of ${c}";;
-    "col-3")
-      args="--output ${a} --above ${b} --output ${b} --above ${c}";;
-    "gamma-3")
-      args="--output ${a} --left-of ${b} --output ${c} --below ${a}";;
-    "gamma-rev-3")
-      args="--output ${a} --left-of ${b} --output ${c} --below ${b}";;
-    "lambda-3")
-      args="--output ${a} --above ${b} --output ${b} --left-of ${c}";;
-    "lambda-rev-3")
-      args="--output ${a} --left-of ${c} --output ${a} --above ${c}";;
-    *)
-      echo "Invalid layout mode"
-      return 2;;
-  esac
+  if [[ ${len} == 2 ]]; then
+    local a="$(echo "${outputs}" | jq -cr '.[0]')"
+    local b="$(echo "${outputs}" | jq -cr '.[1]')"
+
+    local args=''
+    case "${mode}" in
+      "row-2") args="--output ${a} --left-of ${b}";;
+      "col-2") args="--output ${a} --above ${b}";;
+      *)
+        echo "Cannot apply ${mode} layout for setup of ${len} outputs"
+        return 2;;
+    esac
+  elif [[ ${len} == 3 ]]; then
+    local a="$(echo "${outputs}" | jq -cr '.[0]')"
+    local b="$(echo "${outputs}" | jq -cr '.[1]')"
+    local c="$(echo "${outputs}" | jq -cr '.[2]')"
+
+    local args=''
+    case "${mode}" in
+      "row-3") args="--output ${a} --left-of ${b} --output ${b} --left-of ${c}";;
+      "col-3") args="--output ${a} --above ${b} --output ${b} --above ${c}";;
+      "gamma-3") args="--output ${a} --left-of ${b} --output ${c} --below ${a}";;
+      "gamma-rev-3") args="--output ${a} --left-of ${b} --output ${c} --below ${b}";;
+      "lambda-3") args="--output ${a} --above ${b} --output ${b} --left-of ${c}";;
+      "lambda-rev-3") args="--output ${a} --left-of ${c} --output ${a} --above ${c}";;
+      *)
+        echo "Cannot apply ${mode} layout, found ${len} outputs"
+        return 2;;
+    esac
+  fi
 
   xrandr ${args}
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to set layout mode"
+    echo "Failed to set layout"
     return 2
   fi
 
@@ -1000,15 +974,15 @@ save_layout () {
   outputs="$(find_outputs "all")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to read outputs"
+    echo "Unable to find outputs"
     return 2
   fi
 
-  # Parse each output to an object with device and xrandr mode options
+  # Create a hash map of <output,{device, mode}> entries
   local device=''
   device+='if .model_name'
-  device+=' then "\(.model_name)_\(.product_id)_\(.serial_number)"'
-  device+=' else "NA"'
+  device+=' then {model_name: .model_name, product_id: .product_id, serial_number: .serial_number}'
+  device+=' else empty '
   device+='end'
 
   local res=''
@@ -1020,16 +994,15 @@ save_layout () {
   local pos='--pos \(.offset_width)x\(.offset_height)'
   local rotate='--rotate \(.rotation)'
   local reflect='--reflect \(.reflection|ascii_downcase|gsub("( |and|axis)";""))'
-  local primary='if .is_primary then " --primary" else "" end'
+  local primary='if .is_primary then "--primary" else "" end'
 
-  local mode=''
-  mode+='if .resolution_width'
-  mode+=" then \"\(${res}) ${pos} ${rotate} ${reflect}\(${primary})\""
-  mode+=' else "--off"'
-  mode+='end'
+  local query=''
+  query+='if .resolution_width'
+  query+=" then (${device}) * {mode: \"\(${res}) ${pos} ${rotate} ${reflect} \(${primary})\"}"
+  query+=' else empty '
+  query+='end'
 
-  local query="{\"device\": \"\(${device})\", \"mode\": \"\(${mode})\"}"
-  query="map({(.device_name|tostring): ${query}})|add"
+  query="map({(.device_name|tostring): (${query})})|add"
 
   local map=''
   map="$(echo "${outputs}" | jq -cer "${query}")"
@@ -1047,53 +1020,38 @@ save_layout () {
 
   if [[ -f "${SETTINGS_FILE}" ]]; then
     local layouts=''
-    layouts="$(jq '.layouts' "${SETTINGS_FILE}" 2>/dev/null)"
+    layouts="$(jq 'if .layouts then .layouts else empty end' "${SETTINGS_FILE}")"
 
-    if [[ $? -ne 0 ]]; then
-      echo "Unable to read the layout settings"
-      return 2
-    fi
+    if [[ -n "${layouts}" ]]; then
+      local query=''
+      query=".layouts[]|select(.sig == \"${sig}\")"
 
-    if [[ "${layouts}" != "null" ]]; then
       local exists=''
-      exists="$(jq ".layouts[]|select(.sig == \"${sig}\")" "${SETTINGS_FILE}" 2>/dev/null)"
-
-      if [[ $? -ne 0 ]]; then
-        echo "Failed to read the layout settings"
-        return 2
-      fi
+      exists="$(jq "${query}" "${SETTINGS_FILE}")"
 
       if [[ -n "${exists}" ]]; then
-        settings="$(jq -e "(.layouts[]|select(.sig == \"${sig}\")|.map)|= ${map}" "${SETTINGS_FILE}")"
+        query="(${query}|.map)|= ${map}"
       else
-        settings="$(jq -e ".layouts += [${layout}] " "${SETTINGS_FILE}")"
+        query=".layouts += [${layout}]"
       fi
+
+      settings="$(jq "${query}" "${SETTINGS_FILE}")"
     else
-      settings="$(jq -e ".layouts = [${layout}] " "${SETTINGS_FILE}")"
+      settings="$(jq ".layouts = [${layout}] " "${SETTINGS_FILE}")"
     fi
   else
     settings="$(echo "{\"layouts\": [${layout}]}" | jq -e '.')"
   fi
 
-  if [[ $? -ne 0 ]]; then
-    echo "Failed to parse the layout settings"
-    return 2
-  fi
-
   mkdir -p "${CONFIG_HOME}"
   echo "${settings}" > "${SETTINGS_FILE}"
-
-  if [[ $? -ne 0 ]]; then
-    echo "Failed to save the layout settings"
-    return 2
-  fi
   
   echo "Layout has been saved successfully"
 }
 
-# Restores the layout with the signature matching the
-# signature of the current mapping between outputs and
-# devices.
+# Restores the layout setting for the running outputs setup
+# if its mapping betwwen outputs and devices is found in the
+# settings.
 # Globals:
 #  SETTINGS_FILE
 # Arguments:
@@ -1105,12 +1063,9 @@ restore_layout () {
   fi
 
   local layouts=''
-  layouts="$(jq ".layouts" "${SETTINGS_FILE}" 2>/dev/null)"
+  layouts="$(jq 'if .layouts then .layouts else empty end' "${SETTINGS_FILE}")"
 
-  if [[ $? -ne 0 ]]; then
-    echo "Unable to read layout settings"
-    return 2
-  elif [[ "${layouts}" == "null" ]]; then
+  if [[ -z "${layouts}" ]]; then
     echo "No layout settings have found"
     return
   fi
@@ -1131,12 +1086,9 @@ restore_layout () {
   query="[.layouts[]|select(.sig == \"${sig}\")|.map|to_entries[]|${query}]|join(\" \")"
 
   local args=''
-  args="$(jq -cer "${query}" "${SETTINGS_FILE}" 2>/dev/null)"
+  args="$(jq -cr "${query}" "${SETTINGS_FILE}")"
 
-  if [[ $? -ne 0 ]]; then
-    echo "Unable to read layout settings"
-    return 2
-  elif [[ -z "${args}" ]]; then
+  if [[ -z "${args}" ]]; then
     echo "No layout found for the current setup"
     return 2
   fi
@@ -1151,76 +1103,98 @@ restore_layout () {
   echo "Layout has been restored"
 }
 
-# Delete the layout with the given signature.
+# Deletes the layout setting with the given index.
 # Globals:
 #  REPLY, SETTINGS_FILE
 # Arguments;
-#  sig: the signature of a layout
+#  index: the index of the layout setting
 delete_layout () {
-  local sig="$1"
+  local index="$1"
 
   if [[ ! -f "${SETTINGS_FILE}" ]]; then
     echo "No layout settings have found"
     return 2
   fi
 
-  local layouts=''
-  layouts="$(jq '.layouts' "${SETTINGS_FILE}" 2>/dev/null)"
+  if [[ -z "${index}" ]]; then
+    local devices=''
+    devices+='if .value.model_name then .value.model_name else "" end'
+    devices="[.value.map|to_entries[]|${devices}]|join(\",\")"
 
-  if [[ $? -ne 0 ]]; then
-    echo "Unable to read layout settings"
-    return 2
-  elif [[ "${layouts}" == "null" ]]; then
-    echo "No layout settings have found"
-    return 2
-  fi
+    local query=''
+    query+="{key: .key, value: \"\(.key):[\(${devices})]\"}"
+    query="if .layouts|length > 0 then [.layouts|to_entries[]|${query}] else [] end"
 
-  if [[ -z "${sig}" ]]; then
-    local sigs=''
-    sigs="$(jq -cr '[.layouts[]|{key: .sig, value: .sig}]' "${SETTINGS_FILE}" 2>/dev/null)"
+    local layouts=''
+    layouts="$(jq -cer "${query}" "${SETTINGS_FILE}")" || return 1
+    
+    local len=0
+    len="$(count "${layouts}")" || return 1
 
-    if [[ $? -ne 0 ]] || [[ -z "${sigs}" ]]; then
-      echo "Unable to read layout settings"
-      return 2
-    elif [[ "${sigs}" == "[]" ]]; then
+    if [[ ${len} -eq 0 ]]; then
       echo "No layout settings have found"
       return 2
     fi
 
-    # Show a help report of layout mappings per signature
-    local query="\(.sig)\n \([.map|to_entries[]|\"\(.key) [\(.value.device)]\"]|join(\"\n \"))"
-    query="[.layouts[]|\"${query}\"]|join(\"\n\n\")"
+    pick_one "Select a layout settings:" "${layouts}" "vertical" || return 1
+    [[ -n "${REPLY}" ]] && index="${REPLY}" || return
+  fi
 
-    jq -r "${query}" "${SETTINGS_FILE}"
-
-    pick_one "Select a layout:" "${sigs}" "vertical" || return 1
-    [[ -n "${REPLY}" ]] && sig="${REPLY}" || return
+  if [[ ! "${index}" =~ ^[0-9][0-9]*$ ]]; then
+    echo "Invalid index value"
+    return 2
   fi
 
   local exists=''
-  exists="$(jq -e ".layouts[]|select(.sig == \"${sig}\")" "${SETTINGS_FILE}")"
+  exists="$(jq "select(.layouts[${index}])" "${SETTINGS_FILE}")"
 
-  if [[ $? -ne 0 ]]; then
-    echo "Cannot find layout ${sig}"
+  if [[ -z "${exists}" ]]; then
+    echo "Cannot find layout setting"
     return 2
   fi
 
   local settings=''
-  settings="$(jq -e "del(.layouts[]|select(.sig == \"${sig}\"))" "${SETTINGS_FILE}")"
+  settings="$(jq -e "del(.layouts|.[${index}])" "${SETTINGS_FILE}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to delete layout ${sig}"
+    echo "Failed to delete layout setting"
     return 2
   fi
 
   echo "${settings}" > "${SETTINGS_FILE}"
+  
+  echo "Layout setting has been deleted"
+}
+
+# List all the stored layout settings.
+# Globals:
+#  SETTINGS_FILE
+# Arguments:
+#  none
+list_layouts () {
+  if [[ ! -f "${SETTINGS_FILE}" ]]; then
+    echo "No layout settings have found"
+    return
+  fi
+
+  local layout=''
+  layout+='Index:   \(.key)\n'
+  layout+='Devices: \([.value.map|to_entries[]|.value.model_name]|join(","))'
+
+  local query=''
+  query+='if .layouts|length > 0'
+  query+=" then .layouts|to_entries[]|\"${layout}\""
+  query+=' else "No layout settings have found"'
+  query+='end'
+
+  query="[${query}]|join(\"\n\n\")"
+
+  jq -cer "${query}" "${SETTINGS_FILE}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to update layout settings"
+    echo "Unable to list layout settings"
     return 2
   fi
-  
-  echo "Layout ${sig} has been deleted"
 }
 
 # Sets the color profile of the device connected to the output
@@ -1425,7 +1399,7 @@ delete_color () {
     len="$(count "${colors}")" || return 1
 
     if [[ ${len} -eq 0 ]]; then
-      echo "No colors settings have found"
+      echo "No color settings have found"
       return 2
     fi
 
@@ -1567,8 +1541,8 @@ help () {
     printf " %-16s %s\n" \
       "help" "Show this help message." \
       "" "" \
-      "restore layout" "Restore the layout." \
-      "restore colors" "Restore color profiles."
+      "restore layout" "Apply the stored layout matching the current outputs setup." \
+      "restore colors" "Apply stored color settings to active devices."
 
     return
   fi
@@ -1601,12 +1575,15 @@ help () {
     "" "" \
     "list colors" "List all color settings per device being currently stored." \
     "delete color [<index>]" "Delete the stored color setting with the given index." \
-    "restore colors" "Apply all stored color settings of active devices." \
+    "restore colors" "Apply stored color settings to active devices." \
     "" "" \
-    "set layout" "Set the layout of active outputs." \
-    "save layout" "Save the current layout." \
-    "delete layout [<sig>]" "Delete the layout with the given signature." \
-    "restore layout" "Restore the layout saved in settings."
+    "set layout [mode]" "Set the layout mode of active outputs, where mode" \
+    "" "could be row-2, col-2, row-3, col-3, gamma-3," \
+    "" "gamma-rev-3, lambda-3 or lambda-rev-3." \
+    "save layout" "Save the current layout of active outputs." \
+    "list layouts" "List all stored layout settings." \
+    "delete layout [<index>]" "Delete the layout with the given index." \
+    "restore layout" "Apply the stored layout matching the current outputs setup."
 }
 
 loop () {
@@ -1644,11 +1621,12 @@ loop () {
         case "${cmd[1]}" in
           "outputs") list_outputs "${cmd[2]}";;
           "colors") list_colors;;
+          "layouts") list_layouts;;
           *) echo "Invalid or unknown command";;
         esac;;
       "set")
         case "${cmd[1]}" in
-          "layout") set_layout;;
+          "layout") set_layout "${cmd[2]}";;
           "mode") set_mode "${cmd[2]}" "${cmd[3]}" "${cmd[4]}";;
           "primary") set_primary "${cmd[2]}";;
           "on") set_on "${cmd[2]}";;
