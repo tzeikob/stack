@@ -62,10 +62,10 @@ find_output () {
   find_outputs "all" | jq -cer "${query}" || return 1
 }
 
-# Returns a unique hashed signature of the current
-# mapping of outputs and connected devices, assuming
-# that xrandr works deterministically returning the
-# outputs always in the same order.
+# Returns a unique hashed signature of the list of currently
+# active connected devices on outputs, assuming that xrandr
+# works deterministically returning the outputs always in the
+# same order.
 # Arguments:
 #  outputs: a JSON array of outputs
 # Outputs:
@@ -79,7 +79,9 @@ get_sig () {
   model+=' else ""'
   model+='end'
 
-  local query="[.[]|\"\(.device_name)\(${model})\"]|join(\",\")"
+  local query=''
+  query+="select(.resolution_width)|\"\(.device_name)\(${model})\""
+  query="[.[]|${query}]|join(\",\")"
 
   local sig=''
   sig="$(echo "${outputs}" | jq -cer "${query}")" || return 1
