@@ -10,8 +10,8 @@ require "xcalib"
 
 # Returns a list of outputs having the given status.
 # Arguments:
-#  status: all, connected, disconnected,
-#          active, inactive, primary
+#  status: all, connected, disconnected, active,
+#          inactive, primary
 # Outputs:
 #  A JSON array of outputs.
 find_outputs () {
@@ -55,7 +55,7 @@ find_outputs () {
 # Outputs:
 #  A JSON object of output.
 find_output () {
-  local name="$1"
+  local name="${1}"
 
   local query=".[]|select(.device_name == \"${name}\")"
 
@@ -63,17 +63,15 @@ find_output () {
 }
 
 # Returns a unique hashed signature of the current
-# mapping between outputs and devices. The signature
-# is a hash of the list of outputs each one is followed
-# by its connected device, if any. We assume that xrandr
-# works deterministically and returns the outputs always
-# in the same order.
+# mapping of outputs and connected devices, assuming
+# that xrandr works deterministically returning the
+# outputs always in the same order.
 # Arguments:
 #  outputs: a JSON array of outputs
 # Outputs:
 #  A hashed signature value.
 get_sig () {
-  local outputs="$1"
+  local outputs="${1}"
 
   local model=''
   model+='if .model_name'
@@ -110,7 +108,7 @@ is_connected () {
 is_active () {
   local output="${1}"
 
-  local query='select(.is_connected and .resolution_width != null)'
+  local query='select(.is_connected and .resolution_width)'
 
   echo "${output}" | jq -cer "${query}" &>/dev/null || return 1
 }
@@ -133,18 +131,18 @@ is_primary () {
 # Globals:
 #  REPLY
 # Arguments:
-#  prompt:  a prompt text line
-#  status: all, connected, disconnected,
-#          active, inactive, primary
+#  prompt: a prompt text line
+#  status: all, connected, disconnected, active,
+#          inactive, primary
 # Outputs:
 #  A menu of output names.
 pick_output () {
-  local prompt="$1"
-  local status="$2"
+  local prompt="${1}"
+  local status="${2}"
 
   # Convert outputs list into an array of {key, value} options
   local key='\(.device_name)'
-  local value='\(.device_name) [\(if .model_name then .model_name else "NA" end)]'
+  local value='\(.device_name):[\(if .model_name then .model_name else "NA" end)]'
 
   local query="[.[]|{key: \"${key}\", value: \"${value}\"}]"
 
@@ -164,22 +162,22 @@ pick_output () {
 
 # Shows a menu asking the user to select many outputs,
 # where the answer is kept in the global var REPLY as
-# a JSON array of output names.
+# a JSON array of output names in selection order.
 # Globals:
 #  REPLY
 # Arguments:
 #  prompt:  a prompt text line
-#  status:  all, connected, disconnected,
-#           active, inactive, primary
+#  status:  all, connected, disconnected, active,
+#           inactive, primary
 #  size:    the number of items must be selected
 #  skip:    the output to except from selection
 # Outputs:
 #  A menu of output names.
 pick_outputs () {
-  local prompt="$1"
-  local status="$2"
-  local size="$3"
-  local skip="$4"
+  local prompt="${1}"
+  local status="${2}"
+  local size="${3}"
+  local skip="${4}"
 
   local except='select(true)'
   [[ -n "${skip}" ]] && except="select(.device_name != \"${skip}\")"
@@ -215,7 +213,7 @@ pick_outputs () {
 # Outputs:
 #  A menu of resolutions.
 pick_resolution () {
-  local output="$1"
+  local output="${1}"
 
   # Convert resolutions list into an array of {key, value} options
   local query=''
@@ -248,8 +246,8 @@ pick_resolution () {
 # Outputs:
 #  A menu of resolution rates.
 pick_rate () {
-  local output="$1"
-  local resolution="$2"
+  local output="${1}"
+  local resolution="${2}"
 
   # Convert rates list into an array of {key, value} options
   local query=''
@@ -338,13 +336,14 @@ show_status () {
   local offset='[\(.offset_width),\(.offset_height)]'
   local trans='\(.rotation) \(.reflection|ascii_downcase)'
 
-  # Reduce over color settings to match any devices have a profile set
+  # Reduce over color settings to match any devices having a profile set
   local color=''
   color+='reduce $c[] as $i ({};'
-  color+='if $i.model_name == $m and $i.product_id == $p and $i.serial_number == $s'
-  color+=' then . + {profile: $i.profile}'
-  color+=' else . '
-  color+='end)|if .profile then .profile else "none" end'
+  color+=' if $i.model_name == $m and $i.product_id == $p and $i.serial_number == $s'
+  color+='  then . + {profile: $i.profile}'
+  color+='  else .'
+  color+=' end'
+  color+=')|if .profile then .profile else "none" end'
 
   local query=''
   query+='Output:   \(.device_name)\(if .is_primary then "*" else "" end)\n'
@@ -392,11 +391,11 @@ show_logs () {
 # Outputs:
 #  A verbose list of text data.
 show_output () {
-  local name="$1"
+  local name="${1}"
 
   if [[ -z "${name}" ]]; then
     pick_output "Select an output:" "all" || return 1
-    [[ -n "${REPLY}" ]] && name="${REPLY}" || return
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
 
   local colors='[]'
@@ -459,15 +458,15 @@ show_output () {
   find_outputs "all" | jq -cer --argjson c "${colors}" "${query}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find output ${name}"
+    echo "Unable to find output"
     return 2
   fi
 }
 
 # Shows the list of outputs matching the given status.
 # Arguments:
-#  status: all, connected, disconnected,
-#          active, inactive, primary
+#  status: all, connected, disconnected, active,
+#          inactive, primary
 # Outputs:
 #  A list of outputs.
 list_outputs () {
@@ -505,8 +504,8 @@ list_outputs () {
 #  REPLY
 # Arguments:
 #  name:       any string
-#  resolution: a resolution string, e.g. 600x800
-#  rate:       a decimal number, e.g. 60.00
+#  resolution: a width x height resolution
+#  rate:       a refresh rate number
 set_mode () {
   local name="${1}"
   local resolution="${2}"
@@ -514,14 +513,14 @@ set_mode () {
 
   if [[ -z "${name}" ]]; then
     pick_output "Select an output:" "active" || return 1
-    [[ -n "${REPLY}" ]] && name="${REPLY}" || return
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
 
   local output=''
   output="$(find_output "${name}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find output ${name}"
+    echo "Unable to find output"
     return 2
   elif ! is_connected "${output}"; then
     echo "Cannot set mode of a disconnected output"
@@ -533,7 +532,7 @@ set_mode () {
 
   if [[ -z "$resolution" ]]; then
     pick_resolution "${output}" || return 1
-    [[ -n "${REPLY}" ]] && resolution="${REPLY}" || return
+    [[ -n "${REPLY}" ]] && resolution="${REPLY}" || return 0
   fi
   
   if [[ ! "${resolution}" =~ ^[0-9]+x[0-9]+$ ]]; then
@@ -543,7 +542,7 @@ set_mode () {
 
   if [[ -z "${rate}" ]]; then
     pick_rate "${output}" "${resolution}" || return 1
-    [[ -n "${REPLY}" ]] && rate="${REPLY}" || return
+    [[ -n "${REPLY}" ]] && rate="${REPLY}" || return 0
   fi
   
   if [[ ! "${rate}" =~ ^[0-9][0-9]+(.[0-9][0-9])?$ ]]; then
@@ -554,11 +553,11 @@ set_mode () {
   xrandr --output "${name}" --mode "${resolution}" --rate "${rate}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to set mode of output ${name}"
+    echo "Failed to set mode"
     return 2
   fi
 
-  echo "Output ${name} mode set to ${resolution}"
+  echo "Output mode has been set"
 }
 
 # Sets the output with the given name as primary.
@@ -567,18 +566,18 @@ set_mode () {
 # Arguments:
 #  name: any string
 set_primary () {
-  local name="$1"
+  local name="${1}"
 
   if [[ -z "${name}" ]]; then
     pick_output "Select an output:" "active" || return 1
-    [[ -n "${REPLY}" ]] && name="${REPLY}" || return
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
 
   local output=''
   output="$(find_output "${name}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find output ${name}"
+    echo "Unable to find output"
     return 2
   elif ! is_connected "${output}"; then
     echo "Cannot set primary a disconnected output"
@@ -587,18 +586,18 @@ set_primary () {
     echo "Cannot set primary an inactive output"
     return 2
   elif is_primary "${output}"; then
-    echo "Output ${name} is already the primary"
+    echo "Output is already the primary"
     return 2
   fi
 
   xrandr --output "${name}" --primary
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to set output ${name} as primary"
+    echo "Failed to set primary output"
     return 2
   fi
   
-  echo "Output ${name} has been set as primary"
+  echo "Output has been set as primary"
 }
 
 # Sets the output with the given name on.
@@ -607,35 +606,35 @@ set_primary () {
 # Arguments:
 #  name: any string
 set_on () {
-  local name="$1"
+  local name="${1}"
 
   if [[ -z "${name}" ]]; then
     pick_output "Select an output:" "inactive" || return 1
-    [[ -n "${REPLY}" ]] && name="${REPLY}" || return
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
 
   local output=''
   output="$(find_output "${name}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find output ${name}"
+    echo "Unable to find output"
     return 2
   elif ! is_connected "${output}"; then
     echo "Cannot activate a disconnected output"
     return 2
   elif is_active "${output}"; then
-    echo "Output ${name} is already active"
+    echo "Output is already active"
     return 2
   fi
 
   xrandr --output "${name}" --auto
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to activate output ${name}"
+    echo "Failed to activate output"
     return 2
   fi
   
-  echo "Output ${name} has been activated"
+  echo "Output has been activated"
 }
 
 # Sets the output with the given name off.
@@ -644,24 +643,24 @@ set_on () {
 # Arguments:
 #  name: any string
 set_off () {
-  local name="$1"
+  local name="${1}"
 
   if [[ -z "${name}" ]]; then
     pick_output "Select an output:" "active" || return 1
-    [[ -n "${REPLY}" ]] && name="${REPLY}" || return
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
 
   local output=''
   output="$(find_output "${name}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find output ${name}"
+    echo "Unable to find output"
     return 2
   elif ! is_connected "${output}"; then
     echo "Cannot deactivate a disconnected output"
     return 2
   elif ! is_active "${output}"; then
-    echo "Output ${output} is already inactive"
+    echo "Output is already inactive"
     return 2
   elif is_primary "${output}"; then
     echo "Cannot deactivate the primary output"
@@ -671,11 +670,11 @@ set_off () {
   xrandr --output "${name}" --off
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to deactivate output ${name}"
+    echo "Failed to deactivate output"
     return 2
   fi
   
-  echo "Output ${name} has been deactivated"
+  echo "Output has been deactivated"
 }
 
 # Sets the reflection of the output with the given name.
@@ -685,19 +684,19 @@ set_off () {
 #  name: any string
 #  mode: normal, x, y, xy
 reflect () {
-  local name="$1"
-  local mode="$2"
+  local name="${1}"
+  local mode="${2}"
   
   if [[ -z "${name}" ]]; then
     pick_output "Select an output:" "active" || return 1
-    [[ -n "${REPLY}" ]] && name="${REPLY}" || return
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
 
   local output=''
   output="$(find_output "${name}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find output ${name}"
+    echo "Unable to find output"
     return 2
   elif ! is_connected "${output}"; then
     echo "Cannot reflect a disconnected output"
@@ -716,7 +715,7 @@ reflect () {
     modes="[${modes}]"
 
     pick_one "Select a reflection mode:" "${modes}" "horizontal" || return 1
-    [[ -n "${REPLY}" ]] && mode="${REPLY}" || return
+    [[ -n "${REPLY}" ]] && mode="${REPLY}" || return 0
   fi
   
   if [[ ! "${mode}" =~ ^(normal|x|y|xy)$ ]]; then
@@ -727,11 +726,11 @@ reflect () {
   xrandr --output "${name}" --reflect "${mode}"
     
   if [[ $? -ne 0 ]]; then
-    echo "Failed to reflect output ${name}"
+    echo "Failed to reflect output"
     return 2
   fi
 
-  echo "Output ${name} reflected to ${mode} mode"
+  echo "Output has been reflected"
 }
 
 # Sets the rotation of the output with the given name.
@@ -746,14 +745,14 @@ rotate () {
 
   if [[ -z "${name}" ]]; then
     pick_output "Select an output:" "active" || return 1
-    [[ -n "${REPLY}" ]] && name="${REPLY}" || return
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
 
   local output=''
   output="$(find_output "${name}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find output ${name}"
+    echo "Unable to find output"
     return 2
   elif ! is_connected "${output}"; then
     echo "Cannot rotate a disconnected output"
@@ -772,7 +771,7 @@ rotate () {
     modes="[${modes}]"
 
     pick_one "Select a rotation mode:" "${modes}" "horizontal" || return 1
-    [[ -n "${REPLY}" ]] && mode="${REPLY}" || return
+    [[ -n "${REPLY}" ]] && mode="${REPLY}" || return 0
   fi
   
   if [[ ! "${mode}" =~ ^(normal|right|left|inverted)$ ]]; then
@@ -783,11 +782,11 @@ rotate () {
   xrandr --output "${name}" --rotate "${mode}"
     
   if [[ $? -ne 0 ]]; then
-    echo "Failed to rotate output ${name}"
+    echo "Failed to rotate output"
     return 2
   fi
   
-  echo "Output ${name} rotated to ${mode} mode"
+  echo "Output has been rotated"
 }
 
 # Mirrors the output with the given name to other outputs,
@@ -800,18 +799,18 @@ rotate () {
 # Arguments:
 #  name: any string
 mirror () {
-  local name="$1"
+  local name="${1}"
 
   if [[ -z "${name}" ]]; then
-    pick_output "Select an output:" "active" || return 1
-    [[ -n "${REPLY}" ]] && name="${REPLY}" || return
+    pick_output "Select source output:" "active" || return 1
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
 
   local output=''
   output="$(find_output "${name}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find output ${name}"
+    echo "Unable to find output"
     return 2
   elif ! is_connected "${output}"; then
     echo "Cannot mirror a disconnected output"
@@ -833,8 +832,8 @@ mirror () {
   fi
 
   local mirrors=''
-  pick_outputs "Select on which outputs to mirror:" "active" "1," "${name}" || return 1
-  [[ -n "${REPLY}" ]] && mirrors="${REPLY}" || return
+  pick_outputs "Select mirror outputs:" "active" "1," "${name}" || return 1
+  [[ -n "${REPLY}" ]] && mirrors="${REPLY}" || return 0
 
   # Find the common resolution modes among output and mirrors
   local names=''
@@ -860,7 +859,7 @@ mirror () {
 
   local mode=''
   pick_one "Select the mirroring resolution:" "${modes}" "vertical" || return 1
-  [[ -n "${REPLY}" ]] && mode="${REPLY}" || return
+  [[ -n "${REPLY}" ]] && mode="${REPLY}" || return 0
 
   # Have mirrors inherit the position and rotate/reflect of the source output
   local pos="$(echo "${output}" | jq -r '"\(.offset_width)x\(.offset_height)"')"
@@ -877,11 +876,11 @@ mirror () {
   xrandr --output "${name}" --mode "${mode}" ${others}
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to mirror output ${name}"
+    echo "Failed to mirror output"
     return 2
   fi
   
-  echo "Output ${name} mirrored successfully"
+  echo "Output has mirrored successfully"
 }
 
 # Sets the layout of currently active outputs to the given
@@ -889,10 +888,10 @@ mirror () {
 # Globals:
 #  REPLY
 # Arguments:
-#  mode: a layout mode option between row-2, col-2, row-3,
-#        col-3, gamma-3, gamma-rev-3, lambda-3, lambda-rev-3
+#  mode: row-2, col-2, row-3, col-3, gamma-3, gamma-rev-3,
+#        lambda-3, lambda-rev-3
 set_layout () {
-  local mode="$1"
+  local mode="${1}"
 
   if [[ -z "${mode}" ]]; then
     local modes=''
@@ -906,7 +905,7 @@ set_layout () {
     modes+='{"key": "lambda-rev-3", "value": "lambda-rev-3"}'
 
     pick_one "Select a layout mode:" "[${modes}]" "vertical" || return 1
-    [[ -n "$REPLY" ]] && mode="${REPLY}" || return
+    [[ -n "$REPLY" ]] && mode="${REPLY}" || return 0
   fi
 
   local modes='(row-2|col-2|row-3|col-3|gamma-3|gamma-rev-3|lambda-3|lambda-rev-3)'
@@ -917,7 +916,7 @@ set_layout () {
 
   local outputs=''
   pick_outputs "Pick outputs by order:" "active" "all" || return 1
-  [[ -n "$REPLY" ]] && outputs="${REPLY}" || return
+  [[ -n "$REPLY" ]] && outputs="${REPLY}" || return 0
 
   local len=0
   len="$(count "${outputs}")" || return 1
@@ -1013,7 +1012,9 @@ save_layout () {
   fi
 
   # Assign a signature to the current layout mapping
-  local sig="$(get_sig "${outputs}")" || return 1
+  local sig=''
+  sig="$(get_sig "${outputs}")" || return 1
+
   local layout="{\"sig\": \"${sig}\", \"map\": ${map}}"
 
   local settings='{}'
@@ -1046,12 +1047,12 @@ save_layout () {
   mkdir -p "${CONFIG_HOME}"
   echo "${settings}" > "${SETTINGS_FILE}"
   
-  echo "Layout has been saved successfully"
+  echo "Layout has been saved"
 }
 
-# Restores the layout setting for the running outputs setup
-# if its mapping betwwen outputs and devices is found in the
-# settings.
+# Restores the layout setting for the running setup only
+# if its mapping between outputs and devices is found in the
+# settings by signature.
 # Globals:
 #  SETTINGS_FILE
 # Arguments:
@@ -1059,7 +1060,7 @@ save_layout () {
 restore_layout () {
   if [[ ! -f "${SETTINGS_FILE}" ]]; then
     echo "No layout settings have found"
-    return
+    return 0
   fi
 
   local layouts=''
@@ -1067,7 +1068,7 @@ restore_layout () {
 
   if [[ -z "${layouts}" ]]; then
     echo "No layout settings have found"
-    return
+    return 0
   fi
 
   local outputs=''
@@ -1079,7 +1080,8 @@ restore_layout () {
   fi
 
   # Calculate the hashed signature of the current mapping
-  local sig="$(get_sig "${outputs}")" || return 1
+  local sig=''
+  sig="$(get_sig "${outputs}")" || return 1
 
   # Collect all output xrandr mode options matching the sig
   local query='"--output \(.key) \(.value.mode)"'
@@ -1109,7 +1111,7 @@ restore_layout () {
 # Arguments;
 #  index: the index of the layout setting
 delete_layout () {
-  local index="$1"
+  local index="${1}"
 
   if [[ ! -f "${SETTINGS_FILE}" ]]; then
     echo "No layout settings have found"
@@ -1136,8 +1138,8 @@ delete_layout () {
       return 2
     fi
 
-    pick_one "Select a layout settings:" "${layouts}" "vertical" || return 1
-    [[ -n "${REPLY}" ]] && index="${REPLY}" || return
+    pick_one "Select a layout setting:" "${layouts}" "vertical" || return 1
+    [[ -n "${REPLY}" ]] && index="${REPLY}" || return 0
   fi
 
   if [[ ! "${index}" =~ ^[0-9][0-9]*$ ]]; then
@@ -1171,10 +1173,12 @@ delete_layout () {
 #  SETTINGS_FILE
 # Arguments:
 #  none
+# Outputs:
+#  A list of layout settings.
 list_layouts () {
   if [[ ! -f "${SETTINGS_FILE}" ]]; then
     echo "No layout settings have found"
-    return
+    return 0
   fi
 
   local layout=''
@@ -1212,14 +1216,14 @@ set_color () {
 
   if [[ -z "${name}" ]]; then
     pick_output "Select an output:" "active" || return 1
-    [[ -n "${REPLY}" ]] && name="${REPLY}" || return
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
   
   local output=''
   output="$(find_output "${name}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find output ${name}"
+    echo "Unable to find output"
     return 2
   elif ! is_connected "${output}"; then
     echo "Cannot set color of a disconnected output"
@@ -1246,7 +1250,7 @@ set_color () {
     fi
 
     pick_one "Select a color profile:" "${profiles}" "vertical" || return 1
-    [[ -n "${REPLY}" ]] && profile="${REPLY}" || return
+    [[ -n "${REPLY}" ]] && profile="${REPLY}" || return 0
   fi
 
   if [[ ! "${profile}" =~ .ic(c|m)$ ]]; then
@@ -1323,18 +1327,18 @@ set_color () {
 # Arguments:
 #  name: the name of an output
 reset_color () {
-  local name="$1"
+  local name="${1}"
 
   if [[ -z "${name}" ]]; then
     pick_output "Select an output:" "active" || return 1
-    [[ -n "${REPLY}" ]] && name="${REPLY}" || return
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
 
   local output=''
   output="$(find_output "${name}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find output ${name}"
+    echo "Unable to find output"
     return 2
   elif ! is_connected "${output}"; then
     echo "Cannot reset color of a disconnected output"
@@ -1359,7 +1363,7 @@ reset_color () {
 
   # Try to remove color profile from color settings
   if [[ ! -f "${SETTINGS_FILE}" ]]; then
-    return
+    return 0
   fi
 
   local query=''
@@ -1380,7 +1384,7 @@ reset_color () {
 # Arguments:
 #  index: the index of a color setting
 delete_color () {
-  local index="$1"
+  local index="${1}"
 
   if [[ ! -f "${SETTINGS_FILE}" ]]; then
     echo "No color settings have found"
@@ -1404,7 +1408,7 @@ delete_color () {
     fi
 
     pick_one "Select a color setting:" "${colors}" "vertical" || return 1
-    [[ -n "${REPLY}" ]] && index="${REPLY}" || return
+    [[ -n "${REPLY}" ]] && index="${REPLY}" || return 0
   fi
 
   if [[ ! "${index}" =~ ^[0-9][0-9]*$ ]]; then
@@ -1439,10 +1443,12 @@ delete_color () {
 #  SETTINGS_FILE
 # Arguments:
 #  none
+# Outputs:
+#  A list of color settings.
 list_colors () {
   if [[ ! -f "${SETTINGS_FILE}" ]]; then
     echo "No color settings have found"
-    return
+    return 0
   fi
 
   local color=''
@@ -1477,7 +1483,7 @@ list_colors () {
 restore_colors () {
   if [[ ! -f "${SETTINGS_FILE}" ]]; then
     echo "No color settings have found"
-    return
+    return 0
   fi
 
   local colors=''
@@ -1488,7 +1494,7 @@ restore_colors () {
 
   if [[ ${len} -eq 0 ]]; then
     echo "No color settings have found"
-    return
+    return 0
   fi
 
   local outputs=''
@@ -1541,10 +1547,10 @@ help () {
     printf " %-16s %s\n" \
       "help" "Show this help message." \
       "" "" \
-      "restore layout" "Apply the stored layout matching the current outputs setup." \
-      "restore colors" "Apply stored color settings to active devices."
+      "restore colors" "Apply color settings to currently active displays." \
+      "restore layout" "Apply the layout matching the current setup."
 
-    return
+    return 0
   fi
 
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
@@ -1555,35 +1561,30 @@ help () {
     "" "" \
     "show status" "Show a report of the Xorg server and active outputs." \
     "show logs" "Show the logs of the Xorg server." \
-    "show output [<name>]" "Show the data of the given output." \
     "" "" \
-    "list outputs [<status>]" "List all outputs or by the given status," \
-    "" "all, connected, disconnected, active, inactive or primary." \
+    "list outputs [<status>]" "List outputs by the given status." \
+    "show output [<name>]" "Show the data of an output." \
     "" "" \
-    "set mode [<output> [<resolution> [<rate>]]]" "Set the mode of the given output." \
-    "set primary [<output>]" "Set the given output as primary." \
-    "set on|off [<output>]" "Set active or inactive the given output." \
+    "set mode [<output> [<resolution> [<rate>]]]" "Set the mode of an output." \
+    "set primary [<output>]" "Set an output as primary." \
+    "set on|off [<output>]" "Activate or de-activate an output." \
+    "rotate [<output> [<mode>]]" "Rotate the view of an output." \
+    "reflect [<output> [<mode>]]" "Reflect the view of an output." \
+    "mirror [<output>]" "Mirror an output to other outputs." \
     "" "" \
-    "rotate [<output> [<mode>]]" "Set output rotation to normal, right, left or inverted." \
-    "reflect [<output> [<mode>]]" "Set output reflection to normal, x, y or xy axes." \
-    "mirror [<output>]" "Mirror the given active output to other outputs." \
+    "set color [<output> [<profile>]]" "Set color profile of a display connected to an output." \
+    "reset color [<output>]" "Reset color profile of a display connected to an output." \
     "" "" \
-    "set color [<output> [<profile>]]" "Set color profile of the device connected to output," \
-    "" "where profile should be any calibration files" \
-    "" "stored under ${COLORS_HOME}." \
-    "reset color [<output>]" "Reset color profile of the device connected to output." \
+    "list colors" "List all stored color settings per display." \
+    "delete color [<index>]" "Delete a stored color setting." \
+    "restore colors" "Apply color settings to currently active displays." \
     "" "" \
-    "list colors" "List all color settings per device being currently stored." \
-    "delete color [<index>]" "Delete the stored color setting with the given index." \
-    "restore colors" "Apply stored color settings to active devices." \
-    "" "" \
-    "set layout [mode]" "Set the layout mode of active outputs, where mode" \
-    "" "could be row-2, col-2, row-3, col-3, gamma-3," \
-    "" "gamma-rev-3, lambda-3 or lambda-rev-3." \
+    "set layout [mode]" "Set the layout of active outputs." \
     "save layout" "Save the current layout of active outputs." \
+    "" "" \
     "list layouts" "List all stored layout settings." \
-    "delete layout [<index>]" "Delete the layout with the given index." \
-    "restore layout" "Apply the stored layout matching the current outputs setup."
+    "delete layout [<index>]" "Delete a stored layout setting." \
+    "restore layout" "Apply the layout matching the current setup."
 }
 
 loop () {
