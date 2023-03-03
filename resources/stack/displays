@@ -221,7 +221,8 @@ pick_resolution () {
   local query=''
   query+='.associated_modes[]'
   query+=' |"\(.resolution_width)x\(.resolution_height)" as $res'
-  query+=' |{key: "\($res)", value: "\($res)"}'
+  query+=' |(reduce .frequencies[] as $i (""; if $i.is_preferred then . + "*" else . end)) as $pref'
+  query+=' |{key: "\($res)", value: "\($res)\($pref)"}'
   query="[${query}]"
 
   local options=''
@@ -256,8 +257,10 @@ pick_rate () {
   query+='.associated_modes[]'
   query+=' |"\(.resolution_width)x\(.resolution_height)" as $res'
   query+=" |select(\$res == \"${resolution}\")"
-  query+=' |"\(.frequencies[].frequency)" as $freq'
-  query+=' |{key: "\($freq)", value: "\($freq)"}'
+  query+=' |.frequencies[]'
+  query+=' |"\(.frequency)" as $freq'
+  query+=' |"\(if .is_preferred then "*" else "" end)" as $pref'
+  query+=' |{key: "\($freq)", value: "\($freq)\($pref)"}'
   query="[${query}]"
 
   local options=''
@@ -271,7 +274,7 @@ pick_rate () {
     return 2
   fi
 
-  pick_one "Select a refresh rate:" "${options}" "horizontal" || return 1
+  pick_one "Select a refresh rate:" "${options}" "vertical" || return 1
 }
 
 # Shows a prompt status and asks user to enter the
