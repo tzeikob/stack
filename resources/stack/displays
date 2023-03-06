@@ -437,7 +437,7 @@ show_output () {
   local name="${1}"
 
   if [[ -z "${name}" ]]; then
-    pick_output "Select an output:" "all" || return 1
+    pick_output "Select an output:" "all" || return $?
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
 
@@ -555,7 +555,7 @@ set_mode () {
   local rate="${3}"
 
   if [[ -z "${name}" ]]; then
-    pick_output "Select an output:" "active" || return 1
+    pick_output "Select an output:" "active" || return $?
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
 
@@ -574,7 +574,7 @@ set_mode () {
   fi
 
   if [[ -z "$resolution" ]]; then
-    pick_resolution "${output}" || return 1
+    pick_resolution "${output}" || return $?
     [[ -n "${REPLY}" ]] && resolution="${REPLY}" || return 0
   fi
   
@@ -587,7 +587,7 @@ set_mode () {
   fi
 
   if [[ -z "${rate}" ]]; then
-    pick_rate "${output}" "${resolution}" || return 1
+    pick_rate "${output}" "${resolution}" || return $?
     [[ -n "${REPLY}" ]] && rate="${REPLY}" || return 0
   fi
   
@@ -618,7 +618,7 @@ set_primary () {
   local name="${1}"
 
   if [[ -z "${name}" ]]; then
-    pick_output "Select an output:" "active" || return 1
+    pick_output "Select an output:" "active" || return $?
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
 
@@ -658,7 +658,7 @@ set_on () {
   local name="${1}"
 
   if [[ -z "${name}" ]]; then
-    pick_output "Select an output:" "inactive" || return 1
+    pick_output "Select an output:" "inactive" || return $?
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
 
@@ -695,7 +695,7 @@ set_off () {
   local name="${1}"
 
   if [[ -z "${name}" ]]; then
-    pick_output "Select an output:" "active" || return 1
+    pick_output "Select an output:" "active" || return $?
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
 
@@ -737,7 +737,7 @@ reflect () {
   local mode="${2}"
   
   if [[ -z "${name}" ]]; then
-    pick_output "Select an output:" "active" || return 1
+    pick_output "Select an output:" "active" || return $?
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
 
@@ -793,7 +793,7 @@ rotate () {
   local mode="$2"
 
   if [[ -z "${name}" ]]; then
-    pick_output "Select an output:" "active" || return 1
+    pick_output "Select an output:" "active" || return $?
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
 
@@ -851,7 +851,7 @@ mirror () {
   local name="${1}"
 
   if [[ -z "${name}" ]]; then
-    pick_output "Select source output:" "active" || return 1
+    pick_output "Select source output:" "active" || return $?
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
 
@@ -881,7 +881,7 @@ mirror () {
   fi
 
   local mirrors=''
-  pick_outputs "Select mirror outputs:" "active" "1," "${name}" || return 1
+  pick_outputs "Select mirror outputs:" "active" "1," "${name}" || return $?
   [[ -n "${REPLY}" ]] && mirrors="${REPLY}" || return 0
 
   # Find the common resolution modes among output and mirrors
@@ -964,7 +964,7 @@ set_layout () {
   fi
 
   local outputs=''
-  pick_outputs "Pick outputs by order:" "active" "all" || return 1
+  pick_outputs "Pick outputs by order:" "active" "all" || return $?
   [[ -n "$REPLY" ]] && outputs="${REPLY}" || return 0
 
   local len=0
@@ -1264,7 +1264,7 @@ set_color () {
   local profile="$2"
 
   if [[ -z "${name}" ]]; then
-    pick_output "Select an output:" "active" || return 1
+    pick_output "Select an output:" "active" || return $?
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
   
@@ -1379,7 +1379,7 @@ reset_color () {
   local name="${1}"
 
   if [[ -z "${name}" ]]; then
-    pick_output "Select an output:" "active" || return 1
+    pick_output "Select an output:" "active" || return $?
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
 
