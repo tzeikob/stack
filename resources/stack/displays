@@ -846,7 +846,7 @@ rotate () {
 # Globals:
 #  REPLY
 # Arguments:
-#  name: any string
+#  name: an output name
 mirror () {
   local name="${1}"
 
@@ -881,7 +881,7 @@ mirror () {
   fi
 
   local mirrors=''
-  pick_outputs "Select mirror outputs:" "active" "1," "${name}" || return $?
+  pick_outputs "Select target outputs:" "active" "1," "${name}" || return $?
   [[ -n "${REPLY}" ]] && mirrors="${REPLY}" || return 0
 
   # Find the common resolution modes among output and mirrors
@@ -999,6 +999,9 @@ set_layout () {
         echo "Cannot apply ${mode} layout, found ${len} outputs"
         return 2;;
     esac
+  else
+    echo "Cannot apply layout ${mode} for setup of ${len} output"
+    return 2
   fi
 
   xrandr ${args}
