@@ -501,7 +501,7 @@ show_output () {
   find_outputs "all" | jq -cer --argjson c "${colors}" "${query}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find output"
+    echo "Unable to find output ${name}"
     return 2
   fi
 }
@@ -563,13 +563,13 @@ set_mode () {
   output="$(find_output "${name}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find output"
+    echo "Unable to find output ${name}"
     return 2
   elif ! is_connected "${output}"; then
-    echo "Cannot set mode of a disconnected output"
+    echo "Cannot set mode, output ${name} is disconnected"
     return 2
   elif ! is_active "${output}"; then
-    echo "Cannot set mode of an inactive output"
+    echo "Cannot set mode, output ${name} is inactive"
     return 2
   fi
 
@@ -579,10 +579,10 @@ set_mode () {
   fi
   
   if [[ ! "${resolution}" =~ ^[0-9]+x[0-9]+$ ]]; then
-    echo "Invalid resolution value"
+    echo "Cannot set mode, invalid resolution value"
     return 2
   elif ! has_resolution "${output}" "${resolution}"; then
-    echo "Resolution is not supported"
+    echo "Cannot set mode, resolution ${resolution} is not supported"
     return 2
   fi
 
@@ -592,21 +592,21 @@ set_mode () {
   fi
   
   if [[ ! "${rate}" =~ ^[0-9][0-9]+(.[0-9][0-9])?$ ]]; then
-    echo "Invalid refresh rate value"
+    echo "Cannot set mode, invalid refresh rate value"
     return 2
   elif ! has_rate "${output}" "${resolution}" "${rate}"; then
-    echo "Refresh rate is not supported"
+    echo "Cannot set mode, refresh rate ${rate} is not supported"
     return 2
   fi
 
   xrandr --output "${name}" --mode "${resolution}" --rate "${rate}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to set mode"
+    echo "Failed to set mode of output ${name}"
     return 2
   fi
 
-  echo "Output mode has been set"
+  echo "Mode of output ${name} set to ${resolution}@${rate}"
 }
 
 # Sets the output with the given name as primary.
@@ -626,27 +626,27 @@ set_primary () {
   output="$(find_output "${name}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find output"
+    echo "Unable to find output ${name}"
     return 2
   elif ! is_connected "${output}"; then
-    echo "Cannot set primary a disconnected output"
+    echo "Cannot set primary, output ${name} is disconnected"
     return 2
   elif ! is_active "${output}"; then
-    echo "Cannot set primary an inactive output"
+    echo "Cannot set primary, output ${name} is inactive"
     return 2
   elif is_primary "${output}"; then
-    echo "Output is already the primary"
+    echo "Output ${name} is already the primary"
     return 2
   fi
 
   xrandr --output "${name}" --primary
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to set primary output"
+    echo "Failed to set as primary output ${name}"
     return 2
   fi
   
-  echo "Output has been set as primary"
+  echo "Output ${name} set as primary"
 }
 
 # Sets the output with the given name on.
@@ -666,24 +666,24 @@ set_on () {
   output="$(find_output "${name}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find output"
+    echo "Unable to find output ${name}"
     return 2
   elif ! is_connected "${output}"; then
-    echo "Cannot activate a disconnected output"
+    echo "Cannot activate, output ${name} is disconnected"
     return 2
   elif is_active "${output}"; then
-    echo "Output is already active"
+    echo "Output ${name} is already active"
     return 2
   fi
 
   xrandr --output "${name}" --auto
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to activate output"
+    echo "Failed to activate output ${name}"
     return 2
   fi
   
-  echo "Output has been activated"
+  echo "Output ${name} has been activated"
 }
 
 # Sets the output with the given name off.
@@ -703,13 +703,13 @@ set_off () {
   output="$(find_output "${name}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find output"
+    echo "Unable to find output ${name}"
     return 2
   elif ! is_connected "${output}"; then
-    echo "Cannot deactivate a disconnected output"
+    echo "Cannot deactivate, output ${name} is disconnected"
     return 2
   elif ! is_active "${output}"; then
-    echo "Output is already inactive"
+    echo "Output ${name} is already inactive"
     return 2
   elif is_primary "${output}"; then
     echo "Cannot deactivate the primary output"
@@ -719,11 +719,11 @@ set_off () {
   xrandr --output "${name}" --off
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to deactivate output"
+    echo "Failed to deactivate output ${name}"
     return 2
   fi
   
-  echo "Output has been deactivated"
+  echo "Output ${name} has been deactivated"
 }
 
 # Sets the reflection of the output with the given name.
@@ -745,13 +745,13 @@ reflect () {
   output="$(find_output "${name}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find output"
+    echo "Unable to find output ${name}"
     return 2
   elif ! is_connected "${output}"; then
-    echo "Cannot reflect a disconnected output"
+    echo "Cannot reflect, output ${name} is disconnected"
     return 2
   elif ! is_active "${output}"; then
-    echo "Cannot reflect an inactive output"
+    echo "Cannot reflect, output ${name} is inactive"
     return 2
   fi
 
@@ -768,18 +768,18 @@ reflect () {
   fi
   
   if [[ ! "${mode}" =~ ^(normal|x|y|xy)$ ]]; then
-    echo "Invalid reflection value"
+    echo "Cannot reflect, invalid reflection value"
     return 2
   fi
 
   xrandr --output "${name}" --reflect "${mode}"
     
   if [[ $? -ne 0 ]]; then
-    echo "Failed to reflect output"
+    echo "Failed to reflect output ${name}"
     return 2
   fi
 
-  echo "Output has been reflected"
+  echo "Output ${name} has been reflected"
 }
 
 # Sets the rotation of the output with the given name.
@@ -801,13 +801,13 @@ rotate () {
   output="$(find_output "${name}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find output"
+    echo "Unable to find output ${name}"
     return 2
   elif ! is_connected "${output}"; then
-    echo "Cannot rotate a disconnected output"
+    echo "Cannot rotate, output ${name} is disconnected"
     return 2
   elif ! is_active "${output}"; then
-    echo "Cannot rotate an inactive output"
+    echo "Cannot rotate, output ${name} is inactive"
     return 2
   fi
 
@@ -824,18 +824,18 @@ rotate () {
   fi
   
   if [[ ! "${mode}" =~ ^(normal|right|left|inverted)$ ]]; then
-    echo "Invalid rotation value"
+    echo "Cannot rotate, invalid rotation value"
     return 2
   fi
 
   xrandr --output "${name}" --rotate "${mode}"
     
   if [[ $? -ne 0 ]]; then
-    echo "Failed to rotate output"
+    echo "Failed to rotate output ${name}"
     return 2
   fi
   
-  echo "Output has been rotated"
+  echo "Output ${name} has been rotated"
 }
 
 # Mirrors the output with the given name to other outputs,
@@ -859,13 +859,13 @@ mirror () {
   output="$(find_output "${name}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find output"
+    echo "Unable to find output ${name}"
     return 2
   elif ! is_connected "${output}"; then
-    echo "Cannot mirror a disconnected output"
+    echo "Cannot mirror, output ${name} is disconnected"
     return 2
   elif ! is_active "${output}"; then
-    echo "Cannot mirror an inactive output"
+    echo "Cannot mirror, output ${name} is inactive"
     return 2
   fi
 
@@ -876,7 +876,7 @@ mirror () {
   len="$(count "${outputs}")" || return 1
 
   if [[ ${len} -lt 2 ]]; then
-    echo "No other outputs have found to mirror"
+    echo "Cannot mirror, no other outputs have found"
     return 2
   fi
 
@@ -902,7 +902,7 @@ mirror () {
   modes="$(echo "${outputs}" | jq -cer "${query}")" || return 1
 
   if [[ "$(count "${modes}")" -eq 0 ]]; then
-    echo "Mirrors do not share common resolutions"
+    echo "Cannot mirror, outputs have no common resolutions"
     return 2
   fi
 
@@ -925,11 +925,11 @@ mirror () {
   xrandr --output "${name}" --mode "${mode}" ${others}
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to mirror output"
+    echo "Failed to mirror output ${name}"
     return 2
   fi
   
-  echo "Output has mirrored successfully"
+  echo "Output ${name} has been mirrored"
 }
 
 # Sets the layout of currently active outputs to the given
@@ -959,7 +959,7 @@ set_layout () {
 
   local modes='(row-2|col-2|row-3|col-3|gamma-3|gamma-rev-3|lambda-3|lambda-rev-3)'
   if [[ ! "${mode}" =~ ^${modes}$ ]]; then
-    echo "Invalid layout mode"
+    echo "Cannot set layout, invalid layout mode"
     return 2
   fi
 
@@ -979,7 +979,7 @@ set_layout () {
       "row-2") args="--output ${a} --left-of ${b}";;
       "col-2") args="--output ${a} --above ${b}";;
       *)
-        echo "Cannot apply ${mode} layout for setup of ${len} outputs"
+        echo "Cannot set ${mode} layout for setup of ${len} outputs"
         return 2;;
     esac
   elif [[ ${len} == 3 ]]; then
@@ -996,22 +996,22 @@ set_layout () {
       "lambda-3") args="--output ${a} --above ${b} --output ${b} --left-of ${c}";;
       "lambda-rev-3") args="--output ${a} --left-of ${c} --output ${a} --above ${c}";;
       *)
-        echo "Cannot apply ${mode} layout, found ${len} outputs"
+        echo "Cannot set ${mode} layout for setup of ${len} outputs"
         return 2;;
     esac
   else
-    echo "Cannot apply layout ${mode} for setup of ${len} output"
+    echo "Cannot set layout ${mode} for setup of ${len} output(s)"
     return 2
   fi
 
   xrandr ${args}
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to set layout"
+    echo "Failed to set layout to ${name}"
     return 2
   fi
 
-  echo "Layout has been set successfully"
+  echo "Layout has been set to ${mode}"
 }
 
 # Saves the current layout under a unique hashed signature
@@ -1025,7 +1025,7 @@ save_layout () {
   outputs="$(find_outputs "all")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find outputs"
+    echo "Failed to save layout, unable to read outputs"
     return 2
   fi
 
@@ -1059,7 +1059,7 @@ save_layout () {
   map="$(echo "${outputs}" | jq -cer "${query}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to parse the layout mapping"
+    echo "Failed to save layout, unable to parse mapping"
     return 2
   fi
 
@@ -1111,7 +1111,7 @@ save_layout () {
 #  None
 restore_layout () {
   if [[ ! -f "${SETTINGS_FILE}" ]]; then
-    echo "No layout settings have found"
+    echo "No layout settings found"
     return 0
   fi
 
@@ -1119,7 +1119,7 @@ restore_layout () {
   layouts="$(jq 'if .layouts then .layouts else empty end' "${SETTINGS_FILE}")"
 
   if [[ -z "${layouts}" ]]; then
-    echo "No layout settings have found"
+    echo "No layout settings found"
     return 0
   fi
 
@@ -1127,7 +1127,7 @@ restore_layout () {
   outputs="$(find_outputs "all")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to read outputs"
+    echo "Failed to restore layout, unable to read outputs"
     return 2
   fi
 
@@ -1203,7 +1203,7 @@ delete_layout () {
   exists="$(jq "select(.layouts[${index}])" "${SETTINGS_FILE}")"
 
   if [[ -z "${exists}" ]]; then
-    echo "Cannot find layout setting"
+    echo "Cannot find layout setting with index ${index}"
     return 2
   fi
 
@@ -1248,7 +1248,7 @@ list_layouts () {
   jq -cer "${query}" "${SETTINGS_FILE}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to list layout settings"
+    echo "Failed to list layout settings"
     return 2
   fi
 }
@@ -1275,13 +1275,13 @@ set_color () {
   output="$(find_output "${name}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find output"
+    echo "Unable to find output ${name}"
     return 2
   elif ! is_connected "${output}"; then
-    echo "Cannot set color of a disconnected output"
+    echo "Cannot set color, output ${name} is disconnected"
     return 2
   elif ! is_active "${output}"; then
-    echo "Cannot set color of an inactive output"
+    echo "Cannot set color, output ${name} is inactive"
     return 2
   fi
 
@@ -1306,10 +1306,10 @@ set_color () {
   fi
 
   if [[ ! "${profile}" =~ .ic(c|m)$ ]]; then
-    echo "Invalid color profile file"
+    echo "Cannot set color, invalid profile file"
     return 2
   elif [[ ! -f "${COLORS_HOME}/${profile}" ]]; then
-    echo "Cannot find color profile file ${profile}"
+    echo "Cannot set color, profile file ${profile} not exists"
     return 2
   fi
 
@@ -1320,11 +1320,11 @@ set_color () {
   result="$(xcalib -d "${DISPLAY}" -s 0 -o "${index}" "${COLORS_HOME}/${profile}" 2>&1)"
 
   if [[ $? -ne 0 ]] || [[ -n "${result}" ]]; then
-    echo "Failed to set color profile"
+    echo "Failed to set color profile ${profile}"
     return 2
   fi
 
-  echo "Color profile has been set"
+  echo "Color of output ${name} set to ${profile}"
 
   # Save color profile to color settings
   local query=''
@@ -1390,13 +1390,13 @@ reset_color () {
   output="$(find_output "${name}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find output"
+    echo "Unable to find output ${name}"
     return 2
   elif ! is_connected "${output}"; then
-    echo "Cannot reset color of a disconnected output"
+    echo "Cannot reset color, output ${name} is disconnected"
     return 2
   elif ! is_active "${output}"; then
-    echo "Cannot reset color of an inactive output"
+    echo "Cannot reset color, output ${name} is inactive"
     return 2
   fi
 
@@ -1411,7 +1411,7 @@ reset_color () {
     return 2
   fi
 
-  echo "Color profile has been reset"
+  echo "Color of ${name} has been reset"
 
   # Try to remove color profile from color settings
   if [[ ! -f "${SETTINGS_FILE}" ]]; then
@@ -1464,7 +1464,7 @@ delete_color () {
   fi
 
   if [[ ! "${index}" =~ ^[0-9][0-9]*$ ]]; then
-    echo "Invalid index value"
+    echo "Cannot delete color, invalid index value"
     return 2
   fi
 
@@ -1472,7 +1472,7 @@ delete_color () {
   exists="$(jq "select(.colors[${index}])" "${SETTINGS_FILE}")"
 
   if [[ -z "${exists}" ]]; then
-    echo "Cannot find color setting"
+    echo "Cannot find color setting with index ${index}"
     return 2
   fi
 
