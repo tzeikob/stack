@@ -128,6 +128,44 @@ is_primary () {
   echo "${output}" | jq -cer "${query}" &>/dev/null || return 1
 }
 
+# Asserts if an output supports the given resolution.
+# Arguments:
+#  output:     an output
+#  resolution: an output resolution
+# Returns:
+#  0 if output supports the resolution otherwise 1.
+has_resolution () {
+  local output="${1}"
+  local resolution="${2}"
+
+  local query=''
+  query+='.associated_modes[]'
+  query+=" |select(\"\(.resolution_width)x\(.resolution_height)\" == \"${resolution}\")"
+
+  echo "${output}" | jq -cer "${query}" &>/dev/null || return 1
+}
+
+# Asserts if an output at a resolution supports
+# the given refresh rate.
+# Arguments:
+#  output:     an output
+#  resolution: an output resolution
+#  rate:       a refresh rate
+# Returns:
+#  0 if output supports the refresh rate otherwise 1.
+has_rate () {
+  local output="${1}"
+  local resolution="${2}"
+  local rate="${3}"
+
+  local query=''
+  query+='.associated_modes[]'
+  query+=" |select(\"\(.resolution_width)x\(.resolution_height)\" == \"${resolution}\")"
+  query+=" |.frequencies[]|select(.frequency == ${rate})"
+
+  echo "${output}" | jq -cer "${query}" &>/dev/null || return 1
+}
+
 # Shows a menu asking the user to select one output, where the
 # answer is kept in the global var REPLY.
 # Globals:
@@ -543,6 +581,9 @@ set_mode () {
   if [[ ! "${resolution}" =~ ^[0-9]+x[0-9]+$ ]]; then
     echo "Invalid resolution value"
     return 2
+  elif ! has_resolution "${output}" "${resolution}"; then
+    echo "Resolution is not supported"
+    return 2
   fi
 
   if [[ -z "${rate}" ]]; then
@@ -552,6 +593,9 @@ set_mode () {
   
   if [[ ! "${rate}" =~ ^[0-9][0-9]+(.[0-9][0-9])?$ ]]; then
     echo "Invalid refresh rate value"
+    return 2
+  elif ! has_rate "${output}" "${resolution}" "${rate}"; then
+    echo "Refresh rate is not supported"
     return 2
   fi
 
