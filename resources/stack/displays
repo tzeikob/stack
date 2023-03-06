@@ -1624,19 +1624,17 @@ help () {
     "reflect [<output> [<mode>]]" "Reflect the view of an output." \
     "mirror [<output>]" "Mirror an output to other outputs." \
     "" "" \
-    "set color [<output> [<profile>]]" "Set color profile of a display connected to an output." \
-    "reset color [<output>]" "Reset color profile of a display connected to an output." \
-    "" "" \
-    "list colors" "List all stored color settings per display." \
-    "delete color [<index>]" "Delete a stored color setting." \
-    "restore colors" "Apply color settings to currently active displays." \
-    "" "" \
     "set layout [mode]" "Set the layout of active outputs." \
     "save layout" "Save the current layout of active outputs." \
+    "list layouts" "List all layout settings." \
+    "delete layout [<index>]" "Delete a layout setting." \
+    "restore layout" "Apply the layout setting matching the current setup." \
     "" "" \
-    "list layouts" "List all stored layout settings." \
-    "delete layout [<index>]" "Delete a stored layout setting." \
-    "restore layout" "Apply the layout matching the current setup."
+    "set color [<output> [<profile>]]" "Set color profile of a display connected to an output." \
+    "reset color [<output>]" "Reset color profile of a display connected to an output." \
+    "list colors" "List all color settings per display." \
+    "delete color [<index>]" "Delete a color setting." \
+    "restore colors" "Apply color settings to currently active displays."
 }
 
 loop () {
