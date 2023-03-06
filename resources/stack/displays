@@ -1291,7 +1291,7 @@ set_color () {
     query="[.[]|select(.filename|test(\".ic(c|m)$\"))|${query}]"
   
     local profiles=''
-    profiles="$(ls "${COLORS_HOME}" 2>/dev/null | jc --ls | jq -cer "${query}")"
+    profiles="$(ls "${COLORS_HOME}" 2>/dev/null | jc --ls | jq -cr "${query}")"
     
     local len=0
     len="$(count "${profiles}")" || return 1
