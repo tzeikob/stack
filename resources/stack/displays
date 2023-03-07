@@ -13,7 +13,7 @@ require "xcalib"
 #  status: all, connected, disconnected, active,
 #          inactive, primary
 # Outputs:
-#  A JSON array of outputs.
+#  A json array of outputs.
 find_outputs () {
   local status="${1:-"all"}"
 
@@ -53,7 +53,7 @@ find_outputs () {
 # Arguments:
 #  name: any string
 # Outputs:
-#  A JSON object of output.
+#  A json object of output.
 find_output () {
   local name="${1}"
 
@@ -67,7 +67,7 @@ find_output () {
 # works deterministically returning the outputs always in the
 # same order.
 # Arguments:
-#  outputs: a JSON array of outputs
+#  outputs: a json array of outputs
 # Outputs:
 #  A hashed signature value.
 get_sig () {
@@ -91,7 +91,7 @@ get_sig () {
 
 # Asserts if the given output is connected.
 # Arguments:
-#  output: a JSON object output
+#  output: a json object output
 # Returns:
 #  0 if is connected otherwise 1.
 is_connected () {
@@ -104,7 +104,7 @@ is_connected () {
 
 # Asserts if the given output is active.
 # Arguments:
-#  output: a JSON object output
+#  output: a json object output
 # Returns:
 #  0 if is active otherwise 1.
 is_active () {
@@ -117,7 +117,7 @@ is_active () {
 
 # Asserts if the given output is primary.
 # Arguments:
-#  output: a JSON object output
+#  output: a json object output
 # Returns:
 #  0 if is primary otherwise 1.
 is_primary () {
@@ -130,7 +130,7 @@ is_primary () {
 
 # Asserts if an output supports the given resolution.
 # Arguments:
-#  output:     an output
+#  output:     a json object of output
 #  resolution: an output resolution
 # Returns:
 #  0 if output supports the resolution otherwise 1.
@@ -148,7 +148,7 @@ has_resolution () {
 # Asserts if an output at a resolution supports
 # the given refresh rate.
 # Arguments:
-#  output:     an output
+#  output:     a json object of output
 #  resolution: an output resolution
 #  rate:       a refresh rate
 # Returns:
@@ -210,7 +210,7 @@ pick_output () {
 #  status:  all, connected, disconnected, active,
 #           inactive, primary
 #  size:    the number of items must be selected
-#  skip:    the output to except from selection
+#  skip:    the name of output to except from selection
 # Outputs:
 #  A menu of output names.
 pick_outputs () {
@@ -249,7 +249,7 @@ pick_outputs () {
 # Globals:
 #  REPLY
 # Arguments:
-#  output: a JSON object output
+#  output: a json object of output
 # Outputs:
 #  A menu of resolutions.
 pick_resolution () {
@@ -283,7 +283,7 @@ pick_resolution () {
 # Globals:
 #  REPLY
 # Arguments:
-#  output: a JSON object output
+#  output: a json object of output
 # Outputs:
 #  A menu of resolution rates.
 pick_rate () {
@@ -430,7 +430,7 @@ show_logs () {
 # Globals:
 #  REPLY, SETTINGS_FILE
 # Arguments:
-#  name: any string
+#  name: the name of an output
 # Outputs:
 #  A verbose list of text data.
 show_output () {
@@ -546,7 +546,7 @@ list_outputs () {
 # Globals:
 #  REPLY
 # Arguments:
-#  name:       any string
+#  name:       the name of an output
 #  resolution: a width x height resolution
 #  rate:       a refresh rate number
 set_mode () {
@@ -613,7 +613,7 @@ set_mode () {
 # Globals:
 #  REPLY
 # Arguments:
-#  name: any string
+#  name: the name of an output
 set_primary () {
   local name="${1}"
 
@@ -653,7 +653,7 @@ set_primary () {
 # Globals:
 #  REPLY
 # Arguments:
-#  name: any string
+#  name: the name of an output
 set_on () {
   local name="${1}"
 
@@ -690,7 +690,7 @@ set_on () {
 # Globals:
 #  REPLY
 # Arguments:
-#  name: any string
+#  name: the name of an output
 set_off () {
   local name="${1}"
 
@@ -730,7 +730,7 @@ set_off () {
 # Globals:
 #  REPLY
 # Arguments:
-#  name: any string
+#  name: the name of an output
 #  mode: normal, x, y, xy
 reflect () {
   local name="${1}"
@@ -786,7 +786,7 @@ reflect () {
 # Globals:
 #  REPLY
 # Arguments:
-#  name: any string
+#  name: the name of an output
 #  mode: normal, right, left, inverted
 rotate () {
   local name="$1"
@@ -846,7 +846,7 @@ rotate () {
 # Globals:
 #  REPLY
 # Arguments:
-#  name: an output name
+#  name: the name of an output
 mirror () {
   local name="${1}"
 
@@ -1584,14 +1584,12 @@ restore_colors () {
   echo "Color profiles have been restored"
 }
 
-# Show the help message.
-# Globals:
-#  COLORS_HOME
+# Shows the help message.
 # Arguments:
 #  None
 # Outputs:
 #  A long help message.
-help () {
+show_help () {
   if [[ "$1" == "once" ]]; then
     echo "Usage: displays COMMAND [OBJECT] [ARGUMENTS]..."
 
@@ -1614,17 +1612,19 @@ help () {
     "show status" "Show a report of the Xorg server and active outputs." \
     "show logs" "Show the logs of the Xorg server." \
     "" "" \
-    "list outputs [<status>]" "List outputs by the given status." \
+    "list outputs [<status>]" "List outputs by their status," \
+    "" "all, connected, disconnected, active, inactive, primary." \
     "show output [<name>]" "Show the data of an output." \
     "" "" \
     "set mode [<output> [<resolution> [<rate>]]]" "Set the mode of an output." \
     "set primary [<output>]" "Set an output as primary." \
     "set on|off [<output>]" "Activate or de-activate an output." \
-    "rotate [<output> [<mode>]]" "Rotate the view of an output." \
-    "reflect [<output> [<mode>]]" "Reflect the view of an output." \
+    "rotate [<output> [<mode>]]" "Rotate an output's view to normal, right, left or inverted." \
+    "reflect [<output> [<mode>]]" "Reflect an output's view to normal, x, y or xy." \
     "mirror [<output>]" "Mirror an output to other outputs." \
     "" "" \
-    "set layout [mode]" "Set the layout of active outputs." \
+    "set layout [mode]" "Set the layout of active outputs to row-2, col-2, row-3," \
+    "" "col-3, gamma-3, gamma-rev-3, lambda-3 or lambda-rev-3." \
     "save layout" "Save the current layout of active outputs." \
     "list layouts" "List all layout settings." \
     "delete layout [<index>]" "Delete a layout setting." \
@@ -1649,7 +1649,7 @@ loop () {
     restore_separator && set +f
 
     if [[ "${cmd[0]}" == "help" ]]; then
-      help
+      show_help
       continue
     elif [[ "${cmd[0]}" == "clear" ]]; then
       clear
@@ -1722,10 +1722,10 @@ loop () {
 }
 
 once () {
-  case "$1" in
-    "help") help "once";;
+  case "${1}" in
+    "help") show_help "once";;
     "restore")
-      case "$2" in
+      case "${2}" in
         "layout") restore_layout;;
         "colors") restore_colors;;
         *) abort "Invalid or unknown command";;
