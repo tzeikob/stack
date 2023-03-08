@@ -1554,29 +1554,29 @@ restore_colors () {
   local outputs=''
   outputs="$(find_outputs "active")" || return 1
 
-  local cmd=''
-  cmd+="\"xcalib -d ${DISPLAY} -s 0 -o \(.index) ${COLORS_HOME}/\(.profile)\""
+  local xcalib_cmd=''
+  xcalib_cmd+="\"xcalib -d ${DISPLAY} -s 0 -o \(.index) ${COLORS_HOME}/\(.profile)\""
 
   local query=''
   query+='. + $c'
   query+=' |group_by([.model_name, .product_id, .serial_number])'
   query+=" |map({index: (.[0].index), profile: (.[].profile|select(.))})[]"
-  query+=" |${cmd}"
+  query+=" |${xcalib_cmd}"
 
-  local cmds=''
-  cmds="$(echo "${outputs}" | jq -cr --argjson c "${colors}" "${query}")" || return 1
+  local xcalib_cmds=''
+  xcalib_cmds="$(echo "${outputs}" | jq -cr --argjson c "${colors}" "${query}")" || return 1
 
   # Iterate over xcalib commands and execute one by one
   local failed='false'
-  local cmd=''
+  local xcalib_cmd=''
 
-  while read -r cmd; do
-    local result="$(${cmd} 2>&1)"
+  while read -r xcalib_cmd; do
+    local result="$(${xcalib_cmd} 2>&1)"
 
     if [[ $? -ne 0 ]] || [[ -n "${result}" ]]; then
       failed='true'
     fi
-  done <<< "${cmds}"
+  done <<< "${xcalib_cmds}"
 
   if [[ "${failed}" == "true" ]]; then
     echo "Failed to restore all color profiles"
