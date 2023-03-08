@@ -149,7 +149,18 @@ prompt () {
 # Outputs:
 #  A verbose list of text data.
 show_status () {
-  systemctl --user status --lines 0 --no-pager pipewire-pulse.service || return 1
+  systemctl --user status --lines 0 --no-pager pipewire-pulse.service |
+    awk -F': ' '{
+      if ($1 ~ / *Loaded/) $1 = "Loaded"
+      else if ($1 ~ / *Active/) $1 = "Active"
+      else if ($1 ~ / *Main PID/) $1 = "Process"
+      else if ($1 ~ / *Tasks/) $1 = "Tasks"
+      else if ($1 ~ / *Memory/) $1 = "Memory"
+      else if ($1 ~ / *CPU/) $1 = "CPU"
+      else $1 = ""
+
+      if ($1) printf "%-10s %s\n",$1":",$2
+    }' || return 1
 
   local query='\n'
   query+='Server:    \(.server_name)\n'
@@ -172,6 +183,7 @@ show_status () {
   query+=" |(\"\(.device) [\(.profile)]\")"
   query+=']|join("\n           ")'
 
+  echo -n "Cards:     "
   find_cards | jq -cer "${query}" || return 1
 
   local sink=''
