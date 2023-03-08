@@ -343,23 +343,25 @@ prompt () {
 # Outputs:
 #  A verbose list of text data.
 show_status () {
-  local re='/^('
-  re+='name\sof\sdisplay|'
-  re+='version\snumber|'
-  re+='vendor\sstring|'
-  re+='vendor\srelease\snumber|'
-  re+='X.Org\sversion|'
-  re+='motion\sbuffer\ssize|'
-  re+='image\sbyte\sorder|'
-  re+='default\sscreen\snumber|'
-  re+='number\sof\sscreens'
-  re+=')/'
-
-  xdpyinfo -display "${DISPLAY}" | awk -F': ' "${re}"'{
+  xdpyinfo -display "${DISPLAY}" | awk -F': ' '{
     gsub(/[ \t]+$/, "", $1);
     gsub(/^[ \t]+/, "", $2);
-    printf "%-23s %s\n",$1":",$2
-  }' | sed -r 's/\<./\U&/g'
+
+    switch ($1) {
+      case "name of display": $1 = "Display"; break
+      case "version number": $1 = "Version"; break
+      case "vendor string": $1 = "Vendor"; break
+      case "vendor release number": $1 = "Release"; break
+      case "X.Org version": $1 = "X.Org"; break
+      case "motion buffer size": $1 = "Buffer"; break
+      case "image byte order": $1 = "Order"; break
+      case "default screen number": $1 = "Screen"; break
+      case "number of screens": $1 = "Screens"; break
+      default: $1 = ""; break
+    }
+
+    if ($1) printf "%-9s %s\n",$1":",$2
+  }'
 
   if [[ $? -ne 0 ]]; then
     echo "Unable to read xdpy info"
