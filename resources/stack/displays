@@ -413,10 +413,17 @@ show_status () {
 # Globals:
 #  HOME, DISPLAY
 # Arguments:
-#  None
+#  lines: the number of last lines to show
 # Outputs:
 #  The log file of the xorg display.
 show_logs () {
+  local lines="${1}"
+
+  if [[ -n "${lines}" ]] && [[ ! "${lines}" =~ ^[0-9][0-9]*$ ]]; then
+    echo "Invalid lines value"
+    return 2
+  fi
+
   local id="$(echo "${DISPLAY}" | cut -d ':' -f 2)"
   local log_file="${HOME}/.local/share/xorg/Xorg.${id}.log"
 
@@ -425,7 +432,11 @@ show_logs () {
     return 2
   fi
 
-  cat "${log_file}"
+  if [[ -z "${lines}" ]]; then
+    cat "${log_file}"
+  else
+    cat "${log_file}" | tail -n "${lines}"
+  fi
 }
 
 # Shows the data of the output with the given name.
@@ -1612,7 +1623,7 @@ show_help () {
     "help" "Show this help message." \
     "" "" \
     "show status" "Show a report of the Xorg server and active outputs." \
-    "show logs" "Show the logs of the Xorg server." \
+    "show logs [<lines>]" "Show the last logs of the Xorg server." \
     "" "" \
     "list outputs [<status>]" "List outputs by their status," \
     "" "all, connected, disconnected, active, inactive, primary." \
@@ -1666,7 +1677,7 @@ loop () {
       "show")
         case "${cmd[1]}" in
           "status") show_status;;
-          "logs") show_logs;;
+          "logs") show_logs "${cmd[2]}";;
           "output") show_output "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
