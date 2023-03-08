@@ -24,7 +24,7 @@ find_cards () {
 find_card () {
   local index="${1}"
 
-  local query=".[]|select(.index == ${index})"
+  local query=".[]|select(.index|tostring == \"${index}\")"
 
   find_cards | jq -cer "${query}" || return 1
 }
@@ -40,7 +40,7 @@ find_card () {
 pick_card () {
   local prompt="${1}"
 
-  local query='{key: \(.index), value: "\(.index):\(.properties."device.nick")"}'
+  local query='{key: .index, value: "\(.index):\(.properties."device.nick")"}'
   query="[.[]|${query}]"
 
   local cards=''
@@ -71,7 +71,7 @@ pick_profile () {
   local prompt="${1}"
   local card="${2}"
 
-  local query='{key: \(.key), value: "\(.key):\(.value.description)"}'
+  local query='{key: .key, value: "\(.value.description)"}'
   query="[.profiles|to_entries[]|${query}]"
 
   local profiles=''
@@ -102,7 +102,7 @@ pick_module () {
   local prompt="${1}"
   local type="${2}"
 
-  local query='{key: \(.index), value: "\(.properties."device.nick") [\(.type)]"}'
+  local query='{key: .index, value: "\(.properties."device.nick") [\(.type)]"}'
   query="[.[]|=.|map((.ports[] + {index, properties}))|.[]|${query}]"
 
   local modules=''
@@ -217,7 +217,7 @@ show_status () {
   pactl --format=json list sources | jq -cer "${query}" || return 1
 }
 
-# Shows the audio service log file.
+# Shows the logs of the audio service.
 # Arguments:
 #  None
 # Outputs:
@@ -278,13 +278,13 @@ show_card () {
   local query=''
   query='.profiles|[keys[]]|join("\n                ")'
 
-  echo "Profiles:       "
+  echo -n "Profiles:       "
   echo "${card}" | jq -cer "${query}" || return 1
 
   local query=''
   query='[.ports|to_entries[]|"\(.key) [\(.value.type)]"]|join("\n                ")'
 
-  echo "Ports:          "
+  echo -n "Ports:          "
   echo "${card}" | jq -cr "${query}" || return 1
 }
 
@@ -425,7 +425,7 @@ list_playbacks () {
   len="$(count "${sink_inputs}")" || return 1
 
   if [[ ${len} == 0 ]]; then
-    echo "No playbacks have found for ${name:-\b})"
+    echo "No playbacks have found for ${name:-\b}"
     return 0
   fi
 
@@ -600,7 +600,7 @@ set_mute () {
 
   # Build pactl commands for each audio module
   local query=''
-  query+="\"pactl set-${type}-mute \(.name) ${mode} && sleep 0.1\""
+  query+="\"pactl set-${type}-mute \(.name) ${mode}\""
   query="[.[]|${query}]|join(\"\n\")"
 
   local pactl_cmds=''
@@ -621,7 +621,7 @@ set_mute () {
   local pactl_cmd=''
 
   while read -r pactl_cmd; do
-    ${pactl_cmd}
+    ${pactl_cmd} && sleep 0.1
 
     if [[ $? -ne 0 ]]; then
       failed='true'
@@ -672,7 +672,7 @@ show_help () {
     "help" "Show this help message." \
     "" "" \
     "show status" "Show a report of the system's audio." \
-    "show logs" "Show the logs of the audio service." \
+    "show logs" "Show the last logs of the audio service." \
     "show card [<index>]" "Show the data of a card." \
     "" "" \
     "list cards" "List all cards of the system." \
