@@ -71,7 +71,7 @@ pick_profile () {
   local prompt="${1}"
   local card="${2}"
 
-  local query='{key: .key, value: "\(.value.description)"}'
+  local query='{key: .key, value: .key}'
   query="[.profiles|to_entries[]|${query}]"
 
   local profiles=''
@@ -102,7 +102,7 @@ pick_module () {
   local prompt="${1}"
   local type="${2}"
 
-  local query='{key: .index, value: "\(.properties."device.nick") [\(.type)]"}'
+  local query='{key: .index, value: "\(.name) [\(.properties."device.nick")]"}'
   query="[.[]|=.|map((.ports[] + {index, properties}))|.[]|${query}]"
 
   local modules=''
@@ -178,7 +178,7 @@ show_status () {
   query+=' .[]|.active_profile as $p'
   query+=' |{'
   query+='   device: .properties."device.nick",'
-  query+='   profile: (.profiles|to_entries[]|select(.key == $p)|.value.description)'
+  query+='   profile: (.profiles|to_entries[]|select(.key == $p)|.key)'
   query+='  }'
   query+=" |(\"\(.device) [\(.profile)]\")"
   query+=']|join("\n           ")'
@@ -334,7 +334,7 @@ list_cards () {
   local query=''
   query+='.[]'
   query+=' |.active_profile as $p'
-  query+=' |. + {profile: (.profiles|to_entries|.[]|select(.key==$p)|.value.description)}'
+  query+=' |. + {profile: (.profiles|to_entries|.[]|select(.key==$p)|.key)}'
   query+=' |("\n'
   query+='ID:      \(.index)\n'
   query+='Name:    \(.name)\n'
