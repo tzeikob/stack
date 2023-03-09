@@ -325,7 +325,7 @@ pick_rate () {
 #  A minimal prompt status line.
 prompt () {
   local status=''
-  status="$(find_outputs "primary" | jq -cer '.[0].device_name')"
+  status="$(find_outputs "primary" | jq -cer '.[0].model_name' | tr ' ' '-')"
   
   if [[ $? -ne 0 ]]; then
     echo "Unable to resolve status"
