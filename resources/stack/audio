@@ -152,39 +152,30 @@ prompt () {
 # Outputs:
 #  A verbose list of text data.
 show_status () {
-  systemctl --user status --lines 0 --no-pager pipewire-pulse.service |
-    awk -F': ' '{
-      if ($1 ~ / *Loaded/) $1 = "Loaded"
-      else if ($1 ~ / *Active/) $1 = "Active"
-      else if ($1 ~ / *Main PID/) $1 = "Process"
-      else if ($1 ~ / *Tasks/) $1 = "Tasks"
-      else if ($1 ~ / *Memory/) $1 = "Memory"
-      else if ($1 ~ / *CPU/) $1 = "CPU"
-      else $1 = ""
-
-      if ($1) printf "%-10s %s\n",$1":",$2
-    }' || return 1
-
-  local query='\n'
+  local query=''
   query+='Server:    \(.server_name)\n'
-  query+='Path:      \(.server_string)\n'
   query+='Version:   \(.server_version)\n'
-  query+='Local:     \(.is_local)\n'
-  query+='Client:    \(.client_index)\n'
   query+='Sample:    \(.default_sample_specification)\n'
   query+='Channels:  \(.default_channel_map)'
 
   pactl --format=json info | jq -cer "(\"${query}\")" || return 1
 
+  systemctl --user status --lines 0 --no-pager pipewire-pulse.service |
+    awk '{
+      if ($0 ~ / *Active/) {
+        l = "Active"
+        v = $2" "$3
+      } else if ($0 ~ / *Main PID/) {
+        l = "Process"
+        v = $3" "$4
+      } else l = ""
+
+      if (l) printf "%-10s %s\n",l":",v
+    }' || return 1
+
   local query=''
-  query+='['
-  query+=' .[]|.active_profile as $p'
-  query+=' |{'
-  query+='   device: .properties."device.nick",'
-  query+='   profile: (.profiles|to_entries[]|select(.key == $p)|.key)'
-  query+='  }'
-  query+=" |(\"\(.device) [\(.profile)]\")"
-  query+=']|join("\n           ")'
+  query='.[]|"\(.properties."device.nick")"'
+  query="[${query}]|join(\", \")"
 
   echo -n "Cards:     "
   find_cards | jq -cer "${query}" || return 1
@@ -192,30 +183,24 @@ show_status () {
   local sink=''
   sink="$(pactl get-default-sink)" || return 1
 
-  local query=''
-  query+='.[]'
-  query+=" |select(.name == \"${sink}\")"
-  query+=' |("\n'
-  query+='Output:    \(.active_port)\n'
-  query+='Desc:      \(.description)\n'
-  query+='Muted:     \(.mute)\n'
-  query+='Volume:    \(.volume|keys[0] as $k|.[$k].db|gsub("\\s+";""))'
-  query+='")'
+  local query='\n'
+  query+='Output:    \(.properties."alsa.card_name")\n'
+  query+='Port:      \(.active_port)\n'
+  query+='Volume:    \(.volume|keys[0] as $k|.[$k].db|gsub("\\s+";"")) \(if .mute then "mute" else "" end)'
+
+  query=".[]|select(.name == \"${sink}\")|\"${query}\""
 
   pactl --format=json list sinks | jq -cer "${query}" || return 1
 
   local source=''
   source="$(pactl get-default-source)" || return 1
 
-  local query=''
-  query+='.[]'
-  query+=" |select(.name == \"${source}\")"
-  query+=' |("\n'
-  query+='Input:     \(.active_port)\n'
-  query+='Desc:      \(.description)\n'
-  query+='Muted:     \(.mute)\n'
-  query+='Volume:    \(.volume|keys[0] as $k|.[$k].db|gsub("\\s+";""))'
-  query+='")'
+  local query='\n'
+  query+='Input:     \(.properties."alsa.card_name")\n'
+  query+='Port:      \(.active_port)\n'
+  query+='Volume:    \(.volume|keys[0] as $k|.[$k].db|gsub("\\s+";"")) \(if .mute then "mute" else "" end)'
+
+  query=".[]|select(.name == \"${source}\")|\"${query}\""
 
   pactl --format=json list sources | jq -cer "${query}" || return 1
 }
@@ -254,40 +239,29 @@ show_card () {
   fi
 
   local query='("'
-  query+='ID:             \(.index)\n'
-  query+='Device:         \(.properties."device.name")\n'
-  query+='Name:           \(.name)\n'
-  query+='Desc:           \(.properties."device.description")\n'
-  query+='Model:          \(.properties."device.nick")\n'
-  query+='Product:        \(.properties."device.product.name") [\(.properties."device.product.id")]\n'
-  query+='Vendor:         \(.properties."device.vendor.name") [\(.properties."device.vendor.id")]\n'
-  query+='Alsa Path:      \(.properties."api.alsa.path")\n'
-  query+='Alsa Card:      \(.properties."api.alsa.card.name") [\(.properties."api.alsa.card")]\n'
-  query+='Driver:         \(.driver)\n'
-  query+='Form:           \(.properties."device.form_factor")\n'
-  query+='Bus:            \(.properties."device.bus" | ascii_upcase)\n'
-  query+='Bus Path:       \(.properties."device.bus_path")\n'
-  query+='API:            \(.properties."device.api")\n'
-  query+='Usec:           \(.properties."device.plugged.usec")\n'
-  query+='SysFS Path:     \(.properties."sysfs.path")\n'
-  query+='Subsystem:      \(.properties."device.subsystem")\n'
-  query+='ACP:            \(.properties."api.alsa.use-acp")\n'
-  query+='Devicel:        \(.properties."api.dbus.ReserveDevice1")\n'
-  query+='Object Path:    \(.properties."object.path")\n'
-  query+='Profile:        \(.active_profile)")'
+  query+='Index:     \(.index)\n'
+  query+='Model:     \(.properties."device.nick")\n'
+  query+='Product:   \(.properties."device.product.name")\n'
+  query+='Vendor:    \(.properties."device.vendor.name")\n'
+  query+='Driver:    \(.driver)\n'
+  query+='Bus:       \(.properties."device.bus" | ascii_upcase)\n'
+  query+='ACP:       \(.properties."api.alsa.use-acp")\n'
+  query+='Profile:   \(.active_profile)")'
 
   echo "${card}" | jq -cer "${query}" || return 1
 
   local query=''
-  query='.profiles|[keys[]]|join("\n                ")'
+  query='.profiles|[keys[]]|join("\n           ")'
 
-  echo -n "Profiles:       "
+  echo
+  echo -n "Profiles:  "
   echo "${card}" | jq -cer "${query}" || return 1
 
   local query=''
-  query='[.ports|to_entries[]|"\(.key) [\(.value.type)]"]|join("\n                ")'
+  query='[.ports|to_entries[]|"\(.key) [\(.value.type)]"]|join("\n           ")'
 
-  echo -n "Ports:          "
+  echo
+  echo -n "Ports:     "
   echo "${card}" | jq -cr "${query}" || return 1
 }
 
@@ -335,19 +309,13 @@ list_cards () {
   fi
 
   local query=''
-  query+='.[]'
-  query+=' |.active_profile as $p'
-  query+=' |. + {profile: (.profiles|to_entries|.[]|select(.key==$p)|.key)}'
-  query+=' |("\n'
-  query+='ID:      \(.index)\n'
-  query+='Name:    \(.name)\n'
-  query+='Bus:     \(.properties."device.bus" | ascii_upcase)\n'
-  query+='Profile: \(.profile)\n'
-  query+='Product: \(.properties."device.nick")\n'
-  query+='Vendor:  \(.properties."device.vendor.name")'
-  query+='")'
+  query+='Index:  \(.index)\n'
+  query+='Model:  \(.properties."device.nick")\n'
+  query+='Vendor: \(.properties."device.vendor.name")'
 
-  echo "${cards}" | jq -cr "${query}" | tail -n +2 || return 1
+  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+
+  echo "${cards}" | jq -cr "${query}" || return 1
 }
 
 # Shows a list of sink or source audio modules.
@@ -388,20 +356,17 @@ list_ports () {
   query+='   volume: (.volume|keys[0] as $k|.[$k].db|gsub("\\s+";""))'
   query+='  }'
   query+=' ))'
-  query+=' |.[]|("\n'
-  query+='ID:      \(.index)\n'
-  query+='Name:    \(.module_name)\n'
-  query+='Desc:    \(.description)\n'
-  query+='Handle:  \(.name)\n'
-  query+='Type:    \(.type)\n'
-  query+='Mute:    \(.mute)\n'
-  query+='Volume:  \(.volume)\n'
-  query+='State:   \(.state|ascii_downcase)\n'
-  query+='Status:  \(.availability)\n'
-  query+='Device:  \(.properties."device.nick")'
-  query+='")'
+  query+=' |.[]|"'
+  query+='Index:   \(.index)\n'
+  query+='Name:    \(.name)\n'
+  query+='Card:    \(.properties."device.nick")\n'
+  query+='Volume:  \(.volume) \(if .mute then "mute" else "" end)\n'
+  query+='State:   \(.state|ascii_downcase)'
+  query+='"'
 
-  echo "${modules}" | jq -cer "${query}" | tail -n +2 || return 1
+  query="[${query}]|join(\"\n\n\")"
+
+  echo "${modules}" | jq -cer "${query}" || return 1
 }
 
 # Shows the list of active playbacks matching the
@@ -432,16 +397,18 @@ list_playbacks () {
     return 0
   fi
 
-  query+='|.[]|("\n'
-  query+='ID:       \(.index)\n'
-  query+='Process:  \(.properties."application.process.id")\n'
+  query+='|.[]|"'
+  query+='Index:    \(.index)\n'
   query+='Name:     \(.properties."application.name")\n'
   query+='Media:    \(.properties."media.name")\n'
-  query+='Mute:     \(.mute)\n'
+  query+='Process:  \(.properties."application.process.id")\n'
   query+='Volume:   \(.volume|keys[0] as $k|.[$k].db|gsub("\\s+";""))'
-  query+='")'
+  query+=' \(if .mute then "mute" else "" end)'
+  query+='"'
 
-  echo "${sink_inputs}" | jq -cer "${query}" | tail -n +2 || return 1
+  query="[${query}]|join(\"\n\n\")"
+
+  echo "${sink_inputs}" | jq -cer "${query}" || return 1
 }
 
 # Sets the profile of the audio card identified
