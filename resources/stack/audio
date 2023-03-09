@@ -473,6 +473,14 @@ set_profile () {
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
 
+  local exists=''
+  exists="$(echo "${card}" | jq -cer ".profiles|has(\"${name}\")")"
+
+  if [[ "${exists}" == "false" ]]; then
+    echo "Invalid profile name value"
+    return 2
+  fi
+
   pactl set-card-profile "${index}" "${name}" && sleep 0.1
 
   if [[ $? -ne 0 ]]; then
@@ -501,6 +509,16 @@ set_default () {
   if [[ -z "${index}" ]]; then
     pick_module "Select an audio module:" "${type}" || return $?
     [[ -n "${REPLY}" ]] && index="${REPLY}" || return 0
+  fi
+
+  local query=".[]|select(.index|tostring == \"${index}\")"
+
+  local exists=''
+  exists="$(pactl --format=json list "${type}"s | jq -cer "${query}")"
+
+  if [[ -z "${exists}" ]]; then
+    echo "Invalid module index value"
+    return 2
   fi
 
   pactl set-default-${type} "${index}" && sleep 0.1
