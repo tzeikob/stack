@@ -188,9 +188,9 @@ show_status () {
   query+='Port:      \(.active_port)\n'
   query+='Volume:    \(.volume|keys[0] as $k|.[$k].db|gsub("\\s+";"")) \(if .mute then "mute" else "" end)'
 
-  query=".[]|select(.name == \"${sink}\")|\"${query}\""
+  query=".[]|select(.name == \"${sink}\")|select(.active_port)|\"${query}\""
 
-  pactl --format=json list sinks | jq -cer "${query}" || return 1
+  pactl --format=json list sinks | jq -cr "${query}" || return 1
 
   local source=''
   source="$(pactl get-default-source)" || return 1
@@ -200,9 +200,9 @@ show_status () {
   query+='Port:      \(.active_port)\n'
   query+='Volume:    \(.volume|keys[0] as $k|.[$k].db|gsub("\\s+";"")) \(if .mute then "mute" else "" end)'
 
-  query=".[]|select(.name == \"${source}\")|\"${query}\""
+  query=".[]|select(.name == \"${source}\")|select(.active_port)|\"${query}\""
 
-  pactl --format=json list sources | jq -cer "${query}" || return 1
+  pactl --format=json list sources | jq -cr "${query}" || return 1
 }
 
 # Shows the logs of the audio service.
@@ -331,8 +331,10 @@ list_ports () {
     return 2
   fi
 
+  local query='[.[]|select(.active_port)]'
+
   local modules=''
-  modules="$(pactl --format=json list "${type}"s)"
+  modules="$(pactl --format=json list "${type}"s | jq -cer "${query}")"
 
   if [[ $? -ne 0 ]]; then
     echo "Unable to read ${type} modules"
@@ -349,10 +351,10 @@ list_ports () {
 
   local query=''
   query+='.[]'
-  query+=' |= . + {"module_name": .name}'
+  query+=' |= .'
   query+=' |map(('
   query+='  .ports[] + {'
-  query+='   index, module_name, description, state, mute, properties,'
+  query+='   index, state, mute, properties,'
   query+='   volume: (.volume|keys[0] as $k|.[$k].db|gsub("\\s+";""))'
   query+='  }'
   query+=' ))'
