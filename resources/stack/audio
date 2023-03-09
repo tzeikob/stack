@@ -130,14 +130,17 @@ pick_module () {
 prompt () {
   local sink="$(pactl get-default-sink)"
 
-  local query=".[]|select(.name == \"${sink}\")|.active_port"
+  local status='off'
 
-  local status=''
-  status="$(pactl --format=json list sinks | jq -cer "${query}")"
-  
-  if [[ $? -ne 0 ]]; then
-    echo "Unable to resolve status"
-    status='none'
+  if [[ "${sink}" != "auto_null" ]]; then
+    local query=".[]|select(.name == \"${sink}\")|.properties.\"alsa.card_name\""
+
+    status="$(pactl --format=json list sinks | jq -cer "${query}" | tr ' ' '-' )"
+    
+    if [[ $? -ne 0 ]]; then
+      echo "Unable to resolve status"
+      status='none'
+    fi
   fi
 
   read -rep "[audio:${status}] " REPLY
