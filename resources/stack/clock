@@ -16,9 +16,10 @@ require "util-linux"
 #  A minimal prompt status line.
 prompt () {
   local status=''
-  status="$(timedatectl | jc --timedatectl | jq -cer ".time_zone" | cut -d " " -f 1)"
+  status="$(timedatectl | head -n +7 | jc --timedatectl | jq -cer '.time_zone' | cut -d ' ' -f 1)"
 
-  if [[ $? -ne 0 ]]; then
+  local error_code=$?
+  if [[ ${error_code} -ne 0 ]] && [[ ${error_code} -ne 141 ]]; then
     echo "Unable to resolve status"
     status='none'
   fi
@@ -42,9 +43,10 @@ show_status () {
   query+='RTC Local TZ:    \(.rtc_in_local_tz)\n'
   query+='Epoch UTC:       \(.epoch_utc)'
 
-  timedatectl | jc --timedatectl | jq -cer "\"${query}\""
+  timedatectl | head -n +7 | jc --timedatectl | jq -cer "\"${query}\""
 
-  if [[ $? -ne 0 ]]; then
+  local error_code=$?
+  if [[ ${error_code} -ne 0 ]] && [[ ${error_code} -ne 141 ]]; then
     echo "Unable to resolve date time status"
     return 2
   fi
