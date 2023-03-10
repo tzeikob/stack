@@ -690,8 +690,8 @@ show_help () {
     "show card [<index>]" "Show the data of a card." \
     "" "" \
     "list cards" "List all cards of the system." \
-    "list outputs" "List all output ports." \
-    "list inputs" "List all input ports." \
+    "list outputs" "List all outputs." \
+    "list inputs" "List all inputs." \
     "list playbacks [<name>]" "List active playbacks by application name." \
     "" "" \
     "set profile [<card> [<name>]]" "Set the active profile of a card." \
