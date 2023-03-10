@@ -140,7 +140,8 @@ has_resolution () {
 
   local query=''
   query+='.associated_modes[]'
-  query+=" |select(\"\(.resolution_width)x\(.resolution_height)\" == \"${resolution}\")"
+  query+=' |"\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)" as $res'
+  query+=" |select(\$res == \"${resolution}\")"
 
   echo "${output}" | jq -cer "${query}" &>/dev/null || return 1
 }
@@ -160,7 +161,8 @@ has_rate () {
 
   local query=''
   query+='.associated_modes[]'
-  query+=" |select(\"\(.resolution_width)x\(.resolution_height)\" == \"${resolution}\")"
+  query+=' |"\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)" as $res'
+  query+=" |select(\$res == \"${resolution}\")"
   query+=" |.frequencies[]|select(.frequency == ${rate})"
 
   echo "${output}" | jq -cer "${query}" &>/dev/null || return 1
@@ -258,7 +260,7 @@ pick_resolution () {
   # Convert resolutions list into an array of {key, value} options
   local query=''
   query+='.associated_modes[]'
-  query+=' |"\(.resolution_width)x\(.resolution_height)" as $res'
+  query+=' |"\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)" as $res'
   query+=' |(reduce .frequencies[] as $i (""; if $i.is_preferred then . + "*" else . end)) as $pref'
   query+=' |{key: "\($res)", value: "\($res)\($pref)"}'
   query="[${query}]"
@@ -293,7 +295,7 @@ pick_rate () {
   # Convert rates list into an array of {key, value} options
   local query=''
   query+='.associated_modes[]'
-  query+=' |"\(.resolution_width)x\(.resolution_height)" as $res'
+  query+=' |"\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)" as $res'
   query+=" |select(\$res == \"${resolution}\")"
   query+=' |.frequencies[]'
   query+=' |"\(.frequency)" as $freq'
@@ -488,9 +490,9 @@ show_output () {
 
   local modes=''
   modes+='.associated_modes[]|'
-  modes+='"\(.resolution_width)x\(.resolution_height)" as $mode|"'
+  modes+='"\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)" as $mode|"'
   modes+='\($mode)'
-  modes+='\($mode|if (9-length)>0 then (" "*(9-length)) else "" end)'
+  modes+='\($mode|if (10-length)>0 then (" "*(10-length)) else "" end)'
   modes+=' [\([.frequencies[]|.frequency]|join(", "))]"'
 
   modes="[${modes}]|join(\"\n            \")"
@@ -591,7 +593,7 @@ set_mode () {
     [[ -n "${REPLY}" ]] && resolution="${REPLY}" || return 0
   fi
   
-  if [[ ! "${resolution}" =~ ^[0-9]+x[0-9]+$ ]]; then
+  if [[ ! "${resolution}" =~ ^[0-9]+x[0-9]+i?$ ]]; then
     echo "Cannot set mode, invalid resolution value"
     return 2
   elif ! has_resolution "${output}" "${resolution}"; then
@@ -905,7 +907,7 @@ mirror () {
   local query=''
   query+="select(.device_name | match(\"(${names})\"))"
   query+=' |.associated_modes[]'
-  query+=' |"\(.resolution_width)x\(.resolution_height)"'
+  query+=' |"\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)"'
 
   query="[.[]|${query}]"
   query+=' |[group_by(.)|map(select(length>1))|.[]|.[0]'
@@ -1051,7 +1053,7 @@ save_layout () {
 
   local res=''
   res+='.associated_modes[]'
-  res+=' |"\(.resolution_width)x\(.resolution_height)" as $res'
+  res+=' |"\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)" as $res'
   res+=' |.frequencies[]|select(.is_current)'
   res+=' |"--mode \($res) --rate \(.frequency)"'
 
