@@ -204,9 +204,9 @@ set_rtc () {
   fi
 
   if [[ "${mode}" == "local" ]]; then
-    timedatectl set-local-rtc on
+    timedatectl --adjust-system-clock set-local-rtc on
   else
-    timedatectl set-local-rtc off
+    timedatectl --adjust-system-clock set-local-rtc off
   fi
 
   if [[ $? -ne 0 ]]; then
