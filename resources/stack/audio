@@ -676,7 +676,7 @@ show_help () {
       "" "" \
       "restart" "Restart the audio server."
 
-    return
+    return 0
   fi
 
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
