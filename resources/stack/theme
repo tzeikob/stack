@@ -1,250 +1,252 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 set -o pipefail
 source /opt/stack/utils
 
-WALLPAPER_TYPES='jpg|jpeg|png'
-WALLPAPER_MODES='center|fill|max|scale|tile'
+SETTINGS_FILE="${CONFIG_HOME}/theme.json"
 
 require "feh"
+require "identify"
 
-prompt () {
-  read -rep "[theme:${YE}ready$RS] " REPLY
-}
-
-wallpapers () {
-  if [ ! -d  "$WALLPAPERS" ]; then
-    return 1
+# Returns the list of any wallpapers found under
+# the wallpapers home.
+# Globals:
+#  WALLPAPERS_HOME
+# Arguments:
+#  None
+# Outputs:
+#  A json array of image objects.
+find_wallpapers () {
+  if [[ ! -d  "${WALLPAPERS_HOME}" ]]; then
+    echo '[]'
+    return 0
   fi
 
-  ls -1 "$WALLPAPERS" | awk '{ORS="'$AES'";} /.+\.('$WALLPAPER_TYPES')$/{print}'
+  local wallpaper=''
+  wallpaper+='"\"name\": \""$1"\","'
+  wallpaper+='"\"type\": \""$2"\","'
+  wallpaper+='"\"resolution\": \""$3"\","'
+  wallpaper+='"\"bit\": \""$5"\","'
+  wallpaper+='"\"color\": \""$6"\","'
+  wallpaper+='"\"size\": \""$7"\""'
+  wallpaper="\"{\"${wallpaper}\"},\""
+
+  local wallpapers=''
+  wallpapers="$(identify -quiet "${WALLPAPERS_HOME}/*" 2>/dev/null |
+    awk '{
+      if ($1 ~ /.(jpg|jpeg|png)$/) {
+        n=split($1,a,"/")
+        $1=a[n]
+        print '"${wallpaper}"'
+      }
+    }'
+  )"
+  
+  # Remove the extra comma after the last array element
+  if [[ -n "${wallpapers}" ]]; then
+    wallpapers="${wallpapers::-1}"
+  fi
+
+  echo "[${wallpapers}]"
 }
 
+# Shows a menu asking the user to select one wallpaper,
+# where the answer is kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  None
+# Outputs:
+#  A menu of wallpaper filenames.
 pick_wallpaper () {
-  local NAMES="$(wallpapers || echo "err:$?")"
+  local query='{key: .name, value: "\(.name) [\(.resolution)]"}'
+  query="[.[]|${query}]"
 
-  if [[ "$NAMES" =~ ^err: ]]; then
-    echo "Unable to find wallpapers"
-    return 1
+  local wallpapers=''
+  wallpapers="$(find_wallpapers | jq -cer "${query}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to find wallpaper files"
+    return 2
   fi
 
-  if [ $(count "$NAMES") = 0 ]; then
-    echo "No wallpapers have found"
-    return 1
+  local len=0
+  len="$(count "${wallpapers}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No wallpaper files have found"
+    return 2
   fi
 
-  pick_one "Select a wallpaper:" "$NAMES" "vertical-6"
+  pick_one "Select a wallpaper:" "${wallpapers}" "vertical" || return 1
 }
 
+# Shows a prompt status and asks user to enter the
+# next command, which is kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  None
+# Outputs:
+#  A minimal prompt status line.
+prompt () {
+  read -rep "[theme:ready] " REPLY
+}
+
+# show the list of all the wallpapers found under
+# the wallpapers home.
+# Arguments:
+#  None
+# Outputs:
+#  A list of wallpaper data.
 list_wallpapers () {
-  local NAMES="$(wallpapers || echo "err:$?")"
+  local wallpapers=''
+  wallpapers="$(find_wallpapers)"
 
-  if [[ "$NAMES" =~ ^err: ]]; then
-    echo "Unable to find wallpapers"
-    return 1
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to find wallpaper files"
+    return 2
   fi
 
-  local LEN=$(count "$NAMES")
+  local len=0
+  len="$(count "${wallpapers}")" || return 1
 
-  if [ $LEN = 0 ]; then
-    echo "No wallpapers have found"
-    return 1
+  if [[ ${len} -eq 0 ]]; then
+    echo "No wallpaper files have found"
+    return 2
   fi
 
-  local I=0
-  for ((I=0; I<$LEN; I++)); do
-    local NAME="$(element "$NAMES" "$I" | value)"
+  local query=''
+  query+='Name:        \(.name)\n'
+  query+='Type:        \(.type)\n'
+  query+='Color:       \(.color) \(.bit)\n'
+  query+='Size:        \(.size)\n'
+  query+='Resolution:  \(.resolution)'
+  query="[.[]|\"${query}\"]|join(\"\n\n\")"
 
-    [ $I -gt 0 ] && echo
-    echo "Name: ${NAME}"
-    echo "Size: $(du -h "$WALLPAPERS/$NAME" | awk '{print $1}')"
-  done
+  echo "${wallpapers}" | jq -cer "${query}" || return 1
 }
 
+# Sets the desktop wallpaper to the wallpaper with the given
+# file name and scale mode.
+# Globals:
+#  REPLY, WALLPAPERS_HOME, SETTINGS_FILE
+# Arguments:
+#  name: the filename of the wallpaper
+#  mode: center, fill, max, scale or tile
 set_wallpaper () {
-  local NAME=$1
-  local MODE=$2
+  local name="${1}"
+  local mode="${2}"
 
-  if [ -z "$NAME" ]; then
-    pick_wallpaper || return 1
-    [ -z "$REPLY" ] && return
-
-    NAME="$(value "$REPLY")"
+  if [[ -z "${name}" ]]; then
+    pick_wallpaper || return $?
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
 
-  if [[ "$NAME" =~ /+ ]]; then
-    echo "Invalid name argument"
-    return 1
+  if [[ "${name}" =~ /+ ]]; then
+    echo "Invalid wallpaper name"
+    return 2
   fi
 
-  NAME="$(basename "$NAME")"
-  local WALLPAPER="$WALLPAPERS/$NAME"
+  name="$(basename "${name}")"
+  local wallpaper_file="${WALLPAPERS_HOME}/${name}"
 
-  if [[ ! "$WALLPAPER" =~ .+\.($WALLPAPER_TYPES)$ ]]; then
+  if [[ ! "${wallpaper_file}" =~ .+\.(jpg|jpeg|png)$ ]]; then
     echo "Invalid wallpaper file type"
-    return 1
-  elif [ ! -f "$WALLPAPER" ]; then
-    echo "No wallpaper found with name $NAME"
-    return 1
+    return 2
+  elif [[ ! -f "${wallpaper_file}" ]]; then
+    echo "No wallpaper found with name ${name}"
+    return 2
   fi
 
-  if [ -z "$MODE" ]; then
-    local MODES="$(echo "$WALLPAPER_MODES" | awk -F'|' '{
-      out="";
-      for (i=1; i<NF; i++) {out=out $i "'${AES}'"};
-      print out
-    }')"
+  if [[ -z "${mode}" ]]; then
+    local modes=''
+    modes+='{"key": "center", "value": "Center"},'
+    modes+='{"key": "fill", "value": "Fill"},'
+    modes+='{"key": "max", "value": "Max"},'
+    modes+='{"key": "scale", "value": "Scale"},'
+    modes+='{"key": "tile", "value": "Tile"}'
+    modes="[${modes}]"
 
-    pick_one "Select a mode:" "$MODES" "horizontal" || return 1
-    [ -z "$REPLY" ] && return
-
-    MODE="$(value "$REPLY")"
-  elif [[ ! "$MODE" =~ ^${WALLPAPER_MODES}$ ]]; then
-    echo "Invalid wallpaper mode"
-    return 1
-  fi
-
-  feh --no-fehbg --bg-$MODE "$WALLPAPER"
-
-  if [ ! $? = 0 ]; then
-    echo "Failed to set wallpaper"
-    return 1
-  fi
-
-  echo "Wallpaper has been set to $NAME"
-
-  if [ -f "$SETTINGS" ]; then
-    set_prop '.theme.wallpaper.file' "$NAME" "$SETTINGS"
-    set_prop '.theme.wallpaper.mode' "$MODE" "$SETTINGS"
-  else
-    mkdir -p "$CONFIG_HOME"
-    echo '{"theme": {"wallpaper": {"file": "'$NAME'", "mode": "'$MODE'"}}}' > "$SETTINGS"
-  fi
-}
-
-add_wallpaper () {
-  local IMAGE=$1
-
-  if [ -z "$IMAGE" ]; then
-    echo "Missing image file argument"
-    return 1
-  elif [[ ! "$IMAGE" =~ ^/ ]]; then
-    echo "File path should be an absolute path"
-    return 1
-  elif [[ ! "$IMAGE" =~ .+\.($WALLPAPER_TYPES)$ ]]; then
-    echo "Invalid image file type"
-    return 1
-  elif [ ! -f "$IMAGE" ]; then
-    echo "No image found with path $IMAGE"
-    return 1
-  fi
-
-  local IMAGE_NAME="$(basename "$IMAGE")"
-
-  if [ "$IMAGE" = "$WALLPAPERS/$IMAGE_NAME" ]; then
-   echo "Image file is already in wallpapers"
-   return 1
-  fi
-
-  while [ -f "$WALLPAPERS/$IMAGE_NAME" ]; do
-    IMAGE_NAME="copy_${IMAGE_NAME}"
-  done
-
-  mkdir -p "$WALLPAPERS"
-  cp "$IMAGE" "$WALLPAPERS/$IMAGE_NAME" &&
-    echo "Image has been added to wallpapers"
-
-  confirm "Want to set this as wallpaper?" || return 1
-  [ -z "$REPLY" ] && return
-  [ "$(value "$REPLY")" = "no" ] && return
-
-  set_wallpaper "$IMAGE_NAME"
-}
-
-remove_wallpaper () {
-  local NAME=$1
-
-  if [ -z "$NAME" ]; then
-    pick_wallpaper || return 1
-    [ -z "$REPLY" ] && return
-
-    NAME="$(value "$REPLY")"
-  fi
-
-  if [[ "$NAME" =~ /+ ]]; then
-    echo "Invalid name argument"
-    return 1
-  fi
-
-  NAME="$(basename "$NAME")"
-  local WALLPAPER="$WALLPAPERS/$NAME"
-
-  if [[ ! "$WALLPAPER" =~ .+\.($WALLPAPER_TYPES)$ ]]; then
-    echo "Invalid wallpaper file type"
-    return 1
-  elif [ ! -f "$WALLPAPER" ]; then
-    echo "No wallpaper found with name $NAME"
-    return 1
+    pick_one "Select a mode:" "${modes}" "vertical" || return $?
+    [[ -n "${REPLY}" ]] && mode="${REPLY}" || return 0
   fi
   
-  if [ -f "$SETTINGS" ]; then
-    local ACTIVE="$(get_prop '.theme.wallpaper.file' "$SETTINGS")"
-
-    if [ "$WALLPAPER" = "$WALLPAPERS/$ACTIVE" ]; then
-      echo "Cannot delete the active wallpaper"
-      return 1
-    fi
+  if [[ ! "${mode}" =~ ^(center|fill|max|scale|tile)$ ]]; then
+    echo "Invalid wallpaper mode"
+    return 2
   fi
 
-  rm "$WALLPAPER" &&
-    echo "Wallpaper $NAME has been removed" ||
-    echo "Failed to remove wallpaper"
+  feh --no-fehbg --bg-"${mode}" "${wallpaper_file}"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to set wallpaper"
+    return 2
+  fi
+
+  echo "Wallpaper has been set to ${name}"
+
+  local settings='{}'
+  local wallpaper="{\"name\": \"${name}\", \"mode\": \"${mode}\"}"
+
+  if [[ -f "${SETTINGS_FILE}" ]]; then
+    settings="$(jq ".wallpaper = ${wallpaper} " "${SETTINGS_FILE}")"
+  else
+    settings="$(echo "{\"wallpaper\": ${wallpaper}}" | jq -e '.')"
+  fi
+
+  mkdir -p "${CONFIG_HOME}"
+  echo "${settings}" > "${SETTINGS_FILE}"
 }
 
+# Sets the desktop wallpaper to the wallpaper
+# being set in the settings file.
+# Globals:
+#  SETTINGS_FILE
+# Arguments:
+#  None
 load_wallpaper () {
-  if [ ! -f "$SETTINGS" ]; then
-    echo "Unable to find wallpaper configuration"
-    return 1
+  if [[ ! -f "${SETTINGS_FILE}" ]]; then
+    echo "No wallpaper setting found"
+    return 0
   fi
 
-  local FILE="$(get_prop '.theme.wallpaper.file' "$SETTINGS")"
+  local wallpaper=''
+  wallpaper="$(jq 'if .wallpaper then .wallpaper else empty end' "${SETTINGS_FILE}")"
 
-  if [ -z "$FILE" ]; then
-    echo "Missing wallpaper file"
-    return 1
-  elif [[ "$FILE" =~ /+ ]]; then
-    echo "Invalid wallpaper file name"
-    return 1
-  elif [[ ! "$FILE" =~ .+\.($WALLPAPER_TYPES)$ ]]; then
-    echo "Invalid wallpaper file type"
-    return 1
-  elif [ ! -f "$WALLPAPERS/$FILE" ]; then
-    echo "Wallpaper $FILE does not exists"
-    return 1
+  if [[ -z "${wallpaper}" ]]; then
+    echo "No wallpaper setting found"
+    return 0
   fi
 
-  local MODE="$(get_prop '.theme.wallpaper.mode' "$SETTINGS")"
+  local name=''
+  name="$(get "${wallpaper}" '.name')" || return 1
 
-  if [ -z "$MODE" ]; then
-    echo "Missing wallpaper mode"
-    return 1
-  elif [[ ! "$MODE" =~ ^${WALLPAPER_MODES}$ ]]; then
-    echo "Invalid wallpaper mode"
-    return 1
+  if [[ ! -f "${WALLPAPERS_HOME}/${name}" ]]; then
+    echo "Wallpaper ${name} does not exist"
+    return 2
   fi
 
-  set_wallpaper "$FILE" "$MODE"
+  local mode=''
+  mode="$(get "${wallpaper}" '.mode')" || return 1
 
-  if [ ! $? -eq 0 ]; then
+  set_wallpaper "${name}" "${mode}"
+
+  if [[ $? -ne 0 ]]; then
     echo "Failed to load the wallpaper"
-    return 1
+    return 2
   fi
 
   echo "Wallpaper has been loaded"
 }
 
-help () {
-  if [ "$1" = "once" ]; then
+# Shows the help message.
+# Arguments:
+#  mode: once or none
+# Outputs:
+#  A long help message.
+show_help () {
+  if [[ "${1}" == "once" ]]; then
     echo "Usage: theme COMMAND [OBJECT] [ARGUMENTS]..."
 
     echo -e "\nCOMMANDS"
@@ -253,7 +255,7 @@ help () {
       "" "" \
       "load wallpaper" "Load the desktop wallpaper."
 
-    return
+    return 0
   fi
 
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
@@ -263,76 +265,82 @@ help () {
     "help" "Show this help message." \
     "" "" \
     "list wallpapers" "List all the wallapers." \
-    "set wallpaper [<name> [<mode>]]" "Set the desktop wallpaper, where mode" \
-    "" "could be center, fill, scale, max or tile." \
-    "add wallpaper <image>" "Add an image to the wallpapers set." \
-    "remove wallpaper [<name>]" "Remove a wallpaper from the wallpapers set."
+    "set wallpaper [<name> [<mode>]]" "Set the desktop wallpaper in center" \
+    "" "fill, scale, max or tile mode."
 }
 
 loop () {
   clear
 
   while true; do
-    prompt && history -s "$REPLY"
+    prompt && history -s "${REPLY}"
 
     set -f
     set_separator "line"
-    local CMD=($(xargs -n1 <<< "$REPLY"))
+    local cmd=($(xargs -n1 <<< "${REPLY}"))
     restore_separator && set +f
 
-    if [ "${CMD[0]}" = "help" ]; then
-      help
+    if [[ "${cmd[0]}" == "help" ]]; then
+      show_help
       continue
-    elif [ "${CMD[0]}" = "clear" ]; then
+    elif [[ "${cmd[0]}" == "clear" ]]; then
       clear
       continue
-    elif [ "${CMD[0]}" = "quit" ]; then
+    elif [[ "${cmd[0]}" == "quit" ]]; then
       break
-    elif [ -z "${CMD[0]}" ]; then
+    elif [[ -z "${cmd[0]}" ]]; then
       continue
     fi
 
-    case "${CMD[0]}" in
+    case "${cmd[0]}" in
       "set")
-        case "${CMD[1]}" in
-          "wallpaper") set_wallpaper "${CMD[2]}" "${CMD[3]}";;
-          *) echo "Unknown or invalid command";;
+        case "${cmd[1]}" in
+          "wallpaper") set_wallpaper "${cmd[2]}" "${cmd[3]}";;
+          *) echo "Invalid or unknown command";;
         esac;;
       "list")
-        case "${CMD[1]}" in
+        case "${cmd[1]}" in
           "wallpapers") list_wallpapers;;
-          *) echo "Unknown or invalid command";;
+          *) echo "Invalid or unknown command";;
         esac;;
       "add")
-        case "${CMD[1]}" in
-          "wallpaper") add_wallpaper "${CMD[2]}";;
-          *) echo "Unknown or invalid command";;
+        case "${cmd[1]}" in
+          "wallpaper") add_wallpaper "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
         esac;;
       "remove")
-        case "${CMD[1]}" in
-          "wallpaper") remove_wallpaper "${CMD[2]}";;
-          *) echo "Unknown or invalid command";;
+        case "${cmd[1]}" in
+          "wallpaper") remove_wallpaper "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
         esac;;
-      *) echo "Unknown or invalid command";; 
+      *) echo "Invalid or unknown command";; 
     esac
+    
+    if [[ $? -eq 1 ]]; then
+      echo "An unknown error has occurred"
+    fi
   done
 
   clear
 }
 
 once () {
-  case "$1" in
-    "help") help once;;
+  case "${1}" in
+    "help") show_help "once";;
     "load")
-      case "$2" in
+      case "${2}" in
         "wallpaper") load_wallpaper || abort;;
         *) abort "Invalid or unknown command";;
       esac;;
     *) abort "Invalid or unknown command";;
   esac
+
+  if [[ $? -ne 0 ]]; then
+    abort
+  fi
 }
 
-if [ $# = 0 ]; then
+if [[ $# -eq 0 ]]; then
   loop
 else
   once "$@"

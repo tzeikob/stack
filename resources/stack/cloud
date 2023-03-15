@@ -439,7 +439,7 @@ mount_all () {
 
 # Shows the help message.
 # Arguments:
-#  None
+#  mode: once or none
 # Outputs:
 #  A long help message.
 show_help () {

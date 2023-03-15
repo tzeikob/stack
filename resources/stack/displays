@@ -1601,11 +1601,11 @@ restore_colors () {
 
 # Shows the help message.
 # Arguments:
-#  None
+#  mode: once or none
 # Outputs:
 #  A long help message.
 show_help () {
-  if [[ "$1" == "once" ]]; then
+  if [[ "${1}" == "once" ]]; then
     echo "Usage: displays COMMAND [OBJECT] [ARGUMENTS]..."
 
     echo -e "\nCOMMANDS"
