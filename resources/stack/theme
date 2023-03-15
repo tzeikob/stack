@@ -93,6 +93,78 @@ prompt () {
   read -rep "[theme:ready] " REPLY
 }
 
+# Shows the current status of the desktop environment.
+# Globals:
+#  SETTINGS_FILE
+# Arguments:
+#  None
+# Outputs:
+#  A verbose list of text data.
+show_status () {
+  local status=''
+
+  local server=''
+  server="$(xdpyinfo -display "${DISPLAY}" | awk -F': ' '{ORS=""}; {
+    gsub(/^[ \t]+/,"",$2)
+    gsub(/[ \t]+$/,"",$2)
+    switch ($1) {
+      case "version number": print $2; break
+      case "X.Org version": print "/"$2")"; break
+      default: break
+    }
+  }')" || return 1
+  status+="\"server\": \"Xorg ${server::-1}\","
+
+  local compositor=''
+  compositor="$(pacman -Qi picom | grep -Po '^Version\s*: \K.+')" || return 1
+  status+="\"compositor\": \"Picom ${compositor}\","
+
+  local wm=''
+  wm="$(bspwm -v)" || return 1
+  status+="\"wm\": \"BSPWM ${wm}\","
+
+  local bars=''
+  bars="$(polybar -v | head -n +1 | cut -d ' ' -f 2)" || return 1
+  status+="\"bars\": \"Polybar ${bars}\","
+
+  if [[ -f "${SETTINGS_FILE}" ]]; then
+    local query='.wallpaper|if . then "\(.name) \(.mode)" else "none" end'
+    local wallpaper=''
+    wallpaper="$(jq -cr "${query}" "${SETTINGS_FILE}")" || return 1
+    status+="\"wallpaper\": \"${wallpaper}\","
+  fi
+
+  local fields='OS|Kernel|Shell|Theme|Icons'
+  status+="$(neofetch --off --stdout |
+    awk -F':' '/^('"${fields}"')/{
+      gsub(/^[ \t]+/,"",$2)
+      gsub(/[ \t]+$/,"",$2)
+      printf "\"%s\":\"%s\",",tolower($1),$2
+    }'
+  )" || return 1
+
+  # Remove the last extra comma after the last field
+  if [[ -n "${status}" ]]; then
+    status="${status::-1}"
+  fi
+
+  status="{${status}}"
+
+  local query=''
+  query+='OS:          \(.os)\n'
+  query+='Kernel:      \(.kernel)\n'
+  query+='Shell:       \(.shell)\n'
+  query+='Server:      \(.server)\n'
+  query+='Compositor:  \(.compositor)\n'
+  query+='WM:          \(.wm)\n'
+  query+='Bars:        \(.bars)\n'
+  query+='Theme:       \(.theme)\n'
+  query+='Icons:       \(.icons)\n'
+  query+='Wallpaper:   \(if .wallpaper then .wallpaper else "none" end)'
+
+  echo "${status}" | jq -cer "\"${query}\"" || return 1
+}
+
 # show the list of all the wallpapers found under
 # the wallpapers home.
 # Arguments:
@@ -264,6 +336,8 @@ show_help () {
   printf " %-34s %s\n" \
     "help" "Show this help message." \
     "" "" \
+    "show status" "Show the status of the desktop environment." \
+    "" "" \
     "list wallpapers" "List all the wallapers." \
     "set wallpaper [<name> [<mode>]]" "Set the desktop wallpaper in center" \
     "" "fill, scale, max or tile mode."
@@ -293,6 +367,11 @@ loop () {
     fi
 
     case "${cmd[0]}" in
+      "show")
+        case "${cmd[1]}" in
+          "status") show_status;;
+          *) echo "Invalid or unknown command";;
+        esac;;
       "set")
         case "${cmd[1]}" in
           "wallpaper") set_wallpaper "${cmd[2]}" "${cmd[3]}";;
