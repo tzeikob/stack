@@ -301,7 +301,7 @@ install_utilities () {
   cp ~/stack/resources/stack/networks "$STACK_HOME"
   cp ~/stack/resources/stack/disks "$STACK_HOME"
   cp ~/stack/resources/stack/langs "$STACK_HOME"
-  cp ~/stack/resources/stack/theme "$STACK_HOME"
+  cp ~/stack/resources/stack/desktop "$STACK_HOME"
   cp ~/stack/resources/stack/audio "$STACK_HOME"
   cp ~/stack/resources/stack/displays "$STACK_HOME"
   cp ~/stack/resources/stack/cloud "$STACK_HOME"
@@ -311,7 +311,7 @@ install_utilities () {
   ln -sf "$STACK_HOME/networks" /usr/local/bin/networks
   ln -sf "$STACK_HOME/disks" /usr/local/bin/disks
   ln -sf "$STACK_HOME/langs" /usr/local/bin/langs
-  ln -sf "$STACK_HOME/theme" /usr/local/bin/theme
+  ln -sf "$STACK_HOME/desktop" /usr/local/bin/desktop
   ln -sf "$STACK_HOME/audio" /usr/local/bin/audio
   ln -sf "$STACK_HOME/displays" /usr/local/bin/displays
   ln -sf "$STACK_HOME/cloud" /usr/local/bin/cloud

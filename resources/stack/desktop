@@ -3,7 +3,7 @@
 set -o pipefail
 source /opt/stack/utils
 
-SETTINGS_FILE="${CONFIG_HOME}/theme.json"
+SETTINGS_FILE="${CONFIG_HOME}/desktop.json"
 
 require "feh"
 require "identify"
@@ -90,7 +90,7 @@ pick_wallpaper () {
 # Outputs:
 #  A minimal prompt status line.
 prompt () {
-  read -rep "[theme:ready] " REPLY
+  read -rep "[desktop:ready] " REPLY
 }
 
 # Shows the current status of the desktop environment.
@@ -319,7 +319,7 @@ load_wallpaper () {
 #  A long help message.
 show_help () {
   if [[ "${1}" == "once" ]]; then
-    echo "Usage: theme COMMAND [OBJECT] [ARGUMENTS]..."
+    echo "Usage: desktop COMMAND [OBJECT] [ARGUMENTS]..."
 
     echo -e "\nCOMMANDS"
     printf " %-16s %s\n" \
