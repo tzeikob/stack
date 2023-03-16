@@ -1205,8 +1205,8 @@ delete_layout () {
 
   if [[ -z "${index}" ]]; then
     local devices=''
-    devices+='if .value.model_name then .value.model_name else "" end'
-    devices="[.value.map|to_entries[]|${devices}]|join(\",\")"
+    devices+='\(if .value.model_name then "\(.key):\(.value.model_name)" else empty end)'
+    devices="[.value.map|to_entries[]|\"${devices}\"]|join(\", \")"
 
     local query=''
     query+="{key: .key, value: \"\(.key):[\(${devices})]\"}"
@@ -1266,9 +1266,15 @@ list_layouts () {
     return 0
   fi
 
+  local map=''
+  map+='\(.key):\(.key|if (9-length)>0 then (" "*(9-length)) else "" end)'
+  map+='\(if .value.model_name then "\(.value.model_name) " else "" end)'
+  map+='\(if .value.mode == "--off" then "[OFF]" else "[ON]" end)'
+  map="\([.value.map|to_entries[]|\"${map}\"]|join(\"\n\"))"
+
   local layout=''
   layout+='Index:    \(.key)\n'
-  layout+='Devices:  \([.value.map|to_entries[]|.value.model_name]|join(","))'
+  layout+="${map}"
 
   local query=''
   query+='if .layouts|length > 0'
