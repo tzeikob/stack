@@ -62,9 +62,10 @@ find_output () {
   find_outputs "all" | jq -cer "${query}" || return 1
 }
 
-# Returns a unique hashed signature of the list of currently
-# active connected devices on outputs, assuming that xrandr
-# works deterministically returning the outputs always in the
+# Returns a unique hashed signature of the list of the given
+# outputs along with their connected devices if any. The signature
+# is expected to be consistent assuming that xrandr works
+# deterministically returning the outputs always in the exact
 # same order.
 # Arguments:
 #  outputs: a json array of outputs
@@ -80,7 +81,7 @@ get_sig () {
   model+='end'
 
   local query=''
-  query+="select(.resolution_width)|\"\(.device_name)\(${model})\""
+  query+="\"\(.device_name)\(${model})\""
   query="[.[]|${query}]|join(\",\")"
 
   local sig=''
@@ -1030,7 +1031,8 @@ set_layout () {
 }
 
 # Saves the current layout under a unique hashed signature
-# which is based on the mapping between outputs and devices.
+# which is based on the mapping between all outputs and
+# their possibly connected devices.
 # Globals:
 #  REPLY, CONFIG_HOME, SETTINGS_FILE
 # Arguments:
@@ -1044,11 +1046,19 @@ save_layout () {
     return 2
   fi
 
+  local len=0
+  len="$(count "${outputs}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No outputs have found"
+    return 2
+  fi
+
   # Create a hash map of <output,{device, mode}> entries
   local device=''
   device+='if .model_name'
   device+=' then {model_name: .model_name, product_id: .product_id, serial_number: .serial_number}'
-  device+=' else empty '
+  device+=' else {} '
   device+='end'
 
   local res=''
@@ -1065,7 +1075,7 @@ save_layout () {
   local query=''
   query+='if .resolution_width'
   query+=" then (${device}) * {mode: \"\(${res}) ${pos} ${rotate} ${reflect} \(${primary})\"}"
-  query+=' else empty '
+  query+=" else (${device}) * {mode: \"--off\"} "
   query+='end'
 
   query="map({(.device_name|tostring): (${query})})|add"
@@ -1117,9 +1127,9 @@ save_layout () {
   echo "Layout has been saved"
 }
 
-# Restores the layout setting for the running setup only
-# if its mapping between outputs and devices is found in the
-# settings by signature.
+# Restores the layout setting with the signature matching
+# the signature of the mapping between current outputs and 
+# possibly connected devices.
 # Globals:
 #  SETTINGS_FILE
 # Arguments:
@@ -1143,6 +1153,14 @@ restore_layout () {
 
   if [[ $? -ne 0 ]]; then
     echo "Unable to read outputs"
+    return 2
+  fi
+
+  local len=0
+  len="$(count "${outputs}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No outputs have found"
     return 2
   fi
 
