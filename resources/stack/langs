@@ -546,7 +546,7 @@ order_layouts () {
 
 # Shows the help message.
 # Arguments:
-#  mode: once or none
+#  None
 # Outputs:
 #  A long help message.
 show_help () {
