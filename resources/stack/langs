@@ -35,17 +35,23 @@ show_status () {
     if (i > 0) {
       l=$1
       gsub(/^[ \t]+|[ \t]+$/, "", l)
-      printf "%-14s %s\n", l":", substr($0, i+1)
+      split(l,a," ")
+      printf "%-8s %s\n", a[2]":", substr($0, i+1)
     } else {
       gsub(/ /,"")
-      printf "%-14s %s\n", "", " "$0
+      printf "%-8s %s\n", "", " "$0
     }
   }'
 
   local locales=''
   locales="$(locale -a | awk '{ORS=", ";} {print $0}')" || return 1
 
-  echo "Locales:        [${locales::-2}]"
+  # Remove extra comma after the last locale element
+  if [[ -n "${locales}" ]]; then
+    locales="${locales::-2}"
+  fi
+
+  echo "Locales:  ${locales}"
 }
 
 # Sets the keymap of the console keyboard to the
@@ -330,6 +336,9 @@ remove_locale () {
   elif ! grep -qE "^\s*${locale}\s*$" /etc/locale.gen; then
     echo "Invalid or unknown locale"
     return 2
+  elif [[ "${locale}" == "en_US.UTF-8 UTF-8" ]]; then
+    echo "Cannot remove the default locale"
+    return 2
   fi
 
   sudo sed -i "s/\s*\(${locale}\)\s*/#\1/" /etc/locale.gen &&
@@ -433,8 +442,9 @@ remove_layout () {
     languages="$(echo "${layouts}" | tr ',' '\n' | awk '{
       print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
     }')" || return 1
+    languages="[${languages::-1}]"
 
-    pick_one "Select a language:" "${languages}" "vertical" || return $?
+    pick_one "Select a language:" "${languages}" "horizontal" || return $?
     [[ -n "${REPLY}" ]] && language="${REPLY}" || return 0
   fi
 
@@ -456,9 +466,9 @@ remove_layout () {
   fi
 
   if [[ "${layouts}" =~ "${language}," ]]; then
-    layouts="${layouts//language,/}"
+    layouts=${layouts//${language},/}
   else
-    layouts="${layouts//,language/}"
+    layouts=${layouts//,${language}/}
   fi
 
   local model=''
@@ -513,7 +523,7 @@ order_layouts () {
   [[ -z "${REPLY}" ]] && return 0
 
   local ordered=''
-  ordered="$(echo "${REPLY}" | jq -cer '[.[]|.key]|join(",")')" || return 1
+  ordered="$(echo "${REPLY}" | jq -cer 'join(",")')" || return 1
 
   local model=''
   model="$(cat /etc/X11/xorg.conf.d/00-keyboard.conf |
