@@ -15,7 +15,7 @@ require "smartmontools"
 #  type:   a comma-sep list of disk, part, rom or all
 #  status: mounted, unmounted or all
 # Outputs:
-#  A json list of devices objects.
+#  A json array list of device objects.
 find_devices () {
   local type="${1}"
   local status="${2}"
@@ -51,7 +51,7 @@ find_devices () {
 # Arguments:
 #  path: the device path
 # Outputs:
-#  A json device object.
+#  A json object of a device.
 find_device () {
   local path="${1}"
 
@@ -67,7 +67,7 @@ find_device () {
 # Arguments:
 #  None
 # Outputs:
-#  A json list of host objects.
+#  A json array list of host objects.
 find_hosts () {
   local route=''
   route="$(ip route get 1.1.1.1)" || return 1
@@ -106,7 +106,7 @@ find_hosts () {
 # Returns the list of shared folders of the given
 # host available in the local network.
 # Arguments:
-#  host:      the ip address of a host
+#  host:      the name or ip of a host
 #  username:  the name of the user
 #  workgroup: the group of the user
 #  password:  the password of the user
@@ -208,48 +208,6 @@ pick_host () {
   pick_one "Select a host:" "${hosts}" "vertical" || return 1
 }
 
-# Shows a menu asking the user to select one folder
-# of the given host, where the answer is kept in the
-# global var REPLY.
-# Globals:
-#  REPLY
-# Arguments:
-#  host:      the ip address of a host
-#  username:  the name of the user
-#  workgroup: the group of the user
-#  password:  the password of the user
-# Outputs:
-#  A menu of host names.
-pick_shared_folder () {
-  local host="${1}"
-  local username="${2}"
-  local workgroup="${3}"
-  local password="${4}"
-
-  local folders=''
-  folders="$(find_shared_folders "${host}" "${username}" "${workgroup}" "${password}")"
-
-  if [[ $? -ne 0 ]]; then
-    echo "Unable to retrieve shared folders"
-    return 2
-  fi
-
-  local len=0
-  len="$(count "${folders}")" || return 1
-
-  if [[ ${len} -eq 0 ]]; then
-    echo "No shared folders have been found"
-    return 2
-  fi
-
-  local query=''
-  query='[.[]|{key: .name, value: "\(.name) [\(.type)]"}]'
-
-  folders="$(echo "${folders}" | jq -cer "${query}")" || return 1
-
-  pick_one "Select a shared folder:" "${folders}" "vertical" || return 1
-}
-
 # Shows a prompt status and asks user to enter the
 # next command, which is kept in the global var REPLY.
 # Globals:
@@ -271,11 +229,11 @@ prompt () {
   read -rep "[disks:${status}] " REPLY
 }
 
-# Shows the data of the device with the given path.
+# Shows the data of the block device with the given path.
 # Globals:
 #  REPLY
 # Arguments:
-#  path: the device path
+#  path: the path of a block device
 # Outputs:
 #  A long text of device data.
 show_device () {
@@ -330,7 +288,7 @@ show_device () {
 # Scans the device with the given path for
 # possible SMART data.
 # Arguments:
-#  path: the device path
+#  path: the path of a block device
 # Outputs:
 #  A long list of health and status data.
 scan_device () {
@@ -479,13 +437,13 @@ list_shares () {
     [[ -n "${REPLY}" ]] && host="${REPLY}" || return 0
   fi
 
-  ask "Give the username:"
+  ask "Enter the username:"
   local username="${REPLY}"
 
-  ask "Give the workgroup [WORKGROUP]:"
+  ask "Enter the workgroup [WORKGROUP]:"
   local workgroup="${REPLY:-"WORKGROUP"}"
 
-  ask_password "Give the password:"
+  ask_password "Enter the password:"
   local password="${REPLY}"
 
   local folders=''
@@ -497,7 +455,7 @@ list_shares () {
   fi
 
   local len=0
-  len=$(count "${folders}") || return 1
+  len="$(count "${folders}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
     echo "No shared folders have found"
@@ -567,7 +525,7 @@ list_mounts () {
 # Globals:
 #  REPLY, HOME, USER
 # Arguments:
-#  path: the path of a device
+#  path: the path of a block device
 mount_device () {
   local path="${1}"
 
@@ -605,7 +563,7 @@ mount_device () {
 # Globals:
 #  REPLY, HOME, USER
 # Arguments:
-#  path: the path of a mounted device
+#  path: the path of a block device
 unmount_device () {
   local path="${1}"
 
@@ -636,34 +594,27 @@ unmount_device () {
   echo "Device ${path} has been unmounted"
 }
 
-# Mounts the shared folder of the given host.
+# Mounts a shared folder of the given host.
 # Globals:
 #  REPLY, HOME, UID
 # Arguments:
-#  host:   the name or the ip of the host
-#  folder: the name of the shared folder
+#  host: the name or ip of a host
 mount_shared_folder () {
   local host="${1}"
-  local folder="${2}"
 
   if [[ -z "${host}" ]]; then
     pick_host || return $?
     [[ -n "${REPLY}" ]] && host="${REPLY}" || return 0
   fi
 
-  ask "Give the username:"
+  ask "Enter a shared folder:"
+  local folder="${REPLY}"
+
+  ask "Enter the username:"
   local username="${REPLY}"
 
-  ask "Give the workgroup [WORKGROUP]:"
+  ask "Enter the workgroup [WORKGROUP]:"
   local workgroup="${REPLY:-"WORKGROUP"}"
-
-  ask_password "Give the password:"
-  local password="${REPLY}"
-
-  if [[ -z "${folder}" ]]; then
-    pick_shared_folder "${host}" "${username}" "${workgroup}" "${password}" || return $?
-    [[ -n "${REPLY}" ]] && folder="${REPLY}" || return 0
-  fi
 
   local uri="smb://${workgroup};${username}@${host}/${folder,,}"
 
@@ -705,6 +656,7 @@ unmount_shared_folder () {
       print "{\"key\": \""key"\", \"value\":\""key"\"},"
     }')" || return 1
 
+    # Remove the extra comma after the last element
     if [[ -n "${uris}" ]]; then
       uris="${uris::-1}"
     fi
@@ -735,7 +687,7 @@ unmount_shared_folder () {
     return 2
   fi
 
-  echo "Shared folder has been unmounted"
+  echo "Shared folder ${uri} has been unmounted"
 }
 
 # Shows the help message.
@@ -761,8 +713,8 @@ show_help () {
     "mount device [<path>]" "Mount a block device." \
     "unmount device [<path>]" "Unmount a block device." \
     "" "" \
-    "mount share [<host> [<folder>]]" "Mount a shared folder of a host." \
-    "unmount share [<uri>]" "Unmount a shared folder of a host."
+    "mount share [<host>]" "Mount a shared folder." \
+    "unmount share [<uri>]" "Unmount a shared folder."
 }
 
 loop () {
