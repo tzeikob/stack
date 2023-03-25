@@ -57,7 +57,7 @@ find_device () {
 
   local fields='NAME,PATH,LABEL,UUID,VENDOR,MODEL,REV,'
   fields+='SERIAL,TYPE,TRAN,RM,RO,HOTPLUG,FSTYPE,FSVER,'
-  fields+='SIZE,FSAVAIL,FSUSED,FSUSE%,MOUNTPOINTS,STATE'
+  fields+='SIZE,FSAVAIL,FSUSED,FSUSE%,MOUNTPOINT,MOUNTPOINTS,STATE'
 
   lsblk -J -o "${fields}" "${path}" | jq -cer '.blockdevices[0]' || return 1
 }
@@ -577,6 +577,20 @@ unmount_device () {
     return 2
   elif ! grep -qs "${path} " /proc/mounts; then
     echo "Device ${path} is not mounted"
+    return 2
+  fi
+
+  local mountpoint=''
+  mountpoint="$(find_device "${path}" | jq -cer '.mountpoint')" || return 1
+
+  if [[ "${mountpoint}" == "/" ]]; then
+    echo "Cannot unmount root partition"
+    return 2
+  elif [[ "${mountpoint}" == "/home" ]]; then
+    echo "Cannot unmount home partition"
+    return 2
+  elif [[ "${mountpoint}" =~ ^/(var|log)$ ]]; then
+    echo "Cannot unmount ${mountpoint} partition"
     return 2
   fi
 
