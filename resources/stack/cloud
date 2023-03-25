@@ -328,13 +328,7 @@ mount_remote () {
 
   echo "Mounting remote ${name}..."
 
-  local remote=''
-  remote="$(find_remote "${name}")" || return 1
-
-  local service=''
-  service="$(get "${remote}" ".service")" || return 1
-
-  local mount_folder="${HOME}/mount/cloud/${service}/${name}"
+  local mount_folder="${HOME}/mount/cloud/${name}"
 
   mkdir -p "${mount_folder}" &&
   rclone mount "${name}:" "${mount_folder}" \
