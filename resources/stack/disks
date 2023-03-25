@@ -229,6 +229,44 @@ prompt () {
   read -rep "[disks:${status}] " REPLY
 }
 
+# Shows a short status of the disks and filesystem.
+# Arguments:
+#  None
+# Outputs:
+#  A list of disks and filesystem data.
+show_status () {
+  local query='.[]|select(.mountpoint == "/" or .mountpoint == "/home")|.path'
+
+  local part_paths=''
+  part_paths="$(find_devices "part" | jq -cer "${query}")" || return 1
+
+  local query=''
+  query+='Partition:    \(.path):\(.mountpoint)\n'
+  query+='File System:  \(.fstype|ascii_upcase) v\(.fsver)\n'
+  query+='Total Size:   \(.size)\n'
+  query+='Free Space:   \(.fsavail)\n'
+  query+='Used Space:   \(.fsused) [\(."fsuse%")]\n'
+
+  local part_path=''
+  while read -r part_path; do
+    find_device "${part_path}" | jq -cer "\"${query}\"" || return 1
+  done <<< "${part_paths}"
+
+  swapon --noheadings --show | awk -F' ' '{
+    printf "%-13s %s\n", "Swap:", $1
+    printf "%-13s %s\n", "Type:", $2
+    printf "%-13s %s\n", "Used:", $4"/"$3
+  }' || return 1
+
+  cat /proc/meminfo | grep -E "Swap.*" | awk -F':' '{
+    gsub(/^[ \t]+/,"",$1)
+    gsub(/[ \t]+$/,"",$1)
+    gsub(/^[ \t]+/,"",$2)
+    gsub(/[ \t]+$/,"",$2)
+    printf "%-13s %s\n", $1":", $2
+  }' || return 1
+}
+
 # Shows the data of the block device with the given path.
 # Globals:
 #  REPLY
@@ -718,6 +756,8 @@ show_help () {
   printf " %-35s %s\n" \
     "help" "Show this help message." \
     "" "" \
+    "show status" "Show a report of disks and the file system."
+    "" "" \
     "show device [<path>]" "Show the data of a block device." \
     "scan device [<path>]" "Scan a block device for SMART data." \
     "" "" \
@@ -766,6 +806,7 @@ loop () {
         esac;;
       "show")
         case "${cmd[1]}" in
+          "status") show_status;;
           "device") show_device "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
