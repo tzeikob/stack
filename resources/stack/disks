@@ -275,6 +275,8 @@ show_device () {
   query+='\(if .rev then "\nRevision:      \(.rev)" else "" end)'
   query+='\(if .serial then "\nSerial:        \(.serial)" else "" end)'
   query+='\(if .state then "\nState:         \(.state)" else "" end)'
+  query+='\(if .mountpoint then "\nMount:         \(.mountpoint)" else "" end)'
+  query+='\(if .mountpoints != [null] then "\nMounts:        \(.mountpoints)" else "" end)'
   query+="\(if .children then \"\n${parts}\" else \"\" end)"
 
   find_device "${path}" | jq -cer "\"${query}\""
