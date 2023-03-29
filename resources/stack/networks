@@ -1,368 +1,774 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
+set -o pipefail
 source /opt/stack/utils
 
 require "networkmanager"
 require "wpa_supplicant"
 require "wireless_tools"
 
-prompt () {
-  local NETWORKING=$(nmcli networking)
-  local STATUS=$(nmcli -g STATE general status)
-
-  local YELLOW=$'\e[0;33m'
-  local GREEN=$'\e[0;32m'
-  local RED=$'\e[0;31m'
-  local RS=$'\e[m'
-
-  local FG=$YELLOW
-  if [ "$NETWORKING" = "enabled" ]; then
-    if [[ "$STATUS" =~ disconnected ]]; then
-      FG=$RED
-    elif [[ "$STATUS" =~ connected ]]; then
-      FG=$GREEN
-    fi
-  fi
-
-  local DEVICES=($(nmcli device | awk '{\
-    if ( $3 == "connected" && ($2 == "ethernet" || $2 == "wifi")) {print $2":"$1}'}))
-  local LEN=${#DEVICES[@]}
-  
-  local INTERFACE=""
-  if [ $LEN -gt 0 ]; then
-    INTERFACE="${DEVICES[0]}"
-    
-    local INDEX=0
-    while [ $INDEX -lt $LEN ]; do
-      local DEVICE=${DEVICES[$INDEX]}
-
-      [[ "$DEVICE" =~ ^ethernet ]] &&
-        INTERFACE="$DEVICE" && break
-      
-      INDEX=$((INDEX + 1))
-    done
-  fi
-
-  [ -n "$INTERFACE" ] &&
-    STATUS=$(echo "$INTERFACE" | cut -d ":" -f 2)
-
-  read -rep "[networks:$FG${STATUS}$RS] " REPLY
+# Returns the general status of the networking.
+# Arguments:
+#  None
+# Outputs:
+#  A json object of status.
+find_status () {
+  nmcli general | jc --nmcli | jq -cer '.[0]' || return 1
 }
 
-wait_progress () {
-  local STATUS=$(nmcli -g STATE,CONNECTIVITY general status)
-  local SECS_STILL=0
-
-  while true; do
-    [ $SECS_STILL -lt 3 ] && sleep 1 || break
-
-    local NEW_STATUS=$(nmcli -g STATE,CONNECTIVITY general status)
-
-    if [ ! "$STATUS" = "$NEW_STATUS" ]; then
-      STATUS=$NEW_STATUS
-      echo "Network state set to $STATUS"
-    else
-      SECS_STILL=$((SECS_STILL + 1))
-    fi
-  done
+# Returns the list of network devices.
+# Arguments:
+#  None
+# Outputs:
+#  A json array of device objects.
+find_devices () {
+  nmcli device | jc --nmcli || return 1
 }
 
+# Returns the device with the given name.
+# Arguments:
+#  name: the name of a device
+# Outputs:
+#  A josn object of a device.
+find_device () {
+  local name="${1}"
+
+  nmcli device show "${name}" | jc --nmcli | jq -cer '.[0]' || return 1
+}
+
+# Returns the list of network connections.
+# Arguments:
+#  None
+# Outputs:
+#  A json array of connection objects.
+find_connections () {
+  nmcli connection | jc --nmcli || return 1
+}
+
+# Returns the connection with the given name.
+# Arguments:
+#  name: the name of a connection
+# Outputs:
+#  A json object of connection.
+find_connection () {
+  local name="${1}"
+
+  nmcli connection show "${name}" | jc --nmcli | jq -cer '.[0]' || return 1
+}
+
+# Returns any detected wifi networks broadcasting in
+# your local area.
+# Arguments:
+#  None
+# Outputs:
+#  A json array list of wifi networks.
+find_wifis () {
+  local networks=''
+  networks="$(nmcli -f SSID,SIGNAL,CHAN,SECURITY -t device wifi list |
+    awk -F: '{
+      schema="\"ssid\":\"%s\","
+      schema=schema"\"signal\":\"%s\","
+      schema=schema"\"channel\":\"%s\","
+      schema=schema"\"security\":\"%s\""
+      schema="{"schema"},"
+      printf schema, $1,$2,$3,$4
+    }'
+  )" || return 1
+
+  # Remove the last comma after the last element
+  if [[ -n "${networks}" ]]; then
+    networks="${networks::-1}"
+  fi
+
+  echo "[${networks}]"
+}
+
+# Validates if the network object with the given name
+# exists and is a valid networking entity.
+# Arguments:
+#  object: device or connection
+#  name:   the name of the object
+# Returns:
+#  0 if object is valid otherwise 1.
 validate () {
-  local OBJECT=$1
-  local NAME=$2
+  local object="${1}"
+  local name="${2}"
 
-  if [[ ! "$OBJECT" =~ ^(device|connection)$ ]]; then
-    echo "Missing or invalid object argument: $OBJECT"
+  if [[ ! "${object}" =~ ^(device|connection)$ ]]; then
     return 1
   fi
 
-  if [ "$OBJECT" = "device" ]; then
-    nmcli -f DEVICE device | tail -n +2 | grep -wq "$NAME" ||
-      (echo "Invalid or unknown device: $NAME" && return 1)
-  elif [ "$OBJECT" = "connection" ]; then
-    nmcli -f NAME connection | tail -n +2 | grep -wq "$NAME" ||
-      (echo "Invalid or unknown connection: $NAME" && return 1)
+  local result=''
+
+  if [[ "${object}" == "device" ]]; then
+    result="$(find_devices | jq -cer ".[]|select(.device == \"${name}\")")"
+  elif [[ "${object}" == "connection" ]]; then
+    result="$(find_connections | jq -cer ".[]|select(.name == \"${name}\")")"
+  fi
+
+  if [[ $? -ne 0 ]] || [[ -z "${result}" ]]; then
+    return 1
   fi
 }
 
-show_status () {
-  nmcli --colors no general status
+# Stops the execution via sleeping calls
+# until the network settles to a stable state.
+# Arguments:
+#  None
+# Outputs:
+#  The changes of the network state.
+wait_progress () {
+  local query='"\(.state):\(.connectivity)"'
 
-  local OLD_IFS=$IFS && IFS=","
+  local status=''
+  status="$(find_status | jq -cer "${query}")" || return 1
 
-  local CONNECTIONS=($(
-    nmcli -g DEVICE,TYPE,STATE,CONNECTION device |
-      trim |
-      awk -v FS=':' -v OFS=':' '{if ($3 == "connected" ) {print $4","}}' |
-      no_breaks
-  ))
+  local loops=0
+  while true; do
+    # Abort sleeping when max loops reached
+    [[ ${loops} -lt 3 ]] && sleep 1 || return 0
 
-  IFS=$OLD_IFS
+    local new_status=''
+    new_status="$(find_status | jq -cer "${query}")" || return 1
 
-  for CONNECTION in "${CONNECTIONS[@]}"; do
-    echo
-    nmcli --colors no --fields \
-      "connection.interface-name, \
-      connection.id, \
-      connection.uuid, \
-      connection.type, \
-      connection.autoconnect, \
-      802-11-wireless.ssid, \
-      802-11-wireless.channel, \
-      802-11-wireless.seen-bssids, \
-      802-11-wireless-security.key-mgmt, \
-      GENERAL.STATE, \
-      IP4.ADDRESS, \
-      IP4.GATEWAY, \
-      IP4.ROUTE, \
-      IP4.DNS, \
-      IP6.ADDRESS, \
-      IP6.GATEWAY, \
-      IP6.ROUTE" \
-      connection show "$CONNECTION"
+    # Awake from sleep when status settles down
+    if [[ "${status}" != "${new_status}" ]]; then
+      status="${new_status}"
+      echo "Network state set to ${status}"
+      return 0
+    fi
+
+    loops=$((loops + 1))
   done
 }
 
+# Shows a menu asking the user to select one device, where the
+# answer is kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  None
+# Outputs:
+#  A menu of device names.
+pick_device () {
+  local query='{key: .device, value: .device}'
+  query="[.[]|${query}]"
+
+  local devices=''
+  devices="$(find_devices | jq -cer "${query}")" || return 1
+
+  local len=0
+  len="$(count "${devices}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No devices have found"
+    return 2
+  fi
+
+  pick_one "Select a device:" "${devices}" "vertical" || return 1
+}
+
+# Shows a menu asking the user to select one connection,
+# where the answer is kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  None
+# Outputs:
+#  A menu of connection names.
+pick_connection () {
+  local query='{key: .name, value: .name}'
+  query="[.[]|${query}]"
+
+  local connections=''
+  connections="$(find_connections | jq -cer "${query}")" || return 1
+
+  local len=0
+  len="$(count "${connections}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No connections have found"
+    return 2
+  fi
+
+  pick_one "Select a connection:" "${connections}" "vertical" || return 1
+}
+
+# Shows a prompt status and asks user to enter the
+# next command, which is kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  None
+# Outputs:
+#  A minimal prompt status line.
+prompt () {
+  local query=''
+  query+='[.[]|select((.type == "wifi" or .type == "ethernet") and .state == "connected")]'
+  query+=' |if .|length > 0 then .[0].device else "local" end'
+
+  local status=''
+  status="$(find_devices | jq -cer "${query}")"
+
+  if [[ $? -ne 0 ]]; then
+    status='none'
+  fi
+
+  read -rep "[networks:${status}] " REPLY
+}
+
+# Shows the current status of the system networking.
+# Arguments:
+#  None
+# Outputs:
+#  A long list of networking data.
+show_status () {
+  local devices=''
+  devices="$(find_devices)"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to read network devices"
+    return 2
+  fi
+
+  local query=''
+  query+='\([$d[]|select((.type == "wifi" or .type == "ethernet") and .state == "connected")]'
+  query+=' |if .|length == 0 then "local" else .[0]|.device end|'
+  query+='"Network:     \(.)\n")'
+  query+='State:       \(.state)\n'
+  query+='Connection:  \(.connectivity)\n'
+  query+='WiFi:        \(.wifi)\(if .wifi_hw then " [HW]" else "" end)\n'
+  query+='WWAN:        \(.wwan)\(if .wwan_hw then " [HW]" else "" end)'
+  query="\"${query}\""
+
+  find_status | jq -cer --argjson d "${devices}" "${query}" || return 1
+
+  query=''
+  query+='.[]|select(.state == "connected")|.connection'
+
+  local connections=''
+  connections="$(echo "${devices}"| jq -cer "${query}")" || return 1
+
+  query=''
+  query+='Connection:  \(.connection_id)'
+  query+='\(if .default == "yes" then " [default]" else "" end)\n'
+  query+='\(."802_11_wireless_ssid"|if . then "SSID:        \(.)\n" else "" end)'
+  query+='Device:      \(.connection_interface_name)\n'
+  query+='State:       \(.state)\n'
+  query+='Type:        \(.connection_type)\n'
+  query+='\(."802_11_wireless_security_key_mgmt"|'
+  query+=' if . then "Security:    \(.|ascii_upcase)\n" else "" end)'
+  query+='Proxy:       \(.proxy_method)\n'
+  query+='VPN:         \(.vpn)\n'
+  query+='IPv4:        \(.ip4_address_1)\n'
+  query+='IPv6:        \(.ip6_address_1)'
+  query="\"${query}\""
+
+  local connection=''
+  while read -r connection; do
+    echo
+    find_connection "${connection}" | jq -cer "${query}" || return 1
+  done <<< "${connections}"
+}
+
+# Shows the data of the network device with the given name.
+# Globals:
+#  REPLY
+# Arguments:
+#  name: the name of a device
+# Outputs:
+#  A long list of device data.
 show_device () {
-  local NAME=$1
+  local name="${1}"
 
-  validate "device" "$NAME" || return 1
+  if [[ -z "${name}" ]]; then
+    pick_device || return $?
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+  fi
 
-  nmcli --colors no device show "$NAME"
+  if ! validate "device" "${name}"; then
+    echo "Invalid or unknown device"
+    return 2
+  fi
+
+  local query=''
+  query+='Name:        \(.device)\n'
+  query+='Type:        \(.type)\n'
+  query+='MAC:         \(.hwaddr)\n'
+  query+='\(.state_text|if . then "State:       \(.)\n" else "" end)'
+  query+='MTU:         \(.mtu)'
+  query+='\(.ip4_address_1|if . then "\nIPv4:        \(.)" else "" end)'
+  query+='\(.ip4_gateway|if . then "\nGateway:     \(.)" else "" end)'
+  query+='\(.ip4_route_1|if . then "\nRoute:       \(.dst)" else "" end)'
+  query+='\(.ip4_dns_1|if . then "\nDNS:         \(.)" else "" end)'
+  query+='\(.ip6_address_1|if . then "\nIPv6:        \(.)" else "" end)'
+  query+='\(.ip6_gateway|if . then "\nGateway:     \(.)" else "" end)'
+  query+='\(.ip6_route_1|if . then "\nRoute:       \(.dst)" else "" end)'
+  query+='\(.connection|if . then "\nConnection:  \(.)" else "" end)'
+  query="\"${query}\""
+
+  find_device "${name}" | jq -cer "${query}" || return 1
 }
 
+# Shows the data of the network connection with the
+# given name.
+# Globals:
+#  REPLY
+# Arguments:
+#  name: the name of a connection
+# Outputs:
+#  A long list of connection data.
 show_connection () {
-  local NAME=$1
+  local name="${1}"
 
-  validate "connection" "$NAME" || return 1
+  if [[ -z "${name}" ]]; then
+    pick_connection || return $?
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+  fi
 
-  nmcli --colors no --fields \
-    "connection.interface-name, \
-    connection.id, \
-    connection.uuid, \
-    connection.type, \
-    connection.autoconnect, \
-    802-11-wireless.ssid, \
-    802-11-wireless.channel, \
-    802-11-wireless.seen-bssids, \
-    802-11-wireless-security.key-mgmt, \
-    GENERAL.STATE, \
-    IP4.ADDRESS, \
-    IP4.GATEWAY, \
-    IP4.ROUTE, \
-    IP4.DNS, \
-    IP6.ADDRESS, \
-    IP6.GATEWAY, \
-    IP6.ROUTE" \
-    connection show "$NAME"
+  if ! validate "connection" "${name}"; then
+    echo "Invalid or unknown connection"
+    return 2
+  fi
+
+  local query=''
+  query+='Connection:  \(.connection_id)'
+  query+='\(if .default == "yes" then " [default]" else "" end)\n'
+  query+='\(."802_11_wireless_ssid"|if . then "SSID:        \(.)\n" else "" end)'
+  query+='\(.connection_uuid|if . then "UUID:        \(.)\n" else "" end)'
+  query+='Device:      \(.connection_interface_name)\n'
+  query+='\(.state|if . then "State:       \(.)\n" else "" end)'
+  query+='Auto:        \(.connection_autoconnect)\n'
+  query+='Type:        \(.connection_type)\n'
+  query+='\(."802_11_wireless_security_key_mgmt"|'
+  query+=' if . then "Security:    \(.|ascii_upcase)\n" else "" end)'
+  query+='Proxy:       \(.proxy_method)'
+  query+='\(.vpn|if . then "\nVPN:         \(.)" else "" end)'
+  query+='\(.ip4_address_1|if . then "\nIPv4:        \(.)" else "" end)'
+  query+='\(.ip4_gateway|if . then "\nGateway:     \(.)" else "" end)'
+  query+='\(.ip4_route_1|if . then "\nRoute:       \(.dst)" else "" end)'
+  query+='\(.ip4_dns_1|if . then "\nDNS:         \(.)" else "" end)'
+  query+='\(.ip6_address_1|if . then "\nIPv6:        \(.)" else "" end)'
+  query+='\(.ip6_gateway|if . then "\nGateway:     \(.)" else "" end)'
+  query+='\(.ip6_route_1|if . then "\nRoute:       \(.dst)" else "" end)'
+  query="\"${query}\""
+
+  find_connection "${name}" | jq -cer "${query}" || return 1
 }
 
+# Shows the list of networking devices.
+# Arguments:
+#  None
+# Outputs:
+#  A list of network devices.
 list_devices () {
-  local TYPE=$1
-  
-  if [ -z "$TYPE" ]; then
-    nmcli --colors no device
-  else
-    nmcli device | awk -v t=$TYPE '{if ($2 == t || $2 == "TYPE") {print}}'
+  local devices=''
+  devices="$(find_devices)"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to read network devices"
+    return 2
   fi
+
+  local len=0
+  len="$(count "${devices}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No network devices have found"
+    return 0
+  fi
+
+  local query=''
+  query+='Name:   \(.device)\n'
+  query+='Type:   \(.type)'
+  query+='\(.state|if . then "\nState:  \(.)" else "" end)'
+  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+
+  echo "${devices}" | jq -cer "${query}" || return 1
 }
 
+# Shows the list of networking connections.
+# Arguments:
+#  None
+# Outputs:
+#  A list of network connections.
 list_connections () {
-  local TYPE=$1
+  local connections=''
+  connections="$(find_connections)"
 
-  if [ -z "$TYPE" ]; then
-    nmcli --colors no connection
-  else
-    nmcli --color no connection | awk -v t=$TYPE '{if ($3 == t || $3 == "TYPE") {print}}'
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to read network connections"
+    return 2
   fi
+
+  local len=0
+  len="$(count "${connections}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No network connections have found"
+    return 0
+  fi
+
+  local query=''
+  query+='Name:    \(.name)\n'
+  query+='Type:    \(.type)\n'
+  query+='Device:  \(.device)'
+  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+
+  echo "${connections}" | jq -cer "${query}" || return 1
 }
 
+# Detects the available wifi networks in the local area.
+# Arguments:
+#  None
+# Outputs:
+#  The list of wifi networks.
 scan () {
-  local OLD_IFS=$IFS && IFS=","
+  echo "Detecting available wifi networks..."
 
-  local NETWORKS=($(
-    nmcli -f SIGNAL,SSID,IN-USE -t device wifi list |
-      trim |
-      awk -F: '{ \
-        if ($3 == "*") {printf "[%03d] %s", $1, "\033[32m"$2"\033[0m,"} \
-        else {printf "[%03d] %s", $1, "\033[35m"$2"\033[0m,"}}' |
-      no_breaks
-  ))
+  local networks=''
+  networks="$(find_wifis)"
 
-  IFS=$OLD_IFS
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to detect wifi networks"
+    return 2
+  fi
 
-  print 3 45 "${NETWORKS[@]}"
+  local len=0
+  len="$(count "${networks}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No wifi networks have been detected"
+    return 0
+  fi
+
+  local query=''
+  query+='Name:      \(.ssid)\n'
+  query+='Signal:    \(.signal)\n'
+  query+='Channel:   \(.channel)\n'
+  query+='Security:  \(.security|'
+  query+='if . and . != "" then .|ascii_upcase else "none" end)'
+  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+
+  echo "${networks}" | jq -cer "${query}" || return 1
 }
 
+# Enables the device or connection with the given name.
+# Globals:
+#  REPLY
+# Arguments:
+#  object: device or connection
+#  name:   the name of a device or connection
 up () {
-  local OBJECT=$1
-  local NAME=$2
+  local object="${1}"
+  local name="${2}"
 
-  validate "$OBJECT" "$NAME" || return 1
+  if [[ -z "${name}" ]]; then
+    if [[ "${object}" == "device" ]]; then
+      pick_device || return $?
+    elif [[ "${object}" == "connection" ]]; then
+      pick_connection || return $?
+    else
+      echo "Invalid or unknown network object"
+      return 2
+    fi
 
-  if [ "$OBJECT" = "device" ]; then
-    nmcli device connect "$NAME" && wait_progress
-  elif [ "$OBJECT" = "connection" ]; then
-    nmcli connection up "$NAME" && wait_progress
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+  fi
+
+  if ! validate "${object}" "${name}"; then
+    echo "Invalid or unknown network object"
+    return 2
+  fi
+
+  if [[ "${object}" == "device" ]]; then
+    nmcli device connect "${name}" &>/dev/null && wait_progress &&
+      echo "Device ${name} has been enabled"
+    
+    if [[ $? -ne 0 ]]; then
+      echo "Failed to enable device"
+      return 2
+    fi
+  elif [[ "${object}" == "connection" ]]; then
+    nmcli connection up "${name}" &>/dev/null && wait_progress &&
+      echo "Connection ${name} has been enabled"
+
+    if [[ $? -ne 0 ]]; then
+      echo "Failed to enable connection"
+      return 2
+    fi
   fi
 }
 
+# Disables the device or connection with the given name.
+# Globals:
+#  REPLY
+# Arguments:
+#  object: device or connection
+#  name:   the name of a device or connection
 down () {
-  local OBJECT=$1
-  local NAME=$2
+  local object="${1}"
+  local name="${2}"
 
-  validate "$OBJECT" "$NAME" || return 1
+  if [[ -z "${name}" ]]; then
+    if [[ "${object}" == "device" ]]; then
+      pick_device || return $?
+    elif [[ "${object}" == "connection" ]]; then
+      pick_connection || return $?
+    else
+      echo "Invalid or unknown network object"
+      return 2
+    fi
 
-  if [ "$OBJECT" = "device" ]; then
-    nmcli device disconnect "$NAME" && wait_progress
-  elif [ "$OBJECT" = "connection" ]; then
-    nmcli connection down "$NAME" && wait_progress
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+  fi
+
+  if ! validate "${object}" "${name}"; then
+    echo "Invalid or unknown network object"
+    return 2
+  fi
+
+  if [[ "${object}" == "device" ]]; then
+    nmcli device disconnect "${name}" &>/dev/null && wait_progress &&
+      echo "Device ${name} has been disabled"
+
+    if [[ $? -ne 0 ]]; then
+      echo "Failed to disable device"
+      return 2
+    fi
+  elif [[ "${object}" == "connection" ]]; then
+    nmcli connection down "${name}" &>/dev/null && wait_progress &&
+      echo "Connection ${name} has been disabled"
+
+    if [[ $? -ne 0 ]]; then
+      echo "Failed to disable connection"
+      return 2
+    fi
   fi
 }
 
-power_network () {
-  local STATUS=$1
-
-  if [[ ! "$STATUS" =~ ^(on|off)$ ]]; then
-    echo "Missing or invalid status argument: $STATUS"
-    return 1
-  fi
-
-  nmcli networking "$STATUS" && wait_progress &&
-    echo "Network has been powered $STATUS" ||
-    echo "Something went wrong powering network $STATUS"
-}
-
-power_wifi () {
-  local STATUS=$1
-
-  if [[ ! "$STATUS" =~ ^(on|off)$ ]]; then
-    echo "Missing or invalid status argument: $STATUS"
-    return 1
-  fi
-
-  nmcli radio wifi "$STATUS" && wait_progress &&
-    echo "Wifi has been powered $STATUS" ||
-    echo "Something went wrong powering wifi $STATUS"
-}
-
+# Deletes the device or connection with the given name.
+# Globals:
+#  REPLY
+# Arguments:
+#  object: device or connection
+#  name:   the name of a device or connection
 delete () {
-  local OBJECT=$1
-  local NAME=$2
+  local object="${1}"
+  local name="${2}"
 
-  validate "$OBJECT" "$NAME" || return 1
+  if [[ -z "${name}" ]]; then
+    if [[ "${object}" == "device" ]]; then
+      pick_device || return $?
+    elif [[ "${object}" == "connection" ]]; then
+      pick_connection || return $?
+    else
+      echo "Invalid or unknown network object"
+      return 2
+    fi
 
-  if [ "$OBJECT" = "device" ]; then
-    nmcli device delete "$NAME" && wait_progress
-  elif [ "$OBJECT" = "connection" ]; then
-    nmcli connection delete "$NAME" && wait_progress
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+  fi
+
+  if ! validate "${object}" "${name}"; then
+    echo "Invalid or unknown network object"
+    return 2
+  fi
+
+  if [[ "${object}" == "device" ]]; then
+    nmcli device delete "${name}" &>/dev/null && wait_progress &&
+      echo "Device ${name} has been deleted"
+
+    if [[ $? -ne 0 ]]; then
+      echo "Failed to delete device"
+      return 2
+    fi
+  elif [[ "${object}" == "connection" ]]; then
+    nmcli connection delete "${name}" &>/dev/null && wait_progress &&
+      echo "Connection ${name} has been deleted"
+
+    if [[ $? -ne 0 ]]; then
+      echo "Failed to delete connection"
+      return 2
+    fi
   fi
 }
 
+# Sets the system networking to on or off.
+# Arguments:
+#  mode: on or off
+power_network () {
+  local mode="${1}"
+
+  if [[ -z "${mode}" ]]; then
+    echo "Missing mode value"
+    return 2
+  elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
+    echo "Invalid mode value"
+    return 2
+  fi
+
+  nmcli networking "${mode}" && wait_progress
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to set network power to ${mode}"
+    return 2
+  fi
+
+  echo "Network power set to ${mode}"
+}
+
+# Sets the wifi to on or off.
+# Arguments:
+#  mode: on or off
+power_wifi () {
+  local mode="${1}"
+
+  if [[ -z "${mode}" ]]; then
+    echo "Missing mode value"
+    return 2
+  elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
+    echo "Invalid mode value"
+    return 2
+  fi
+
+  nmcli radio wifi "${mode}" && wait_progress
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to set wifi power to ${mode}"
+    return 2
+  fi
+
+  echo "Wifi power set to ${mode}"
+}
+
+# Connect to the wifi network with the given id
+# and secret key.
+# Globals:
+#  REPLY
+# Arguments:
+#  ssid: the ssid of the wifi network
 connect () {
-  local SSID=$1
-  local SECRET_KEY=$2
+  local ssid="${1}"
 
-  if [ -z "$SSID" ]; then
-    echo "Missing SSID argument"
-    return 1
+  if [[ -z "${ssid}" ]]; then
+    echo "Detecting available wifi networks..."
+
+    local networks=''
+    networks="$(find_wifis)" || return 1
+
+    local len=0
+    len="$(count "${networks}")" || return 1
+
+    if [[ ${len} -eq 0 ]]; then
+      echo "No wifi networks have been detected"
+      return 0
+    fi
+
+    local query='{key: .ssid, value: "\(.ssid) [\(.signal)]"}'
+    query="[.[]|${query}]"
+
+    networks="$(echo "${networks}" | jq -cer "${query}")" || return 1
+    pick_one "Select a wifi network:" "${networks}" "vertical" || return $?
+    [[ -n "${REPLY}" ]] && ssid="${REPLY}" || return 0
   fi
 
-  if [ -z "$SECRET_KEY" ]; then
-    echo "Missing secret key argument"
-    return 1
-  fi
+  ask_password "Enter the private key:"
+  local key="${REPLY}"
 
-  nmcli device wifi connect "$SSID" password "$SECRET_KEY" hidden yes &&
+  nmcli device wifi connect "${ssid}" password "${key}" hidden yes &&
    wait_progress
+  
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to establish connection with ${ssid}"
+    return 2
+  fi
 }
 
-help () {
-  local FRM=" %-30s\t%s\n"
-
+# Shows the help message.
+# Arguments:
+#  None
+# Outputs:
+#  A long help message.
+show_help () {
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
   echo -e "\nCOMMANDS"
-  printf "$FRM" \
+  printf " %-35s %s\n" \
     "help" "Show this help message." \
-    "show status" "Show the current status of system's networking." \
-    "show device <name>" "Show the status of the device." \
-    "show connection <name>" "Show the status of the connection." \
     "" "" \
-    "list devices [<type>]" "List the network devices of the system." \
-    "list connections [<type>]" "List network connections." \
-    "scan" "Scan for wireless networks in your area." \
+    "show status" "Show the current status of networking." \
+    "show device [<name>]" "Show the data of a device." \
+    "show connection [<name>]" "Show the data of a connection." \
     "" "" \
-    "connect <ssid> <secret-key>" "Connect to a wireless network with the given ssid." \
-    "up device <name>" "Get the given device up." \
-    "up connection <name>" "Get the given connection up." \
-    "down device <name>" "Get the given device down." \
-    "down connection <name>" "Get the given connection down." \
+    "list devices" "List the network devices." \
+    "list connections" "List the network connections." \
     "" "" \
-    "power network on|off" "Power on/off the system networking." \
-    "power wifi on|off" "Power on/off the wifi device." \
-    "delete device <name>" "Delete the given device." \
-    "delete connection <name>" "Delete the given connection."
-
-  echo -e "\nOBJECTS"
-  printf "$FRM" \
-    "status" "The status of the system's networking." \
-    "device" "A network device." \
-    "connection" "A network connection." \
-    "network" "The system's networking." \
-    "wifi" "The wireless network device."
+    "scan" "Detect wifi networks in your area." \
+    "connect [<ssid>]" "Connect to a wifi network." \
+    "" "" \
+    "up device|connection [<name>]" "Enable a device or connection." \
+    "down device|connection [<name>]" "Disable a device or connection." \
+    "delete device|connection [<name>]" "Delete a device or connection." \
+    "" "" \
+    "power network on|off" "Set the system network to on or off." \
+    "power wifi on|off" "Set the wifi device to on or off."
 }
 
 loop () {
   clear
 
   while true; do
-    prompt && history -s "$REPLY"
+    prompt && history -s "${REPLY}"
 
     set -f
-    local OLD_IFS=$IFS && IFS=$'\n'
-    local CMD=($(xargs -n1 <<< "$REPLY"))
-    IFS=$OLD_IFS && set +f
+    set_separator "line"
+    local cmd=($(xargs -n1 <<< "${REPLY}"))
+    restore_separator && set +f
 
-    if [ "${CMD[0]}" = "help" ]; then
-      help
+    if [[ "${cmd[0]}" == "help" ]]; then
+      show_help
       continue
-    elif [ "${CMD[0]}" = "clear" ]; then
+    elif [[ "${cmd[0]}" == "clear" ]]; then
       clear
       continue
-    elif [ "${CMD[0]}" = "quit" ]; then
+    elif [[ "${cmd[0]}" == "quit" ]]; then
       break
-    elif [ -z "${CMD[0]}" ]; then
+    elif [[ -z "${cmd[0]}" ]]; then
       continue
     fi
 
-    case "${CMD[0]}" in
+    case "${cmd[0]}" in
       "show")
-        case "${CMD[1]}" in
+        case "${cmd[1]}" in
           "status") show_status;;
-          "device") show_device "${CMD[2]}";;
-          "connection") show_connection "${CMD[2]}";;
-          *) echo "Unknown or invalid command: $REPLY";;
+          "device") show_device "${cmd[2]}";;
+          "connection") show_connection "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
         esac;;
       "list")
-        case "${CMD[1]}" in
-          "devices") list_devices "${CMD[2]}";;
-          "connections") list_connections "${CMD[2]}";;
-          *) echo "Unknown or invalid command: $REPLY";;
+        case "${cmd[1]}" in
+          "devices") list_devices;;
+          "connections") list_connections;;
+          *) echo "Invalid or unknown command";;
         esac;;
       "scan") scan;;
       "power")
-        case "${CMD[1]}" in
-          "network") power_network "${CMD[2]}";;
-          "wifi") power_wifi "${CMD[2]}";;
-          *) echo "Unknown or invalid command: $REPLY";;
+        case "${cmd[1]}" in
+          "network") power_network "${cmd[2]}";;
+          "wifi") power_wifi "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
         esac;;
-      "connect") connect "${CMD[1]}" "${CMD[2]}";; 
-      "up") up "${CMD[1]}" "${CMD[2]}";;
-      "down") down "${CMD[1]}" "${CMD[2]}";;
-      "delete") delete "${CMD[1]}" "${CMD[2]}";;
-      *) echo "Unknown or invalid command: $REPLY";; 
+      "connect") connect "${cmd[1]}";; 
+      "up") up "${cmd[1]}" "${cmd[2]}";;
+      "down") down "${cmd[1]}" "${cmd[2]}";;
+      "delete") delete "${cmd[1]}" "${cmd[2]}";;
+      *) echo "Invalid or unknown command";; 
     esac
+
+    if [[ $? -eq 1 ]]; then
+      echo "An unknown error has occurred"
+    fi
   done
 
   clear
