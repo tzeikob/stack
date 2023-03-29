@@ -227,8 +227,10 @@ sync_drive () {
   ask "Enter the root folder ID (blank to skip):"
   local root_folder="${REPLY}"
 
-  rclone config create "${name}" drive scope=drive \
-    client_id="${client_id}" client_secret="${client_secret}" root_folder_id="${root_folder}"
+  echo "Go to browser and accept access permssions..."
+
+  rclone config create "${name}" drive scope=drive client_id="${client_id}" \
+    client_secret="${client_secret}" root_folder_id="${root_folder}" &>/dev/null
 
   if [[ $? -ne 0 ]]; then
     echo "Failed to sync drive remote"
@@ -261,8 +263,10 @@ sync_dropbox () {
   ask "Enter the app secret:" ".+"
   local app_secret="${REPLY}"
 
+  echo "Go to browser and accept access permssions..."
+
   rclone config create "${name}" dropbox \
-    client_id="${app_key}" client_secret="${app_secret}"
+    client_id="${app_key}" client_secret="${app_secret}" &>/dev/null
 
   if [[ $? -ne 0 ]]; then
     echo "Failed to sync dropbox remote"
