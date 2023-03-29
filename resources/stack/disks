@@ -756,7 +756,7 @@ show_help () {
   printf " %-35s %s\n" \
     "help" "Show this help message." \
     "" "" \
-    "show status" "Show a report of disks and the file system."
+    "show status" "Show a report of disks and the file system." \
     "" "" \
     "show device [<path>]" "Show the data of a block device." \
     "scan device [<path>]" "Scan a block device for SMART data." \
