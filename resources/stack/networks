@@ -383,9 +383,10 @@ list_devices () {
   fi
 
   local query=''
-  query+='Name:   \(.device)\n'
-  query+='Type:   \(.type)'
-  query+='\(.state|if . then "\nState:  \(.)" else "" end)'
+  query+='Name:        \(.device)\n'
+  query+='Type:        \(.type)\n'
+  query+='State:       \(.state|if . then . else "none" end)\n'
+  query+='Connection:  \(.connection|if . then . else "none" end)'
   query="[.[]|\"${query}\"]|join(\"\n\n\")"
 
   echo "${devices}" | jq -cer "${query}" || return 1
@@ -416,7 +417,7 @@ list_connections () {
   local query=''
   query+='Name:    \(.name)\n'
   query+='Type:    \(.type)\n'
-  query+='Device:  \(.device)'
+  query+='Device:  \(.device|if . then . else "none" end)'
   query="[.[]|\"${query}\"]|join(\"\n\n\")"
 
   echo "${connections}" | jq -cer "${query}" || return 1
