@@ -247,7 +247,11 @@ show_status () {
   query+='.[]|select(.state == "connected")|.connection'
 
   local connections=''
-  connections="$(echo "${devices}"| jq -cer "${query}")" || return 1
+  connections="$(echo "${devices}" | jq -cr "${query}")" || return 1
+
+  if [[ -z "${connections}" ]]; then
+    return 0
+  fi
 
   query=''
   query+='Connection:  \(.connection_id)'
