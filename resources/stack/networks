@@ -57,21 +57,26 @@ find_connection () {
 }
 
 # Returns any detected wifi networks broadcasting in
-# your local area.
+# your local area having a singal strength equal to
+# the given value.
 # Arguments:
-#  None
+#  signal: a signal limitation value
 # Outputs:
 #  A json array list of wifi networks.
 find_wifis () {
+  local signal="${1:-"0"}"
+
   local networks=''
   networks="$(nmcli -f SSID,SIGNAL,CHAN,SECURITY -t device wifi list |
-    awk -F: '{
-      schema="\"ssid\":\"%s\","
-      schema=schema"\"signal\":\"%s\","
-      schema=schema"\"channel\":\"%s\","
-      schema=schema"\"security\":\"%s\""
-      schema="{"schema"},"
-      printf schema, $1,$2,$3,$4
+    awk -v limit="${signal}" -F: '{
+      if ($2 >= limit) {
+        schema="\"ssid\":\"%s\","
+        schema=schema"\"signal\":%s,"
+        schema=schema"\"channel\":\"%s\","
+        schema=schema"\"security\":\"%s\""
+        schema="{"schema"},"
+        printf schema, $1,$2,$3,$4,$5
+      }
     }'
   )" || return 1
 
@@ -423,16 +428,27 @@ list_connections () {
   echo "${connections}" | jq -cer "${query}" || return 1
 }
 
-# Detects the available wifi networks in the local area.
+# Detects the available wifi networks in the local area
+# with signal strength at least the given limit.
 # Arguments:
-#  None
+#  limit: a signal limitation value
 # Outputs:
 #  The list of wifi networks.
 scan () {
+  local signal="${1:-"0"}"
+
+  if [[ ! "${signal}" =~ ^[0-9][0-9]{,2}$ ]]; then
+    echo "Invalid signal limit value"
+    return 2
+  elif (( ${signal} < 0 || ${signal} > 100 )); then
+    echo "Signal limit value out of range"
+    return 2
+  fi
+
   echo "Detecting available wifi networks..."
 
   local networks=''
-  networks="$(find_wifis)"
+  networks="$(find_wifis "${signal}")"
 
   if [[ $? -ne 0 ]]; then
     echo "Unable to detect wifi networks"
@@ -449,8 +465,7 @@ scan () {
 
   local query=''
   query+='Name:      \(.ssid)\n'
-  query+='Signal:    \(.signal)\n'
-  query+='Channel:   \(.channel)\n'
+  query+='Signal:    \(.signal) [\(.channel)]\n'
   query+='Security:  \(.security|'
   query+='if . and . != "" then .|ascii_upcase else "none" end)'
   query="[.[]|\"${query}\"]|join(\"\n\n\")"
@@ -481,7 +496,7 @@ connect () {
       return 0
     fi
 
-    local query='{key: .ssid, value: "\(.ssid) [\(.signal)]"}'
+    local query='{key: .ssid, value: "[\(.signal)] \(.ssid)"}'
     query="[.[]|${query}]"
 
     networks="$(echo "${networks}" | jq -cer "${query}")" || return 1
@@ -709,7 +724,7 @@ show_help () {
     "list devices" "List the network devices." \
     "list connections" "List the network connections." \
     "" "" \
-    "scan" "Detect wifi networks in your area." \
+    "scan [signal]" "Detect wifi networks in your area with minimum signal." \
     "connect [<ssid>]" "Connect to a wifi network." \
     "" "" \
     "up device|connection [<name>]" "Enable a device or connection." \
@@ -757,7 +772,7 @@ loop () {
           "connections") list_connections;;
           *) echo "Invalid or unknown command";;
         esac;;
-      "scan") scan;;
+      "scan") scan "${cmd[1]}";;
       "power")
         case "${cmd[1]}" in
           "network") power_network "${cmd[2]}";;
