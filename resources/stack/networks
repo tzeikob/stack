@@ -116,37 +116,6 @@ validate () {
   fi
 }
 
-# Stops the execution via sleeping calls
-# until the network settles to a stable state.
-# Arguments:
-#  None
-# Outputs:
-#  The changes of the network state.
-wait_progress () {
-  local query='"\(.state):\(.connectivity)"'
-
-  local status=''
-  status="$(find_status | jq -cer "${query}")" || return 1
-
-  local loops=0
-  while true; do
-    # Abort sleeping when max loops reached
-    [[ ${loops} -lt 3 ]] && sleep 1 || return 0
-
-    local new_status=''
-    new_status="$(find_status | jq -cer "${query}")" || return 1
-
-    # Awake from sleep when status settles down
-    if [[ "${status}" != "${new_status}" ]]; then
-      status="${new_status}"
-      echo "Network state set to ${status}"
-      return 0
-    fi
-
-    loops=$((loops + 1))
-  done
-}
-
 # Shows a menu asking the user to select one device, where the
 # answer is kept in the global var REPLY.
 # Globals:
@@ -507,13 +476,17 @@ connect () {
   ask_password "Enter the private key:"
   local key="${REPLY}"
 
-  nmcli device wifi connect "${ssid}" password "${key}" hidden yes &&
-   wait_progress
+  echo "Connecting to ${ssid}..."
+
+  nmcli device wifi connect "${ssid}" password "${key}" hidden yes
   
   if [[ $? -ne 0 ]]; then
-    echo "Failed to establish connection with ${ssid}"
+    echo "Failed to connect to ${ssid}"
     return 2
   fi
+
+  sleep 3
+  echo "Connection to ${ssid} has been established"
 }
 
 # Enables the device or connection with the given name.
@@ -544,23 +517,21 @@ up () {
     return 2
   fi
 
-  if [[ "${object}" == "device" ]]; then
-    nmcli device connect "${name}" &>/dev/null && wait_progress &&
-      echo "Device ${name} has been enabled"
-    
-    if [[ $? -ne 0 ]]; then
-      echo "Failed to enable device"
-      return 2
-    fi
-  elif [[ "${object}" == "connection" ]]; then
-    nmcli connection up "${name}" &>/dev/null && wait_progress &&
-      echo "Connection ${name} has been enabled"
+  echo "Enabling ${object} ${name}..."
 
-    if [[ $? -ne 0 ]]; then
-      echo "Failed to enable connection"
-      return 2
-    fi
+  if [[ "${object}" == "device" ]]; then
+    nmcli device connect "${name}" &>/dev/null
+  elif [[ "${object}" == "connection" ]]; then
+    nmcli connection up "${name}" &>/dev/null
   fi
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to enable ${object}"
+    return 2
+  fi
+
+  sleep 3
+  echo "${object^} ${name} has been enabled"
 }
 
 # Disables the device or connection with the given name.
@@ -591,23 +562,21 @@ down () {
     return 2
   fi
 
+  echo "Disabling ${object} ${name}..."
+
   if [[ "${object}" == "device" ]]; then
-    nmcli device disconnect "${name}" &>/dev/null && wait_progress &&
-      echo "Device ${name} has been disabled"
-
-    if [[ $? -ne 0 ]]; then
-      echo "Failed to disable device"
-      return 2
-    fi
+    nmcli device disconnect "${name}" &>/dev/null
   elif [[ "${object}" == "connection" ]]; then
-    nmcli connection down "${name}" &>/dev/null && wait_progress &&
-      echo "Connection ${name} has been disabled"
-
-    if [[ $? -ne 0 ]]; then
-      echo "Failed to disable connection"
-      return 2
-    fi
+    nmcli connection down "${name}" &>/dev/null
   fi
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to disable ${object}"
+    return 2
+  fi
+
+  sleep 3
+  echo "${object^} ${name} has been disabled"
 }
 
 # Deletes the device or connection with the given name.
@@ -638,23 +607,21 @@ delete () {
     return 2
   fi
 
+  echo "Deleting ${object} ${name}..."
+
   if [[ "${object}" == "device" ]]; then
-    nmcli device delete "${name}" &>/dev/null && wait_progress &&
-      echo "Device ${name} has been deleted"
-
-    if [[ $? -ne 0 ]]; then
-      echo "Failed to delete device"
-      return 2
-    fi
+    nmcli device delete "${name}" &>/dev/null
   elif [[ "${object}" == "connection" ]]; then
-    nmcli connection delete "${name}" &>/dev/null && wait_progress &&
-      echo "Connection ${name} has been deleted"
-
-    if [[ $? -ne 0 ]]; then
-      echo "Failed to delete connection"
-      return 2
-    fi
+    nmcli connection delete "${name}" &>/dev/null
   fi
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to delete ${object}"
+    return 2
+  fi
+
+  sleep 3
+  echo "${object^} ${name} has been deleted"
 }
 
 # Sets the system networking to on or off.
@@ -671,13 +638,16 @@ power_network () {
     return 2
   fi
 
-  nmcli networking "${mode}" && wait_progress
+  echo "Powering network ${mode}..."
+
+  nmcli networking "${mode}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to set network power to ${mode}"
+    echo "Failed to power network ${mode}"
     return 2
   fi
 
+  sleep 3
   echo "Network power set to ${mode}"
 }
 
@@ -695,13 +665,16 @@ power_wifi () {
     return 2
   fi
 
-  nmcli radio wifi "${mode}" && wait_progress
+  echo "Powering wifi ${mode}..."
+
+  nmcli radio wifi "${mode}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to set wifi power to ${mode}"
+    echo "Failed to power wifi ${mode}"
     return 2
   fi
 
+  sleep 3
   echo "Wifi power set to ${mode}"
 }
 
