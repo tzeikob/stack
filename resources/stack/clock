@@ -249,6 +249,7 @@ show_help () {
     "" "" \
     "set ntp on|off" "Enable or disable the NTP service." \
     "set rtc local|utc" "Set the hardware clock to local or UTC time." \
+    "" "" \
     "sync rtc" "Sync the hardware clock from the system clock."
 }
 
