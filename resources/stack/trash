@@ -49,27 +49,21 @@ find_files () {
 # Outputs:
 #  A minimal prompt status line.
 prompt () {
-  local path=''
-
-  if [[ "${PWD}" == "${HOME}" ]]; then
-    path=" ${PWD}"
-  elif [[ "${PWD}" != "/" ]]; then
-    path=" ${PWD/*\//}"
-  fi
+  local status='empty'
 
   local len=0
   len="$(find_files | jq -cer 'length')"
 
   if [[ $? -ne 0 ]]; then
-    len='none'
+    status='none'
+  elif [[ ${len} -gt 0 ]]; then
+    status="${len}"
   fi
 
   local root=''
   if [[ "$(id -u)" == "0" ]]; then
     root='#'
   fi
-
-  local status="${len}${path}"
 
   read -rep "[${root}trash:${status}] " REPLY
 }
@@ -131,7 +125,7 @@ list_files () {
 # Arguments:
 #  path: the path to restore files from
 restore_files () {
-  local path="${1}"
+  local path="${1:-"/"}"
 
   # Find the eligible trashed files for restore
   local files=''
@@ -165,7 +159,7 @@ restore_files () {
   len="$(count "${files}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No files have found for restore"
+    echo "No files have found to restore"
     return 0
   fi
 
@@ -355,7 +349,7 @@ show_help () {
     "list +<days>" "List files trashed more than the given days ago." \
     "list <date>" "List files trashed at a certain date." \
     "" "" \
-    "restore [<path>]" "Restore files from the current dir or given path." \
+    "restore [<path>]" "Restore files starting from / or the given path." \
     "remove [<paths>]" "Remove the given trashed files." \
     "" "" \
     "empty" "Remove all trashed files." \
