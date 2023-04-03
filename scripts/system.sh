@@ -308,6 +308,7 @@ install_utilities () {
 
   ln -sf "$STACK_HOME/clock" /usr/local/bin/clock
   ln -sf "$STACK_HOME/trash" /usr/local/bin/trash
+  ln -sf "$STACK_HOME/trash" /usr/local/bin/tt
   ln -sf "$STACK_HOME/networks" /usr/local/bin/networks
   ln -sf "$STACK_HOME/disks" /usr/local/bin/disks
   ln -sf "$STACK_HOME/langs" /usr/local/bin/langs
