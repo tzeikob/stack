@@ -5,9 +5,6 @@ source /opt/stack/utils
 
 SETTINGS_FILE="${CONFIG_HOME}/displays.json"
 
-require "xorg-xrandr"
-require "xcalib"
-
 # Returns a list of outputs having the given status.
 # Arguments:
 #  status: all, connected, disconnected, active,

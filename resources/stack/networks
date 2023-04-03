@@ -3,10 +3,6 @@
 set -o pipefail
 source /opt/stack/utils
 
-require "networkmanager"
-require "wpa_supplicant"
-require "wireless_tools"
-
 # Returns the general status of the networking.
 # Arguments:
 #  None

@@ -5,9 +5,6 @@ source /opt/stack/utils
 
 SETTINGS_FILE="${CONFIG_HOME}/desktop.json"
 
-require "feh"
-require "identify"
-
 # Returns the list of any wallpapers found under
 # the wallpapers home.
 # Globals:

@@ -3,9 +3,6 @@
 set -o pipefail
 source /opt/stack/utils
 
-require "systemd"
-require "util-linux"
-
 # Shows a prompt status and asks user to enter the
 # next command, which is kept in the global var REPLY.
 # Globals:

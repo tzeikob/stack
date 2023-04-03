@@ -51,23 +51,6 @@ abort () {
   exit 1
 }
 
-require () {
-  local DEPS=("${@}")
-  local LEN=${#DEPS[@]}
-
-  local INDEX=0
-  while [ $INDEX -lt $LEN ]; do
-    local DEP=${DEPS[$INDEX]}
-
-    pacman -Qi "$DEP" &>/dev/null ||
-    [ -f "/usr/bin/$DEP" ] ||
-    [ -f "/usr/local/bin/$DEP" ] ||
-      abort "Missing $DEP dependency"
-    
-    INDEX=$((INDEX + 1))
-  done
-}
-
 # Removes leading and trailing white spaces
 # from the given string or input.
 # Arguments:

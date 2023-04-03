@@ -3,9 +3,6 @@
 set -o pipefail
 source /opt/stack/utils
 
-require "rclone"
-require "fuse2"
-
 # Returns the remote services having the given status.
 # If status is not given all remotes will be returned.
 # Arguments:

@@ -3,8 +3,6 @@
 set -o pipefail
 source /opt/stack/utils
 
-require "trash-cli"
-
 # Returns the list of all trashed files.
 # Arguments:
 #  None

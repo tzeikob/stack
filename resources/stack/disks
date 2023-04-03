@@ -3,12 +3,6 @@
 set -o pipefail
 source /opt/stack/utils
 
-require "udisks2"
-require "glib2"
-require "nmap"
-require "smbclient"
-require "smartmontools"
-
 # Returns the list of block devices of the given
 # types being in the given status.
 # Arguments:

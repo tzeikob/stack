@@ -3,9 +3,6 @@
 set -o pipefail
 source /opt/stack/utils
 
-require "libpulse"
-require "jq"
-
 # Converts the given raw value to its human friendly value.
 # Arguments:
 #  key:   the type of value
