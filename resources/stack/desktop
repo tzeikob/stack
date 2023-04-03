@@ -202,7 +202,7 @@ list_wallpapers () {
 # Sets the desktop wallpaper to the wallpaper with the given
 # file name and scale mode.
 # Globals:
-#  REPLY, WALLPAPERS_HOME, SETTINGS_FILE
+#  REPLY, WALLPAPERS_HOME, SETTINGS_FILE, CONFIG_HOME
 # Arguments:
 #  name: the filename of the wallpaper
 #  mode: center, fill, max, scale or tile
