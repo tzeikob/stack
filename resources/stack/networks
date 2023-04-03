@@ -481,7 +481,7 @@ connect () {
     [[ -n "${REPLY}" ]] && ssid="${REPLY}" || return 0
   fi
 
-  ask_password "Enter the private key:"
+  ask_password "Enter the private key:" || return $?
   local key="${REPLY}"
 
   echo "Connecting to ${ssid}..."

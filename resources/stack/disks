@@ -477,7 +477,7 @@ list_shares () {
   ask "Enter the workgroup [WORKGROUP]:" || return $?
   local workgroup="${REPLY:-"WORKGROUP"}"
 
-  ask_password "Enter the password:"
+  ask_password "Enter the password:" || return $?
   local password="${REPLY}"
 
   local folders=''
