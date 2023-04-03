@@ -200,7 +200,7 @@ pick_output () {
     return 2
   fi
 
-  pick_one "${prompt}" "${options}" "vertical" || return 1
+  pick_one "${prompt}" "${options}" "vertical" || return $?
 }
 
 # Shows a menu asking the user to select many outputs,
@@ -243,7 +243,7 @@ pick_outputs () {
     return 2
   fi
 
-  pick_many "${prompt}" "${options}" "${size}" "vertical" || return 1
+  pick_many "${prompt}" "${options}" "${size}" "vertical" || return $?
 }
 
 # Shows a menu of resolutions of the given output and waits
@@ -277,7 +277,7 @@ pick_resolution () {
     return 2
   fi
 
-  pick_one "Select a resolution:" "${options}" "vertical" || return 1
+  pick_one "Select a resolution:" "${options}" "vertical" || return $?
 }
 
 # Shows a menu of resolution rates of the given output and
@@ -315,7 +315,7 @@ pick_rate () {
     return 2
   fi
 
-  pick_one "Select a refresh rate:" "${options}" "vertical" || return 1
+  pick_one "Select a refresh rate:" "${options}" "vertical" || return $?
 }
 
 # Shows a prompt status and asks user to enter the

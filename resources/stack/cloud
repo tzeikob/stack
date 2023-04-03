@@ -135,7 +135,7 @@ pick_remote () {
     return 2
   fi
 
-  pick_one "Select a remote:" "${remotes}" "vertical" || return 1
+  pick_one "Select a remote:" "${remotes}" "vertical" || return $?
 }
 
 # Shows a prompt status and asks user to enter the
@@ -218,13 +218,13 @@ sync_drive () {
     return 2
   fi
 
-  ask "Enter the client ID:" ".+"
+  ask "Enter the client ID:" ".+" || return $?
   local client_id="${REPLY}"
 
-  ask "Enter the client secret:" ".+"
+  ask "Enter the client secret:" ".+" || return $?
   local client_secret="${REPLY}"
 
-  ask "Enter the root folder ID (blank to skip):"
+  ask "Enter the root folder ID (blank to skip):" || return $?
   local root_folder="${REPLY}"
 
   echo "Go to browser and accept access permssions..."
@@ -257,10 +257,10 @@ sync_dropbox () {
     return 2
   fi
 
-  ask "Enter the app key:" ".+"
+  ask "Enter the app key:" ".+" || return $?
   local app_key="${REPLY}"
 
-  ask "Enter the app secret:" ".+"
+  ask "Enter the app secret:" ".+" || return $?
   local app_secret="${REPLY}"
 
   echo "Go to browser and accept access permssions..."

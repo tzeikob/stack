@@ -170,7 +170,7 @@ pick_device () {
 
   devices="$(echo "${devices}" | jq -cer "${query}")" || return 1
 
-  pick_one "Select a device:" "${devices}" "vertical" || return 1
+  pick_one "Select a device:" "${devices}" "vertical" || return $?
 }
 
 # Shows a menu asking the user to select one host, where the
@@ -205,7 +205,7 @@ pick_host () {
 
   hosts="$(echo "${hosts}" | jq -cer "${query}")" || return 1
 
-  pick_one "Select a host:" "${hosts}" "vertical" || return 1
+  pick_one "Select a host:" "${hosts}" "vertical" || return $?
 }
 
 # Shows a prompt status and asks user to enter the
@@ -477,10 +477,10 @@ list_shares () {
     [[ -n "${REPLY}" ]] && host="${REPLY}" || return 0
   fi
 
-  ask "Enter the username:"
+  ask "Enter the username:" || return $?
   local username="${REPLY}"
 
-  ask "Enter the workgroup [WORKGROUP]:"
+  ask "Enter the workgroup [WORKGROUP]:" || return $?
   local workgroup="${REPLY:-"WORKGROUP"}"
 
   ask_password "Enter the password:"
@@ -661,13 +661,13 @@ mount_shared_folder () {
     [[ -n "${REPLY}" ]] && host="${REPLY}" || return 0
   fi
 
-  ask "Enter a shared folder:"
+  ask "Enter a shared folder:" || return $?
   local folder="${REPLY}"
 
-  ask "Enter the username:"
+  ask "Enter the username:" || return $?
   local username="${REPLY}"
 
-  ask "Enter the workgroup [WORKGROUP]:"
+  ask "Enter the workgroup [WORKGROUP]:" || return $?
   local workgroup="${REPLY:-"WORKGROUP"}"
 
   local uri="smb://${workgroup};${username}@${host}/${folder,,}"

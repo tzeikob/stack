@@ -78,7 +78,7 @@ pick_wallpaper () {
     return 2
   fi
 
-  pick_one "Select a wallpaper:" "${wallpapers}" "vertical" || return 1
+  pick_one "Select a wallpaper:" "${wallpapers}" "vertical" || return $?
 }
 
 # Shows a prompt status and asks user to enter the

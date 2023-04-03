@@ -149,7 +149,7 @@ pick_device () {
     return 2
   fi
 
-  pick_one "Select a device:" "${devices}" "vertical" || return 1
+  pick_one "Select a device:" "${devices}" "vertical" || return $?
 }
 
 # Shows a menu asking the user to select one connection,
@@ -175,7 +175,7 @@ pick_connection () {
     return 2
   fi
 
-  pick_one "Select a connection:" "${connections}" "vertical" || return 1
+  pick_one "Select a connection:" "${connections}" "vertical" || return $?
 }
 
 # Shows a prompt status and asks user to enter the
