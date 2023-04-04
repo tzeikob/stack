@@ -3,6 +3,10 @@
 set -o pipefail
 source /opt/stack/utils
 
+SETTINGS_FILE="${CONFIG_HOME}/networks.json"
+SHELLRC_FILE="${HOME}/.bashrc"
+PROXY_ENV_FILE="${HOME}/.config/environment.d/proxy.conf"
+
 # Returns the general status of the networking.
 # Arguments:
 #  None
@@ -172,6 +176,33 @@ pick_connection () {
   fi
 
   pick_one "Select a connection:" "${connections}" "vertical" || return $?
+}
+
+# Shows a menu asking the user to select one proxy profile,
+# where the answer is kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  None
+# Outputs:
+#  A menu of proxy profiles.
+pick_proxy () {
+  local query=''
+  query+='{key: .name, value: "\(.name) [\(.host)]"}'
+  query=".proxies|if .|length>0 then [.[]|${query}] else [] end"
+
+  local proxies=''
+  proxies="$(jq -cer "${query}" "${SETTINGS_FILE}")" || return 1
+  
+  local len=0
+  len="$(count "${proxies}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No proxy profiles have found"
+    return 2
+  fi
+
+  pick_one "Select a proxy profile:" "${proxies}" "vertical" || return $?
 }
 
 # Shows a prompt status and asks user to enter the
@@ -692,6 +723,254 @@ add () {
   echo "Connection ${name} has been created"
 }
 
+# Adds a new proxy profile with the given host,
+# port and authentication info.
+# Globals:
+#  REPLY, SETTINGS_FILE, CONFIG_HOME
+# Arguments:
+#  name: the name of the proxy profile
+add_proxy () {
+  local name="${1}"
+
+  if [[ -z "${name}" ]]; then
+    echo "Missing the proxy profile name"
+    return 2
+  fi
+
+  if [[ -f "${SETTINGS_FILE}" ]]; then
+    local query=''
+    query+=".proxies|if . then .[]|select(.name == \"${name}\") else empty end"
+  
+    local exists=''
+    exists="$(jq -cr "${query}" "${SETTINGS_FILE}")" || return 1
+
+    if [[ -n "${exists}" ]]; then
+      echo "Proxy profile ${name} already exists"
+      return 2
+    fi
+  fi
+
+  ask "Enter the host:" ".+" || return $?
+  local host="${REPLY}"
+
+  ask "Enter the port:" ".+" || return $?
+  local port="${REPLY}"
+
+  confirm "Is this an authenticated proxy?" || return $?
+  [[ -z "${REPLY}" ]] && return 0
+
+  if [[ "${REPLY}" == "yes" ]]; then
+    ask "Enter the username:" ".+" || return $?
+    local username="${REPLY}"
+
+    ask_password "Enter the password:" ".+" || return $?
+    local password="${REPLY}"
+  fi
+
+  local proxy=''
+  proxy+="\"name\": \"${name}\","
+  proxy+="\"host\": \"${host}\","
+  proxy+="\"port\": \"${port}\""
+
+  if [[ -n "${username}" ]]; then
+    proxy+=",\"username\": \"${username}\""
+    proxy+=",\"password\": \"${password}\""
+  fi
+
+  proxy="{${proxy}}"
+
+  if [[ -f "${SETTINGS_FILE}" ]]; then
+    settings="$(jq -e ".proxies += [${proxy}]" "${SETTINGS_FILE}")" || return 1
+  else
+    settings="$(echo "{\"proxies\": [${proxy}]}" | jq -e '.')" || return 1
+  fi
+
+  mkdir -p "${CONFIG_HOME}"
+  echo "${settings}" > "${SETTINGS_FILE}"
+  
+  echo "Proxy profile ${name} has been added"
+}
+
+# Removes the proxy profile with the given name.
+# Globals:
+#  REPLY, SETTINGS_FILE
+# Arguments:
+#  name: the name of the proxy profile
+remove_proxy () {
+  local name="${1}"
+
+  if [[ ! -f "${SETTINGS_FILE}" ]]; then
+    echo "No proxy profiles have found"
+    return 0
+  fi
+
+  if [[ -z "${name}" ]]; then
+    pick_proxy || return $?
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+  fi
+
+  local exists=''
+  exists="$(jq ".proxies|if . then .[]|select(.name == \"${name}\") else empty end" "${SETTINGS_FILE}")"
+
+  if [[ -z "${exists}" ]]; then
+    echo "Cannot find proxy profile ${name}"
+    return 2
+  fi
+
+  local settings=''
+  settings="$(jq -e "del(.proxies[]|select(.name == \"${name}\"))" "${SETTINGS_FILE}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to delete proxy profile ${name}"
+    return 2
+  fi
+
+  echo "${settings}" > "${SETTINGS_FILE}"
+  
+  echo "Proxy profile ${name} has been deleted"
+}
+
+# Shows the list of all proxy profiles stored in the
+# settings file.
+# Globals:
+#  SETTINGS_FILE
+# Arguments:
+#  None
+# Outputs:
+#  A list of proxy profiles.
+list_proxies () {
+  if [[ ! -f "${SETTINGS_FILE}" ]]; then
+    echo "No proxy profiles have found"
+    return 0
+  fi
+
+  local proxies=''
+  proxies="$(jq -cer '.proxies|if length>0 then . else [] end' "${SETTINGS_FILE}")" || return 1
+  
+  local len=0
+  len="$(count "${proxies}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No proxy profiles have found"
+    return 0
+  fi
+
+  local query=''
+  query+='Name:  \(.name)\n'
+  query+='Host:  \(.host)\n'
+  query+='Port:  \(.port)'
+  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+
+  echo "${proxies}" | jq -cer "${query}" || return 1
+}
+
+# Sets system-wise proxy server to settings with the
+# given profile name.
+# Globals:
+#  REPLY, SETTINGS_FILE, HOME, PROXY_ENV_FILE, SHELLRC_FILE
+# Arguments:
+#  name: the name of a proxy profile
+set_proxy () {
+  local name="${1}"
+
+  if [[ ! -f "${SETTINGS_FILE}" ]]; then
+    echo "No proxy profiles have found"
+    return 2
+  fi
+
+  if [[ -z "${name}" ]]; then
+    pick_proxy || return $?
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+  fi
+
+  local proxy=''
+  proxy="$(jq ".proxies|if . then .[]|select(.name == \"${name}\") else empty end" "${SETTINGS_FILE}")"
+
+  if [[ -z "${proxy}" ]]; then
+    echo "Cannot find proxy profile ${name}"
+    return 2
+  fi
+
+  local query=''
+  query+='\(if .username then "\(.username):\(.password)@" else "" end)'
+  query+='\(.host):\(.port)'
+  query="\"${query}\""
+
+  local uri=''
+  uri="$(echo "${proxy}" | jq -cer "${query}")" || return 1
+
+  local no_proxy='localhost,127.0.0.1,192.168.1.1,::1,*.local'
+
+  mkdir -p "${HOME}/.config/environment.d"
+
+  echo "export http_proxy=\"http://${uri}/\"" > "${PROXY_ENV_FILE}" &&
+  echo "export HTTP_PROXY=\"http://${uri}/\"" >> "${PROXY_ENV_FILE}" &&
+  echo "export https_proxy=\"https://${uri}/\"" >> "${PROXY_ENV_FILE}" &&
+  echo "export HTTPS_PROXY=\"https://${uri}/\"" >> "${PROXY_ENV_FILE}" &&
+  echo "export ftp_proxy=\"ftp://${uri}/\"" >> "${PROXY_ENV_FILE}" &&
+  echo "export FTP_PROXY=\"ftp://${uri}/\"" >> "${PROXY_ENV_FILE}" &&
+  echo "export rsync_proxy=\"rsync://${uri}/\"" >> "${PROXY_ENV_FILE}" &&
+  echo "export RSYNC_PROXY=\"rsync://${uri}/\"" >> "${PROXY_ENV_FILE}" &&
+  echo "export no_proxy=\"${no_proxy}\"" >> "${PROXY_ENV_FILE}" &&
+  echo "export NO_PROXY=\"${no_proxy}\"" >> "${PROXY_ENV_FILE}" &&
+  sed -i "\|source \"${PROXY_ENV_FILE}\"|d" "${SHELLRC_FILE}" &&
+  echo "source \"${PROXY_ENV_FILE}\"" >> "${SHELLRC_FILE}" ||
+    echo "Failed to set environment proxy variables"
+
+  if which git &> /dev/null; then
+    git config --global http.proxy "http://${uri}/" &&
+    git config --global https.proxy "https://${uri}/" ||
+      echo "Failed to set git proxy settings"
+  fi
+
+  if which npm &> /dev/null; then
+    npm config set proxy "http://${uri}/" &&
+    npm config set https-proxy "https://${uri}/" ||
+      echo "Failed to set npm proxy settings"
+  fi
+  
+  if which yarn &> /dev/null; then
+    yarn config set proxy "http://${uri}/" &&
+    yarn config set https-proxy "https://${uri}/" ||
+      echo "Failed to set yarn proxy settings"
+  fi
+  
+  echo "Proxy settings have been applied"
+}
+
+# Reverts any proxy settings have been applied to
+# the system.
+# Globals:
+#  PROXY_ENV_FILE, SHELLRC_FILE
+# Arguments:
+#  None
+unset_proxy () {
+  rm -f "${PROXY_ENV_FILE}" &&
+  sed -i "\|source \"${PROXY_ENV_FILE}\"|d" "${SHELLRC_FILE}" ||
+    echo "Failed to unset environment proxy variables"
+
+  if which git &> /dev/null &&
+    git config --global --get http.proxy &> /dev/null; then
+    git config --global --unset http.proxy &&
+    git config --global --unset https.proxy ||
+      echo "Failed to unset git proxy settings"
+  fi
+
+  if which npm &> /dev/null; then
+    npm config delete proxy &&
+    npm config delete https-proxy ||
+      echo "Failed to set npm proxy settings"
+  fi
+  
+  if which yarn &> /dev/null; then
+    yarn config delete proxy &&
+    yarn config delete https-proxy ||
+      echo "Failed to unset yarn proxy settings"
+  fi
+  
+  echo "Proxy settings have been unset"
+}
+
 # Sets the system networking to on or off.
 # Arguments:
 #  mode: on or off
@@ -777,6 +1056,12 @@ show_help () {
     "add connection <name>" "Add a new connection." \
     "remove connection [<name>]" "Remove a connection." \
     "" "" \
+    "add proxy <name>" "Add a new proxy server profile." \
+    "remove proxy [<name>]" "Remove a proxy server profile." \
+    "list proxies" "List all proxy server profiles." \
+    "set proxy [<name>]" "Applies proxy server settings." \
+    "unset proxy" "Disables proxy server settings." \
+    "" "" \
     "power network on|off" "Set the system network to on or off." \
     "power wifi on|off" "Set the wifi device to on or off."
 }
@@ -816,6 +1101,7 @@ loop () {
         case "${cmd[1]}" in
           "devices") list_devices;;
           "connections") list_connections;;
+          "proxies") list_proxies;;
           *) echo "Invalid or unknown command";;
         esac;;
       "scan") scan "${cmd[1]}";;
@@ -831,9 +1117,26 @@ loop () {
       "add")
         case "${cmd[1]}" in
           "connection") add "${cmd[2]}";;
+          "proxy") add_proxy "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
-      "remove") remove "${cmd[1]}" "${cmd[2]}";;
+      "remove")
+        case "${cmd[1]}" in
+          "device") remove "device" "${cmd[2]}";;
+          "connection") remove "connection" "${cmd[2]}";;
+          "proxy") remove_proxy "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "set")
+        case "${cmd[1]}" in
+          "proxy") set_proxy "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "unset")
+        case "${cmd[1]}" in
+          "proxy") unset_proxy;;
+          *) echo "Invalid or unknown command";;
+        esac;;
       *) echo "Invalid or unknown command";; 
     esac
 
