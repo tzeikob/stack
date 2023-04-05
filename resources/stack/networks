@@ -6,6 +6,7 @@ source /opt/stack/utils
 SETTINGS_FILE="${CONFIG_HOME}/networks.json"
 SHELLRC_FILE="${HOME}/.bashrc"
 PROXY_ENV_FILE="${HOME}/.config/environment.d/proxy.conf"
+DOCKER_PROXY_FILE='/etc/systemd/system/docker.service.d/http-proxy.conf'
 
 # Returns the general status of the networking.
 # Arguments:
@@ -254,6 +255,19 @@ show_status () {
 
   find_status | jq -cer --argjson d "${devices}" "${query}" || return 1
 
+  local proxy='off'
+  if [[ -f "${PROXY_ENV_FILE}" ]]; then
+    proxy="$(cat "${PROXY_ENV_FILE}" | awk -F'=' '/export http_proxy=/ {
+      split($2,a,"http://")
+      if (a[2] ~ /@/) {
+        split(a[2],b,"@")
+        print b[2]
+      } else print a[2]
+    }' | tr -d 'htp"/')" || return 1
+  fi
+
+  echo "Proxy:       ${proxy}"
+
   query=''
   query+='.[]|select(.state == "connected")|.connection'
 
@@ -273,7 +287,6 @@ show_status () {
   query+='Type:        \(.connection_type)\n'
   query+='\(."802_11_wireless_security_key_mgmt"|'
   query+=' if . then "Security:    \(.|ascii_upcase)\n" else "" end)'
-  query+='Proxy:       \(.proxy_method)\n'
   query+='VPN:         \(.vpn)\n'
   query+='IPv4:        \(.ip4_address_1)\n'
   query+='IPv6:        \(.ip6_address_1)'
@@ -355,10 +368,9 @@ show_connection () {
   query+='Device:      \(.connection_interface_name)\n'
   query+='\(.state|if . then "State:       \(.)\n" else "" end)'
   query+='Auto:        \(.connection_autoconnect)\n'
-  query+='Type:        \(.connection_type)\n'
+  query+='Type:        \(.connection_type)'
   query+='\(."802_11_wireless_security_key_mgmt"|'
-  query+=' if . then "Security:    \(.|ascii_upcase)\n" else "" end)'
-  query+='Proxy:       \(.proxy_method)'
+  query+=' if . then "\nSecurity:    \(.|ascii_upcase)" else "" end)'
   query+='\(.vpn|if . then "\nVPN:         \(.)" else "" end)'
   query+='\(.ip4_address_1|if . then "\nIPv4:        \(.)" else "" end)'
   query+='\(.ip4_gateway|if . then "\nGateway:     \(.)" else "" end)'
@@ -934,6 +946,17 @@ set_proxy () {
     yarn config set https-proxy "https://${uri}/" ||
       echo "Failed to set yarn proxy settings"
   fi
+
+  sudo mkdir -p "/etc/systemd/system/docker.service.d"
+
+  printf '%s\n%s%s%s%s' \
+    "[Service]" \
+    "Environment=" \
+    "\"HTTP_PROXY=http://${uri}/\" " \
+    "\"HTTPS_PROXY=https://${uri}/\" " \
+    "\"NO_PROXY=${no_proxy}\"" | sudo tee "${DOCKER_PROXY_FILE}" > /dev/null &&
+  sudo systemctl daemon-reload ||
+    echo "Failed to set docker proxy settings"
   
   echo "Proxy settings have been applied"
 }
@@ -967,6 +990,10 @@ unset_proxy () {
     yarn config delete https-proxy ||
       echo "Failed to unset yarn proxy settings"
   fi
+
+  sudo rm -f "${DOCKER_PROXY_FILE}" &&
+  sudo systemctl daemon-reload ||
+    echo "Failed to unset docker proxy settings"
   
   echo "Proxy settings have been unset"
 }
