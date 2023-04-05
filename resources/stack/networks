@@ -263,7 +263,7 @@ show_status () {
         split(a[2],b,"@")
         print b[2]
       } else print a[2]
-    }' | tr -d 'htp"/')" || return 1
+    }' | tr -d '"/')" || return 1
   fi
 
   echo "Proxy:       ${proxy}"
@@ -871,6 +871,7 @@ list_proxies () {
   query+='Name:  \(.name)\n'
   query+='Host:  \(.host)\n'
   query+='Port:  \(.port)'
+  query+='\(.username|if . then "\nAuth:  \(.)" else "" end)'
   query="[.[]|\"${query}\"]|join(\"\n\n\")"
 
   echo "${proxies}" | jq -cer "${query}" || return 1
