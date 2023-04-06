@@ -29,7 +29,7 @@ find_wallpapers () {
   wallpaper="\"{\"${wallpaper}\"},\""
 
   local wallpapers=''
-  wallpapers="$(identify -quiet "${WALLPAPERS_HOME}/*" 2>/dev/null |
+  wallpapers="$(identify -quiet "${WALLPAPERS_HOME}/*" 2> /dev/null |
     awk '{
       if ($1 ~ /.(jpg|jpeg|png)$/) {
         n=split($1,a,"/")

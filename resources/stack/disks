@@ -481,7 +481,7 @@ list_shares () {
   local password="${REPLY}"
 
   local folders=''
-  folders="$(find_shared_folders "${host}" "${username}" "${workgroup}" "${password}" &>/dev/null)"
+  folders="$(find_shared_folders "${host}" "${username}" "${workgroup}" "${password}" &> /dev/null)"
 
   if [[ $? -ne 0 ]]; then
     echo "Unable to retrieve shared folders"
@@ -576,7 +576,7 @@ mount_device () {
     return 2
   fi
   
-  udisksctl mount -b "${path}" &>/dev/null
+  udisksctl mount -b "${path}" &> /dev/null
 
   if [[ $? -ne 0 ]]; then
     echo "Failed to mount device"
@@ -628,14 +628,14 @@ unmount_device () {
     return 2
   fi
 
-  sync && udisksctl unmount -b "${path}" &>/dev/null
+  sync && udisksctl unmount -b "${path}" &> /dev/null
 
   if [[ $? -ne 0 ]]; then
     echo "Failed to unmount device"
     return 2
   fi
 
-  udisksctl power-off -b "${path}" &>/dev/null &&
+  udisksctl power-off -b "${path}" &> /dev/null &&
     echo "Device power set to off" ||
     echo "Unable to power off the device"
 
@@ -671,7 +671,7 @@ mount_shared_folder () {
     return 2
   fi
 
-  gio mount "${uri}" 2>/dev/null
+  gio mount "${uri}" 2> /dev/null
   
   if [[ $? -ne 0 ]]; then
     echo "Failed to mount shared folder"
@@ -728,7 +728,7 @@ unmount_shared_folder () {
     return 2
   fi
 
-  sync && gio mount -u "${uri}" 2>/dev/null
+  sync && gio mount -u "${uri}" 2> /dev/null
   
   if [[ $? -ne 0 ]]; then
     echo "Failed to umount shared folder"

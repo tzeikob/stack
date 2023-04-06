@@ -87,7 +87,7 @@ list_files () {
   elif [[ "${filter}" =~ ^\+[0-9]+$ ]]; then
     filter="$(echo "${filter}" | tr -d '+')"
     query="[.[]|select((now - .epoch) / 86400 > ${filter})]"
-  elif [[ "${filter}" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] && date -d "${filter}" &>/dev/null; then
+  elif [[ "${filter}" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] && date -d "${filter}" &> /dev/null; then
     filter="$(date -d ${filter} +%s)"
     query="[.[]|select(${filter} - .epoch_date == 0)]"
   elif [[ -z "${filter}" ]]; then
@@ -169,7 +169,7 @@ restore_files () {
 
   len="$(find_files | jq -cer 'length')" || return 1
 
-  trash-restore "${path}" &>/dev/null <<< "${selected}"
+  trash-restore "${path}" &> /dev/null <<< "${selected}"
 
   if [[ $? -ne 0 ]]; then
     echo "Failed to restore trashed files"
@@ -307,7 +307,7 @@ trash_files () {
   while [[ ${index} -lt ${len} ]]; do
     local file="${files[index]}"
 
-    trash-put "${file}" &>/dev/null ||
+    trash-put "${file}" &> /dev/null ||
       echo "Cannot trash the file ${file}"
 
     index=$((index + 1))

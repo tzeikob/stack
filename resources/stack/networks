@@ -571,9 +571,9 @@ up () {
   echo "Enabling ${object} ${name}..."
 
   if [[ "${object}" == "device" ]]; then
-    nmcli device connect "${name}" &>/dev/null
+    nmcli device connect "${name}" &> /dev/null
   elif [[ "${object}" == "connection" ]]; then
-    nmcli connection up "${name}" &>/dev/null
+    nmcli connection up "${name}" &> /dev/null
   fi
 
   if [[ $? -ne 0 ]]; then
@@ -616,9 +616,9 @@ down () {
   echo "Disabling ${object} ${name}..."
 
   if [[ "${object}" == "device" ]]; then
-    nmcli device disconnect "${name}" &>/dev/null
+    nmcli device disconnect "${name}" &> /dev/null
   elif [[ "${object}" == "connection" ]]; then
-    nmcli connection down "${name}" &>/dev/null
+    nmcli connection down "${name}" &> /dev/null
   fi
 
   if [[ $? -ne 0 ]]; then
@@ -661,9 +661,9 @@ remove () {
   echo "Removing ${object} ${name}..."
 
   if [[ "${object}" == "device" ]]; then
-    nmcli device delete "${name}" &>/dev/null
+    nmcli device delete "${name}" &> /dev/null
   elif [[ "${object}" == "connection" ]]; then
-    nmcli connection delete "${name}" &>/dev/null
+    nmcli connection delete "${name}" &> /dev/null
   fi
 
   if [[ $? -ne 0 ]]; then
@@ -688,7 +688,7 @@ add () {
     return 2
   fi
 
-  if find_connection "${name}" &>/dev/null; then
+  if find_connection "${name}" &> /dev/null; then
     echo "Connection ${name} already exists"
     return 2
   fi

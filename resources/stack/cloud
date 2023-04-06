@@ -91,7 +91,7 @@ exists () {
 
   local query=".[]|select(.name == \"${name}\")"
 
-  find_remotes | jq -cer "${query}" &>/dev/null || return 1
+  find_remotes | jq -cer "${query}" &> /dev/null || return 1
 }
 
 # Checks if the remote with the given name is mounted
@@ -227,7 +227,7 @@ sync_drive () {
   echo "Go to browser and accept access permssions..."
 
   rclone config create "${name}" drive scope=drive client_id="${client_id}" \
-    client_secret="${client_secret}" root_folder_id="${root_folder}" &>/dev/null
+    client_secret="${client_secret}" root_folder_id="${root_folder}" &> /dev/null
 
   if [[ $? -ne 0 ]]; then
     echo "Failed to sync drive remote"
@@ -263,7 +263,7 @@ sync_dropbox () {
   echo "Go to browser and accept access permssions..."
 
   rclone config create "${name}" dropbox \
-    client_id="${app_key}" client_secret="${app_secret}" &>/dev/null
+    client_id="${app_key}" client_secret="${app_secret}" &> /dev/null
 
   if [[ $? -ne 0 ]]; then
     echo "Failed to sync dropbox remote"

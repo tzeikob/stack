@@ -97,7 +97,7 @@ is_connected () {
 
   local query='select(.is_connected)'
 
-  echo "${output}" | jq -cer "${query}" &>/dev/null || return 1
+  echo "${output}" | jq -cer "${query}" &> /dev/null || return 1
 }
 
 # Asserts if the given output is active.
@@ -110,7 +110,7 @@ is_active () {
 
   local query='select(.is_connected and .resolution_width)'
 
-  echo "${output}" | jq -cer "${query}" &>/dev/null || return 1
+  echo "${output}" | jq -cer "${query}" &> /dev/null || return 1
 }
 
 # Asserts if the given output is primary.
@@ -123,7 +123,7 @@ is_primary () {
 
   local query='select(.is_primary)'
 
-  echo "${output}" | jq -cer "${query}" &>/dev/null || return 1
+  echo "${output}" | jq -cer "${query}" &> /dev/null || return 1
 }
 
 # Asserts if an output supports the given resolution.
@@ -141,7 +141,7 @@ has_resolution () {
   query+=' |"\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)" as $res'
   query+=" |select(\$res == \"${resolution}\")"
 
-  echo "${output}" | jq -cer "${query}" &>/dev/null || return 1
+  echo "${output}" | jq -cer "${query}" &> /dev/null || return 1
 }
 
 # Asserts if an output at a resolution supports
@@ -163,7 +163,7 @@ has_rate () {
   query+=" |select(\$res == \"${resolution}\")"
   query+=" |.frequencies[]|select(.frequency == ${rate})"
 
-  echo "${output}" | jq -cer "${query}" &>/dev/null || return 1
+  echo "${output}" | jq -cer "${query}" &> /dev/null || return 1
 }
 
 # Shows a menu asking the user to select one output, where the
@@ -1327,7 +1327,7 @@ set_color () {
     query="[.[]|select(.filename|test(\".ic(c|m)$\"))|${query}]"
   
     local profiles=''
-    profiles="$(ls "${COLORS_HOME}" 2>/dev/null | jc --ls | jq -cr "${query}")"
+    profiles="$(ls "${COLORS_HOME}" 2> /dev/null | jc --ls | jq -cr "${query}")"
     
     local len=0
     len="$(count "${profiles}")" || return 1
