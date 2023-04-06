@@ -1110,12 +1110,12 @@ save_layout () {
         query=".layouts += [${layout}]"
       fi
 
-      settings="$(jq "${query}" "${SETTINGS_FILE}")"
+      settings="$(jq -e "${query}" "${SETTINGS_FILE}")" || return 1
     else
-      settings="$(jq ".layouts = [${layout}] " "${SETTINGS_FILE}")"
+      settings="$(jq -e ".layouts = [${layout}] " "${SETTINGS_FILE}")" || return 1
     fi
   else
-    settings="$(echo "{\"layouts\": [${layout}]}" | jq -e '.')"
+    settings="$(echo "{\"layouts\": [${layout}]}" | jq -e '.')" || return 1
   fi
 
   mkdir -p "${CONFIG_HOME}"
@@ -1395,12 +1395,12 @@ set_color () {
         query=".colors += [${color}]"
       fi
 
-      settings="$(jq --argjson c "${color}" "${query}" "${SETTINGS_FILE}")"
+      settings="$(jq -e --argjson c "${color}" "${query}" "${SETTINGS_FILE}")" || return 1
     else
-      settings="$(jq ".colors = [${color}]" "${SETTINGS_FILE}")"
+      settings="$(jq -e ".colors = [${color}]" "${SETTINGS_FILE}")" || return 1
     fi
   else
-    settings="$(echo "{\"colors\": [${color}]}" | jq '.')"
+    settings="$(echo "{\"colors\": [${color}]}" | jq -e '.')" || return 1
   fi
 
   mkdir -p "${CONFIG_HOME}"
@@ -1461,7 +1461,7 @@ reset_color () {
   query="if .colors then .colors[]|select(${query}) else empty end"
 
   local settings=''
-  settings="$(jq --argjson o "${output}" "del(${query})" "${SETTINGS_FILE}")"
+  settings="$(jq -e --argjson o "${output}" "del(${query})" "${SETTINGS_FILE}")" || return 1
 
   echo "${settings}" > "${SETTINGS_FILE}"
 }

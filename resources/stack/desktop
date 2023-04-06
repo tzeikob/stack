@@ -259,9 +259,9 @@ set_wallpaper () {
   local wallpaper="{\"name\": \"${name}\", \"mode\": \"${mode}\"}"
 
   if [[ -f "${SETTINGS_FILE}" ]]; then
-    settings="$(jq ".wallpaper = ${wallpaper} " "${SETTINGS_FILE}")"
+    settings="$(jq -e ".wallpaper = ${wallpaper} " "${SETTINGS_FILE}")" || return 1
   else
-    settings="$(echo "{\"wallpaper\": ${wallpaper}}" | jq -e '.')"
+    settings="$(echo "{\"wallpaper\": ${wallpaper}}" | jq -e '.')" || return 1
   fi
 
   mkdir -p "${CONFIG_HOME}"

@@ -803,6 +803,7 @@ add_proxy () {
 
   proxy="{${proxy}}"
 
+  local settings='{}'
   if [[ -f "${SETTINGS_FILE}" ]]; then
     settings="$(jq -e ".proxies += [${proxy}]" "${SETTINGS_FILE}")" || return 1
   else
