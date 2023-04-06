@@ -779,10 +779,22 @@ add_proxy () {
     local password="${REPLY}"
   fi
 
+  local no_proxy='[]'
+  confirm "Want to set no proxy hosts?" || return $?
+  [[ -z "${REPLY}" ]] && return 0
+
+  if [[ "${REPLY}" == "yes" ]]; then
+    ask "Enter no proxy hosts:" ".*" || return $?
+
+    local query='[split(" ")|.[]|if . and .!="" then . else empty end]'
+    no_proxy="$(echo "\"${REPLY}\"" | jq -cer "${query}")" || return 1
+  fi
+
   local proxy=''
   proxy+="\"name\": \"${name}\","
   proxy+="\"host\": \"${host}\","
-  proxy+="\"port\": \"${port}\""
+  proxy+="\"port\": \"${port}\","
+  proxy+="\"no_proxy\": ${no_proxy}"
 
   if [[ -n "${username}" ]]; then
     proxy+=",\"username\": \"${username}\""
@@ -868,10 +880,11 @@ list_proxies () {
   fi
 
   local query=''
-  query+='Name:  \(.name)\n'
-  query+='Host:  \(.host)\n'
-  query+='Port:  \(.port)'
-  query+='\(.username|if . then "\nAuth:  \(.)" else "" end)'
+  query+='Name:    \(.name)\n'
+  query+='Host:    \(.host)\n'
+  query+='Port:    \(.port)'
+  query+='\(.username|if . and .!="" then "\nAuth:    \(.)" else "" end)'
+  query+='\(.no_proxy|if .|length>0 then "\nIgnore:  \([.[]]|join(", "))" else "" end)'
   query="[.[]|\"${query}\"]|join(\"\n\n\")"
 
   echo "${proxies}" | jq -cer "${query}" || return 1
@@ -912,7 +925,8 @@ set_proxy () {
   local uri=''
   uri="$(echo "${proxy}" | jq -cer "${query}")" || return 1
 
-  local no_proxy='localhost,127.0.0.1,192.168.1.1,::1,*.local'
+  local no_proxy=''
+  no_proxy="$(echo "${proxy}" | jq -cer '[.no_proxy][]|join(",")')" || return 1
 
   mkdir -p "${HOME}/.config/environment.d"
 
