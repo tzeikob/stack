@@ -924,6 +924,8 @@ set_proxy () {
   echo "export FTP_PROXY=\"ftp://${uri}/\"" >> "${PROXY_ENV_FILE}" &&
   echo "export rsync_proxy=\"rsync://${uri}/\"" >> "${PROXY_ENV_FILE}" &&
   echo "export RSYNC_PROXY=\"rsync://${uri}/\"" >> "${PROXY_ENV_FILE}" &&
+  echo "export all_proxy=\"https://${uri}/\"" >> "${PROXY_ENV_FILE}" &&
+  echo "export ALL_PROXY=\"https://${uri}/\"" >> "${PROXY_ENV_FILE}" &&
   echo "export no_proxy=\"${no_proxy}\"" >> "${PROXY_ENV_FILE}" &&
   echo "export NO_PROXY=\"${no_proxy}\"" >> "${PROXY_ENV_FILE}" &&
   sed -i "\|source \"${PROXY_ENV_FILE}\"|d" "${SHELLRC_FILE}" &&
