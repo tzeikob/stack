@@ -42,7 +42,25 @@ find_devices () {
 find_device () {
   local name="${1}"
 
-  nmcli device show "${name}" | jc --nmcli | jq -cer '.[0]' || return 1
+  local device=''
+  device="$(nmcli device show "${name}" | jc --nmcli | jq -cer '.[0]')" || return 1
+
+  local type=''
+  type="$(get "${device}" ".type")" || return 1
+
+  if [[ "${type}" == "wifi" ]]; then
+    local query=''
+    query+='freq: .frequency,'
+    query+='rate: .bit_rate,'
+    query+='quality: .link_quality,'
+    query+='signal: .signal_level'
+    query=".[0]|{${query}}"
+
+    device="$(iwconfig "${name}" | jc --iwconfig |
+      jq -cer --argjson d "${device}" "${query} + \$d")" || return 1
+  fi
+
+  echo "${device}"
 }
 
 # Returns the list of network connections.
@@ -323,6 +341,10 @@ show_device () {
   query+='Name:        \(.device)\n'
   query+='Type:        \(.type)\n'
   query+='MAC:         \(.hwaddr)\n'
+  query+='\(.freq|if . then "Freq:        \(.)GHz\n" else "" end)'
+  query+='\(.rate|if . then "Rate:        \(.)Mb/s\n" else "" end)'
+  query+='\(.quality|if . then "Quality:     \(.)\n" else "" end)'
+  query+='\(.signal|if . then "Signal:      \(.)dBm\n" else "" end)'
   query+='\(.state_text|if . then "State:       \(.)\n" else "" end)'
   query+='MTU:         \(.mtu)'
   query+='\(.ip4_address_1|if . then "\nIPv4:        \(.)" else "" end)'
