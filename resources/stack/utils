@@ -76,6 +76,8 @@ ask () {
   local prompt="${1}"
   local re="${2}"
 
+  REPLY=''
+
   if [[ -n "${re}" ]]; then
     read -rep "${prompt} " REPLY
 
@@ -98,6 +100,8 @@ ask () {
 ask_password () {
   local prompt="${1}"
 
+  REPLY=''
+
   read -srep "${prompt} " REPLY
 }
 
@@ -112,6 +116,8 @@ ask_password () {
 #  A menu of yes or no options.
 confirm () {
   local prompt="${1}"
+
+  REPLY=''
   
   local options="yes${KVS}Yes${AES}no${KVS}No"
 
@@ -142,6 +148,8 @@ pick_one () {
   local options="${2}"
   local mode="${3}"
   local slots="${4:-6}"
+
+  REPLY=''
 
   local len=0
   len="$(count "${options}")" || return 1
@@ -192,6 +200,8 @@ pick_many () {
   local size="${3}"
   local mode="${4}"
   local slots="${5:-6}"
+
+  REPLY=''
 
   local len=0
   len="$(count "${options}")" || return 1
