@@ -948,16 +948,18 @@ set_proxy () {
       echo "Failed to set yarn proxy settings"
   fi
 
-  sudo mkdir -p "/etc/systemd/system/docker.service.d"
+  if which docker &> /dev/null; then
+    sudo mkdir -p "/etc/systemd/system/docker.service.d"
 
-  printf '%s\n%s%s%s%s' \
-    "[Service]" \
-    "Environment=" \
-    "\"HTTP_PROXY=http://${uri}/\" " \
-    "\"HTTPS_PROXY=https://${uri}/\" " \
-    "\"NO_PROXY=${no_proxy}\"" | sudo tee "${DOCKER_PROXY_FILE}" > /dev/null &&
-  sudo systemctl daemon-reload ||
-    echo "Failed to set docker proxy settings"
+    printf '%s\n%s%s%s%s' \
+      "[Service]" \
+      "Environment=" \
+      "\"HTTP_PROXY=http://${uri}/\" " \
+      "\"HTTPS_PROXY=https://${uri}/\" " \
+      "\"NO_PROXY=${no_proxy}\"" | sudo tee "${DOCKER_PROXY_FILE}" > /dev/null &&
+    sudo systemctl daemon-reload ||
+      echo "Failed to set docker proxy settings"
+  fi
   
   echo "Proxy settings have been applied"
 }
@@ -992,9 +994,11 @@ unset_proxy () {
       echo "Failed to unset yarn proxy settings"
   fi
 
-  sudo rm -f "${DOCKER_PROXY_FILE}" &&
-  sudo systemctl daemon-reload ||
-    echo "Failed to unset docker proxy settings"
+  if which docker &> /dev/null; then
+    sudo rm -f "${DOCKER_PROXY_FILE}" &&
+    sudo systemctl daemon-reload ||
+      echo "Failed to unset docker proxy settings"
+  fi
   
   echo "Proxy settings have been unset"
 }
