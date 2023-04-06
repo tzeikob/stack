@@ -976,6 +976,44 @@ set_proxy () {
     sudo systemctl daemon-reload ||
       echo "Failed to set docker proxy settings"
   fi
+
+  local host=''
+  host="$(echo "${proxy}" | jq -cer '.host|if . then . else "" end')" || return 1
+
+  local port=''
+  port="$(echo "${proxy}" | jq -cer '.port|if . then . else "" end')" || return 1
+
+  gsettings set org.gnome.system.proxy mode "manual"
+  gsettings set org.gnome.system.proxy.http host "${host}"
+  gsettings set org.gnome.system.proxy.http port "${port}"
+  gsettings set org.gnome.system.proxy.https host "${host}"
+  gsettings set org.gnome.system.proxy.https port "${port}"
+  gsettings set org.gnome.system.proxy.ftp host "${host}"
+  gsettings set org.gnome.system.proxy.ftp port "${port}"
+
+  local username=''
+  username="$(echo "${proxy}" | jq -cer '.username|if . then . else "" end')" || return 1
+
+  local password=''
+  password="$(echo "${proxy}" | jq -cer '.password|if . then . else "" end')" || return 1
+
+  if [[ -n "${username}" ]]; then
+    gsettings set org.gnome.system.proxy.http use-authentication true
+    gsettings set org.gnome.system.proxy.http authentication-user "${username}"
+    gsettings set org.gnome.system.proxy.http authentication-password "${password}"
+  else
+    gsettings set org.gnome.system.proxy.http use-authentication false
+    gsettings set org.gnome.system.proxy.http authentication-user ""
+    gsettings set org.gnome.system.proxy.http authentication-password ""
+  fi
+
+  local query=".no_proxy|if .|length > 0"
+  query+=" then \"[\([.[]|\"'\(.)'\"]|join(\",\"))]\" else [] end"
+
+  local no_proxy=''
+  no_proxy="$(echo "${proxy}" | jq -cer "${query}")" || return 1
+
+  gsettings set org.gnome.system.proxy ignore-hosts "${no_proxy}"
   
   echo "Proxy settings have been applied"
 }
@@ -1015,7 +1053,19 @@ unset_proxy () {
     sudo systemctl daemon-reload ||
       echo "Failed to unset docker proxy settings"
   fi
-  
+
+  gsettings set org.gnome.system.proxy mode "none"
+  gsettings set org.gnome.system.proxy.http host ""
+  gsettings set org.gnome.system.proxy.http port "0"
+  gsettings set org.gnome.system.proxy.https host ""
+  gsettings set org.gnome.system.proxy.https port "0"
+  gsettings set org.gnome.system.proxy.ftp host ""
+  gsettings set org.gnome.system.proxy.ftp port "0"
+  gsettings set org.gnome.system.proxy ignore-hosts "[]"
+  gsettings set org.gnome.system.proxy.http use-authentication false
+  gsettings set org.gnome.system.proxy.http authentication-user ""
+  gsettings set org.gnome.system.proxy.http authentication-password ""
+
   echo "Proxy settings have been unset"
 }
 
