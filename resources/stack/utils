@@ -268,10 +268,10 @@ pick_many () {
 #  The value of the given key.
 get () {
   local object="${1}"
-  local query="${2}"
+  local query="${2:-"."}|if . then . else \"\" end"
 
   local result=''
-  result="$(echo "${object}" | jq -cer "${query}")" || return 1
+  result="$(echo "${object}" | jq -cr "${query}")" || return 1
 
   echo "${result}"
 }

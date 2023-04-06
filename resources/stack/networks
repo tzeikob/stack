@@ -978,10 +978,10 @@ set_proxy () {
   fi
 
   local host=''
-  host="$(echo "${proxy}" | jq -cer '.host|if . then . else "" end')" || return 1
+  host="$(get "${proxy}" ".host")" || return 1
 
   local port=''
-  port="$(echo "${proxy}" | jq -cer '.port|if . then . else "" end')" || return 1
+  port="$(get "${proxy}" ".port")" || return 1
 
   gsettings set org.gnome.system.proxy mode "manual"
   gsettings set org.gnome.system.proxy.http host "${host}"
@@ -994,10 +994,10 @@ set_proxy () {
   gsettings set org.gnome.system.proxy.socks port "${port}"
 
   local username=''
-  username="$(echo "${proxy}" | jq -cer '.username|if . then . else "" end')" || return 1
+  username="$(get "${proxy}" ".username")" || return 1
 
   local password=''
-  password="$(echo "${proxy}" | jq -cer '.password|if . then . else "" end')" || return 1
+  password="$(get "${proxy}" ".password")" || return 1
 
   if [[ -n "${username}" ]]; then
     gsettings set org.gnome.system.proxy.http use-authentication true

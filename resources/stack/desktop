@@ -299,7 +299,7 @@ load_wallpaper () {
   local mode=''
   mode="$(get "${wallpaper}" '.mode')" || return 1
 
-  set_wallpaper "${name}" "${mode}"
+  set_wallpaper "${name}" "${mode:-"center"}"
 
   if [[ $? -ne 0 ]]; then
     echo "Failed to load the wallpaper"
