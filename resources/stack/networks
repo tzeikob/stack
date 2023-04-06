@@ -765,7 +765,7 @@ add_proxy () {
   ask "Enter the host:" ".+" || return $?
   local host="${REPLY}"
 
-  ask "Enter the port:" ".+" || return $?
+  ask "Enter the port:" "^[0-9]+$" || return $?
   local port="${REPLY}"
 
   confirm "Is this an authenticated proxy?" || return $?
