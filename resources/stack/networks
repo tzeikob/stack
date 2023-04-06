@@ -630,49 +630,66 @@ down () {
   echo "${object^} ${name} has been disabled"
 }
 
-# Removes the device or connection with the given name.
+# Removes the software device with the given name.
 # Globals:
 #  REPLY
 # Arguments:
-#  object: device or connection
-#  name:   the name of a device or connection
-remove () {
-  local object="${1}"
-  local name="${2}"
+#  name: the name of a device
+remove_device () {
+  local name="${1}"
 
   if [[ -z "${name}" ]]; then
-    if [[ "${object}" == "device" ]]; then
-      pick_device || return $?
-    elif [[ "${object}" == "connection" ]]; then
-      pick_connection || return $?
-    else
-      echo "Invalid or unknown network object"
-      return 2
-    fi
-
+    pick_device || return $?
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
 
-  if ! validate "${object}" "${name}"; then
-    echo "Invalid or unknown network object"
+  if ! validate "device" "${name}"; then
+    echo "Invalid or unknown device"
     return 2
   fi
 
-  echo "Removing ${object} ${name}..."
+  echo "Removing device ${name}..."
 
-  if [[ "${object}" == "device" ]]; then
-    nmcli device delete "${name}" &> /dev/null
-  elif [[ "${object}" == "connection" ]]; then
-    nmcli connection delete "${name}" &> /dev/null
-  fi
+  nmcli device delete "${name}" &> /dev/null
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to remove ${object}"
+    echo "Failed to remove device"
     return 2
   fi
 
   sleep 3
-  echo "${object^} ${name} has been removed"
+  echo "Device ${name} has been removed"
+}
+
+# Removes the connection with the given name.
+# Globals:
+#  REPLY
+# Arguments:
+#  name: the name of a connection
+remove_connection () {
+  local name="${1}"
+
+  if [[ -z "${name}" ]]; then
+    pick_connection || return $?
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+  fi
+
+  if ! validate "connection" "${name}"; then
+    echo "Invalid or unknown connection"
+    return 2
+  fi
+
+  echo "Removing connection ${name}..."
+
+  nmcli connection delete "${name}" &> /dev/null
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to remove connection"
+    return 2
+  fi
+
+  sleep 3
+  echo "Connection ${name} has been removed"
 }
 
 # Adds a new ethernet connection with the given name.
@@ -680,7 +697,7 @@ remove () {
 #  REPLY
 # Arguments:
 #  name: the name of the connection
-add () {
+add_connection () {
   local name="${1}"
 
   if [[ -z "${name}" ]]; then
@@ -1219,14 +1236,14 @@ loop () {
       "down") down "${cmd[1]}" "${cmd[2]}";;
       "add")
         case "${cmd[1]}" in
-          "connection") add "${cmd[2]}";;
+          "connection") add_connection "${cmd[2]}";;
           "proxy") add_proxy "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       "remove")
         case "${cmd[1]}" in
-          "device") remove "device" "${cmd[2]}";;
-          "connection") remove "connection" "${cmd[2]}";;
+          "device") remove_device "${cmd[2]}";;
+          "connection") remove_connection "${cmd[2]}";;
           "proxy") remove_proxy "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
