@@ -106,7 +106,7 @@ find_connection () {
 
 # Returns any detected wifi networks broadcasting in
 # your local area having a singal strength equal or
-# greter to the given value.
+# greater to the given value.
 # Arguments:
 #  device: the name of a wifi device
 #  signal: a signal limitation value
@@ -600,9 +600,11 @@ connect () {
 
   echo "Connecting to ${ssid}..."
 
-  nmcli device wifi connect "${ssid}" password "${key}" ifname "${device}" hidden yes
+  local result=''
+  result="$(nmcli device wifi connect "${ssid}" password "${key}" \
+    ifname "${device}" hidden yes 2> /dev/null)"
   
-  if [[ $? -ne 0 ]]; then
+  if [[ $? -ne 0 ]] || [[ "${result}" =~ (E|e)rror ]]; then
     echo "Failed to connect to ${ssid}"
     return 2
   fi
