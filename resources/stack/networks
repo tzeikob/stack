@@ -278,6 +278,19 @@ prompt () {
 # Outputs:
 #  A long list of networking data.
 show_status () {
+  systemctl status --lines 0 --no-pager NetworkManager.service |
+    awk '{
+      if ($0 ~ / *Active/) {
+        l = "Service"
+        v = $2" "$3
+      } else if ($0 ~ / *Main PID/) {
+        l = "Process"
+        v = $3" "$4
+      } else l = ""
+
+      if (l) printf "%-12s %s\n",l":",v
+    }' || return 1
+
   local devices=''
   devices="$(find_devices)"
 
