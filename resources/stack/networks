@@ -54,9 +54,9 @@ find_device () {
     query+='rate: .bit_rate,'
     query+='quality: .link_quality,'
     query+='signal: .signal_level'
-    query=".[0]|{${query}}"
+    query="if (.|length>0 and .[0].frequency) then .[0]|{${query}} else {} end"
 
-    device="$(iwconfig "${name}" | jc --iwconfig |
+    device="$(iwconfig "${name}" 2> /dev/null | jc --iwconfig |
       jq -cer --argjson d "${device}" "${query} + \$d")" || return 1
   fi
 
@@ -95,10 +95,12 @@ find_connection () {
     query+='rate: .bit_rate,'
     query+='quality: .link_quality,'
     query+='signal: .signal_level'
-    query=".[0]|if .frequency then {${query}} else {} end"
+    query="if (.|length>0 and .[0].frequency) then .[0]|{${query}} else {} end"
 
-    connection="$(iwconfig "${device}" | jc --iwconfig |
-      jq -cer --argjson c "${connection}" "${query} + \$c")" || return 1
+    if validate "device" "${device}" ; then
+      connection="$(iwconfig "${device}" 2> /dev/null | jc --iwconfig |
+        jq -cer --argjson c "${connection}" "${query} + \$c")" || return 1
+    fi
   fi
   
   echo "${connection}"
