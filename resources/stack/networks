@@ -80,7 +80,28 @@ find_connections () {
 find_connection () {
   local name="${1}"
 
-  nmcli connection show "${name}" | jc --nmcli | jq -cer '.[0]' || return 1
+  local connection=''
+  connection="$(nmcli connection show "${name}" | jc --nmcli | jq -cer '.[0]')" || return 1
+
+  local type=''
+  type="$(get "${connection}" ".connection_type")" || return 1
+
+  if [[ "${type}" =~ "wireless" ]]; then
+    local device=''
+    device="$(get "${connection}" ".connection_interface_name")" || return 1
+
+    local query=''
+    query+='freq: .frequency,'
+    query+='rate: .bit_rate,'
+    query+='quality: .link_quality,'
+    query+='signal: .signal_level'
+    query=".[0]|if .frequency then {${query}} else {} end"
+
+    connection="$(iwconfig "${device}" | jc --iwconfig |
+      jq -cer --argjson c "${connection}" "${query} + \$c")" || return 1
+  fi
+  
+  echo "${connection}"
 }
 
 # Returns any detected wifi networks broadcasting in
@@ -301,6 +322,8 @@ show_status () {
   query+='\(if .default == "yes" then " [default]" else "" end)\n'
   query+='\(."802_11_wireless_ssid"|if . then "SSID:        \(.)\n" else "" end)'
   query+='Device:      \(.connection_interface_name)\n'
+  query+='\(if .freq then "Freq:        \(.freq)GHz [\(.rate)Mb/s]\n" else "" end)'
+  query+='\(if .quality then "Signal:      \(.quality) [\(.signal)dBm]\n" else "" end)'
   query+='State:       \(.state)\n'
   query+='Type:        \(.connection_type)\n'
   query+='\(."802_11_wireless_security_key_mgmt"|'
@@ -341,10 +364,8 @@ show_device () {
   query+='Name:        \(.device)\n'
   query+='Type:        \(.type)\n'
   query+='MAC:         \(.hwaddr)\n'
-  query+='\(.freq|if . then "Freq:        \(.)GHz\n" else "" end)'
-  query+='\(.rate|if . then "Rate:        \(.)Mb/s\n" else "" end)'
-  query+='\(.quality|if . then "Quality:     \(.)\n" else "" end)'
-  query+='\(.signal|if . then "Signal:      \(.)dBm\n" else "" end)'
+  query+='\(if .freq then "Freq:        \(.freq)GHz [\(.rate)Mb/s]\n" else "" end)'
+  query+='\(if .quality then "Signal:      \(.quality) [\(.signal)dBm]\n" else "" end)'
   query+='\(.state_text|if . then "State:       \(.)\n" else "" end)'
   query+='MTU:         \(.mtu)'
   query+='\(.ip4_address_1|if . then "\nIPv4:        \(.)" else "" end)'
@@ -388,6 +409,8 @@ show_connection () {
   query+='\(."802_11_wireless_ssid"|if . then "SSID:        \(.)\n" else "" end)'
   query+='\(.connection_uuid|if . then "UUID:        \(.)\n" else "" end)'
   query+='Device:      \(.connection_interface_name)\n'
+  query+='\(if .freq then "Freq:        \(.freq)GHz [\(.rate)Mb/s]\n" else "" end)'
+  query+='\(if .quality then "Signal:      \(.quality) [\(.signal)dBm]\n" else "" end)'
   query+='\(.state|if . then "State:       \(.)\n" else "" end)'
   query+='Auto:        \(.connection_autoconnect)\n'
   query+='Type:        \(.connection_type)'
