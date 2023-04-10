@@ -311,12 +311,6 @@ show_status () {
 
   find_status | jq -cer --argjson d "${devices}" "${query}" || return 1
 
-  local query=''
-  query+='IP:          \(.ip)\n'
-  query+='Country:     \(.country) [\(.cc)]'
-
-  curl -s https://api.myip.com/ | jq -cer "\"${query}\"" || return 1
-
   local proxy='off'
   if [[ -f "${PROXY_ENV_FILE}" ]]; then
     proxy="$(cat "${PROXY_ENV_FILE}" | awk -F'=' '/export http_proxy=/ {
@@ -328,7 +322,17 @@ show_status () {
     }' | tr -d '"/')" || return 1
   fi
 
-  echo "Proxy:       ${proxy}"
+  echo -e "Proxy:       ${proxy}\n"
+
+  local query=''
+  query+='ISP:         \(.isp)\n'
+  query+='Org:         \(.as)\n'
+  query+='IP:          \(.query)\n'
+  query+='Country:     \(.country) [\(.countryCode)]\n'
+  query+='Region:      \(.regionName), \(.city)\n'
+  query+='Location:    \(.lat), \(.lon)'
+
+  curl -s 'http://ip-api.com/json' | jq -cer "\"${query}\"" || return 1
 
   query=''
   query+='.[]|select(.state == "connected")|.connection'
