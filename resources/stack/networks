@@ -671,7 +671,7 @@ up () {
   if [[ "${object}" == "device" ]]; then
     nmcli device connect "${name}" &> /dev/null
   elif [[ "${object}" == "connection" ]]; then
-    nmcli connection up "${name}" &> /dev/null
+    nmcli connection up "${name}" --ask
   fi
 
   if [[ $? -ne 0 ]]; then
@@ -790,18 +790,14 @@ remove_connection () {
   echo "Connection ${name} has been removed"
 }
 
-# Adds a new ethernet connection with the given name.
+# Adds a new ethernet connection.
 # Globals:
 #  REPLY
 # Arguments:
-#  name: the name of the connection
-add_connection () {
-  local name="${1}"
-
-  if [[ -z "${name}" ]]; then
-    echo "Connection name is missing"
-    return 2
-  fi
+#  None
+add_ethernet_connection () {
+  ask "Enter the connection name:" ".+" || return $?
+  local name="${REPLY}"
 
   if find_connection "${name}" &> /dev/null; then
     echo "Connection ${name} already exists"
@@ -816,7 +812,7 @@ add_connection () {
   confirm "Want to enable DHCP mode?" || return $?
   [[ -n "${REPLY}" ]] && dhcp="${REPLY}" || return 0
 
-  echo "Creating connection ${name}..."
+  echo "Creating ethernet connection ${name}..."
 
   if [[ "${dhcp}" == "yes" ]]; then
     nmcli connection add type "ethernet" \
@@ -842,12 +838,62 @@ add_connection () {
   fi
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to create connection"
+    echo "Failed to create ethernet connection"
     return 2
   fi
 
   sleep 3
-  echo "Connection ${name} has been created"
+  echo "Ethernet connection ${name} has been created"
+}
+
+# Adds a new vpn connection.
+# Globals:
+#  REPLY
+# Arguments:
+#  None
+add_vpn_connection () {
+  ask "Enter the path to ovpn file:" "^/.+" || return $?
+  local file_path="${REPLY}"
+
+  if [[ ! -f "${file_path}" ]]; then
+    echo "Invalid or unknown ${file_path} file"
+    return 2
+  fi
+
+  local name=$(basename -- "${file_path}")
+  local extension="${name##*.}"
+  name="${name%.*}"
+
+  if [[ "${extension}" != "ovpn" ]]; then
+    echo "Invalid ovpn file type"
+    return 2
+  fi
+
+  ask "Enter the username (blank to skip):" || return $?
+  local username="${REPLY}"
+
+  ask_password "Enter the password (blank to skip):" || return $?
+  local password="${REPLY}"
+
+  echo "Creating VPN connection ${name}..."
+
+  nmcli connection import type openvpn file "${file_path}"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to create VPN connection"
+    return 2
+  fi
+
+  if [[ -n "${username}" ]]; then
+    nmcli connection modify "${name}" +vpn.data username="${username}"
+  fi
+
+  if [[ -n "${password}" ]]; then
+    nmcli connection modify "${name}" +vpn.secrets password="${password}"
+  fi
+
+  sleep 3
+  echo "VPN connection ${name} has been created"
 }
 
 # Adds a new proxy profile with the given host,
@@ -1271,7 +1317,7 @@ show_help () {
     "" "" \
     "up connection [<name>]" "Enable a connection." \
     "down connection [<name>]" "Disable a connection." \
-    "add connection <name>" "Add a new connection." \
+    "add connection <ethernet|vpn>" "Add a new ethernet or vpn connection." \
     "remove connection [<name>]" "Remove a connection." \
     "" "" \
     "add proxy <name>" "Add a new proxy server profile." \
@@ -1334,7 +1380,12 @@ loop () {
       "down") down "${cmd[1]}" "${cmd[2]}";;
       "add")
         case "${cmd[1]}" in
-          "connection") add_connection "${cmd[2]}";;
+          "connection")
+            case "${cmd[2]}" in
+              "ethernet") add_ethernet_connection;;
+              "vpn") add_vpn_connection;;
+              *) echo "Invalid or unknown command";;
+            esac;;
           "proxy") add_proxy "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
