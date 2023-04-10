@@ -311,6 +311,12 @@ show_status () {
 
   find_status | jq -cer --argjson d "${devices}" "${query}" || return 1
 
+  local query=''
+  query+='IP:          \(.ip)\n'
+  query+='Country:     \(.country) [\(.cc)]'
+
+  curl -s https://api.myip.com/ | jq -cer "\"${query}\"" || return 1
+
   local proxy='off'
   if [[ -f "${PROXY_ENV_FILE}" ]]; then
     proxy="$(cat "${PROXY_ENV_FILE}" | awk -F'=' '/export http_proxy=/ {
