@@ -308,7 +308,7 @@ show_status () {
 
   local query=''
   query+='ISP:         \(.as|split(" ")|"\(.[1]) \(.[2])") [\(.isp)]\n'
-  query+='IP:          \(.query)\n'
+  query+='Public IP:   \(.query)\n'
   query+='Country:     \(.city|if . then "\(.), " else "" end)\(.country)'
 
   curl -s 'http://ip-api.com/json' | jq -cer "\"${query}\""
@@ -333,29 +333,26 @@ show_status () {
   fi
 
   query=''
-  query+='.[]|select(.state == "connected")|.connection'
+  query+='.[]|select(.type|test("(^ethernet|wifi|vpn)$"))|.name'
 
   local connections=''
-  connections="$(echo "${devices}" | jq -cr "${query}")" || return 1
+  connections="$(nmcli connection show --active | jc --nmcli | jq -cr "${query}")" || return 1
 
   if [[ -z "${connections}" ]]; then
     return 0
   fi
 
   query=''
-  query+='Connection:  \(.connection_id)'
-  query+='\(if .default == "yes" then " [default]" else "" end)\n'
-  query+='\(."802_11_wireless_ssid"|if . then "SSID:        \(.)\n" else "" end)'
-  query+='Device:      \(.connection_interface_name)\n'
-  query+='\(if .freq then "Freq:        \(.freq)GHz [\(.rate)Mb/s]\n" else "" end)'
-  query+='\(if .quality then "Signal:      \(.quality) [\(.signal)dBm]\n" else "" end)'
-  query+='State:       \(.state)\n'
-  query+='Type:        \(.connection_type)\n'
-  query+='\(."802_11_wireless_security_key_mgmt"|'
-  query+=' if . then "Security:    \(.|ascii_upcase)\n" else "" end)'
-  query+='VPN:         \(.vpn)\n'
-  query+='IPv4:        \(.ip4_address_1)\n'
-  query+='IPv6:        \(.ip6_address_1)'
+  query+='Connection:  \(.connection_id)\(if .default == "yes" then " [default]" else "" end)'
+  query+='\(."802_11_wireless_ssid"|if . then "\nSSID:        \(.)" else "" end)'
+  query+='\nDevice:      \(if .connection_type == "vpn" then .ip_iface else .connection_interface_name end)'
+  query+='\(if .freq then "\nFreq:        \(.freq)GHz [\(.rate)Mb/s]" else "" end)'
+  query+='\(if .quality then "\nSignal:      \(.quality) [\(.signal)dBm]" else "" end)'
+  query+='\nType:        \(.connection_type)\(.vpn_type|if . then " [\(.)]" else "" end)'
+  query+='\(if .connection_type == "vpn" then "\nHost:        \(.vpn_gateway)" else "" end)'
+  query+='\(if .vpn_username then "\nUser:        \(.vpn_username)" else "" end)'
+  query+='\(."802_11_wireless_security_key_mgmt"|if . then "\nSecurity:    \(.|ascii_upcase)" else "" end)'
+  query+='\(if .ip4_address_1 then "\nIPv4:        \(.ip4_address_1)" else "" end)'
   query="\"${query}\""
 
   local connection=''
@@ -429,19 +426,19 @@ show_connection () {
   fi
 
   local query=''
-  query+='Connection:  \(.connection_id)'
-  query+='\(if .default == "yes" then " [default]" else "" end)\n'
-  query+='\(."802_11_wireless_ssid"|if . then "SSID:        \(.)\n" else "" end)'
-  query+='\(.connection_uuid|if . then "UUID:        \(.)\n" else "" end)'
-  query+='Device:      \(.connection_interface_name)\n'
-  query+='\(if .freq then "Freq:        \(.freq)GHz [\(.rate)Mb/s]\n" else "" end)'
-  query+='\(if .quality then "Signal:      \(.quality) [\(.signal)dBm]\n" else "" end)'
-  query+='\(.state|if . then "State:       \(.)\n" else "" end)'
-  query+='Auto:        \(.connection_autoconnect)\n'
-  query+='Type:        \(.connection_type)'
-  query+='\(."802_11_wireless_security_key_mgmt"|'
-  query+=' if . then "\nSecurity:    \(.|ascii_upcase)" else "" end)'
-  query+='\(.vpn|if . then "\nVPN:         \(.)" else "" end)'
+  query+='Connection:  \(.connection_id)\(if .default == "yes" then " [default]" else "" end)'
+  query+='\(."802_11_wireless_ssid"|if . then "\nSSID:        \(.)" else "" end)'
+  query+='\(.connection_uuid|if . then "\nUUID:        \(.)" else "" end)'
+  query+='\nDevice:      \(if .connection_type == "vpn"'
+  query+=' then "\(.ip_iface|if . then . else "none" end)" else .connection_interface_name end)'
+  query+='\(if .freq then "\nFreq:        \(.freq)GHz [\(.rate)Mb/s]" else "" end)'
+  query+='\(if .quality then "\nSignal:      \(.quality) [\(.signal)dBm]" else "" end)'
+  query+='\(.state|if . then "\nState:       \(.)" else "" end)'
+  query+='\nAuto:        \(.connection_autoconnect)'
+  query+='\nType:        \(.connection_type)\(.vpn_type|if . then " [\(.)]" else "" end)'
+  query+='\(if .connection_type == "vpn" and .vpn_gateway then "\nHost:        \(.vpn_gateway)" else "" end)'
+  query+='\(if .vpn_username then "\nUser:        \(.vpn_username)" else "" end)'
+  query+='\(."802_11_wireless_security_key_mgmt"|if . then "\nSecurity:    \(.|ascii_upcase)" else "" end)'
   query+='\(.ip4_address_1|if . then "\nIPv4:        \(.)" else "" end)'
   query+='\(.ip4_gateway|if . then "\nGateway:     \(.)" else "" end)'
   query+='\(.ip4_route_1|if . then "\nRoute:       \(.dst)" else "" end)'
