@@ -311,7 +311,11 @@ show_status () {
   query+='IP:          \(.query)\n'
   query+='Country:     \(.city|if . then "\(.), " else "" end)\(.country)'
 
-  curl -s 'http://ip-api.com/json' | jq -cer "\"${query}\"" || return 1
+  curl -s 'http://ip-api.com/json' | jq -cer "\"${query}\""
+
+  if [[ $? -ne 0 ]]; then
+    echo "ISP:         Unavailable"
+  fi
 
   local proxy=''
   if [[ -f "${PROXY_ENV_FILE}" ]]; then
