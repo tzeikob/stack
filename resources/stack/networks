@@ -572,53 +572,42 @@ scan () {
   echo "${networks}" | jq -cer "${query}" || return 1
 }
 
-# Connect to the wifi network with the given id
-# and secret key.
+# Adds a wifi connection to wireless network.
 # Globals:
 #  REPLY
 # Arguments:
-#  device: the name of a wifi device
-#  ssid:   the ssid of the wifi network
-connect () {
-  local device="${1}"
-  local ssid="${2}"
+#  None
+add_wifi_connection () {
+  local device=''
+  pick_device "wifi" || return $?
+  [[ -n "${REPLY}" ]] && device="${REPLY}" || return 0
 
-  if [[ -z "${device}" ]]; then
-    pick_device "wifi" || return $?
-    [[ -n "${REPLY}" ]] && device="${REPLY}" || return 0
+  echo "Detecting available wifi networks..."
+
+  local networks=''
+  networks="$(find_wifis "${device}")" || return 1
+
+  local len=0
+  len="$(count "${networks}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No wifi networks have been detected"
+    return 0
   fi
 
-  if ! validate "device" "${device}"; then
-    echo "Invalid or unknwon device"
-    return 2
-  fi
+  local query='{key: .ssid, value: "[\(.signal)] \(.ssid)"}'
+  query="[.[]|${query}]"
 
-  if [[ -z "${ssid}" ]]; then
-    echo "Detecting available wifi networks..."
+  networks="$(echo "${networks}" | jq -cer "${query}")" || return 1
 
-    local networks=''
-    networks="$(find_wifis "${device}")" || return 1
-
-    local len=0
-    len="$(count "${networks}")" || return 1
-
-    if [[ ${len} -eq 0 ]]; then
-      echo "No wifi networks have been detected"
-      return 0
-    fi
-
-    local query='{key: .ssid, value: "[\(.signal)] \(.ssid)"}'
-    query="[.[]|${query}]"
-
-    networks="$(echo "${networks}" | jq -cer "${query}")" || return 1
-    pick_one "Select a wifi network:" "${networks}" "vertical" || return $?
-    [[ -n "${REPLY}" ]] && ssid="${REPLY}" || return 0
-  fi
+  local ssid=''
+  pick_one "Select a wifi network:" "${networks}" "vertical" || return $?
+  [[ -n "${REPLY}" ]] && ssid="${REPLY}" || return 0
 
   ask_password "Enter the private key:" || return $?
   local key="${REPLY}"
 
-  echo "Connecting to ${ssid}..."
+  echo "Connecting to network ${ssid}..."
 
   local result=''
   result="$(nmcli device wifi connect "${ssid}" password "${key}" \
@@ -1304,7 +1293,6 @@ show_help () {
     "list connections" "List the network connections." \
     "" "" \
     "scan [<device>] [<signal>]" "Detect wifi networks with min signal." \
-    "connect [<device>] [<ssid>]" "Connect to a wifi network." \
     "" "" \
     "up device [<name>]" "Enable a network device." \
     "down device [<name>]" "Disable a network device." \
@@ -1312,7 +1300,7 @@ show_help () {
     "" "" \
     "up connection [<name>]" "Enable a connection." \
     "down connection [<name>]" "Disable a connection." \
-    "add connection <ethernet|vpn>" "Add a new ethernet or vpn connection." \
+    "add connection <eth|wifi|vpn>" "Add an ethernet, wifi or vpn connection." \
     "remove connection [<name>]" "Remove a connection." \
     "" "" \
     "add proxy <name>" "Add a new proxy server profile." \
@@ -1370,14 +1358,14 @@ loop () {
           "wifi") power_wifi "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
-      "connect") connect "${cmd[1]}" "${cmd[2]}";; 
       "up") up "${cmd[1]}" "${cmd[2]}";;
       "down") down "${cmd[1]}" "${cmd[2]}";;
       "add")
         case "${cmd[1]}" in
           "connection")
             case "${cmd[2]}" in
-              "ethernet") add_ethernet_connection;;
+              "eth") add_ethernet_connection;;
+              "wifi") add_wifi_connection;;
               "vpn") add_vpn_connection;;
               *) echo "Invalid or unknown command";;
             esac;;
