@@ -853,10 +853,10 @@ add_vpn_connection () {
     return 2
   fi
 
-  ask "Enter the username (blank to skip):" || return $?
+  ask "Enter the username:" ".+" || return $?
   local username="${REPLY}"
 
-  ask_password "Enter the password (blank to skip):" || return $?
+  ask_password "Enter the password:" ".+" || return $?
   local password="${REPLY}"
 
   echo "Creating VPN connection ${name}..."
@@ -868,13 +868,8 @@ add_vpn_connection () {
     return 2
   fi
 
-  if [[ -n "${username}" ]]; then
-    nmcli connection modify "${name}" +vpn.data username="${username}"
-  fi
-
-  if [[ -n "${password}" ]]; then
-    nmcli connection modify "${name}" +vpn.secrets password="${password}"
-  fi
+  nmcli connection modify "${name}" +vpn.data username="${username}" || return 1
+  nmcli connection modify "${name}" +vpn.secrets password="${password}" || return 1
 
   sleep 3
   echo "VPN connection ${name} has been created"
