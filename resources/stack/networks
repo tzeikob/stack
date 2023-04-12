@@ -572,56 +572,6 @@ scan () {
   echo "${networks}" | jq -cer "${query}" || return 1
 }
 
-# Adds a wifi connection to wireless network.
-# Globals:
-#  REPLY
-# Arguments:
-#  None
-add_wifi_connection () {
-  local device=''
-  pick_device "wifi" || return $?
-  [[ -n "${REPLY}" ]] && device="${REPLY}" || return 0
-
-  echo "Detecting available wifi networks..."
-
-  local networks=''
-  networks="$(find_wifis "${device}")" || return 1
-
-  local len=0
-  len="$(count "${networks}")" || return 1
-
-  if [[ ${len} -eq 0 ]]; then
-    echo "No wifi networks have been detected"
-    return 0
-  fi
-
-  local query='{key: .ssid, value: "[\(.signal)] \(.ssid)"}'
-  query="[.[]|${query}]"
-
-  networks="$(echo "${networks}" | jq -cer "${query}")" || return 1
-
-  local ssid=''
-  pick_one "Select a wifi network:" "${networks}" "vertical" || return $?
-  [[ -n "${REPLY}" ]] && ssid="${REPLY}" || return 0
-
-  ask_password "Enter the private key:" || return $?
-  local key="${REPLY}"
-
-  echo "Connecting to network ${ssid}..."
-
-  local result=''
-  result="$(nmcli device wifi connect "${ssid}" password "${key}" \
-    ifname "${device}" hidden yes 2> /dev/null)"
-  
-  if [[ $? -ne 0 ]] || [[ "${result}" =~ (E|e)rror ]]; then
-    echo "Failed to connect to ${ssid}"
-    return 2
-  fi
-
-  sleep 3
-  echo "Connection to ${ssid} has been established"
-}
-
 # Enables the device or connection with the given name.
 # Globals:
 #  REPLY
@@ -828,6 +778,56 @@ add_ethernet_connection () {
 
   sleep 3
   echo "Ethernet connection ${name} has been created"
+}
+
+# Adds a wifi connection to wireless network.
+# Globals:
+#  REPLY
+# Arguments:
+#  None
+add_wifi_connection () {
+  local device=''
+  pick_device "wifi" || return $?
+  [[ -n "${REPLY}" ]] && device="${REPLY}" || return 0
+
+  echo "Detecting available wifi networks..."
+
+  local networks=''
+  networks="$(find_wifis "${device}")" || return 1
+
+  local len=0
+  len="$(count "${networks}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No wifi networks have been detected"
+    return 0
+  fi
+
+  local query='{key: .ssid, value: "[\(.signal)] \(.ssid)"}'
+  query="[.[]|${query}]"
+
+  networks="$(echo "${networks}" | jq -cer "${query}")" || return 1
+
+  local ssid=''
+  pick_one "Select a wifi network:" "${networks}" "vertical" || return $?
+  [[ -n "${REPLY}" ]] && ssid="${REPLY}" || return 0
+
+  ask_password "Enter the private key:" || return $?
+  local key="${REPLY}"
+
+  echo "Connecting to network ${ssid}..."
+
+  local result=''
+  result="$(nmcli device wifi connect "${ssid}" password "${key}" \
+    ifname "${device}" hidden yes 2> /dev/null)"
+  
+  if [[ $? -ne 0 ]] || [[ "${result}" =~ (E|e)rror ]]; then
+    echo "Failed to connect to ${ssid}"
+    return 2
+  fi
+
+  sleep 3
+  echo "Connection to ${ssid} has been established"
 }
 
 # Adds a new vpn connection.
