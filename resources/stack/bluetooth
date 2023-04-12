@@ -1,0 +1,121 @@
+#!/bin/bash
+
+set -o pipefail
+source /opt/stack/utils
+
+# Shows a prompt status and asks user to enter the
+# next command, which is kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  None
+# Outputs:
+#  A minimal prompt status line.
+prompt () {
+  local status='ready'
+
+  read -rep "[bluetooth:${status}] " REPLY
+}
+
+# Shows the current status of bluetooth service
+# and connected devices.
+# Arguments:
+#  None
+# Outputs:
+#  A long list of bluetooth data.
+show_status () {
+  systemctl status --lines 0 --no-pager bluetooth.service |
+  awk '{
+    if ($0 ~ / *Active/) {
+      l = "Service"
+      v = $2" "$3
+    } else l = ""
+
+    if (l) printf "%-12s %s\n",l":",v
+  }' || return 1
+}
+
+# Shows the logs of the bluetooth service.
+# Arguments:
+#  None
+# Outputs:
+#  A long list of log messages.
+show_logs () {
+  systemctl status --no-pager bluetooth.service | tail -n +13 || return 1
+}
+
+# Restarts the bluetooth service.
+# Arguments:
+#  None
+restart_bluetooth () {
+  sudo systemctl restart bluetooth.service
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to restart the bluetooth service"
+    return 2
+  fi
+
+  echo "Bluetooth service has been restarted"
+}
+
+# Shows the help message.
+# Arguments:
+#  None
+# Outputs:
+#  A long help message.
+show_help () {
+  echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
+
+  echo -e "\nCOMMANDS"
+  printf " %-32s %s\n" \
+    "help" "Show this help message." \
+    "" "" \
+    "show status" "Show a report of the bluetooth service and devices." \
+    "show logs" "Show the last logs of the bluetooth service." \
+    "" "" \
+    "restart" "Restart the bluetooth service."
+}
+
+loop () {
+  clear
+
+  while true; do
+    prompt && history -s "${REPLY}"
+
+    set -f
+    set_separator "line"
+    local cmd=($(xargs -n1 <<< "${REPLY}"))
+    restore_separator && set +f
+
+    if [[ "${cmd[0]}" == "help" ]]; then
+      show_help
+      continue
+    elif [[ "${cmd[0]}" == "clear" ]]; then
+      clear
+      continue
+    elif [[ "${cmd[0]}" == "quit" ]]; then
+      break
+    elif [[ -z "${cmd[0]}" ]]; then
+      continue
+    fi
+
+    case "${cmd[0]}" in
+      "show")
+        case "${cmd[1]}" in
+          "status") show_status;;
+          "logs") show_logs;;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "restart") restart_bluetooth;;
+      *) echo "Invalid or unknown command";; 
+    esac
+    
+    if [[ $? -eq 1 ]]; then
+      echo "An unknown error has occurred"
+    fi
+  done
+
+  clear
+}
+
+loop

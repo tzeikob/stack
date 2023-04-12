@@ -306,6 +306,7 @@ install_utilities () {
   cp ~/stack/resources/stack/audio "$STACK_HOME"
   cp ~/stack/resources/stack/displays "$STACK_HOME"
   cp ~/stack/resources/stack/cloud "$STACK_HOME"
+  cp ~/stack/resources/stack/bluetooth "$STACK_HOME"
 
   ln -sf "$STACK_HOME/clock" /usr/local/bin/clock
   ln -sf "$STACK_HOME/trash" /usr/local/bin/trash
@@ -317,6 +318,7 @@ install_utilities () {
   ln -sf "$STACK_HOME/audio" /usr/local/bin/audio
   ln -sf "$STACK_HOME/displays" /usr/local/bin/displays
   ln -sf "$STACK_HOME/cloud" /usr/local/bin/cloud
+  ln -sf "$STACK_HOME/bluetooth" /usr/local/bin/bluetooth
 
   echo 'displays restore layout || notify-send "Failed to load displays layout"' >> ~/.xinitrc
   echo 'displays restore colors || notify-send "Failed to load some color profiles"' >> ~/.xinitrc
