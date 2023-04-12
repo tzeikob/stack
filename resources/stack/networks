@@ -519,10 +519,10 @@ list_connections () {
 # with signal strength at least the given limit.
 # Arguments:
 #  device: the name of a wifi device
-#  singal:  a signal limitation value
+#  singal: a signal limitation value
 # Outputs:
 #  The list of wifi networks.
-scan () {
+list_wifis () {
   local device="${1}"
   local signal="${2:-"0"}"
 
@@ -532,7 +532,7 @@ scan () {
   fi
 
   if ! validate "device" "${device}"; then
-    echo "Invalid or unknwon device"
+    echo "Invalid or unknown device"
     return 2
   fi
 
@@ -1291,8 +1291,7 @@ show_help () {
     "" "" \
     "list devices" "List the network devices." \
     "list connections" "List the network connections." \
-    "" "" \
-    "scan [<device>] [<signal>]" "Detect wifi networks with min signal." \
+    "list wifis [<device>] [<signal>]" "Detect wifi networks with a min signal." \
     "" "" \
     "up device [<name>]" "Enable a network device." \
     "down device [<name>]" "Disable a network device." \
@@ -1348,10 +1347,10 @@ loop () {
         case "${cmd[1]}" in
           "devices") list_devices;;
           "connections") list_connections;;
+          "wifis") list_wifis "${cmd[2]}" "${cmd[3]}";;
           "proxies") list_proxies;;
           *) echo "Invalid or unknown command";;
         esac;;
-      "scan") scan "${cmd[1]}" "${cmd[2]}";;
       "power")
         case "${cmd[1]}" in
           "network") power_network "${cmd[2]}";;
