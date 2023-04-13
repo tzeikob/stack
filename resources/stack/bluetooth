@@ -48,6 +48,8 @@ show_logs () {
 # Arguments:
 #  None
 restart_bluetooth () {
+  rfkill block bluetooth &&
+  rfkill unblock bluetooth &&
   sudo modprobe -r btusb &&
   sudo modprobe -r btintel &&
   sudo modprobe btintel &&
