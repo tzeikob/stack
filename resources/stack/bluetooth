@@ -48,6 +48,10 @@ show_logs () {
 # Arguments:
 #  None
 restart_bluetooth () {
+  sudo modprobe -r btusb &&
+  sudo modprobe -r btintel &&
+  sudo modprobe btintel &&
+  sudo modprobe btusb &&
   sudo systemctl restart bluetooth.service
 
   if [[ $? -ne 0 ]]; then
