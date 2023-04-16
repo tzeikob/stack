@@ -3,6 +3,15 @@
 set -o pipefail
 source /opt/stack/utils
 
+# Returns all the available controllers.
+# Arguments:
+#  None
+# Outputs:
+#  A json array of controller objects.
+find_controllers () {
+  bluetoothctl list | jc --bluetoothctl || return 1
+}
+
 # Shows a prompt status and asks user to enter the
 # next command, which is kept in the global var REPLY.
 # Globals:
@@ -12,7 +21,12 @@ source /opt/stack/utils
 # Outputs:
 #  A minimal prompt status line.
 prompt () {
-  local status='ready'
+  local status=''
+  status="$(find_controllers | jq -cer '.[]|select(.is_default == false)|.name')"
+
+  if [[ $? -ne 0 ]]; then
+    status="none"
+  fi
 
   read -rep "[bluetooth:${status}] " REPLY
 }
