@@ -420,6 +420,99 @@ set_pairable () {
   echo "Controller pairable mode set to ${mode}"
 }
 
+# Connects to the device with the given address.
+# Globals:
+#  REPLY
+# Arguments:
+#  address: the address of a device
+connect_device () {
+  local address="${1}"
+
+  if [[ -z "${address}" ]]; then
+    pick_device || return $?
+    [[ -n "${REPLY}" ]] && address="${REPLY}" || return 0
+  fi
+
+  local device=''
+  device="$(find_device "${address}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to find the device"
+    return 2
+  fi
+
+  bluetoothctl connect "${address}" &> /dev/null
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to connect device ${address}"
+    return 2
+  fi
+
+  echo "Device ${address} has been connected"
+}
+
+# Disconnects the device with the given address.
+# Globals:
+#  REPLY
+# Arguments:
+#  address: the address of a device
+disconnect_device () {
+  local address="${1}"
+
+  if [[ -z "${address}" ]]; then
+    pick_device || return $?
+    [[ -n "${REPLY}" ]] && address="${REPLY}" || return 0
+  fi
+
+  local device=''
+  device="$(find_device "${address}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to find the device"
+    return 2
+  fi
+
+  bluetoothctl disconnect "${address}" &> /dev/null
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to disconnect device ${address}"
+    return 2
+  fi
+
+  echo "Device ${address} has been disconnected"
+}
+
+# Removes the device with the given address.
+# Globals:
+#  REPLY
+# Arguments:
+#  address: the address of a device
+remove_device () {
+  local address="${1}"
+
+  if [[ -z "${address}" ]]; then
+    pick_device || return $?
+    [[ -n "${REPLY}" ]] && address="${REPLY}" || return 0
+  fi
+
+  local device=''
+  device="$(find_device "${address}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to find the device"
+    return 2
+  fi
+
+  bluetoothctl remove "${address}" &> /dev/null
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to remove device ${address}"
+    return 2
+  fi
+
+  echo "Device ${address} has been removed"
+}
+
 # Restarts the bluetooth service.
 # Arguments:
 #  None
@@ -468,6 +561,10 @@ show_help () {
     "set discoverable <on|off>" "Set the default controller to be discoverable." \
     "set pairable <on|off>" "Set the default controller to be pairable." \
     "" "" \
+    "connect device [<address>]" "Connect a bluetooth device." \
+    "disconnect device [<address>]" "Disconnect a bluetooth device." \
+    "remove device [<address>]" "Removes a bluetooth device." \
+    "" "" \
     "restart" "Restart the bluetooth service."
 }
 
@@ -515,6 +612,21 @@ loop () {
           "power") set_power "${cmd[2]}";;
           "discoverable") set_discoverable "${cmd[2]}";;
           "pairable") set_pairable "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "connect")
+        case "${cmd[1]}" in
+          "device") connect_device "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "disconnect")
+        case "${cmd[1]}" in
+          "device") disconnect_device "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "remove")
+        case "${cmd[1]}" in
+          "device") remove_device "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       "restart") restart_bluetooth;;
