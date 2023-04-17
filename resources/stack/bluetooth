@@ -348,6 +348,78 @@ set_controller () {
   echo "Default controller set to ${address}"
 }
 
+# Sets the default controller power to on/off.
+# Arguments:
+#  mode: on or off
+set_power () {
+  local mode="${1}"
+
+  if [[ -z "${mode}" ]]; then
+    echo "Missing the power mode value"
+    return 2
+  elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
+    echo "Invalid power mode value"
+    return 2
+  fi
+
+  bluetoothctl power "${mode}" &> /dev/null
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to set controller power mode to ${mode}"
+    return 2
+  fi
+
+  echo "Controller power mode set to ${mode}"
+}
+
+# Sets the default controller discoverable mode to on/off.
+# Arguments:
+#  mode: on or off
+set_discoverable () {
+  local mode="${1}"
+
+  if [[ -z "${mode}" ]]; then
+    echo "Missing the discoverable mode value"
+    return 2
+  elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
+    echo "Invalid discoverable mode value"
+    return 2
+  fi
+
+  bluetoothctl discoverable "${mode}" &> /dev/null
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to set controller discoverable mode to ${mode}"
+    return 2
+  fi
+
+  echo "Controller discoverable mode set to ${mode}"
+}
+
+# Sets the default controller pairable mode to on/off.
+# Arguments:
+#  mode: on or off
+set_pairable () {
+  local mode="${1}"
+
+  if [[ -z "${mode}" ]]; then
+    echo "Missing the pairable mode value"
+    return 2
+  elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
+    echo "Invalid pairable mode value"
+    return 2
+  fi
+
+  bluetoothctl pairable "${mode}" &> /dev/null
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to set controller pairable mode to ${mode}"
+    return 2
+  fi
+
+  echo "Controller pairable mode set to ${mode}"
+}
+
 # Restarts the bluetooth service.
 # Arguments:
 #  None
@@ -392,6 +464,9 @@ show_help () {
     "" "any of paired, connected, trusted or bonded." \
     "" "" \
     "set controller [<address>]" "Set the default controller." \
+    "set power <on|off>" "Set the default controller power to on/off." \
+    "set discoverable <on|off>" "Set the default controller to be discoverable." \
+    "set pairable <on|off>" "Set the default controller to be pairable." \
     "" "" \
     "restart" "Restart the bluetooth service."
 }
@@ -437,6 +512,9 @@ loop () {
       "set")
         case "${cmd[1]}" in
           "controller") set_controller "${cmd[2]}";;
+          "power") set_power "${cmd[2]}";;
+          "discoverable") set_discoverable "${cmd[2]}";;
+          "pairable") set_pairable "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       "restart") restart_bluetooth;;
