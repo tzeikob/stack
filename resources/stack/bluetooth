@@ -39,7 +39,7 @@ find_controller () {
 # Outputs:
 #  A json array of device objects.
 find_devices () {
-  local status="${1}"
+  local status="${1^}"
 
   local devices=''
   if [[ -n "${status}" ]]; then
@@ -140,15 +140,46 @@ prompt () {
 # Outputs:
 #  A long list of bluetooth data.
 show_status () {
-  systemctl status --lines 0 --no-pager bluetooth.service |
-  awk '{
+  systemctl status --lines 0 --no-pager bluetooth.service | awk '{
     if ($0 ~ / *Active/) {
       l = "Service"
       v = $2" "$3
     } else l = ""
 
-    if (l) printf "%-12s %s\n",l":",v
+    if (l) printf "%-14s %s\n",l":",v
   }' || return 1
+
+  local query=''
+  query+='Controller:    \(.name) [\(.alias)]\n'
+  query+='Address:       \(.address)\n'
+  query+='Powered:       \(.powered)\n'
+  query+='Discovering:   \(.discovering)\n'
+  query+='Pairable:      \(.pairable)\n'
+  query+='Discoverable:  \(.discoverable)'
+  
+  find_controller | jq -cer ".[0]|\"${query}\"" || return 1
+
+  local query=''
+  query+='if .|length > 0 then .[]|.address else "" end'
+
+  local devices=''
+  devices="$(find_devices "connected" | jq -cer "${query}")" || return 1
+
+  if [[ -z "${devices}" ]]; then
+    return 0
+  fi
+
+  local query=''
+  query+='Device:        \(.name)\n'
+  query+='Address:       \(.address)\n'
+  query+='Type:          \(.icon)'
+  query="[.[]|\"${query}\"]|join(\"\n\")"
+
+  local device=''
+  while read -r device; do
+    echo
+    find_device "${device}" | jq -cer "${query}" || return 1
+  done <<< "${devices}"
 }
 
 # Shows the logs of the bluetooth service.
