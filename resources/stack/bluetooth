@@ -12,6 +12,26 @@ find_controllers () {
   bluetoothctl list | jc --bluetoothctl || return 1
 }
 
+# Returns the controller with the given address.
+# If no address is given the default controller
+# will be returned.
+# Arguments:
+#  address: the address of a controller
+# Outputs:
+#  A json object of a controller.
+find_controller () {
+  local address="${1}"
+
+  local controller=''
+  if [[ -n "${address}" ]]; then
+    controller="$(bluetoothctl show "${address}")" || return 1
+  else
+    controller="$(bluetoothctl show)" || return 1
+  fi
+
+  echo "${controller}" | jc --bluetoothctl || return 1
+}
+
 # Returns all the available devices filtered by the
 # optionally given status.
 # Arguments:
@@ -29,6 +49,32 @@ find_devices () {
   fi
 
   echo "${devices}" | jc --bluetoothctl || return 1
+}
+
+# Shows a menu asking the user to select a controller,
+# where the answer is kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  None
+# Outputs:
+#  A menu of controllers.
+pick_controller () {
+  local query='{key: .address, value: "\(.address) [\(.name)]"}'
+  query="[.[]|${query}]"
+
+  local controllers=''
+  controllers="$(find_controllers | jq -cer "${query}")" || return 1
+
+  local len=0
+  len=$(count "${controllers}") || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No audio controllers have found"
+    return 2
+  fi
+  
+  pick_one "Select a controller:" "${controllers}" "vertical" || return $?
 }
 
 # Shows a prompt status and asks user to enter the
@@ -146,6 +192,46 @@ list_devices () {
   echo "${devices}" | jq -cer "${query}" || return 1
 }
 
+# Shows the data of the controller with the given
+# address.
+# Globals:
+#  REPLY
+# Arguments:
+#  address: the address of a controller
+# Outputs:
+#  A list of controller data.
+show_controller () {
+  local address="${1}"
+
+  if [[ -z "${address}" ]]; then
+    pick_controller || return $?
+    [[ -n "${REPLY}" ]] && address="${REPLY}" || return 0
+  fi
+
+  local controller=''
+  controller="$(find_controller "${address}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to find controller ${address}"
+    return 2
+  fi
+
+  local query=''
+  query+='Name:          \(.name)\n'
+  query+='Address:       \(.address)\n'
+  query+='alias:         \(.alias)\n'
+  query+='Class:         \(.class)\n'
+  query+='Powered:       \(.powered)\n'
+  query+='Discoverable   \(.discoverable)\n'
+  query+='Timeout:       \(.discoverable_timeout)\n'
+  query+='Pairable:      \(.pairable)\n'
+  query+='Modalias:      \(.modalias)\n'
+  query+='Discovering:   \(.discovering)\n'
+  query+='UUID:          \(.uuids|join("\n               "))'
+  
+  echo "${controller}" | jq -cer ".[0]|\"${query}\"" || return 1
+}
+
 # Restarts the bluetooth service.
 # Arguments:
 #  None
@@ -180,6 +266,8 @@ show_help () {
     "" "" \
     "show status" "Show a report of the bluetooth service and devices." \
     "show logs" "Show the last logs of the bluetooth service." \
+    "" "" \
+    "show controller [<address>]" "Show the data of a controller." \
     "" "" \
     "list controllers" "List the available controllers." \
     "list devices [<status>]" "List the devices where status could be" \
@@ -216,6 +304,7 @@ loop () {
         case "${cmd[1]}" in
           "status") show_status;;
           "logs") show_logs;;
+          "controller") show_controller "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       "list")

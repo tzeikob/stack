@@ -73,7 +73,7 @@ pick_card () {
   local len=0
   len=$(count "${cards}") || return 1
 
-  if [[ ${len} == 0 ]]; then
+  if [[ ${len} -eq 0 ]]; then
     echo "No audio cards have found"
     return 2
   fi
