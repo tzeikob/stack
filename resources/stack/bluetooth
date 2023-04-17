@@ -41,7 +41,7 @@ find_devices () {
 #  A minimal prompt status line.
 prompt () {
   local status=''
-  status="$(find_controllers | jq -cer '.[]|select(.is_default == false)|.name')"
+  status="$(find_controllers | jq -cer '.[]|select(.is_default == true)|.name')"
 
   if [[ $? -ne 0 ]]; then
     status="none"
