@@ -332,6 +332,7 @@ restart_bluetooth () {
     return 2
   fi
 
+  sleep 3
   echo "Bluetooth service has been restarted"
 }
 
