@@ -315,6 +315,39 @@ show_device () {
   echo "${device}" | jq -cer ".[0]|\"${query}\"" || return 1
 }
 
+# Sets the default controller to the controller
+# with the given address.
+# Globals:
+#  REPLY
+# Arguments:
+#  address: the address of a controller
+set_controller () {
+  local address="${1}"
+
+  if [[ -z "${address}" ]]; then
+    pick_controller || return $?
+    [[ -n "${REPLY}" ]] && address="${REPLY}" || return 0
+  fi
+
+  local controller=''
+  controller="$(find_controller "${address}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to find controller ${address}"
+    return 2
+  fi
+
+  bluetoothctl select "${address}"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to set default controller"
+    return 2
+  fi
+
+  sleep 3
+  echo "Default controller set to ${address}"
+}
+
 # Restarts the bluetooth service.
 # Arguments:
 #  None
@@ -358,6 +391,8 @@ show_help () {
     "list devices [<status>]" "List the devices where status could be" \
     "" "any of paired, connected, trusted or bonded." \
     "" "" \
+    "set controller [<address>]" "Set the default controller." \
+    "" "" \
     "restart" "Restart the bluetooth service."
 }
 
@@ -397,6 +432,11 @@ loop () {
         case "${cmd[1]}" in
           "controllers") list_controllers;;
           "devices") list_devices "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "set")
+        case "${cmd[1]}" in
+          "controller") set_controller "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       "restart") restart_bluetooth;;
