@@ -51,6 +51,17 @@ find_devices () {
   echo "${devices}" | jc --bluetoothctl || return 1
 }
 
+# Returns the device with the given address.
+# Arguments:
+#  address: the address of a device
+# Outputs:
+#  A json object of a device.
+find_device () {
+  local address="${1}"
+
+  bluetoothctl info "${address}" | jc --bluetoothctl || return 1
+}
+
 # Shows a menu asking the user to select a controller,
 # where the answer is kept in the global var REPLY.
 # Globals:
@@ -70,11 +81,37 @@ pick_controller () {
   len=$(count "${controllers}") || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No audio controllers have found"
+    echo "No controllers have found"
     return 2
   fi
   
   pick_one "Select a controller:" "${controllers}" "vertical" || return $?
+}
+
+# Shows a menu asking the user to select a device,
+# where the answer is kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  None
+# Outputs:
+#  A menu of devices.
+pick_device () {
+  local query='{key: .address, value: "\(.address) [\(.name)]"}'
+  query="[.[]|${query}]"
+
+  local devices=''
+  devices="$(find_devices | jq -cer "${query}")" || return 1
+
+  local len=0
+  len=$(count "${devices}") || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No devices have found"
+    return 2
+  fi
+  
+  pick_one "Select a device:" "${devices}" "vertical" || return $?
 }
 
 # Shows a prompt status and asks user to enter the
@@ -222,7 +259,7 @@ show_controller () {
   query+='alias:         \(.alias)\n'
   query+='Class:         \(.class)\n'
   query+='Powered:       \(.powered)\n'
-  query+='Discoverable   \(.discoverable)\n'
+  query+='Discoverable:  \(.discoverable)\n'
   query+='Timeout:       \(.discoverable_timeout)\n'
   query+='Pairable:      \(.pairable)\n'
   query+='Modalias:      \(.modalias)\n'
@@ -230,6 +267,51 @@ show_controller () {
   query+='UUID:          \(.uuids|join("\n               "))'
   
   echo "${controller}" | jq -cer ".[0]|\"${query}\"" || return 1
+}
+
+# Shows the data of the device with the given
+# address.
+# Globals:
+#  REPLY
+# Arguments:
+#  address: the address of a device
+# Outputs:
+#  A list of device data.
+show_device () {
+  local address="${1}"
+
+  if [[ -z "${address}" ]]; then
+    pick_device || return $?
+    [[ -n "${REPLY}" ]] && address="${REPLY}" || return 0
+  fi
+
+  local device=''
+  device="$(find_device "${address}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to find device ${address}"
+    return 2
+  fi
+
+  local query=''
+  query+='Name:          \(.name)\n'
+  query+='Address:       \(.address)\n'
+  query+='\(.is_public|if . then "Public:        \(.)\n" else "" end)'
+  query+='Alias:         \(.alias)\n'
+  query+='Class:         \(.class)\n'
+  query+='Icon:          \(.icon)\n'
+  query+='Connected:     \(.connected)\n'
+  query+='Paired:        \(.paired)\n'
+  query+='Bonded:        \(.bonded)\n'
+  query+='Trusted:       \(.trusted)\n'
+  query+='Blocked:       \(.blocked)\n'
+  query+='Legacy:        \(.legacy_pairing)\n'
+  query+='\(.modalias|if . then "Modalias:      \(.)\n" else "" end)'
+  query+='\(.rssi|if . then "RSSI:          \(.)\n" else "" end)'
+  query+='\(.txpower|if . then "Power:         \(.)\n" else "" end)'
+  query+='UUID:          \(.uuids|join("\n               "))'
+  
+  echo "${device}" | jq -cer ".[0]|\"${query}\"" || return 1
 }
 
 # Restarts the bluetooth service.
@@ -268,6 +350,7 @@ show_help () {
     "show logs" "Show the last logs of the bluetooth service." \
     "" "" \
     "show controller [<address>]" "Show the data of a controller." \
+    "show device [<address>]" "Show the data of a device." \
     "" "" \
     "list controllers" "List the available controllers." \
     "list devices [<status>]" "List the devices where status could be" \
@@ -305,6 +388,7 @@ loop () {
           "status") show_status;;
           "logs") show_logs;;
           "controller") show_controller "${cmd[2]}";;
+          "device") show_device "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       "list")
