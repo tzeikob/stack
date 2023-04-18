@@ -153,7 +153,7 @@ show_status () {
   query+='Controller:    \(.name) [\(.alias)]\n'
   query+='Address:       \(.address)\n'
   query+='Powered:       \(.powered)\n'
-  query+='Discovering:   \(.discovering)\n'
+  query+='Scanning:      \(.discovering)\n'
   query+='Pairable:      \(.pairable)\n'
   query+='Discoverable:  \(.discoverable)'
   
@@ -407,6 +407,54 @@ set_power () {
   echo "Controller power mode set to ${mode}"
 }
 
+# Enables or disables scanning mode.
+# Arguments:
+#  mode: on or off
+set_scan () {
+  local mode="${1}"
+
+  if [[ -z "${mode}" ]]; then
+    echo "Missing scanning mode value"
+    return 2
+  elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
+    echo "Invalid scanning mode value"
+    return 2
+  fi
+
+  # Collect any running scanning process
+  local query='.command|test("^bluetoothctl scan on")'
+  query=".[]|select(${query})|.pid"
+
+  local pids=''
+  pids="$(ps aux | jc --ps | jq -cr "${query}")" || return 1
+
+  if [[ "${mode}" == "on" ]] && [[ -n "${pids}" ]]; then
+    echo "Scanning is already on"
+    return 2
+  fi
+
+  if [[ "${mode}" == "off" ]] && [[ -z "${pids}" ]]; then
+    echo "Scanning mode is already off"
+    return 2
+  fi
+
+  if [[ "${mode}" == "on" ]]; then
+    bluetoothctl scan on &> /dev/null &
+  elif [[ "${mode}" == "off" ]]; then
+    local pid=''
+    while read -r pid; do
+      kill "${pid}"
+    done <<< "${pids}"
+  fi
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to set scanning mode to ${mode}"
+    return 2
+  fi
+
+  echo "Scanning mode set to ${mode}"
+}
+
 # Sets the default controller discoverable mode to on/off.
 # Arguments:
 #  mode: on or off
@@ -592,7 +640,8 @@ show_help () {
     "" "any of paired, connected, trusted or bonded." \
     "" "" \
     "set controller [<address>]" "Set the default controller." \
-    "set power <on|off>" "Set the default controller power to on/off." \
+    "set power <on|off>" "Set the default controller power to on or off." \
+    "set scan <on|off>" "Set scanning mode to on or off." \
     "set discoverable <on|off>" "Set the default controller to be discoverable." \
     "set pairable <on|off>" "Set the default controller to be pairable." \
     "" "" \
@@ -645,6 +694,7 @@ loop () {
         case "${cmd[1]}" in
           "controller") set_controller "${cmd[2]}";;
           "power") set_power "${cmd[2]}";;
+          "scan") set_scan "${cmd[2]}";;
           "discoverable") set_discoverable "${cmd[2]}";;
           "pairable") set_pairable "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
