@@ -157,7 +157,11 @@ show_status () {
   query+='Pairable:      \(.pairable)\n'
   query+='Discoverable:  \(.discoverable)'
   
-  find_controller | jq -cer ".[0]|\"${query}\"" || return 1
+  find_controller | jq -cer ".[0]|\"${query}\""
+  
+  if [[ $? -ne 0 ]]; then
+    echo "Controller:    none"
+  fi
 
   local query=''
   query+='if .|length > 0 then .[]|.address else "" end'
