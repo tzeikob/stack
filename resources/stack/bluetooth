@@ -397,14 +397,19 @@ set_power () {
     return 2
   fi
 
-  bluetoothctl power "${mode}" &> /dev/null
-
-  if [[ $? -ne 0 ]]; then
-    echo "Failed to set controller power mode to ${mode}"
+  if ! find_controller &> /dev/null; then
+    echo "Unable to find default controller"
     return 2
   fi
 
-  echo "Controller power mode set to ${mode}"
+  bluetoothctl power "${mode}" &> /dev/null
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to set power mode to ${mode}"
+    return 2
+  fi
+
+  echo "Power mode set to ${mode}"
 }
 
 # Enables or disables scanning mode.
@@ -418,6 +423,11 @@ set_scan () {
     return 2
   elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
     echo "Invalid scanning mode value"
+    return 2
+  fi
+
+  if ! find_controller &> /dev/null; then
+    echo "Unable to find default controller"
     return 2
   fi
 
@@ -469,14 +479,19 @@ set_discoverable () {
     return 2
   fi
 
-  bluetoothctl discoverable "${mode}" &> /dev/null
-
-  if [[ $? -ne 0 ]]; then
-    echo "Failed to set controller discoverable mode to ${mode}"
+  if ! find_controller &> /dev/null; then
+    echo "Unable to find default controller"
     return 2
   fi
 
-  echo "Controller discoverable mode set to ${mode}"
+  bluetoothctl discoverable "${mode}" &> /dev/null
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to set discoverable mode to ${mode}"
+    return 2
+  fi
+
+  echo "Discoverable mode set to ${mode}"
 }
 
 # Sets the default controller pairable mode to on/off.
@@ -493,14 +508,19 @@ set_pairable () {
     return 2
   fi
 
-  bluetoothctl pairable "${mode}" &> /dev/null
-
-  if [[ $? -ne 0 ]]; then
-    echo "Failed to set controller pairable mode to ${mode}"
+  if ! find_controller &> /dev/null; then
+    echo "Unable to find default controller"
     return 2
   fi
 
-  echo "Controller pairable mode set to ${mode}"
+  bluetoothctl pairable "${mode}" &> /dev/null
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to set pairable mode to ${mode}"
+    return 2
+  fi
+
+  echo "Pairable mode set to ${mode}"
 }
 
 # Connects to the device with the given address.
