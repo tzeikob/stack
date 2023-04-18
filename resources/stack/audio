@@ -64,7 +64,8 @@ find_card () {
 pick_card () {
   local prompt="${1}"
 
-  local query='{key: .index, value: "\(.index):\(.properties."device.nick")"}'
+  local query='{key: .index, value: "\(.index):\(.properties|'
+  query+='if ."device.nick" then ."device.nick" else ."device.alias" end)"}'
   query="[.[]|${query}]"
 
   local cards=''
@@ -126,7 +127,8 @@ pick_module () {
   local prompt="${1}"
   local type="${2}"
 
-  local query='{key: .index, value: "\(.name) [\(.properties."device.nick")]"}'
+  local query='{key: .index, value: "\(.name)'
+  query+=' [\(.properties|if ."device.nick" then ."device.nick" else ."device.alias" end)]"}'
   query="[.[]|=.|map((.ports[] + {index, properties}))|.[]|${query}]"
 
   local modules=''
@@ -157,7 +159,10 @@ prompt () {
   local status='off'
 
   if [[ "${sink}" != "auto_null" ]]; then
-    local query=".[]|select(.name == \"${sink}\")|.properties.\"alsa.card_name\""
+    local query=''
+    query+=".[]|select(.name == \"${sink}\")|.properties"
+    query+=" |if .\"device.nick\" then .\"device.nick\""
+    query+="  else .\"device.alias\" end"
 
     status="$(pactl --format=json list sinks | jq -cer "${query}" | tr ' ' '-' )"
     
@@ -198,8 +203,10 @@ show_status () {
     }' || return 1
 
   local query=''
-  query='.[]|"\(.properties."device.nick")"'
-  query="[${query}]|join(\", \")"
+  query+='.[]|.properties'
+  query+='|if ."device.nick" then ."device.nick"'
+  query+=' else ."device.alias" end'
+  query="[${query}]|join(\"\n           \")"
 
   echo -n "Cards:     "
   find_cards | jq -cer "${query}" || return 1
@@ -208,7 +215,7 @@ show_status () {
   sink="$(pactl get-default-sink)" || return 1
 
   local query='\n'
-  query+='Output:    \(.properties."alsa.card_name")\n'
+  query+='Output:    \(.properties|if ."device.nick" then ."device.nick" else ."device.alias" end)\n'
   query+='Port:      \(.active_port)\n'
   query+='Volume:    \(.volume|keys[0] as $k|.[$k].db|gsub("\\s+";"")) \(if .mute then "mute" else "" end)'
 
@@ -220,7 +227,7 @@ show_status () {
   source="$(pactl get-default-source)" || return 1
 
   local query='\n'
-  query+='Input:     \(.properties."alsa.card_name")\n'
+  query+='Input:     \(.properties|if ."device.nick" then ."device.nick" else ."device.alias" end)\n'
   query+='Port:      \(.active_port)\n'
   query+='Volume:    \(.volume|keys[0] as $k|.[$k].db|gsub("\\s+";"")) \(if .mute then "mute" else "" end)'
 
@@ -264,12 +271,12 @@ show_card () {
 
   local query='("'
   query+='Index:     \(.index)\n'
-  query+='Model:     \(.properties."device.nick")\n'
-  query+='Product:   \(.properties."device.product.name")\n'
-  query+='Vendor:    \(.properties."device.vendor.name")\n'
+  query+='Model:     \(.properties|if ."device.nick" then ."device.nick" else ."device.alias" end)\n'
+  query+='\(.properties."device.product.name"|if . then "Product:   \(.)\n" else "" end)'
+  query+='\(.properties."device.vendor.name"|if . then "Vendor:    \(.)\n" else "" end)'
   query+='Driver:    \(.driver)\n'
   query+='Bus:       \(.properties."device.bus" | ascii_upcase)\n'
-  query+='ACP:       \(.properties."api.alsa.use-acp")\n'
+  query+='\(.properties."api.alsa.use-acp"|if . then "ACP:       \(.)\n" else "" end)'
   query+='Profile:   \(.active_profile)")'
 
   echo "${card}" | jq -cer "${query}" || return 1
@@ -334,8 +341,8 @@ list_cards () {
 
   local query=''
   query+='Index:  \(.index)\n'
-  query+='Model:  \(.properties."device.nick")\n'
-  query+='Vendor: \(.properties."device.vendor.name")'
+  query+='Model:  \(.properties|if ."device.nick" then ."device.nick" else ."device.alias" end)'
+  query+='\(.properties."device.vendor.name"|if . then "\nVendor: \(.)" else "" end)'
 
   query="[.[]|\"${query}\"]|join(\"\n\n\")"
 
@@ -385,7 +392,7 @@ list_ports () {
   query+=' |.[]|"'
   query+='Index:   \(.index)\n'
   query+='Name:    \(.name)\n'
-  query+='Card:    \(.properties."device.nick")\n'
+  query+='Card:    \(.properties|if ."device.nick" then ."device.nick" else ."device.alias" end)\n'
   query+='Volume:  \(.volume) \(if .mute then "mute" else "" end)\n'
   query+='State:   \(.state|ascii_downcase)'
   query+='"'
@@ -419,7 +426,7 @@ list_playbacks () {
   len="$(count "${sink_inputs}")" || return 1
 
   if [[ ${len} == 0 ]]; then
-    echo "No playbacks have found for ${name:-\b}"
+    echo "No playbacks have found"
     return 0
   fi
 
