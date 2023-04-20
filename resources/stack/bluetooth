@@ -396,7 +396,7 @@ set_controller () {
     return 2
   fi
 
-  sleep 3
+  sleep 2
   echo "Default controller set to ${address}"
 }
 
@@ -467,7 +467,7 @@ set_scan () {
     bluetoothctl scan on &> /dev/null &
   fi
 
-  sleep 3
+  sleep 2
 
   if [[ "${mode}" == "on" ]] && ! is_scanning_on ; then
     echo "Failed to set scanning mode to on"
@@ -648,7 +648,7 @@ restart_bluetooth () {
     return 2
   fi
 
-  sleep 3
+  sleep 2
   echo "Bluetooth service has been restarted"
 }
 
