@@ -559,6 +559,8 @@ connect_device () {
     return 2
   fi
 
+  bluetoothctl pair "${address}" &> /dev/null &&
+  bluetoothctl trust "${address}" &> /dev/null &&
   bluetoothctl connect "${address}" &> /dev/null
 
   if [[ $? -ne 0 ]]; then
