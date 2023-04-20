@@ -316,8 +316,8 @@ show_controller () {
   query+='Discoverable:  \(.discoverable)\n'
   query+='Timeout:       \(.discoverable_timeout)\n'
   query+='Modalias:      \(.modalias)\n'
-  query+='Class:         \(.class)\n'
-  query+='UUID:          \(.uuids|join("\n               "))'
+  query+='Class:         \(.class)'
+  query+='\(.uuids|if . then "\nUUID:          \(.|join("\n               "))" else "" end)'
   
   echo "${controller}" | jq -cer ".[0]|\"${query}\"" || return 1
 }
@@ -361,8 +361,8 @@ show_device () {
   query+='Blocked:    \(.blocked)\n'
   query+='Legacy:     \(.legacy_pairing)\n'
   query+='\(.modalias|if . then "Modalias:   \(.)\n" else "" end)'
-  query+='Class:      \(.class)\n'
-  query+='UUID:       \(.uuids|join("\n            "))'
+  query+='Class:      \(.class)'
+  query+='\(.uuids|if . then "\nUUID:       \(.|join("\n            "))" else "" end)'
   
   echo "${device}" | jq -cer ".[0]|\"${query}\"" || return 1
 }
