@@ -62,6 +62,23 @@ find_device () {
   bluetoothctl info "${address}" | jc --bluetoothctl || return 1
 }
 
+# Checks if the scanning mode of default controller
+# is set to on.
+# Argmuments:
+#  None
+# Returns:
+#  0 if scanning is on otherwise 1.
+is_scanning_on () {
+  local mode=''
+  mode="$(find_controller | jq -cer '.[0]|.discovering')" || return 1
+
+  if [[ "${mode}" == "yes" ]]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
 # Shows a menu asking the user to select a controller,
 # where the answer is kept in the global var REPLY.
 # Globals:
@@ -412,7 +429,7 @@ set_power () {
   echo "Power mode set to ${mode}"
 }
 
-# Enables or disables scanning mode.
+# Sets scanning mode to on or off.
 # Arguments:
 #  mode: on or off
 set_scan () {
@@ -431,34 +448,32 @@ set_scan () {
     return 2
   fi
 
-  # Collect any running scanning process
+  # Collect any running scanning processes
   local query='.command|test("^bluetoothctl scan on")'
   query=".[]|select(${query})|.pid"
 
   local pids=''
   pids="$(ps aux | jc --ps | jq -cr "${query}")" || return 1
 
-  if [[ "${mode}" == "on" ]] && [[ -n "${pids}" ]]; then
-    echo "Scanning is already on"
-    return 2
-  fi
-
-  if [[ "${mode}" == "off" ]] && [[ -z "${pids}" ]]; then
-    echo "Scanning mode is already off"
-    return 2
-  fi
-
-  if [[ "${mode}" == "on" ]]; then
-    bluetoothctl scan on &> /dev/null &
-  elif [[ "${mode}" == "off" ]]; then
+  # Clean any scanning processes before action
+  if [[ -n "${pids}" ]]; then
     local pid=''
     while read -r pid; do
       kill "${pid}"
     done <<< "${pids}"
   fi
 
-  if [[ $? -ne 0 ]]; then
-    echo "Failed to set scanning mode to ${mode}"
+  if [[ "${mode}" == "on" ]]; then
+    bluetoothctl scan on &> /dev/null &
+  fi
+
+  sleep 3
+
+  if [[ "${mode}" == "on" ]] && ! is_scanning_on ; then
+    echo "Failed to set scanning mode to on"
+    return 2
+  elif [[ "${mode}" == "off" ]] && is_scanning_on ; then
+    echo "Failed to set scanning mode to off"
     return 2
   fi
 
