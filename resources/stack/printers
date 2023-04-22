@@ -1,0 +1,181 @@
+#!/bin/bash
+
+set -o pipefail
+source /opt/stack/utils
+
+# Returns the list of all printing destinations.
+# Arguments:
+#  None
+# Outputs:
+#  A json array of print destinations.
+find_destinations () {
+  local destinations=''
+  destinations="$(lpstat -v 2>&1)"
+
+  local error_code=$?
+
+  if [[ "${destinations}" =~ "No destinations added" ]]; then
+    echo '[]'
+    return 0
+  elif [[ ${error_code} -ne 0 ]]; then
+    return 1
+  fi
+  
+  destinations="$(echo "${destinations}" | awk '/device for.*/{
+    match($0, /device for (.*): (.*):(.*)/, a)
+
+    schema="\"name\": \"%s\","
+    schema=schema"\"protocol\": \"%s\","
+    schema=schema"\"uri\": \"%s\""
+    schema="{"schema"},"
+
+    printf schema, a[1], a[2], a[2]":"a[3]
+  }')"
+
+  # Remove the extra comma after the last element
+  if [[ -n "${destinations}" ]]; then
+    destinations="${destinations::-1}"
+  fi
+
+  echo "[${destinations}]"
+}
+
+# Shows a prompt status and asks user to enter the
+# next command, which is kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  None
+# Outputs:
+#  A minimal prompt status line.
+prompt () {
+  local status='ready'
+
+  read -rep "[printers:${status}] " REPLY
+}
+
+# Shows the list of all printing destinations.
+# Arguments:
+#  None
+# Outputs;
+#  A list of print destinations.
+list_destinations () {
+  local destinations=''
+  destinations="$(find_destinations)"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to read print destinations"
+    return 2
+  fi
+
+  local len=0
+  len="$(count "${destinations}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No print destinations have found"
+    return 0
+  fi
+
+  local query=''
+  query+='Name:  \(.name)\n'
+  query+='URI:   \(.uri)'
+  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+
+  echo "${destinations}" | jq -cer "${query}" || return 1
+}
+
+# Shows a short status of cups service and printers.
+# Arguments:
+#  None
+# Outputs:
+#  A list of cups and printer data.
+show_status () {
+  systemctl status --lines 0 --no-pager cups.service | awk '{
+    if ($0 ~ / *Active/) {
+      l = "Service"
+      v = $2" "$3
+    } else l = ""
+
+    if (l) printf "%-9s %s\n",l":",v
+  }' || return 1
+
+  local destinations=''
+  destinations="$(find_destinations)" || return 1
+
+  local len=0
+  len="$(count "${destinations}")" || return 1
+
+  if [[ ${len} -gt 0 ]]; then
+    echo ""
+    local query=''
+    query+='Name:     \(.name)\n'
+    query+='URI:      \(.uri)'
+    query="[.[]|\"${query}\"]|join(\"\n\n\")"
+
+    echo "${destinations}" | jq -cer "${query}" || return 1
+  fi
+}
+
+# Shows the help message.
+# Arguments:
+#  None
+# Outputs:
+#  A long help message.
+show_help () {
+  echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
+
+  echo -e "\nCOMMANDS"
+  printf " %-35s %s\n" \
+    "help" "Show this help message." \
+    "" "" \
+    "show status" "Show a report of cups service and printers." \
+    "" "" \
+    "list destinations" "List all the print destinations."
+}
+
+loop () {
+  clear
+
+  while true; do
+    prompt && history -s "${REPLY}"
+
+    set -f
+    set_separator "line"
+    local cmd=($(xargs -n1 <<< "${REPLY}"))
+    restore_separator && set +f
+
+    if [[ "${cmd[0]}" == "help" ]]; then
+      show_help
+      continue
+    elif [[ "${cmd[0]}" == "clear" ]]; then
+      clear
+      continue
+    elif [[ "${cmd[0]}" == "quit" ]]; then
+      break
+    elif [[ -z "${cmd[0]}" ]]; then
+      continue
+    fi
+
+    case "${cmd[0]}" in
+      "show")
+        case "${cmd[1]}" in
+          "status") show_status;;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "list")
+        case "${cmd[1]}" in
+          "destinations") list_destinations;;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      *) echo "Invalid or unknown command";; 
+    esac
+
+    if [[ $? -eq 1 ]]; then
+      echo "An unknown error has occurred"
+    fi
+  done
+
+  clear
+}
+
+loop

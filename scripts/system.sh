@@ -185,7 +185,7 @@ install_packages () {
   pacman -S --noconfirm \
     base-devel pacman-contrib pkgstats grub mtools dosfstools gdisk \
     parted curl wget udisks2 udiskie gvfs gvfs-smb bash-completion \
-    man-db man-pages texinfo cups bluez bluez-utils unzip terminus-font \
+    man-db man-pages texinfo cups cups-pdf cups-filters usbutils bluez bluez-utils unzip terminus-font \
     vim nano git tree arch-audit atool zip xz unace p7zip gzip lzop feh \
     bzip2 unrar dialog inetutils dnsutils openssh nfs-utils openbsd-netcat ipset \
     neofetch age imagemagick gpick fuse2 rclone smartmontools glib2 jq jc \
@@ -307,6 +307,7 @@ install_utilities () {
   cp ~/stack/resources/stack/displays "$STACK_HOME"
   cp ~/stack/resources/stack/cloud "$STACK_HOME"
   cp ~/stack/resources/stack/bluetooth "$STACK_HOME"
+  cp ~/stack/resources/stack/printers "$STACK_HOME"
 
   ln -sf "$STACK_HOME/clock" /usr/local/bin/clock
   ln -sf "$STACK_HOME/trash" /usr/local/bin/trash
@@ -319,6 +320,7 @@ install_utilities () {
   ln -sf "$STACK_HOME/displays" /usr/local/bin/displays
   ln -sf "$STACK_HOME/cloud" /usr/local/bin/cloud
   ln -sf "$STACK_HOME/bluetooth" /usr/local/bin/bluetooth
+  ln -sf "$STACK_HOME/printers" /usr/local/bin/printers
 
   echo 'displays restore layout || notify-send "Failed to load displays layout"' >> ~/.xinitrc
   echo 'displays restore colors || notify-send "Failed to load some color profiles"' >> ~/.xinitrc
