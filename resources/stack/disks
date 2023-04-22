@@ -481,7 +481,7 @@ list_shares () {
   local password="${REPLY}"
 
   local folders=''
-  folders="$(find_shared_folders "${host}" "${username}" "${workgroup}" "${password}" &> /dev/null)"
+  folders="$(find_shared_folders "${host}" "${username}" "${workgroup}" "${password}")"
 
   if [[ $? -ne 0 ]]; then
     echo "Unable to retrieve shared folders"
