@@ -3,11 +3,12 @@
 set -o pipefail
 source /opt/stack/utils
 
-# Returns the list of all printing destinations.
+# Returns the list of all printing destinations,
+# which have been installed into the system.
 # Arguments:
 #  None
 # Outputs:
-#  A json array of print destinations.
+#  A json array of print destination objects.
 find_destinations () {
   local destinations=''
   destinations="$(lpstat -v 2>&1)"
@@ -54,12 +55,12 @@ prompt () {
   read -rep "[printers:${status}] " REPLY
 }
 
-# Shows the list of all printing destinations.
+# Shows the list of all printers.
 # Arguments:
 #  None
-# Outputs;
-#  A list of print destinations.
-list_destinations () {
+# Outputs:
+#  A list of printers.
+list_printers () {
   local destinations=''
   destinations="$(find_destinations)"
 
@@ -72,7 +73,7 @@ list_destinations () {
   len="$(count "${destinations}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No print destinations have found"
+    echo "No printers have found"
     return 0
   fi
 
@@ -130,7 +131,7 @@ show_help () {
     "" "" \
     "show status" "Show a report of cups service and printers." \
     "" "" \
-    "list destinations" "List all the print destinations."
+    "list printers" "List all printers."
 }
 
 loop () {
@@ -164,7 +165,7 @@ loop () {
         esac;;
       "list")
         case "${cmd[1]}" in
-          "destinations") list_destinations;;
+          "printers") list_printers;;
           *) echo "Invalid or unknown command";;
         esac;;
       *) echo "Invalid or unknown command";; 
