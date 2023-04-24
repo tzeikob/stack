@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -o pipefail
+
 CONFIG_HOME="${HOME}/.config/stack"
 
 RESOURCES_HOME="${HOME}/.local/share"
@@ -60,6 +62,47 @@ trim () {
   [[ -p /dev/stdin ]] && input="$(cat -)" || input="${@}"
 
   echo "${input}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'
+}
+
+# Returns the list of any detected hosts in the
+# local network.
+# Arguments:
+#  None
+# Outputs:
+#  A json array list of host objects.
+find_hosts () {
+  local route=''
+  route="$(ip route get 1.1.1.1)" || return 1
+
+  local cidr=''
+  cidr="$(echo "${route}" | awk '/via/{print $3}' |
+    head -n 1 | sed -r 's/(\.[0-9]{1,3}$)/.0\/24/')" || return 1
+
+  local map=''
+  map="$(nmap -n -sn "${cidr}" -oG -)" || return 1
+
+  local ips=''
+  ips="$(echo "${map}" | awk '/Up$/{print $2}')" || return 1
+
+  local ip=''
+  local hosts=''
+
+  while read -r ip; do
+    local host_map=''
+    host_map="$(nmap --host-timeout 5 "${ip}" -oG -)" || continue
+
+    hosts+="$(echo "${host_map}" | awk '/Host.*Up/{
+      gsub(/(\(|\))/,"",$3);
+      print "{\"ip\":\""$2"\",\"name\":\""$3"\"},"
+    }')"
+  done <<< "${ips}"
+
+  # Remove the extra comma after the last element
+  if [[ -n "${hosts}" ]]; then
+    hosts="${hosts::-1}"
+  fi
+
+  echo "[${hosts}]"
 }
 
 # Asks the user to enter a value, which is validated

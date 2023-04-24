@@ -41,6 +41,97 @@ find_destinations () {
   echo "[${destinations}]"
 }
 
+# Discovers any direct or network print destinations.
+# Arguments:
+#  None
+# Outputs:
+#  A json array of print destination objects.
+discover_destinations () {
+  local destinations=''
+
+  # Search in local network for snmp destinations
+  local hosts=''
+  hosts="$(find_hosts | jq -cer '.[]|.ip')" || return 1
+
+  if [[ -n "${hosts}" ]]; then
+    local host=''
+    while read -r host; do
+      destinations+="$(/usr/lib/cups/backend/snmp "${host}" 2>&1 |
+        awk '/^network\s.*:\/\//{
+          match($0, /^network\s.*:\/\/.*\s"(.*)"\s".*"\s".*".*/, a)
+
+          schema="\"type\": \"%s\","
+          schema=schema"\"uri\": \"%s\","
+          schema=schema"\"name\": \"%s\""
+          schema="{"schema"},"
+
+          printf schema, $1, $2, a[1]
+        }')" || continue
+    done <<< "${hosts}"
+  fi
+
+  # Search for direct destinations
+  destinations+="$(lpinfo -v 2>&1 | awk '/^(direct|network)\s.*:\/\//{
+    match($0, /^(direct|network)\s.*:\/\/.*\s"(.*)"\s".*"\s".*".*/, a)
+
+    schema="\"type\": \"%s\","
+    schema=schema"\"uri\": \"%s\","
+    schema=schema"\"name\": \"%s\""
+    schema="{"schema"},"
+
+    printf schema, $1, $2, a[1]
+  }')" || return 1
+
+  # Remove the extra comma after the last element
+  if [[ -n "${destinations}" ]]; then
+    destinations="${destinations::-1}"
+  fi
+
+  echo "[${destinations}]"
+}
+
+# Shows a menu asking the user to select one driver,
+# where the answer is kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  None
+# Outputs:
+#  A menu of printer drivers.
+pick_driver () {
+  local drivers=''
+  drivers="$(lpinfo -m 2>&1 | awk '{
+    desc=""
+    for(i=2; i<=NF; i++) {
+      if (i>2) desc=desc" " 
+      desc=desc$i
+    }
+
+    schema="\"key\": \"%s\","
+    schema=schema"\"value\": \"%s\""
+    schema="{"schema"},"
+
+    printf schema, $1, desc
+  }')" || return 1
+
+  # Remove the extra comma after the last element
+  if [[ -n "${drivers}" ]]; then
+    drivers="${drivers::-1}"
+  fi
+
+  drivers="[${drivers}]"
+  
+  local len=0
+  len="$(count "${drivers}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No drivers have found"
+    return 2
+  fi
+
+  pick_one "Select a driver:" "${drivers}" "vertical" || return $?
+}
+
 # Shows a prompt status and asks user to enter the
 # next command, which is kept in the global var REPLY.
 # Globals:
@@ -117,6 +208,59 @@ show_status () {
   fi
 }
 
+# Adds the printer with the given uri.
+# Globals:
+#  REPLY
+# Arguments:
+#  uri: the uri of a print destination
+add_printer () {
+  local uri="${1}"
+
+  if [[ -z "${uri}" ]]; then
+    echo "Discovering print destinations..."
+
+    local query=''
+    query+='{key: .uri, value: "\(.uri)\(.name|if (. and . != "") then " [\(.)]" else "" end)"}'
+    query="[.[]|${query}]"
+
+    local destinations=''
+    destinations="$(discover_destinations | jq -cer "${query}")" || return 1
+
+    local len=0
+    len="$(count "${destinations}")" || return 1
+
+    if [[ ${len} -eq 0 ]]; then
+      echo "No printers have been discovered"
+      return 0
+    fi
+
+    pick_one "Select a printer:" "${destinations}" "vertical" || return $?
+    [[ -n "${REPLY}" ]] && uri="${REPLY}" || return 0
+  fi
+
+  ask "Enter a name:" ".+" || return $?
+  local name="${REPLY}"
+
+  ask "Enter a description:" ".+" || return $?
+  local desc="${REPLY}"
+
+  ask "Enter a location name:" ".+" || return $?
+  local loc="${REPLY}"
+
+  local driver=''
+  pick_driver || return $?
+  [[ -n "${REPLY}" ]] && driver="${REPLY}" || return 0
+
+  lpadmin -p "${name}" -E -D "${desc}" -L "${loc}" -v "${uri}" -m "${driver}" &> /dev/null
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to add printer ${uri}"
+    return 2
+  fi
+
+  echo "Printer ${uri} has been added"
+}
+
 # Shows the help message.
 # Arguments:
 #  None
@@ -126,12 +270,13 @@ show_help () {
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
   echo -e "\nCOMMANDS"
-  printf " %-35s %s\n" \
+  printf " %-22s %s\n" \
     "help" "Show this help message." \
     "" "" \
     "show status" "Show a report of cups service and printers." \
     "" "" \
-    "list printers" "List all printers."
+    "list printers" "List all printers." \
+    "add printer [uri]" "Add a new printer."
 }
 
 loop () {
@@ -166,6 +311,11 @@ loop () {
       "list")
         case "${cmd[1]}" in
           "printers") list_printers;;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "add")
+        case "${cmd[1]}" in
+          "printer") add_printer "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       *) echo "Invalid or unknown command";; 
