@@ -302,7 +302,9 @@ add_printer () {
   pick_driver || return $?
   [[ -n "${REPLY}" ]] && driver="${REPLY}" || return 0
 
-  lpadmin -p "${name}" -E -D "${desc}" -L "${loc}" -v "${uri}" -m "${driver}" &> /dev/null
+  lpadmin -p "${name}" -E \
+    -o printer-is-shared=false \
+    -D "${desc}" -L "${loc}" -v "${uri}" -m "${driver}" &> /dev/null
 
   if [[ $? -ne 0 ]]; then
     echo "Failed to add printer ${uri}"
