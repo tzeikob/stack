@@ -41,6 +41,24 @@ find_destinations () {
   echo "[${destinations}]"
 }
 
+# Checks if a destination with the given name exists.
+# Arguments:
+#  name: the name of a destination
+# Returns:
+#  0 if exists otherwise 1.
+exists_destination () {
+  local name="${1}"
+
+  local destination=''
+  destination="$(find_destinations | jq -cer ".[]|select(.name == \"${name}\")")"
+
+  if [[ -n "${destination}" ]]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
 # Discovers any direct or network print destinations.
 # Arguments:
 #  None
@@ -70,7 +88,7 @@ discover_destinations () {
     done <<< "${hosts}"
   fi
 
-  # Search for direct destinations
+  # Search for extra direct and network destinations
   destinations+="$(lpinfo -v 2>&1 | awk '/^(direct|network)\s.*:\/\//{
     match($0, /^(direct|network)\s.*:\/\/.*\s"(.*)"\s".*"\s".*".*/, a)
 
@@ -212,9 +230,19 @@ show_status () {
 # Globals:
 #  REPLY
 # Arguments:
-#  uri: the uri of a print destination
+#  name: the name of print destination
+#  uri:  the uri of a print destination
 add_printer () {
-  local uri="${1}"
+  local name="${1}"
+  local uri="${2}"
+
+  if [[ -z "${name}" ]]; then
+    echo "Missing the name value"
+    return 2
+  elif exists_destination "${name}"; then
+    echo "Printer with name ${name} already exists"
+    return 2
+  fi
 
   if [[ -z "${uri}" ]]; then
     echo "Discovering print destinations..."
@@ -237,9 +265,6 @@ add_printer () {
     pick_one "Select a printer:" "${destinations}" "vertical" || return $?
     [[ -n "${REPLY}" ]] && uri="${REPLY}" || return 0
   fi
-
-  ask "Enter a name:" ".+" || return $?
-  local name="${REPLY}"
 
   ask "Enter a description:" ".+" || return $?
   local desc="${REPLY}"
@@ -276,7 +301,7 @@ show_help () {
     "show status" "Show a report of cups service and printers." \
     "" "" \
     "list printers" "List all printers." \
-    "add printer [uri]" "Add a new printer."
+    "add printer <name> [<uri>]" "Add a new printer."
 }
 
 loop () {
@@ -315,7 +340,7 @@ loop () {
         esac;;
       "add")
         case "${cmd[1]}" in
-          "printer") add_printer "${cmd[2]}";;
+          "printer") add_printer "${cmd[2]}" "${cmd[3]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       *) echo "Invalid or unknown command";; 
