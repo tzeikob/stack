@@ -108,6 +108,32 @@ discover_destinations () {
   echo "[${destinations}]"
 }
 
+# Shows a menu asking the user to select one printer,
+# where the answer is kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  None
+# Outputs:
+#  A menu of printers.
+pick_printer () {
+  local query='{key: .name, value: "\(.name) [\(.uri)]"}'
+  query="[.[]|${query}]"
+
+  local destinations=''
+  destinations="$(find_destinations | jq -cer "${query}")" || return 1
+
+  local len=0
+  len="$(count "${destinations}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No printer have found"
+    return 2
+  fi
+
+  pick_one "Select a printer:" "${destinations}" "vertical" || return $?
+}
+
 # Shows a menu asking the user to select one driver,
 # where the answer is kept in the global var REPLY.
 # Globals:
@@ -286,6 +312,35 @@ add_printer () {
   echo "Printer ${uri} has been added"
 }
 
+# Removes the printer destination with the
+# given name.
+# Globals:
+#  REPLY
+# Arguments:
+#  name: the name of a destination.
+remove_printer () {
+  local name="${1}"
+
+  if [[ -z "${name}" ]]; then
+    pick_printer || return $?
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+  fi
+
+  if ! exists_destination "${name}"; then
+    echo "Cannot find printer ${name}"
+    return 2
+  fi
+
+  lpadmin -x "${name}" &> /dev/null
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to remove printer ${name}"
+    return 2
+  fi
+
+  echo "Printer ${name} has been removed"
+}
+
 # Shows the help message.
 # Arguments:
 #  None
@@ -295,13 +350,15 @@ show_help () {
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
   echo -e "\nCOMMANDS"
-  printf " %-22s %s\n" \
+  printf " %-28s %s\n" \
     "help" "Show this help message." \
     "" "" \
     "show status" "Show a report of cups service and printers." \
     "" "" \
     "list printers" "List all printers." \
-    "add printer <name> [<uri>]" "Add a new printer."
+    "" "" \
+    "add printer <name> [<uri>]" "Add a new printer." \
+    "remove printer [<name>]" "Remove a printer."
 }
 
 loop () {
@@ -341,6 +398,11 @@ loop () {
       "add")
         case "${cmd[1]}" in
           "printer") add_printer "${cmd[2]}" "${cmd[3]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "remove")
+        case "${cmd[1]}" in
+          "printer") remove_printer "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       *) echo "Invalid or unknown command";; 
