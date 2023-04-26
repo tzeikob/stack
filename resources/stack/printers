@@ -332,6 +332,15 @@ show_status () {
   fi
 }
 
+# Show the current print queue status.
+# Arguments:
+#  None
+# Outputs:
+#  A list of print queue data.
+show_queue () {
+  lpq || return 1
+}
+
 # Shows the list of all printers.
 # Arguments:
 #  None
@@ -588,6 +597,7 @@ show_help () {
     "help" "Show this help message." \
     "" "" \
     "show status" "Show a report of cups service and printers." \
+    "show queue" "Show the current print queue status." \
     "" "" \
     "list printers" "List all printers." \
     "add printer <name> [<uri>]" "Add a new printer." \
@@ -629,6 +639,7 @@ loop () {
       "show")
         case "${cmd[1]}" in
           "status") show_status;;
+          "queue") show_queue;;
           *) echo "Invalid or unknown command";;
         esac;;
       "list")
