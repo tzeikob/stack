@@ -236,7 +236,7 @@ pick_driver () {
 # Outputs:
 #  A menu of print jobs.
 pick_job () {
-  local query='{key: .id, value: "\(.file) [\(.id)]"}'
+  local query='{key: .id, value: "\(.id) [\(.file)]"}'
   query="[.[]|${query}]"
 
   local jobs=''
@@ -401,7 +401,7 @@ show_status () {
   if [[ ${len} -gt 0 ]]; then
     echo ""
     local query=''
-    query+='Name:     \(.name)\n'
+    query+='Printer:  \(.name)\n'
     query+='URI:      \(.uri)'
     query="[.[]|\"${query}\"]|join(\"\n\n\")"
 
@@ -652,7 +652,7 @@ set_option () {
   echo "Printer ${key} set to ${value}"
 }
 
-# Show all queued print jobs.
+# Shows the list of all queued print jobs.
 # Arguments:
 #  None
 # Outputs:
@@ -705,11 +705,11 @@ cancel_job () {
   cancel -x "${id}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to cancel print jobs ${id}"
+    echo "Failed to cancel print job ${id}"
     return 2
   fi
 
-  echo "Print jobs ${id} has been canceled"
+  echo "Print job ${id} has been canceled"
 }
 
 # Shows the help message.
