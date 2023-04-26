@@ -392,6 +392,8 @@ show_status () {
     if (l) printf "%-9s %s\n",l":",v
   }' || return 1
 
+  find_jobs | jq -cer "\"Jobs:     \(length)\"" || return 1
+
   local destinations=''
   destinations="$(find_destinations)" || return 1
 
