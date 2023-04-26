@@ -49,8 +49,10 @@ find_destinations () {
 exists_destination () {
   local name="${1}"
 
+  local query=".[]|select(.name == \"${name}\")"
+
   local destination=''
-  destination="$(find_destinations | jq -cer ".[]|select(.name == \"${name}\")")"
+  destination="$(find_destinations | jq -cer "${query}")" || return 1
 
   if [[ -n "${destination}" ]]; then
     return 0
@@ -106,6 +108,55 @@ discover_destinations () {
   fi
 
   echo "[${destinations}]"
+}
+
+# Returns all the active queued print jobs.
+# Arguments:
+#  None
+# Outputs:
+#  A json array list of print job objects.
+find_jobs () {
+  local jobs=''
+  jobs="$(lpq -a | awk '{
+    if (NR==1) next
+
+    match($0, /.*\s+([0-9]{1,3})\s+(.*)\s+([0-9]+)\sbytes$/, a)
+
+    schema="\"id\": \"%s\","
+    schema=schema"\"rank\": \"%s\","
+    schema=schema"\"file\": \"%s\","
+    schema=schema"\"size\": \"%s\""
+    schema="{"schema"},"
+
+    printf schema, a[1], $1, a[2], a[3]
+  }')" || return 1
+
+  # Remove the extra comma after the last element
+  if [[ -n "${jobs}" ]]; then
+    jobs="${jobs::-1}"
+  fi
+
+  echo "[${jobs}]"
+}
+
+# Checks if a print job with the given id exists.
+# Arguments:
+#  id: the id of a print job
+# Returns:
+#  0 if exists otherwise 1.
+exists_job () {
+  local id="${1}"
+
+  local query=".[]|select(.id == \"${id}\")"
+
+  local job=''
+  job="$(find_jobs | jq -cer "${query}")" || return 1
+
+  if [[ -n "${id}" ]]; then
+    return 0
+  else
+    return 1
+  fi
 }
 
 # Shows a menu asking the user to select one printer,
@@ -174,6 +225,32 @@ pick_driver () {
   fi
 
   pick_one "Select a driver:" "${drivers}" "vertical" || return $?
+}
+
+# Shows a menu asking the user to select one print job,
+# where the answer is kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  None
+# Outputs:
+#  A menu of print jobs.
+pick_job () {
+  local query='{key: .id, value: "\(.file) [\(.id)]"}'
+  query="[.[]|${query}]"
+
+  local jobs=''
+  jobs="$(find_jobs | jq -cer "${query}")" || return 1
+
+  local len=0
+  len="$(count "${jobs}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No print jobs have found"
+    return 2
+  fi
+
+  pick_one "Select a print job:" "${jobs}" "vertical" || return $?
 }
 
 # Shows a menu asking the user to select a quality option,
@@ -330,15 +407,6 @@ show_status () {
 
     echo "${destinations}" | jq -cer "${query}" || return 1
   fi
-}
-
-# Show the current print queue status.
-# Arguments:
-#  None
-# Outputs:
-#  A list of print queue data.
-show_queue () {
-  lpq || return 1
 }
 
 # Shows the list of all printers.
@@ -584,33 +652,64 @@ set_option () {
   echo "Printer ${key} set to ${value}"
 }
 
-# Cancels all print jobs queued to the printer
-# with the given name.
+# Show all queued print jobs.
+# Arguments:
+#  None
+# Outputs:
+#  A list of print jobs.
+list_jobs () {
+  local jobs=''
+  jobs="$(find_jobs)"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to read print jobs"
+    return 2
+  fi
+
+  local len=0
+  len="$(count "${jobs}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No active print jobs have found"
+    return 0
+  fi
+
+  local query=''
+  query+='ID:    \(.id)\n'
+  query+='Rank:  \(.rank)\n'
+  query+='File:  \(.file)\n'
+  query+='Size:  \(.size)'
+  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+
+  echo "${jobs}" | jq -cer "${query}" || return 1
+}
+
+# Cancels the queued job with the given id.
 # Globals:
 #  REPLY
 # Arguments:
-#  name: the name of a destination
-cancel_jobs () {
-  local name="${1}"
+#  id: the id of a print job
+cancel_job () {
+  local id="${1}"
 
-  if [[ -z "${name}" ]]; then
-    pick_printer || return $?
-    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+  if [[ -z "${id}" ]]; then
+    pick_job || return $?
+    [[ -n "${REPLY}" ]] && id="${REPLY}" || return 0
   fi
 
-  if ! exists_destination "${name}"; then
-    echo "Cannot find printer ${name}"
+  if ! exists_job "${id}"; then
+    echo "Cannot find print job ${id}"
     return 2
   fi
 
-  cancel -ax "${name}"
+  cancel -x "${id}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to cancel print jobs of ${name}"
+    echo "Failed to cancel print jobs ${id}"
     return 2
   fi
 
-  echo "Print jobs of ${name} have been canceled"
+  echo "Print jobs ${id} has been canceled"
 }
 
 # Shows the help message.
@@ -626,7 +725,6 @@ show_help () {
     "help" "Show this help message." \
     "" "" \
     "show status" "Show a report of cups service and printers." \
-    "show queue" "Show the current print queue status." \
     "" "" \
     "list printers" "List all printers." \
     "add printer <name> [<uri>]" "Add a new printer." \
@@ -640,7 +738,8 @@ show_help () {
     "set toner [<name> [standard|save]]" "Set the toner mode of a printer." \
     "set onerror [<name> [<policy>]]" "Set the on error policy of a printer." \
     "" "" \
-    "cancel jobs [<name>]" "Cancel all print jobs of a printer."
+    "list jobs" "List all queued print jobs." \
+    "cancel job [<id>]" "Cancel a queued print job."
 }
 
 loop () {
@@ -670,12 +769,12 @@ loop () {
       "show")
         case "${cmd[1]}" in
           "status") show_status;;
-          "queue") show_queue;;
           *) echo "Invalid or unknown command";;
         esac;;
       "list")
         case "${cmd[1]}" in
           "printers") list_printers;;
+          "jobs") list_jobs;;
           *) echo "Invalid or unknown command";;
         esac;;
       "add")
@@ -709,7 +808,7 @@ loop () {
         esac;;
       "cancel")
         case "${cmd[1]}" in
-          "jobs") cancel_jobs "${cmd[2]}";;
+          "job") cancel_job "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       *) echo "Invalid or unknown command";; 
