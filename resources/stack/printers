@@ -453,6 +453,64 @@ remove_printer () {
   echo "Printer ${name} has been removed"
 }
 
+# Shares the printer with the given name
+# to the local network.
+# Globals:
+#  REPLY
+# Arguments:
+#  name: the name of a destination.
+share_printer () {
+  local name="${1}"
+
+  if [[ -z "${name}" ]]; then
+    pick_printer || return $?
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+  fi
+
+  if ! exists_destination "${name}"; then
+    echo "Cannot find printer ${name}"
+    return 2
+  fi
+
+  lpadmin -p "${name}" -o printer-is-shared=true &> /dev/null
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to share printer ${name}"
+    return 2
+  fi
+
+  echo "Printer ${name} has been shared"
+}
+
+# Unshares the printer with the given name
+# of the local network.
+# Globals:
+#  REPLY
+# Arguments:
+#  name: the name of a destination.
+unshare_printer () {
+  local name="${1}"
+
+  if [[ -z "${name}" ]]; then
+    pick_printer || return $?
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+  fi
+
+  if ! exists_destination "${name}"; then
+    echo "Cannot find printer ${name}"
+    return 2
+  fi
+
+  lpadmin -p "${name}" -o printer-is-shared=false &> /dev/null
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to unshare printer ${name}"
+    return 2
+  fi
+
+  echo "Printer ${name} has been unshared"
+}
+
 # Sets the given option to the printer with
 # the given name.
 # Arguments:
@@ -534,6 +592,8 @@ show_help () {
     "list printers" "List all printers." \
     "add printer <name> [<uri>]" "Add a new printer." \
     "remove printer [<name>]" "Remove a printer." \
+    "share printer [<name>]" "Share a printer to the local network." \
+    "unshare printer [<name>]" "Unshare a printer of the local network." \
     "" "" \
     "set quality [<name> [600dpi|1200dpi]]" "Set the print quality of a printer." \
     "set size [<name> [<size>]]" "Set the default page size of a printer." \
@@ -584,6 +644,16 @@ loop () {
       "remove")
         case "${cmd[1]}" in
           "printer") remove_printer "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "share")
+        case "${cmd[1]}" in
+          "printer") share_printer "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "unshare")
+        case "${cmd[1]}" in
+          "printer") unshare_printer "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       "set")
