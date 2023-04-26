@@ -392,6 +392,10 @@ show_status () {
     if (l) printf "%-9s %s\n",l":",v
   }' || return 1
 
+  echo "Cups:     $(cups-config --version)"
+  echo "API:      $(cups-config --api-version)"
+  echo "Dir:      $(cups-config --datadir)"
+
   find_jobs | jq -cer "\"Jobs:     \(length)\"" || return 1
 
   local destinations=''
