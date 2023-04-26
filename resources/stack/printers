@@ -190,36 +190,6 @@ prompt () {
   read -rep "[printers:${status}] " REPLY
 }
 
-# Shows the list of all printers.
-# Arguments:
-#  None
-# Outputs:
-#  A list of printers.
-list_printers () {
-  local destinations=''
-  destinations="$(find_destinations)"
-
-  if [[ $? -ne 0 ]]; then
-    echo "Unable to read print destinations"
-    return 2
-  fi
-
-  local len=0
-  len="$(count "${destinations}")" || return 1
-
-  if [[ ${len} -eq 0 ]]; then
-    echo "No printers have found"
-    return 0
-  fi
-
-  local query=''
-  query+='Name:  \(.name)\n'
-  query+='URI:   \(.uri)'
-  query="[.[]|\"${query}\"]|join(\"\n\n\")"
-
-  echo "${destinations}" | jq -cer "${query}" || return 1
-}
-
 # Shows a short status of cups service and printers.
 # Arguments:
 #  None
@@ -250,6 +220,36 @@ show_status () {
 
     echo "${destinations}" | jq -cer "${query}" || return 1
   fi
+}
+
+# Shows the list of all printers.
+# Arguments:
+#  None
+# Outputs:
+#  A list of printers.
+list_printers () {
+  local destinations=''
+  destinations="$(find_destinations)"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to read print destinations"
+    return 2
+  fi
+
+  local len=0
+  len="$(count "${destinations}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No printers have found"
+    return 0
+  fi
+
+  local query=''
+  query+='Name:  \(.name)\n'
+  query+='URI:   \(.uri)'
+  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+
+  echo "${destinations}" | jq -cer "${query}" || return 1
 }
 
 # Adds the printer with the given uri.
