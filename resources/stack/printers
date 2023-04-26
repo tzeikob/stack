@@ -176,6 +176,116 @@ pick_driver () {
   pick_one "Select a driver:" "${drivers}" "vertical" || return $?
 }
 
+# Shows a menu asking the user to select a quality option,
+# where the answer is kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  None
+# Outputs:
+#  A menu of quality options.
+pick_quality () {
+  local values=''
+  values+='{"key": "600dpi", "value": "Standard [600dpi]"},'
+  values+='{"key": "1200dpi", "value": "High Resolution [1200dpi]"}'
+  values="[${values}]"
+
+  pick_one "Select a quality:" "${values}" "vertical" || return $?
+}
+
+# Shows a menu asking the user to select a page size option,
+# where the answer is kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  None
+# Outputs:
+#  A menu of page size options.
+pick_page_size () {
+  local values=''
+  values+='{"key": "Letter", "value": "Letter [Letter]"},'
+  values+='{"key": "Legal", "value": "Legal [Legal]"},'
+  values+='{"key": "A4", "value": "A4 [A4]"},'
+  values+='{"key": "A5", "value": "A5 [A5]"},'
+  values+='{"key": "Executive", "value": "Executive [Executive]"},'
+  values+='{"key": "Folio", "value": "US Folio [Folio]"},'
+  values+='{"key": "JB5", "value": "JIS B5 [JB5]"},'
+  values+='{"key": "B5-ISO", "value": "ISO B5 [B5-ISO]"},'
+  values+='{"key": "COM10", "value": "No.10 Env. [COM10]"},'
+  values+='{"key": "Monarch", "value": "Monarch Env. [Monarch]"},'
+  values+='{"key": "DL", "value": "DL Env. [DL]"},'
+  values+='{"key": "C5", "value": "C5 Env. [C5]"},'
+  values+='{"key": "Oficio_S", "value": "Oficio [Oficio_S]"},'
+  values+='{"key": "PCard4x6", "value": "Post Card 4x6 [PCard4x6]"}'
+  values="[${values}]"
+
+  pick_one "Select a page size:" "${values}" "vertical" || return $?
+}
+
+# Shows a menu asking the user to select a paper type option,
+# where the answer is kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  None
+# Outputs:
+#  A menu of paper type options.
+pick_paper_type () {
+  local values=''
+  values+='{"key": "None", "value": "Printer Default [None]"},'
+  values+='{"key": "Plain", "value": "Plain [Plain]"},'
+  values+='{"key": "Thick", "value": "Thick [Thick]"},'
+  values+='{"key": "Thin", "value": "Thin [Thin]"},'
+  values+='{"key": "Bond", "value": "Bond [Bond]"},'
+  values+='{"key": "Color", "value": "Color [Color]"},'
+  values+='{"key": "Card", "value": "CardStock [Card]"},'
+  values+='{"key": "Labels", "value": "Labels [Labels]"},'
+  values+='{"key": "Preprinted", "value": "Preprinted [Preprinted]"},'
+  values+='{"key": "Cotton", "value": "Cotton [Cotton]"},'
+  values+='{"key": "Archive", "value": "Archive [Archive]"},'
+  values+='{"key": "Recycled", "value": "Recycled [Recycled]"},'
+  values+='{"key": "Envelope", "value": "Envelope [Envelope]"}'
+  values="[${values}]"
+
+  pick_one "Select a paper type:" "${values}" "vertical" || return $?
+}
+
+# Shows a menu asking the user to select a toner mode option,
+# where the answer is kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  None
+# Outputs:
+#  A menu of toner mode options.
+pick_toner_mode () {
+  local values=''
+  values+='{"key": "Save", "value": "Save"},'
+  values+='{"key": "Standard", "value": "Standard"}'
+  values="[${values}]"
+
+  pick_one "Select a toner mode:" "${values}" "vertical" || return $?
+}
+
+# Shows a menu asking the user to select a error policy option,
+# where the answer is kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  None
+# Outputs:
+#  A menu of error policy options.
+pick_error_policy () {
+  local values=''
+  values+='{"key": "abort-job", "value": "Abort Job [abort-job]"},'
+  values+='{"key": "retry-current-job", "value": "Retry Current Job [retry-current-job]"},'
+  values+='{"key": "retry-job", "value": "Retry Job [retry-job]"},'
+  values+='{"key": "stop-printer", "value": "Stop Printer [stop-printer]"}'
+  values="[${values}]"
+
+  pick_one "Select an error policy:" "${values}" "vertical" || return $?
+}
+
 # Shows a prompt status and asks user to enter the
 # next command, which is kept in the global var REPLY.
 # Globals:
@@ -343,6 +453,70 @@ remove_printer () {
   echo "Printer ${name} has been removed"
 }
 
+# Sets the given option to the printer with
+# the given name.
+# Arguments:
+#  name:  the name of a printer destination
+#  key:   the key name of the option
+#  value: the value of the option
+set_option () {
+  local name="${1}"
+  local key="${2}"
+  local value="${3}"
+
+  if [[ -z "${name}" ]]; then
+    pick_printer || return $?
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+  fi
+
+  if ! exists_destination "${name}"; then
+    echo "Cannot find printer ${name}"
+    return 2
+  fi
+
+  if [[ -z "${key}" ]]; then
+    echo "Missing the option key value"
+    return 2
+  elif [[ ! "${key}" =~ ^(Quality|PageSize|MediaType|TonerSaveMode|printer-error-policy)$ ]]; then
+    echo "Option ${key} is not supported"
+    return 2
+  fi
+
+  if [[ -z "${value}" ]]; then
+    case "${key}" in
+      "Quality") pick_quality || return $?;;
+      "PageSize") pick_page_size || return $?;;
+      "MediaType") pick_paper_type || return $?;;
+      "TonerSaveMode") pick_toner_mode || return $?;;
+      "printer-error-policy") pick_error_policy || return $?;;
+      *) echo "Unknown or invalid printer option" && return 2;;
+    esac
+
+    [[ -n "${REPLY}" ]] && value="${REPLY}" || return 0
+  fi
+
+  local re=''
+  re+='600dpi|1200dpi|'
+  re+='Letter|Legal|A4|A5|Executive|Folio|JB5|B5-ISO|COM10|Monarch|DL|C5|Oficio_S|PCard4x6|'
+  re+='Save|Standard|'
+  re+='None|Plain|Thick|Thin|Bond|Color|Card|Labels|Preprinted|Cotton|Archive|Recycled|Envelope|'
+  re+='abort-job|retry-current-job|retry-job|stop-printer'
+
+  if [[ ! "${value,,}" =~ ^(${re,,})$ ]]; then
+    echo "Invalid option value"
+    return 2
+  fi
+
+  lpadmin -p "${name}" -o "${key}"="${value}"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to set printer option ${key}"
+    return 2
+  fi
+
+  echo "Printer ${key} set to ${value}"
+}
+
 # Shows the help message.
 # Arguments:
 #  None
@@ -352,7 +526,7 @@ show_help () {
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
   echo -e "\nCOMMANDS"
-  printf " %-28s %s\n" \
+  printf " %-40s %s\n" \
     "help" "Show this help message." \
     "" "" \
     "show status" "Show a report of cups service and printers." \
@@ -360,7 +534,13 @@ show_help () {
     "list printers" "List all printers." \
     "" "" \
     "add printer <name> [<uri>]" "Add a new printer." \
-    "remove printer [<name>]" "Remove a printer."
+    "remove printer [<name>]" "Remove a printer." \
+    "" "" \
+    "set quality [<name> [<600dpi|1200dpi>]]" "Set the print quality of a printer." \
+    "set size [<name> [<size>]]" "Set the default page size of a printer." \
+    "set paper [<name> [<type>]]" "Set the paper type of a printer." \
+    "set toner [<name> [<standard|save>]]" "Set the toner mode of a printer." \
+    "set onerror [<name> [<policy>]]" "Set the on error policy of a printer."
 }
 
 loop () {
@@ -405,6 +585,15 @@ loop () {
       "remove")
         case "${cmd[1]}" in
           "printer") remove_printer "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "set")
+        case "${cmd[1]}" in
+          "quality") set_option "${cmd[2]}" "Quality" "${cmd[3]}";;
+          "size") set_option "${cmd[2]}" "PageSize" "${cmd[3]}";;
+          "paper") set_option "${cmd[2]}" "MediaType" "${cmd[3]}";;
+          "toner") set_option "${cmd[2]}" "TonerSaveMode" "${cmd[3]}";;
+          "onerror") set_option "${cmd[2]}" "printer-error-policy" "${cmd[3]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       *) echo "Invalid or unknown command";; 
