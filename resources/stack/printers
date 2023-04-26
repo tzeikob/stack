@@ -532,14 +532,13 @@ show_help () {
     "show status" "Show a report of cups service and printers." \
     "" "" \
     "list printers" "List all printers." \
-    "" "" \
     "add printer <name> [<uri>]" "Add a new printer." \
     "remove printer [<name>]" "Remove a printer." \
     "" "" \
-    "set quality [<name> [<600dpi|1200dpi>]]" "Set the print quality of a printer." \
+    "set quality [<name> [600dpi|1200dpi]]" "Set the print quality of a printer." \
     "set size [<name> [<size>]]" "Set the default page size of a printer." \
     "set paper [<name> [<type>]]" "Set the paper type of a printer." \
-    "set toner [<name> [<standard|save>]]" "Set the toner mode of a printer." \
+    "set toner [<name> [standard|save]]" "Set the toner mode of a printer." \
     "set onerror [<name> [<policy>]]" "Set the on error policy of a printer."
 }
 
