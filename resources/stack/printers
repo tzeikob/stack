@@ -438,7 +438,7 @@ add_printer () {
 # Globals:
 #  REPLY
 # Arguments:
-#  name: the name of a destination.
+#  name: the name of a destination
 remove_printer () {
   local name="${1}"
 
@@ -467,7 +467,7 @@ remove_printer () {
 # Globals:
 #  REPLY
 # Arguments:
-#  name: the name of a destination.
+#  name: the name of a destination
 share_printer () {
   local name="${1}"
 
@@ -496,7 +496,7 @@ share_printer () {
 # Globals:
 #  REPLY
 # Arguments:
-#  name: the name of a destination.
+#  name: the name of a destination
 unshare_printer () {
   local name="${1}"
 
@@ -584,6 +584,35 @@ set_option () {
   echo "Printer ${key} set to ${value}"
 }
 
+# Cancels all print jobs queued to the printer
+# with the given name.
+# Globals:
+#  REPLY
+# Arguments:
+#  name: the name of a destination
+cancel_jobs () {
+  local name="${1}"
+
+  if [[ -z "${name}" ]]; then
+    pick_printer || return $?
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+  fi
+
+  if ! exists_destination "${name}"; then
+    echo "Cannot find printer ${name}"
+    return 2
+  fi
+
+  cancel -ax "${name}"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to cancel print jobs of ${name}"
+    return 2
+  fi
+
+  echo "Print jobs of ${name} have been canceled"
+}
+
 # Shows the help message.
 # Arguments:
 #  None
@@ -609,7 +638,9 @@ show_help () {
     "set size [<name> [<size>]]" "Set the default page size of a printer." \
     "set paper [<name> [<type>]]" "Set the paper type of a printer." \
     "set toner [<name> [standard|save]]" "Set the toner mode of a printer." \
-    "set onerror [<name> [<policy>]]" "Set the on error policy of a printer."
+    "set onerror [<name> [<policy>]]" "Set the on error policy of a printer." \
+    "" "" \
+    "cancel jobs [<name>]" "Cancel all print jobs of a printer."
 }
 
 loop () {
@@ -674,6 +705,11 @@ loop () {
           "paper") set_option "${cmd[2]}" "MediaType" "${cmd[3]}";;
           "toner") set_option "${cmd[2]}" "TonerSaveMode" "${cmd[3]}";;
           "onerror") set_option "${cmd[2]}" "printer-error-policy" "${cmd[3]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "cancel")
+        case "${cmd[1]}" in
+          "jobs") cancel_jobs "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       *) echo "Invalid or unknown command";; 
