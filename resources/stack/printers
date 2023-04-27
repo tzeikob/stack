@@ -372,7 +372,12 @@ pick_error_policy () {
 # Outputs:
 #  A minimal prompt status line.
 prompt () {
-  local status='ready'
+  local status=''
+  status="$(lpstat -d | awk -F':' '{print $2}' | trim)"
+
+  if [[ $? -ne 0 ]]; then
+    status="none"
+  fi
 
   read -rep "[printers:${status}] " REPLY
 }
