@@ -43,7 +43,7 @@ find_destinations () {
 
 # Checks if a destination with the given name exists.
 # Arguments:
-#  name: the name of a destination
+#  name: the name of a print destination
 # Returns:
 #  0 if exists otherwise 1.
 exists_destination () {
@@ -509,6 +509,15 @@ add_printer () {
     return 2
   fi
 
+  local is_default=''
+  confirm "Want to set this printer as default?" || return $?
+  [[ -n "${REPLY}" ]] && is_default="${REPLY}" || return 0
+
+  if [[ "${is_default}" == "yes" ]]; then
+    lpoptions -d "${name}" &> /dev/null ||
+      echo "Failed to set printer as default"
+  fi
+
   echo "Printer ${uri} has been added"
 }
 
@@ -517,7 +526,7 @@ add_printer () {
 # Globals:
 #  REPLY
 # Arguments:
-#  name: the name of a destination
+#  name: the name of a print destination
 remove_printer () {
   local name="${1}"
 
@@ -546,7 +555,7 @@ remove_printer () {
 # Globals:
 #  REPLY
 # Arguments:
-#  name: the name of a destination
+#  name: the name of a print destination
 share_printer () {
   local name="${1}"
 
@@ -575,7 +584,7 @@ share_printer () {
 # Globals:
 #  REPLY
 # Arguments:
-#  name: the name of a destination
+#  name: the name of a print destination
 unshare_printer () {
   local name="${1}"
 
@@ -602,7 +611,7 @@ unshare_printer () {
 # Sets the given option to the printer with
 # the given name.
 # Arguments:
-#  name:  the name of a printer destination
+#  name:  the name of a print destination
 #  key:   the key name of the option
 #  value: the value of the option
 set_option () {
@@ -661,6 +670,33 @@ set_option () {
   fi
 
   echo "Printer ${key} set to ${value}"
+}
+
+# Sets the printer with the given name as default
+# print destination.
+# Arguments:
+#  name: the name of a print destination
+set_default () {
+  local name="${1}"
+
+  if [[ -z "${name}" ]]; then
+    pick_printer || return $?
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+  fi
+
+  if ! exists_destination "${name}"; then
+    echo "Cannot find printer ${name}"
+    return 2
+  fi
+
+  lpoptions -d "${name}" &> /dev/null
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to set ${name} as default printer"
+    return 2
+  fi
+
+  echo "Printer ${name} set as default"
 }
 
 # Shows the list of all queued print jobs.
@@ -762,6 +798,7 @@ show_help () {
     "set paper [<name> [<type>]]" "Set the paper type of a printer." \
     "set toner [<name> [standard|save]]" "Set the toner mode of a printer." \
     "set onerror [<name> [<policy>]]" "Set the on error policy of a printer." \
+    "set default [<name>]" "Set a printer as default print destination." \
     "" "" \
     "share printer [<name>]" "Share a printer to the local network." \
     "unshare printer [<name>]" "Unshare a printer of the local network." \
@@ -834,6 +871,7 @@ loop () {
           "paper") set_option "${cmd[2]}" "MediaType" "${cmd[3]}";;
           "toner") set_option "${cmd[2]}" "TonerSaveMode" "${cmd[3]}";;
           "onerror") set_option "${cmd[2]}" "printer-error-policy" "${cmd[3]}";;
+          "default") set_default "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       "cancel")
