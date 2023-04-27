@@ -41,6 +41,37 @@ find_destinations () {
   echo "[${destinations}]"
 }
 
+# Returns the print destination with the given name.
+# Arguments:
+#  None
+# Outputs:
+#  A json object of print destination.
+find_destination () {
+  local name="${1}"
+
+  local query=".[]|select(.name == \"${name}\")"
+
+  local destination=''
+  destination="$(find_destinations | jq -cer "${query}")" || return 1
+
+  local options=''
+  options="$(lpoptions -p "${name}" -l | awk '{
+    match($0, /(.*)\/(.*):.*\*([^ ]*).*/, a)
+
+    schema="\"%s\": \"%s\","
+    printf schema, a[1], a[3]
+  }')" || return 1
+
+  # Remove the extra comma after the last pair
+  if [[ -n "${options}" ]]; then
+    options="${options::-1}"
+  fi
+
+  options="{${options}}"
+
+  echo "${destination}" | jq -cer --argjson o "${options}" '. + $o' || return 1
+}
+
 # Checks if a destination with the given name exists.
 # Arguments:
 #  name: the name of a print destination
@@ -450,6 +481,46 @@ list_printers () {
   echo "${destinations}" | jq -cer "${query}" || return 1
 }
 
+# Shows the data of the printer with the given
+# print destination name.
+# Globals:
+#  REPLY
+# Arguments:
+#  name: the name of a print destination
+# Outputs:
+#  A long list of printer data.
+show_printer () {
+  local name="${1}"
+
+  if [[ -z "${name}" ]]; then
+    pick_printer || return $?
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+  fi
+
+  if ! exists_destination "${name}"; then
+    echo "Cannot find printer ${name}"
+    return 2
+  fi
+
+  local query=''
+  query+='Name:        \(.name)\n'
+  query+='URI:         \(.uri)\n'
+  query+='Protocol:    \(.protocol)\n'
+  query+='Color:       \(.ColorModel)\n'
+  query+='Quality:     \(.Quality)\n'
+  query+='Brightness:  \(.secBrightness)\n'
+  query+='Contrast:    \(.secContrast)\n'
+  query+='Input:       \(.InputSlot)\n'
+  query+='Toner:       \(.TonerSaveMode)\n'
+  query+='Page:        \(.PageSize)\n'
+  query+='Paper:       \(.MediaType)\n'
+  query+='Blank:       \(.JCLSkipBlankPages)\n'
+  query+='Enhance:     \(.JCLEdgeEnhance)'
+  query="\"${query}\""
+
+  find_destination "${name}" | jq -cer "${query}" || return 1
+}
+
 # Adds the printer with the given uri.
 # Globals:
 #  REPLY
@@ -788,6 +859,7 @@ show_help () {
     "help" "Show this help message." \
     "" "" \
     "show status" "Show a report of cups service and printers." \
+    "show printer [<name>]" "Show the data of a printer." \
     "" "" \
     "list printers" "List all printers." \
     "add printer <name> [<uri>]" "Add a new printer." \
@@ -836,6 +908,7 @@ loop () {
       "show")
         case "${cmd[1]}" in
           "status") show_status;;
+          "printer") show_printer "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       "list")
