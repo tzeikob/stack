@@ -69,7 +69,37 @@ find_destination () {
 
   options="{${options}}"
 
-  echo "${destination}" | jq -cer --argjson o "${options}" '. + $o' || return 1
+  local props=''
+  props="$(lpoptions -p "${name}" | awk '{
+    re=""
+    re=re "copies=.+\\sdevice-uri=.+\\sfinishings=.+\\s"
+    re=re "job-cancel-after=.+\\sjob-hold-until=.+\\sjob-priority=.+\\s"
+    re=re "job-sheets=.+\\smarker-change-time=.+\\snumber-up=.+\\s"
+    re=re "print-color-mode=(.+)\\sprinter-commands=.+\\sprinter-info='\''(.+)'\''\\s"
+    re=re "printer-is-accepting-jobs=(.+)\\sprinter-is-shared=(.+)\\s"
+    re=re "printer-is-temporary=(.+)\\sprinter-location=(.+)\\s"
+    re=re "printer-make-and-model='\''(.+)'\''\\sprinter-state=(.+)\\s"
+    re=re "printer-state-change-time=.+\\sprinter-state-reasons=.+\\s"
+    re=re "printer-type=(.+)\\sprinter-uri-supported=.+"
+    
+    match($0, re, a)
+    out=""
+    out=out "\"color\":\"" a[1] "\","
+    out=out "\"description\":\"" a[2] "\","
+    out=out "\"accepting_jobs\":\"" a[3] "\","
+    out=out "\"is_shared\":\"" a[4] "\","
+    out=out "\"is_temp\":\"" a[5] "\","
+    out=out "\"location\":\"" a[6] "\","
+    out=out "\"model\":\"" a[7] "\","
+    out=out "\"state\":\"" a[8] "\","
+    out=out "\"type\":\"" a[9] "\""
+    out="{" out "}"
+
+    print out
+  }')" || return 1
+
+  echo "${destination}" |
+    jq -cer --argjson o "${options}" --argjson p "${props}" '. + $o + $p' || return 1
 }
 
 # Checks if a destination with the given name exists.
@@ -503,19 +533,21 @@ show_printer () {
   fi
 
   local query=''
-  query+='Name:        \(.name)\n'
-  query+='URI:         \(.uri)\n'
-  query+='Protocol:    \(.protocol)\n'
-  query+='Color:       \(.ColorModel)\n'
-  query+='Quality:     \(.Quality)\n'
-  query+='Brightness:  \(.secBrightness)\n'
-  query+='Contrast:    \(.secContrast)\n'
-  query+='Input:       \(.InputSlot)\n'
-  query+='Toner:       \(.TonerSaveMode)\n'
-  query+='Page:        \(.PageSize)\n'
-  query+='Paper:       \(.MediaType)\n'
-  query+='Blank:       \(.JCLSkipBlankPages)\n'
-  query+='Enhance:     \(.JCLEdgeEnhance)'
+  query+='Name:       \(.name)\n'
+  query+='URI:        \(.uri)\n'
+  query+='Model:      \(.model)\n'
+  query+='Desc:       \(.description)\n'
+  query+='Location:   \(.location)\n'
+  query+='Protocol:   \(.protocol)\n'
+  query+='State:      \(.state)\n'
+  query+='Accepts:    \(.accepting_jobs)\n'
+  query+='Shared:     \(.is_shared)\n'
+  query+='Temporary:  \(.is_temp)\n'
+  query+='Color:      \(.ColorModel) [\(.color)]\n'
+  query+='Quality:    \(.Quality)\n'
+  query+='Toner:      \(.TonerSaveMode)\n'
+  query+='Page:       \(.PageSize)\n'
+  query+='Paper:      \(.MediaType)'
   query="\"${query}\""
 
   find_destination "${name}" | jq -cer "${query}" || return 1
