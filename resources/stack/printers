@@ -455,29 +455,33 @@ show_status () {
       v = $2" "$3
     } else l = ""
 
-    if (l) printf "%-9s %s\n",l":",v
+    if (l) printf "%-10s %s\n",l":",v
   }' || return 1
 
-  echo "Cups:     $(cups-config --version)"
-  echo "API:      $(cups-config --api-version)"
-  echo "Dir:      $(cups-config --datadir)"
+  echo "Cups:      $(cups-config --version)"
+  echo "API:       $(cups-config --api-version)"
+  echo "Dir:       $(cups-config --datadir)"
 
-  find_jobs | jq -cer "\"Jobs:     \(length)\"" || return 1
+  find_jobs | jq -cer "\"Jobs:      \(length)\"" || return 1
 
   local destinations=''
-  destinations="$(find_destinations)" || return 1
+  destinations="$(find_destinations |
+    jq -cer 'if .|length>0 then .[]|.name else "" end')" || return 1
 
-  local len=0
-  len="$(count "${destinations}")" || return 1
-
-  if [[ ${len} -gt 0 ]]; then
-    echo ""
+  if [[ -n "${destinations}" ]]; then
     local query=''
-    query+='Printer:  \(.name)\n'
-    query+='URI:      \(.uri)'
-    query="[.[]|\"${query}\"]|join(\"\n\n\")"
+    query+='Printer:   \(.name) \(if .is_shared == "true" then "[shared]" else "" end)\n'
+    query+='URI:       \(.uri)\n'
+    query+='Model:     \(.model)\n'
+    query+='Desc:      \(.description)\n'
+    query+='Location:  \(.location)'
+    query="\"${query}\""
 
-    echo "${destinations}" | jq -cer "${query}" || return 1
+    local destination=''
+    while read -r destination; do
+      echo ""
+      find_destination "${destination}" | jq -cer "${query}" || return 1
+    done <<< "${destinations}"
   fi
 }
 
