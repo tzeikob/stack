@@ -718,6 +718,22 @@ cancel_job () {
   echo "Print job ${id} has been canceled"
 }
 
+# Restarts the cup service.
+# Arguments:
+#  None
+restart () {
+  sudo echo "Restarting the cups service..."
+
+  sudo systemctl restart cups.service
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to restart cups service"
+    return 2
+  fi
+
+  echo "Cups service has been restarted"
+}
+
 # Shows the help message.
 # Arguments:
 #  None
@@ -745,7 +761,9 @@ show_help () {
     "set onerror [<name> [<policy>]]" "Set the on error policy of a printer." \
     "" "" \
     "list jobs" "List all queued print jobs." \
-    "cancel job [<id>]" "Cancel a queued print job."
+    "cancel job [<id>]" "Cancel a queued print job." \
+    "" "" \
+    "restart" "Restart the cups service."
 }
 
 loop () {
@@ -817,6 +835,7 @@ loop () {
           "job") cancel_job "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
+      "restart") restart;;
       *) echo "Invalid or unknown command";; 
     esac
 
