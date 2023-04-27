@@ -375,7 +375,7 @@ prompt () {
   local status=''
   status="$(lpstat -d | awk -F':' '{print $2}' | trim)"
 
-  if [[ $? -ne 0 ]]; then
+  if [[ $? -ne 0 ]] || [[ -z "${status}" ]]; then
     status="none"
   fi
 
