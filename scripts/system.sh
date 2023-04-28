@@ -183,7 +183,7 @@ install_packages () {
   echo -e "\nInstalling the base packages..."
 
   pacman -S --noconfirm \
-    base-devel pacman-contrib pkgstats grub mtools dosfstools gdisk \
+    base-devel pacman-contrib pkgstats grub mtools dosfstools ntfs-3g exfatprogs gdisk \
     parted curl wget udisks2 udiskie gvfs gvfs-smb bash-completion \
     man-db man-pages texinfo cups cups-pdf cups-filters usbutils bluez bluez-utils unzip terminus-font \
     vim nano git tree arch-audit atool zip xz unace p7zip gzip lzop feh \

@@ -56,6 +56,49 @@ find_device () {
   lsblk -J -o "${fields}" "${path}" | jq -cer '.blockdevices[0]' || return 1
 }
 
+# Checks if the block device with the given path
+# is a disk or not.
+# Arguments:
+#  path: the path of a block device
+# Returns:
+#  0 if it is a disk otherwise 1.
+is_disk () {
+  local path="${1}"
+
+  local type=''
+  type="$(find_device "${path}" | jq -cr '.type')" || return 1
+
+  if [[ "${type}" == "disk" ]]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+# Checks if the block device with the given path
+# is a disk with system partitions.
+# Arguments:
+#  path: the path of a block device
+# Returns:
+#  0 if it is a system disk otherwise 1.
+is_system_disk () {
+  local path="${1}"
+
+  local query=''
+  query+='.children|if . and length>0'
+  query+=' then .[]|.mountpoint|if . then select(.|test("^(/|/home)$")) else "" end'
+  query+=' else "" end'
+
+  local parts=''
+  parts="$(find_device "${path}" | jq -cr "${query}")" || return 1
+
+  if [[ -n "${parts}" ]]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
 # Returns the list of shared folders of the given
 # host available in the local network.
 # Arguments:
@@ -161,6 +204,27 @@ pick_host () {
   hosts="$(echo "${hosts}" | jq -cer "${query}")" || return 1
 
   pick_one "Select a host:" "${hosts}" "vertical" || return $?
+}
+
+# Shows a menu asking the user to select one file system type,
+# where the answer is kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  None
+# Outputs:
+#  A menu of file system types.
+pick_fs_type () {
+  local values=''
+  values+='{"key": "ext4", "value": "EXT4"},'
+  values+='{"key": "ext3", "value": "EXT3"},'
+  values+='{"key": "ext2", "value": "EXT2"},'
+  values+='{"key": "ntfs", "value": "NTFS"},'
+  values+='{"key": "exfat", "value": "exFAT"},'
+  values+='{"key": "fat32", "value": "FAT32"}'
+  values="[${values}]"
+
+  pick_one "Select a file system type:" "${values}" "vertical" || return $?
 }
 
 # Shows a prompt status and asks user to enter the
@@ -599,6 +663,97 @@ unmount_device () {
   echo "Device ${path} has been unmounted"
 }
 
+# Formats the disk device with the given path.
+# Globals:
+#  REPLY
+# Arguments:
+#  path: the path of a block disk device
+format_device () {
+  local path="${1}"
+
+  if [[ -z "${path}" ]]; then
+    pick_device "disk" || return $?
+    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
+  fi
+
+  if [[ ! -b "${path}" ]]; then
+    echo "Invalid block device"
+    return 2
+  elif ! is_disk "${path}"; then
+    echo "Not a disk block device"
+    return 2
+  elif is_system_disk "${path}"; then
+    echo "Cannot format the system disk"
+    return 2
+  fi
+
+  ask "Enter the disk label:" ".+" || return $?
+  local label="${REPLY}"
+
+  local fs_type=''
+  pick_fs_type || return $?
+  [[ -n "${REPLY}" ]] && fs_type="${REPLY}" || return 0
+
+  local model=''
+  model="$(find_device "${path}" | jq -cr '"\(.vendor) \(.model) \(.size)"')" || return 1
+
+  echo "ALL DATA in ${model} [${path}],"
+  echo "will be irreversibly gone forever!"
+  confirm "Do you really want to proceed?" || return $?
+  [[ -z "${REPLY}" ]] && return 0
+  [[ "${REPLY}" != "yes" ]] && return 0
+
+  # Unmount any mounted partitions of the disk
+  local parts=''
+  parts="$(grep -sE "${path}.*[0-9]+ " /proc/mounts | awk '{print $1}')"
+  
+  if [[ -n "${parts}" ]]; then
+    echo "Unmounting disk partitions..."
+
+    local part=''
+    while read -r part; do
+      unmount_device "${part}" || return 1
+    done <<< "${parts}"
+  fi
+
+  sudo wipefs --all --force --quiet "${path}" || return 1
+
+  echo "All partitions and data wiped out"
+
+  sudo parted --script -a optimal -- "${path}" mklabel msdos || return 1
+
+  # Use ntfs as partition type for exfat file systems
+  local part_type="${fs_type}"
+  [[ "${part_type}" == "exfat" ]] && part_type="ntfs"
+
+  sudo parted --script -a optimal -- "${path}" mkpart primary "${part_type}" 1Mib 100% || return 1
+  sudo parted --script -- "${path}" align-check optimal 1 || return 1
+
+  # Add path postfix for nvme disks
+  if [[ "${path}" =~ ^/dev/nvme ]]; then
+    path="${path}p"
+  fi
+
+  echo "Applying the new file system..."
+
+  case "${fs_type}" in
+    "ext2") sudo mkfs.ext2 -L "${label}" "${path}1" | awk NF;;
+    "ext3") sudo mkfs.ext3 -L "${label}" "${path}1" | awk NF;;
+    "ext4") sudo mkfs.ext4 -L "${label}" "${path}1" | awk NF;;
+    "ntfs") sudo mkfs.ntfs -f -L "${label}" "${path}1" | awk NF;;
+    "exfat") sudo mkfs.exfat -L "${label}" "${path}1" | awk NF;;
+    "fat32") sudo mkfs.fat -F 32 -n "${label}" "${path}1" | awk NF;;
+    *) echo "Unknown file system type" && return 2;;
+  esac
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to format device ${path}"
+    return 2
+  fi
+
+  echo "Device ${path} has been formated"
+}
+
 # Ejects the disk block device with the given path.
 # Globals:
 #  REPLY
@@ -778,6 +933,7 @@ show_help () {
     "" "" \
     "mount device [<path>]" "Mount a block device." \
     "unmount device [<path>]" "Unmount a block device." \
+    "format device [<path>]" "Format a disk block device." \
     "eject device [<path>]" "Eject a disk block device." \
     "" "" \
     "mount share [<host>]" "Mount a shared folder." \
@@ -836,6 +992,11 @@ loop () {
         case "${cmd[1]}" in
           "device") unmount_device "${cmd[2]}";;
           "share") unmount_shared_folder "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "format")
+        case "${cmd[1]}" in
+          "device") format_device "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       "eject")
