@@ -599,6 +599,11 @@ unmount_device () {
   echo "Device ${path} has been unmounted"
 }
 
+# Ejects the disk block device with the given path.
+# Globals:
+#  REPLY
+# Arguments:
+#  path: the path of a block device
 eject_device () {
   local path="${1}"
 
