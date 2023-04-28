@@ -596,11 +596,61 @@ unmount_device () {
     return 2
   fi
 
-  udisksctl power-off -b "${path}" &> /dev/null &&
-    echo "Device power set to off" ||
-    echo "Unable to power off the device"
-
   echo "Device ${path} has been unmounted"
+}
+
+eject_device () {
+  local path="${1}"
+
+  if [[ -z "${path}" ]]; then
+    pick_device "disk" || return $?
+    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
+  fi
+
+  if [[ ! -b "${path}" ]]; then
+    echo "Invalid block device"
+    return 2
+  fi
+
+  local device=''
+  device="$(find_device "${path}")" || return 1
+
+  local type=''
+  type="$(echo "${device}" | jq -cr '.type')" || return 1
+
+  if [[ "${type}" != "disk" ]]; then
+    echo "Not a disk block device"
+    return 2
+  fi
+
+  local is_removable=''
+  is_removable="$(echo "${device}" | jq -cr '.rm')" || return 1
+
+  if [[ "${is_removable}" != "true" ]]; then
+    echo "Not a removable disk block device"
+    return 2
+  fi
+
+  # Unmount any mounted partitions of the disk
+  local parts=''
+  parts="$(grep -sE "${path}.*[0-9]+ " /proc/mounts | awk '{print $1}')"
+  
+  if [[ -n "${parts}" ]]; then
+    echo "Unmounting disk partition(s)..."
+
+    local part=''
+    while read -r part; do
+      unmount_device "${part}" || return 1
+    done <<< "${parts}"
+  fi
+
+  udisksctl power-off -b "${path}" &> /dev/null
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to power off the device"
+  fi
+
+  echo "Device power set to off"  
 }
 
 # Mounts a shared folder of the given host.
@@ -723,6 +773,7 @@ show_help () {
     "" "" \
     "mount device [<path>]" "Mount a block device." \
     "unmount device [<path>]" "Unmount a block device." \
+    "eject device [<path>]" "Eject a disk block device." \
     "" "" \
     "mount share [<host>]" "Mount a shared folder." \
     "unmount share [<uri>]" "Unmount a shared folder."
@@ -780,6 +831,11 @@ loop () {
         case "${cmd[1]}" in
           "device") unmount_device "${cmd[2]}";;
           "share") unmount_shared_folder "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "eject")
+        case "${cmd[1]}" in
+          "device") eject_device "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       *) echo "Invalid or unknown command";; 
