@@ -154,7 +154,9 @@ pick_host () {
   fi
 
   local query=''
-  query='[.[]|{key: .ip, value: "\(.ip) [\(.name)]"}]'
+  query+='key: .ip,'
+  query+='value: "\(.ip)\(.name|if . and . != "" then " [\(.)]" else "" end)"'
+  query="[.[]|{${query}}]"
 
   hosts="$(echo "${hosts}" | jq -cer "${query}")" || return 1
 
