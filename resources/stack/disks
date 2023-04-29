@@ -824,6 +824,145 @@ eject_device () {
   echo "Device ${path} power set to off"  
 }
 
+# Creates a bootable archlinux installation drive.
+# Globals:
+#  REPLY, HOME, PWD
+# Arguments:
+#  path: the path of a block disk device
+create_bootable () {
+  local path="${1}"
+
+  if [[ -z "${path}" ]]; then
+    pick_device "disk" || return $?
+    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
+  fi
+
+  if [[ ! -b "${path}" ]]; then
+    echo "Invalid block device"
+    return 2
+  elif ! is_removable_disk "${path}"; then
+    echo "Not a removable disk block device"
+    return 2
+  elif is_system_disk "${path}"; then
+    echo "Cannot create bootable on a system disk"
+    return 2
+  fi
+
+  confirm "Do you want to download the latest archlinux iso?" || return $?
+  [[ -z "${REPLY}" ]] && return 0
+
+  local iso_file_path=''
+
+  if [[ "${REPLY}" == "yes" ]]; then
+    local host='http://arch.phinau.de'
+    local file='archlinux-x86_64.iso'
+    local output="${HOME}/downloads"
+
+    if [[ -f "${output}/${file}" ]]; then
+      echo "An existing archlinux iso file is found"
+      echo "Please clean ${output} and re-try"
+      return 2
+    fi
+
+    if [[ -f "${output}/${file}.sig" ]]; then
+      echo "An existing archlinux sig file is found"
+      echo "Please clean ${output} and re-try"
+      return 2
+    fi
+
+    if [[ -f "${output}/b2sums.txt" ]]; then
+      echo "An existing archlinux checksums file is found"
+      echo "Please clean ${output} and re-try"
+      return 2
+    fi
+
+    download "${output}" \
+      "${host}/iso/latest/b2sums.txt" \
+      "${host}/iso/latest/${file}.sig" \
+      "${host}/iso/latest/${file}"
+
+    if [[ $? -ne 0 ]]; then
+      echo "Unable to download archlinux files"
+      return 2
+    fi
+
+    sq --force wkd get pierre@archlinux.org -o "${output}/release-key.pgp"
+
+    if [[ $? -ne 0 ]]; then
+      echo "Unable to fetch the release key"
+      return 2
+    fi
+
+    echo "Verifying the integrity of files..."
+
+    cd ${output} &&
+    b2sum --ignore-missing -c b2sums.txt &&
+    sq verify --signer-file release-key.pgp --detached "${file}.sig" "${file}" 2>&1 | awk NF
+
+    if [[ $? -ne 0 ]]; then
+      echo "Failed to verify archlinux files"
+      return 2
+    fi
+
+    iso_file_path="${output}/${file}"
+
+    echo "Files have been verified successfully"
+  else
+    ask "Enter the path to the archlinux iso file:" "^/.+" || return $?
+    iso_file_path="${REPLY}"
+  fi
+
+  if [[ ! -f "${iso_file_path}" ]]; then
+    echo "Invalid or unknown archlinux iso file"
+    return 2
+  fi
+
+  local model=''
+  model="$(find_device "${path}" | jq -cr '"\(.vendor) \(.model) \(.size)"')" || return 1
+
+  echo ""
+  echo "ALL DATA in ${model} [${path}],"
+  echo "will be irreversibly gone forever!"
+  confirm "Do you really want to proceed?" || return $?
+  [[ "${REPLY}" != "yes" ]] && return 0
+
+  # Unmount any mounted partitions of the disk
+  local parts=''
+  parts="$(grep -sE "${path}.*[0-9]+ " /proc/mounts | awk '{print $1}')"
+  
+  if [[ -n "${parts}" ]]; then
+    echo "Unmounting disk partition(s)..."
+
+    local part=''
+    while read -r part; do
+      unmount_device "${part}" || return 1
+    done <<< "${parts}"
+  fi
+
+  echo "Formatting the bootable disk..."
+
+  sudo wipefs --all --force --quiet "${path}" &&
+  sudo parted --script -a optimal -- "${path}" mklabel msdos &&
+  sudo parted --script -a optimal -- "${path}" mkpart primary fat32 1Mib 100% &&
+  sudo parted --script -- "${path}" align-check optimal 1 &&
+  sudo mkfs.fat -F 32 "${path}1"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to format the bootable disk"
+    return 2
+  fi
+
+  echo "Flashing archlinux installation files..."
+
+  sudo dd "if=${iso_file_path}" "of=${path}" bs=4M conv=fsync oflag=direct status=progress
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to flash installation files to ${path}"
+  fi
+
+  echo "Bootable disk ${path} is ready"
+}
+
 # Mounts a shared folder of the given host.
 # Globals:
 #  REPLY, HOME, UID
@@ -948,7 +1087,9 @@ show_help () {
     "eject device [<path>]" "Eject a disk block device." \
     "" "" \
     "mount share [<host>]" "Mount a shared folder." \
-    "unmount share [<uri>]" "Unmount a shared folder."
+    "unmount share [<uri>]" "Unmount a shared folder." \
+    "" "" \
+    "create bootable [<path>]" "Create a bootable archlinux installation drive."
 }
 
 loop () {
@@ -1013,6 +1154,11 @@ loop () {
       "eject")
         case "${cmd[1]}" in
           "device") eject_device "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "create")
+        case "${cmd[1]}" in
+          "bootable") create_bootable "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       *) echo "Invalid or unknown command";; 

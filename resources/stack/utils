@@ -356,3 +356,25 @@ get_hash () {
 
   echo "${value}" | md5sum | cut "-c1-${length}"
 }
+
+# Downloads the files with the given URL to the
+# the given directory.
+# Arguments:
+#  output: the output directory
+#  files:  a list of urls
+download () {
+  local output="${1}" && shift
+  local urls="${@}"
+
+  echo "Downloading files to ${output}:"
+  echo ${urls} | awk '{
+    for(i=1; i<=NF; i++) {
+      print " "$i
+    }
+  }'
+
+  local url=''
+  for url in ${urls}; do
+    wget -P "${output}" "${url}" -q --show-progress
+  done
+}
