@@ -162,7 +162,7 @@ confirm () {
 
   REPLY=''
   
-  local options="yes${KVS}Yes${AES}no${KVS}No"
+  local options="no${KVS}No${AES}yes${KVS}Yes"
 
   echo "${prompt}"
   REPLY="$(echo "${options}" |
