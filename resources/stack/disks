@@ -76,6 +76,31 @@ is_disk () {
 }
 
 # Checks if the block device with the given path
+# is a removable disk or not.
+# Arguments:
+#  path: the path of a block device
+# Returns:
+#  0 if it is a removable disk otherwise 1.
+is_removable_disk () {
+  local path="${1}"
+
+  local device=''
+  device="$(find_device "${path}")" || return 1
+
+  local type=''
+  type="$(echo "${device}" | jq -cr '.type')" || return 1
+
+  local is_removable=''
+  is_removable="$(echo "${device}" | jq -cr '.rm')" || return 1
+
+  if [[ "${type}" == "disk" ]] && [[ "${is_removable}" == "true" ]]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+# Checks if the block device with the given path
 # is a disk with system partitions.
 # Arguments:
 #  path: the path of a block device
@@ -770,24 +795,11 @@ eject_device () {
   if [[ ! -b "${path}" ]]; then
     echo "Invalid block device"
     return 2
-  fi
-
-  local device=''
-  device="$(find_device "${path}")" || return 1
-
-  local type=''
-  type="$(echo "${device}" | jq -cr '.type')" || return 1
-
-  if [[ "${type}" != "disk" ]]; then
-    echo "Not a disk block device"
-    return 2
-  fi
-
-  local is_removable=''
-  is_removable="$(echo "${device}" | jq -cr '.rm')" || return 1
-
-  if [[ "${is_removable}" != "true" ]]; then
+  elif ! is_removable_disk "${path}"; then
     echo "Not a removable disk block device"
+    return 2
+  elif is_system_disk "${path}"; then
+    echo "Cannot eject a system disk"
     return 2
   fi
 
@@ -810,7 +822,7 @@ eject_device () {
     echo "Unable to power off the device"
   fi
 
-  echo "Device power set to off"  
+  echo "Device ${path} power set to off"  
 }
 
 # Mounts a shared folder of the given host.
