@@ -747,10 +747,10 @@ format_device () {
   sudo parted --script -a optimal -- "${path}" mklabel msdos || return 1
 
   # Use ntfs as partition type for exfat file systems
-  local part_type="${fs_type}"
-  [[ "${part_type}" == "exfat" ]] && part_type="ntfs"
+  local part_fs_type="${fs_type}"
+  [[ "${part_fs_type}" == "exfat" ]] && part_fs_type="ntfs"
 
-  sudo parted --script -a optimal -- "${path}" mkpart primary "${part_type}" 1Mib 100% || return 1
+  sudo parted --script -a optimal -- "${path}" mkpart primary "${part_fs_type}" 1Mib 100% || return 1
   sudo parted --script -- "${path}" align-check optimal 1 || return 1
 
   # Add path postfix for nvme disks
