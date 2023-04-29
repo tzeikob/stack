@@ -725,7 +725,6 @@ format_device () {
   echo "ALL DATA in ${model} [${path}],"
   echo "will be irreversibly gone forever!"
   confirm "Do you really want to proceed?" || return $?
-  [[ -z "${REPLY}" ]] && return 0
   [[ "${REPLY}" != "yes" ]] && return 0
 
   # Unmount any mounted partitions of the disk
