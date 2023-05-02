@@ -124,6 +124,44 @@ is_system_disk () {
   fi
 }
 
+# Unmounts the partition with the given path.
+# Arguments:
+#  path: the path of a partition block device
+unmount_partition () {
+  local path="${1}"
+
+  sync &&
+  udisksctl unmount -b "${path}" &> /dev/null || return 1
+}
+
+# Unmounts the partitions of a disk with the
+# given path.
+# Arguments:
+#  path: the path of a disk block device
+unmount_disk_partitions () {
+  local path="${1}"
+
+  # Collect any disk's partitions currently mounted
+  local parts=''
+  parts="$(grep -sE "${path}.*[0-9]+ " /proc/mounts | awk '{print $1}')"
+  
+  if [[ -n "${parts}" ]]; then
+    local part=''
+    while read -r part; do
+      unmount_partition "${part}"
+
+      if [[ $? -eq 0 ]]; then
+        echo "Partition ${part} unmounted"
+      else
+        echo "Failed to unmount partition ${part}"
+        return 2
+      fi
+    done <<< "${parts}"
+  else
+    echo "No mounted partitions found"
+  fi
+}
+
 # Returns the list of shared folders of the given
 # host available in the local network.
 # Arguments:
@@ -678,7 +716,7 @@ unmount_device () {
     return 2
   fi
 
-  sync && udisksctl unmount -b "${path}" &> /dev/null
+  unmount_partition "${path}"
 
   if [[ $? -ne 0 ]]; then
     echo "Failed to unmount device"
@@ -727,17 +765,13 @@ format_device () {
   confirm "Do you really want to proceed?" || return $?
   [[ "${REPLY}" != "yes" ]] && return 0
 
-  # Unmount any mounted partitions of the disk
-  local parts=''
-  parts="$(grep -sE "${path}.*[0-9]+ " /proc/mounts | awk '{print $1}')"
-  
-  if [[ -n "${parts}" ]]; then
-    echo "Unmounting disk partitions..."
+  echo "Unmounting disk partitions..."
 
-    local part=''
-    while read -r part; do
-      unmount_device "${part}" || return 1
-    done <<< "${parts}"
+  unmount_disk_partitions "${path}"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to unmount disk partitions"
+    return 2
   fi
 
   sudo wipefs --all --force --quiet "${path}" || return 1
@@ -802,17 +836,13 @@ eject_device () {
     return 2
   fi
 
-  # Unmount any mounted partitions of the disk
-  local parts=''
-  parts="$(grep -sE "${path}.*[0-9]+ " /proc/mounts | awk '{print $1}')"
-  
-  if [[ -n "${parts}" ]]; then
-    echo "Unmounting disk partition(s)..."
+  echo "Unmounting disk partitions..."
 
-    local part=''
-    while read -r part; do
-      unmount_device "${part}" || return 1
-    done <<< "${parts}"
+  unmount_disk_partitions "${path}"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to unmount disk partitions"
+    return 2
   fi
 
   udisksctl power-off -b "${path}" &> /dev/null
@@ -920,17 +950,13 @@ create_bootable () {
   confirm "Do you really want to proceed?" || return $?
   [[ "${REPLY}" != "yes" ]] && return 0
 
-  # Unmount any mounted partitions of the disk
-  local parts=''
-  parts="$(grep -sE "${path}.*[0-9]+ " /proc/mounts | awk '{print $1}')"
-  
-  if [[ -n "${parts}" ]]; then
-    echo "Unmounting disk partition(s)..."
+  echo "Unmounting disk partitions..."
 
-    local part=''
-    while read -r part; do
-      unmount_device "${part}" || return 1
-    done <<< "${parts}"
+  unmount_disk_partitions "${path}"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to unmount disk partitions"
+    return 2
   fi
 
   echo "Formatting the bootable disk..."
