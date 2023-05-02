@@ -848,7 +848,7 @@ create_bootable () {
     return 2
   fi
 
-  confirm "Do you want to download the latest archlinux iso?" || return $?
+  confirm "Do you want to download the latest iso?" || return $?
   [[ -z "${REPLY}" ]] && return 0
 
   local iso_file_path=''
@@ -858,28 +858,22 @@ create_bootable () {
     local file='archlinux-x86_64.iso'
     local output="${HOME}/downloads"
 
+    local files=(
+      "${host}/iso/latest/b2sums.txt"
+      "${host}/iso/latest/${file}.sig"
+    )
+
     if [[ -f "${output}/${file}" ]]; then
-      echo "An existing archlinux iso file is found"
-      echo "Please clean ${output} and re-try"
-      return 2
+      echo "An existing iso file is found"
+    else
+      files+=("${host}/iso/latest/${file}")
     fi
 
-    if [[ -f "${output}/${file}.sig" ]]; then
-      echo "An existing archlinux sig file is found"
-      echo "Please clean ${output} and re-try"
-      return 2
-    fi
+    # Clean up signature and checksum files
+    rm -f "${output}/b2sums.txt"
+    rm -f "${output}/${file}.sig"
 
-    if [[ -f "${output}/b2sums.txt" ]]; then
-      echo "An existing archlinux checksums file is found"
-      echo "Please clean ${output} and re-try"
-      return 2
-    fi
-
-    download "${output}" \
-      "${host}/iso/latest/b2sums.txt" \
-      "${host}/iso/latest/${file}.sig" \
-      "${host}/iso/latest/${file}"
+    download "${output}" "${files[@]}"
 
     if [[ $? -ne 0 ]]; then
       echo "Unable to download archlinux files"
@@ -904,11 +898,11 @@ create_bootable () {
       return 2
     fi
 
-    iso_file_path="${output}/${file}"
-
     echo "Files have been verified successfully"
+
+    iso_file_path="${output}/${file}"
   else
-    ask "Enter the path to the archlinux iso file:" "^/.+" || return $?
+    ask "Enter the path to the iso file:" "^/.+" || return $?
     iso_file_path="${REPLY}"
   fi
 
