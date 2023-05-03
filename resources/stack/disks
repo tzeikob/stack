@@ -924,19 +924,32 @@ create_bootable () {
   local iso_file_path=''
 
   if [[ "${REPLY}" == "yes" ]]; then
-    local host='http://arch.phinau.de'
+    local hosts=''
+    hosts+='{"key": "http://arch.phinau.de/iso/latest", "value": "Germany [phinau.de]"},'
+    hosts+='{"key": "http://mirrors.acm.wpi.edu/archlinux/iso/latest", "value": "USA [acm.wpi.edu]"},'
+    hosts+='{"key": "https://mirror.kamtv.ru/archlinux/iso/latest", "value": "Russia [kamtv.ru]"},'
+    hosts+='{"key": "https://mirrors.bfsu.edu.cn/archlinux/iso/latest", "value": "China [bfsu.edu.cn]"},'
+    hosts+='{"key": "https://mirror.vishmak.in/archlinux/iso/latest", "value": "India [vishmak.in]"},'
+    hosts+='{"key": "http://archlinux.c3sl.ufpr.br/iso/latest", "value": "Brazil [c3sl.ufpr.br]"},'
+    hosts+='{"key": "https://mirror.aarnet.edu.au/pub/archlinux/iso/latest", "value": "Australia [aarnet.edu.au]"}'
+    hosts="[${hosts}]"
+
+    local host=''
+    pick_one "Select the mirror host:" "${hosts}" "vertical" || return $?
+    [[ -n "${REPLY}" ]] && host="${REPLY}" || return 0
+
     local file='archlinux-x86_64.iso'
     local output="${HOME}/downloads"
 
     local files=(
-      "${host}/iso/latest/b2sums.txt"
-      "${host}/iso/latest/${file}.sig"
+      "${host}/b2sums.txt"
+      "${host}/${file}.sig"
     )
 
     if [[ -f "${output}/${file}" ]]; then
       echo "An existing iso file is found"
     else
-      files+=("${host}/iso/latest/${file}")
+      files+=("${host}/${file}")
     fi
 
     # Clean up signature and checksum files
