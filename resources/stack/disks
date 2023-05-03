@@ -438,7 +438,7 @@ show_device () {
   parts+='\(.path) \(if .mountpoints != [null] then "\(.mountpoints) " else "" end)'
   parts+='\(.fstype|ascii_upcase) '
   parts+='\(if .label then .label else "" end)'
-  parts="Parts:         \([.children[]|\"${parts}\"]|join(\"\n              \"))"
+  parts="Parts:         \([.children[]|\"${parts}\"]|join(\"\n               \"))"
 
   local query=''
   query+='Name:          \(.name)\n'
@@ -1120,7 +1120,7 @@ show_help () {
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
   echo -e "\nCOMMANDS"
-  printf " %-35s %s\n" \
+  printf " %-28s %s\n" \
     "help" "Show this help message." \
     "" "" \
     "show status" "Show a report of disks and the file system." \
