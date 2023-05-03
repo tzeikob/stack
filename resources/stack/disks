@@ -111,7 +111,8 @@ is_system_disk () {
 
   local query=''
   query+='.children|if . and length>0'
-  query+=' then .[]|.mountpoint|if . then select(.|test("^(/|/home)$")) else "" end'
+  query+=' then .[]|.mountpoint|'
+  query+='  if . then select(.|test("^(/|/home|/boot|/var|/log|/swap)$")) else "" end'
   query+=' else "" end'
 
   local parts=''
@@ -382,13 +383,16 @@ prompt () {
 # Outputs:
 #  A list of disks and filesystem data.
 show_status () {
-  local query='.[]|select(.mountpoint == "/" or .mountpoint == "/home")|.path'
+  local query='.[]|'
+  query+='if .mountpoint '
+  query+=' then select(.mountpoint|test("^(/|/home|/boot|/var|/log|/swap)$"))|.path'
+  query+=' else "" end'
 
   local part_paths=''
   part_paths="$(find_devices "part" | jq -cer "${query}")" || return 1
 
   local query=''
-  query+='Partition:    \(.path):\(.mountpoint)\n'
+  query+='Partition:    \(.path) [\(.mountpoint)]\n'
   query+='File System:  \(.fstype|ascii_upcase) v\(.fsver)\n'
   query+='Total Size:   \(.size)\n'
   query+='Free Space:   \(.fsavail)\n'
@@ -770,14 +774,8 @@ unmount_device () {
   local mountpoint=''
   mountpoint="$(find_device "${path}" | jq -cer '.mountpoint')" || return 1
 
-  if [[ "${mountpoint}" == "/" ]]; then
-    echo "Cannot unmount root partition"
-    return 2
-  elif [[ "${mountpoint}" == "/home" ]]; then
-    echo "Cannot unmount home partition"
-    return 2
-  elif [[ "${mountpoint}" =~ ^/(var|log)$ ]]; then
-    echo "Cannot unmount ${mountpoint} partition"
+  if [[ "${mountpoint}" =~ ^(/|/home|/boot|/var|/log|/swap)$ ]]; then
+    echo "Cannot unmount system partition ${mountpoint}"
     return 2
   fi
 
