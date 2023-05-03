@@ -1174,8 +1174,8 @@ show_help () {
     "" "" \
     "mount device [<path>]" "Mount a partition or rom block device." \
     "unmount device [<path>]" "Unmount a partition or rom block device." \
-    "mount share [<host>]" "Mount a shared folder." \
-    "unmount share [<uri>]" "Unmount a shared folder." \
+    "mount folder [<host>]" "Mount a shared storage folder." \
+    "unmount folder [<uri>]" "Unmount a shared storage folder." \
     "" "" \
     "format disk [<path>]" "Format a disk block device." \
     "eject disk [<path>]" "Eject a removable disk block device." \
@@ -1228,13 +1228,13 @@ loop () {
       "mount")
         case "${cmd[1]}" in
           "device") mount_device "${cmd[2]}";;
-          "share") mount_shared_folder "${cmd[2]}" "${cmd[3]}";;
+          "folder") mount_shared_folder "${cmd[2]}" "${cmd[3]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       "unmount")
         case "${cmd[1]}" in
           "device") unmount_device "${cmd[2]}";;
-          "share") unmount_shared_folder "${cmd[2]}";;
+          "folder") unmount_shared_folder "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       "format")
