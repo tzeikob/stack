@@ -162,6 +162,71 @@ unmount_disk_partitions () {
   fi
 }
 
+# Re-creates the partition table and removes any
+# existing partitions on the disk block device with
+# the given path.
+# Arguments:
+#  path: the path of a disk block device
+clean_partitions () {
+  local path="${1}"
+
+  sudo wipefs --all --force --quiet "${path}" &&
+  sudo parted --script -a optimal -- "${path}" mklabel msdos || return 1
+}
+
+# Creates a primary partition to the disk block
+# device with the given path.
+# Arguments:
+#  path:    the path of a block disk device
+#  fs_type: the fs type of the partition
+#  start:   the start of the partition
+#  end:     the end of the partition
+create_partition () {
+  local path="${1}"
+  local fs_type="${2}"
+  local start="${3}"
+  local end="${4}"
+
+  # Use ntfs as fs type for exfat file systems
+  [[ "${fs_type}" == "exfat" ]] && fs_type="ntfs"
+  
+  sudo parted --script -a optimal -- "${path}" mkpart primary "${fs_type}" "${start}" "${end}" &&
+  sudo parted --script -- "${path}" align-check optimal 1 || return 1
+}
+
+# Formats the i-th partition of the disk block
+# device with the given path.
+# Arguments:
+#  path:    the path of a disk block device
+#  index:   the index of the partition to format
+#  fs_type: the fs type of the partition
+#  label:   the label of the partition
+format_partition () {
+  local path="${1}"
+  local index="${2}"
+  local fs_type="${3}"
+  local label="${4}"
+
+  # Add path postfix for nvme disks
+  if [[ "${path}" =~ ^/dev/nvme ]]; then
+    path="${path}p"
+  fi
+
+  case "${fs_type}" in
+    "ext2") sudo mkfs.ext2 -L "${label}" "${path}${index}" | awk NF;;
+    "ext3") sudo mkfs.ext3 -L "${label}" "${path}${index}" | awk NF;;
+    "ext4") sudo mkfs.ext4 -L "${label}" "${path}${index}" | awk NF;;
+    "ntfs") sudo mkfs.ntfs -f -L "${label}" "${path}${index}" | awk NF;;
+    "exfat") sudo mkfs.exfat -L "${label}" "${path}${index}" | awk NF;;
+    "fat32") sudo mkfs.fat -F 32 -n "${label}" "${path}${index}" | awk NF;;
+    *) return 1;;
+  esac
+
+  if [[ $? -ne 0 ]]; then
+    return 1
+  fi
+}
+
 # Returns the list of shared folders of the given
 # host available in the local network.
 # Arguments:
@@ -766,43 +831,18 @@ format_device () {
   [[ "${REPLY}" != "yes" ]] && return 0
 
   echo "Unmounting disk partitions..."
+  unmount_disk_partitions "${path}" || return 1
 
-  unmount_disk_partitions "${path}"
+  echo "Cleaning disk partitions..."
+  clean_partitions "${path}" &&
+  echo "Partition table is ready" || return 1
 
-  if [[ $? -ne 0 ]]; then
-    echo "Failed to unmount disk partitions"
-    return 2
-  fi
+  echo "Creating disk partition..."
+  create_partition "${path}" "${fs_type}" "1Mib" "100%" &&
+  echo "Primary partition created" || return 1
 
-  sudo wipefs --all --force --quiet "${path}" || return 1
-
-  echo "All partitions and data wiped out"
-
-  sudo parted --script -a optimal -- "${path}" mklabel msdos || return 1
-
-  # Use ntfs as partition type for exfat file systems
-  local part_fs_type="${fs_type}"
-  [[ "${part_fs_type}" == "exfat" ]] && part_fs_type="ntfs"
-
-  sudo parted --script -a optimal -- "${path}" mkpart primary "${part_fs_type}" 1Mib 100% || return 1
-  sudo parted --script -- "${path}" align-check optimal 1 || return 1
-
-  # Add path postfix for nvme disks
-  if [[ "${path}" =~ ^/dev/nvme ]]; then
-    path="${path}p"
-  fi
-
-  echo "Applying the new file system..."
-
-  case "${fs_type}" in
-    "ext2") sudo mkfs.ext2 -L "${label}" "${path}1" | awk NF;;
-    "ext3") sudo mkfs.ext3 -L "${label}" "${path}1" | awk NF;;
-    "ext4") sudo mkfs.ext4 -L "${label}" "${path}1" | awk NF;;
-    "ntfs") sudo mkfs.ntfs -f -L "${label}" "${path}1" | awk NF;;
-    "exfat") sudo mkfs.exfat -L "${label}" "${path}1" | awk NF;;
-    "fat32") sudo mkfs.fat -F 32 -n "${label}" "${path}1" | awk NF;;
-    *) echo "Unknown file system type" && return 2;;
-  esac
+  echo "Formatting disk partition..."
+  format_partition "${path}" "1" "${fs_type}" "${label}"
 
   if [[ $? -ne 0 ]]; then
     echo "Failed to format device ${path}"
@@ -951,33 +991,25 @@ create_bootable () {
   [[ "${REPLY}" != "yes" ]] && return 0
 
   echo "Unmounting disk partitions..."
+  unmount_disk_partitions "${path}" || return 1
 
-  unmount_disk_partitions "${path}"
+  echo "Cleaning disk partitions..."
+  clean_partitions "${path}" &&
+  echo "Partition table is ready" || return 1
 
-  if [[ $? -ne 0 ]]; then
-    echo "Failed to unmount disk partitions"
-    return 2
-  fi
+  echo "Creating disk partition..."
+  create_partition "${path}" "fat32" "1Mib" "100%" &&
+  echo "Primary partition created" || return 1
 
   echo "Formatting the bootable disk..."
+  format_partition "${path}" "1" "fat32" || return 1
 
-  sudo wipefs --all --force --quiet "${path}" &&
-  sudo parted --script -a optimal -- "${path}" mklabel msdos &&
-  sudo parted --script -a optimal -- "${path}" mkpart primary fat32 1Mib 100% &&
-  sudo parted --script -- "${path}" align-check optimal 1 &&
-  sudo mkfs.fat -F 32 "${path}1"
-
-  if [[ $? -ne 0 ]]; then
-    echo "Failed to format the bootable disk"
-    return 2
-  fi
-
-  echo "Flashing archlinux installation files..."
+  echo "Flashing installation files..."
 
   sudo dd "if=${iso_file_path}" "of=${path}" bs=4M conv=fsync oflag=direct status=progress
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to flash installation files to ${path}"
+    echo "Failed to flash installation files"
   fi
 
   echo "Bootable disk ${path} is ready"
