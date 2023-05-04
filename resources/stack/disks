@@ -213,8 +213,8 @@ format_partition () {
   local fs_type="${3}"
   local label="${4}"
 
-  # Add path postfix for nvme disks
-  if [[ "${path}" =~ ^/dev/nvme ]]; then
+  # Add path postfix for nvme and mmcblk disks
+  if [[ "${path}" =~ ^/dev/(nvme|mmcblk) ]]; then
     path="${path}p"
   fi
 
