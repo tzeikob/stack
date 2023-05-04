@@ -69,31 +69,6 @@ is_type_of () {
 }
 
 # Checks if the block device with the given path
-# is a removable disk or not.
-# Arguments:
-#  path: the path of a block device
-# Returns:
-#  0 if it is a removable disk otherwise 1.
-is_removable_disk () {
-  local path="${1}"
-
-  local device=''
-  device="$(find_device "${path}")" || return 1
-
-  local type=''
-  type="$(echo "${device}" | jq -cr '.type')" || return 1
-
-  local is_removable=''
-  is_removable="$(echo "${device}" | jq -cr '.rm')" || return 1
-
-  if [[ "${type}" == "disk" ]] && [[ "${is_removable}" == "true" ]]; then
-    return 0
-  else
-    return 1
-  fi
-}
-
-# Checks if the block device with the given path
 # is a disk with system partitions.
 # Arguments:
 #  path: the path of a block device
