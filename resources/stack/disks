@@ -841,7 +841,8 @@ format_disk () {
   [[ -n "${REPLY}" ]] && fs_type="${REPLY}" || return 0
 
   local model=''
-  model="$(find_device "${path}" | jq -cr '"\(.vendor) \(.model) \(.size)"')" || return 1
+  model="$(find_device "${path}" |
+    jq -cr '"\(.vendor|gsub("^\\s+|\\s+$";"")) \(.model) \(.size)"')" || return 1
 
   echo "ALL DATA in ${model} [${path}],"
   echo "will be irreversibly gone forever!"
