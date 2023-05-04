@@ -4,10 +4,10 @@ set -o pipefail
 source /opt/stack/utils
 
 # Returns the list of block devices of the given
-# types being in the given status.
+# type and the optionally given mounting status.
 # Arguments:
-#  type:   a comma-sep list of disk, part, rom or all
-#  status: mounted, unmounted or all
+#  type:   disk, part or rom
+#  status: mounted or unmounted
 # Outputs:
 #  A json array list of block device objects.
 find_devices () {
@@ -16,15 +16,8 @@ find_devices () {
 
   local query='.blockdevices[]'
 
-  if [[ -n "${type}" ]] && [[ "${type}" != "all" ]]; then
-    query+="$(echo "${type}" | awk -F',' '{
-      criteria=""
-      for (i=1; i<=NF; i++) {
-        if (i > 1) criteria=criteria " or "
-        criteria=criteria "(.type == \"" $i "\")"
-      }
-      print "|select(" criteria ")"
-    }')"
+  if [[ -n "${type}" ]]; then
+    query+="|select(.type == \"${type}\")"
   fi
   
   if [[ "${status}" == "mounted" ]]; then
@@ -265,8 +258,8 @@ find_shared_folders () {
 # Globals:
 #  REPLY
 # Arguments:
-#  type:   a comma-sep list of disk, part, rom or all
-#  status: mounted, unmounted or all
+#  type:   disk, part or rom
+#  status: mounted, unmounted
 # Outputs:
 #  A menu of block devices.
 pick_device () {
@@ -277,7 +270,7 @@ pick_device () {
   devices="$(find_devices "${type}" "${status}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find block devices"
+    echo "Unable to find ${type} block devices"
     return 2
   fi
 
@@ -285,7 +278,7 @@ pick_device () {
   len="$(count "${devices}")" || return 1
   
   if [[ ${len} -eq 0 ]]; then
-    echo "No block devices have found"
+    echo "No ${type} block devices have found"
     return 2
   fi
 
@@ -300,7 +293,7 @@ pick_device () {
 
   devices="$(echo "${devices}" | jq -cer "${query}")" || return 1
 
-  pick_one "Select a block device:" "${devices}" "vertical" || return $?
+  pick_one "Select a ${type} block device:" "${devices}" "vertical" || return $?
 }
 
 # Shows a menu asking the user to select one host, where the
@@ -675,21 +668,33 @@ list_shares () {
   echo "${folders}" | jq -cer "${query}" || return 1
 }
 
-# Shows the list of mounted devices and shared folders.
+# Shows the list of mounted block devices and
+# shared folders.
 # Globals:
 #  UID
 # Arguments:
 #  None
 # Outputs:
-#  A list of mounted devices and shared folders.
+#  A list of mounted block devices and shared folders.
 list_mounts () {
-  local devices=''
-  devices="$(find_devices "part,rom" "mounted")"
+  local parts=''
+  parts="$(find_devices "part" "mounted")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to read mounted block devices"
+    echo "Unable to read partition block devices"
     return 2
   fi
+
+  local roms=''
+  roms="$(find_devices "rom" "mounted")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to read rom block devices"
+    return 2
+  fi
+
+  local devices=''
+  devices="$(echo "${parts}" | jq -cer --argjson r "${roms}" '. + $r')" || return 1
 
   local folders=''
   folders="$(ls "/run/user/${UID}/gvfs" | awk -v id="${UID}" '{
@@ -698,7 +703,7 @@ list_mounts () {
   }')"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to read mounted shared folders"
+    echo "Unable to read shared folders"
     return 2
   fi
 
@@ -729,20 +734,27 @@ list_mounts () {
 # Globals:
 #  REPLY, HOME, USER
 # Arguments:
+#  type: part or rom
 #  path: the path of a block device
 mount_device () {
-  local path="${1}"
+  local type="${1}"
+  local path="${2}"
+
+  if [[ ! "${type}" =~ ^(part|rom)$ ]]; then
+    echo "Invalid block device type"
+    return 2
+  fi
 
   if [[ -z "${path}" ]]; then
-    pick_device 'part,rom' "unmounted" || return $?
+    pick_device "${type}" "unmounted" || return $?
     [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
   fi
 
   if [[ ! -b "${path}" ]]; then
     echo "Invalid block device"
     return 2
-  elif is_type_of "${path}" "disk"; then
-    echo "Not mountable block device"
+  elif ! is_type_of "${path}" "${type}"; then
+    echo "Invalid ${type} block device"
     return 2
   elif grep -qs "${path} " /proc/mounts; then
     echo "Block device ${path} is already mounted"
@@ -770,20 +782,27 @@ mount_device () {
 # Globals:
 #  REPLY, HOME, USER
 # Arguments:
+#  type: part or rom
 #  path: the path of a block device
 unmount_device () {
-  local path="${1}"
+  local type="${1}"
+  local path="${2}"
+
+  if [[ ! "${type}" =~ ^(part|rom)$ ]]; then
+    echo "Invalid block device type"
+    return 2
+  fi
 
   if [[ -z "${path}" ]]; then
-    pick_device 'part,rom' "mounted" || return $?
+    pick_device "${type}" "mounted" || return $?
     [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
   fi
 
   if [[ ! -b "${path}" ]]; then
     echo "Invalid block device"
     return 2
-  elif is_type_of "${path}" "disk"; then
-    echo "Not mountable block device"
+  elif ! is_type_of "${path}" "${type}"; then
+    echo "Invalid ${type} block device"
     return 2
   elif ! grep -qs "${path} " /proc/mounts; then
     echo "Block device ${path} is not mounted"
@@ -1150,7 +1169,7 @@ show_help () {
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
   echo -e "\nCOMMANDS"
-  printf " %-28s %s\n" \
+  printf " %-32s %s\n" \
     "help" "Show this help message." \
     "" "" \
     "show status" "Show a report of the file system." \
@@ -1161,12 +1180,12 @@ show_help () {
     "" "" \
     "list disks" "List all disk block devices." \
     "list partitions" "List all partition block devices." \
-    "list roms" "List all optical drive block devices." \
+    "list roms" "List all optical block devices." \
     "list shares [<host>]" "List the shared folders of a host." \
     "list mounts" "List all mounting points." \
     "" "" \
-    "mount device [<path>]" "Mount a partition or rom block device." \
-    "unmount device [<path>]" "Unmount a partition or rom block device." \
+    "mount partition|rom [<path>]" "Mount a partition or optical block device." \
+    "unmount partition|rom [<path>]" "Unmount a partition or optical block device." \
     "mount folder [<host>]" "Mount a shared storage folder." \
     "unmount folder [<uri>]" "Unmount a shared storage folder." \
     "" "" \
@@ -1220,13 +1239,15 @@ loop () {
         esac;;
       "mount")
         case "${cmd[1]}" in
-          "device") mount_device "${cmd[2]}";;
+          "partition") mount_device "part" "${cmd[2]}";;
+          "rom") mount_device "rom" "${cmd[2]}";;
           "folder") mount_shared_folder "${cmd[2]}" "${cmd[3]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       "unmount")
         case "${cmd[1]}" in
-          "device") unmount_device "${cmd[2]}";;
+          "partition") unmount_device "part" "${cmd[2]}";;
+          "rom") unmount_device "rom" "${cmd[2]}";;
           "folder") unmount_shared_folder "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
