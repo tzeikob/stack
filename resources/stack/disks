@@ -109,11 +109,29 @@ is_system_disk () {
   fi
 }
 
-# Unmounts the partition block device with
-# the given path.
+# Mounts the block device with the given path.
+# Globals:
+#  HOME, USER
 # Arguments:
-#  path: the path of a partition block device
-unmount_partition () {
+#  path: the path of a block device
+mount_device () {
+  local path="${1}"
+
+  udisksctl mount -b "${path}" &> /dev/null || return 1
+
+  # Create symlink of local mount folder
+  local local_home="${HOME}/mount/local"
+
+  if [[ -d "/run/media/${USER}" ]] && [[ ! -L "${local_home}" ]]; then
+    mkdir -p "${local_home}"
+    ln -s "/run/media/${USER}" "${local_home}"
+  fi
+}
+
+# Unmounts the block device with the given path.
+# Arguments:
+#  path: the path of a mountable block device
+unmount_device () {
   local path="${1}"
 
   sync &&
@@ -134,7 +152,7 @@ unmount_partitions () {
   if [[ -n "${parts}" ]]; then
     local part=''
     while read -r part; do
-      unmount_partition "${part}"
+      unmount_device "${part}"
 
       if [[ $? -eq 0 ]]; then
         echo "Partition ${part} unmounted"
@@ -964,82 +982,101 @@ list_mounts () {
   fi
 }
 
-# Mounts the block device with the given path.
+# Mounts the partition block device with the given path.
 # Globals:
-#  REPLY, HOME, USER
+#  REPLY
 # Arguments:
-#  type: part or rom
-#  path: the path of a block device
-mount_device () {
-  local type="${1}"
-  local path="${2}"
-
-  if [[ ! "${type}" =~ ^(part|rom)$ ]]; then
-    echo "Invalid block device type"
-    return 2
-  fi
+#  path: the path of a partition block device
+mount_partition () {
+  local path="${1}"
 
   if [[ -z "${path}" ]]; then
-    pick_device "${type}" "unmounted" || return $?
+    pick_device "disk" || return $?
+    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
+
+    pick_partition "${path}" "unmounted" || return $?
     [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
   fi
 
   if [[ ! -b "${path}" ]]; then
     echo "Invalid block device"
     return 2
-  elif ! is_type_of "${path}" "${type}"; then
-    echo "Invalid ${type} block device"
+  elif ! is_type_of "${path}" "part"; then
+    echo "Invalid part block device"
     return 2
   elif grep -qs "${path} " /proc/mounts; then
     echo "Block device ${path} is already mounted"
     return 2
   fi
-  
-  udisksctl mount -b "${path}" &> /dev/null
+
+  mount_device "${path}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to mount block device"
+    echo "Failed to mount part block device"
     return 2
   fi
 
-  echo "Block device ${path} has been mounted"
-
-  local local_home="${HOME}/mount/local"
-
-  if [[ -d "/run/media/${USER}" ]] && [[ ! -L "${local_home}" ]]; then
-    mkdir -p "${local_home}"
-    ln -s "/run/media/${USER}" "${local_home}"
-  fi
+  echo "Part block device ${path} has been mounted"
 }
 
-# Unmounts the block device with the given path.
+# Mounts the rom block device with the given path.
 # Globals:
-#  REPLY, HOME, USER
+#  REPLY
 # Arguments:
-#  type: part or rom
-#  path: the path of a block device
-unmount_device () {
-  local type="${1}"
-  local path="${2}"
-
-  if [[ ! "${type}" =~ ^(part|rom)$ ]]; then
-    echo "Invalid block device type"
-    return 2
-  fi
+#  path: the path of a rom block device
+mount_rom () {
+  local path="${1}"
 
   if [[ -z "${path}" ]]; then
-    pick_device "${type}" "mounted" || return $?
+    pick_device "rom" "unmounted" || return $?
     [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
   fi
 
   if [[ ! -b "${path}" ]]; then
     echo "Invalid block device"
     return 2
-  elif ! is_type_of "${path}" "${type}"; then
-    echo "Invalid ${type} block device"
+  elif ! is_type_of "${path}" "rom"; then
+    echo "Invalid rom block device"
+    return 2
+  elif grep -qs "${path} " /proc/mounts; then
+    echo "Block device ${path} is already mounted"
+    return 2
+  fi
+
+  mount_device "${path}"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to mount rom block device"
+    return 2
+  fi
+
+  echo "Rom Block device ${path} has been mounted"
+}
+
+# Unmounts the partition block device with the given path.
+# Globals:
+#  REPLY, HOME, USER
+# Arguments:
+#  path: the path of a partition block device
+unmount_partition () {
+  local path="${1}"
+
+  if [[ -z "${path}" ]]; then
+    pick_device "disk" || return $?
+    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
+
+    pick_partition "${path}" "mounted" || return $?
+    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
+  fi
+
+  if [[ ! -b "${path}" ]]; then
+    echo "Invalid block device"
+    return 2
+  elif ! is_type_of "${path}" "part"; then
+    echo "Invalid part block device"
     return 2
   elif ! grep -qs "${path} " /proc/mounts; then
-    echo "Block device ${path} is not mounted"
+    echo "Part block device ${path} is not mounted"
     return 2
   fi
 
@@ -1051,14 +1088,48 @@ unmount_device () {
     return 2
   fi
 
-  unmount_partition "${path}"
+  unmount_device "${path}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to unmount block device"
+    echo "Failed to unmount part block device"
     return 2
   fi
 
-  echo "Block device ${path} has been unmounted"
+  echo "Part block device ${path} has been unmounted"
+}
+
+# Unmounts the rom block device with the given path.
+# Globals:
+#  REPLY, HOME, USER
+# Arguments:
+#  path: the path of a rom block device
+unmount_rom () {
+  local path="${1}"
+
+  if [[ -z "${path}" ]]; then
+    pick_device "rom" "mounted" || return $?
+    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
+  fi
+
+  if [[ ! -b "${path}" ]]; then
+    echo "Invalid block device"
+    return 2
+  elif ! is_type_of "${path}" "rom"; then
+    echo "Invalid rom block device"
+    return 2
+  elif ! grep -qs "${path} " /proc/mounts; then
+    echo "Rom block device ${path} is not mounted"
+    return 2
+  fi
+
+  unmount_device "${path}"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to unmount rom block device"
+    return 2
+  fi
+
+  echo "Rom block device ${path} has been unmounted"
 }
 
 # Formats the disk block device with the given path,
@@ -1418,8 +1489,10 @@ show_help () {
     "list shares [<host>]" "List the shared folders of a host." \
     "list mounts" "List all mounting points." \
     "" "" \
-    "mount partition|rom [<path>]" "Mount a partition or optical block device." \
-    "unmount partition|rom [<path>]" "Unmount a partition or optical block device." \
+    "mount partition [<path>]" "Mount a partition block device." \
+    "unmount partition [<path>]" "Unmount a partition block device." \
+    "mount rom [<path>]" "Mount an optical block device." \
+    "unmount rom [<path>]" "Unmount an optical block device." \
     "mount folder [<host>]" "Mount a shared storage folder." \
     "unmount folder [<uri>]" "Unmount a shared storage folder." \
     "" "" \
@@ -1473,15 +1546,15 @@ loop () {
         esac;;
       "mount")
         case "${cmd[1]}" in
-          "partition") mount_device "part" "${cmd[2]}";;
-          "rom") mount_device "rom" "${cmd[2]}";;
+          "partition") mount_partition "${cmd[2]}";;
+          "rom") mount_rom "${cmd[2]}";;
           "folder") mount_shared_folder "${cmd[2]}" "${cmd[3]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       "unmount")
         case "${cmd[1]}" in
-          "partition") unmount_device "part" "${cmd[2]}";;
-          "rom") unmount_device "rom" "${cmd[2]}";;
+          "partition") unmount_partition "${cmd[2]}";;
+          "rom") unmount_rom "${cmd[2]}";;
           "folder") unmount_shared_folder "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
