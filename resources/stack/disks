@@ -283,6 +283,51 @@ pick_device () {
   pick_one "Select a ${type} block device:" "${devices}" "vertical" || return $?
 }
 
+# Shows a menu asking the user to select one partition
+# block device of the disk with the given path, where
+# the answer is kept in the global
+# var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  path:   the path of a disk block device
+#  status: mounted, unmounted
+# Outputs:
+#  A menu of partition block devices.
+pick_partition () {
+  local path="${1}"
+  local status="${2}"
+
+  local devices=''
+  devices="$(find_partitions "${path}" "${status}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to find part block devices"
+    return 2
+  fi
+
+  local len=0
+  len="$(count "${devices}")" || return 1
+  
+  if [[ ${len} -eq 0 ]]; then
+    echo "No partition block devices have found"
+    return 2
+  fi
+
+  local value=''
+  value+='\(.path) ['
+  value+='\(if .vendor then "\(.vendor|gsub("^\\s+|\\s+$";"")) " else "" end)'
+  value+='\(if .label then "\(.label) " else "" end)'
+  value+='\(.size)]'
+
+  local query=''
+  query="[.[]|{key: .path, value: \"${value}\"}]"
+
+  devices="$(echo "${devices}" | jq -cer "${query}")" || return 1
+
+  pick_one "Select a partition block device:" "${devices}" "vertical" || return $?
+}
+
 # Shows a menu asking the user to select one host, where the
 # answer is kept in the global var REPLY.
 # Globals:
@@ -403,28 +448,153 @@ show_status () {
   }' || return 1
 }
 
-# Shows the data of the block device with the given path.
+# Shows the data of the disk block device with
+# the given path.
 # Globals:
 #  REPLY
 # Arguments:
-#  type: disk, part or rom
-#  path: the path of a block device
+#  path: the path of a disk block device
 # Outputs:
-#  A long text of block device data.
-show_device () {
-  local type="${1}"
-  local path="${2}"
+#  A long text of disk block device data.
+show_disk () {
+  local path="${1}"
 
   if [[ -z "${path}" ]]; then
-    pick_device "${type}" || return $?
+    pick_device "disk" || return $?
     [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
   fi
 
   if [[ ! -b "${path}" ]]; then
     echo "Invalid block device"
     return 2
-  elif ! is_type_of "${path}" "${type}"; then
-    echo "Invalid ${type} block device"
+  elif ! is_type_of "${path}" "disk"; then
+    echo "Invalid disk block device"
+    return 2
+  fi
+
+  local parts=''
+  parts+='\(.path) \(.mountpoints|if . != [null] then "\(.) " else "" end)'
+  parts+='\(.fstype|if . then .|ascii_upcase else "" end) '
+  parts+='\(.label|if . then . else "" end)'
+  parts="Parts:         \([.children[]|\"${parts}\"]|join(\"\n               \"))"
+
+  local query=''
+  query+='Name:          \(.name)\n'
+  query+='Path:          \(.path)\n'
+  query+='Type:          \(.type)\n'
+  query+='\(if .fstype then "File System:   \(.fstype|ascii_upcase)\n" else "" end)'
+  query+='\(if .fsver then "File Version:  \(.fsver)\n" else "" end)'
+  query+='Removable:     \(.rm)\n'
+  query+='ReadOnly:      \(.ro)\n'
+  query+='\(if .tran then "Transfer:      \(.tran)\n" else "" end)'
+  query+='HotPlug:       \(.hotplug)\n'
+  query+='Size:          \(.size)'
+  query+='\(if .fsavail then "\nFree Space:    \(.fsavail)" else "" end)'
+  query+='\(if .fsused then "\nUsed Space:    \(.fsused) [\(."fsuse%")]" else "" end)'
+  query+='\(if .label then "\nLabel:         \(.label)" else "" end)'
+  query+='\(if .uuid then "\nUUID:          \(.uuid)" else "" end)'
+  query+='\(if .vendor then "\nVendor:        \(.vendor)" else "" end)'
+  query+='\(if .model then "\nModel:         \(.model)" else "" end)'
+  query+='\(if .rev then "\nRevision:      \(.rev)" else "" end)'
+  query+='\(if .serial then "\nSerial:        \(.serial)" else "" end)'
+  query+='\(if .state then "\nState:         \(.state)" else "" end)'
+  query+='\(if .mountpoint then "\nMount:         \(.mountpoint)" else "" end)'
+  query+='\(if .mountpoints != [null] then "\nMounts:        \(.mountpoints)" else "" end)'
+  query+="\(if .children then \"\n${parts}\" else \"\" end)"
+
+  find_device "${path}" | jq -cer "\"${query}\""
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to read disk block device"
+    return 2
+  fi
+}
+
+# Shows the data of the partition block device.
+# Globals:
+#  REPLY
+# Arguments:
+#  path: the path of a partition block device
+# Outputs:
+#  A long text of partition block device data.
+show_partition () {
+  local path="${1}"
+
+  if [[ -z "${path}" ]]; then
+    pick_device "disk" || return $?
+    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
+
+    pick_partition "${path}" || return $?
+    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
+  fi
+
+  if [[ ! -b "${path}" ]]; then
+    echo "Invalid block device"
+    return 2
+  elif ! is_type_of "${path}" "part"; then
+    echo "Invalid part block device"
+    return 2
+  fi
+
+  local parts=''
+  parts+='\(.path) \(.mountpoints|if . != [null] then "\(.) " else "" end)'
+  parts+='\(.fstype|if . then .|ascii_upcase else "" end) '
+  parts+='\(.label|if . then . else "" end)'
+  parts="Parts:         \([.children[]|\"${parts}\"]|join(\"\n               \"))"
+
+  local query=''
+  query+='Name:          \(.name)\n'
+  query+='Path:          \(.path)\n'
+  query+='Type:          \(.type)\n'
+  query+='\(if .fstype then "File System:   \(.fstype|ascii_upcase)\n" else "" end)'
+  query+='\(if .fsver then "File Version:  \(.fsver)\n" else "" end)'
+  query+='Removable:     \(.rm)\n'
+  query+='ReadOnly:      \(.ro)\n'
+  query+='\(if .tran then "Transfer:      \(.tran)\n" else "" end)'
+  query+='HotPlug:       \(.hotplug)\n'
+  query+='Size:          \(.size)'
+  query+='\(if .fsavail then "\nFree Space:    \(.fsavail)" else "" end)'
+  query+='\(if .fsused then "\nUsed Space:    \(.fsused) [\(."fsuse%")]" else "" end)'
+  query+='\(if .label then "\nLabel:         \(.label)" else "" end)'
+  query+='\(if .uuid then "\nUUID:          \(.uuid)" else "" end)'
+  query+='\(if .vendor then "\nVendor:        \(.vendor)" else "" end)'
+  query+='\(if .model then "\nModel:         \(.model)" else "" end)'
+  query+='\(if .rev then "\nRevision:      \(.rev)" else "" end)'
+  query+='\(if .serial then "\nSerial:        \(.serial)" else "" end)'
+  query+='\(if .state then "\nState:         \(.state)" else "" end)'
+  query+='\(if .mountpoint then "\nMount:         \(.mountpoint)" else "" end)'
+  query+='\(if .mountpoints != [null] then "\nMounts:        \(.mountpoints)" else "" end)'
+  query+="\(if .children then \"\n${parts}\" else \"\" end)"
+
+  find_device "${path}" | jq -cer "\"${query}\""
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to read block device data"
+    return 2
+  fi
+}
+
+# Shows the data of the rom block device with
+# the given path.
+# Globals:
+#  REPLY
+# Arguments:
+#  path: the path of a rom block device
+# Outputs:
+#  A long text of rom block device data.
+show_rom () {
+  local path="${1}"
+
+  if [[ -z "${path}" ]]; then
+    pick_device "rom" || return $?
+    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
+  fi
+
+  if [[ ! -b "${path}" ]]; then
+    echo "Invalid block device"
+    return 2
+  elif ! is_type_of "${path}" "rom"; then
+    echo "Invalid rom block device"
     return 2
   fi
 
@@ -1296,9 +1466,9 @@ loop () {
       "show")
         case "${cmd[1]}" in
           "status") show_status;;
-          "disk") show_device "disk" "${cmd[2]}";;
-          "partition") show_device "part" "${cmd[2]}";;
-          "rom") show_device "rom" "${cmd[2]}";;
+          "disk") show_disk "${cmd[2]}";;
+          "partition") show_partition "${cmd[2]}";;
+          "rom") show_rom "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       "mount")
