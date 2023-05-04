@@ -1552,7 +1552,7 @@ loop () {
         case "${cmd[1]}" in
           "partition") mount_partition "${cmd[2]}";;
           "rom") mount_rom "${cmd[2]}";;
-          "folder") mount_shared_folder "${cmd[2]}" "${cmd[3]}";;
+          "folder") mount_shared_folder "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       "unmount")
