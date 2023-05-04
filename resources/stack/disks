@@ -932,9 +932,6 @@ create_bootable () {
   elif ! is_type_of "${path}" "disk"; then
     echo "Not a disk block device"
     return 2
-  elif ! is_removable_disk "${path}"; then
-    echo "Not a removable disk block device"
-    return 2
   fi
 
   confirm "Do you want to download the latest iso?" || return $?
