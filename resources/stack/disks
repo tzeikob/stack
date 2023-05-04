@@ -30,6 +30,22 @@ find_devices () {
   lsblk -J -o "${fields}" | jq -cer "${query}" || return 1
 }
 
+# Returns the list of partitions of the disk
+# block device with the given path.
+# Arguments:
+#  path:   the path of a disk block device
+#  status: mounted, unmounted
+# Outputs:
+#  A json array of partition block device objects.
+find_partitions () {
+  local path="${1}"
+  local status="${2}"
+
+  local query="[.[]|select(.path|test(\"^${path}\"))]"
+
+  find_devices "part" "${status}" | jq -cer "${query}" || return 1
+}
+
 # Returns the block device with the given path.
 # Arguments:
 #  path: the path of a block device
@@ -549,24 +565,17 @@ scan_disk () {
   fi
 }
 
-# Shows the list of block devices of the given type.
+# Shows the list of disk block devices.
 # Arguments:
-#  type: disk, part or rom
+#  None
 # Outputs:
-#  A list of block devices.
-list_devices () {
-  local type="${1}"
-
-  if [[ ! "${type}" =~ ^(disk|part|rom)$ ]]; then
-    echo "Invalid block device type"
-    return 2
-  fi
-
+#  A list of disk block devices.
+list_disks () {
   local devices=''
-  devices="$(find_devices "${type}")"
+  devices="$(find_devices "disk")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to read ${type} block devices"
+    echo "Unable to read disk block devices"
     return 2
   fi
 
@@ -574,7 +583,91 @@ list_devices () {
   len="$(count "${devices}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No ${type} block devices have found"
+    echo "No disk block devices have found"
+    return 0
+  fi
+
+  local query=''
+  query+='Path:    \(.path)\n'
+  query+='Type:    \(.type)\n'
+  query+='Size:    \(.size)'
+  query+='\(if .vendor then "\nVendor:  \(.vendor)" else "" end)'
+  query+='\(if .model then "\nModel:   \(.model)" else "" end)'
+  query+='\(if .label then "\nLabel:   \(.label)" else "" end)'
+  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+
+  echo "${devices}" | jq -cer "${query}" || return 1
+}
+
+# Shows the list of partitions of the disk block device
+# with the given path.
+# Arguments:
+#  path: the path of a disk block device
+# Outputs:
+#  A list of parition block devices.
+list_partitions () {
+  local path="${1}"
+
+  if [[ -z "${path}" ]]; then
+    pick_device "disk" || return $?
+    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
+  fi
+
+  if [[ ! -b "${path}" ]]; then
+    echo "Invalid block device"
+    return 2
+  elif ! is_type_of "${path}" "disk"; then
+    echo "Invalid disk block device"
+    return 2
+  fi
+
+  local devices=''
+  devices="$(find_partitions "${path}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to read part block devices"
+    return 2
+  fi
+
+  local len=0
+  len="$(count "${devices}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No part block devices have found"
+    return 0
+  fi
+
+  local query=''
+  query+='Path:    \(.path)\n'
+  query+='Type:    \(.type)\n'
+  query+='Size:    \(.size)'
+  query+='\(if .vendor then "\nVendor:  \(.vendor)" else "" end)'
+  query+='\(if .model then "\nModel:   \(.model)" else "" end)'
+  query+='\(if .label then "\nLabel:   \(.label)" else "" end)'
+  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+
+  echo "${devices}" | jq -cer "${query}" || return 1
+}
+
+# Shows the list of rom block devices.
+# Arguments:
+#  None
+# Outputs:
+#  A list of rom block devices.
+list_roms () {
+  local devices=''
+  devices="$(find_devices "rom")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to read rom block devices"
+    return 2
+  fi
+
+  local len=0
+  len="$(count "${devices}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No rom block devices have found"
     return 0
   fi
 
@@ -1150,7 +1243,7 @@ show_help () {
     "show rom [<path>]" "Show an optical drive block device." \
     "" "" \
     "list disks" "List all disk block devices." \
-    "list partitions" "List all partition block devices." \
+    "list partitions [<path>]" "List the partitions of a disk block device." \
     "list roms" "List all optical block devices." \
     "list shares [<host>]" "List the shared folders of a host." \
     "list mounts" "List all mounting points." \
@@ -1193,9 +1286,9 @@ loop () {
     case "${cmd[0]}" in
       "list")
         case "${cmd[1]}" in
-          "disks") list_devices "disk";;
-          "partitions") list_devices "part";;
-          "roms") list_devices "rom";;
+          "disks") list_disks;;
+          "partitions") list_partitions "${cmd[2]}";;
+          "roms") list_roms;;
           "shares") list_shares "${cmd[2]}";;
           "mounts") list_mounts;;
           *) echo "Invalid or unknown command";;
