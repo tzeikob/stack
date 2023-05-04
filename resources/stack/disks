@@ -14,11 +14,7 @@ find_devices () {
   local type="${1}"
   local status="${2}"
 
-  local query='.blockdevices[]'
-
-  if [[ -n "${type}" ]]; then
-    query+="|select(.type == \"${type}\")"
-  fi
+  local query=".blockdevices[]|select(.type == \"${type}\")"
   
   if [[ "${status}" == "mounted" ]]; then
     query+='|select(.mountpoints != [null])'
