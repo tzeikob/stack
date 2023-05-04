@@ -892,9 +892,6 @@ eject_disk () {
   elif ! is_type_of "${path}" "disk"; then
     echo "Not a disk block device"
     return 2
-  elif ! is_removable_disk "${path}"; then
-    echo "Not a removable disk block device"
-    return 2
   fi
 
   echo "Unmounting disk partitions..."
@@ -906,13 +903,11 @@ eject_disk () {
     return 2
   fi
 
-  udisksctl power-off -b "${path}" &> /dev/null
+  udisksctl power-off -b "${path}" &> /dev/null &&
+    echo "Disk power set to off" ||
+    echo "Unable to power off disk"
 
-  if [[ $? -ne 0 ]]; then
-    echo "Unable to power off disk ${path}"
-  fi
-
-  echo "Disk ${path} power set to off"
+  echo "Disk ${path} can now be ejected"
 }
 
 # Creates a bootable archlinux installation drive.
