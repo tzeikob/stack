@@ -6,13 +6,15 @@ source /opt/stack/utils
 # Returns the list of block devices of the given
 # type and the optionally given mounting status.
 # Arguments:
-#  type:   disk, part or rom
+#  type:   disk, partition or rom
 #  status: mounted or unmounted
 # Outputs:
-#  A json array list of block device objects.
+#  A json array of block device objects.
 find_devices () {
   local type="${1}"
   local status="${2}"
+
+  [[ "${type}" == "partition" ]] && type="part"
 
   local query=".blockdevices[]|select(.type == \"${type}\")"
   
@@ -43,7 +45,7 @@ find_partitions () {
 
   local query="[.[]|select(.path|test(\"^${path}\"))]"
 
-  find_devices "part" "${status}" | jq -cer "${query}" || return 1
+  find_devices "partition" "${status}" | jq -cer "${query}" || return 1
 }
 
 # Returns the block device with the given path.
@@ -65,12 +67,14 @@ find_device () {
 # is of the given type or not.
 # Arguments:
 #  path: the path of a block device
-#  type: disk, part or rom
+#  type: disk, partition or rom
 # Returns:
 #  0 if it is of type otherwise 1.
 is_type_of () {
   local path="${1}"
   local type="${2}"
+
+  [[ "${type}" == "partition" ]] && type="part"
 
   local query="if .type == \"${type}\" then true else false end"
 
@@ -113,13 +117,13 @@ is_system_disk () {
 # Globals:
 #  HOME, USER
 # Arguments:
-#  path: the path of a block device
+#  path: the path of a mountable block device
 mount_device () {
   local path="${1}"
 
   udisksctl mount -b "${path}" &> /dev/null || return 1
 
-  # Create symlink of local mount folder
+  # Create symlink to the local mount folder
   local local_home="${HOME}/mount/local"
 
   if [[ -d "/run/media/${USER}" ]] && [[ ! -L "${local_home}" ]]; then
@@ -138,8 +142,8 @@ unmount_device () {
   udisksctl unmount -b "${path}" &> /dev/null || return 1
 }
 
-# Unmounts the partitions of a disk with the
-# given path.
+# Unmounts the partitions of a disk block device
+# with the given path.
 # Arguments:
 #  path: the path of a disk block device
 unmount_partitions () {
@@ -155,7 +159,7 @@ unmount_partitions () {
       unmount_device "${part}"
 
       if [[ $? -eq 0 ]]; then
-        echo "Partition ${part} unmounted"
+        echo "Partition ${part} has been unmounted"
       else
         echo "Failed to unmount partition ${part}"
         return 2
@@ -239,7 +243,7 @@ format_partition () {
 #  workgroup: the group of the user
 #  password:  the password of the user
 # Outputs:
-#  A json list of folder objects.
+#  A json array of shared folder objects.
 find_shared_folders () {
   local host="${1}"
   local username="${2}"
@@ -263,7 +267,7 @@ find_shared_folders () {
 # Globals:
 #  REPLY
 # Arguments:
-#  type:   disk, part or rom
+#  type:   disk, partition or rom
 #  status: mounted, unmounted
 # Outputs:
 #  A menu of block devices.
@@ -275,7 +279,7 @@ pick_device () {
   devices="$(find_devices "${type}" "${status}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find ${type} block devices"
+    echo "Unable to find ${status:-\b} ${type}s"
     return 2
   fi
 
@@ -283,7 +287,7 @@ pick_device () {
   len="$(count "${devices}")" || return 1
   
   if [[ ${len} -eq 0 ]]; then
-    echo "No ${type} block devices have found"
+    echo "No ${status:-\b} ${type}s have found"
     return 2
   fi
 
@@ -298,13 +302,12 @@ pick_device () {
 
   devices="$(echo "${devices}" | jq -cer "${query}")" || return 1
 
-  pick_one "Select a ${type} block device:" "${devices}" "vertical" || return $?
+  pick_one "Select a ${type}:" "${devices}" "vertical" || return $?
 }
 
 # Shows a menu asking the user to select one partition
 # block device of the disk with the given path, where
-# the answer is kept in the global
-# var REPLY.
+# the answer is kept in the global var REPLY.
 # Globals:
 #  REPLY
 # Arguments:
@@ -320,7 +323,7 @@ pick_partition () {
   devices="$(find_partitions "${path}" "${status}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find part block devices"
+    echo "Unable to find ${status:-\b} partitions"
     return 2
   fi
 
@@ -328,7 +331,7 @@ pick_partition () {
   len="$(count "${devices}")" || return 1
   
   if [[ ${len} -eq 0 ]]; then
-    echo "No partition block devices have found"
+    echo "No ${status:-\b} partitions have found"
     return 2
   fi
 
@@ -343,7 +346,7 @@ pick_partition () {
 
   devices="$(echo "${devices}" | jq -cer "${query}")" || return 1
 
-  pick_one "Select a partition block device:" "${devices}" "vertical" || return $?
+  pick_one "Select a partition:" "${devices}" "vertical" || return $?
 }
 
 # Shows a menu asking the user to select one host, where the
@@ -416,7 +419,7 @@ prompt () {
   local query='.[]|select(.mountpoint == "/")|.path'
 
   local status=''
-  status="$(find_devices "part" "mounted" | jq -cer "${query}")"
+  status="$(find_devices "partition" "mounted" | jq -cer "${query}")"
 
   if [[ $? -ne 0 ]]; then
     status='none'
@@ -437,7 +440,7 @@ show_status () {
   query+=' else "" end'
 
   local part_paths=''
-  part_paths="$(find_devices "part" | jq -cer "${query}")" || return 1
+  part_paths="$(find_devices "partition" | jq -cer "${query}")" || return 1
 
   local query=''
   query+='Partition:    \(.path) [\(.mountpoint)]\n'
@@ -486,7 +489,7 @@ show_disk () {
     echo "Invalid block device"
     return 2
   elif ! is_type_of "${path}" "disk"; then
-    echo "Invalid disk block device"
+    echo "Invalid disk device"
     return 2
   fi
 
@@ -523,7 +526,7 @@ show_disk () {
   find_device "${path}" | jq -cer "\"${query}\""
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to read disk block device"
+    echo "Failed to read disk device"
     return 2
   fi
 }
@@ -549,8 +552,8 @@ show_partition () {
   if [[ ! -b "${path}" ]]; then
     echo "Invalid block device"
     return 2
-  elif ! is_type_of "${path}" "part"; then
-    echo "Invalid part block device"
+  elif ! is_type_of "${path}" "partition"; then
+    echo "Invalid partition device"
     return 2
   fi
 
@@ -587,7 +590,7 @@ show_partition () {
   find_device "${path}" | jq -cer "\"${query}\""
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to read block device data"
+    echo "Failed to read partition device"
     return 2
   fi
 }
@@ -612,7 +615,7 @@ show_rom () {
     echo "Invalid block device"
     return 2
   elif ! is_type_of "${path}" "rom"; then
-    echo "Invalid rom block device"
+    echo "Invalid rom device"
     return 2
   fi
 
@@ -649,7 +652,7 @@ show_rom () {
   find_device "${path}" | jq -cer "\"${query}\""
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to read block device data"
+    echo "Failed to read rom device"
     return 2
   fi
 }
@@ -672,7 +675,7 @@ scan_disk () {
     echo "Invalid block device"
     return 2
   elif ! is_type_of "${path}" "disk"; then
-    echo "Invalid disk block device"
+    echo "Invalid disk device"
     return 2
   elif ! sudo smartctl -i "${path}" &> /dev/null; then
     echo "Unable to retrieve SMART data"
@@ -763,7 +766,7 @@ list_disks () {
   devices="$(find_devices "disk")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to read disk block devices"
+    echo "Unable to read disks"
     return 2
   fi
 
@@ -771,7 +774,7 @@ list_disks () {
   len="$(count "${devices}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No disk block devices have found"
+    echo "No disks have found"
     return 0
   fi
 
@@ -805,7 +808,7 @@ list_partitions () {
     echo "Invalid block device"
     return 2
   elif ! is_type_of "${path}" "disk"; then
-    echo "Invalid disk block device"
+    echo "Invalid disk device"
     return 2
   fi
 
@@ -813,7 +816,7 @@ list_partitions () {
   devices="$(find_partitions "${path}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to read part block devices"
+    echo "Unable to read partitions"
     return 2
   fi
 
@@ -821,7 +824,7 @@ list_partitions () {
   len="$(count "${devices}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No part block devices have found"
+    echo "No partitions have found"
     return 0
   fi
 
@@ -847,7 +850,7 @@ list_roms () {
   devices="$(find_devices "rom")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to read rom block devices"
+    echo "Unable to read roms"
     return 2
   fi
 
@@ -855,7 +858,7 @@ list_roms () {
   len="$(count "${devices}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No rom block devices have found"
+    echo "No roms have found"
     return 0
   fi
 
@@ -930,10 +933,10 @@ list_shares () {
 #  A list of mounted block devices and shared folders.
 list_mounts () {
   local parts=''
-  parts="$(find_devices "part" "mounted")"
+  parts="$(find_devices "partition" "mounted")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to read partition block devices"
+    echo "Unable to read mounted partitions"
     return 2
   fi
 
@@ -941,7 +944,7 @@ list_mounts () {
   roms="$(find_devices "rom" "mounted")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to read rom block devices"
+    echo "Unable to read mounted roms"
     return 2
   fi
 
@@ -1001,22 +1004,22 @@ mount_partition () {
   if [[ ! -b "${path}" ]]; then
     echo "Invalid block device"
     return 2
-  elif ! is_type_of "${path}" "part"; then
-    echo "Invalid part block device"
+  elif ! is_type_of "${path}" "partition"; then
+    echo "Invalid partition device"
     return 2
   elif grep -qs "${path} " /proc/mounts; then
-    echo "Block device ${path} is already mounted"
+    echo "Partition ${path} is already mounted"
     return 2
   fi
 
   mount_device "${path}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to mount part block device"
+    echo "Failed to mount partition"
     return 2
   fi
 
-  echo "Part block device ${path} has been mounted"
+  echo "Partition ${path} has been mounted"
 }
 
 # Mounts the rom block device with the given path.
@@ -1036,21 +1039,21 @@ mount_rom () {
     echo "Invalid block device"
     return 2
   elif ! is_type_of "${path}" "rom"; then
-    echo "Invalid rom block device"
+    echo "Invalid rom device"
     return 2
   elif grep -qs "${path} " /proc/mounts; then
-    echo "Block device ${path} is already mounted"
+    echo "Rom ${path} is already mounted"
     return 2
   fi
 
   mount_device "${path}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to mount rom block device"
+    echo "Failed to mount rom"
     return 2
   fi
 
-  echo "Rom Block device ${path} has been mounted"
+  echo "Rom ${path} has been mounted"
 }
 
 # Unmounts the partition block device with the given path.
@@ -1072,11 +1075,11 @@ unmount_partition () {
   if [[ ! -b "${path}" ]]; then
     echo "Invalid block device"
     return 2
-  elif ! is_type_of "${path}" "part"; then
-    echo "Invalid part block device"
+  elif ! is_type_of "${path}" "partition"; then
+    echo "Invalid partition device"
     return 2
   elif ! grep -qs "${path} " /proc/mounts; then
-    echo "Part block device ${path} is not mounted"
+    echo "Partition ${path} is not mounted"
     return 2
   fi
 
@@ -1091,11 +1094,11 @@ unmount_partition () {
   unmount_device "${path}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to unmount part block device"
+    echo "Failed to unmount partition"
     return 2
   fi
 
-  echo "Part block device ${path} has been unmounted"
+  echo "Partition ${path} has been unmounted"
 }
 
 # Unmounts the rom block device with the given path.
@@ -1115,25 +1118,26 @@ unmount_rom () {
     echo "Invalid block device"
     return 2
   elif ! is_type_of "${path}" "rom"; then
-    echo "Invalid rom block device"
+    echo "Invalid rom device"
     return 2
   elif ! grep -qs "${path} " /proc/mounts; then
-    echo "Rom block device ${path} is not mounted"
+    echo "Rom ${path} is not mounted"
     return 2
   fi
 
   unmount_device "${path}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to unmount rom block device"
+    echo "Failed to unmount rom"
     return 2
   fi
 
-  echo "Rom block device ${path} has been unmounted"
+  echo "Rom ${path} has been unmounted"
 }
 
 # Formats the disk block device with the given path,
-# creating a new partition table of a single primary partition.
+# creating a new partition table of a single primary
+# partition.
 # Globals:
 #  REPLY
 # Arguments:
@@ -1150,7 +1154,7 @@ format_disk () {
     echo "Invalid block device"
     return 2
   elif ! is_type_of "${path}" "disk"; then
-    echo "Not a disk block device"
+    echo "Not a disk device"
     return 2
   elif is_system_disk "${path}"; then
     echo "Cannot format the system disk"
@@ -1192,14 +1196,14 @@ format_disk () {
     return 2
   fi
 
-  echo "disk ${path} has been formated"
+  echo "Disk ${path} has been formated"
 }
 
 # Ejects the disk block device with the given path.
 # Globals:
 #  REPLY
 # Arguments:
-#  path: the path of a block device
+#  path: the path of a disk block device
 eject_disk () {
   local path="${1}"
 
@@ -1211,11 +1215,11 @@ eject_disk () {
   if [[ ! -b "${path}" ]]; then
     echo "Invalid block device"
     return 2
+  elif ! is_type_of "${path}" "disk"; then
+    echo "Not a disk device"
+    return 2
   elif is_system_disk "${path}"; then
     echo "Cannot eject a system disk"
-    return 2
-  elif ! is_type_of "${path}" "disk"; then
-    echo "Not a disk block device"
     return 2
   fi
 
@@ -1230,16 +1234,16 @@ eject_disk () {
 
   udisksctl power-off -b "${path}" &> /dev/null &&
     echo "Disk power set to off" ||
-    echo "Unable to power off disk"
+    echo "Unable to power disk off"
 
-  echo "Disk ${path} can now be ejected"
+  echo "Disk ${path} can now be safely ejected"
 }
 
 # Creates a bootable archlinux installation drive.
 # Globals:
 #  REPLY, HOME, PWD
 # Arguments:
-#  path: the path of a block disk device
+#  path: the path of a disk block device
 create_bootable () {
   local path="${1}"
 
@@ -1251,11 +1255,11 @@ create_bootable () {
   if [[ ! -b "${path}" ]]; then
     echo "Invalid block device"
     return 2
+  elif ! is_type_of "${path}" "disk"; then
+    echo "Not a disk device"
+    return 2
   elif is_system_disk "${path}"; then
     echo "Cannot create bootable on a system disk"
-    return 2
-  elif ! is_type_of "${path}" "disk"; then
-    echo "Not a disk block device"
     return 2
   fi
 
@@ -1276,7 +1280,7 @@ create_bootable () {
     hosts="[${hosts}]"
 
     local host=''
-    pick_one "Select a mirror host close to you:" "${hosts}" "vertical" || return $?
+    pick_one "Select a mirror host:" "${hosts}" "vertical" || return $?
     [[ -n "${REPLY}" ]] && host="${REPLY}" || return 0
 
     local file='archlinux-x86_64.iso'
@@ -1442,7 +1446,7 @@ unmount_shared_folder () {
     len="$(count "${uris}")" || return 1
 
     if [[ ${len} -eq 0 ]]; then
-      echo "No mounted shared folders have been found"
+      echo "No mounted shared folders have found"
       return 0
     fi
 
@@ -1497,7 +1501,7 @@ show_help () {
     "unmount folder [<uri>]" "Unmount a shared storage folder." \
     "" "" \
     "format disk [<path>]" "Format a disk block device." \
-    "eject disk [<path>]" "Eject a removable disk block device." \
+    "eject disk [<path>]" "Eject a disk block device." \
     "scan disk [<path>]" "Scan a disk block device for SMART data." \
     "" "" \
     "create bootable [<path>]" "Create a bootable archlinux installation drive."
