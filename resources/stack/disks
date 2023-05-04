@@ -449,9 +449,9 @@ show_device () {
   fi
 
   local parts=''
-  parts+='\(.path) \(if .mountpoints != [null] then "\(.mountpoints) " else "" end)'
-  parts+='\(.fstype|ascii_upcase) '
-  parts+='\(if .label then .label else "" end)'
+  parts+='\(.path) \(.mountpoints|if . != [null] then "\(.) " else "" end)'
+  parts+='\(.fstype|if . then .|ascii_upcase else "" end) '
+  parts+='\(.label|if . then . else "" end)'
   parts="Parts:         \([.children[]|\"${parts}\"]|join(\"\n               \"))"
 
   local query=''
