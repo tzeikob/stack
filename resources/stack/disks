@@ -1107,6 +1107,88 @@ unmount_rom () {
   echo "Rom ${path} has been unmounted"
 }
 
+# Mounts the image file system contained with in
+# the file with the given file path.
+# Globals:
+#  HOME
+# Arguments:
+#  path: the path to an image file
+mount_image () {
+  local path="${1}"
+
+  if [[ ! -f "${path}" ]]; then
+    echo "Not valid image file"
+    return 2
+  fi
+
+  local mount_home="${HOME}/mount/virtual"
+  local image_name="$(basename "${path}")"
+
+  if [[ -d "${mount_home}/${image_name}" ]]; then
+    echo "Image ${path} is already mounted"
+    return 2
+  fi
+
+  mkdir -p "${mount_home}"
+  fuseiso -p "${path}" "${mount_home}/${image_name}" &> /dev/null
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to mount image file"
+    return 2
+  fi
+
+  echo "Image file ${path} mounted"
+}
+
+# Unmounts the image file system mounted to the given
+# path.
+# Globals:
+#  REPLY
+# Arguments:
+#  path: the path an image is mounted to
+unmount_image () {
+  local path="${1}"
+
+  if [[ -z "${path}" ]]; then
+    local mounts=''
+    mounts="$(cat /proc/mounts | awk '/^fuseiso/{
+      print "{\"key\":\"" $2 "\",\"value\":\"" $2 "\"},"
+    }')" || return 1
+
+    # Remove the extra comma after the last element
+    if [[ -n "${mounts}" ]]; then
+      mounts="${mounts::-1}"
+    fi
+
+    mounts="[${mounts}]"
+
+    local len=0
+    len="$(count "${mounts}")" || return 1
+
+    if [[ ${len} -eq 0 ]]; then
+      echo "No image mounts have found"
+      return 0
+    fi
+
+    pick_one "Select an image mount:" "${mounts}" "vertical" || return $?
+    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
+  fi
+
+  if [[ ! -d "${path}" ]]; then
+    echo "No valid image mount path"
+    return 2
+  fi
+
+  fusermount -u "${path}"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to unmount image file system"
+    return 2
+  fi
+
+  echo "Image file system ${path} unmounted"
+}
+
 # Formats the disk block device with the given path,
 # creating a new partition table of a single primary
 # partition.
@@ -1469,6 +1551,8 @@ show_help () {
     "unmount partition [<path>]" "Unmount a partition block device." \
     "mount rom [<path>]" "Mount an optical block device." \
     "unmount rom [<path>]" "Unmount an optical block device." \
+    "mount image <path>" "Mount an iso, img image file system." \
+    "unmount image [<path>]" "Unmount an image file system." \
     "mount folder [<host>]" "Mount a shared storage folder." \
     "unmount folder [<uri>]" "Unmount a shared storage folder." \
     "" "" \
@@ -1524,6 +1608,7 @@ loop () {
         case "${cmd[1]}" in
           "partition") mount_partition "${cmd[2]}";;
           "rom") mount_rom "${cmd[2]}";;
+          "image") mount_image "${cmd[2]}";;
           "folder") mount_shared_folder "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
@@ -1531,6 +1616,7 @@ loop () {
         case "${cmd[1]}" in
           "partition") unmount_partition "${cmd[2]}";;
           "rom") unmount_rom "${cmd[2]}";;
+          "image") unmount_image "${cmd[2]}";;
           "folder") unmount_shared_folder "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
