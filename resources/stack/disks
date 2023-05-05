@@ -895,14 +895,14 @@ list_shares () {
   echo "${folders}" | jq -cer "${query}" || return 1
 }
 
-# Shows the list of mounted block devices and
+# Shows the list of any mounted devices, images and/or
 # shared folders.
 # Globals:
 #  UID
 # Arguments:
 #  None
 # Outputs:
-#  A list of mounted block devices and shared folders.
+#  A list of mounting points.
 list_mounts () {
   local parts=''
   parts="$(find_devices "partition" "mounted")"
@@ -926,7 +926,7 @@ list_mounts () {
   local folders=''
   folders="$(ls "/run/user/${UID}/gvfs" | awk -v id="${UID}" '{
     match($0, /server=(.*),share=(.*),/, a);
-    print "\nDevice:  "a[1]"/"a[2]"\nPoints:  [\"/run/user/"id"/gvfs/"$0"\"]"
+    print "\nName:    "a[1]"/"a[2]"\nType:    folder\nPoints:  [\"/run/user/"id"/gvfs/"$0"\"]"
   }')"
 
   if [[ $? -ne 0 ]]; then
@@ -937,7 +937,7 @@ list_mounts () {
   local images=''
   images="$(cat /proc/mounts | awk '/^fuseiso/{
     n=split($2, a, "/")
-    print "\nDevice:  " a[n] "\nPoints:  [\"" $2 "\"]"
+    print "\nName:    " a[n] "\nType:    image\nPoints:  [\"" $2 "\"]"
   }')"
 
   if [[ $? -ne 0 ]]; then
@@ -955,8 +955,9 @@ list_mounts () {
 
   if [[ ${len} -gt 0 ]]; then
     local query=''
-    query+='Device:  \(.path)\n'
-    query+='\(if .label then "Label:   \(.label)\n" else "" end)'
+    query+='Name:    \(.path)'
+    query+='\(.label|if . and . != "" then " [\(.)]" else "" end)\n'
+    query+='Type:    device\n'
     query+='Points:  \(.mountpoints)'
     query="[.[]|\"${query}\"]|join(\"\n\n\")"
 
