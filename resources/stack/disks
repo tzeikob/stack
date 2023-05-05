@@ -494,33 +494,25 @@ show_disk () {
   fi
 
   local parts=''
-  parts+='\(.path) \(.mountpoints|if . != [null] then "\(.) " else "" end)'
-  parts+='\(.fstype|if . then .|ascii_upcase else "" end) '
-  parts+='\(.label|if . then . else "" end)'
+  parts+='\(.path)'
+  parts+='\(.fstype|if . then " \(.|ascii_upcase)" else "" end)'
+  parts+='\(.label|if . then " \(.)" else "" end)'
   parts="Parts:         \([.children[]|\"${parts}\"]|join(\"\n               \"))"
 
   local query=''
   query+='Name:          \(.name)\n'
   query+='Path:          \(.path)\n'
   query+='Type:          \(.type)\n'
-  query+='\(if .fstype then "File System:   \(.fstype|ascii_upcase)\n" else "" end)'
-  query+='\(if .fsver then "File Version:  \(.fsver)\n" else "" end)'
   query+='Removable:     \(.rm)\n'
   query+='ReadOnly:      \(.ro)\n'
-  query+='\(if .tran then "Transfer:      \(.tran)\n" else "" end)'
+  query+='Transfer:      \(.tran)\n'
   query+='HotPlug:       \(.hotplug)\n'
-  query+='Size:          \(.size)'
-  query+='\(if .fsavail then "\nFree Space:    \(.fsavail)" else "" end)'
-  query+='\(if .fsused then "\nUsed Space:    \(.fsused) [\(."fsuse%")]" else "" end)'
-  query+='\(if .label then "\nLabel:         \(.label)" else "" end)'
-  query+='\(if .uuid then "\nUUID:          \(.uuid)" else "" end)'
-  query+='\(if .vendor then "\nVendor:        \(.vendor)" else "" end)'
-  query+='\(if .model then "\nModel:         \(.model)" else "" end)'
-  query+='\(if .rev then "\nRevision:      \(.rev)" else "" end)'
-  query+='\(if .serial then "\nSerial:        \(.serial)" else "" end)'
-  query+='\(if .state then "\nState:         \(.state)" else "" end)'
-  query+='\(if .mountpoint then "\nMount:         \(.mountpoint)" else "" end)'
-  query+='\(if .mountpoints != [null] then "\nMounts:        \(.mountpoints)" else "" end)'
+  query+='Size:          \(.size)\n'
+  query+='Vendor:        \(.vendor)\n'
+  query+='Model:         \(.model)\n'
+  query+='Revision:      \(.rev)\n'
+  query+='Serial:        \(.serial)\n'
+  query+='State:         \(.state)'
   query+="\(if .children then \"\n${parts}\" else \"\" end)"
 
   find_device "${path}" | jq -cer "\"${query}\""
@@ -557,12 +549,6 @@ show_partition () {
     return 2
   fi
 
-  local parts=''
-  parts+='\(.path) \(.mountpoints|if . != [null] then "\(.) " else "" end)'
-  parts+='\(.fstype|if . then .|ascii_upcase else "" end) '
-  parts+='\(.label|if . then . else "" end)'
-  parts="Parts:         \([.children[]|\"${parts}\"]|join(\"\n               \"))"
-
   local query=''
   query+='Name:          \(.name)\n'
   query+='Path:          \(.path)\n'
@@ -571,21 +557,14 @@ show_partition () {
   query+='\(if .fsver then "File Version:  \(.fsver)\n" else "" end)'
   query+='Removable:     \(.rm)\n'
   query+='ReadOnly:      \(.ro)\n'
-  query+='\(if .tran then "Transfer:      \(.tran)\n" else "" end)'
   query+='HotPlug:       \(.hotplug)\n'
   query+='Size:          \(.size)'
   query+='\(if .fsavail then "\nFree Space:    \(.fsavail)" else "" end)'
   query+='\(if .fsused then "\nUsed Space:    \(.fsused) [\(."fsuse%")]" else "" end)'
   query+='\(if .label then "\nLabel:         \(.label)" else "" end)'
   query+='\(if .uuid then "\nUUID:          \(.uuid)" else "" end)'
-  query+='\(if .vendor then "\nVendor:        \(.vendor)" else "" end)'
-  query+='\(if .model then "\nModel:         \(.model)" else "" end)'
-  query+='\(if .rev then "\nRevision:      \(.rev)" else "" end)'
-  query+='\(if .serial then "\nSerial:        \(.serial)" else "" end)'
-  query+='\(if .state then "\nState:         \(.state)" else "" end)'
   query+='\(if .mountpoint then "\nMount:         \(.mountpoint)" else "" end)'
   query+='\(if .mountpoints != [null] then "\nMounts:        \(.mountpoints)" else "" end)'
-  query+="\(if .children then \"\n${parts}\" else \"\" end)"
 
   find_device "${path}" | jq -cer "\"${query}\""
 
@@ -619,12 +598,6 @@ show_rom () {
     return 2
   fi
 
-  local parts=''
-  parts+='\(.path) \(.mountpoints|if . != [null] then "\(.) " else "" end)'
-  parts+='\(.fstype|if . then .|ascii_upcase else "" end) '
-  parts+='\(.label|if . then . else "" end)'
-  parts="Parts:         \([.children[]|\"${parts}\"]|join(\"\n               \"))"
-
   local query=''
   query+='Name:          \(.name)\n'
   query+='Path:          \(.path)\n'
@@ -633,21 +606,20 @@ show_rom () {
   query+='\(if .fsver then "File Version:  \(.fsver)\n" else "" end)'
   query+='Removable:     \(.rm)\n'
   query+='ReadOnly:      \(.ro)\n'
-  query+='\(if .tran then "Transfer:      \(.tran)\n" else "" end)'
+  query+='Transfer:      \(.tran)\n'
   query+='HotPlug:       \(.hotplug)\n'
-  query+='Size:          \(.size)'
-  query+='\(if .fsavail then "\nFree Space:    \(.fsavail)" else "" end)'
-  query+='\(if .fsused then "\nUsed Space:    \(.fsused) [\(."fsuse%")]" else "" end)'
-  query+='\(if .label then "\nLabel:         \(.label)" else "" end)'
-  query+='\(if .uuid then "\nUUID:          \(.uuid)" else "" end)'
-  query+='\(if .vendor then "\nVendor:        \(.vendor)" else "" end)'
-  query+='\(if .model then "\nModel:         \(.model)" else "" end)'
-  query+='\(if .rev then "\nRevision:      \(.rev)" else "" end)'
-  query+='\(if .serial then "\nSerial:        \(.serial)" else "" end)'
-  query+='\(if .state then "\nState:         \(.state)" else "" end)'
+  query+='Size:          \(.size)\n'
+  query+='\(if .fsavail then "Free Space:    \(.fsavail)\n" else "" end)'
+  query+='\(if .fsused then "Used Space:    \(.fsused) [\(."fsuse%")]\n" else "" end)'
+  query+='\(if .label then "Label:         \(.label)\n" else "" end)'
+  query+='\(if .uuid then "UUID:          \(.uuid)\n" else "" end)'
+  query+='Vendor:        \(.vendor)\n'
+  query+='Model:         \(.model)\n'
+  query+='Revision:      \(.rev)\n'
+  query+='Serial:        \(.serial)\n'
+  query+='State:         \(.state)'
   query+='\(if .mountpoint then "\nMount:         \(.mountpoint)" else "" end)'
   query+='\(if .mountpoints != [null] then "\nMounts:        \(.mountpoints)" else "" end)'
-  query+="\(if .children then \"\n${parts}\" else \"\" end)"
 
   find_device "${path}" | jq -cer "\"${query}\""
 
