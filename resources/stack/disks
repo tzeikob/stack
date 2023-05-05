@@ -1269,6 +1269,82 @@ format_disk () {
   echo "Disk ${path} has been formated"
 }
 
+# Encrypts the disk block device with the given path.
+# Globals:
+#  REPLY
+# Arguments:
+#  path: the path of a block disk device
+encrypt_disk () {
+  local path="${1}"
+
+  if [[ -z "${path}" ]]; then
+    pick_device "disk" || return $?
+    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
+  fi
+
+  if [[ ! -b "${path}" ]]; then
+    echo "Invalid block device"
+    return 2
+  elif ! is_type_of "${path}" "disk"; then
+    echo "Not a disk device"
+    return 2
+  elif is_system_disk "${path}"; then
+    echo "Cannot encrypt the system disk"
+    return 2
+  fi
+
+  ask "Enter the disk label:" ".+" || return $?
+  local label="${REPLY}"
+
+  local fs_type=''
+  pick_fs_type || return $?
+  [[ -n "${REPLY}" ]] && fs_type="${REPLY}" || return 0
+
+  local model=''
+  model="$(find_device "${path}" |
+    jq -cr '"\(.vendor|gsub("^\\s+|\\s+$";"")) \(.model) \(.size)"')" || return 1
+
+  echo "ALL DATA in ${model} [${path}],"
+  echo "will be irreversibly gone forever!"
+  confirm "Do you really want to proceed?" || return $?
+  [[ "${REPLY}" != "yes" ]] && return 0
+
+  echo "Unmounting disk partitions..."
+  unmount_partitions "${path}" || return 1
+
+  echo "Cleaning disk partitions..."
+  clean_partitions "${path}" &&
+  echo "Partition table is ready" || return 1
+
+  echo "Creating disk partition..."
+  create_partition "${path}" "${fs_type}" "1Mib" "100%" &&
+  echo "Primary partition created" || return 1
+
+  echo "Formatting disk partition..."
+  format_partition "${path}" "1" "${fs_type}" "${label}" &&
+  echo "Partition ${path}1 has been formated" || return 1
+
+  ask_password "Enter a strong password:" ".+" || return $?
+  local password="${REPLY}"
+
+  # Create a seed file with 350 random characters
+  local rand_text_file="/tmp/.rand_text_$(date +%s)"
+
+  tr -dc 'A-Za-z0-9!"#$%&'\''()*+,-./:;<=>?@[\]^_`{|}~' < /dev/urandom |
+    head -c 350 > "${rand_text_file}"
+
+  sudo veracrypt --text --create "${path}1" --password "${password}" \
+    --volume-type normal --encryption AES --hash sha-512 --filesystem "${fs_type}" \
+    --pim 0 --keyfiles "" --random-source "${rand_text_file}"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to encrypt disk ${path}"
+    return 2
+  fi
+
+  echo "Disk ${path} has been encrypted"
+}
+
 # Ejects the disk block device with the given path.
 # Globals:
 #  REPLY
@@ -1573,6 +1649,7 @@ show_help () {
     "unmount folder [<uri>]" "Unmount a shared storage folder." \
     "" "" \
     "format disk [<path>]" "Format a disk block device." \
+    "encrypt disk [<path>]" "Encrypt the entire disk block device." \
     "eject disk [<path>]" "Eject a disk block device." \
     "scan disk [<path>]" "Scan a disk block device for SMART data." \
     "" "" \
@@ -1639,6 +1716,11 @@ loop () {
       "format")
         case "${cmd[1]}" in
           "disk") format_disk "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "encrypt")
+        case "${cmd[1]}" in
+          "disk") encrypt_disk "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       "eject")
