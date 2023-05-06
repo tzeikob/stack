@@ -1010,40 +1010,6 @@ mount_partition () {
   echo "Partition ${path} has been mounted"
 }
 
-# Mounts the rom block device with the given path.
-# Globals:
-#  REPLY
-# Arguments:
-#  path: the path of a rom block device
-mount_rom () {
-  local path="${1}"
-
-  if [[ -z "${path}" ]]; then
-    pick_device "rom" "unmounted" || return $?
-    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
-  fi
-
-  if [[ ! -b "${path}" ]]; then
-    echo "Invalid block device"
-    return 2
-  elif ! is_type_of "${path}" "rom"; then
-    echo "Invalid rom device"
-    return 2
-  elif grep -qs "${path} " /proc/mounts; then
-    echo "Rom ${path} is already mounted"
-    return 2
-  fi
-
-  mount_device "${path}"
-
-  if [[ $? -ne 0 ]]; then
-    echo "Failed to mount rom"
-    return 2
-  fi
-
-  echo "Rom ${path} has been mounted"
-}
-
 # Unmounts the partition block device with the given path.
 # Globals:
 #  REPLY, HOME, USER
@@ -1087,6 +1053,40 @@ unmount_partition () {
   fi
 
   echo "Partition ${path} has been unmounted"
+}
+
+# Mounts the rom block device with the given path.
+# Globals:
+#  REPLY
+# Arguments:
+#  path: the path of a rom block device
+mount_rom () {
+  local path="${1}"
+
+  if [[ -z "${path}" ]]; then
+    pick_device "rom" "unmounted" || return $?
+    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
+  fi
+
+  if [[ ! -b "${path}" ]]; then
+    echo "Invalid block device"
+    return 2
+  elif ! is_type_of "${path}" "rom"; then
+    echo "Invalid rom device"
+    return 2
+  elif grep -qs "${path} " /proc/mounts; then
+    echo "Rom ${path} is already mounted"
+    return 2
+  fi
+
+  mount_device "${path}"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to mount rom"
+    return 2
+  fi
+
+  echo "Rom ${path} has been mounted"
 }
 
 # Unmounts the rom block device with the given path.
