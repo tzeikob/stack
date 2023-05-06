@@ -135,11 +135,18 @@ mount_device () {
 # Unmounts the block device with the given path.
 # Arguments:
 #  path: the path of a mountable block device
+#  type: normal or encrypted
 unmount_device () {
   local path="${1}"
+  local type="${2:-"normal"}"
 
-  sync &&
-  udisksctl unmount -b "${path}" &> /dev/null || return 1
+  sync
+
+  if [[ "${type}" == "encrypted" ]]; then
+    sudo veracrypt -t --dismount "${path}" &> /dev/null || return 1
+  else
+    udisksctl unmount -b "${path}" &> /dev/null || return 1
+  fi
 }
 
 # Unmounts the partitions of a disk block device
@@ -149,24 +156,52 @@ unmount_device () {
 unmount_partitions () {
   local path="${1}"
 
-  # Collect any disk's partitions currently mounted
-  local parts=''
-  parts="$(grep -sE "${path}.*[0-9]+ " /proc/mounts | awk '{print $1}')"
+  # Collect disk's normal mounted partitions
+  local normal_parts=''
+  normal_parts="$(grep -sE "^${path}.*[0-9]+ " /proc/mounts | awk '{print $1}')"
+
+  # Collect disk's encrypted mounted partitions
+  local encrypted_parts=''
+  encrypted_parts="$(veracrypt -t --list 2>&1)"
   
-  if [[ -n "${parts}" ]]; then
-    local part=''
-    while read -r part; do
-      unmount_device "${part}"
+  if [[ $? -ne 0 ]] && [[ "${encrypted_parts}" != "Error: No volumes mounted." ]]; then
+    return 1
+  fi
+  
+  encrypted_parts="$(echo "${encrypted_parts}" |
+    awk '/^[0-9]+: '"${path//\//\\/}"'/{print $2}')" || return 1
+  
+  if [[ -z "${normal_parts}" ]] && [[ -z "${encrypted_parts}" ]]; then
+    echo "No mounted partitions have found"
+    return 0
+  fi
+
+  if [[ -n "${normal_parts}" ]]; then
+    local normal_part=''
+    while read -r normal_part; do
+      unmount_device "${normal_part}"
 
       if [[ $? -eq 0 ]]; then
-        echo "Partition ${part} has been unmounted"
+        echo "Partition ${normal_part} has been unmounted"
       else
-        echo "Failed to unmount partition ${part}"
+        echo "Failed to unmount partition ${normal_part}"
         return 2
       fi
-    done <<< "${parts}"
-  else
-    echo "No mounted partitions found"
+    done <<< "${normal_parts}"
+  fi
+
+  if [[ -n "${encrypted_parts}" ]]; then
+    local encrypted_part=''
+    while read -r encrypted_part; do
+      unmount_device "${encrypted_part}" "encrypted"
+
+      if [[ $? -eq 0 ]]; then
+        echo "Partition ${encrypted_part} has been unmounted"
+      else
+        echo "Failed to unmount partition ${encrypted_part}"
+        return 2
+      fi
+    done <<< "${encrypted_parts}"
   fi
 }
 
