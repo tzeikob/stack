@@ -1269,12 +1269,12 @@ format_disk () {
   echo "Disk ${path} has been formated"
 }
 
-# Encrypts the disk block device with the given path.
+# Creates an encrypted disk block device with the given path.
 # Globals:
 #  REPLY
 # Arguments:
 #  path: the path of a block disk device
-encrypt_disk () {
+create_encrypted () {
   local path="${1}"
 
   if [[ -z "${path}" ]]; then
@@ -1649,11 +1649,11 @@ show_help () {
     "unmount folder [<uri>]" "Unmount a shared storage folder." \
     "" "" \
     "format disk [<path>]" "Format a disk block device." \
-    "encrypt disk [<path>]" "Encrypt the entire disk block device." \
     "eject disk [<path>]" "Eject a disk block device." \
     "scan disk [<path>]" "Scan a disk block device for SMART data." \
     "" "" \
-    "create bootable [<path>]" "Create a bootable archlinux installation drive."
+    "create encrypted [<path>]" "Create an encrypted drive." \
+    "create bootable [<path>]" "Create a bootable installation drive."
 }
 
 loop () {
@@ -1718,11 +1718,6 @@ loop () {
           "disk") format_disk "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
-      "encrypt")
-        case "${cmd[1]}" in
-          "disk") encrypt_disk "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
-        esac;;
       "eject")
         case "${cmd[1]}" in
           "disk") eject_disk "${cmd[2]}";;
@@ -1735,6 +1730,7 @@ loop () {
         esac;;
       "create")
         case "${cmd[1]}" in
+          "encrypted") create_encrypted "${cmd[2]}";;
           "bootable") create_bootable "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
