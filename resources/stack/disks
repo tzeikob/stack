@@ -1269,7 +1269,48 @@ format_disk () {
   echo "Disk ${path} has been formated"
 }
 
-# Creates an encrypted disk block device with the given path.
+# Ejects the disk block device with the given path.
+# Globals:
+#  REPLY
+# Arguments:
+#  path: the path of a disk block device
+eject_disk () {
+  local path="${1}"
+
+  if [[ -z "${path}" ]]; then
+    pick_device "disk" || return $?
+    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
+  fi
+
+  if [[ ! -b "${path}" ]]; then
+    echo "Invalid block device"
+    return 2
+  elif ! is_type_of "${path}" "disk"; then
+    echo "Not a disk device"
+    return 2
+  elif is_system_disk "${path}"; then
+    echo "Cannot eject a system disk"
+    return 2
+  fi
+
+  echo "Unmounting disk partitions..."
+
+  unmount_partitions "${path}"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to unmount disk partitions"
+    return 2
+  fi
+
+  udisksctl power-off -b "${path}" &> /dev/null &&
+    echo "Disk power set to off" ||
+    echo "Unable to power disk off"
+
+  echo "Disk ${path} can now be safely ejected"
+}
+
+# Creates an encrypted disk block device with the
+# given path.
 # Globals:
 #  REPLY
 # Arguments:
@@ -1343,46 +1384,6 @@ create_encrypted () {
   fi
 
   echo "Disk ${path} has been encrypted"
-}
-
-# Ejects the disk block device with the given path.
-# Globals:
-#  REPLY
-# Arguments:
-#  path: the path of a disk block device
-eject_disk () {
-  local path="${1}"
-
-  if [[ -z "${path}" ]]; then
-    pick_device "disk" || return $?
-    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
-  fi
-
-  if [[ ! -b "${path}" ]]; then
-    echo "Invalid block device"
-    return 2
-  elif ! is_type_of "${path}" "disk"; then
-    echo "Not a disk device"
-    return 2
-  elif is_system_disk "${path}"; then
-    echo "Cannot eject a system disk"
-    return 2
-  fi
-
-  echo "Unmounting disk partitions..."
-
-  unmount_partitions "${path}"
-
-  if [[ $? -ne 0 ]]; then
-    echo "Failed to unmount disk partitions"
-    return 2
-  fi
-
-  udisksctl power-off -b "${path}" &> /dev/null &&
-    echo "Disk power set to off" ||
-    echo "Unable to power disk off"
-
-  echo "Disk ${path} can now be safely ejected"
 }
 
 # Creates a bootable archlinux installation drive.
