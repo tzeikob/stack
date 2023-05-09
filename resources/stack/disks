@@ -3,83 +3,230 @@
 set -o pipefail
 source /opt/stack/utils
 
-# Returns the list of block devices of the given
-# type and the optionally given mounting status.
+# Returns the list of disk block devices.
 # Arguments:
-#  type:   disk, partition or rom
-#  status: mounted or unmounted
+#  None
 # Outputs:
-#  A json array of block device objects.
-find_devices () {
-  local type="${1}"
-  local status="${2}"
+#  A json array of disk block device objects.
+find_disks () {
+  local fields='name,path,type,size,rm,ro,tran,hotplug,state,'
+  fields+='vendor,model,rev,serial,mountpoint,mountpoints,'
+  fields+='label,uuid,fstype,fsver,fsavail,fsused,fsuse%'
 
-  [[ "${type}" == "partition" ]] && type="part"
-
-  local query=".blockdevices[]|select(.type == \"${type}\")"
-  
-  if [[ "${status}" == "mounted" ]]; then
-    query+='|select(.mountpoints != [null])'
-  elif [[ "${status}" == "unmounted" ]]; then
-    query+='|select(.mountpoints == [null])'
-  fi
-
-  query="[${query}]"
-
-  local fields='PATH,TYPE,VENDOR,LABEL,SIZE,MOUNTPOINT,'
-  fields+='MOUNTPOINTS,RM,RO,FSTYPE,MODEL'
+  local query='[.blockdevices[]|select(.type == "disk")]'
 
   lsblk -J -o "${fields}" | jq -cer "${query}" || return 1
 }
 
-# Returns the list of partitions of the disk
-# block device with the given path.
+# Returns the disk block device with the given path.
+# Arguments:
+#  path: the path of a disk block device
+# Outputs:
+#  A json object of a disk block device.
+find_disk () {
+  local path="${1}"
+
+  if [[ ! -b "${path}" ]]; then
+    return 1
+  fi
+
+  local query=".[]|select(.path == \"${path}\")"
+
+  find_disks | jq -cer "${query}" || return 1
+}
+
+# Returns the list of partitions of the disk block
+# device with the given path.
 # Arguments:
 #  path:   the path of a disk block device
-#  status: mounted, unmounted
+#  status: mounted or unmounted
 # Outputs:
 #  A json array of partition block device objects.
 find_partitions () {
   local path="${1}"
   local status="${2}"
 
-  local query="[.[]|select(.path|test(\"^${path}\"))]"
+  if [[ ! -b "${path}" ]]; then
+    return 1
+  fi
 
-  find_devices "partition" "${status}" | jq -cer "${query}" || return 1
+  # Collect any disk partitions reported by lsblk
+  local query=''
+  query+='.children|if . then .[]|select(.type == "part") else empty end'
+  query="[${query}]"
+
+  local parts=''
+  parts="$(find_disk "${path}" | jq -cer "${query}")" || return 1
+
+  # Collect any disk encrypted volumes reported by veracrypt
+  local volumes=''
+  volumes="$(veracrypt -t --list 2>&1)"
+
+  if [[ $? -ne 0 ]] && [[ ! "${volumes}" =~ "No volumes mounted" ]]; then
+    return 1
+  fi
+
+  local query=''
+  query+=".[]|select(.path|test(\"^${path}\"))"
+  query+=' |{path: .path, veracrypt: .}'
+  query="[${query}]"
+
+  volumes="$(echo "${volumes}" | jc --veracrypt | jq -cer "${query}")" || return 1
+
+  # Merge partitions and volumes data by path into an array
+  local query='$p + $v | group_by(.path) | map(add)'
+
+  if [[ "${status}" == "mounted" ]]; then
+    query+='|.[]|select(.mountpoint != null or .veracrypt.mountpoint != null)'
+  elif [[ "${status}" == "unmounted" ]]; then
+    query+='|.[]|select(.mountpoint == null and .veracrypt.mountpoint == null)'
+  fi
+
+  query="[${query}]|flatten"
+
+  jq -ncer --argjson p "${parts}" --argjson v "${volumes}" "${query}" || return 1
 }
 
-# Returns the block device with the given path.
+# Returns the partition block device with the given path.
 # Arguments:
-#  path: the path of a block device
+#  path: the path of a partition block device
 # Outputs:
-#  A json object of a block device.
-find_device () {
+#  A json object of a partition block device.
+find_partition () {
   local path="${1}"
 
-  local fields='NAME,PATH,LABEL,UUID,VENDOR,MODEL,REV,'
-  fields+='SERIAL,TYPE,TRAN,RM,RO,HOTPLUG,FSTYPE,FSVER,'
-  fields+='SIZE,FSAVAIL,FSUSED,FSUSE%,MOUNTPOINT,MOUNTPOINTS,STATE'
+  if [[ ! -b "${path}" ]]; then
+    return 1
+  fi
 
-  lsblk -J -o "${fields}" "${path}" | jq -cer '.blockdevices[0]' || return 1
+  # Collect the partition data reported by lsblk
+  local fields='name,path,type,size,rm,ro,tran,hotplug,state,'
+  fields+='vendor,model,rev,serial,mountpoint,mountpoints,'
+  fields+='label,uuid,fstype,fsver,fsavail,fsused,fsuse%'
+
+  local query='.blockdevices[0]|select(.type == "part")'
+
+  local part=''
+  part="$(lsblk -J -o "${fields}" "${path}" | jq -cer "${query}")" || return 1
+
+  # Colect the encrypted volume data reported by veracrypt, if any
+  local volume=''
+  volume="$(veracrypt -t --volume-properties "${path}" 2>&1)"
+
+  if [[ $? -ne 0 ]] && [[ ! "${volume}" =~ "No such volume is mounted" ]]; then
+    return 1
+  fi
+
+  local query='if .|length>0 then .[0]|{path: .path, veracrypt: .} else {} end'
+
+  volume="$(echo "${volume}" | jc --veracrypt | jq -cer "${query}")" || return 1
+
+  # Merge partition and volume data into an object
+  jq -ncer --argjson p "${part}" --argjson v "${volume}" "\$p + \$v" || return 1
+}
+
+# Returns the list of rom block devices.
+# Arguments:
+#  status: mounted or unmounted
+# Outputs:
+#  A json array of rom block device objects.
+find_roms () {
+  local status="${1}"
+
+  local fields='name,path,type,size,rm,ro,tran,hotplug,state,'
+  fields+='vendor,model,rev,serial,mountpoint,mountpoints,'
+  fields+='label,uuid,fstype,fsver,fsavail,fsused,fsuse%'
+
+  local query='.blockdevices[]|select(.type == "rom")'
+
+  if [[ "${status}" == "mounted" ]]; then
+    query+='|select(.mountpoint != null)'
+  elif [[ "${status}" == "unmounted" ]]; then
+    query+='|select(.mountpoint == null)'
+  fi
+
+  query="[${query}]"
+
+  lsblk -J -o "${fields}" | jq -cer "${query}" || return 1
+}
+
+# Returns the rom block device with the given path.
+# Arguments:
+#  path: the path of a rom block device
+# Outputs:
+#  A json object of a rom block device.
+find_rom () {
+  local path="${1}"
+
+  if [[ ! -b "${path}" ]]; then
+    return 1
+  fi
+
+  local query=".[]|select(.path == \"${path}\")"
+
+  find_roms | jq -cer "${query}" || return 1
 }
 
 # Checks if the block device with the given path
-# is of the given type or not.
+# is a disk device.
 # Arguments:
 #  path: the path of a block device
-#  type: disk, partition or rom
 # Returns:
-#  0 if it is of type otherwise 1.
-is_type_of () {
+#  0 if it is disk otherwise 1.
+is_disk () {
   local path="${1}"
-  local type="${2}"
 
-  [[ "${type}" == "partition" ]] && type="part"
+  if [[ ! -b "${path}" ]]; then
+    return 1
+  fi
 
-  local query="if .type == \"${type}\" then true else false end"
+  local type=''
+  type="$(find_disk "${path}" | jq -cer '.type')" || return 1
+
+  if [[ "${type}" == "disk" ]]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+# Checks if the block device with the given path
+# is a disk with system partitions on it.
+# Arguments:
+#  path: the path of a disk block device
+# Returns:
+#  0 if it is a system disk otherwise 1.
+is_system_disk () {
+  local path="${1}"
+
+  if [[ ! -b "${path}" ]]; then
+    return 1
+  fi
+
+  local disk=''
+  disk="$(find_disk "${path}")" || return 1
+
+  local system_paths='/|/home|/boot|/var|/log|/swap'
+
+  # Check if any partition's mountpoint is a system path
+  local is_system_path="if . then .|test(\"^(${system_paths})$\") else false end"
+
+  local query=''
+  query+=".children|if . then [.[]|.mountpoint|${is_system_path}]|any else false end"
 
   local result=''
-  result="$(find_device "${path}" | jq -cr "${query}")"
+  result="$(echo "${disk}" | jq -cr "${query}")" || return 1
+
+  if [[ "${result}" == "true" ]]; then
+    return 0
+  fi
+
+  # Check also deep into the partitions children, if any
+  local query=''
+  query+=".children|if . then [.[]|.mountpoint|${is_system_path}]|any else false end"
+  query=".children|if . then ([.[]|${query}]|any) else false end"
+
+  result="$(echo "${disk}" | jq -cr "${query}")" || return 1
 
   if [[ "${result}" == "true" ]]; then
     return 0
@@ -89,28 +236,106 @@ is_type_of () {
 }
 
 # Checks if the block device with the given path
-# is a disk with system partitions.
+# is a partition device.
 # Arguments:
 #  path: the path of a block device
 # Returns:
-#  0 if it is a system disk otherwise 1.
-is_system_disk () {
+#  0 if it is partition otherwise 1.
+is_partition () {
   local path="${1}"
 
-  local query=''
-  query+='.children|if . and length>0'
-  query+=' then .[]|.mountpoint|'
-  query+='  if . then select(.|test("^(/|/home|/boot|/var|/log|/swap)$")) else "" end'
-  query+=' else "" end'
+  if [[ ! -b "${path}" ]]; then
+    return 1
+  fi
 
-  local parts=''
-  parts="$(find_device "${path}" | jq -cr "${query}")" || return 1
+  local type=''
+  type="$(find_partition "${path}" | jq -cer '.type')" || return 1
 
-  if [[ -n "${parts}" ]]; then
+  if [[ "${type}" == "part" ]]; then
     return 0
   else
     return 1
   fi
+}
+
+# Checks if the block device with the given path
+# is a partition pointing to a system path.
+# Arguments:
+#  path: the path of a partition block device
+# Returns:
+#  0 if it is a system partition otherwise 1.
+is_system_partition () {
+  local path="${1}"
+
+  if [[ ! -b "${path}" ]]; then
+    return 1
+  fi
+
+  local system_paths='/|/home|/boot|/var|/log|/swap'
+
+  # Check if partition mountpoint is a system path
+  local is_system_path="if . then .|test(\"^(${system_paths})$\") else false end"
+
+  local query=''
+  query+="if (.mountpoint|${is_system_path}) or (.veracrypt.mountpoint|${is_system_path})"
+  query+=' then true else false '
+  query+='end'
+
+  local result=''
+  result="$(find_partition "${path}" | jq -cer "${query}")" || return 1
+
+  if [[ "${result}" == "true" ]]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+# Checks if the block device with the given path
+# is a rom device.
+# Arguments:
+#  path: the path of a block device
+# Returns:
+#  0 if it is rom otherwise 1.
+is_rom () {
+  local path="${1}"
+
+  if [[ ! -b "${path}" ]]; then
+    return 1
+  fi
+
+  local type=''
+  type="$(find_rom "${path}" | jq -cer '.type')" || return 1
+
+  if [[ "${type}" == "rom" ]]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+# Checks if the block device with the given path
+# is mounted or not.
+# Arguments:
+#  path: the path of a mountable block device
+# Returns:
+#  0 if it is mounted otherwise 1.
+is_mounted () {
+  local path="${1}"
+
+  if [[ ! -b "${path}" ]]; then
+    return 1
+  fi
+
+  if grep -qsE "^${path} " /proc/mounts; then
+    return 0
+  fi
+
+  if veracrypt -t --list 2>&1 | grep -qsE "^[0-9]+: ${path} "; then
+    return 0
+  fi
+
+  return 1
 }
 
 # Mounts the block device with the given path.
@@ -120,6 +345,10 @@ is_system_disk () {
 #  path: the path of a mountable block device
 mount_device () {
   local path="${1}"
+
+  if [[ ! -b "${path}" ]]; then
+    return 1
+  fi
 
   udisksctl mount -b "${path}" &> /dev/null || return 1
 
@@ -132,76 +361,118 @@ mount_device () {
   fi
 }
 
-# Unmounts the block device with the given path.
+# Mounts the encrypted block device with the given path.
 # Arguments:
-#  path: the path of a mountable block device
-#  type: normal or encrypted
-unmount_device () {
+#  path:     the path of an encrypted block device
+#  password: the encryption key pass
+mount_encrypted () {
   local path="${1}"
-  local type="${2:-"normal"}"
+  local password="${2}"
 
-  sync
+  if [[ ! -b "${path}" ]]; then
+    return 1
+  fi
 
-  if [[ "${type}" == "encrypted" ]]; then
-    sudo veracrypt -t --dismount "${path}" &> /dev/null || return 1
-  else
-    udisksctl unmount -b "${path}" &> /dev/null || return 1
+  local folder_name="$(echo "${path:1}" | tr '/' '_')"
+  local mount_point="${HOME}/mount/encrypted/${folder_name}"
+
+  mkdir -p "${mount_point}" &&
+  sudo veracrypt -t --mount "${path}" "${mount_point}" --password "${password}" \
+    --pim 0 --keyfiles "" --protect-hidden no --non-interactive &> /dev/null
+
+  if [[ $? -ne 0 ]]; then
+    rm -rf "${mount_point}"
+    return 1
   fi
 }
 
-# Unmounts the partitions of a disk block device
-# with the given path.
+# Unmounts the block device with the given path.
+# Arguments:
+#  path: the path of a mountable block device
+unmount_device () {
+  local path="${1}"
+
+  if [[ ! -b "${path}" ]]; then
+    return 1
+  fi
+
+  sync &&
+  udisksctl unmount -b "${path}" &> /dev/null || return 1
+}
+
+# Unmounts the encrypted block device with the given path.
+# Arguments:
+#  path: the path of an encrypted block device
+unmount_encrypted () {
+  local path="${1}"
+
+  if [[ ! -b "${path}" ]]; then
+    return 1
+  fi
+
+  sync &&
+  sudo veracrypt -t --dismount "${path}" &> /dev/null || return 1
+
+  local folder_name="$(echo "${path:1}" | tr '/' '_')"
+  rm -rf "${HOME}/mount/encrypted/${folder_name}"
+}
+
+# Unmounts the mounted partitions of a disk block
+# device with the given path.
 # Arguments:
 #  path: the path of a disk block device
 unmount_partitions () {
   local path="${1}"
 
-  # Collect disk's normal mounted partitions
-  local normal_parts=''
-  normal_parts="$(grep -sE "^${path}.*[0-9]+ " /proc/mounts | awk '{print $1}')"
+  if [[ ! -b "${path}" ]]; then
+    return 1
+  fi
 
-  # Collect disk's encrypted mounted partitions
-  local encrypted_parts=''
-  encrypted_parts="$(veracrypt -t --list 2>&1)"
+  # Collect any disk's mounted partitions
+  local parts=''
+  parts="$(grep -sE "^${path}p?[0-9]+ " /proc/mounts | awk '{print $1}')"
+
+  # Collect any disk's mounted encrypted volumes, if any
+  local volumes=''
+  volumes="$(veracrypt -t --list 2>&1)"
   
-  if [[ $? -ne 0 ]] && [[ "${encrypted_parts}" != "Error: No volumes mounted." ]]; then
+  if [[ $? -ne 0 ]] && [[ ! "${volumes}" =~ "No volumes mounted" ]]; then
     return 1
   fi
   
-  encrypted_parts="$(echo "${encrypted_parts}" |
-    awk '/^[0-9]+: '"${path//\//\\/}"'/{print $2}')" || return 1
+  volumes="$(echo "${volumes}" | jc --veracrypt | jq -cr '.[]|.path')" || return 1
   
-  if [[ -z "${normal_parts}" ]] && [[ -z "${encrypted_parts}" ]]; then
+  if [[ -z "${parts}" ]] && [[ -z "${volumes}" ]]; then
     echo "No mounted partitions have found"
     return 0
   fi
 
-  if [[ -n "${normal_parts}" ]]; then
-    local normal_part=''
-    while read -r normal_part; do
-      unmount_device "${normal_part}"
+  if [[ -n "${parts}" ]]; then
+    local part=''
+    while read -r part; do
+      unmount_device "${part}"
 
       if [[ $? -eq 0 ]]; then
-        echo "Partition ${normal_part} has been unmounted"
+        echo "Partition ${part} has been unmounted"
       else
-        echo "Failed to unmount partition ${normal_part}"
+        echo "Failed to unmount partition ${part}"
         return 2
       fi
-    done <<< "${normal_parts}"
+    done <<< "${parts}"
   fi
 
-  if [[ -n "${encrypted_parts}" ]]; then
-    local encrypted_part=''
-    while read -r encrypted_part; do
-      unmount_device "${encrypted_part}" "encrypted"
+  if [[ -n "${volumes}" ]]; then
+    local volume=''
+    while read -r volume; do
+      unmount_encrypted "${volume}"
 
       if [[ $? -eq 0 ]]; then
-        echo "Partition ${encrypted_part} has been unmounted"
+        echo "Partition ${volume} has been unmounted"
       else
-        echo "Failed to unmount partition ${encrypted_part}"
+        echo "Failed to unmount partition ${volume}"
         return 2
       fi
-    done <<< "${encrypted_parts}"
+    done <<< "${volumes}"
   fi
 }
 
@@ -212,6 +483,10 @@ unmount_partitions () {
 #  path: the path of a disk block device
 clean_partitions () {
   local path="${1}"
+
+  if [[ ! -b "${path}" ]]; then
+    return 1
+  fi
 
   sudo wipefs --all --force --quiet "${path}" &&
   sudo parted --script -a optimal -- "${path}" mklabel msdos || return 1
@@ -229,6 +504,10 @@ create_partition () {
   local fs_type="${2}"
   local start="${3}"
   local end="${4}"
+
+  if [[ ! -b "${path}" ]]; then
+    return 1
+  fi
 
   # Use ntfs as fs type for exfat file systems
   [[ "${fs_type}" == "exfat" ]] && fs_type="ntfs"
@@ -249,6 +528,10 @@ format_partition () {
   local index="${2}"
   local fs_type="${3}"
   local label="${4}"
+
+  if [[ ! -b "${path}" ]]; then
+    return 1
+  fi
 
   # Add path postfix for nvme and mmcblk disks
   if [[ "${path}" =~ ^/dev/(nvme|mmcblk) ]]; then
@@ -297,52 +580,50 @@ find_shared_folders () {
   echo "[${folders}]"
 }
 
-# Shows a menu asking the user to select one block device,
+# Shows a menu asking the user to select one disk block device,
 # where the answer is kept in the global var REPLY.
 # Globals:
 #  REPLY
 # Arguments:
-#  type:   disk, partition or rom
-#  status: mounted, unmounted
+#  None
 # Outputs:
-#  A menu of block devices.
-pick_device () {
-  local type="${1}"
-  local status="${2}"
-
-  local devices=''
-  devices="$(find_devices "${type}" "${status}")"
+#  A menu of disk block devices.
+pick_disk () {
+  local disks=''
+  disks="$(find_disks)"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find ${status:-\b} ${type}s"
+    echo "Unable to find disks"
     return 2
   fi
 
   local len=0
-  len="$(count "${devices}")" || return 1
+  len="$(count "${disks}")" || return 1
   
   if [[ ${len} -eq 0 ]]; then
-    echo "No ${status:-\b} ${type}s have found"
+    echo "No disks have found"
     return 2
   fi
 
+  local trim='.|gsub("^\\s+|\\s+$";"")'
+  local vendor="\(.vendor|if . then .|${trim} else empty end)"
+
   local value=''
-  value+='\(.path) ['
-  value+='\(if .vendor then "\(.vendor|gsub("^\\s+|\\s+$";"")) " else "" end)'
-  value+='\(if .label then "\(.label) " else "" end)'
-  value+='\(.size)]'
+  value+="[\"${vendor}\", .size]|join(\" \")"
+  value="\(${value}|if . != \"\" then \" [\(.|${trim})]\" else empty end)"
+  value="\(.path)${value}"
 
   local query=''
   query="[.[]|{key: .path, value: \"${value}\"}]"
 
-  devices="$(echo "${devices}" | jq -cer "${query}")" || return 1
+  disks="$(echo "${disks}" | jq -cer "${query}")" || return 1
 
-  pick_one "Select a ${type}:" "${devices}" "vertical" || return $?
+  pick_one "Select a disk:" "${disks}" "vertical" || return $?
 }
 
 # Shows a menu asking the user to select one partition
-# block device of the disk with the given path, where
-# the answer is kept in the global var REPLY.
+# of the disk with the given path, where the answer is
+# kept in the global var REPLY.
 # Globals:
 #  REPLY
 # Arguments:
@@ -354,34 +635,79 @@ pick_partition () {
   local path="${1}"
   local status="${2}"
 
-  local devices=''
-  devices="$(find_partitions "${path}" "${status}")"
+  local parts=''
+  parts="$(find_partitions "${path}" "${status}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find ${status:-\b} partitions"
+    echo -e "Unable to find ${status:-\b} partitions"
     return 2
   fi
 
   local len=0
-  len="$(count "${devices}")" || return 1
+  len="$(count "${parts}")" || return 1
   
   if [[ ${len} -eq 0 ]]; then
-    echo "No ${status:-\b} partitions have found"
+    echo -e "No ${status:-\b} partitions have found"
     return 2
   fi
 
+  local trim='.|gsub("^\\s+|\\s+$";"")'
+  local label="\(.label|if . then .|${trim} else empty end)"
+
   local value=''
-  value+='\(.path) ['
-  value+='\(if .vendor then "\(.vendor|gsub("^\\s+|\\s+$";"")) " else "" end)'
-  value+='\(if .label then "\(.label) " else "" end)'
-  value+='\(.size)]'
+  value+="[\"${label}\", .size]|join(\" \")"
+  value="\(${value}|if . != \"\" then \" [\(.|${trim})]\" else empty end)"
+  value="\(.path)${value}"
+
+  local query="[.[]|{key: .path, value: \"${value}\"}]"
+
+  parts="$(echo "${parts}" | jq -cer "${query}")" || return 1
+
+  pick_one "Select a partition:" "${parts}" "vertical" || return $?
+}
+
+# Shows a menu asking the user to select one rom block
+# device, where the answer is kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  status: mounted, unmounted
+# Outputs:
+#  A menu of rom block devices.
+pick_rom () {
+  local status="${1}"
+
+  local roms=''
+  roms="$(find_roms "${status}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo -e "Unable to find ${status:-\b} roms"
+    return 2
+  fi
+
+  local len=0
+  len="$(count "${roms}")" || return 1
+  
+  if [[ ${len} -eq 0 ]]; then
+    echo -e "No ${status:-\b} roms have found"
+    return 2
+  fi
+
+  local trim='.|gsub("^\\s+|\\s+$";"")'
+  local vendor="\(.vendor|if . then .|${trim} else empty end)"
+  local label="\(.label|if . then .|${trim} else empty end)"
+
+  local value=''
+  value+="[\"${vendor}\", \"${label}\", .size]|join(\" \")"
+  value="\(${value}|if . != \"\" then \" [\(.|${trim})]\" else empty end)"
+  value="\(.path)${value}"
 
   local query=''
   query="[.[]|{key: .path, value: \"${value}\"}]"
 
-  devices="$(echo "${devices}" | jq -cer "${query}")" || return 1
+  roms="$(echo "${roms}" | jq -cer "${query}")" || return 1
 
-  pick_one "Select a partition:" "${devices}" "vertical" || return $?
+  pick_one "Select a rom:" "${roms}" "vertical" || return $?
 }
 
 # Shows a menu asking the user to select one host, where the
@@ -451,10 +777,11 @@ pick_fs_type () {
 # Outputs:
 #  A minimal prompt status line.
 prompt () {
-  local query='.[]|select(.mountpoint == "/")|.path'
+  local query='.[]|.children|'
+  query+='if . then .[]|select(.mountpoint == "/")|.name else empty end'
 
   local status=''
-  status="$(find_devices "partition" "mounted" | jq -cer "${query}")"
+  status="$(find_disks | jq -cer "${query}")"
 
   if [[ $? -ne 0 ]]; then
     status='none'
@@ -469,30 +796,39 @@ prompt () {
 # Outputs:
 #  A list of disks and filesystem data.
 show_status () {
-  local query='.[]|'
-  query+='if .mountpoint '
-  query+=' then select(.mountpoint|test("^(/|/home|/boot|/var|/log|/swap)$"))|.path'
-  query+=' else "" end'
+  local alt_fstype='.children|'
+  alt_fstype+='if . and length>0'
+  alt_fstype+=' then (.[0]|.fstype|if . then  " \(.|ascii_upcase)" else "" end)'
+  alt_fstype+=' else "" end'
 
-  local part_paths=''
-  part_paths="$(find_devices "partition" | jq -cer "${query}")" || return 1
+  local alt_fsuse='.children|'
+  alt_fsuse+='if . and length>0'
+  alt_fsuse+=' then (.[0]|."fsuse%"|if . then  " \(.)" else "" end)'
+  alt_fsuse+=' else "" end'
+
+  local parts=''
+  parts+='\(.path)'
+  parts+="\(if .fstype then \" \(.fstype|ascii_upcase)\" else ${alt_fstype} end)"
+  parts+="\(if .\"fsuse%\" then \" \(.\"fsuse%\")\" else ${alt_fsuse} end)"
+  parts=".children|if . and length>0 then .[]|\"${parts}\" else \"\" end"
+  parts="[${parts}]|join(\"\n         \")"
 
   local query=''
-  query+='Partition:    \(.path) [\(.mountpoint)]\n'
-  query+='File System:  \(.fstype|ascii_upcase) v\(.fsver)\n'
-  query+='Total Size:   \(.size)\n'
-  query+='Free Space:   \(.fsavail)\n'
-  query+='Used Space:   \(.fsused) [\(."fsuse%")]\n'
+  query+='Disk:    \(.path)\n'
+  query+='Model:   \(.vendor|gsub("^\\s+|\\s+$";"")) \(.model)\n'
+  query+='Size:    \(.size)\n'
+  query+="Parts:   \(if .children then ${parts} else \"none\" end)"
 
-  local part_path=''
-  while read -r part_path; do
-    find_device "${part_path}" | jq -cer "\"${query}\"" || return 1
-  done <<< "${part_paths}"
+  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+
+  find_disks | jq -cer "${query}" || return 1
+
+  echo
 
   swapon --noheadings --show | awk -F' ' '{
-    printf "%-13s %s\n", "Swap:", $1
-    printf "%-13s %s\n", "Type:", $2
-    printf "%-13s %s\n", "Used:", $4"/"$3
+    printf "%-8s %s\n", "Swap:", $1
+    printf "%-8s %s\n", "Type:", $2
+    printf "%-8s %s\n", "Used:", $4"/"$3
   }' || return 1
 
   cat /proc/meminfo | grep -E "Swap.*" | awk -F':' '{
@@ -500,7 +836,11 @@ show_status () {
     gsub(/[ \t]+$/,"",$1)
     gsub(/^[ \t]+/,"",$2)
     gsub(/[ \t]+$/,"",$2)
-    printf "%-13s %s\n", $1":", $2
+
+    if ($1 == "SwapCached") $1="Cached"
+    if ($1 == "SwapTotal") $1="Total"
+    if ($1 == "SwapFree") $1="Free"
+    printf "%-8s %s\n", $1":", $2
   }' || return 1
 }
 
@@ -516,44 +856,65 @@ show_disk () {
   local path="${1}"
 
   if [[ -z "${path}" ]]; then
-    pick_device "disk" || return $?
+    pick_disk || return $?
     [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
   fi
 
   if [[ ! -b "${path}" ]]; then
-    echo "Invalid block device"
-    return 2
-  elif ! is_type_of "${path}" "disk"; then
-    echo "Invalid disk device"
+    echo "Unable to find disk ${path}"
     return 2
   fi
 
-  local parts=''
-  parts+='\(.path)'
-  parts+='\(.fstype|if . then " \(.|ascii_upcase)" else "" end)'
-  parts+='\(.label|if . then " \(.)" else "" end)'
-  parts="Parts:         \([.children[]|\"${parts}\"]|join(\"\n               \"))"
-
-  local query=''
-  query+='Name:          \(.name)\n'
-  query+='Path:          \(.path)\n'
-  query+='Type:          \(.type)\n'
-  query+='Removable:     \(.rm)\n'
-  query+='ReadOnly:      \(.ro)\n'
-  query+='Transfer:      \(.tran)\n'
-  query+='HotPlug:       \(.hotplug)\n'
-  query+='Size:          \(.size)\n'
-  query+='Vendor:        \(.vendor)\n'
-  query+='Model:         \(.model)\n'
-  query+='Revision:      \(.rev)\n'
-  query+='Serial:        \(.serial)\n'
-  query+='State:         \(.state)'
-  query+="\(if .children then \"\n${parts}\" else \"\" end)"
-
-  find_device "${path}" | jq -cer "\"${query}\""
+  local disk=''
+  disk="$(find_disk "${path}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to read disk device"
+    echo "Unable to find disk ${path}"
+    return 2
+  fi
+
+  local alt_fstype='.children|'
+  alt_fstype+='if . and length>0'
+  alt_fstype+=' then (.[0]|.fstype|if . then  " \(.|ascii_upcase)" else "" end)'
+  alt_fstype+=' else "" end'
+
+  local alt_fsuse='.children|'
+  alt_fsuse+='if . and length>0'
+  alt_fsuse+=' then (.[0]|."fsuse%"|if . then  " \(.)" else "" end)'
+  alt_fsuse+=' else "" end'
+
+  local alt_label='.children|'
+  alt_label+='if . and length>0'
+  alt_label+=' then (.[0]|.label|if . then  " [\(.)]" else "" end)'
+  alt_label+=' else "" end'
+
+  local parts=''
+  parts+='\(.path)'
+  parts+="\(if .fstype then \" \(.fstype|ascii_upcase)\" else ${alt_fstype} end)"
+  parts+="\(if .\"fsuse%\" then \" \(.\"fsuse%\")\" else ${alt_fsuse} end)"
+  parts+="\(if .label then \" [\(.label)]\" else ${alt_label} end)"
+  parts=".children|if . and length>0 then .[]|\"${parts}\" else \"\" end"
+  parts="[${parts}]|join(\"\n            \")"
+
+  local query=''
+  query+='Name:       \(.name)\n'
+  query+='Path:       \(.path)\n'
+  query+='Removable:  \(.rm)\n'
+  query+='ReadOnly:   \(.ro)\n'
+  query+='Transfer:   \(.tran)\n'
+  query+='HotPlug:    \(.hotplug)\n'
+  query+='Size:       \(.size)\n'
+  query+='Vendor:     \(.vendor)\n'
+  query+='Model:      \(.model)\n'
+  query+='Revision:   \(.rev)\n'
+  query+='Serial:     \(.serial)\n'
+  query+='State:      \(.state)\n'
+  query+="Parts:      \(if .children then ${parts} else \"none\" end)"
+
+  echo "${disk}" | jq -cer "\"${query}\""
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to parse disk data"
     return 2
   fi
 }
@@ -569,42 +930,77 @@ show_partition () {
   local path="${1}"
 
   if [[ -z "${path}" ]]; then
-    pick_device "disk" || return $?
+    pick_disk || return $?
     [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
 
     pick_partition "${path}" || return $?
     [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
   fi
-
+  
   if [[ ! -b "${path}" ]]; then
-    echo "Invalid block device"
-    return 2
-  elif ! is_type_of "${path}" "partition"; then
-    echo "Invalid partition device"
+    echo "Unable to find partition ${path}"
     return 2
   fi
 
-  local query=''
-  query+='Name:          \(.name)\n'
-  query+='Path:          \(.path)\n'
-  query+='Type:          \(.type)\n'
-  query+='\(if .fstype then "File System:   \(.fstype|ascii_upcase)\n" else "" end)'
-  query+='\(if .fsver then "File Version:  \(.fsver)\n" else "" end)'
-  query+='Removable:     \(.rm)\n'
-  query+='ReadOnly:      \(.ro)\n'
-  query+='HotPlug:       \(.hotplug)\n'
-  query+='Size:          \(.size)'
-  query+='\(if .fsavail then "\nFree Space:    \(.fsavail)" else "" end)'
-  query+='\(if .fsused then "\nUsed Space:    \(.fsused) [\(."fsuse%")]" else "" end)'
-  query+='\(if .label then "\nLabel:         \(.label)" else "" end)'
-  query+='\(if .uuid then "\nUUID:          \(.uuid)" else "" end)'
-  query+='\(if .mountpoint then "\nMount:         \(.mountpoint)" else "" end)'
-  query+='\(if .mountpoints != [null] then "\nMounts:        \(.mountpoints)" else "" end)'
-
-  find_device "${path}" | jq -cer "\"${query}\""
+  local part=''
+  part="$(find_partition "${path}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to read partition device"
+    echo "Unable to find partition ${path}"
+    return 2
+  fi
+
+  local alt_fstype='.children|'
+  alt_fstype+='if . and length>0'
+  alt_fstype+=' then (.[0]|.fstype|if . then  "File System:  \(.|ascii_upcase)\n" else "" end)'
+  alt_fstype+=' else "" end'
+
+  local alt_fsavail='.children|'
+  alt_fsavail+='if . and length>0'
+  alt_fsavail+=' then (.[0]|.fsavail|if . then  "\nFree Space:   \(.)" else "" end)'
+  alt_fsavail+=' else "" end'
+
+  local alt_fsused='.children|'
+  alt_fsused+='if . and length>0'
+  alt_fsused+=' then (.[0]|if .fsused then  "\nUsed Space:   \(.fsused) [\(."fsuse%")]" else "" end)'
+  alt_fsused+=' else "" end'
+
+  local alt_label='.children|'
+  alt_label+='if . and length>0'
+  alt_label+=' then (.[0]|.label|if . then  "\nLabel:        \(.)" else "" end)'
+  alt_label+=' else "" end'
+
+  local alt_uuid='.children|'
+  alt_uuid+='if . and length>0'
+  alt_uuid+=' then (.[0]|.uuid|if . then  "\nUUID:         \(.)" else "" end)'
+  alt_uuid+=' else "" end'
+
+  local alt_mountpoint=''
+  alt_mountpoint+='.veracrypt|if . then "\nMount:        \(.mountpoint)" else "" end'
+
+  local query=''
+  query+='Name:         \(.name) \(if .veracrypt then "[encrypted]" else "" end)\n'
+  query+='Path:         \(.path)\n'
+  query+="\(if .fstype then \"File System:  \(.fstype|ascii_upcase)\n\" else ${alt_fstype} end)"
+  query+='Removable:    \(.rm)\n'
+  query+='ReadOnly:     \(.ro)\n'
+  query+='HotPlug:      \(.hotplug)\n'
+  query+='Size:         \(.size)'
+  query+="\(if .fsavail then \"\nFree Space:   \(.fsavail)\" else ${alt_fsavail} end)"
+  query+="\(if .fsused then \"\nUsed Space:   \(.fsused) [\(.\"fsuse%\")]\" else ${alt_fsused} end)"
+  query+="\(if .label then \"\nLabel:        \(.label)\" else ${alt_label} end)"
+  query+="\(if .uuid then \"\nUUID:         \(.uuid)\" else ${alt_uuid} end)"
+  query+='\(.veracrypt|if . then "\nSlot:         \(.slot)" else "" end)'
+  query+='\(.veracrypt|if . then "\nHidden:       \(.hidden_protected)" else "" end)'
+  query+='\(.veracrypt|if . then "\nEncryption:   \(.encryption_algo):\(.prf) [\(.mode)]" else "" end)'
+  query+='\(.veracrypt|if . then "\nBlock:        \(.block_size)" else "" end)'
+  query+='\(.veracrypt|if . then "\nMapped:       \(.device)" else "" end)'
+  query+="\(if .mountpoint then \"\nMount:        \(.mountpoint)\" else ${alt_mountpoint} end)"
+
+  echo "${part}" | jq -cer "\"${query}\""
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to parse partition data"
     return 2
   fi
 }
@@ -621,24 +1017,27 @@ show_rom () {
   local path="${1}"
 
   if [[ -z "${path}" ]]; then
-    pick_device "rom" || return $?
+    pick_rom || return $?
     [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
   fi
 
   if [[ ! -b "${path}" ]]; then
-    echo "Invalid block device"
+    echo "Unable to find rom ${path}"
     return 2
-  elif ! is_type_of "${path}" "rom"; then
-    echo "Invalid rom device"
+  fi
+
+  local rom=''
+  rom="$(find_rom "${path}")"
+  
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to find rom ${path}"
     return 2
   fi
 
   local query=''
   query+='Name:          \(.name)\n'
   query+='Path:          \(.path)\n'
-  query+='Type:          \(.type)\n'
   query+='\(if .fstype then "File System:   \(.fstype|ascii_upcase)\n" else "" end)'
-  query+='\(if .fsver then "File Version:  \(.fsver)\n" else "" end)'
   query+='Removable:     \(.rm)\n'
   query+='ReadOnly:      \(.ro)\n'
   query+='Transfer:      \(.tran)\n'
@@ -654,111 +1053,11 @@ show_rom () {
   query+='Serial:        \(.serial)\n'
   query+='State:         \(.state)'
   query+='\(if .mountpoint then "\nMount:         \(.mountpoint)" else "" end)'
-  query+='\(if .mountpoints != [null] then "\nMounts:        \(.mountpoints)" else "" end)'
 
-  find_device "${path}" | jq -cer "\"${query}\""
+  echo "${rom}" | jq -cer "\"${query}\""
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to read rom device"
-    return 2
-  fi
-}
-
-# Scans the disk block device with the given path
-# for possible SMART data.
-# Arguments:
-#  path: the path of a disk block device
-# Outputs:
-#  A long list of health and status data.
-scan_disk () {
-  local path="${1}"
-
-  if [[ -z "${path}" ]]; then
-    pick_device "disk" || return $?
-    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
-  fi
-
-  if [[ ! -b "${path}" ]]; then
-    echo "Invalid block device"
-    return 2
-  elif ! is_type_of "${path}" "disk"; then
-    echo "Invalid disk device"
-    return 2
-  elif ! sudo smartctl -i "${path}" &> /dev/null; then
-    echo "Unable to retrieve SMART data"
-    return 2
-  fi
-
-  local model=''
-  model+='if .model_name'
-  model+=' then "\nModel:     \(.model_name) FW.\(.firmware_version)"'
-  model+=' else ""'
-  model+='end'
-
-  local physicals=''
-  physicals+='if .physical_block_size'
-  physicals+=' then " P:\(.physical_block_size)"'
-  physicals+=' else ""'
-  physicals+='end'
-
-  local factor=''
-  factor+='if .form_factor.name'
-  factor+=' then "\nFactor:    \(.form_factor.name) \(.rotation_rate) rpm"'
-  factor+=' else ""'
-  factor+='end'
-
-  local sata=''
-  sata+='if .sata_version.string'
-  sata+=' then "\nSATA:      \(.sata_version.string) at \(.interface_speed.max.string)"'
-  sata+=' else ""'
-  sata+='end'
-
-  local trim=''
-  trim+='if .trim.supported'
-  trim+=' then "\nTrim:      \(.trim.supported)"'
-  trim+=' else ""'
-  trim+='end'
-
-  local passed=''
-  passed+='if .smart_status.passed then "passed" else "failed" end'
-
-  local temp=''
-  temp+='if .temperature.current'
-  temp+=' then "\nTemp:      \(.temperature.current)C"'
-  temp+=' else ""'
-  temp+='end'
-
-  local attr=''
-  attr+='Attr:      \(.id)\n'
-  attr+='Name:      \(.name)\n'
-  attr+='Raw:       \(.raw.value)\n'
-  attr+='Values:    [V\(.value), W\(.worst), T\(.thresh)]\n'
-  attr+='Failing:   \(.when_failed)'
-
-  local attrs=''
-  attrs+='.ata_smart_attributes.table as $a |'
-  attrs+="if \$a then \"\n\n\([\$a[]|\"${attr}\"]|join(\"\n\n\"))\" else \"\" end"
-
-  local query=''
-  query+='Device:    \(.device.name)'
-  query+="\(${model})"
-  query+='\nProtocol:  \(.device.type|ascii_upcase) \(.device.protocol)'
-  query+='\nCapacity:  \(.user_capacity.bytes) bytes'
-  query+="\nBlocks:    L:\(.logical_block_size)\(${physicals})"
-  query+="\(${factor})"
-  query+="\(${trim})"
-  query+="\(${sata})"
-  query+='\nSMART:     \(.smart_support.enabled)'
-  query+="\(${temp})"
-  query+="\nHealth:    \(${passed})"
-  query+="\(${attrs})"
-
-  sudo smartctl -iHj "${path}" | jq -cer "\"${query}\""
-
-  local code="$?"
-
-  if [[ ${code} -ne 0 ]] && [[ ${code} -ne 24 ]]; then
-    echo "Failed to read SMART data"
+    echo "Failed to parse rom data"
     return 2
   fi
 }
@@ -769,16 +1068,16 @@ scan_disk () {
 # Outputs:
 #  A list of disk block devices.
 list_disks () {
-  local devices=''
-  devices="$(find_devices "disk")"
+  local disks=''
+  disks="$(find_disks)"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to read disks"
+    echo "Unable to find disks"
     return 2
   fi
 
   local len=0
-  len="$(count "${devices}")" || return 1
+  len="$(count "${disks}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
     echo "No disks have found"
@@ -786,15 +1085,14 @@ list_disks () {
   fi
 
   local query=''
+  query+='Name:    \(.name)\n'
   query+='Path:    \(.path)\n'
-  query+='Type:    \(.type)\n'
   query+='Size:    \(.size)'
   query+='\(if .vendor then "\nVendor:  \(.vendor)" else "" end)'
   query+='\(if .model then "\nModel:   \(.model)" else "" end)'
-  query+='\(if .label then "\nLabel:   \(.label)" else "" end)'
   query="[.[]|\"${query}\"]|join(\"\n\n\")"
 
-  echo "${devices}" | jq -cer "${query}" || return 1
+  echo "${disks}" | jq -cer "${query}" || return 1
 }
 
 # Shows the list of partitions of the disk block device
@@ -807,28 +1105,25 @@ list_partitions () {
   local path="${1}"
 
   if [[ -z "${path}" ]]; then
-    pick_device "disk" || return $?
+    pick_disk || return $?
     [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
   fi
 
-  if [[ ! -b "${path}" ]]; then
-    echo "Invalid block device"
-    return 2
-  elif ! is_type_of "${path}" "disk"; then
-    echo "Invalid disk device"
+  if [[ ! -b "${path}" ]] || ! is_disk "${path}"; then
+    echo "Unable to find disk ${path}"
     return 2
   fi
 
-  local devices=''
-  devices="$(find_partitions "${path}")"
+  local parts=''
+  parts="$(find_partitions "${path}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to read partitions"
+    echo "Unable to find partitions"
     return 2
   fi
 
   local len=0
-  len="$(count "${devices}")" || return 1
+  len="$(count "${parts}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
     echo "No partitions have found"
@@ -836,15 +1131,13 @@ list_partitions () {
   fi
 
   local query=''
-  query+='Path:    \(.path)\n'
-  query+='Type:    \(.type)\n'
-  query+='Size:    \(.size)'
-  query+='\(if .vendor then "\nVendor:  \(.vendor)" else "" end)'
-  query+='\(if .model then "\nModel:   \(.model)" else "" end)'
-  query+='\(if .label then "\nLabel:   \(.label)" else "" end)'
+  query+='Name:   \(.name)\(if .veracrypt then " [encrypted]" else "" end)\n'
+  query+='Path:   \(.path)\n'
+  query+='Size:   \(.size)'
+  query+='\(if .label then "\nLabel:  \(.label)" else "" end)'
   query="[.[]|\"${query}\"]|join(\"\n\n\")"
 
-  echo "${devices}" | jq -cer "${query}" || return 1
+  echo "${parts}" | jq -cer "${query}" || return 1
 }
 
 # Shows the list of rom block devices.
@@ -853,16 +1146,16 @@ list_partitions () {
 # Outputs:
 #  A list of rom block devices.
 list_roms () {
-  local devices=''
-  devices="$(find_devices "rom")"
+  local roms=''
+  roms="$(find_roms)"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to read roms"
+    echo "Unable to find roms"
     return 2
   fi
 
   local len=0
-  len="$(count "${devices}")" || return 1
+  len="$(count "${roms}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
     echo "No roms have found"
@@ -870,15 +1163,15 @@ list_roms () {
   fi
 
   local query=''
+  query+='Name:    \(.name)\n'
   query+='Path:    \(.path)\n'
-  query+='Type:    \(.type)\n'
   query+='Size:    \(.size)'
   query+='\(if .vendor then "\nVendor:  \(.vendor)" else "" end)'
   query+='\(if .model then "\nModel:   \(.model)" else "" end)'
   query+='\(if .label then "\nLabel:   \(.label)" else "" end)'
   query="[.[]|\"${query}\"]|join(\"\n\n\")"
 
-  echo "${devices}" | jq -cer "${query}" || return 1
+  echo "${roms}" | jq -cer "${query}" || return 1
 }
 
 # Shows the list of shared folders of the given host.
@@ -888,7 +1181,7 @@ list_roms () {
 #  host: the name or ip of a host.
 # Outputs:
 #  A list of shared folders.
-list_shares () {
+list_shared_folders () {
   local host="${1}"
 
   if [[ -z "${host}" ]]; then
@@ -909,7 +1202,7 @@ list_shares () {
   folders="$(find_shared_folders "${host}" "${username}" "${workgroup}" "${password}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to retrieve shared folders"
+    echo "Unable to find shared folders"
     return 2
   fi
 
@@ -939,73 +1232,84 @@ list_shares () {
 # Outputs:
 #  A list of mounting points.
 list_mounts () {
-  local parts=''
-  parts="$(find_devices "partition" "mounted")"
+  local mounts='[]'
 
-  if [[ $? -ne 0 ]]; then
-    echo "Unable to read mounted partitions"
-    return 2
-  fi
+  local disks=''
+  disks="$(find_disks | jq -cer '.[]|.path')" || return 1
+
+  local disk=''
+  while read -r disk; do
+    local parts=''
+    parts="$(find_partitions "${disk}" "mounted" |
+      jq -cer '[.[]|{name: .path, point: (if .mountpoint then .mountpoint else .veracrypt.mountpoint end)}]')" || return 1
+
+    # Merge disk partitions to mounts array
+    mounts="$(jq -n --argjson m "${mounts}" --argjson p "${parts}" '$m + $p')" || return 1
+  done <<< "${disks}"
 
   local roms=''
-  roms="$(find_devices "rom" "mounted")"
-
-  if [[ $? -ne 0 ]]; then
-    echo "Unable to read mounted roms"
-    return 2
-  fi
-
-  local devices=''
-  devices="$(echo "${parts}" | jq -cer --argjson r "${roms}" '. + $r')" || return 1
+  roms="$(find_roms "mounted" | 
+    jq -cer '[.[]|{name: .path, point: .mountpoint}]')" || return 1
+  
+  # Merge roms to mounts array
+  mounts="$(jq -n --argjson m "${mounts}" --argjson r "${roms}" '$m + $r')" || return 1
 
   local folders=''
   folders="$(ls "/run/user/${UID}/gvfs" | awk -v id="${UID}" '{
     match($0, /server=(.*),share=(.*),/, a);
-    print "\nName:    "a[1]"/"a[2]"\nType:    folder\nPoints:  [\"/run/user/"id"/gvfs/"$0"\"]"
-  }')"
 
-  if [[ $? -ne 0 ]]; then
-    echo "Unable to read shared folders"
-    return 2
+    schema="\"name\": \"%s\","
+    schema=schema"\"point\": \"%s\""
+    schema="{"schema"},"
+
+    printf schema, a[1]"/"a[2], "/run/user/"id"/gvfs/"$0
+  }')" || return 1
+
+  # Remove the extra comma after the last element
+  if [[ -n "${folders}" ]]; then
+    folders="${folders::-1}"
   fi
+
+  folders="[${folders}]"
+
+  # Merge shared folders to mounts array
+  mounts="$(jq -n --argjson m "${mounts}" --argjson f "${folders}" '$m + $f')" || return 1
 
   local images=''
   images="$(cat /proc/mounts | awk '/^fuseiso/{
     n=split($2, a, "/")
-    print "\nName:    " a[n] "\nType:    image\nPoints:  [\"" $2 "\"]"
-  }')"
 
-  if [[ $? -ne 0 ]]; then
-    echo "Unable to read image mounts"
-    return 2
+    schema="\"name\": \"%s\","
+    schema=schema"\"point\": \"%s\""
+    schema="{"schema"},"
+
+    printf schema, a[n], $2
+  }')" || return 1
+
+  # Remove the extra comma after the last element
+  if [[ -n "${images}" ]]; then
+    images="${images::-1}"
   fi
 
-  local len=0
-  len="$(count "${devices}")" || return 1
+  images="[${images}]"
 
-  if [[ ${len} -eq 0 ]] && [[ -z "${folders}" ]] && [[ -z "${images}" ]]; then
+  # Merge images to mounts array
+  mounts="$(jq -n --argjson m "${mounts}" --argjson i "${images}" '$m + $i')" || return 1
+
+  local len=0
+  len="$(count "${mounts}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
     echo "No mounts have found"
     return 0
   fi
 
-  if [[ ${len} -gt 0 ]]; then
-    local query=''
-    query+='Name:    \(.path)'
-    query+='\(.label|if . and . != "" then " [\(.)]" else "" end)\n'
-    query+='Type:    device\n'
-    query+='Points:  \(.mountpoints)'
-    query="[.[]|\"${query}\"]|join(\"\n\n\")"
+  local query=''
+  query+='Name:   \(.name)\n'
+  query+='Point:  \(.point)'
+  query="[.[]|\"${query}\"]|join(\"\n\n\")"
 
-    echo "${devices}" | jq -cer "${query}" || return 1
-  fi
-
-  if [[ -n "${folders}" ]]; then
-    echo "${folders}"
-  fi
-
-  if [[ -n "${images}" ]]; then
-    echo "${images}"
-  fi
+  echo "${mounts}" | jq -cer "${query}" || return 1
 }
 
 # Mounts the partition block device with the given path.
@@ -1017,25 +1321,34 @@ mount_partition () {
   local path="${1}"
 
   if [[ -z "${path}" ]]; then
-    pick_device "disk" || return $?
+    pick_disk || return $?
     [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
 
     pick_partition "${path}" "unmounted" || return $?
     [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
   fi
 
-  if [[ ! -b "${path}" ]]; then
-    echo "Invalid block device"
+  if [[ ! -b "${path}" ]] || ! is_partition "${path}"; then
+    echo "Unable to find partition ${path}"
     return 2
-  elif ! is_type_of "${path}" "partition"; then
-    echo "Invalid partition device"
-    return 2
-  elif grep -qs "${path} " /proc/mounts; then
+  elif is_mounted "${path}"; then
     echo "Partition ${path} is already mounted"
     return 2
   fi
 
+  # Try to mount it as normal partition
   mount_device "${path}"
+
+  if [[ $? -eq 0 ]]; then
+    echo "Partition ${path} has been mounted"
+    return 0
+  fi
+
+  # Otherwise try to mount it as encrypted partition
+  ask_password "Enter the encryption password:" || return $?
+  local password="${REPLY}"
+
+  mount_encrypted "${path}" "${password}"
 
   if [[ $? -ne 0 ]]; then
     echo "Failed to mount partition"
@@ -1045,42 +1358,42 @@ mount_partition () {
   echo "Partition ${path} has been mounted"
 }
 
-# Unmounts the partition block device with the given path.
+# Unmounts the partition block device with the
+# given path.
 # Globals:
-#  REPLY, HOME, USER
+#  REPLY
 # Arguments:
 #  path: the path of a partition block device
 unmount_partition () {
   local path="${1}"
 
   if [[ -z "${path}" ]]; then
-    pick_device "disk" || return $?
+    pick_disk || return $?
     [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
 
     pick_partition "${path}" "mounted" || return $?
     [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
   fi
 
-  if [[ ! -b "${path}" ]]; then
-    echo "Invalid block device"
+  if [[ ! -b "${path}" ]] || ! is_partition "${path}"; then
+    echo "Unable to find partition ${path}"
     return 2
-  elif ! is_type_of "${path}" "partition"; then
-    echo "Invalid partition device"
+  elif ! is_mounted "${path}"; then
+    echo "Partition ${path} is already unmounted"
     return 2
-  elif ! grep -qs "${path} " /proc/mounts; then
-    echo "Partition ${path} is not mounted"
-    return 2
-  fi
-
-  local mountpoint=''
-  mountpoint="$(find_device "${path}" | jq -cer '.mountpoint')" || return 1
-
-  if [[ "${mountpoint}" =~ ^(/|/home|/boot|/var|/log|/swap)$ ]]; then
-    echo "Cannot unmount system partition ${mountpoint}"
+  elif is_system_partition "${path}"; then
+    echo "Cannot unmount system partition"
     return 2
   fi
 
   unmount_device "${path}"
+
+  if [[ $? -eq 0 ]]; then
+    echo "Partition ${path} has been unmounted"
+    return 0
+  fi
+
+  unmount_encrypted "${path}"
 
   if [[ $? -ne 0 ]]; then
     echo "Failed to unmount partition"
@@ -1099,17 +1412,14 @@ mount_rom () {
   local path="${1}"
 
   if [[ -z "${path}" ]]; then
-    pick_device "rom" "unmounted" || return $?
+    pick_rom "unmounted" || return $?
     [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
   fi
 
-  if [[ ! -b "${path}" ]]; then
-    echo "Invalid block device"
+  if [[ ! -b "${path}" ]] || ! is_rom "${path}"; then
+    echo "Unable to find rom ${path}"
     return 2
-  elif ! is_type_of "${path}" "rom"; then
-    echo "Invalid rom device"
-    return 2
-  elif grep -qs "${path} " /proc/mounts; then
+  elif is_mounted "${path}"; then
     echo "Rom ${path} is already mounted"
     return 2
   fi
@@ -1133,17 +1443,14 @@ unmount_rom () {
   local path="${1}"
 
   if [[ -z "${path}" ]]; then
-    pick_device "rom" "mounted" || return $?
+    pick_rom "mounted" || return $?
     [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
   fi
 
-  if [[ ! -b "${path}" ]]; then
-    echo "Invalid block device"
+  if [[ ! -b "${path}" ]] || ! is_rom "${path}"; then
+    echo "Unable to find rom ${path}"
     return 2
-  elif ! is_type_of "${path}" "rom"; then
-    echo "Invalid rom device"
-    return 2
-  elif ! grep -qs "${path} " /proc/mounts; then
+  elif ! is_mounted "${path}"; then
     echo "Rom ${path} is not mounted"
     return 2
   fi
@@ -1172,19 +1479,21 @@ mount_image () {
     return 2
   fi
 
-  local mount_home="${HOME}/mount/virtual"
-  local image_name="$(basename "${path}")"
+  local folder_name="$(basename "${path}")"
+  local mount_point="${HOME}/mount/virtual/${folder_name}"
 
-  if [[ -d "${mount_home}/${image_name}" ]]; then
+  if [[ -d "${mount_point}" ]]; then
     echo "Image ${path} is already mounted"
     return 2
   fi
 
-  mkdir -p "${mount_home}"
-  fuseiso -p "${path}" "${mount_home}/${image_name}" &> /dev/null
+  mkdir -p "${mount_point}" &&
+  fuseiso -p "${path}" "${mount_point}" &> /dev/null
 
   if [[ $? -ne 0 ]]; then
     echo "Failed to mount image file"
+
+    rm -rf "${mount_point}"
     return 2
   fi
 
@@ -1237,322 +1546,9 @@ unmount_image () {
     return 2
   fi
 
+  rm -rf "${path}"
+
   echo "Image file system ${path} unmounted"
-}
-
-# Formats the disk block device with the given path,
-# creating a new partition table of a single primary
-# partition.
-# Globals:
-#  REPLY
-# Arguments:
-#  path: the path of a block disk device
-format_disk () {
-  local path="${1}"
-
-  if [[ -z "${path}" ]]; then
-    pick_device "disk" || return $?
-    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
-  fi
-
-  if [[ ! -b "${path}" ]]; then
-    echo "Invalid block device"
-    return 2
-  elif ! is_type_of "${path}" "disk"; then
-    echo "Not a disk device"
-    return 2
-  elif is_system_disk "${path}"; then
-    echo "Cannot format the system disk"
-    return 2
-  fi
-
-  ask "Enter the disk label:" ".+" || return $?
-  local label="${REPLY}"
-
-  local fs_type=''
-  pick_fs_type || return $?
-  [[ -n "${REPLY}" ]] && fs_type="${REPLY}" || return 0
-
-  local model=''
-  model="$(find_device "${path}" |
-    jq -cr '"\(.vendor|gsub("^\\s+|\\s+$";"")) \(.model) \(.size)"')" || return 1
-
-  echo "ALL DATA in ${model} [${path}],"
-  echo "will be irreversibly gone forever!"
-  confirm "Do you really want to proceed?" || return $?
-  [[ "${REPLY}" != "yes" ]] && return 0
-
-  echo "Unmounting disk partitions..."
-  unmount_partitions "${path}" || return 1
-
-  echo "Cleaning disk partitions..."
-  clean_partitions "${path}" &&
-  echo "Partition table is ready" || return 1
-
-  echo "Creating disk partition..."
-  create_partition "${path}" "${fs_type}" "1Mib" "100%" &&
-  echo "Primary partition created" || return 1
-
-  echo "Formatting disk partition..."
-  format_partition "${path}" "1" "${fs_type}" "${label}"
-
-  if [[ $? -ne 0 ]]; then
-    echo "Failed to format disk ${path}"
-    return 2
-  fi
-
-  echo "Disk ${path} has been formated"
-}
-
-# Ejects the disk block device with the given path.
-# Globals:
-#  REPLY
-# Arguments:
-#  path: the path of a disk block device
-eject_disk () {
-  local path="${1}"
-
-  if [[ -z "${path}" ]]; then
-    pick_device "disk" || return $?
-    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
-  fi
-
-  if [[ ! -b "${path}" ]]; then
-    echo "Invalid block device"
-    return 2
-  elif ! is_type_of "${path}" "disk"; then
-    echo "Not a disk device"
-    return 2
-  elif is_system_disk "${path}"; then
-    echo "Cannot eject a system disk"
-    return 2
-  fi
-
-  echo "Unmounting disk partitions..."
-
-  unmount_partitions "${path}"
-
-  if [[ $? -ne 0 ]]; then
-    echo "Failed to unmount disk partitions"
-    return 2
-  fi
-
-  udisksctl power-off -b "${path}" &> /dev/null &&
-    echo "Disk power set to off" ||
-    echo "Unable to power disk off"
-
-  echo "Disk ${path} can now be safely ejected"
-}
-
-# Creates an encrypted disk block device with the
-# given path.
-# Globals:
-#  REPLY
-# Arguments:
-#  path: the path of a block disk device
-create_encrypted () {
-  local path="${1}"
-
-  if [[ -z "${path}" ]]; then
-    pick_device "disk" || return $?
-    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
-  fi
-
-  if [[ ! -b "${path}" ]]; then
-    echo "Invalid block device"
-    return 2
-  elif ! is_type_of "${path}" "disk"; then
-    echo "Not a disk device"
-    return 2
-  elif is_system_disk "${path}"; then
-    echo "Cannot encrypt the system disk"
-    return 2
-  fi
-
-  ask "Enter the disk label:" ".+" || return $?
-  local label="${REPLY}"
-
-  local fs_type=''
-  pick_fs_type || return $?
-  [[ -n "${REPLY}" ]] && fs_type="${REPLY}" || return 0
-
-  local model=''
-  model="$(find_device "${path}" |
-    jq -cr '"\(.vendor|gsub("^\\s+|\\s+$";"")) \(.model) \(.size)"')" || return 1
-
-  echo "ALL DATA in ${model} [${path}],"
-  echo "will be irreversibly gone forever!"
-  confirm "Do you really want to proceed?" || return $?
-  [[ "${REPLY}" != "yes" ]] && return 0
-
-  echo "Unmounting disk partitions..."
-  unmount_partitions "${path}" || return 1
-
-  echo "Cleaning disk partitions..."
-  clean_partitions "${path}" &&
-  echo "Partition table is ready" || return 1
-
-  echo "Creating disk partition..."
-  create_partition "${path}" "${fs_type}" "1Mib" "100%" &&
-  echo "Primary partition created" || return 1
-
-  echo "Formatting disk partition..."
-  format_partition "${path}" "1" "${fs_type}" "${label}" &&
-  echo "Partition ${path}1 has been formated" || return 1
-
-  ask_password "Enter a strong password:" ".+" || return $?
-  local password="${REPLY}"
-
-  # Create a seed file with 350 random characters
-  local rand_text_file="/tmp/.rand_text_$(date +%s)"
-
-  tr -dc 'A-Za-z0-9!"#$%&'\''()*+,-./:;<=>?@[\]^_`{|}~' < /dev/urandom |
-    head -c 350 > "${rand_text_file}"
-
-  sudo veracrypt --text --create "${path}1" --password "${password}" \
-    --volume-type normal --encryption AES --hash sha-512 --filesystem "${fs_type}" \
-    --pim 0 --keyfiles "" --random-source "${rand_text_file}"
-
-  if [[ $? -ne 0 ]]; then
-    echo "Failed to encrypt disk ${path}"
-    return 2
-  fi
-
-  echo "Disk ${path} has been encrypted"
-}
-
-# Creates a bootable archlinux installation drive.
-# Globals:
-#  REPLY, HOME, PWD
-# Arguments:
-#  path: the path of a disk block device
-create_bootable () {
-  local path="${1}"
-
-  if [[ -z "${path}" ]]; then
-    pick_device "disk" || return $?
-    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
-  fi
-
-  if [[ ! -b "${path}" ]]; then
-    echo "Invalid block device"
-    return 2
-  elif ! is_type_of "${path}" "disk"; then
-    echo "Not a disk device"
-    return 2
-  elif is_system_disk "${path}"; then
-    echo "Cannot create bootable on a system disk"
-    return 2
-  fi
-
-  confirm "Do you want to download the latest iso?" || return $?
-  [[ -z "${REPLY}" ]] && return 0
-
-  local iso_file_path=''
-
-  if [[ "${REPLY}" == "yes" ]]; then
-    local hosts=''
-    hosts+='{"key": "http://arch.phinau.de/iso/latest", "value": "Germany [phinau.de]"},'
-    hosts+='{"key": "http://mirrors.acm.wpi.edu/archlinux/iso/latest", "value": "USA [acm.wpi.edu]"},'
-    hosts+='{"key": "https://mirror.kamtv.ru/archlinux/iso/latest", "value": "Russia [kamtv.ru]"},'
-    hosts+='{"key": "https://mirrors.bfsu.edu.cn/archlinux/iso/latest", "value": "China [bfsu.edu.cn]"},'
-    hosts+='{"key": "https://mirror.vishmak.in/archlinux/iso/latest", "value": "India [vishmak.in]"},'
-    hosts+='{"key": "http://archlinux.c3sl.ufpr.br/iso/latest", "value": "Brazil [c3sl.ufpr.br]"},'
-    hosts+='{"key": "https://mirror.aarnet.edu.au/pub/archlinux/iso/latest", "value": "Australia [aarnet.edu.au]"}'
-    hosts="[${hosts}]"
-
-    local host=''
-    pick_one "Select a mirror host:" "${hosts}" "vertical" || return $?
-    [[ -n "${REPLY}" ]] && host="${REPLY}" || return 0
-
-    local file='archlinux-x86_64.iso'
-    local output="${HOME}/downloads"
-
-    local files=(
-      "${host}/b2sums.txt"
-      "${host}/${file}.sig"
-    )
-
-    if [[ -f "${output}/${file}" ]]; then
-      echo "An existing iso file is found"
-    else
-      files+=("${host}/${file}")
-    fi
-
-    # Clean up signature and checksum files
-    rm -f "${output}/b2sums.txt"
-    rm -f "${output}/${file}.sig"
-
-    download "${output}" "${files[@]}"
-
-    if [[ $? -ne 0 ]]; then
-      echo "Unable to download archlinux files"
-      return 2
-    fi
-
-    sq --force wkd get pierre@archlinux.org -o "${output}/release-key.pgp"
-
-    if [[ $? -ne 0 ]]; then
-      echo "Unable to fetch the release key"
-      return 2
-    fi
-
-    echo "Verifying the integrity of files..."
-
-    cd ${output} &&
-    b2sum --ignore-missing -c b2sums.txt &&
-    sq verify --signer-file release-key.pgp --detached "${file}.sig" "${file}" 2>&1 | awk NF
-
-    if [[ $? -ne 0 ]]; then
-      echo "Failed to verify archlinux files"
-      return 2
-    fi
-
-    echo "Files have been verified successfully"
-
-    iso_file_path="${output}/${file}"
-  else
-    ask "Enter the path to the iso file:" "^/.+" || return $?
-    iso_file_path="${REPLY}"
-  fi
-
-  if [[ ! -f "${iso_file_path}" ]]; then
-    echo "Invalid or unknown archlinux iso file"
-    return 2
-  fi
-
-  local model=''
-  model="$(find_device "${path}" | jq -cr '"\(.vendor) \(.model) \(.size)"')" || return 1
-
-  echo ""
-  echo "ALL DATA in ${model} [${path}],"
-  echo "will be irreversibly gone forever!"
-  confirm "Do you really want to proceed?" || return $?
-  [[ "${REPLY}" != "yes" ]] && return 0
-
-  echo "Unmounting disk partitions..."
-  unmount_partitions "${path}" || return 1
-
-  echo "Cleaning disk partitions..."
-  clean_partitions "${path}" &&
-  echo "Partition table is ready" || return 1
-
-  echo "Creating disk partition..."
-  create_partition "${path}" "fat32" "1Mib" "100%" &&
-  echo "Primary partition created" || return 1
-
-  echo "Formatting the bootable disk..."
-  format_partition "${path}" "1" "fat32" || return 1
-
-  echo "Flashing installation files..."
-
-  sudo dd "if=${iso_file_path}" "of=${path}" bs=4M conv=fsync oflag=direct status=progress
-
-  if [[ $? -ne 0 ]]; then
-    echo "Failed to flash installation files"
-  fi
-
-  echo "Bootable disk ${path} is ready"
 }
 
 # Mounts a shared folder of the given host.
@@ -1651,6 +1647,408 @@ unmount_shared_folder () {
   echo "Shared folder ${uri} has been unmounted"
 }
 
+# Formats the disk block device with the given path,
+# creating a new partition table of a single primary
+# partition.
+# Globals:
+#  REPLY
+# Arguments:
+#  path: the path of a disk block device
+format_disk () {
+  local path="${1}"
+
+  if [[ -z "${path}" ]]; then
+    pick_disk || return $?
+    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
+  fi
+
+  if [[ ! -b "${path}" ]] || ! is_disk "${path}"; then
+    echo "Unable to find disk ${path}"
+    return 2
+  elif is_system_disk "${path}"; then
+    echo "Cannot format the system disk"
+    return 2
+  fi
+
+  ask "Enter the disk label:" ".+" || return $?
+  local label="${REPLY}"
+
+  local fs_type=''
+  pick_fs_type || return $?
+  [[ -n "${REPLY}" ]] && fs_type="${REPLY}" || return 0
+
+  local model=''
+  model="$(find_disk "${path}" |
+    jq -cr '"\(.vendor|gsub("^\\s+|\\s+$";"")) \(.model) \(.size)"')" || return 1
+
+  echo "ALL DATA in ${model} [${path}],"
+  echo "will be irreversibly gone forever!"
+  confirm "Do you really want to proceed?" || return $?
+  [[ "${REPLY}" != "yes" ]] && return 0
+
+  echo "Unmounting disk partitions..."
+  unmount_partitions "${path}" || return 1
+
+  echo "Cleaning disk partitions..."
+  clean_partitions "${path}" &&
+  echo "Partition table is ready" || return 1
+
+  echo "Creating disk partition..."
+  create_partition "${path}" "${fs_type}" "1Mib" "100%" &&
+  echo "Primary partition created" || return 1
+
+  echo "Formatting disk partition..."
+  format_partition "${path}" "1" "${fs_type}" "${label}"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to format disk ${path}"
+    return 2
+  fi
+
+  echo "Disk ${path} has been formated"
+}
+
+# Ejects the disk block device with the given path.
+# Globals:
+#  REPLY
+# Arguments:
+#  path: the path of a disk block device
+eject_disk () {
+  local path="${1}"
+
+  if [[ -z "${path}" ]]; then
+    pick_disk || return $?
+    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
+  fi
+
+  if [[ ! -b "${path}" ]] || ! is_disk "${path}"; then
+    echo "Unable to find disk ${path}"
+    return 2
+  elif is_system_disk "${path}"; then
+    echo "Cannot eject the system disk"
+    return 2
+  fi
+
+  echo "Unmounting disk partitions..."
+
+  unmount_partitions "${path}"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to unmount disk partitions"
+    return 2
+  fi
+
+  udisksctl power-off -b "${path}" &> /dev/null
+
+  if [[ $? -eq 0 ]]; then
+    echo "Disk power set to off"
+    echo "Unplug safely the disk device"
+  else
+    echo "Unable to power disk off"
+    echo "Unplug the disk device at your own risk"
+  fi
+}
+
+# Scans the disk block device with the given path
+# for possible SMART data.
+# Arguments:
+#  path: the path of a disk block device
+# Outputs:
+#  A long list of health and status data.
+scan_disk () {
+  local path="${1}"
+
+  if [[ -z "${path}" ]]; then
+    pick_disk || return $?
+    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
+  fi
+
+  if [[ ! -b "${path}" ]] || ! is_disk "${path}"; then
+    echo "Unable to find disk ${path}"
+    return 2
+  fi
+  
+  if ! sudo smartctl -i "${path}" &> /dev/null; then
+    echo "Unable to retrieve SMART data"
+    return 2
+  fi
+
+  local model=''
+  model+='if .model_name'
+  model+=' then "\nModel:     \(.model_name) FW.\(.firmware_version)"'
+  model+=' else ""'
+  model+='end'
+
+  local physicals=''
+  physicals+='if .physical_block_size'
+  physicals+=' then " P:\(.physical_block_size)"'
+  physicals+=' else ""'
+  physicals+='end'
+
+  local factor=''
+  factor+='if .form_factor.name'
+  factor+=' then "\nFactor:    \(.form_factor.name) \(.rotation_rate) rpm"'
+  factor+=' else ""'
+  factor+='end'
+
+  local sata=''
+  sata+='if .sata_version.string'
+  sata+=' then "\nSATA:      \(.sata_version.string) at \(.interface_speed.max.string)"'
+  sata+=' else ""'
+  sata+='end'
+
+  local trim=''
+  trim+='if .trim.supported'
+  trim+=' then "\nTrim:      \(.trim.supported)"'
+  trim+=' else ""'
+  trim+='end'
+
+  local passed=''
+  passed+='if .smart_status.passed then "passed" else "failed" end'
+
+  local temp=''
+  temp+='if .temperature.current'
+  temp+=' then "\nTemp:      \(.temperature.current)C"'
+  temp+=' else ""'
+  temp+='end'
+
+  local attr=''
+  attr+='Attr:      \(.id)\n'
+  attr+='Name:      \(.name)\n'
+  attr+='Raw:       \(.raw.value)\n'
+  attr+='Values:    [V\(.value), W\(.worst), T\(.thresh)]\n'
+  attr+='Failing:   \(.when_failed)'
+
+  local attrs=''
+  attrs+='.ata_smart_attributes.table as $a |'
+  attrs+="if \$a then \"\n\n\([\$a[]|\"${attr}\"]|join(\"\n\n\"))\" else \"\" end"
+
+  local query=''
+  query+='Name:      \(.device.name)'
+  query+="\(${model})"
+  query+='\nProtocol:  \(.device.type|ascii_upcase) \(.device.protocol)'
+  query+='\nCapacity:  \(.user_capacity.bytes) bytes'
+  query+="\nBlocks:    L:\(.logical_block_size)\(${physicals})"
+  query+="\(${factor})"
+  query+="\(${trim})"
+  query+="\(${sata})"
+  query+='\nSMART:     \(.smart_support.enabled)'
+  query+="\(${temp})"
+  query+="\nHealth:    \(${passed})"
+  query+="\(${attrs})"
+
+  sudo smartctl -iHj "${path}" | jq -cer "\"${query}\""
+
+  local code="$?"
+
+  if [[ ${code} -ne 0 ]] && [[ ${code} -ne 24 ]]; then
+    echo "Failed to parse SMART data"
+    return 2
+  fi
+}
+
+# Creates an encrypted disk block device with the
+# given path.
+# Globals:
+#  REPLY
+# Arguments:
+#  path: the path of a disk block device
+create_encrypted () {
+  local path="${1}"
+
+  if [[ -z "${path}" ]]; then
+    pick_disk || return $?
+    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
+  fi
+
+  if [[ ! -b "${path}" ]] || ! is_disk "${path}"; then
+    echo "Unable to find disk ${path}"
+    return 2
+  elif is_system_disk "${path}"; then
+    echo "Cannot encrypt the system disk"
+    return 2
+  fi
+
+  local fs_type=''
+  pick_fs_type || return $?
+  [[ -n "${REPLY}" ]] && fs_type="${REPLY}" || return 0
+
+  local model=''
+  model="$(find_disk "${path}" |
+    jq -cr '"\(.vendor|gsub("^\\s+|\\s+$";"")) \(.model) \(.size)"')" || return 1
+
+  echo "ALL DATA in ${model} [${path}],"
+  echo "will be irreversibly gone forever!"
+  confirm "Do you really want to proceed?" || return $?
+  [[ "${REPLY}" != "yes" ]] && return 0
+
+  echo "Unmounting disk partitions..."
+  unmount_partitions "${path}" || return 1
+
+  echo "Cleaning disk partitions..."
+  clean_partitions "${path}" &&
+  echo "Partition table is ready" || return 1
+
+  echo "Creating disk partition..."
+  create_partition "${path}" "${fs_type}" "1Mib" "100%" &&
+  echo "Primary partition created" || return 1
+
+  echo "Formatting disk partition..."
+  format_partition "${path}" "1" "${fs_type}" &&
+  echo "Partition ${path}1 has been formated" || return 1
+
+  ask_password "Enter a strong password:" ".+" || return $?
+  local password="${REPLY}"
+
+  # Create a seed file with 350 random characters
+  local rand_text_file="/tmp/.rand_text_$(date +%s)"
+
+  tr -dc 'A-Za-z0-9!"#$%&'\''()*+,-./:;<=>?@[\]^_`{|}~' < /dev/urandom |
+    head -c 350 > "${rand_text_file}"
+
+  sudo veracrypt -t --create "${path}1" --password "${password}" \
+    --volume-type normal --encryption AES --hash sha-512 --filesystem "${fs_type}" \
+    --pim 0 --keyfiles "" --random-source "${rand_text_file}"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to encrypt disk ${path}"
+    return 2
+  fi
+
+  echo "Disk ${path} has been encrypted"
+}
+
+# Creates a bootable archlinux installation drive.
+# Globals:
+#  REPLY, HOME, PWD
+# Arguments:
+#  path: the path of a disk block device
+create_bootable () {
+  local path="${1}"
+
+  if [[ -z "${path}" ]]; then
+    pick_disk || return $?
+    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
+  fi
+
+  if [[ ! -b "${path}" ]] || ! is_disk "${path}"; then
+    echo "Unable to find disk ${path}"
+    return 2
+  elif is_system_disk "${path}"; then
+    echo "Cannot create bootable on the system disk"
+    return 2
+  fi
+
+  confirm "Do you want to download the latest iso?" || return $?
+  [[ -z "${REPLY}" ]] && return 0
+
+  local iso_file_path=''
+
+  if [[ "${REPLY}" == "yes" ]]; then
+    local hosts=''
+    hosts+='{"key": "http://arch.phinau.de/iso/latest", "value": "Germany [phinau.de]"},'
+    hosts+='{"key": "http://mirrors.acm.wpi.edu/archlinux/iso/latest", "value": "USA [acm.wpi.edu]"},'
+    hosts+='{"key": "https://mirror.kamtv.ru/archlinux/iso/latest", "value": "Russia [kamtv.ru]"},'
+    hosts+='{"key": "https://mirrors.bfsu.edu.cn/archlinux/iso/latest", "value": "China [bfsu.edu.cn]"},'
+    hosts+='{"key": "https://mirror.vishmak.in/archlinux/iso/latest", "value": "India [vishmak.in]"},'
+    hosts+='{"key": "http://archlinux.c3sl.ufpr.br/iso/latest", "value": "Brazil [c3sl.ufpr.br]"},'
+    hosts+='{"key": "https://mirror.aarnet.edu.au/pub/archlinux/iso/latest", "value": "Australia [aarnet.edu.au]"}'
+    hosts="[${hosts}]"
+
+    local host=''
+    pick_one "Select a mirror host:" "${hosts}" "vertical" || return $?
+    [[ -n "${REPLY}" ]] && host="${REPLY}" || return 0
+
+    local file='archlinux-x86_64.iso'
+    local output="${HOME}/downloads"
+
+    local files=(
+      "${host}/b2sums.txt"
+      "${host}/${file}.sig"
+    )
+
+    if [[ -f "${output}/${file}" ]]; then
+      echo "An existing iso file is found"
+    else
+      files+=("${host}/${file}")
+    fi
+
+    # Clean up signature and checksum files
+    rm -f "${output}/b2sums.txt"
+    rm -f "${output}/${file}.sig"
+
+    download "${output}" "${files[@]}"
+
+    if [[ $? -ne 0 ]]; then
+      echo "Unable to download archlinux files"
+      return 2
+    fi
+
+    sq --force wkd get pierre@archlinux.org -o "${output}/release-key.pgp"
+
+    if [[ $? -ne 0 ]]; then
+      echo "Unable to fetch the release key"
+      return 2
+    fi
+
+    echo "Verifying the integrity of files..."
+
+    cd ${output} &&
+    b2sum --ignore-missing -c b2sums.txt &&
+    sq verify --signer-file release-key.pgp --detached "${file}.sig" "${file}" 2>&1 | awk NF
+
+    if [[ $? -ne 0 ]]; then
+      echo "Failed to verify archlinux files"
+      return 2
+    fi
+
+    echo "Files have been verified successfully"
+
+    iso_file_path="${output}/${file}"
+  else
+    ask "Enter the path to the iso file:" "^/.+" || return $?
+    iso_file_path="${REPLY}"
+  fi
+
+  if [[ ! -f "${iso_file_path}" ]]; then
+    echo "Invalid or unknown archlinux iso file"
+    return 2
+  fi
+
+  local model=''
+  model="$(find_disk "${path}" | jq -cr '"\(.vendor) \(.model) \(.size)"')" || return 1
+
+  echo ""
+  echo "ALL DATA in ${model} [${path}],"
+  echo "will be irreversibly gone forever!"
+  confirm "Do you really want to proceed?" || return $?
+  [[ "${REPLY}" != "yes" ]] && return 0
+
+  echo "Unmounting disk partitions..."
+  unmount_partitions "${path}" || return 1
+
+  echo "Cleaning disk partitions..."
+  clean_partitions "${path}" &&
+  echo "Partition table is ready" || return 1
+
+  echo "Creating disk partition..."
+  create_partition "${path}" "fat32" "1Mib" "100%" &&
+  echo "Primary partition created" || return 1
+
+  echo "Formatting the bootable disk..."
+  format_partition "${path}" "1" "fat32" || return 1
+
+  echo "Flashing installation files..."
+
+  sudo dd "if=${iso_file_path}" "of=${path}" bs=4M conv=fsync oflag=direct status=progress
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to flash installation files"
+  fi
+
+  echo "Bootable disk ${path} is ready"
+}
+
 # Shows the help message.
 # Arguments:
 #  None
@@ -1672,7 +2070,7 @@ show_help () {
     "list disks" "List all disk block devices." \
     "list partitions [<path>]" "List the partitions of a disk block device." \
     "list roms" "List all optical block devices." \
-    "list shares [<host>]" "List the shared folders of a host." \
+    "list folders [<host>]" "List the shared folders of a host." \
     "list mounts" "List all mounting points." \
     "" "" \
     "mount partition [<path>]" "Mount a partition block device." \
@@ -1721,7 +2119,7 @@ loop () {
           "disks") list_disks;;
           "partitions") list_partitions "${cmd[2]}";;
           "roms") list_roms;;
-          "shares") list_shares "${cmd[2]}";;
+          "folders") list_shared_folders "${cmd[2]}";;
           "mounts") list_mounts;;
           *) echo "Invalid or unknown command";;
         esac;;
