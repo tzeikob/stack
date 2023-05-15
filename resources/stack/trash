@@ -1,0 +1,425 @@
+#!/bin/bash
+
+set -o pipefail
+source /opt/stack/utils
+
+# Returns the list of all trashed files.
+# Arguments:
+#  None
+# Outputs:
+#  A json array of trashed files.
+find_files () {
+  local files=''
+  files="$(trash-list | awk '{
+    schema="\"date\": \"%s\","
+    schema=schema"\"time\": \"%s\","
+    schema=schema"\"epoch_date\": %s,"
+    schema=schema"\"epoch\": %s,"
+    schema=schema"\"path\": \"%s\""
+    schema="{"schema"},"
+
+    path=""
+    for (i = 3; i <= NF; i++) {
+      path=path$i
+      if (i < NF) path=path" "
+    }
+
+    cmd="date -d" $1 " +%s"; cmd | getline epoch_date; close(cmd);
+    cmd="date -d" $1"T"$2 " +%s"; cmd | getline epoch; close(cmd);
+
+    printf schema, $1, $2, epoch_date, epoch, path
+  }')" || return 1
+
+  # Remove the extra comma after the last element
+  if [[ -n "${files}" ]]; then
+    files="${files::-1}"
+  fi
+
+  echo "[${files}]"
+}
+
+# Shows a prompt status and asks user to enter the
+# next command, which is kept in the global var REPLY.
+# Globals:
+#  REPLY, PWD, HOME
+# Arguments:
+#  None
+# Outputs:
+#  A minimal prompt status line.
+prompt () {
+  local status='empty'
+
+  local len=0
+  len="$(find_files | jq -cer 'length')"
+
+  if [[ $? -ne 0 ]]; then
+    status='none'
+  elif [[ ${len} -gt 0 ]]; then
+    status="${len}"
+  fi
+
+  local root=''
+  if [[ "$(id -u)" == "0" ]]; then
+    root='#'
+  fi
+
+  read -rep "[${root}trash:${status}] " REPLY
+}
+
+# Show the list of trashed files filtered by the given
+# value. If the filter is an integer number the filter
+# selects only the files trashed within the given days,
+# if the number is prefixed with + the filter selects
+# the files trashed more than the given days ago and if
+# the filter is a date YYYY-MM-dd the filter selects
+# the files trashed the exact given date.
+# Arguments:
+#  filter: number of days or a certain date
+# Outputs:
+#  A list of trashed files.
+list_files () {
+  local filter="${1}"
+
+  local query=''
+
+  if [[ "${filter}" =~ ^[0-9]+$ ]]; then
+    query="[.[]|select((now - .epoch) / 86400 < ${filter})]"
+  elif [[ "${filter}" =~ ^\+[0-9]+$ ]]; then
+    filter="$(echo "${filter}" | tr -d '+')"
+    query="[.[]|select((now - .epoch) / 86400 > ${filter})]"
+  elif [[ "${filter}" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] && date -d "${filter}" &> /dev/null; then
+    filter="$(date -d ${filter} +%s)"
+    query="[.[]|select(${filter} - .epoch_date == 0)]"
+  elif [[ -z "${filter}" ]]; then
+    query='.'
+  else
+    echo "Invalid filter value"
+    return 2
+  fi
+
+  local files=''
+  files="$(find_files | jq -cer "${query}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to read trashed files"
+    return 2
+  fi
+
+  local len=0
+  len="$(count "${files}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No trashed files have found"
+    return 0
+  fi
+
+  query='.[]|"\(.date) \(.time) \(.path)"'
+
+  echo "${files}" | jq -cer "${query}" || return 1
+}
+
+# Restores trashed files from the current dur or
+# the given path.
+# Arguments:
+#  path: the path to restore files from
+restore_files () {
+  local path="${1:-"/"}"
+
+  # Find the eligible trashed files for restore
+  local files=''
+  files="$(trash-restore "${path}" <<< "" | awk '/^ *[0-9]+ /{
+    schema="\"key\": \"%s\","
+    schema=schema"\"value\": \"%s\""
+    schema="{"schema"},"
+
+    path=""
+    for (i = 4; i <= NF; i++) {
+      path=path$i
+      if (i < NF) path=path" "
+    }
+
+    printf schema, $1, path
+  }')"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to read trashed files"
+    return 2
+  fi
+
+  # Remove the extra comma after the last element
+  if [[ -n "${files}" ]]; then
+    files="${files::-1}"
+  fi
+  
+  files="[${files}]"
+
+  local len=0
+  len="$(count "${files}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No files have found to restore"
+    return 0
+  fi
+
+  local selected=''
+  pick_many 'Select the files to restore:' "${files}" "1," "vertical" || return $?
+  [[ -n "${REPLY}" ]] && selected="${REPLY}" || return 0
+
+  selected="$(echo "${selected}" | jq -rec 'join(",")')" || return 1
+
+  len="$(find_files | jq -cer 'length')" || return 1
+
+  trash-restore "${path}" &> /dev/null <<< "${selected}"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to restore trashed files"
+    return 2
+  fi
+
+  local post_len=0
+  post_len="$(find_files | jq -cer 'length')" || return 1
+  len=$((len - post_len))
+
+  echo "${len} file(s) have been restored"
+}
+
+# Removes the trashed files, given as a list of paths.
+# Globals:
+#  REPLY
+# Arguments:
+#  paths: a space delimited list of paths
+remove_files () {
+  local paths=("$@")
+
+  local files=''
+  files="$(find_files)"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to read trashed files"
+    return 2
+  fi
+
+  local len=0
+  len="$(count "${files}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No trashed files have found"
+    return 0
+  fi
+
+  if [ "${#paths[@]}" -eq 0 ]; then
+    local query='[.[]|{key: .path, value: "\(.date) \(.path)"}]'
+    files="$(echo "${files}" | jq -cer "${query}")" || return 1
+
+    pick_many "Select the files to remove:" "${files}" "1," "vertical" || return $?
+    [[ -z "${REPLY}" ]] && return 0
+
+    readarray -t paths < <(echo "${REPLY}" | jq -cr '.[]')
+  fi
+
+  confirm "File(s) will be gone forever, proceed?" || return $?
+  [[ "${REPLY}" != "yes" ]] && return 0
+
+  local index=0
+  for ((index = 0; index < ${#paths[@]}; index++)); do
+    local path="${paths[index]}"
+
+    trash-rm "${path}" || echo "Failed to remove file ${path}"
+  done
+
+  local post_len=0
+  post_len="$(find_files | jq -cer 'length')" || return 1
+  len=$((len - post_len))
+
+  if [[ ${len} -gt 0 ]]; then
+    echo "${len} trashed file(s) removed"
+  else
+    echo "No trashed files have been removed"
+  fi
+}
+
+# Empties the trash from files trashed more than
+# the given days ago.
+# Globals:
+#  REPLY
+# Arguments:
+#  days: a positive integer number
+empty_files () {
+  local days="${1}"
+  
+  local len=0
+  len="$(find_files | jq -cer 'length')" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No trashed files have been found"
+    return 0
+  fi
+  
+  local prompt=''
+  if [[ -z "${days}" ]]; then
+    prompt="ALL trashed files will be gone, proceed?"
+  elif [[ "${days}" =~ ^[0-9]+$ ]]; then
+    prompt="Files trashed more than ${days} days ago will be gone, proceed?"
+  else
+    echo "Invalid days value"
+    return 2
+  fi
+
+  confirm "${prompt}" || return $?
+
+  if [[ "${REPLY}" == "yes" ]]; then
+    trash-empty -f "${days:-0}"
+  else
+    return 0
+  fi
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to remove trashed files"
+    return 2
+  fi
+
+  local post_len=0
+  post_len="$(find_files | jq -cer 'length')" || return 1
+  len=$((len - post_len))
+
+  if [[ ${len} -gt 0 ]]; then
+    echo "${len} trashed file(s) removed"
+  else
+    echo "No trashed files have been removed"
+  fi
+}
+
+# Puts the given files to the trash.
+# Arguments:
+#  files[]: a list of file paths
+trash_files () {
+  local files=("$@")
+  local len=${#files[@]}
+
+  if [[ ${len} -eq 0 ]]; then
+    abort "No files have given"
+  fi
+
+  local trashed_len=0
+  trashed_len="$(find_files | jq -cer 'length')" || return 1
+
+  local index=0
+  while [[ ${index} -lt ${len} ]]; do
+    local file="${files[index]}"
+
+    trash-put "${file}" &> /dev/null ||
+      echo "Cannot trash the file ${file}"
+
+    index=$((index + 1))
+  done
+
+  local post_trashed_len=0
+  post_trashed_len="$(find_files | jq -cer 'length')" || return 1
+  len=$((post_trashed_len - trashed_len))
+
+  echo "${len} file(s) have been trashed"
+}
+
+# Shows the help message.
+# Arguments:
+#  mode: once or none
+# Outputs:
+#  A long help message.
+show_help () {
+  if [[ "${1}" == "once" ]]; then
+    echo "Usage: trash [OPTIONS] FILE..."
+
+    echo -e "\nOPTIONS"
+    printf " %-20s %s\n" \
+      "h, --help" "Show this help message."
+
+    return 0
+  fi
+
+  echo "Usage: COMMAND [ARGUMENTS]..."
+  
+  echo -e "\nCOMMANDS"
+  printf " %-20s %s\n" \
+    "help" "Show this help message." \
+    "" "" \
+    "list" "List all trashed files." \
+    "list <days>" "List files trashed within the given days." \
+    "list +<days>" "List files trashed more than the given days ago." \
+    "list <date>" "List files trashed at a certain date." \
+    "" "" \
+    "restore [<path>]" "Restore files starting from / or the given path." \
+    "remove [<paths>]" "Remove the given trashed files." \
+    "" "" \
+    "empty" "Remove all trashed files." \
+    "empty <days>" "Remove files trashed more than the given days ago."
+}
+
+loop () {
+  clear
+
+  while true; do
+    prompt && history -s "${REPLY}"
+
+    set -f
+    set_separator "line"
+    local cmd=($(xargs -n1 <<< "${REPLY}"))
+    restore_separator && set +f
+
+    if [[ "${cmd[0]}" == "help" ]]; then
+      show_help
+      continue
+    elif [[ "${cmd[0]}" == "clear" ]]; then
+      clear
+      continue
+    elif [[ "${cmd[0]}" == "quit" ]]; then
+      break
+    elif [[ -z "${cmd[0]}" ]]; then
+      continue
+    fi
+
+    case "${cmd[0]}" in
+      "list") list_files "${cmd[1]}";;
+      "restore") restore_files "${cmd[1]}";;
+      "remove") remove_files "${cmd[@]:1}";;
+      "empty") empty_files "${cmd[1]}";;
+      *) echo "Invalid or unknown command";; 
+    esac
+  
+    if [[ $? -eq 1 ]]; then
+      echo "An unknown error has occurred"
+    fi
+  done
+
+  clear
+}
+
+once () {
+  local opts=""
+  local files=()
+
+  while true; do
+    if [[ "${1}" = "-h" ]] || [[ "${1}" == "--help" ]]; then
+      opts="${opts} help"
+    elif [[ "${1}" =~ ^(-|--) ]]; then
+      abort "Unknown or invalid option"
+    elif [[ -n "${1}" ]]; then
+      files+=("${1}")
+    else
+      break
+    fi
+
+    shift
+  done
+
+  if [[ "${opts}" =~ "help" ]]; then
+    show_help "once"
+  else
+    trash_files "${files[@]}"
+  fi
+}
+
+if [[ $# -eq 0 ]]; then
+  loop
+else
+  once "$@"
+fi

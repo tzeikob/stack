@@ -31,10 +31,14 @@ set_users () {
 
   useradd -m -G "$USERGROUPS" -s /bin/bash "$USERNAME" || exit 1
 
+  local CONFIG_HOME="/home/$USERNAME/.config"
+  mkdir -p "$CONFIG_HOME"
+  chown -R "$USERNAME":"$USERNAME" "$CONFIG_HOME"
+
   local RULE="%wheel ALL=(ALL:ALL) ALL"
   sed -i "s/^# \($RULE\)/\1/" /etc/sudoers
 
-  if ! cat /etc/sudoers | grep "^$RULE" > /dev/null; then
+  if ! cat /etc/sudoers | grep -q "^$RULE"; then
     echo "Error: failed to grant wheel permissions to user $USERNAME"
     exit 1
   fi
@@ -71,11 +75,19 @@ set_locale () {
 
   printf '%s\n' \
     "LANG=${PARTS[0]}" \
-    "LC_TIME=${PARTS[0]}" \
+    "LANGUAGE=${PARTS[0]}:en:C" \
     "LC_CTYPE=${PARTS[0]}" \
     "LC_NUMERIC=${PARTS[0]}" \
+    "LC_TIME=${PARTS[0]}" \
+    "LC_COLLATE=${PARTS[0]}" \
     "LC_MONETARY=${PARTS[0]}" \
-    "LC_COLLATE=${PARTS[0]}" >> /etc/locale.conf
+    "LC_MESSAGES=${PARTS[0]}" \
+    "LC_PAPER=${PARTS[0]}" \
+    "LC_NAME=${PARTS[0]}" \
+    "LC_ADDRESS=${PARTS[0]}" \
+    "LC_TELEPHONE=${PARTS[0]}" \
+    "LC_MEASUREMENT=${PARTS[0]}" \
+    "LC_IDENTIFICATION=${PARTS[0]}" >> /etc/locale.conf
 
   echo "Locale has been set to $LOCALE"
 }
@@ -91,7 +103,7 @@ set_timezone () {
 
   hwclock --systohc --utc || exit 1
 
-  echo "System clock has been synchronized to hardware clock"
+  echo "Hardware clock has been synchronized to system clock"
 
   echo "Timezone has been set to $TIMEZONE"
 }
@@ -171,12 +183,12 @@ install_packages () {
   echo -e "\nInstalling the base packages..."
 
   pacman -S --noconfirm \
-    base-devel pacman-contrib pkgstats grub mtools dosfstools gdisk \
+    base-devel pacman-contrib pkgstats grub mtools dosfstools ntfs-3g exfatprogs gdisk fuseiso veracrypt \
     parted curl wget udisks2 udiskie gvfs gvfs-smb bash-completion \
-    man-db man-pages texinfo cups bluez bluez-utils unzip terminus-font \
+    man-db man-pages texinfo cups cups-pdf cups-filters usbutils bluez bluez-utils unzip terminus-font \
     vim nano git tree arch-audit atool zip xz unace p7zip gzip lzop feh \
     bzip2 unrar dialog inetutils dnsutils openssh nfs-utils openbsd-netcat ipset \
-    neofetch age polkit-gnome imagemagick gpick \
+    neofetch age imagemagick gpick fuse2 rclone smartmontools glib2 jq jc sequoia-sq \
     $([ "$UEFI" = "yes" ] && echo 'efibootmgr') || exit 1
 
   echo -e "\nReplacing iptables with nft tables..."
@@ -205,16 +217,17 @@ install_aur () {
 install_display_server () {
   echo "Installing the xorg display server..."
 
-  pacman -S --noconfirm xorg xorg-xinit xorg-xrandr arandr || exit 1
+  pacman -S --noconfirm xorg xorg-xinit xorg-xrandr xorg-xdpyinfo arandr || exit 1
 
   cp /root/stack/resources/xorg/xorg.conf /etc/X11
+  cp /root/stack/resources/xorg/keyboard.conf /etc/X11/xorg.conf.d/00-keyboard.conf
 
-  echo "Server configuration has been saved to /etc/X11/xorg.conf"
+  echo "Server configurations have been saved under /etc/X11"
 
   local OLD_IFS=$IFS && IFS=","
   LAYOUTS="${LAYOUTS[*]}" && IFS=$OLD_IFS
 
-  sed -i "/XkbLayout/ s/us/${LAYOUTS}/" /etc/X11/xorg.conf
+  sed -i "/XkbLayout/ s/us/us,${LAYOUTS}/" /etc/X11/xorg.conf.d/00-keyboard.conf
 
   echo "Keyboard layouts have been set to $LAYOUTS"
 
@@ -268,12 +281,52 @@ install_drivers () {
   fi
 
   pacman -S --noconfirm \
-    acpi acpid acpi_call \
-    networkmanager wireless_tools netctl wpa_supplicant dhclient \
+    acpi acpid acpi_call xcalib \
+    networkmanager networkmanager-openvpn wireless_tools netctl wpa_supplicant \
+    nmap dhclient smbclient libnma \
     alsa-utils pipewire pipewire-alsa pipewire-pulse pipewire-jack pavucontrol \
     $CPU_PKGS $GPU_PKGS $OTHER_PKGS $VM_PKGS || exit 1
 
   echo "Drivers have been installed"
+}
+
+install_utilities () {
+  echo -e "\nInstalling stack utility binaries..."
+
+  local STACK_HOME="/opt/stack"
+  mkdir -p "$STACK_HOME"
+
+  cp ~/stack/resources/stack/utils "$STACK_HOME"
+  cp ~/stack/resources/stack/clock "$STACK_HOME"
+  cp ~/stack/resources/stack/trash "$STACK_HOME"
+  cp ~/stack/resources/stack/networks "$STACK_HOME"
+  cp ~/stack/resources/stack/disks "$STACK_HOME"
+  cp ~/stack/resources/stack/langs "$STACK_HOME"
+  cp ~/stack/resources/stack/desktop "$STACK_HOME"
+  cp ~/stack/resources/stack/audio "$STACK_HOME"
+  cp ~/stack/resources/stack/displays "$STACK_HOME"
+  cp ~/stack/resources/stack/cloud "$STACK_HOME"
+  cp ~/stack/resources/stack/bluetooth "$STACK_HOME"
+  cp ~/stack/resources/stack/printers "$STACK_HOME"
+
+  ln -sf "$STACK_HOME/clock" /usr/local/bin/clock
+  ln -sf "$STACK_HOME/trash" /usr/local/bin/trash
+  ln -sf "$STACK_HOME/trash" /usr/local/bin/tt
+  ln -sf "$STACK_HOME/networks" /usr/local/bin/networks
+  ln -sf "$STACK_HOME/disks" /usr/local/bin/disks
+  ln -sf "$STACK_HOME/langs" /usr/local/bin/langs
+  ln -sf "$STACK_HOME/desktop" /usr/local/bin/desktop
+  ln -sf "$STACK_HOME/audio" /usr/local/bin/audio
+  ln -sf "$STACK_HOME/displays" /usr/local/bin/displays
+  ln -sf "$STACK_HOME/cloud" /usr/local/bin/cloud
+  ln -sf "$STACK_HOME/bluetooth" /usr/local/bin/bluetooth
+  ln -sf "$STACK_HOME/printers" /usr/local/bin/printers
+
+  echo 'displays restore layout || notify-send "Failed to load displays layout"' >> ~/.xinitrc
+  echo 'displays restore colors || notify-send "Failed to load some color profiles"' >> ~/.xinitrc
+  echo 'cloud mount remotes || notify-send "Failed to mount some cloud remotes"' >> ~/.xinitrc
+
+  echo "Stack utilities have been installed"
 }
 
 config_security () {
@@ -405,6 +458,7 @@ set_host &&
   install_aur &&
   install_display_server &&
   install_drivers &&
+  install_utilities &&
   config_security &&
   increase_watchers &&
   install_bootloader &&

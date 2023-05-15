@@ -128,9 +128,9 @@ what_cpu () {
 
   local CPU=$(lscpu)
 
-  if grep -E "AuthenticAMD" > /dev/null <<< ${CPU}; then
+  if grep -Eq "AuthenticAMD" <<< ${CPU}; then
     CPU="amd"
-  elif grep -E "GenuineIntel" > /dev/null <<< ${CPU}; then
+  elif grep -Eq "GenuineIntel" <<< ${CPU}; then
     CPU="intel"
   else
     CPU="generic"
@@ -161,13 +161,13 @@ what_gpu () {
 
   local GPU=$(lspci)
 
-  if grep -E "NVIDIA|GeForce" > /dev/null <<< ${GPU}; then
+  if grep -Eq "NVIDIA|GeForce" <<< ${GPU}; then
     GPU="nvidia"
-  elif grep -E "Radeon|AMD" > /dev/null <<< ${GPU}; then
+  elif grep -Eq "Radeon|AMD" <<< ${GPU}; then
     GPU="amd"
-  elif grep -E "Integrated Graphics Controller" > /dev/null <<< ${GPU}; then
+  elif grep -Eq "Integrated Graphics Controller" <<< ${GPU}; then
     GPU="intel"
-  elif grep -E "Intel Corporation UHD" > /dev/null <<< ${GPU}; then
+  elif grep -Eq "Intel Corporation UHD" <<< ${GPU}; then
     GPU="intel"
   else
     GPU="generic"
@@ -469,7 +469,7 @@ which_layouts () {
     de dk dz ee epo es et fi fo fr gb ge gh gn gr hr hu id ie il in iq ir
     is it jp ke kg kh kr kz la latam lk lt lv ma mao md me mk ml mm mn mt
     mv my ng nl no np ph pk pl pt ro rs ru se si sk sn sy tg th tj tm tr
-    tw tz ua us uz vnza
+    tw tz ua uz vnza
   )
 
   print 8 6 "${LAYOUTS[@]}"
@@ -716,7 +716,7 @@ while true; do
     opt_in "chat" "slack" "discord" "skype" "teams" "irssi" &&
     opt_in "office" "libreoffice" "xournal" "foliate" "evince" &&
     opt_in "remote" "teamviewer" "anydesk" "tigervnc" &&
-    opt_in "file" "filezilla" "rclone" "transmission" &&
+    opt_in "file" "filezilla" "transmission" &&
     opt_in "virtualization" "docker" "virtualbox" "vmware"
 
   echo "Configuration options have been set to:"

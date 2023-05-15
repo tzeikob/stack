@@ -1,0 +1,815 @@
+#!/bin/bash
+
+set -o pipefail
+source /opt/stack/utils
+
+# Converts the given raw value to its human friendly value.
+# Arguments:
+#  key:   the type of value
+#  value: the raw value
+# Outputs:
+#  A human friendly value.
+label () {
+  local key="${1}"
+  local value="${2}"
+
+  if [[ "${key}" == "type" ]]; then
+    case "${value}" in
+      "sink") echo "output";;
+      "source") echo "input";;
+      *) echo "${value}";;
+    esac
+  elif [[ "${key}" == "mute" ]]; then
+    case "${value}" in
+      "0") echo "unmute";;
+      "1") echo "mute";;
+      *) echo "${value}";;
+    esac
+  else
+    echo "${value}"
+  fi
+}
+
+# Returns the list of all audio cards.
+# Arguments:
+#  none
+# Outputs:
+#  A json array of audio cards.
+find_cards () {
+  pactl --format=json list cards || return 1
+}
+
+# Returns the audio card identified by the given
+# index number.
+# Arguments:
+#  index: a zero-based integer
+# Outputs:
+#  A json object of an audio card.
+find_card () {
+  local index="${1}"
+
+  local query=".[]|select(.index|tostring == \"${index}\")"
+
+  find_cards | jq -cer "${query}" || return 1
+}
+
+# Shows a menu asking the user to select an audio card,
+# where the answer is kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  prompt: a prompt text line
+# Outputs:
+#  A menu of audio card names.
+pick_card () {
+  local prompt="${1}"
+
+  local query='{key: .index, value: "\(.index):\(.properties|'
+  query+='if ."device.nick" then ."device.nick" else ."device.alias" end)"}'
+  query="[.[]|${query}]"
+
+  local cards=''
+  cards="$(find_cards | jq -cer "${query}")" || return 1
+
+  local len=0
+  len=$(count "${cards}") || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No audio cards have found"
+    return 2
+  fi
+  
+  pick_one "${prompt}" "${cards}" "vertical" || return $?
+}
+
+# Shows a menu asking the user to select a profile of the
+# given audio card, where the answer is kept in the global
+# var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  prompt: a prompt text line
+#  card:   a json object of an audio card
+# Outputs:
+#  A menu of audio card profile names.
+pick_profile () {
+  local prompt="${1}"
+  local card="${2}"
+
+  local query='{key: .key, value: .key}'
+  query="[.profiles|to_entries[]|${query}]"
+
+  local profiles=''
+  profiles="$(echo "${card}" | jq -cer "${query}")" || return 1
+
+  local len=0
+  len="$(count "${profiles}")" || return 1
+
+  if [[ ${len} == 0 ]]; then
+    echo "No audio profiles found"
+    return 2
+  fi
+  
+  pick_one "${prompt}" "${profiles}" "vertical" || return $?
+}
+
+# Shows a menu asking the user to select an audio module
+# with the given type, where the answer is kept in the
+# global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  prompt: a prompt text line
+#  type:   sink, source
+# Outputs:
+#  A menu of audio module names.
+pick_module () {
+  local prompt="${1}"
+  local type="${2}"
+
+  local query='{key: .index, value: "\(.name)'
+  query+=' [\(.properties|if ."device.nick" then ."device.nick" else ."device.alias" end)]"}'
+  query="[.[]|=.|map((.ports[] + {index, properties}))|.[]|${query}]"
+
+  local modules=''
+  modules="$(pactl --format=json list "${type}"s | jq -cer "${query}")" || return 1
+
+  local len=0
+  len="$(count "${modules}")" || return 1
+
+  if [[ ${len} == 0 ]]; then
+    echo "No $(label "type" "${type}") modules have found"
+    return 2
+  fi
+  
+  pick_one "${prompt}" "${modules}" "vertical" || return $?
+}
+
+# Shows a prompt status and asks user to enter the
+# next command, which is kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  None
+# Outputs:
+#  A minimal prompt status line.
+prompt () {
+  local sink="$(pactl get-default-sink)"
+
+  local status='off'
+
+  if [[ "${sink}" != "auto_null" ]]; then
+    local query=''
+    query+=".[]|select(.name == \"${sink}\")|.properties"
+    query+=" |if .\"device.nick\" then .\"device.nick\""
+    query+="  else .\"device.alias\" end"
+
+    status="$(pactl --format=json list sinks | jq -cer "${query}" | tr ' ' '-' )"
+    
+    if [[ $? -ne 0 ]]; then
+      echo "Unable to resolve status"
+      status='none'
+    fi
+  fi
+
+  read -rep "[audio:${status}] " REPLY
+}
+
+# Shows the current status of system's audio.
+# Arguments:
+#  None
+# Outputs:
+#  A verbose list of text data.
+show_status () {
+  local query=''
+  query+='Server:    \(.server_name)\n'
+  query+='Version:   \(.server_version)\n'
+  query+='Sample:    \(.default_sample_specification)\n'
+  query+='Channels:  \(.default_channel_map)'
+
+  pactl --format=json info | jq -cer "(\"${query}\")" || return 1
+
+  systemctl --user status --lines 0 --no-pager pipewire-pulse.service |
+    awk '{
+      if ($0 ~ / *Active/) {
+        l = "Active"
+        v = $2" "$3
+      } else if ($0 ~ / *Main PID/) {
+        l = "Process"
+        v = $3" "$4
+      } else l = ""
+
+      if (l) printf "%-10s %s\n",l":",v
+    }' || return 1
+
+  local query=''
+  query+='.[]|.properties'
+  query+='|if ."device.nick" then ."device.nick"'
+  query+=' else ."device.alias" end'
+  query="[${query}]|join(\"\n           \")"
+
+  echo -n "Cards:     "
+  find_cards | jq -cer "${query}" || return 1
+
+  local sink=''
+  sink="$(pactl get-default-sink)" || return 1
+
+  local query='\n'
+  query+='Output:    \(.properties|if ."device.nick" then ."device.nick" else ."device.alias" end)\n'
+  query+='Port:      \(.active_port)\n'
+  query+='Volume:    \(.volume|keys[0] as $k|.[$k].db|gsub("\\s+";"")) \(if .mute then "mute" else "" end)'
+
+  query=".[]|select(.name == \"${sink}\")|select(.active_port)|\"${query}\""
+
+  pactl --format=json list sinks | jq -cr "${query}" || return 1
+
+  local source=''
+  source="$(pactl get-default-source)" || return 1
+
+  local query='\n'
+  query+='Input:     \(.properties|if ."device.nick" then ."device.nick" else ."device.alias" end)\n'
+  query+='Port:      \(.active_port)\n'
+  query+='Volume:    \(.volume|keys[0] as $k|.[$k].db|gsub("\\s+";"")) \(if .mute then "mute" else "" end)'
+
+  query=".[]|select(.name == \"${source}\")|select(.active_port)|\"${query}\""
+
+  pactl --format=json list sources | jq -cr "${query}" || return 1
+}
+
+# Shows the logs of the audio service.
+# Arguments:
+#  None
+# Outputs:
+#  A long list of log messages.
+show_logs () {
+  systemctl --user status --no-pager pipewire-pulse.service | tail -n +12 || return 1
+}
+
+# Shows the data of the card with identified by the
+# given index.
+# Globals:
+#  REPLY
+# Arguments:
+#  index: a zero-based integer
+# Outputs:
+#  A verbose list of text data.
+show_card () {
+  local index="${1}"
+
+  if [[ -z "${index}" ]]; then
+    pick_card "Select an audio card:" || return $?
+    [[ -n "${REPLY}" ]] && index="${REPLY}" || return 0
+  fi
+
+  local card=''
+  card="$(find_card "${index}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to find card with index ${index}"
+    return 2
+  fi
+
+  local query='("'
+  query+='Index:     \(.index)\n'
+  query+='Model:     \(.properties|if ."device.nick" then ."device.nick" else ."device.alias" end)\n'
+  query+='\(.properties."device.product.name"|if . then "Product:   \(.)\n" else "" end)'
+  query+='\(.properties."device.vendor.name"|if . then "Vendor:    \(.)\n" else "" end)'
+  query+='Driver:    \(.driver)\n'
+  query+='Bus:       \(.properties."device.bus" | ascii_upcase)\n'
+  query+='\(.properties."api.alsa.use-acp"|if . then "ACP:       \(.)\n" else "" end)'
+  query+='Profile:   \(.active_profile)")'
+
+  echo "${card}" | jq -cer "${query}" || return 1
+
+  local query=''
+  query='.profiles|[keys[]]|join("\n           ")'
+
+  echo
+  echo -n "Profiles:  "
+  echo "${card}" | jq -cer "${query}" || return 1
+
+  local query=''
+  query='[.ports|to_entries[]|"\(.key) [\(.value.type)]"]|join("\n           ")'
+
+  echo
+  echo -n "Ports:     "
+  echo "${card}" | jq -cr "${query}" || return 1
+}
+
+# Restarts the audio services.
+# Arguments:
+#  none
+restart () {
+  echo "Restarting the audio server..."
+
+  systemctl --user restart pipewire.socket && sleep 0.5 &&
+    echo "Pipewire socket restarted" &&
+  systemctl --user restart pipewire.service && sleep 0.5 &&
+    echo "Pipewire service restarted" &&
+  systemctl --user restart pipewire-session-manager.service && sleep 0.5 &&
+  systemctl --user restart pipewire-media-session.service && sleep 0.5 &&
+  systemctl --user restart pipewire-pulse.socket && sleep 0.5 &&
+    echo "Pulse socket restarted" &&
+  systemctl --user restart pipewire-pulse.service && sleep 0.5 &&
+    echo "Pulse service restarted" &&
+  echo "Audio server has been restarted" &&
+  (~/.config/polybar/launch &> /dev/null &) ||
+    echo "An error occurred restarting the audio server"
+}
+
+# Shows the list of all audio cards of the system.
+# Arguments:
+#  none
+# Outputs:
+#  The list of audio cards.
+list_cards () {
+  local cards=''
+  cards="$(find_cards)"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to read audio cards"
+    return 2
+  fi
+
+  local len=0
+  len="$(count "${cards}")" || return 1
+
+  if [[ ${len} == 0 ]]; then
+    echo "No audio cards have found"
+    return 0
+  fi
+
+  local query=''
+  query+='Index:  \(.index)\n'
+  query+='Model:  \(.properties|if ."device.nick" then ."device.nick" else ."device.alias" end)'
+  query+='\(.properties."device.vendor.name"|if . then "\nVendor: \(.)" else "" end)'
+
+  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+
+  echo "${cards}" | jq -cr "${query}" || return 1
+}
+
+# Shows a list of sink or source audio modules.
+# Arguments:
+#  type: sink or source
+# Outputs:
+#  The list of sink or source modules.
+list_ports () {
+  local type="${1}"
+
+  if [[ ! "${type}" =~ ^(sink|source)$ ]]; then
+    echo "Invalid module type value"
+    return 2
+  fi
+
+  local query='[.[]|select(.active_port)]'
+
+  local modules=''
+  modules="$(pactl --format=json list "${type}"s | jq -cer "${query}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to read $(label "type" "${type}") modules"
+    return 2
+  fi
+
+  local len=0
+  len="$(count "${modules}")" || return 1
+
+  if [[ ${len} == 0 ]]; then
+    echo "No $(label "type" "${type}") modules have found"
+    return 0
+  fi
+
+  local query=''
+  query+='.[]'
+  query+=' |= .'
+  query+=' |map(('
+  query+='  .ports[] + {'
+  query+='   index, state, mute, properties,'
+  query+='   volume: (.volume|keys[0] as $k|.[$k].db|gsub("\\s+";""))'
+  query+='  }'
+  query+=' ))'
+  query+=' |.[]|"'
+  query+='Index:   \(.index)\n'
+  query+='Name:    \(.name)\n'
+  query+='Card:    \(.properties|if ."device.nick" then ."device.nick" else ."device.alias" end)\n'
+  query+='Volume:  \(.volume) \(if .mute then "mute" else "" end)\n'
+  query+='State:   \(.state|ascii_downcase)'
+  query+='"'
+
+  query="[${query}]|join(\"\n\n\")"
+
+  echo "${modules}" | jq -cer "${query}" || return 1
+}
+
+# Shows the list of active playbacks matching the
+# given application name.
+# Arguments:
+#  name: the application name
+# Outputs:
+#  A list of playback streams.
+list_playbacks () {
+  local name="${1}"
+
+  local query=''
+  query="[.[]|select(.properties.\"application.name\"|test(\"${name}\"; \"i\"))]"
+
+  local sink_inputs=''
+  sink_inputs="$(pactl --format=json list sink-inputs | jq -cer "${query}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to read playback streams"
+    return 2
+  fi
+
+  local len=0
+  len="$(count "${sink_inputs}")" || return 1
+
+  if [[ ${len} == 0 ]]; then
+    echo "No playbacks have found"
+    return 0
+  fi
+
+  query+='|.[]|"'
+  query+='Index:    \(.index)\n'
+  query+='Name:     \(.properties."application.name")\n'
+  query+='Media:    \(.properties."media.name")\n'
+  query+='Process:  \(.properties."application.process.id")\n'
+  query+='Volume:   \(.volume|keys[0] as $k|.[$k].db|gsub("\\s+";""))'
+  query+=' \(if .mute then "mute" else "" end)'
+  query+='"'
+
+  query="[${query}]|join(\"\n\n\")"
+
+  echo "${sink_inputs}" | jq -cer "${query}" || return 1
+}
+
+# Sets the profile of the audio card identified
+# by the given index.
+# Globals:
+#  REPLY
+# Arguments:
+#  index: a zero-based integer
+#  name:  the name of a profile
+set_profile () {
+  local index="${1}"
+  local name="${2}"
+
+  if [[ -z "${index}" ]]; then
+    pick_card "Select an audio card:" || return $?
+    [[ -n "${REPLY}" ]] && index="${REPLY}" || return 0
+  fi
+
+  local card=''
+  card="$(find_card "${index}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to find card with index ${index}"
+    return 2
+  fi
+
+  if [[ -z "${name}" ]]; then
+    pick_profile "Select a profile:" "${card}" || return $?
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+  fi
+
+  local exists=''
+  exists="$(echo "${card}" | jq -cer ".profiles|has(\"${name}\")")"
+
+  if [[ "${exists}" == "false" ]]; then
+    echo "Invalid profile name value"
+    return 2
+  fi
+
+  pactl set-card-profile "${index}" "${name}" && sleep 0.1
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to set profile"
+    return 2
+  fi
+  
+  echo "Profile has been set to ${name}"
+}
+
+# Sets the active sink or source module.
+# Globals:
+#  REPLY
+# Arguments:
+#  type:   sink, source
+#  index:  the index of an audio module
+set_default () {
+  local type="${1}"
+  local index="${2}"
+
+  if [[ ! "${type}" =~ ^(sink|source)$ ]]; then
+    echo "Invalid module type value"
+    return 2
+  fi
+
+  if [[ -z "${index}" ]]; then
+    pick_module "Select an audio module:" "${type}" || return $?
+    [[ -n "${REPLY}" ]] && index="${REPLY}" || return 0
+  fi
+
+  local query=".[]|select(.index|tostring == \"${index}\")"
+
+  local exists=''
+  exists="$(pactl --format=json list "${type}"s | jq -cer "${query}")"
+
+  if [[ -z "${exists}" ]]; then
+    echo "Invalid module index value"
+    return 2
+  fi
+
+  pactl set-default-${type} "${index}" && sleep 0.1
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to set active $(label "type" "${type}")"
+    return 2
+  fi
+
+  echo "Active $(label "type" "${type}") set to module ${index}"
+}
+
+# Sets the volume of the active sink or source
+# to the given value. If the given value is up or
+# down the volume increases or decreases by 5%.
+# Arguments:
+#  type: sink, source
+#  to:   up, down, mute, unmute or [0,150] 
+turn_default () {
+  local type="${1}"
+  local to="${2}"
+
+  if [[ ! "${type}" =~ ^(sink|source)$ ]]; then
+    echo "Invalid module type value"
+    return 2
+  fi
+
+  if [[ ! "${to}" =~ ^(up|down|mute|unmute|[0-9]+)$ ]]; then
+    echo "Invalid volume value"
+    return 2
+  elif [[ "${to}" =~ ^[0-9]+$ ]] && ! ((${to} >= 0 && ${to} <= 150)); then
+    echo "Volume value is out of range"
+    return 2
+  fi
+
+  local module=''
+  module="$(pactl get-default-${type})"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to read the active $(label "type" "${type}")"
+    return 2
+  fi
+  
+  if [[ "${to}" == "mute" ]]; then
+    pactl set-${type}-mute "${module}" 1 && sleep 0.1
+
+    if [[ $? -ne 0 ]]; then
+      echo "Failed to set active $(label "type" "${type}") to mute"
+      return 2
+    fi
+
+    echo "Active $(label "type" "${type}") volume set to mute" && return 0
+  elif [[ "${to}" == "unmute" ]]; then
+    pactl set-${type}-mute "${module}" 0 && sleep 0.1
+
+    if [[ $? -ne 0 ]]; then
+      echo "Failed to set active $(label "type" "${type}") to unmute"
+      return 2
+    fi
+
+    echo "Active $(label "type" "${type}") volume set to unmute" && return 0
+  fi
+
+  local volume="${to}"
+
+  if [[ "${to}" == "up" ]]; then
+    volume="+5"
+  elif [[ "${to}" == "down" ]]; then
+    volume="-5"
+  fi
+
+  pactl set-${type}-mute "${module}" 0 &&
+  pactl set-${type}-volume "${module}" "${volume}%" && sleep 0.1
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to set volume of active $(label "type" "${type}")"
+    return 2
+  fi
+
+  echo "Active $(label "type" "${type}") volume set to ${volume}%"
+}
+
+# Sets all sink or source modules to mute or unmute mode.
+# Arguments:
+#  type: sink or source
+#  mode: 1 to mute or 0 to unmute
+set_mute () {
+  local type="${1}"
+  local mode="${2}"
+
+  if [[ ! "${type}" =~ ^(sink|source)$ ]]; then
+    echo "Invalid module type value"
+    return 2
+  fi
+
+  if [[ ! "${mode}" =~ ^(1|0)$ ]]; then
+    echo "Invalid mute mode value"
+    return 2
+  fi
+
+  # Build pactl commands for each audio module
+  local query=''
+  query+="\"pactl set-${type}-mute \(.name) ${mode}\""
+  query="[.[]|${query}]|join(\"\n\")"
+
+  local pactl_cmds=''
+  pactl_cmds="$(pactl --format=json list "${type}"s | jq -cer "${query}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to read $(label "type" "${type}") modules"
+    return 2
+  fi
+
+  if [[ -z "${pactl_cmds}" ]]; then
+    echo "No $(label "type" "${type}") modules have found"
+    return 0
+  fi
+
+  # Execute each pactl command
+  local failed='false'
+  local pactl_cmd=''
+
+  while read -r pactl_cmd; do
+    ${pactl_cmd} && sleep 0.1
+
+    if [[ $? -ne 0 ]]; then
+      failed='true'
+    fi
+  done <<< "${pactl_cmds}"
+
+  if [[ "${failed}" == "true" ]]; then
+    echo "Failed to set mute mode for all $(label "type" "${type}") modules"
+    return 2
+  fi
+
+  echo "All $(label "type" "${type}") modules set to $(label "mute" "${mode}")"
+}
+
+# Shows the help message.
+# Arguments:
+#  mode: once or none
+# Outputs:
+#  A long help message.
+show_help () {
+  if [[ "$1" == "once" ]]; then
+    echo "Usage: audio COMMAND [OBJECT] [ARGUMENTS]..."
+
+    echo -e "\nCOMMANDS"
+    printf " %-12s %s\n" \
+      "help" "Show this help message." \
+      "" "" \
+      "set profile" "Set the active profile." \
+      "set output" "Set the active output." \
+      "" "" \
+      "up" "Increase the volume of active output." \
+      "down" "Decrease the volume of active output." \
+      "mute" "Mute the active output." \
+      "unmute" "Unmute the active output." \
+      "" "" \
+      "restart" "Restart the audio server."
+
+    return 0
+  fi
+
+  echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
+
+  echo -e "\nCOMMANDS"
+  printf " %-32s %s\n" \
+    "help" "Show this help message." \
+    "" "" \
+    "show status" "Show a report of the system's audio." \
+    "show logs" "Show the last logs of the audio service." \
+    "show card [<index>]" "Show the data of a card." \
+    "" "" \
+    "list cards" "List all cards of the system." \
+    "list outputs" "List all outputs." \
+    "list inputs" "List all inputs." \
+    "list playbacks [<name>]" "List active playbacks by application name." \
+    "" "" \
+    "set profile [<card> [<name>]]" "Set the active profile of a card." \
+    "set output [<index>]" "Set the active output." \
+    "set input [<index>]" "Set the active input." \
+    "" "" \
+    "turn output|input <volume>" "Turn the volume of active output/input to," \
+    "" "up, down, mute, unmute or a percentage value." \
+    "mute outputs|inputs" "Mute all outputs or inputs." \
+    "unmute outputs|inputs" "Unmute all outputs or inputs." \
+    "" "" \
+    "restart" "Restart the audio server."
+}
+
+loop () {
+  clear
+
+  while true; do
+    prompt && history -s "${REPLY}"
+
+    set -f
+    set_separator "line"
+    local cmd=($(xargs -n1 <<< "${REPLY}"))
+    restore_separator && set +f
+
+    if [[ "${cmd[0]}" == "help" ]]; then
+      show_help
+      continue
+    elif [[ "${cmd[0]}" == "clear" ]]; then
+      clear
+      continue
+    elif [[ "${cmd[0]}" == "quit" ]]; then
+      break
+    elif [[ -z "${cmd[0]}" ]]; then
+      continue
+    fi
+
+    case "${cmd[0]}" in
+      "show")
+        case "${cmd[1]}" in
+          "status") show_status;;
+          "logs") show_logs;;
+          "card") show_card "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "restart") restart;;
+      "list")
+        case "${cmd[1]}" in
+          "cards") list_cards;;
+          "outputs") list_ports "sink";;
+          "inputs") list_ports "source";;
+          "playbacks") list_playbacks "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "set")
+        case "${cmd[1]}" in
+          "profile") set_profile "${cmd[2]}" "${cmd[3]}";;
+          "output") set_default "sink" "${cmd[2]}";;
+          "input") set_default "source" "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "turn")
+        case "${cmd[1]}" in
+          "output") turn_default "sink" "${cmd[2]}";;
+          "input") turn_default "source" "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "mute")
+        case "${cmd[1]}" in
+          "outputs") set_mute "sink" "1";;
+          "inputs") set_mute "source" "1";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "unmute")
+        case "${cmd[1]}" in
+          "outputs") set_mute "sink" "0";;
+          "inputs") set_mute "source" "0";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      *) echo "Invalid or unknown command";; 
+    esac
+    
+    if [[ $? -eq 1 ]]; then
+      echo "An unknown error has occurred"
+    fi
+  done
+
+  clear
+}
+
+once () {
+  case "${1}" in
+    "help") show_help "once";;
+    "restart") restart;;
+    "set")
+      case "${2}" in
+        "profile") set_profile;;
+        "output") set_default "sink";;
+        *) abort "Invalid or unknown command";; 
+      esac;;
+    "mute") turn_default "sink" "mute";;
+    "unmute") turn_default "sink" "unmute";;
+    "up") turn_default "sink" "up";;
+    "down") turn_default "sink" "down";;
+    *) abort "Invalid or unknown command";; 
+  esac
+
+  if [[ $? -ne 0 ]]; then
+    abort
+  fi
+}
+
+if [[ $# -eq 0 ]]; then
+  loop
+else
+  once "$@"
+fi

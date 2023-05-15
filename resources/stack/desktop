@@ -1,0 +1,423 @@
+#!/bin/bash
+
+set -o pipefail
+source /opt/stack/utils
+
+SETTINGS_FILE="${CONFIG_HOME}/desktop.json"
+
+# Returns the list of any wallpapers found under
+# the wallpapers home.
+# Globals:
+#  WALLPAPERS_HOME
+# Arguments:
+#  None
+# Outputs:
+#  A json array of image objects.
+find_wallpapers () {
+  if [[ ! -d  "${WALLPAPERS_HOME}" ]]; then
+    echo '[]'
+    return 0
+  fi
+
+  local wallpaper=''
+  wallpaper+='"\"name\": \""$1"\","'
+  wallpaper+='"\"type\": \""$2"\","'
+  wallpaper+='"\"resolution\": \""$3"\","'
+  wallpaper+='"\"bit\": \""$5"\","'
+  wallpaper+='"\"color\": \""$6"\","'
+  wallpaper+='"\"size\": \""$7"\""'
+  wallpaper="\"{\"${wallpaper}\"},\""
+
+  local wallpapers=''
+  wallpapers="$(identify -quiet "${WALLPAPERS_HOME}/*" 2> /dev/null |
+    awk '{
+      if ($1 ~ /.(jpg|jpeg|png)$/) {
+        n=split($1,a,"/")
+        $1=a[n]
+        print '"${wallpaper}"'
+      }
+    }'
+  )"
+  
+  # Remove the extra comma after the last array element
+  if [[ -n "${wallpapers}" ]]; then
+    wallpapers="${wallpapers::-1}"
+  fi
+
+  echo "[${wallpapers}]"
+}
+
+# Shows a menu asking the user to select one wallpaper,
+# where the answer is kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  None
+# Outputs:
+#  A menu of wallpaper filenames.
+pick_wallpaper () {
+  local query='{key: .name, value: "\(.name) [\(.resolution)]"}'
+  query="[.[]|${query}]"
+
+  local wallpapers=''
+  wallpapers="$(find_wallpapers | jq -cer "${query}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to find wallpaper files"
+    return 2
+  fi
+
+  local len=0
+  len="$(count "${wallpapers}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No wallpaper files have found"
+    return 2
+  fi
+
+  pick_one "Select a wallpaper:" "${wallpapers}" "vertical" || return $?
+}
+
+# Shows a prompt status and asks user to enter the
+# next command, which is kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  None
+# Outputs:
+#  A minimal prompt status line.
+prompt () {
+  read -rep "[desktop:ready] " REPLY
+}
+
+# Shows the current status of the desktop environment.
+# Globals:
+#  SETTINGS_FILE
+# Arguments:
+#  None
+# Outputs:
+#  A verbose list of text data.
+show_status () {
+  local status=''
+
+  local server=''
+  server="$(xdpyinfo -display "${DISPLAY}" | awk -F': ' '{ORS=""}; {
+    gsub(/^[ \t]+/,"",$2)
+    gsub(/[ \t]+$/,"",$2)
+    switch ($1) {
+      case "version number": print $2; break
+      case "X.Org version": print "/"$2")"; break
+      default: break
+    }
+  }')" || return 1
+  status+="\"server\": \"Xorg ${server::-1}\","
+
+  local compositor=''
+  compositor="$(pacman -Qi picom | grep -Po '^Version\s*: \K.+')" || return 1
+  status+="\"compositor\": \"Picom ${compositor}\","
+
+  local wm=''
+  wm="$(bspwm -v)" || return 1
+  status+="\"wm\": \"BSPWM ${wm}\","
+
+  local bars=''
+  bars="$(polybar -v | head -n +1 | cut -d ' ' -f 2)" || return 1
+  status+="\"bars\": \"Polybar ${bars}\","
+
+  if [[ -f "${SETTINGS_FILE}" ]]; then
+    local query='.wallpaper|if . then "\(.name) \(.mode)" else "none" end'
+    local wallpaper=''
+    wallpaper="$(jq -cr "${query}" "${SETTINGS_FILE}")" || return 1
+    status+="\"wallpaper\": \"${wallpaper}\","
+  fi
+
+  local fields='OS|Kernel|Shell|Theme|Icons'
+  status+="$(neofetch --off --stdout |
+    awk -F':' '/^('"${fields}"')/{
+      gsub(/^[ \t]+/,"",$2)
+      gsub(/[ \t]+$/,"",$2)
+      printf "\"%s\":\"%s\",",tolower($1),$2
+    }'
+  )" || return 1
+
+  # Remove the last extra comma after the last field
+  if [[ -n "${status}" ]]; then
+    status="${status::-1}"
+  fi
+
+  status="{${status}}"
+
+  local query=''
+  query+='OS:          \(.os)\n'
+  query+='Kernel:      \(.kernel)\n'
+  query+='Shell:       \(.shell)\n'
+  query+='Server:      \(.server)\n'
+  query+='Compositor:  \(.compositor)\n'
+  query+='WM:          \(.wm)\n'
+  query+='Bars:        \(.bars)\n'
+  query+='Theme:       \(.theme)\n'
+  query+='Icons:       \(.icons)\n'
+  query+='Wallpaper:   \(if .wallpaper then .wallpaper else "none" end)'
+
+  echo "${status}" | jq -cer "\"${query}\"" || return 1
+}
+
+# show the list of all the wallpapers found under
+# the wallpapers home.
+# Arguments:
+#  None
+# Outputs:
+#  A list of wallpaper data.
+list_wallpapers () {
+  local wallpapers=''
+  wallpapers="$(find_wallpapers)"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to find wallpaper files"
+    return 2
+  fi
+
+  local len=0
+  len="$(count "${wallpapers}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No wallpaper files have found"
+    return 2
+  fi
+
+  local query=''
+  query+='Name:        \(.name)\n'
+  query+='Type:        \(.type)\n'
+  query+='Color:       \(.color) \(.bit)\n'
+  query+='Size:        \(.size)\n'
+  query+='Resolution:  \(.resolution)'
+  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+
+  echo "${wallpapers}" | jq -cer "${query}" || return 1
+}
+
+# Sets the desktop wallpaper to the wallpaper with the given
+# file name and scale mode.
+# Globals:
+#  REPLY, WALLPAPERS_HOME, SETTINGS_FILE, CONFIG_HOME
+# Arguments:
+#  name: the filename of the wallpaper
+#  mode: center, fill, max, scale or tile
+set_wallpaper () {
+  local name="${1}"
+  local mode="${2}"
+
+  if [[ -z "${name}" ]]; then
+    pick_wallpaper || return $?
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+  fi
+
+  if [[ "${name}" =~ /+ ]]; then
+    echo "Invalid wallpaper name"
+    return 2
+  fi
+
+  name="$(basename "${name}")"
+  local wallpaper_file="${WALLPAPERS_HOME}/${name}"
+
+  if [[ ! "${wallpaper_file}" =~ .+\.(jpg|jpeg|png)$ ]]; then
+    echo "Invalid wallpaper file type"
+    return 2
+  elif [[ ! -f "${wallpaper_file}" ]]; then
+    echo "No wallpaper found with name ${name}"
+    return 2
+  fi
+
+  if [[ -z "${mode}" ]]; then
+    local modes=''
+    modes+='{"key": "center", "value": "Center"},'
+    modes+='{"key": "fill", "value": "Fill"},'
+    modes+='{"key": "max", "value": "Max"},'
+    modes+='{"key": "scale", "value": "Scale"},'
+    modes+='{"key": "tile", "value": "Tile"}'
+    modes="[${modes}]"
+
+    pick_one "Select a mode:" "${modes}" "vertical" || return $?
+    [[ -n "${REPLY}" ]] && mode="${REPLY}" || return 0
+  fi
+  
+  if [[ ! "${mode}" =~ ^(center|fill|max|scale|tile)$ ]]; then
+    echo "Invalid wallpaper mode"
+    return 2
+  fi
+
+  feh --no-fehbg --bg-"${mode}" "${wallpaper_file}"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to set wallpaper"
+    return 2
+  fi
+
+  echo "Wallpaper has been set to ${name}"
+
+  local settings='{}'
+  local wallpaper="{\"name\": \"${name}\", \"mode\": \"${mode}\"}"
+
+  if [[ -f "${SETTINGS_FILE}" ]]; then
+    settings="$(jq -e ".wallpaper = ${wallpaper} " "${SETTINGS_FILE}")" || return 1
+  else
+    settings="$(echo "{\"wallpaper\": ${wallpaper}}" | jq -e '.')" || return 1
+  fi
+
+  mkdir -p "${CONFIG_HOME}"
+  echo "${settings}" > "${SETTINGS_FILE}"
+}
+
+# Sets the desktop wallpaper to the wallpaper
+# being set in the settings file.
+# Globals:
+#  SETTINGS_FILE
+# Arguments:
+#  None
+load_wallpaper () {
+  if [[ ! -f "${SETTINGS_FILE}" ]]; then
+    echo "No wallpaper setting found"
+    return 0
+  fi
+
+  local wallpaper=''
+  wallpaper="$(jq 'if .wallpaper then .wallpaper else empty end' "${SETTINGS_FILE}")"
+
+  if [[ -z "${wallpaper}" ]]; then
+    echo "No wallpaper setting found"
+    return 0
+  fi
+
+  local name=''
+  name="$(get "${wallpaper}" '.name')" || return 1
+
+  if [[ ! -f "${WALLPAPERS_HOME}/${name}" ]]; then
+    echo "Wallpaper ${name} does not exist"
+    return 2
+  fi
+
+  local mode=''
+  mode="$(get "${wallpaper}" '.mode')" || return 1
+
+  set_wallpaper "${name}" "${mode:-"center"}"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to load the wallpaper"
+    return 2
+  fi
+
+  echo "Wallpaper has been loaded"
+}
+
+# Shows the help message.
+# Arguments:
+#  mode: once or none
+# Outputs:
+#  A long help message.
+show_help () {
+  if [[ "${1}" == "once" ]]; then
+    echo "Usage: desktop COMMAND [OBJECT] [ARGUMENTS]..."
+
+    echo -e "\nCOMMANDS"
+    printf " %-16s %s\n" \
+      "help" "Show this help message." \
+      "" "" \
+      "load wallpaper" "Load the desktop wallpaper."
+
+    return 0
+  fi
+
+  echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
+
+  echo -e "\nCOMMANDS"
+  printf " %-34s %s\n" \
+    "help" "Show this help message." \
+    "" "" \
+    "show status" "Show the status of the desktop environment." \
+    "" "" \
+    "list wallpapers" "List all the wallapers." \
+    "set wallpaper [<name> [<mode>]]" "Set the desktop wallpaper in center" \
+    "" "fill, scale, max or tile mode."
+}
+
+loop () {
+  clear
+
+  while true; do
+    prompt && history -s "${REPLY}"
+
+    set -f
+    set_separator "line"
+    local cmd=($(xargs -n1 <<< "${REPLY}"))
+    restore_separator && set +f
+
+    if [[ "${cmd[0]}" == "help" ]]; then
+      show_help
+      continue
+    elif [[ "${cmd[0]}" == "clear" ]]; then
+      clear
+      continue
+    elif [[ "${cmd[0]}" == "quit" ]]; then
+      break
+    elif [[ -z "${cmd[0]}" ]]; then
+      continue
+    fi
+
+    case "${cmd[0]}" in
+      "show")
+        case "${cmd[1]}" in
+          "status") show_status;;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "set")
+        case "${cmd[1]}" in
+          "wallpaper") set_wallpaper "${cmd[2]}" "${cmd[3]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "list")
+        case "${cmd[1]}" in
+          "wallpapers") list_wallpapers;;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "add")
+        case "${cmd[1]}" in
+          "wallpaper") add_wallpaper "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "remove")
+        case "${cmd[1]}" in
+          "wallpaper") remove_wallpaper "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      *) echo "Invalid or unknown command";; 
+    esac
+    
+    if [[ $? -eq 1 ]]; then
+      echo "An unknown error has occurred"
+    fi
+  done
+
+  clear
+}
+
+once () {
+  case "${1}" in
+    "help") show_help "once";;
+    "load")
+      case "${2}" in
+        "wallpaper") load_wallpaper || abort;;
+        *) abort "Invalid or unknown command";;
+      esac;;
+    *) abort "Invalid or unknown command";;
+  esac
+
+  if [[ $? -ne 0 ]]; then
+    abort
+  fi
+}
+
+if [[ $# -eq 0 ]]; then
+  loop
+else
+  once "$@"
+fi

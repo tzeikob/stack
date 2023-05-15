@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+
+source /opt/stack/utils
+
+require "bspwm"
+require "slock"
+require "rofi"
+require "rofi-emoji" "xsel"
+
+show_apps_menu () {
+  rofi -show drun
+}
+
+show_run_menu () {
+  rofi -show run
+}
+
+show_windows_menu () {
+  rofi -show window
+}
+
+show_emoji_menu () {
+  rofi -show emoji
+}
+
+show_power_menu () {
+  local SD=" Shutdown"
+  local RB=" Reboot"
+  local LO=" Logout"
+  local LK=" Lock"
+
+  local HIDE_PROMT="inputbar {children: [entry];}"
+  local EXACT_LINES="listview {lines: 4;}"
+
+  local CHOSEN=$(printf "$SD\n$RB\n$LO\n$LK" | rofi -dmenu -i -theme-str "${HIDE_PROMT} ${EXACT_LINES}")
+
+  case "$CHOSEN" in
+    "$SD") shutdown now;;
+    "$RB") reboot;;
+    "$LO") bspc quit;;
+    "$LK") slock;;
+    *) exit 1;;
+  esac
+}
+
+case "$1" in
+ "apps") show_apps_menu;;
+ "run") show_run_menu;;
+ "windows") show_windows_menu;;
+ "emoji") show_emoji_menu;;
+ "power") show_power_menu;;
+ *) abort "Missing or invalid launch menu";;
+esac

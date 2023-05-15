@@ -1,0 +1,766 @@
+#!/bin/bash
+
+set -o pipefail
+source /opt/stack/utils
+
+# Returns all the available controllers.
+# Arguments:
+#  None
+# Outputs:
+#  A json array of controller objects.
+find_controllers () {
+  bluetoothctl list | jc --bluetoothctl || return 1
+}
+
+# Returns the controller with the given address.
+# If no address is given the default controller
+# will be returned.
+# Arguments:
+#  address: the address of a controller
+# Outputs:
+#  A json object of a controller.
+find_controller () {
+  local address="${1}"
+
+  local controller=''
+  if [[ -n "${address}" ]]; then
+    controller="$(bluetoothctl show "${address}")" || return 1
+  else
+    controller="$(bluetoothctl show)" || return 1
+  fi
+
+  echo "${controller}" | jc --bluetoothctl || return 1
+}
+
+# Returns all the available devices filtered by the
+# optionally given status.
+# Arguments:
+#  status: paired, connected or trusted
+# Outputs:
+#  A json array of device objects.
+find_devices () {
+  local status="${1^}"
+
+  local devices=''
+  if [[ -n "${status}" ]]; then
+    devices="$(bluetoothctl devices "${status}")" || return 1
+  else
+    devices="$(bluetoothctl devices)" || return 1
+  fi
+
+  echo "${devices}" | jc --bluetoothctl || return 1
+}
+
+# Returns the device with the given address.
+# Arguments:
+#  address: the address of a device
+# Outputs:
+#  A json object of a device.
+find_device () {
+  local address="${1}"
+
+  bluetoothctl info "${address}" | jc --bluetoothctl || return 1
+}
+
+# Checks if the scanning mode of default controller
+# is set to on.
+# Argmuments:
+#  None
+# Returns:
+#  0 if scanning is on otherwise 1.
+is_scanning_on () {
+  local mode=''
+  mode="$(find_controller | jq -cer '.[0]|.discovering')" || return 1
+
+  if [[ "${mode}" == "yes" ]]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+# Shows a menu asking the user to select a controller,
+# where the answer is kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  None
+# Outputs:
+#  A menu of controllers.
+pick_controller () {
+  local query='{key: .address, value: "\(.address) [\(.name)]"}'
+  query="[.[]|${query}]"
+
+  local controllers=''
+  controllers="$(find_controllers | jq -cer "${query}")" || return 1
+
+  local len=0
+  len=$(count "${controllers}") || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No controllers have found"
+    return 2
+  fi
+  
+  pick_one "Select a controller:" "${controllers}" "vertical" || return $?
+}
+
+# Shows a menu asking the user to select a device,
+# where the answer is kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  None
+# Outputs:
+#  A menu of devices.
+pick_device () {
+  local query='{key: .address, value: "\(.address) [\(.name)]"}'
+  query="[.[]|${query}]"
+
+  local devices=''
+  devices="$(find_devices | jq -cer "${query}")" || return 1
+
+  local len=0
+  len=$(count "${devices}") || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No devices have found"
+    return 2
+  fi
+  
+  pick_one "Select a device:" "${devices}" "vertical" || return $?
+}
+
+# Shows a prompt status and asks user to enter the
+# next command, which is kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  None
+# Outputs:
+#  A minimal prompt status line.
+prompt () {
+  local status=''
+  status="$(find_controllers | jq -cer '.[]|select(.is_default == true)|.name')"
+
+  if [[ $? -ne 0 ]]; then
+    status="none"
+  fi
+
+  read -rep "[bluetooth:${status}] " REPLY
+}
+
+# Shows the current status of bluetooth service
+# and connected devices.
+# Arguments:
+#  None
+# Outputs:
+#  A long list of bluetooth data.
+show_status () {
+  systemctl status --lines 0 --no-pager bluetooth.service | awk '{
+    if ($0 ~ / *Active/) {
+      l = "Service"
+      v = $2" "$3
+    } else l = ""
+
+    if (l) printf "%-14s %s\n",l":",v
+  }' || return 1
+
+  local query=''
+  query+='Controller:    \(.name) [\(.alias)]\n'
+  query+='Address:       \(.address)\n'
+  query+='Powered:       \(.powered)\n'
+  query+='Scanning:      \(.discovering)\n'
+  query+='Pairable:      \(.pairable)\n'
+  query+='Discoverable:  \(.discoverable)'
+  
+  find_controller | jq -cer ".[0]|\"${query}\""
+  
+  if [[ $? -ne 0 ]]; then
+    echo "Controller:    none"
+  fi
+
+  local query=''
+  query+='if .|length > 0 then .[]|.address else "" end'
+
+  local devices=''
+  devices="$(find_devices "connected" | jq -cer "${query}")" || return 1
+
+  if [[ -z "${devices}" ]]; then
+    return 0
+  fi
+
+  local query=''
+  query+='Device:        \(.name)\n'
+  query+='Address:       \(.address)\n'
+  query+='Type:          \(.icon)'
+  query="[.[]|\"${query}\"]|join(\"\n\")"
+
+  local device=''
+  while read -r device; do
+    echo
+    find_device "${device}" | jq -cer "${query}" || return 1
+  done <<< "${devices}"
+}
+
+# Shows the logs of the bluetooth service.
+# Arguments:
+#  None
+# Outputs:
+#  A long list of log messages.
+show_logs () {
+  systemctl status --no-pager bluetooth.service | tail -n +13 || return 1
+}
+
+# Shows the list of available controllers.
+# Arguments:
+#  None
+# Outputs:
+#  A list of bluetooth controllers.
+list_controllers () {
+  local controllers=''
+  controllers="$(find_controllers)"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to read controllers"
+    return 2
+  fi
+
+  local len=0
+  len="$(count "${controllers}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No controllers have found"
+    return 0
+  fi
+
+  local query=''
+  query+='Name:     \(.name)\n'
+  query+='Address:  \(.address)'
+  query+='\(if .is_default then "\nDefault:  \(.is_default)" else "" end)'
+  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+
+  echo "${controllers}" | jq -cer "${query}" || return 1
+}
+
+# Shows the list of available devices filtered by
+# the optionally given status.
+# Arguments:
+#  status: paired, connected or trusted
+# Outputs:
+#  A list of bluetooth devices.
+list_devices () {
+  local status="${1}"
+
+  if [[ -n "${status}" ]] && [[ ! "${status}" =~ ^(paired|connected|trusted|bonded)$ ]]; then
+    echo "Invalid status value"
+    return 2
+  fi
+
+  local devices=''
+  devices="$(find_devices "${status^}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to read devices"
+    return 2
+  fi
+
+  local len=0
+  len="$(count "${devices}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No available devices have found"
+    return 0
+  fi
+
+  local query=''
+  query+='Name:     \(.name)\n'
+  query+='Address:  \(.address)'
+  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+
+  echo "${devices}" | jq -cer "${query}" || return 1
+}
+
+# Shows the data of the controller with the given
+# address.
+# Globals:
+#  REPLY
+# Arguments:
+#  address: the address of a controller
+# Outputs:
+#  A list of controller data.
+show_controller () {
+  local address="${1}"
+
+  if [[ -z "${address}" ]]; then
+    pick_controller || return $?
+    [[ -n "${REPLY}" ]] && address="${REPLY}" || return 0
+  fi
+
+  local controller=''
+  controller="$(find_controller "${address}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to find controller ${address}"
+    return 2
+  fi
+
+  local query=''
+  query+='Name:          \(.name)\n'
+  query+='Address:       \(.address)\n'
+  query+='\(.is_public|if . then "Public:        \(.)\n" else "" end)'
+  query+='alias:         \(.alias)\n'
+  query+='Powered:       \(.powered)\n'
+  query+='Discovering:   \(.discovering)\n'
+  query+='Pairable:      \(.pairable)\n'
+  query+='Discoverable:  \(.discoverable)\n'
+  query+='Timeout:       \(.discoverable_timeout)\n'
+  query+='Modalias:      \(.modalias)\n'
+  query+='Class:         \(.class)'
+  query+='\(.uuids|if . then "\nUUID:          \(.|join("\n               "))" else "" end)'
+  
+  echo "${controller}" | jq -cer ".[0]|\"${query}\"" || return 1
+}
+
+# Shows the data of the device with the given
+# address.
+# Globals:
+#  REPLY
+# Arguments:
+#  address: the address of a device
+# Outputs:
+#  A list of device data.
+show_device () {
+  local address="${1}"
+
+  if [[ -z "${address}" ]]; then
+    pick_device || return $?
+    [[ -n "${REPLY}" ]] && address="${REPLY}" || return 0
+  fi
+
+  local device=''
+  device="$(find_device "${address}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to find device ${address}"
+    return 2
+  fi
+
+  local query=''
+  query+='Name:       \(.name)\n'
+  query+='Address:    \(.address)\n'
+  query+='Alias:      \(.alias)\n'
+  query+='Icon:       \(.icon)\n'
+  query+='\(.is_public|if . then "Public:     \(.)\n" else "" end)'
+  query+='\(.rssi|if . then "RSSI:       \(.)\n" else "" end)'
+  query+='\(.txpower|if . then "Power:      \(.)\n" else "" end)'
+  query+='Connected:  \(.connected)\n'
+  query+='Paired:     \(.paired)\n'
+  query+='Bonded:     \(.bonded)\n'
+  query+='Trusted:    \(.trusted)\n'
+  query+='Blocked:    \(.blocked)\n'
+  query+='Legacy:     \(.legacy_pairing)\n'
+  query+='\(.modalias|if . then "Modalias:   \(.)\n" else "" end)'
+  query+='Class:      \(.class)'
+  query+='\(.uuids|if . then "\nUUID:       \(.|join("\n            "))" else "" end)'
+  
+  echo "${device}" | jq -cer ".[0]|\"${query}\"" || return 1
+}
+
+# Sets the default controller to the controller
+# with the given address.
+# Globals:
+#  REPLY
+# Arguments:
+#  address: the address of a controller
+set_controller () {
+  local address="${1}"
+
+  if [[ -z "${address}" ]]; then
+    pick_controller || return $?
+    [[ -n "${REPLY}" ]] && address="${REPLY}" || return 0
+  fi
+
+  local controller=''
+  controller="$(find_controller "${address}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to find controller ${address}"
+    return 2
+  fi
+
+  bluetoothctl select "${address}"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to set default controller"
+    return 2
+  fi
+
+  sleep 2
+  echo "Default controller set to ${address}"
+}
+
+# Sets the default controller power to on/off.
+# Arguments:
+#  mode: on or off
+set_power () {
+  local mode="${1}"
+
+  if [[ -z "${mode}" ]]; then
+    echo "Missing the power mode value"
+    return 2
+  elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
+    echo "Invalid power mode value"
+    return 2
+  fi
+
+  if ! find_controller &> /dev/null; then
+    echo "Unable to find default controller"
+    return 2
+  fi
+
+  bluetoothctl power "${mode}" &> /dev/null
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to set power mode to ${mode}"
+    return 2
+  fi
+
+  echo "Power mode set to ${mode}"
+}
+
+# Sets scanning mode to on or off.
+# Arguments:
+#  mode: on or off
+set_scan () {
+  local mode="${1}"
+
+  if [[ -z "${mode}" ]]; then
+    echo "Missing scanning mode value"
+    return 2
+  elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
+    echo "Invalid scanning mode value"
+    return 2
+  fi
+
+  if ! find_controller &> /dev/null; then
+    echo "Unable to find default controller"
+    return 2
+  fi
+
+  # Collect any running scanning processes
+  local query='.command|test("^bluetoothctl scan on")'
+  query=".[]|select(${query})|.pid"
+
+  local pids=''
+  pids="$(ps aux | jc --ps | jq -cr "${query}")" || return 1
+
+  # Clean any scanning processes before action
+  if [[ -n "${pids}" ]]; then
+    local pid=''
+    while read -r pid; do
+      kill "${pid}"
+    done <<< "${pids}"
+  fi
+
+  if [[ "${mode}" == "on" ]]; then
+    bluetoothctl scan on &> /dev/null &
+  fi
+
+  sleep 2
+
+  if [[ "${mode}" == "on" ]] && ! is_scanning_on ; then
+    echo "Failed to set scanning mode to on"
+    return 2
+  elif [[ "${mode}" == "off" ]] && is_scanning_on ; then
+    echo "Failed to set scanning mode to off"
+    return 2
+  fi
+
+  echo "Scanning mode set to ${mode}"
+}
+
+# Sets the default controller discoverable mode to on/off.
+# Arguments:
+#  mode: on or off
+set_discoverable () {
+  local mode="${1}"
+
+  if [[ -z "${mode}" ]]; then
+    echo "Missing the discoverable mode value"
+    return 2
+  elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
+    echo "Invalid discoverable mode value"
+    return 2
+  fi
+
+  if ! find_controller &> /dev/null; then
+    echo "Unable to find default controller"
+    return 2
+  fi
+
+  bluetoothctl discoverable "${mode}" &> /dev/null
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to set discoverable mode to ${mode}"
+    return 2
+  fi
+
+  echo "Discoverable mode set to ${mode}"
+}
+
+# Sets the default controller pairable mode to on/off.
+# Arguments:
+#  mode: on or off
+set_pairable () {
+  local mode="${1}"
+
+  if [[ -z "${mode}" ]]; then
+    echo "Missing the pairable mode value"
+    return 2
+  elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
+    echo "Invalid pairable mode value"
+    return 2
+  fi
+
+  if ! find_controller &> /dev/null; then
+    echo "Unable to find default controller"
+    return 2
+  fi
+
+  bluetoothctl pairable "${mode}" &> /dev/null
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to set pairable mode to ${mode}"
+    return 2
+  fi
+
+  echo "Pairable mode set to ${mode}"
+}
+
+# Connects to the device with the given address.
+# Globals:
+#  REPLY
+# Arguments:
+#  address: the address of a device
+connect_device () {
+  local address="${1}"
+
+  if [[ -z "${address}" ]]; then
+    pick_device || return $?
+    [[ -n "${REPLY}" ]] && address="${REPLY}" || return 0
+  fi
+
+  local device=''
+  device="$(find_device "${address}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to find the device"
+    return 2
+  fi
+
+  bluetoothctl pair "${address}" &> /dev/null &&
+  bluetoothctl trust "${address}" &> /dev/null &&
+  bluetoothctl connect "${address}" &> /dev/null
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to connect device ${address}"
+    return 2
+  fi
+
+  echo "Device ${address} has been connected"
+}
+
+# Disconnects the device with the given address.
+# Globals:
+#  REPLY
+# Arguments:
+#  address: the address of a device
+disconnect_device () {
+  local address="${1}"
+
+  if [[ -z "${address}" ]]; then
+    pick_device || return $?
+    [[ -n "${REPLY}" ]] && address="${REPLY}" || return 0
+  fi
+
+  local device=''
+  device="$(find_device "${address}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to find the device"
+    return 2
+  fi
+
+  bluetoothctl disconnect "${address}" &> /dev/null
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to disconnect device ${address}"
+    return 2
+  fi
+
+  echo "Device ${address} has been disconnected"
+}
+
+# Removes the device with the given address.
+# Globals:
+#  REPLY
+# Arguments:
+#  address: the address of a device
+remove_device () {
+  local address="${1}"
+
+  if [[ -z "${address}" ]]; then
+    pick_device || return $?
+    [[ -n "${REPLY}" ]] && address="${REPLY}" || return 0
+  fi
+
+  local device=''
+  device="$(find_device "${address}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to find the device"
+    return 2
+  fi
+
+  bluetoothctl remove "${address}" &> /dev/null
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to remove device ${address}"
+    return 2
+  fi
+
+  echo "Device ${address} has been removed"
+}
+
+# Restarts the bluetooth service.
+# Arguments:
+#  None
+restart_bluetooth () {
+  rfkill block bluetooth &&
+  rfkill unblock bluetooth &&
+  sudo modprobe -r btusb &&
+  sudo modprobe -r btintel &&
+  sudo modprobe btintel &&
+  sudo modprobe btusb &&
+  sudo systemctl restart bluetooth.service
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to restart the bluetooth service"
+    return 2
+  fi
+
+  sleep 2
+  echo "Bluetooth service has been restarted"
+}
+
+# Shows the help message.
+# Arguments:
+#  None
+# Outputs:
+#  A long help message.
+show_help () {
+  echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
+
+  echo -e "\nCOMMANDS"
+  printf " %-32s %s\n" \
+    "help" "Show this help message." \
+    "" "" \
+    "show status" "Show a report of the bluetooth service and devices." \
+    "show logs" "Show the last logs of the bluetooth service." \
+    "" "" \
+    "show controller [<address>]" "Show the data of a controller." \
+    "show device [<address>]" "Show the data of a device." \
+    "" "" \
+    "list controllers" "List the available controllers." \
+    "list devices [<status>]" "List the devices where status could be" \
+    "" "any of paired, connected, trusted or bonded." \
+    "" "" \
+    "set controller [<address>]" "Set the default controller." \
+    "set power <on|off>" "Set the default controller power to on or off." \
+    "set scan <on|off>" "Set scanning mode to on or off." \
+    "set discoverable <on|off>" "Set the default controller to be discoverable." \
+    "set pairable <on|off>" "Set the default controller to be pairable." \
+    "" "" \
+    "connect device [<address>]" "Connect a bluetooth device." \
+    "disconnect device [<address>]" "Disconnect a bluetooth device." \
+    "remove device [<address>]" "Removes a bluetooth device." \
+    "" "" \
+    "restart" "Restart the bluetooth service."
+}
+
+loop () {
+  clear
+
+  while true; do
+    prompt && history -s "${REPLY}"
+
+    set -f
+    set_separator "line"
+    local cmd=($(xargs -n1 <<< "${REPLY}"))
+    restore_separator && set +f
+
+    if [[ "${cmd[0]}" == "help" ]]; then
+      show_help
+      continue
+    elif [[ "${cmd[0]}" == "clear" ]]; then
+      clear
+      continue
+    elif [[ "${cmd[0]}" == "quit" ]]; then
+      break
+    elif [[ -z "${cmd[0]}" ]]; then
+      continue
+    fi
+
+    case "${cmd[0]}" in
+      "show")
+        case "${cmd[1]}" in
+          "status") show_status;;
+          "logs") show_logs;;
+          "controller") show_controller "${cmd[2]}";;
+          "device") show_device "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "list")
+        case "${cmd[1]}" in
+          "controllers") list_controllers;;
+          "devices") list_devices "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "set")
+        case "${cmd[1]}" in
+          "controller") set_controller "${cmd[2]}";;
+          "power") set_power "${cmd[2]}";;
+          "scan") set_scan "${cmd[2]}";;
+          "discoverable") set_discoverable "${cmd[2]}";;
+          "pairable") set_pairable "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "connect")
+        case "${cmd[1]}" in
+          "device") connect_device "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "disconnect")
+        case "${cmd[1]}" in
+          "device") disconnect_device "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "remove")
+        case "${cmd[1]}" in
+          "device") remove_device "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "restart") restart_bluetooth;;
+      *) echo "Invalid or unknown command";; 
+    esac
+    
+    if [[ $? -eq 1 ]]; then
+      echo "An unknown error has occurred"
+    fi
+  done
+
+  clear
+}
+
+loop

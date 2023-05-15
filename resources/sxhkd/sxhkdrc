@@ -4,27 +4,23 @@ super + Escape
 
 # Open applications launcher
 super + @space
-  rofi -show drun
+  ~/.config/rofi/launch apps
 
 # Open run launcher
 super + Home
-  rofi -show run
+  ~/.config/rofi/launch run
 
 # Open window launcher
 super + Insert
-  rofi -show window
+  ~/.config/rofi/launch windows
 
 # Open emoji icons launcher
 super + e
-  rofi -show emoji
-
-# Open calculator launcher
-super + Delete
-  rofi -show calc -no-show-match -no-sort
+  ~/.config/rofi/launch emoji
 
 # Open power manager launcher
 super + End
-  power
+  ~/.config/rofi/launch power
 
 # Quit/restart bspwm
 super + alt + {q,r}
@@ -102,7 +98,7 @@ super + ctrl + shift + space
 
 # Expand/contract a window by moving one of its sides inwards/outwards
 super + alt + {Left,Down,Up,Right}
-  ~/.config/bspwm/resize.sh {left,down,up,right} 20
+  ~/.config/bspwm/resize {left,down,up,right} 20
 
 # Move a floating window
 super + {Left,Down,Up,Right}

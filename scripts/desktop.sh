@@ -40,8 +40,8 @@ install_window_manager () {
   cp ~/stack/resources/bspwm/rules "$CONFIG_HOME"
   chmod 755 "$CONFIG_HOME/rules"
 
-  cp ~/stack/resources/bspwm/resize.sh "$CONFIG_HOME"
-  chmod 755 "$CONFIG_HOME/resize.sh"
+  cp ~/stack/resources/bspwm/resize "$CONFIG_HOME"
+  chmod 755 "$CONFIG_HOME/resize"
 
   echo "exec bspwm" >> ~/.xinitrc
 
@@ -75,6 +75,10 @@ install_terminals () {
 
   sudo pacman -S --noconfirm cool-retro-term || exit 1
 
+  echo "Installing various terminal utilities..."
+
+  yay -S --noconfirm --removemake smenu || exit 1
+
   echo "Virtual terminals have been installed"
 }
 
@@ -83,14 +87,14 @@ install_file_manager () {
 
   sudo pacman -S --noconfirm nnn fzf || exit 1
 
-  echo 'alias N="sudo -E nnn -dH"' >> ~/.bashrc
-  echo 'export EDITOR=nano' >> ~/.bashrc
-
   local CONFIG_HOME=~/.config/nnn
   mkdir -p "$CONFIG_HOME"
 
   cp ~/stack/resources/nnn/env "$CONFIG_HOME"
+
   echo 'source "$HOME/.config/nnn/env"' >> ~/.bashrc
+  echo 'alias N="sudo -E nnn -dH"' >> ~/.bashrc
+  echo 'export EDITOR=nano' >> ~/.bashrc
 
   echo "Installing extra nnn plugins..."
 
@@ -104,22 +108,7 @@ install_file_manager () {
 
   echo "Extra plugins have been installed"
 
-  cp ~/stack/resources/nnn/remove "$CONFIG_HOME/plugins"
-  chmod 755 "$CONFIG_HOME/plugins/remove"
-
-  echo "Plugin remove has been installed"
-
-  cp ~/stack/resources/nnn/trash "$CONFIG_HOME/plugins"
-  chmod 755 "$CONFIG_HOME/plugins/trash"
-
-  echo "Plugin trash has been installed"
-
-  cp ~/stack/resources/nnn/mount "$CONFIG_HOME/plugins"
-  chmod 755 "$CONFIG_HOME/plugins/mount"
-
-  echo "Plugin mount has been installed"
-
-  mkdir -p ~/downloads ~/documents ~/images ~/audios ~/videos ~/virtuals ~/sources ~/data ~/mount
+  mkdir -p ~/downloads ~/documents ~/images ~/audios ~/videos ~/virtuals ~/sources ~/data ~/mounts
   cp ~/stack/resources/nnn/user.dirs ~/.config/user-dirs.dirs
 
   echo "User home directories have been created"
@@ -139,15 +128,6 @@ install_trash () {
 
   sudo pacman -S --noconfirm trash-cli || exit 1
 
-  sudo cp ~/stack/resources/trash-cli/alias.sh /usr/local/bin/trash
-  sudo chmod 755 /usr/local/bin/trash
-
-  echo "Added a proxy binary to orchestrate trash-cli commands"
-
-  echo 'alias rr=rm' >> ~/.bashrc
-  echo 'alias tt=trash' >> ~/.bashrc
-
-  echo "Set aliases for rm and trash"
   echo "Trash has been installed"
 }
 
@@ -162,8 +142,8 @@ install_bars () {
   cp ~/stack/resources/polybar/config.ini "$CONFIG_HOME"
   chmod 644 "$CONFIG_HOME/config.ini"
 
-  cp ~/stack/resources/polybar/launch.sh "$CONFIG_HOME"
-  chmod 755 "$CONFIG_HOME/launch.sh"
+  cp ~/stack/resources/polybar/launch "$CONFIG_HOME"
+  chmod 755 "$CONFIG_HOME/launch"
 
   echo "Polybar launcher script has been installed"
   echo "Status bars have been installed"
@@ -176,7 +156,7 @@ install_notifier () {
 
   mkdir -p ~/.config/dunst
   cp ~/stack/resources/dunst/dunstrc ~/.config/dunst
-  cp ~/stack/resources/dunst/alert.sh ~/.config/dunst
+  cp ~/stack/resources/dunst/alert ~/.config/dunst
 
   sudo cp ~/stack/resources/dunst/drip.ogg /usr/share/sounds/dunst
 
@@ -186,7 +166,7 @@ install_notifier () {
 install_launchers () {
   echo "Setting up the launchers via rofi..."
 
-  sudo pacman -S --noconfirm rofi rofi-emoji rofi-calc xsel || exit 1
+  sudo pacman -S --noconfirm rofi rofi-emoji xsel || exit 1
 
   local CONFIG_HOME=~/.config/rofi
   mkdir -p "$CONFIG_HOME"
@@ -194,10 +174,8 @@ install_launchers () {
   cp ~/stack/resources/rofi/config.rasi "$CONFIG_HOME"
   chmod 644 "$CONFIG_HOME/config.rasi"
 
-  sudo cp ~/stack/resources/rofi/power /usr/local/bin
-  sudo chmod 755 /usr/local/bin/power
+  cp ~/stack/resources/rofi/launch "$CONFIG_HOME"
 
-  echo "Power launcher has been installed"
   echo "Launchers has been installed"
 }
 
@@ -208,7 +186,8 @@ install_login_screen () {
   yay -S --noconfirm --removemake figlet-fonts figlet-fonts-extra || exit 1
 
   sudo mv /etc/issue /etc/issue.bak
-  sudo cp ~/stack/resources/getty/issue.sh /etc
+  mkdir -p ~/.config/getty
+  sudo cp ~/stack/resources/getty/update-issue ~/.config/getty
 
   echo "Welcome screen theme has been set"
 
@@ -267,6 +246,7 @@ install_screen_locker () {
   echo "Lock screen color theme has been applied"
 
   sudo make install || exit 1
+  sudo mv /usr/local/bin/slock /usr/bin
 
   cd / && rm -rf ~/slock-1.4 ~/slock-1.4.tar.gz
 
@@ -343,8 +323,8 @@ install_theme () {
 
   sudo curl "$THEME_URL" -sSLo /usr/share/themes/Dracula.zip \
     --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 || exit 1
-
   sudo unzip -q /usr/share/themes/Dracula.zip -d /usr/share/themes || exit 1
+  
   sudo mv /usr/share/themes/gtk-master /usr/share/themes/Dracula
   sudo rm -f /usr/share/themes/Dracula.zip
 
@@ -376,10 +356,15 @@ install_theme () {
 
   cp ~/stack/resources/gtk/settings.ini "$GTK_HOME"
 
-  mkdir -p ~/images/wallpapers
-  cp ~/stack/resources/feh/wallpaper.jpeg ~/images/wallpapers/wallpaper.jpeg
+  local WALLPAPERS=~/.local/share/wallpapers
+  mkdir -p "$WALLPAPERS"
+  cp ~/stack/resources/feh/wallpaper.jpeg "$WALLPAPERS/default.jpeg"
 
-  echo "Default wallpaper has been saved to ~/images/wallpapers"
+  local CONFIG_HOME=~/.config/stack
+  mkdir -p "$CONFIG_HOME"
+  echo '{"theme": {"wallpaper": {"file": "default.jpeg", "mode": "fill"}}}' > "$CONFIG_HOME/.settings"
+
+  echo "Default wallpaper has been set"
   echo "Theme has been setup"
 }
 

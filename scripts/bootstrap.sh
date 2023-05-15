@@ -15,7 +15,7 @@ sync_clock () {
 
   timedatectl status > "$HOME/.ntp"
 
-  while cat "$HOME/.ntp" | grep "System clock synchronized: no" > /dev/null; do
+  while cat "$HOME/.ntp" | grep -q "System clock synchronized: no"; do
     sleep 1
     timedatectl status > "$HOME/.ntp"
   done
@@ -100,7 +100,7 @@ grant () {
       local RULE="%wheel ALL=(ALL:ALL) NOPASSWD: ALL"
       sed -i "s/^# \($RULE\)/\1/" /mnt/etc/sudoers
 
-      if ! cat /mnt/etc/sudoers | grep "^$RULE" > /dev/null; then
+      if ! cat /mnt/etc/sudoers | grep -q "^$RULE"; then
         echo "Error: failed to grant nopasswd permission to wheel group"
         exit 1
       fi;;
