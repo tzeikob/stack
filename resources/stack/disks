@@ -353,7 +353,7 @@ mount_device () {
   udisksctl mount -b "${path}" &> /dev/null || return 1
 
   # Create symlink to the local mount folder
-  local local_home="${HOME}/mount/local"
+  local local_home="${HOME}/mounts/local"
 
   if [[ -d "/run/media/${USER}" ]] && [[ ! -L "${local_home}" ]]; then
     mkdir -p "${local_home}"
@@ -374,7 +374,7 @@ mount_encrypted () {
   fi
 
   local folder_name="$(echo "${path:1}" | tr '/' '_')"
-  local mount_point="${HOME}/mount/encrypted/${folder_name}"
+  local mount_point="${HOME}/mounts/encrypted/${folder_name}"
 
   mkdir -p "${mount_point}" &&
   sudo veracrypt -t --mount "${path}" "${mount_point}" --password "${password}" \
@@ -414,7 +414,7 @@ unmount_encrypted () {
   sudo veracrypt -t --dismount "${path}" &> /dev/null || return 1
 
   local folder_name="$(echo "${path:1}" | tr '/' '_')"
-  rm -rf "${HOME}/mount/encrypted/${folder_name}"
+  rm -rf "${HOME}/mounts/encrypted/${folder_name}"
 }
 
 # Unmounts the mounted partitions of a disk block
@@ -1480,7 +1480,7 @@ mount_image () {
   fi
 
   local folder_name="$(basename "${path}")"
-  local mount_point="${HOME}/mount/virtual/${folder_name}"
+  local mount_point="${HOME}/mounts/virtual/${folder_name}"
 
   if [[ -d "${mount_point}" ]]; then
     echo "Image ${path} is already mounted"
@@ -1589,7 +1589,7 @@ mount_shared_folder () {
 
   echo "Shared folder ${folder} mounted"
 
-  local remote_home="${HOME}/mount/remote"
+  local remote_home="${HOME}/mounts/remote"
 
   if [[ -d "/run/user/${UID}/gvfs" ]] && [[ ! -L "${remote_home}/gvfs" ]]; then
     mkdir -p "${remote_home}"

@@ -108,7 +108,7 @@ install_file_manager () {
 
   echo "Extra plugins have been installed"
 
-  mkdir -p ~/downloads ~/documents ~/images ~/audios ~/videos ~/virtuals ~/sources ~/data ~/mount
+  mkdir -p ~/downloads ~/documents ~/images ~/audios ~/videos ~/virtuals ~/sources ~/data ~/mounts
   cp ~/stack/resources/nnn/user.dirs ~/.config/user-dirs.dirs
 
   echo "User home directories have been created"

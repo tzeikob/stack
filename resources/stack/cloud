@@ -329,7 +329,7 @@ mount_remote () {
 
   echo "Mounting remote ${name}..."
 
-  local mount_folder="${HOME}/mount/cloud/${name}"
+  local mount_folder="${HOME}/mounts/cloud/${name}"
 
   mkdir -p "${mount_folder}" &&
   rclone mount "${name}:" "${mount_folder}" \

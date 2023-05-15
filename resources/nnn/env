@@ -1,6 +1,6 @@
 export NNN_OPTS="RU"
 export NNN_PLUG="v:imgview;p:mocq;c:chksum;d:dups;e:gpge"
-export NNN_BMS="d:$HOME/downloads;o:$HOME/documents;i:$HOME/images;a:$HOME/audios;v:$HOME/videos;s:$HOME/sources;e:$HOME/mount;t:$HOME/.local/share/Trash/files"
+export NNN_BMS="d:$HOME/downloads;o:$HOME/documents;i:$HOME/images;a:$HOME/audios;v:$HOME/videos;s:$HOME/sources;e:$HOME/mounts;t:$HOME/.local/share/Trash/files"
 export NNN_ARCHIVE="\\.(7z|a|ace|alz|arc|arj|bz|bz2|cab|cpio|deb|gz|jar|lha|lz|lzh|lzma|lzo|rar|rpm|rz|t7z|tar|tbz|tbz2|tgz|tlz|txz|tZ|tzo|war|xpi|xz|Z|zip)$"
 export NNN_TRASH=1
 
