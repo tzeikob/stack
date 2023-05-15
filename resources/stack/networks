@@ -812,7 +812,7 @@ add_wifi_connection () {
   pick_one "Select a wifi network:" "${networks}" "vertical" || return $?
   [[ -n "${REPLY}" ]] && ssid="${REPLY}" || return 0
 
-  ask_password "Enter the private key:" || return $?
+  ask_secret "Enter the private key:" || return $?
   local key="${REPLY}"
 
   echo "Connecting to network ${ssid}..."
@@ -856,7 +856,7 @@ add_vpn_connection () {
   ask "Enter the username:" ".+" || return $?
   local username="${REPLY}"
 
-  ask_password "Enter the password:" ".+" || return $?
+  ask_secret "Enter the password:" ".+" || return $?
   local password="${REPLY}"
 
   echo "Creating VPN connection ${name}..."
@@ -915,7 +915,7 @@ add_proxy () {
     ask "Enter the username:" ".+" || return $?
     local username="${REPLY}"
 
-    ask_password "Enter the password:" ".+" || return $?
+    ask_secret "Enter the password:" ".+" || return $?
     local password="${REPLY}"
   fi
 

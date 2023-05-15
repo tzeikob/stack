@@ -132,7 +132,7 @@ ask () {
   fi
 }
 
-# Asks the user to enter a password, the answer is
+# Asks the user to enter a secret value, the answer is
 # kept in the global var REPLY.
 # Globals:
 #  REPLY
@@ -140,12 +140,31 @@ ask () {
 #  prompt: a text line
 # Outputs:
 #  A prompt text line.
-ask_password () {
+ask_secret () {
   local prompt="${1}"
 
   REPLY=''
 
   read -srep "${prompt} " REPLY
+}
+
+# Asks the user to re-type the given secret value
+# until it becomes confirmed.
+# Arguments:
+#  prompt: a text line
+#  secret: the secret value to be confirmed
+# Outputs:
+#  A prompt text line.
+confirm_secret () {
+  local prompt="${1}"
+  local secret="${2}"
+
+  local retyped_secret=''
+  read -srep "${prompt} " retyped_secret
+
+  while [[ "${secret}" != "${retyped_secret}" ]]; do
+    read -srep "Failed to confirm, type again: " retyped_secret
+  done
 }
 
 # Shows a Yes/No menu and asks user to select an option,

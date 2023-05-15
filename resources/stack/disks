@@ -1195,7 +1195,7 @@ list_shared_folders () {
   ask "Enter the workgroup [WORKGROUP]:" || return $?
   local workgroup="${REPLY:-"WORKGROUP"}"
 
-  ask_password "Enter the password:" || return $?
+  ask_secret "Enter the password:" || return $?
   local password="${REPLY}"
 
   local folders=''
@@ -1345,7 +1345,7 @@ mount_partition () {
   fi
 
   # Otherwise try to mount it as encrypted partition
-  ask_password "Enter the encryption password:" || return $?
+  ask_secret "Enter the encryption password:" || return $?
   local password="${REPLY}"
 
   mount_encrypted "${path}" "${password}"
@@ -1873,6 +1873,10 @@ create_encrypted () {
   pick_fs_type || return $?
   [[ -n "${REPLY}" ]] && fs_type="${REPLY}" || return 0
 
+  ask_secret "Enter the encryption password:" ".+" || return $?
+  confirm_secret "Re-type the encryption password:" "${REPLY}" || return $?
+  local password="${REPLY}"
+
   local model=''
   model="$(find_disk "${path}" |
     jq -cr '"\(.vendor|gsub("^\\s+|\\s+$";"")) \(.model) \(.size)"')" || return 1
@@ -1896,9 +1900,6 @@ create_encrypted () {
   echo "Formatting disk partition..."
   format_partition "${path}" "1" "${fs_type}" &&
   echo "Partition ${path}1 has been formated" || return 1
-
-  ask_password "Enter a strong password:" ".+" || return $?
-  local password="${REPLY}"
 
   # Create a seed file with 350 random characters
   local rand_text_file="/tmp/.rand_text_$(date +%s)"
