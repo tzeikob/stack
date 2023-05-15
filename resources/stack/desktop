@@ -379,16 +379,6 @@ loop () {
           "wallpapers") list_wallpapers;;
           *) echo "Invalid or unknown command";;
         esac;;
-      "add")
-        case "${cmd[1]}" in
-          "wallpaper") add_wallpaper "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
-        esac;;
-      "remove")
-        case "${cmd[1]}" in
-          "wallpaper") remove_wallpaper "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
-        esac;;
       *) echo "Invalid or unknown command";; 
     esac
     
