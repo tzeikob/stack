@@ -85,7 +85,30 @@ pick_wallpaper () {
 # Outputs:
 #  A json array of stylus-pen device objects.
 find_tablets () {
-  xsetwacom --list devices || return 1
+  local tablets=''
+  tablets="$(xsetwacom --list devices | awk '{
+    match($0, "(.*)id:(.*)type:(.*)", a)
+    gsub(/^[ \t]+/,"",a[1])
+    gsub(/[ \t]+$/,"",a[1])
+    gsub(/^[ \t]+/,"",a[2])
+    gsub(/[ \t]+$/,"",a[2])
+    gsub(/^[ \t]+/,"",a[3])
+    gsub(/[ \t]+$/,"",a[3])
+
+    schema="\"id\": \"%s\","
+    schema=schema"\"name\": \"%s\","
+    schema=schema"\"type\": \"%s\""
+    schema="{"schema"},"
+
+    printf schema, a[2], a[1], a[3]
+  }')" || return 1
+
+  # Remove the extra comma after the last element
+  if [[ -n "${tablets}" ]]; then
+    tablets="${tablets::-1}"
+  fi
+
+  echo "[${tablets}]"
 }
 
 # Shows a prompt status and asks user to enter the
@@ -111,7 +134,8 @@ show_status () {
   local status=''
 
   local server=''
-  server="$(xdpyinfo -display "${DISPLAY}" | awk -F': ' '{ORS=""}; {
+  server="$(xdpyinfo -display "${DISPLAY}" | awk -F': ' '{
+    ORS=""
     gsub(/^[ \t]+/,"",$2)
     gsub(/[ \t]+$/,"",$2)
     switch ($1) {
@@ -135,7 +159,7 @@ show_status () {
   status+="\"bars\": \"Polybar ${bars}\","
 
   if [[ -f "${SETTINGS_FILE}" ]]; then
-    local query='.wallpaper|if . then "\(.name) \(.mode)" else "none" end'
+    local query='.wallpaper|if . then "\(.name) [\(.mode|ascii_upcase)]" else "none" end'
     local wallpaper=''
     wallpaper="$(jq -cr "${query}" "${SETTINGS_FILE}")" || return 1
     status+="\"wallpaper\": \"${wallpaper}\","
@@ -326,7 +350,24 @@ load_wallpaper () {
 # Outputs:
 #  A list of stylus-pen devices.
 list_tablets () {
-  find_tablets || return 1
+  local tablets=''
+  tablets="$(find_tablets)" || return 1
+
+  local len=0
+  len="$(count "${tablets}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No tablets have found"
+    return 0
+  fi
+
+  local query=''
+  query+='ID:    \(.id)\n'
+  query+='Name:  \(.name)\n'
+  query+='Type:  \(.type)'
+  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+
+  echo "${tablets}" | jq -cer "${query}" || return 1
 }
 
 # Shows the help message.
@@ -359,7 +400,7 @@ show_help () {
     "set wallpaper [<name> [<mode>]]" "Set the desktop wallpaper in center" \
     "" "fill, scale, max or tile mode." \
     "" "" \
-    "list tablets" "List all the connected stylus-pen tablets."
+    "list tablets" "List all the connected tablets."
 }
 
 loop () {
