@@ -112,6 +112,72 @@ find_tablets () {
   echo "[${tablets}]"
 }
 
+# Returns the tablet device with the given name.
+# Arguments:
+#  name: the name of the tablet device
+# Outputs:
+#  A json object of tablet device.
+find_tablet () {
+  local name="${1}"
+
+  local query=".[]|select(.name == \"${name}\")"
+
+  local tablet=''
+  tablet="$(find_tablets | jq -cer "${query}")" || return 1
+
+  local vendor=''
+  vendor="$(get "${tablet}" '.vendor')" || return 1
+
+  # Merge properties specific to wacom devices
+  if [[ "${vendor}" == "wacom" ]]; then
+    local props=''
+    props="$(xsetwacom --get "${name}" all 2>&1 | awk '/^Option/{
+      match($0, "Option \"(.*)\" \"(.*)\"", a)
+      print "\""a[1]"\": \""a[2]"\","
+    }')" || return 1
+
+    # Remove the extra comma after the last key/value pair
+    if [[ -n "${props}" ]]; then
+      props="${props::-1}"
+    fi
+
+    tablet="$(echo "${tablet}" | jq -cer --argjson p "{${props}}" '. + $p')" || return 1
+  fi
+
+  echo "${tablet}"
+}
+
+# Shows a menu asking the user to select one tablet device,
+# where the answer is kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  None
+# Outputs:
+#  A menu of tablet devices.
+pick_tablet () {
+  local tablets=''
+  tablets="$(find_tablets)"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to find tablets"
+    return 2
+  fi
+
+  local len=0
+  len="$(count "${tablets}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No tablets have found"
+    return 2
+  fi
+
+  local query='[.[]|{key: .name, value: .name}]'
+  tablets="$(echo "${tablets}" | jq -cer "${query}")" || return 1
+
+  pick_one "Select a tablet:" "${tablets}" "vertical" || return $?
+}
+
 # Shows a prompt status and asks user to enter the
 # next command, which is kept in the global var REPLY.
 # Globals:
@@ -344,6 +410,50 @@ load_wallpaper () {
   echo "Wallpaper has been loaded"
 }
 
+# Show the data of the tablet device with the
+# given name.
+# Globals:
+#  REPLY
+# Arguments:
+#  name: the name of a tablet device
+# Outputs:
+#  A long list of tablet device data.
+show_tablet () {
+  local name="${1}"
+
+  if [[ -z "${name}" ]]; then
+    pick_tablet || return $?
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+  fi
+
+  local tablet=''
+  tablet="$(find_tablet "${name}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to find tablet ${name}"
+    return 2
+  fi
+
+  local query=''
+  query+='ID:           \(.id)\n'
+  query+='Name:         \(.name)\n'
+  query+='Type:         \(.type)\n'
+  query+='Vendor:       \(.vendor)'
+  query+='\(.Area|if . then "\nArea:         \(.)" else "" end)'
+  query+='\(.Rotate|if . then "\nRotate:       \(.)" else "" end)'
+  query+='\(.PressureRecalibration|if . then "\nPressure:     \(.)" else "" end)'
+  query+='\(.PressCurve|if . then "\nPress Curve:  \(.)" else "" end)'
+  query+='\(.RawSample|if . then "\nSample:       \(.)" else "" end)'
+  query+='\(.Mode|if . then "\nMode:         \(.)" else "" end)'
+  query+='\(.Touch|if . then "\nTouch:        \(.)" else "" end)'
+  query+='\(.Gesture|if . then "\nGesture:      \(.)" else "" end)'
+  query+='\(.TapTime|if . then "\nTap Time:     \(.)" else "" end)'
+  query+='\(.CursorProx|if . then "\nCursor:       \(.)" else "" end)'
+  query+='\(.Threshold|if . then "\nThreshold:    \(.)" else "" end)'
+
+  echo "${tablet}" | jq -cer "\"${query}\"" || return 1
+}
+
 # Shows the list of stylus-pen devices currently
 # connected to the system.
 # Arguments:
@@ -402,6 +512,7 @@ show_help () {
     "help" "Show this help message." \
     "" "" \
     "show status" "Show the status of the desktop environment." \
+    "show tablet [<name>]" "Show a tablet device." \
     "" "" \
     "list wallpapers" "List the available wallapers." \
     "list tablets" "List the connected tablets." \
@@ -437,6 +548,7 @@ loop () {
       "show")
         case "${cmd[1]}" in
           "status") show_status;;
+          "tablet") show_tablet "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       "set")
