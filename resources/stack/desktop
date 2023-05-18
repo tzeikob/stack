@@ -147,6 +147,27 @@ find_tablet () {
   echo "${tablet}"
 }
 
+# Checks if the given name corresponds to an
+# existing tablet device.
+# Arguments:
+#  name: the name of a tablet device
+# Returns:
+#  0 if it is a tablet otherwise 1.
+is_tablet () {
+  local name="${1}"
+
+  local query=".[]|select(.name == \"${name}\")"
+
+  local tablet=''
+  tablet="$(find_tablets | jq -cer "${query}")" || return 1
+
+  if [[ -n "${tablet}" ]]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
 # Shows a menu asking the user to select one tablet device,
 # where the answer is kept in the global var REPLY.
 # Globals:
@@ -177,6 +198,111 @@ pick_tablet () {
 
   pick_one "Select a tablet:" "${tablets}" "vertical" || return $?
 }
+
+# START: TO BE REMOVED AS DUPS IN DISPLAYS
+
+# Returns a list of outputs having the given status.
+# Arguments:
+#  status: all, connected, disconnected, active,
+#          inactive, primary
+# Outputs:
+#  A json array of outputs.
+find_outputs () {
+  local status="${1:-"all"}"
+
+  local states='all|connected|disconnected|active|inactive|primary'
+  if [[ ! "${status}" =~ ^(${states})$ ]]; then
+    return 1
+  fi
+
+  local criteria='true'
+  if [[ "${status}" == "connected" ]]; then
+    criteria='.is_connected == true'
+  elif [[ "${status}" == "disconnected" ]]; then
+    criteria='.is_connected == false'
+  elif [[ "${status}" == "active" ]]; then
+    criteria='.is_connected == true and .resolution_width != null'
+  elif [[ "${status}" == "inactive" ]]; then
+    criteria='.is_connected == true and .resolution_width == null'
+  elif [[ "${status}" == "primary" ]]; then
+    criteria='.is_primary == true'
+  fi
+
+  local a=''
+  a+='.screens[]|select(.screen_number==0)'
+  a+=" |.associated_device|select(${criteria})"
+  a="[${a}]"
+
+  local b=''
+  b+=".unassociated_devices[]|select(${criteria})"
+  b="[${b}]"
+
+  local query="[${a}+${b}|to_entries[]|{index: .key} + .value]"
+
+  xrandr --props | jc --xrandr | jq -cer "${query}" || return 1
+}
+
+# Returns the output with the given name.
+# Arguments:
+#  name: any string
+# Outputs:
+#  A json object of output.
+find_output () {
+  local name="${1}"
+
+  local query=".[]|select(.device_name == \"${name}\")"
+
+  find_outputs "all" | jq -cer "${query}" || return 1
+}
+
+# Asserts if the given output is active.
+# Arguments:
+#  output: a json object output
+# Returns:
+#  0 if is active otherwise 1.
+is_active () {
+  local output="${1}"
+
+  local query='select(.is_connected and .resolution_width)'
+
+  echo "${output}" | jq -cer "${query}" &> /dev/null || return 1
+}
+
+# Shows a menu asking the user to select one output, where the
+# answer is kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  prompt: a prompt text line
+#  status: all, connected, disconnected, active,
+#          inactive, primary
+# Outputs:
+#  A menu of output names.
+pick_output () {
+  local prompt="${1}"
+  local status="${2}"
+
+  # Convert outputs list into an array of {key, value} options
+  local key='\(.device_name)'
+  local value='\(.device_name):[\(if .model_name then .model_name else "NA" end)]'
+
+  local query="[.[]|{key: \"${key}\", value: \"${value}\"}]"
+
+  local options=''
+  options="$(find_outputs "${status}" | jq -cer "${query}")" || return 1
+
+  local len=0
+  len="$(count "${options}")" || return 1
+  
+  if [[ ${len} -eq 0 ]]; then
+    echo "No ${status:-\b} outputs have found"
+    return 2
+  fi
+
+  pick_one "${prompt}" "${options}" "vertical" || return $?
+}
+
+# END: TO BE REMOVED AS DUPS IN DISPLAYS
 
 # Shows a prompt status and asks user to enter the
 # next command, which is kept in the global var REPLY.
@@ -487,6 +613,98 @@ list_tablets () {
   echo "${tablets}" | jq -cer "${query}" || return 1
 }
 
+# Map the area of the tablet with the given name
+# to a display device scaled by the given factor.
+# Globals:
+#  REPLY
+# Arguments:
+#  name:    the name of a tablet device
+#  display: the name of a display device
+#  scale:   the scale factor of mapping
+map_tablet () {
+  local name="${1}"
+  local display="${2}"
+  local scale="${3}"
+
+  if [[ -z "${name}" ]]; then
+    pick_tablet || return $?
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+  fi
+
+  if ! is_tablet "${name}"; then
+    echo "Unable to find tablet ${name}"
+    return 2
+  fi
+
+  if [[ -z "${display}" ]]; then
+    pick_output "Select a display screen:" "active" || return $?
+    [[ -n "${REPLY}" ]] && display="${REPLY}" || return 0
+  fi
+
+  local output=''
+  output="$(find_output "${display}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to find display ${display}"
+    return 2
+  elif ! is_active "${output}"; then
+    echo "Display ${display} is not active"
+    return 2
+  fi
+
+  if [[ -z "${scale}" ]]; then
+    ask "Enter the scale factor (e.g. 0.5):" "^[0-9]+\.?[0-9]*$" || return $?
+    scale="${REPLY}"
+  fi
+
+  if (( $(echo "${scale} <= 0" | bc -l) )); then
+    echo "Scale could not be lower or equal to 0"
+    return 2
+  elif (( $(echo "${scale} > 1" | bc -l) )); then
+    echo "Scale could not be larger than 1"
+    return 2
+  fi
+
+  # Reset tablet area before applying the new mapping
+  xsetwacom --set "${name}" ResetArea &> /dev/null
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to map tablet ${name}"
+    return 2
+  fi
+
+  local tablet=''
+  tablet="$(find_tablet "${name}")" || return 1
+
+  local area_width=0
+  area_width="$(get "${tablet}" '.Area' | awk '{print $3}')" || return 1
+
+  local display_width=0
+  display_width="$(get "${output}" '.resolution_width')" || return 1
+
+  local display_height=0
+  display_height="$(get "${output}" '.resolution_height')" || return 1
+
+  local scaled_width=0
+  scaled_width=$(awk -v "aw=${area_width}" -v "s=${scale}" 'BEGIN {
+    print int(aw * s)
+  }') || return 1
+
+  local scaled_height=0
+  scaled_height=$(awk -v "sw=${scaled_width}" -v "dw=${display_width}" -v "dh=${display_height}" 'BEGIN {
+    print int(sw * (dh/dw))
+  }') || return 1
+
+  xsetwacom set "${name}" area 0 0 "${scaled_width}" "${scaled_height}" &> /dev/null || return 1
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to map tablet ${name}"
+    return 2
+  fi
+
+  echo "Tablet ${name} mapped to screen ${display}"
+}
+
 # Shows the help message.
 # Arguments:
 #  mode: once or none
@@ -508,7 +726,7 @@ show_help () {
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
   echo -e "\nCOMMANDS"
-  printf " %-34s %s\n" \
+  printf " %-42s %s\n" \
     "help" "Show this help message." \
     "" "" \
     "show status" "Show the status of the desktop environment." \
@@ -518,7 +736,8 @@ show_help () {
     "list tablets" "List the connected tablets." \
     "" "" \
     "set wallpaper [<name> [<mode>]]" "Set the desktop wallpaper in center" \
-    "" "fill, scale, max or tile mode."
+    "" "fill, scale, max or tile mode." \
+    "map tablet [<name> [<display> [<scale>]]]" "Map the tablet's area to a display."
 }
 
 loop () {
@@ -554,6 +773,11 @@ loop () {
       "set")
         case "${cmd[1]}" in
           "wallpaper") set_wallpaper "${cmd[2]}" "${cmd[3]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "map")
+        case "${cmd[1]}" in
+          "tablet") map_tablet "${cmd[2]}" "${cmd[3]}" "${cmd[4]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       "list")
