@@ -613,18 +613,92 @@ list_tablets () {
   echo "${tablets}" | jq -cer "${query}" || return 1
 }
 
-# Map the area of the tablet with the given name
-# to a display device scaled by the given factor.
+# Scales the area of the tablet with the given name.
+# Globals:
+#  REPLY
+# Arguments:
+#  name:  the name of a tablet device
+#  scale: the scale factor [0.1-1]
+scale_tablet () {
+  local name="${1}"
+  local scale="${2}"
+
+  if [[ -z "${name}" ]]; then
+    pick_tablet || return $?
+    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+  fi
+
+  if ! is_tablet "${name}"; then
+    echo "Unable to find tablet ${name}"
+    return 2
+  fi
+
+  if [[ -z "${scale}" ]]; then
+    ask "Enter the scale factor [0.1-1]:" "^[0-9]+\.?[0-9]*$" || return $?
+    scale="${REPLY}"
+  fi
+
+  if (( $(echo "${scale} <= 0" | bc -l) )); then
+    echo "Scale can't be lower or equal to 0"
+    return 2
+  elif (( $(echo "${scale} > 1" | bc -l) )); then
+    echo "Scale can't be larger than 1"
+    return 2
+  fi
+
+  # Reset tablet area before applying the new scaling
+  xsetwacom --set "${name}" ResetArea &> /dev/null
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to reset tablet's area"
+    return 2
+  fi
+
+  if (( $(echo "${scale} == 1" | bc -l) )); then
+    echo "Tablet's area has been reset"
+    return 0
+  fi
+
+  local tablet=''
+  tablet="$(find_tablet "${name}")" || return 1
+
+  local area_width=0
+  area_width="$(get "${tablet}" '.Area' | awk '{print $3}')" || return 1
+
+  local area_height=0
+  area_height="$(get "${tablet}" '.Area' | awk '{print $4}')" || return 1
+
+  local scaled_width=0
+  scaled_width=$(awk -v "aw=${area_width}" -v "s=${scale}" 'BEGIN {
+    print int(aw * s)
+  }') || return 1
+
+  local scaled_height=0
+  scaled_height=$(awk -v "ah=${area_height}" -v "s=${scale}" 'BEGIN {
+    print int(ah * s)
+  }') || return 1
+
+  xsetwacom set "${name}" area 0 0 "${scaled_width}" "${scaled_height}" &> /dev/null || return 1
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to scale tablet's area"
+    return 2
+  fi
+
+  echo "Tablet area scaled to x${scale}"
+}
+
+# Maps the area of the tablet with the given name
+# to a display device, where the special word desktop
+# reset the tablet's mapping.
 # Globals:
 #  REPLY
 # Arguments:
 #  name:    the name of a tablet device
-#  display: the name of a display device
-#  scale:   the scale factor of mapping
+#  display: the name of a display device or desktop
 map_tablet () {
   local name="${1}"
   local display="${2}"
-  local scale="${3}"
 
   if [[ -z "${name}" ]]; then
     pick_tablet || return $?
@@ -641,73 +715,27 @@ map_tablet () {
     [[ -n "${REPLY}" ]] && display="${REPLY}" || return 0
   fi
 
-  local output=''
-  output="$(find_output "${display}")"
+  if [[ "${display}" != "desktop" ]]; then
+    local output=''
+    output="$(find_output "${display}")"
+
+    if [[ $? -ne 0 ]]; then
+      echo "Unable to find display ${display}"
+      return 2
+    elif ! is_active "${output}"; then
+      echo "Display ${display} is not active"
+      return 2
+    fi
+  fi
+
+  xsetwacom set "${name}" MapToOutput "${display}" &> /dev/null || return 1
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find display ${display}"
-    return 2
-  elif ! is_active "${output}"; then
-    echo "Display ${display} is not active"
+    echo "Unable to map tablet"
     return 2
   fi
 
-  if [[ -z "${scale}" ]]; then
-    ask "Enter the scale factor (0.1-1):" "^[0-9]+\.?[0-9]*$" || return $?
-    scale="${REPLY}"
-  fi
-
-  if (( $(echo "${scale} <= 0" | bc -l) )); then
-    echo "Scale can't be lower or equal to 0"
-    return 2
-  elif (( $(echo "${scale} > 1" | bc -l) )); then
-    echo "Scale can't be larger than 1"
-    return 2
-  fi
-
-  # Reset tablet area before applying the new mapping
-  xsetwacom --set "${name}" ResetArea &> /dev/null
-
-  if [[ $? -ne 0 ]]; then
-    echo "Unable to reset tablet's area"
-    return 2
-  fi
-
-  if (( $(echo "${scale} == 1" | bc -l) )); then
-    echo "Tablet ${name} mapping has been reset"
-    return 0
-  fi
-
-  local tablet=''
-  tablet="$(find_tablet "${name}")" || return 1
-
-  local area_width=0
-  area_width="$(get "${tablet}" '.Area' | awk '{print $3}')" || return 1
-
-  local display_width=0
-  display_width="$(get "${output}" '.resolution_width')" || return 1
-
-  local display_height=0
-  display_height="$(get "${output}" '.resolution_height')" || return 1
-
-  local scaled_width=0
-  scaled_width=$(awk -v "aw=${area_width}" -v "s=${scale}" 'BEGIN {
-    print int(aw * s)
-  }') || return 1
-
-  local scaled_height=0
-  scaled_height=$(awk -v "sw=${scaled_width}" -v "dw=${display_width}" -v "dh=${display_height}" 'BEGIN {
-    print int(sw * (dh/dw))
-  }') || return 1
-
-  xsetwacom set "${name}" area 0 0 "${scaled_width}" "${scaled_height}" &> /dev/null || return 1
-
-  if [[ $? -ne 0 ]]; then
-    echo "Unable to map tablet ${name}"
-    return 2
-  fi
-
-  echo "Tablet ${name} mapped to screen ${display}"
+  echo "Tablet mapped to ${display}"
 }
 
 # Shows the help message.
@@ -731,7 +759,7 @@ show_help () {
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
   echo -e "\nCOMMANDS"
-  printf " %-45s %s\n" \
+  printf " %-36s %s\n" \
     "help" "Show this help message." \
     "" "" \
     "show status" "Show the status of the desktop environment." \
@@ -742,7 +770,10 @@ show_help () {
     "" "" \
     "set wallpaper [<name> [<mode>]]" "Set the desktop wallpaper in center" \
     "" "fill, scale, max or tile mode." \
-    "map tablet [<name> [<display> [<scale>]]]" "Map the tablet's area to a display."
+    "scale tablet [<name> [<factor>]]" "Scale down the area of a tablet (e.g. 0.5)" \
+    "" "or use factor 1 to reset scaling." \
+    "map tablet [<name> [<display>]]" "Map a tablet to a screen display" \
+    "" "or just use desktop to reset mapping."
 }
 
 loop () {
@@ -780,9 +811,14 @@ loop () {
           "wallpaper") set_wallpaper "${cmd[2]}" "${cmd[3]}";;
           *) echo "Invalid or unknown command";;
         esac;;
+      "scale")
+        case "${cmd[1]}" in
+          "tablet") scale_tablet "${cmd[2]}" "${cmd[3]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
       "map")
         case "${cmd[1]}" in
-          "tablet") map_tablet "${cmd[2]}" "${cmd[3]}" "${cmd[4]}";;
+          "tablet") map_tablet "${cmd[2]}" "${cmd[3]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       "list")
