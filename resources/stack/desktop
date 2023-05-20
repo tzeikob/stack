@@ -669,8 +669,13 @@ map_tablet () {
   xsetwacom --set "${name}" ResetArea &> /dev/null
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to map tablet ${name}"
+    echo "Unable to reset tablet's area"
     return 2
+  fi
+
+  if (( $(echo "${scale} == 1" | bc -l) )); then
+    echo "Tablet ${name} mapping has been reset"
+    return 0
   fi
 
   local tablet=''
