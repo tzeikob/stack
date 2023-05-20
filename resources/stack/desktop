@@ -637,7 +637,7 @@ map_tablet () {
   fi
 
   if [[ -z "${display}" ]]; then
-    pick_output "Select a display screen:" "active" || return $?
+    pick_output "Select a display:" "active" || return $?
     [[ -n "${REPLY}" ]] && display="${REPLY}" || return 0
   fi
 
@@ -653,15 +653,15 @@ map_tablet () {
   fi
 
   if [[ -z "${scale}" ]]; then
-    ask "Enter the scale factor (e.g. 0.5):" "^[0-9]+\.?[0-9]*$" || return $?
+    ask "Enter the scale factor (0.1-1):" "^[0-9]+\.?[0-9]*$" || return $?
     scale="${REPLY}"
   fi
 
   if (( $(echo "${scale} <= 0" | bc -l) )); then
-    echo "Scale could not be lower or equal to 0"
+    echo "Scale can't be lower or equal to 0"
     return 2
   elif (( $(echo "${scale} > 1" | bc -l) )); then
-    echo "Scale could not be larger than 1"
+    echo "Scale can't be larger than 1"
     return 2
   fi
 
@@ -726,7 +726,7 @@ show_help () {
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
   echo -e "\nCOMMANDS"
-  printf " %-42s %s\n" \
+  printf " %-45s %s\n" \
     "help" "Show this help message." \
     "" "" \
     "show status" "Show the status of the desktop environment." \
