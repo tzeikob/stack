@@ -613,7 +613,8 @@ list_tablets () {
   echo "${tablets}" | jq -cer "${query}" || return 1
 }
 
-# Scales the area of the tablet with the given name.
+# Scales the area of the tablet with the given name,
+# keeping the current aspect ratio.
 # Globals:
 #  REPLY
 # Arguments:
@@ -628,7 +629,10 @@ scale_tablet () {
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
 
-  if ! is_tablet "${name}"; then
+  local tablet=''
+  tablet="$(find_tablet "${name}")"
+
+  if [[ $? -ne 0 ]]; then
     echo "Unable to find tablet ${name}"
     return 2
   fi
@@ -646,46 +650,34 @@ scale_tablet () {
     return 2
   fi
 
+  # Read the current aspect ratio
+  local ratio=0
+  ratio="$(get "${tablet}" '.Area' | awk '{print $4/$3}')" || return 1
+
   # Reset tablet area before applying the new scaling
   xsetwacom --set "${name}" ResetArea &> /dev/null
 
-  if [[ $? -ne 0 ]]; then
-    echo "Unable to reset tablet's area"
-    return 2
-  fi
+  # Restore the aspect ratio
+  tablet="$(find_tablet "${name}")"
 
-  if (( $(echo "${scale} == 1" | bc -l) )); then
-    echo "Tablet's area has been reset"
-    return 0
-  fi
+  local width=0
+  width="$(get "${tablet}" '.Area' | awk -v "scale=${scale}" '{
+    print int($3 * scale)
+  }')" || return 1
 
-  local tablet=''
-  tablet="$(find_tablet "${name}")" || return 1
+  local height=0
+  height="$(echo "${width}" | awk -v "ratio=${ratio}" '{
+    print int($0 * ratio)
+  }')" || return 1
 
-  local area_width=0
-  area_width="$(get "${tablet}" '.Area' | awk '{print $3}')" || return 1
-
-  local area_height=0
-  area_height="$(get "${tablet}" '.Area' | awk '{print $4}')" || return 1
-
-  local scaled_width=0
-  scaled_width=$(awk -v "aw=${area_width}" -v "s=${scale}" 'BEGIN {
-    print int(aw * s)
-  }') || return 1
-
-  local scaled_height=0
-  scaled_height=$(awk -v "ah=${area_height}" -v "s=${scale}" 'BEGIN {
-    print int(ah * s)
-  }') || return 1
-
-  xsetwacom set "${name}" area 0 0 "${scaled_width}" "${scaled_height}" &> /dev/null || return 1
+  xsetwacom set "${name}" area 0 0 "${width}" "${height}" &> /dev/null || return 1
 
   if [[ $? -ne 0 ]]; then
     echo "Unable to scale tablet's area"
     return 2
   fi
 
-  echo "Tablet area scaled to x${scale}"
+  echo "Tablet area scaled by ${scale}"
 }
 
 # Maps the area of the tablet with the given name
