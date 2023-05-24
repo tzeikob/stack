@@ -655,10 +655,10 @@ scale_tablet () {
   ratio="$(get "${tablet}" '.Area' | awk '{print $4/$3}')" || return 1
 
   # Reset tablet area before applying the new scaling
-  xsetwacom --set "${name}" ResetArea &> /dev/null
+  xsetwacom --set "${name}" ResetArea &> /dev/null || return 1
 
   # Restore the aspect ratio
-  tablet="$(find_tablet "${name}")"
+  tablet="$(find_tablet "${name}")" || return 1
 
   local width=0
   width="$(get "${tablet}" '.Area' | awk -v "scale=${scale}" '{
