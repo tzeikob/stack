@@ -670,7 +670,7 @@ scale_tablet () {
     print int($0 * ratio)
   }')" || return 1
 
-  xsetwacom set "${name}" area 0 0 "${width}" "${height}" &> /dev/null || return 1
+  xsetwacom --set "${name}" area 0 0 "${width}" "${height}" &> /dev/null
 
   if [[ $? -ne 0 ]]; then
     echo "Unable to scale tablet's area"
@@ -682,7 +682,7 @@ scale_tablet () {
 
 # Maps the area of the tablet with the given name
 # to a display device, where the special word desktop
-# reset the tablet's mapping.
+# resets the tablet's mapping and ratio.
 # Globals:
 #  REPLY
 # Arguments:
@@ -697,7 +697,10 @@ map_tablet () {
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
 
-  if ! is_tablet "${name}"; then
+  local tablet=''
+  tablet="$(find_tablet "${name}")"
+
+  if [[ $? -ne 0 ]]; then
     echo "Unable to find tablet ${name}"
     return 2
   fi
@@ -707,23 +710,52 @@ map_tablet () {
     [[ -n "${REPLY}" ]] && display="${REPLY}" || return 0
   fi
 
-  if [[ "${display}" != "desktop" ]]; then
-    local output=''
-    output="$(find_output "${display}")"
+  # Reset mapping and area if desktop is given
+  if [[ "${display}" == "desktop" ]]; then
+    xsetwacom --set "${name}" MapToOutput desktop &> /dev/null &&
+    xsetwacom --set "${name}" ResetArea &> /dev/null
 
     if [[ $? -ne 0 ]]; then
-      echo "Unable to find display ${display}"
-      return 2
-    elif ! is_active "${output}"; then
-      echo "Display ${display} is not active"
+      echo "Failed to reset mapping"
       return 2
     fi
+
+    echo "Tablet mapping has been reset"
+    return 0
   fi
 
-  xsetwacom set "${name}" MapToOutput "${display}" &> /dev/null || return 1
+  local output=''
+  output="$(find_output "${display}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to map tablet"
+    echo "Unable to find display ${display}"
+    return 2
+  elif ! is_active "${output}"; then
+    echo "Display ${display} is not active"
+    return 2
+  fi
+
+  # Re-calculate tablet's area to match display's ratio
+  local width=0
+  width="$(get "${tablet}" '.Area' | awk '{print $3}')" || return 1
+
+  local display_width=0
+  display_width="$(get "${output}" '.resolution_width')" || return 1
+
+  local display_height=0
+  display_height="$(get "${output}" '.resolution_height')" || return 1
+
+  local ratio=0
+  ratio="$(echo "${display_width} ${display_height}" | awk '{print $2/$1}')" || return 1
+
+  local height=0
+  height="$(echo "${width}" | awk -v "ratio=${ratio}" '{print int($0 * ratio)}')" || return 1
+
+  xsetwacom --set "${name}" MapToOutput "${display}" &> /dev/null &&
+  xsetwacom --set "${name}" area 0 0 "${width}" "${height}" &> /dev/null
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to map tablet to ${display}"
     return 2
   fi
 
