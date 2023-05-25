@@ -714,13 +714,35 @@ map_tablet () {
 
   # Reset mapping and area if desktop is given
   if [[ "${display}" == "desktop" ]]; then
-    xsetwacom --set "${name}" MapToOutput desktop &> /dev/null &&
-    xsetwacom --set "${name}" ResetArea &> /dev/null
+    xsetwacom --set "${name}" MapToOutput desktop &> /dev/null
 
     if [[ $? -ne 0 ]]; then
       echo "Failed to reset mapping"
       return 2
     fi
+
+    # Restore area keeping the current scale
+    local width=0
+    width="$(get "${tablet}" '.Area' | awk '{print $3}')" || return 1
+
+    xsetwacom --set "${name}" ResetArea &> /dev/null || return 1
+
+    tablet="$(find_tablet "${name}")" || return 1
+
+    local area=''
+    area="$(get "${tablet}" '.Area' | awk -v "width=${width}" '{
+      scale=width/$3
+      
+      width=scale*$3
+      width=(width == int(width)) ? width : int(width)+1
+
+      height=scale*$4
+      height=(height == int(height)) ? height : int(height)+1
+
+      print 0" "0" "width" "height
+    }')" || return 1
+
+    xsetwacom --set "${name}" area "${area}" &> /dev/null || return 1
 
     echo "Tablet mapping has been reset"
     return 0
