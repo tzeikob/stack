@@ -662,12 +662,14 @@ scale_tablet () {
 
   local width=0
   width="$(get "${tablet}" '.Area' | awk -v "scale=${scale}" '{
-    print int($3 * scale)
+    width=$3*scale
+    print (width == int(width)) ? width : int(width)+1
   }')" || return 1
 
   local height=0
   height="$(echo "${width}" | awk -v "ratio=${ratio}" '{
-    print int($0 * ratio)
+    height=$0*ratio
+    print (height == int(height)) ? height : int(height)+1
   }')" || return 1
 
   xsetwacom --set "${name}" area 0 0 "${width}" "${height}" &> /dev/null
@@ -749,7 +751,10 @@ map_tablet () {
   ratio="$(echo "${display_width} ${display_height}" | awk '{print $2/$1}')" || return 1
 
   local height=0
-  height="$(echo "${width}" | awk -v "ratio=${ratio}" '{print int($0 * ratio)}')" || return 1
+  height="$(echo "${width}" | awk -v "ratio=${ratio}" '{
+    height=$0*ratio
+    print (height == int(height)) ? height : int(height)+1
+  }')" || return 1
 
   xsetwacom --set "${name}" MapToOutput "${display}" &> /dev/null &&
   xsetwacom --set "${name}" area 0 0 "${width}" "${height}" &> /dev/null
