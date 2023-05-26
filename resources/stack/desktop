@@ -653,7 +653,7 @@ scale_tablet () {
 
   # Read the current aspect ratio
   local ratio=0
-  ratio="$(get "${tablet}" '.Area' | awk '{print $4/$3}')" || return 1
+  ratio="$(get "${tablet}" '.Area' | awk '{print $3/$4}')" || return 1
 
   # Reset tablet area before applying the new scaling
   xsetwacom --set "${name}" ResetArea &> /dev/null || return 1
@@ -661,26 +661,24 @@ scale_tablet () {
   # Restore the aspect ratio
   tablet="$(find_tablet "${name}")" || return 1
 
-  local width=0
-  width="$(get "${tablet}" '.Area' | awk -v "scale=${scale}" '{
-    width=$3*scale
-    print (width == int(width)) ? width : int(width)+1
+  local area=0
+  area="$(get "${tablet}" '.Area' | awk -v "scale=${scale}" -v "ratio=${ratio}" '{
+    if (ratio > 1) ratio=1/ratio
+
+    width=int($3*scale)
+    height=int(width*ratio)
+
+    print 0" "0" "width" "height
   }')" || return 1
 
-  local height=0
-  height="$(echo "${width}" | awk -v "ratio=${ratio}" '{
-    height=$0*ratio
-    print (height == int(height)) ? height : int(height)+1
-  }')" || return 1
-
-  xsetwacom --set "${name}" area 0 0 "${width}" "${height}" &> /dev/null
+  xsetwacom --set "${name}" area "${area}" &> /dev/null
 
   if [[ $? -ne 0 ]]; then
     echo "Unable to scale tablet's area"
     return 2
   fi
 
-  echo "Tablet area scaled by ${scale}"
+  echo "Tablet's area scaled by ${scale}"
 }
 
 # Maps the area of the tablet with the given name
@@ -733,12 +731,8 @@ map_tablet () {
     local area=''
     area="$(get "${tablet}" '.Area' | awk -v "width=${width}" '{
       scale=width/$3
-      
-      width=scale*$3
-      width=(width == int(width)) ? width : int(width)+1
-
-      height=scale*$4
-      height=(height == int(height)) ? height : int(height)+1
+      width=int($3*scale)
+      height=int($4*scale)
 
       print 0" "0" "width" "height
     }')" || return 1
@@ -761,9 +755,6 @@ map_tablet () {
   fi
 
   # Re-calculate tablet's area to match display's ratio
-  local width=0
-  width="$(get "${tablet}" '.Area' | awk '{print $3}')" || return 1
-
   local display_width=0
   display_width="$(get "${output}" '.resolution_width')" || return 1
 
@@ -771,16 +762,20 @@ map_tablet () {
   display_height="$(get "${output}" '.resolution_height')" || return 1
 
   local ratio=0
-  ratio="$(echo "${display_width} ${display_height}" | awk '{print $2/$1}')" || return 1
+  ratio="$(echo "${display_width} ${display_height}" | awk '{print $1/$2}')" || return 1
 
-  local height=0
-  height="$(echo "${width}" | awk -v "ratio=${ratio}" '{
-    height=$0*ratio
-    print (height == int(height)) ? height : int(height)+1
+  local area=0
+  area="$(get "${tablet}" '.Area' | awk -v "ratio=${ratio}" '{
+    if (ratio > 1) ratio=1/ratio
+
+    width=$3
+    height=int(width*ratio)
+
+    print 0" "0" "width" "height
   }')" || return 1
 
   xsetwacom --set "${name}" MapToOutput "${display}" &> /dev/null &&
-  xsetwacom --set "${name}" area 0 0 "${width}" "${height}" &> /dev/null
+  xsetwacom --set "${name}" area "${area}" &> /dev/null
 
   if [[ $? -ne 0 ]]; then
     echo "Failed to map tablet to ${display}"
