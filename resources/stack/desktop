@@ -287,6 +287,7 @@ pick_output () {
   local value='\(.device_name):[\(if .model_name then .model_name else "NA" end)]'
 
   local query="[.[]|{key: \"${key}\", value: \"${value}\"}]"
+  query+='|. + [{key: "desktop", value: "ALL:[DESKTOP]"}]'
 
   local options=''
   options="$(find_outputs "${status}" | jq -cer "${query}")" || return 1
