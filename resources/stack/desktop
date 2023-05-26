@@ -168,6 +168,25 @@ is_tablet () {
   fi
 }
 
+# Checks if the tablet device with the given name
+# has a scalable and mappable area.
+# Arguments:
+#  name: the name of a tablet device
+# Returns:
+#  0 if it is scalable otherwise 1.
+is_scalable () {
+  local name="${1}"
+
+  local area=''
+  area="$(find_tablet "${name}" | jq -cer '.Area')" || return 1
+
+  if [[ -n "${area}" ]]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
 # Shows a menu asking the user to select one tablet device,
 # where the answer is kept in the global var REPLY.
 # Globals:
@@ -636,6 +655,9 @@ scale_tablet () {
   if [[ $? -ne 0 ]]; then
     echo "Unable to find tablet ${name}"
     return 2
+  elif ! is_scalable "${name}"; then
+    echo "Tablet ${name} is not scalable"
+    return 2
   fi
 
   if [[ -z "${scale}" ]]; then
@@ -703,6 +725,9 @@ map_tablet () {
 
   if [[ $? -ne 0 ]]; then
     echo "Unable to find tablet ${name}"
+    return 2
+  elif ! is_scalable "${name}"; then
+    echo "Tablet ${name} is not scalable"
     return 2
   fi
 
