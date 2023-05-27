@@ -2,6 +2,14 @@
 
 set -Eeo pipefail
 
+install_packages () {
+  echo -e "\nInstalling various system packages..."
+
+  yay -S --noconfirm --removemake digimend-kernel-drivers-dkms-git || exit 1
+  
+  echo "Packages have been installed"
+}
+
 install_compositor () {
   echo "Installing the picom compositor..."
 
@@ -441,7 +449,8 @@ fi
 
 source ~/stack/.options
 
-install_compositor &&
+install_packages &&
+  install_compositor &&
   install_window_manager &&
   install_terminals &&
   install_file_manager &&
