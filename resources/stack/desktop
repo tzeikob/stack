@@ -556,6 +556,80 @@ load_wallpaper () {
   echo "Wallpaper has been loaded"
 }
 
+# Sets the acceleration speed of every pointing device
+# to the given speed factor, where 0 means slow and 1
+# means fast.
+# Globals:
+#  REPLY
+# Arguments:
+#  factor: a speed factor between [0, 1]
+set_pointer_speed () {
+  local factor="${1}"
+
+  if [[ -z "${factor}" ]]; then
+    ask "Enter the speed factor [0,1]:" "^[0-9]+\.?[0-9]*$" || return $?
+    factor="${REPLY}"
+  fi
+
+  if (( $(echo "${factor} < 0" | bc -l) )); then
+    echo "Speed factor can't be lower than 0"
+    return 2
+  elif (( $(echo "${factor} > 1" | bc -l) )); then
+    echo "Speed factor can't be greater than 1"
+    return 2
+  fi
+
+  # Convert factor to acceleration speed [-1,1]
+  local speed=0
+  speed="$(echo "${factor}" | awk '{print 2*$0 - 1}')" || return 1
+
+  # Convert factor to velocity [0,15]
+  local velocity=0
+  velocity="$(echo "${factor}" | awk '{
+    if ($0 == 0) {
+      velocity=0.001
+    } else {
+      velocity=15*$0
+    }
+
+    print velocity
+  }')" || return 1
+
+  local devices=''
+  devices="$(xinput --list | awk '{
+    if ($0 ~ "Virtual core pointer") {
+      next
+    } else if ($0 ~ "Virtual core keyboard") {
+      exit
+    }
+
+    match($0, ".*id=([0-9]+).*", a)
+    print a[1]
+  }')" || return 1
+
+  local succeed="false"
+
+  local device=''
+  while read -r device; do
+    # Assume this is a mouse device and set its acceleration speed
+    xinput --set-prop "${device}" "libinput Accel Speed" "${speed}" &> /dev/null &&
+    succeed="true" && continue
+
+    # Otherwise assume this is a touch device and set its velocity
+    xinput --set-prop "${device}" "Device Accel Constant Deceleration" 1 &> /dev/null &&
+    xinput --set-prop "${device}" "Device Accel Adaptive Deceleration" 1 &> /dev/null &&
+    xinput --set-prop "${device}" "Device Accel Velocity Scaling" "${velocity}" &> /dev/null &&
+    succeed="true"
+  done <<< "${devices}"
+
+  if [[ "${succeed}" == "false" ]]; then
+    echo "Failed to set pointer speed"
+    return 2
+  fi
+
+  echo "Pointer speed set to ${factor}"
+}
+
 # Show the data of the tablet device with the
 # given name.
 # Globals:
@@ -842,6 +916,8 @@ show_help () {
     "" "" \
     "set wallpaper [<name> [<mode>]]" "Set the desktop wallpaper in center" \
     "" "fill, scale, max or tile mode." \
+    "set pointer speed [<factor>]" "Set the pointer's speed to a factor between" \
+    "" "[0, 1] where 0 means slow and 1 fast." \
     "scale tablet [<name> [<factor>]]" "Scale down the area of a tablet (e.g. 0.5)" \
     "" "or use factor 1 to reset scaling." \
     "map tablet [<name> [<display>]]" "Map a tablet to a screen display" \
@@ -881,6 +957,11 @@ loop () {
       "set")
         case "${cmd[1]}" in
           "wallpaper") set_wallpaper "${cmd[2]}" "${cmd[3]}";;
+          "pointer")
+            case "${cmd[2]}" in
+              "speed") set_pointer_speed "${cmd[3]}";;
+              *) echo "Invalid or unknown command";;
+            esac;;
           *) echo "Invalid or unknown command";;
         esac;;
       "scale")
