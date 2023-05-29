@@ -636,47 +636,6 @@ set_wallpaper () {
   echo "${settings}" > "${SETTINGS_FILE}"
 }
 
-# Sets the desktop wallpaper to the wallpaper
-# being set in the settings file.
-# Globals:
-#  SETTINGS_FILE
-# Arguments:
-#  None
-load_wallpaper () {
-  if [[ ! -f "${SETTINGS_FILE}" ]]; then
-    echo "No wallpaper setting found"
-    return 0
-  fi
-
-  local wallpaper=''
-  wallpaper="$(jq 'if .wallpaper then .wallpaper else empty end' "${SETTINGS_FILE}")"
-
-  if [[ -z "${wallpaper}" ]]; then
-    echo "No wallpaper setting found"
-    return 0
-  fi
-
-  local name=''
-  name="$(get "${wallpaper}" '.name')" || return 1
-
-  if [[ ! -f "${WALLPAPERS_HOME}/${name}" ]]; then
-    echo "Wallpaper ${name} does not exist"
-    return 2
-  fi
-
-  local mode=''
-  mode="$(get "${wallpaper}" '.mode')" || return 1
-
-  set_wallpaper "${name}" "${mode:-"center"}"
-
-  if [[ $? -ne 0 ]]; then
-    echo "Failed to load the wallpaper"
-    return 2
-  fi
-
-  echo "Wallpaper has been loaded"
-}
-
 # Show the data of the pointing device with the
 # given id.
 # Globals:
@@ -1085,6 +1044,80 @@ map_tablet () {
   echo "Tablet mapped to ${display}"
 }
 
+# Applies the pointer settings being set
+# in the settings file.
+# Globals:
+#  SETTINGS_FILE
+# Arguments:
+#  None
+init_pointer () {
+  if [[ ! -f "${SETTINGS_FILE}" ]]; then
+    echo "No desktop settings found"
+    return 0
+  fi
+
+  local pointer=''
+  pointer="$(jq '.pointer|if . then . else empty end' "${SETTINGS_FILE}")"
+
+  if [[ -z "${pointer}" ]]; then
+    echo "No pointer setting found"
+    return 0
+  fi
+
+  local speed=''
+  speed="$(get "${pointer}" '.speed')" || return 1
+
+  set_pointer_speed "${speed}"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to set pointer speed"
+    return 2
+  fi
+
+  echo "Pointer speed has been set"
+}
+
+# Sets the desktop wallpaper to the wallpaper
+# being set in the settings file.
+# Globals:
+#  SETTINGS_FILE
+# Arguments:
+#  None
+init_wallpaper () {
+  if [[ ! -f "${SETTINGS_FILE}" ]]; then
+    echo "No desktop settings found"
+    return 0
+  fi
+
+  local wallpaper=''
+  wallpaper="$(jq '.wallpaper|if . then . else empty end' "${SETTINGS_FILE}")"
+
+  if [[ -z "${wallpaper}" ]]; then
+    echo "No wallpaper setting found"
+    return 0
+  fi
+
+  local name=''
+  name="$(get "${wallpaper}" '.name')" || return 1
+
+  if [[ ! -f "${WALLPAPERS_HOME}/${name}" ]]; then
+    echo "Wallpaper ${name} does not exist"
+    return 2
+  fi
+
+  local mode=''
+  mode="$(get "${wallpaper}" '.mode')" || return 1
+
+  set_wallpaper "${name}" "${mode:-"center"}"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to set the wallpaper"
+    return 2
+  fi
+
+  echo "Wallpaper has been set"
+}
+
 # Shows the help message.
 # Arguments:
 #  mode: once or none
@@ -1098,7 +1131,8 @@ show_help () {
     printf " %-16s %s\n" \
       "help" "Show this help message." \
       "" "" \
-      "load wallpaper" "Load the desktop wallpaper."
+      "init pointer" "Set pointer's stored settings." \
+      "init wallpaper" "Set the desktop's stored wallpaper."
 
     return 0
   fi
@@ -1199,9 +1233,10 @@ loop () {
 once () {
   case "${1}" in
     "help") show_help "once";;
-    "load")
+    "init")
       case "${2}" in
-        "wallpaper") load_wallpaper || abort;;
+        "pointer") init_pointer || abort;;
+        "wallpaper") init_wallpaper || abort;;
         *) abort "Invalid or unknown command";;
       esac;;
     *) abort "Invalid or unknown command";;

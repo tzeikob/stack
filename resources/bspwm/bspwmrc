@@ -1,6 +1,7 @@
 #!/bin/sh
 
-desktop load wallpaper &
+desktop init pointer &
+desktop init wallpaper &
 pgrep -x sxhkd > /dev/null || sxhkd &
 $HOME/.config/polybar/launch &
 dunst &
