@@ -114,6 +114,91 @@ find_pointers () {
   echo "[${pointers}]"
 }
 
+# Returns the pointing device with the given id.
+# Arguments:
+#  id: the id of the pointing device
+# Outputs:
+#  A json object of pointing device.
+find_pointer () {
+  local id="${1}"
+
+  local name=''
+  name="$(find_pointers |
+    jq -cer ".[]|select(.id == \"${id}\")|.name")" || return 1
+
+  local pointer=''
+  pointer+="\"id\":\"${id}\","
+  pointer+="\"name\":\"${name}\","
+
+  pointer+="$(xinput --list-props "${id}" | awk '{
+    match($0, "(.*)\\([0-9]{3}\\):(.*)", a)
+    gsub(/^[ \t]+/,"",a[1])
+    gsub(/[ \t]+$/,"",a[1])
+    gsub(/^[ \t]+/,"",a[2])
+    gsub(/[ \t]+$/,"",a[2])
+    key=a[1];value=a[2]
+
+    if (key == "Device Node") {
+      key="node"
+      gsub(/"/,"",value)
+    } else if (key == "Device Enabled") {
+      key="enabled"
+    } else if (key == "libinput Accel Speed") {
+      key="accel_speed"
+    } else if (key == "libinput Accel Profile Enabled") {
+      key="accel"
+    } else if (key == "Device Accel Constant Deceleration") {
+      key="const_decel"
+    } else if (key == "Device Accel Adaptive Deceleration") {
+      key="adapt_decel"
+    } else if (key == "Device Accel Velocity Scaling") {
+      key="velocity"
+    } else {
+      next
+    }
+
+    print "\""key"\":\""value"\","
+  }')" || return 1
+
+  # Remove the extra comma after the last element
+  if [[ -n "${pointer}" ]]; then
+    pointer="${pointer::-1}"
+  fi
+
+  echo "{${pointer}}"
+}
+
+# Shows a menu asking the user to select one pointing device,
+# where the answer is kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  None
+# Outputs:
+#  A menu of pointing devices.
+pick_pointer () {
+  local pointers=''
+  pointers="$(find_pointers)"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to find pointers"
+    return 2
+  fi
+
+  local len=0
+  len="$(count "${pointers}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No pointers have found"
+    return 2
+  fi
+
+  local query='[.[]|{key: .id, value: "\(.id):\(.name)"}]'
+  pointers="$(echo "${pointers}" | jq -cer "${query}")" || return 1
+
+  pick_one "Select a pointer:" "${pointers}" "vertical" || return $?
+}
+
 # Returns the list of stylus-pen devices currently
 # connected to the system.
 # Arguments:
@@ -592,6 +677,43 @@ load_wallpaper () {
   echo "Wallpaper has been loaded"
 }
 
+# Show the data of the pointing device with the
+# given id.
+# Globals:
+#  REPLY
+# Arguments:
+#  id: the id of the pointing device
+# Outputs:
+#  A long list of pointing device data.
+show_pointer () {
+  local id="${1}"
+
+  if [[ -z "${id}" ]]; then
+    pick_pointer || return $?
+    [[ -n "${REPLY}" ]] && id="${REPLY}" || return 0
+  fi
+
+  local pointer=''
+  pointer="$(find_pointer "${id}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to find pointer ${id}"
+    return 2
+  fi
+
+  local query=''
+  query+='ID:          \(.id)\n'
+  query+='Name:        \(.name)'
+  query+='\(.node|if . then "\nNode:        \(.)" else "" end)'
+  query+='\(.enabled|if . then "\nEnabled:     \(.)" else "" end)'
+  query+='\(.accel_speed|if . then "\nSpeed:       \(.)" else "" end)'
+  query+='\(.accel|if . then "\nAccel:       \(.)" else "" end)'
+  query+='\(.velocity|if . then "\nVelocity:    \(.)" else "" end)'
+  query+='\(if .const_decel then "\nDecel:       \(.const_decel) \(.adapt_decel)" else "" end)'
+
+  echo "${pointer}" | jq -cer "\"${query}\"" || return 1
+}
+
 # Shows the list of pointing devices currently
 # connected to the system.
 # Arguments:
@@ -976,6 +1098,7 @@ show_help () {
     "help" "Show this help message." \
     "" "" \
     "show status" "Show the status of the desktop environment." \
+    "show pointer [<id>]" "Show a pointing device." \
     "show tablet [<name>]" "Show a tablet device." \
     "" "" \
     "list wallpapers" "List the available wallapers." \
@@ -1019,6 +1142,7 @@ loop () {
       "show")
         case "${cmd[1]}" in
           "status") show_status;;
+          "pointer") show_pointer "${cmd[2]}";;
           "tablet") show_tablet "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
