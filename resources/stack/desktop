@@ -623,6 +623,7 @@ set_wallpaper () {
 
   echo "Wallpaper has been set to ${name}"
 
+  # Save wallpaper into settings file
   local settings='{}'
   local wallpaper="{\"name\": \"${name}\", \"mode\": \"${mode}\"}"
 
@@ -777,6 +778,7 @@ set_pointer_speed () {
 
   echo "Pointer speed set to ${factor}"
 
+  # Save factor into settings file
   local settings='{}'
   local pointer="{\"speed\": \"${factor}\"}"
 
@@ -935,6 +937,38 @@ scale_tablet () {
   fi
 
   echo "Tablet's area scaled by ${scale}"
+
+  # Save tablet's scale factor into settings file
+  local settings='{}'
+  local tablet="{\"name\": \"${name}\", \"scale\": \"${scale}\"}"
+
+  if [[ -f "${SETTINGS_FILE}" ]]; then
+    local tablets=''
+    tablets="$(jq '.tablets|if . then . else empty end' "${SETTINGS_FILE}")"
+
+    if [[ -n "${tablets}" ]]; then
+      local query=''
+      query=".tablets[]|select(.name == \"${name}\")"
+
+      local exists=''
+      exists="$(jq "${query}" "${SETTINGS_FILE}")"
+
+      if [[ -n "${exists}" ]]; then
+        query="(${query}|.scale)|= ${scale}"
+      else
+        query=".tablets += [${tablet}]"
+      fi
+
+      settings="$(jq -e "${query}" "${SETTINGS_FILE}")" || return 1
+    else
+      settings="$(jq -e ".tablets = [${tablet}] " "${SETTINGS_FILE}")" || return 1
+    fi
+  else
+    settings="$(echo "{\"tablets\": [${tablet}]}" | jq -e '.')" || return 1
+  fi
+
+  mkdir -p "${CONFIG_HOME}"
+  echo "${settings}" > "${SETTINGS_FILE}"
 }
 
 # Maps the area of the tablet with the given name
