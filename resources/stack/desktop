@@ -817,6 +817,18 @@ set_pointer_speed () {
   fi
 
   echo "Pointer speed set to ${factor}"
+
+  local settings='{}'
+  local pointer="{\"speed\": \"${factor}\"}"
+
+  if [[ -f "${SETTINGS_FILE}" ]]; then
+    settings="$(jq -e ".pointer = ${pointer} " "${SETTINGS_FILE}")" || return 1
+  else
+    settings="$(echo "{\"pointer\": ${pointer}}" | jq -e '.')" || return 1
+  fi
+
+  mkdir -p "${CONFIG_HOME}"
+  echo "${settings}" > "${SETTINGS_FILE}"
 }
 
 # Show the data of the tablet device with the
