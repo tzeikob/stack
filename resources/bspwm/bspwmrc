@@ -1,6 +1,7 @@
 #!/bin/sh
 
 desktop init pointer &
+desktop init tablets &
 desktop init wallpaper &
 pgrep -x sxhkd > /dev/null || sxhkd &
 $HOME/.config/polybar/launch &

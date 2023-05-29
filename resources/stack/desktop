@@ -932,11 +932,11 @@ scale_tablet () {
   xsetwacom --set "${name}" area "${area}" &> /dev/null
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to scale tablet's area"
+    echo "Unable to scale tablet ${name}"
     return 2
   fi
 
-  echo "Tablet's area scaled by ${scale}"
+  echo "Tablet ${name} scaled by ${scale}"
 
   # Save tablet's scale factor into settings file
   local settings='{}'
@@ -1071,22 +1071,22 @@ map_tablet () {
   xsetwacom --set "${name}" area "${area}" &> /dev/null
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to map tablet to ${display}"
+    echo "Failed to map tablet ${name}"
     return 2
   fi
 
-  echo "Tablet mapped to ${display}"
+  echo "Tablet ${name} mapped to ${display}"
 }
 
-# Applies the pointer settings being set
-# in the settings file.
+# Applies the pointer settings being set in the
+# settings file.
 # Globals:
 #  SETTINGS_FILE
 # Arguments:
 #  None
 init_pointer () {
   if [[ ! -f "${SETTINGS_FILE}" ]]; then
-    echo "No desktop settings found"
+    echo "No pointer settings found"
     return 0
   fi
 
@@ -1094,7 +1094,7 @@ init_pointer () {
   pointer="$(jq '.pointer|if . then . else empty end' "${SETTINGS_FILE}")"
 
   if [[ -z "${pointer}" ]]; then
-    echo "No pointer setting found"
+    echo "No pointer settings found"
     return 0
   fi
 
@@ -1111,6 +1111,54 @@ init_pointer () {
   echo "Pointer speed has been set"
 }
 
+# Applies the settings for those tablets being stored
+# in the settings file.
+# Globals:
+#  SETTINGS_FILE
+# Arguments:
+#  None
+init_tablets () {
+  if [[ ! -f "${SETTINGS_FILE}" ]]; then
+    echo "No tablets settings found"
+    return 0
+  fi
+
+  local tablets=''
+  tablets="$(jq '.tablets|if . then . else empty end' "${SETTINGS_FILE}")"
+
+  if [[ -z "${tablets}" ]]; then
+    echo "No tablets settings found"
+    return 0
+  fi
+
+  local output=''
+  output="$(find_outputs "primary" | jq -cer '.[0]|.device_name')" || return 1
+
+  tablets="$(echo "${tablets}" | jq -cr '.[]|{name, scale}')" || return 1
+
+  # Iterate over tablet commands and execute one by one
+  local failed='false'
+  local tablet=''
+
+  while read -r tablet; do
+    local name=''
+    name="$(get "${tablet}" '.name')"
+
+    local scale=1
+    scale="$(get "${tablet}" '.scale')"
+
+    scale_tablet "${name}" "${scale}" &&
+    map_tablet "${name}" "${output}" || failed='true'
+  done <<< "${tablets}"
+
+  if [[ "${failed}" == "true" ]]; then
+    echo "Failed to set all tablets"
+    return 2
+  fi
+
+  echo "Tablets have been set"
+}
+
 # Sets the desktop wallpaper to the wallpaper
 # being set in the settings file.
 # Globals:
@@ -1119,7 +1167,7 @@ init_pointer () {
 #  None
 init_wallpaper () {
   if [[ ! -f "${SETTINGS_FILE}" ]]; then
-    echo "No desktop settings found"
+    echo "No wallpaper settings found"
     return 0
   fi
 
@@ -1127,7 +1175,7 @@ init_wallpaper () {
   wallpaper="$(jq '.wallpaper|if . then . else empty end' "${SETTINGS_FILE}")"
 
   if [[ -z "${wallpaper}" ]]; then
-    echo "No wallpaper setting found"
+    echo "No wallpaper settings found"
     return 0
   fi
 
@@ -1165,8 +1213,9 @@ show_help () {
     printf " %-16s %s\n" \
       "help" "Show this help message." \
       "" "" \
-      "init pointer" "Set pointer's stored settings." \
-      "init wallpaper" "Set the desktop's stored wallpaper."
+      "init pointer" "Apply pointer stored settings." \
+      "init tablets" "Apply tablets stored settings" \
+      "init wallpaper" "Set the desktop stored wallpaper."
 
     return 0
   fi
@@ -1270,6 +1319,7 @@ once () {
     "init")
       case "${2}" in
         "pointer") init_pointer || abort;;
+        "tablets") init_tablets || abort;;
         "wallpaper") init_wallpaper || abort;;
         *) abort "Invalid or unknown command";;
       esac;;
