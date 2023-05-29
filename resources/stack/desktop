@@ -1107,7 +1107,7 @@ show_help () {
     "" "" \
     "set wallpaper [<name> [<mode>]]" "Set the desktop wallpaper in center" \
     "" "fill, scale, max or tile mode." \
-    "set pointer speed [<factor>]" "Set the pointer's speed to a factor between" \
+    "speed pointer [<factor>]" "Set the pointer's speed to a factor between" \
     "" "[0, 1] where 0 means slow and 1 fast." \
     "scale tablet [<name> [<factor>]]" "Scale down the area of a tablet (e.g. 0.5)" \
     "" "or use factor 1 to reset scaling." \
@@ -1149,11 +1149,11 @@ loop () {
       "set")
         case "${cmd[1]}" in
           "wallpaper") set_wallpaper "${cmd[2]}" "${cmd[3]}";;
-          "pointer")
-            case "${cmd[2]}" in
-              "speed") set_pointer_speed "${cmd[3]}";;
-              *) echo "Invalid or unknown command";;
-            esac;;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "speed")
+        case "${cmd[1]}" in
+          "pointer") set_pointer_speed "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       "scale")
