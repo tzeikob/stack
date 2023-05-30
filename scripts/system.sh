@@ -188,7 +188,7 @@ install_packages () {
     man-db man-pages texinfo cups cups-pdf cups-filters usbutils bluez bluez-utils unzip terminus-font \
     vim nano git tree arch-audit atool zip xz unace p7zip gzip lzop feh \
     bzip2 unrar dialog inetutils dnsutils openssh nfs-utils openbsd-netcat ipset \
-    neofetch age imagemagick gpick fuse2 rclone smartmontools glib2 jq jc sequoia-sq \
+    neofetch age imagemagick gpick fuse2 rclone smartmontools glib2 jq jc sequoia-sq xf86-input-wacom bc \
     $([ "$UEFI" = "yes" ] && echo 'efibootmgr') || exit 1
 
   echo -e "\nReplacing iptables with nft tables..."
@@ -325,6 +325,16 @@ install_utilities () {
   echo 'displays restore layout || notify-send "Failed to load displays layout"' >> ~/.xinitrc
   echo 'displays restore colors || notify-send "Failed to load some color profiles"' >> ~/.xinitrc
   echo 'cloud mount remotes || notify-send "Failed to mount some cloud remotes"' >> ~/.xinitrc
+
+  local services_home="/home/${USERNAME}/systemd/user"
+  mkdir -p "${services_home}"
+  cp ~/stack/resources/stack/services/init-pointer.service "${services_home}"
+  cp ~/stack/resources/stack/services/init-tablets.service "${services_home}"
+  chown -R "$USERNAME":"$USERNAME" "${services_home}"
+
+  local rules_home='/etc/udev/rules.d'
+  cp ~/stack/resources/stack/rules/97-init-pointer.service "${rules_home}"
+  cp ~/stack/resources/stack/rules/98-init-tablets.service "${rules_home}"
 
   echo "Stack utilities have been installed"
 }

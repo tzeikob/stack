@@ -1294,7 +1294,7 @@ show_help () {
     "" "" \
     "up connection [<name>]" "Enable a connection." \
     "down connection [<name>]" "Disable a connection." \
-    "add connection <eth|wifi|vpn>" "Add an ethernet, wifi or vpn connection." \
+    "add connection eth|wifi|vpn" "Add an ethernet, wifi or vpn connection." \
     "remove connection [<name>]" "Remove a connection." \
     "" "" \
     "add proxy <name>" "Add a new proxy server profile." \
