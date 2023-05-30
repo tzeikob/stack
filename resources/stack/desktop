@@ -569,11 +569,13 @@ list_wallpapers () {
 # Globals:
 #  REPLY, WALLPAPERS_HOME, SETTINGS_FILE, CONFIG_HOME
 # Arguments:
-#  name: the filename of the wallpaper
-#  mode: center, fill, max, scale or tile
+#  name:    the filename of the wallpaper
+#  mode:    center, fill, max, scale or tile
+#  persist: save or nosave, default is save
 set_wallpaper () {
   local name="${1}"
   local mode="${2}"
+  local persist="${3:-"save"}"
 
   if [[ -z "${name}" ]]; then
     pick_wallpaper || return $?
@@ -624,17 +626,19 @@ set_wallpaper () {
   echo "Wallpaper has been set to ${name}"
 
   # Save wallpaper into settings file
-  local settings='{}'
-  local wallpaper="{\"name\": \"${name}\", \"mode\": \"${mode}\"}"
+  if [[ "${persist}" == "save" ]]; then
+    local settings='{}'
+    local wallpaper="{\"name\": \"${name}\", \"mode\": \"${mode}\"}"
 
-  if [[ -f "${SETTINGS_FILE}" ]]; then
-    settings="$(jq -e ".wallpaper = ${wallpaper} " "${SETTINGS_FILE}")" || return 1
-  else
-    settings="$(echo "{\"wallpaper\": ${wallpaper}}" | jq -e '.')" || return 1
+    if [[ -f "${SETTINGS_FILE}" ]]; then
+      settings="$(jq -e ".wallpaper = ${wallpaper} " "${SETTINGS_FILE}")" || return 1
+    else
+      settings="$(echo "{\"wallpaper\": ${wallpaper}}" | jq -e '.')" || return 1
+    fi
+
+    mkdir -p "${CONFIG_HOME}"
+    echo "${settings}" > "${SETTINGS_FILE}"
   fi
-
-  mkdir -p "${CONFIG_HOME}"
-  echo "${settings}" > "${SETTINGS_FILE}"
 }
 
 # Show the data of the pointing device with the
@@ -711,9 +715,11 @@ list_pointers () {
 # Globals:
 #  REPLY
 # Arguments:
-#  factor: a speed factor between [0, 1]
+#  factor:  a speed factor between [0, 1]
+#  persist: save or nosave, default is save
 set_pointer_speed () {
   local factor="${1}"
+  local persist="${2:-"save"}"
 
   if [[ -z "${factor}" ]]; then
     ask "Enter the speed factor [0,1]:" "^[0-9]+\.?[0-9]*$" || return $?
@@ -779,17 +785,19 @@ set_pointer_speed () {
   echo "Pointer speed set to ${factor}"
 
   # Save factor into settings file
-  local settings='{}'
-  local pointer="{\"speed\": \"${factor}\"}"
+  if [[ "${persist}" == "save" ]]; then
+    local settings='{}'
+    local pointer="{\"speed\": \"${factor}\"}"
 
-  if [[ -f "${SETTINGS_FILE}" ]]; then
-    settings="$(jq -e ".pointer = ${pointer} " "${SETTINGS_FILE}")" || return 1
-  else
-    settings="$(echo "{\"pointer\": ${pointer}}" | jq -e '.')" || return 1
+    if [[ -f "${SETTINGS_FILE}" ]]; then
+      settings="$(jq -e ".pointer = ${pointer} " "${SETTINGS_FILE}")" || return 1
+    else
+      settings="$(echo "{\"pointer\": ${pointer}}" | jq -e '.')" || return 1
+    fi
+
+    mkdir -p "${CONFIG_HOME}"
+    echo "${settings}" > "${SETTINGS_FILE}"
   fi
-
-  mkdir -p "${CONFIG_HOME}"
-  echo "${settings}" > "${SETTINGS_FILE}"
 }
 
 # Show the data of the tablet device with the
@@ -874,11 +882,13 @@ list_tablets () {
 # Globals:
 #  REPLY
 # Arguments:
-#  name:  the name of a tablet device
-#  scale: the scale factor [0.1-1]
+#  name:    the name of a tablet device
+#  scale:   the scale factor [0.1-1]
+#  persist: save or nosave, default is save
 scale_tablet () {
   local name="${1}"
   local scale="${2}"
+  local persist="${3:-"save"}"
 
   if [[ -z "${name}" ]]; then
     pick_tablet || return $?
@@ -939,36 +949,38 @@ scale_tablet () {
   echo "Tablet ${name} scaled by ${scale}"
 
   # Save tablet's scale factor into settings file
-  local settings='{}'
-  local tablet="{\"name\": \"${name}\", \"scale\": \"${scale}\"}"
+  if [[ "${persist}" == "save" ]]; then
+    local settings='{}'
+    local tablet="{\"name\": \"${name}\", \"scale\": \"${scale}\"}"
 
-  if [[ -f "${SETTINGS_FILE}" ]]; then
-    local tablets=''
-    tablets="$(jq '.tablets|if . then . else empty end' "${SETTINGS_FILE}")"
+    if [[ -f "${SETTINGS_FILE}" ]]; then
+      local tablets=''
+      tablets="$(jq '.tablets|if . then . else empty end' "${SETTINGS_FILE}")"
 
-    if [[ -n "${tablets}" ]]; then
-      local query=''
-      query=".tablets[]|select(.name == \"${name}\")"
+      if [[ -n "${tablets}" ]]; then
+        local query=''
+        query=".tablets[]|select(.name == \"${name}\")"
 
-      local exists=''
-      exists="$(jq "${query}" "${SETTINGS_FILE}")"
+        local exists=''
+        exists="$(jq "${query}" "${SETTINGS_FILE}")"
 
-      if [[ -n "${exists}" ]]; then
-        query="(${query}|.scale)|= ${scale}"
+        if [[ -n "${exists}" ]]; then
+          query="(${query}|.scale)|= ${scale}"
+        else
+          query=".tablets += [${tablet}]"
+        fi
+
+        settings="$(jq -e "${query}" "${SETTINGS_FILE}")" || return 1
       else
-        query=".tablets += [${tablet}]"
+        settings="$(jq -e ".tablets = [${tablet}] " "${SETTINGS_FILE}")" || return 1
       fi
-
-      settings="$(jq -e "${query}" "${SETTINGS_FILE}")" || return 1
     else
-      settings="$(jq -e ".tablets = [${tablet}] " "${SETTINGS_FILE}")" || return 1
+      settings="$(echo "{\"tablets\": [${tablet}]}" | jq -e '.')" || return 1
     fi
-  else
-    settings="$(echo "{\"tablets\": [${tablet}]}" | jq -e '.')" || return 1
-  fi
 
-  mkdir -p "${CONFIG_HOME}"
-  echo "${settings}" > "${SETTINGS_FILE}"
+    mkdir -p "${CONFIG_HOME}"
+    echo "${settings}" > "${SETTINGS_FILE}"
+  fi
 }
 
 # Maps the area of the tablet with the given name
@@ -1101,7 +1113,7 @@ init_pointer () {
   local speed=''
   speed="$(get "${pointer}" '.speed')" || return 1
 
-  set_pointer_speed "${speed}"
+  set_pointer_speed "${speed}" "nosave"
 
   if [[ $? -ne 0 ]]; then
     echo "Failed to set pointer speed"
@@ -1147,7 +1159,7 @@ init_tablets () {
     local scale=1
     scale="$(get "${tablet}" '.scale')"
 
-    scale_tablet "${name}" "${scale}" &&
+    scale_tablet "${name}" "${scale}" "nosave" &&
     map_tablet "${name}" "${output}" || failed='true'
   done <<< "${tablets}"
 
@@ -1190,7 +1202,7 @@ init_wallpaper () {
   local mode=''
   mode="$(get "${wallpaper}" '.mode')" || return 1
 
-  set_wallpaper "${name}" "${mode:-"center"}"
+  set_wallpaper "${name}" "${mode:-"center"}" "nosave"
 
   if [[ $? -ne 0 ]]; then
     echo "Failed to set the wallpaper"
