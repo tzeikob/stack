@@ -326,6 +326,16 @@ install_utilities () {
   echo 'displays restore colors || notify-send "Failed to load some color profiles"' >> ~/.xinitrc
   echo 'cloud mount remotes || notify-send "Failed to mount some cloud remotes"' >> ~/.xinitrc
 
+  local services_home="/home/${USERNAME}/systemd/user"
+  mkdir -p "${services_home}"
+  cp ~/stack/resources/stack/services/init-pointer.service "${services_home}"
+  cp ~/stack/resources/stack/services/init-tablets.service "${services_home}"
+  chown -R "$USERNAME":"$USERNAME" "${services_home}"
+
+  local rules_home='/etc/udev/rules.d'
+  cp ~/stack/resources/stack/rules/97-init-pointer.service "${rules_home}"
+  cp ~/stack/resources/stack/rules/98-init-tablets.service "${rules_home}"
+
   echo "Stack utilities have been installed"
 }
 

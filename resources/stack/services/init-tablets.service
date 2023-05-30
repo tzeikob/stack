@@ -1,0 +1,9 @@
+[Unit]
+Description=service to initialize plugged-in tablets settings
+
+[Service]
+Type=simple
+ExecStart=/opt/stack/desktop init tablets
+
+[Install]
+WantedBy=default.target

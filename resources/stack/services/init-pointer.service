@@ -1,0 +1,9 @@
+[Unit]
+Description=service to initialize the desktop's pointer settings
+
+[Service]
+Type=simple
+ExecStart=/opt/stack/desktop init pointer
+
+[Install]
+WantedBy=default.target
