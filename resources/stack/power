@@ -1,0 +1,103 @@
+#!/bin/bash
+
+set -o pipefail
+source /opt/stack/utils
+
+# Finds the ac power adapter data.
+# Arguments:
+#  None
+# Outputs:
+#  A json object of ac power data.
+find_adapter () {
+  acpi -a | jc --acpi | jq -cer '.[0]' || return 1
+}
+
+# Shows a prompt status and asks user to enter the
+# next command, which is kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  None
+# Outputs:
+#  A minimal prompt status line.
+prompt () {
+  local query=''
+  query+='."on-line"|if . then "ac" else "battery" end'
+
+  local status=''
+  status="$(find_adapter | jq -cer "${query}")"
+
+  if [[ $? -ne 0 ]]; then
+    status='none'
+  fi
+
+  read -rep "[power:${status}] " REPLY
+}
+
+# Shows the current status of the system's power.
+# Arguments:
+#  None
+# Outputs:
+#  A verbose list of text data.
+show_status () {
+  local status='Nothing to show'
+
+  echo "${status}"
+}
+
+# Shows the help message.
+# Arguments:
+#  None
+# Outputs:
+#  A long help message.
+show_help () {
+  echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
+
+  echo -e "\nCOMMANDS"
+  printf " %-36s %s\n" \
+    "help" "Show this help message." \
+    "" "" \
+    "show status" "Show the status of the system power."
+}
+
+loop () {
+  clear
+
+  while true; do
+    prompt && history -s "${REPLY}"
+
+    set -f
+    set_separator "line"
+    local cmd=($(xargs -n1 <<< "${REPLY}"))
+    restore_separator && set +f
+
+    if [[ "${cmd[0]}" == "help" ]]; then
+      show_help
+      continue
+    elif [[ "${cmd[0]}" == "clear" ]]; then
+      clear
+      continue
+    elif [[ "${cmd[0]}" == "quit" ]]; then
+      break
+    elif [[ -z "${cmd[0]}" ]]; then
+      continue
+    fi
+
+    case "${cmd[0]}" in
+      "show")
+        case "${cmd[1]}" in
+          "status") show_status;;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      *) echo "Invalid or unknown command";; 
+    esac
+    
+    if [[ $? -eq 1 ]]; then
+      echo "An unknown error has occurred"
+    fi
+  done
+
+  clear
+}
+
+loop
