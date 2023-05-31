@@ -12,6 +12,18 @@ find_adapter () {
   acpi -a | jc --acpi | jq -cer '.[0]' || return 1
 }
 
+# Finds the battery power data.
+# Arguments:
+#  None
+# Outputs:
+#  A json object of battery power data.
+find_battery () {
+  local query=''
+  query+='if length > 0 then .[0] else "" end'
+
+  acpi -b -i | jc --acpi | jq -cer "${query}" || return 1
+}
+
 # Shows a prompt status and asks user to enter the
 # next command, which is kept in the global var REPLY.
 # Globals:
@@ -40,9 +52,26 @@ prompt () {
 # Outputs:
 #  A verbose list of text data.
 show_status () {
-  local status='Nothing to show'
+  local query=''
+  query+='"Adapter:   \(."on-line"|if . then "on" else "off" end)"'
 
-  echo "${status}"
+  find_adapter | jq -cer "${query}" || return 1
+
+  local battery=''
+  battery="$(find_battery)" || return 1
+
+  if [[ -n "${battery}" ]]; then
+    local query=''
+    query+='Battery:   yes\n'
+    query+='State:     \(.state|ascii_downcase)\n'
+    query+='Charge:    \(.charge_percent)%\n'
+    query+="Capacity:  \(.design_capacity_mah)mAh"
+    query="\"${query}\""
+
+    echo "${battery}" | jq -cer "${query}" || return 1
+  else
+    echo "Battery:   no"
+  fi
 }
 
 # Shows the help message.
