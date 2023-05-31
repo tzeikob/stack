@@ -34,7 +34,7 @@ find_battery () {
 #  A minimal prompt status line.
 prompt () {
   local query=''
-  query+='."on-line"|if . then "ac" else "battery" end'
+  query+='."on-line"|if . then "adapter" else "battery" end'
 
   local status=''
   status="$(find_adapter | jq -cer "${query}")"
