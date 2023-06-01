@@ -3,8 +3,6 @@
 set -o pipefail
 source /opt/stack/utils
 
-LOGIND_CONFIG_FILE='/etc/systemd/logind.conf'
-
 # Finds the ac power adapter data.
 # Arguments:
 #  None
@@ -75,6 +73,13 @@ show_status () {
     echo "Battery:   no"
   fi
 
+  local config_file='/etc/systemd/logind.conf.d/logind.conf'
+
+  # Fallback to the default logind config file
+  if [[ ! -f "${config_file}" ]]; then
+    config_file="/etc/systemd/logind.conf"
+  fi
+
   echo ""
 
   local options=(
@@ -82,7 +87,7 @@ show_status () {
     HandleLidSwitch HandleLidSwitchExternalPower HandleLidSwitchDocked
   )
 
-  local labels=('Power Button' 'Reboot Button' 'Suspend Button' 'Lid Down' 'Lid Powered' 'Lid Docked')
+  local labels=('Power' 'Reboot' 'Suspend' 'Lid Down' 'Lid Powered' 'Lid Docked')
 
   local index=0
   for ((index=0; index<${#options[@]}; index++)) do
@@ -90,16 +95,16 @@ show_status () {
     local label="${labels[index]}"
 
     # Read the next option value if set
-    grep -E "^${option}=.*" "${LOGIND_CONFIG_FILE}" | awk -v "label=${label}" '{
+    grep -E "^${option}=.*" "${config_file}" | awk -v "label=${label}" '{
       match($0, /.*=(.*)/ ,a)
-      printf  "%-15s  %s\n", label":", a[1]
+      printf  "%-12s  %s\n", label":", a[1]
     }'
 
     # Otherwise read its default value
     if [[ $? -ne 0 ]]; then
-      grep -E "^#${option}=.*" "${LOGIND_CONFIG_FILE}" | awk -v "label=${label}" '{
+      grep -E "^#${option}=.*" "${config_file}" | awk -v "label=${label}" '{
         match($0, /.*=(.*)/ ,a)
-        printf  "%-15s  %s\n", label":", a[1]
+        printf  "%-12s  %s\n", label":", a[1]
       }'
     fi
   done
@@ -166,10 +171,18 @@ set_action () {
     option='HandleLidSwitchDocked'
   fi
 
-  if grep -qE "^${option}=" "${LOGIND_CONFIG_FILE}"; then
-    sudo sed -i "s/\(${option}=\).*/\1${action}/" "${LOGIND_CONFIG_FILE}"
+  local config_file='/etc/systemd/logind.conf.d/logind.conf'
+
+  # Copy the default config file if not yet created
+  if [[ ! -f "${config_file}" ]]; then
+    sudo mkdir -p /etc/systemd/logind.conf.d
+    sudo cp /etc/systemd/logind.conf "${config_file}"
+  fi
+
+  if grep -qE "^${option}=" "${config_file}"; then
+    sudo sed -i "s/\(${option}=\).*/\1${action}/" "${config_file}"
   else
-    echo "${option}=${action}" | sudo tee -a "${LOGIND_CONFIG_FILE}" > /dev/null
+    echo "${option}=${action}" | sudo tee -a "${config_file}" > /dev/null
   fi
 
   systemctl kill -s HUP systemd-logind
@@ -182,16 +195,23 @@ set_action () {
   echo "Action ${handler} set to ${action}"
 }
 
-# Resets the action of all power handers.
+# Resets the action of all power handlers.
 # Arguments:
 #  None
 reset_actions () {
-  sudo sed -i "/^HandlePowerKey=.*/d" "${LOGIND_CONFIG_FILE}"
-  sudo sed -i "/^HandleRebootKey=.*/d" "${LOGIND_CONFIG_FILE}"
-  sudo sed -i "/^HandleSuspendKey=.*/d" "${LOGIND_CONFIG_FILE}"
-  sudo sed -i "/^HandleLidSwitch=.*/d" "${LOGIND_CONFIG_FILE}"
-  sudo sed -i "/^HandleLidSwitchExternalPower=.*/d" "${LOGIND_CONFIG_FILE}"
-  sudo sed -i "/^HandleLidSwitchDocked=.*/d" "${LOGIND_CONFIG_FILE}"
+  local config_file='/etc/systemd/logind.conf.d/logind.conf'
+
+  if [[ ! -f "${config_file}" ]]; then
+    echo "Power actions are already set to defaults"
+    return 0
+  fi
+
+  sudo sed -i "/^HandlePowerKey=.*/d" "${config_file}"
+  sudo sed -i "/^HandleRebootKey=.*/d" "${config_file}"
+  sudo sed -i "/^HandleSuspendKey=.*/d" "${config_file}"
+  sudo sed -i "/^HandleLidSwitch=.*/d" "${config_file}"
+  sudo sed -i "/^HandleLidSwitchExternalPower=.*/d" "${config_file}"
+  sudo sed -i "/^HandleLidSwitchDocked=.*/d" "${config_file}"
 
   systemctl kill -s HUP systemd-logind
 
