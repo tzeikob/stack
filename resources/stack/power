@@ -153,6 +153,29 @@ set_action () {
   echo "Action ${handler} set to ${action}"
 }
 
+# Resets the action of all power handers.
+# Arguments:
+#  None
+reset_actions () {
+  local config_file='/etc/systemd/logind.conf'
+
+  sudo sed -i "/^HandlePowerKey=.*/d" "${config_file}"
+  sudo sed -i "/^HandleRebootKey=.*/d" "${config_file}"
+  sudo sed -i "/^HandleSuspendKey=.*/d" "${config_file}"
+  sudo sed -i "/^HandleLidSwitch=.*/d" "${config_file}"
+  sudo sed -i "/^HandleLidSwitchExternalPower=.*/d" "${config_file}"
+  sudo sed -i "/^HandleLidSwitchDocked=.*/d" "${config_file}"
+
+  systemctl kill -s HUP systemd-logind
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to reset power actions"
+    return 2
+  fi
+
+  echo "Power actions have been reset"
+}
+
 # Shows the help message.
 # Arguments:
 #  None
@@ -168,7 +191,8 @@ show_help () {
     "show status" "Show the status of the system power." \
     "" "" \
     "set action [<handler> [<action>]]" "Set the action of a power handler to" \
-    "" "poweroff, reboot, suspend or ignore."
+    "" "poweroff, reboot, suspend or ignore." \
+    "reset actions" "Reset to default action for all power handlers."
 }
 
 loop () {
@@ -203,6 +227,11 @@ loop () {
       "set")
         case "${cmd[1]}" in
           "action") set_action "${cmd[2]}" "${cmd[3]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "reset")
+        case "${cmd[1]}" in
+          "actions") reset_actions;;
           *) echo "Invalid or unknown command";;
         esac;;
       *) echo "Invalid or unknown command";; 
