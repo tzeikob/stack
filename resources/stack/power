@@ -64,8 +64,8 @@ show_status () {
     local query=''
     query+='Battery:   yes\n'
     query+='State:     \(.state|ascii_downcase)\n'
-    query+='Charge:    \(.charge_percent)%\n'
-    query+="Capacity:  \(.design_capacity_mah)mAh"
+    query+='Charge:    \(.charge_percent)%'
+    query+="\(.design_capacity_mah|if . then \"\nCapacity:  \(.)mAh\" else \"\" end)"
     query="\"${query}\""
 
     echo "${battery}" | jq -cer "${query}" || return 1
