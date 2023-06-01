@@ -74,6 +74,85 @@ show_status () {
   fi
 }
 
+# Sets the action of the hander with the given name.
+# Globals:
+#  REPLY
+# Arguments:
+#  handler: power, reboot, suspend, lid, lid-powered or lid-docked
+#  action:  poweroff, reboot, suspend or ignore
+set_action () {
+  local handler="${1}"
+  local action="${2}"
+
+  if [[ -z "${handler}" ]]; then
+    local handlers=''
+    handlers+='{"key":"power", "value":"power"},'
+    handlers+='{"key":"reboot", "value":"reboot"},'
+    handlers+='{"key":"suspend", "value":"suspend"},'
+    handlers+='{"key":"lid", "value":"lid"},'
+    handlers+='{"key":"lid-powered", "value":"lid-powered"},'
+    handlers+='{"key":"lid-docked", "value":"lid-docked"}'
+    handlers="[${handlers}]"
+
+    pick_one "Select a power handler:" "${handlers}" "vertical" || return $?
+    [[ -n "${REPLY}" ]] && handler="${REPLY}" || return 0
+  fi
+
+  if [[ ! "${handler}" =~ ^(power|reboot|suspend|lid|lid-powered|lid-docked)$ ]]; then
+    echo "Invalid power handler"
+    return 2
+  fi
+
+  if [[ -z "${action}" ]]; then
+    local actions=''
+    actions+='{"key":"poweroff", "value":"poweroff"},'
+    actions+='{"key":"reboot", "value":"reboot"},'
+    actions+='{"key":"suspend", "value":"suspend"},'
+    actions+='{"key":"ignore", "value":"ignore"}'
+    actions="[${actions}]"
+
+    pick_one "Select an action:" "${actions}" "vertical" || return $?
+    [[ -n "${REPLY}" ]] && action="${REPLY}" || return 0
+  fi
+
+  if [[ ! "${action}" =~ ^(poweroff|reboot|suspend|ignore)$ ]]; then
+    echo "Invalid power action"
+    return 2
+  fi
+
+  local option=''
+  if [[ "${handler}" == "power" ]]; then
+    option='HandlePowerKey'
+  elif [[ "${handler}" == "reboot" ]]; then
+    option='HandleRebootKey'
+  elif [[ "${handler}" == "suspend" ]]; then
+    option='HandleSuspendKey'
+  elif [[ "${handler}" == "lid" ]]; then
+    option='HandleLidSwitch'
+  elif [[ "${handler}" == "lid-powered" ]]; then
+    option='HandleLidSwitchExternalPower'
+  else
+    option='HandleLidSwitchDocked'
+  fi
+
+  local config_file='/etc/systemd/logind.conf'
+
+  if grep -qE "^${option}=" "${config_file}"; then
+    sudo sed -i "s/\(${option}=\).*/\1${action}/" "${config_file}"
+  else
+    echo "${option}=${action}" | sudo tee -a "${config_file}" > /dev/null
+  fi
+
+  systemctl kill -s HUP systemd-logind
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to set ${handler} action"
+    return 2
+  fi
+
+  echo "Action ${handler} set to ${action}"
+}
+
 # Shows the help message.
 # Arguments:
 #  None
@@ -86,7 +165,10 @@ show_help () {
   printf " %-36s %s\n" \
     "help" "Show this help message." \
     "" "" \
-    "show status" "Show the status of the system power."
+    "show status" "Show the status of the system power." \
+    "" "" \
+    "set action [<handler> [<action>]]" "Set the action of a power handler to" \
+    "" "poweroff, reboot, suspend or ignore."
 }
 
 loop () {
@@ -116,6 +198,11 @@ loop () {
       "show")
         case "${cmd[1]}" in
           "status") show_status;;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "set")
+        case "${cmd[1]}" in
+          "action") set_action "${cmd[2]}" "${cmd[3]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       *) echo "Invalid or unknown command";; 
