@@ -3,6 +3,8 @@
 set -o pipefail
 source /opt/stack/utils
 
+SETTINGS_FILE="${CONFIG_HOME}/power.json"
+
 # Finds the ac power adapter data.
 # Arguments:
 #  None
@@ -223,12 +225,104 @@ reset_actions () {
   echo "Power actions have been reset"
 }
 
-# Shows the help message.
+# Sets the interval time of the screen locker, where
+# 0 means deactivate the locker.
+# Arguments:
+#  mins:    an integer interval in mins or 0
+#  persist: save or nosave, default is save
+set_locker () {
+  local mins="${1}"
+  local persist="${2:-"save"}"
+
+  if [[ -z "${mins}" ]]; then
+    echo "Missing the interval time"
+    return 2
+  elif [[ ! "${mins}" =~ ^[0-9]{,2}$ ]]; then
+    echo "Invalid interval time"
+    return 2
+  elif [[ ${mins} -lt 0 ]] || [[ ${mins} -gt 60 ]]; then
+    echo "Interval time out of range [0,60]"
+    return 2
+  fi
+
+  # Exit possibly running locker instance
+  xautolock -exit &> /dev/null
+  sleep 1
+
+  if [[ ${mins} -gt 0 ]]; then
+    xautolock -locker slock -nowlocker slock -time "${mins}" -corners 0-00 -detectsleep &
+    echo "Screen locker set to ${mins} mins"
+  else
+    echo "Screen locker has been disabled"
+  fi
+
+  # Save locker interval into settings file
+  if [[ "${persist}" == "save" ]]; then
+    local settings='{}'
+    local locker="{\"interval\": \"${mins}\"}"
+
+    if [[ -f "${SETTINGS_FILE}" ]]; then
+      settings="$(jq -e ".locker = ${locker} " "${SETTINGS_FILE}")" || return 1
+    else
+      settings="$(echo "{\"locker\": ${locker}}" | jq -e '.')" || return 1
+    fi
+
+    mkdir -p "${CONFIG_HOME}"
+    echo "${settings}" > "${SETTINGS_FILE}"
+  fi
+}
+
+# Initializes the screen locker to settings being set
+# in the settings file.
+# Globals:
+#  SETTINGS_FILE
 # Arguments:
 #  None
+init_locker () {
+  if [[ ! -f "${SETTINGS_FILE}" ]]; then
+    echo "No locker settings found"
+    return 0
+  fi
+
+  local locker=''
+  locker="$(jq '.locker|if . then . else empty end' "${SETTINGS_FILE}")"
+
+  if [[ -z "${locker}" ]]; then
+    echo "No locker settings found"
+    return 0
+  fi
+
+  local interval=''
+  interval="$(get "${locker}" '.interval')" || return 1
+
+  set_locker "${interval}" "nosave"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to set locker"
+    return 2
+  fi
+
+  echo "Locker has been set"
+}
+
+# Shows the help message.
+# Arguments:
+#  mode: once or none
 # Outputs:
 #  A long help message.
 show_help () {
+  if [[ "${1}" == "once" ]]; then
+    echo "Usage: power COMMAND [OBJECT] [ARGUMENTS]..."
+
+    echo -e "\nCOMMANDS"
+    printf " %-16s %s\n" \
+      "help" "Show this help message." \
+      "" "" \
+      "init locker" "Initialize the screen locker."
+
+    return 0
+  fi
+
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
   echo -e "\nCOMMANDS"
@@ -239,7 +333,10 @@ show_help () {
     "" "" \
     "set action [<handler> [<action>]]" "Set the action of a power handler to" \
     "" "poweroff, reboot, suspend or ignore." \
-    "reset actions" "Reset to default action for all power handlers."
+    "reset actions" "Reset to default action for all power handlers." \
+    "" "" \
+    "set locker <mins>" "Set the interval of the screen locker," \
+    "" "where 0 means deactivate the locker."
 }
 
 loop () {
@@ -274,6 +371,7 @@ loop () {
       "set")
         case "${cmd[1]}" in
           "action") set_action "${cmd[2]}" "${cmd[3]}";;
+          "locker") set_locker "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       "reset")
@@ -292,4 +390,24 @@ loop () {
   clear
 }
 
-loop
+once () {
+  case "${1}" in
+    "help") show_help "once";;
+    "init")
+      case "${2}" in
+        "locker") init_locker || abort;;
+        *) abort "Invalid or unknown command";;
+      esac;;
+    *) abort "Invalid or unknown command";;
+  esac
+
+  if [[ $? -ne 0 ]]; then
+    abort
+  fi
+}
+
+if [[ $# -eq 0 ]]; then
+  loop
+else
+  once "$@"
+fi
