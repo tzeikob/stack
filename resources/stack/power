@@ -305,6 +305,36 @@ init_locker () {
   echo "Locker has been set"
 }
 
+# Enables the current running instance of the
+# screen locker.
+# Arguments:
+#  None
+enable_locker () {
+  xautolock -enable &> /dev/null
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to enable screen locker"
+    return 2
+  fi
+
+  echo "Screen locker has been enabled"
+}
+
+# Disables the current running instance of the
+# screen locker.
+# Arguments:
+#  None
+disable_locker () {
+  xautolock -disable &> /dev/null
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to disable screen locker"
+    return 2
+  fi
+
+  echo "Screen locker has been disabled"
+}
+
 # Shows the help message.
 # Arguments:
 #  mode: once or none
@@ -318,7 +348,9 @@ show_help () {
     printf " %-16s %s\n" \
       "help" "Show this help message." \
       "" "" \
-      "init locker" "Initialize the screen locker."
+      "init locker" "Initialize the screen locker." \
+      "enable locker" "Enable the screen locker." \
+      "disable locker" "Disable the screen locker."
 
     return 0
   fi
@@ -336,7 +368,9 @@ show_help () {
     "reset actions" "Reset to default action for all power handlers." \
     "" "" \
     "set locker <mins>" "Set the interval of the screen locker," \
-    "" "where 0 means deactivate the locker."
+    "" "where 0 means deactivate the locker." \
+    "enable locker" "Enable the screen locker." \
+    "disable locker" "Disable the screen locker."
 }
 
 loop () {
@@ -379,6 +413,16 @@ loop () {
           "actions") reset_actions;;
           *) echo "Invalid or unknown command";;
         esac;;
+      "enable")
+        case "${cmd[1]}" in
+          "locker") enable_locker;;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "disable")
+        case "${cmd[1]}" in
+          "locker") disable_locker;;
+          *) echo "Invalid or unknown command";;
+        esac;;
       *) echo "Invalid or unknown command";; 
     esac
     
@@ -396,6 +440,16 @@ once () {
     "init")
       case "${2}" in
         "locker") init_locker || abort;;
+        *) abort "Invalid or unknown command";;
+      esac;;
+    "enable")
+      case "${2}" in
+        "locker") enable_locker || abort;;
+        *) abort "Invalid or unknown command";;
+      esac;;
+    "disable")
+      case "${2}" in
+        "locker") disable_locker || abort;;
         *) abort "Invalid or unknown command";;
       esac;;
     *) abort "Invalid or unknown command";;
