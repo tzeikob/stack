@@ -345,10 +345,6 @@ install_utilities () {
   sed -i "s/\(.*=\)suspend.target/\1hibernate.target/" /etc/systemd/system/hibernate@.service
   systemctl enable hibernate@${USERNAME}.service
 
-  cp ~/stack/resources/stack/services/suspend.service /etc/systemd/system/sleep@.service
-  sed -i "s/\(.*=\)suspend.target/\1sleep.target/" /etc/systemd/system/sleep@.service
-  systemctl enable sleep@${USERNAME}.service
-
   cp ~/stack/resources/stack/services/suspend.service /etc/systemd/system/hybrid-sleep@.service
   sed -i "s/\(.*=\)suspend.target/\1hybrid-sleep.target/" /etc/systemd/system/hybrid-sleep@.service
   systemctl enable hybrid-sleep@${USERNAME}.service
