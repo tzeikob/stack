@@ -338,6 +338,25 @@ install_utilities () {
   cp ~/stack/resources/stack/rules/97-init-pointer.service "${rules_home}"
   cp ~/stack/resources/stack/rules/98-init-tablets.service "${rules_home}"
 
+  cp ~/stack/resources/stack/services/suspend.service /etc/systemd/system/suspend@.service
+  systemctl enable suspend@${USERNAME}.service
+
+  cp ~/stack/resources/stack/services/suspend.service /etc/systemd/system/hibernate@.service
+  sed -i "s/\(.*=\)suspend.target/\1hibernate.target/" /etc/systemd/system/hibernate@.service
+  systemctl enable hibernate@${USERNAME}.service
+
+  cp ~/stack/resources/stack/services/suspend.service /etc/systemd/system/sleep@.service
+  sed -i "s/\(.*=\)suspend.target/\1sleep.target/" /etc/systemd/system/sleep@.service
+  systemctl enable sleep@${USERNAME}.service
+
+  cp ~/stack/resources/stack/services/suspend.service /etc/systemd/system/hybrid-sleep@.service
+  sed -i "s/\(.*=\)suspend.target/\1hybrid-sleep.target/" /etc/systemd/system/hybrid-sleep@.service
+  systemctl enable hybrid-sleep@${USERNAME}.service
+
+  cp ~/stack/resources/stack/services/suspend.service /etc/systemd/system/suspend-then-hibernate@.service
+  sed -i "s/\(.*=\)suspend.target/\1suspend-then-hibernate.target/" /etc/systemd/system/suspend-then-hibernate@.service
+  systemctl enable suspend-then-hibernate@${USERNAME}.service
+
   echo "Stack utilities have been installed"
 }
 
