@@ -341,17 +341,22 @@ install_utilities () {
   cp ~/stack/resources/stack/services/suspend.service /etc/systemd/system/suspend@.service
   systemctl enable suspend@${USERNAME}.service
 
-  cp ~/stack/resources/stack/services/suspend.service /etc/systemd/system/hibernate@.service
-  sed -i "s/\(.*=\)suspend.target/\1hibernate.target/" /etc/systemd/system/hibernate@.service
-  systemctl enable hibernate@${USERNAME}.service
+  local logind_conf='/etc/systemd/logind.conf.d/logind.conf'
+  mkdir -p /etc/systemd/logind.conf.d
+  cp /etc/systemd/logind.conf "${logind_conf}"
 
-  cp ~/stack/resources/stack/services/suspend.service /etc/systemd/system/hybrid-sleep@.service
-  sed -i "s/\(.*=\)suspend.target/\1hybrid-sleep.target/" /etc/systemd/system/hybrid-sleep@.service
-  systemctl enable hybrid-sleep@${USERNAME}.service
+  echo "HandleHibernateKey=ignore" >> "${logind_conf}"
+  echo "HandleHibernateKeyLongPress=ignore" >> "${logind_conf}"
+  echo "HibernateKeyIgnoreInhibited=no" >> "${logind_conf}"
 
-  cp ~/stack/resources/stack/services/suspend.service /etc/systemd/system/suspend-then-hibernate@.service
-  sed -i "s/\(.*=\)suspend.target/\1suspend-then-hibernate.target/" /etc/systemd/system/suspend-then-hibernate@.service
-  systemctl enable suspend-then-hibernate@${USERNAME}.service
+  local sleep_conf='/etc/systemd/sleep.conf.d/sleep.conf'
+  mkdir -p /etc/systemd/sleep.conf.d
+  cp /etc/systemd/sleep.conf "${sleep_conf}"
+
+  echo "AllowSuspend=yes" >> "${sleep_conf}"
+  echo "AllowHibernation=no" >> "${sleep_conf}"
+  echo "AllowSuspendThenHibernate=no" >> "${sleep_conf}"
+  echo "AllowHybridSleep=no" >> "${sleep_conf}"
 
   echo "Stack utilities have been installed"
 }
