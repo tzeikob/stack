@@ -335,6 +335,86 @@ disable_locker () {
   echo "Screen locker has been disabled"
 }
 
+# Shuts the system power down.
+# Arguments:
+#  None
+shutdown_system () {
+  echo "Shutting down the system..."
+
+  systemctl poweroff
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to shutdown the system"
+    return 2
+  fi
+}
+
+# Reboots the system.
+# Arguments:
+#  None
+reboot_system () {
+  echo "Rebooting the system..."
+
+  systemctl reboot
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to reboot the system"
+    return 2
+  fi
+}
+
+# Sets system in suspend mode.
+# Arguments:
+#  None
+suspend_system () {
+  echo "System getting into suspend mode..."
+
+  systemctl suspend
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to suspend the system"
+    return 2
+  fi
+}
+
+# Sets system in hibernate mode.
+# Arguments:
+#  None
+hibernate_system () {
+  echo "System getting into hibernate mode..."
+
+  systemctl hibernate
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to hibernate the system"
+    return 2
+  fi
+}
+
+# Locks the screen.
+# Arguments:
+#  None
+lock_screen () {
+  xautolock -locknow
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to lock the screen"
+    return 2
+  fi
+}
+
+# Logs the user out, terminating the current xorg session.
+# Arguments:
+#  None
+logout_user () {
+  bspc quit
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to log the user out"
+    return 2
+  fi
+}
+
 # Shows the help message.
 # Arguments:
 #  mode: once or none
@@ -350,7 +430,14 @@ show_help () {
       "" "" \
       "init locker" "Initialize the screen locker." \
       "enable locker" "Enable the screen locker." \
-      "disable locker" "Disable the screen locker."
+      "disable locker" "Disable the screen locker." \
+      "" "" \
+      "shutdown" "Shut the system down." \
+      "reboot" "Reboot the system." \
+      "suspend" "Set system in suspend mode." \
+      "hibernate" "Set system in hibernate mode." \
+      "lock" "Lock the screen." \
+      "logout" "Log the user out."
 
     return 0
   fi
@@ -452,6 +539,12 @@ once () {
         "locker") disable_locker || abort;;
         *) abort "Invalid or unknown command";;
       esac;;
+    "shutdown") shutdown_system;;
+    "reboot") reboot_system;;
+    "suspend") suspend_system;;
+    "hibernate") hibernate_system;;
+    "lock") lock_screen;;
+    "logout") logout_user;;
     *) abort "Invalid or unknown command";;
   esac
 

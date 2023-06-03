@@ -1,12 +1,5 @@
 #!/usr/bin/env bash
 
-source /opt/stack/utils
-
-require "bspwm"
-require "slock"
-require "rofi"
-require "rofi-emoji" "xsel"
-
 show_apps_menu () {
   rofi -show drun
 }
@@ -26,19 +19,23 @@ show_emoji_menu () {
 show_power_menu () {
   local SD=" Shutdown"
   local RB=" Reboot"
-  local LO=" Logout"
+  local SP="  Suspend"
+  local HB="  Hibernate"
   local LK=" Lock"
+  local LO=" Logout"
 
   local HIDE_PROMT="inputbar {children: [entry];}"
-  local EXACT_LINES="listview {lines: 4;}"
+  local EXACT_LINES="listview {lines: 6;}"
 
-  local CHOSEN=$(printf "$SD\n$RB\n$LO\n$LK" | rofi -dmenu -i -theme-str "${HIDE_PROMT} ${EXACT_LINES}")
+  local CHOSEN=$(printf "$SD\n$RB\n$SP\n$HB\n$LK\n$LO" | rofi -dmenu -i -theme-str "${HIDE_PROMT} ${EXACT_LINES}")
 
   case "$CHOSEN" in
-    "$SD") shutdown now;;
-    "$RB") reboot;;
-    "$LO") bspc quit;;
-    "$LK") slock;;
+    "$SD") power shutdown;;
+    "$RB") power reboot;;
+    "$SP") power suspend;;
+    "$HB") power hibernate;;
+    "$LK") power lock;;
+    "$LO") power logout;;
     *) exit 1;;
   esac
 }
