@@ -103,7 +103,7 @@ show_status () {
   fi
 
   local options=(AllowSuspend AllowHibernation)
-  local labels=('Suspend' 'Hibernate')
+  local labels=(Suspend Hibernate)
 
   local index=0
   for ((index=0; index<${#options[@]}; index++)) do
