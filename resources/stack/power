@@ -75,6 +75,26 @@ show_status () {
     echo "Battery:    no"
   fi
 
+  if [[ ! -f "${SETTINGS_FILE}" ]]; then
+    echo "Locker:     off"
+  fi
+
+  local locker=''
+  locker="$(jq '.locker|if . then . else empty end' "${SETTINGS_FILE}")"
+
+  if [[ -z "${locker}" ]]; then
+    echo "Locker:     off"
+  fi
+
+  local interval=''
+  interval="$(get "${locker}" '.interval')" || return 1
+
+  if [[ ${interval} -eq 0 ]]; then
+    echo "Locker:     off"
+  else
+    echo "Locker:     ${interval} mins"
+  fi
+
   local sleep_conf='/etc/systemd/sleep.conf.d/sleep.conf'
 
   # Fallback to the default sleep config file
