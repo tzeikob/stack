@@ -339,8 +339,6 @@ disable_locker () {
 # Arguments:
 #  None
 shutdown_system () {
-  echo "Shutting down the system..."
-
   systemctl poweroff
 
   if [[ $? -ne 0 ]]; then
@@ -353,8 +351,6 @@ shutdown_system () {
 # Arguments:
 #  None
 reboot_system () {
-  echo "Rebooting the system..."
-
   systemctl reboot
 
   if [[ $? -ne 0 ]]; then
@@ -367,8 +363,6 @@ reboot_system () {
 # Arguments:
 #  None
 suspend_system () {
-  echo "System getting into suspend mode..."
-
   systemctl suspend
 
   if [[ $? -ne 0 ]]; then

@@ -17,23 +17,24 @@ show_emoji_menu () {
 }
 
 show_power_menu () {
-  local SD=" Shutdown"
-  local RB=" Reboot"
-  local SP="  Suspend"
-  local LK=" Lock"
-  local LO=" Logout"
+  local options=''
+  options+='Shutdown\n'
+  options+='Reboot\n'
+  options+='Suspend\n'
+  options+='Lock\n'
+  options+='Logout'
 
   local HIDE_PROMT="inputbar {children: [entry];}"
-  local EXACT_LINES="listview {lines: 6;}"
+  local EXACT_LINES="listview {lines: 5;}"
 
-  local CHOSEN=$(printf "$SD\n$RB\n$SP\n$LK\n$LO" | rofi -dmenu -i -theme-str "${HIDE_PROMT} ${EXACT_LINES}")
+  local CHOSEN="$(printf "${options}" | rofi -dmenu -i -theme-str "${HIDE_PROMT} ${EXACT_LINES}")"
 
   case "$CHOSEN" in
-    "$SD") power shutdown;;
-    "$RB") power reboot;;
-    "$SP") power suspend;;
-    "$LK") power lock;;
-    "$LO") power logout;;
+    "Shutdown") power shutdown;;
+    "Reboot") power reboot;;
+    "Suspend") power suspend;;
+    "Lock") power lock;;
+    "Logout") power logout;;
     *) exit 1;;
   esac
 }
