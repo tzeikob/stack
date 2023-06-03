@@ -381,7 +381,7 @@ suspend_system () {
 # Arguments:
 #  None
 lock_screen () {
-  xautolock -locknow
+  slock
 
   if [[ $? -ne 0 ]]; then
     echo "Unable to lock the screen"
