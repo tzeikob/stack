@@ -55,7 +55,7 @@ prompt () {
 #  A verbose list of text data.
 show_status () {
   local query=''
-  query+='"Adapter:   \(."on-line"|if . then "on" else "off" end)"'
+  query+='"Adapter:    \(."on-line"|if . then "on" else "off" end)"'
 
   find_adapter | jq -cer "${query}" || return 1
 
@@ -64,22 +64,52 @@ show_status () {
 
   if [[ -n "${battery}" ]]; then
     local query=''
-    query+='Battery:   yes\n'
-    query+='State:     \(.state|ascii_downcase)\n'
-    query+='Charge:    \(.charge_percent)%'
-    query+="\(.design_capacity_mah|if . then \"\nCapacity:  \(.)mAh\" else \"\" end)"
+    query+='Battery:    yes\n'
+    query+='State:      \(.state|ascii_downcase)\n'
+    query+='Charge:     \(.charge_percent)%'
+    query+="\(.design_capacity_mah|if . then \"\nCapacity:   \(.)mAh\" else \"\" end)"
     query="\"${query}\""
 
     echo "${battery}" | jq -cer "${query}" || return 1
   else
-    echo "Battery:   no"
+    echo "Battery:    no"
   fi
 
-  local config_file='/etc/systemd/logind.conf.d/logind.conf'
+  local sleep_conf='/etc/systemd/sleep.conf.d/sleep.conf'
+
+  # Fallback to the default sleep config file
+  if [[ ! -f "${sleep_conf}" ]]; then
+    sleep_conf="/etc/systemd/sleep.conf"
+  fi
+
+  local options=(AllowSuspend AllowHibernation)
+  local labels=('Suspend' 'Hibernate')
+
+  local index=0
+  for ((index=0; index<${#options[@]}; index++)) do
+    local option="${options[index]}"
+    local label="${labels[index]}"
+
+    # Read the next option value if set
+    grep -E "^${option}=.*" "${sleep_conf}" | awk -v "label=${label}" '{
+      match($0, /.*=(.*)/ ,a)
+      printf  "%-10s  %s\n", label":", a[1]
+    }'
+
+    # Otherwise read its default value
+    if [[ $? -ne 0 ]]; then
+      grep -E "^#${option}=.*" "${sleep_conf}" | awk -v "label=${label}" '{
+        match($0, /.*=(.*)/ ,a)
+        printf  "%-10s  %s\n", label":", a[1]
+      }'
+    fi
+  done
+
+  local logind_conf='/etc/systemd/logind.conf.d/logind.conf'
 
   # Fallback to the default logind config file
-  if [[ ! -f "${config_file}" ]]; then
-    config_file="/etc/systemd/logind.conf"
+  if [[ ! -f "${logind_conf}" ]]; then
+    logind_conf="/etc/systemd/logind.conf"
   fi
 
   echo ""
@@ -97,14 +127,14 @@ show_status () {
     local label="${labels[index]}"
 
     # Read the next option value if set
-    grep -E "^${option}=.*" "${config_file}" | awk -v "label=${label}" '{
+    grep -E "^${option}=.*" "${logind_conf}" | awk -v "label=${label}" '{
       match($0, /.*=(.*)/ ,a)
       printf  "%-12s  %s\n", label":", a[1]
     }'
 
     # Otherwise read its default value
     if [[ $? -ne 0 ]]; then
-      grep -E "^#${option}=.*" "${config_file}" | awk -v "label=${label}" '{
+      grep -E "^#${option}=.*" "${logind_conf}" | awk -v "label=${label}" '{
         match($0, /.*=(.*)/ ,a)
         printf  "%-12s  %s\n", label":", a[1]
       }'
