@@ -75,24 +75,17 @@ show_status () {
     echo "Battery:    no"
   fi
 
-  if [[ ! -f "${SETTINGS_FILE}" ]]; then
-    echo "Locker:     off"
-  fi
-
-  local locker=''
-  locker="$(jq '.locker|if . then . else empty end' "${SETTINGS_FILE}")"
-
-  if [[ -z "${locker}" ]]; then
-    echo "Locker:     off"
-  fi
-
-  local interval=''
-  interval="$(get "${locker}" '.interval')" || return 1
-
-  if [[ ${interval} -eq 0 ]]; then
-    echo "Locker:     off"
+  local locker_process=''
+  locker_process="$(ps ax -o "command" | jc --ps |
+    jq '.[]|select(.command|test("^xautolock"))|.command')" || return 1
+  
+  if [[ -n "${locker_process}" ]]; then
+    echo "${locker_process}" | awk '{
+      match($0,/.* -time(.*) -corners.*/,a)
+      print "Locker:    "a[1]" mins"
+    }'
   else
-    echo "Locker:     ${interval} mins"
+    echo "Locker:     off"
   fi
 
   local sleep_conf='/etc/systemd/sleep.conf.d/sleep.conf'
