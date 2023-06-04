@@ -55,7 +55,7 @@ prompt () {
 #  A verbose list of text data.
 show_status () {
   local query=''
-  query+='"Adapter:    \(."on-line"|if . then "on" else "off" end)"'
+  query+='"Adapter:   \(."on-line"|if . then "on" else "off" end)"'
 
   find_adapter | jq -cer "${query}" || return 1
 
@@ -64,15 +64,15 @@ show_status () {
 
   if [[ -n "${battery}" ]]; then
     local query=''
-    query+='Battery:    yes\n'
-    query+='State:      \(.state|ascii_downcase)\n'
-    query+='Charge:     \(.charge_percent)%'
-    query+="\(.design_capacity_mah|if . then \"\nCapacity:   \(.)mAh\" else \"\" end)"
+    query+='Battery:   yes\n'
+    query+='State:     \(.state|ascii_downcase)\n'
+    query+='Charge:    \(.charge_percent)%'
+    query+="\(.design_capacity_mah|if . then \"\nCapacity:  \(.)mAh\" else \"\" end)"
     query="\"${query}\""
 
     echo "${battery}" | jq -cer "${query}" || return 1
   else
-    echo "Battery:    no"
+    echo "Battery:   no"
   fi
 
   local locker_process=''
@@ -82,10 +82,10 @@ show_status () {
   if [[ -n "${locker_process}" ]]; then
     echo "${locker_process}" | awk '{
       match($0,/.* -time(.*) -corners.*/,a)
-      print "Locker:    "a[1]" mins"
+      print "Locker:   "a[1]" mins"
     }'
   else
-    echo "Locker:     off"
+    echo "Locker:    off"
   fi
 
   loginctl show-session | awk '{
