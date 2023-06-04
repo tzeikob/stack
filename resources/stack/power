@@ -100,7 +100,7 @@ show_status () {
     }
 
     printf  "%-9s  %s\n", a[1]":", a[2]
-  }'
+  }' || return 1
 
   echo ""
 
@@ -126,7 +126,7 @@ show_status () {
     }
 
     printf  "%-13s  %s\n", a[1]":", a[2]
-  }'
+  }' || return 1
 }
 
 # Sets the action of the hander with the given name.
