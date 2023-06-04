@@ -88,41 +88,45 @@ show_status () {
     echo "Locker:     off"
   fi
 
-  local logind_conf='/etc/systemd/logind.conf.d/logind.conf'
+  loginctl show-session | awk '{
+    match($0,/(.*)=(.*)/,a)
 
-  # Fallback to the default logind config file
-  if [[ ! -f "${logind_conf}" ]]; then
-    logind_conf="/etc/systemd/logind.conf"
-  fi
+    if (a[1] == "Docked") {
+      a[1]="Docked"
+    } else if (a[1] == "LidClosed") {
+      a[1]="Lid Down"
+    } else {
+      next
+    }
+
+    printf  "%-9s  %s\n", a[1]":", a[2]
+  }'
 
   echo ""
 
-  local options=(
-    HandlePowerKey HandleRebootKey HandleSuspendKey
-    HandleLidSwitch HandleLidSwitchExternalPower HandleLidSwitchDocked
-  )
+  loginctl show-session | awk '{
+    match($0,/(.*)=(.*)/,a)
 
-  local labels=('Power' 'Reboot' 'Suspend' 'Lid Down' 'Lid Powered' 'Lid Docked')
+    if (a[1] == "HandlePowerKey") {
+      a[1]="On Power"
+    } else if (a[1] == "HandleRebootKey") {
+      a[1]="On Reboot"
+    } else if (a[1] == "HandleSuspendKey") {
+      a[1]="On Suspend"
+    } else if (a[1] == "HandleHibernateKey") {
+      a[1]="On Hibernate"
+    } else if (a[1] == "HandleLidSwitch") {
+      a[1]="On Lid Down"
+    } else if (a[1] == "HandleLidSwitchDocked") {
+      a[1]="On Docked"
+    } else if (a[1] == "IdleAction") {
+      a[1]="On Idle"
+    } else {
+      next
+    }
 
-  local index=0
-  for ((index=0; index<${#options[@]}; index++)) do
-    local option="${options[index]}"
-    local label="${labels[index]}"
-
-    # Read the next option value if set
-    grep -E "^${option}=.*" "${logind_conf}" | awk -v "label=${label}" '{
-      match($0, /.*=(.*)/ ,a)
-      printf  "%-12s  %s\n", label":", a[1]
-    }'
-
-    # Otherwise read its default value
-    if [[ $? -ne 0 ]]; then
-      grep -E "^#${option}=.*" "${logind_conf}" | awk -v "label=${label}" '{
-        match($0, /.*=(.*)/ ,a)
-        printf  "%-12s  %s\n", label":", a[1]
-      }'
-    fi
-  done
+    printf  "%-13s  %s\n", a[1]":", a[2]
+  }'
 }
 
 # Sets the action of the hander with the given name.
