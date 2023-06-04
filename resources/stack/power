@@ -133,7 +133,7 @@ show_status () {
 # Globals:
 #  REPLY
 # Arguments:
-#  handler: power, reboot, suspend, lid, lid-powered or lid-docked
+#  handler: power, reboot, suspend, lid or docked
 #  action:  poweroff, reboot, suspend or ignore
 set_action () {
   local handler="${1}"
@@ -145,15 +145,14 @@ set_action () {
     handlers+='{"key":"reboot", "value":"reboot"},'
     handlers+='{"key":"suspend", "value":"suspend"},'
     handlers+='{"key":"lid", "value":"lid"},'
-    handlers+='{"key":"lid-powered", "value":"lid-powered"},'
-    handlers+='{"key":"lid-docked", "value":"lid-docked"}'
+    handlers+='{"key":"docked", "value":"docked"}'
     handlers="[${handlers}]"
 
     pick_one "Select a power handler:" "${handlers}" "vertical" || return $?
     [[ -n "${REPLY}" ]] && handler="${REPLY}" || return 0
   fi
 
-  if [[ ! "${handler}" =~ ^(power|reboot|suspend|lid|lid-powered|lid-docked)$ ]]; then
+  if [[ ! "${handler}" =~ ^(power|reboot|suspend|lid|docked)$ ]]; then
     echo "Invalid power handler"
     return 2
   fi
@@ -184,10 +183,11 @@ set_action () {
     option='HandleSuspendKey'
   elif [[ "${handler}" == "lid" ]]; then
     option='HandleLidSwitch'
-  elif [[ "${handler}" == "lid-powered" ]]; then
-    option='HandleLidSwitchExternalPower'
-  else
+  elif [[ "${handler}" == "docked" ]]; then
     option='HandleLidSwitchDocked'
+  else
+    echo "Invalid power handler"
+    return 2
   fi
 
   local config_file='/etc/systemd/logind.conf.d/logind.conf'
@@ -229,7 +229,6 @@ reset_actions () {
   sudo sed -i "/^HandleRebootKey=.*/d" "${config_file}"
   sudo sed -i "/^HandleSuspendKey=.*/d" "${config_file}"
   sudo sed -i "/^HandleLidSwitch=.*/d" "${config_file}"
-  sudo sed -i "/^HandleLidSwitchExternalPower=.*/d" "${config_file}"
   sudo sed -i "/^HandleLidSwitchDocked=.*/d" "${config_file}"
 
   systemctl kill -s HUP systemd-logind
