@@ -75,6 +75,24 @@ show_status () {
     echo "Battery:   no"
   fi
 
+  local query='.[]|select(.unit == "acpid.service")|"ACPID:     \(.active)"'
+
+  local acpid_status=''
+  acpid_status="$(systemctl -a | jc --systemctl | jq -cr "${query}")" || return 1
+
+  if [[ -n "${acpid_status}" ]]; then
+    echo "${acpid_status}"
+  fi
+
+  local query='.[]|select(.unit == "tlp.service")|"TLP:       \(.active)"'
+
+  local tlp_status=''
+  tlp_status="$(systemctl -a | jc --systemctl | jq -cr "${query}")" || return 1
+
+  if [[ -n "${tlp_status}" ]]; then
+    echo "${tlp_status}"
+  fi
+
   local locker_process=''
   locker_process="$(ps ax -o "command" | jc --ps |
     jq '.[]|select(.command|test("^xautolock"))|.command')" || return 1
@@ -351,6 +369,43 @@ disable_locker () {
   echo "Screen locker has been disabled"
 }
 
+# Enables power saving mode via the tlp service.
+# Arguments:
+#  None
+enable_tlp () {
+  sudo systemctl stop acpid.service &> /dev/null &&
+  sudo systemctl disable acpid.service &> /dev/null &&
+  sudo systemctl enable tlp.service &> /dev/null &&
+  sudo systemctl start tlp.service &> /dev/null &&
+  sudo systemctl daemon-reload
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to enable power saving mode"
+    return 2
+  fi
+
+  echo "Power saving mode has been enabled"
+}
+
+# Disables power saving mode restoring back the
+# acpid service.
+# Arguments:
+#  None
+disable_tlp () {
+  sudo systemctl stop tlp.service &> /dev/null &&
+  sudo systemctl disable tlp.service &> /dev/null &&
+  sudo systemctl enable acpid.service &> /dev/null &&
+  sudo systemctl start acpid.service &> /dev/null &&
+  sudo systemctl daemon-reload
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to disable power saving mode"
+    return 2
+  fi
+
+  echo "Power saving mode has been disabled"
+}
+
 # Shuts the system power down.
 # Arguments:
 #  None
@@ -452,7 +507,10 @@ show_help () {
     "set locker <mins>" "Set the interval of the screen locker," \
     "" "where 0 means deactivate the locker." \
     "enable locker" "Enable the screen locker." \
-    "disable locker" "Disable the screen locker."
+    "disable locker" "Disable the screen locker." \
+    "" "" \
+    "enable tlp" "Enable the power saving mode." \
+    "disable tlp" "Disable the power saving mode."
 }
 
 loop () {
@@ -498,11 +556,13 @@ loop () {
       "enable")
         case "${cmd[1]}" in
           "locker") enable_locker;;
+          "tlp") enable_tlp;;
           *) echo "Invalid or unknown command";;
         esac;;
       "disable")
         case "${cmd[1]}" in
           "locker") disable_locker;;
+          "tlp") disable_tlp;;
           *) echo "Invalid or unknown command";;
         esac;;
       *) echo "Invalid or unknown command";; 

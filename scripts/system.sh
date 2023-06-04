@@ -281,7 +281,7 @@ install_drivers () {
   fi
 
   pacman -S --noconfirm \
-    acpi acpid acpi_call xcalib \
+    acpi acpi_call acpid tlp xcalib \
     networkmanager networkmanager-openvpn wireless_tools netctl wpa_supplicant \
     nmap dhclient smbclient libnma \
     alsa-utils pipewire pipewire-alsa pipewire-pulse pipewire-jack pavucontrol \
