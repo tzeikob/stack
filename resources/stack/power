@@ -88,36 +88,6 @@ show_status () {
     echo "Locker:     off"
   fi
 
-  local sleep_conf='/etc/systemd/sleep.conf.d/sleep.conf'
-
-  # Fallback to the default sleep config file
-  if [[ ! -f "${sleep_conf}" ]]; then
-    sleep_conf="/etc/systemd/sleep.conf"
-  fi
-
-  local options=(AllowSuspend AllowHibernation)
-  local labels=(Suspend Hibernate)
-
-  local index=0
-  for ((index=0; index<${#options[@]}; index++)) do
-    local option="${options[index]}"
-    local label="${labels[index]}"
-
-    # Read the next option value if set
-    grep -E "^${option}=.*" "${sleep_conf}" | awk -v "label=${label}" '{
-      match($0, /.*=(.*)/ ,a)
-      printf  "%-10s  %s\n", label":", a[1]
-    }'
-
-    # Otherwise read its default value
-    if [[ $? -ne 0 ]]; then
-      grep -E "^#${option}=.*" "${sleep_conf}" | awk -v "label=${label}" '{
-        match($0, /.*=(.*)/ ,a)
-        printf  "%-10s  %s\n", label":", a[1]
-      }'
-    fi
-  done
-
   local logind_conf='/etc/systemd/logind.conf.d/logind.conf'
 
   # Fallback to the default logind config file
