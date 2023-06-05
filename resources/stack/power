@@ -465,7 +465,7 @@ set_charge () {
   tlp_process="$(systemctl -a | jc --systemctl | jq -cr "${query}")" || return 1
 
   if [[ -n "${tlp_process}" ]]; then
-    sudo tlp start &> /dev/null || return 1
+    sudo systemctl restart tlp.service &> /dev/null || return 1
   fi
 
   echo "Charge ${action} threshold set to ${threshold}%"
