@@ -208,7 +208,7 @@ set_action () {
     return 2
   fi
 
-  local config_file='/etc/systemd/logind.conf.d/logind.conf'
+  local config_file='/etc/systemd/logind.conf.d/00-main.conf'
 
   # Copy the default config file if not yet created
   if [[ ! -f "${config_file}" ]]; then
@@ -236,7 +236,7 @@ set_action () {
 # Arguments:
 #  None
 reset_actions () {
-  local config_file='/etc/systemd/logind.conf.d/logind.conf'
+  local config_file='/etc/systemd/logind.conf.d/00-main.conf'
 
   if [[ ! -f "${config_file}" ]]; then
     echo "Power actions are already set to defaults"

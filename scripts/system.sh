@@ -341,7 +341,7 @@ install_utilities () {
   cp ~/stack/resources/stack/services/suspend.service /etc/systemd/system/suspend@.service
   systemctl enable suspend@${USERNAME}.service
 
-  local logind_conf='/etc/systemd/logind.conf.d/logind.conf'
+  local logind_conf='/etc/systemd/logind.conf.d/00-main.conf'
   mkdir -p /etc/systemd/logind.conf.d
   cp /etc/systemd/logind.conf "${logind_conf}"
 
@@ -349,7 +349,7 @@ install_utilities () {
   echo "HandleHibernateKeyLongPress=ignore" >> "${logind_conf}"
   echo "HibernateKeyIgnoreInhibited=no" >> "${logind_conf}"
 
-  local sleep_conf='/etc/systemd/sleep.conf.d/sleep.conf'
+  local sleep_conf='/etc/systemd/sleep.conf.d/00-main.conf'
   mkdir -p /etc/systemd/sleep.conf.d
   cp /etc/systemd/sleep.conf "${sleep_conf}"
 
