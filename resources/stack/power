@@ -450,41 +450,40 @@ init_screensaver () {
   echo "Screensaver has been set"
 }
 
-# Enables power saving mode via the tlp service.
+# Enables or disables power saving mode via the tlp service.
 # Arguments:
-#  None
-enable_tlp () {
-  sudo systemctl stop acpid.service &> /dev/null &&
-  sudo systemctl disable acpid.service &> /dev/null &&
-  sudo systemctl enable tlp.service &> /dev/null &&
-  sudo systemctl start tlp.service &> /dev/null &&
-  sudo systemctl daemon-reload
+#  status: on or off
+set_tlp () {
+  local status="${1}"
 
-  if [[ $? -ne 0 ]]; then
-    echo "Failed to enable power saving mode"
+  if [[ -z "${status}" ]]; then
+    echo "Missing the tlp status"
+    return 2
+  elif [[ ! "${status}" =~ ^(on|off)$ ]]; then
+    echo "Invalid tlp status"
     return 2
   fi
 
-  echo "Power saving mode has been enabled"
-}
-
-# Disables power saving mode restoring back the
-# acpid service.
-# Arguments:
-#  None
-disable_tlp () {
-  sudo systemctl stop tlp.service &> /dev/null &&
-  sudo systemctl disable tlp.service &> /dev/null &&
-  sudo systemctl enable acpid.service &> /dev/null &&
-  sudo systemctl start acpid.service &> /dev/null &&
-  sudo systemctl daemon-reload
+  if [[ "${status}" == "on" ]]; then
+    sudo systemctl stop acpid.service &> /dev/null &&
+    sudo systemctl disable acpid.service &> /dev/null &&
+    sudo systemctl enable tlp.service &> /dev/null &&
+    sudo systemctl start tlp.service &> /dev/null &&
+    sudo systemctl daemon-reload
+  else
+    sudo systemctl stop tlp.service &> /dev/null &&
+    sudo systemctl disable tlp.service &> /dev/null &&
+    sudo systemctl enable acpid.service &> /dev/null &&
+    sudo systemctl start acpid.service &> /dev/null &&
+    sudo systemctl daemon-reload
+  fi
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to disable power saving mode"
+    echo "Failed to set tlp to ${status}"
     return 2
   fi
 
-  echo "Power saving mode has been disabled"
+  echo "TLP has been set to ${status}"
 }
 
 # Sets the battery charge start/stop threshold to the given
@@ -654,8 +653,7 @@ show_help () {
     "set screensaver <mins>" "Set the interval of the screen saver," \
     "" "where 0 means deactivate the screensaver." \
     "" "" \
-    "enable tlp" "Enable the power saving mode." \
-    "disable tlp" "Disable the power saving mode." \
+    "set tlp on|off" "Enable or disable power saving mode." \
     "set charge start|stop <percent>" "Set the battery charge thresholds."
 }
 
@@ -693,22 +691,13 @@ loop () {
           "action") set_action "${cmd[2]}" "${cmd[3]}";;
           "locker") set_locker "${cmd[2]}";;
           "screensaver") set_screensaver "${cmd[2]}";;
+          "tlp") set_tlp "${cmd[2]}";;
           "charge") set_charge "${cmd[2]}" "${cmd[3]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       "reset")
         case "${cmd[1]}" in
           "actions") reset_actions;;
-          *) echo "Invalid or unknown command";;
-        esac;;
-      "enable")
-        case "${cmd[1]}" in
-          "tlp") enable_tlp;;
-          *) echo "Invalid or unknown command";;
-        esac;;
-      "disable")
-        case "${cmd[1]}" in
-          "tlp") disable_tlp;;
           *) echo "Invalid or unknown command";;
         esac;;
       *) echo "Invalid or unknown command";; 
