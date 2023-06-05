@@ -406,6 +406,71 @@ disable_tlp () {
   echo "Power saving mode has been disabled"
 }
 
+# Sets the battery charge start/stop threshold to the given
+# percentage limit.
+# Arguments:
+#  action:    start or stop
+#  threshold: a percentage value between [0,100]
+set_charge () {
+  local action="${1}"
+  local threshold="${2}"
+
+  if [[ -z "${action}" ]]; then
+    echo "Missing the charge action"
+    return 2
+  elif [[ ! "${action}" =~ ^(start|stop)$ ]]; then
+    echo "Invalid charge action"
+    return 2
+  fi
+
+  if [[ -z "${threshold}" ]]; then
+    echo "Missing the threshold value"
+    return 2
+  elif [[ ! "${threshold}" =~ ^[0-9]{1,3}$ ]]; then
+    echo "Invalid threshold value"
+    return 2
+  elif [[ ${threshold} -lt 0 ]] || [[ ${threshold} -gt 100 ]]; then
+    echo "Threshold value out of range"
+    return 2
+  fi
+
+  local config_file='/etc/tlp.d/00-main.conf'
+
+  if [[ ! -f "${config_file}" ]]; then
+    sudo rm -f /etc/tlp.d/00-template.conf
+    sudo touch "${config_file}"
+  fi
+
+  local option=''
+
+  if [[ "${action}" == "start" ]]; then
+    option='START_CHARGE_THRESH_BAT'
+  else
+    option='STOP_CHARGE_THRESH_BAT'
+  fi
+
+  local index=0
+  for index in 0 1; do
+    if grep -qE "^${option}${index}=" "${config_file}"; then
+      sudo sed -i "s/^\(${option}${index}=\).*/\1${threshold}/" "${config_file}"
+    else
+      echo "${option}${index}=${threshold}" | sudo tee -a "${config_file}" > /dev/null
+    fi
+  done
+
+  # Restart TLP only if it is enabled
+  local query='.[]|select(.unit == "tlp.service")'
+
+  local tlp_process=''
+  tlp_process="$(systemctl -a | jc --systemctl | jq -cr "${query}")" || return 1
+
+  if [[ -n "${tlp_process}" ]]; then
+    sudo tlp start &> /dev/null || return 1
+  fi
+
+  echo "Charge ${action} threshold set to ${threshold}%"
+}
+
 # Shuts the system power down.
 # Arguments:
 #  None
@@ -510,7 +575,8 @@ show_help () {
     "disable locker" "Disable the screen locker." \
     "" "" \
     "enable tlp" "Enable the power saving mode." \
-    "disable tlp" "Disable the power saving mode."
+    "disable tlp" "Disable the power saving mode." \
+    "set charge start|stop <percent>" "Set the battery charge thresholds."
 }
 
 loop () {
@@ -546,6 +612,7 @@ loop () {
         case "${cmd[1]}" in
           "action") set_action "${cmd[2]}" "${cmd[3]}";;
           "locker") set_locker "${cmd[2]}";;
+          "charge") set_charge "${cmd[2]}" "${cmd[3]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       "reset")
