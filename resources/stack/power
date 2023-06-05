@@ -349,36 +349,6 @@ init_locker () {
   echo "Locker has been set"
 }
 
-# Enables the current running instance of the
-# screen locker.
-# Arguments:
-#  None
-enable_locker () {
-  xautolock -enable &> /dev/null
-
-  if [[ $? -ne 0 ]]; then
-    echo "Failed to enable screen locker"
-    return 2
-  fi
-
-  echo "Screen locker has been enabled"
-}
-
-# Disables the current running instance of the
-# screen locker.
-# Arguments:
-#  None
-disable_locker () {
-  xautolock -disable &> /dev/null
-
-  if [[ $? -ne 0 ]]; then
-    echo "Failed to disable screen locker"
-    return 2
-  fi
-
-  echo "Screen locker has been disabled"
-}
-
 # Enables power saving mode via the tlp service.
 # Arguments:
 #  None
@@ -555,8 +525,6 @@ show_help () {
       "help" "Show this help message." \
       "" "" \
       "init locker" "Initialize the screen locker." \
-      "enable locker" "Enable the screen locker." \
-      "disable locker" "Disable the screen locker." \
       "" "" \
       "shutdown" "Shut the system down." \
       "reboot" "Reboot the system." \
@@ -581,8 +549,6 @@ show_help () {
     "" "" \
     "set locker <mins>" "Set the interval of the screen locker," \
     "" "where 0 means deactivate the locker." \
-    "enable locker" "Enable the screen locker." \
-    "disable locker" "Disable the screen locker." \
     "" "" \
     "enable tlp" "Enable the power saving mode." \
     "disable tlp" "Disable the power saving mode." \
@@ -632,13 +598,11 @@ loop () {
         esac;;
       "enable")
         case "${cmd[1]}" in
-          "locker") enable_locker;;
           "tlp") enable_tlp;;
           *) echo "Invalid or unknown command";;
         esac;;
       "disable")
         case "${cmd[1]}" in
-          "locker") disable_locker;;
           "tlp") disable_tlp;;
           *) echo "Invalid or unknown command";;
         esac;;
@@ -659,16 +623,6 @@ once () {
     "init")
       case "${2}" in
         "locker") init_locker || abort;;
-        *) abort "Invalid or unknown command";;
-      esac;;
-    "enable")
-      case "${2}" in
-        "locker") enable_locker || abort;;
-        *) abort "Invalid or unknown command";;
-      esac;;
-    "disable")
-      case "${2}" in
-        "locker") disable_locker || abort;;
         *) abort "Invalid or unknown command";;
       esac;;
     "shutdown") shutdown_system;;
