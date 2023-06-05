@@ -75,6 +75,16 @@ show_status () {
     echo "Battery:   no"
   fi
 
+  if [[ -f '/sys/class/power_supply/BAT0/current_now' ]]; then
+    local current_now="$(< /sys/class/power_supply/BAT0/current_now)"
+    echo "Current:   ${current_now}mAh"
+  fi
+
+  if [[ -f '/sys/class/power_supply/BAT0/charge_now' ]]; then
+    local charge_now="$(< /sys/class/power_supply/BAT0/charge_now)"
+    echo "Load:      ${charge_now}mAh"
+  fi
+
   local query='.[]|select(.unit == "acpid.service")|"ACPID:     \(.active)"'
 
   local acpid_status=''
