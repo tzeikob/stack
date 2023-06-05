@@ -358,6 +358,12 @@ install_utilities () {
   echo "AllowSuspendThenHibernate=no" >> "${sleep_conf}"
   echo "AllowHybridSleep=no" >> "${sleep_conf}"
 
+  local tlp_conf='/etc/tlp.d/00-main.conf'
+  echo "SOUND_POWER_SAVE_ON_AC=0" >> "${tlp_conf}"
+  echo "SOUND_POWER_SAVE_ON_BAT=0" >> "${tlp_conf}"
+
+  rm -f /etc/tlp.d/00-template.conf
+
   echo "Stack utilities have been installed"
 }
 
