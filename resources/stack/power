@@ -217,7 +217,7 @@ set_action () {
   fi
 
   if grep -qE "^${option}=" "${config_file}"; then
-    sudo sed -i "s/\(${option}=\).*/\1${action}/" "${config_file}"
+    sudo sed -i "s/^\(${option}=\).*/\1${action}/" "${config_file}"
   else
     echo "${option}=${action}" | sudo tee -a "${config_file}" > /dev/null
   fi
