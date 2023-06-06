@@ -1132,19 +1132,6 @@ save_layout () {
 # Arguments:
 #  None
 restore_layout () {
-  if [[ ! -f "${SETTINGS_FILE}" ]]; then
-    echo "No layout settings found"
-    return 0
-  fi
-
-  local layouts=''
-  layouts="$(jq 'if .layouts then .layouts else empty end' "${SETTINGS_FILE}")"
-
-  if [[ -z "${layouts}" ]]; then
-    echo "No layout settings found"
-    return 0
-  fi
-
   local outputs=''
   outputs="$(find_outputs "all")"
 
@@ -1165,12 +1152,26 @@ restore_layout () {
   local sig=''
   sig="$(get_sig "${outputs}")" || return 1
 
+  # Read any stored layouts
+  if [[ ! -f "${SETTINGS_FILE}" ]]; then
+    echo "No layout settings found"
+    return 0
+  fi
+
+  local layouts=''
+  layouts="$(jq '.layouts|if . then . else empty end' "${SETTINGS_FILE}")"
+
+  if [[ -z "${layouts}" ]]; then
+    echo "No layout settings found"
+    return 0
+  fi
+
   # Collect all output xrandr mode options matching the sig
   local query='"--output \(.key) \(.value.mode)"'
-  query="[.layouts[]|select(.sig == \"${sig}\")|.map|to_entries[]|${query}]|join(\" \")"
+  query="[.[]|select(.sig == \"${sig}\")|.map|to_entries[]|${query}]|join(\" \")"
 
   local args=''
-  args="$(jq -cr "${query}" "${SETTINGS_FILE}")"
+  args="$(echo "${layouts}" | jq -cr "${query}")"
 
   if [[ -z "${args}" ]]; then
     echo "No layout found for the current setup"
