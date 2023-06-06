@@ -1152,7 +1152,7 @@ restore_layout () {
   local sig=''
   sig="$(get_sig "${outputs}")" || return 1
 
-  # Read any stored layouts
+  # Search for a layout matching the current mapping
   if [[ ! -f "${SETTINGS_FILE}" ]]; then
     echo "No layout settings found"
     return 0
@@ -1174,8 +1174,8 @@ restore_layout () {
   args="$(echo "${layouts}" | jq -cr "${query}")"
 
   if [[ -z "${args}" ]]; then
-    echo "No layout found for the current setup"
-    return 2
+    echo "No layout found for current mapping"
+    return 0
   fi
 
   xrandr ${args}
