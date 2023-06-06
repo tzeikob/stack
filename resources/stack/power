@@ -621,7 +621,7 @@ show_help () {
     echo "Usage: power COMMAND [OBJECT] [ARGUMENTS]..."
 
     echo -e "\nCOMMANDS"
-    printf " %-16s %s\n" \
+    printf " %-20s %s\n" \
       "help" "Show this help message." \
       "" "" \
       "init locker" "Initialize the screen locker." \
