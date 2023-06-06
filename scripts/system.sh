@@ -335,11 +335,11 @@ install_utilities () {
   chown -R "$USERNAME":"$USERNAME" "${services_home}"
 
   local rules_home='/etc/udev/rules.d'
-  cp ~/stack/resources/stack/rules/97-init-pointer.rules "${rules_home}"
-  cp ~/stack/resources/stack/rules/98-init-tablets.rules "${rules_home}"
+  cp ~/stack/resources/stack/rules/90-init-pointer.rules "${rules_home}"
+  cp ~/stack/resources/stack/rules/91-init-tablets.rules "${rules_home}"
 
-  cp ~/stack/resources/stack/rules/99-restore-layout.rules "${rules_home}"
-  sed -i "s/USER/${USERNAME}/g" "${rules_home}/99-restore-layout.rules"
+  cp ~/stack/resources/stack/rules/92-restore-layout.rules "${rules_home}"
+  sed -i "s/USER/${USERNAME}/g" "${rules_home}/92-restore-layout.rules"
 
   cp ~/stack/resources/stack/services/suspend.service /etc/systemd/system/suspend@.service
   systemctl enable suspend@${USERNAME}.service
