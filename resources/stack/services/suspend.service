@@ -1,0 +1,13 @@
+[Unit]
+Description=user suspend actions
+Before=suspend.target
+
+[Service]
+User=%I
+Type=forking
+Environment=DISPLAY=:0
+ExecStart=/opt/stack/power lock
+ExecStartPost=/usr/bin/sleep 1
+
+[Install]
+WantedBy=suspend.target

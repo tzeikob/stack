@@ -3,6 +3,9 @@
 desktop init pointer &
 desktop init tablets &
 desktop init wallpaper &
+power init locker &
+power init screensaver &
+
 pgrep -x sxhkd > /dev/null || sxhkd &
 $HOME/.config/polybar/launch &
 dunst &

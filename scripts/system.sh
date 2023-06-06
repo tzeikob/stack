@@ -188,7 +188,7 @@ install_packages () {
     man-db man-pages texinfo cups cups-pdf cups-filters usbutils bluez bluez-utils unzip terminus-font \
     vim nano git tree arch-audit atool zip xz unace p7zip gzip lzop feh \
     bzip2 unrar dialog inetutils dnsutils openssh nfs-utils openbsd-netcat ipset \
-    neofetch age imagemagick gpick fuse2 rclone smartmontools glib2 jq jc sequoia-sq xf86-input-wacom bc \
+    neofetch age imagemagick gpick fuse2 rclone smartmontools glib2 jq jc sequoia-sq xf86-input-wacom bc xautolock \
     $([ "$UEFI" = "yes" ] && echo 'efibootmgr') || exit 1
 
   echo -e "\nReplacing iptables with nft tables..."
@@ -281,7 +281,7 @@ install_drivers () {
   fi
 
   pacman -S --noconfirm \
-    acpi acpid acpi_call xcalib \
+    acpi acpi_call acpid tlp xcalib \
     networkmanager networkmanager-openvpn wireless_tools netctl wpa_supplicant \
     nmap dhclient smbclient libnma \
     alsa-utils pipewire pipewire-alsa pipewire-pulse pipewire-jack pavucontrol \
@@ -308,6 +308,7 @@ install_utilities () {
   cp ~/stack/resources/stack/cloud "$STACK_HOME"
   cp ~/stack/resources/stack/bluetooth "$STACK_HOME"
   cp ~/stack/resources/stack/printers "$STACK_HOME"
+  cp ~/stack/resources/stack/power "$STACK_HOME"
 
   ln -sf "$STACK_HOME/clock" /usr/local/bin/clock
   ln -sf "$STACK_HOME/trash" /usr/local/bin/trash
@@ -321,6 +322,7 @@ install_utilities () {
   ln -sf "$STACK_HOME/cloud" /usr/local/bin/cloud
   ln -sf "$STACK_HOME/bluetooth" /usr/local/bin/bluetooth
   ln -sf "$STACK_HOME/printers" /usr/local/bin/printers
+  ln -sf "$STACK_HOME/power" /usr/local/bin/power
 
   echo 'displays restore layout || notify-send "Failed to load displays layout"' >> ~/.xinitrc
   echo 'displays restore colors || notify-send "Failed to load some color profiles"' >> ~/.xinitrc
@@ -335,6 +337,32 @@ install_utilities () {
   local rules_home='/etc/udev/rules.d'
   cp ~/stack/resources/stack/rules/97-init-pointer.service "${rules_home}"
   cp ~/stack/resources/stack/rules/98-init-tablets.service "${rules_home}"
+
+  cp ~/stack/resources/stack/services/suspend.service /etc/systemd/system/suspend@.service
+  systemctl enable suspend@${USERNAME}.service
+
+  local logind_conf='/etc/systemd/logind.conf.d/00-main.conf'
+  mkdir -p /etc/systemd/logind.conf.d
+  cp /etc/systemd/logind.conf "${logind_conf}"
+
+  echo "HandleHibernateKey=ignore" >> "${logind_conf}"
+  echo "HandleHibernateKeyLongPress=ignore" >> "${logind_conf}"
+  echo "HibernateKeyIgnoreInhibited=no" >> "${logind_conf}"
+
+  local sleep_conf='/etc/systemd/sleep.conf.d/00-main.conf'
+  mkdir -p /etc/systemd/sleep.conf.d
+  cp /etc/systemd/sleep.conf "${sleep_conf}"
+
+  echo "AllowSuspend=yes" >> "${sleep_conf}"
+  echo "AllowHibernation=no" >> "${sleep_conf}"
+  echo "AllowSuspendThenHibernate=no" >> "${sleep_conf}"
+  echo "AllowHybridSleep=no" >> "${sleep_conf}"
+
+  local tlp_conf='/etc/tlp.d/00-main.conf'
+  echo "SOUND_POWER_SAVE_ON_AC=0" >> "${tlp_conf}"
+  echo "SOUND_POWER_SAVE_ON_BAT=0" >> "${tlp_conf}"
+
+  rm -f /etc/tlp.d/00-template.conf
 
   echo "Stack utilities have been installed"
 }

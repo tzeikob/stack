@@ -106,7 +106,7 @@ super + {Left,Down,Up,Right}
 
 # Lock the screen
 super + x
-  slock
+  power lock
 
 # Decrease audio
 XF86AudioLowerVolume

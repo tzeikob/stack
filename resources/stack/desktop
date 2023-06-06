@@ -1225,9 +1225,9 @@ show_help () {
     printf " %-16s %s\n" \
       "help" "Show this help message." \
       "" "" \
-      "init pointer" "Apply pointer stored settings." \
-      "init tablets" "Apply tablets stored settings" \
-      "init wallpaper" "Set the desktop stored wallpaper."
+      "init pointer" "Initialize the pointer." \
+      "init tablets" "Initialize any connected tablets." \
+      "init wallpaper" "Initialize the desktop wallpaper."
 
     return 0
   fi
