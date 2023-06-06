@@ -338,6 +338,9 @@ install_utilities () {
   cp ~/stack/resources/stack/rules/97-init-pointer.service "${rules_home}"
   cp ~/stack/resources/stack/rules/98-init-tablets.service "${rules_home}"
 
+  cp ~/stack/resources/stack/rules/99-restore-layout.service "${rules_home}"
+  sed -i "s/USER/${USERNAME}/g" "${rules_home}/99-restore-layout.service"
+
   cp ~/stack/resources/stack/services/suspend.service /etc/systemd/system/suspend@.service
   systemctl enable suspend@${USERNAME}.service
 

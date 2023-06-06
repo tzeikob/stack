@@ -1,0 +1,1 @@
+ACTION=="change", SUBSYSTEM=="drm", ENV{DISPLAY}=":0", ENV{HOME}="/home/USER", ENV{XAUTHORITY}="/home/USER/.Xauthority", RUN+="/opt/stack/displays restore layout"
