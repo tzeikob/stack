@@ -1,0 +1,13 @@
+[Unit]
+Description=service to fix the current layout positioning
+
+[Service]
+Type=simple
+Environment=HOME=/home/#USER
+Environment=XAUTHORITY=/home/#USER/.Xauthority
+Environment=DISPLAY=:0
+ExecStartPre=/usr/bin/sleep 1
+ExecStart=/opt/stack/displays fix layout
+
+[Install]
+WantedBy=default.target
