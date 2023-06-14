@@ -620,6 +620,8 @@ set_mode () {
   fi
 
   echo "Output ${name} mode set to ${resolution}@${rate}"
+
+  fix_layout || return 1
 }
 
 # Sets the output with the given name as primary.
@@ -737,6 +739,8 @@ set_off () {
   fi
   
   echo "Output ${name} has been deactivated"
+
+  fix_layout || return 1
 }
 
 # Sets the reflection of the output with the given name.
@@ -849,6 +853,8 @@ rotate () {
   fi
   
   echo "Rotation of output ${name} set to ${mode}"
+
+  fix_layout || return 1
 }
 
 # Mirrors the output with the given name to other outputs,
@@ -944,6 +950,8 @@ mirror () {
   fi
   
   echo "Output ${name} has been mirrored"
+
+  fix_layout || return 1
 }
 
 # Sets the layout of currently active outputs to the given
