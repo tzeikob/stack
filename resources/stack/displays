@@ -691,7 +691,14 @@ set_on () {
     return 2
   fi
 
-  xrandr --output "${name}" --auto
+  # Find the last in order monitor
+  local query='[.[]|select(.is_connected and .resolution_width)]'
+  query+='|sort_by(.offset_width, .offset_height)|last|.device_name'
+  
+  local last=''
+  last="$(find_outputs "all" | jq -cr "${query}")" || return 1
+
+  xrandr --output "${name}" --auto --right-of "${last}"
 
   if [[ $? -ne 0 ]]; then
     echo "Failed to activate output"
