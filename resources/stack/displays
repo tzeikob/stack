@@ -693,7 +693,7 @@ set_on () {
 
   # Find the last in order monitor
   local query='[.[]|select(.is_connected and .resolution_width)]'
-  query+='|sort_by(.offset_width, .offset_height)'
+  query+='|sort_by(.offset_height, .offset_width)'
   query+='|if length > 0 then last|.device_name else "" end'
   
   local last=''
@@ -1239,7 +1239,7 @@ fix_layout () {
   disconnected="$(echo "${outputs}" | jq -cr "${query}")"
 
   local query='[.[]|select(.is_connected and .resolution_width)]'
-  query+='|sort_by(.offset_width, .offset_height)'
+  query+='|sort_by(.offset_height, .offset_width)'
 
   local active=''
   active="$(echo "${outputs}" | jq -cr "${query}")"
