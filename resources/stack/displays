@@ -1251,6 +1251,8 @@ fix_layout () {
   fix+='|(.[0].device_name) as $a'
   fix+='|(.[1].device_name) as $b'
   fix+='|if ($dx == 0 and $dy == 0) then "--output \($b) --same-as \($a)"'
+  fix+=' elif ($dx > 0 and $dy > 0 and $dx >= $dy) then "--output \($b) --right-of \($a)"'
+  fix+=' elif ($dx > 0 and $dy > 0 and $dx < $dy) then "--output \($b) --below \($a)"'
   fix+=' elif ($dx == 0) then "--output \($b) --below \($a)"'
   fix+=' else "--output \($b) --right-of \($a)"'
   fix+=' end'
