@@ -6,7 +6,6 @@ Type=simple
 Environment=HOME=/home/#USER
 Environment=XAUTHORITY=/home/#USER/.Xauthority
 Environment=DISPLAY=:0
-ExecStartPre=/usr/bin/sleep 1
 ExecStart=/opt/stack/displays fix layout
 
 [Install]

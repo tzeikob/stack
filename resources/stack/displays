@@ -620,8 +620,6 @@ set_mode () {
   fi
 
   echo "Output ${name} mode set to ${resolution}@${rate}"
-
-  fix_layout || return 1
 }
 
 # Sets the output with the given name as primary.
@@ -691,7 +689,7 @@ set_on () {
     return 2
   fi
 
-  # Find the last in order monitor
+  # Find the last in order active monitor
   local query='[.[]|select(.is_connected and .resolution_width)]'
   query+='|sort_by(.offset_height, .offset_width)'
   query+='|if length > 0 then last|.device_name else "" end'
@@ -751,8 +749,6 @@ set_off () {
   fi
   
   echo "Output ${name} has been deactivated"
-
-  fix_layout || return 1
 }
 
 # Sets the reflection of the output with the given name.
@@ -865,8 +861,6 @@ rotate () {
   fi
   
   echo "Rotation of output ${name} set to ${mode}"
-
-  fix_layout || return 1
 }
 
 # Mirrors the output with the given name to other outputs,
@@ -962,8 +956,6 @@ mirror () {
   fi
   
   echo "Output ${name} has been mirrored"
-
-  fix_layout || return 1
 }
 
 # Sets the layout of currently active outputs to the given
@@ -1211,8 +1203,8 @@ restore_layout () {
 }
 
 # Fixes the positioning of the current layout by
-# filling possible gaps and straightening diagonal
-# alignments if so.
+# setting forcefully to off any output being
+# disconnected or inactive.
 # Arguments:
 #  None
 fix_layout () {
@@ -1232,47 +1224,28 @@ fix_layout () {
     return 2
   fi
 
-  # Collect the disconnected and active monitors
-  local query='[.[]|select(.is_connected|not)]'
+  # Set any disconnected monitors off
+  local query='.[]|select(.is_connected|not)'
+  query+='|"--output \(.device_name) --off"'
+  query="[${query}]|join(\" \")"
 
   local disconnected=''
   disconnected="$(echo "${outputs}" | jq -cr "${query}")"
 
-  local query='[.[]|select(.is_connected and .resolution_width)]'
-  query+='|sort_by(.offset_height, .offset_width)'
+  # Set any inactive monitors off
+  local query='.[]|select(.is_connected and .resolution_width == null)'
+  query+='|"--output \(.device_name) --off"'
+  query="[${query}]|join(\" \")"
 
-  local active=''
-  active="$(echo "${outputs}" | jq -cr "${query}")"
+  local inactive=''
+  inactive="$(echo "${outputs}" | jq -cr "${query}")"
 
-  # Resolve and fix current topology of active monitors
-  local fix='.'
-  fix+='|(.[1].offset_width - .[0].offset_width) as $dx'
-  fix+='|(.[1].offset_height - .[0].offset_height) as $dy'
-  fix+='|(.[0].device_name) as $a'
-  fix+='|(.[1].device_name) as $b'
-  fix+='|if ($dx == 0 and $dy == 0) then "--output \($b) --same-as \($a)"'
-  fix+=' elif ($dx > 0 and $dy > 0 and $dx >= $dy) then "--output \($b) --right-of \($a)"'
-  fix+=' elif ($dx > 0 and $dy > 0 and $dx < $dy) then "--output \($b) --below \($a)"'
-  fix+=' elif ($dx == 0) then "--output \($b) --below \($a)"'
-  fix+=' else "--output \($b) --right-of \($a)"'
-  fix+=' end'
-
-  local query="if (length == 2) then ${fix} else \"\" end"
-
-  local layout=''
-  layout="$(echo "${active}" | jq -cr "${query}")"
-
-  # Set any disconnected monitors off
-  local query='[.[]|"--output \(.device_name) --off"]|join(" ")'
-
-  layout+=" $(echo "${disconnected}" | jq -cr "${query}")"
-
-  if [[ -z "${layout// }" ]]; then
+  if [[ -z "${disconnected// }" ]] && [[ -z "${inactive// }" ]]; then
     echo "No fix applied to layout"
     return 0
   fi
 
-  xrandr ${layout}
+  xrandr ${disconnected} ${inactive}
 
   if [[ $? -ne 0 ]]; then
     echo "Failed to fix the layout"
