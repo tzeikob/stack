@@ -1020,7 +1020,7 @@ set_layout () {
       "gamma-3") args="--output ${a} --left-of ${b} --output ${c} --below ${a}";;
       "gamma-rev-3") args="--output ${a} --left-of ${b} --output ${c} --below ${b}";;
       "lambda-3") args="--output ${a} --above ${b} --output ${b} --left-of ${c}";;
-      "lambda-rev-3") args="--output ${a} --left-of ${c} --output ${a} --above ${c}";;
+      "lambda-rev-3") args="--output ${a} --left-of ${c} --output ${b} --above ${c}";;
       *)
         echo "Layout ${mode} is not applicable in ${len} outputs setup"
         return 2;;
