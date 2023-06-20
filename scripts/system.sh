@@ -324,22 +324,22 @@ install_utilities () {
   ln -sf "$STACK_HOME/printers" /usr/local/bin/printers
   ln -sf "$STACK_HOME/power" /usr/local/bin/power
 
-  echo 'displays restore layout || notify-send "Failed to load displays layout"' >> ~/.xinitrc
-  echo 'displays restore colors || notify-send "Failed to load some color profiles"' >> ~/.xinitrc
-  echo 'cloud mount remotes || notify-send "Failed to mount some cloud remotes"' >> ~/.xinitrc
-
-  local services_home="/home/${USERNAME}/systemd/user"
-  mkdir -p "${services_home}"
-  cp ~/stack/resources/stack/services/init-pointer.service "${services_home}"
-  cp ~/stack/resources/stack/services/init-tablets.service "${services_home}"
-  chown -R "$USERNAME":"$USERNAME" "${services_home}"
+  echo 'displays restore layout || notify-send "Failed to restore layout"' >> ~/.xinitrc
+  echo 'displays restore colors || notify-send "Failed to restore colors"' >> ~/.xinitrc
+  echo 'cloud mount remotes || notify-send "Failed to mount cloud remotes"' >> ~/.xinitrc
 
   local rules_home='/etc/udev/rules.d'
   cp ~/stack/resources/stack/rules/90-init-pointer.rules "${rules_home}"
   cp ~/stack/resources/stack/rules/91-init-tablets.rules "${rules_home}"
+  cp ~/stack/resources/stack/rules/92-fix-layout.rules "${rules_home}"
 
-  cp ~/stack/resources/stack/rules/92-restore-layout.rules "${rules_home}"
-  sed -i "s/USER/${USERNAME}/g" "${rules_home}/92-restore-layout.rules"
+  local services_home="/home/${USERNAME}/.config/systemd/user"
+  mkdir -p "${services_home}"
+  cp ~/stack/resources/stack/services/init-pointer.service "${services_home}"
+  cp ~/stack/resources/stack/services/init-tablets.service "${services_home}"
+  cp ~/stack/resources/stack/services/fix-layout.service "${services_home}"
+  sed -i "s/#USER/${USERNAME}/g" "${services_home}/fix-layout.service"
+  chown -R "$USERNAME":"$USERNAME" "${services_home}"
 
   cp ~/stack/resources/stack/services/suspend.service /etc/systemd/system/suspend@.service
   systemctl enable suspend@${USERNAME}.service

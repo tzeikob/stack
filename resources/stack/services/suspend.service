@@ -1,5 +1,5 @@
 [Unit]
-Description=user suspend actions
+Description=service to lock the screen before suspend
 Before=suspend.target
 
 [Service]

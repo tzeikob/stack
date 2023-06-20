@@ -689,7 +689,19 @@ set_on () {
     return 2
   fi
 
-  xrandr --output "${name}" --auto
+  # Find the last in order active monitor
+  local query='[.[]|select(.is_connected and .resolution_width)]'
+  query+='|sort_by(.offset_height, .offset_width)'
+  query+='|if length > 0 then last|.device_name else "" end'
+  
+  local last=''
+  last="$(find_outputs "all" | jq -cr "${query}")" || return 1
+
+  if [[ -n "${last}" ]]; then
+    xrandr --output "${name}" --auto --right-of "${last}"
+  else
+    xrandr --output "${name}" --auto
+  fi
 
   if [[ $? -ne 0 ]]; then
     echo "Failed to activate output"
@@ -929,8 +941,9 @@ mirror () {
   local ref="$(echo "${output}" | jq -r '.reflection|ascii_downcase' |
     awk '{gsub(/( |and|axis)/,"",$0); print}')"
 
-  query="[\"--output \(.[]) --mode ${mode} --pos ${pos} --rotate ${rot} --reflect ${ref}\"]"
-  query+='|join(" ")'
+  local query='.[]|'
+  query+="\"--output \(.) --mode ${mode} --pos ${pos} --rotate ${rot} --reflect ${ref}\""
+  query="[${query}]|join(\" \")"
 
   local others=''
   others="$(echo "${mirrors}" | jq -cr "${query}")" || return 1
@@ -1126,12 +1139,25 @@ save_layout () {
 
 # Restores the layout setting with the signature matching
 # the signature of the mapping between current outputs and 
-# possibly connected devices.
+# connected devices.
 # Globals:
 #  SETTINGS_FILE
 # Arguments:
 #  None
 restore_layout () {
+  if [[ ! -f "${SETTINGS_FILE}" ]]; then
+    echo "No layout settings found"
+    return 0
+  fi
+
+  local layouts=''
+  layouts="$(jq '.layouts|if . then . else empty end' "${SETTINGS_FILE}")"
+
+  if [[ -z "${layouts}" ]]; then
+    echo "No layout settings found"
+    return 0
+  fi
+
   local outputs=''
   outputs="$(find_outputs "all")"
 
@@ -1153,32 +1179,20 @@ restore_layout () {
   sig="$(get_sig "${outputs}")" || return 1
 
   # Search for a layout matching the current mapping
-  if [[ ! -f "${SETTINGS_FILE}" ]]; then
-    echo "No layout settings found"
+  local query='.[]'
+  query+="|select(.sig == \"${sig}\")|.map|to_entries[]"
+  query+='|"--output \(.key) \(.value.mode)"'
+  query="[${query}]|join(\" \")"
+
+  local layout=''
+  layout="$(echo "${layouts}" | jq -cr "${query}")"
+
+  if [[ -z "${layout}" ]]; then
+    echo "No layout match found"
     return 0
   fi
 
-  local layouts=''
-  layouts="$(jq '.layouts|if . then . else empty end' "${SETTINGS_FILE}")"
-
-  if [[ -z "${layouts}" ]]; then
-    echo "No layout settings found"
-    return 0
-  fi
-
-  # Collect all output xrandr mode options matching the sig
-  local query='"--output \(.key) \(.value.mode)"'
-  query="[.[]|select(.sig == \"${sig}\")|.map|to_entries[]|${query}]|join(\" \")"
-
-  local args=''
-  args="$(echo "${layouts}" | jq -cr "${query}")"
-
-  if [[ -z "${args}" ]]; then
-    echo "No layout found for current mapping"
-    return 0
-  fi
-
-  xrandr ${args}
+  xrandr ${layout}
 
   if [[ $? -ne 0 ]]; then
     echo "Failed to restore the layout"
@@ -1186,6 +1200,59 @@ restore_layout () {
   fi
 
   echo "Layout has been restored"
+}
+
+# Fixes the positioning of the current layout by
+# setting forcefully to off any output being
+# disconnected or inactive.
+# Arguments:
+#  None
+fix_layout () {
+  local outputs=''
+  outputs="$(find_outputs "all")"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to read outputs"
+    return 2
+  fi
+
+  local len=0
+  len="$(count "${outputs}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No outputs have found"
+    return 2
+  fi
+
+  # Set any disconnected monitors off
+  local query='.[]|select(.is_connected|not)'
+  query+='|"--output \(.device_name) --off"'
+  query="[${query}]|join(\" \")"
+
+  local disconnected=''
+  disconnected="$(echo "${outputs}" | jq -cr "${query}")"
+
+  # Set any inactive monitors off
+  local query='.[]|select(.is_connected and .resolution_width == null)'
+  query+='|"--output \(.device_name) --off"'
+  query="[${query}]|join(\" \")"
+
+  local inactive=''
+  inactive="$(echo "${outputs}" | jq -cr "${query}")"
+
+  if [[ -z "${disconnected// }" ]] && [[ -z "${inactive// }" ]]; then
+    echo "No fix applied to layout"
+    return 0
+  fi
+
+  xrandr ${disconnected} ${inactive}
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to fix the layout"
+    return 2
+  fi
+
+  echo "Layout has been fixed"
 }
 
 # Deletes the layout setting with the given index.
@@ -1634,8 +1701,9 @@ show_help () {
     printf " %-16s %s\n" \
       "help" "Show this help message." \
       "" "" \
-      "restore colors" "Apply color settings to currently active displays." \
-      "restore layout" "Apply the layout matching the current setup."
+      "restore colors" "Restore colors to currently active displays." \
+      "restore layout" "Restore the layout matching the current mapping." \
+      "fix layout" "Fix the positioning of the current layout."
 
     return 0
   fi
@@ -1665,13 +1733,13 @@ show_help () {
     "save layout" "Save the current layout of active outputs." \
     "list layouts" "List all layout settings." \
     "delete layout [<index>]" "Delete a layout setting." \
-    "restore layout" "Apply the layout setting matching the current setup." \
+    "restore layout" "Restore the layout matching the current mapping." \
     "" "" \
     "set color [<output> [<profile>]]" "Set color profile of a display connected to an output." \
     "reset color [<output>]" "Reset color profile of a display connected to an output." \
     "list colors" "List all color settings per display." \
     "delete color [<index>]" "Delete a color setting." \
-    "restore colors" "Apply color settings to currently active displays."
+    "restore colors" "Restore colors to currently active displays."
 }
 
 loop () {
@@ -1765,6 +1833,11 @@ once () {
       case "${2}" in
         "layout") restore_layout;;
         "colors") restore_colors;;
+        *) abort "Invalid or unknown command";;
+      esac;;
+    "fix")
+      case "${2}" in
+        "layout") fix_layout;;
         *) abort "Invalid or unknown command";;
       esac;;
     *) abort "Invalid or unknown command";;
