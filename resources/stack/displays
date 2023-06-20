@@ -72,7 +72,7 @@ get_sig () {
   local outputs="${1}"
 
   local model=''
-  model+='if .model_name'
+  model+='if .model_name and .is_connected and .resolution_width'
   model+=' then "_\(.model_name)_\(.product_id)_\(.serial_number)"'
   model+=' else ""'
   model+='end'
@@ -1066,7 +1066,7 @@ save_layout () {
 
   # Create a hash map of <output,{device, mode}> entries
   local device=''
-  device+='if .model_name'
+  device+='if .model_name and .is_connected and .resolution_width'
   device+=' then {model_name: .model_name, product_id: .product_id, serial_number: .serial_number}'
   device+=' else {} '
   device+='end'
