@@ -958,86 +958,81 @@ mirror () {
   echo "Output ${name} has been mirrored"
 }
 
-# Sets the layout of currently active outputs to the given
-# mode, where mode is limited to only 2 and 3 display setups.
+# Sets the layout of the currently active outputs.
 # Globals:
 #  REPLY
 # Arguments:
-#  mode: row-2, col-2, row-3, col-3, gamma-3, gamma-rev-3,
-#        lambda-3, lambda-rev-3
+#  None
 set_layout () {
-  local mode="${1}"
+  local outputs=''
+  outputs="$(find_outputs "active")"
 
-  if [[ -z "${mode}" ]]; then
-    local modes=''
-    modes+='{"key": "row-2", "value": "row-2"},'
-    modes+='{"key": "col-2", "value": "col-2"},'
-    modes+='{"key": "row-3", "value": "row-3"},'
-    modes+='{"key": "col-3", "value": "col-3"},'
-    modes+='{"key": "gamma-3", "value": "gamma-3"},'
-    modes+='{"key": "gamma-rev-3", "value": "gamma-rev-3"},'
-    modes+='{"key": "lambda-3", "value": "lambda-3"},'
-    modes+='{"key": "lambda-rev-3", "value": "lambda-rev-3"}'
-
-    pick_one "Select a layout mode:" "[${modes}]" "vertical" || return $?
-    [[ -n "$REPLY" ]] && mode="${REPLY}" || return 0
-  fi
-
-  local modes='(row-2|col-2|row-3|col-3|gamma-3|gamma-rev-3|lambda-3|lambda-rev-3)'
-  if [[ ! "${mode}" =~ ^${modes}$ ]]; then
-    echo "Invalid layout mode"
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to read active outputs"
     return 2
   fi
+
+  local len=0
+  len="$(count "${outputs}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No active outputs have found"
+    return 2
+  elif [[ ${len} -eq 1 ]]; then
+    echo "Only one active output found"
+    return 0
+  elif [[ ${len} -gt 3 ]]; then
+    echo "No layout modes found for more than 3 monitors"
+    return 0
+  fi
+
+  local modes=''
+
+  if [[ ${len} -eq 2 ]]; then
+    modes+='{"key": "row-2", "value": "Row"},'
+    modes+='{"key": "col-2", "value": "Column"}'
+  elif [[ ${len} -eq 3 ]]; then
+    modes+='{"key": "row-3", "value": "Row"},'
+    modes+='{"key": "col-3", "value": "Column"},'
+    modes+='{"key": "gamma-3", "value": "Gamma"},'
+    modes+='{"key": "gamma-rev-3", "value": "Gamma Reverse"},'
+    modes+='{"key": "lambda-3", "value": "Lambda"},'
+    modes+='{"key": "lambda-rev-3", "value": "Lambda Reverse"}'
+  fi
+
+  local mode=''
+  pick_one "Select a layout mode:" "[${modes}]" "vertical" || return $?
+  [[ -n "$REPLY" ]] && mode="${REPLY}" || return 0
 
   local outputs=''
   pick_outputs "Pick outputs by order:" "active" "all" || return $?
   [[ -n "$REPLY" ]] && outputs="${REPLY}" || return 0
 
-  local len=0
-  len="$(count "${outputs}")" || return 1
+  local query=''
 
-  if [[ ${len} == 2 ]]; then
-    local a="$(echo "${outputs}" | jq -cr '.[0]')"
-    local b="$(echo "${outputs}" | jq -cr '.[1]')"
+  case "${mode}" in
+    "row-2") query='"--output \(.[1]) --right-of \(.[0])"';;
+    "col-2") query='"--output \(.[1]) --below \(.[0])"';;
+    "row-3") query='"--output \(.[1]) --right-of \(.[0]) --output \(.[2]) --right-of \(.[1])"';;
+    "col-3") query='"--output \(.[1]) --below \(.[0]) --output \(.[2]) --below \(.[1])"';;
+    "gamma-3") query='"--output \(.[1]) --right-of \(.[0]) --output \(.[2]) --below \(.[0])"';;
+    "gamma-rev-3") query='"--output \(.[1]) --right-of \(.[0]) --output \(.[2]) --below \(.[1])"';;
+    "lambda-3") query='"--output \(.[1]) --below \(.[0]) --output \(.[2]) --right-of \(.[1])"';;
+    "lambda-rev-3") query='"--output \(.[2]) --right-of \(.[1]) --output \(.[0]) --above \(.[2])"';;
+    *) return 1;;
+  esac
 
-    local args=''
-    case "${mode}" in
-      "row-2") args="--output ${a} --left-of ${b}";;
-      "col-2") args="--output ${a} --above ${b}";;
-      *)
-        echo "Layout ${mode} is not applicable in ${len} outputs setup"
-        return 2;;
-    esac
-  elif [[ ${len} == 3 ]]; then
-    local a="$(echo "${outputs}" | jq -cr '.[0]')"
-    local b="$(echo "${outputs}" | jq -cr '.[1]')"
-    local c="$(echo "${outputs}" | jq -cr '.[2]')"
+  local layout=''
+  layout="$(echo "${outputs}" | jq -cr "${query}")"
 
-    local args=''
-    case "${mode}" in
-      "row-3") args="--output ${a} --left-of ${b} --output ${b} --left-of ${c}";;
-      "col-3") args="--output ${a} --above ${b} --output ${b} --above ${c}";;
-      "gamma-3") args="--output ${a} --left-of ${b} --output ${c} --below ${a}";;
-      "gamma-rev-3") args="--output ${a} --left-of ${b} --output ${c} --below ${b}";;
-      "lambda-3") args="--output ${a} --above ${b} --output ${b} --left-of ${c}";;
-      "lambda-rev-3") args="--output ${a} --left-of ${c} --output ${b} --above ${c}";;
-      *)
-        echo "Layout ${mode} is not applicable in ${len} outputs setup"
-        return 2;;
-    esac
-  else
-    echo "Layout ${mode} is not applicable in ${len} output(s) setup"
-    return 2
-  fi
-
-  xrandr ${args}
+  xrandr ${layout}
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to set layout"
+    echo "Failed to set layout ${mode,,}"
     return 2
   fi
 
-  echo "Layout has been set to ${mode}"
+  echo "Layout has been set to ${mode,,}"
 }
 
 # Saves the current layout under a unique hashed signature
@@ -1782,7 +1777,7 @@ loop () {
         esac;;
       "set")
         case "${cmd[1]}" in
-          "layout") set_layout "${cmd[2]}";;
+          "layout") set_layout;;
           "mode") set_mode "${cmd[2]}" "${cmd[3]}" "${cmd[4]}";;
           "primary") set_primary "${cmd[2]}";;
           "on") set_on "${cmd[2]}";;
