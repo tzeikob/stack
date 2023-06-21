@@ -1009,89 +1009,172 @@ set_layout () {
   local mode=''
   pick_one "Select a layout mode:" "[${modes}]" "vertical" || return $?
   [[ -n "$REPLY" ]] && mode="${REPLY}" || return 0
-  echo ""
 
+  local c=$'\e[30m\e[47m'
+  local r=$'\e[0m'
   local query=''
 
+  echo
   case "${mode}" in
     "row-2")
-      echo "[1][2]"
+      echo -e "${c}       ${r}  ${c}       ${r}"
+      echo -e "${c}  |1|  ${r}  ${c}  |2|  ${r}"
+      echo -e "${c}       ${r}  ${c}       ${r}"
+
       query='--output \(.[1]) --right-of \(.[0])'
       ;;
     "col-2")
-      echo "[1]"
-      echo "[2]"
+      echo -e "${c}       ${r}"
+      echo -e "${c}  |1|  ${r}"
+      echo -e "${c}       ${r}"
+      echo
+      echo -e "${c}       ${r}"
+      echo -e "${c}  |2|  ${r}"
+      echo -e "${c}       ${r}"
+
       query='--output \(.[1]) --below \(.[0])'
       ;;
     "row-3")
-      echo "[1][2][3]"
+      echo -e "${c}       ${r}   ${c}       ${r}   ${c}       ${r}"
+      echo -e "${c}  |1|  ${r}   ${c}  |2|  ${r}   ${c}  |3|  ${r}"
+      echo -e "${c}       ${r}   ${c}       ${r}   ${c}       ${r}"
+
       query='--output \(.[1]) --right-of \(.[0]) '
       query+='--output \(.[2]) --right-of \(.[1])'
       ;;
     "col-3")
-      echo "[1]"
-      echo "[2]"
-      echo "[3]"
+      echo -e "${c}       ${r}"
+      echo -e "${c}  |1|  ${r}"
+      echo -e "${c}       ${r}"
+      echo
+      echo -e "${c}       ${r}"
+      echo -e "${c}  |2|  ${r}"
+      echo -e "${c}       ${r}"
+      echo
+      echo -e "${c}       ${r}"
+      echo -e "${c}  |3|  ${r}"
+      echo -e "${c}       ${r}"
+
       query='--output \(.[1]) --below \(.[0]) '
       query+='--output \(.[2]) --below \(.[1])'
       ;;
     "gamma-3")
-      echo "[1][2]"
-      echo "[3]"
+      echo -e "${c}       ${r}   ${c}       ${r}"
+      echo -e "${c}  |1|  ${r}   ${c}  |2|  ${r}"
+      echo -e "${c}       ${r}   ${c}       ${r}"
+      echo
+      echo -e "${c}       ${r}"
+      echo -e "${c}  |3|  ${r}"
+      echo -e "${c}       ${r}"
+
       query='--output \(.[1]) --right-of \(.[0]) '
       query+='--output \(.[2]) --below \(.[0])'
       ;;
     "gamma-rev-3")
-      echo "[1][2]"
-      echo "   [3]"
+      echo -e "${c}       ${r}   ${c}       ${r}"
+      echo -e "${c}  |1|  ${r}   ${c}  |2|  ${r}"
+      echo -e "${c}       ${r}   ${c}       ${r}"
+      echo
+      echo -e "${r}       ${r}   ${c}       ${r}"
+      echo -e "${r}       ${r}   ${c}  |3|  ${r}"
+      echo -e "${r}       ${r}   ${c}       ${r}"
+
       query='--output \(.[1]) --right-of \(.[0]) '
       query+='--output \(.[2]) --below \(.[1])'
       ;;
     "lambda-3")
-      echo "[1]"
-      echo "[2][3]"
+      echo -e "${c}       ${r}"
+      echo -e "${c}  |1|  ${r}"
+      echo -e "${c}       ${r}"
+      echo
+      echo -e "${c}       ${r}   ${c}       ${r}"
+      echo -e "${c}  |2|  ${r}   ${c}  |3|  ${r}"
+      echo -e "${c}       ${r}   ${c}       ${r}"
+
       query='--output \(.[1]) --below \(.[0]) '
       query+='--output \(.[2]) --right-of \(.[1])'
       ;;
     "lambda-rev-3")
-      echo "   [1]"
-      echo "[2][3]"
+      echo -e "${r}       ${r}   ${c}       ${r}"
+      echo -e "${r}       ${r}   ${c}  |1|  ${r}"
+      echo -e "${r}       ${r}   ${c}       ${r}"
+      echo
+      echo -e "${c}       ${r}   ${c}       ${r}"
+      echo -e "${c}  |2|  ${r}   ${c}  |3|  ${r}"
+      echo -e "${c}       ${r}   ${c}       ${r}"
+
       query='--output \(.[2]) --right-of \(.[1]) '
       query+='--output \(.[0]) --above \(.[2])'
       ;;
     "grid-4")
-      echo "[1][2]"
-      echo "[3][4]"
+      echo -e "${c}       ${r}   ${c}       ${r}"
+      echo -e "${c}  |1|  ${r}   ${c}  |2|  ${r}"
+      echo -e "${c}       ${r}   ${c}       ${r}"
+      echo
+      echo -e "${c}       ${r}   ${c}       ${r}"
+      echo -e "${c}  |3|  ${r}   ${c}  |4|  ${r}"
+      echo -e "${c}       ${r}   ${c}       ${r}"
+
       query='--output \(.[1]) --right-of \(.[0]) '
       query+='--output \(.[2]) --below \(.[0]) '
       query+='--output \(.[3]) --right-of \(.[2])'
       ;;
     "taph-4")
-      echo "[1][2][3]"
-      echo "   [4]"
+      echo -e "${c}       ${r}   ${c}       ${r}   ${c}       ${r}"
+      echo -e "${c}  |1|  ${r}   ${c}  |2|  ${r}   ${c}  |3|  ${r}"
+      echo -e "${c}       ${r}   ${c}       ${r}   ${c}       ${r}"
+      echo
+      echo -e "${r}       ${r}   ${c}       ${r}"
+      echo -e "${r}       ${r}   ${c}  |4|  ${r}"
+      echo -e "${r}       ${r}   ${c}       ${r}"
+
       query='--output \(.[1]) --right-of \(.[0]) '
       query+='--output \(.[2]) --right-of \(.[1]) '
       query+='--output \(.[3]) --below \(.[1])'
       ;;
     "taph-rev-4")
-      echo "   [1]"
-      echo "[2][3][4]"
+      echo -e "${r}       ${r}   ${c}       ${r}"
+      echo -e "${r}       ${r}   ${c}  |1|  ${r}"
+      echo -e "${r}       ${r}   ${c}       ${r}"
+      echo
+      echo -e "${c}       ${r}   ${c}       ${r}   ${c}       ${r}"
+      echo -e "${c}  |2|  ${r}   ${c}  |3|  ${r}   ${c}  |4|  ${r}"
+      echo -e "${c}       ${r}   ${c}       ${r}   ${c}       ${r}"
+
       query='--output \(.[2]) --below \(.[0]) '
       query+='--output \(.[1]) --left-of \(.[2]) '
       query+='--output \(.[3]) --right-of \(.[2])'
       ;;
     "taph-right-4")
-      echo "[1]"
-      echo "[2][3]"
-      echo "[4]"
+      echo -e "${c}       ${r}"
+      echo -e "${c}  |1|  ${r}"
+      echo -e "${c}       ${r}"
+      echo
+      echo -e "${c}       ${r}   ${c}       ${r}"
+      echo -e "${c}  |2|  ${r}   ${c}  |3|  ${r}"
+      echo -e "${c}       ${r}   ${c}       ${r}"
+      echo
+      echo -e "${c}       ${r}"
+      echo -e "${c}  |4|  ${r}"
+      echo -e "${c}       ${r}"
+
       query='--output \(.[1]) --below \(.[0]) '
       query+='--output \(.[2]) --right-of \(.[1]) '
       query+='--output \(.[3]) --below \(.[1])'
       ;;
     "taph-left-4")
-      echo "   [1]"
-      echo "[2][3]"
-      echo "   [4]"
+      echo -e "${r}       ${r}   ${c}       ${r}"
+      echo -e "${r}       ${r}   ${c}  |1|  ${r}"
+      echo -e "${r}       ${r}   ${c}       ${r}"
+      echo
+      echo -e "${c}       ${r}   ${c}       ${r}"
+      echo -e "${c}  |2|  ${r}   ${c}  |3|  ${r}"
+      echo -e "${c}       ${r}   ${c}       ${r}"
+      echo
+      echo -e "${r}       ${r}   ${c}       ${r}"
+      echo -e "${r}       ${r}   ${c}  |4|  ${r}"
+      echo -e "${r}       ${r}   ${c}       ${r}"
+
       query='--output \(.[0]) --above \(.[2]) '
       query+='--output \(.[1]) --left-of \(.[2]) '
       query+='--output \(.[3]) --below \(.[2])'
@@ -1101,6 +1184,7 @@ set_layout () {
       echo "Invalid or unknown layout mode"
       return 2;;
   esac
+  echo
 
   local outputs=''
   pick_outputs "Pick outputs by order:" "active" "all" || return $?
