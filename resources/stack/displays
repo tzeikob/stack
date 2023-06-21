@@ -981,8 +981,8 @@ set_layout () {
   elif [[ ${len} -eq 1 ]]; then
     echo "Only one active output found"
     return 0
-  elif [[ ${len} -gt 3 ]]; then
-    echo "No layout modes found for more than 3 monitors"
+  elif [[ ${len} -gt 4 ]]; then
+    echo "Too many active outputs have found"
     return 0
   fi
 
@@ -998,6 +998,12 @@ set_layout () {
     modes+='{"key": "gamma-rev-3", "value": "Gamma Reverse"},'
     modes+='{"key": "lambda-3", "value": "Lambda"},'
     modes+='{"key": "lambda-rev-3", "value": "Lambda Reverse"}'
+  elif [[ ${len} -eq 4 ]]; then
+    modes+='{"key": "grid-4", "value": "Grid"},'
+    modes+='{"key": "taph-4", "value": "Taph"},'
+    modes+='{"key": "taph-rev-4", "value": "Taph Reverse"},'
+    modes+='{"key": "taph-right-4", "value": "Taph Right"},'
+    modes+='{"key": "taph-left-4", "value": "Taph Left"}'
   fi
 
   local mode=''
@@ -1011,19 +1017,67 @@ set_layout () {
   local query=''
 
   case "${mode}" in
-    "row-2") query='"--output \(.[1]) --right-of \(.[0])"';;
-    "col-2") query='"--output \(.[1]) --below \(.[0])"';;
-    "row-3") query='"--output \(.[1]) --right-of \(.[0]) --output \(.[2]) --right-of \(.[1])"';;
-    "col-3") query='"--output \(.[1]) --below \(.[0]) --output \(.[2]) --below \(.[1])"';;
-    "gamma-3") query='"--output \(.[1]) --right-of \(.[0]) --output \(.[2]) --below \(.[0])"';;
-    "gamma-rev-3") query='"--output \(.[1]) --right-of \(.[0]) --output \(.[2]) --below \(.[1])"';;
-    "lambda-3") query='"--output \(.[1]) --below \(.[0]) --output \(.[2]) --right-of \(.[1])"';;
-    "lambda-rev-3") query='"--output \(.[2]) --right-of \(.[1]) --output \(.[0]) --above \(.[2])"';;
+    "row-2")
+      query='--output \(.[1]) --right-of \(.[0])'
+      ;;
+    "col-2")
+      query='--output \(.[1]) --below \(.[0])'
+      ;;
+    "row-3")
+      query='--output \(.[1]) --right-of \(.[0]) '
+      query+='--output \(.[2]) --right-of \(.[1])'
+      ;;
+    "col-3")
+      query='--output \(.[1]) --below \(.[0]) '
+      query+='--output \(.[2]) --below \(.[1])'
+      ;;
+    "gamma-3")
+      query='--output \(.[1]) --right-of \(.[0]) '
+      query+='--output \(.[2]) --below \(.[0])'
+      ;;
+    "gamma-rev-3")
+      query='--output \(.[1]) --right-of \(.[0]) '
+      query+='--output \(.[2]) --below \(.[1])'
+      ;;
+    "lambda-3")
+      query='--output \(.[1]) --below \(.[0]) '
+      query+='--output \(.[2]) --right-of \(.[1])'
+      ;;
+    "lambda-rev-3")
+      query='--output \(.[2]) --right-of \(.[1]) '
+      query+='--output \(.[0]) --above \(.[2])'
+      ;;
+    "grid-4")
+      query='--output \(.[1]) --right-of \(.[0]) '
+      query+='--output \(.[2]) --below \(.[0]) '
+      query+='--output \(.[3]) --right-of \(.[2])'
+      ;;
+    "taph-4")
+      query='--output \(.[1]) --right-of \(.[0]) '
+      query+='--output \(.[2]) --right-of \(.[1]) '
+      query+='--output \(.[3]) --below \(.[1])'
+      ;;
+    "taph-rev-4")
+      query='--output \(.[2]) --below \(.[0]) '
+      query+='--output \(.[1]) --left-of \(.[2]) '
+      query+='--output \(.[3]) --right-of \(.[2])'
+      ;;
+    "taph-right-4")
+      query='--output \(.[1]) --below \(.[0]) '
+      query+='--output \(.[2]) --right-of \(.[1]) '
+      query+='--output \(.[3]) --below \(.[1])'
+      ;;
+    "taph-left-4")
+      query='--output \(.[0]) --above \(.[2]) '
+      query+='--output \(.[1]) --left-of \(.[2]) '
+      query+='--output \(.[3]) --below \(.[2])'
+      ;;
+
     *) return 1;;
   esac
 
   local layout=''
-  layout="$(echo "${outputs}" | jq -cr "${query}")"
+  layout="$(echo "${outputs}" | jq -cr "\"${query}\"")"
 
   xrandr ${layout}
 
