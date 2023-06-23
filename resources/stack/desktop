@@ -738,13 +738,13 @@ set_pointer_speed () {
   local speed=0
   speed="$(echo "${factor}" | awk '{print 2*$0 - 1}')" || return 1
 
-  # Convert factor to velocity [0,15]
+  # Convert factor to velocity [0,10]
   local velocity=0
   velocity="$(echo "${factor}" | awk '{
     if ($0 == 0) {
       velocity=0.001
     } else {
-      velocity=15*$0
+      velocity=10*$0
     }
 
     print velocity
