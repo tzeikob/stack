@@ -144,6 +144,47 @@ unmute_stream () {
   echo "Notifications has been unmuted"
 }
 
+# Enables or disables pop-up notifications.
+# Globals:
+#  HOME
+# Arguments:
+#  mode: on or off
+set_popup () {
+  local mode="${1}"
+
+  if [[ ! "${mode}" =~ ^(on|off)$ ]]; then
+    echo 'Invalid pop-up mode'
+    return 2
+  fi
+
+  local config_file="${HOME}/.config/dunst/dunstrc"
+
+  # Create the config file if none exists yet
+  if [[ ! -f "${config_file}" ]]; then
+    echo '[global]' > "${config_file}"
+    echo '  transparency = 0' >> "${config_file}"
+  fi
+
+  # Convert mode to transparency value
+  local value=0
+  if [[ "${mode}" == "off" ]]; then
+    value=100
+  fi
+
+  sed -i "s/\([[:blank:]]*transparency\).*/\1 = ${value}/" "${config_file}"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to set pop-up notifications to ${mode}"
+    return 2
+  fi
+
+  # Restart dunst service so changes take effect
+  killall dunst &&
+  dunst > /dev/null 2>&1 &
+
+  echo "Pop-up notifications set to ${mode}"
+}
+
 # Shows the help message.
 # Arguments:
 #  mode: once or none
@@ -175,7 +216,9 @@ show_help () {
     "" "id or appname in asc or desc order." \
     "" "" \
     "mute" "Pause the notifications stream." \
-    "unmute" "Restore the notifications stream."
+    "unmute" "Restore the notifications stream." \
+    "" "" \
+    "set popup on|off" "Show or hide pop-up notifications."
 }
 
 loop () {
@@ -210,6 +253,11 @@ loop () {
       "list") list_archived "${cmd[1]}" "${cmd[2]}";;
       "mute") mute_stream;;
       "unmute") unmute_stream;;
+      "set")
+        case "${cmd[1]}" in
+          "popup") set_popup "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
       *) echo "Invalid or unknown command";; 
     esac
     
