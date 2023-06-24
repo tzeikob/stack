@@ -1,0 +1,184 @@
+#!/bin/bash
+
+set -o pipefail
+source /opt/stack/utils
+
+# Shows a prompt status and asks user to enter the
+# next command, which is kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  None
+# Outputs:
+#  A minimal prompt status line.
+prompt () {
+  local status=0
+  status="$(dunstctl count history)"
+
+  if [[ $? -ne 0 ]]; then
+    status='none'
+  fi
+
+  read -rep "[notifications:${status}] " REPLY
+}
+
+# Shows the current status of the notification server.
+# Arguments:
+#  None
+# Outputs:
+#  A verbose list of text data.
+show_status () {
+  local status=''
+
+  local paused=''
+  paused="$(dunstctl is-paused)" || return 1
+
+  status+="\"is_paused\": ${paused},"
+
+  status+="$(dunstctl count | awk '{
+    split($0, a, ":")
+
+    if (a[1] ~ "Waiting") {
+      print "\"pending\":"a[2]","
+    } else if (a[1] ~ "Currently displayed") {
+      print "\"displayed\":"a[2]","
+    } else if (a[1] ~ "History") {
+      print "\"archived\":"a[2]","
+    }
+  }')" || return 1
+
+  # Remove the last extra comma after the last field
+  if [[ -n "${status}" ]]; then
+    status="${status::-1}"
+  fi
+
+  status="{${status}}"
+
+  local query=''
+  query+='Paused:     \(.is_paused)\n'
+  query+='Pending:    \(.pending)\n'
+  query+='Displayed:  \(.displayed)\n'
+  query+='Archived:   \(.archived)'
+
+  echo "${status}" | jq -cer "\"${query}\"" || return 1
+}
+
+# Pauses the notification stream.
+# Arguments:
+#  None
+mute_stream () {
+  dunstctl set-paused true
+
+  if [[ $? -ne 0 ]]; then
+    echo 'Unable to mute notifications'
+    return 2
+  fi
+
+  echo "Notifications has been muted"
+}
+
+# Restores the notification stream.
+# Arguments:
+#  None
+unmute_stream () {
+  dunstctl set-paused false
+
+  if [[ $? -ne 0 ]]; then
+    echo 'Unable to unmute notifications'
+    return 2
+  fi
+
+  echo "Notifications has been unmuted"
+}
+
+# Shows the help message.
+# Arguments:
+#  mode: once or none
+# Outputs:
+#  A long help message.
+show_help () {
+  if [[ "${1}" == "once" ]]; then
+    echo "Usage: notifications COMMAND [OBJECT] [ARGUMENTS]..."
+
+    echo -e "\nCOMMANDS"
+    printf " %-16s %s\n" \
+      "help" "Show this help message." \
+      "" "" \
+      "mute" "Pause the notifications stream." \
+      "unmute" "Restore the notifications stream."
+
+    return 0
+  fi
+
+  echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
+
+  echo -e "\nCOMMANDS"
+  printf " %-36s %s\n" \
+    "help" "Show this help message." \
+    "" "" \
+    "show status" "Show the status of notifications." \
+    "" "" \
+    "mute" "Pause the notifications stream." \
+    "unmute" "Restore the notifications stream."
+}
+
+loop () {
+  clear
+
+  while true; do
+    prompt && history -s "${REPLY}"
+
+    set -f
+    set_separator "line"
+    local cmd=($(xargs -n1 <<< "${REPLY}"))
+    restore_separator && set +f
+
+    if [[ "${cmd[0]}" == "help" ]]; then
+      show_help
+      continue
+    elif [[ "${cmd[0]}" == "clear" ]]; then
+      clear
+      continue
+    elif [[ "${cmd[0]}" == "quit" ]]; then
+      break
+    elif [[ -z "${cmd[0]}" ]]; then
+      continue
+    fi
+
+    case "${cmd[0]}" in
+      "show")
+        case "${cmd[1]}" in
+          "status") show_status;;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "mute") mute_stream;;
+      "unmute") unmute_stream;;
+      *) echo "Invalid or unknown command";; 
+    esac
+    
+    if [[ $? -eq 1 ]]; then
+      echo "An unknown error has occurred"
+    fi
+  done
+
+  clear
+}
+
+once () {
+  case "${1}" in
+    "help") show_help "once";;
+    "mute") mute_stream;;
+    "unmute") unmute_stream;;
+    *) abort "Invalid or unknown command";;
+  esac
+
+  if [[ $? -ne 0 ]]; then
+    abort
+  fi
+}
+
+if [[ $# -eq 0 ]]; then
+  loop
+else
+  once "$@"
+fi

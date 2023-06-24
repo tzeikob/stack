@@ -309,6 +309,7 @@ install_utilities () {
   cp ~/stack/resources/stack/bluetooth "$STACK_HOME"
   cp ~/stack/resources/stack/printers "$STACK_HOME"
   cp ~/stack/resources/stack/power "$STACK_HOME"
+  cp ~/stack/resources/stack/notifications "$STACK_HOME"
 
   ln -sf "$STACK_HOME/clock" /usr/local/bin/clock
   ln -sf "$STACK_HOME/trash" /usr/local/bin/trash
@@ -323,6 +324,7 @@ install_utilities () {
   ln -sf "$STACK_HOME/bluetooth" /usr/local/bin/bluetooth
   ln -sf "$STACK_HOME/printers" /usr/local/bin/printers
   ln -sf "$STACK_HOME/power" /usr/local/bin/power
+  ln -sf "$STACK_HOME/notifications" /usr/local/bin/notifications
 
   echo 'displays restore layout || notify-send "Failed to restore layout"' >> ~/.xinitrc
   echo 'displays restore colors || notify-send "Failed to restore colors"' >> ~/.xinitrc
