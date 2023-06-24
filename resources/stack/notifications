@@ -106,6 +106,17 @@ list_archived () {
     return 2
   fi
 
+  local notifications=''
+  notifications="$(find_archived "${sort_by}" "${order}")" || return 1
+
+  local len=0
+  len="$(count "${notifications}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo 'No notifications have found'
+    return 0
+  fi
+
   local query=''
   query+='ID:       \(.id.data)\n'
   query+='App:      \(.appname.data)'
@@ -113,7 +124,7 @@ list_archived () {
   query+='\(.body.data|if . and . != "" then "\nBody:     \(.)" else "" end)'
   query="[.[]|\"${query}\"]|join(\"\n\n\")"
 
-  find_archived "${sort_by}" "${order}" | jq -cer "${query}" || return 1
+  echo "${notifications}" | jq -cer "${query}" || return 1
 }
 
 # Pauses the notification stream.
