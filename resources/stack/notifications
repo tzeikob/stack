@@ -141,7 +141,7 @@ mute_stream () {
   dunstctl set-paused true
 
   if [[ $? -ne 0 ]]; then
-    echo 'Unable to mute notifications'
+    echo 'Failed to mute notifications'
     return 2
   fi
 
@@ -155,7 +155,7 @@ unmute_stream () {
   dunstctl set-paused false
 
   if [[ $? -ne 0 ]]; then
-    echo 'Unable to unmute notifications'
+    echo 'Failed to unmute notifications'
     return 2
   fi
 
@@ -206,7 +206,7 @@ set_popup () {
   sed -i "s/\([[:blank:]]*transparency\).*/\1 = ${value}/" "${config_file}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to set pop-up notifications to ${mode}"
+    echo "Failed to set pop-up notifications to ${mode}"
     return 2
   fi
 
