@@ -52,6 +52,12 @@ prompt () {
 show_status () {
   local status=''
 
+  if grep -qsE "[[:blank:]]*transparency = 100" "${HOME}/.config/dunst/dunstrc"; then
+    status+="\"popup\": false,"
+  else
+    status+="\"popup\": true,"
+  fi
+
   local paused=''
   paused="$(dunstctl is-paused)" || return 1
 
@@ -77,6 +83,7 @@ show_status () {
   status="{${status}}"
 
   local query=''
+  query+='Popup:      \(.popup)\n'
   query+='Paused:     \(.is_paused)\n'
   query+='Pending:    \(.pending)\n'
   query+='Displayed:  \(.displayed)\n'
