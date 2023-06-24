@@ -162,6 +162,20 @@ unmute_stream () {
   echo "Notifications has been unmuted"
 }
 
+# Removes all the archived notifications.
+# Arguments:
+#  None
+clean_archive () {
+  dunstctl history-clear
+
+  if [[ $? -ne 0 ]]; then
+    echo 'Failed to remove all notifications'
+    return 2
+  fi
+
+  echo 'All notifications have been removed'
+}
+
 # Enables or disables pop-up notifications.
 # Globals:
 #  HOME
@@ -233,10 +247,11 @@ show_help () {
     "list [<sort_by> [<order>]]" "List archived notifications sorted by either the" \
     "" "id or appname in asc or desc order." \
     "" "" \
+    "set popup on|off" "Show or hide pop-up notifications." \
+    "" "" \
     "mute" "Pause the notifications stream." \
     "unmute" "Restore the notifications stream." \
-    "" "" \
-    "set popup on|off" "Show or hide pop-up notifications."
+    "clean" "Removes all archived notifications."
 }
 
 loop () {
@@ -271,6 +286,7 @@ loop () {
       "list") list_archived "${cmd[1]}" "${cmd[2]}";;
       "mute") mute_stream;;
       "unmute") unmute_stream;;
+      "clean") clean_archive;;
       "set")
         case "${cmd[1]}" in
           "popup") set_popup "${cmd[2]}";;
