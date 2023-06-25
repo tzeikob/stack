@@ -166,7 +166,8 @@ install_notifier () {
   cp ~/stack/resources/dunst/dunstrc ~/.config/dunst
   cp ~/stack/resources/dunst/alert ~/.config/dunst
 
-  sudo cp ~/stack/resources/dunst/drip.ogg /usr/share/sounds/dunst
+  sudo mkdir -p /usr/share/sounds/dunst
+  sudo cp ~/stack/resources/dunst/drip.ogg /usr/share/sounds/dunst/
 
   echo "Notifications server has been installed"
 }
@@ -394,6 +395,7 @@ install_fonts () {
     "RobotoMono https://fonts.google.com/download?family=Roboto%20Mono"
     "ShareTechMono https://fonts.google.com/download?family=Share%20Tech%20Mono"
     "SpaceMono https://fonts.google.com/download?family=Space%20Mono"
+    "PixelMix https://dl.dafont.com/dl/?f=pixelmix"
   )
 
   for FONT in "${FONTS[@]}"; do
