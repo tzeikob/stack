@@ -3,14 +3,14 @@
 set -o pipefail
 source /opt/stack/utils
 
-# Returns the list of archived notifications 
+# Returns the list of all archived notifications 
 # sorted by the given field in the given order.
 # Arguments:
 #  sort_by:  id or appname
 #  order:    asc or desc, default is asc
 # Outputs:
 #  A json array of notification objects.
-find_archived () {
+find_all () {
   local sort_by="${1}"
   local order="${2}"
 
@@ -83,11 +83,11 @@ show_status () {
   status="{${status}}"
 
   local query=''
-  query+='Popup:      \(.popup)\n'
-  query+='Paused:     \(.is_paused)\n'
-  query+='Pending:    \(.pending)\n'
-  query+='Displayed:  \(.displayed)\n'
-  query+='Archived:   \(.archived)'
+  query+='Popup:    \(.popup)\n'
+  query+='Paused:   \(.is_paused)\n'
+  query+='Pending:  \(.pending)\n'
+  query+='Showing:  \(.displayed)\n'
+  query+='Sent:     \(.archived)'
 
   echo "${status}" | jq -cer "\"${query}\"" || return 1
 }
@@ -99,7 +99,7 @@ show_status () {
 #  order:   asc or desc, default is asc
 # Outputs:
 #  A long list of notificaions data.
-list_archived () {
+list_all () {
   local sort_by="${1:-"id"}"
   local order="${2:-"asc"}"
 
@@ -114,7 +114,7 @@ list_archived () {
   fi
 
   local notifications=''
-  notifications="$(find_archived "${sort_by}" "${order}")" || return 1
+  notifications="$(find_all "${sort_by}" "${order}")" || return 1
 
   local len=0
   len="$(count "${notifications}")" || return 1
@@ -137,7 +137,7 @@ list_archived () {
 # Pauses the notification stream.
 # Arguments:
 #  None
-mute_stream () {
+mute_all () {
   dunstctl set-paused true
 
   if [[ $? -ne 0 ]]; then
@@ -151,7 +151,7 @@ mute_stream () {
 # Restores the notification stream.
 # Arguments:
 #  None
-unmute_stream () {
+unmute_all () {
   dunstctl set-paused false
 
   if [[ $? -ne 0 ]]; then
@@ -165,7 +165,7 @@ unmute_stream () {
 # Removes all the archived notifications.
 # Arguments:
 #  None
-clean_archive () {
+clean_all () {
   dunstctl history-clear
 
   if [[ $? -ne 0 ]]; then
@@ -230,8 +230,8 @@ show_help () {
     printf " %-16s %s\n" \
       "help" "Show this help message." \
       "" "" \
-      "mute" "Pause the notifications stream." \
-      "unmute" "Restore the notifications stream."
+      "mute all" "Pause the notifications stream." \
+      "unmute all" "Restore the notifications stream."
 
     return 0
   fi
@@ -239,19 +239,19 @@ show_help () {
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
   echo -e "\nCOMMANDS"
-  printf " %-30s %s\n" \
+  printf " %-35s %s\n" \
     "help" "Show this help message." \
     "" "" \
     "show status" "Show the status of notifications." \
     "" "" \
-    "list [<sort_by> [<order>]]" "List archived notifications sorted by either the" \
+    "list all [<sort_by> [<order>]]" "List all notifications sorted by either the" \
     "" "id or appname in asc or desc order." \
     "" "" \
     "set popup on|off" "Show or hide pop-up notifications." \
     "" "" \
-    "mute" "Pause the notifications stream." \
-    "unmute" "Restore the notifications stream." \
-    "clean" "Removes all archived notifications."
+    "mute all" "Pause the notifications stream." \
+    "unmute all" "Restore the notifications stream." \
+    "clean all" "Removes all notifications."
 }
 
 loop () {
@@ -283,10 +283,26 @@ loop () {
           "status") show_status;;
           *) echo "Invalid or unknown command";;
         esac;;
-      "list") list_archived "${cmd[1]}" "${cmd[2]}";;
-      "mute") mute_stream;;
-      "unmute") unmute_stream;;
-      "clean") clean_archive;;
+      "list")
+        case "${cmd[1]}" in
+          "all") list_all "${cmd[2]}" "${cmd[3]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "mute")
+        case "${cmd[1]}" in
+          "all") mute_all;;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "unmute")
+        case "${cmd[1]}" in
+          "all") unmute_all;;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "clean")
+        case "${cmd[1]}" in
+          "all") clean_all;;
+          *) echo "Invalid or unknown command";;
+        esac;;
       "set")
         case "${cmd[1]}" in
           "popup") set_popup "${cmd[2]}";;
@@ -306,8 +322,16 @@ loop () {
 once () {
   case "${1}" in
     "help") show_help "once";;
-    "mute") mute_stream;;
-    "unmute") unmute_stream;;
+    "mute")
+      case "${2}" in
+        "all") mute_all;;
+        *) abort "Invalid or unknown command";;
+      esac;;
+    "unmute")
+      case "${2}" in
+        "all") unmute_all;;
+        *) abort "Invalid or unknown command";;
+      esac;;
     *) abort "Invalid or unknown command";;
   esac
 
