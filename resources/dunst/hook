@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -o pipefail
+
 # Read parameters coming from dunst
 appname="${1}"
 summary="${2}"
@@ -12,4 +14,12 @@ if [[ "${urgency}" == "CRITICAL" ]]; then
   sound='critical'
 fi
 
-pw-play --volume=0.5 "/usr/share/sounds/dunst/${sound}.wav"
+settings_file="${HOME}/.config/stack/notifications.json"
+
+volume="$(jq -cer '.volume' "${settings_file}")"
+
+if [[ $? -ne 0 ]]; then
+  volume=0.8
+fi
+
+pw-play --volume="${volume}" "/usr/share/sounds/dunst/${sound}.wav"
