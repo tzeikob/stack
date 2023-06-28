@@ -164,10 +164,11 @@ install_notifier () {
 
   mkdir -p ~/.config/dunst
   cp ~/stack/resources/dunst/dunstrc ~/.config/dunst
-  cp ~/stack/resources/dunst/alert ~/.config/dunst
+  cp ~/stack/resources/dunst/hook ~/.config/dunst
 
   sudo mkdir -p /usr/share/sounds/dunst
-  sudo cp ~/stack/resources/dunst/drip.ogg /usr/share/sounds/dunst/
+  sudo cp ~/stack/resources/dunst/normal.wav /usr/share/sounds/dunst
+  sudo cp ~/stack/resources/dunst/critical.wav /usr/share/sounds/dunst
 
   echo "Notifications server has been installed"
 }

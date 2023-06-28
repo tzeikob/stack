@@ -90,6 +90,6 @@
 [experimental]
     per_monitor_dpi = false
 
-[play_sound]
+[post_hook]
     summary = "*"
-    script = ~/.config/dunst/alert
+    script = ~/.config/dunst/hook

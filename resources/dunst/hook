@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# Read parameters coming from dunst
+appname="${1}"
+summary="${2}"
+body="${3}"
+urgency="${5}"
+
+sound='normal'
+
+if [[ "${urgency}" == "CRITICAL" ]]; then
+  sound='critical'
+fi
+
+pw-play --volume=0.5 "/usr/share/sounds/dunst/${sound}.wav"
