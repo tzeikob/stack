@@ -2,24 +2,38 @@
 
 set -o pipefail
 
-# Read parameters coming from dunst
-appname="${1}"
-summary="${2}"
-body="${3}"
-urgency="${5}"
+SETTINGS_FILE="${HOME}/.config/stack/notifications.json"
 
-sound='normal'
+# Plays the popup sound for the incoming notification
+# based on the notification's parameters.
+# Globals:
+#  SETTINGS_FILE
+# Arguments:
+#  appname: the notification caller
+#  summary: the summary of the notification
+#  body:    the body of the notification
+#  icon:    the notification icon
+#  urgency: the urgency value
+play_popup_sound () {
+  local appname="${1}"
+  local summary="${2}"
+  local body="${3}"
+  local urgency="${5}"
 
-if [[ "${urgency}" == "CRITICAL" ]]; then
-  sound='critical'
-fi
+  local sound='normal'
 
-settings_file="${HOME}/.config/stack/notifications.json"
+  if [[ "${urgency}" == "CRITICAL" ]]; then
+    sound='critical'
+  fi
 
-volume="$(jq -cer '.volume' "${settings_file}")"
+  local volume=0
+  volume="$(jq -cer '.volume' "${SETTINGS_FILE}")"
 
-if [[ $? -ne 0 ]]; then
-  volume=0.8
-fi
+  if [[ $? -ne 0 ]]; then
+    volume=0.8
+  fi
 
-pw-play --volume="${volume}" "/usr/share/sounds/dunst/${sound}.wav"
+  pw-play --volume="${volume}" "/usr/share/sounds/dunst/${sound}.wav"
+}
+
+play_popup_sound "$@"
