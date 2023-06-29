@@ -65,6 +65,14 @@ show_status () {
 
   status+="\"is_paused\": ${paused},"
 
+  local volume=100
+  if [[ -f "${SETTINGS_FILE}" ]]; then
+    local query='.volume|if . then (.*100) else 100 end'
+    volume="$(jq -cr "${query}" "${SETTINGS_FILE}")" || return 1
+  fi
+
+  status+="\"volume\": ${volume}," 
+
   status+="$(dunstctl count | awk '{
     split($0, a, ":")
 
@@ -87,6 +95,7 @@ show_status () {
   local query=''
   query+='Popup:    \(.popup)\n'
   query+='Paused:   \(.is_paused)\n'
+  query+='Volume:   \(.volume)\n'
   query+='Pending:  \(.pending)\n'
   query+='Showing:  \(.displayed)\n'
   query+='Sent:     \(.archived)'

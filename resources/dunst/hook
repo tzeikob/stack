@@ -30,7 +30,7 @@ play_popup_sound () {
   volume="$(jq -cer '.volume' "${SETTINGS_FILE}")"
 
   if [[ $? -ne 0 ]]; then
-    volume=0.8
+    volume=1
   fi
 
   pw-play --volume="${volume}" "/usr/share/sounds/dunst/${sound}.wav"
