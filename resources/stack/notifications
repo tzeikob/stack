@@ -55,15 +55,17 @@ show_status () {
   local status=''
 
   if grep -qsE "[[:blank:]]*transparency = 100" "${HOME}/.config/dunst/dunstrc"; then
-    status+="\"popup\": false,"
+    status+='"popup": "off",'
   else
-    status+="\"popup\": true,"
+    status+='"popup": "on",'
   fi
 
-  local paused=''
-  paused="$(dunstctl is-paused)" || return 1
+  local state=''
+  state="$(dunstctl is-paused | awk '{
+    if ($0 == "true") {print "muted"} else {print "unmuted"}
+  }')" || return 1
 
-  status+="\"is_paused\": ${paused},"
+  status+="\"state\": \"${state}\","
 
   local volume=100
   if [[ -f "${SETTINGS_FILE}" ]]; then
@@ -93,8 +95,8 @@ show_status () {
   status="{${status}}"
 
   local query=''
+  query+='State:    \(.state)\n'
   query+='Popup:    \(.popup)\n'
-  query+='Paused:   \(.is_paused)\n'
   query+='Volume:   \(.volume)\n'
   query+='Pending:  \(.pending)\n'
   query+='Showing:  \(.displayed)\n'
@@ -299,7 +301,7 @@ show_help () {
     "" "" \
     "mute all" "Pause the notifications stream." \
     "unmute all" "Restore the notifications stream." \
-    "clean all" "Removes all notifications."
+    "clean all" "Remove all notifications."
 }
 
 loop () {
