@@ -27,6 +27,51 @@ find_all () {
   dunstctl history | jq -cr "${query}" || return 1
 }
 
+# Returns the notifications state.
+# Arguments:
+#  None
+# Outputs:
+#  A json object of the notifiactions state.
+get_state () {
+  local state=''
+
+  state+="$(dunstctl is-paused |
+    awk '{print "\"is_paused\":"$0","}')" || return 1
+
+  state+="$(dunstctl count | awk '{
+    split($0, a, ":")
+
+    if (a[1] ~ "Waiting") {
+      print "\"pending\":"a[2]","
+    } else if (a[1] ~ "Currently displayed") {
+      print "\"displayed\":"a[2]","
+    } else if (a[1] ~ "History") {
+      print "\"archived\":"a[2]","
+    }
+  }')" || return 1
+
+  if grep -qsE "[[:blank:]]*transparency = 100" "${HOME}/.config/dunst/dunstrc"; then
+    state+='"popup": false,'
+  else
+    state+='"popup": true,'
+  fi
+
+  local volume=100
+  if [[ -f "${SETTINGS_FILE}" ]]; then
+    local query='.volume|if . then (.*100) else 100 end'
+    volume="$(jq -cr "${query}" "${SETTINGS_FILE}")" || return 1
+  fi
+
+  state+="\"volume\": ${volume},"
+
+  # Remove the last extra comma after the last field
+  if [[ -n "${state}" ]]; then
+    state="${state::-1}"
+  fi
+
+  echo "{${state}}"
+}
+
 # Shows a prompt status and asks user to enter the
 # next command, which is kept in the global var REPLY.
 # Globals:
@@ -36,8 +81,8 @@ find_all () {
 # Outputs:
 #  A minimal prompt status line.
 prompt () {
-  local status=0
-  status="$(dunstctl count history)"
+  local status=''
+  status="$(get_state | jq -cer '.archived')"
 
   if [[ $? -ne 0 ]]; then
     status='none'
@@ -52,57 +97,15 @@ prompt () {
 # Outputs:
 #  A verbose list of text data.
 show_status () {
-  local status=''
-
-  if grep -qsE "[[:blank:]]*transparency = 100" "${HOME}/.config/dunst/dunstrc"; then
-    status+='"popup": "off",'
-  else
-    status+='"popup": "on",'
-  fi
-
-  local state=''
-  state="$(dunstctl is-paused | awk '{
-    if ($0 == "true") {print "muted"} else {print "unmuted"}
-  }')" || return 1
-
-  status+="\"state\": \"${state}\","
-
-  local volume=100
-  if [[ -f "${SETTINGS_FILE}" ]]; then
-    local query='.volume|if . then (.*100) else 100 end'
-    volume="$(jq -cr "${query}" "${SETTINGS_FILE}")" || return 1
-  fi
-
-  status+="\"volume\": ${volume}," 
-
-  status+="$(dunstctl count | awk '{
-    split($0, a, ":")
-
-    if (a[1] ~ "Waiting") {
-      print "\"pending\":"a[2]","
-    } else if (a[1] ~ "Currently displayed") {
-      print "\"displayed\":"a[2]","
-    } else if (a[1] ~ "History") {
-      print "\"archived\":"a[2]","
-    }
-  }')" || return 1
-
-  # Remove the last extra comma after the last field
-  if [[ -n "${status}" ]]; then
-    status="${status::-1}"
-  fi
-
-  status="{${status}}"
-
   local query=''
-  query+='State:    \(.state)\n'
-  query+='Popup:    \(.popup)\n'
+  query+='Muted:    \(.is_paused|if . then "yes" else "no" end)\n'
+  query+='Popup:    \(.popup|if . then "on" else "off" end)\n'
   query+='Volume:   \(.volume)\n'
   query+='Pending:  \(.pending)\n'
   query+='Showing:  \(.displayed)\n'
   query+='Sent:     \(.archived)'
 
-  echo "${status}" | jq -cer "\"${query}\"" || return 1
+  get_state | jq -cer "\"${query}\"" || return 1
 }
 
 # Shows the list of archived notifications sorted by the
@@ -279,6 +282,8 @@ show_help () {
     printf " %-16s %s\n" \
       "help" "Show this help message." \
       "" "" \
+      "get state" "Return the state of the notifications stream."
+      "" "" \
       "mute all" "Pause the notifications stream." \
       "unmute all" "Restore the notifications stream."
 
@@ -373,6 +378,11 @@ loop () {
 once () {
   case "${1}" in
     "help") show_help "once";;
+    "get")
+      case "${2}" in
+        "state") get_state;;
+        *) abort "Invalid or unknown command";;
+      esac;;
     "mute")
       case "${2}" in
         "all") mute_all;;

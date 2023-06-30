@@ -305,7 +305,7 @@ set_locker () {
   sleep 1
 
   if [[ ${mins} -gt 0 ]]; then
-    xautolock -locker slock -nowlocker slock -time "${mins}" -corners 0-00 -detectsleep &
+    xautolock -locker 'power lock' -nowlocker 'power lock' -time "${mins}" -corners 0-00 -detectsleep &
     echo "Screen locker set to ${mins} mins"
   else
     echo "Screen locker has been disabled"
@@ -587,15 +587,29 @@ suspend_system () {
   fi
 }
 
-# Locks the screen.
+# Locks the screen making sure notifications stream is muted
+# before lock and resets it back to it's previous state
+# after user unlocks the screen.
 # Arguments:
 #  None
 lock_screen () {
+  local is_paused=''
+  is_paused="$(notifications get state | jq -cr '.is_paused')"
+
+  if [[ "${is_paused}" == "false" ]]; then
+    notifications mute all
+  fi
+
   slock
 
   if [[ $? -ne 0 ]]; then
     echo "Unable to lock the screen"
     return 2
+  fi
+
+  # Reset notifications stream to previous state
+  if [[ "${is_paused}" == "false" ]]; then
+    notifications unmute all
   fi
 }
 
