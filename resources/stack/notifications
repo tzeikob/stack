@@ -161,7 +161,7 @@ mute_all () {
     return 2
   fi
 
-  echo "Notifications has been muted"
+  echo "Notifications have been muted"
 }
 
 # Restores the notification stream.
@@ -175,7 +175,7 @@ unmute_all () {
     return 2
   fi
 
-  echo "Notifications has been unmuted"
+  echo "Notifications have been unmuted"
 }
 
 # Removes all the archived notifications.
