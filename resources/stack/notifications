@@ -1,0 +1,398 @@
+#!/bin/bash
+
+set -o pipefail
+source /opt/stack/utils
+
+SETTINGS_FILE="${CONFIG_HOME}/notifications.json"
+
+# Returns the list of all archived notifications 
+# sorted by the given field in the given order.
+# Arguments:
+#  sort_by:  id or appname
+#  order:    asc or desc, default is asc
+# Outputs:
+#  A json array of notification objects.
+find_all () {
+  local sort_by="${1}"
+  local order="${2}"
+
+  local query='.data[0]'
+
+  if [[ "${sort_by}" =~ ^(id|appname)$ ]]; then
+    query+="|sort_by(.${sort_by})"
+
+    [[ "${order}" == "desc" ]] && query+='|reverse'
+  fi
+
+  dunstctl history | jq -cr "${query}" || return 1
+}
+
+# Shows a prompt status and asks user to enter the
+# next command, which is kept in the global var REPLY.
+# Globals:
+#  REPLY
+# Arguments:
+#  None
+# Outputs:
+#  A minimal prompt status line.
+prompt () {
+  local status=0
+  status="$(dunstctl count history)"
+
+  if [[ $? -ne 0 ]]; then
+    status='none'
+  fi
+
+  read -rep "[notifications:${status}] " REPLY
+}
+
+# Shows the current status of the notification server.
+# Arguments:
+#  None
+# Outputs:
+#  A verbose list of text data.
+show_status () {
+  local status=''
+
+  if grep -qsE "[[:blank:]]*transparency = 100" "${HOME}/.config/dunst/dunstrc"; then
+    status+='"popup": "off",'
+  else
+    status+='"popup": "on",'
+  fi
+
+  local state=''
+  state="$(dunstctl is-paused | awk '{
+    if ($0 == "true") {print "muted"} else {print "unmuted"}
+  }')" || return 1
+
+  status+="\"state\": \"${state}\","
+
+  local volume=100
+  if [[ -f "${SETTINGS_FILE}" ]]; then
+    local query='.volume|if . then (.*100) else 100 end'
+    volume="$(jq -cr "${query}" "${SETTINGS_FILE}")" || return 1
+  fi
+
+  status+="\"volume\": ${volume}," 
+
+  status+="$(dunstctl count | awk '{
+    split($0, a, ":")
+
+    if (a[1] ~ "Waiting") {
+      print "\"pending\":"a[2]","
+    } else if (a[1] ~ "Currently displayed") {
+      print "\"displayed\":"a[2]","
+    } else if (a[1] ~ "History") {
+      print "\"archived\":"a[2]","
+    }
+  }')" || return 1
+
+  # Remove the last extra comma after the last field
+  if [[ -n "${status}" ]]; then
+    status="${status::-1}"
+  fi
+
+  status="{${status}}"
+
+  local query=''
+  query+='State:    \(.state)\n'
+  query+='Popup:    \(.popup)\n'
+  query+='Volume:   \(.volume)\n'
+  query+='Pending:  \(.pending)\n'
+  query+='Showing:  \(.displayed)\n'
+  query+='Sent:     \(.archived)'
+
+  echo "${status}" | jq -cer "\"${query}\"" || return 1
+}
+
+# Shows the list of archived notifications sorted by the
+# optionally given field and order.
+# Arguments:
+#  sort_by: id or appname, default is id
+#  order:   asc or desc, default is asc
+# Outputs:
+#  A long list of notificaions data.
+list_all () {
+  local sort_by="${1:-"id"}"
+  local order="${2:-"asc"}"
+
+  if [[ ! "${sort_by}" =~ ^(id|appname)$ ]]; then
+    echo 'Invalid sorting field'
+    return 2
+  fi
+
+  if [[ -n "${order}" ]] && [[ ! "${order}" =~ ^(asc|desc)$ ]]; then
+    echo 'Invalid ordering value'
+    return 2
+  fi
+
+  local notifications=''
+  notifications="$(find_all "${sort_by}" "${order}")" || return 1
+
+  local len=0
+  len="$(count "${notifications}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo 'No notifications have found'
+    return 0
+  fi
+
+  local query=''
+  query+='ID:       \(.id.data)\n'
+  query+='App:      \(.appname.data)'
+  query+='\(.summary.data|if . and . != "" then "\nSummary:  \(.)" else "" end)'
+  query+='\(.body.data|if . and . != "" then "\nBody:     \(.)" else "" end)'
+  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+
+  echo "${notifications}" | jq -cer "${query}" || return 1
+}
+
+# Pauses the notification stream.
+# Arguments:
+#  None
+mute_all () {
+  dunstctl set-paused true
+
+  if [[ $? -ne 0 ]]; then
+    echo 'Failed to mute notifications'
+    return 2
+  fi
+
+  echo "Notifications has been muted"
+}
+
+# Restores the notification stream.
+# Arguments:
+#  None
+unmute_all () {
+  dunstctl set-paused false
+
+  if [[ $? -ne 0 ]]; then
+    echo 'Failed to unmute notifications'
+    return 2
+  fi
+
+  echo "Notifications has been unmuted"
+}
+
+# Removes all the archived notifications.
+# Arguments:
+#  None
+clean_all () {
+  dunstctl history-clear
+
+  if [[ $? -ne 0 ]]; then
+    echo 'Failed to remove all notifications'
+    return 2
+  fi
+
+  echo 'All notifications have been removed'
+}
+
+# Enables or disables pop-up notifications.
+# Globals:
+#  HOME
+# Arguments:
+#  mode: on or off
+set_popup () {
+  local mode="${1}"
+
+  if [[ ! "${mode}" =~ ^(on|off)$ ]]; then
+    echo 'Invalid pop-up mode'
+    return 2
+  fi
+
+  local config_file="${HOME}/.config/dunst/dunstrc"
+
+  # Create the config file if none exists yet
+  if [[ ! -f "${config_file}" ]]; then
+    echo '[global]' > "${config_file}"
+    echo '  transparency = 0' >> "${config_file}"
+  fi
+
+  # Convert mode to transparency value
+  local value=0
+  if [[ "${mode}" == "off" ]]; then
+    value=100
+  fi
+
+  sed -i "s/\([[:blank:]]*transparency\).*/\1 = ${value}/" "${config_file}"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to set pop-up notifications to ${mode}"
+    return 2
+  fi
+
+  # Restart dunst service so changes take effect
+  killall dunst &&
+  dunst > /dev/null 2>&1 &
+
+  echo "Pop-up notifications set to ${mode}"
+}
+
+# Sets the volume of the notifications sound.
+# Globals:
+#  SETTINGS_FILE, CONFIG_HOME
+# Arguments:
+#  percent: a value between 0 and 100
+set_volume () {
+  local percent="${1}"
+
+  if [[ -z "${percent}" ]]; then
+    ask "Enter the volume [0, 100]:" "^[0-9]{1,3}$" || return $?
+    percent="${REPLY}"
+  elif [[ ! "${percent}" =~ ^[0-9]{1,3}$ ]]; then
+    echo 'Invalid volume value'
+    return 2
+  fi
+
+  if [[ ${percent} -lt 0 ]] || [[ ${percent} -gt 100 ]]; then
+    echo 'Volume is out of range'
+    return 2
+  fi
+
+  # Scale down volume to [0,1] range
+  percent=$(echo "${percent}" | awk '{print $0/100}')
+
+  local settings='{}'
+
+  if [[ -f "${SETTINGS_FILE}" ]]; then
+    settings="$(jq -e ".volume = ${percent}" "${SETTINGS_FILE}")" || return 1
+  else
+    settings="$(echo "{\"volume\": ${percent}}" | jq -e '.')" || return 1
+  fi
+
+  mkdir -p "${CONFIG_HOME}"
+  echo "${settings}" > "${SETTINGS_FILE}"
+}
+
+# Shows the help message.
+# Arguments:
+#  mode: once or none
+# Outputs:
+#  A long help message.
+show_help () {
+  if [[ "${1}" == "once" ]]; then
+    echo "Usage: notifications COMMAND [OBJECT] [ARGUMENTS]..."
+
+    echo -e "\nCOMMANDS"
+    printf " %-16s %s\n" \
+      "help" "Show this help message." \
+      "" "" \
+      "mute all" "Pause the notifications stream." \
+      "unmute all" "Restore the notifications stream."
+
+    return 0
+  fi
+
+  echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
+
+  echo -e "\nCOMMANDS"
+  printf " %-35s %s\n" \
+    "help" "Show this help message." \
+    "" "" \
+    "show status" "Show the status of notifications." \
+    "" "" \
+    "list all [<sort_by> [<order>]]" "List all notifications sorted by either the" \
+    "" "id or appname in asc or desc order." \
+    "" "" \
+    "set popup on|off" "Show or hide pop-up notifications." \
+    "set volume <percent>" "Set the volume of the notifications sound." \
+    "" "" \
+    "mute all" "Pause the notifications stream." \
+    "unmute all" "Restore the notifications stream." \
+    "clean all" "Remove all notifications."
+}
+
+loop () {
+  clear
+
+  while true; do
+    prompt && history -s "${REPLY}"
+
+    set -f
+    set_separator "line"
+    local cmd=($(xargs -n1 <<< "${REPLY}"))
+    restore_separator && set +f
+
+    if [[ "${cmd[0]}" == "help" ]]; then
+      show_help
+      continue
+    elif [[ "${cmd[0]}" == "clear" ]]; then
+      clear
+      continue
+    elif [[ "${cmd[0]}" == "quit" ]]; then
+      break
+    elif [[ -z "${cmd[0]}" ]]; then
+      continue
+    fi
+
+    case "${cmd[0]}" in
+      "show")
+        case "${cmd[1]}" in
+          "status") show_status;;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "list")
+        case "${cmd[1]}" in
+          "all") list_all "${cmd[2]}" "${cmd[3]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "mute")
+        case "${cmd[1]}" in
+          "all") mute_all;;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "unmute")
+        case "${cmd[1]}" in
+          "all") unmute_all;;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "clean")
+        case "${cmd[1]}" in
+          "all") clean_all;;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "set")
+        case "${cmd[1]}" in
+          "popup") set_popup "${cmd[2]}";;
+          "volume") set_volume "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      *) echo "Invalid or unknown command";; 
+    esac
+    
+    if [[ $? -eq 1 ]]; then
+      echo "An unknown error has occurred"
+    fi
+  done
+
+  clear
+}
+
+once () {
+  case "${1}" in
+    "help") show_help "once";;
+    "mute")
+      case "${2}" in
+        "all") mute_all;;
+        *) abort "Invalid or unknown command";;
+      esac;;
+    "unmute")
+      case "${2}" in
+        "all") unmute_all;;
+        *) abort "Invalid or unknown command";;
+      esac;;
+    *) abort "Invalid or unknown command";;
+  esac
+
+  if [[ $? -ne 0 ]]; then
+    abort
+  fi
+}
+
+if [[ $# -eq 0 ]]; then
+  loop
+else
+  once "$@"
+fi
