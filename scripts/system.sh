@@ -346,6 +346,9 @@ install_utilities () {
   cp ~/stack/resources/stack/services/lock.service /etc/systemd/system/lock@.service
   systemctl enable lock@${USERNAME}.service
 
+  local user_id="$(id -u "${USERNAME}")"
+  sed -i "s/#USER_ID/${user_id}/g" "/etc/systemd/system/suspend.target.wants/lock@${USERNAME}.service"
+
   local logind_conf='/etc/systemd/logind.conf.d/00-main.conf'
   mkdir -p /etc/systemd/logind.conf.d
   cp /etc/systemd/logind.conf "${logind_conf}"

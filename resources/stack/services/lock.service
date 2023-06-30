@@ -6,6 +6,7 @@ Before=suspend.target
 User=%I
 Type=forking
 Environment=DISPLAY=:0
+Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/#USER_ID/bus
 ExecStart=/opt/stack/power lock
 ExecStartPost=/usr/bin/sleep 1
 
