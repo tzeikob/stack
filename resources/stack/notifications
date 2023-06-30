@@ -82,7 +82,7 @@ get_state () {
 #  A minimal prompt status line.
 prompt () {
   local status=''
-  status="$(get_state | jq -cer '.archived')"
+  status="$(get_state | jq -cer '.archived + .displayed')"
 
   if [[ $? -ne 0 ]]; then
     status='none'
