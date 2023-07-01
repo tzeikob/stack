@@ -375,6 +375,10 @@ config_security () {
   echo -e "\nHardening system's security..."
 
   sed -i 's;# dir = /var/run/faillock;dir = /var/lib/faillock;' /etc/security/faillock.conf
+  sed -i 's;# deny = 3;deny = 10;' /etc/security/faillock.conf
+  sed -i 's;# fail_interval = 900;fail_interval = 300;' /etc/security/faillock.conf
+  sed -i 's;# unlock_time = 600;unlock_time = 180;' /etc/security/faillock.conf
+
 
   echo "Faillocks set to be persistent after system reboot"
 
