@@ -326,10 +326,6 @@ install_utilities () {
   ln -sf "$STACK_HOME/power" /usr/local/bin/power
   ln -sf "$STACK_HOME/notifications" /usr/local/bin/notifications
 
-  echo 'displays restore layout || notify-send "Failed to restore layout"' >> ~/.xinitrc
-  echo 'displays restore colors || notify-send "Failed to restore colors"' >> ~/.xinitrc
-  echo 'cloud mount remotes || notify-send "Failed to mount cloud remotes"' >> ~/.xinitrc
-
   local rules_home='/etc/udev/rules.d'
   cp ~/stack/resources/stack/rules/90-init-pointer.rules "${rules_home}"
   cp ~/stack/resources/stack/rules/91-init-tablets.rules "${rules_home}"
