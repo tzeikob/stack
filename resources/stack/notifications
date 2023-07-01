@@ -47,27 +47,6 @@ restart () {
   echo 'Notifications service has been restarted'
 }
 
-# Stops the notifications service.
-# Arguments:
-# None
-stop () {
-  if ! ps aux | grep dunst | grep -v grep > /dev/null 2>&1; then
-    echo 'Notifications service is already down'
-    return 0
-  fi
-
-  echo 'Stopping the notifications service...'
-
-  killall dunst
-
-  if ps aux | grep dunst | grep -v grep > /dev/null 2>&1; then
-    echo 'Failed to stop the notifications service'
-    return 2
-  fi
-
-  echo 'Notifications service has been stopped'
-}
-
 # Returns the list of all archived notifications 
 # sorted by the given field in the given order.
 # Arguments:
@@ -160,6 +139,18 @@ prompt () {
 # Outputs:
 #  A verbose list of text data.
 show_status () {
+  local query=''
+  query+='.[]|select(.command|test("^(/usr/bin/dunst|dunst)"))|.pid'
+
+  local pid=''
+  pid="$(ps aux | jc --ps | jq -cr "${query}")" || return 1
+
+  if [[ -n "${pid}" ]]; then
+    echo "Service:  up"
+  else
+    echo "Service:  down"
+  fi
+
   local query=''
   query+='Muted:    \(.is_paused|if . then "yes" else "no" end)\n'
   query+='Popup:    \(.popup|if . then "on" else "off" end)\n'
@@ -350,7 +341,6 @@ show_help () {
       "unmute all" "Restore the notifications stream." \
       "" "" \
       "start" "Start the notifications service." \
-      "stop" "Stop the notifications service." \
       "restart" "Restart the notifications service."
 
     return 0
@@ -375,7 +365,6 @@ show_help () {
     "clean all" "Remove all notifications." \
     "" "" \
     "start" "Start the notifications service." \
-    "stop" "Stop the notifications service." \
     "restart" "Restart the notifications service."
 }
 
@@ -435,7 +424,6 @@ loop () {
           *) echo "Invalid or unknown command";;
         esac;;
       "start") start;;
-      "stop") stop;;
       "restart") restart;;
       *) echo "Invalid or unknown command";; 
     esac
@@ -467,7 +455,6 @@ once () {
         *) abort "Invalid or unknown command";;
       esac;;
     "start") start;;
-    "stop") stop;;
     "restart") restart;;
     *) abort "Invalid or unknown command";;
   esac
