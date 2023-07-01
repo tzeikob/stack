@@ -232,37 +232,6 @@ install_break_timer () {
   echo "Break timer tool has been installed"
 }
 
-install_screen_locker () {
-  echo "Installing the screen locker..."
-
-  cd ~/
-  curl https://dl.suckless.org/tools/slock-1.4.tar.gz -sSLo ./slock-1.4.tar.gz \
-    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 || exit 1
-  tar -xzvf ./slock-1.4.tar.gz || exit 1
-
-  cd ~/slock-1.4
-  curl https://tools.suckless.org/slock/patches/control-clear/slock-git-20161012-control-clear.diff -sSLo ./control-clear.diff \
-    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 || exit 1
-  patch -p1 < ./control-clear.diff || exit 1
-
-  echo "Control clear patch has been added"
-
-  sed -ri 's/(.*)nogroup(.*)/\1nobody\2/' ./config.def.h
-  sed -ri 's/.*INIT.*/  [INIT] = "#1a1b26",/' ./config.def.h
-  sed -ri 's/.*INPUT.*/  [INPUT] = "#383c4a",/' ./config.def.h
-  sed -ri 's/.*FAILED.*/  [FAILED] = "#ff2369"/' ./config.def.h
-  sed -ri 's/(.*)controlkeyclear.*/\1controlkeyclear = 1;/' ./config.def.h
-
-  echo "Lock screen color theme has been applied"
-
-  sudo make install || exit 1
-  sudo mv /usr/local/bin/slock /usr/bin
-
-  cd / && rm -rf ~/slock-1.4 ~/slock-1.4.tar.gz
-
-  echo -e "Screen locker has been installed"
-}
-
 install_screencasters () {
   echo "Installing screen casting tools..."
 
@@ -464,7 +433,6 @@ install_packages &&
   install_login_screen &&
   install_monitors &&
   install_break_timer &&
-  install_screen_locker &&
   install_screencasters &&
   install_calculator &&
   install_media_apps &&
