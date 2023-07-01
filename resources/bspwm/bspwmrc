@@ -5,10 +5,10 @@ desktop init tablets &
 desktop init wallpaper &
 power init locker &
 power init screensaver &
+notifications start &
 
 pgrep -x sxhkd > /dev/null || sxhkd &
 $HOME/.config/polybar/launch &
-dunst &
 
 bspc monitor -d 1 2 3 4 5
 

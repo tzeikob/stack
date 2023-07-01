@@ -5,6 +5,69 @@ source /opt/stack/utils
 
 SETTINGS_FILE="${CONFIG_HOME}/notifications.json"
 
+# Starts the notifications service.
+# Arguments:
+#  None
+start () {
+  if ps aux | grep dunst | grep -v grep > /dev/null 2>&1; then
+    echo 'Notifications service is already runnning'
+    return 0
+  fi
+
+  echo 'Starting the notifications service...'
+
+  dunst > /dev/null 2>&1 &
+
+  local pid=$!
+
+  if ! ps -p "${pid}" > /dev/null; then
+    echo 'Failed to start notifications service'
+    return 2
+  fi
+
+  echo 'Notifications service has been started'
+}
+
+# Restarts the notifications service.
+# Arguments:
+#  None
+restart () {
+  echo 'Restarting the notifications service...'
+
+  killall dunst &&
+  dunst > /dev/null 2>&1 &
+
+  local pid=$!
+
+  if ! ps -p "${pid}" > /dev/null; then
+    echo 'Failed to restart notifications service'
+    return 2
+  fi
+
+  echo 'Notifications service has been restarted'
+}
+
+# Stops the notifications service.
+# Arguments:
+# None
+stop () {
+  if ! ps aux | grep dunst | grep -v grep > /dev/null 2>&1; then
+    echo 'Notifications service is already down'
+    return 0
+  fi
+
+  echo 'Stopping the notifications service...'
+
+  killall dunst
+
+  if ps aux | grep dunst | grep -v grep > /dev/null 2>&1; then
+    echo 'Failed to stop the notifications service'
+    return 2
+  fi
+
+  echo 'Notifications service has been stopped'
+}
+
 # Returns the list of all archived notifications 
 # sorted by the given field in the given order.
 # Arguments:
@@ -226,9 +289,8 @@ set_popup () {
     return 2
   fi
 
-  # Restart dunst service so changes take effect
-  killall dunst &&
-  dunst > /dev/null 2>&1 &
+  # Restart service so changes take effect
+  restart
 
   echo "Pop-up notifications set to ${mode}"
 }
@@ -282,10 +344,14 @@ show_help () {
     printf " %-16s %s\n" \
       "help" "Show this help message." \
       "" "" \
-      "get state" "Return the state of the notifications stream."
+      "get state" "Return the state of the notifications stream." \
       "" "" \
       "mute all" "Pause the notifications stream." \
-      "unmute all" "Restore the notifications stream."
+      "unmute all" "Restore the notifications stream." \
+      "" "" \
+      "start" "Start the notifications service." \
+      "stop" "Stop the notifications service." \
+      "restart" "Restart the notifications service."
 
     return 0
   fi
@@ -306,7 +372,11 @@ show_help () {
     "" "" \
     "mute all" "Pause the notifications stream." \
     "unmute all" "Restore the notifications stream." \
-    "clean all" "Remove all notifications."
+    "clean all" "Remove all notifications." \
+    "" "" \
+    "start" "Start the notifications service." \
+    "stop" "Stop the notifications service." \
+    "restart" "Restart the notifications service."
 }
 
 loop () {
@@ -364,6 +434,9 @@ loop () {
           "volume") set_volume "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
+      "start") start;;
+      "stop") stop;;
+      "restart") restart;;
       *) echo "Invalid or unknown command";; 
     esac
     
@@ -393,6 +466,9 @@ once () {
         "all") unmute_all;;
         *) abort "Invalid or unknown command";;
       esac;;
+    "start") start;;
+    "stop") stop;;
+    "restart") restart;;
     *) abort "Invalid or unknown command";;
   esac
 
