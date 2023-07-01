@@ -600,7 +600,8 @@ lock_screen () {
     notifications mute all
   fi
 
-  export XSECURELOCK_PASSWORD_PROMPT=hidden
+  export XSECURELOCK_PASSWORD_PROMPT=asterisks
+  export XSECURELOCK_AUTH_CURSOR_BLINK=0
   export XSECURELOCK_FONT='PixelMix Bold'
   export XSECURELOCK_AUTH_BACKGROUND_COLOR=#282a36
   export XSECURELOCK_BACKGROUND_COLOR=#282a36
@@ -614,6 +615,7 @@ lock_screen () {
   export XSECURELOCK_SHOW_HOSTNAME=0
   export XSECURELOCK_SHOW_USERNAME=0
   export XSECURELOCK_SHOW_KEYBOARD_LAYOUT=1
+
   xsecurelock
 
   if [[ $? -ne 0 ]]; then
