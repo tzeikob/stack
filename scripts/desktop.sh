@@ -232,6 +232,17 @@ install_break_timer () {
   echo "Break timer tool has been installed"
 }
 
+install_screenlocker () {
+  echo 'Installing the screen locker...'
+
+  sudo pacman -S --noconfirm xsecurelock xautolock || exit 1
+
+  mkdir -p ~/.config/xsecurelock
+  cp ~/stack/resources/xsecurelock/screensaver ~/.config/xsecurelock
+
+  echo 'Screen locker has been install'
+}
+
 install_screencasters () {
   echo "Installing screen casting tools..."
 
@@ -433,6 +444,7 @@ install_packages &&
   install_login_screen &&
   install_monitors &&
   install_break_timer &&
+  install_screenlocker &&
   install_screencasters &&
   install_calculator &&
   install_media_apps &&

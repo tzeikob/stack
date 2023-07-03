@@ -1,0 +1,157 @@
+#!/usr/bin/python3
+
+"""
+A saver module for xsecurelock which displays the current
+date and time. Have the following environment variables in
+order to configure the look and feel:
+
+ - XSECURELOCK_SAVER_FONT: font family of the textual parts
+ - XSECURELOCK_SAVER_FONT_SIZE: font size of the textual parts
+ - XSECURELOCK_SAVER_DATE_FORMAT: the format of the date
+ - XSECURELOCK_SAVER_TIME_FORMAT: the format of the time
+ - XSECURELOCK_SAVER_BACKGROUND: the backaground color
+ - XSECURELOCK_SAVER_FOREGROUND: the foreground color
+"""
+
+import os
+import types
+import datetime
+import re
+import socket
+import time
+import cairo
+import gi
+
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk, Gdk, GdkX11, GLib, GdkPixbuf, Gio
+
+def convertHEXtoRGB(hex):
+  """Convert a color given in hexadecimal format to rgb."""
+  n = int(hex, 16)
+  rgb = [(n>>16)/255, (n>>8&~(0xFF<<8))/255, (n & ~(0xFFFF<<8))/255]
+
+  return rgb
+
+def on_win_realize(widget, ctx):
+  """On realization, embed into XSCREENSAVER_WINDOW and remember parent position."""
+  parent_wid = int(os.getenv("XSCREENSAVER_WINDOW", 0))
+
+  if not parent_wid:
+    return
+  
+  parent = GdkX11.X11Window.foreign_new_for_display(widget.get_display(), parent_wid)
+  x, y, w, h = parent.get_geometry()
+  ctx.position = x, y
+  window = widget.get_window()
+  window.resize(w, h)
+  window.reparent(parent, 0, 0)
+
+def on_win_draw(widget, cctx, ctx):
+  """Draw the background."""
+  x, y = ctx.position
+  wwidth, wheight = widget.get_size()
+  scale = widget.get_scale_factor()
+  bg = None
+
+  cctx.set_operator(cairo.OPERATOR_SOURCE)
+  r,g,b = ctx.background_color
+  cctx.set_source_rgba(r, g, b, 1)
+  cctx.paint()
+
+def on_overlay_draw(widget, cctx, ctx):
+  """Draw overlay the current date and time."""
+  if not ctx.leader:
+    return
+
+  wwidth, wheight = widget.get_parent().get_size()
+  cctx.set_operator(cairo.OPERATOR_OVER)
+
+  def draw(what):
+    x, y = cctx.get_current_point()
+    r,g,b = ctx.foreground_color
+    cctx.set_source_rgb(r, g, b,)
+    cctx.move_to(x, y)
+    cctx.show_text(what)
+
+  if ctx.clock:
+    time, date = ctx.clock
+
+    # Time
+    cctx.select_font_face(ctx.font_family, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+    cctx.set_font_size(ctx.clock_font_size)
+    _, _, twidth, theight, _, _ = cctx.text_extents(re.sub(r"\d", "8", time))
+    cctx.move_to(wwidth // 2 - twidth // 2, wheight // 3)
+    draw(time)
+
+    # Date
+    cctx.select_font_face(ctx.font_family, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+    cctx.set_font_size(ctx.clock_font_size // 3)
+    _, _, twidth, theight, _, _ = cctx.text_extents(date)
+    cctx.move_to(wwidth // 2 - twidth // 2, wheight // 3 + theight * 1.5)
+    draw(date)
+
+def on_clock_change(ctx):
+  """
+  Update the current date and time if it has been chaged.
+
+  We are checking more often than once a minute because we want to
+  update the clock swiftly after suspend. An alternative would be to
+  listen to PrepareForSleep signal from org.freedesktop.login1, but
+  this is more complex.
+  """
+  now = datetime.datetime.now()
+  new_clock = now.strftime(ctx.time_format)
+
+  if new_clock != ctx.clock:
+    ctx.clock = (new_clock, now.strftime(ctx.date_format))
+    ctx.overlay.queue_draw()
+  
+    if ctx.leader is None:
+      # Do leader "election"
+      if ctx.position != (0, 0):
+        time.sleep(0.2)
+
+      s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+
+      try:
+        s.bind("\0screensaver")
+      except OSError:
+        ctx.leader = False
+      else:
+        ctx.leader = s
+
+  if ctx.leader:
+    GLib.timeout_add(1000, on_clock_change, ctx)
+
+if __name__ == "__main__":
+  ctx = types.SimpleNamespace()
+
+  ctx.font_family = os.getenv("XSECURELOCK_SAVER_FONT", "Monospace")
+  ctx.clock_font_size = int(os.getenv("XSECURELOCK_SAVER_FONT_SIZE", 80))
+  ctx.date_format = os.getenv("XSECURELOCK_SAVER_DATE_FORMAT", "%a, %-d %B, %Y")
+  ctx.time_format = os.getenv("XSECURELOCK_SAVER_TIME_FORMAT", "%I:%M %p")
+  ctx.background_color = convertHEXtoRGB(os.getenv("XSECURELOCK_SAVER_BACKGROUND", "000000"))
+  ctx.foreground_color = convertHEXtoRGB(os.getenv("XSECURELOCK_SAVER_FOREGROUND", "ffffff"))
+
+  ctx.background = None
+  ctx.clock = None
+  ctx.position = (0, 0)
+  ctx.leader = None
+
+  ctx.window = Gtk.Window()
+  ctx.window.set_app_paintable(True)
+  ctx.window.set_visual(ctx.window.get_screen().get_rgba_visual())
+  ctx.window.connect("realize", on_win_realize, ctx)
+  ctx.window.connect("draw", on_win_draw, ctx)
+  ctx.window.connect("delete-event", Gtk.main_quit)
+
+  ctx.overlay = Gtk.DrawingArea()
+  ctx.overlay.connect("draw", on_overlay_draw, ctx)
+  ctx.window.add(ctx.overlay)
+
+  GLib.timeout_add(1000, on_clock_change, ctx)
+
+  ctx.window.show_all()
+
+  # Main loop
+  Gtk.main()

@@ -189,7 +189,6 @@ install_packages () {
     vim nano git tree arch-audit atool zip xz unace p7zip gzip lzop feh \
     bzip2 unrar dialog inetutils dnsutils openssh nfs-utils openbsd-netcat ipset \
     neofetch age imagemagick gpick fuse2 rclone smartmontools glib2 jq jc sequoia-sq xf86-input-wacom bc \
-    xsecurelock xautolock \
     $([ "$UEFI" = "yes" ] && echo 'efibootmgr') || exit 1
 
   echo -e "\nReplacing iptables with nft tables..."
