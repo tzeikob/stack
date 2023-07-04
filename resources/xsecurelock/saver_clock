@@ -107,7 +107,7 @@ def on_clock_change(ctx):
       s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 
       try:
-        s.bind("\0saver")
+        s.bind("\0saver_clock")
       except OSError:
         ctx.leader = False
       else:

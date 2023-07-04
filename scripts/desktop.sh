@@ -237,8 +237,7 @@ install_screenlocker () {
 
   sudo pacman -S --noconfirm xsecurelock xautolock || exit 1
 
-  mkdir -p ~/.config/xsecurelock
-  cp ~/stack/resources/xsecurelock/saver ~/.config/xsecurelock
+  sudo cp ~/stack/resources/xsecurelock/saver_clock /usr/local/libexec/xsecurelock
 
   echo 'Screen locker has been install'
 }
