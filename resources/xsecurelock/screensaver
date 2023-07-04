@@ -25,12 +25,14 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GdkX11, GLib, GdkPixbuf, Gio
 
-def convertHEXtoRGB(hex):
+def rgb(hex):
   """Convert a color given in hexadecimal format to rgb."""
   n = int(hex, 16)
-  rgb = [(n>>16)/255, (n>>8&~(0xFF<<8))/255, (n & ~(0xFFFF<<8))/255]
+  red = (n>>16)/255
+  green = (n>>8&~(0xFF<<8))/255
+  blue = (n & ~(0xFFFF<<8))/255
 
-  return rgb
+  return [red, green, blue]
 
 def on_win_realize(widget, ctx):
   """On realization, embed into XSCREENSAVER_WINDOW and remember parent position."""
@@ -130,8 +132,8 @@ if __name__ == "__main__":
   ctx.clock_font_size = int(os.getenv("XSECURELOCK_SAVER_FONT_SIZE", 80))
   ctx.date_format = os.getenv("XSECURELOCK_SAVER_DATE_FORMAT", "%a, %-d %B, %Y")
   ctx.time_format = os.getenv("XSECURELOCK_SAVER_TIME_FORMAT", "%I:%M %p")
-  ctx.background_color = convertHEXtoRGB(os.getenv("XSECURELOCK_SAVER_BACKGROUND", "000000"))
-  ctx.foreground_color = convertHEXtoRGB(os.getenv("XSECURELOCK_SAVER_FOREGROUND", "ffffff"))
+  ctx.background_color = rgb(os.getenv("XSECURELOCK_SAVER_BACKGROUND", "000000"))
+  ctx.foreground_color = rgb(os.getenv("XSECURELOCK_SAVER_FOREGROUND", "ffffff"))
 
   ctx.background = None
   ctx.clock = None
