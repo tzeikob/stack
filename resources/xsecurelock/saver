@@ -114,7 +114,7 @@ def on_clock_change(ctx):
         ctx.leader = s
 
   if ctx.leader:
-    GLib.timeout_add(1000, on_clock_change, ctx)
+    GLib.timeout_add(1, on_clock_change, ctx)
 
 if __name__ == "__main__":
   ctx = types.SimpleNamespace()
@@ -142,7 +142,7 @@ if __name__ == "__main__":
   ctx.overlay.connect("draw", on_overlay_draw, ctx)
   ctx.window.add(ctx.overlay)
 
-  GLib.timeout_add(1000, on_clock_change, ctx)
+  GLib.timeout_add(1, on_clock_change, ctx)
   ctx.window.show_all()
 
   Gtk.main()
