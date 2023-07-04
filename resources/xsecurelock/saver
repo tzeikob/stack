@@ -2,8 +2,9 @@
 
 """
 A saver module for xsecurelock which displays the current
-date and time. Have the following environment variables in
-order to configure the look and feel:
+date and time.
+
+The module expects the following environment variables:
 
  - XSECURELOCK_SAVER_FONT: font family of the textual parts
  - XSECURELOCK_SAVER_FONT_SIZE: font size of the textual parts
@@ -49,11 +50,10 @@ def on_win_realize(widget, ctx):
   window.reparent(parent, 0, 0)
 
 def on_win_draw(widget, cctx, ctx):
-  """Draw the background."""
+  """Draw the background context."""
   x, y = ctx.position
   wwidth, wheight = widget.get_size()
   scale = widget.get_scale_factor()
-  bg = None
 
   cctx.set_operator(cairo.OPERATOR_SOURCE)
   r,g,b = ctx.background_color
@@ -61,7 +61,7 @@ def on_win_draw(widget, cctx, ctx):
   cctx.paint()
 
 def on_overlay_draw(widget, cctx, ctx):
-  """Draw overlay the current date and time."""
+  """Draw overlay with the current date and time."""
   if not ctx.leader:
     return
 
@@ -78,29 +78,20 @@ def on_overlay_draw(widget, cctx, ctx):
   if ctx.clock:
     time, date = ctx.clock
 
-    # Time
     cctx.select_font_face(ctx.font_family, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
-    cctx.set_font_size(ctx.clock_font_size)
+    cctx.set_font_size(ctx.font_size)
     _, _, twidth, theight, _, _ = cctx.text_extents(re.sub(r"\d", "8", time))
     cctx.move_to(wwidth // 2 - twidth // 2, wheight // 3)
     draw(time)
 
-    # Date
     cctx.select_font_face(ctx.font_family, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
-    cctx.set_font_size(ctx.clock_font_size // 3)
+    cctx.set_font_size(ctx.font_size // 3)
     _, _, twidth, theight, _, _ = cctx.text_extents(date)
     cctx.move_to(wwidth // 2 - twidth // 2, wheight // 3 + theight * 1.5)
     draw(date)
 
 def on_clock_change(ctx):
-  """
-  Update the current date and time if it has been chaged.
-
-  We are checking more often than once a minute because we want to
-  update the clock swiftly after suspend. An alternative would be to
-  listen to PrepareForSleep signal from org.freedesktop.login1, but
-  this is more complex.
-  """
+  """Update the current date and time if it has been chaged."""
   now = datetime.datetime.now()
   new_clock = now.strftime(ctx.time_format)
 
@@ -108,15 +99,15 @@ def on_clock_change(ctx):
     ctx.clock = (new_clock, now.strftime(ctx.date_format))
     ctx.overlay.queue_draw()
   
+    # Vote for leader
     if ctx.leader is None:
-      # Do leader "election"
       if ctx.position != (0, 0):
         time.sleep(0.2)
 
       s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 
       try:
-        s.bind("\0screensaver")
+        s.bind("\0saver")
       except OSError:
         ctx.leader = False
       else:
@@ -129,7 +120,7 @@ if __name__ == "__main__":
   ctx = types.SimpleNamespace()
 
   ctx.font_family = os.getenv("XSECURELOCK_SAVER_FONT", "Monospace")
-  ctx.clock_font_size = int(os.getenv("XSECURELOCK_SAVER_FONT_SIZE", 80))
+  ctx.font_size = int(os.getenv("XSECURELOCK_SAVER_FONT_SIZE", 80))
   ctx.date_format = os.getenv("XSECURELOCK_SAVER_DATE_FORMAT", "%a, %-d %B, %Y")
   ctx.time_format = os.getenv("XSECURELOCK_SAVER_TIME_FORMAT", "%I:%M %p")
   ctx.background_color = rgb(os.getenv("XSECURELOCK_SAVER_BACKGROUND", "000000"))
@@ -152,8 +143,6 @@ if __name__ == "__main__":
   ctx.window.add(ctx.overlay)
 
   GLib.timeout_add(1000, on_clock_change, ctx)
-
   ctx.window.show_all()
 
-  # Main loop
   Gtk.main()
