@@ -1,0 +1,31 @@
+#!/bin/python3
+
+import sys
+import pam
+from getpass import getuser, getpass
+
+# Read the current user running this process
+username = getuser()
+
+# Send a password prompt request to user
+prompt_message='Enter your password:'
+print(f"P {len(prompt_message)}")
+print(prompt_message)
+
+# Read what user has sent to the authenticator
+password_len = input()
+password = input()
+
+p = pam.pam()
+
+# Authenticate the given password with PAM authenticator
+if not p.authenticate(username, password):
+  failed_message='Ooops authentication failed!'
+  print(f"e {len(failed_message)}")
+  print(failed_message)
+else:
+  succeed_message=f"Hi there, {username}!"
+  print(f"i {len(succeed_message)}")
+  print(succeed_message)
+
+sys.exit(p.code)
