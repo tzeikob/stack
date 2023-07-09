@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/bin/python3
 
 """
 A saver module for xsecurelock which displays the current
