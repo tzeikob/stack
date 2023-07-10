@@ -628,6 +628,7 @@ lock_screen () {
   XSECURELOCK_SAVER_BACKGROUND="282a36" \
   XSECURELOCK_SAVER_FOREGROUND="ff557f" \
   XSECURELOCK_SAVER_STOP_ON_DPMS=0 \
+  XSECURELOCK_AUTH=/usr/local/libexec/xsecurelock/auth_stack \
   XSECURELOCK_AUTHPROTO=/usr/local/libexec/xsecurelock/authproto_stack \
   xsecurelock >/dev/null 2>&1
 

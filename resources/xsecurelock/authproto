@@ -1,6 +1,7 @@
 #!/bin/python3
 
 import sys
+import time
 import pam
 from getpass import getuser, getpass
 
@@ -21,6 +22,7 @@ try:
     password = input()
 
     if p.authenticate(username, password):
+      time.sleep(1)
       succeed_message=f"Hi there, {username}!"
       print(f"i {len(succeed_message)}")
       print(succeed_message)
