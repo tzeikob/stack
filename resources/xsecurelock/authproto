@@ -33,9 +33,6 @@ try:
     
     sys.exit(p.code)
   elif prompt_type == 'x':
-    cancel_message=f"Canceling authentication..."
-    print(f"i {len(cancel_message)}")
-    print(cancel_message)
     sys.exit(1)
   else:
     sys.exit(1)
