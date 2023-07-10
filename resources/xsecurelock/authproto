@@ -25,7 +25,7 @@ try:
       print(f"i {len(succeed_message)}")
       print(succeed_message)
     else:
-      failed_message='Ooops authentication failed!'
+      failed_message='Sorry, incorrect password!'
       print(f"e {len(failed_message)}")
       print(failed_message)
     
@@ -38,7 +38,7 @@ try:
   else:
     sys.exit(1)
 except Exception as e:
-  error_message='System failure!'
+  error_message='System failure, unable to authenticate!'
   print(f"e {len(error_message)}")
   print(error_message)
   sys.exit(42)
