@@ -19,14 +19,14 @@ if prompt_type == 'p':
   p = pam.pam()
   password = input()
 
-  if not p.authenticate(username, password):
-    failed_message='Ooops authentication failed!'
-    print(f"e {len(failed_message)}")
-    print(failed_message)
-  else:
+  if p.authenticate(username, password):
     succeed_message=f"Hi there, {username}!"
     print(f"i {len(succeed_message)}")
     print(succeed_message)
+  else:
+    failed_message='Ooops authentication failed!'
+    print(f"e {len(failed_message)}")
+    print(failed_message)
   
   sys.exit(p.code)
 elif prompt_type == 'x':
