@@ -4,35 +4,41 @@ import sys
 import pam
 from getpass import getuser, getpass
 
-# Read the current user running this process
-username = getuser()
+try:
+  # Read the current user running this process
+  username = getuser()
 
-# Send a request for password prompt
-prompt_message='Enter your password:'
-print(f"P {len(prompt_message)}")
-print(prompt_message)
+  # Send a request for password prompt
+  prompt_message='Enter your password:'
+  print(f"P {len(prompt_message)}")
+  print(prompt_message)
 
-# Read what type of response sent by user
-prompt_type=input().split()[0]
+  # Read what type of response sent by user
+  prompt_type=input().split()[0]
 
-if prompt_type == 'p':
-  p = pam.pam()
-  password = input()
+  if prompt_type == 'p':
+    p = pam.pam()
+    password = input()
 
-  if p.authenticate(username, password):
-    succeed_message=f"Hi there, {username}!"
-    print(f"i {len(succeed_message)}")
-    print(succeed_message)
+    if p.authenticate(username, password):
+      succeed_message=f"Hi there, {username}!"
+      print(f"i {len(succeed_message)}")
+      print(succeed_message)
+    else:
+      failed_message='Ooops authentication failed!'
+      print(f"e {len(failed_message)}")
+      print(failed_message)
+    
+    sys.exit(p.code)
+  elif prompt_type == 'x':
+    cancel_message=f"Canceling authentication..."
+    print(f"i {len(cancel_message)}")
+    print(cancel_message)
+    sys.exit(1)
   else:
-    failed_message='Ooops authentication failed!'
-    print(f"e {len(failed_message)}")
-    print(failed_message)
-  
-  sys.exit(p.code)
-elif prompt_type == 'x':
-  cancel_message=f"Canceling..."
-  print(f"i {len(cancel_message)}")
-  print(cancel_message)
-  sys.exit(1)
-else:
-  sys.exit(1)
+    sys.exit(1)
+except Exception as e:
+  error_message='System failure!'
+  print(f"e {len(error_message)}")
+  print(error_message)
+  sys.exit(42)
