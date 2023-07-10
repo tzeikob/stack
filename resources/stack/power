@@ -620,7 +620,7 @@ lock_screen () {
   XSECURELOCK_BURNIN_MITIGATION=0 \
   XSECURELOCK_BURNIN_MITIGATION_DYNAMIC=0 \
   XSECURELOCK_AUTH_TIMEOUT=30 \
-  XSECURELOCK_SAVER=saver_clock \
+  XSECURELOCK_SAVER=saver_stack \
   XSECURELOCK_SAVER_FONT="PixelMix" \
   XSECURELOCK_SAVER_FONT_SIZE=120 \
   XSECURELOCK_SAVER_DATE_FORMAT="%a, %-d %B, %Y" \
@@ -628,7 +628,7 @@ lock_screen () {
   XSECURELOCK_SAVER_BACKGROUND="282a36" \
   XSECURELOCK_SAVER_FOREGROUND="ff557f" \
   XSECURELOCK_SAVER_STOP_ON_DPMS=0 \
-  XSECURELOCK_AUTHPROTO=/usr/local/libexec/xsecurelock/authproto_clock \
+  XSECURELOCK_AUTHPROTO=/usr/local/libexec/xsecurelock/authproto_stack \
   xsecurelock >/dev/null 2>&1
 
   if [[ $? -ne 0 ]]; then
