@@ -593,6 +593,18 @@ suspend_system () {
 # Arguments:
 #  None
 lock_screen () {
+  local query=''
+  query+='[.[]|select(.command|test("xsecurelock.*"))]'
+  query+='|if length > 0 then "true" else "false" end'
+
+  local is_locked=''
+  is_locked="$(ps aux | grep -v 'jq' | jc --ps | jq -cr "${query}")" || return 1
+
+  if [[ "${is_locked}" == "true" ]]; then
+    echo 'Screen locker is already running'
+    return 0
+  fi
+
   local is_paused=''
   is_paused="$(notifications get state | jq -cr '.is_paused')"
 
