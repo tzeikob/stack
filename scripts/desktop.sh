@@ -240,7 +240,7 @@ install_screenlocker () {
 
   sudo cp ~/stack/resources/xsecurelock/saver /usr/local/libexec/xsecurelock/saver_stack
   sudo cp ~/stack/resources/xsecurelock/authproto /usr/local/libexec/xsecurelock/authproto_stack
-  sudo cp ~/stack/resources/xsecurelock/sleep /usr/lib/systemd/system-sleep/xsecurelock
+  sudo cp ~/stack/resources/xsecurelock/sleep /usr/lib/systemd/system-sleep/locker
 
   echo 'Screen locker has been install'
 }
