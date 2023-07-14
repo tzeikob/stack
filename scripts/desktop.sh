@@ -239,7 +239,7 @@ install_screenlocker () {
   pip3 install python-pam || exit 1
 
   sudo cp ~/stack/resources/xsecurelock/saver /usr/local/libexec/xsecurelock/saver_clock
-  sudo cp ~/stack/resources/xsecurelock/authproto /usr/local/libexec/xsecurelock/authproto_stack
+  sudo cp ~/stack/resources/xsecurelock/authproto /usr/local/libexec/xsecurelock/authproto_pam
   sudo cp ~/stack/resources/xsecurelock/sleep /usr/lib/systemd/system-sleep/locker
 
   echo 'Screen locker has been install'
