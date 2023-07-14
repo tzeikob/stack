@@ -242,6 +242,11 @@ install_screenlocker () {
   sudo cp ~/stack/resources/xsecurelock/authproto /usr/local/libexec/xsecurelock/authproto_pam
   sudo cp ~/stack/resources/xsecurelock/sleep /usr/lib/systemd/system-sleep/locker
 
+  local user_id="$(id -u "${USERNAME}")"
+  sudo cp ~/stack/resources/xsecurelock/service /etc/systemd/system/lock@.service
+  sudo sed -i "s/#USER_ID/${user_id}/g" /etc/systemd/system/lock@.service
+  sudo systemctl enable lock@${USERNAME}.service
+
   echo 'Screen locker has been install'
 }
 
