@@ -240,7 +240,7 @@ install_screenlocker () {
 
   sudo cp ~/stack/resources/xsecurelock/saver /usr/local/libexec/xsecurelock/saver_clock
   sudo cp ~/stack/resources/xsecurelock/authproto /usr/local/libexec/xsecurelock/authproto_pam
-  sudo cp ~/stack/resources/xsecurelock/sleep /usr/lib/systemd/system-sleep/locker
+  sudo cp ~/stack/resources/xsecurelock/hook /usr/lib/systemd/system-sleep/locker
 
   local user_id="$(id -u "${USERNAME}")"
   sudo cp ~/stack/resources/xsecurelock/service /etc/systemd/system/lock@.service
