@@ -81,13 +81,13 @@ def on_overlay_draw(widget, cctx, ctx):
     cctx.select_font_face(ctx.font_family, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
     cctx.set_font_size(ctx.font_size)
     _, _, twidth, theight, _, _ = cctx.text_extents(re.sub(r"\d", "8", time))
-    cctx.move_to(wwidth // 2 - twidth // 2, wheight // 3)
+    cctx.move_to(wwidth // 2 - twidth // 2, wheight // 2.75)
     draw(time)
 
     cctx.select_font_face(ctx.font_family, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
     cctx.set_font_size(ctx.font_size // 3)
     _, _, twidth, theight, _, _ = cctx.text_extents(date)
-    cctx.move_to(wwidth // 2 - twidth // 2, wheight // 3 + theight * 1.5)
+    cctx.move_to(wwidth // 2 - twidth // 2, wheight // 2.75 + theight * 1.5)
     draw(date)
 
 def on_clock_change(ctx):
