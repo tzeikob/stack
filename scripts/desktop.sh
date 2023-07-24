@@ -235,11 +235,19 @@ install_break_timer () {
 install_screenlocker () {
   echo 'Installing the screen locker...'
 
-  sudo pacman -S --noconfirm xsecurelock xautolock || exit 1
   pip3 install python-pam || exit 1
 
-  sudo cp ~/stack/resources/xsecurelock/saver /usr/local/libexec/xsecurelock/saver_clock
-  sudo cp ~/stack/resources/xsecurelock/authproto /usr/local/libexec/xsecurelock/authproto_pam
+  local prev_wd="$(echo ${PWD})}"
+  cd ~
+  git clone https://github.com/tzeikob/xsecurelock.git || exit 1
+  cd xsecurelock
+  sh autogen.sh || exit 1
+  ./configure --with-pam-service-name=system-auth || exit 1
+  make || exit 1
+  sudo make install || exit 1
+  cd "${prev_wd}"
+  rm -rf ~/xsecurelock
+
   sudo cp ~/stack/resources/xsecurelock/hook /usr/lib/systemd/system-sleep/locker
 
   local user_id="$(id -u "${USERNAME}")"
