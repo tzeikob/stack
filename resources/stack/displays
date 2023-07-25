@@ -1415,7 +1415,23 @@ fix_layout () {
     return 2
   fi
 
-  echo "Layout has been fixed"
+  # Set new primary monitor if primary has disconnected
+  local query='.[]|select((.is_connected|not) and .is_primary)|.device_name'
+
+  local disconnected_primary=''
+  disconnected_primary="$(echo "${outputs}" | jq -cr "${query}")"
+
+  if [[ -n "${disconnected_primary}" ]]; then
+    local query='[.[]|select(.is_connected and .resolution_width)]'
+    query+='|.[0].device_name'
+
+    local new_primary=''
+    new_primary="$(echo "${outputs}" | jq -cr "${query}")"
+
+    [[ -n "${new_primary}" ]] && set_primary "${new_primary}"
+  fi
+
+  echo "Layout has been fixed22"
 }
 
 # Deletes the layout setting with the given index.
