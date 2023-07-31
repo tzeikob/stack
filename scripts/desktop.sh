@@ -235,7 +235,7 @@ install_break_timer () {
 install_screenlocker () {
   echo 'Installing the screen locker...'
 
-  pip3 install python-pam || exit 1
+  pip3 install python-pam screeninfo || exit 1
 
   local prev_wd="$(echo ${PWD})}"
   cd ~
