@@ -4,3 +4,10 @@
 if [[ "${1}" == "pre" ]] && [[ "${2}" == "suspend" ]]; then
   sleep 2
 fi
+
+# On resume prompt for authentication
+if [[ "${1}" == "post" ]]; then
+  pkill -x -USR2 xsecurelock
+fi
+
+exit 0
