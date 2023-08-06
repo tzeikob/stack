@@ -232,35 +232,30 @@ install_break_timer () {
   echo "Break timer tool has been installed"
 }
 
-install_screen_locker () {
-  echo "Installing the screen locker..."
+install_screenlocker () {
+  echo 'Installing the screen locker...'
 
-  cd ~/
-  curl https://dl.suckless.org/tools/slock-1.4.tar.gz -sSLo ./slock-1.4.tar.gz \
-    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 || exit 1
-  tar -xzvf ./slock-1.4.tar.gz || exit 1
+  pip3 install python-pam screeninfo || exit 1
 
-  cd ~/slock-1.4
-  curl https://tools.suckless.org/slock/patches/control-clear/slock-git-20161012-control-clear.diff -sSLo ./control-clear.diff \
-    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 || exit 1
-  patch -p1 < ./control-clear.diff || exit 1
-
-  echo "Control clear patch has been added"
-
-  sed -ri 's/(.*)nogroup(.*)/\1nobody\2/' ./config.def.h
-  sed -ri 's/.*INIT.*/  [INIT] = "#1a1b26",/' ./config.def.h
-  sed -ri 's/.*INPUT.*/  [INPUT] = "#383c4a",/' ./config.def.h
-  sed -ri 's/.*FAILED.*/  [FAILED] = "#ff2369"/' ./config.def.h
-  sed -ri 's/(.*)controlkeyclear.*/\1controlkeyclear = 1;/' ./config.def.h
-
-  echo "Lock screen color theme has been applied"
-
+  local prev_wd="$(echo ${PWD})}"
+  cd ~
+  git clone https://github.com/tzeikob/xsecurelock.git || exit 1
+  cd xsecurelock
+  sh autogen.sh || exit 1
+  ./configure --with-pam-service-name=system-auth || exit 1
+  make || exit 1
   sudo make install || exit 1
-  sudo mv /usr/local/bin/slock /usr/bin
+  cd "${prev_wd}"
+  rm -rf ~/xsecurelock
 
-  cd / && rm -rf ~/slock-1.4 ~/slock-1.4.tar.gz
+  sudo cp ~/stack/resources/xsecurelock/hook /usr/lib/systemd/system-sleep/locker
 
-  echo -e "Screen locker has been installed"
+  local user_id="$(id -u "${USERNAME}")"
+  sudo cp ~/stack/resources/xsecurelock/service /etc/systemd/system/lock@.service
+  sudo sed -i "s/#USER_ID/${user_id}/g" /etc/systemd/system/lock@.service
+  sudo systemctl enable lock@${USERNAME}.service
+
+  echo 'Screen locker has been install'
 }
 
 install_screencasters () {
@@ -464,7 +459,7 @@ install_packages &&
   install_login_screen &&
   install_monitors &&
   install_break_timer &&
-  install_screen_locker &&
+  install_screenlocker &&
   install_screencasters &&
   install_calculator &&
   install_media_apps &&
