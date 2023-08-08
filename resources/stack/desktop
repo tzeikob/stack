@@ -726,7 +726,10 @@ set_pointer_speed () {
     factor="${REPLY}"
   fi
 
-  if (( $(echo "${factor} < 0" | bc -l) )); then
+  if [[ ! "${factor}" =~ ^[0-9]+\.?[0-9]*$ ]]; then
+    echo "Invalid pointer speed"
+    return 2
+  elif (( $(echo "${factor} < 0" | bc -l) )); then
     echo "Speed factor can't be lower than 0"
     return 2
   elif (( $(echo "${factor} > 1" | bc -l) )); then
@@ -911,7 +914,10 @@ scale_tablet () {
     scale="${REPLY}"
   fi
 
-  if (( $(echo "${scale} <= 0" | bc -l) )); then
+  if [[ ! "${scale}" =~ ^[0-9]+\.?[0-9]*$ ]]; then
+    echo "Invalid pointer speed"
+    return 2
+  elif (( $(echo "${scale} <= 0" | bc -l) )); then
     echo "Scale can't be lower or equal to 0"
     return 2
   elif (( $(echo "${scale} > 1" | bc -l) )); then
