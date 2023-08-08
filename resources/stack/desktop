@@ -787,7 +787,7 @@ set_pointer_speed () {
   # Save factor into settings file
   if [[ "${persist}" == "save" ]]; then
     local settings='{}'
-    local pointer="{\"speed\": \"${factor}\"}"
+    local pointer="{\"speed\": ${factor}}"
 
     if [[ -f "${SETTINGS_FILE}" ]]; then
       settings="$(jq -e ".pointer = ${pointer} " "${SETTINGS_FILE}")" || return 1
@@ -951,7 +951,7 @@ scale_tablet () {
   # Save tablet's scale factor into settings file
   if [[ "${persist}" == "save" ]]; then
     local settings='{}'
-    local tablet="{\"name\": \"${name}\", \"scale\": \"${scale}\"}"
+    local tablet="{\"name\": \"${name}\", \"scale\": ${scale}}"
 
     if [[ -f "${SETTINGS_FILE}" ]]; then
       local tablets=''

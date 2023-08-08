@@ -314,7 +314,7 @@ set_locker () {
   # Save locker interval into settings file
   if [[ "${persist}" == "save" ]]; then
     local settings='{}'
-    local locker="{\"interval\": \"${mins}\"}"
+    local locker="{\"interval\": ${mins}}"
 
     if [[ -f "${SETTINGS_FILE}" ]]; then
       settings="$(jq -e ".locker = ${locker} " "${SETTINGS_FILE}")" || return 1
@@ -404,7 +404,7 @@ set_screensaver () {
   # Save screen saver interval into settings file
   if [[ "${persist}" == "save" ]]; then
     local settings='{}'
-    local screensaver="{\"interval\": \"${mins}\"}"
+    local screensaver="{\"interval\": ${mins}}"
 
     if [[ -f "${SETTINGS_FILE}" ]]; then
       settings="$(jq -e ".screensaver = ${screensaver} " "${SETTINGS_FILE}")" || return 1
