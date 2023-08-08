@@ -168,8 +168,6 @@ has_rate () {
 
 # Shows a menu asking the user to select one output, where the
 # answer is kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  prompt: a prompt text line
 #  status: all, connected, disconnected, active,
@@ -203,8 +201,6 @@ pick_output () {
 # Shows a menu asking the user to select many outputs,
 # where the answer is kept in the global var REPLY as
 # a JSON array of output names in selection order.
-# Globals:
-#  REPLY
 # Arguments:
 #  prompt:  a prompt text line
 #  status:  all, connected, disconnected, active,
@@ -246,8 +242,6 @@ pick_outputs () {
 # Shows a menu of resolutions of the given output and waits
 # the user to pick one option. The selected option is kept
 # in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  output: a json object of output
 # Outputs:
@@ -280,8 +274,6 @@ pick_resolution () {
 # Shows a menu of resolution rates of the given output and
 # waits the user to pick one option. The selected option is
 # kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  output: a json object of output
 # Outputs:
@@ -317,8 +309,6 @@ pick_rate () {
 
 # Shows a prompt status and asks user to enter the
 # next command, which is kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  None
 # Outputs:
@@ -336,8 +326,6 @@ prompt () {
 }
 
 # Shows the current status of Xorg and active displays.
-# Globals:
-#  DISPLAY, COLORS, SETTINGS_FILE
 # Arguments:
 #  None
 # Outputs:
@@ -410,8 +398,6 @@ show_status () {
 }
 
 # Shows the Xorg displays log file.
-# Globals:
-#  HOME, DISPLAY
 # Arguments:
 #  lines: the number of last lines to show
 # Outputs:
@@ -440,8 +426,6 @@ show_logs () {
 }
 
 # Shows the data of the output with the given name.
-# Globals:
-#  REPLY, SETTINGS_FILE
 # Arguments:
 #  name: the name of an output
 # Outputs:
@@ -556,8 +540,6 @@ list_outputs () {
 
 # Sets the resolution and rate of the output with the
 # given name.
-# Globals:
-#  REPLY
 # Arguments:
 #  name:       the name of an output
 #  resolution: a width x height resolution
@@ -623,8 +605,6 @@ set_mode () {
 }
 
 # Sets the output with the given name as primary.
-# Globals:
-#  REPLY
 # Arguments:
 #  name: the name of an output
 set_primary () {
@@ -663,8 +643,6 @@ set_primary () {
 }
 
 # Sets the output with the given name on.
-# Globals:
-#  REPLY
 # Arguments:
 #  name: the name of an output
 set_on () {
@@ -712,8 +690,6 @@ set_on () {
 }
 
 # Sets the output with the given name off.
-# Globals:
-#  REPLY
 # Arguments:
 #  name: the name of an output
 set_off () {
@@ -752,8 +728,6 @@ set_off () {
 }
 
 # Sets the reflection of the output with the given name.
-# Globals:
-#  REPLY
 # Arguments:
 #  name: the name of an output
 #  mode: normal, x, y, xy
@@ -808,8 +782,6 @@ reflect () {
 }
 
 # Sets the rotation of the output with the given name.
-# Globals:
-#  REPLY
 # Arguments:
 #  name: the name of an output
 #  mode: normal, right, left, inverted
@@ -868,8 +840,6 @@ rotate () {
 # the source output and the mirrors. All outputs will move to
 # position equal to the position of the source output and
 # inherit the rotation and reflection modes.
-# Globals:
-#  REPLY
 # Arguments:
 #  name: the name of an output
 mirror () {
@@ -959,8 +929,6 @@ mirror () {
 }
 
 # Sets the layout of the currently active outputs.
-# Globals:
-#  REPLY
 # Arguments:
 #  None
 set_layout () {
@@ -1206,8 +1174,6 @@ set_layout () {
 # Saves the current layout under a unique hashed signature
 # which is based on the mapping between all outputs and
 # their possibly connected devices.
-# Globals:
-#  REPLY, CONFIG_HOME, SETTINGS_FILE
 # Arguments:
 #  None
 save_layout () {
@@ -1303,8 +1269,6 @@ save_layout () {
 # Restores the layout setting with the signature matching
 # the signature of the mapping between current outputs and 
 # connected devices.
-# Globals:
-#  SETTINGS_FILE
 # Arguments:
 #  None
 restore_layout () {
@@ -1436,8 +1400,6 @@ fix_layout () {
 }
 
 # Deletes the layout setting with the given index.
-# Globals:
-#  REPLY, SETTINGS_FILE
 # Arguments;
 #  index: the index of the layout setting
 delete_layout () {
@@ -1499,8 +1461,6 @@ delete_layout () {
 }
 
 # List all the stored layout settings.
-# Globals:
-#  SETTINGS_FILE
 # Arguments:
 #  none
 # Outputs:
@@ -1541,8 +1501,6 @@ list_layouts () {
 # with the given name and saves it to the color settings. The
 # profile should be the filename of any .icc or .icm color
 # calibration files stored in $COLORS_HOME.
-# Globals:
-#  REPLY, COLORS_HOME, DISPLAY, CONFIG_HOME, SETTINGS_FILE
 # Arguments:
 #  name:    the name of an output
 #  profile: the file name of a color profile
@@ -1658,8 +1616,6 @@ set_color () {
 # Resets the color profile of the device connected to the
 # output with the given name and removes it from the color
 # settings.
-# Globals:
-#  REPLY, DISPLAY, SETTINGS_FILE
 # Arguments:
 #  name: the name of an output
 reset_color () {
@@ -1715,8 +1671,6 @@ reset_color () {
 }
 
 # Deletes the color setting with the given index.
-# Globals:
-#  SETTINGS_FILE, REPLY
 # Arguments:
 #  index: the index of a color setting
 delete_color () {
@@ -1775,8 +1729,6 @@ delete_color () {
 
 # List all the color settings per device being stored
 # in settings.
-# Globals:
-#  SETTINGS_FILE
 # Arguments:
 #  none
 # Outputs:
@@ -1812,8 +1764,6 @@ list_colors () {
 
 # Restores the color settings of any devices currently
 # connected to an output.
-# Globals:
-#  COLORS_HOME, SETTINGS_FILE, DISPLAY
 # Arguments:
 #  None
 restore_colors () {

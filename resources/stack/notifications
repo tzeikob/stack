@@ -116,8 +116,6 @@ get_state () {
 
 # Shows a prompt status and asks user to enter the
 # next command, which is kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  None
 # Outputs:
@@ -247,8 +245,6 @@ clean_all () {
 }
 
 # Enables or disables pop-up notifications.
-# Globals:
-#  HOME
 # Arguments:
 #  mode: on or off
 set_popup () {
@@ -287,8 +283,6 @@ set_popup () {
 }
 
 # Sets the volume of the notifications sound.
-# Globals:
-#  SETTINGS_FILE, CONFIG_HOME
 # Arguments:
 #  percent: a value between 0 and 100
 set_volume () {

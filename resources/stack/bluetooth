@@ -81,8 +81,6 @@ is_scanning_on () {
 
 # Shows a menu asking the user to select a controller,
 # where the answer is kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  None
 # Outputs:
@@ -107,8 +105,6 @@ pick_controller () {
 
 # Shows a menu asking the user to select a device,
 # where the answer is kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  None
 # Outputs:
@@ -133,8 +129,6 @@ pick_device () {
 
 # Shows a prompt status and asks user to enter the
 # next command, which is kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  None
 # Outputs:
@@ -283,8 +277,6 @@ list_devices () {
 
 # Shows the data of the controller with the given
 # address.
-# Globals:
-#  REPLY
 # Arguments:
 #  address: the address of a controller
 # Outputs:
@@ -324,8 +316,6 @@ show_controller () {
 
 # Shows the data of the device with the given
 # address.
-# Globals:
-#  REPLY
 # Arguments:
 #  address: the address of a device
 # Outputs:
@@ -369,8 +359,6 @@ show_device () {
 
 # Sets the default controller to the controller
 # with the given address.
-# Globals:
-#  REPLY
 # Arguments:
 #  address: the address of a controller
 set_controller () {
@@ -539,8 +527,6 @@ set_pairable () {
 }
 
 # Connects to the device with the given address.
-# Globals:
-#  REPLY
 # Arguments:
 #  address: the address of a device
 connect_device () {
@@ -572,8 +558,6 @@ connect_device () {
 }
 
 # Disconnects the device with the given address.
-# Globals:
-#  REPLY
 # Arguments:
 #  address: the address of a device
 disconnect_device () {
@@ -603,8 +587,6 @@ disconnect_device () {
 }
 
 # Removes the device with the given address.
-# Globals:
-#  REPLY
 # Arguments:
 #  address: the address of a device
 remove_device () {

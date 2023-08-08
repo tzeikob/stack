@@ -7,8 +7,6 @@ SETTINGS_FILE="${CONFIG_HOME}/desktop.json"
 
 # Returns the list of any wallpapers found under
 # the wallpapers home.
-# Globals:
-#  WALLPAPERS_HOME
 # Arguments:
 #  None
 # Outputs:
@@ -49,8 +47,6 @@ find_wallpapers () {
 
 # Shows a menu asking the user to select one wallpaper,
 # where the answer is kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  None
 # Outputs:
@@ -170,8 +166,6 @@ find_pointer () {
 
 # Shows a menu asking the user to select one pointing device,
 # where the answer is kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  None
 # Outputs:
@@ -310,8 +304,6 @@ is_scalable () {
 
 # Shows a menu asking the user to select one tablet device,
 # where the answer is kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  None
 # Outputs:
@@ -410,8 +402,6 @@ is_active () {
 
 # Shows a menu asking the user to select one output, where the
 # answer is kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  prompt: a prompt text line
 #  status: all, connected, disconnected, active,
@@ -447,8 +437,6 @@ pick_output () {
 
 # Shows a prompt status and asks user to enter the
 # next command, which is kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  None
 # Outputs:
@@ -458,8 +446,6 @@ prompt () {
 }
 
 # Shows the current status of the desktop environment.
-# Globals:
-#  SETTINGS_FILE
 # Arguments:
 #  None
 # Outputs:
@@ -566,8 +552,6 @@ list_wallpapers () {
 
 # Sets the desktop wallpaper to the wallpaper with the given
 # file name and scale mode.
-# Globals:
-#  REPLY, WALLPAPERS_HOME, SETTINGS_FILE, CONFIG_HOME
 # Arguments:
 #  name:    the filename of the wallpaper
 #  mode:    center, fill, max, scale or tile
@@ -643,8 +627,6 @@ set_wallpaper () {
 
 # Show the data of the pointing device with the
 # given id.
-# Globals:
-#  REPLY
 # Arguments:
 #  id: the id of the pointing device
 # Outputs:
@@ -712,8 +694,6 @@ list_pointers () {
 # Sets the acceleration speed of every pointing device
 # to the given speed factor, where 0 means slow and 1
 # means fast.
-# Globals:
-#  REPLY
 # Arguments:
 #  factor:  a speed factor between [0, 1]
 #  persist: save or nosave, default is save
@@ -805,8 +785,6 @@ set_pointer_speed () {
 
 # Show the data of the tablet device with the
 # given name.
-# Globals:
-#  REPLY
 # Arguments:
 #  name: the name of a tablet device
 # Outputs:
@@ -882,8 +860,6 @@ list_tablets () {
 
 # Scales the area of the tablet with the given name,
 # keeping the current aspect ratio.
-# Globals:
-#  REPLY
 # Arguments:
 #  name:    the name of a tablet device
 #  scale:   the scale factor [0.1-1]
@@ -992,8 +968,6 @@ scale_tablet () {
 # Maps the area of the tablet with the given name
 # to a display device, where the special word desktop
 # resets the tablet's mapping and ratio.
-# Globals:
-#  REPLY
 # Arguments:
 #  name:    the name of a tablet device
 #  display: the name of a display device or desktop
@@ -1098,8 +1072,6 @@ map_tablet () {
 
 # Applies the pointer settings being set in the
 # settings file.
-# Globals:
-#  SETTINGS_FILE
 # Arguments:
 #  None
 init_pointer () {
@@ -1131,8 +1103,6 @@ init_pointer () {
 
 # Applies the settings for those tablets being stored
 # in the settings file.
-# Globals:
-#  SETTINGS_FILE
 # Arguments:
 #  None
 init_tablets () {
@@ -1179,8 +1149,6 @@ init_tablets () {
 
 # Sets the desktop wallpaper to the wallpaper
 # being set in the settings file.
-# Globals:
-#  SETTINGS_FILE
 # Arguments:
 #  None
 init_wallpaper () {

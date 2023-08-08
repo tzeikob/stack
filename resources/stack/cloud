@@ -108,8 +108,6 @@ is_mounted () {
 
 # Shows a menu asking the user to select one remote, where the
 # answer is kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  status: mounted or unmounted
 # Outputs:
@@ -137,8 +135,6 @@ pick_remote () {
 
 # Shows a prompt status and asks user to enter the
 # next command, which is kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  None
 # Outputs:
@@ -200,8 +196,6 @@ list_remotes () {
 }
 
 # Creates a new google drive remote with the given name.
-# Globals:
-#  REPLY
 # Arguments:
 #  name: the name of the remote
 sync_drive () {
@@ -239,8 +233,6 @@ sync_drive () {
 }
 
 # Creates a new dropbox remote with the given name.
-# Globals:
-#  REPLY
 # Arguments:
 #  name: the name of the remote
 sync_dropbox () {
@@ -275,8 +267,6 @@ sync_dropbox () {
 }
 
 # Deletes the remote with the given name.
-# Globals:
-#  REPLY
 # Arguments:
 #  name: the name of a remote
 delete_remote () {
@@ -307,8 +297,6 @@ delete_remote () {
 }
 
 # Mounts the remote with the given name to the disk.
-# Globals:
-#  REPLY, HOME
 # Arguments:
 #  name: the name of the remote
 mount_remote () {
@@ -347,8 +335,6 @@ mount_remote () {
 }
 
 # Unmounts the remote with the given name from the disk.
-# Globals:
-#  REPLY
 # Arguments:
 #  name: the name of the remote
 unmount_remote () {

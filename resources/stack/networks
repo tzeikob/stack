@@ -170,8 +170,6 @@ validate () {
 
 # Shows a menu asking the user to select one device, where the
 # answer is kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  type: ethernet, wifi or bridge
 # Outputs:
@@ -198,8 +196,6 @@ pick_device () {
 
 # Shows a menu asking the user to select one connection,
 # where the answer is kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  None
 # Outputs:
@@ -224,8 +220,6 @@ pick_connection () {
 
 # Shows a menu asking the user to select one proxy profile,
 # where the answer is kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  None
 # Outputs:
@@ -251,8 +245,6 @@ pick_proxy () {
 
 # Shows a prompt status and asks user to enter the
 # next command, which is kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  None
 # Outputs:
@@ -363,8 +355,6 @@ show_status () {
 }
 
 # Shows the data of the network device with the given name.
-# Globals:
-#  REPLY
 # Arguments:
 #  name: the name of a device
 # Outputs:
@@ -406,8 +396,6 @@ show_device () {
 
 # Shows the data of the network connection with the
 # given name.
-# Globals:
-#  REPLY
 # Arguments:
 #  name: the name of a connection
 # Outputs:
@@ -573,8 +561,6 @@ list_wifis () {
 }
 
 # Enables the device or connection with the given name.
-# Globals:
-#  REPLY
 # Arguments:
 #  object: device or connection
 #  name:   the name of a device or connection
@@ -618,8 +604,6 @@ up () {
 }
 
 # Disables the device or connection with the given name.
-# Globals:
-#  REPLY
 # Arguments:
 #  object: device or connection
 #  name:   the name of a device or connection
@@ -663,8 +647,6 @@ down () {
 }
 
 # Removes the software device with the given name.
-# Globals:
-#  REPLY
 # Arguments:
 #  name: the name of a device
 remove_device () {
@@ -694,8 +676,6 @@ remove_device () {
 }
 
 # Removes the connection with the given name.
-# Globals:
-#  REPLY
 # Arguments:
 #  name: the name of a connection
 remove_connection () {
@@ -725,8 +705,6 @@ remove_connection () {
 }
 
 # Adds a new ethernet connection.
-# Globals:
-#  REPLY
 # Arguments:
 #  None
 add_ethernet_connection () {
@@ -781,8 +759,6 @@ add_ethernet_connection () {
 }
 
 # Adds a wifi connection to wireless network.
-# Globals:
-#  REPLY
 # Arguments:
 #  None
 add_wifi_connection () {
@@ -831,8 +807,6 @@ add_wifi_connection () {
 }
 
 # Adds a new vpn connection.
-# Globals:
-#  REPLY
 # Arguments:
 #  None
 add_vpn_connection () {
@@ -877,8 +851,6 @@ add_vpn_connection () {
 
 # Adds a new proxy profile with the given host,
 # port and authentication info.
-# Globals:
-#  REPLY, SETTINGS_FILE, CONFIG_HOME
 # Arguments:
 #  name: the name of the proxy profile
 add_proxy () {
@@ -957,8 +929,6 @@ add_proxy () {
 }
 
 # Removes the proxy profile with the given name.
-# Globals:
-#  REPLY, SETTINGS_FILE
 # Arguments:
 #  name: the name of the proxy profile
 remove_proxy () {
@@ -997,8 +967,6 @@ remove_proxy () {
 
 # Shows the list of all proxy profiles stored in the
 # settings file.
-# Globals:
-#  SETTINGS_FILE
 # Arguments:
 #  None
 # Outputs:
@@ -1033,8 +1001,6 @@ list_proxies () {
 
 # Sets system-wise proxy server to settings with the
 # given profile name.
-# Globals:
-#  REPLY, SETTINGS_FILE, HOME, PROXY_ENV_FILE, SHELLRC_FILE
 # Arguments:
 #  name: the name of a proxy profile
 set_proxy () {
@@ -1163,8 +1129,6 @@ set_proxy () {
 
 # Reverts any proxy settings have been applied to
 # the system.
-# Globals:
-#  PROXY_ENV_FILE, SHELLRC_FILE
 # Arguments:
 #  None
 unset_proxy () {

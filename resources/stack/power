@@ -28,8 +28,6 @@ find_battery () {
 
 # Shows a prompt status and asks user to enter the
 # next command, which is kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  None
 # Outputs:
@@ -169,8 +167,6 @@ show_status () {
 }
 
 # Sets the action of the hander with the given name.
-# Globals:
-#  REPLY
 # Arguments:
 #  handler: power, reboot, suspend, lid or docked
 #  action:  poweroff, reboot, suspend or ignore
@@ -329,8 +325,6 @@ set_locker () {
 
 # Initializes the screen locker to settings being set
 # in the settings file.
-# Globals:
-#  SETTINGS_FILE
 # Arguments:
 #  None
 init_locker () {
@@ -419,8 +413,6 @@ set_screensaver () {
 
 # Initializes the screen saver to settings being set
 # in the settings file.
-# Globals:
-#  SETTINGS_FILE
 # Arguments:
 #  None
 init_screensaver () {

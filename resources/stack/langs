@@ -5,8 +5,6 @@ source /opt/stack/utils
 
 # Shows a prompt status and asks user to enter the
 # next command, which is kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  None
 # Outputs:
@@ -54,8 +52,6 @@ show_status () {
 
 # Sets the keymap of the console keyboard to the
 # given keymap.
-# Globals:
-#  REPLY
 # Arguments:
 #  map: the name of a keymap
 set_keymap () {
@@ -88,8 +84,6 @@ set_keymap () {
 }
 
 # Sets the system's language to the given language.
-# Globals:
-#  REPLY
 # Arguments:
 #  language: a language code
 set_language () {
@@ -129,8 +123,6 @@ set_language () {
 
 # Sets the locale variable with the given name to the
 # given locale.
-# Globals:
-#  REPLY
 # Arguments:
 #  name:   the name of the locale variable 
 #  locale: a locale value
@@ -179,8 +171,6 @@ set_locale () {
 }
 
 # Sets a keyboard layout options.
-# Globals:
-#  REPLY
 # Arguments:
 #  value: a layout options value
 set_options () {
@@ -222,8 +212,6 @@ set_options () {
 }
 
 # Sets the keyboard model to the given model.
-# Globals:
-#  REPLY
 # Arguments:
 #  name: the name of the model
 set_model () {
@@ -265,8 +253,6 @@ set_model () {
 }
 
 # Adds a locale to the system locales.
-# Globals:
-#  REPLY
 # Arguments:
 #  locale: a locale name
 add_locale () {
@@ -307,8 +293,6 @@ add_locale () {
 }
 
 # Removes the given locale from the system locales.
-# Globals:
-#  REPLY
 # Arguments:
 #  locale: a locale name
 remove_locale () {
@@ -351,8 +335,6 @@ remove_locale () {
 }
 
 # Adds a new language to keyboard layouts.
-# Globals:
-#  REPLY
 # Arguments:
 #  language: a language name
 add_layout () {
@@ -419,8 +401,6 @@ add_layout () {
 }
 
 # Removes a language from keyboard layouts.
-# Globals:
-#  REPLY
 # Arguments:
 #  language: a language name
 remove_layout () {
@@ -490,8 +470,6 @@ remove_layout () {
 
 # Asks user to select the layouts so they can be set
 # in that order in keyboard layouts.
-# Globals:
-#  REPLY
 # Arguments:
 #  None
 order_layouts () {

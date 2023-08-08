@@ -55,8 +55,6 @@ find_card () {
 
 # Shows a menu asking the user to select an audio card,
 # where the answer is kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  prompt: a prompt text line
 # Outputs:
@@ -85,8 +83,6 @@ pick_card () {
 # Shows a menu asking the user to select a profile of the
 # given audio card, where the answer is kept in the global
 # var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  prompt: a prompt text line
 #  card:   a json object of an audio card
@@ -116,8 +112,6 @@ pick_profile () {
 # Shows a menu asking the user to select an audio module
 # with the given type, where the answer is kept in the
 # global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  prompt: a prompt text line
 #  type:   sink, source
@@ -147,8 +141,6 @@ pick_module () {
 
 # Shows a prompt status and asks user to enter the
 # next command, which is kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  None
 # Outputs:
@@ -247,8 +239,6 @@ show_logs () {
 
 # Shows the data of the card with identified by the
 # given index.
-# Globals:
-#  REPLY
 # Arguments:
 #  index: a zero-based integer
 # Outputs:
@@ -446,8 +436,6 @@ list_playbacks () {
 
 # Sets the profile of the audio card identified
 # by the given index.
-# Globals:
-#  REPLY
 # Arguments:
 #  index: a zero-based integer
 #  name:  the name of a profile
@@ -492,8 +480,6 @@ set_profile () {
 }
 
 # Sets the active sink or source module.
-# Globals:
-#  REPLY
 # Arguments:
 #  type:   sink, source
 #  index:  the index of an audio module

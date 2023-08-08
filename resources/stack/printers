@@ -222,8 +222,6 @@ exists_job () {
 
 # Shows a menu asking the user to select one printer,
 # where the answer is kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  None
 # Outputs:
@@ -248,8 +246,6 @@ pick_printer () {
 
 # Shows a menu asking the user to select one driver,
 # where the answer is kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  None
 # Outputs:
@@ -290,8 +286,6 @@ pick_driver () {
 
 # Shows a menu asking the user to select one print job,
 # where the answer is kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  None
 # Outputs:
@@ -316,8 +310,6 @@ pick_job () {
 
 # Shows a menu asking the user to select a quality option,
 # where the answer is kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  None
 # Outputs:
@@ -333,8 +325,6 @@ pick_quality () {
 
 # Shows a menu asking the user to select a page size option,
 # where the answer is kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  None
 # Outputs:
@@ -362,8 +352,6 @@ pick_page_size () {
 
 # Shows a menu asking the user to select a paper type option,
 # where the answer is kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  None
 # Outputs:
@@ -390,8 +378,6 @@ pick_paper_type () {
 
 # Shows a menu asking the user to select a toner mode option,
 # where the answer is kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  None
 # Outputs:
@@ -407,8 +393,6 @@ pick_toner_mode () {
 
 # Shows a menu asking the user to select a error policy option,
 # where the answer is kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  None
 # Outputs:
@@ -426,8 +410,6 @@ pick_error_policy () {
 
 # Shows a prompt status and asks user to enter the
 # next command, which is kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  None
 # Outputs:
@@ -517,8 +499,6 @@ list_printers () {
 
 # Shows the data of the printer with the given
 # print destination name.
-# Globals:
-#  REPLY
 # Arguments:
 #  name: the name of a print destination
 # Outputs:
@@ -558,8 +538,6 @@ show_printer () {
 }
 
 # Adds the printer with the given uri.
-# Globals:
-#  REPLY
 # Arguments:
 #  name: the name of print destination
 #  uri:  the uri of a print destination
@@ -630,8 +608,6 @@ add_printer () {
 
 # Removes the printer destination with the
 # given name.
-# Globals:
-#  REPLY
 # Arguments:
 #  name: the name of a print destination
 remove_printer () {
@@ -659,8 +635,6 @@ remove_printer () {
 
 # Shares the printer with the given name
 # to the local network.
-# Globals:
-#  REPLY
 # Arguments:
 #  name: the name of a print destination
 share_printer () {
@@ -688,8 +662,6 @@ share_printer () {
 
 # Unshares the printer with the given name
 # of the local network.
-# Globals:
-#  REPLY
 # Arguments:
 #  name: the name of a print destination
 unshare_printer () {
@@ -839,8 +811,6 @@ list_jobs () {
 }
 
 # Cancels the queued job with the given id.
-# Globals:
-#  REPLY
 # Arguments:
 #  id: the id of a print job
 cancel_job () {

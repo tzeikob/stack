@@ -40,8 +40,6 @@ find_files () {
 
 # Shows a prompt status and asks user to enter the
 # next command, which is kept in the global var REPLY.
-# Globals:
-#  REPLY, PWD, HOME
 # Arguments:
 #  None
 # Outputs:
@@ -184,8 +182,6 @@ restore_files () {
 }
 
 # Removes the trashed files, given as a list of paths.
-# Globals:
-#  REPLY
 # Arguments:
 #  paths: a space delimited list of paths
 remove_files () {
@@ -240,8 +236,6 @@ remove_files () {
 
 # Empties the trash from files trashed more than
 # the given days ago.
-# Globals:
-#  REPLY
 # Arguments:
 #  days: a positive integer number
 empty_files () {

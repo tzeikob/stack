@@ -13,8 +13,6 @@ AES_LN=$'╬\n'
 KVS=$'▒'
 
 # Sets the IFS to the given value.
-# Globals:
-#  IFS
 # Arguments:
 #  value: space, line, tab or any character
 set_separator () {
@@ -29,8 +27,6 @@ set_separator () {
 }
 
 # Restores the IFS to the default value.
-# Globals:
-#  IFS
 # Arguments:
 #  None
 restore_separator () {
@@ -108,8 +104,6 @@ find_hosts () {
 # Asks the user to enter a value, which is validated
 # by the optional regular expression. The answer is
 # kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  prompt: a text line
 #  re:     an optional regular expression
@@ -134,8 +128,6 @@ ask () {
 
 # Asks the user to enter a secret value, the answer is
 # kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  prompt: a text line
 # Outputs:
@@ -170,8 +162,6 @@ confirm_secret () {
 # Shows a Yes/No menu and asks user to select an option,
 # where the selection is kept in the global var REPLY
 # either as a yes or no value.
-# Globals:
-#  REPLY, AES, AES_LN, KVS
 # Arguments:
 #  prompt: a text line
 # Outputs:
@@ -196,8 +186,6 @@ confirm () {
 # Shows a menu and asks user to pick one option, where
 # the selection is kept in the global var REPLY as a
 # value equal to the key property of the selected option.
-# Globals:
-#  REPLY, AES, AES_LN, KVS
 # Arguments:
 #  prompt:  a text line
 #  options: a JSON array of {key, value} pairs
@@ -242,8 +230,6 @@ pick_one () {
 # where the selection is kept in the global var REPLY as a
 # JSON array with elements equal to the key property of every
 # selected option.
-# Globals:
-#  REPLY, AES, AES_LN, KVS
 # Arguments:
 #  prompt:  a text line
 #  options: a JSON array of {key, value} pairs

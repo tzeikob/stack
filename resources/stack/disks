@@ -339,8 +339,6 @@ is_mounted () {
 }
 
 # Mounts the block device with the given path.
-# Globals:
-#  HOME, USER
 # Arguments:
 #  path: the path of a mountable block device
 mount_device () {
@@ -582,8 +580,6 @@ find_shared_folders () {
 
 # Shows a menu asking the user to select one disk block device,
 # where the answer is kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  None
 # Outputs:
@@ -624,8 +620,6 @@ pick_disk () {
 # Shows a menu asking the user to select one partition
 # of the disk with the given path, where the answer is
 # kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  path:   the path of a disk block device
 #  status: mounted, unmounted
@@ -668,8 +662,6 @@ pick_partition () {
 
 # Shows a menu asking the user to select one rom block
 # device, where the answer is kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  status: mounted, unmounted
 # Outputs:
@@ -712,8 +704,6 @@ pick_rom () {
 
 # Shows a menu asking the user to select one host, where the
 # answer is kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  None
 # Outputs:
@@ -749,8 +739,6 @@ pick_host () {
 
 # Shows a menu asking the user to select one file system type,
 # where the answer is kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  None
 # Outputs:
@@ -770,8 +758,6 @@ pick_fs_type () {
 
 # Shows a prompt status and asks user to enter the
 # next command, which is kept in the global var REPLY.
-# Globals:
-#  REPLY
 # Arguments:
 #  None
 # Outputs:
@@ -846,8 +832,6 @@ show_status () {
 
 # Shows the data of the disk block device with
 # the given path.
-# Globals:
-#  REPLY
 # Arguments:
 #  path: the path of a disk block device
 # Outputs:
@@ -920,8 +904,6 @@ show_disk () {
 }
 
 # Shows the data of the partition block device.
-# Globals:
-#  REPLY
 # Arguments:
 #  path: the path of a partition block device
 # Outputs:
@@ -1007,8 +989,6 @@ show_partition () {
 
 # Shows the data of the rom block device with
 # the given path.
-# Globals:
-#  REPLY
 # Arguments:
 #  path: the path of a rom block device
 # Outputs:
@@ -1175,8 +1155,6 @@ list_roms () {
 }
 
 # Shows the list of shared folders of the given host.
-# Globals:
-#  REPLY
 # Arguments:
 #  host: the name or ip of a host.
 # Outputs:
@@ -1225,8 +1203,6 @@ list_shared_folders () {
 
 # Shows the list of any mounted devices, images and/or
 # shared folders.
-# Globals:
-#  UID
 # Arguments:
 #  None
 # Outputs:
@@ -1313,8 +1289,6 @@ list_mounts () {
 }
 
 # Mounts the partition block device with the given path.
-# Globals:
-#  REPLY
 # Arguments:
 #  path: the path of a partition block device
 mount_partition () {
@@ -1360,8 +1334,6 @@ mount_partition () {
 
 # Unmounts the partition block device with the
 # given path.
-# Globals:
-#  REPLY
 # Arguments:
 #  path: the path of a partition block device
 unmount_partition () {
@@ -1404,8 +1376,6 @@ unmount_partition () {
 }
 
 # Mounts the rom block device with the given path.
-# Globals:
-#  REPLY
 # Arguments:
 #  path: the path of a rom block device
 mount_rom () {
@@ -1435,8 +1405,6 @@ mount_rom () {
 }
 
 # Unmounts the rom block device with the given path.
-# Globals:
-#  REPLY, HOME, USER
 # Arguments:
 #  path: the path of a rom block device
 unmount_rom () {
@@ -1467,8 +1435,6 @@ unmount_rom () {
 
 # Mounts the image file system contained with in
 # the file with the given file path.
-# Globals:
-#  HOME
 # Arguments:
 #  path: the path to an image file
 mount_image () {
@@ -1502,8 +1468,6 @@ mount_image () {
 
 # Unmounts the image file system mounted to the given
 # path.
-# Globals:
-#  REPLY
 # Arguments:
 #  path: the path an image is mounted to
 unmount_image () {
@@ -1552,8 +1516,6 @@ unmount_image () {
 }
 
 # Mounts a shared folder of the given host.
-# Globals:
-#  REPLY, HOME, UID
 # Arguments:
 #  host: the name or ip of a host
 mount_shared_folder () {
@@ -1598,8 +1560,6 @@ mount_shared_folder () {
 }
 
 # Unmounts the shared folder with the given uri.
-# Globals:
-#  REPLY, UID
 # Arguments:
 #  uri: the uri of the shared folder
 unmount_shared_folder () {
@@ -1650,8 +1610,6 @@ unmount_shared_folder () {
 # Formats the disk block device with the given path,
 # creating a new partition table of a single primary
 # partition.
-# Globals:
-#  REPLY
 # Arguments:
 #  path: the path of a disk block device
 format_disk () {
@@ -1709,8 +1667,6 @@ format_disk () {
 }
 
 # Ejects the disk block device with the given path.
-# Globals:
-#  REPLY
 # Arguments:
 #  path: the path of a disk block device
 eject_disk () {
@@ -1849,8 +1805,6 @@ scan_disk () {
 
 # Creates an encrypted disk block device with the
 # given path.
-# Globals:
-#  REPLY
 # Arguments:
 #  path: the path of a disk block device
 create_encrypted () {
@@ -1920,8 +1874,6 @@ create_encrypted () {
 }
 
 # Creates a bootable archlinux installation drive.
-# Globals:
-#  REPLY, HOME, PWD
 # Arguments:
 #  path: the path of a disk block device
 create_bootable () {
