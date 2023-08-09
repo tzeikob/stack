@@ -108,6 +108,10 @@ super + {Left,Down,Up,Right}
 super + x
   power lock
 
+# Blank the screen
+super + ctrl + b
+  power blank
+
 # Decrease audio
 XF86AudioLowerVolume
   amixer set Master 2%-

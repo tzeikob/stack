@@ -22,10 +22,11 @@ show_power_menu () {
   options+='Reboot\n'
   options+='Suspend\n'
   options+='Lock\n'
+  options+='Blank\n'
   options+='Logout'
 
   local HIDE_PROMT="inputbar {children: [entry];}"
-  local EXACT_LINES="listview {lines: 5;}"
+  local EXACT_LINES="listview {lines: 6;}"
 
   local CHOSEN="$(printf "${options}" | rofi -dmenu -i -theme-str "${HIDE_PROMT} ${EXACT_LINES}")"
 
@@ -34,6 +35,7 @@ show_power_menu () {
     "Reboot") power reboot;;
     "Suspend") power suspend;;
     "Lock") power lock;;
+    "Blank") power blank;;
     "Logout") power logout;;
     *) exit 1;;
   esac

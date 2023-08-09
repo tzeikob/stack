@@ -621,6 +621,20 @@ lock_screen () {
   fi
 }
 
+# Blanks the screen immediately.
+# Arguments:
+#  None
+blank_screen () {
+  xset dpms force off
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to blank the screen"
+    return 2
+  fi
+
+  echo "Screen has been blanked"
+}
+
 # Logs the user out, terminating the current xorg session.
 # Arguments:
 #  None
@@ -653,6 +667,7 @@ show_help () {
       "reboot" "Reboot the system." \
       "suspend" "Set system in suspend mode." \
       "lock" "Lock the screen." \
+      "blank" "Blank the screen." \
       "logout" "Log the user out."
 
     return 0
@@ -746,6 +761,7 @@ once () {
     "reboot") reboot_system;;
     "suspend") suspend_system;;
     "lock") lock_screen;;
+    "blank") blank_screen;;
     "logout") logout_user;;
     *) abort "Invalid or unknown command";;
   esac
