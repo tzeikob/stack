@@ -1,0 +1,257 @@
+#!/bin/bash
+
+set -o pipefail
+source /opt/stack/utils
+
+SETTINGS_FILE="${CONFIG_HOME}/security.json"
+
+# Shows a prompt status and asks user to enter the
+# next command, which is kept in the global var REPLY.
+# Arguments:
+#  None
+# Outputs:
+#  A minimal prompt status line.
+prompt () {
+  local status='ready'
+
+  read -rep "[security:${status}] " REPLY
+}
+
+# Shows the current status of the system's security.
+# Arguments:
+#  None
+# Outputs:
+#  A verbose list of text data.
+show_status () {
+  local locker_process=''
+  locker_process="$(ps ax -o "command" | jc --ps |
+    jq '.[]|select(.command|test("^xautolock"))|.command')" || return 1
+  
+  if [[ -n "${locker_process}" ]]; then
+    echo "${locker_process}" | awk '{
+      match($0,/.* -time(.*) -corners.*/,a)
+      print "Locker:      "a[1]" mins"
+    }'
+  else
+    echo "Locker:      off"
+  fi
+}
+
+# Sets the interval time of the screen locker, where
+# 0 means deactivate the locker.
+# Arguments:
+#  mins:    an integer interval in mins or 0
+#  persist: save or nosave, default is save
+set_locker () {
+  local mins="${1}"
+  local persist="${2:-"save"}"
+
+  if [[ -z "${mins}" ]]; then
+    echo "Missing the interval time"
+    return 2
+  elif [[ ! "${mins}" =~ ^[0-9]{,2}$ ]]; then
+    echo "Invalid interval time"
+    return 2
+  elif [[ ${mins} -lt 0 ]] || [[ ${mins} -gt 60 ]]; then
+    echo "Interval time out of range [0,60]"
+    return 2
+  fi
+
+  # Exit possibly running locker instance
+  xautolock -exit &> /dev/null
+  sleep 1
+
+  if [[ ${mins} -gt 0 ]]; then
+    xautolock -locker 'security lock' -nowlocker 'security lock' -time "${mins}" -corners 0-00 -detectsleep &
+    echo "Screen locker set to ${mins} mins"
+  else
+    echo "Screen locker has been disabled"
+  fi
+
+  # Save locker interval into settings file
+  if [[ "${persist}" == "save" ]]; then
+    local settings='{}'
+    local locker="{\"interval\": ${mins}}"
+
+    if [[ -f "${SETTINGS_FILE}" ]]; then
+      settings="$(jq -e ".locker = ${locker} " "${SETTINGS_FILE}")" || return 1
+    else
+      settings="$(echo "{\"locker\": ${locker}}" | jq -e '.')" || return 1
+    fi
+
+    mkdir -p "${CONFIG_HOME}"
+    echo "${settings}" > "${SETTINGS_FILE}"
+  fi
+}
+
+# Initializes the screen locker to settings being set
+# in the settings file.
+# Arguments:
+#  None
+init_locker () {
+  if [[ ! -f "${SETTINGS_FILE}" ]]; then
+    echo "No locker settings found"
+    return 0
+  fi
+
+  local locker=''
+  locker="$(jq '.locker|if . then . else empty end' "${SETTINGS_FILE}")"
+
+  if [[ -z "${locker}" ]]; then
+    echo "No locker settings found"
+    return 0
+  fi
+
+  local interval=''
+  interval="$(get "${locker}" '.interval')" || return 1
+
+  set_locker "${interval}" "nosave"
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to set locker"
+    return 2
+  fi
+
+  echo "Locker has been set"
+}
+
+# Locks the screen making sure notifications stream is muted
+# before lock and resets it back to it's previous state
+# after user unlocks the screen.
+# Arguments:
+#  None
+lock_screen () {
+  local query=''
+  query+='[.[]|select(.command|test("xsecurelock.*"))]'
+  query+='|if length > 0 then "true" else "false" end'
+
+  local is_locked=''
+  is_locked="$(ps aux | grep -v 'jq' | jc --ps | jq -cr "${query}")" || return 1
+
+  if [[ "${is_locked}" == "true" ]]; then
+    echo 'Screen locker is already running'
+    return 0
+  fi
+
+  local is_paused=''
+  is_paused="$(notifications get state | jq -cr '.is_paused')"
+
+  if [[ "${is_paused}" == "false" ]]; then
+    notifications mute all
+  fi
+
+  env XSECURELOCK_FONT='PixelMix' \
+    XSECURELOCK_SAVER="saver_clock" \
+    XSECURELOCK_NO_COMPOSITE=1 \
+    XSECURELOCK_BLANK_TIMEOUT=-1 \
+    xsecurelock >/dev/null 2>&1
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to lock the screen"
+    return 2
+  fi
+
+  # Reset notifications stream to previous state
+  if [[ "${is_paused}" == "false" ]]; then
+    notifications unmute all
+  fi
+}
+
+# Shows the help message.
+# Arguments:
+#  mode: once or none
+# Outputs:
+#  A long help message.
+show_help () {
+  if [[ "${1}" == "once" ]]; then
+    echo "Usage: security COMMAND [OBJECT] [ARGUMENTS]..."
+
+    echo -e "\nCOMMANDS"
+    printf " %-20s %s\n" \
+      "help" "Show this help message." \
+      "" "" \
+      "init locker" "Initialize the screen locker." \
+      "lock" "Lock the screen."
+
+    return 0
+  fi
+
+  echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
+
+  echo -e "\nCOMMANDS"
+  printf " %-36s %s\n" \
+    "help" "Show this help message." \
+    "" "" \
+    "show status" "Show the status of the system security." \
+    "" "" \
+    "set locker <mins>" "Set the interval of the screen locker," \
+    "" "where 0 means deactivate the locker."
+}
+
+loop () {
+  clear
+
+  while true; do
+    prompt && history -s "${REPLY}"
+
+    set -f
+    set_separator "line"
+    local cmd=($(xargs -n1 <<< "${REPLY}"))
+    restore_separator && set +f
+
+    if [[ "${cmd[0]}" == "help" ]]; then
+      show_help
+      continue
+    elif [[ "${cmd[0]}" == "clear" ]]; then
+      clear
+      continue
+    elif [[ "${cmd[0]}" == "quit" ]]; then
+      break
+    elif [[ -z "${cmd[0]}" ]]; then
+      continue
+    fi
+
+    case "${cmd[0]}" in
+      "show")
+        case "${cmd[1]}" in
+          "status") show_status;;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "set")
+        case "${cmd[1]}" in
+          "locker") set_locker "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      *) echo "Invalid or unknown command";; 
+    esac
+    
+    if [[ $? -eq 1 ]]; then
+      echo "An unknown error has occurred"
+    fi
+  done
+
+  clear
+}
+
+once () {
+  case "${1}" in
+    "help") show_help "once";;
+    "init")
+      case "${2}" in
+        "locker") init_locker || abort;;
+        *) abort "Invalid or unknown command";;
+      esac;;
+    "lock") lock_screen;;
+    *) abort "Invalid or unknown command";;
+  esac
+
+  if [[ $? -ne 0 ]]; then
+    abort
+  fi
+}
+
+if [[ $# -eq 0 ]]; then
+  loop
+else
+  once "$@"
+fi

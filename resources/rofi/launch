@@ -34,7 +34,7 @@ show_power_menu () {
     "Shutdown") power shutdown;;
     "Reboot") power reboot;;
     "Suspend") power suspend;;
-    "Lock") power lock;;
+    "Lock") security lock;;
     "Blank") power blank;;
     "Logout") power logout;;
     *) exit 1;;
