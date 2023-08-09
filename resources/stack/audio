@@ -424,7 +424,7 @@ list_playbacks () {
   query+='Index:    \(.index)\n'
   query+='Name:     \(.properties."application.name")\n'
   query+='Media:    \(.properties."media.name")\n'
-  query+='Process:  \(.properties."application.process.id")\n'
+  query+='\(.properties."application.process.id"|if . then "Process:  \(.)\n" else "" end)'
   query+='Volume:   \(.volume|keys[0] as $k|.[$k].db|gsub("\\s+";""))'
   query+=' \(if .mute then "mute" else "" end)'
   query+='"'
