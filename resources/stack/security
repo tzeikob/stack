@@ -157,6 +157,20 @@ lock_screen () {
   fi
 }
 
+# Change the password of the current user.
+# Arguments:
+#  None
+set_password () {
+  passwd
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to set user password"
+    return 2
+  fi
+
+  echo "User password has been set"
+}
+
 # Logs the user out, terminating the current xorg session.
 # Arguments:
 #  None
@@ -199,7 +213,8 @@ show_help () {
     "show status" "Show the status of the system security." \
     "" "" \
     "set locker <mins>" "Set the interval of the screen locker," \
-    "" "where 0 means deactivate the locker."
+    "" "where 0 means deactivate the locker." \
+    "set password" "Change the user password."
 }
 
 loop () {
@@ -234,6 +249,7 @@ loop () {
       "set")
         case "${cmd[1]}" in
           "locker") set_locker "${cmd[2]}";;
+          "password") set_password;;
           *) echo "Invalid or unknown command";;
         esac;;
       *) echo "Invalid or unknown command";; 
