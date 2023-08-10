@@ -23,6 +23,21 @@ prompt () {
 # Outputs:
 #  A verbose list of text data.
 show_status () {
+  passwd -S | awk '{
+    status="protected"
+    if ($2 == "L") {
+      status="locked"
+    } else if ($2 == "NP") {
+      status="no password"
+    }
+
+    print "User:    "$1
+    print "Status:  "status
+    print "Changed: "$3
+  }'
+
+  echo
+
   local locker_process=''
   locker_process="$(ps ax -o "command" | jc --ps |
     jq '.[]|select(.command|test("^xautolock"))|.command')" || return 1
@@ -30,10 +45,10 @@ show_status () {
   if [[ -n "${locker_process}" ]]; then
     echo "${locker_process}" | awk '{
       match($0,/.* -time(.*) -corners.*/,a)
-      print "Locker:      "a[1]" mins"
+      print "Locker:  "a[1]" mins"
     }'
   else
-    echo "Locker:      off"
+    echo "Locker:  off"
   fi
 }
 
