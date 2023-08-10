@@ -167,7 +167,7 @@ show_help () {
     echo "Usage: security COMMAND [OBJECT] [ARGUMENTS]..."
 
     echo -e "\nCOMMANDS"
-    printf " %-20s %s\n" \
+    printf " %-16s %s\n" \
       "help" "Show this help message." \
       "" "" \
       "init locker" "Initialize the screen locker." \
@@ -179,7 +179,7 @@ show_help () {
   echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
 
   echo -e "\nCOMMANDS"
-  printf " %-36s %s\n" \
+  printf " %-25s %s\n" \
     "help" "Show this help message." \
     "" "" \
     "show status" "Show the status of the system security." \

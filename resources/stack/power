@@ -101,13 +101,17 @@ show_status () {
     echo "${tlp_status}"
   fi
 
-  local query='.screensaver.interval|if . then . else "" end'
+  if [[ -f "${SETTINGS_FILE}" ]]; then
+    local query='.screensaver.interval|if . then . else "" end'
 
-  local screensaver=''
-  screensaver="$(jq -cr "${query}" "${SETTINGS_FILE}")" || return 1
-  
-  if [[ -n "${screensaver}" ]] && [[ ${screensaver} -gt 0 ]]; then
-    echo "Screensaver:  ${screensaver} mins"
+    local screensaver=''
+    screensaver="$(jq -cr "${query}" "${SETTINGS_FILE}")" || return 1
+    
+    if [[ -n "${screensaver}" ]] && [[ ${screensaver} -gt 0 ]]; then
+      echo "Screensaver:  ${screensaver} mins"
+    else
+      echo "Screensaver:  off"
+    fi
   else
     echo "Screensaver:  off"
   fi
