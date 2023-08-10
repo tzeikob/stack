@@ -506,18 +506,6 @@ blank_screen () {
   echo "Screen has been blanked"
 }
 
-# Logs the user out, terminating the current xorg session.
-# Arguments:
-#  None
-logout_user () {
-  bspc quit
-
-  if [[ $? -ne 0 ]]; then
-    echo "Unable to log the user out"
-    return 2
-  fi
-}
-
 # Shows the help message.
 # Arguments:
 #  mode: once or none
@@ -536,8 +524,7 @@ show_help () {
       "shutdown" "Shut the system down." \
       "reboot" "Reboot the system." \
       "suspend" "Set system in suspend mode." \
-      "blank" "Blank the screen." \
-      "logout" "Log the user out."
+      "blank" "Blank the screen."
 
     return 0
   fi
@@ -626,7 +613,6 @@ once () {
     "reboot") reboot_system;;
     "suspend") suspend_system;;
     "blank") blank_screen;;
-    "logout") logout_user;;
     *) abort "Invalid or unknown command";;
   esac
 

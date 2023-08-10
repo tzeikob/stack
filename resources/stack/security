@@ -157,6 +157,18 @@ lock_screen () {
   fi
 }
 
+# Logs the user out, terminating the current xorg session.
+# Arguments:
+#  None
+logout_user () {
+  bspc quit
+
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to log the user out"
+    return 2
+  fi
+}
+
 # Shows the help message.
 # Arguments:
 #  mode: once or none
@@ -171,7 +183,9 @@ show_help () {
       "help" "Show this help message." \
       "" "" \
       "init locker" "Initialize the screen locker." \
-      "lock" "Lock the screen."
+      "" "" \
+      "lock" "Lock the screen." \
+      "logout" "Logout the user."
 
     return 0
   fi
@@ -242,6 +256,7 @@ once () {
         *) abort "Invalid or unknown command";;
       esac;;
     "lock") lock_screen;;
+    "logout") logout_user;;
     *) abort "Invalid or unknown command";;
   esac
 

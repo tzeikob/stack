@@ -36,7 +36,7 @@ show_power_menu () {
     "Suspend") power suspend;;
     "Lock") security lock;;
     "Blank") power blank;;
-    "Logout") power logout;;
+    "Logout") security logout;;
     *) exit 1;;
   esac
 }
