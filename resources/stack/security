@@ -215,6 +215,34 @@ logout_user () {
   fi
 }
 
+# Sets the number of password attempts a user allowed
+# to submit before he is locked out.
+# Arguments:
+#  attempts: a positive integer number
+set_password_attempts () {
+  local attempts="${1}"
+
+  if [[ -z "${attempts}" ]]; then
+    echo "Missing the attempts value"
+    return 2
+  elif [[ ! "${attempts}" =~ ^[1-9][0-9]*$ ]]; then
+    echo "Invalid attempts value"
+    return 2
+  elif [[ ! ${attempts} -gt 0 ]]; then
+    echo "Attempts should be greater than 0"
+    return 2
+  fi
+
+  sudo sed -ri "s;deny =.*;deny = ${attempts};" /etc/security/faillock.conf
+
+  if [[ $? -ne 0 ]]; then
+    echo 'Unable to set password attempts'
+    return 2
+  fi
+
+  echo "Password attempts set to ${attempts}"
+}
+
 # Shows the help message.
 # Arguments:
 #  mode: once or none
@@ -246,7 +274,8 @@ show_help () {
     "" "" \
     "set locker <mins>" "Set the interval of the screen locker," \
     "" "where 0 means deactivate the locker." \
-    "set password" "Change the user password."
+    "set password" "Change the user password." \
+    "set password_attempts <attempts>" "Set the failed password attempts."
 }
 
 loop () {
@@ -282,6 +311,7 @@ loop () {
         case "${cmd[1]}" in
           "locker") set_locker "${cmd[2]}";;
           "password") set_password;;
+          "password_attemps") set_password_attempts "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       *) echo "Invalid or unknown command";; 
