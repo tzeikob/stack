@@ -216,7 +216,7 @@ logout_user () {
 }
 
 # Sets the number of failed password attempts a user
-# allowed to submit before he is password is locked.
+# allowed to submit before his password is locked.
 # Arguments:
 #  attempts: a positive integer number
 set_password_attempts () {
@@ -270,6 +270,34 @@ set_password_unlock () {
   echo "Password unlock time set to ${time}"
 }
 
+# Sets the interval time between each consecutive failed
+# password attempt.
+# Arguments:
+#  time: the number of secs between failed attempts
+set_password_interval () {
+  local time="${1}"
+
+  if [[ -z "${time}" ]]; then
+    echo "Missing the fail interval value"
+    return 2
+  elif [[ ! "${time}" =~ ^[1-9][0-9]*$ ]]; then
+    echo "Invalid fail interval value"
+    return 2
+  elif [[ ! ${time} -gt 0 ]]; then
+    echo "Fail interval should be greater than 0"
+    return 2
+  fi
+
+  sudo sed -ri "s;fail_interval =.*;fail_interval = ${time};" /etc/security/faillock.conf
+
+  if [[ $? -ne 0 ]]; then
+    echo 'Unable to set password fail interval'
+    return 2
+  fi
+
+  echo "Password fail interval set to ${time}"
+}
+
 # Shows the help message.
 # Arguments:
 #  mode: once or none
@@ -303,8 +331,9 @@ show_help () {
     "" "where 0 means deactivate the locker." \
     "" "" \
     "set password" "Change the user password." \
-    "set password_attempts <attempts>" "Set the failed password attempts." \
-    "set password_unlock <secs>" "Set the time to wait before password unlock."
+    "set password_attempts <attempts>" "Set the max failed password attempts." \
+    "set password_unlock <secs>" "Set the time to wait before password unlock." \
+    "set password_interval <secs>" "Set the interval between failed password attempts."
 }
 
 loop () {
@@ -342,6 +371,7 @@ loop () {
           "password") set_password;;
           "password_attemps") set_password_attempts "${cmd[2]}";;
           "password_unlock") set_password_unlock "${cmd[2]}";;
+          "password_interval") set_password_interval "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       *) echo "Invalid or unknown command";; 
