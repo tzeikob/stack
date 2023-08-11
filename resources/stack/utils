@@ -140,13 +140,39 @@ ask_secret () {
   read -srep "${prompt} " REPLY
 }
 
-# Asks the user to re-type the given secret value
-# until it becomes confirmed.
+# Authenticates current user's password.
+# Arguments:
+#  password: the password in plain text.
+# Returns:
+#  0 if authentication succeeded otherwise 1.
+authenticate_user () {
+  local password="${1}"
+
+  local cmd=''
+  cmd+="import pam, sys;"
+  cmd+="from getpass import getuser;"
+  cmd+="p = pam.pam();"
+  cmd+="p.authenticate(getuser(), \"${password}\");"
+  cmd+="sys.exit(p.code)"
+
+  python -c "${cmd}"
+
+  if [[ $? -ne 0 ]]; then
+    return 1
+  fi
+
+  return 0
+}
+
+# Asks the user to retype the given secret value
+# and confirms it.
 # Arguments:
 #  prompt: a text line
 #  secret: the secret value to be confirmed
 # Outputs:
 #  A prompt text line.
+# Returns:
+#  0 if secret is confirmed otherwise 1.
 confirm_secret () {
   local prompt="${1}"
   local secret="${2}"
@@ -154,9 +180,11 @@ confirm_secret () {
   local retyped_secret=''
   read -srep "${prompt} " retyped_secret
 
-  while [[ "${secret}" != "${retyped_secret}" ]]; do
-    read -srep "Failed to confirm, type again: " retyped_secret
-  done
+  if [[ "${secret}" != "${retyped_secret}" ]]; then
+    return 1
+  fi
+
+  return 0
 }
 
 # Shows a Yes/No menu and asks user to select an option,

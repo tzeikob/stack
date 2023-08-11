@@ -1828,8 +1828,12 @@ create_encrypted () {
   [[ -n "${REPLY}" ]] && fs_type="${REPLY}" || return 0
 
   ask_secret "Enter the encryption password:" ".+" || return $?
-  confirm_secret "Re-type the encryption password:" "${REPLY}" || return $?
   local password="${REPLY}"
+
+  if ! confirm_secret "Retype the encryption password:" "${password}"; then
+    echo 'Encryption password does not match'
+    return 2
+  fi
 
   local model=''
   model="$(find_disk "${path}" |

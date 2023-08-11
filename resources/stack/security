@@ -176,7 +176,24 @@ lock_screen () {
 # Arguments:
 #  None
 set_password () {
-  passwd
+  ask_secret "Enter current password:"
+  local password="${REPLY}"
+
+  if ! authenticate_user "${password}"; then
+    echo 'Incorrect or invalid password'
+    return 2
+  fi
+
+  ask_secret "Enter new password:"
+  local new_password="${REPLY}"
+
+  if ! confirm_secret "Retype new password:" "${new_password}"; then
+    echo 'New password does not match'
+    return 2
+  fi
+
+  echo -e "${password}\n${new_password}\n${new_password}" |
+    passwd --quiet >/dev/null 2>&1
 
   if [[ $? -ne 0 ]]; then
     echo "Unable to set user password"
