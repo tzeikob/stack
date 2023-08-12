@@ -370,6 +370,13 @@ install_utilities () {
 config_security () {
   echo -e "\nHardening system's security..."
 
+  sed -i '/# Defaults maxseq = 1000/a Defaults badpass_message="Incorrect password"' /etc/sudoers
+  sed -i '/# Defaults maxseq = 1000/a Defaults passwd_timeout=0' /etc/sudoers
+  sed -i '/# Defaults maxseq = 1000/a Defaults passwd_tries=1' /etc/sudoers
+  sed -i '/# Defaults maxseq = 1000/a Defaults passprompt="Enter current password: "' /etc/sudoers
+
+  echo "Sudo configuration has been done"
+
   sed -ri 's;# dir =.*;dir = /var/lib/faillock;' /etc/security/faillock.conf
   sed -ri 's;# deny =.*;deny = 3;' /etc/security/faillock.conf
   sed -ri 's;# fail_interval =.*;fail_interval = 180;' /etc/security/faillock.conf
