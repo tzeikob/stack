@@ -31,12 +31,20 @@ show_status () {
       status="no password"
     }
 
-    print "User:    "$1
-    print "Status:  "status
-    print "Changed: "$3
-  }'
+    print "User:      "$1
+    print "Status:    "status
+    print "Changed:   "$3
+  }' || return 1
 
-  echo
+  cat /etc/security/faillock.conf | awk '{
+    if ($0 ~ /^deny =.*/) {
+      print "Attempts:  "$3
+    } else if ($0 ~ /^unlock_time =.*/) {
+      print "Unblock:   "$3" secs"
+    } else if ($0 ~ /^fail_interval =.*/) {
+      print "Interval:  "$3" secs"
+    }
+  }' || return 1
 
   local locker_process=''
   locker_process="$(ps ax -o "command" | jc --ps |
@@ -44,11 +52,11 @@ show_status () {
   
   if [[ -n "${locker_process}" ]]; then
     echo "${locker_process}" | awk '{
-      match($0,/.* -time(.*) -corners.*/,a)
-      print "Locker:  "a[1]" mins"
+      match($0,/.* -time (.*) -corners.*/,a)
+      print "Locker:    "a[1]" mins"
     }'
   else
-    echo "Locker:  off"
+    echo "Locker:    off"
   fi
 }
 
