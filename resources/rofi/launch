@@ -34,9 +34,9 @@ show_power_menu () {
     "Shutdown") power shutdown;;
     "Reboot") power reboot;;
     "Suspend") power suspend;;
-    "Lock") security lock;;
+    "Lock") security lock screen;;
     "Blank") power blank;;
-    "Logout") security logout;;
+    "Logout") security logout user;;
     *) exit 1;;
   esac
 }

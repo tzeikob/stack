@@ -57,7 +57,7 @@ show_status () {
 # Arguments:
 #  mins:    an integer interval in mins or 0
 #  persist: save or nosave, default is save
-set_locker () {
+set_screen_locker () {
   local mins="${1}"
   local persist="${2:-"save"}"
 
@@ -77,7 +77,7 @@ set_locker () {
   sleep 1
 
   if [[ ${mins} -gt 0 ]]; then
-    xautolock -locker 'security lock' -nowlocker 'security lock' -time "${mins}" -corners 0-00 -detectsleep &
+    xautolock -locker 'security lock screen' -nowlocker 'security lock screen' -time "${mins}" -corners 0-00 -detectsleep &
     echo "Screen locker set to ${mins} mins"
   else
     echo "Screen locker has been disabled"
@@ -99,11 +99,11 @@ set_locker () {
   fi
 }
 
-# Initializes the screen locker to settings being set
+# Initializes the screen locker to interval being set
 # in the settings file.
 # Arguments:
 #  None
-init_locker () {
+init_screen_locker () {
   if [[ ! -f "${SETTINGS_FILE}" ]]; then
     echo "No locker settings found"
     return 0
@@ -120,7 +120,7 @@ init_locker () {
   local interval=''
   interval="$(get "${locker}" '.interval')" || return 1
 
-  set_locker "${interval}" "nosave"
+  set_screen_locker "${interval}" "nosave"
 
   if [[ $? -ne 0 ]]; then
     echo "Failed to set locker"
@@ -175,7 +175,7 @@ lock_screen () {
 # Change the password of the current user.
 # Arguments:
 #  None
-set_password () {
+set_user_password () {
   ask_secret "Enter current password:"
   local password="${REPLY}"
 
@@ -215,11 +215,11 @@ logout_user () {
   fi
 }
 
-# Sets the number of failed password attempts a user
-# allowed to submit before his password is locked.
+# Sets the max number of failed attempts before
+# the user's password gets blocked.
 # Arguments:
-#  attempts: a positive integer number
-set_password_attempts () {
+#  attempts: the max number of failed password attempts
+set_faillock_attempts () {
   local attempts="${1}"
 
   if [[ -z "${attempts}" ]]; then
@@ -236,66 +236,68 @@ set_password_attempts () {
   sudo sed -ri "s;deny =.*;deny = ${attempts};" /etc/security/faillock.conf
 
   if [[ $? -ne 0 ]]; then
-    echo 'Unable to set password attempts'
+    echo 'Unable to set faillock attempts'
     return 2
   fi
 
-  echo "Password attempts set to ${attempts}"
+  echo "Failock attempts set to ${attempts}"
 }
 
-# Sets the time to wait before unlock the password.
+# Sets the time after which a blocked password
+# should get unblocked.
 # Arguments:
-#  time: the number of secs to keep password locked
-set_password_unlock () {
+#  time: the secs to wait a password to be unblocked
+set_faillock_unblock () {
   local time="${1}"
 
   if [[ -z "${time}" ]]; then
-    echo "Missing the unlock time value"
+    echo "Missing the unblock time value"
     return 2
   elif [[ ! "${time}" =~ ^[1-9][0-9]*$ ]]; then
-    echo "Invalid unlock time value"
+    echo "Invalid unblock time value"
     return 2
   elif [[ ! ${time} -gt 0 ]]; then
-    echo "Unlock time should be greater than 0"
+    echo "Unblock time should be greater than 0"
     return 2
   fi
 
   sudo sed -ri "s;unlock_time =.*;unlock_time = ${time};" /etc/security/faillock.conf
 
   if [[ $? -ne 0 ]]; then
-    echo 'Unable to set password unlock time'
+    echo 'Unable to set faillock unblock time'
     return 2
   fi
 
-  echo "Password unlock time set to ${time}"
+  echo "Failock unblock time set to ${time} secs"
 }
 
-# Sets the interval time between each consecutive failed
-# password attempt.
+# Sets the interval in which a failed password attempt
+# should be counted as consecutive attempt to trigger
+# a password block.
 # Arguments:
-#  time: the number of secs between failed attempts
-set_password_interval () {
+#  time: the secs between consecutive failed attempts
+set_faillock_interval () {
   local time="${1}"
 
   if [[ -z "${time}" ]]; then
-    echo "Missing the fail interval value"
+    echo "Missing the interval value"
     return 2
   elif [[ ! "${time}" =~ ^[1-9][0-9]*$ ]]; then
-    echo "Invalid fail interval value"
+    echo "Invalid interval value"
     return 2
   elif [[ ! ${time} -gt 0 ]]; then
-    echo "Fail interval should be greater than 0"
+    echo "Interval should be greater than 0"
     return 2
   fi
 
   sudo sed -ri "s;fail_interval =.*;fail_interval = ${time};" /etc/security/faillock.conf
 
   if [[ $? -ne 0 ]]; then
-    echo 'Unable to set password fail interval'
+    echo 'Unable to set faillock interval'
     return 2
   fi
 
-  echo "Password fail interval set to ${time}"
+  echo "Failock interval set to ${time} secs"
 }
 
 # Shows the help message.
@@ -309,12 +311,12 @@ show_help () {
 
     echo -e "\nCOMMANDS"
     printf " %-16s %s\n" \
-      "help" "Show this help message." \
+      "show help" "Show this help message." \
       "" "" \
       "init locker" "Initialize the screen locker." \
       "" "" \
-      "lock" "Lock the screen." \
-      "logout" "Logout the user."
+      "lock screen" "Lock the screen." \
+      "logout user" "Logout the user."
 
     return 0
   fi
@@ -323,17 +325,17 @@ show_help () {
 
   echo -e "\nCOMMANDS"
   printf " %-25s %s\n" \
-    "help" "Show this help message." \
+    "show help" "Show this help message." \
     "" "" \
     "show status" "Show the status of the system security." \
     "" "" \
-    "set locker <mins>" "Set the interval of the screen locker," \
-    "" "where 0 means deactivate the locker." \
+    "set password" "Set a new user password." \
+    "set attempts <max>" "Set max failed attempts before password is blocked." \
+    "set unblock <time>" "Set password unblock time in secs." \
+    "set interval <time>" "Set consecutive password fails interval in secs." \
     "" "" \
-    "set password" "Change the user password." \
-    "set password_attempts <attempts>" "Set the max failed password attempts." \
-    "set password_unlock <secs>" "Set the time to wait before password unlock." \
-    "set password_interval <secs>" "Set the interval between failed password attempts."
+    "set locker <mins>" "Set the interval of the screen locker," \
+    "" "where 0 means deactivate the locker."
 }
 
 loop () {
@@ -347,10 +349,7 @@ loop () {
     local cmd=($(xargs -n1 <<< "${REPLY}"))
     restore_separator && set +f
 
-    if [[ "${cmd[0]}" == "help" ]]; then
-      show_help
-      continue
-    elif [[ "${cmd[0]}" == "clear" ]]; then
+    if [[ "${cmd[0]}" == "clear" ]]; then
       clear
       continue
     elif [[ "${cmd[0]}" == "quit" ]]; then
@@ -362,16 +361,17 @@ loop () {
     case "${cmd[0]}" in
       "show")
         case "${cmd[1]}" in
+          "help") show_help;;
           "status") show_status;;
           *) echo "Invalid or unknown command";;
         esac;;
       "set")
         case "${cmd[1]}" in
-          "locker") set_locker "${cmd[2]}";;
-          "password") set_password;;
-          "password_attemps") set_password_attempts "${cmd[2]}";;
-          "password_unlock") set_password_unlock "${cmd[2]}";;
-          "password_interval") set_password_interval "${cmd[2]}";;
+          "locker") set_screen_locker "${cmd[2]}";;
+          "password") set_user_password;;
+          "attempts") set_faillock_attempts "${cmd[2]}";;
+          "unblock") set_faillock_unblock "${cmd[2]}";;
+          "interval") set_faillock_interval "${cmd[2]}";;
           *) echo "Invalid or unknown command";;
         esac;;
       *) echo "Invalid or unknown command";; 
@@ -387,14 +387,26 @@ loop () {
 
 once () {
   case "${1}" in
-    "help") show_help "once";;
-    "init")
+    "show")
       case "${2}" in
-        "locker") init_locker || abort;;
+        "help") show_help "once";;
         *) abort "Invalid or unknown command";;
       esac;;
-    "lock") lock_screen;;
-    "logout") logout_user;;
+    "init")
+      case "${2}" in
+        "locker") init_screen_locker || abort;;
+        *) abort "Invalid or unknown command";;
+      esac;;
+    "lock")
+      case "${2}" in
+        "screen") lock_screen;;
+        *) abort "Invalid or unknown command";;
+      esac;;
+    "logout")
+      case "${2}" in
+        "user") logout_user;;
+        *) abort "Invalid or unknown command";;
+      esac;;
     *) abort "Invalid or unknown command";;
   esac
 

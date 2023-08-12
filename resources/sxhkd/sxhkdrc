@@ -106,7 +106,7 @@ super + {Left,Down,Up,Right}
 
 # Lock the screen
 super + x
-  security lock
+  security lock screen
 
 # Blank the screen
 super + ctrl + b
