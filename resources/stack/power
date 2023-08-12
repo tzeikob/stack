@@ -101,26 +101,17 @@ show_status () {
     echo "${tlp_status}"
   fi
 
-  local locker_process=''
-  locker_process="$(ps ax -o "command" | jc --ps |
-    jq '.[]|select(.command|test("^xautolock"))|.command')" || return 1
-  
-  if [[ -n "${locker_process}" ]]; then
-    echo "${locker_process}" | awk '{
-      match($0,/.* -time(.*) -corners.*/,a)
-      print "Locker:      "a[1]" mins"
-    }'
-  else
-    echo "Locker:      off"
-  fi
+  if [[ -f "${SETTINGS_FILE}" ]]; then
+    local query='.screensaver.interval|if . then . else "" end'
 
-  local query='.screensaver.interval|if . then . else "" end'
-
-  local screensaver=''
-  screensaver="$(jq -cr "${query}" "${SETTINGS_FILE}")" || return 1
-  
-  if [[ -n "${screensaver}" ]] && [[ ${screensaver} -gt 0 ]]; then
-    echo "Screensaver:  ${screensaver} mins"
+    local screensaver=''
+    screensaver="$(jq -cr "${query}" "${SETTINGS_FILE}")" || return 1
+    
+    if [[ -n "${screensaver}" ]] && [[ ${screensaver} -gt 0 ]]; then
+      echo "Screensaver:  ${screensaver} mins"
+    else
+      echo "Screensaver:  off"
+    fi
   else
     echo "Screensaver:  off"
   fi
@@ -274,84 +265,6 @@ reset_actions () {
   fi
 
   echo "Power actions have been reset"
-}
-
-# Sets the interval time of the screen locker, where
-# 0 means deactivate the locker.
-# Arguments:
-#  mins:    an integer interval in mins or 0
-#  persist: save or nosave, default is save
-set_locker () {
-  local mins="${1}"
-  local persist="${2:-"save"}"
-
-  if [[ -z "${mins}" ]]; then
-    echo "Missing the interval time"
-    return 2
-  elif [[ ! "${mins}" =~ ^[0-9]{,2}$ ]]; then
-    echo "Invalid interval time"
-    return 2
-  elif [[ ${mins} -lt 0 ]] || [[ ${mins} -gt 60 ]]; then
-    echo "Interval time out of range [0,60]"
-    return 2
-  fi
-
-  # Exit possibly running locker instance
-  xautolock -exit &> /dev/null
-  sleep 1
-
-  if [[ ${mins} -gt 0 ]]; then
-    xautolock -locker 'power lock' -nowlocker 'power lock' -time "${mins}" -corners 0-00 -detectsleep &
-    echo "Screen locker set to ${mins} mins"
-  else
-    echo "Screen locker has been disabled"
-  fi
-
-  # Save locker interval into settings file
-  if [[ "${persist}" == "save" ]]; then
-    local settings='{}'
-    local locker="{\"interval\": ${mins}}"
-
-    if [[ -f "${SETTINGS_FILE}" ]]; then
-      settings="$(jq -e ".locker = ${locker} " "${SETTINGS_FILE}")" || return 1
-    else
-      settings="$(echo "{\"locker\": ${locker}}" | jq -e '.')" || return 1
-    fi
-
-    mkdir -p "${CONFIG_HOME}"
-    echo "${settings}" > "${SETTINGS_FILE}"
-  fi
-}
-
-# Initializes the screen locker to settings being set
-# in the settings file.
-# Arguments:
-#  None
-init_locker () {
-  if [[ ! -f "${SETTINGS_FILE}" ]]; then
-    echo "No locker settings found"
-    return 0
-  fi
-
-  local locker=''
-  locker="$(jq '.locker|if . then . else empty end' "${SETTINGS_FILE}")"
-
-  if [[ -z "${locker}" ]]; then
-    echo "No locker settings found"
-    return 0
-  fi
-
-  local interval=''
-  interval="$(get "${locker}" '.interval')" || return 1
-
-  set_locker "${interval}" "nosave"
-
-  if [[ $? -ne 0 ]]; then
-    echo "Failed to set locker"
-    return 2
-  fi
-
-  echo "Locker has been set"
 }
 
 # Sets the interval time of the screen saver, where
@@ -579,48 +492,6 @@ suspend_system () {
   fi
 }
 
-# Locks the screen making sure notifications stream is muted
-# before lock and resets it back to it's previous state
-# after user unlocks the screen.
-# Arguments:
-#  None
-lock_screen () {
-  local query=''
-  query+='[.[]|select(.command|test("xsecurelock.*"))]'
-  query+='|if length > 0 then "true" else "false" end'
-
-  local is_locked=''
-  is_locked="$(ps aux | grep -v 'jq' | jc --ps | jq -cr "${query}")" || return 1
-
-  if [[ "${is_locked}" == "true" ]]; then
-    echo 'Screen locker is already running'
-    return 0
-  fi
-
-  local is_paused=''
-  is_paused="$(notifications get state | jq -cr '.is_paused')"
-
-  if [[ "${is_paused}" == "false" ]]; then
-    notifications mute all
-  fi
-
-  env XSECURELOCK_FONT='PixelMix' \
-    XSECURELOCK_SAVER="saver_clock" \
-    XSECURELOCK_NO_COMPOSITE=1 \
-    XSECURELOCK_BLANK_TIMEOUT=-1 \
-    xsecurelock >/dev/null 2>&1
-
-  if [[ $? -ne 0 ]]; then
-    echo "Unable to lock the screen"
-    return 2
-  fi
-
-  # Reset notifications stream to previous state
-  if [[ "${is_paused}" == "false" ]]; then
-    notifications unmute all
-  fi
-}
-
 # Blanks the screen immediately.
 # Arguments:
 #  None
@@ -633,18 +504,6 @@ blank_screen () {
   fi
 
   echo "Screen has been blanked"
-}
-
-# Logs the user out, terminating the current xorg session.
-# Arguments:
-#  None
-logout_user () {
-  bspc quit
-
-  if [[ $? -ne 0 ]]; then
-    echo "Unable to log the user out"
-    return 2
-  fi
 }
 
 # Shows the help message.
@@ -660,15 +519,12 @@ show_help () {
     printf " %-20s %s\n" \
       "help" "Show this help message." \
       "" "" \
-      "init locker" "Initialize the screen locker." \
       "init screensaver" "Initialize the screen saver." \
       "" "" \
       "shutdown" "Shut the system down." \
       "reboot" "Reboot the system." \
       "suspend" "Set system in suspend mode." \
-      "lock" "Lock the screen." \
-      "blank" "Blank the screen." \
-      "logout" "Log the user out."
+      "blank" "Blank the screen."
 
     return 0
   fi
@@ -685,8 +541,6 @@ show_help () {
     "" "poweroff, reboot, suspend or ignore." \
     "reset actions" "Reset to default action for all power handlers." \
     "" "" \
-    "set locker <mins>" "Set the interval of the screen locker," \
-    "" "where 0 means deactivate the locker." \
     "set screensaver <mins>" "Set the interval of the screen saver," \
     "" "where 0 means deactivate the screensaver." \
     "" "" \
@@ -726,7 +580,6 @@ loop () {
       "set")
         case "${cmd[1]}" in
           "action") set_action "${cmd[2]}" "${cmd[3]}";;
-          "locker") set_locker "${cmd[2]}";;
           "screensaver") set_screensaver "${cmd[2]}";;
           "tlp") set_tlp "${cmd[2]}";;
           "charge") set_charge "${cmd[2]}" "${cmd[3]}";;
@@ -753,16 +606,13 @@ once () {
     "help") show_help "once";;
     "init")
       case "${2}" in
-        "locker") init_locker || abort;;
         "screensaver") init_screensaver || abort;;
         *) abort "Invalid or unknown command";;
       esac;;
     "shutdown") shutdown_system;;
     "reboot") reboot_system;;
     "suspend") suspend_system;;
-    "lock") lock_screen;;
     "blank") blank_screen;;
-    "logout") logout_user;;
     *) abort "Invalid or unknown command";;
   esac
 

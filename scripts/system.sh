@@ -309,6 +309,7 @@ install_utilities () {
   cp ~/stack/resources/stack/bluetooth "$STACK_HOME"
   cp ~/stack/resources/stack/printers "$STACK_HOME"
   cp ~/stack/resources/stack/power "$STACK_HOME"
+  cp ~/stack/resources/stack/security "$STACK_HOME"
   cp ~/stack/resources/stack/notifications "$STACK_HOME"
 
   ln -sf "$STACK_HOME/clock" /usr/local/bin/clock
@@ -324,6 +325,7 @@ install_utilities () {
   ln -sf "$STACK_HOME/bluetooth" /usr/local/bin/bluetooth
   ln -sf "$STACK_HOME/printers" /usr/local/bin/printers
   ln -sf "$STACK_HOME/power" /usr/local/bin/power
+  ln -sf "$STACK_HOME/security" /usr/local/bin/security
   ln -sf "$STACK_HOME/notifications" /usr/local/bin/notifications
 
   local rules_home='/etc/udev/rules.d'
@@ -368,11 +370,17 @@ install_utilities () {
 config_security () {
   echo -e "\nHardening system's security..."
 
-  sed -i 's;# dir = /var/run/faillock;dir = /var/lib/faillock;' /etc/security/faillock.conf
-  sed -i 's;# deny = 3;deny = 10;' /etc/security/faillock.conf
-  sed -i 's;# fail_interval = 900;fail_interval = 300;' /etc/security/faillock.conf
-  sed -i 's;# unlock_time = 600;unlock_time = 180;' /etc/security/faillock.conf
+  sed -i '/# Defaults maxseq = 1000/a Defaults badpass_message="Incorrect password"' /etc/sudoers
+  sed -i '/# Defaults maxseq = 1000/a Defaults passwd_timeout=0' /etc/sudoers
+  sed -i '/# Defaults maxseq = 1000/a Defaults passwd_tries=1' /etc/sudoers
+  sed -i '/# Defaults maxseq = 1000/a Defaults passprompt="Enter current password: "' /etc/sudoers
 
+  echo "Sudo configuration has been done"
+
+  sed -ri 's;# dir =.*;dir = /var/lib/faillock;' /etc/security/faillock.conf
+  sed -ri 's;# deny =.*;deny = 3;' /etc/security/faillock.conf
+  sed -ri 's;# fail_interval =.*;fail_interval = 180;' /etc/security/faillock.conf
+  sed -ri 's;# unlock_time =.*;unlock_time = 120;' /etc/security/faillock.conf
 
   echo "Faillocks set to be persistent after system reboot"
 
