@@ -346,7 +346,7 @@ show_help () {
 
     echo -e "\nCOMMANDS"
     printf " %-16s %s\n" \
-      "show help" "Show this help message." \
+      "help" "Show this help message." \
       "" "" \
       "init locker" "Initialize the screen locker." \
       "" "" \
@@ -360,7 +360,7 @@ show_help () {
 
   echo -e "\nCOMMANDS"
   printf " %-25s %s\n" \
-    "show help" "Show this help message." \
+    "help" "Show this help message." \
     "" "" \
     "show status" "Show the status of the system security." \
     "" "" \
@@ -384,7 +384,10 @@ loop () {
     local cmd=($(xargs -n1 <<< "${REPLY}"))
     restore_separator && set +f
 
-    if [[ "${cmd[0]}" == "clear" ]]; then
+    if [[ "${cmd[0]}" == "help" ]]; then
+      show_help
+      continue
+    elif [[ "${cmd[0]}" == "clear" ]]; then
       clear
       continue
     elif [[ "${cmd[0]}" == "quit" ]]; then
@@ -396,7 +399,6 @@ loop () {
     case "${cmd[0]}" in
       "show")
         case "${cmd[1]}" in
-          "help") show_help;;
           "status") show_status;;
           *) echo "Invalid or unknown command";;
         esac;;
@@ -422,11 +424,7 @@ loop () {
 
 once () {
   case "${1}" in
-    "show")
-      case "${2}" in
-        "help") show_help "once";;
-        *) abort "Invalid or unknown command";;
-      esac;;
+    "help") show_help "once";;
     "init")
       case "${2}" in
         "locker") init_screen_locker || abort;;
