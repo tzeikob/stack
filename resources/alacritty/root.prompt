@@ -18,15 +18,15 @@ timer_stop () {
     if (msecs < 10) printf "00%dms", msecs
     else if (msecs < 100) printf "0%dms", msecs
     else if (msecs < 1000) printf "%dms", msecs
-    else if (secs < 10) printf "00%ds", secs
-    else if (secs < 100) printf "0%ds", secs
-    else if (secs < 180) printf "%ds", secs
-    else if (mins < 10) printf "00%dm", mins
-    else if (mins < 100) printf "0%dm", mins
-    else if (mins < 180) printf "%dm", mins
-    else if (hours < 10) printf "00%dh", hours
-    else if (hours < 24) printf "0%dh", hours
-    else print "slow"
+    else if (secs < 10) printf "00%ds ", secs
+    else if (secs < 100) printf "0%ds ", secs
+    else if (secs < 180) printf "%ds ", secs
+    else if (mins < 10) printf "00%dm ", mins
+    else if (mins < 100) printf "0%dm ", mins
+    else if (mins < 180) printf "%dm ", mins
+    else if (hours < 10) printf "00%dh ", hours
+    else if (hours < 24) printf "0%dh ", hours
+    else print "slow "
   }')
   
   unset TIMER
