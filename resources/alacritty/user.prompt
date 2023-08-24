@@ -10,18 +10,26 @@ timer_start () {
 
 timer_stop () {
   local now=$(date +%s.%3N)
+
   ELAPSED=$(echo "${now}" | awk -v timer=${TIMER} '{
     elapsed = ($0 - timer)
+    
+    msecs = int(elapsed*1000 + 0.5)
+    secs = int(elapsed + 0.5)
+    mins = int(elapsed/60 + 0.5)
+    hours = int(elapsed/60/60 + 0.5)
 
-    if (elapsed < 0.01) printf "00%.0fn", elapsed*1000
-    else if (elapsed < 0.1) printf "0%.0fn", elapsed*1000
-    else if (elapsed < 1) printf "%.0fn", elapsed*1000
-    else if (elapsed < 10) printf "00%.0fs", elapsed
-    else if (elapsed < 60) printf "0%.0fs", elapsed
-    else if (elapsed < 600) printf "00%.0fm", (elapsed/60)
-    else if (elapsed < 3600) printf "0%.0fm", (elapsed/60)
-    else if (elapsed < 36000) printf "00%.0fh", (elapsed/60/60)
-    else if (elapsed < 86400) printf "0%.0fh", (elapsed/60/60)
+    if (msecs < 10) printf "00%dms", msecs
+    else if (msecs < 100) printf "0%dms", msecs
+    else if (msecs < 1000) printf "%dms", msecs
+    else if (secs < 10) printf "00%ds", secs
+    else if (secs < 100) printf "0%ds", secs
+    else if (secs < 180) printf "%ds", secs
+    else if (mins < 10) printf "00%dm", mins
+    else if (mins < 100) printf "0%dm", mins
+    else if (mins < 180) printf "%dm", mins
+    else if (hours < 10) printf "00%dh", hours
+    else if (hours < 24) printf "0%dh", hours
     else print "slow"
   }')
   
