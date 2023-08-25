@@ -1,0 +1,136 @@
+#!/bin/bash
+
+set -o pipefail
+
+source /opt/stack/utils
+
+# Returns the remote services having the given status.
+# If status is not given all remotes will be returned.
+# Arguments:
+#  status: mounted or unmounted
+# Outputs:
+#  A json array of remote objects.
+find_remotes () {
+  local status="${1}"
+
+  local mounts="$(< /proc/mounts)"
+
+  local remote=''
+  local remotes=''
+
+  remotes="$(rclone listremotes --long |
+    while read -r remote; do
+      if [[ -z "${remote}" ]]; then
+        continue
+      fi
+
+      local name="$(echo "${remote}" | cut -d ':' -f 1)"
+      local service="$(echo "${remote}" | cut -d ':' -f 2 | trim)"
+
+      # Check if there remote name exists in the mounts
+      local mount="$(grep "^${name}:.* fuse.rclone" <<< "${mounts}")"
+
+      local is_mounted='false'
+      local mount_point=''
+      if [[ -n "${mount}" ]]; then
+        is_mounted='true'
+        mount_point="$(echo "${mount}" | awk '{print $2}')"
+      fi
+
+      remote=''
+      remote+="\"name\": \"${name}\","
+      remote+="\"service\": \"${service}\","
+      remote+="\"is_mounted\": ${is_mounted}"
+
+      if [[ "${is_mounted}" == "true" ]]; then
+        remote+=",\"mount_point\": \"${mount_point}\""
+      fi
+
+      remote="{${remote}}"
+
+      case "${status}" in
+        "mounted")
+          if [[ "${is_mounted}" == "true" ]]; then
+            echo -n "${remote},"
+          fi;;
+        "unmounted")
+          if [[ "${is_mounted}" == "false" ]]; then
+            echo -n "${remote},"
+          fi;;
+        *) echo -n "${remote},";;
+      esac
+    done;)" || return 1
+  
+  # Remove extra comma after the last array element
+  if [[ -n "${remotes}" ]]; then
+    remotes="${remotes::-1}"
+  fi
+
+  echo "[${remotes}]"
+}
+
+# Returns the remote with the given name.
+# Arguments:
+#  name: the name of a remote
+# Outputs:
+#  A json object of remote.
+find_remote () {
+  local name="${1}"
+
+  local query=".[]|select(.name == \"${name}\")"
+
+  find_remotes | jq -cer "${query}" || return 1
+}
+
+# Checks if the service with the given name exists.
+# Arguments:
+#  name: the name of a service
+# Returns:
+#  0 if exists otherwise 1
+exists () {
+  local name="${1}"
+
+  local query=".[]|select(.name == \"${name}\")"
+
+  find_remotes | jq -cer "${query}" &> /dev/null || return 1
+}
+
+# Checks if the remote with the given name is mounted
+# by greping the name in the /proc/mounts file.
+# Arguments:
+#  name: the name of a service
+# Returns:
+#  0 if is mounted otherwise 1
+is_mounted () {
+  local name="${1}"
+
+  grep -Eq "^${name}:.* fuse.rclone" /proc/mounts
+}
+
+# Shows a menu asking the user to select one remote, where the
+# answer is kept in the global var REPLY.
+# Arguments:
+#  status: mounted or unmounted
+# Outputs:
+#  A menu of remote names.
+pick_remote () {
+  local status="${1}"
+
+  local query=''
+  query='{"key": .name, "value": "\(.name) [\(.service)]"}'
+  query="[.[]|${query}]"
+
+  local remotes=''
+  remotes="$(find_remotes "${status}" | jq -cer "${query}")" || return 1
+
+  local len=0
+  len="$(count "${remotes}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo -e "No ${status:-\b} remotes have found"
+    return 2
+  fi
+
+  pick_one "Select a remote:" "${remotes}" "vertical" || return $?
+}
+

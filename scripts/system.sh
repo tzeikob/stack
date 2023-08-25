@@ -296,37 +296,64 @@ install_utilities () {
   local STACK_HOME="/opt/stack"
   mkdir -p "$STACK_HOME"
 
-  cp ~/stack/resources/stack/utils "$STACK_HOME"
-  cp ~/stack/resources/stack/clock "$STACK_HOME"
-  cp ~/stack/resources/stack/trash "$STACK_HOME"
-  cp ~/stack/resources/stack/networks "$STACK_HOME"
-  cp ~/stack/resources/stack/disks "$STACK_HOME"
-  cp ~/stack/resources/stack/langs "$STACK_HOME"
-  cp ~/stack/resources/stack/desktop "$STACK_HOME"
-  cp ~/stack/resources/stack/audio "$STACK_HOME"
-  cp ~/stack/resources/stack/displays "$STACK_HOME"
-  cp ~/stack/resources/stack/cloud "$STACK_HOME"
-  cp ~/stack/resources/stack/bluetooth "$STACK_HOME"
-  cp ~/stack/resources/stack/printers "$STACK_HOME"
-  cp ~/stack/resources/stack/power "$STACK_HOME"
-  cp ~/stack/resources/stack/security "$STACK_HOME"
-  cp ~/stack/resources/stack/notifications "$STACK_HOME"
+  mkdir -p "${STAK_HOME}/displays"
+  cp ~/stack/resources/stack/displays/* "${STACK_HOME}/displays"
+  ln -sf "${STACK_HOME}/displays/main" /usr/local/bin/displays
 
-  ln -sf "$STACK_HOME/clock" /usr/local/bin/clock
-  ln -sf "$STACK_HOME/trash" /usr/local/bin/trash
-  ln -sf "$STACK_HOME/trash" /usr/local/bin/tt
-  ln -sf "$STACK_HOME/networks" /usr/local/bin/networks
-  ln -sf "$STACK_HOME/disks" /usr/local/bin/disks
-  ln -sf "$STACK_HOME/langs" /usr/local/bin/langs
-  ln -sf "$STACK_HOME/desktop" /usr/local/bin/desktop
-  ln -sf "$STACK_HOME/audio" /usr/local/bin/audio
-  ln -sf "$STACK_HOME/displays" /usr/local/bin/displays
-  ln -sf "$STACK_HOME/cloud" /usr/local/bin/cloud
-  ln -sf "$STACK_HOME/bluetooth" /usr/local/bin/bluetooth
-  ln -sf "$STACK_HOME/printers" /usr/local/bin/printers
-  ln -sf "$STACK_HOME/power" /usr/local/bin/power
-  ln -sf "$STACK_HOME/security" /usr/local/bin/security
-  ln -sf "$STACK_HOME/notifications" /usr/local/bin/notifications
+  mkdir -p "${STACK_HOME}/desktop"
+  cp ~/stack/resources/stack/desktop/* "${STACK_HOME}/desktop"
+  ln -sf "${STACK_HOME}/desktop/main" /usr/local/bin/desktop
+
+  mkdir -p "${STACK_HOME}/audio"
+  cp ~/stack/resources/stack/audio/* "${STACK_HOME}/audio"
+  ln -sf "${STACK_HOME}/audio/main" /usr/local/bin/audio
+
+  mkdir -p "${STACK_HOME}/clock"
+  cp ~/stack/resources/stack/clock/* "${STACK_HOME}/clock"
+  ln -sf "${STACK_HOME}/clock/main" /usr/local/bin/clock
+  
+  mkdir -p "${STACK_HOME}/cloud"
+  cp ~/stack/resources/stack/cloud/* "${STACK_HOME}/cloud"
+  ln -sf "${STACK_HOME}/cloud/main" /usr/local/bin/cloud
+
+  mkdir -p "${STACK_HOME}/networks"
+  cp ~/stack/resources/stack/networks/* "${STACK_HOME}/networks"
+  ln -sf "${STACK_HOME}/networks/main" /usr/local/bin/networks
+
+  mkdir -p "${STACK_HOME}/disks"
+  cp ~/stack/resources/stack/disks/* "${STACK_HOME}/disks"
+  ln -sf "${STACK_HOME}/disks/main" /usr/local/bin/disks
+
+  mkdir -p "${STACK_HOME}/bluetooth"
+  cp ~/stack/resources/stack/bluetooth/* "${STACK_HOME}/bluetooth"
+  ln -sf "${STACK_HOME}/bluetooth/main" /usr/local/bin/bluetooth
+
+  mkdir -p "${STACK_HOME}/langs"
+  cp ~/stack/resources/stack/langs/* "${STACK_HOME}/langs"
+  ln -sf "${STACK_HOME}/langs/main" /usr/local/bin/langs
+
+  mkdir -p "${STACK_HOME}/notifications"
+  cp ~/stack/resources/stack/notifications/* "${STACK_HOME}/notifications"
+  ln -sf "${STACK_HOME}/notifications/main" /usr/local/bin/notifications
+  
+  mkdir -p "${STACK_HOME}/power"
+  cp ~/stack/resources/stack/power/* "${STACK_HOME}/power"
+  ln -sf "${STACK_HOME}/power/main" /usr/local/bin/power
+
+  mkdir -p "${STACK_HOME}/printers"
+  cp ~/stack/resources/stack/printers/* "${STACK_HOME}/printers"
+  ln -sf "${STACK_HOME}/printers/main" /usr/local/bin/printers
+
+  mkdir -p "${STACK_HOME}/security"
+  cp ~/stack/resources/stack/security/* "${STACK_HOME}/security"
+  ln -sf "${STACK_HOME}/security/main" /usr/local/bin/security
+
+  mkdir -p "${STACK_HOME}/trash"
+  cp ~/stack/resources/stack/trash/* "${STACK_HOME}/trash"
+  ln -sf "${STACK_HOME}/trash/main" /usr/local/bin/trash
+  ln -sf "${STACK_HOME}/trash/main" /usr/local/bin/tt
+
+  cp ~/stack/resources/stack/utils "$STACK_HOME"
 
   local rules_home='/etc/udev/rules.d'
   cp ~/stack/resources/stack/rules/90-init-pointer.rules "${rules_home}"

@@ -1,0 +1,28 @@
+#!/bin/bash
+
+set -o pipefail
+
+source /opt/stack/utils
+
+# Returns the list of all archived notifications 
+# sorted by the given field in the given order.
+# Arguments:
+#  sort_by:  id or appname
+#  order:    asc or desc, default is asc
+# Outputs:
+#  A json array of notification objects.
+find_all () {
+  local sort_by="${1}"
+  local order="${2}"
+
+  local query='.data[0]'
+
+  if [[ "${sort_by}" =~ ^(id|appname)$ ]]; then
+    query+="|sort_by(.${sort_by})"
+
+    [[ "${order}" == "desc" ]] && query+='|reverse'
+  fi
+
+  dunstctl history | jq -cr "${query}" || return 1
+}
+

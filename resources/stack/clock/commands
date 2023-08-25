@@ -1,25 +1,9 @@
 #!/bin/bash
 
 set -o pipefail
+
 source /opt/stack/utils
-
-# Shows a prompt status and asks user to enter the
-# next command, which is kept in the global var REPLY.
-# Arguments:
-#  None
-# Outputs:
-#  A minimal prompt status line.
-prompt () {
-  local status=''
-  status="$(timedatectl | jc --timedatectl | jq -cer '.time_zone' | cut -d ' ' -f 1)"
-
-  if [[ $? -ne 0 ]]; then
-    echo "Unable to resolve status"
-    status='none'
-  fi
-
-  read -rep "[clock:${status}] " REPLY
-}
+source /opt/stack/clock/helpers
 
 # Shows the current status of system clock.
 # Arguments:
@@ -87,19 +71,12 @@ set_ntp () {
 set_timezone () {
   local timezone="${1}"
 
-  local timezones=''
-  timezones="$(timedatectl list-timezones | awk '{print "{\"key\":\""$0"\",\"value\":\""$0"\"},"}')"
-  timezones="[${timezones::-1}]"
-
   if [[ -z "${timezone}" ]]; then
-    pick_one "Select a timezone:" "${timezones}" "vertical" || return $?
+    pick_timezone || return $?
     [[ -n "${REPLY}" ]] && timezone="${REPLY}" || return 0
   fi
 
-  local exists=''
-  exists="$(echo "${timezones}" | jq -cer ".[]|select(.key == \"${timezone}\")")"
-
-  if [[ -z "${exists}" ]]; then
+  if ! timedatectl list-timezones | grep -qw "${timezone}"; then
     echo "Invalid timezone value"
     return 2
   fi
@@ -148,9 +125,9 @@ set_time () {
   echo "Time set to ${time}"
 }
 
-# Sets the system date to the given hours and minutes.
+# Sets the system date to the given day, month and year.
 # Arguments:
-#  time: the time in hh:mm form
+#  date: the date in yyyy-mm-dd form
 set_date () {
   local date="${1}"
 
@@ -224,82 +201,3 @@ sync_rtc () {
   echo "Hardware clock synced from the system clock"
 }
 
-# Shows the help message.
-# Arguments:
-#  None
-# Outputs:
-#  A long help message.
-show_help () {
-  echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
-
-  echo -e "\nCOMMANDS"
-  printf " %-30s %s\n" \
-    "help" "Show this help message." \
-    "" "" \
-    "show status" "Show the system date time status." \
-    "" "" \
-    "set timezone [<Region/City>]" "Set the system timezone." \
-    "set time <HH:MM:SS>" "Set the system local time." \
-    "set date <YYYY-mm-dd>" "Set the system date." \
-    "" "" \
-    "set ntp on|off" "Enable or disable the NTP service." \
-    "set rtc local|utc" "Set the hardware clock to local or UTC time." \
-    "" "" \
-    "sync rtc" "Sync the hardware clock from the system clock."
-}
-
-loop () {
-  clear
-
-  while true; do
-    prompt && history -s "${REPLY}"
-
-    set -f
-    set_separator "line"
-    local cmd=($(xargs -n1 <<< "${REPLY}"))
-    restore_separator && set +f
-
-    if [[ "${cmd[0]}" == "help" ]]; then
-      show_help
-      continue
-    elif [[ "${cmd[0]}" == "clear" ]]; then
-      clear
-      continue
-    elif [[ "${cmd[0]}" == "quit" ]]; then
-      break
-    elif [[ -z "${cmd[0]}" ]]; then
-      continue
-    fi
-
-    case "${cmd[0]}" in
-      "show")
-        case "${cmd[1]}" in
-          "status") show_status;;
-          *) echo "Invalid or unknown command";;
-        esac;;
-      "set")
-        case "${cmd[1]}" in
-          "ntp") set_ntp "${cmd[2]}";;
-          "timezone") set_timezone "${cmd[2]}";;
-          "time") set_time "${cmd[2]}";;
-          "date") set_date "${cmd[2]}";;
-          "rtc") set_rtc "${cmd[2]}";;
-          *) echo "Invalid or unknown command";; 
-        esac;;
-      "sync")
-        case "${cmd[1]}" in
-          "rtc") sync_rtc;;
-          *) echo "Invalid or unknown command";; 
-        esac;;
-      *) echo "Invalid or unknown command";; 
-    esac
-
-    if [[ $? -eq 1 ]]; then
-      echo "An unknown error has occurred"
-    fi
-  done
-
-  clear
-}
-
-loop

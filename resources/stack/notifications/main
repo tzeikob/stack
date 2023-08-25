@@ -1,0 +1,155 @@
+#!/bin/bash
+
+set -o pipefail
+
+source /opt/stack/utils
+source /opt/stack/notifications/commands
+
+# Shows the help message.
+# Arguments:
+#  mode: once or none
+# Outputs:
+#  A long help message.
+show_help () {
+  if [[ "${1}" == "once" ]]; then
+    echo "Usage: notifications COMMAND [OBJECT] [ARGUMENTS]..."
+
+    echo -e "\nCOMMANDS"
+    printf " %-16s %s\n" \
+      "help" "Show this help message." \
+      "" "" \
+      "get state" "Return the state of the notifications stream." \
+      "" "" \
+      "mute all" "Pause the notifications stream." \
+      "unmute all" "Restore the notifications stream." \
+      "" "" \
+      "start" "Start the notifications service." \
+      "restart" "Restart the notifications service."
+
+    return 0
+  fi
+
+  echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
+
+  echo -e "\nCOMMANDS"
+  printf " %-35s %s\n" \
+    "help" "Show this help message." \
+    "" "" \
+    "show status" "Show the status of notifications." \
+    "" "" \
+    "list all [<sort_by> [<order>]]" "List all notifications sorted by either the" \
+    "" "id or appname in asc or desc order." \
+    "" "" \
+    "set popup on|off" "Show or hide pop-up notifications." \
+    "set volume <percent>" "Set the volume of the notifications sound." \
+    "" "" \
+    "mute all" "Pause the notifications stream." \
+    "unmute all" "Restore the notifications stream." \
+    "clean all" "Remove all notifications." \
+    "" "" \
+    "start" "Start the notifications service." \
+    "restart" "Restart the notifications service."
+}
+
+loop () {
+  clear
+
+  while true; do
+    prompt "notifications" && history -s "${REPLY}"
+
+    set -f
+    set_separator "line"
+    local cmd=($(xargs -n1 <<< "${REPLY}"))
+    restore_separator && set +f
+
+    if [[ "${cmd[0]}" == "help" ]]; then
+      show_help
+      continue
+    elif [[ "${cmd[0]}" == "clear" ]]; then
+      clear
+      continue
+    elif [[ "${cmd[0]}" == "quit" ]]; then
+      break
+    elif [[ -z "${cmd[0]}" ]]; then
+      continue
+    fi
+
+    case "${cmd[0]}" in
+      "show")
+        case "${cmd[1]}" in
+          "status") show_status;;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "list")
+        case "${cmd[1]}" in
+          "all") list_all "${cmd[2]}" "${cmd[3]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "mute")
+        case "${cmd[1]}" in
+          "all") mute_all;;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "unmute")
+        case "${cmd[1]}" in
+          "all") unmute_all;;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "clean")
+        case "${cmd[1]}" in
+          "all") clean_all;;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "set")
+        case "${cmd[1]}" in
+          "popup") set_popup "${cmd[2]}";;
+          "volume") set_volume "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "start") start;;
+      "restart") restart;;
+      *) echo "Invalid or unknown command";; 
+    esac
+    
+    if [[ $? -eq 1 ]]; then
+      echo "An unknown error has occurred"
+    fi
+  done
+
+  clear
+}
+
+once () {
+  case "${1}" in
+    "help") show_help "once";;
+    "get")
+      case "${2}" in
+        "state") get_state;;
+        *) abort "Invalid or unknown command";;
+      esac;;
+    "mute")
+      case "${2}" in
+        "all") mute_all;;
+        *) abort "Invalid or unknown command";;
+      esac;;
+    "unmute")
+      case "${2}" in
+        "all") unmute_all;;
+        *) abort "Invalid or unknown command";;
+      esac;;
+    "start") start;;
+    "restart") restart;;
+    *) abort "Invalid or unknown command";;
+  esac
+
+  if [[ $? -ne 0 ]]; then
+    abort
+  fi
+}
+
+if [[ $# -eq 0 ]]; then
+  loop
+else
+  once "$@"
+fi
+

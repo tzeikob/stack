@@ -1,0 +1,34 @@
+#!/bin/bash
+
+set -o pipefail
+
+source /opt/stack/utils
+
+# Shows a menu asking the user to select a timezone,
+# where the answer is kept in the global var REPLY.
+# Arguments:
+#  prompt: a prompt text line
+# Outputs:
+#  A menu of timezones.
+pick_timezone () {
+  local prompt="${1}"
+  
+  local timezones=''
+  timezones="$(timedatectl list-timezones | awk '{
+    print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
+  }')" || return 1
+
+  # Remove the extra comma after the last array element
+  timezones="[${timezones::-1}]"
+
+  local len=0
+  len=$(count "${timezones}") || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No timezones have found"
+    return 2
+  fi
+  
+  pick_one "${prompt}" "${timezones}" "vertical" || return $?
+}
+

@@ -1,0 +1,144 @@
+#!/bin/bash
+
+set -o pipefail
+
+source /opt/stack/utils
+source /opt/stack/desktop/commands
+
+# Shows the help message.
+# Arguments:
+#  mode: once or none
+# Outputs:
+#  A long help message.
+show_help () {
+  if [[ "${1}" == "once" ]]; then
+    echo "Usage: desktop COMMAND [OBJECT] [ARGUMENTS]..."
+
+    echo -e "\nCOMMANDS"
+    printf " %-16s %s\n" \
+      "help" "Show this help message." \
+      "" "" \
+      "init pointer" "Initialize the pointer." \
+      "init tablets" "Initialize any connected tablets." \
+      "init wallpaper" "Initialize the desktop wallpaper."
+
+    return 0
+  fi
+
+  echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
+
+  echo -e "\nCOMMANDS"
+  printf " %-36s %s\n" \
+    "help" "Show this help message." \
+    "" "" \
+    "show status" "Show the status of the desktop environment." \
+    "show pointer [<id>]" "Show a pointing device." \
+    "show tablet [<name>]" "Show a tablet device." \
+    "" "" \
+    "list wallpapers" "List the available wallapers." \
+    "list pointers" "List the available pointing devices." \
+    "list tablets" "List the connected tablets." \
+    "" "" \
+    "set wallpaper [<name> [<mode>]]" "Set the desktop wallpaper in center" \
+    "" "fill, scale, max or tile mode." \
+    "speed pointer [<factor>]" "Set the pointer's speed to a factor between" \
+    "" "[0, 1] where 0 means slow and 1 fast." \
+    "scale tablet [<name> [<factor>]]" "Scale down the area of a tablet (e.g. 0.5)" \
+    "" "or use factor 1 to reset scaling." \
+    "map tablet [<name> [<display>]]" "Map a tablet to a screen display" \
+    "" "or just use desktop to reset mapping."
+}
+
+loop () {
+  clear
+
+  while true; do
+    prompt "desktop" && history -s "${REPLY}"
+
+    set -f
+    set_separator "line"
+    local cmd=($(xargs -n1 <<< "${REPLY}"))
+    restore_separator && set +f
+
+    if [[ "${cmd[0]}" == "help" ]]; then
+      show_help
+      continue
+    elif [[ "${cmd[0]}" == "clear" ]]; then
+      clear
+      continue
+    elif [[ "${cmd[0]}" == "quit" ]]; then
+      break
+    elif [[ -z "${cmd[0]}" ]]; then
+      continue
+    fi
+
+    case "${cmd[0]}" in
+      "show")
+        case "${cmd[1]}" in
+          "status") show_status;;
+          "pointer") show_pointer "${cmd[2]}";;
+          "tablet") show_tablet "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "set")
+        case "${cmd[1]}" in
+          "wallpaper") set_wallpaper "${cmd[2]}" "${cmd[3]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "speed")
+        case "${cmd[1]}" in
+          "pointer") set_pointer_speed "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "scale")
+        case "${cmd[1]}" in
+          "tablet") scale_tablet "${cmd[2]}" "${cmd[3]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "map")
+        case "${cmd[1]}" in
+          "tablet") map_tablet "${cmd[2]}" "${cmd[3]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "list")
+        case "${cmd[1]}" in
+          "wallpapers") list_wallpapers;;
+          "pointers") list_pointers;;
+          "tablets") list_tablets;;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      *) echo "Invalid or unknown command";; 
+    esac
+    
+    if [[ $? -eq 1 ]]; then
+      echo "An unknown error has occurred"
+    fi
+  done
+
+  clear
+}
+
+once () {
+  case "${1}" in
+    "help") show_help "once";;
+    "init")
+      case "${2}" in
+        "pointer") init_pointer || abort;;
+        "tablets") init_tablets || abort;;
+        "wallpaper") init_wallpaper || abort;;
+        *) abort "Invalid or unknown command";;
+      esac;;
+    *) abort "Invalid or unknown command";;
+  esac
+
+  if [[ $? -ne 0 ]]; then
+    abort
+  fi
+}
+
+if [[ $# -eq 0 ]]; then
+  loop
+else
+  once "$@"
+fi
+

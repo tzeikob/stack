@@ -1,171 +1,9 @@
 #!/bin/bash
 
 set -o pipefail
+
 source /opt/stack/utils
-
-# Converts the given raw value to its human friendly value.
-# Arguments:
-#  key:   the type of value
-#  value: the raw value
-# Outputs:
-#  A human friendly value.
-label () {
-  local key="${1}"
-  local value="${2}"
-
-  if [[ "${key}" == "type" ]]; then
-    case "${value}" in
-      "sink") echo "output";;
-      "source") echo "input";;
-      *) echo "${value}";;
-    esac
-  elif [[ "${key}" == "mute" ]]; then
-    case "${value}" in
-      "0") echo "unmute";;
-      "1") echo "mute";;
-      *) echo "${value}";;
-    esac
-  else
-    echo "${value}"
-  fi
-}
-
-# Returns the list of all audio cards.
-# Arguments:
-#  none
-# Outputs:
-#  A json array of audio cards.
-find_cards () {
-  pactl --format=json list cards || return 1
-}
-
-# Returns the audio card identified by the given
-# index number.
-# Arguments:
-#  index: a zero-based integer
-# Outputs:
-#  A json object of an audio card.
-find_card () {
-  local index="${1}"
-
-  local query=".[]|select(.index|tostring == \"${index}\")"
-
-  find_cards | jq -cer "${query}" || return 1
-}
-
-# Shows a menu asking the user to select an audio card,
-# where the answer is kept in the global var REPLY.
-# Arguments:
-#  prompt: a prompt text line
-# Outputs:
-#  A menu of audio card names.
-pick_card () {
-  local prompt="${1}"
-
-  local query='{key: .index, value: "\(.index):\(.properties|'
-  query+='if ."device.nick" then ."device.nick" else ."device.alias" end)"}'
-  query="[.[]|${query}]"
-
-  local cards=''
-  cards="$(find_cards | jq -cer "${query}")" || return 1
-
-  local len=0
-  len=$(count "${cards}") || return 1
-
-  if [[ ${len} -eq 0 ]]; then
-    echo "No audio cards have found"
-    return 2
-  fi
-  
-  pick_one "${prompt}" "${cards}" "vertical" || return $?
-}
-
-# Shows a menu asking the user to select a profile of the
-# given audio card, where the answer is kept in the global
-# var REPLY.
-# Arguments:
-#  prompt: a prompt text line
-#  card:   a json object of an audio card
-# Outputs:
-#  A menu of audio card profile names.
-pick_profile () {
-  local prompt="${1}"
-  local card="${2}"
-
-  local query='{key: .key, value: .key}'
-  query="[.profiles|to_entries[]|${query}]"
-
-  local profiles=''
-  profiles="$(echo "${card}" | jq -cer "${query}")" || return 1
-
-  local len=0
-  len="$(count "${profiles}")" || return 1
-
-  if [[ ${len} == 0 ]]; then
-    echo "No audio profiles found"
-    return 2
-  fi
-  
-  pick_one "${prompt}" "${profiles}" "vertical" || return $?
-}
-
-# Shows a menu asking the user to select an audio module
-# with the given type, where the answer is kept in the
-# global var REPLY.
-# Arguments:
-#  prompt: a prompt text line
-#  type:   sink, source
-# Outputs:
-#  A menu of audio module names.
-pick_module () {
-  local prompt="${1}"
-  local type="${2}"
-
-  local query='{key: .index, value: "\(.name)'
-  query+=' [\(.properties|if ."device.nick" then ."device.nick" else ."device.alias" end)]"}'
-  query="[.[]|=.|map((.ports[] + {index, properties}))|.[]|${query}]"
-
-  local modules=''
-  modules="$(pactl --format=json list "${type}"s | jq -cer "${query}")" || return 1
-
-  local len=0
-  len="$(count "${modules}")" || return 1
-
-  if [[ ${len} == 0 ]]; then
-    echo "No $(label "type" "${type}") modules have found"
-    return 2
-  fi
-  
-  pick_one "${prompt}" "${modules}" "vertical" || return $?
-}
-
-# Shows a prompt status and asks user to enter the
-# next command, which is kept in the global var REPLY.
-# Arguments:
-#  None
-# Outputs:
-#  A minimal prompt status line.
-prompt () {
-  local sink="$(pactl get-default-sink)"
-
-  local status='off'
-
-  if [[ "${sink}" != "auto_null" ]]; then
-    local query=''
-    query+=".[]|select(.name == \"${sink}\")|.properties"
-    query+=" |if .\"device.nick\" then .\"device.nick\""
-    query+="  else .\"device.alias\" end"
-
-    status="$(pactl --format=json list sinks | jq -cer "${query}" | tr ' ' '-' )"
-    
-    if [[ $? -ne 0 ]]; then
-      echo "Unable to resolve status"
-      status='none'
-    fi
-  fi
-
-  read -rep "[audio:${status}] " REPLY
-}
+source /opt/stack/audio/helpers
 
 # Shows the current status of system's audio.
 # Arguments:
@@ -469,7 +307,7 @@ set_profile () {
     return 2
   fi
 
-  pactl set-card-profile "${index}" "${name}" && sleep 0.1
+  pactl set-card-profile "${index}" "${name}"
 
   if [[ $? -ne 0 ]]; then
     echo "Failed to set profile"
@@ -507,7 +345,7 @@ set_default () {
     return 2
   fi
 
-  pactl set-default-${type} "${index}" && sleep 0.1
+  pactl set-default-${type} "${index}"
 
   if [[ $? -ne 0 ]]; then
     echo "Failed to set active $(label "type" "${type}")"
@@ -549,7 +387,7 @@ turn_default () {
   fi
   
   if [[ "${to}" == "mute" ]]; then
-    pactl set-${type}-mute "${module}" 1 && sleep 0.1
+    pactl set-${type}-mute "${module}" 1
 
     if [[ $? -ne 0 ]]; then
       echo "Failed to set active $(label "type" "${type}") to mute"
@@ -558,7 +396,7 @@ turn_default () {
 
     echo "Active $(label "type" "${type}") volume set to mute" && return 0
   elif [[ "${to}" == "unmute" ]]; then
-    pactl set-${type}-mute "${module}" 0 && sleep 0.1
+    pactl set-${type}-mute "${module}" 0
 
     if [[ $? -ne 0 ]]; then
       echo "Failed to set active $(label "type" "${type}") to unmute"
@@ -577,7 +415,7 @@ turn_default () {
   fi
 
   pactl set-${type}-mute "${module}" 0 &&
-  pactl set-${type}-volume "${module}" "${volume}%" && sleep 0.1
+  pactl set-${type}-volume "${module}" "${volume}%"
 
   if [[ $? -ne 0 ]]; then
     echo "Failed to set volume of active $(label "type" "${type}")"
@@ -628,7 +466,7 @@ set_mute () {
   local pactl_cmd=''
 
   while read -r pactl_cmd; do
-    ${pactl_cmd} && sleep 0.1
+    ${pactl_cmd}
 
     if [[ $? -ne 0 ]]; then
       failed='true'
@@ -643,159 +481,3 @@ set_mute () {
   echo "All $(label "type" "${type}") modules set to $(label "mute" "${mode}")"
 }
 
-# Shows the help message.
-# Arguments:
-#  mode: once or none
-# Outputs:
-#  A long help message.
-show_help () {
-  if [[ "$1" == "once" ]]; then
-    echo "Usage: audio COMMAND [OBJECT] [ARGUMENTS]..."
-
-    echo -e "\nCOMMANDS"
-    printf " %-12s %s\n" \
-      "help" "Show this help message." \
-      "" "" \
-      "set profile" "Set the active profile." \
-      "set output" "Set the active output." \
-      "" "" \
-      "up" "Increase the volume of active output." \
-      "down" "Decrease the volume of active output." \
-      "mute" "Mute the active output." \
-      "unmute" "Unmute the active output." \
-      "" "" \
-      "restart" "Restart the audio server."
-
-    return 0
-  fi
-
-  echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
-
-  echo -e "\nCOMMANDS"
-  printf " %-32s %s\n" \
-    "help" "Show this help message." \
-    "" "" \
-    "show status" "Show a report of the system's audio." \
-    "show logs" "Show the last logs of the audio service." \
-    "show card [<index>]" "Show the data of a card." \
-    "" "" \
-    "list cards" "List all cards of the system." \
-    "list outputs" "List all outputs." \
-    "list inputs" "List all inputs." \
-    "list playbacks [<name>]" "List active playbacks by application name." \
-    "" "" \
-    "set profile [<card> [<name>]]" "Set the active profile of a card." \
-    "set output [<index>]" "Set the active output." \
-    "set input [<index>]" "Set the active input." \
-    "" "" \
-    "turn output|input <volume>" "Turn the volume of active output/input to," \
-    "" "up, down, mute, unmute or a percentage value." \
-    "mute outputs|inputs" "Mute all outputs or inputs." \
-    "unmute outputs|inputs" "Unmute all outputs or inputs." \
-    "" "" \
-    "restart" "Restart the audio server."
-}
-
-loop () {
-  clear
-
-  while true; do
-    prompt && history -s "${REPLY}"
-
-    set -f
-    set_separator "line"
-    local cmd=($(xargs -n1 <<< "${REPLY}"))
-    restore_separator && set +f
-
-    if [[ "${cmd[0]}" == "help" ]]; then
-      show_help
-      continue
-    elif [[ "${cmd[0]}" == "clear" ]]; then
-      clear
-      continue
-    elif [[ "${cmd[0]}" == "quit" ]]; then
-      break
-    elif [[ -z "${cmd[0]}" ]]; then
-      continue
-    fi
-
-    case "${cmd[0]}" in
-      "show")
-        case "${cmd[1]}" in
-          "status") show_status;;
-          "logs") show_logs;;
-          "card") show_card "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
-        esac;;
-      "restart") restart;;
-      "list")
-        case "${cmd[1]}" in
-          "cards") list_cards;;
-          "outputs") list_ports "sink";;
-          "inputs") list_ports "source";;
-          "playbacks") list_playbacks "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
-        esac;;
-      "set")
-        case "${cmd[1]}" in
-          "profile") set_profile "${cmd[2]}" "${cmd[3]}";;
-          "output") set_default "sink" "${cmd[2]}";;
-          "input") set_default "source" "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
-        esac;;
-      "turn")
-        case "${cmd[1]}" in
-          "output") turn_default "sink" "${cmd[2]}";;
-          "input") turn_default "source" "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
-        esac;;
-      "mute")
-        case "${cmd[1]}" in
-          "outputs") set_mute "sink" "1";;
-          "inputs") set_mute "source" "1";;
-          *) echo "Invalid or unknown command";;
-        esac;;
-      "unmute")
-        case "${cmd[1]}" in
-          "outputs") set_mute "sink" "0";;
-          "inputs") set_mute "source" "0";;
-          *) echo "Invalid or unknown command";;
-        esac;;
-      *) echo "Invalid or unknown command";; 
-    esac
-    
-    if [[ $? -eq 1 ]]; then
-      echo "An unknown error has occurred"
-    fi
-  done
-
-  clear
-}
-
-once () {
-  case "${1}" in
-    "help") show_help "once";;
-    "restart") restart;;
-    "set")
-      case "${2}" in
-        "profile") set_profile;;
-        "output") set_default "sink";;
-        *) abort "Invalid or unknown command";; 
-      esac;;
-    "mute") turn_default "sink" "mute";;
-    "unmute") turn_default "sink" "unmute";;
-    "up") turn_default "sink" "up";;
-    "down") turn_default "sink" "down";;
-    *) abort "Invalid or unknown command";; 
-  esac
-
-  if [[ $? -ne 0 ]]; then
-    abort
-  fi
-}
-
-if [[ $# -eq 0 ]]; then
-  loop
-else
-  once "$@"
-fi

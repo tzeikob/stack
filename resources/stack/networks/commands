@@ -1,268 +1,14 @@
 #!/bin/bash
 
 set -o pipefail
+
 source /opt/stack/utils
+source /opt/stack/networks/helpers
 
 SETTINGS_FILE="${CONFIG_HOME}/networks.json"
 SHELLRC_FILE="${HOME}/.bashrc"
 PROXY_ENV_FILE="${HOME}/.config/environment.d/proxy.conf"
 DOCKER_PROXY_FILE='/etc/systemd/system/docker.service.d/http-proxy.conf'
-
-# Returns the general status of the networking.
-# Arguments:
-#  None
-# Outputs:
-#  A json object of status.
-find_status () {
-  nmcli general | jc --nmcli | jq -cer '.[0]' || return 1
-}
-
-# Returns the list of network devices of the
-# given type.
-# Arguments:
-#  type: ethernet, wifi or bridge
-# Outputs:
-#  A json array of device objects.
-find_devices () {
-  local type="${1}"
-
-  local query='.'
-  if [[ -n "${type}" ]]; then
-    query="[.[]|select(.type == \"${type}\")]"
-  fi
-
-  nmcli device | jc --nmcli | jq -cer "${query}" || return 1
-}
-
-# Returns the device with the given name.
-# Arguments:
-#  name: the name of a device
-# Outputs:
-#  A josn object of a device.
-find_device () {
-  local name="${1}"
-
-  local device=''
-  device="$(nmcli device show "${name}" | jc --nmcli | jq -cer '.[0]')" || return 1
-
-  local type=''
-  type="$(get "${device}" ".type")" || return 1
-
-  if [[ "${type}" == "wifi" ]]; then
-    local query=''
-    query+='freq: .frequency,'
-    query+='rate: .bit_rate,'
-    query+='quality: .link_quality,'
-    query+='signal: .signal_level'
-    query="if (.|length>0 and .[0].frequency) then .[0]|{${query}} else {} end"
-
-    device="$(iwconfig "${name}" 2> /dev/null | jc --iwconfig |
-      jq -cer --argjson d "${device}" "${query} + \$d")" || return 1
-  fi
-
-  echo "${device}"
-}
-
-# Returns the list of network connections.
-# Arguments:
-#  None
-# Outputs:
-#  A json array of connection objects.
-find_connections () {
-  nmcli connection | jc --nmcli || return 1
-}
-
-# Returns the connection with the given name.
-# Arguments:
-#  name: the name of a connection
-# Outputs:
-#  A json object of connection.
-find_connection () {
-  local name="${1}"
-
-  local connection=''
-  connection="$(nmcli connection show "${name}" | jc --nmcli | jq -cer '.[0]')" || return 1
-
-  local type=''
-  type="$(get "${connection}" ".connection_type")" || return 1
-
-  if [[ "${type}" =~ "wireless" ]]; then
-    local device=''
-    device="$(get "${connection}" ".connection_interface_name")" || return 1
-
-    local query=''
-    query+='freq: .frequency,'
-    query+='rate: .bit_rate,'
-    query+='quality: .link_quality,'
-    query+='signal: .signal_level'
-    query="if (.|length>0 and .[0].frequency) then .[0]|{${query}} else {} end"
-
-    if validate "device" "${device}" ; then
-      connection="$(iwconfig "${device}" 2> /dev/null | jc --iwconfig |
-        jq -cer --argjson c "${connection}" "${query} + \$c")" || return 1
-    fi
-  fi
-  
-  echo "${connection}"
-}
-
-# Returns any detected wifi networks broadcasting in
-# your local area having a singal strength equal or
-# greater to the given value.
-# Arguments:
-#  device: the name of a wifi device
-#  signal: a signal limitation value
-# Outputs:
-#  A json array list of wifi networks.
-find_wifis () {
-  local device="${1}"
-  local signal="${2:-"0"}"
-
-  local networks=''
-  networks="$(nmcli -f SSID,SIGNAL,CHAN,SECURITY -t device wifi list ifname "${device}" |
-    awk -v limit="${signal}" -F: '{
-      if ($2 >= limit) {
-        schema="\"ssid\":\"%s\","
-        schema=schema"\"signal\":%s,"
-        schema=schema"\"channel\":\"%s\","
-        schema=schema"\"security\":\"%s\""
-        schema="{"schema"},"
-        printf schema, $1,$2,$3,$4,$5
-      }
-    }'
-  )" || return 1
-
-  # Remove the last comma after the last element
-  if [[ -n "${networks}" ]]; then
-    networks="${networks::-1}"
-  fi
-
-  echo "[${networks}]"
-}
-
-# Validates if the network object with the given name
-# exists and is a valid networking entity.
-# Arguments:
-#  object: device or connection
-#  name:   the name of the object
-# Returns:
-#  0 if object is valid otherwise 1.
-validate () {
-  local object="${1}"
-  local name="${2}"
-
-  if [[ ! "${object}" =~ ^(device|connection)$ ]]; then
-    return 1
-  fi
-
-  local result=''
-
-  if [[ "${object}" == "device" ]]; then
-    result="$(find_devices | jq -cer ".[]|select(.device == \"${name}\")")"
-  elif [[ "${object}" == "connection" ]]; then
-    result="$(find_connections | jq -cer ".[]|select(.name == \"${name}\")")"
-  fi
-
-  if [[ $? -ne 0 ]] || [[ -z "${result}" ]]; then
-    return 1
-  fi
-}
-
-# Shows a menu asking the user to select one device, where the
-# answer is kept in the global var REPLY.
-# Arguments:
-#  type: ethernet, wifi or bridge
-# Outputs:
-#  A menu of device names.
-pick_device () {
-  local type="${1}"
-
-  local query='{key: .device, value: .device}'
-  query="[.[]|${query}]"
-
-  local devices=''
-  devices="$(find_devices "${type}" | jq -cer "${query}")" || return 1
-
-  local len=0
-  len="$(count "${devices}")" || return 1
-
-  if [[ ${len} -eq 0 ]]; then
-    echo "No devices have found"
-    return 2
-  fi
-
-  pick_one "Select a device:" "${devices}" "vertical" || return $?
-}
-
-# Shows a menu asking the user to select one connection,
-# where the answer is kept in the global var REPLY.
-# Arguments:
-#  None
-# Outputs:
-#  A menu of connection names.
-pick_connection () {
-  local query='{key: .name, value: .name}'
-  query="[.[]|${query}]"
-
-  local connections=''
-  connections="$(find_connections | jq -cer "${query}")" || return 1
-
-  local len=0
-  len="$(count "${connections}")" || return 1
-
-  if [[ ${len} -eq 0 ]]; then
-    echo "No connections have found"
-    return 2
-  fi
-
-  pick_one "Select a connection:" "${connections}" "vertical" || return $?
-}
-
-# Shows a menu asking the user to select one proxy profile,
-# where the answer is kept in the global var REPLY.
-# Arguments:
-#  None
-# Outputs:
-#  A menu of proxy profiles.
-pick_proxy () {
-  local query=''
-  query+='{key: .name, value: "\(.name) [\(.host)]"}'
-  query=".proxies|if .|length>0 then [.[]|${query}] else [] end"
-
-  local proxies=''
-  proxies="$(jq -cer "${query}" "${SETTINGS_FILE}")" || return 1
-  
-  local len=0
-  len="$(count "${proxies}")" || return 1
-
-  if [[ ${len} -eq 0 ]]; then
-    echo "No proxy profiles have found"
-    return 2
-  fi
-
-  pick_one "Select a proxy profile:" "${proxies}" "vertical" || return $?
-}
-
-# Shows a prompt status and asks user to enter the
-# next command, which is kept in the global var REPLY.
-# Arguments:
-#  None
-# Outputs:
-#  A minimal prompt status line.
-prompt () {
-  local query=''
-  query+='[.[]|select((.type == "wifi" or .type == "ethernet") and .state == "connected")]'
-  query+=' |if .|length > 0 then .[0].device else "local" end'
-
-  local status=''
-  status="$(find_devices | jq -cer "${query}")"
-
-  if [[ $? -ne 0 ]]; then
-    status='none'
-  fi
-
-  read -rep "[networks:${status}] " REPLY
-}
 
 # Shows the current status of the system networking.
 # Arguments:
@@ -599,7 +345,6 @@ up () {
     return 2
   fi
 
-  sleep 3
   echo "${object^} ${name} has been enabled"
 }
 
@@ -642,7 +387,6 @@ down () {
     return 2
   fi
 
-  sleep 3
   echo "${object^} ${name} has been disabled"
 }
 
@@ -671,7 +415,6 @@ remove_device () {
     return 2
   fi
 
-  sleep 3
   echo "Device ${name} has been removed"
 }
 
@@ -700,7 +443,6 @@ remove_connection () {
     return 2
   fi
 
-  sleep 3
   echo "Connection ${name} has been removed"
 }
 
@@ -754,7 +496,6 @@ add_ethernet_connection () {
     return 2
   fi
 
-  sleep 3
   echo "Ethernet connection ${name} has been created"
 }
 
@@ -802,7 +543,6 @@ add_wifi_connection () {
     return 2
   fi
 
-  sleep 3
   echo "Connection to ${ssid} has been established"
 }
 
@@ -845,7 +585,6 @@ add_vpn_connection () {
   nmcli connection modify "${name}" +vpn.data username="${username}" || return 1
   nmcli connection modify "${name}" +vpn.secrets password="${password}" || return 1
 
-  sleep 3
   echo "VPN connection ${name} has been created"
 }
 
@@ -1201,7 +940,6 @@ power_network () {
     return 2
   fi
 
-  sleep 3
   echo "Network power set to ${mode}"
 }
 
@@ -1228,134 +966,6 @@ power_wifi () {
     return 2
   fi
 
-  sleep 3
   echo "Wifi power set to ${mode}"
 }
 
-# Shows the help message.
-# Arguments:
-#  None
-# Outputs:
-#  A long help message.
-show_help () {
-  echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
-
-  echo -e "\nCOMMANDS"
-  printf " %-35s %s\n" \
-    "help" "Show this help message." \
-    "" "" \
-    "show status" "Show the current status of networking." \
-    "show device [<name>]" "Show the data of a device." \
-    "show connection [<name>]" "Show the data of a connection." \
-    "" "" \
-    "list devices" "List the network devices." \
-    "list connections" "List the network connections." \
-    "list wifis [<device>] [<signal>]" "Detect wifi networks with a min signal." \
-    "" "" \
-    "up device [<name>]" "Enable a network device." \
-    "down device [<name>]" "Disable a network device." \
-    "remove device [<name>]" "Remove a software network device." \
-    "" "" \
-    "up connection [<name>]" "Enable a connection." \
-    "down connection [<name>]" "Disable a connection." \
-    "add connection eth|wifi|vpn" "Add an ethernet, wifi or vpn connection." \
-    "remove connection [<name>]" "Remove a connection." \
-    "" "" \
-    "add proxy <name>" "Add a new proxy server profile." \
-    "remove proxy [<name>]" "Remove a proxy server profile." \
-    "list proxies" "List all proxy server profiles." \
-    "set proxy [<name>]" "Applies proxy server settings." \
-    "unset proxy" "Disables proxy server settings." \
-    "" "" \
-    "power network on|off" "Set the system network to on or off." \
-    "power wifi on|off" "Set the wifi device to on or off."
-}
-
-loop () {
-  clear
-
-  while true; do
-    prompt && history -s "${REPLY}"
-
-    set -f
-    set_separator "line"
-    local cmd=($(xargs -n1 <<< "${REPLY}"))
-    restore_separator && set +f
-
-    if [[ "${cmd[0]}" == "help" ]]; then
-      show_help
-      continue
-    elif [[ "${cmd[0]}" == "clear" ]]; then
-      clear
-      continue
-    elif [[ "${cmd[0]}" == "quit" ]]; then
-      break
-    elif [[ -z "${cmd[0]}" ]]; then
-      continue
-    fi
-
-    case "${cmd[0]}" in
-      "show")
-        case "${cmd[1]}" in
-          "status") show_status;;
-          "device") show_device "${cmd[2]}";;
-          "connection") show_connection "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
-        esac;;
-      "list")
-        case "${cmd[1]}" in
-          "devices") list_devices;;
-          "connections") list_connections;;
-          "wifis") list_wifis "${cmd[2]}" "${cmd[3]}";;
-          "proxies") list_proxies;;
-          *) echo "Invalid or unknown command";;
-        esac;;
-      "power")
-        case "${cmd[1]}" in
-          "network") power_network "${cmd[2]}";;
-          "wifi") power_wifi "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
-        esac;;
-      "up") up "${cmd[1]}" "${cmd[2]}";;
-      "down") down "${cmd[1]}" "${cmd[2]}";;
-      "add")
-        case "${cmd[1]}" in
-          "connection")
-            case "${cmd[2]}" in
-              "eth") add_ethernet_connection;;
-              "wifi") add_wifi_connection;;
-              "vpn") add_vpn_connection;;
-              *) echo "Invalid or unknown command";;
-            esac;;
-          "proxy") add_proxy "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
-        esac;;
-      "remove")
-        case "${cmd[1]}" in
-          "device") remove_device "${cmd[2]}";;
-          "connection") remove_connection "${cmd[2]}";;
-          "proxy") remove_proxy "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
-        esac;;
-      "set")
-        case "${cmd[1]}" in
-          "proxy") set_proxy "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
-        esac;;
-      "unset")
-        case "${cmd[1]}" in
-          "proxy") unset_proxy;;
-          *) echo "Invalid or unknown command";;
-        esac;;
-      *) echo "Invalid or unknown command";; 
-    esac
-
-    if [[ $? -eq 1 ]]; then
-      echo "An unknown error has occurred"
-    fi
-  done
-
-  clear
-}
-
-loop

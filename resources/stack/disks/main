@@ -1,0 +1,139 @@
+#!/bin/bash
+
+set -o pipefail
+
+source /opt/stack/utils
+source /opt/stack/disks/commands
+
+# Shows the help message.
+# Arguments:
+#  None
+# Outputs:
+#  A long help message.
+show_help () {
+  echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
+
+  echo -e "\nCOMMANDS"
+  printf " %-32s %s\n" \
+    "help" "Show this help message." \
+    "" "" \
+    "show status" "Show a report of the file system." \
+    "" "" \
+    "show disk [<path>]" "Show a disk block device." \
+    "show partition [<path>]" "Show a partition block device." \
+    "show rom [<path>]" "Show an optical drive block device." \
+    "" "" \
+    "list disks" "List all disk block devices." \
+    "list partitions [<path>]" "List the partitions of a disk block device." \
+    "list roms" "List all optical block devices." \
+    "list folders [<host>]" "List the shared folders of a host." \
+    "list mounts" "List all mounting points." \
+    "" "" \
+    "mount partition [<path>]" "Mount a partition block device." \
+    "unmount partition [<path>]" "Unmount a partition block device." \
+    "mount rom [<path>]" "Mount an optical block device." \
+    "unmount rom [<path>]" "Unmount an optical block device." \
+    "mount image <path>" "Mount an iso, img image file system." \
+    "unmount image [<path>]" "Unmount an image file system." \
+    "mount folder [<host>]" "Mount a shared storage folder." \
+    "unmount folder [<uri>]" "Unmount a shared storage folder." \
+    "" "" \
+    "format disk [<path>]" "Format a disk block device." \
+    "eject disk [<path>]" "Eject a disk block device." \
+    "scan disk [<path>]" "Scan a disk block device for SMART data." \
+    "" "" \
+    "create encrypted [<path>]" "Create an encrypted drive." \
+    "create bootable [<path>]" "Create a bootable installation drive."
+}
+
+loop () {
+  clear
+
+  while true; do
+    prompt "disks" && history -s "${REPLY}"
+
+    set -f
+    set_separator "line"
+    local cmd=($(xargs -n1 <<< "${REPLY}"))
+    restore_separator && set +f
+
+    if [[ "${cmd[0]}" == "help" ]]; then
+      show_help
+      continue
+    elif [[ "${cmd[0]}" == "clear" ]]; then
+      clear
+      continue
+    elif [[ "${cmd[0]}" == "quit" ]]; then
+      break
+    elif [[ -z "${cmd[0]}" ]]; then
+      continue
+    fi
+
+    case "${cmd[0]}" in
+      "list")
+        case "${cmd[1]}" in
+          "disks") list_disks;;
+          "partitions") list_partitions "${cmd[2]}";;
+          "roms") list_roms;;
+          "folders") list_shared_folders "${cmd[2]}";;
+          "mounts") list_mounts;;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "show")
+        case "${cmd[1]}" in
+          "status") show_status;;
+          "disk") show_disk "${cmd[2]}";;
+          "partition") show_partition "${cmd[2]}";;
+          "rom") show_rom "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "mount")
+        case "${cmd[1]}" in
+          "partition") mount_partition "${cmd[2]}";;
+          "rom") mount_rom "${cmd[2]}";;
+          "image") mount_image "${cmd[2]}";;
+          "folder") mount_shared_folder "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "unmount")
+        case "${cmd[1]}" in
+          "partition") unmount_partition "${cmd[2]}";;
+          "rom") unmount_rom "${cmd[2]}";;
+          "image") unmount_image "${cmd[2]}";;
+          "folder") unmount_shared_folder "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "format")
+        case "${cmd[1]}" in
+          "disk") format_disk "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "eject")
+        case "${cmd[1]}" in
+          "disk") eject_disk "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "scan")
+        case "${cmd[1]}" in
+          "disk") scan_disk "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "create")
+        case "${cmd[1]}" in
+          "encrypted") create_encrypted "${cmd[2]}";;
+          "bootable") create_bootable "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      *) echo "Invalid or unknown command";; 
+    esac
+
+    if [[ $? -eq 1 ]]; then
+      echo "An unknown error has occurred"
+    fi
+  done
+
+  clear
+}
+
+loop
+

@@ -1,148 +1,9 @@
 #!/bin/bash
 
 set -o pipefail
+
 source /opt/stack/utils
-
-# Returns all the available controllers.
-# Arguments:
-#  None
-# Outputs:
-#  A json array of controller objects.
-find_controllers () {
-  bluetoothctl list | jc --bluetoothctl || return 1
-}
-
-# Returns the controller with the given address.
-# If no address is given the default controller
-# will be returned.
-# Arguments:
-#  address: the address of a controller
-# Outputs:
-#  A json object of a controller.
-find_controller () {
-  local address="${1}"
-
-  local controller=''
-  if [[ -n "${address}" ]]; then
-    controller="$(bluetoothctl show "${address}")" || return 1
-  else
-    controller="$(bluetoothctl show)" || return 1
-  fi
-
-  echo "${controller}" | jc --bluetoothctl || return 1
-}
-
-# Returns all the available devices filtered by the
-# optionally given status.
-# Arguments:
-#  status: paired, connected or trusted
-# Outputs:
-#  A json array of device objects.
-find_devices () {
-  local status="${1^}"
-
-  local devices=''
-  if [[ -n "${status}" ]]; then
-    devices="$(bluetoothctl devices "${status}")" || return 1
-  else
-    devices="$(bluetoothctl devices)" || return 1
-  fi
-
-  echo "${devices}" | jc --bluetoothctl || return 1
-}
-
-# Returns the device with the given address.
-# Arguments:
-#  address: the address of a device
-# Outputs:
-#  A json object of a device.
-find_device () {
-  local address="${1}"
-
-  bluetoothctl info "${address}" | jc --bluetoothctl || return 1
-}
-
-# Checks if the scanning mode of default controller
-# is set to on.
-# Argmuments:
-#  None
-# Returns:
-#  0 if scanning is on otherwise 1.
-is_scanning_on () {
-  local mode=''
-  mode="$(find_controller | jq -cer '.[0]|.discovering')" || return 1
-
-  if [[ "${mode}" == "yes" ]]; then
-    return 0
-  else
-    return 1
-  fi
-}
-
-# Shows a menu asking the user to select a controller,
-# where the answer is kept in the global var REPLY.
-# Arguments:
-#  None
-# Outputs:
-#  A menu of controllers.
-pick_controller () {
-  local query='{key: .address, value: "\(.address) [\(.name)]"}'
-  query="[.[]|${query}]"
-
-  local controllers=''
-  controllers="$(find_controllers | jq -cer "${query}")" || return 1
-
-  local len=0
-  len=$(count "${controllers}") || return 1
-
-  if [[ ${len} -eq 0 ]]; then
-    echo "No controllers have found"
-    return 2
-  fi
-  
-  pick_one "Select a controller:" "${controllers}" "vertical" || return $?
-}
-
-# Shows a menu asking the user to select a device,
-# where the answer is kept in the global var REPLY.
-# Arguments:
-#  None
-# Outputs:
-#  A menu of devices.
-pick_device () {
-  local query='{key: .address, value: "\(.address) [\(.name)]"}'
-  query="[.[]|${query}]"
-
-  local devices=''
-  devices="$(find_devices | jq -cer "${query}")" || return 1
-
-  local len=0
-  len=$(count "${devices}") || return 1
-
-  if [[ ${len} -eq 0 ]]; then
-    echo "No devices have found"
-    return 2
-  fi
-  
-  pick_one "Select a device:" "${devices}" "vertical" || return $?
-}
-
-# Shows a prompt status and asks user to enter the
-# next command, which is kept in the global var REPLY.
-# Arguments:
-#  None
-# Outputs:
-#  A minimal prompt status line.
-prompt () {
-  local status=''
-  status="$(find_controllers | jq -cer '.[]|select(.is_default == true)|.name')"
-
-  if [[ $? -ne 0 ]]; then
-    status="none"
-  fi
-
-  read -rep "[bluetooth:${status}] " REPLY
-}
+source /opt/stack/bluetooth/helpers
 
 # Shows the current status of bluetooth service
 # and connected devices.
@@ -384,7 +245,6 @@ set_controller () {
     return 2
   fi
 
-  sleep 2
   echo "Default controller set to ${address}"
 }
 
@@ -454,8 +314,6 @@ set_scan () {
   if [[ "${mode}" == "on" ]]; then
     bluetoothctl scan on &> /dev/null &
   fi
-
-  sleep 2
 
   if [[ "${mode}" == "on" ]] && ! is_scanning_on ; then
     echo "Failed to set scanning mode to on"
@@ -632,117 +490,6 @@ restart_bluetooth () {
     return 2
   fi
 
-  sleep 2
   echo "Bluetooth service has been restarted"
 }
 
-# Shows the help message.
-# Arguments:
-#  None
-# Outputs:
-#  A long help message.
-show_help () {
-  echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
-
-  echo -e "\nCOMMANDS"
-  printf " %-32s %s\n" \
-    "help" "Show this help message." \
-    "" "" \
-    "show status" "Show a report of the bluetooth service and devices." \
-    "show logs" "Show the last logs of the bluetooth service." \
-    "" "" \
-    "show controller [<address>]" "Show the data of a controller." \
-    "show device [<address>]" "Show the data of a device." \
-    "" "" \
-    "list controllers" "List the available controllers." \
-    "list devices [<status>]" "List the devices where status could be" \
-    "" "any of paired, connected, trusted or bonded." \
-    "" "" \
-    "set controller [<address>]" "Set the default controller." \
-    "set power <on|off>" "Set the default controller power to on or off." \
-    "set scan <on|off>" "Set scanning mode to on or off." \
-    "set discoverable <on|off>" "Set the default controller to be discoverable." \
-    "set pairable <on|off>" "Set the default controller to be pairable." \
-    "" "" \
-    "connect device [<address>]" "Connect a bluetooth device." \
-    "disconnect device [<address>]" "Disconnect a bluetooth device." \
-    "remove device [<address>]" "Removes a bluetooth device." \
-    "" "" \
-    "restart" "Restart the bluetooth service."
-}
-
-loop () {
-  clear
-
-  while true; do
-    prompt && history -s "${REPLY}"
-
-    set -f
-    set_separator "line"
-    local cmd=($(xargs -n1 <<< "${REPLY}"))
-    restore_separator && set +f
-
-    if [[ "${cmd[0]}" == "help" ]]; then
-      show_help
-      continue
-    elif [[ "${cmd[0]}" == "clear" ]]; then
-      clear
-      continue
-    elif [[ "${cmd[0]}" == "quit" ]]; then
-      break
-    elif [[ -z "${cmd[0]}" ]]; then
-      continue
-    fi
-
-    case "${cmd[0]}" in
-      "show")
-        case "${cmd[1]}" in
-          "status") show_status;;
-          "logs") show_logs;;
-          "controller") show_controller "${cmd[2]}";;
-          "device") show_device "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
-        esac;;
-      "list")
-        case "${cmd[1]}" in
-          "controllers") list_controllers;;
-          "devices") list_devices "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
-        esac;;
-      "set")
-        case "${cmd[1]}" in
-          "controller") set_controller "${cmd[2]}";;
-          "power") set_power "${cmd[2]}";;
-          "scan") set_scan "${cmd[2]}";;
-          "discoverable") set_discoverable "${cmd[2]}";;
-          "pairable") set_pairable "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
-        esac;;
-      "connect")
-        case "${cmd[1]}" in
-          "device") connect_device "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
-        esac;;
-      "disconnect")
-        case "${cmd[1]}" in
-          "device") disconnect_device "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
-        esac;;
-      "remove")
-        case "${cmd[1]}" in
-          "device") remove_device "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
-        esac;;
-      "restart") restart_bluetooth;;
-      *) echo "Invalid or unknown command";; 
-    esac
-    
-    if [[ $? -eq 1 ]]; then
-      echo "An unknown error has occurred"
-    fi
-  done
-
-  clear
-}
-
-loop

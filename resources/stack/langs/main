@@ -1,0 +1,106 @@
+#!/bin/bash
+
+set -o pipefail
+
+source /opt/stack/utils
+source /opt/stack/langs/commands
+
+# Shows the help message.
+# Arguments:
+#  None
+# Outputs:
+#  A long help message.
+show_help () {
+  echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
+
+  echo -e "\nCOMMANDS"
+  printf " %-35s %s\n" \
+    "help" "Show this help message." \
+    "" "" \
+    "show status" "Show the system locale and keyboard status." \
+    "" "" \
+    "set language [<language>]" "Set the system's language." \
+    "set keymap [<map>]" "Set the keyboard's virtual console keymap." \
+    "set options [<value>]" "Set a keyboard layout options." \
+    "set model [<name>]" "Set the model of the keyboard." \
+    "" "" \
+    "set locale <name> [<locale>]" "Set a locale variable, where name could be" \
+    "" "ctype, numeric, time, collate, monetary," \
+    "" "messages, paper, name, address, telephone," \
+    "" "measurement, identification." \
+    "add locale [<locale>]" "Add a locale to the system's locales." \
+    "remove locale [<locale>]" "Remove a locale from the system's locales." \
+    "" "" \
+    "add layout [<language>]" "Add a keyboard layout language." \
+    "remove layout [<language>]" "Remove a keyboard layout language." \
+    "order layouts" "Set the order of keyboard layouts."
+}
+
+loop () {
+  clear
+
+  while true; do
+    prompt "langs" && history -s "${REPLY}"
+
+    set -f
+    set_separator "line"
+    local cmd=($(xargs -n1 <<< "${REPLY}"))
+    restore_separator && set +f
+
+    if [[ "${cmd[0]}" == "help" ]]; then
+      show_help
+      continue
+    elif [[ "${cmd[0]}" == "clear" ]]; then
+      clear
+      continue
+    elif [[ "${cmd[0]}" == "quit" ]]; then
+      break
+    elif [[ -z "${cmd[0]}" ]]; then
+      continue
+    fi
+
+    case "${cmd[0]}" in
+      "show")
+        case "${cmd[1]}" in
+          "status") show_status;;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "set")
+        case "${cmd[1]}" in
+          "keymap") set_keymap "${cmd[2]}";;
+          "language") set_language "${cmd[2]}";;
+          "locale") set_locale "${cmd[2]}" "${cmd[3]}";;
+          "options") set_options "${cmd[2]}";;
+          "model") set_model "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "add")
+        case "${cmd[1]}" in
+          "locale") add_locale "${cmd[2]}";;
+          "layout") add_layout "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "remove")
+        case "${cmd[1]}" in
+          "locale") remove_locale "${cmd[2]}";;
+          "layout") remove_layout "${cmd[2]}";;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      "order")
+        case "${cmd[1]}" in
+          "layouts") order_layouts;;
+          *) echo "Invalid or unknown command";;
+        esac;;
+      *) echo "Invalid or unknown command";; 
+    esac
+
+    if [[ $? -eq 1 ]]; then
+      echo "An unknown error has occurred"
+    fi
+  done
+
+  clear
+}
+
+loop
+

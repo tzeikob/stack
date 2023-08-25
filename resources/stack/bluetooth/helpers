@@ -1,0 +1,130 @@
+#!/bin/bash
+
+set -o pipefail
+
+source /opt/stack/utils
+
+# Returns all the available controllers.
+# Arguments:
+#  None
+# Outputs:
+#  A json array of controller objects.
+find_controllers () {
+  bluetoothctl list | jc --bluetoothctl || return 1
+}
+
+# Returns the controller with the given address.
+# If no address is given the default controller
+# will be returned.
+# Arguments:
+#  address: the address of a controller
+# Outputs:
+#  A json object of a controller.
+find_controller () {
+  local address="${1}"
+
+  local controller=''
+  if [[ -n "${address}" ]]; then
+    controller="$(bluetoothctl show "${address}")" || return 1
+  else
+    controller="$(bluetoothctl show)" || return 1
+  fi
+
+  echo "${controller}" | jc --bluetoothctl || return 1
+}
+
+# Returns all the available devices filtered by the
+# optionally given status.
+# Arguments:
+#  status: paired, connected or trusted
+# Outputs:
+#  A json array of device objects.
+find_devices () {
+  local status="${1^}"
+
+  local devices=''
+  if [[ -n "${status}" ]]; then
+    devices="$(bluetoothctl devices "${status}")" || return 1
+  else
+    devices="$(bluetoothctl devices)" || return 1
+  fi
+
+  echo "${devices}" | jc --bluetoothctl || return 1
+}
+
+# Returns the device with the given address.
+# Arguments:
+#  address: the address of a device
+# Outputs:
+#  A json object of a device.
+find_device () {
+  local address="${1}"
+
+  bluetoothctl info "${address}" | jc --bluetoothctl || return 1
+}
+
+# Checks if the scanning mode of default controller
+# is set to on.
+# Argmuments:
+#  None
+# Returns:
+#  0 if scanning is on otherwise 1.
+is_scanning_on () {
+  local mode=''
+  mode="$(find_controller | jq -cer '.[0]|.discovering')" || return 1
+
+  if [[ "${mode}" == "yes" ]]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+# Shows a menu asking the user to select a controller,
+# where the answer is kept in the global var REPLY.
+# Arguments:
+#  None
+# Outputs:
+#  A menu of controllers.
+pick_controller () {
+  local query='{key: .address, value: "\(.address) [\(.name)]"}'
+  query="[.[]|${query}]"
+
+  local controllers=''
+  controllers="$(find_controllers | jq -cer "${query}")" || return 1
+
+  local len=0
+  len=$(count "${controllers}") || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No controllers have found"
+    return 2
+  fi
+  
+  pick_one "Select a controller:" "${controllers}" "vertical" || return $?
+}
+
+# Shows a menu asking the user to select a device,
+# where the answer is kept in the global var REPLY.
+# Arguments:
+#  None
+# Outputs:
+#  A menu of devices.
+pick_device () {
+  local query='{key: .address, value: "\(.address) [\(.name)]"}'
+  query="[.[]|${query}]"
+
+  local devices=''
+  devices="$(find_devices | jq -cer "${query}")" || return 1
+
+  local len=0
+  len=$(count "${devices}") || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No devices have found"
+    return 2
+  fi
+  
+  pick_one "Select a device:" "${devices}" "vertical" || return $?
+}
+

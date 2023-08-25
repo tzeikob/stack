@@ -1,0 +1,307 @@
+#!/bin/bash
+
+set -o pipefail
+
+source /opt/stack/utils
+
+# Returns a list of outputs having the given status.
+# Arguments:
+#  status: all, connected, disconnected,
+#          active, inactive, primary
+# Outputs:
+#  A json array of outputs.
+find_outputs () {
+  local status="${1:-"all"}"
+
+  local states='all|connected|disconnected|active|inactive|primary'
+  if [[ ! "${status}" =~ ^(${states})$ ]]; then
+    return 1
+  fi
+
+  local criteria='true'
+  if [[ "${status}" == "connected" ]]; then
+    criteria='.is_connected == true'
+  elif [[ "${status}" == "disconnected" ]]; then
+    criteria='.is_connected == false'
+  elif [[ "${status}" == "active" ]]; then
+    criteria='.is_connected == true and .resolution_width != null'
+  elif [[ "${status}" == "inactive" ]]; then
+    criteria='.is_connected == true and .resolution_width == null'
+  elif [[ "${status}" == "primary" ]]; then
+    criteria='.is_primary == true'
+  fi
+
+  local a=''
+  a+='.screens[]|select(.screen_number==0)'
+  a+=" |.associated_device|select(${criteria})"
+  a="[${a}]"
+
+  local b=''
+  b+=".unassociated_devices[]|select(${criteria})"
+  b="[${b}]"
+
+  local query="[${a}+${b}|to_entries[]|{index: .key} + .value]"
+
+  xrandr --props | jc --xrandr | jq -cer "${query}" || return 1
+}
+
+# Returns the output with the given name.
+# Arguments:
+#  name: any string
+# Outputs:
+#  A json object of output.
+find_output () {
+  local name="${1}"
+
+  local query=".[]|select(.device_name == \"${name}\")"
+
+  find_outputs "all" | jq -cer "${query}" || return 1
+}
+
+# Returns a unique hashed signature of the list of the given
+# outputs along with their connected devices if any. The signature
+# is expected to be consistent assuming that xrandr works
+# deterministically returning the outputs always in the exact
+# same order.
+# Arguments:
+#  outputs: a json array of outputs
+# Outputs:
+#  A hashed signature value.
+get_sig () {
+  local outputs="${1}"
+
+  local model=''
+  model+='if .model_name and .is_connected and .resolution_width'
+  model+=' then "_\(.model_name)_\(.product_id)_\(.serial_number)"'
+  model+=' else ""'
+  model+='end'
+
+  local query=''
+  query+="\"\(.device_name)\(${model})\""
+  query="[.[]|${query}]|join(\",\")"
+
+  local sig=''
+  sig="$(echo "${outputs}" | jq -cer "${query}")" || return 1
+
+  get_hash "${sig}" "6" || return 1
+}
+
+# Asserts if the given output is connected.
+# Arguments:
+#  output: a json object output
+# Returns:
+#  0 if is connected otherwise 1.
+is_connected () {
+  local output="${1}"
+
+  local query='select(.is_connected)'
+
+  echo "${output}" | jq -cer "${query}" &> /dev/null || return 1
+}
+
+# Asserts if the given output is active.
+# Arguments:
+#  output: a json object output
+# Returns:
+#  0 if is active otherwise 1.
+is_active () {
+  local output="${1}"
+
+  local query='select(.is_connected and .resolution_width)'
+
+  echo "${output}" | jq -cer "${query}" &> /dev/null || return 1
+}
+
+# Asserts if the given output is primary.
+# Arguments:
+#  output: a json object output
+# Returns:
+#  0 if is primary otherwise 1.
+is_primary () {
+  local output="${1}"
+
+  local query='select(.is_primary)'
+
+  echo "${output}" | jq -cer "${query}" &> /dev/null || return 1
+}
+
+# Asserts if an output supports the given resolution.
+# Arguments:
+#  output:     a json object of output
+#  resolution: an output resolution
+# Returns:
+#  0 if output supports the resolution otherwise 1.
+has_resolution () {
+  local output="${1}"
+  local resolution="${2}"
+
+  local query=''
+  query+='.associated_modes[]'
+  query+=' |"\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)" as $res'
+  query+=" |select(\$res == \"${resolution}\")"
+
+  echo "${output}" | jq -cer "${query}" &> /dev/null || return 1
+}
+
+# Asserts if an output at a resolution supports
+# the given refresh rate.
+# Arguments:
+#  output:     a json object of output
+#  resolution: an output resolution
+#  rate:       a refresh rate
+# Returns:
+#  0 if output supports the refresh rate otherwise 1.
+has_rate () {
+  local output="${1}"
+  local resolution="${2}"
+  local rate="${3}"
+
+  local query=''
+  query+='.associated_modes[]'
+  query+=' |"\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)" as $res'
+  query+=" |select(\$res == \"${resolution}\")"
+  query+=" |.frequencies[]|select(.frequency == ${rate})"
+
+  echo "${output}" | jq -cer "${query}" &> /dev/null || return 1
+}
+
+# Shows a menu asking the user to select one output, where the
+# answer is kept in the global var REPLY.
+# Arguments:
+#  prompt: a prompt text line
+#  status: all, connected, disconnected, active,
+#          inactive, primary
+# Outputs:
+#  A menu of output names.
+pick_output () {
+  local prompt="${1}"
+  local status="${2}"
+
+  # Convert outputs list into an array of {key, value} options
+  local key='\(.device_name)'
+  local value='\(.device_name):[\(if .model_name then .model_name else "NA" end)]'
+
+  local query="[.[]|{key: \"${key}\", value: \"${value}\"}]"
+
+  local options=''
+  options="$(find_outputs "${status}" | jq -cer "${query}")" || return 1
+
+  local len=0
+  len="$(count "${options}")" || return 1
+  
+  if [[ ${len} -eq 0 ]]; then
+    echo "No ${status:-\b} outputs have found"
+    return 2
+  fi
+
+  pick_one "${prompt}" "${options}" "vertical" || return $?
+}
+
+# Shows a menu asking the user to select many outputs,
+# where the answer is kept in the global var REPLY as
+# a JSON array of output names in selection order.
+# Arguments:
+#  prompt:  a prompt text line
+#  status:  all, connected, disconnected, active,
+#           inactive, primary
+#  size:    the number of items must be selected
+#  skip:    the name of output to except from selection
+# Outputs:
+#  A menu of output names.
+pick_outputs () {
+  local prompt="${1}"
+  local status="${2}"
+  local size="${3}"
+  local skip="${4}"
+
+  local except='select(true)'
+  [[ -n "${skip}" ]] && except="select(.device_name != \"${skip}\")"
+
+  # Convert outputs list into an array of {key, value} options
+  local key='\(.device_name)'
+  local value='\(.device_name) [\(if .model_name then .model_name else "NA" end)]'
+
+  local query="{key: \"${key}\", value: \"${value}\"}"
+  query="[.[]|${except}|${query}]"
+
+  local options=''
+  options="$(find_outputs "${status}" | jq -cer "${query}")" || return 1
+
+  local len=0
+  len="$(count "${options}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No ${status:-\b} outputs have found"
+    return 2
+  fi
+
+  pick_many "${prompt}" "${options}" "${size}" "vertical" || return $?
+}
+
+# Shows a menu of resolutions of the given output and waits
+# the user to pick one option. The selected option is kept
+# in the global var REPLY.
+# Arguments:
+#  output: a json object of output
+# Outputs:
+#  A menu of resolutions.
+pick_resolution () {
+  local output="${1}"
+
+  # Convert resolutions list into an array of {key, value} options
+  local query=''
+  query+='.associated_modes[]'
+  query+=' |"\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)" as $res'
+  query+=' |(reduce .frequencies[] as $i (""; if $i.is_preferred then . + "*" else . end)) as $pref'
+  query+=' |{key: "\($res)", value: "\($res)\($pref)"}'
+  query="[${query}]"
+
+  local options=''
+  options="$(echo "${output}" | jq -cer "${query}")" || return 1
+
+  local len=0
+  len="$(count "${options}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No resolutions have found"
+    return 2
+  fi
+
+  pick_one "Select a resolution:" "${options}" "vertical" || return $?
+}
+
+# Shows a menu of resolution rates of the given output and
+# waits the user to pick one option. The selected option is
+# kept in the global var REPLY.
+# Arguments:
+#  output: a json object of output
+# Outputs:
+#  A menu of resolution rates.
+pick_rate () {
+  local output="${1}"
+  local resolution="${2}"
+
+  # Convert rates list into an array of {key, value} options
+  local query=''
+  query+='.associated_modes[]'
+  query+=' |"\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)" as $res'
+  query+=" |select(\$res == \"${resolution}\")"
+  query+=' |.frequencies[]'
+  query+=' |"\(.frequency)" as $freq'
+  query+=' |"\(if .is_preferred then "*" else "" end)" as $pref'
+  query+=' |{key: "\($freq)", value: "\($freq)\($pref)"}'
+  query="[${query}]"
+
+  local options=''
+  options="$(echo "${output}" | jq -cer "${query}")" || return 1
+
+  local len=0
+  len="$(count "${options}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo "No refresh rates have found"
+    return 2
+  fi
+
+  pick_one "Select a refresh rate:" "${options}" "vertical" || return $?
+}

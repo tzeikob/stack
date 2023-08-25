@@ -1,0 +1,27 @@
+#!/bin/bash
+
+set -o pipefail
+
+source /opt/stack/utils
+
+# Finds the ac power adapter data.
+# Arguments:
+#  None
+# Outputs:
+#  A json object of ac power data.
+find_adapter () {
+  acpi -a | jc --acpi | jq -cer '.[0]' || return 1
+}
+
+# Finds the battery power data.
+# Arguments:
+#  None
+# Outputs:
+#  A json object of battery power data.
+find_battery () {
+  local query=''
+  query+='if length > 0 then .[0] else "" end'
+
+  acpi -b -i | jc --acpi | jq -cer "${query}" || return 1
+}
+
