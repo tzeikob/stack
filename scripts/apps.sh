@@ -353,7 +353,7 @@ install_irssi () {
   sudo pacman -S --noconfirm irssi || exit 1
 
   mkdir -p ~/.local/share/applications
-  cp ~/stack/resources/irssi/desktop ~/.local/share/applications/irssi.desktop
+  cp ~/stack/configs/irssi/desktop ~/.local/share/applications/irssi.desktop
 
   echo -e "Irssi clinet has been installed\n"
 }

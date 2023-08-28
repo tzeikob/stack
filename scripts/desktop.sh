@@ -18,7 +18,7 @@ install_compositor () {
   local CONFIG_HOME=~/.config/picom
   mkdir -p "$CONFIG_HOME"
 
-  cp ~/stack/resources/picom/picom.conf "$CONFIG_HOME"
+  cp ~/stack/configs/picom/picom.conf "$CONFIG_HOME"
 
   if [ "$VIRTUAL_VENDOR" = "oracle" ]; then
     echo "Virtual box machine detected"
@@ -42,13 +42,13 @@ install_window_manager () {
   local CONFIG_HOME=~/.config/bspwm
   mkdir -p "$CONFIG_HOME"
 
-  cp ~/stack/resources/bspwm/bspwmrc "$CONFIG_HOME"
+  cp ~/stack/configs/bspwm/bspwmrc "$CONFIG_HOME"
   chmod 755 "$CONFIG_HOME/bspwmrc"
 
-  cp ~/stack/resources/bspwm/rules "$CONFIG_HOME"
+  cp ~/stack/configs/bspwm/rules "$CONFIG_HOME"
   chmod 755 "$CONFIG_HOME/rules"
 
-  cp ~/stack/resources/bspwm/resize "$CONFIG_HOME"
+  cp ~/stack/configs/bspwm/resize "$CONFIG_HOME"
   chmod 755 "$CONFIG_HOME/resize"
 
   echo "exec bspwm" >> ~/.xinitrc
@@ -66,16 +66,16 @@ install_terminals () {
   echo "export TERMINAL=alacritty" >> ~/.bashrc
 
   mkdir -p ~/.config/alacritty
-  cp ~/stack/resources/alacritty/alacritty.yml ~/.config/alacritty
+  cp ~/stack/configs/alacritty/alacritty.yml ~/.config/alacritty
 
   sed -i '/PS1.*/d' ~/.bashrc
-  cat ~/stack/resources/alacritty/user.prompt >> ~/.bashrc
+  cat ~/stack/configs/alacritty/user.prompt >> ~/.bashrc
 
   sudo cp /etc/skel/.bash_profile /root
   sudo cp /etc/skel/.bashrc /root
 
   sudo sed -i '/PS1.*/d' /root/.bashrc
-  cat ~/stack/resources/alacritty/root.prompt | sudo tee -a /root/.bashrc > /dev/null
+  cat ~/stack/configs/alacritty/root.prompt | sudo tee -a /root/.bashrc > /dev/null
 
   echo "Terminal prompt hooks have been set"
 
@@ -98,7 +98,7 @@ install_file_manager () {
   local CONFIG_HOME=~/.config/nnn
   mkdir -p "$CONFIG_HOME"
 
-  cp ~/stack/resources/nnn/env "$CONFIG_HOME"
+  cp ~/stack/configs/nnn/env "$CONFIG_HOME"
 
   echo 'source "$HOME/.config/nnn/env"' >> ~/.bashrc
   echo 'alias N="sudo -E nnn -dH"' >> ~/.bashrc
@@ -117,7 +117,7 @@ install_file_manager () {
   echo "Extra plugins have been installed"
 
   mkdir -p ~/downloads ~/documents ~/images ~/audios ~/videos ~/virtuals ~/sources ~/data ~/mounts
-  cp ~/stack/resources/nnn/user.dirs ~/.config/user-dirs.dirs
+  cp ~/stack/configs/nnn/user.dirs ~/.config/user-dirs.dirs
 
   echo "User home directories have been created"
 
@@ -147,10 +147,10 @@ install_bars () {
   local CONFIG_HOME=~/.config/polybar
   mkdir -p "$CONFIG_HOME"
 
-  cp ~/stack/resources/polybar/config.ini "$CONFIG_HOME"
+  cp ~/stack/configs/polybar/config.ini "$CONFIG_HOME"
   chmod 644 "$CONFIG_HOME/config.ini"
 
-  cp ~/stack/resources/polybar/launch "$CONFIG_HOME"
+  cp ~/stack/configs/polybar/launch "$CONFIG_HOME"
   chmod 755 "$CONFIG_HOME/launch"
 
   echo "Polybar launcher script has been installed"
@@ -163,12 +163,12 @@ install_notifier () {
   sudo pacman -S --noconfirm dunst || exit 1
 
   mkdir -p ~/.config/dunst
-  cp ~/stack/resources/dunst/dunstrc ~/.config/dunst
-  cp ~/stack/resources/dunst/hook ~/.config/dunst
+  cp ~/stack/configs/dunst/dunstrc ~/.config/dunst
+  cp ~/stack/configs/dunst/hook ~/.config/dunst
 
   sudo mkdir -p /usr/share/sounds/dunst
-  sudo cp ~/stack/resources/dunst/normal.wav /usr/share/sounds/dunst
-  sudo cp ~/stack/resources/dunst/critical.wav /usr/share/sounds/dunst
+  sudo cp ~/stack/configs/dunst/normal.wav /usr/share/sounds/dunst
+  sudo cp ~/stack/configs/dunst/critical.wav /usr/share/sounds/dunst
 
   echo "Notifications server has been installed"
 }
@@ -181,10 +181,10 @@ install_launchers () {
   local CONFIG_HOME=~/.config/rofi
   mkdir -p "$CONFIG_HOME"
 
-  cp ~/stack/resources/rofi/config.rasi "$CONFIG_HOME"
+  cp ~/stack/configs/rofi/config.rasi "$CONFIG_HOME"
   chmod 644 "$CONFIG_HOME/config.rasi"
 
-  cp ~/stack/resources/rofi/launch "$CONFIG_HOME"
+  cp ~/stack/configs/rofi/launch "$CONFIG_HOME"
 
   echo "Launchers has been installed"
 }
@@ -197,11 +197,11 @@ install_login_screen () {
 
   sudo mv /etc/issue /etc/issue.bak
   mkdir -p ~/.config/getty
-  sudo cp ~/stack/resources/getty/update-issue ~/.config/getty
+  sudo cp ~/stack/configs/getty/update-issue ~/.config/getty
 
   echo "Welcome screen theme has been set"
 
-  sudo cp ~/stack/resources/getty/login-issue.service /etc/systemd/system
+  sudo cp ~/stack/configs/getty/login-issue.service /etc/systemd/system
   sudo systemctl enable login-issue || exit 1
 
   sudo sed -ri "s;(ExecStart=-/sbin/agetty)(.*);\1 --nohostname\2;" /lib/systemd/system/getty@.service
@@ -217,7 +217,7 @@ install_monitors () {
   sudo pacman -S --noconfirm htop glances || exit 1
 
   mkdir -p ~/.local/share/applications
-  cp ~/stack/resources/glances/desktop ~/.local/share/applications/glances.desktop
+  cp ~/stack/configs/glances/desktop ~/.local/share/applications/glances.desktop
 
   echo "Monitoring tools have been installed"
 }
@@ -227,7 +227,7 @@ install_break_timer () {
 
   yay -S --noconfirm --removemake breaktimer-bin || exit 1
 
-  cp ~/stack/resources/break/config.json ~/.config/BreakTimer/config.json
+  cp ~/stack/configs/break/config.json ~/.config/BreakTimer/config.json
 
   echo "Break timer tool has been installed"
 }
@@ -248,10 +248,10 @@ install_screenlocker () {
   cd "${prev_wd}"
   rm -rf ~/xsecurelock
 
-  sudo cp ~/stack/resources/xsecurelock/hook /usr/lib/systemd/system-sleep/locker
+  sudo cp ~/stack/configs/xsecurelock/hook /usr/lib/systemd/system-sleep/locker
 
   local user_id="$(id -u "${USERNAME}")"
-  sudo cp ~/stack/resources/xsecurelock/service /etc/systemd/system/lock@.service
+  sudo cp ~/stack/configs/xsecurelock/service /etc/systemd/system/lock@.service
   sudo sed -i "s/#USER_ID/${user_id}/g" /etc/systemd/system/lock@.service
   sudo systemctl enable lock@${USERNAME}.service
 
@@ -274,8 +274,8 @@ install_calculator () {
   yay -S --noconfirm --removemake libqalculate kalker || exit 1
 
   mkdir -p ~/.local/share/applications
-  cp ~/stack/resources/kalker/desktop ~/.local/share/applications/kalker.desktop
-  cp ~/stack/resources/qalculate/desktop ~/.local/share/applications/qalculate.desktop
+  cp ~/stack/configs/kalker/desktop ~/.local/share/applications/kalker.desktop
+  cp ~/stack/configs/qalculate/desktop ~/.local/share/applications/qalculate.desktop
 
   echo "Calculator has been installed"
 }
@@ -293,14 +293,14 @@ install_media_apps () {
   local CONFIG_HOME=~/.moc
   mkdir -p "$CONFIG_HOME" "$CONFIG_HOME/themes"
 
-  cp ~/stack/resources/moc/config "$CONFIG_HOME"
+  cp ~/stack/configs/moc/config "$CONFIG_HOME"
   chmod 644 "$CONFIG_HOME/config"
 
-  cp ~/stack/resources/moc/dark "$CONFIG_HOME/themes"
+  cp ~/stack/configs/moc/dark "$CONFIG_HOME/themes"
   chmod 644 "$CONFIG_HOME/themes/dark"
 
   mkdir -p ~/.local/share/applications
-  cp ~/stack/resources/moc/desktop ~/.local/share/applications/moc.desktop
+  cp ~/stack/configs/moc/desktop ~/.local/share/applications/moc.desktop
 
   printf '%s\n' \
     'image/jpeg=sxiv.desktop' \
@@ -359,11 +359,11 @@ install_theme () {
   local GTK_HOME=~/.config/gtk-3.0
   mkdir -p "$GTK_HOME"
 
-  cp ~/stack/resources/gtk/settings.ini "$GTK_HOME"
+  cp ~/stack/configs/gtk/settings.ini "$GTK_HOME"
 
   local WALLPAPERS=~/.local/share/wallpapers
   mkdir -p "$WALLPAPERS"
-  cp ~/stack/resources/feh/wallpaper.jpeg "$WALLPAPERS/default.jpeg"
+  cp ~/stack/configs/feh/wallpaper.jpeg "$WALLPAPERS/default.jpeg"
 
   local CONFIG_HOME=~/.config/stack
   mkdir -p "$CONFIG_HOME"
@@ -431,7 +431,7 @@ setup_bindings () {
   local CONFIG_HOME=~/.config/sxhkd
   mkdir -p "$CONFIG_HOME"
 
-  cp ~/stack/resources/sxhkd/sxhkdrc "$CONFIG_HOME"
+  cp ~/stack/configs/sxhkd/sxhkdrc "$CONFIG_HOME"
   chmod 644 "$CONFIG_HOME/sxhkdrc"
 
   echo "Key bindings have been set"
