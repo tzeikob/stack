@@ -360,14 +360,6 @@ install_utilities () {
   cp ~/stack/resources/stack/rules/91-init-tablets.rules "${rules_home}"
   cp ~/stack/resources/stack/rules/92-fix-layout.rules "${rules_home}"
 
-  local services_home="/home/${USERNAME}/.config/systemd/user"
-  mkdir -p "${services_home}"
-  cp ~/stack/resources/stack/services/init-pointer.service "${services_home}"
-  cp ~/stack/resources/stack/services/init-tablets.service "${services_home}"
-  cp ~/stack/resources/stack/services/fix-layout.service "${services_home}"
-  sed -i "s/#USER/${USERNAME}/g" "${services_home}/fix-layout.service"
-  chown -R "$USERNAME":"$USERNAME" "${services_home}"
-
   local logind_conf='/etc/systemd/logind.conf.d/00-main.conf'
   mkdir -p /etc/systemd/logind.conf.d
   cp /etc/systemd/logind.conf "${logind_conf}"
@@ -498,6 +490,16 @@ enable_services () {
   if [ "$VIRTUAL_VENDOR" = "oracle" ]; then
     systemctl enable vboxservice.service || exit 1
   fi
+  
+  local services_home="/home/${USERNAME}/.config/systemd/user"
+  mkdir -p "${services_home}"
+  
+  cp ~/stack/services/init-pointer.service "${services_home}"
+  cp ~/stack/services/init-tablets.service "${services_home}"
+  cp ~/stack/services/fix-layout.service "${services_home}"
+  
+  sed -i "s/#USER/${USERNAME}/g" "${services_home}/fix-layout.service"
+  chown -R "$USERNAME":"$USERNAME" "${services_home}"
 
   echo "System services have been enabled"
 }
