@@ -146,7 +146,7 @@ boost_builds () {
   fi
 }
 
-config_pacman () {
+configure_pacman () {
   echo -e "\nConfiguring the pacman package manager..."
 
   sed -i 's/^#ParallelDownloads/ParallelDownloads/' /etc/pacman.conf
@@ -290,71 +290,36 @@ install_drivers () {
   echo "Drivers have been installed"
 }
 
-install_utilities () {
-  echo -e "\nInstalling stack utility binaries..."
+install_tools () {
+  echo -e "\nInstalling system tools..."
 
   local STACK_HOME="/opt/stack"
-  mkdir -p "$STACK_HOME"
+  mkdir -p "${STACK_HOME}"
 
-  mkdir -p "${STAK_HOME}/displays"
-  cp ~/stack/resources/stack/displays/* "${STACK_HOME}/displays"
+  cp -r ~/stack/tools/* "${STACK_HOME}"
+
   ln -sf "${STACK_HOME}/displays/main" /usr/local/bin/displays
-
-  mkdir -p "${STACK_HOME}/desktop"
-  cp ~/stack/resources/stack/desktop/* "${STACK_HOME}/desktop"
   ln -sf "${STACK_HOME}/desktop/main" /usr/local/bin/desktop
-
-  mkdir -p "${STACK_HOME}/audio"
-  cp ~/stack/resources/stack/audio/* "${STACK_HOME}/audio"
   ln -sf "${STACK_HOME}/audio/main" /usr/local/bin/audio
-
-  mkdir -p "${STACK_HOME}/clock"
-  cp ~/stack/resources/stack/clock/* "${STACK_HOME}/clock"
   ln -sf "${STACK_HOME}/clock/main" /usr/local/bin/clock
-  
-  mkdir -p "${STACK_HOME}/cloud"
-  cp ~/stack/resources/stack/cloud/* "${STACK_HOME}/cloud"
   ln -sf "${STACK_HOME}/cloud/main" /usr/local/bin/cloud
-
-  mkdir -p "${STACK_HOME}/networks"
-  cp ~/stack/resources/stack/networks/* "${STACK_HOME}/networks"
   ln -sf "${STACK_HOME}/networks/main" /usr/local/bin/networks
-
-  mkdir -p "${STACK_HOME}/disks"
-  cp ~/stack/resources/stack/disks/* "${STACK_HOME}/disks"
   ln -sf "${STACK_HOME}/disks/main" /usr/local/bin/disks
-
-  mkdir -p "${STACK_HOME}/bluetooth"
-  cp ~/stack/resources/stack/bluetooth/* "${STACK_HOME}/bluetooth"
   ln -sf "${STACK_HOME}/bluetooth/main" /usr/local/bin/bluetooth
-
-  mkdir -p "${STACK_HOME}/langs"
-  cp ~/stack/resources/stack/langs/* "${STACK_HOME}/langs"
   ln -sf "${STACK_HOME}/langs/main" /usr/local/bin/langs
-
-  mkdir -p "${STACK_HOME}/notifications"
-  cp ~/stack/resources/stack/notifications/* "${STACK_HOME}/notifications"
   ln -sf "${STACK_HOME}/notifications/main" /usr/local/bin/notifications
-  
-  mkdir -p "${STACK_HOME}/power"
-  cp ~/stack/resources/stack/power/* "${STACK_HOME}/power"
   ln -sf "${STACK_HOME}/power/main" /usr/local/bin/power
-
-  mkdir -p "${STACK_HOME}/printers"
-  cp ~/stack/resources/stack/printers/* "${STACK_HOME}/printers"
   ln -sf "${STACK_HOME}/printers/main" /usr/local/bin/printers
-
-  mkdir -p "${STACK_HOME}/security"
-  cp ~/stack/resources/stack/security/* "${STACK_HOME}/security"
   ln -sf "${STACK_HOME}/security/main" /usr/local/bin/security
-
-  mkdir -p "${STACK_HOME}/trash"
-  cp ~/stack/resources/stack/trash/* "${STACK_HOME}/trash"
   ln -sf "${STACK_HOME}/trash/main" /usr/local/bin/trash
   ln -sf "${STACK_HOME}/trash/main" /usr/local/bin/tt
 
-  cp ~/stack/resources/stack/utils "$STACK_HOME"
+  echo "System tools have been installed"
+}
 
+configure_power () {
+  echo -e "\nConfiguring power settings..."
+  
   local logind_conf='/etc/systemd/logind.conf.d/00-main.conf'
   mkdir -p /etc/systemd/logind.conf.d
   cp /etc/systemd/logind.conf "${logind_conf}"
@@ -378,10 +343,10 @@ install_utilities () {
 
   rm -f /etc/tlp.d/00-template.conf
 
-  echo "Stack utilities have been installed"
+  echo "Power configurations have been set"
 }
 
-config_security () {
+configure_security () {
   echo -e "\nHardening system's security..."
 
   sed -i '/# Defaults maxseq = 1000/a Defaults badpass_message="Incorrect password"' /etc/sudoers
@@ -536,14 +501,15 @@ set_host &&
   set_timezone &&
   set_mirrors &&
   boost_builds &&
-  config_pacman &&
+  configure_pacman &&
   sync_packages &&
   install_packages &&
   install_aur &&
   install_display_server &&
   install_drivers &&
-  install_utilities &&
-  config_security &&
+  install_tools &&
+  configure_power &&
+  configure_security &&
   increase_watchers &&
   install_bootloader &&
   enable_services &&
