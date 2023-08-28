@@ -355,11 +355,6 @@ install_utilities () {
 
   cp ~/stack/resources/stack/utils "$STACK_HOME"
 
-  local rules_home='/etc/udev/rules.d'
-  cp ~/stack/resources/stack/rules/90-init-pointer.rules "${rules_home}"
-  cp ~/stack/resources/stack/rules/91-init-tablets.rules "${rules_home}"
-  cp ~/stack/resources/stack/rules/92-fix-layout.rules "${rules_home}"
-
   local logind_conf='/etc/systemd/logind.conf.d/00-main.conf'
   mkdir -p /etc/systemd/logind.conf.d
   cp /etc/systemd/logind.conf "${logind_conf}"
@@ -504,6 +499,17 @@ enable_services () {
   echo "System services have been enabled"
 }
 
+install_rules () {
+  echo -e "\nInstalling system rules..."
+
+  local rules_home='/etc/udev/rules.d'
+  cp ~/stack/rules/90-init-pointer.rules "${rules_home}"
+  cp ~/stack/rules/91-init-tablets.rules "${rules_home}"
+  cp ~/stack/rules/92-fix-layout.rules "${rules_home}"
+
+  echo "System rules have been installed"
+}
+
 copy_files () {
   echo "Start copying installation files..."
 
@@ -541,6 +547,7 @@ set_host &&
   increase_watchers &&
   install_bootloader &&
   enable_services &&
+  install_rules &&
   copy_files
 
 echo -e "\nSetting up the system has been completed"
