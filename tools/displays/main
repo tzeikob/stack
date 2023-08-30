@@ -138,6 +138,8 @@ loop () {
     if [[ $? -eq 1 ]]; then
       echo "An unknown error has occurred"
     fi
+
+    REPLY=''
   done
 
   clear
