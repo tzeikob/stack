@@ -177,7 +177,7 @@ set_user_password () {
   local password="${REPLY}"
 
   if ! authenticate_user "${password}"; then
-    echo 'Incorrect or invalid password'
+    echo 'Sorry incorrect password'
     return 2
   fi
 
@@ -230,16 +230,7 @@ set_faillock_attempts () {
     return 2
   fi
 
-  ask_secret "Enter current password:"
-  local password="${REPLY}"
-
-  if ! authenticate_user "${password}"; then
-    echo 'Incorrect or invalid password'
-    return 2
-  fi
-
-  echo "${password}" |
-    sudo --stdin sed -ri "s;deny =.*;deny = ${attempts};" /etc/security/faillock.conf
+  sudo sed -ri "s;deny =.*;deny = ${attempts};" /etc/security/faillock.conf
 
   if [[ $? -ne 0 ]]; then
     echo 'Unable to set faillock attempts'
@@ -267,16 +258,7 @@ set_faillock_unblock () {
     return 2
   fi
 
-  ask_secret "Enter current password:"
-  local password="${REPLY}"
-
-  if ! authenticate_user "${password}"; then
-    echo 'Incorrect or invalid password'
-    return 2
-  fi
-
-  echo "${password}" |
-    sudo --stdin sed -ri "s;unlock_time =.*;unlock_time = ${time};" /etc/security/faillock.conf
+  sudo sed -ri "s;unlock_time =.*;unlock_time = ${time};" /etc/security/faillock.conf
 
   if [[ $? -ne 0 ]]; then
     echo 'Unable to set faillock unblock time'
@@ -305,16 +287,7 @@ set_faillock_interval () {
     return 2
   fi
 
-  ask_secret "Enter current password:"
-  local password="${REPLY}"
-
-  if ! authenticate_user "${password}"; then
-    echo 'Incorrect or invalid password'
-    return 2
-  fi
-
-  echo "${password}" |
-    sudo --stdin sed -ri "s;fail_interval =.*;fail_interval = ${time};" /etc/security/faillock.conf
+  sudo sed -ri "s;fail_interval =.*;fail_interval = ${time};" /etc/security/faillock.conf
 
   if [[ $? -ne 0 ]]; then
     echo 'Unable to set faillock interval'
