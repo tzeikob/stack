@@ -65,7 +65,7 @@ loop () {
       "list")
         case "${cmd[1]}" in
           "remotes") list_remotes "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
+          *) echo 'Invalid or unknown command';;
         esac;;
       "sync")
         case "${cmd[1]}" in
@@ -73,30 +73,30 @@ loop () {
             case "${cmd[2]}" in
               "drive") sync_drive "${cmd[3]}";;
               "dropbox") sync_dropbox "${cmd[3]}";;
-              *) echo "Invalid or unknown service";;
+              *) echo 'Invalid or unknown service';;
             esac;;
-          *) echo "Invalid or unknown command";;
+          *) echo 'Invalid or unknown command';;
         esac;;
       "delete")
         case "${cmd[1]}" in
           "remote") delete_remote "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
+          *) echo 'Invalid or unknown command';;
         esac;;
       "mount")
         case "${cmd[1]}" in
           "remote") mount_remote "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
+          *) echo 'Invalid or unknown command';;
         esac;;
       "unmount")
         case "${cmd[1]}" in
           "remote") unmount_remote "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
+          *) echo 'Invalid or unknown command';;
         esac;;
-      *) echo "Unknown or invalid command";; 
+      *) echo 'Unknown or invalid command';; 
     esac
 
     if [[ $? -eq 1 ]]; then
-      echo "An unknown error has occurred"
+      echo 'An unknown error has occurred'
     fi
 
     REPLY=''

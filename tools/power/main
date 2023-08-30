@@ -74,7 +74,7 @@ loop () {
       "show")
         case "${cmd[1]}" in
           "status") show_status;;
-          *) echo "Invalid or unknown command";;
+          *) echo 'Invalid or unknown command';;
         esac;;
       "set")
         case "${cmd[1]}" in
@@ -82,18 +82,18 @@ loop () {
           "screensaver") set_screensaver "${cmd[2]}";;
           "tlp") set_tlp "${cmd[2]}";;
           "charge") set_charge "${cmd[2]}" "${cmd[3]}";;
-          *) echo "Invalid or unknown command";;
+          *) echo 'Invalid or unknown command';;
         esac;;
       "reset")
         case "${cmd[1]}" in
           "actions") reset_actions;;
-          *) echo "Invalid or unknown command";;
+          *) echo 'Invalid or unknown command';;
         esac;;
-      *) echo "Invalid or unknown command";; 
+      *) echo 'Invalid or unknown command';; 
     esac
     
     if [[ $? -eq 1 ]]; then
-      echo "An unknown error has occurred"
+      echo 'An unknown error has occurred'
     fi
 
     REPLY=''
@@ -108,13 +108,13 @@ once () {
     "init")
       case "${2}" in
         "screensaver") init_screensaver || abort;;
-        *) abort "Invalid or unknown command";;
+        *) abort 'Invalid or unknown command';;
       esac;;
     "shutdown") shutdown_system;;
     "reboot") reboot_system;;
     "suspend") suspend_system;;
     "blank") blank_screen;;
-    *) abort "Invalid or unknown command";;
+    *) abort 'Invalid or unknown command';;
   esac
 
   if [[ $? -ne 0 ]]; then

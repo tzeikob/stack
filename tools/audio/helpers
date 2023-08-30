@@ -16,14 +16,14 @@ label () {
 
   if [[ "${key}" == "type" ]]; then
     case "${value}" in
-      "sink") echo "output";;
-      "source") echo "input";;
+      sink) echo 'output';;
+      source) echo 'input';;
       *) echo "${value}";;
     esac
   elif [[ "${key}" == "mute" ]]; then
     case "${value}" in
-      "0") echo "unmute";;
-      "1") echo "mute";;
+      0) echo 'unmute';;
+      1) echo 'mute';;
       *) echo "${value}";;
     esac
   else
@@ -74,11 +74,11 @@ pick_card () {
   len=$(count "${cards}") || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No audio cards have found"
+    echo 'No audio cards have found'
     return 2
   fi
   
-  pick_one "${prompt}" "${cards}" "vertical" || return $?
+  pick_one "${prompt}" "${cards}" vertical || return $?
 }
 
 # Shows a menu asking the user to select a profile of the
@@ -103,11 +103,11 @@ pick_profile () {
   len="$(count "${profiles}")" || return 1
 
   if [[ ${len} == 0 ]]; then
-    echo "No audio profiles found"
+    echo 'No audio profiles found'
     return 2
   fi
   
-  pick_one "${prompt}" "${profiles}" "vertical" || return $?
+  pick_one "${prompt}" "${profiles}" vertical || return $?
 }
 
 # Shows a menu asking the user to select an audio module
@@ -133,10 +133,10 @@ pick_module () {
   len="$(count "${modules}")" || return 1
 
   if [[ ${len} == 0 ]]; then
-    echo "No $(label "type" "${type}") modules have found"
+    echo "No $(label type "${type}") modules have found"
     return 2
   fi
   
-  pick_one "${prompt}" "${modules}" "vertical" || return $?
+  pick_one "${prompt}" "${modules}" vertical || return $?
 }
 

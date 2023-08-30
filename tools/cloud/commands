@@ -20,7 +20,7 @@ list_remotes () {
   remotes="$(find_remotes | jq -cer "${query}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to read remotes"
+    echo 'Unable to read remotes'
     return 2
   fi
 
@@ -49,7 +49,7 @@ sync_drive () {
   local name="${1}"
 
   if [[ -z "${name}" ]]; then
-    echo "Missing the remote name"
+    echo 'Missing the remote name'
     return 2
   elif exists "${name}"; then
     echo "Remote ${name} already exists"
@@ -65,13 +65,13 @@ sync_drive () {
   ask "Enter the root folder ID (blank to skip):" || return $?
   local root_folder="${REPLY}"
 
-  echo "Go to browser and accept access permssions..."
+  echo 'Go to browser and accept access permssions...'
 
   rclone config create "${name}" drive scope=drive client_id="${client_id}" \
     client_secret="${client_secret}" root_folder_id="${root_folder}" &> /dev/null
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to sync drive remote"
+    echo 'Failed to sync drive remote'
     rclone config delete "${name}"
     return 2
   fi
@@ -86,7 +86,7 @@ sync_dropbox () {
   local name="${1}"
 
   if [[ -z "${name}" ]]; then
-    echo "Missing the remote name"
+    echo 'Missing the remote name'
     return 2
   elif exists "${name}"; then
     echo "Remote ${name} already exists"
@@ -105,7 +105,7 @@ sync_dropbox () {
     client_id="${app_key}" client_secret="${app_secret}" &> /dev/null
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to sync dropbox remote"
+    echo 'Failed to sync dropbox remote'
     rclone config delete "${name}"
     return 2
   fi
@@ -136,7 +136,7 @@ delete_remote () {
   rclone config delete "${name}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to delete remote"
+    echo 'Failed to delete remote'
     return 2
   fi
   
@@ -173,7 +173,7 @@ mount_remote () {
     --vfs-cache-max-size=150G --vfs-cache-max-age=12h --daemon
   
   if [[ $? -ne 0 ]]; then
-    echo "Failed to mount remote"
+    echo 'Failed to mount remote'
     find "${mount_folder}" -maxdepth 0 -empty -exec rm -rf {} \;
     return 2
   fi
@@ -211,7 +211,7 @@ unmount_remote () {
   fusermount -uz "${mount_point}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to unmount remote"
+    echo 'Failed to unmount remote'
     return 2
   fi
 
@@ -228,7 +228,7 @@ mount_all () {
   remotes="$(find_remotes)"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to read remotes"
+    echo 'Unable to read remotes'
     return 2
   fi
 
@@ -236,7 +236,7 @@ mount_all () {
   len="$(count "${remotes}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No remotes have been found"
+    echo 'No remotes have been found'
     return 2
   fi
 
@@ -258,10 +258,10 @@ mount_all () {
   done <<< "${remotes}"
 
   if [[ "${failed}" == "true" ]]; then
-    echo "Failed to mount all remotes"
+    echo 'Failed to mount all remotes'
     return 2
   fi
 
-  echo "All remotes have been mounted"
+  echo 'All remotes have been mounted'
 }
 

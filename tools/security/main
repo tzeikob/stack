@@ -70,7 +70,7 @@ loop () {
       "show")
         case "${cmd[1]}" in
           "status") show_status;;
-          *) echo "Invalid or unknown command";;
+          *) echo 'Invalid or unknown command';;
         esac;;
       "set")
         case "${cmd[1]}" in
@@ -79,13 +79,13 @@ loop () {
           "attempts") set_faillock_attempts "${cmd[2]}";;
           "unblock") set_faillock_unblock "${cmd[2]}";;
           "interval") set_faillock_interval "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
+          *) echo 'Invalid or unknown command';;
         esac;;
-      *) echo "Invalid or unknown command";; 
+      *) echo 'Invalid or unknown command';; 
     esac
     
     if [[ $? -eq 1 ]]; then
-      echo "An unknown error has occurred"
+      echo 'An unknown error has occurred'
     fi
 
     REPLY=''
@@ -96,7 +96,7 @@ loop () {
 
 once () {
   case "${1}" in
-    "help") show_help "once";;
+    "help") show_help once;;
     "init")
       case "${2}" in
         "locker") init_screen_locker || abort;;

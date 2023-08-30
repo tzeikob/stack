@@ -59,13 +59,13 @@ set_screen_locker () {
   local persist="${2:-"save"}"
 
   if [[ -z "${mins}" ]]; then
-    echo "Missing the interval time"
+    echo 'Missing the interval time'
     return 2
   elif [[ ! "${mins}" =~ ^[0-9]{,2}$ ]]; then
-    echo "Invalid interval time"
+    echo 'Invalid interval time'
     return 2
   elif [[ ${mins} -lt 0 ]] || [[ ${mins} -gt 60 ]]; then
-    echo "Interval time out of range [0,60]"
+    echo 'Interval time out of range [0,60]'
     return 2
   fi
 
@@ -77,7 +77,7 @@ set_screen_locker () {
     xautolock -locker 'security lock screen' -nowlocker 'security lock screen' -time "${mins}" -corners 0-00 -detectsleep &
     echo "Screen locker set to ${mins} mins"
   else
-    echo "Screen locker has been disabled"
+    echo 'Screen locker has been disabled'
   fi
 
   # Save locker interval into settings file
@@ -102,7 +102,7 @@ set_screen_locker () {
 #  None
 init_screen_locker () {
   if [[ ! -f "${SETTINGS_FILE}" ]]; then
-    echo "No locker settings found"
+    echo 'No locker settings found'
     return 0
   fi
 
@@ -110,7 +110,7 @@ init_screen_locker () {
   locker="$(jq '.locker|if . then . else empty end' "${SETTINGS_FILE}")"
 
   if [[ -z "${locker}" ]]; then
-    echo "No locker settings found"
+    echo 'No locker settings found'
     return 0
   fi
 
@@ -120,11 +120,11 @@ init_screen_locker () {
   set_screen_locker "${interval}" "nosave"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to set locker"
+    echo 'Failed to set locker'
     return 2
   fi
 
-  echo "Locker has been set"
+  echo 'Locker has been set'
 }
 
 # Locks the screen making sure notifications stream is muted
@@ -159,7 +159,7 @@ lock_screen () {
     xsecurelock >/dev/null 2>&1
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to lock the screen"
+    echo 'Unable to lock the screen'
     return 2
   fi
 
@@ -173,7 +173,7 @@ lock_screen () {
 # Arguments:
 #  None
 set_user_password () {
-  ask_secret "Enter current password:"
+  ask_secret 'Enter current password:'
   local password="${REPLY}"
 
   if ! authenticate_user "${password}"; then
@@ -181,7 +181,7 @@ set_user_password () {
     return 2
   fi
 
-  ask_secret "Enter new password:"
+  ask_secret 'Enter new password:'
   local new_password="${REPLY}"
 
   if ! confirm_secret "Retype new password:" "${new_password}"; then
@@ -193,11 +193,11 @@ set_user_password () {
     passwd --quiet >/dev/null 2>&1
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to set user password"
+    echo 'Unable to set user password'
     return 2
   fi
 
-  echo "User password has been set"
+  echo 'User password has been set'
 }
 
 # Logs the user out, terminating the current xorg session.
@@ -207,7 +207,7 @@ logout_user () {
   bspc quit
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to log the user out"
+    echo 'Unable to log the user out'
     return 2
   fi
 }
@@ -220,13 +220,13 @@ set_faillock_attempts () {
   local attempts="${1}"
 
   if [[ -z "${attempts}" ]]; then
-    echo "Missing the attempts value"
+    echo 'Missing the attempts value'
     return 2
   elif [[ ! "${attempts}" =~ ^[1-9][0-9]*$ ]]; then
-    echo "Invalid attempts value"
+    echo 'Invalid attempts value'
     return 2
   elif [[ ! ${attempts} -gt 0 ]]; then
-    echo "Attempts should be greater than 0"
+    echo 'Attempts should be greater than 0'
     return 2
   fi
 
@@ -248,13 +248,13 @@ set_faillock_unblock () {
   local time="${1}"
 
   if [[ -z "${time}" ]]; then
-    echo "Missing the unblock time value"
+    echo 'Missing the unblock time value'
     return 2
   elif [[ ! "${time}" =~ ^[1-9][0-9]*$ ]]; then
-    echo "Invalid unblock time value"
+    echo 'Invalid unblock time value'
     return 2
   elif [[ ! ${time} -gt 0 ]]; then
-    echo "Unblock time should be greater than 0"
+    echo 'Unblock time should be greater than 0'
     return 2
   fi
 
@@ -277,13 +277,13 @@ set_faillock_interval () {
   local time="${1}"
 
   if [[ -z "${time}" ]]; then
-    echo "Missing the interval value"
+    echo 'Missing the interval value'
     return 2
   elif [[ ! "${time}" =~ ^[1-9][0-9]*$ ]]; then
-    echo "Invalid interval value"
+    echo 'Invalid interval value'
     return 2
   elif [[ ! ${time} -gt 0 ]]; then
-    echo "Interval should be greater than 0"
+    echo 'Interval should be greater than 0'
     return 2
   fi
 

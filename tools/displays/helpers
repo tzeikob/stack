@@ -263,7 +263,7 @@ pick_resolution () {
   len="$(count "${options}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No resolutions have found"
+    echo 'No resolutions have found'
     return 2
   fi
 
@@ -299,7 +299,7 @@ pick_rate () {
   len="$(count "${options}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No refresh rates have found"
+    echo 'No refresh rates have found'
     return 2
   fi
 

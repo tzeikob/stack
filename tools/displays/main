@@ -88,14 +88,14 @@ loop () {
           "status") show_status;;
           "logs") show_logs "${cmd[2]}";;
           "output") show_output "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
+          *) echo 'Invalid or unknown command';;
         esac;;
       "list")
         case "${cmd[1]}" in
           "outputs") list_outputs "${cmd[2]}";;
           "colors") list_colors;;
           "layouts") list_layouts;;
-          *) echo "Invalid or unknown command";;
+          *) echo 'Invalid or unknown command';;
         esac;;
       "set")
         case "${cmd[1]}" in
@@ -105,38 +105,38 @@ loop () {
           "on") set_on "${cmd[2]}";;
           "off") set_off "${cmd[2]}";;
           "color") set_color "${cmd[2]}" "${cmd[3]}";;
-          *) echo "Invalid or unknown command";;
+          *) echo 'Invalid or unknown command';;
         esac;;
       "reset")
         case "${cmd[1]}" in
           "color") reset_color "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
+          *) echo 'Invalid or unknown command';;
         esac;;
       "save")
         case "${cmd[1]}" in
           "layout") save_layout;;
-          *) echo "Invalid or unknown command";;
+          *) echo 'Invalid or unknown command';;
         esac;;
       "delete")
         case "${cmd[1]}" in
           "layout") delete_layout "${cmd[2]}";;
           "color") delete_color "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
+          *) echo 'Invalid or unknown command';;
         esac;;
       "restore")
         case "${cmd[1]}" in
           "layout") restore_layout;;
           "colors") restore_colors;;
-          *) echo "Invalid or unknown command";;
+          *) echo 'Invalid or unknown command';;
         esac;;
       "rotate") rotate "${cmd[1]}" "${cmd[2]}";;
       "reflect") reflect "${cmd[1]}" "${cmd[2]}";;
       "mirror") mirror "${cmd[1]}";;
-      *) echo "Invalid or unknown command";;
+      *) echo 'Invalid or unknown command';;
     esac
 
     if [[ $? -eq 1 ]]; then
-      echo "An unknown error has occurred"
+      echo 'An unknown error has occurred'
     fi
 
     REPLY=''

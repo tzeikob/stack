@@ -238,7 +238,7 @@ pick_printer () {
   len="$(count "${destinations}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No printer have found"
+    echo 'No printer have found'
     return 2
   fi
 
@@ -278,7 +278,7 @@ pick_driver () {
   len="$(count "${drivers}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No drivers have found"
+    echo 'No drivers have found'
     return 2
   fi
 
@@ -302,7 +302,7 @@ pick_job () {
   len="$(count "${jobs}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No print jobs have found"
+    echo 'No print jobs have found'
     return 2
   fi
 

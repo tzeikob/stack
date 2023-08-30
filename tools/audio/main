@@ -12,60 +12,60 @@ source /opt/stack/audio/commands
 #  A long help message.
 show_help () {
   if [[ "${1}" == "once" ]]; then
-    echo "Usage: audio COMMAND [OBJECT] [ARGUMENTS]..."
+    echo 'Usage: audio COMMAND [OBJECT] [ARGUMENTS]...'
 
-    echo -e "\nCOMMANDS"
-    printf " %-12s %s\n" \
-      "help" "Show this help message." \
-      "" "" \
-      "set profile" "Set the active profile." \
-      "set output" "Set the active output." \
-      "" "" \
-      "up" "Increase the volume of active output." \
-      "down" "Decrease the volume of active output." \
-      "mute" "Mute the active output." \
-      "unmute" "Unmute the active output." \
-      "" "" \
-      "restart" "Restart the audio server."
+    echo -e '\nCOMMANDS'
+    printf ' %-12s %s\n' \
+      'help' 'Show this help message.' \
+      '' '' \
+      'set profile' 'Set the active profile.' \
+      'set output' 'Set the active output.' \
+      '' '' \
+      'up' 'Increase the volume of active output.' \
+      'down' 'Decrease the volume of active output.' \
+      'mute' 'Mute the active output.' \
+      'unmute' 'Unmute the active output.' \
+      '' '' \
+      'restart' 'Restart the audio server.'
 
     return 0
   fi
 
-  echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
+  echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
 
-  echo -e "\nCOMMANDS"
-  printf " %-32s %s\n" \
-    "help" "Show this help message." \
-    "" "" \
-    "show status" "Show a report of the system's audio." \
-    "show logs" "Show the last logs of the audio service." \
-    "show card [<index>]" "Show the data of a card." \
-    "" "" \
-    "list cards" "List all cards of the system." \
-    "list outputs" "List all outputs." \
-    "list inputs" "List all inputs." \
-    "list playbacks [<name>]" "List active playbacks by application name." \
-    "" "" \
-    "set profile [<card> [<name>]]" "Set the active profile of a card." \
-    "set output [<index>]" "Set the active output." \
-    "set input [<index>]" "Set the active input." \
-    "" "" \
-    "turn output|input <volume>" "Turn the volume of active output/input to," \
-    "" "up, down, mute, unmute or a percentage value." \
-    "mute outputs|inputs" "Mute all outputs or inputs." \
-    "unmute outputs|inputs" "Unmute all outputs or inputs." \
-    "" "" \
-    "restart" "Restart the audio server."
+  echo -e '\nCOMMANDS'
+  printf ' %-32s %s\n' \
+    'help' 'Show this help message.' \
+    '' '' \
+    'show status' 'Show a report of the system audio.' \
+    'show logs' 'Show the last logs of the audio service.' \
+    'show card [<index>]' 'Show the data of a card.' \
+    '' '' \
+    'list cards' 'List all cards of the system.' \
+    'list outputs' 'List all outputs.' \
+    'list inputs' 'List all inputs.' \
+    'list playbacks [<name>]' 'List active playbacks by application name.' \
+    '' '' \
+    'set profile [<card> [<name>]]' 'Set the active profile of a card.' \
+    'set output [<index>]' 'Set the active output.' \
+    'set input [<index>]' 'Set the active input.' \
+    '' '' \
+    'turn output|input <volume>' 'Turn the volume of active output/input to,' \
+    '' 'up, down, mute, unmute or a percentage value.' \
+    'mute outputs|inputs' 'Mute all outputs or inputs.' \
+    'unmute outputs|inputs' 'Unmute all outputs or inputs.' \
+    '' '' \
+    'restart' 'Restart the audio server.'
 }
 
 loop () {
   clear
 
   while true; do
-    prompt "audio" && history -s "${REPLY}"
+    prompt audio && history -s "${REPLY}"
 
     set -f
-    set_separator "line"
+    set_separator line
     local cmd=($(xargs -n1 <<< "${REPLY}"))
     restore_separator && set +f
 
@@ -82,52 +82,52 @@ loop () {
     fi
 
     case "${cmd[0]}" in
-      "show")
+      show)
         case "${cmd[1]}" in
-          "status") show_status;;
-          "logs") show_logs;;
-          "card") show_card "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
+          status) show_status;;
+          logs) show_logs;;
+          card) show_card "${cmd[2]}";;
+          *) echo 'Invalid or unknown command';;
         esac;;
-      "restart") restart;;
-      "list")
+      restart) restart;;
+      list)
         case "${cmd[1]}" in
-          "cards") list_cards;;
-          "outputs") list_ports "sink";;
-          "inputs") list_ports "source";;
-          "playbacks") list_playbacks "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
+          cards) list_cards;;
+          outputs) list_ports sink;;
+          inputs) list_ports source;;
+          playbacks) list_playbacks "${cmd[2]}";;
+          *) echo 'Invalid or unknown command';;
         esac;;
-      "set")
+      set)
         case "${cmd[1]}" in
-          "profile") set_profile "${cmd[2]}" "${cmd[3]}";;
-          "output") set_default "sink" "${cmd[2]}";;
-          "input") set_default "source" "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
+          profile) set_profile "${cmd[2]}" "${cmd[3]}";;
+          output) set_default sink "${cmd[2]}";;
+          input) set_default source "${cmd[2]}";;
+          *) echo 'Invalid or unknown command';;
         esac;;
-      "turn")
+      turn)
         case "${cmd[1]}" in
-          "output") turn_default "sink" "${cmd[2]}";;
-          "input") turn_default "source" "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
+          output) turn_default sink "${cmd[2]}";;
+          input) turn_default source "${cmd[2]}";;
+          *) echo 'Invalid or unknown command';;
         esac;;
-      "mute")
+      mute)
         case "${cmd[1]}" in
-          "outputs") set_mute "sink" "1";;
-          "inputs") set_mute "source" "1";;
-          *) echo "Invalid or unknown command";;
+          outputs) set_mute sink 1;;
+          inputs) set_mute source 1;;
+          *) echo 'Invalid or unknown command';;
         esac;;
-      "unmute")
+      unmute)
         case "${cmd[1]}" in
-          "outputs") set_mute "sink" "0";;
-          "inputs") set_mute "source" "0";;
-          *) echo "Invalid or unknown command";;
+          outputs) set_mute sink 0;;
+          inputs) set_mute source 0;;
+          *) echo 'Invalid or unknown command';;
         esac;;
-      *) echo "Invalid or unknown command";; 
+      *) echo 'Invalid or unknown command';; 
     esac
     
     if [[ $? -eq 1 ]]; then
-      echo "An unknown error has occurred"
+      echo 'An unknown error has occurred'
     fi
 
     REPLY=''
@@ -138,19 +138,19 @@ loop () {
 
 once () {
   case "${1}" in
-    "help") show_help "once";;
-    "restart") restart;;
-    "set")
+    help) show_help once;;
+    restart) restart;;
+    set)
       case "${2}" in
-        "profile") set_profile;;
-        "output") set_default "sink";;
-        *) abort "Invalid or unknown command";; 
+        profile) set_profile;;
+        output) set_default sink;;
+        *) abort 'Invalid or unknown command';; 
       esac;;
-    "mute") turn_default "sink" "mute";;
-    "unmute") turn_default "sink" "unmute";;
-    "up") turn_default "sink" "up";;
-    "down") turn_default "sink" "down";;
-    *) abort "Invalid or unknown command";; 
+    mute) turn_default sink mute;;
+    unmute) turn_default sink unmute;;
+    up) turn_default sink up;;
+    down) turn_default sink down;;
+    *) abort 'Invalid or unknown command';; 
   esac
 
   if [[ $? -ne 0 ]]; then
