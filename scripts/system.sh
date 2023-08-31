@@ -349,9 +349,9 @@ configure_power () {
 configure_security () {
   echo -e "\nHardening system's security..."
 
-  sed -i '/# Defaults maxseq = 1000/a Defaults badpass_message="Incorrect password"' /etc/sudoers
+  sed -i '/# Defaults maxseq = 1000/a Defaults badpass_message="Sorry incorrect password"' /etc/sudoers
   sed -i '/# Defaults maxseq = 1000/a Defaults passwd_timeout=0' /etc/sudoers
-  sed -i '/# Defaults maxseq = 1000/a Defaults passwd_tries=1' /etc/sudoers
+  sed -i '/# Defaults maxseq = 1000/a Defaults passwd_tries=2' /etc/sudoers
   sed -i '/# Defaults maxseq = 1000/a Defaults passprompt="Enter current password: "' /etc/sudoers
 
   echo "Sudo configuration has been done"
