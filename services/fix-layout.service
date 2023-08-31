@@ -6,7 +6,7 @@ Type=simple
 Environment=HOME=/home/#USER
 Environment=XAUTHORITY=/home/#USER/.Xauthority
 Environment=DISPLAY=:0
-ExecStart=/opt/stack/displays fix layout
+ExecStart=/usr/local/bin/displays fix layout
 
 [Install]
 WantedBy=default.target
