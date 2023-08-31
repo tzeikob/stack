@@ -11,43 +11,43 @@ source /opt/stack/printers/commands
 # Outputs:
 #  A long help message.
 show_help () {
-  echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
+  echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
 
-  echo -e "\nCOMMANDS"
-  printf " %-40s %s\n" \
-    "help" "Show this help message." \
-    "" "" \
-    "show status" "Show a report of cups service and printers." \
-    "show printer [<name>]" "Show the data of a printer." \
-    "" "" \
-    "list printers" "List all printers." \
-    "add printer <name> [<uri>]" "Add a new printer." \
-    "remove printer [<name>]" "Remove a printer." \
-    "" "" \
-    "set quality [<name> [600dpi|1200dpi]]" "Set the print quality of a printer." \
-    "set size [<name> [<size>]]" "Set the default page size of a printer." \
-    "set paper [<name> [<type>]]" "Set the paper type of a printer." \
-    "set toner [<name> [standard|save]]" "Set the toner mode of a printer." \
-    "set onerror [<name> [<policy>]]" "Set the on error policy of a printer." \
-    "set default [<name>]" "Set a printer as default print destination." \
-    "" "" \
-    "share printer [<name>]" "Share a printer to the local network." \
-    "unshare printer [<name>]" "Unshare a printer of the local network." \
-    "" "" \
-    "list jobs" "List all queued print jobs." \
-    "cancel job [<id>]" "Cancel a queued print job." \
-    "" "" \
-    "restart" "Restart the cups service."
+  echo -e '\nCOMMANDS'
+  printf ' %-40s %s\n' \
+    'help' 'Show this help message.' \
+    '' '' \
+    'show status' 'Show a report of cups service and printers.' \
+    'show printer [<name>]' 'Show the data of a printer.' \
+    '' '' \
+    'list printers' 'List all printers.' \
+    'add printer <name> [<uri>]' 'Add a new printer.' \
+    'remove printer [<name>]' 'Remove a printer.' \
+    '' '' \
+    'set quality [<name> [600dpi|1200dpi]]' 'Set the print quality of a printer.' \
+    'set size [<name> [<size>]]' 'Set the default page size of a printer.' \
+    'set paper [<name> [<type>]]' 'Set the paper type of a printer.' \
+    'set toner [<name> [standard|save]]' 'Set the toner mode of a printer.' \
+    'set onerror [<name> [<policy>]]' 'Set the on error policy of a printer.' \
+    'set default [<name>]' 'Set a printer as default print destination.' \
+    '' '' \
+    'share printer [<name>]' 'Share a printer to the local network.' \
+    'unshare printer [<name>]' 'Unshare a printer of the local network.' \
+    '' '' \
+    'list jobs' 'List all queued print jobs.' \
+    'cancel job [<id>]' 'Cancel a queued print job.' \
+    '' '' \
+    'restart' 'Restart the cups service.'
 }
 
 loop () {
   clear
 
   while true; do
-    prompt "printers" && history -s "${REPLY}"
+    prompt printers && history -s "${REPLY}"
 
     set -f
-    set_separator "line"
+    set_separator line
     local cmd=($(xargs -n1 <<< "${REPLY}"))
     restore_separator && set +f
 
@@ -64,59 +64,59 @@ loop () {
     fi
 
     case "${cmd[0]}" in
-      "show")
+      show)
         case "${cmd[1]}" in
-          "status") show_status;;
-          "printer") show_printer "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
+          status) show_status;;
+          printer) show_printer "${cmd[2]}";;
+          *) echo 'Invalid or unknown command';;
         esac;;
-      "list")
+      list)
         case "${cmd[1]}" in
-          "printers") list_printers;;
-          "jobs") list_jobs;;
-          *) echo "Invalid or unknown command";;
+          printers) list_printers;;
+          jobs) list_jobs;;
+          *) echo 'Invalid or unknown command';;
         esac;;
-      "add")
+      add)
         case "${cmd[1]}" in
-          "printer") add_printer "${cmd[2]}" "${cmd[3]}";;
-          *) echo "Invalid or unknown command";;
+          printer) add_printer "${cmd[2]}" "${cmd[3]}";;
+          *) echo 'Invalid or unknown command';;
         esac;;
-      "remove")
+      remove)
         case "${cmd[1]}" in
-          "printer") remove_printer "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
+          printer) remove_printer "${cmd[2]}";;
+          *) echo 'Invalid or unknown command';;
         esac;;
-      "share")
+      share)
         case "${cmd[1]}" in
-          "printer") share_printer "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
+          printer) share_printer "${cmd[2]}";;
+          *) echo 'Invalid or unknown command';;
         esac;;
-      "unshare")
+      unshare)
         case "${cmd[1]}" in
-          "printer") unshare_printer "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
+          printer) unshare_printer "${cmd[2]}";;
+          *) echo 'Invalid or unknown command';;
         esac;;
-      "set")
+      set)
         case "${cmd[1]}" in
-          "quality") set_option "${cmd[2]}" "Quality" "${cmd[3]}";;
-          "size") set_option "${cmd[2]}" "PageSize" "${cmd[3]}";;
-          "paper") set_option "${cmd[2]}" "MediaType" "${cmd[3]}";;
-          "toner") set_option "${cmd[2]}" "TonerSaveMode" "${cmd[3]}";;
-          "onerror") set_option "${cmd[2]}" "printer-error-policy" "${cmd[3]}";;
-          "default") set_default "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
+          quality) set_option "${cmd[2]}" 'Quality' "${cmd[3]}";;
+          size) set_option "${cmd[2]}" 'PageSize' "${cmd[3]}";;
+          paper) set_option "${cmd[2]}" 'MediaType' "${cmd[3]}";;
+          toner) set_option "${cmd[2]}" 'TonerSaveMode' "${cmd[3]}";;
+          onerror) set_option "${cmd[2]}" 'printer-error-policy' "${cmd[3]}";;
+          default) set_default "${cmd[2]}";;
+          *) echo 'Invalid or unknown command';;
         esac;;
-      "cancel")
+      cancel)
         case "${cmd[1]}" in
-          "job") cancel_job "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
+          job) cancel_job "${cmd[2]}";;
+          *) echo 'Invalid or unknown command';;
         esac;;
-      "restart") restart;;
-      *) echo "Invalid or unknown command";; 
+      restart) restart;;
+      *) echo 'Invalid or unknown command';; 
     esac
 
     if [[ $? -eq 1 ]]; then
-      echo "An unknown error has occurred"
+      echo 'An unknown error has occurred'
     fi
 
     REPLY=''

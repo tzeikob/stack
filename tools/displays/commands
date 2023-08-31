@@ -40,7 +40,7 @@ show_status () {
 
   local colors='[]'
   if [[ -f "${SETTINGS_FILE}" ]]; then
-    colors="$(jq -cr "if .colors then .colors else [] end" "${SETTINGS_FILE}")"
+    colors="$(jq -cr 'if .colors then .colors else [] end' "${SETTINGS_FILE}")"
   fi
 
   local rate=''
@@ -71,7 +71,7 @@ show_status () {
 
   query=".[]|${alias}|(\"\n${query}\")"
 
-  find_outputs "active" | jq -cer --argjson c "${colors}" "${query}"
+  find_outputs active | jq -cer --argjson c "${colors}" "${query}"
 
   if [[ $? -ne 0 ]]; then
     echo 'Unable to read active outputs'
@@ -116,13 +116,13 @@ show_output () {
   local name="${1}"
 
   if [[ -z "${name}" ]]; then
-    pick_output "Select an output:" "all" || return $?
+    pick_output 'Select an output:' all || return $?
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
 
   local colors='[]'
   if [[ -f "${SETTINGS_FILE}" ]]; then
-    colors="$(jq -cr "if .colors then .colors else [] end" "${SETTINGS_FILE}")"
+    colors="$(jq -cr 'if .colors then .colors else [] end' "${SETTINGS_FILE}")"
   fi
 
   local base=''
@@ -177,7 +177,7 @@ show_output () {
 
   query=".[]|${alias}|select(.device_name==\"${name}\")|(\"${query}\")"
 
-  find_outputs "all" | jq -cer --argjson c "${colors}" "${query}"
+  find_outputs all | jq -cer --argjson c "${colors}" "${query}"
 
   if [[ $? -ne 0 ]]; then
     echo "Unable to find output ${name}"
@@ -232,7 +232,7 @@ set_mode () {
   local rate="${3}"
 
   if [[ -z "${name}" ]]; then
-    pick_output "Select an output:" "active" || return $?
+    pick_output 'Select an output:' active || return $?
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
 
@@ -293,7 +293,7 @@ set_primary () {
   local name="${1}"
 
   if [[ -z "${name}" ]]; then
-    pick_output "Select an output:" "active" || return $?
+    pick_output 'Select an output:' active || return $?
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
 
@@ -331,7 +331,7 @@ set_on () {
   local name="${1}"
 
   if [[ -z "${name}" ]]; then
-    pick_output "Select an output:" "inactive" || return $?
+    pick_output 'Select an output:' inactive || return $?
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
 
@@ -355,7 +355,7 @@ set_on () {
   query+='|if length > 0 then last|.device_name else "" end'
   
   local last=''
-  last="$(find_outputs "all" | jq -cr "${query}")" || return 1
+  last="$(find_outputs all | jq -cr "${query}")" || return 1
 
   if [[ -n "${last}" ]]; then
     xrandr --output "${name}" --auto --right-of "${last}"
@@ -378,7 +378,7 @@ set_off () {
   local name="${1}"
 
   if [[ -z "${name}" ]]; then
-    pick_output "Select an output:" "active" || return $?
+    pick_output 'Select an output:' active || return $?
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
 
@@ -418,7 +418,7 @@ reflect () {
   local mode="${2}"
   
   if [[ -z "${name}" ]]; then
-    pick_output "Select an output:" "active" || return $?
+    pick_output 'Select an output:' active || return $?
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
 
@@ -444,7 +444,7 @@ reflect () {
     modes+='{"key": "xy", "value": "XY Axis"}'
     modes="[${modes}]"
 
-    pick_one "Select a reflection mode:" "${modes}" "horizontal" || return $?
+    pick_one 'Select a reflection mode:' "${modes}" horizontal || return $?
     [[ -n "${REPLY}" ]] && mode="${REPLY}" || return 0
   fi
   
@@ -472,7 +472,7 @@ rotate () {
   local mode="${2}"
 
   if [[ -z "${name}" ]]; then
-    pick_output "Select an output:" "active" || return $?
+    pick_output 'Select an output:' active || return $?
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
 
@@ -498,7 +498,7 @@ rotate () {
     modes+='{"key": "inverted", "value": "Inverted"}'
     modes="[${modes}]"
 
-    pick_one "Select a rotation mode:" "${modes}" "horizontal" || return $?
+    pick_one 'Select a rotation mode:' "${modes}" horizontal || return $?
     [[ -n "${REPLY}" ]] && mode="${REPLY}" || return 0
   fi
   
@@ -528,7 +528,7 @@ mirror () {
   local name="${1}"
 
   if [[ -z "${name}" ]]; then
-    pick_output "Select source output:" "active" || return $?
+    pick_output 'Select source output:' active || return $?
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
 
@@ -547,7 +547,7 @@ mirror () {
   fi
 
   local outputs=''
-  outputs="$(find_outputs "active")" || return 1
+  outputs="$(find_outputs active)" || return 1
 
   local len=0
   len="$(count "${outputs}")" || return 1
@@ -558,7 +558,7 @@ mirror () {
   fi
 
   local mirrors=''
-  pick_outputs "Select target outputs:" "active" "1," "${name}" || return $?
+  pick_outputs 'Select target outputs:' active '1,' "${name}" || return $?
   [[ -n "${REPLY}" ]] && mirrors="${REPLY}" || return 0
 
   # Find the common resolution modes among output and mirrors
@@ -584,7 +584,7 @@ mirror () {
   fi
 
   local mode=''
-  pick_one "Select the mirroring resolution:" "${modes}" "vertical" || return $?
+  pick_one 'Select the mirroring resolution:' "${modes}" vertical || return $?
   [[ -n "${REPLY}" ]] && mode="${REPLY}" || return 0
 
   # Have mirrors inherit the position and rotate/reflect of the source output
@@ -615,7 +615,7 @@ mirror () {
 #  None
 set_layout () {
   local outputs=''
-  outputs="$(find_outputs "active")"
+  outputs="$(find_outputs active)"
 
   if [[ $? -ne 0 ]]; then
     echo 'Unable to read active outputs'
@@ -657,7 +657,7 @@ set_layout () {
   fi
 
   local mode=''
-  pick_one "Select a layout mode:" "[${modes}]" "vertical" || return $?
+  pick_one 'Select a layout mode:' "[${modes}]" vertical || return $?
   [[ -n "$REPLY" ]] && mode="${REPLY}" || return 0
 
   local c=$'\e[30m\e[47m'
@@ -666,14 +666,14 @@ set_layout () {
 
   echo
   case "${mode}" in
-    "row-2")
+    row-2)
       echo -e "${c}       ${r}  ${c}       ${r}"
       echo -e "${c}  |1|  ${r}  ${c}  |2|  ${r}"
       echo -e "${c}       ${r}  ${c}       ${r}"
 
       query='--output \(.[1]) --right-of \(.[0])'
       ;;
-    "col-2")
+    col-2)
       echo -e "${c}       ${r}"
       echo -e "${c}  |1|  ${r}"
       echo -e "${c}       ${r}"
@@ -684,7 +684,7 @@ set_layout () {
 
       query='--output \(.[1]) --below \(.[0])'
       ;;
-    "row-3")
+    row-3)
       echo -e "${c}       ${r}   ${c}       ${r}   ${c}       ${r}"
       echo -e "${c}  |1|  ${r}   ${c}  |2|  ${r}   ${c}  |3|  ${r}"
       echo -e "${c}       ${r}   ${c}       ${r}   ${c}       ${r}"
@@ -692,7 +692,7 @@ set_layout () {
       query='--output \(.[1]) --right-of \(.[0]) '
       query+='--output \(.[2]) --right-of \(.[1])'
       ;;
-    "col-3")
+    col-3)
       echo -e "${c}       ${r}"
       echo -e "${c}  |1|  ${r}"
       echo -e "${c}       ${r}"
@@ -708,7 +708,7 @@ set_layout () {
       query='--output \(.[1]) --below \(.[0]) '
       query+='--output \(.[2]) --below \(.[1])'
       ;;
-    "gamma-3")
+    gamma-3)
       echo -e "${c}       ${r}   ${c}       ${r}"
       echo -e "${c}  |1|  ${r}   ${c}  |2|  ${r}"
       echo -e "${c}       ${r}   ${c}       ${r}"
@@ -720,7 +720,7 @@ set_layout () {
       query='--output \(.[1]) --right-of \(.[0]) '
       query+='--output \(.[2]) --below \(.[0])'
       ;;
-    "gamma-rev-3")
+    gamma-rev-3)
       echo -e "${c}       ${r}   ${c}       ${r}"
       echo -e "${c}  |1|  ${r}   ${c}  |2|  ${r}"
       echo -e "${c}       ${r}   ${c}       ${r}"
@@ -732,7 +732,7 @@ set_layout () {
       query='--output \(.[1]) --right-of \(.[0]) '
       query+='--output \(.[2]) --below \(.[1])'
       ;;
-    "lambda-3")
+    lambda-3)
       echo -e "${c}       ${r}"
       echo -e "${c}  |1|  ${r}"
       echo -e "${c}       ${r}"
@@ -744,7 +744,7 @@ set_layout () {
       query='--output \(.[1]) --below \(.[0]) '
       query+='--output \(.[2]) --right-of \(.[1])'
       ;;
-    "lambda-rev-3")
+    lambda-rev-3)
       echo -e "${r}       ${r}   ${c}       ${r}"
       echo -e "${r}       ${r}   ${c}  |1|  ${r}"
       echo -e "${r}       ${r}   ${c}       ${r}"
@@ -756,7 +756,7 @@ set_layout () {
       query='--output \(.[2]) --right-of \(.[1]) '
       query+='--output \(.[0]) --above \(.[2])'
       ;;
-    "grid-4")
+    grid-4)
       echo -e "${c}       ${r}   ${c}       ${r}"
       echo -e "${c}  |1|  ${r}   ${c}  |2|  ${r}"
       echo -e "${c}       ${r}   ${c}       ${r}"
@@ -769,7 +769,7 @@ set_layout () {
       query+='--output \(.[2]) --below \(.[0]) '
       query+='--output \(.[3]) --right-of \(.[2])'
       ;;
-    "taph-4")
+    taph-4)
       echo -e "${c}       ${r}   ${c}       ${r}   ${c}       ${r}"
       echo -e "${c}  |1|  ${r}   ${c}  |2|  ${r}   ${c}  |3|  ${r}"
       echo -e "${c}       ${r}   ${c}       ${r}   ${c}       ${r}"
@@ -782,7 +782,7 @@ set_layout () {
       query+='--output \(.[2]) --right-of \(.[1]) '
       query+='--output \(.[3]) --below \(.[1])'
       ;;
-    "taph-rev-4")
+    taph-rev-4)
       echo -e "${r}       ${r}   ${c}       ${r}"
       echo -e "${r}       ${r}   ${c}  |1|  ${r}"
       echo -e "${r}       ${r}   ${c}       ${r}"
@@ -795,7 +795,7 @@ set_layout () {
       query+='--output \(.[1]) --left-of \(.[2]) '
       query+='--output \(.[3]) --right-of \(.[2])'
       ;;
-    "taph-right-4")
+    taph-right-4)
       echo -e "${c}       ${r}"
       echo -e "${c}  |1|  ${r}"
       echo -e "${c}       ${r}"
@@ -812,7 +812,7 @@ set_layout () {
       query+='--output \(.[2]) --right-of \(.[1]) '
       query+='--output \(.[3]) --below \(.[1])'
       ;;
-    "taph-left-4")
+    taph-left-4)
       echo -e "${r}       ${r}   ${c}       ${r}"
       echo -e "${r}       ${r}   ${c}  |1|  ${r}"
       echo -e "${r}       ${r}   ${c}       ${r}"
@@ -837,7 +837,7 @@ set_layout () {
   echo
 
   local outputs=''
-  pick_outputs "Pick outputs by order:" "active" "all" || return $?
+  pick_outputs 'Pick outputs by order:' active all || return $?
   [[ -n "$REPLY" ]] && outputs="${REPLY}" || return 0
 
   local layout=''
@@ -860,7 +860,7 @@ set_layout () {
 #  None
 save_layout () {
   local outputs=''
-  outputs="$(find_outputs "all")"
+  outputs="$(find_outputs all)"
 
   if [[ $? -ne 0 ]]; then
     echo 'Unable to read outputs'
@@ -968,7 +968,7 @@ restore_layout () {
   fi
 
   local outputs=''
-  outputs="$(find_outputs "all")"
+  outputs="$(find_outputs all)"
 
   if [[ $? -ne 0 ]]; then
     echo 'Unable to read outputs'
@@ -1018,7 +1018,7 @@ restore_layout () {
 #  None
 fix_layout () {
   local outputs=''
-  outputs="$(find_outputs "all")"
+  outputs="$(find_outputs all)"
 
   if [[ $? -ne 0 ]]; then
     echo 'Unable to read outputs'
@@ -1112,7 +1112,7 @@ delete_layout () {
       return 2
     fi
 
-    pick_one "Select a layout setting:" "${layouts}" "vertical" || return $?
+    pick_one 'Select a layout setting:' "${layouts}" vertical || return $?
     [[ -n "${REPLY}" ]] && index="${REPLY}" || return 0
   fi
 
@@ -1191,7 +1191,7 @@ set_color () {
   local profile="${2}"
 
   if [[ -z "${name}" ]]; then
-    pick_output "Select an output:" "active" || return $?
+    pick_output 'Select an output:' active || return $?
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
   
@@ -1225,7 +1225,7 @@ set_color () {
       return 2
     fi
 
-    pick_one "Select a color profile:" "${profiles}" "vertical" || return $?
+    pick_one 'Select a color profile:' "${profiles}" vertical || return $?
     [[ -n "${REPLY}" ]] && profile="${REPLY}" || return 0
   fi
 
@@ -1304,7 +1304,7 @@ reset_color () {
   local name="${1}"
 
   if [[ -z "${name}" ]]; then
-    pick_output "Select an output:" "active" || return $?
+    pick_output 'Select an output:' active || return $?
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
 
@@ -1379,7 +1379,7 @@ delete_color () {
       return 2
     fi
 
-    pick_one "Select a color setting:" "${colors}" "vertical" || return $?
+    pick_one 'Select a color setting:' "${colors}" vertical || return $?
     [[ -n "${REPLY}" ]] && index="${REPLY}" || return 0
   fi
 
@@ -1466,7 +1466,7 @@ restore_colors () {
   fi
 
   local outputs=''
-  outputs="$(find_outputs "active")" || return 1
+  outputs="$(find_outputs active)" || return 1
 
   local xcalib_cmd=''
   xcalib_cmd+="\"xcalib -d ${DISPLAY} -s 0 -o \(.index) ${COLORS_HOME}/\(.profile)\""

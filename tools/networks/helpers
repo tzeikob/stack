@@ -95,7 +95,7 @@ find_connection () {
     query+='signal: .signal_level'
     query="if (.|length>0 and .[0].frequency) then .[0]|{${query}} else {} end"
 
-    if validate "device" "${device}" ; then
+    if validate device "${device}" ; then
       connection="$(iwconfig "${device}" 2> /dev/null | jc --iwconfig |
         jq -cer --argjson c "${connection}" "${query} + \$c")" || return 1
     fi
@@ -185,11 +185,11 @@ pick_device () {
   len="$(count "${devices}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No devices have found"
+    echo 'No devices have found'
     return 2
   fi
 
-  pick_one "Select a device:" "${devices}" "vertical" || return $?
+  pick_one 'Select a device:' "${devices}" vertical || return $?
 }
 
 # Shows a menu asking the user to select one connection,
@@ -209,11 +209,11 @@ pick_connection () {
   len="$(count "${connections}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No connections have found"
+    echo 'No connections have found'
     return 2
   fi
 
-  pick_one "Select a connection:" "${connections}" "vertical" || return $?
+  pick_one 'Select a connection:' "${connections}" vertical || return $?
 }
 
 # Shows a menu asking the user to select one proxy profile,
@@ -238,6 +238,6 @@ pick_proxy () {
     return 2
   fi
 
-  pick_one "Select a proxy profile:" "${proxies}" "vertical" || return $?
+  pick_one 'Select a proxy profile:' "${proxies}" vertical || return $?
 }
 

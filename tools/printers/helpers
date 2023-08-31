@@ -242,7 +242,7 @@ pick_printer () {
     return 2
   fi
 
-  pick_one "Select a printer:" "${destinations}" "vertical" || return $?
+  pick_one 'Select a printer:' "${destinations}" vertical || return $?
 }
 
 # Shows a menu asking the user to select one driver,
@@ -282,7 +282,7 @@ pick_driver () {
     return 2
   fi
 
-  pick_one "Select a driver:" "${drivers}" "vertical" || return $?
+  pick_one 'Select a driver:' "${drivers}" vertical || return $?
 }
 
 # Shows a menu asking the user to select one print job,
@@ -306,7 +306,7 @@ pick_job () {
     return 2
   fi
 
-  pick_one "Select a print job:" "${jobs}" "vertical" || return $?
+  pick_one 'Select a print job:' "${jobs}" vertical || return $?
 }
 
 # Shows a menu asking the user to select a quality option,
@@ -321,7 +321,7 @@ pick_quality () {
   values+='{"key": "1200dpi", "value": "High Resolution [1200dpi]"}'
   values="[${values}]"
 
-  pick_one "Select a quality:" "${values}" "vertical" || return $?
+  pick_one 'Select a quality:' "${values}" vertical || return $?
 }
 
 # Shows a menu asking the user to select a page size option,
@@ -348,7 +348,7 @@ pick_page_size () {
   values+='{"key": "PCard4x6", "value": "Post Card 4x6 [PCard4x6]"}'
   values="[${values}]"
 
-  pick_one "Select a page size:" "${values}" "vertical" || return $?
+  pick_one 'Select a page size:' "${values}" vertical || return $?
 }
 
 # Shows a menu asking the user to select a paper type option,
@@ -374,7 +374,7 @@ pick_paper_type () {
   values+='{"key": "Envelope", "value": "Envelope [Envelope]"}'
   values="[${values}]"
 
-  pick_one "Select a paper type:" "${values}" "vertical" || return $?
+  pick_one 'Select a paper type:' "${values}" vertical || return $?
 }
 
 # Shows a menu asking the user to select a toner mode option,
@@ -389,7 +389,7 @@ pick_toner_mode () {
   values+='{"key": "Standard", "value": "Standard"}'
   values="[${values}]"
 
-  pick_one "Select a toner mode:" "${values}" "vertical" || return $?
+  pick_one 'Select a toner mode:' "${values}" vertical || return $?
 }
 
 # Shows a menu asking the user to select a error policy option,
@@ -406,6 +406,6 @@ pick_error_policy () {
   values+='{"key": "stop-printer", "value": "Stop Printer [stop-printer]"}'
   values="[${values}]"
 
-  pick_one "Select an error policy:" "${values}" "vertical" || return $?
+  pick_one 'Select an error policy:' "${values}" vertical || return $?
 }
 

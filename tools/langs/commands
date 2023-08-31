@@ -48,19 +48,19 @@ set_keymap () {
     }')" || return 1
     maps="[${maps::-1}]"
 
-    pick_one "Select a keymap:" "${maps}" "vertical" || return $?
+    pick_one 'Select a keymap:' "${maps}" vertical || return $?
     [[ -n "${REPLY}" ]] && map="${REPLY}" || return 0
   fi
 
   if ! localectl --no-pager list-keymaps | grep -qE "^${map}$"; then
-    echo "Invalid keymap value"
+    echo 'Invalid keymap value'
     return 2
   fi
 
   localectl set-keymap --no-convert "${map}"
   
   if [[ $? -ne 0 ]]; then
-    echo "Failed to set keymap"
+    echo 'Failed to set keymap'
     return 2
   fi
 
@@ -80,25 +80,25 @@ set_language () {
     }')" || return 1
     languages="[${languages::-1}]"
 
-    pick_one "Select a language:" "${languages}" "vertical" || return $?
+    pick_one 'Select a language:' "${languages}" vertical || return $?
     [[ -n "${REPLY}" ]] && language="${REPLY}" || return 0
   fi
 
   if [[ ! "${language}" =~ ^[a-zA-Z0-9_.-]+$ ]]; then
-    echo "Invalid language value"
+    echo 'Invalid language value'
     return 2
   elif ! cat /etc/locale.gen | grep -qE "^#?${language} .*$"; then
-    echo "Invalid or unknown language"
+    echo 'Invalid or unknown language'
     return 2
   fi
 
   sudo sed -i "s/\(LANG=\).*/\1${language}/" /etc/locale.conf &&
    sudo sed -i "s/\(LANGUAGE=\).*/\1${language}:en:C/" /etc/locale.conf &&
-   unset "LANG" "LANGUAGE" &&
+   unset LANG LANGUAGE &&
    source /etc/profile.d/locale.sh
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to set language"
+    echo 'Failed to set language'
     return 2
   fi
 
@@ -119,7 +119,7 @@ set_locale () {
   properties+='NAME|ADDRESS|TELEPHONE|MEASUREMENT|IDENTIFICATION'
 
   if [[ ! "${name}" =~ (${properties}) ]]; then
-    echo "Invalid locale variable name"
+    echo 'Invalid locale variable name'
     return 2
   fi
   
@@ -130,15 +130,15 @@ set_locale () {
     }')" || return 1
     locales="[${locales::-1}]"
 
-    pick_one "Select a locale:" "${locales}" "vertical" || return $?
+    pick_one 'Select a locale:' "${locales}" vertical || return $?
     [[ -n "${REPLY}" ]] && locale="${REPLY}" || return 0
   fi
 
   if [[ ! "${locale}" =~ ^[a-zA-Z0-9_.-]+$ ]]; then
-    echo "Invalid locale value"
+    echo 'Invalid locale value'
     return 2
   elif ! cat /etc/locale.gen | grep -qE "^#?${locale} .*$"; then
-    echo "Invalid or unknown locale"
+    echo 'Invalid or unknown locale'
     return 2
   fi
 
@@ -147,7 +147,7 @@ set_locale () {
    source /etc/profile.d/locale.sh
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to set locale variable"
+    echo 'Failed to set locale variable'
     return 2
   fi
 
@@ -167,12 +167,12 @@ set_options () {
     }')" ||  return 1
     options="[${options::-1}]"
 
-    pick_one "Select an options value:" "${options}" "vertical" || return $?
+    pick_one 'Select an options value:' "${options}" vertical || return $?
     [[ -n "${REPLY}" ]] && value="${REPLY}" || return 0
   fi
   
   if ! localectl --no-pager list-x11-keymap-options | grep -qw "${value}"; then
-    echo "Invalid keyboard options value"
+    echo 'Invalid keyboard options value'
     return 2
   fi
 
@@ -184,11 +184,11 @@ set_options () {
   model="$(cat /etc/X11/xorg.conf.d/00-keyboard.conf |
     awk '/XkbModel/{print $3}' | tr -d '"')" || return 1
 
-  localectl --no-convert set-x11-keymap "${layouts}" "${model}" "" "${value}" &&
+  localectl --no-convert set-x11-keymap "${layouts}" "${model}" '' "${value}" &&
    setxkbmap -layout "${layouts}" -model "${model}" -option "${value}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to set keyboard options"
+    echo 'Failed to set keyboard options'
     return 2
   fi
 
@@ -208,12 +208,12 @@ set_model () {
     }')" || return 1
     models="[${models::-1}]"
 
-    pick_one "Select a model:" "${models}" "vertical" || return $?
+    pick_one 'Select a model:' "${models}" vertical || return $?
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
   
   if ! localectl --no-pager list-x11-keymap-models | grep -qw "${name}"; then
-    echo "Invalid keyboard model value"
+    echo 'Invalid keyboard model value'
     return 2
   fi
 
@@ -225,11 +225,11 @@ set_model () {
   options="$(cat /etc/X11/xorg.conf.d/00-keyboard.conf |
     awk '/XkbOptions/{print $3}' | tr -d '"')" || return 1
 
-  localectl --no-convert set-x11-keymap "${layouts}" "${name}" "" "${options}" &&
+  localectl --no-convert set-x11-keymap "${layouts}" "${name}" '' "${options}" &&
    setxkbmap -layout "${layouts}" -model "${value}" -option "${options}"
   
   if [[ $? -ne 0 ]]; then
-    echo "Failed to set keyboard model"
+    echo 'Failed to set keyboard model'
     return 2
   fi
 
@@ -250,18 +250,18 @@ add_locale () {
     }')" || return 1
     locales="[${locales::-1}]"
 
-    pick_one "Select a locale:" "${locales}" "vertical" || return $?
+    pick_one 'Select a locale:' "${locales}" vertical || return $?
     [[ -n "${REPLY}" ]] && locale="${REPLY}"  || return 0
   fi
 
   if [[ ! "${locale}" =~ ^[a-zA-Z[:blank:]0-9_.-]+$ ]]; then
-    echo "Malformed locale value"
+    echo 'Malformed locale value'
     return 2
   elif grep -qE "^\s*${locale}\s*$" /etc/locale.gen; then
     echo "Locale ${locale} is already added"
     return 2
   elif ! grep -qE "^\s*#\s*${locale}\s*$" /etc/locale.gen; then
-    echo "Invalid or unknown locale"
+    echo 'Invalid or unknown locale'
     return 2
   fi
 
@@ -269,7 +269,7 @@ add_locale () {
    sudo locale-gen
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to add locale"
+    echo 'Failed to add locale'
     return 2
   fi
 
@@ -289,21 +289,21 @@ remove_locale () {
     }')" || return 1
     locales="[${locales::-1}]"
 
-    pick_one "Select a locale:" "${locales}" "vertical" || return $?
+    pick_one 'Select a locale:' "${locales}" vertical || return $?
     [[ -n "${REPLY}" ]] && locale="${REPLY}" || return 0
   fi
 
   if [[ ! "${locale}" =~ ^[a-zA-Z[:blank:]0-9_.-]+$ ]]; then
-    echo "Malformed locale value"
+    echo 'Malformed locale value'
     return 2
   elif grep -qE "^\s*#\s*${locale}\s*$" /etc/locale.gen; then
     echo "Locale ${locale} is already removed"
     return 2
   elif ! grep -qE "^\s*${locale}\s*$" /etc/locale.gen; then
-    echo "Invalid or unknown locale"
+    echo 'Invalid or unknown locale'
     return 2
   elif [[ "${locale}" == "en_US.UTF-8 UTF-8" ]]; then
-    echo "Cannot remove the default locale"
+    echo 'Cannot remove the default locale'
     return 2
   fi
 
@@ -311,7 +311,7 @@ remove_locale () {
    sudo locale-gen
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to remove locale"
+    echo 'Failed to remove locale'
     return 2
   fi
 
@@ -331,15 +331,15 @@ add_layout () {
     }')" || return 1
     languages="[${languages::-1}]"
 
-    pick_one "Select a language:" "${languages}" "vertical" || return $?
+    pick_one 'Select a language:' "${languages}" vertical || return $?
     [[ -n "${REPLY}" ]] && language="${REPLY}" || return 0
   fi
 
   if [[ ! "${language}" =~ ^[a-z]{2,6}$ ]]; then
-    echo "Invalid language value"
+    echo 'Invalid language value'
     return 2
   elif ! localectl --no-pager list-x11-keymap-layouts | grep -qw "${language}"; then
-    echo "Invalid or unknown language"
+    echo 'Invalid or unknown language'
     return 2
   fi
 
@@ -353,7 +353,7 @@ add_layout () {
   fi
 
   if [[ -n "${layouts}" ]]; then
-    confirm "Want to set it as default?" || return $?
+    confirm 'Want to set it as default?' || return $?
     [[ -z "${REPLY}" ]] && return 0
 
     if [[ "${REPLY}" == "yes" ]]; then
@@ -373,11 +373,11 @@ add_layout () {
   options="$(cat /etc/X11/xorg.conf.d/00-keyboard.conf |
     awk '/XkbOptions/{print $3}' | tr -d '"')" || return 1
 
-  localectl --no-convert set-x11-keymap "${layouts}" "${model}" "" "${options}" &&
+  localectl --no-convert set-x11-keymap "${layouts}" "${model}" '' "${options}" &&
    setxkbmap -layout "${layouts}" -model "${model}" -option "${options}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to add layout"
+    echo 'Failed to add layout'
     return 2
   fi
 
@@ -395,7 +395,7 @@ remove_layout () {
     awk '/XkbLayout/{print $3}' | tr -d '"')" || return 1
 
   if [[ -z "${layouts}" ]]; then
-    echo "No keyboard layouts have set yet"
+    echo 'No keyboard layouts have set yet'
     return 0
   fi
 
@@ -406,21 +406,21 @@ remove_layout () {
     }')" || return 1
     languages="[${languages::-1}]"
 
-    pick_one "Select a language:" "${languages}" "horizontal" || return $?
+    pick_one 'Select a language:' "${languages}" horizontal || return $?
     [[ -n "${REPLY}" ]] && language="${REPLY}" || return 0
   fi
 
   if [[ ! "${language}" =~ ^[a-z]{2,6}$ ]]; then
-    echo "Invalid language value"
+    echo 'Invalid language value'
     return 2
   elif ! localectl --no-pager list-x11-keymap-layouts | grep -qw "${language}"; then
-    echo "Invalid or unknown language"
+    echo 'Invalid or unknown language'
     return 2
   elif [[ "${language}" == "us" ]]; then
-    echo "Cannot remove the default layout"
+    echo 'Cannot remove the default layout'
     return 2
   elif [[ "${layouts}" == "${language}" ]]; then
-    echo "Cannot remove the only keyboard layout"
+    echo 'Cannot remove the only keyboard layout'
     return 2
   elif [[ ! "${layouts}" =~ "${language}" ]]; then
     echo "Layout ${language} not found in layouts"
@@ -441,11 +441,11 @@ remove_layout () {
   options="$(cat /etc/X11/xorg.conf.d/00-keyboard.conf |
     awk '/XkbOptions/{print $3}' | tr -d '"')" || return 1
 
-  localectl --no-convert set-x11-keymap "${layouts}" "${model}" "" "${options}" &&
+  localectl --no-convert set-x11-keymap "${layouts}" "${model}" '' "${options}" &&
    setxkbmap -layout "${layouts}" -model "${model}" -option "${options}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to remove layout"
+    echo 'Failed to remove layout'
     return 2
   fi
 
@@ -472,14 +472,14 @@ order_layouts () {
   len="$(count "${layouts}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No keyboard layouts have set yet"
+    echo 'No keyboard layouts have set yet'
     return 0
   elif [[ ${len} -eq 1 ]]; then
-    echo "Only one layout has found"
+    echo 'Only one layout has found'
     return 0
   fi
 
-  pick_many "Pick layouts by order:" "${layouts}" "all" "horizontal" || return $?
+  pick_many 'Pick layouts by order:' "${layouts}" all horizontal || return $?
   [[ -z "${REPLY}" ]] && return 0
 
   local ordered=''
@@ -493,11 +493,11 @@ order_layouts () {
   options="$(cat /etc/X11/xorg.conf.d/00-keyboard.conf |
     awk '/XkbOptions/{print $3}' | tr -d '"')" || return 1
 
-  localectl --no-convert set-x11-keymap "${ordered}" "${model}" "" "${options}" &&
+  localectl --no-convert set-x11-keymap "${ordered}" "${model}" '' "${options}" &&
    setxkbmap -layout "${ordered}" -model "${model}" -option "${options}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to set layouts order"
+    echo 'Failed to set layouts order'
     return 2
   fi
 

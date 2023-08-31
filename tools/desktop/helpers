@@ -58,7 +58,7 @@ pick_wallpaper () {
   wallpapers="$(find_wallpapers | jq -cer "${query}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find wallpaper files"
+    echo 'Unable to find wallpaper files'
     return 2
   fi
 
@@ -66,11 +66,11 @@ pick_wallpaper () {
   len="$(count "${wallpapers}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No wallpaper files have found"
+    echo 'No wallpaper files have found'
     return 2
   fi
 
-  pick_one "Select a wallpaper:" "${wallpapers}" "vertical" || return $?
+  pick_one 'Select a wallpaper:' "${wallpapers}" vertical || return $?
 }
 
 # Returns the list of pointing devices currently
@@ -174,7 +174,7 @@ pick_pointer () {
   pointers="$(find_pointers)"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find pointers"
+    echo 'Unable to find pointers'
     return 2
   fi
 
@@ -182,14 +182,14 @@ pick_pointer () {
   len="$(count "${pointers}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No pointers have found"
+    echo 'No pointers have found'
     return 2
   fi
 
   local query='[.[]|{key: .id, value: "\(.id):\(.name)"}]'
   pointers="$(echo "${pointers}" | jq -cer "${query}")" || return 1
 
-  pick_one "Select a pointer:" "${pointers}" "vertical" || return $?
+  pick_one 'Select a pointer:' "${pointers}" vertical || return $?
 }
 
 # Returns the list of stylus-pen devices currently
@@ -312,7 +312,7 @@ pick_tablet () {
   tablets="$(find_tablets)"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find tablets"
+    echo 'Unable to find tablets'
     return 2
   fi
 
@@ -320,13 +320,13 @@ pick_tablet () {
   len="$(count "${tablets}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No tablets have found"
+    echo 'No tablets have found'
     return 2
   fi
 
   local query='[.[]|{key: .name, value: .name}]'
   tablets="$(echo "${tablets}" | jq -cer "${query}")" || return 1
 
-  pick_one "Select a tablet:" "${tablets}" "vertical" || return $?
+  pick_one 'Select a tablet:' "${tablets}" vertical || return $?
 }
 

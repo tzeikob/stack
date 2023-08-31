@@ -12,61 +12,59 @@ source /opt/stack/displays/commands
 #  A long help message.
 show_help () {
   if [[ "${1}" == "once" ]]; then
-    echo "Usage: displays COMMAND [OBJECT] [ARGUMENTS]..."
+    echo 'Usage: displays COMMAND [OBJECT] [ARGUMENTS]...'
 
-    echo -e "\nCOMMANDS"
-    printf " %-16s %s\n" \
-      "help" "Show this help message." \
-      "" "" \
-      "restore colors" "Restore colors to currently active displays." \
-      "restore layout" "Restore the layout matching the current mapping." \
-      "fix layout" "Fix the positioning of the current layout."
+    echo -e '\nCOMMANDS'    printf ' %-16s %s\n' \
+      'help' 'Show this help message.' \
+      '' '' \
+      'restore colors' 'Restore colors to currently active displays.' \
+      'restore layout' 'Restore the layout matching the current mapping.' \
+      'fix layout' 'Fix the positioning of the current layout.'
 
     return 0
   fi
 
-  echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
+  echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
 
-  echo -e "\nCOMMANDS"
-  printf " %-44s %s\n" \
-    "help" "Show this help message." \
-    "" "" \
-    "show status" "Show a report of the Xorg server and active outputs." \
-    "show logs [<lines>]" "Show the last logs of the Xorg server." \
-    "" "" \
-    "list outputs [<status>]" "List outputs by their status," \
-    "" "all, connected, disconnected, active, inactive, primary." \
-    "show output [<name>]" "Show the data of an output." \
-    "" "" \
-    "set mode [<output> [<resolution> [<rate>]]]" "Set the mode of an output." \
-    "set primary [<output>]" "Set an output as primary." \
-    "set on|off [<output>]" "Activate or de-activate an output." \
-    "rotate [<output> [<mode>]]" "Rotate an output's view to normal, right, left or inverted." \
-    "reflect [<output> [<mode>]]" "Reflect an output's view to normal, x, y or xy." \
-    "mirror [<output>]" "Mirror an output to other outputs." \
-    "" "" \
-    "set layout [mode]" "Set the layout of active outputs to row-2, col-2, row-3," \
-    "" "col-3, gamma-3, gamma-rev-3, lambda-3 or lambda-rev-3." \
-    "save layout" "Save the current layout of active outputs." \
-    "list layouts" "List all layout settings." \
-    "delete layout [<index>]" "Delete a layout setting." \
-    "restore layout" "Restore the layout matching the current mapping." \
-    "" "" \
-    "set color [<output> [<profile>]]" "Set color profile of a display connected to an output." \
-    "reset color [<output>]" "Reset color profile of a display connected to an output." \
-    "list colors" "List all color settings per display." \
-    "delete color [<index>]" "Delete a color setting." \
-    "restore colors" "Restore colors to currently active displays."
+  echo -e '\nCOMMANDS'  printf ' %-44s %s\n' \
+    'help' 'Show this help message.' \
+    '' '' \
+    'show status' 'Show a report of the Xorg server and active outputs.' \
+    'show logs [<lines>]' 'Show the last logs of the Xorg server.' \
+    '' '' \
+    'list outputs [<status>]' 'List outputs by their status,' \
+    '' 'all, connected, disconnected, active, inactive, primary.' \
+    'show output [<name>]' 'Show the data of an output.' \
+    '' '' \
+    'set mode [<output> [<resolution> [<rate>]]]' 'Set the mode of an output.' \
+    'set primary [<output>]' 'Set an output as primary.' \
+    'set on|off [<output>]' 'Activate or de-activate an output.' \
+    'rotate [<output> [<mode>]]' 'Rotate an output view to normal, right, left or inverted.' \
+    'reflect [<output> [<mode>]]' 'Reflect an output view to normal, x, y or xy.' \
+    'mirror [<output>]' 'Mirror an output to other outputs.' \
+    '' '' \
+    'set layout [mode]' 'Set the layout of active outputs to row-2, col-2, row-3,' \
+    '' 'col-3, gamma-3, gamma-rev-3, lambda-3 or lambda-rev-3.' \
+    'save layout' 'Save the current layout of active outputs.' \
+    'list layouts' 'List all layout settings.' \
+    'delete layout [<index>]' 'Delete a layout setting.' \
+    'restore layout' 'Restore the layout matching the current mapping.' \
+    '' '' \
+    'set color [<output> [<profile>]]' 'Set color profile of a display connected to an output.' \
+    'reset color [<output>]' 'Reset color profile of a display connected to an output.' \
+    'list colors' 'List all color settings per display.' \
+    'delete color [<index>]' 'Delete a color setting.' \
+    'restore colors' 'Restore colors to currently active displays.'
 }
 
 loop () {
   clear
 
   while true; do
-    prompt "displays" && history -s "${REPLY}"
+    prompt displays && history -s "${REPLY}"
 
     set -f
-    set_separator "line"
+    set_separator line
     local cmd=($(xargs -n1 <<< "${REPLY}"))
     restore_separator && set +f
 
@@ -83,55 +81,55 @@ loop () {
     fi
 
     case "${cmd[0]}" in
-      "show")
+      show)
         case "${cmd[1]}" in
-          "status") show_status;;
-          "logs") show_logs "${cmd[2]}";;
-          "output") show_output "${cmd[2]}";;
+          status) show_status;;
+          logs) show_logs "${cmd[2]}";;
+          output) show_output "${cmd[2]}";;
           *) echo 'Invalid or unknown command';;
         esac;;
-      "list")
+      list)
         case "${cmd[1]}" in
-          "outputs") list_outputs "${cmd[2]}";;
-          "colors") list_colors;;
-          "layouts") list_layouts;;
+          outputs) list_outputs "${cmd[2]}";;
+          colors) list_colors;;
+          layouts) list_layouts;;
           *) echo 'Invalid or unknown command';;
         esac;;
-      "set")
+      set)
         case "${cmd[1]}" in
-          "layout") set_layout;;
-          "mode") set_mode "${cmd[2]}" "${cmd[3]}" "${cmd[4]}";;
-          "primary") set_primary "${cmd[2]}";;
-          "on") set_on "${cmd[2]}";;
-          "off") set_off "${cmd[2]}";;
-          "color") set_color "${cmd[2]}" "${cmd[3]}";;
+          layout) set_layout;;
+          mode) set_mode "${cmd[2]}" "${cmd[3]}" "${cmd[4]}";;
+          primary) set_primary "${cmd[2]}";;
+          on) set_on "${cmd[2]}";;
+          off) set_off "${cmd[2]}";;
+          color) set_color "${cmd[2]}" "${cmd[3]}";;
           *) echo 'Invalid or unknown command';;
         esac;;
-      "reset")
+      reset)
         case "${cmd[1]}" in
-          "color") reset_color "${cmd[2]}";;
+          color) reset_color "${cmd[2]}";;
           *) echo 'Invalid or unknown command';;
         esac;;
-      "save")
+      save)
         case "${cmd[1]}" in
-          "layout") save_layout;;
+          layout) save_layout;;
           *) echo 'Invalid or unknown command';;
         esac;;
-      "delete")
+      delete)
         case "${cmd[1]}" in
-          "layout") delete_layout "${cmd[2]}";;
-          "color") delete_color "${cmd[2]}";;
+          layout) delete_layout "${cmd[2]}";;
+          color) delete_color "${cmd[2]}";;
           *) echo 'Invalid or unknown command';;
         esac;;
-      "restore")
+      restore)
         case "${cmd[1]}" in
-          "layout") restore_layout;;
-          "colors") restore_colors;;
+          layout) restore_layout;;
+          colors) restore_colors;;
           *) echo 'Invalid or unknown command';;
         esac;;
-      "rotate") rotate "${cmd[1]}" "${cmd[2]}";;
-      "reflect") reflect "${cmd[1]}" "${cmd[2]}";;
-      "mirror") mirror "${cmd[1]}";;
+      rotate) rotate "${cmd[1]}" "${cmd[2]}";;
+      reflect) reflect "${cmd[1]}" "${cmd[2]}";;
+      mirror) mirror "${cmd[1]}";;
       *) echo 'Invalid or unknown command';;
     esac
 
@@ -147,19 +145,19 @@ loop () {
 
 once () {
   case "${1}" in
-    "help") show_help "once";;
-    "restore")
+    help) show_help once;;
+    restore)
       case "${2}" in
-        "layout") restore_layout;;
-        "colors") restore_colors;;
-        *) abort "Invalid or unknown command";;
+        layout) restore_layout;;
+        colors) restore_colors;;
+        *) abort 'Invalid or unknown command';;
       esac;;
-    "fix")
+    fix)
       case "${2}" in
-        "layout") fix_layout;;
-        *) abort "Invalid or unknown command";;
+        layout) fix_layout;;
+        *) abort 'Invalid or unknown command';;
       esac;;
-    *) abort "Invalid or unknown command";;
+    *) abort 'Invalid or unknown command';;
   esac
 
   if [[ $? -ne 0 ]]; then

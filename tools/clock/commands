@@ -24,7 +24,7 @@ show_status () {
   timedatectl | jc --timedatectl | jq -cer "\"${query}\""
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to resolve date time status"
+    echo 'Unable to resolve date time status'
     return 2
   fi
 
@@ -48,7 +48,7 @@ set_ntp () {
   local status="${1}"
 
   if [[ ! "${status}" =~ ^(on|off)$ ]]; then
-    echo "Invalid status value"
+    echo 'Invalid status value'
     return 2
   fi
 
@@ -77,14 +77,14 @@ set_timezone () {
   fi
 
   if ! timedatectl list-timezones | grep -qw "${timezone}"; then
-    echo "Invalid timezone value"
+    echo 'Invalid timezone value'
     return 2
   fi
 
   timedatectl set-timezone "${timezone}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to set the timezone"
+    echo 'Failed to set the timezone'
     return 2
   fi
   
@@ -98,7 +98,7 @@ set_time () {
   local time="${1}"
 
   if [[ ! "${time}" =~ ^[0-9][0-9]:[0-9][0-9]$ ]]; then
-    echo "Invalid time value"
+    echo 'Invalid time value'
     return 2
   fi
 
@@ -106,19 +106,19 @@ set_time () {
   local min=$(echo "${time}" | cut -d ':' -f 2)
 
   if ((${hour} > 23)); then
-    echo "Hour value is out of range"
+    echo 'Hour value is out of range'
     return 2
   fi
 
   if ((${min} > 59)); then
-    echo "Minute value is out of range"
+    echo 'Minute value is out of range'
     return 2
   fi
 
   timedatectl set-time "${time}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to set the time"
+    echo 'Failed to set the time'
     return 2
   fi
 
@@ -132,7 +132,7 @@ set_date () {
   local date="${1}"
 
   if [[ ! "${date}" =~ ^[0-9][0-9]([0-9][0-9])?-[0-9][0-9]-[0-9][0-9]$ ]]; then
-    echo "Invalid date value"
+    echo 'Invalid date value'
     return 2
   fi
 
@@ -141,12 +141,12 @@ set_date () {
   local day=$(echo "${date}" | cut -d '-' -f 3)
 
   if ((${month} == 0 || ${month} > 12)) ; then
-    echo "Month value is out of range"
+    echo 'Month value is out of range'
     return 2
   fi
 
   if ((${day} == 0 || ${day} > 31)); then
-    echo "Day value is out of range"
+    echo 'Day value is out of range'
     return 2
   fi
 
@@ -155,7 +155,7 @@ set_date () {
   timedatectl set-time "${date} ${time}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to set the date"
+    echo 'Failed to set the date'
     return 2
   fi
 
@@ -169,7 +169,7 @@ set_rtc () {
   local mode="${1}"
 
   if [[ ! "${mode}" =~ ^(local|utc)$ ]]; then
-    echo "Invalid rtc mode value"
+    echo 'Invalid rtc mode value'
     return 2
   fi
 
@@ -180,7 +180,7 @@ set_rtc () {
   fi
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to set RTC"
+    echo 'Failed to set RTC'
     return 2
   fi
 
@@ -194,10 +194,10 @@ sync_rtc () {
   sudo hwclock --systohc --utc
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to sync the hardware clock"
+    echo 'Failed to sync the hardware clock'
     return 2
   fi
 
-  echo "Hardware clock synced from the system clock"
+  echo 'Hardware clock synced from the system clock'
 }
 

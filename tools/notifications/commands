@@ -72,7 +72,7 @@ get_state () {
     }
   }')" || return 1
 
-  if grep -qsE "[[:blank:]]*transparency = 100" "${HOME}/.config/dunst/dunstrc"; then
+  if grep -qsE '[[:blank:]]*transparency = 100' "${HOME}/.config/dunst/dunstrc"; then
     state+='"popup": false,'
   else
     state+='"popup": true,'
@@ -107,9 +107,9 @@ show_status () {
   pid="$(ps aux | jc --ps | jq -cr "${query}")" || return 1
 
   if [[ -n "${pid}" ]]; then
-    echo "Service:  up"
+    echo 'Service:  up'
   else
-    echo "Service:  down"
+    echo 'Service:  down'
   fi
 
   local query=''
@@ -176,7 +176,7 @@ mute_all () {
     return 2
   fi
 
-  echo "Notifications have been muted"
+  echo 'Notifications have been muted'
 }
 
 # Restores the notification stream.
@@ -190,7 +190,7 @@ unmute_all () {
     return 2
   fi
 
-  echo "Notifications have been unmuted"
+  echo 'Notifications have been unmuted'
 }
 
 # Removes all the archived notifications.
@@ -252,7 +252,7 @@ set_volume () {
   local percent="${1}"
 
   if [[ -z "${percent}" ]]; then
-    ask "Enter the volume [0, 100]:" "^[0-9]{1,3}$" || return $?
+    ask 'Enter the volume [0, 100]:' '^[0-9]{1,3}$' || return $?
     percent="${REPLY}"
   elif [[ ! "${percent}" =~ ^[0-9]{1,3}$ ]]; then
     echo 'Invalid volume value'

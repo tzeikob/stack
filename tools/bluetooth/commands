@@ -32,14 +32,14 @@ show_status () {
   find_controller | jq -cer ".[0]|\"${query}\""
   
   if [[ $? -ne 0 ]]; then
-    echo "Controller:    none"
+    echo 'Controller:    none'
   fi
 
   local query=''
   query+='if .|length > 0 then .[]|.address else "" end'
 
   local devices=''
-  devices="$(find_devices "connected" | jq -cer "${query}")" || return 1
+  devices="$(find_devices connected | jq -cer "${query}")" || return 1
 
   if [[ -z "${devices}" ]]; then
     return 0
@@ -77,7 +77,7 @@ list_controllers () {
   controllers="$(find_controllers)"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to read controllers"
+    echo 'Unable to read controllers'
     return 2
   fi
 
@@ -85,7 +85,7 @@ list_controllers () {
   len="$(count "${controllers}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No controllers have found"
+    echo 'No controllers have found'
     return 0
   fi
 
@@ -108,7 +108,7 @@ list_devices () {
   local status="${1}"
 
   if [[ -n "${status}" ]] && [[ ! "${status}" =~ ^(paired|connected|trusted|bonded)$ ]]; then
-    echo "Invalid status value"
+    echo 'Invalid status value'
     return 2
   fi
 
@@ -116,7 +116,7 @@ list_devices () {
   devices="$(find_devices "${status^}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to read devices"
+    echo 'Unable to read devices'
     return 2
   fi
 
@@ -124,7 +124,7 @@ list_devices () {
   len="$(count "${devices}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No available devices have found"
+    echo 'No available devices have found'
     return 0
   fi
 
@@ -241,7 +241,7 @@ set_controller () {
   bluetoothctl select "${address}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to set default controller"
+    echo 'Failed to set default controller'
     return 2
   fi
 
@@ -255,15 +255,15 @@ set_power () {
   local mode="${1}"
 
   if [[ -z "${mode}" ]]; then
-    echo "Missing the power mode value"
+    echo 'Missing the power mode value'
     return 2
   elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
-    echo "Invalid power mode value"
+    echo 'Invalid power mode value'
     return 2
   fi
 
   if ! find_controller &> /dev/null; then
-    echo "Unable to find default controller"
+    echo 'Unable to find default controller'
     return 2
   fi
 
@@ -284,15 +284,15 @@ set_scan () {
   local mode="${1}"
 
   if [[ -z "${mode}" ]]; then
-    echo "Missing scanning mode value"
+    echo 'Missing scanning mode value'
     return 2
   elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
-    echo "Invalid scanning mode value"
+    echo 'Invalid scanning mode value'
     return 2
   fi
 
   if ! find_controller &> /dev/null; then
-    echo "Unable to find default controller"
+    echo 'Unable to find default controller'
     return 2
   fi
 
@@ -316,10 +316,10 @@ set_scan () {
   fi
 
   if [[ "${mode}" == "on" ]] && ! is_scanning_on ; then
-    echo "Failed to set scanning mode to on"
+    echo 'Failed to set scanning mode to on'
     return 2
   elif [[ "${mode}" == "off" ]] && is_scanning_on ; then
-    echo "Failed to set scanning mode to off"
+    echo 'Failed to set scanning mode to off'
     return 2
   fi
 
@@ -333,15 +333,15 @@ set_discoverable () {
   local mode="${1}"
 
   if [[ -z "${mode}" ]]; then
-    echo "Missing the discoverable mode value"
+    echo 'Missing the discoverable mode value'
     return 2
   elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
-    echo "Invalid discoverable mode value"
+    echo 'Invalid discoverable mode value'
     return 2
   fi
 
   if ! find_controller &> /dev/null; then
-    echo "Unable to find default controller"
+    echo 'Unable to find default controller'
     return 2
   fi
 
@@ -362,15 +362,15 @@ set_pairable () {
   local mode="${1}"
 
   if [[ -z "${mode}" ]]; then
-    echo "Missing the pairable mode value"
+    echo 'Missing the pairable mode value'
     return 2
   elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
-    echo "Invalid pairable mode value"
+    echo 'Invalid pairable mode value'
     return 2
   fi
 
   if ! find_controller &> /dev/null; then
-    echo "Unable to find default controller"
+    echo 'Unable to find default controller'
     return 2
   fi
 
@@ -399,7 +399,7 @@ connect_device () {
   device="$(find_device "${address}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find the device"
+    echo 'Unable to find the device'
     return 2
   fi
 
@@ -430,7 +430,7 @@ disconnect_device () {
   device="$(find_device "${address}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find the device"
+    echo 'Unable to find the device'
     return 2
   fi
 
@@ -459,7 +459,7 @@ remove_device () {
   device="$(find_device "${address}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find the device"
+    echo 'Unable to find the device'
     return 2
   fi
 
@@ -486,10 +486,10 @@ restart_bluetooth () {
   sudo systemctl restart bluetooth.service
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to restart the bluetooth service"
+    echo 'Failed to restart the bluetooth service'
     return 2
   fi
 
-  echo "Bluetooth service has been restarted"
+  echo 'Bluetooth service has been restarted'
 }
 

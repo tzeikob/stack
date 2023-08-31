@@ -56,13 +56,13 @@ sync_drive () {
     return 2
   fi
 
-  ask "Enter the client ID:" ".+" || return $?
+  ask 'Enter the client ID:' '.+' || return $?
   local client_id="${REPLY}"
 
-  ask "Enter the client secret:" ".+" || return $?
+  ask 'Enter the client secret:' '.+' || return $?
   local client_secret="${REPLY}"
 
-  ask "Enter the root folder ID (blank to skip):" || return $?
+  ask 'Enter the root folder ID (blank to skip):' || return $?
   local root_folder="${REPLY}"
 
   echo 'Go to browser and accept access permssions...'
@@ -93,13 +93,13 @@ sync_dropbox () {
     return 2
   fi
 
-  ask "Enter the app key:" ".+" || return $?
+  ask 'Enter the app key:' '.+' || return $?
   local app_key="${REPLY}"
 
-  ask "Enter the app secret:" ".+" || return $?
+  ask 'Enter the app secret:' '.+' || return $?
   local app_secret="${REPLY}"
 
-  echo "Go to browser and accept access permssions..."
+  echo 'Go to browser and accept access permssions...'
 
   rclone config create "${name}" dropbox \
     client_id="${app_key}" client_secret="${app_secret}" &> /dev/null
@@ -150,7 +150,7 @@ mount_remote () {
   local name="${1}"
 
   if [[ -z "${name}" ]]; then
-    pick_remote "unmounted" || return $?
+    pick_remote unmounted || return $?
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
   
@@ -188,7 +188,7 @@ unmount_remote () {
   local name="${1}"
 
   if [[ -z "${name}" ]]; then
-    pick_remote "mounted" || return $?
+    pick_remote mounted || return $?
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
   
@@ -206,7 +206,7 @@ unmount_remote () {
   remote="$(find_remote "${name}")" || return 1
 
   local mount_point=''
-  mount_point="$(get "${remote}" ".mount_point")" || return 1
+  mount_point="$(get "${remote}" '.mount_point')" || return 1
 
   fusermount -uz "${mount_point}"
 

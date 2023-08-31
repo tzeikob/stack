@@ -49,11 +49,11 @@ find_remotes () {
       remote="{${remote}}"
 
       case "${status}" in
-        "mounted")
+        mounted)
           if [[ "${is_mounted}" == "true" ]]; then
             echo -n "${remote},"
           fi;;
-        "unmounted")
+        unmounted)
           if [[ "${is_mounted}" == "false" ]]; then
             echo -n "${remote},"
           fi;;

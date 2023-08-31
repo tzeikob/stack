@@ -46,7 +46,7 @@ show_status () {
     printf "%-8s %s\n", "Used:", $4"/"$3
   }' || return 1
 
-  cat /proc/meminfo | grep -E "Swap.*" | awk -F':' '{
+  cat /proc/meminfo | grep -E 'Swap.*' | awk -F':' '{
     gsub(/^[ \t]+/,"",$1)
     gsub(/[ \t]+$/,"",$1)
     gsub(/^[ \t]+/,"",$2)
@@ -127,7 +127,7 @@ show_disk () {
   echo "${disk}" | jq -cer "\"${query}\""
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to parse disk data"
+    echo 'Failed to parse disk data'
     return 2
   fi
 }
@@ -211,7 +211,7 @@ show_partition () {
   echo "${part}" | jq -cer "\"${query}\""
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to parse partition data"
+    echo 'Failed to parse partition data'
     return 2
   fi
 }
@@ -266,7 +266,7 @@ show_rom () {
   echo "${rom}" | jq -cer "\"${query}\""
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to parse rom data"
+    echo 'Failed to parse rom data'
     return 2
   fi
 }
@@ -281,7 +281,7 @@ list_disks () {
   disks="$(find_disks)"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find disks"
+    echo 'Unable to find disks'
     return 2
   fi
 
@@ -289,7 +289,7 @@ list_disks () {
   len="$(count "${disks}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No disks have found"
+    echo 'No disks have found'
     return 0
   fi
 
@@ -327,7 +327,7 @@ list_partitions () {
   parts="$(find_partitions "${path}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find partitions"
+    echo 'Unable to find partitions'
     return 2
   fi
 
@@ -335,7 +335,7 @@ list_partitions () {
   len="$(count "${parts}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No partitions have found"
+    echo 'No partitions have found'
     return 0
   fi
 
@@ -359,7 +359,7 @@ list_roms () {
   roms="$(find_roms)"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find roms"
+    echo 'Unable to find roms'
     return 2
   fi
 
@@ -367,7 +367,7 @@ list_roms () {
   len="$(count "${roms}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No roms have found"
+    echo 'No roms have found'
     return 0
   fi
 
@@ -396,20 +396,20 @@ list_shared_folders () {
     [[ -n "${REPLY}" ]] && host="${REPLY}" || return 0
   fi
 
-  ask "Enter the username:" || return $?
+  ask 'Enter the username:' || return $?
   local username="${REPLY}"
 
-  ask "Enter the workgroup [WORKGROUP]:" || return $?
+  ask 'Enter the workgroup [WORKGROUP]:' || return $?
   local workgroup="${REPLY:-"WORKGROUP"}"
 
-  ask_secret "Enter the password:" || return $?
+  ask_secret 'Enter the password:' || return $?
   local password="${REPLY}"
 
   local folders=''
   folders="$(find_shared_folders "${host}" "${username}" "${workgroup}" "${password}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find shared folders"
+    echo 'Unable to find shared folders'
     return 2
   fi
 
@@ -417,7 +417,7 @@ list_shared_folders () {
   len="$(count "${folders}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No shared folders have found"
+    echo 'No shared folders have found'
     return 0
   fi
 
@@ -445,7 +445,7 @@ list_mounts () {
   local disk=''
   while read -r disk; do
     local parts=''
-    parts="$(find_partitions "${disk}" "mounted" |
+    parts="$(find_partitions "${disk}" mounted |
       jq -cer '[.[]|{name: .path, point: (if .mountpoint then .mountpoint else .veracrypt.mountpoint end)}]')" || return 1
 
     # Merge disk partitions to mounts array
@@ -453,7 +453,7 @@ list_mounts () {
   done <<< "${disks}"
 
   local roms=''
-  roms="$(find_roms "mounted" | 
+  roms="$(find_roms mounted | 
     jq -cer '[.[]|{name: .path, point: .mountpoint}]')" || return 1
   
   # Merge roms to mounts array
@@ -505,7 +505,7 @@ list_mounts () {
   len="$(count "${mounts}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No mounts have found"
+    echo 'No mounts have found'
     return 0
   fi
 
@@ -527,7 +527,7 @@ mount_partition () {
     pick_disk || return $?
     [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
 
-    pick_partition "${path}" "unmounted" || return $?
+    pick_partition "${path}" unmounted || return $?
     [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
   fi
 
@@ -548,13 +548,13 @@ mount_partition () {
   fi
 
   # Otherwise try to mount it as encrypted partition
-  ask_secret "Enter the encryption password:" || return $?
+  ask_secret 'Enter the encryption password:' || return $?
   local password="${REPLY}"
 
   mount_encrypted "${path}" "${password}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to mount partition"
+    echo 'Failed to mount partition'
     return 2
   fi
 
@@ -572,7 +572,7 @@ unmount_partition () {
     pick_disk || return $?
     [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
 
-    pick_partition "${path}" "mounted" || return $?
+    pick_partition "${path}" mounted || return $?
     [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
   fi
 
@@ -583,7 +583,7 @@ unmount_partition () {
     echo "Partition ${path} is already unmounted"
     return 2
   elif is_system_partition "${path}"; then
-    echo "Cannot unmount system partition"
+    echo 'Cannot unmount system partition'
     return 2
   fi
 
@@ -597,7 +597,7 @@ unmount_partition () {
   unmount_encrypted "${path}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to unmount partition"
+    echo 'Failed to unmount partition'
     return 2
   fi
 
@@ -611,7 +611,7 @@ mount_rom () {
   local path="${1}"
 
   if [[ -z "${path}" ]]; then
-    pick_rom "unmounted" || return $?
+    pick_rom unmounted || return $?
     [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
   fi
 
@@ -626,7 +626,7 @@ mount_rom () {
   mount_device "${path}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to mount rom"
+    echo 'Failed to mount rom'
     return 2
   fi
 
@@ -640,7 +640,7 @@ unmount_rom () {
   local path="${1}"
 
   if [[ -z "${path}" ]]; then
-    pick_rom "mounted" || return $?
+    pick_rom mounted || return $?
     [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
   fi
 
@@ -655,7 +655,7 @@ unmount_rom () {
   unmount_device "${path}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to unmount rom"
+    echo 'Failed to unmount rom'
     return 2
   fi
 
@@ -670,7 +670,7 @@ mount_image () {
   local path="${1}"
 
   if [[ ! -f "${path}" ]]; then
-    echo "Not valid image file"
+    echo 'Not valid image file'
     return 2
   fi
 
@@ -686,7 +686,7 @@ mount_image () {
   fuseiso -p "${path}" "${mount_point}" &> /dev/null
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to mount image file"
+    echo 'Failed to mount image file'
 
     rm -rf "${mount_point}"
     return 2
@@ -719,23 +719,23 @@ unmount_image () {
     len="$(count "${mounts}")" || return 1
 
     if [[ ${len} -eq 0 ]]; then
-      echo "No image mounts have found"
+      echo 'No image mounts have found'
       return 0
     fi
 
-    pick_one "Select an image mount:" "${mounts}" "vertical" || return $?
+    pick_one 'Select an image mount:' "${mounts}" vertical || return $?
     [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
   fi
 
   if [[ ! -d "${path}" ]]; then
-    echo "No valid image mount path"
+    echo 'No valid image mount path'
     return 2
   fi
 
   fusermount -u "${path}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to unmount image file system"
+    echo 'Failed to unmount image file system'
     return 2
   fi
 
@@ -755,26 +755,26 @@ mount_shared_folder () {
     [[ -n "${REPLY}" ]] && host="${REPLY}" || return 0
   fi
 
-  ask "Enter a shared folder:" || return $?
+  ask 'Enter a shared folder:' || return $?
   local folder="${REPLY}"
 
-  ask "Enter the username:" || return $?
+  ask 'Enter the username:' || return $?
   local username="${REPLY}"
 
-  ask "Enter the workgroup [WORKGROUP]:" || return $?
+  ask 'Enter the workgroup [WORKGROUP]:' || return $?
   local workgroup="${REPLY:-"WORKGROUP"}"
 
   local uri="smb://${workgroup};${username}@${host}/${folder,,}"
 
   if gio mount -l | grep -q "${uri}"; then
-    echo "Shared folder is already mounted"
+    echo 'Shared folder is already mounted'
     return 2
   fi
 
   gio mount "${uri}" 2> /dev/null
   
   if [[ $? -ne 0 ]]; then
-    echo "Failed to mount shared folder"
+    echo 'Failed to mount shared folder'
     return 2
   fi
 
@@ -813,23 +813,23 @@ unmount_shared_folder () {
     len="$(count "${uris}")" || return 1
 
     if [[ ${len} -eq 0 ]]; then
-      echo "No mounted shared folders have found"
+      echo 'No mounted shared folders have found'
       return 0
     fi
 
-    pick_one "Select a shared folder:" "${uris}" "vertical" || return $?
+    pick_one 'Select a shared folder:' "${uris}" vertical || return $?
     [[ -n "${REPLY}" ]] && uri="${REPLY}" || return 0
   fi
 
   if ! gio mount -l | grep -q "${uri}"; then
-    echo "Shared folder is not mounted"
+    echo 'Shared folder is not mounted'
     return 2
   fi
 
   sync && gio mount -u "${uri}" 2> /dev/null
   
   if [[ $? -ne 0 ]]; then
-    echo "Failed to umount shared folder"
+    echo 'Failed to umount shared folder'
     return 2
   fi
 
@@ -853,11 +853,11 @@ format_disk () {
     echo "Unable to find disk ${path}"
     return 2
   elif is_system_disk "${path}"; then
-    echo "Cannot format the system disk"
+    echo 'Cannot format the system disk'
     return 2
   fi
 
-  ask "Enter the disk label:" ".+" || return $?
+  ask 'Enter the disk label:' '.+' || return $?
   local label="${REPLY}"
 
   local fs_type=''
@@ -869,23 +869,23 @@ format_disk () {
     jq -cr '"\(.vendor|gsub("^\\s+|\\s+$";"")) \(.model) \(.size)"')" || return 1
 
   echo "ALL DATA in ${model} [${path}],"
-  echo "will be irreversibly gone forever!"
-  confirm "Do you really want to proceed?" || return $?
+  echo 'will be irreversibly gone forever!'
+  confirm 'Do you really want to proceed?' || return $?
   [[ "${REPLY}" != "yes" ]] && return 0
 
-  echo "Unmounting disk partitions..."
+  echo 'Unmounting disk partitions...'
   unmount_partitions "${path}" || return 1
 
-  echo "Cleaning disk partitions..."
+  echo 'Cleaning disk partitions...'
   clean_partitions "${path}" &&
-  echo "Partition table is ready" || return 1
+  echo 'Partition table is ready' || return 1
 
-  echo "Creating disk partition..."
-  create_partition "${path}" "${fs_type}" "1Mib" "100%" &&
-  echo "Primary partition created" || return 1
+  echo 'Creating disk partition...'
+  create_partition "${path}" "${fs_type}" 1Mib 100% &&
+  echo 'Primary partition created' || return 1
 
-  echo "Formatting disk partition..."
-  format_partition "${path}" "1" "${fs_type}" "${label}"
+  echo 'Formatting disk partition...'
+  format_partition "${path}" 1 "${fs_type}" "${label}"
 
   if [[ $? -ne 0 ]]; then
     echo "Failed to format disk ${path}"
@@ -910,27 +910,27 @@ eject_disk () {
     echo "Unable to find disk ${path}"
     return 2
   elif is_system_disk "${path}"; then
-    echo "Cannot eject the system disk"
+    echo 'Cannot eject the system disk'
     return 2
   fi
 
-  echo "Unmounting disk partitions..."
+  echo 'Unmounting disk partitions...'
 
   unmount_partitions "${path}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to unmount disk partitions"
+    echo 'Failed to unmount disk partitions'
     return 2
   fi
 
   udisksctl power-off -b "${path}" &> /dev/null
 
   if [[ $? -eq 0 ]]; then
-    echo "Disk power set to off"
-    echo "Unplug safely the disk device"
+    echo 'Disk power set to off'
+    echo 'Unplug safely the disk device'
   else
-    echo "Unable to power disk off"
-    echo "Unplug the disk device at your own risk"
+    echo 'Unable to power disk off'
+    echo 'Unplug the disk device at your own risk'
   fi
 }
 
@@ -954,7 +954,7 @@ scan_disk () {
   fi
   
   if ! sudo smartctl -i "${path}" &> /dev/null; then
-    echo "Unable to retrieve SMART data"
+    echo 'Unable to retrieve SMART data'
     return 2
   fi
 
@@ -1024,10 +1024,10 @@ scan_disk () {
 
   sudo smartctl -iHj "${path}" | jq -cer "\"${query}\""
 
-  local code="$?"
+  local code=$?
 
   if [[ ${code} -ne 0 ]] && [[ ${code} -ne 24 ]]; then
-    echo "Failed to parse SMART data"
+    echo 'Failed to parse SMART data'
     return 2
   fi
 }
@@ -1048,7 +1048,7 @@ create_encrypted () {
     echo "Unable to find disk ${path}"
     return 2
   elif is_system_disk "${path}"; then
-    echo "Cannot encrypt the system disk"
+    echo 'Cannot encrypt the system disk'
     return 2
   fi
 
@@ -1056,10 +1056,10 @@ create_encrypted () {
   pick_fs_type || return $?
   [[ -n "${REPLY}" ]] && fs_type="${REPLY}" || return 0
 
-  ask_secret "Enter the encryption password:" ".+" || return $?
+  ask_secret 'Enter the encryption password:' '.+' || return $?
   local password="${REPLY}"
 
-  if ! confirm_secret "Retype the encryption password:" "${password}"; then
+  if ! confirm_secret 'Retype the encryption password:' "${password}"; then
     echo 'Encryption password does not match'
     return 2
   fi
@@ -1069,23 +1069,23 @@ create_encrypted () {
     jq -cr '"\(.vendor|gsub("^\\s+|\\s+$";"")) \(.model) \(.size)"')" || return 1
 
   echo "ALL DATA in ${model} [${path}],"
-  echo "will be irreversibly gone forever!"
-  confirm "Do you really want to proceed?" || return $?
+  echo 'will be irreversibly gone forever!'
+  confirm 'Do you really want to proceed?' || return $?
   [[ "${REPLY}" != "yes" ]] && return 0
 
-  echo "Unmounting disk partitions..."
+  echo 'Unmounting disk partitions...'
   unmount_partitions "${path}" || return 1
 
-  echo "Cleaning disk partitions..."
+  echo 'Cleaning disk partitions...'
   clean_partitions "${path}" &&
-  echo "Partition table is ready" || return 1
+  echo 'Partition table is ready' || return 1
 
-  echo "Creating disk partition..."
-  create_partition "${path}" "${fs_type}" "1Mib" "100%" &&
-  echo "Primary partition created" || return 1
+  echo 'Creating disk partition...'
+  create_partition "${path}" "${fs_type}" 1Mib 100% &&
+  echo 'Primary partition created' || return 1
 
-  echo "Formatting disk partition..."
-  format_partition "${path}" "1" "${fs_type}" &&
+  echo 'Formatting disk partition...'
+  format_partition "${path}" 1 "${fs_type}" &&
   echo "Partition ${path}1 has been formated" || return 1
 
   # Create a seed file with 350 random characters
@@ -1096,7 +1096,7 @@ create_encrypted () {
 
   sudo veracrypt -t --create "${path}1" --password "${password}" \
     --volume-type normal --encryption AES --hash sha-512 --filesystem "${fs_type}" \
-    --pim 0 --keyfiles "" --random-source "${rand_text_file}"
+    --pim 0 --keyfiles '' --random-source "${rand_text_file}"
 
   if [[ $? -ne 0 ]]; then
     echo "Failed to encrypt disk ${path}"
@@ -1121,11 +1121,11 @@ create_bootable () {
     echo "Unable to find disk ${path}"
     return 2
   elif is_system_disk "${path}"; then
-    echo "Cannot create bootable on the system disk"
+    echo 'Cannot create bootable on the system disk'
     return 2
   fi
 
-  confirm "Do you want to download the latest iso?" || return $?
+  confirm 'Do you want to download the latest iso?' || return $?
   [[ -z "${REPLY}" ]] && return 0
 
   local iso_file_path=''
@@ -1142,7 +1142,7 @@ create_bootable () {
     hosts="[${hosts}]"
 
     local host=''
-    pick_one "Select a mirror host:" "${hosts}" "vertical" || return $?
+    pick_one 'Select a mirror host:' "${hosts}" vertical || return $?
     [[ -n "${REPLY}" ]] && host="${REPLY}" || return 0
 
     local file='archlinux-x86_64.iso'
@@ -1154,7 +1154,7 @@ create_bootable () {
     )
 
     if [[ -f "${output}/${file}" ]]; then
-      echo "An existing iso file is found"
+      echo 'An existing iso file is found'
     else
       files+=("${host}/${file}")
     fi
@@ -1166,38 +1166,38 @@ create_bootable () {
     download "${output}" "${files[@]}"
 
     if [[ $? -ne 0 ]]; then
-      echo "Unable to download archlinux files"
+      echo 'Unable to download archlinux files'
       return 2
     fi
 
     sq --force wkd get pierre@archlinux.org -o "${output}/release-key.pgp"
 
     if [[ $? -ne 0 ]]; then
-      echo "Unable to fetch the release key"
+      echo 'Unable to fetch the release key'
       return 2
     fi
 
-    echo "Verifying the integrity of files..."
+    echo 'Verifying the integrity of files...'
 
     cd ${output} &&
     b2sum --ignore-missing -c b2sums.txt &&
     sq verify --signer-file release-key.pgp --detached "${file}.sig" "${file}" 2>&1 | awk NF
 
     if [[ $? -ne 0 ]]; then
-      echo "Failed to verify archlinux files"
+      echo 'Failed to verify archlinux files'
       return 2
     fi
 
-    echo "Files have been verified successfully"
+    echo 'Files have been verified successfully'
 
     iso_file_path="${output}/${file}"
   else
-    ask "Enter the path to the iso file:" "^/.+" || return $?
+    ask 'Enter the path to the iso file:' '^/.+' || return $?
     iso_file_path="${REPLY}"
   fi
 
   if [[ ! -f "${iso_file_path}" ]]; then
-    echo "Invalid or unknown archlinux iso file"
+    echo 'Invalid or unknown archlinux iso file'
     return 2
   fi
 
@@ -1206,30 +1206,30 @@ create_bootable () {
 
   echo ''
   echo "ALL DATA in ${model} [${path}],"
-  echo "will be irreversibly gone forever!"
-  confirm "Do you really want to proceed?" || return $?
+  echo 'will be irreversibly gone forever!'
+  confirm 'Do you really want to proceed?' || return $?
   [[ "${REPLY}" != "yes" ]] && return 0
 
-  echo "Unmounting disk partitions..."
+  echo 'Unmounting disk partitions...'
   unmount_partitions "${path}" || return 1
 
-  echo "Cleaning disk partitions..."
+  echo 'Cleaning disk partitions...'
   clean_partitions "${path}" &&
-  echo "Partition table is ready" || return 1
+  echo 'Partition table is ready' || return 1
 
-  echo "Creating disk partition..."
-  create_partition "${path}" "fat32" "1Mib" "100%" &&
-  echo "Primary partition created" || return 1
+  echo 'Creating disk partition...'
+  create_partition "${path}" fat32 1Mib 100% &&
+  echo 'Primary partition created' || return 1
 
-  echo "Formatting the bootable disk..."
-  format_partition "${path}" "1" "fat32" || return 1
+  echo 'Formatting the bootable disk...'
+  format_partition "${path}" 1 fat32 || return 1
 
-  echo "Flashing installation files..."
+  echo 'Flashing installation files...'
 
   sudo dd "if=${iso_file_path}" "of=${path}" bs=4M conv=fsync oflag=direct status=progress
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to flash installation files"
+    echo 'Failed to flash installation files'
   fi
 
   echo "Bootable disk ${path} is ready"

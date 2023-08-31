@@ -12,40 +12,40 @@ source /opt/stack/cloud/commands
 #  A long help message.
 show_help () {
   if [[ "${1}" == "once" ]]; then
-    echo "Usage: cloud COMMAND [OBJECT] [ARGUMENTS]..."
+    echo 'Usage: cloud COMMAND [OBJECT] [ARGUMENTS]...'
 
-    echo -e "\nCOMMANDS"
-    printf " %-15s %s\n" \
-      "help" "Show this help message." \
-      "" "" \
-      "mount remotes" "Mount all synced cloud remotes."
+    echo -e '\nCOMMANDS'
+    printf ' %-15s %s\n' \
+      'help' 'Show this help message.' \
+      '' '' \
+      'mount remotes' 'Mount all synced cloud remotes.'
 
     return 0
   fi
 
-  echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
+  echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
   
-  echo -e "\nCOMMANDS"
-  printf " %-30s %s\n" \
-    "help" "Show this help message." \
-    "" "" \
-    "list remotes [service]" "List all synced remotes by service." \
-    "sync remote <service> <name>" "Sync a remote service, where service" \
-    "" "could be drive or dropbox." \
-    "delete remote [<name>]" "Delete a synced remote service." \
-    "" "" \
-    "mount remote [<name>]" "Mount an already synced remote." \
-    "unmount remote [<name>]" "Unmount an already mounted remote."
+  echo -e '\nCOMMANDS'
+  printf ' %-30s %s\n' \
+    'help' 'Show this help message.' \
+    '' '' \
+    'list remotes [service]' 'List all synced remotes by service.' \
+    'sync remote <service> <name>' 'Sync a remote service, where service' \
+    '' 'could be drive or dropbox.' \
+    'delete remote [<name>]' 'Delete a synced remote service.' \
+    '' '' \
+    'mount remote [<name>]' 'Mount an already synced remote.' \
+    'unmount remote [<name>]' 'Unmount an already mounted remote.'
 }
 
 loop () {
   clear
 
   while true; do
-    prompt "cloud" && history -s "${REPLY}"
+    prompt cloud && history -s "${REPLY}"
 
     set -f
-    set_separator "line"
+    set_separator line
     local cmd=($(xargs -n1 <<< "${REPLY}"))
     restore_separator && set +f
 
@@ -62,34 +62,34 @@ loop () {
     fi
 
     case "${cmd[0]}" in
-      "list")
+      list)
         case "${cmd[1]}" in
-          "remotes") list_remotes "${cmd[2]}";;
+          remotes) list_remotes "${cmd[2]}";;
           *) echo 'Invalid or unknown command';;
         esac;;
-      "sync")
+      sync)
         case "${cmd[1]}" in
-          "remote")
+          remote)
             case "${cmd[2]}" in
-              "drive") sync_drive "${cmd[3]}";;
-              "dropbox") sync_dropbox "${cmd[3]}";;
+              drive) sync_drive "${cmd[3]}";;
+              dropbox) sync_dropbox "${cmd[3]}";;
               *) echo 'Invalid or unknown service';;
             esac;;
           *) echo 'Invalid or unknown command';;
         esac;;
-      "delete")
+      delete)
         case "${cmd[1]}" in
-          "remote") delete_remote "${cmd[2]}";;
+          remote) delete_remote "${cmd[2]}";;
           *) echo 'Invalid or unknown command';;
         esac;;
-      "mount")
+      mount)
         case "${cmd[1]}" in
-          "remote") mount_remote "${cmd[2]}";;
+          remote) mount_remote "${cmd[2]}";;
           *) echo 'Invalid or unknown command';;
         esac;;
-      "unmount")
+      unmount)
         case "${cmd[1]}" in
-          "remote") unmount_remote "${cmd[2]}";;
+          remote) unmount_remote "${cmd[2]}";;
           *) echo 'Invalid or unknown command';;
         esac;;
       *) echo 'Unknown or invalid command';; 
@@ -107,13 +107,13 @@ loop () {
 
 once () {
   case "${1}" in
-    "help") show_help "once";;
-    "mount")
+    help) show_help once;;
+    mount)
       case "${2}" in
-        "remotes") mount_all || abort;;
-        *) abort "Invalid or unknown command";;
+        remotes) mount_all || abort;;
+        *) abort 'Invalid or unknown command';;
       esac;;
-    *) abort "Invalid or unknown command";;
+    *) abort 'Invalid or unknown command';;
   esac
 
   if [[ $? -ne 0 ]]; then

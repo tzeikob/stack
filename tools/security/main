@@ -12,45 +12,45 @@ source /opt/stack/security/commands
 #  A long help message.
 show_help () {
   if [[ "${1}" == "once" ]]; then
-    echo "Usage: security COMMAND [OBJECT] [ARGUMENTS]..."
+    echo 'Usage: security COMMAND [OBJECT] [ARGUMENTS]...'
 
-    echo -e "\nCOMMANDS"
-    printf " %-16s %s\n" \
-      "help" "Show this help message." \
-      "" "" \
-      "init locker" "Initialize the screen locker." \
-      "" "" \
-      "lock screen" "Lock the screen." \
-      "logout user" "Logout the user."
+    echo -e '\nCOMMANDS'
+    printf ' %-16s %s\n' \
+      'help' 'Show this help message.' \
+      '' '' \
+      'init locker' 'Initialize the screen locker.' \
+      '' '' \
+      'lock screen' 'Lock the screen.' \
+      'logout user' 'Logout the user.'
 
     return 0
   fi
 
-  echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
+  echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
 
-  echo -e "\nCOMMANDS"
-  printf " %-25s %s\n" \
-    "help" "Show this help message." \
-    "" "" \
-    "show status" "Show the status of the system security." \
-    "" "" \
-    "set password" "Set a new user password." \
-    "set attempts <max>" "Set max failed attempts before password is blocked." \
-    "set unblock <time>" "Set password unblock time in secs." \
-    "set interval <time>" "Set consecutive password fails interval in secs." \
-    "" "" \
-    "set locker <mins>" "Set the interval of the screen locker," \
-    "" "where 0 means deactivate the locker."
+  echo -e '\nCOMMANDS'
+  printf ' %-25s %s\n' \
+    'help' 'Show this help message.' \
+    '' '' \
+    'show status' 'Show the status of the system security.' \
+    '' '' \
+    'set password' 'Set a new user password.' \
+    'set attempts <max>' 'Set max failed attempts before password is blocked.' \
+    'set unblock <time>' 'Set password unblock time in secs.' \
+    'set interval <time>' 'Set consecutive password fails interval in secs.' \
+    '' '' \
+    'set locker <mins>' 'Set the interval of the screen locker,' \
+    '' 'where 0 means deactivate the locker.'
 }
 
 loop () {
   clear
 
   while true; do
-    prompt "security" && history -s "${REPLY}"
+    prompt security && history -s "${REPLY}"
 
     set -f
-    set_separator "line"
+    set_separator line
     local cmd=($(xargs -n1 <<< "${REPLY}"))
     restore_separator && set +f
 
@@ -67,18 +67,18 @@ loop () {
     fi
 
     case "${cmd[0]}" in
-      "show")
+      show)
         case "${cmd[1]}" in
-          "status") show_status;;
+          status) show_status;;
           *) echo 'Invalid or unknown command';;
         esac;;
-      "set")
+      set)
         case "${cmd[1]}" in
-          "locker") set_screen_locker "${cmd[2]}";;
-          "password") set_user_password;;
-          "attempts") set_faillock_attempts "${cmd[2]}";;
-          "unblock") set_faillock_unblock "${cmd[2]}";;
-          "interval") set_faillock_interval "${cmd[2]}";;
+          locker) set_screen_locker "${cmd[2]}";;
+          password) set_user_password;;
+          attempts) set_faillock_attempts "${cmd[2]}";;
+          unblock) set_faillock_unblock "${cmd[2]}";;
+          interval) set_faillock_interval "${cmd[2]}";;
           *) echo 'Invalid or unknown command';;
         esac;;
       *) echo 'Invalid or unknown command';; 
@@ -96,23 +96,23 @@ loop () {
 
 once () {
   case "${1}" in
-    "help") show_help once;;
-    "init")
+    help) show_help once;;
+    init)
       case "${2}" in
-        "locker") init_screen_locker || abort;;
-        *) abort "Invalid or unknown command";;
+        locker) init_screen_locker || abort;;
+        *) abort 'Invalid or unknown command';;
       esac;;
-    "lock")
+    lock)
       case "${2}" in
-        "screen") lock_screen;;
-        *) abort "Invalid or unknown command";;
+        screen) lock_screen;;
+        *) abort 'Invalid or unknown command';;
       esac;;
-    "logout")
+    logout)
       case "${2}" in
-        "user") logout_user;;
-        *) abort "Invalid or unknown command";;
+        user) logout_user;;
+        *) abort 'Invalid or unknown command';;
       esac;;
-    *) abort "Invalid or unknown command";;
+    *) abort 'Invalid or unknown command';;
   esac
 
   if [[ $? -ne 0 ]]; then

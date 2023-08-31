@@ -24,7 +24,7 @@ show_status () {
   echo "API:       $(cups-config --api-version)"
   echo "Dir:       $(cups-config --datadir)"
 
-  find_jobs | jq -cer "\"Jobs:      \(length)\"" || return 1
+  find_jobs | jq -cer '"Jobs:      \(length)"' || return 1
 
   local destinations=''
   destinations="$(find_destinations |
@@ -41,7 +41,7 @@ show_status () {
 
     local destination=''
     while read -r destination; do
-      echo ""
+      echo ''
       find_destination "${destination}" | jq -cer "${query}" || return 1
     done <<< "${destinations}"
   fi
@@ -57,7 +57,7 @@ list_printers () {
   destinations="$(find_destinations)"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to read print destinations"
+    echo 'Unable to read print destinations'
     return 2
   fi
 
@@ -65,7 +65,7 @@ list_printers () {
   len="$(count "${destinations}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No printers have found"
+    echo 'No printers have found'
     return 0
   fi
 
@@ -126,7 +126,7 @@ add_printer () {
   local uri="${2}"
 
   if [[ -z "${name}" ]]; then
-    echo "Missing the name value"
+    echo 'Missing the name value'
     return 2
   elif exists_destination "${name}"; then
     echo "Printer with name ${name} already exists"
@@ -134,7 +134,7 @@ add_printer () {
   fi
 
   if [[ -z "${uri}" ]]; then
-    echo "Discovering print destinations..."
+    echo 'Discovering print destinations...'
 
     local query=''
     query+='{key: .uri, value: "\(.uri)\(.name|if (. and . != "") then " [\(.)]" else "" end)"}'
@@ -147,18 +147,18 @@ add_printer () {
     len="$(count "${destinations}")" || return 1
 
     if [[ ${len} -eq 0 ]]; then
-      echo "No printers have been discovered"
+      echo 'No printers have been discovered'
       return 0
     fi
 
-    pick_one "Select a printer:" "${destinations}" "vertical" || return $?
+    pick_one 'Select a printer:' "${destinations}" vertical || return $?
     [[ -n "${REPLY}" ]] && uri="${REPLY}" || return 0
   fi
 
-  ask "Enter a description:" ".+" || return $?
+  ask 'Enter a description:' '.+' || return $?
   local desc="${REPLY}"
 
-  ask "Enter a location name:" ".+" || return $?
+  ask 'Enter a location name:' '.+' || return $?
   local loc="${REPLY}"
 
   local driver=''
@@ -175,12 +175,12 @@ add_printer () {
   fi
 
   local is_default=''
-  confirm "Want to set this printer as default?" || return $?
+  confirm 'Want to set this printer as default?' || return $?
   [[ -n "${REPLY}" ]] && is_default="${REPLY}" || return 0
 
   if [[ "${is_default}" == "yes" ]]; then
     lpoptions -d "${name}" &> /dev/null ||
-      echo "Failed to set printer as default"
+      echo 'Failed to set printer as default'
   fi
 
   echo "Printer ${uri} has been added"
@@ -289,7 +289,7 @@ set_option () {
   fi
 
   if [[ -z "${key}" ]]; then
-    echo "Missing the option key value"
+    echo 'Missing the option key value'
     return 2
   elif [[ ! "${key}" =~ ^(Quality|PageSize|MediaType|TonerSaveMode|printer-error-policy)$ ]]; then
     echo "Option ${key} is not supported"
@@ -298,12 +298,12 @@ set_option () {
 
   if [[ -z "${value}" ]]; then
     case "${key}" in
-      "Quality") pick_quality || return $?;;
-      "PageSize") pick_page_size || return $?;;
-      "MediaType") pick_paper_type || return $?;;
-      "TonerSaveMode") pick_toner_mode || return $?;;
-      "printer-error-policy") pick_error_policy || return $?;;
-      *) echo "Unknown or invalid printer option" && return 2;;
+      Quality) pick_quality || return $?;;
+      PageSize) pick_page_size || return $?;;
+      MediaType) pick_paper_type || return $?;;
+      TonerSaveMode) pick_toner_mode || return $?;;
+      printer-error-policy) pick_error_policy || return $?;;
+      *) echo 'Unknown or invalid printer option' && return 2;;
     esac
 
     [[ -n "${REPLY}" ]] && value="${REPLY}" || return 0
@@ -317,7 +317,7 @@ set_option () {
   re+='abort-job|retry-current-job|retry-job|stop-printer'
 
   if [[ ! "${value,,}" =~ ^(${re,,})$ ]]; then
-    echo "Invalid option value"
+    echo 'Invalid option value'
     return 2
   fi
 
@@ -368,7 +368,7 @@ list_jobs () {
   jobs="$(find_jobs)"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to read print jobs"
+    echo 'Unable to read print jobs'
     return 2
   fi
 
@@ -376,7 +376,7 @@ list_jobs () {
   len="$(count "${jobs}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No active print jobs have found"
+    echo 'No active print jobs have found'
     return 0
   fi
 
@@ -420,15 +420,15 @@ cancel_job () {
 # Arguments:
 #  None
 restart () {
-  sudo echo "Restarting the cups service..."
+  sudo echo 'Restarting the cups service...'
 
   sudo systemctl restart cups.service
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to restart cups service"
+    echo 'Failed to restart cups service'
     return 2
   fi
 
-  echo "Cups service has been restarted"
+  echo 'Cups service has been restarted'
 }
 

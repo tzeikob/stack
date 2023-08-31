@@ -12,49 +12,48 @@ source /opt/stack/power/commands
 #  A long help message.
 show_help () {
   if [[ "${1}" == "once" ]]; then
-    echo "Usage: power COMMAND [OBJECT] [ARGUMENTS]..."
+    echo 'Usage: power COMMAND [OBJECT] [ARGUMENTS]...'
 
-    echo -e "\nCOMMANDS"
-    printf " %-20s %s\n" \
-      "help" "Show this help message." \
-      "" "" \
-      "init screensaver" "Initialize the screen saver." \
-      "" "" \
-      "shutdown" "Shut the system down." \
-      "reboot" "Reboot the system." \
-      "suspend" "Set system in suspend mode." \
-      "blank" "Blank the screen."
+    echo -e '\nCOMMANDS'
+    printf ' %-20s %s\n' \
+      'help' 'Show this help message.' \
+      '' '' \
+      'init screensaver' 'Initialize the screen saver.' \
+      '' '' \
+      'shutdown' 'Shut the system down.' \
+      'reboot' 'Reboot the system.' \
+      'suspend' 'Set system in suspend mode.' \
+      'blank' 'Blank the screen.'
 
     return 0
   fi
 
-  echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
+  echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
 
-  echo -e "\nCOMMANDS"
-  printf " %-36s %s\n" \
-    "help" "Show this help message." \
-    "" "" \
-    "show status" "Show the status of the system power." \
-    "" "" \
-    "set action [<handler> [<action>]]" "Set the action of a power handler to" \
-    "" "poweroff, reboot, suspend or ignore." \
-    "reset actions" "Reset to default action for all power handlers." \
-    "" "" \
-    "set screensaver <mins>" "Set the interval of the screen saver," \
-    "" "where 0 means deactivate the screensaver." \
-    "" "" \
-    "set tlp on|off" "Enable or disable power saving mode." \
-    "set charge start|stop <percent>" "Set the battery charge thresholds."
+  echo -e '\nCOMMANDS'  printf ' %-36s %s\n' \
+    'help' 'Show this help message.' \
+    '' '' \
+    'show status' 'Show the status of the system power.' \
+    '' '' \
+    'set action [<handler> [<action>]]' 'Set the action of a power handler to' \
+    '' 'poweroff, reboot, suspend or ignore.' \
+    'reset actions' 'Reset to default action for all power handlers.' \
+    '' '' \
+    'set screensaver <mins>' 'Set the interval of the screen saver,' \
+    '' 'where 0 means deactivate the screensaver.' \
+    '' '' \
+    'set tlp on|off' 'Enable or disable power saving mode.' \
+    'set charge start|stop <percent>' 'Set the battery charge thresholds.'
 }
 
 loop () {
   clear
 
   while true; do
-    prompt "power" && history -s "${REPLY}"
+    prompt power && history -s "${REPLY}"
 
     set -f
-    set_separator "line"
+    set_separator line
     local cmd=($(xargs -n1 <<< "${REPLY}"))
     restore_separator && set +f
 
@@ -71,22 +70,22 @@ loop () {
     fi
 
     case "${cmd[0]}" in
-      "show")
+      show)
         case "${cmd[1]}" in
-          "status") show_status;;
+          status) show_status;;
           *) echo 'Invalid or unknown command';;
         esac;;
-      "set")
+      set)
         case "${cmd[1]}" in
-          "action") set_action "${cmd[2]}" "${cmd[3]}";;
-          "screensaver") set_screensaver "${cmd[2]}";;
-          "tlp") set_tlp "${cmd[2]}";;
-          "charge") set_charge "${cmd[2]}" "${cmd[3]}";;
+          action) set_action "${cmd[2]}" "${cmd[3]}";;
+          screensaver) set_screensaver "${cmd[2]}";;
+          tlp) set_tlp "${cmd[2]}";;
+          charge) set_charge "${cmd[2]}" "${cmd[3]}";;
           *) echo 'Invalid or unknown command';;
         esac;;
-      "reset")
+      reset)
         case "${cmd[1]}" in
-          "actions") reset_actions;;
+          actions) reset_actions;;
           *) echo 'Invalid or unknown command';;
         esac;;
       *) echo 'Invalid or unknown command';; 
@@ -104,16 +103,16 @@ loop () {
 
 once () {
   case "${1}" in
-    "help") show_help "once";;
-    "init")
+    help) show_help once;;
+    init)
       case "${2}" in
-        "screensaver") init_screensaver || abort;;
+        screensaver) init_screensaver || abort;;
         *) abort 'Invalid or unknown command';;
       esac;;
-    "shutdown") shutdown_system;;
-    "reboot") reboot_system;;
-    "suspend") suspend_system;;
-    "blank") blank_screen;;
+    shutdown) shutdown_system;;
+    reboot) reboot_system;;
+    suspend) suspend_system;;
+    blank) blank_screen;;
     *) abort 'Invalid or unknown command';;
   esac
 

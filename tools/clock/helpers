@@ -25,10 +25,10 @@ pick_timezone () {
   len=$(count "${timezones}") || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No timezones have found"
+    echo 'No timezones have found'
     return 2
   fi
   
-  pick_one "${prompt}" "${timezones}" "vertical" || return $?
+  pick_one "${prompt}" "${timezones}" vertical || return $?
 }
 

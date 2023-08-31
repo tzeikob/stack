@@ -11,43 +11,43 @@ source /opt/stack/bluetooth/commands
 # Outputs:
 #  A long help message.
 show_help () {
-  echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
+  echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
 
-  echo -e "\nCOMMANDS"
-  printf " %-32s %s\n" \
-    "help" "Show this help message." \
-    "" "" \
-    "show status" "Show a report of the bluetooth service and devices." \
-    "show logs" "Show the last logs of the bluetooth service." \
-    "" "" \
-    "show controller [<address>]" "Show the data of a controller." \
-    "show device [<address>]" "Show the data of a device." \
-    "" "" \
-    "list controllers" "List the available controllers." \
-    "list devices [<status>]" "List the devices where status could be" \
-    "" "any of paired, connected, trusted or bonded." \
-    "" "" \
-    "set controller [<address>]" "Set the default controller." \
-    "set power <on|off>" "Set the default controller power to on or off." \
-    "set scan <on|off>" "Set scanning mode to on or off." \
-    "set discoverable <on|off>" "Set the default controller to be discoverable." \
-    "set pairable <on|off>" "Set the default controller to be pairable." \
-    "" "" \
-    "connect device [<address>]" "Connect a bluetooth device." \
-    "disconnect device [<address>]" "Disconnect a bluetooth device." \
-    "remove device [<address>]" "Removes a bluetooth device." \
-    "" "" \
-    "restart" "Restart the bluetooth service."
+  echo -e '\nCOMMANDS'
+  printf ' %-32s %s\n' \
+    'help' 'Show this help message.' \
+    '' '' \
+    'show status' 'Show a report of the bluetooth service and devices.' \
+    'show logs' 'Show the last logs of the bluetooth service.' \
+    '' '' \
+    'show controller [<address>]' 'Show the data of a controller.' \
+    'show device [<address>]' 'Show the data of a device.' \
+    '' '' \
+    'list controllers' 'List the available controllers.' \
+    'list devices [<status>]' 'List the devices where status could be' \
+    '' 'any of paired, connected, trusted or bonded.' \
+    '' '' \
+    'set controller [<address>]' 'Set the default controller.' \
+    'set power <on|off>' 'Set the default controller power to on or off.' \
+    'set scan <on|off>' 'Set scanning mode to on or off.' \
+    'set discoverable <on|off>' 'Set the default controller to be discoverable.' \
+    'set pairable <on|off>' 'Set the default controller to be pairable.' \
+    '' '' \
+    'connect device [<address>]' 'Connect a bluetooth device.' \
+    'disconnect device [<address>]' 'Disconnect a bluetooth device.' \
+    'remove device [<address>]' 'Removes a bluetooth device.' \
+    '' '' \
+    'restart' 'Restart the bluetooth service.'
 }
 
 loop () {
   clear
 
   while true; do
-    prompt "bluetooth" && history -s "${REPLY}"
+    prompt bluetooth && history -s "${REPLY}"
 
     set -f
-    set_separator "line"
+    set_separator line
     local cmd=($(xargs -n1 <<< "${REPLY}"))
     restore_separator && set +f
 
@@ -64,50 +64,50 @@ loop () {
     fi
 
     case "${cmd[0]}" in
-      "show")
+      show)
         case "${cmd[1]}" in
-          "status") show_status;;
-          "logs") show_logs;;
-          "controller") show_controller "${cmd[2]}";;
-          "device") show_device "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
+          status) show_status;;
+          logs) show_logs;;
+          controller) show_controller "${cmd[2]}";;
+          device) show_device "${cmd[2]}";;
+          *) echo 'Invalid or unknown command';;
         esac;;
-      "list")
+      list)
         case "${cmd[1]}" in
-          "controllers") list_controllers;;
-          "devices") list_devices "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
+          controllers) list_controllers;;
+          devices) list_devices "${cmd[2]}";;
+          *) echo 'Invalid or unknown command';;
         esac;;
-      "set")
+      set)
         case "${cmd[1]}" in
-          "controller") set_controller "${cmd[2]}";;
-          "power") set_power "${cmd[2]}";;
-          "scan") set_scan "${cmd[2]}";;
-          "discoverable") set_discoverable "${cmd[2]}";;
-          "pairable") set_pairable "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
+          controller) set_controller "${cmd[2]}";;
+          power) set_power "${cmd[2]}";;
+          scan) set_scan "${cmd[2]}";;
+          discoverable) set_discoverable "${cmd[2]}";;
+          pairable) set_pairable "${cmd[2]}";;
+          *) echo 'Invalid or unknown command';;
         esac;;
-      "connect")
+      connect)
         case "${cmd[1]}" in
-          "device") connect_device "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
+          device) connect_device "${cmd[2]}";;
+          *) echo 'Invalid or unknown command';;
         esac;;
-      "disconnect")
+      disconnect)
         case "${cmd[1]}" in
-          "device") disconnect_device "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
+          device) disconnect_device "${cmd[2]}";;
+          *) echo 'Invalid or unknown command';;
         esac;;
-      "remove")
+      remove)
         case "${cmd[1]}" in
-          "device") remove_device "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
+          device) remove_device "${cmd[2]}";;
+          *) echo 'Invalid or unknown command';;
         esac;;
-      "restart") restart_bluetooth;;
-      *) echo "Invalid or unknown command";; 
+      restart) restart_bluetooth;;
+      *) echo 'Invalid or unknown command';; 
     esac
     
     if [[ $? -eq 1 ]]; then
-      echo "An unknown error has occurred"
+      echo 'An unknown error has occurred'
     fi
 
     REPLY=''

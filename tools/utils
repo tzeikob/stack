@@ -19,9 +19,9 @@ set_separator () {
   local value="${1}"
 
   case "${value}" in
-    "space") IFS=$' ';;
-    "line") IFS=$'\n';;
-    "tab") IFS=$'\t';;
+    space) IFS=$' ';;
+    line) IFS=$'\n';;
+    tab) IFS=$'\t';;
     *) IFS="${value}";;
   esac
 }
@@ -131,7 +131,7 @@ ask () {
     read -rep "${prompt} " REPLY
 
     while [[ ! "${REPLY}" =~ ${re} ]]; do
-      read -rep "Please enter a valid value: " REPLY
+      read -rep 'Please enter a valid value: ' REPLY
     done
   else
     read -rep "${prompt} " REPLY
@@ -161,11 +161,11 @@ authenticate_user () {
   local password="${1}"
 
   local cmd=''
-  cmd+="import pam, sys;"
-  cmd+="from getpass import getuser;"
-  cmd+="p = pam.pam();"
+  cmd+='import pam, sys;'
+  cmd+='from getpass import getuser;'
+  cmd+='p = pam.pam();'
   cmd+="p.authenticate(getuser(), \"${password}\");"
-  cmd+="sys.exit(p.code)"
+  cmd+='sys.exit(p.code)'
 
   python -c "${cmd}"
 
@@ -423,3 +423,4 @@ download () {
     wget -P "${output}" "${url}" -q --show-progress
   done
 }
+

@@ -90,7 +90,7 @@ list_wallpapers () {
   wallpapers="$(find_wallpapers)"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find wallpaper files"
+    echo 'Unable to find wallpaper files'
     return 2
   fi
 
@@ -98,7 +98,7 @@ list_wallpapers () {
   len="$(count "${wallpapers}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No wallpaper files have found"
+    echo 'No wallpaper files have found'
     return 2
   fi
 
@@ -130,7 +130,7 @@ set_wallpaper () {
   fi
 
   if [[ "${name}" =~ /+ ]]; then
-    echo "Invalid wallpaper name"
+    echo 'Invalid wallpaper name'
     return 2
   fi
 
@@ -138,7 +138,7 @@ set_wallpaper () {
   local wallpaper_file="${WALLPAPERS_HOME}/${name}"
 
   if [[ ! "${wallpaper_file}" =~ .+\.(jpg|jpeg|png)$ ]]; then
-    echo "Invalid wallpaper file type"
+    echo 'Invalid wallpaper file type'
     return 2
   elif [[ ! -f "${wallpaper_file}" ]]; then
     echo "No wallpaper found with name ${name}"
@@ -154,19 +154,19 @@ set_wallpaper () {
     modes+='{"key": "tile", "value": "Tile"}'
     modes="[${modes}]"
 
-    pick_one "Select a mode:" "${modes}" "vertical" || return $?
+    pick_one 'Select a mode:' "${modes}" vertical || return $?
     [[ -n "${REPLY}" ]] && mode="${REPLY}" || return 0
   fi
   
   if [[ ! "${mode}" =~ ^(center|fill|max|scale|tile)$ ]]; then
-    echo "Invalid wallpaper mode"
+    echo 'Invalid wallpaper mode'
     return 2
   fi
 
   feh --no-fehbg --bg-"${mode}" "${wallpaper_file}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to set wallpaper"
+    echo 'Failed to set wallpaper'
     return 2
   fi
 
@@ -234,7 +234,7 @@ list_pointers () {
   pointers="$(find_pointers)"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find pointers"
+    echo 'Unable to find pointers'
     return 2
   fi
 
@@ -242,7 +242,7 @@ list_pointers () {
   len="$(count "${pointers}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No pointers have found"
+    echo 'No pointers have found'
     return 0
   fi
 
@@ -265,18 +265,18 @@ set_pointer_speed () {
   local persist="${2:-"save"}"
 
   if [[ -z "${factor}" ]]; then
-    ask "Enter the speed factor [0,1]:" "^[0-9]+\.?[0-9]*$" || return $?
+    ask 'Enter the speed factor [0,1]:' '^[0-9]+\.?[0-9]*$' || return $?
     factor="${REPLY}"
   fi
 
   if [[ ! "${factor}" =~ ^[0-9]+\.?[0-9]*$ ]]; then
-    echo "Invalid pointer speed"
+    echo 'Invalid pointer speed'
     return 2
   elif (( $(echo "${factor} < 0" | bc) )); then
-    echo "Speed factor can't be lower than 0"
+    echo 'Speed factor cannot be lower than 0'
     return 2
   elif (( $(echo "${factor} > 1" | bc) )); then
-    echo "Speed factor can't be greater than 1"
+    echo 'Speed factor cannot be greater than 1'
     return 2
   fi
 
@@ -308,23 +308,23 @@ set_pointer_speed () {
     print a[1]
   }')" || return 1
 
-  local succeed="false"
+  local succeed='false'
 
   local device=''
   while read -r device; do
     # Assume this is a mouse device and set its acceleration speed
-    xinput --set-prop "${device}" "libinput Accel Speed" "${speed}" &> /dev/null &&
-    succeed="true" && continue
+    xinput --set-prop "${device}" 'libinput Accel Speed' "${speed}" &> /dev/null &&
+    succeed='true' && continue
 
     # Otherwise assume this is a touch device and set its velocity
-    xinput --set-prop "${device}" "Device Accel Constant Deceleration" 1 &> /dev/null &&
-    xinput --set-prop "${device}" "Device Accel Adaptive Deceleration" 1 &> /dev/null &&
-    xinput --set-prop "${device}" "Device Accel Velocity Scaling" "${velocity}" &> /dev/null &&
-    succeed="true"
+    xinput --set-prop "${device}" 'Device Accel Constant Deceleration' 1 &> /dev/null &&
+    xinput --set-prop "${device}" 'Device Accel Adaptive Deceleration' 1 &> /dev/null &&
+    xinput --set-prop "${device}" 'Device Accel Velocity Scaling' "${velocity}" &> /dev/null &&
+    succeed='true'
   done <<< "${devices}"
 
   if [[ "${succeed}" == "false" ]]; then
-    echo "Failed to set pointer speed"
+    echo 'Failed to set pointer speed'
     return 2
   fi
 
@@ -399,7 +399,7 @@ list_tablets () {
   tablets="$(find_tablets)"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find tablets"
+    echo 'Unable to find tablets'
     return 2
   fi
 
@@ -407,7 +407,7 @@ list_tablets () {
   len="$(count "${tablets}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No tablets have found"
+    echo 'No tablets have found'
     return 0
   fi
 
@@ -449,18 +449,18 @@ scale_tablet () {
   fi
 
   if [[ -z "${scale}" ]]; then
-    ask "Enter the scale factor [0.1-1]:" "^[0-9]+\.?[0-9]*$" || return $?
+    ask 'Enter the scale factor [0.1-1]:' '^[0-9]+\.?[0-9]*$' || return $?
     scale="${REPLY}"
   fi
 
   if [[ ! "${scale}" =~ ^[0-9]+\.?[0-9]*$ ]]; then
-    echo "Invalid pointer speed"
+    echo 'Invalid pointer speed'
     return 2
   elif (( $(echo "${scale} <= 0" | bc) )); then
-    echo "Scale can't be lower or equal to 0"
+    echo 'Scale cannot be lower or equal to 0'
     return 2
   elif (( $(echo "${scale} > 1" | bc) )); then
-    echo "Scale can't be larger than 1"
+    echo 'Scale cannot be larger than 1'
     return 2
   fi
 
@@ -555,7 +555,7 @@ map_tablet () {
   fi
 
   if [[ -z "${display}" ]]; then
-    pick_output "Select a display:" "active" || return $?
+    pick_output 'Select a display:' active || return $?
     [[ -n "${REPLY}" ]] && display="${REPLY}" || return 0
   fi
 
@@ -564,7 +564,7 @@ map_tablet () {
     xsetwacom --set "${name}" MapToOutput desktop &> /dev/null
 
     if [[ $? -ne 0 ]]; then
-      echo "Failed to reset mapping"
+      echo 'Failed to reset mapping'
       return 2
     fi
 
@@ -587,7 +587,7 @@ map_tablet () {
 
     xsetwacom --set "${name}" area "${area}" &> /dev/null || return 1
 
-    echo "Tablet mapping has been reset"
+    echo 'Tablet mapping has been reset'
     return 0
   fi
 
@@ -639,7 +639,7 @@ map_tablet () {
 #  None
 init_pointer () {
   if [[ ! -f "${SETTINGS_FILE}" ]]; then
-    echo "No pointer settings found"
+    echo 'No pointer settings found'
     return 0
   fi
 
@@ -647,21 +647,21 @@ init_pointer () {
   pointer="$(jq '.pointer|if . then . else empty end' "${SETTINGS_FILE}")"
 
   if [[ -z "${pointer}" ]]; then
-    echo "No pointer settings found"
+    echo 'No pointer settings found'
     return 0
   fi
 
   local speed=''
   speed="$(get "${pointer}" '.speed')" || return 1
 
-  set_pointer_speed "${speed}" "nosave"
+  set_pointer_speed "${speed}" nosave
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to set pointer speed"
+    echo 'Failed to set pointer speed'
     return 2
   fi
 
-  echo "Pointer speed has been set"
+  echo 'Pointer speed has been set'
 }
 
 # Applies the settings for those tablets being stored
@@ -670,7 +670,7 @@ init_pointer () {
 #  None
 init_tablets () {
   if [[ ! -f "${SETTINGS_FILE}" ]]; then
-    echo "No tablets settings found"
+    echo 'No tablets settings found'
     return 0
   fi
 
@@ -678,12 +678,12 @@ init_tablets () {
   tablets="$(jq '.tablets|if . then . else empty end' "${SETTINGS_FILE}")"
 
   if [[ -z "${tablets}" ]]; then
-    echo "No tablets settings found"
+    echo 'No tablets settings found'
     return 0
   fi
 
   local output=''
-  output="$(find_outputs "primary" | jq -cer '.[0]|.device_name')" || return 1
+  output="$(find_outputs primary | jq -cer '.[0]|.device_name')" || return 1
 
   tablets="$(echo "${tablets}" | jq -cr '.[]|{name, scale}')" || return 1
 
@@ -698,16 +698,16 @@ init_tablets () {
     local scale=1
     scale="$(get "${tablet}" '.scale')"
 
-    scale_tablet "${name}" "${scale}" "nosave" &&
+    scale_tablet "${name}" "${scale}" nosave &&
     map_tablet "${name}" "${output}" || failed='true'
   done <<< "${tablets}"
 
   if [[ "${failed}" == "true" ]]; then
-    echo "Failed to set all tablets"
+    echo 'Failed to set all tablets'
     return 2
   fi
 
-  echo "Tablets have been set"
+  echo 'Tablets have been set'
 }
 
 # Sets the desktop wallpaper to the wallpaper
@@ -716,7 +716,7 @@ init_tablets () {
 #  None
 init_wallpaper () {
   if [[ ! -f "${SETTINGS_FILE}" ]]; then
-    echo "No wallpaper settings found"
+    echo 'No wallpaper settings found'
     return 0
   fi
 
@@ -724,7 +724,7 @@ init_wallpaper () {
   wallpaper="$(jq '.wallpaper|if . then . else empty end' "${SETTINGS_FILE}")"
 
   if [[ -z "${wallpaper}" ]]; then
-    echo "No wallpaper settings found"
+    echo 'No wallpaper settings found'
     return 0
   fi
 
@@ -739,13 +739,13 @@ init_wallpaper () {
   local mode=''
   mode="$(get "${wallpaper}" '.mode')" || return 1
 
-  set_wallpaper "${name}" "${mode:-"center"}" "nosave"
+  set_wallpaper "${name}" "${mode:-"center"}" nosave
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to set the wallpaper"
+    echo 'Failed to set the wallpaper'
     return 2
   fi
 
-  echo "Wallpaper has been set"
+  echo 'Wallpaper has been set'
 }
 

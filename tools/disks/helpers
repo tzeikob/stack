@@ -123,7 +123,7 @@ find_partition () {
   volume="$(echo "${volume}" | jc --veracrypt | jq -cer "${query}")" || return 1
 
   # Merge partition and volume data into an object
-  jq -ncer --argjson p "${part}" --argjson v "${volume}" "\$p + \$v" || return 1
+  jq -ncer --argjson p "${part}" --argjson v "${volume}" '\$p + \$v' || return 1
 }
 
 # Returns the list of rom block devices.
@@ -377,7 +377,7 @@ mount_encrypted () {
 
   mkdir -p "${mount_point}" &&
   sudo veracrypt -t --mount "${path}" "${mount_point}" --password "${password}" \
-    --pim 0 --keyfiles "" --protect-hidden no --non-interactive &> /dev/null
+    --pim 0 --keyfiles '' --protect-hidden no --non-interactive &> /dev/null
 
   if [[ $? -ne 0 ]]; then
     rm -rf "${mount_point}"
@@ -442,7 +442,7 @@ unmount_partitions () {
   volumes="$(echo "${volumes}" | jc --veracrypt | jq -cr '.[]|.path')" || return 1
   
   if [[ -z "${parts}" ]] && [[ -z "${volumes}" ]]; then
-    echo "No mounted partitions have found"
+    echo 'No mounted partitions have found'
     return 0
   fi
 
@@ -509,7 +509,7 @@ create_partition () {
   fi
 
   # Use ntfs as fs type for exfat file systems
-  [[ "${fs_type}" == "exfat" ]] && fs_type="ntfs"
+  [[ "${fs_type}" == "exfat" ]] && fs_type='ntfs'
   
   sudo parted --script -a optimal -- "${path}" mkpart primary "${fs_type}" "${start}" "${end}" &&
   sudo parted --script -- "${path}" align-check optimal 1 || return 1
@@ -538,12 +538,12 @@ format_partition () {
   fi
 
   case "${fs_type}" in
-    "ext2") sudo mkfs.ext2 -L "${label}" "${path}${index}" | awk NF;;
-    "ext3") sudo mkfs.ext3 -L "${label}" "${path}${index}" | awk NF;;
-    "ext4") sudo mkfs.ext4 -L "${label}" "${path}${index}" | awk NF;;
-    "ntfs") sudo mkfs.ntfs -f -L "${label}" "${path}${index}" | awk NF;;
-    "exfat") sudo mkfs.exfat -L "${label}" "${path}${index}" | awk NF;;
-    "fat32") sudo mkfs.fat -F 32 -n "${label}" "${path}${index}" | awk NF;;
+    ext2) sudo mkfs.ext2 -L "${label}" "${path}${index}" | awk NF;;
+    ext3) sudo mkfs.ext3 -L "${label}" "${path}${index}" | awk NF;;
+    ext4) sudo mkfs.ext4 -L "${label}" "${path}${index}" | awk NF;;
+    ntfs) sudo mkfs.ntfs -f -L "${label}" "${path}${index}" | awk NF;;
+    exfat) sudo mkfs.exfat -L "${label}" "${path}${index}" | awk NF;;
+    fat32) sudo mkfs.fat -F 32 -n "${label}" "${path}${index}" | awk NF;;
     *) return 1;;
   esac
 
@@ -590,7 +590,7 @@ pick_disk () {
   disks="$(find_disks)"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find disks"
+    echo 'Unable to find disks'
     return 2
   fi
 
@@ -598,7 +598,7 @@ pick_disk () {
   len="$(count "${disks}")" || return 1
   
   if [[ ${len} -eq 0 ]]; then
-    echo "No disks have found"
+    echo 'No disks have found'
     return 2
   fi
 
@@ -615,7 +615,7 @@ pick_disk () {
 
   disks="$(echo "${disks}" | jq -cer "${query}")" || return 1
 
-  pick_one "Select a disk:" "${disks}" "vertical" || return $?
+  pick_one 'Select a disk:' "${disks}" vertical || return $?
 }
 
 # Shows a menu asking the user to select one partition
@@ -658,7 +658,7 @@ pick_partition () {
 
   parts="$(echo "${parts}" | jq -cer "${query}")" || return 1
 
-  pick_one "Select a partition:" "${parts}" "vertical" || return $?
+  pick_one 'Select a partition:' "${parts}" vertical || return $?
 }
 
 # Shows a menu asking the user to select one rom block
@@ -700,7 +700,7 @@ pick_rom () {
 
   roms="$(echo "${roms}" | jq -cer "${query}")" || return 1
 
-  pick_one "Select a rom:" "${roms}" "vertical" || return $?
+  pick_one 'Select a rom:' "${roms}" vertical || return $?
 }
 
 # Shows a menu asking the user to select one host, where the
@@ -710,13 +710,13 @@ pick_rom () {
 # Outputs:
 #  A menu of host names.
 pick_host () {
-  echo "Searching hosts in local network..."
+  echo 'Searching hosts in local network...'
 
   local hosts=''
   hosts="$(find_hosts)"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find hosts"
+    echo 'Unable to find hosts'
     return 2
   fi
 
@@ -724,7 +724,7 @@ pick_host () {
   len="$(count "${hosts}")" || return 1
   
   if [[ ${len} -eq 0 ]]; then
-    echo "No hosts have found"
+    echo 'No hosts have found'
     return 2
   fi
 
@@ -735,7 +735,7 @@ pick_host () {
 
   hosts="$(echo "${hosts}" | jq -cer "${query}")" || return 1
 
-  pick_one "Select a host:" "${hosts}" "vertical" || return $?
+  pick_one 'Select a host:' "${hosts}" vertical || return $?
 }
 
 # Shows a menu asking the user to select one file system type,
@@ -754,6 +754,6 @@ pick_fs_type () {
   values+='{"key": "fat32", "value": "FAT32"}'
   values="[${values}]"
 
-  pick_one "Select a file system type:" "${values}" "vertical" || return $?
+  pick_one 'Select a file system type:' "${values}" vertical || return $?
 }
 

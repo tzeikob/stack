@@ -30,7 +30,7 @@ show_status () {
   devices="$(find_devices)"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to read network devices"
+    echo 'Unable to read network devices'
     return 2
   fi
 
@@ -52,7 +52,7 @@ show_status () {
   curl -s 'http://ip-api.com/json' | jq -cer "\"${query}\""
 
   if [[ $? -ne 0 ]]; then
-    echo "ISP:         Unavailable"
+    echo 'ISP:         Unavailable'
   fi
 
   local proxy=''
@@ -113,8 +113,8 @@ show_device () {
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
 
-  if ! validate "device" "${name}"; then
-    echo "Invalid or unknown device"
+  if ! validate device "${name}"; then
+    echo 'Invalid or unknown device'
     return 2
   fi
 
@@ -154,8 +154,8 @@ show_connection () {
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
 
-  if ! validate "connection" "${name}"; then
-    echo "Invalid or unknown connection"
+  if ! validate connection "${name}"; then
+    echo 'Invalid or unknown connection'
     return 2
   fi
 
@@ -196,7 +196,7 @@ list_devices () {
   devices="$(find_devices)"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to read network devices"
+    echo 'Unable to read network devices'
     return 2
   fi
 
@@ -204,7 +204,7 @@ list_devices () {
   len="$(count "${devices}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No network devices have found"
+    echo 'No network devices have found'
     return 0
   fi
 
@@ -228,7 +228,7 @@ list_connections () {
   connections="$(find_connections)"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to read network connections"
+    echo 'Unable to read network connections'
     return 2
   fi
 
@@ -236,7 +236,7 @@ list_connections () {
   len="$(count "${connections}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No network connections have found"
+    echo 'No network connections have found'
     return 0
   fi
 
@@ -261,30 +261,30 @@ list_wifis () {
   local signal="${2:-"0"}"
 
   if [[ -z "${device}" ]]; then
-    pick_device "wifi" || return $?
+    pick_device wifi || return $?
     [[ -n "${REPLY}" ]] && device="${REPLY}" || return 0
   fi
 
-  if ! validate "device" "${device}"; then
-    echo "Invalid or unknown device"
+  if ! validate device "${device}"; then
+    echo 'Invalid or unknown device'
     return 2
   fi
 
   if [[ ! "${signal}" =~ ^[0-9][0-9]{,2}$ ]]; then
-    echo "Invalid signal limit value"
+    echo 'Invalid signal limit value'
     return 2
   elif (( ${signal} < 0 || ${signal} > 100 )); then
-    echo "Signal limit value out of range"
+    echo 'Signal limit value out of range'
     return 2
   fi
 
-  echo "Detecting available wifi networks..."
+  echo 'Detecting available wifi networks...'
 
   local networks=''
   networks="$(find_wifis "${device}" "${signal}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to detect wifi networks"
+    echo 'Unable to detect wifi networks'
     return 2
   fi
 
@@ -292,7 +292,7 @@ list_wifis () {
   len="$(count "${networks}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No wifi networks have been detected"
+    echo 'No wifi networks have been detected'
     return 0
   fi
 
@@ -320,7 +320,7 @@ up () {
     elif [[ "${object}" == "connection" ]]; then
       pick_connection || return $?
     else
-      echo "Invalid or unknown network object"
+      echo 'Invalid or unknown network object'
       return 2
     fi
 
@@ -328,7 +328,7 @@ up () {
   fi
 
   if ! validate "${object}" "${name}"; then
-    echo "Invalid or unknown network object"
+    echo 'Invalid or unknown network object'
     return 2
   fi
 
@@ -362,7 +362,7 @@ down () {
     elif [[ "${object}" == "connection" ]]; then
       pick_connection || return $?
     else
-      echo "Invalid or unknown network object"
+      echo 'Invalid or unknown network object'
       return 2
     fi
 
@@ -370,7 +370,7 @@ down () {
   fi
 
   if ! validate "${object}" "${name}"; then
-    echo "Invalid or unknown network object"
+    echo 'Invalid or unknown network object'
     return 2
   fi
 
@@ -401,8 +401,8 @@ remove_device () {
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
 
-  if ! validate "device" "${name}"; then
-    echo "Invalid or unknown device"
+  if ! validate device "${name}"; then
+    echo 'Invalid or unknown device'
     return 2
   fi
 
@@ -411,7 +411,7 @@ remove_device () {
   nmcli device delete "${name}" &> /dev/null
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to remove device"
+    echo 'Failed to remove device'
     return 2
   fi
 
@@ -429,8 +429,8 @@ remove_connection () {
     [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
   fi
 
-  if ! validate "connection" "${name}"; then
-    echo "Invalid or unknown connection"
+  if ! validate connection "${name}"; then
+    echo 'Invalid or unknown connection'
     return 2
   fi
 
@@ -439,7 +439,7 @@ remove_connection () {
   nmcli connection delete "${name}" &> /dev/null
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to remove connection"
+    echo 'Failed to remove connection'
     return 2
   fi
 
@@ -450,7 +450,7 @@ remove_connection () {
 # Arguments:
 #  None
 add_ethernet_connection () {
-  ask "Enter the connection name:" ".+" || return $?
+  ask 'Enter the connection name:' '.+' || return $?
   local name="${REPLY}"
 
   if find_connection "${name}" &> /dev/null; then
@@ -459,40 +459,40 @@ add_ethernet_connection () {
   fi
 
   local device=''
-  pick_device "ethernet" || return $?
+  pick_device ethernet || return $?
   [[ -n "${REPLY}" ]] && device="${REPLY}" || return 0
 
   local dhcp=''
-  confirm "Want to enable DHCP mode?" || return $?
+  confirm 'Want to enable DHCP mode?' || return $?
   [[ -n "${REPLY}" ]] && dhcp="${REPLY}" || return 0
 
   echo "Creating ethernet connection ${name}..."
 
   if [[ "${dhcp}" == "yes" ]]; then
-    nmcli connection add type "ethernet" \
-      con-name "${name}" ifname "${device}" ipv4.method "auto"
+    nmcli connection add type ethernet \
+      con-name "${name}" ifname "${device}" ipv4.method auto
   else
     local re='^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$'
 
-    ask "Enter the static ip:" "${re}" || return $?
+    ask 'Enter the static ip:' "${re}" || return $?
     local ip="${REPLY}"
 
-    ask "Enter the gateway:" "${re}" || return $?
+    ask 'Enter the gateway:' "${re}" || return $?
     local gateway="${REPLY}"
 
-    ask "Enter the primary DNS:" "${re}" || return $?
+    ask 'Enter the primary DNS:' "${re}" || return $?
     local dns="${REPLY}"
 
-    ask "Enter the secondary DNS:" "${re}" || return $?
+    ask 'Enter the secondary DNS:' "${re}" || return $?
     dns="${dns} ${REPLY}"
 
-    nmcli connection add type "ethernet" \
+    nmcli connection add type ethernet \
       con-name "${name}" ifname "${device}" ipv4.method "manual" \
       ipv4.addresses "${ip}/24" ipv4.gateway "${gateway}" ipv4.dns "${dns}"
   fi
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to create ethernet connection"
+    echo 'Failed to create ethernet connection'
     return 2
   fi
 
@@ -504,10 +504,10 @@ add_ethernet_connection () {
 #  None
 add_wifi_connection () {
   local device=''
-  pick_device "wifi" || return $?
+  pick_device wifi || return $?
   [[ -n "${REPLY}" ]] && device="${REPLY}" || return 0
 
-  echo "Detecting available wifi networks..."
+  echo 'Detecting available wifi networks...'
 
   local networks=''
   networks="$(find_wifis "${device}")" || return 1
@@ -516,7 +516,7 @@ add_wifi_connection () {
   len="$(count "${networks}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No wifi networks have been detected"
+    echo 'No wifi networks have been detected'
     return 0
   fi
 
@@ -526,10 +526,10 @@ add_wifi_connection () {
   networks="$(echo "${networks}" | jq -cer "${query}")" || return 1
 
   local ssid=''
-  pick_one "Select a wifi network:" "${networks}" "vertical" || return $?
+  pick_one 'Select a wifi network:' "${networks}" vertical || return $?
   [[ -n "${REPLY}" ]] && ssid="${REPLY}" || return 0
 
-  ask_secret "Enter the private key:" || return $?
+  ask_secret 'Enter the private key:' || return $?
   local key="${REPLY}"
 
   echo "Connecting to network ${ssid}..."
@@ -550,7 +550,7 @@ add_wifi_connection () {
 # Arguments:
 #  None
 add_vpn_connection () {
-  ask "Enter the path to ovpn file:" "^/.+" || return $?
+  ask 'Enter the path to ovpn file:' '^/.+' || return $?
   local file_path="${REPLY}"
 
   if [[ ! -f "${file_path}" ]]; then
@@ -563,14 +563,14 @@ add_vpn_connection () {
   name="${name%.*}"
 
   if [[ "${extension}" != "ovpn" ]]; then
-    echo "Invalid ovpn file type"
+    echo 'Invalid ovpn file type'
     return 2
   fi
 
-  ask "Enter the username:" ".+" || return $?
+  ask 'Enter the username:' '.+' || return $?
   local username="${REPLY}"
 
-  ask_secret "Enter the password:" ".+" || return $?
+  ask_secret 'Enter the password:' '.+' || return $?
   local password="${REPLY}"
 
   echo "Creating VPN connection ${name}..."
@@ -578,7 +578,7 @@ add_vpn_connection () {
   nmcli connection import type openvpn file "${file_path}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to create VPN connection"
+    echo 'Failed to create VPN connection'
     return 2
   fi
 
@@ -596,7 +596,7 @@ add_proxy () {
   local name="${1}"
 
   if [[ -z "${name}" ]]; then
-    echo "Missing the proxy profile name"
+    echo 'Missing the proxy profile name'
     return 2
   fi
 
@@ -613,29 +613,29 @@ add_proxy () {
     fi
   fi
 
-  ask "Enter the host:" ".+" || return $?
+  ask 'Enter the host:' '.+' || return $?
   local host="${REPLY}"
 
-  ask "Enter the port:" "^[0-9]+$" || return $?
+  ask 'Enter the port:' '^[0-9]+$' || return $?
   local port="${REPLY}"
 
-  confirm "Is this an authenticated proxy?" || return $?
+  confirm 'Is this an authenticated proxy?' || return $?
   [[ -z "${REPLY}" ]] && return 0
 
   if [[ "${REPLY}" == "yes" ]]; then
-    ask "Enter the username:" ".+" || return $?
+    ask 'Enter the username:' '.+' || return $?
     local username="${REPLY}"
 
-    ask_secret "Enter the password:" ".+" || return $?
+    ask_secret 'Enter the password:' '.+' || return $?
     local password="${REPLY}"
   fi
 
   local no_proxy='[]'
-  confirm "Want to set no proxy hosts?" || return $?
+  confirm 'Want to set no proxy hosts?' || return $?
   [[ -z "${REPLY}" ]] && return 0
 
   if [[ "${REPLY}" == "yes" ]]; then
-    ask "Enter no proxy hosts:" ".*" || return $?
+    ask 'Enter no proxy hosts:' '.*' || return $?
 
     local query='[split(" ")|.[]|if . and .!="" then . else empty end]'
     no_proxy="$(echo "\"${REPLY}\"" | jq -cer "${query}")" || return 1
@@ -674,7 +674,7 @@ remove_proxy () {
   local name="${1}"
 
   if [[ ! -f "${SETTINGS_FILE}" ]]; then
-    echo "No proxy profiles have found"
+    echo 'No proxy profiles have found'
     return 0
   fi
 
@@ -712,7 +712,7 @@ remove_proxy () {
 #  A list of proxy profiles.
 list_proxies () {
   if [[ ! -f "${SETTINGS_FILE}" ]]; then
-    echo "No proxy profiles have found"
+    echo 'No proxy profiles have found'
     return 0
   fi
 
@@ -723,7 +723,7 @@ list_proxies () {
   len="$(count "${proxies}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No proxy profiles have found"
+    echo 'No proxy profiles have found'
     return 0
   fi
 
@@ -746,7 +746,7 @@ set_proxy () {
   local name="${1}"
 
   if [[ ! -f "${SETTINGS_FILE}" ]]; then
-    echo "No proxy profiles have found"
+    echo 'No proxy profiles have found'
     return 2
   fi
 
@@ -790,37 +790,37 @@ set_proxy () {
   echo "export NO_PROXY=\"${no_proxy}\"" >> "${PROXY_ENV_FILE}" &&
   sed -i "\|source \"${PROXY_ENV_FILE}\"|d" "${SHELLRC_FILE}" &&
   echo "source \"${PROXY_ENV_FILE}\"" >> "${SHELLRC_FILE}" ||
-    echo "Failed to set environment proxy variables"
+    echo 'Failed to set environment proxy variables'
 
   if which git &> /dev/null; then
     git config --global http.proxy "http://${uri}/" &&
     git config --global https.proxy "https://${uri}/" ||
-      echo "Failed to set git proxy settings"
+      echo 'Failed to set git proxy settings'
   fi
 
   if which npm &> /dev/null; then
     npm config set proxy "http://${uri}/" &&
     npm config set https-proxy "https://${uri}/" ||
-      echo "Failed to set npm proxy settings"
+      echo 'Failed to set npm proxy settings'
   fi
   
   if which yarn &> /dev/null; then
     yarn config set proxy "http://${uri}/" &&
     yarn config set https-proxy "https://${uri}/" ||
-      echo "Failed to set yarn proxy settings"
+      echo 'Failed to set yarn proxy settings'
   fi
 
   if which docker &> /dev/null; then
-    sudo mkdir -p "/etc/systemd/system/docker.service.d"
+    sudo mkdir -p /etc/systemd/system/docker.service.d
 
     printf '%s\n%s%s%s%s' \
-      "[Service]" \
-      "Environment=" \
+      '[Service]' \
+      'Environment=' \
       "\"HTTP_PROXY=http://${uri}/\" " \
       "\"HTTPS_PROXY=https://${uri}/\" " \
       "\"NO_PROXY=${no_proxy}\"" | sudo tee "${DOCKER_PROXY_FILE}" > /dev/null &&
     sudo systemctl daemon-reload ||
-      echo "Failed to set docker proxy settings"
+      echo 'Failed to set docker proxy settings'
   fi
 
   local host=''
@@ -829,7 +829,7 @@ set_proxy () {
   local port=''
   port="$(get "${proxy}" ".port")" || return 1
 
-  gsettings set org.gnome.system.proxy mode "manual"
+  gsettings set org.gnome.system.proxy mode manual
   gsettings set org.gnome.system.proxy.http host "${host}"
   gsettings set org.gnome.system.proxy.http port "${port}"
   gsettings set org.gnome.system.proxy.https host "${host}"
@@ -851,11 +851,11 @@ set_proxy () {
     gsettings set org.gnome.system.proxy.http authentication-password "${password}"
   else
     gsettings set org.gnome.system.proxy.http use-authentication false
-    gsettings set org.gnome.system.proxy.http authentication-user ""
-    gsettings set org.gnome.system.proxy.http authentication-password ""
+    gsettings set org.gnome.system.proxy.http authentication-user ''
+    gsettings set org.gnome.system.proxy.http authentication-password ''
   fi
 
-  local query=".no_proxy|if .|length > 0"
+  local query='.no_proxy|if .|length > 0'
   query+=" then \"[\([.[]|\"'\(.)'\"]|join(\",\"))]\" else [] end"
 
   local no_proxy=''
@@ -863,7 +863,7 @@ set_proxy () {
 
   gsettings set org.gnome.system.proxy ignore-hosts "${no_proxy}"
   
-  echo "Proxy settings have been applied"
+  echo 'Proxy settings have been applied'
 }
 
 # Reverts any proxy settings have been applied to
@@ -873,48 +873,48 @@ set_proxy () {
 unset_proxy () {
   rm -f "${PROXY_ENV_FILE}" &&
   sed -i "\|source \"${PROXY_ENV_FILE}\"|d" "${SHELLRC_FILE}" ||
-    echo "Failed to unset environment proxy variables"
+    echo 'Failed to unset environment proxy variables'
 
   if which git &> /dev/null &&
     git config --global --get http.proxy &> /dev/null; then
     git config --global --unset http.proxy &&
     git config --global --unset https.proxy ||
-      echo "Failed to unset git proxy settings"
+      echo 'Failed to unset git proxy settings'
   fi
 
   if which npm &> /dev/null; then
     npm config delete proxy &&
     npm config delete https-proxy ||
-      echo "Failed to set npm proxy settings"
+      echo 'Failed to set npm proxy settings'
   fi
   
   if which yarn &> /dev/null; then
     yarn config delete proxy &&
     yarn config delete https-proxy ||
-      echo "Failed to unset yarn proxy settings"
+      echo 'Failed to unset yarn proxy settings'
   fi
 
   if which docker &> /dev/null; then
     sudo rm -f "${DOCKER_PROXY_FILE}" &&
     sudo systemctl daemon-reload ||
-      echo "Failed to unset docker proxy settings"
+      echo 'Failed to unset docker proxy settings'
   fi
 
-  gsettings set org.gnome.system.proxy mode "none"
-  gsettings set org.gnome.system.proxy.http host ""
-  gsettings set org.gnome.system.proxy.http port "0"
-  gsettings set org.gnome.system.proxy.https host ""
-  gsettings set org.gnome.system.proxy.https port "0"
-  gsettings set org.gnome.system.proxy.ftp host ""
-  gsettings set org.gnome.system.proxy.ftp port "0"
-  gsettings set org.gnome.system.proxy.socks host ""
-  gsettings set org.gnome.system.proxy.socks port "0"
+  gsettings set org.gnome.system.proxy mode none
+  gsettings set org.gnome.system.proxy.http host ''
+  gsettings set org.gnome.system.proxy.http port 0
+  gsettings set org.gnome.system.proxy.https host ''
+  gsettings set org.gnome.system.proxy.https port 0
+  gsettings set org.gnome.system.proxy.ftp host ''
+  gsettings set org.gnome.system.proxy.ftp port 0
+  gsettings set org.gnome.system.proxy.socks host ''
+  gsettings set org.gnome.system.proxy.socks port 0
   gsettings set org.gnome.system.proxy.http use-authentication false
-  gsettings set org.gnome.system.proxy.http authentication-user ""
-  gsettings set org.gnome.system.proxy.http authentication-password ""
-  gsettings set org.gnome.system.proxy ignore-hosts "[]"
+  gsettings set org.gnome.system.proxy.http authentication-user ''
+  gsettings set org.gnome.system.proxy.http authentication-password ''
+  gsettings set org.gnome.system.proxy ignore-hosts '[]'
 
-  echo "Proxy settings have been unset"
+  echo 'Proxy settings have been unset'
 }
 
 # Sets the system networking to on or off.
@@ -924,10 +924,10 @@ power_network () {
   local mode="${1}"
 
   if [[ -z "${mode}" ]]; then
-    echo "Missing mode value"
+    echo 'Missing mode value'
     return 2
   elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
-    echo "Invalid mode value"
+    echo 'Invalid mode value'
     return 2
   fi
 
@@ -950,10 +950,10 @@ power_wifi () {
   local mode="${1}"
 
   if [[ -z "${mode}" ]]; then
-    echo "Missing mode value"
+    echo 'Missing mode value'
     return 2
   elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
-    echo "Invalid mode value"
+    echo 'Invalid mode value'
     return 2
   fi
 

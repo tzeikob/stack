@@ -97,11 +97,11 @@ pick_controller () {
   len=$(count "${controllers}") || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No controllers have found"
+    echo 'No controllers have found'
     return 2
   fi
   
-  pick_one "Select a controller:" "${controllers}" "vertical" || return $?
+  pick_one 'Select a controller:' "${controllers}" vertical || return $?
 }
 
 # Shows a menu asking the user to select a device,
@@ -121,10 +121,10 @@ pick_device () {
   len=$(count "${devices}") || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No devices have found"
+    echo 'No devices have found'
     return 2
   fi
   
-  pick_one "Select a device:" "${devices}" "vertical" || return $?
+  pick_one 'Select a device:' "${devices}" vertical || return $?
 }
 

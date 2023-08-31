@@ -12,41 +12,41 @@ source /opt/stack/trash/commands
 #  A long help message.
 show_help () {
   if [[ "${1}" == "once" ]]; then
-    echo "Usage: trash [OPTIONS] FILE..."
+    echo 'Usage: trash [OPTIONS] FILE...'
 
-    echo -e "\nOPTIONS"
-    printf " %-20s %s\n" \
-      "h, --help" "Show this help message."
+    echo -e '\nOPTIONS'
+    printf ' %-20s %s\n' \
+      'h, --help' 'Show this help message.'
 
     return 0
   fi
 
-  echo "Usage: COMMAND [ARGUMENTS]..."
+  echo 'Usage: COMMAND [ARGUMENTS]...'
   
-  echo -e "\nCOMMANDS"
-  printf " %-20s %s\n" \
-    "help" "Show this help message." \
-    "" "" \
-    "list" "List all trashed files." \
-    "list <days>" "List files trashed within the given days." \
-    "list +<days>" "List files trashed more than the given days ago." \
-    "list <date>" "List files trashed at a certain date." \
-    "" "" \
-    "restore [<path>]" "Restore files starting from / or the given path." \
-    "remove [<paths>]" "Remove the given trashed files." \
-    "" "" \
-    "empty" "Remove all trashed files." \
-    "empty <days>" "Remove files trashed more than the given days ago."
+  echo -e '\nCOMMANDS'
+  printf ' %-20s %s\n' \
+    'help' 'Show this help message.' \
+    '' '' \
+    'list' 'List all trashed files.' \
+    'list <days>' 'List files trashed within the given days.' \
+    'list +<days>' 'List files trashed more than the given days ago.' \
+    'list <date>' 'List files trashed at a certain date.' \
+    '' '' \
+    'restore [<path>]' 'Restore files starting from / or the given path.' \
+    'remove [<paths>]' 'Remove the given trashed files.' \
+    '' '' \
+    'empty' 'Remove all trashed files.' \
+    'empty <days>' 'Remove files trashed more than the given days ago.'
 }
 
 loop () {
   clear
 
   while true; do
-    prompt "trash" && history -s "${REPLY}"
+    prompt trash && history -s "${REPLY}"
 
     set -f
-    set_separator "line"
+    set_separator line
     local cmd=($(xargs -n1 <<< "${REPLY}"))
     restore_separator && set +f
 
@@ -63,15 +63,15 @@ loop () {
     fi
 
     case "${cmd[0]}" in
-      "list") list_files "${cmd[1]}";;
-      "restore") restore_files "${cmd[1]}";;
-      "remove") remove_files "${cmd[@]:1}";;
-      "empty") empty_files "${cmd[1]}";;
-      *) echo "Invalid or unknown command";; 
+      list) list_files "${cmd[1]}";;
+      restore) restore_files "${cmd[1]}";;
+      remove) remove_files "${cmd[@]:1}";;
+      empty) empty_files "${cmd[1]}";;
+      *) echo 'Invalid or unknown command';; 
     esac
   
     if [[ $? -eq 1 ]]; then
-      echo "An unknown error has occurred"
+      echo 'An unknown error has occurred'
     fi
   
     REPLY=''
@@ -81,14 +81,14 @@ loop () {
 }
 
 once () {
-  local opts=""
+  local opts=''
   local files=()
 
   while true; do
     if [[ "${1}" = "-h" ]] || [[ "${1}" == "--help" ]]; then
       opts="${opts} help"
     elif [[ "${1}" =~ ^(-|--) ]]; then
-      abort "Unknown or invalid option"
+      abort 'Unknown or invalid option'
     elif [[ -n "${1}" ]]; then
       files+=("${1}")
     else
@@ -99,7 +99,7 @@ once () {
   done
 
   if [[ "${opts}" =~ "help" ]]; then
-    show_help "once"
+    show_help once
   else
     trash_files "${files[@]}"
   fi

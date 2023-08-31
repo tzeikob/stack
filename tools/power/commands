@@ -31,7 +31,7 @@ show_status () {
 
     echo "${battery}" | jq -cer "${query}" || return 1
   else
-    echo "Battery:      no"
+    echo 'Battery:      no'
   fi
 
   if [[ -f '/sys/class/power_supply/BAT0/current_now' ]]; then
@@ -71,10 +71,10 @@ show_status () {
     if [[ -n "${screensaver}" ]] && [[ ${screensaver} -gt 0 ]]; then
       echo "Screensaver:  ${screensaver} mins"
     else
-      echo "Screensaver:  off"
+      echo 'Screensaver:  off'
     fi
   else
-    echo "Screensaver:  off"
+    echo 'Screensaver:  off'
   fi
 
   loginctl show-session | awk '{
@@ -135,7 +135,7 @@ set_action () {
     handlers+='{"key":"docked", "value":"docked"}'
     handlers="[${handlers}]"
 
-    pick_one "Select a power handler:" "${handlers}" "vertical" || return $?
+    pick_one 'Select a power handler:' "${handlers}" vertical || return $?
     [[ -n "${REPLY}" ]] && handler="${REPLY}" || return 0
   fi
 
@@ -152,7 +152,7 @@ set_action () {
     actions+='{"key":"ignore", "value":"ignore"}'
     actions="[${actions}]"
 
-    pick_one "Select an action:" "${actions}" "vertical" || return $?
+    pick_one 'Select an action:' "${actions}" vertical || return $?
     [[ -n "${REPLY}" ]] && action="${REPLY}" || return 0
   fi
 
@@ -212,11 +212,11 @@ reset_actions () {
     return 0
   fi
 
-  sudo sed -i "/^HandlePowerKey=.*/d" "${config_file}"
-  sudo sed -i "/^HandleRebootKey=.*/d" "${config_file}"
-  sudo sed -i "/^HandleSuspendKey=.*/d" "${config_file}"
-  sudo sed -i "/^HandleLidSwitch=.*/d" "${config_file}"
-  sudo sed -i "/^HandleLidSwitchDocked=.*/d" "${config_file}"
+  sudo sed -i '/^HandlePowerKey=.*/d' "${config_file}"
+  sudo sed -i '/^HandleRebootKey=.*/d' "${config_file}"
+  sudo sed -i '/^HandleSuspendKey=.*/d' "${config_file}"
+  sudo sed -i '/^HandleLidSwitch=.*/d' "${config_file}"
+  sudo sed -i '/^HandleLidSwitchDocked=.*/d' "${config_file}"
 
   systemctl kill -s HUP systemd-logind
 
@@ -306,7 +306,7 @@ init_screensaver () {
   local interval=''
   interval="$(get "${screensaver}" '.interval')" || return 1
 
-  set_screensaver "${interval}" "nosave"
+  set_screensaver "${interval}" nosave
 
   if [[ $? -ne 0 ]]; then
     echo 'Failed to set screensaver'

@@ -11,47 +11,46 @@ source /opt/stack/networks/commands
 # Outputs:
 #  A long help message.
 show_help () {
-  echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
+  echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
 
-  echo -e "\nCOMMANDS"
-  printf " %-35s %s\n" \
-    "help" "Show this help message." \
-    "" "" \
-    "show status" "Show the current status of networking." \
-    "show device [<name>]" "Show the data of a device." \
-    "show connection [<name>]" "Show the data of a connection." \
-    "" "" \
-    "list devices" "List the network devices." \
-    "list connections" "List the network connections." \
-    "list wifis [<device>] [<signal>]" "Detect wifi networks with a min signal." \
-    "" "" \
-    "up device [<name>]" "Enable a network device." \
-    "down device [<name>]" "Disable a network device." \
-    "remove device [<name>]" "Remove a software network device." \
-    "" "" \
-    "up connection [<name>]" "Enable a connection." \
-    "down connection [<name>]" "Disable a connection." \
-    "add connection eth|wifi|vpn" "Add an ethernet, wifi or vpn connection." \
-    "remove connection [<name>]" "Remove a connection." \
-    "" "" \
-    "add proxy <name>" "Add a new proxy server profile." \
-    "remove proxy [<name>]" "Remove a proxy server profile." \
-    "list proxies" "List all proxy server profiles." \
-    "set proxy [<name>]" "Applies proxy server settings." \
-    "unset proxy" "Disables proxy server settings." \
-    "" "" \
-    "power network on|off" "Set the system network to on or off." \
-    "power wifi on|off" "Set the wifi device to on or off."
+  echo -e '\nCOMMANDS'  printf ' %-35s %s\n' \
+    'help' 'Show this help message.' \
+    '' '' \
+    'show status' 'Show the current status of networking.' \
+    'show device [<name>]' 'Show the data of a device.' \
+    'show connection [<name>]' 'Show the data of a connection.' \
+    '' '' \
+    'list devices' 'List the network devices.' \
+    'list connections' 'List the network connections.' \
+    'list wifis [<device>] [<signal>]' 'Detect wifi networks with a min signal.' \
+    '' '' \
+    'up device [<name>]' 'Enable a network device.' \
+    'down device [<name>]' 'Disable a network device.' \
+    'remove device [<name>]' 'Remove a software network device.' \
+    '' '' \
+    'up connection [<name>]' 'Enable a connection.' \
+    'down connection [<name>]' 'Disable a connection.' \
+    'add connection eth|wifi|vpn''Add an ethernet, wifi or vpn connection.' \
+    'remove connection [<name>]' 'Remove a connection.' \
+    '' '' \
+    'add proxy <name>' 'Add a new proxy server profile.' \
+    'remove proxy [<name>]' 'Remove a proxy server profile.' \
+    'list proxies' 'List all proxy server profiles.' \
+    'set proxy [<name>]' 'Applies proxy server settings.' \
+    'unset proxy' 'Disables proxy server settings.' \
+    '' '' \
+    'power network on|off' 'Set the system network to on or off.' \
+    'power wifi on|off' 'Set the wifi device to on or off.'
 }
 
 loop () {
   clear
 
   while true; do
-    prompt "networks" && history -s "${REPLY}"
+    prompt networks && history -s "${REPLY}"
 
     set -f
-    set_separator "line"
+    set_separator line
     local cmd=($(xargs -n1 <<< "${REPLY}"))
     restore_separator && set +f
 
@@ -68,63 +67,63 @@ loop () {
     fi
 
     case "${cmd[0]}" in
-      "show")
+      show)
         case "${cmd[1]}" in
-          "status") show_status;;
-          "device") show_device "${cmd[2]}";;
-          "connection") show_connection "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
+          status) show_status;;
+          device) show_device "${cmd[2]}";;
+          connection) show_connection "${cmd[2]}";;
+          *) echo 'Invalid or unknown command';;
         esac;;
-      "list")
+      list)
         case "${cmd[1]}" in
-          "devices") list_devices;;
-          "connections") list_connections;;
-          "wifis") list_wifis "${cmd[2]}" "${cmd[3]}";;
-          "proxies") list_proxies;;
-          *) echo "Invalid or unknown command";;
+          devices) list_devices;;
+          connections) list_connections;;
+          wifis) list_wifis "${cmd[2]}" "${cmd[3]}";;
+          proxies) list_proxies;;
+          *) echo 'Invalid or unknown command';;
         esac;;
-      "power")
+      power)
         case "${cmd[1]}" in
-          "network") power_network "${cmd[2]}";;
-          "wifi") power_wifi "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
+          network) power_network "${cmd[2]}";;
+          wifi) power_wifi "${cmd[2]}";;
+          *) echo 'Invalid or unknown command';;
         esac;;
-      "up") up "${cmd[1]}" "${cmd[2]}";;
-      "down") down "${cmd[1]}" "${cmd[2]}";;
-      "add")
+      up) up "${cmd[1]}" "${cmd[2]}";;
+      down) down "${cmd[1]}" "${cmd[2]}";;
+      add)
         case "${cmd[1]}" in
-          "connection")
+          connection)
             case "${cmd[2]}" in
-              "eth") add_ethernet_connection;;
-              "wifi") add_wifi_connection;;
-              "vpn") add_vpn_connection;;
-              *) echo "Invalid or unknown command";;
+              eth) add_ethernet_connection;;
+              wifi) add_wifi_connection;;
+              vpn) add_vpn_connection;;
+              *) echo 'Invalid or unknown command';;
             esac;;
-          "proxy") add_proxy "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
+          proxy) add_proxy "${cmd[2]}";;
+          *) echo 'Invalid or unknown command';;
         esac;;
-      "remove")
+      remove)
         case "${cmd[1]}" in
-          "device") remove_device "${cmd[2]}";;
-          "connection") remove_connection "${cmd[2]}";;
-          "proxy") remove_proxy "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
+          device) remove_device "${cmd[2]}";;
+          connection) remove_connection "${cmd[2]}";;
+          proxy) remove_proxy "${cmd[2]}";;
+          *) echo 'Invalid or unknown command';;
         esac;;
-      "set")
+      set)
         case "${cmd[1]}" in
-          "proxy") set_proxy "${cmd[2]}";;
-          *) echo "Invalid or unknown command";;
+          proxy) set_proxy "${cmd[2]}";;
+          *) echo 'Invalid or unknown command';;
         esac;;
-      "unset")
+      unset)
         case "${cmd[1]}" in
-          "proxy") unset_proxy;;
-          *) echo "Invalid or unknown command";;
+          proxy) unset_proxy;;
+          *) echo 'Invalid or unknown command';;
         esac;;
-      *) echo "Invalid or unknown command";; 
+      *) echo 'Invalid or unknown command';; 
     esac
 
     if [[ $? -eq 1 ]]; then
-      echo "An unknown error has occurred"
+      echo 'An unknown error has occurred'
     fi
 
     REPLY=''

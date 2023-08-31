@@ -32,7 +32,7 @@ list_files () {
   elif [[ -z "${filter}" ]]; then
     query='.'
   else
-    echo "Invalid filter value"
+    echo 'Invalid filter value'
     return 2
   fi
 
@@ -40,7 +40,7 @@ list_files () {
   files="$(find_files | jq -cer "${query}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to read trashed files"
+    echo 'Unable to read trashed files'
     return 2
   fi
 
@@ -48,7 +48,7 @@ list_files () {
   len="$(count "${files}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No trashed files have found"
+    echo 'No trashed files have found'
     return 0
   fi
 
@@ -81,7 +81,7 @@ restore_files () {
   }')"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to read trashed files"
+    echo 'Unable to read trashed files'
     return 2
   fi
 
@@ -96,12 +96,12 @@ restore_files () {
   len="$(count "${files}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No files have found to restore"
+    echo 'No files have found to restore'
     return 0
   fi
 
   local selected=''
-  pick_many 'Select the files to restore:' "${files}" "1," "vertical" || return $?
+  pick_many 'Select the files to restore:' "${files}" '1,' vertical || return $?
   [[ -n "${REPLY}" ]] && selected="${REPLY}" || return 0
 
   selected="$(echo "${selected}" | jq -rec 'join(",")')" || return 1
@@ -111,7 +111,7 @@ restore_files () {
   trash-restore "${path}" &> /dev/null <<< "${selected}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to restore trashed files"
+    echo 'Failed to restore trashed files'
     return 2
   fi
 
@@ -132,7 +132,7 @@ remove_files () {
   files="$(find_files)"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to read trashed files"
+    echo 'Unable to read trashed files'
     return 2
   fi
 
@@ -140,7 +140,7 @@ remove_files () {
   len="$(count "${files}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No trashed files have found"
+    echo 'No trashed files have found'
     return 0
   fi
 
@@ -148,13 +148,13 @@ remove_files () {
     local query='[.[]|{key: .path, value: "\(.date) \(.path)"}]'
     files="$(echo "${files}" | jq -cer "${query}")" || return 1
 
-    pick_many "Select the files to remove:" "${files}" "1," "vertical" || return $?
+    pick_many 'Select which files to remove:' "${files}" '1,' vertical || return $?
     [[ -z "${REPLY}" ]] && return 0
 
     readarray -t paths < <(echo "${REPLY}" | jq -cr '.[]')
   fi
 
-  confirm "File(s) will be gone forever, proceed?" || return $?
+  confirm 'File(s) will be gone forever, proceed?' || return $?
   [[ "${REPLY}" != "yes" ]] && return 0
 
   local index=0
@@ -171,7 +171,7 @@ remove_files () {
   if [[ ${len} -gt 0 ]]; then
     echo "${len} trashed file(s) removed"
   else
-    echo "No trashed files have been removed"
+    echo 'No trashed files have been removed'
   fi
 }
 
@@ -186,17 +186,17 @@ empty_files () {
   len="$(find_files | jq -cer 'length')" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo "No trashed files have been found"
+    echo 'No trashed files have been found'
     return 0
   fi
   
   local prompt=''
   if [[ -z "${days}" ]]; then
-    prompt="ALL trashed files will be gone, proceed?"
+    prompt='ALL trashed files will be gone, proceed?'
   elif [[ "${days}" =~ ^[0-9]+$ ]]; then
     prompt="Files trashed more than ${days} days ago will be gone, proceed?"
   else
-    echo "Invalid days value"
+    echo 'Invalid days value'
     return 2
   fi
 
@@ -209,7 +209,7 @@ empty_files () {
   fi
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to remove trashed files"
+    echo 'Failed to remove trashed files'
     return 2
   fi
 
@@ -220,7 +220,7 @@ empty_files () {
   if [[ ${len} -gt 0 ]]; then
     echo "${len} trashed file(s) removed"
   else
-    echo "No trashed files have been removed"
+    echo 'No trashed files have been removed'
   fi
 }
 
@@ -232,7 +232,7 @@ trash_files () {
   local len=${#files[@]}
 
   if [[ ${len} -eq 0 ]]; then
-    abort "No files have given"
+    abort 'No files have been given'
   fi
 
   local trashed_len=0

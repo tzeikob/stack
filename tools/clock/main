@@ -11,32 +11,32 @@ source /opt/stack/clock/commands
 # Outputs:
 #  A long help message.
 show_help () {
-  echo "Usage: COMMAND [OBJECT] [ARGUMENTS]..."
+  echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
 
-  echo -e "\nCOMMANDS"
-  printf " %-30s %s\n" \
-    "help" "Show this help message." \
-    "" "" \
-    "show status" "Show the system date time status." \
-    "" "" \
-    "set timezone [<Region/City>]" "Set the system timezone." \
-    "set time <HH:MM:SS>" "Set the system local time." \
-    "set date <YYYY-mm-dd>" "Set the system date." \
-    "" "" \
-    "set ntp on|off" "Enable or disable the NTP service." \
-    "set rtc local|utc" "Set the hardware clock to local or UTC time." \
-    "" "" \
-    "sync rtc" "Sync the hardware clock from the system clock."
+  echo -e '\nCOMMANDS'
+  printf ' %-30s %s\n' \
+    'help' 'Show this help message.' \
+    '' '' \
+    'show status' 'Show the system date time status.' \
+    '' '' \
+    'set timezone [<Region/City>]' 'Set the system timezone.' \
+    'set time <HH:MM:SS>' 'Set the system local time.' \
+    'set date <YYYY-mm-dd>' 'Set the system date.' \
+    '' '' \
+    'set ntp on|off' 'Enable or disable the NTP service.' \
+    'set rtc local|utc' 'Set the hardware clock to local or UTC time.' \
+    '' '' \
+    'sync rtc' 'Sync the hardware clock from the system clock.'
 }
 
 loop () {
   clear
 
   while true; do
-    prompt "clock" && history -s "${REPLY}"
+    prompt clock && history -s "${REPLY}"
 
     set -f
-    set_separator "line"
+    set_separator line
     local cmd=($(xargs -n1 <<< "${REPLY}"))
     restore_separator && set +f
 
@@ -53,30 +53,30 @@ loop () {
     fi
 
     case "${cmd[0]}" in
-      "show")
+      show)
         case "${cmd[1]}" in
-          "status") show_status;;
-          *) echo "Invalid or unknown command";;
+          status) show_status;;
+          *) echo 'Invalid or unknown command';;
         esac;;
-      "set")
+      set)
         case "${cmd[1]}" in
-          "ntp") set_ntp "${cmd[2]}";;
-          "timezone") set_timezone "${cmd[2]}";;
-          "time") set_time "${cmd[2]}";;
-          "date") set_date "${cmd[2]}";;
-          "rtc") set_rtc "${cmd[2]}";;
-          *) echo "Invalid or unknown command";; 
+          ntp) set_ntp "${cmd[2]}";;
+          timezone) set_timezone "${cmd[2]}";;
+          time) set_time "${cmd[2]}";;
+          date) set_date "${cmd[2]}";;
+          rtc) set_rtc "${cmd[2]}";;
+          *) echo 'Invalid or unknown command';; 
         esac;;
-      "sync")
+      sync)
         case "${cmd[1]}" in
-          "rtc") sync_rtc;;
-          *) echo "Invalid or unknown command";; 
+          rtc) sync_rtc;;
+          *) echo 'Invalid or unknown command';; 
         esac;;
-      *) echo "Invalid or unknown command";; 
+      *) echo 'Invalid or unknown command';; 
     esac
 
     if [[ $? -eq 1 ]]; then
-      echo "An unknown error has occurred"
+      echo 'An unknown error has occurred'
     fi
 
     REPLY=''
