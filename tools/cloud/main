@@ -46,58 +46,27 @@ loop () {
 
     set -f
     set_separator line
-    local cmd=($(xargs -n1 <<< "${REPLY}"))
+    local args=($(xargs -n1 <<< "${REPLY}"))
     restore_separator && set +f
 
-    if [[ "${cmd[0]}" == "help" ]]; then
-      show_help
-      continue
-    elif [[ "${cmd[0]}" == "clear" ]]; then
-      clear
-      continue
-    elif [[ "${cmd[0]}" == "quit" ]]; then
-      break
-    elif [[ -z "${cmd[0]}" ]]; then
-      continue
-    fi
+    local cmd="${args[0]}"
+    local obj="${args[1]}"
 
-    case "${cmd[0]}" in
-      list)
-        case "${cmd[1]}" in
-          remotes) list_remotes "${cmd[2]}";;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      sync)
-        case "${cmd[1]}" in
-          remote)
-            case "${cmd[2]}" in
-              drive) sync_drive "${cmd[3]}";;
-              dropbox) sync_dropbox "${cmd[3]}";;
-              *) echo 'Invalid or unknown service';;
-            esac;;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      delete)
-        case "${cmd[1]}" in
-          remote) delete_remote "${cmd[2]}";;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      mount)
-        case "${cmd[1]}" in
-          remote) mount_remote "${cmd[2]}";;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      unmount)
-        case "${cmd[1]}" in
-          remote) unmount_remote "${cmd[2]}";;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      *) echo 'Unknown or invalid command';; 
-    esac
-
-    if [[ $? -eq 1 ]]; then
-      echo 'An unknown error has occurred'
-    fi
+    case "${cmd}${obj:+ ${obj}}" in
+      'help') show_help;;
+      'list remotes') list_remotes "${args[2]}";;
+      'sync remote drive') sync_drive "${args[3]}";;
+      'sync remote dropbox') sync_dropbox "${args[3]}";;
+      'delete remote') delete_remote "${args[2]}";;
+      'mount  remote') mount_remote "${args[2]}";;
+      'unmount remote') unmount_remote "${args[2]}";;
+      'clear') clear && continue;;
+      'quit') break;;
+      '') continue;;
+      *)
+        echo 'Ooops, invalid or unknown command!'
+        $(return 2);;
+    esac && success || fail
 
     REPLY=''
   done
@@ -106,24 +75,21 @@ loop () {
 }
 
 once () {
-  case "${1}" in
-    help) show_help once;;
-    mount)
-      case "${2}" in
-        remotes) mount_all || abort;;
-        *) abort 'Invalid or unknown command';;
-      esac;;
-    *) abort 'Invalid or unknown command';;
-  esac
+  local cmd="${1}"
+  local obj="${2}"
 
-  if [[ $? -ne 0 ]]; then
-    abort
-  fi
+  case "${cmd}${obj:+ ${obj}}" in
+    'help') show_help once;;
+    'mount remotes') mount_all;;
+    *)
+      echo 'Ooops, invalid or unknown command'
+      return 2;;
+  esac
 }
 
 if [[ $# -eq 0 ]]; then
   loop
 else
-  once "$@"
+  once "$@" && success || fail
 fi
 

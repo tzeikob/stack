@@ -57,62 +57,31 @@ loop () {
 
     set -f
     set_separator line
-    local cmd=($(xargs -n1 <<< "${REPLY}"))
+    local args=($(xargs -n1 <<< "${REPLY}"))
     restore_separator && set +f
+  
+    local cmd="${args[0]}"
+    local obj="${args[1]}"
 
-    if [[ "${cmd[0]}" == "help" ]]; then
-      show_help
-      continue
-    elif [[ "${cmd[0]}" == "clear" ]]; then
-      clear
-      continue
-    elif [[ "${cmd[0]}" == "quit" ]]; then
-      break
-    elif [[ -z "${cmd[0]}" ]]; then
-      continue
-    fi
-
-    case "${cmd[0]}" in
-      show)
-        case "${cmd[1]}" in
-          status) show_status;;
-          pointer) show_pointer "${cmd[2]}";;
-          tablet) show_tablet "${cmd[2]}";;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      set)
-        case "${cmd[1]}" in
-          wallpaper) set_wallpaper "${cmd[2]}" "${cmd[3]}";;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      speed)
-        case "${cmd[1]}" in
-          pointer) set_pointer_speed "${cmd[2]}";;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      scale)
-        case "${cmd[1]}" in
-          tablet) scale_tablet "${cmd[2]}" "${cmd[3]}";;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      map)
-        case "${cmd[1]}" in
-          tablet) map_tablet "${cmd[2]}" "${cmd[3]}";;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      list)
-        case "${cmd[1]}" in
-          wallpapers) list_wallpapers;;
-          pointers) list_pointers;;
-          tablets) list_tablets;;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      *) echo 'Invalid or unknown command';; 
-    esac
-    
-    if [[ $? -eq 1 ]]; then
-      echo 'An unknown error has occurred'
-    fi
+    case "${cmd}${obj:+ ${obj}}" in
+      'help') show_help;;
+      'show status') show_status;;
+      'show pointer') show_pointer "${args[2]}";;
+      'show tablet') show_tablet "${args[2]}";;
+      'set wallpaper') set_wallpaper "${args[2]}" "${args[3]}";;
+      'speed pointer') set_pointer_speed "${args[2]}";;
+      'scale tablet') scale_tablet "${args[2]}" "${args[3]}";;
+      'map tablet') map_tablet "${args[2]}" "${args[3]}";;
+      'list wallpapers') list_wallpapers;;
+      'list pointers') list_pointers;;
+      'list tablets') list_tablets;;
+      'clear') clear && continue;;
+      'quit') break;;
+      '') continue;;
+      *)
+        echo 'Ooops, invalid or unknown command!'
+        $(return 2);;
+    esac && success || fail
 
     REPLY=''
   done
@@ -121,26 +90,23 @@ loop () {
 }
 
 once () {
-  case "${1}" in
-    help) show_help once;;
-    init)
-      case "${2}" in
-        pointer) init_pointer || abort;;
-        tablets) init_tablets || abort;;
-        wallpaper) init_wallpaper || abort;;
-        *) abort 'Invalid or unknown command';;
-      esac;;
-    *) abort 'Invalid or unknown command';;
-  esac
+  local cmd="${1}"
+  local obj="${2}"
 
-  if [[ $? -ne 0 ]]; then
-    abort
-  fi
+  case "${cmd}${obj:+ ${obj}}" in
+    'help') show_help once;;
+    'init pointer') init_pointer;;
+    'init tablets') init_tablets;;
+    'init wallpaper') init_wallpaper;;
+    *)
+      echo 'Ooops, invalid or unknown command'
+      return 2;;
+  esac
 }
 
 if [[ $# -eq 0 ]]; then
   loop
 else
-  once "$@"
+  once "$@" && success || fail
 fi
 

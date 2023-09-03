@@ -26,7 +26,8 @@ show_help () {
 
   echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
 
-  echo -e '\nCOMMANDS'  printf ' %-44s %s\n' \
+  echo -e '\nCOMMANDS'
+  printf ' %-44s %s\n' \
     'help' 'Show this help message.' \
     '' '' \
     'show status' 'Show a report of the Xorg server and active outputs.' \
@@ -65,77 +66,42 @@ loop () {
 
     set -f
     set_separator line
-    local cmd=($(xargs -n1 <<< "${REPLY}"))
+    local args=($(xargs -n1 <<< "${REPLY}"))
     restore_separator && set +f
 
-    if [[ "${cmd[0]}" == "help" ]]; then
-      show_help
-      continue
-    elif [[ "${cmd[0]}" == "clear" ]]; then
-      clear
-      continue
-    elif [[ "${cmd[0]}" == "quit" ]]; then
-      break
-    elif [[ -z "${cmd[0]}" ]]; then
-      continue
-    fi
+    local cmd="${args[0]}"
+    local obj="${args[1]}"
 
-    case "${cmd[0]}" in
-      show)
-        case "${cmd[1]}" in
-          status) show_status;;
-          logs) show_logs "${cmd[2]}";;
-          output) show_output "${cmd[2]}";;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      list)
-        case "${cmd[1]}" in
-          outputs) list_outputs "${cmd[2]}";;
-          colors) list_colors;;
-          layouts) list_layouts;;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      set)
-        case "${cmd[1]}" in
-          layout) set_layout;;
-          mode) set_mode "${cmd[2]}" "${cmd[3]}" "${cmd[4]}";;
-          primary) set_primary "${cmd[2]}";;
-          on) set_on "${cmd[2]}";;
-          off) set_off "${cmd[2]}";;
-          color) set_color "${cmd[2]}" "${cmd[3]}";;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      reset)
-        case "${cmd[1]}" in
-          color) reset_color "${cmd[2]}";;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      save)
-        case "${cmd[1]}" in
-          layout) save_layout;;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      delete)
-        case "${cmd[1]}" in
-          layout) delete_layout "${cmd[2]}";;
-          color) delete_color "${cmd[2]}";;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      restore)
-        case "${cmd[1]}" in
-          layout) restore_layout;;
-          colors) restore_colors;;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      rotate) rotate "${cmd[1]}" "${cmd[2]}";;
-      reflect) reflect "${cmd[1]}" "${cmd[2]}";;
-      mirror) mirror "${cmd[1]}";;
-      *) echo 'Invalid or unknown command';;
-    esac
-
-    if [[ $? -eq 1 ]]; then
-      echo 'An unknown error has occurred'
-    fi
+    case "${cmd}${obj:+ ${obj}}" in
+      'help') show_help;;
+      'show status') show_status;;
+      'show logs') show_logs "${args[2]}";;
+      'show output') show_output "${args[2]}";;
+      'list outputs') list_outputs "${args[2]}";;
+      'list colors') list_colors;;
+      'list layouts') list_layouts;;
+      'set layout') set_layout;;
+      'set mode') set_mode "${args[2]}" "${args[3]}" "${args[4]}";;
+      'set primary') set_primary "${args[2]}";;
+      'set on') set_on "${args[2]}";;
+      'set off') set_off "${args[2]}";;
+      'set color') set_color "${args[2]}" "${args[3]}";;
+      'reset color') reset_color "${args[2]}";;
+      'save layout') save_layout;;
+      'delete layout') delete_layout "${args[2]}";;
+      'delete color') delete_color "${args[2]}";;
+      'restore layout') restore_layout;;
+      'restore colors') restore_colors;;
+      'rotate') rotate "${args[1]}" "${args[2]}";;
+      'reflect') reflect "${args[1]}" "${args[2]}";;
+      'mirror') mirror "${args[1]}";;
+      'clear') clear && continue;;
+      'quit') break;;
+      '') continue;;
+      *)
+        echo 'Ooops, invalid or unknown command!'
+        $(return 2);;
+    esac && success || fail
 
     REPLY=''
   done
@@ -144,29 +110,22 @@ loop () {
 }
 
 once () {
-  case "${1}" in
-    help) show_help once;;
-    restore)
-      case "${2}" in
-        layout) restore_layout;;
-        colors) restore_colors;;
-        *) abort 'Invalid or unknown command';;
-      esac;;
-    fix)
-      case "${2}" in
-        layout) fix_layout;;
-        *) abort 'Invalid or unknown command';;
-      esac;;
-    *) abort 'Invalid or unknown command';;
-  esac
+  local cmd="${1}"
+  local obj="${2}"
 
-  if [[ $? -ne 0 ]]; then
-    abort
-  fi
+  case "${cmd}${obj:+ ${obj}}" in
+    'help') show_help once;;
+    'restore layout') restore_layout;;
+    'restore colors') restore_colors;;
+    'fix layout') fix_layout;;
+    *)
+      echo 'Ooops, invalid or unknown command'
+      return 2;;
+  esac
 }
 
 if [[ $# -eq 0 ]]; then
   loop
 else
-  once "$@"
+  once "$@" && success || fail
 fi

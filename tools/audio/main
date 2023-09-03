@@ -66,69 +66,38 @@ loop () {
 
     set -f
     set_separator line
-    local cmd=($(xargs -n1 <<< "${REPLY}"))
+    local args=($(xargs -n1 <<< "${REPLY}"))
     restore_separator && set +f
 
-    if [[ "${cmd[0]}" == "help" ]]; then
-      show_help
-      continue
-    elif [[ "${cmd[0]}" == "clear" ]]; then
-      clear
-      continue
-    elif [[ "${cmd[0]}" == "quit" ]]; then
-      break
-    elif [[ -z "${cmd[0]}" ]]; then
-      continue
-    fi
+    local cmd="${args[0]}"
+    local obj="${args[1]}"
 
-    case "${cmd[0]}" in
-      show)
-        case "${cmd[1]}" in
-          status) show_status;;
-          logs) show_logs;;
-          card) show_card "${cmd[2]}";;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      restart) restart;;
-      list)
-        case "${cmd[1]}" in
-          cards) list_cards;;
-          outputs) list_ports sink;;
-          inputs) list_ports source;;
-          playbacks) list_playbacks "${cmd[2]}";;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      set)
-        case "${cmd[1]}" in
-          profile) set_profile "${cmd[2]}" "${cmd[3]}";;
-          output) set_default sink "${cmd[2]}";;
-          input) set_default source "${cmd[2]}";;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      turn)
-        case "${cmd[1]}" in
-          output) turn_default sink "${cmd[2]}";;
-          input) turn_default source "${cmd[2]}";;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      mute)
-        case "${cmd[1]}" in
-          outputs) set_mute sink 1;;
-          inputs) set_mute source 1;;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      unmute)
-        case "${cmd[1]}" in
-          outputs) set_mute sink 0;;
-          inputs) set_mute source 0;;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      *) echo 'Invalid or unknown command';; 
-    esac
-    
-    if [[ $? -eq 1 ]]; then
-      echo 'An unknown error has occurred'
-    fi
+    case "${cmd}${obj:+ ${obj}}" in
+      'help') show_help;;
+      'show status') show_status;;
+      'show logs') show_logs;;
+      'show card') show_card "${args[2]}";;
+      'restart') restart;;
+      'list cards') list_cards;;
+      'list outputs') list_ports sink;;
+      'list inputs') list_ports source;;
+      'list playbacks') list_playbacks "${args[2]}";;
+      'set profile') set_profile "${args[2]}" "${args[3]}";;
+      'set ouptut') set_default sink "${args[2]}";;
+      'set input') set_default source "${args[2]}";;
+      'turn output') turn_default sink "${args[2]}";;
+      'turn input') turn_default source "${args[2]}";;
+      'mute outputs') set_mute sink 1;;
+      'mute inputs') set_mute source 1;;
+      'unmute outputs') set_mute sink 0;;
+      'unmute inputs') set_mute source 0;;
+      'clear') clear && continue;;
+      'quit') break;;
+      '') continue;;
+      *)
+        echo 'Ooops, invalid or unknown command!'
+        $(return 2);;
+    esac && success || fail
 
     REPLY=''
   done
@@ -137,30 +106,27 @@ loop () {
 }
 
 once () {
-  case "${1}" in
-    help) show_help once;;
-    restart) restart;;
-    set)
-      case "${2}" in
-        profile) set_profile;;
-        output) set_default sink;;
-        *) abort 'Invalid or unknown command';; 
-      esac;;
-    mute) turn_default sink mute;;
-    unmute) turn_default sink unmute;;
-    up) turn_default sink up;;
-    down) turn_default sink down;;
-    *) abort 'Invalid or unknown command';; 
-  esac
+  local cmd="${1}"
+  local obj="${2}"
 
-  if [[ $? -ne 0 ]]; then
-    abort
-  fi
+  case "${cmd}${obj:+ ${obj}}" in
+    'help') show_help once;;
+    'restart') restart;;
+    'set profile') set_profile;;
+    'set output') set_default sink;;
+    'mute') turn_default sink mute;;
+    'unmute') turn_default sink unmute;;
+    'up') turn_default sink up;;
+    'down') turn_default sink down;;
+    *)
+      echo 'Ooops, invalid or unknown command'
+      return 2;;
+  esac
 }
 
 if [[ $# -eq 0 ]]; then
   loop
 else
-  once "$@"
+  once "$@" && success || fail
 fi
 

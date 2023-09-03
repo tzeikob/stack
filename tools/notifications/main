@@ -59,61 +59,30 @@ loop () {
 
     set -f
     set_separator line
-    local cmd=($(xargs -n1 <<< "${REPLY}"))
+    local args=($(xargs -n1 <<< "${REPLY}"))
     restore_separator && set +f
 
-    if [[ "${cmd[0]}" == "help" ]]; then
-      show_help
-      continue
-    elif [[ "${cmd[0]}" == "clear" ]]; then
-      clear
-      continue
-    elif [[ "${cmd[0]}" == "quit" ]]; then
-      break
-    elif [[ -z "${cmd[0]}" ]]; then
-      continue
-    fi
+    local cmd="${args[0]}"
+    local obj="${args[1]}"
 
-    case "${cmd[0]}" in
-      show)
-        case "${cmd[1]}" in
-          status) show_status;;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      list)
-        case "${cmd[1]}" in
-          all) list_all "${cmd[2]}" "${cmd[3]}";;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      mute)
-        case "${cmd[1]}" in
-          all) mute_all;;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      unmute)
-        case "${cmd[1]}" in
-          all) unmute_all;;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      clean)
-        case "${cmd[1]}" in
-          all) clean_all;;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      set)
-        case "${cmd[1]}" in
-          popup) set_popup "${cmd[2]}";;
-          volume) set_volume "${cmd[2]}";;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      start) start;;
-      restart) restart;;
-      *) echo 'Invalid or unknown command';; 
-    esac
-    
-    if [[ $? -eq 1 ]]; then
-      echo 'An unknown error has occurred'
-    fi
+    case "${cmd}${obj:+ ${obj}}" in
+      'help') show_help;;
+      'show status') show_status;;
+      'list all') list_all "${args[2]}" "${args[3]}";;
+      'mute all') mute_all;;
+      'unmute all') unmute_all;;
+      'clean all') clean_all;;
+      'set popup') set_popup "${args[2]}";;
+      'set volume') set_volume "${args[2]}";;
+      'start') start;;
+      'restart') restart;;
+      'clear') clear && continue;;
+      'quit') break;;
+      '') continue;;
+      *)
+        echo 'Ooops, invalid or unknown command!'
+        $(return 2);;
+    esac && success || fail
 
     REPLY=''
   done
@@ -122,36 +91,25 @@ loop () {
 }
 
 once () {
-  case "${1}" in
-    help) show_help once;;
-    get)
-      case "${2}" in
-        state) get_state;;
-        *) abort 'Invalid or unknown command';;
-      esac;;
-    mute)
-      case "${2}" in
-        all) mute_all;;
-        *) abort 'Invalid or unknown command';;
-      esac;;
-    unmute)
-      case "${2}" in
-        all) unmute_all;;
-        *) abort 'Invalid or unknown command';;
-      esac;;
-    start) start;;
-    restart) restart;;
-    *) abort 'Invalid or unknown command';;
-  esac
+  local cmd="${1}"
+  local obj="${2}"
 
-  if [[ $? -ne 0 ]]; then
-    abort
-  fi
+  case "${cmd}${obj:+ ${obj}}" in
+   'help') show_help once;;
+    'get state') get_state;;
+    'mute all') mute_all;;
+    'unmute all') unmute_all;;
+    'start') start;;
+    'restart') restart;;
+    *)
+      echo 'Ooops, invalid or unknown command'
+      return 2;;
+  esac
 }
 
 if [[ $# -eq 0 ]]; then
   loop
 else
-  once "$@"
+  once "$@" && success || fail
 fi
 

@@ -48,67 +48,36 @@ loop () {
 
     set -f
     set_separator line
-    local cmd=($(xargs -n1 <<< "${REPLY}"))
+    local args=($(xargs -n1 <<< "${REPLY}"))
     restore_separator && set +f
 
-    if [[ "${cmd[0]}" == "help" ]]; then
-      show_help
-      continue
-    elif [[ "${cmd[0]}" == "clear" ]]; then
-      clear
-      continue
-    elif [[ "${cmd[0]}" == "quit" ]]; then
-      break
-    elif [[ -z "${cmd[0]}" ]]; then
-      continue
-    fi
+    local cmd="${args[0]}"
+    local obj="${args[1]}"
 
-    case "${cmd[0]}" in
-      show)
-        case "${cmd[1]}" in
-          status) show_status;;
-          logs) show_logs;;
-          controller) show_controller "${cmd[2]}";;
-          device) show_device "${cmd[2]}";;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      list)
-        case "${cmd[1]}" in
-          controllers) list_controllers;;
-          devices) list_devices "${cmd[2]}";;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      set)
-        case "${cmd[1]}" in
-          controller) set_controller "${cmd[2]}";;
-          power) set_power "${cmd[2]}";;
-          scan) set_scan "${cmd[2]}";;
-          discoverable) set_discoverable "${cmd[2]}";;
-          pairable) set_pairable "${cmd[2]}";;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      connect)
-        case "${cmd[1]}" in
-          device) connect_device "${cmd[2]}";;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      disconnect)
-        case "${cmd[1]}" in
-          device) disconnect_device "${cmd[2]}";;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      remove)
-        case "${cmd[1]}" in
-          device) remove_device "${cmd[2]}";;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      restart) restart_bluetooth;;
-      *) echo 'Invalid or unknown command';; 
-    esac
-    
-    if [[ $? -eq 1 ]]; then
-      echo 'An unknown error has occurred'
-    fi
+    case "${cmd}${obj:+ ${obj}}" in
+      'help') show_help;;
+      'show status') show_status;;
+      'show logs') show_logs;;
+      'show controller') show_controller "${args[2]}";;
+      'show device') show_device "${args[2]}";;
+      'list controllers') list_controllers;;
+      'list devices') list_devices "${args[2]}";;
+      'set controller') set_controller "${args[2]}";;
+      'set power') set_power "${args[2]}";;
+      'set scan') set_scan "${args[2]}";;
+      'set discoverable') set_discoverable "${args[2]}";;
+      'set pairable') set_pairable "${args[2]}";;
+      'connect device') connect_device "${args[2]}";;
+      'disconnect device') disconnect_device "${args[2]}";;
+      'remove device') remove_device "${args[2]}";;
+      'restart') restart_bluetooth;;
+      'clear') clear && continue;;
+      'quit') break;;
+      '') continue;;
+      *)
+        echo 'Ooops, invalid or unknown command!'
+        $(return 2);;
+    esac && success || fail
 
     REPLY=''
   done

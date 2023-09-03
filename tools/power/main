@@ -30,7 +30,8 @@ show_help () {
 
   echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
 
-  echo -e '\nCOMMANDS'  printf ' %-36s %s\n' \
+  echo -e '\nCOMMANDS'
+  printf ' %-36s %s\n' \
     'help' 'Show this help message.' \
     '' '' \
     'show status' 'Show the status of the system power.' \
@@ -54,46 +55,27 @@ loop () {
 
     set -f
     set_separator line
-    local cmd=($(xargs -n1 <<< "${REPLY}"))
+    local args=($(xargs -n1 <<< "${REPLY}"))
     restore_separator && set +f
 
-    if [[ "${cmd[0]}" == "help" ]]; then
-      show_help
-      continue
-    elif [[ "${cmd[0]}" == "clear" ]]; then
-      clear
-      continue
-    elif [[ "${cmd[0]}" == "quit" ]]; then
-      break
-    elif [[ -z "${cmd[0]}" ]]; then
-      continue
-    fi
+    local cmd="${args[0]}"
+    local obj="${args[1]}"
 
-    case "${cmd[0]}" in
-      show)
-        case "${cmd[1]}" in
-          status) show_status;;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      set)
-        case "${cmd[1]}" in
-          action) set_action "${cmd[2]}" "${cmd[3]}";;
-          screensaver) set_screensaver "${cmd[2]}";;
-          tlp) set_tlp "${cmd[2]}";;
-          charge) set_charge "${cmd[2]}" "${cmd[3]}";;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      reset)
-        case "${cmd[1]}" in
-          actions) reset_actions;;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      *) echo 'Invalid or unknown command';; 
-    esac
-    
-    if [[ $? -eq 1 ]]; then
-      echo 'An unknown error has occurred'
-    fi
+    case "${cmd}${obj:+ ${obj}}" in
+      'help') show_help;;
+      'show status') show_status;;
+      'set action') set_action "${args[2]}" "${args[3]}";;
+      'set screensaver') set_screensaver "${args[2]}";;
+      'set tlp') set_tlp "${args[2]}";;
+      'set charge') set_charge "${args[2]}" "${args[3]}";;
+      'reset actions') reset_actions;;
+      'clear') clear && continue;;
+      'quit') break;;
+      '') continue;;
+      *)
+        echo 'Ooops, invalid or unknown command!'
+        $(return 2);;
+    esac && success || fail
 
     REPLY=''
   done
@@ -102,28 +84,25 @@ loop () {
 }
 
 once () {
-  case "${1}" in
-    help) show_help once;;
-    init)
-      case "${2}" in
-        screensaver) init_screensaver || abort;;
-        *) abort 'Invalid or unknown command';;
-      esac;;
-    shutdown) shutdown_system;;
-    reboot) reboot_system;;
-    suspend) suspend_system;;
-    blank) blank_screen;;
-    *) abort 'Invalid or unknown command';;
-  esac
+  local cmd="${1}"
+  local obj="${2}"
 
-  if [[ $? -ne 0 ]]; then
-    abort
-  fi
+  case "${cmd}${obj:+ ${obj}}" in
+    'help') show_help once;;
+    'init screensaver') init_screensaver;;
+    'shutdown') shutdown_system;;
+    'reboot') reboot_system;;
+    'suspend') suspend_system;;
+    'blank') blank_screen;;
+    *)
+      echo 'Ooops, invalid or unknown command'
+      return 2;;
+  esac
 }
 
 if [[ $# -eq 0 ]]; then
   loop
 else
-  once "$@"
+  once "$@" && success || fail
 fi
 

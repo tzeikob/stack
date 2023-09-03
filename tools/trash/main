@@ -47,33 +47,26 @@ loop () {
 
     set -f
     set_separator line
-    local cmd=($(xargs -n1 <<< "${REPLY}"))
+    local args=($(xargs -n1 <<< "${REPLY}"))
     restore_separator && set +f
 
-    if [[ "${cmd[0]}" == "help" ]]; then
-      show_help
-      continue
-    elif [[ "${cmd[0]}" == "clear" ]]; then
-      clear
-      continue
-    elif [[ "${cmd[0]}" == "quit" ]]; then
-      break
-    elif [[ -z "${cmd[0]}" ]]; then
-      continue
-    fi
+    local cmd="${args[0]}"
+    local obj="${args[1]}"
 
-    case "${cmd[0]}" in
-      list) list_files "${cmd[1]}";;
-      restore) restore_files "${cmd[1]}";;
-      remove) remove_files "${cmd[@]:1}";;
-      empty) empty_files "${cmd[1]}";;
-      *) echo 'Invalid or unknown command';; 
-    esac
-  
-    if [[ $? -eq 1 ]]; then
-      echo 'An unknown error has occurred'
-    fi
-  
+    case "${cmd}${obj:+ ${obj}}" in
+      'help') show_help;;
+      'list') list_files "${args[1]}";;
+      'restore') restore_files "${args[1]}";;
+      'remove') remove_files "${args[@]:1}";;
+      'empty') empty_files "${args[1]}";;  
+      'clear') clear && continue;;
+      'quit') break;;
+      '') continue;;
+      *)
+        echo 'Ooops, invalid or unknown command!'
+        $(return 2);;
+    esac && success || fail
+
     REPLY=''
   done
 
@@ -88,7 +81,8 @@ once () {
     if [[ "${1}" = "-h" ]] || [[ "${1}" == "--help" ]]; then
       opts="${opts} help"
     elif [[ "${1}" =~ ^(-|--) ]]; then
-      abort 'Unknown or invalid option'
+      echo 'Ooops, unknown or invalid option!'
+      return 2
     elif [[ -n "${1}" ]]; then
       files+=("${1}")
     else
@@ -108,6 +102,6 @@ once () {
 if [[ $# -eq 0 ]]; then
   loop
 else
-  once "$@"
+  once "$@" && success || fail
 fi
 

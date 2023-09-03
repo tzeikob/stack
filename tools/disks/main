@@ -54,82 +54,43 @@ loop () {
 
     set -f
     set_separator line
-    local cmd=($(xargs -n1 <<< "${REPLY}"))
+    local args=($(xargs -n1 <<< "${REPLY}"))
     restore_separator && set +f
 
-    if [[ "${cmd[0]}" == "help" ]]; then
-      show_help
-      continue
-    elif [[ "${cmd[0]}" == "clear" ]]; then
-      clear
-      continue
-    elif [[ "${cmd[0]}" == "quit" ]]; then
-      break
-    elif [[ -z "${cmd[0]}" ]]; then
-      continue
-    fi
+    local cmd="${args[0]}"
+    local obj="${args[1]}"
 
-    case "${cmd[0]}" in
-      list)
-        case "${cmd[1]}" in
-          disks) list_disks;;
-          partitions) list_partitions "${cmd[2]}";;
-          roms) list_roms;;
-          folders) list_shared_folders "${cmd[2]}";;
-          mounts) list_mounts;;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      show)
-        case "${cmd[1]}" in
-          status) show_status;;
-          disk) show_disk "${cmd[2]}";;
-          partition) show_partition "${cmd[2]}";;
-          rom) show_rom "${cmd[2]}";;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      mount)
-        case "${cmd[1]}" in
-          partition) mount_partition "${cmd[2]}";;
-          rom) mount_rom "${cmd[2]}";;
-          image) mount_image "${cmd[2]}";;
-          folder) mount_shared_folder "${cmd[2]}";;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      unmount)
-        case "${cmd[1]}" in
-          partition) unmount_partition "${cmd[2]}";;
-          rom) unmount_rom "${cmd[2]}";;
-          image) unmount_image "${cmd[2]}";;
-          folder) unmount_shared_folder "${cmd[2]}";;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      format)
-        case "${cmd[1]}" in
-          disk) format_disk "${cmd[2]}";;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      eject)
-        case "${cmd[1]}" in
-          disk) eject_disk "${cmd[2]}";;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      scan)
-        case "${cmd[1]}" in
-          disk) scan_disk "${cmd[2]}";;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      create)
-        case "${cmd[1]}" in
-          encrypted) create_encrypted "${cmd[2]}";;
-          bootable) create_bootable "${cmd[2]}";;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      *) echo 'Invalid or unknown command';; 
-    esac
-
-    if [[ $? -eq 1 ]]; then
-      echo 'An unknown error has occurred'
-    fi
+    case "${cmd}${obj:+ ${obj}}" in
+      'help') show_help;;
+      'list disks') list_disks;;
+      'list partitions') list_partitions "${args[2]}";;
+      'list roms') list_roms;;
+      'list folders') list_shared_folders "${args[2]}";;
+      'list mounts') list_mounts;;
+      'show status') show_status;;
+      'show disk') show_disk "${args[2]}";;
+      'show partition') show_partition "${args[2]}";;
+      'show rom') show_rom "${args[2]}";;
+      'mount partition') mount_partition "${args[2]}";;
+      'mount rom') mount_rom "${args[2]}";;
+      'mount image') mount_image "${args[2]}";;
+      'mount folder') mount_shared_folder "${args[2]}";;
+      'unmount partition') unmount_partition "${args[2]}";;
+      'unmount rom') unmount_rom "${args[2]}";;
+      'unmount image') unmount_image "${args[2]}";;
+      'unmount folder') unmount_shared_folder "${args[2]}";;
+      'format disk') format_disk "${args[2]}";;
+      'eject disk') eject_disk "${args[2]}";;
+      'scan disk') scan_disk "${args[2]}";;
+      'create encrypted') create_encrypted "${args[2]}";;
+      'create bootable') create_bootable "${args[2]}";;
+      'clear') clear && continue;;
+      'quit') break;;
+      '') continue;;
+      *)
+        echo 'Ooops, invalid or unknown command!'
+        $(return 2);;
+    esac && success || fail
 
     REPLY=''
   done

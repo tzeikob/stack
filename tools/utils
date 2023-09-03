@@ -424,3 +424,47 @@ download () {
   done
 }
 
+# Plays a success beep sound printing the optionaly
+# given message.
+# Arguments:
+#  message: a message to print
+# Returns:
+#  A zero exit code.
+success () {
+  local message="${1}"
+
+  if [[ -n "${message}" ]]; then
+    echo -e "${message}"
+  fi
+
+  pw-play --volume=0.5 /usr/share/sounds/dunst/normal.wav &
+
+  return 0
+}
+
+# Plays a failure beep sound printing the optionaly given
+# message and returning the current exit code set by the
+# previous command.
+# Arguments:
+#  message: a message to print
+# Returns:
+#  A non-zero exit code.
+fail () {
+  local exit_code=$?
+
+  local message="${1}"
+
+  # Set a generic error message only for exit code 1
+  if [[ -z "${message}" ]] && [[ ${exit_code} -eq 1 ]]; then
+    message='Ooops, an unknwon error occurred!'
+  fi
+
+  if [[ -n "${message}" ]]; then
+    echo -e "${message}"
+  fi
+
+  pw-play --volume=0.5 /usr/share/sounds/dunst/critical.wav &
+
+  return ${exit_code}
+}
+

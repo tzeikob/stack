@@ -291,7 +291,7 @@ set_screensaver () {
 #  None
 init_screensaver () {
   if [[ ! -f "${SETTINGS_FILE}" ]]; then
-    echo 'No screensaver settings found'
+    echo 'No screen saver settings found'
     return 0
   fi
 
@@ -299,7 +299,7 @@ init_screensaver () {
   screensaver="$(jq '.screensaver|if . then . else empty end' "${SETTINGS_FILE}")"
 
   if [[ -z "${screensaver}" ]]; then
-    echo 'No screensaver settings found'
+    echo 'No screen saver settings found'
     return 0
   fi
 
@@ -309,11 +309,11 @@ init_screensaver () {
   set_screensaver "${interval}" nosave
 
   if [[ $? -ne 0 ]]; then
-    echo 'Failed to set screensaver'
+    echo 'Failed to initialize the screen saver'
     return 2
   fi
 
-  echo 'Screensaver has been set'
+  echo 'Screen saver has been initialized'
 }
 
 # Enables or disables power saving mode via the tlp service.

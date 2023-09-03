@@ -13,7 +13,8 @@ source /opt/stack/networks/commands
 show_help () {
   echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
 
-  echo -e '\nCOMMANDS'  printf ' %-35s %s\n' \
+  echo -e '\nCOMMANDS'
+  printf ' %-35s %s\n' \
     'help' 'Show this help message.' \
     '' '' \
     'show status' 'Show the current status of networking.' \
@@ -51,80 +52,41 @@ loop () {
 
     set -f
     set_separator line
-    local cmd=($(xargs -n1 <<< "${REPLY}"))
+    local args=($(xargs -n1 <<< "${REPLY}"))
     restore_separator && set +f
 
-    if [[ "${cmd[0]}" == "help" ]]; then
-      show_help
-      continue
-    elif [[ "${cmd[0]}" == "clear" ]]; then
-      clear
-      continue
-    elif [[ "${cmd[0]}" == "quit" ]]; then
-      break
-    elif [[ -z "${cmd[0]}" ]]; then
-      continue
-    fi
+    local cmd="${args[0]}"
+    local obj="${args[1]}"
 
-    case "${cmd[0]}" in
-      show)
-        case "${cmd[1]}" in
-          status) show_status;;
-          device) show_device "${cmd[2]}";;
-          connection) show_connection "${cmd[2]}";;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      list)
-        case "${cmd[1]}" in
-          devices) list_devices;;
-          connections) list_connections;;
-          wifis) list_wifis "${cmd[2]}" "${cmd[3]}";;
-          proxies) list_proxies;;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      power)
-        case "${cmd[1]}" in
-          network) power_network "${cmd[2]}";;
-          wifi) power_wifi "${cmd[2]}";;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      up) up "${cmd[1]}" "${cmd[2]}";;
-      down) down "${cmd[1]}" "${cmd[2]}";;
-      add)
-        case "${cmd[1]}" in
-          connection)
-            case "${cmd[2]}" in
-              eth) add_ethernet_connection;;
-              wifi) add_wifi_connection;;
-              vpn) add_vpn_connection;;
-              *) echo 'Invalid or unknown command';;
-            esac;;
-          proxy) add_proxy "${cmd[2]}";;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      remove)
-        case "${cmd[1]}" in
-          device) remove_device "${cmd[2]}";;
-          connection) remove_connection "${cmd[2]}";;
-          proxy) remove_proxy "${cmd[2]}";;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      set)
-        case "${cmd[1]}" in
-          proxy) set_proxy "${cmd[2]}";;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      unset)
-        case "${cmd[1]}" in
-          proxy) unset_proxy;;
-          *) echo 'Invalid or unknown command';;
-        esac;;
-      *) echo 'Invalid or unknown command';; 
-    esac
-
-    if [[ $? -eq 1 ]]; then
-      echo 'An unknown error has occurred'
-    fi
+    case "${cmd}${obj:+ ${obj}}" in
+      'help') show_help;;
+      'show status') show_status;;
+      'show device') show_device "${args[2]}";;
+      'show connection') show_connection "${args[2]}";;
+      'list devices') list_devices;;
+      'list connections') list_connections;;
+      'list wifis') list_wifis "${args[2]}" "${args[3]}";;
+      'list proxies') list_proxies;;
+      'power network') power_network "${args[2]}";;
+      'power wifi') power_wifi "${args[2]}";;
+      'up') up "${args[1]}" "${args[2]}";;
+      'down') down "${args[1]}" "${args[2]}";;
+      'add connection eth') add_ethernet_connection;;
+      'add connection wifi') add_wifi_connection;;
+      'add connection vpn') add_vpn_connection;;
+      'add proxy') add_proxy "${args[2]}";;
+      'remove device') remove_device "${args[2]}";;
+      'remove connection') remove_connection "${args[2]}";;
+      'remove proxy') remove_proxy "${args[2]}";;
+      'set proxy') set_proxy "${args[2]}";;
+      'unset proxy') unset_proxy;;
+      'clear') clear && continue;;
+      'quit') break;;
+      '') continue;;
+      *)
+        echo 'Ooops, invalid or unknown command!'
+        $(return 2);;
+    esac && success || fail
 
     REPLY=''
   done
