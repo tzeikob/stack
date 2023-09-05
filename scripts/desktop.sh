@@ -157,6 +157,19 @@ install_bars () {
   echo "Status bars have been installed"
 }
 
+install_sounds () {
+  echo 'Installing extra system sounds...'
+
+  local sounds_home='/usr/share/sounds/stack'
+  
+  sudo mkdir -p "${sounds_home}"
+  
+  sudo cp ~/stack/resources/sounds/normal.wav "${sounds_home}"
+  sudo cp ~/stack/resources/sounds/critical.wav "${sounds_home}"
+
+  echo 'System sounds have been installed'
+}
+
 install_notifier () {
   echo "Installing notifications server..."
 
@@ -165,10 +178,6 @@ install_notifier () {
   mkdir -p ~/.config/dunst
   cp ~/stack/configs/dunst/dunstrc ~/.config/dunst
   cp ~/stack/configs/dunst/hook ~/.config/dunst
-
-  sudo mkdir -p /usr/share/sounds/dunst
-  sudo cp ~/stack/configs/dunst/normal.wav /usr/share/sounds/dunst
-  sudo cp ~/stack/configs/dunst/critical.wav /usr/share/sounds/dunst
 
   echo "Notifications server has been installed"
 }
@@ -454,6 +463,7 @@ install_packages &&
   install_file_manager &&
   install_trash &&
   install_bars &&
+  install_sounds &&
   install_notifier &&
   install_launchers &&
   install_login_screen &&

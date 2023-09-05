@@ -31,7 +31,7 @@ play_popup_sound () {
     volume=1
   fi
 
-  pw-play --volume="${volume}" "/usr/share/sounds/dunst/${sound}.wav"
+  pw-play --volume="${volume}" "/usr/share/sounds/stack/${sound}.wav"
 }
 
 play_popup_sound "$@"
