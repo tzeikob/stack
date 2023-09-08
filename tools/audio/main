@@ -12,12 +12,15 @@ source /opt/stack/audio/commands
 #  A long help message.
 show_help () {
   if [[ "${1}" == "once" ]]; then
-    echo 'Usage: audio COMMAND [OBJECT] [ARGUMENTS]...'
+    echo 'Usage: audio [OPTIONS] COMMAND [OBJECT] [ARGUMENTS]...'
+
+    echo -e '\nOPTIONS'
+    printf ' %-12s %s\n' \
+      '-h' 'Show this help message.' \
+      '-q' 'Stay quiet and do not play beep sounds.'
 
     echo -e '\nCOMMANDS'
     printf ' %-12s %s\n' \
-      'help' 'Show this help message.' \
-      '' '' \
       'set profile' 'Set the active profile.' \
       'set output' 'Set the active output.' \
       '' '' \
@@ -106,11 +109,24 @@ loop () {
 }
 
 once () {
+  while getopts 'hq' opt; do
+    case "${opt}" in
+     'h')
+        show_help once
+        return 0;;
+     'q') QUIET='true';;
+     *)
+      echo 'Ooops, invalid or unknown option'
+      return 2;;
+    esac
+  done
+
+  shift $((OPTIND-1))
+
   local cmd="${1}"
   local obj="${2}"
 
   case "${cmd}${obj:+ ${obj}}" in
-    'help') show_help once;;
     'restart') restart;;
     'set profile') set_profile;;
     'set output') set_default sink;;

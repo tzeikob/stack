@@ -12,12 +12,15 @@ source /opt/stack/security/commands
 #  A long help message.
 show_help () {
   if [[ "${1}" == "once" ]]; then
-    echo 'Usage: security COMMAND [OBJECT] [ARGUMENTS]...'
+    echo 'Usage: security [OPTIONS] COMMAND [OBJECT] [ARGUMENTS]...'
+
+    echo -e '\nOPTIONS'
+    printf ' %-16s %s\n' \
+      '-h' 'Show this help message.' \
+      '-q' 'Stay quiet and do not play beep sounds.'
 
     echo -e '\nCOMMANDS'
     printf ' %-16s %s\n' \
-      'help' 'Show this help message.' \
-      '' '' \
       'init locker' 'Initialize the screen locker.' \
       '' '' \
       'lock screen' 'Lock the screen.' \
@@ -80,11 +83,24 @@ loop () {
 }
 
 once () {
+  while getopts 'hq' opt; do
+    case "${opt}" in
+     'h')
+        show_help once
+        return 0;;
+     'q') QUIET='true';;
+     *)
+      echo 'Ooops, invalid or unknown option'
+      return 2;;
+    esac
+  done
+
+  shift $((OPTIND-1))
+
   local cmd="${1}"
   local obj="${2}"
 
   case "${cmd}${obj:+ ${obj}}" in
-    'help') show_help once;;
     'init locker') init_screen_locker;;
     'lock screen') lock_screen;;
     'logout user') logout_user;;

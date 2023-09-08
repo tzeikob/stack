@@ -12,12 +12,15 @@ source /opt/stack/cloud/commands
 #  A long help message.
 show_help () {
   if [[ "${1}" == "once" ]]; then
-    echo 'Usage: cloud COMMAND [OBJECT] [ARGUMENTS]...'
+    echo 'Usage: cloud [OPTIONS] COMMAND [OBJECT] [ARGUMENTS]...'
+
+    echo -e '\nOPTIONS'
+    printf ' %-15s %s\n' \
+      '-h' 'Show this help message.' \
+      '-q' 'Stay quiet and do not play beep sounds.'
 
     echo -e '\nCOMMANDS'
     printf ' %-15s %s\n' \
-      'help' 'Show this help message.' \
-      '' '' \
       'mount remotes' 'Mount all synced cloud remotes.'
 
     return 0
@@ -75,11 +78,24 @@ loop () {
 }
 
 once () {
+  while getopts 'hq' opt; do
+    case "${opt}" in
+     'h')
+        show_help once
+        return 0;;
+     'q') QUIET='true';;
+     *)
+      echo 'Ooops, invalid or unknown option'
+      return 2;;
+    esac
+  done
+
+  shift $((OPTIND-1))
+
   local cmd="${1}"
   local obj="${2}"
 
   case "${cmd}${obj:+ ${obj}}" in
-    'help') show_help once;;
     'mount remotes') mount_all;;
     *)
       echo 'Ooops, invalid or unknown command'

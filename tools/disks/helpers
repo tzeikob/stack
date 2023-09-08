@@ -123,7 +123,7 @@ find_partition () {
   volume="$(echo "${volume}" | jc --veracrypt | jq -cer "${query}")" || return 1
 
   # Merge partition and volume data into an object
-  jq -ncer --argjson p "${part}" --argjson v "${volume}" '\$p + \$v' || return 1
+  jq -ncer --argjson p "${part}" --argjson v "${volume}" '$p + $v' || return 1
 }
 
 # Returns the list of rom block devices.

@@ -12,12 +12,15 @@ source /opt/stack/notifications/commands
 #  A long help message.
 show_help () {
   if [[ "${1}" == "once" ]]; then
-    echo 'Usage: notifications COMMAND [OBJECT] [ARGUMENTS]...'
+    echo 'Usage: notifications [OPTIONS] COMMAND [OBJECT] [ARGUMENTS]...'
+    
+    echo -e '\nOPTIONS'
+    printf ' %-16s %s\n' \
+      '-h' 'Show this help message.' \
+      '-q' 'Stay quiet and do not play beep sounds.'
 
     echo -e '\nCOMMANDS'
     printf ' %-16s %s\n' \
-      'help' 'Show this help message.' \
-      '' '' \
       'get state' 'Return the state of the notifications stream.' \
       '' '' \
       'mute all' 'Pause the notifications stream.' \
@@ -91,11 +94,24 @@ loop () {
 }
 
 once () {
+  while getopts 'hq' opt; do
+    case "${opt}" in
+     'h')
+        show_help once
+        return 0;;
+     'q') QUIET='true';;
+     *)
+      echo 'Ooops, invalid or unknown option'
+      return 2;;
+    esac
+  done
+
+  shift $((OPTIND-1))
+
   local cmd="${1}"
   local obj="${2}"
 
   case "${cmd}${obj:+ ${obj}}" in
-   'help') show_help once;;
     'get state') get_state;;
     'mute all') mute_all;;
     'unmute all') unmute_all;;

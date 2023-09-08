@@ -106,11 +106,11 @@ super + {Left,Down,Up,Right}
 
 # Lock the screen
 super + x
-  security lock screen
+  security -q lock screen
 
 # Blank the screen
 super + ctrl + b
-  power blank
+  power -q blank
 
 # Decrease audio
 XF86AudioLowerVolume

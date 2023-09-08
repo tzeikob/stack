@@ -12,12 +12,15 @@ source /opt/stack/desktop/commands
 #  A long help message.
 show_help () {
   if [[ "${1}" == "once" ]]; then
-    echo 'Usage: desktop COMMAND [OBJECT] [ARGUMENTS]...'
+    echo 'Usage: desktop [OPTIONS] COMMAND [OBJECT] [ARGUMENTS]...'
+
+    echo -e '\nOPTIONS'
+    printf ' %-16s %s\n' \
+      '-h' 'Show this help message.' \
+      '-q' 'Stay quiet and do not play beep sounds.'
 
     echo -e '\nCOMMANDS'
     printf ' %-16s %s\n' \
-      'help' 'Show this help message.' \
-      '' '' \
       'init pointer' 'Initialize the pointer.' \
       'init tablets' 'Initialize any connected tablets.' \
       'init wallpaper' 'Initialize the desktop wallpaper.'
@@ -90,11 +93,24 @@ loop () {
 }
 
 once () {
+  while getopts 'hq' opt; do
+    case "${opt}" in
+     'h')
+        show_help once
+        return 0;;
+     'q') QUIET='true';;
+     *)
+      echo 'Ooops, invalid or unknown option'
+      return 2;;
+    esac
+  done
+
+  shift $((OPTIND-1))
+
   local cmd="${1}"
   local obj="${2}"
 
   case "${cmd}${obj:+ ${obj}}" in
-    'help') show_help once;;
     'init pointer') init_pointer;;
     'init tablets') init_tablets;;
     'init wallpaper') init_wallpaper;;

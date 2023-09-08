@@ -12,11 +12,12 @@ source /opt/stack/trash/commands
 #  A long help message.
 show_help () {
   if [[ "${1}" == "once" ]]; then
-    echo 'Usage: trash [OPTIONS] FILE...'
+    echo 'Usage: trash [OPTIONS] FILE(S)...'
 
     echo -e '\nOPTIONS'
-    printf ' %-20s %s\n' \
-      'h, --help' 'Show this help message.'
+    printf ' %-8s %s\n' \
+      '-h' 'Show this help message.' \
+      '-q' 'Stay quiet and do not play beep sounds.'
 
     return 0
   fi
@@ -74,29 +75,29 @@ loop () {
 }
 
 once () {
-  local opts=''
+  while getopts 'hq' opt; do
+    case "${opt}" in
+     'h')
+        show_help once
+        return 0;;
+     'q') QUIET='true';;
+     *)
+      echo 'Ooops, invalid or unknown option'
+      return 2;;
+    esac
+  done
+
+  shift $((OPTIND-1))
+
+  # Collect the given list of files
   local files=()
 
-  while true; do
-    if [[ "${1}" = "-h" ]] || [[ "${1}" == "--help" ]]; then
-      opts="${opts} help"
-    elif [[ "${1}" =~ ^(-|--) ]]; then
-      echo 'Ooops, unknown or invalid option!'
-      return 2
-    elif [[ -n "${1}" ]]; then
-      files+=("${1}")
-    else
-      break
-    fi
-
+  while [[ $# -gt 0 ]]; do
+    files+=("${1}")
     shift
   done
 
-  if [[ "${opts}" =~ "help" ]]; then
-    show_help once
-  else
-    trash_files "${files[@]}"
-  fi
+  trash_files "${files[@]}"
 }
 
 if [[ $# -eq 0 ]]; then
