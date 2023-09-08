@@ -52,9 +52,8 @@ loop () {
     restore_separator && set +f
 
     local cmd="${args[0]}"
-    local obj="${args[1]}"
 
-    case "${cmd}${obj:+ ${obj}}" in
+    case "${cmd}" in
       'help') show_help;;
       'list') list_files "${args[1]}";;
       'restore') restore_files "${args[1]}";;

@@ -44,9 +44,9 @@ show_help () {
     'set mode [<output> [<resolution> [<rate>]]]' 'Set the mode of an output.' \
     'set primary [<output>]' 'Set an output as primary.' \
     'set on|off [<output>]' 'Activate or de-activate an output.' \
-    'rotate [<output> [<mode>]]' 'Rotate an output view to normal, right, left or inverted.' \
-    'reflect [<output> [<mode>]]' 'Reflect an output view to normal, x, y or xy.' \
-    'mirror [<output>]' 'Mirror an output to other outputs.' \
+    'rotate output [<output> [<mode>]]' 'Rotate an output view to normal, right, left or inverted.' \
+    'reflect output [<output> [<mode>]]' 'Reflect an output view to normal, x, y or xy.' \
+    'mirror output [<output>]' 'Mirror an output to other outputs.' \
     '' '' \
     'set layout [mode]' 'Set the layout of active outputs to row-2, col-2, row-3,' \
     '' 'col-3, gamma-3, gamma-rev-3, lambda-3 or lambda-rev-3.' \
@@ -96,9 +96,9 @@ loop () {
       'delete color') delete_color "${args[2]}";;
       'restore layout') restore_layout;;
       'restore colors') restore_colors;;
-      'rotate') rotate "${args[1]}" "${args[2]}";;
-      'reflect') reflect "${args[1]}" "${args[2]}";;
-      'mirror') mirror "${args[1]}";;
+      'rotate output') rotate_output "${args[2]}" "${args[3]}";;
+      'reflect output') reflect_output "${args[2]}" "${args[3]}";;
+      'mirror_output') mirror_output "${args[2]}";;
       'clear') clear && continue;;
       'quit') break;;
       '') continue;;

@@ -413,7 +413,7 @@ set_off () {
 # Arguments:
 #  name: the name of an output
 #  mode: normal, x, y, xy
-reflect () {
+reflect_output () {
   local name="${1}"
   local mode="${2}"
   
@@ -467,7 +467,7 @@ reflect () {
 # Arguments:
 #  name: the name of an output
 #  mode: normal, right, left, inverted
-rotate () {
+rotate_output () {
   local name="${1}"
   local mode="${2}"
 
@@ -524,7 +524,7 @@ rotate () {
 # inherit the rotation and reflection modes.
 # Arguments:
 #  name: the name of an output
-mirror () {
+mirror_output () {
   local name="${1}"
 
   if [[ -z "${name}" ]]; then

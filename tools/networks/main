@@ -31,7 +31,7 @@ show_help () {
     '' '' \
     'up connection [<name>]' 'Enable a connection.' \
     'down connection [<name>]' 'Disable a connection.' \
-    'add connection eth|wifi|vpn''Add an ethernet, wifi or vpn connection.' \
+    'add connection eth|wifi|vpn' 'Add an ethernet, wifi or vpn connection.' \
     'remove connection [<name>]' 'Remove a connection.' \
     '' '' \
     'add proxy <name>' 'Add a new proxy server profile.' \
@@ -69,8 +69,10 @@ loop () {
       'list proxies') list_proxies;;
       'power network') power_network "${args[2]}";;
       'power wifi') power_wifi "${args[2]}";;
-      'up') up "${args[1]}" "${args[2]}";;
-      'down') down "${args[1]}" "${args[2]}";;
+      'up device') up device "${args[2]}";;
+      'down device') down device "${args[2]}";;
+      'up connection') up connection "${args[2]}";;
+      'down connection') down connection "${args[2]}";;
       'add connection eth') add_ethernet_connection;;
       'add connection wifi') add_wifi_connection;;
       'add connection vpn') add_vpn_connection;;
