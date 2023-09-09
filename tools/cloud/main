@@ -7,77 +7,43 @@ source /opt/stack/cloud/commands
 
 # Shows the help message.
 # Arguments:
-#  mode: once or none
+#  mode: loop or once
 # Outputs:
 #  A long help message.
 show_help () {
-  if [[ "${1}" == "once" ]]; then
-    echo 'Usage: cloud [OPTIONS] COMMAND [OBJECT] [ARGUMENTS]...'
+  local mode="${1:-"once"}"
 
+  if [[ "${mode}" == "once" ]]; then
+    echo 'Usage: cloud [OPTIONS] COMMAND [OBJECT] [ARGUMENTS]...'
+    
     echo -e '\nOPTIONS'
-    printf ' %-15s %s\n' \
+    printf ' %-10s %s\n' \
       '-h' 'Show this help message.' \
       '-q' 'Stay quiet and do not play beep sounds.'
+  
+    echo -e '\nCOMMANDS'
+  else
+    echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
 
     echo -e '\nCOMMANDS'
-    printf ' %-15s %s\n' \
-      'mount remotes' 'Mount all synced cloud remotes.'
-
-    return 0
+    printf ' %-30s %s\n' \
+      'help' 'Show this help message.'
   fi
 
-  echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
-  
-  echo -e '\nCOMMANDS'
   printf ' %-30s %s\n' \
-    'help' 'Show this help message.' \
-    '' '' \
     'list remotes [service]' 'List all synced remotes by service.' \
     'sync remote <service> <name>' 'Sync a remote service, where service' \
     '' 'could be drive or dropbox.' \
     'delete remote [<name>]' 'Delete a synced remote service.' \
     '' '' \
     'mount remote [<name>]' 'Mount an already synced remote.' \
-    'unmount remote [<name>]' 'Unmount an already mounted remote.'
+    'unmount remote [<name>]' 'Unmount an already mounted remote.' \
+    'mount remotes' 'Mount all synced cloud remotes.'
 }
 
-loop () {
-  clear
+run () {
+  local opt=''
 
-  while true; do
-    prompt cloud && history -s "${REPLY}"
-
-    set -f
-    set_separator line
-    local args=($(xargs -n1 <<< "${REPLY}"))
-    restore_separator && set +f
-
-    local cmd="${args[0]}"
-    local obj="${args[1]}"
-
-    case "${cmd}${obj:+ ${obj}}" in
-      'help') show_help;;
-      'list remotes') list_remotes "${args[2]}";;
-      'sync remote drive') sync_drive "${args[3]}";;
-      'sync remote dropbox') sync_dropbox "${args[3]}";;
-      'delete remote') delete_remote "${args[2]}";;
-      'mount  remote') mount_remote "${args[2]}";;
-      'unmount remote') unmount_remote "${args[2]}";;
-      'clear') clear && continue;;
-      'quit') break;;
-      '') continue;;
-      *)
-        echo 'Ooops, invalid or unknown command!'
-        $(return 2);;
-    esac && success || fail
-
-    REPLY=''
-  done
-
-  clear
-}
-
-once () {
   while getopts 'hq' opt; do
     case "${opt}" in
      'h')
@@ -85,27 +51,65 @@ once () {
         return 0;;
      'q') QUIET='true';;
      *)
-      echo 'Ooops, invalid or unknown option'
-      return 2;;
+      fail 'Ooops, invalid or unknown option'
+      return $?;;
     esac
   done
 
   shift $((OPTIND-1))
 
-  local cmd="${1}"
-  local obj="${2}"
+  local mode='once'
+  if [[ $# -eq 0 ]]; then
+    mode='loop'
+    clear
+  fi
 
-  case "${cmd}${obj:+ ${obj}}" in
-    'mount remotes') mount_all;;
-    *)
-      echo 'Ooops, invalid or unknown command'
-      return 2;;
-  esac
+  while true; do
+    if [[ "${mode}" == "loop" ]]; then
+      prompt cloud && history -s "${REPLY}"
+    else
+      REPLY="$@"
+    fi
+
+    set -f
+    set_separator line
+    local args=($(xargs -n1 <<< "${REPLY}"))
+    restore_separator && set +f
+    REPLY=''
+
+    local cmd="${args[0]}"
+    local obj="${args[1]}"
+
+    if [[ "${mode}" == "loop" ]]; then
+      case "${cmd}${obj:+ ${obj}}" in
+        'help') show_help loop && continue;;
+        'clear') clear && continue;;
+        'quit') break;;
+        '') continue;;
+      esac
+    fi
+
+    case "${cmd}${obj:+ ${obj}}" in
+      'list remotes') list_remotes "${args[2]}";;
+      'sync remote drive') sync_drive "${args[3]}";;
+      'sync remote dropbox') sync_dropbox "${args[3]}";;
+      'delete remote') delete_remote "${args[2]}";;
+      'mount  remote') mount_remote "${args[2]}";;
+      'unmount remote') unmount_remote "${args[2]}";;
+      'mount remotes') mount_all;;
+      *)
+        echo 'Ooops, invalid or unknown command!'
+        $(return 2);;
+    esac && success || fail
+
+    local exit_code=$?
+    if [[ "${mode}" == "once" ]]; then
+      return ${exit_code}
+    fi
+  done
+
+  clear
 }
 
-if [[ $# -eq 0 ]]; then
-  loop
-else
-  once "$@" && success || fail
-fi
+run "$@"
 

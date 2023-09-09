@@ -7,16 +7,30 @@ source /opt/stack/printers/commands
 
 # Shows the help message.
 # Arguments:
-#  None
+#  mode: loop or once
 # Outputs:
 #  A long help message.
 show_help () {
-  echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
+  local mode="${1:-"once"}"
 
-  echo -e '\nCOMMANDS'
+  if [[ "${mode}" == "once" ]]; then
+    echo 'Usage: printers [OPTIONS] COMMAND [OBJECT] [ARGUMENTS]...'
+    
+    echo -e '\nOPTIONS'
+    printf ' %-10s %s\n' \
+      '-h' 'Show this help message.' \
+      '-q' 'Stay quiet and do not play beep sounds.'
+  
+    echo -e '\nCOMMANDS'
+  else
+    echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
+
+    echo -e '\nCOMMANDS'
+    printf ' %-40s %s\n' \
+      'help' 'Show this help message.'
+  fi
+
   printf ' %-40s %s\n' \
-    'help' 'Show this help message.' \
-    '' '' \
     'show status' 'Show a report of cups service and printers.' \
     'show printer [<name>]' 'Show the data of a printer.' \
     '' '' \
@@ -40,22 +54,55 @@ show_help () {
     'restart' 'Restart the cups service.'
 }
 
-loop () {
-  clear
+run () {
+  local opt=''
+
+  while getopts 'hq' opt; do
+    case "${opt}" in
+     'h')
+        show_help once
+        return 0;;
+     'q') QUIET='true';;
+     *)
+      fail 'Ooops, invalid or unknown option'
+      return $?;;
+    esac
+  done
+
+  shift $((OPTIND-1))
+
+  local mode='once'
+  if [[ $# -eq 0 ]]; then
+    mode='loop'
+    clear
+  fi
 
   while true; do
-    prompt printers && history -s "${REPLY}"
+    if [[ "${mode}" == "loop" ]]; then
+      prompt printers && history -s "${REPLY}"
+    else
+      REPLY="$@"
+    fi
 
     set -f
     set_separator line
     local args=($(xargs -n1 <<< "${REPLY}"))
     restore_separator && set +f
+    REPLY=''
 
     local cmd="${args[0]}"
     local obj="${args[1]}"
 
+    if [[ "${mode}" == "loop" ]]; then
+      case "${cmd}${obj:+ ${obj}}" in
+        'help') show_help loop && continue;;
+        'clear') clear && continue;;
+        'quit') break;;
+        '') continue;;
+      esac
+    fi
+
     case "${cmd}${obj:+ ${obj}}" in
-      'help') show_help;;
       'show status') show_status;;
       'show printer') show_printer "${args[2]}";;
       'list printers') list_printers;;
@@ -72,19 +119,19 @@ loop () {
       'set default') set_default "${args[2]}";;
       'cancel job') cancel_job "${args[2]}";;
       'restart') restart;;
-      'clear') clear && continue;;
-      'quit') break;;
-      '') continue;;
       *)
         echo 'Ooops, invalid or unknown command!'
         $(return 2);;
     esac && success || fail
 
-    REPLY=''
+    local exit_code=$?
+    if [[ "${mode}" == "once" ]]; then
+      return ${exit_code}
+    fi
   done
 
   clear
 }
 
-loop
+run "$@"
 

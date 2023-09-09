@@ -424,8 +424,9 @@ download () {
   done
 }
 
-# Plays a success beep sound printing the optionaly
-# given message.
+# Returns a zero exit code to declare success,
+# in addition it is printing an optionaly given
+# message and playing a success beep sound.
 # Arguments:
 #  message: a message to print
 # Returns:
@@ -444,15 +445,18 @@ success () {
   return 0
 }
 
-# Plays a failure beep sound printing the optionaly given
-# message and returning the current exit code set by the
-# previous command.
+# Returns a none zero exit code to declare failure
+# in addition it is printing the optionaly given
+# message and playing a fail beep sound. In the case
+# of a zero exit code set by the previous command
+# it forcefully returns 1.
 # Arguments:
 #  message: a message to print
 # Returns:
 #  A non-zero exit code.
 fail () {
   local exit_code=$?
+  [[ ${exit_code} -eq 0 ]] && exit_code=1
 
   local message="${1}"
 

@@ -7,16 +7,30 @@ source /opt/stack/networks/commands
 
 # Shows the help message.
 # Arguments:
-#  None
+#  mode: loop or once
 # Outputs:
 #  A long help message.
 show_help () {
-  echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
+  local mode="${1:-"once"}"
 
-  echo -e '\nCOMMANDS'
-  printf ' %-35s %s\n' \
-    'help' 'Show this help message.' \
-    '' '' \
+  if [[ "${mode}" == "once" ]]; then
+    echo 'Usage: networks [OPTIONS] COMMAND [OBJECT] [ARGUMENTS]...'
+    
+    echo -e '\nOPTIONS'
+    printf ' %-10s %s\n' \
+      '-h' 'Show this help message.' \
+      '-q' 'Stay quiet and do not play beep sounds.'
+  
+    echo -e '\nCOMMANDS'
+  else
+    echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
+
+    echo -e '\nCOMMANDS'
+    printf ' %-36s %s\n' \
+      'help' 'Show this help message.'
+  fi
+
+  printf ' %-36s %s\n' \
     'show status' 'Show the current status of networking.' \
     'show device [<name>]' 'Show the data of a device.' \
     'show connection [<name>]' 'Show the data of a connection.' \
@@ -44,22 +58,55 @@ show_help () {
     'power wifi on|off' 'Set the wifi device to on or off.'
 }
 
-loop () {
-  clear
+run () {
+  local opt=''
+
+  while getopts 'hq' opt; do
+    case "${opt}" in
+     'h')
+        show_help once
+        return 0;;
+     'q') QUIET='true';;
+     *)
+      fail 'Ooops, invalid or unknown option'
+      return $?;;
+    esac
+  done
+
+  shift $((OPTIND-1))
+
+  local mode='once'
+  if [[ $# -eq 0 ]]; then
+    mode='loop'
+    clear
+  fi
 
   while true; do
-    prompt networks && history -s "${REPLY}"
+    if [[ "${mode}" == "loop" ]]; then
+      prompt networks && history -s "${REPLY}"
+    else
+      REPLY="$@"
+    fi
 
     set -f
     set_separator line
     local args=($(xargs -n1 <<< "${REPLY}"))
     restore_separator && set +f
+    REPLY=''
 
     local cmd="${args[0]}"
     local obj="${args[1]}"
 
+    if [[ "${mode}" == "loop" ]]; then
+      case "${cmd}${obj:+ ${obj}}" in
+        'help') show_help loop && continue;;
+        'clear') clear && continue;;
+        'quit') break;;
+        '') continue;;
+      esac
+    fi
+
     case "${cmd}${obj:+ ${obj}}" in
-      'help') show_help;;
       'show status') show_status;;
       'show device') show_device "${args[2]}";;
       'show connection') show_connection "${args[2]}";;
@@ -82,19 +129,19 @@ loop () {
       'remove proxy') remove_proxy "${args[2]}";;
       'set proxy') set_proxy "${args[2]}";;
       'unset proxy') unset_proxy;;
-      'clear') clear && continue;;
-      'quit') break;;
-      '') continue;;
       *)
         echo 'Ooops, invalid or unknown command!'
         $(return 2);;
     esac && success || fail
 
-    REPLY=''
+    local exit_code=$?
+    if [[ "${mode}" == "once" ]]; then
+      return ${exit_code}
+    fi
   done
 
   clear
 }
 
-loop
+run "$@"
 

@@ -7,34 +7,30 @@ source /opt/stack/security/commands
 
 # Shows the help message.
 # Arguments:
-#  mode: once or none
+#  mode: loop or once
 # Outputs:
 #  A long help message.
 show_help () {
-  if [[ "${1}" == "once" ]]; then
-    echo 'Usage: security [OPTIONS] COMMAND [OBJECT] [ARGUMENTS]...'
+  local mode="${1:-"once"}"
 
+  if [[ "${mode}" == "once" ]]; then
+    echo 'Usage: security [OPTIONS] COMMAND [OBJECT] [ARGUMENTS]...'
+    
     echo -e '\nOPTIONS'
-    printf ' %-16s %s\n' \
+    printf ' %-10s %s\n' \
       '-h' 'Show this help message.' \
       '-q' 'Stay quiet and do not play beep sounds.'
+  
+    echo -e '\nCOMMANDS'
+  else
+    echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
 
     echo -e '\nCOMMANDS'
-    printf ' %-16s %s\n' \
-      'init locker' 'Initialize the screen locker.' \
-      '' '' \
-      'lock screen' 'Lock the screen.' \
-      'logout user' 'Logout the user.'
-
-    return 0
+    printf ' %-28s %s\n' \
+      'help' 'Show this help message.'
   fi
 
-  echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
-
-  echo -e '\nCOMMANDS'
-  printf ' %-25s %s\n' \
-    'help' 'Show this help message.' \
-    '' '' \
+  printf ' %-28s %s\n' \
     'show status' 'Show the status of the system security.' \
     '' '' \
     'set password' 'Set a new user password.' \
@@ -43,46 +39,16 @@ show_help () {
     'set interval <time>' 'Set consecutive password fails interval in secs.' \
     '' '' \
     'set locker <mins>' 'Set the interval of the screen locker,' \
-    '' 'where 0 means deactivate the locker.'
+    '' 'where 0 means deactivate the locker.' \
+    'init locker' 'Initialize the screen locker.' \
+    '' '' \
+    'lock screen' 'Lock the screen.' \
+    'logout user' 'Logout the user.'
 }
 
-loop () {
-  clear
+run () {
+  local opt=''
 
-  while true; do
-    prompt security && history -s "${REPLY}"
-
-    set -f
-    set_separator line
-    local args=($(xargs -n1 <<< "${REPLY}"))
-    restore_separator && set +f
-
-    local cmd="${args[0]}"
-    local obj="${args[1]}"
-
-    case "${cmd}${obj:+ ${obj}}" in
-      'help') show_help;;
-      'show status') show_status;;
-      'set locker') set_screen_locker "${args[2]}";;
-      'set password') set_user_password;;
-      'set attempts') set_faillock_attempts "${args[2]}";;
-      'set unblock') set_faillock_unblock "${args[2]}";;
-      'set interval') set_faillock_interval "${args[2]}";;
-      'clear') clear && continue;;
-      'quit') break;;
-      '') continue;;
-      *)
-        echo 'Ooops, invalid or unknown command!'
-        $(return 2);;
-    esac && success || fail
-
-    REPLY=''
-  done
-
-  clear
-}
-
-once () {
   while getopts 'hq' opt; do
     case "${opt}" in
      'h')
@@ -90,29 +56,67 @@ once () {
         return 0;;
      'q') QUIET='true';;
      *)
-      echo 'Ooops, invalid or unknown option'
-      return 2;;
+      fail 'Ooops, invalid or unknown option'
+      return $?;;
     esac
   done
 
   shift $((OPTIND-1))
 
-  local cmd="${1}"
-  local obj="${2}"
+  local mode='once'
+  if [[ $# -eq 0 ]]; then
+    mode='loop'
+    clear
+  fi
 
-  case "${cmd}${obj:+ ${obj}}" in
-    'init locker') init_screen_locker;;
-    'lock screen') lock_screen;;
-    'logout user') logout_user;;
-    *)
-      echo 'Ooops, invalid or unknown command'
-      return 2;;
-  esac
+  while true; do
+    if [[ "${mode}" == "loop" ]]; then
+      prompt security && history -s "${REPLY}"
+    else
+      REPLY="$@"
+    fi
+
+    set -f
+    set_separator line
+    local args=($(xargs -n1 <<< "${REPLY}"))
+    restore_separator && set +f
+    REPLY=''
+
+    local cmd="${args[0]}"
+    local obj="${args[1]}"
+
+    if [[ "${mode}" == "loop" ]]; then
+      case "${cmd}${obj:+ ${obj}}" in
+        'help') show_help loop && continue;;
+        'clear') clear && continue;;
+        'quit') break;;
+        '') continue;;
+      esac
+    fi
+
+    case "${cmd}${obj:+ ${obj}}" in
+      'show status') show_status;;
+      'set locker') set_screen_locker "${args[2]}";;
+      'set password') set_user_password;;
+      'set attempts') set_faillock_attempts "${args[2]}";;
+      'set unblock') set_faillock_unblock "${args[2]}";;
+      'set interval') set_faillock_interval "${args[2]}";;
+      'init locker') init_screen_locker;;
+      'lock screen') lock_screen;;
+      'logout user') logout_user;;
+      *)
+        echo 'Ooops, invalid or unknown command!'
+        $(return 2);;
+    esac && success || fail
+
+    local exit_code=$?
+    if [[ "${mode}" == "once" ]]; then
+      return ${exit_code}
+    fi
+  done
+
+  clear
 }
 
-if [[ $# -eq 0 ]]; then
-  loop
-else
-  once "$@" && success || fail
-fi
+run "$@"
 

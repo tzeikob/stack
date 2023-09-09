@@ -7,33 +7,30 @@ source /opt/stack/displays/commands
 
 # Shows the help message.
 # Arguments:
-#  mode: once or none
+#  mode: loop or once
 # Outputs:
 #  A long help message.
 show_help () {
-  if [[ "${1}" == "once" ]]; then
-    echo 'Usage: displays [OPTIONS] COMMAND [OBJECT] [ARGUMENTS]...'
+  local mode="${1:-"once"}"
 
+  if [[ "${mode}" == "once" ]]; then
+    echo 'Usage: displays [OPTIONS] COMMAND [OBJECT] [ARGUMENTS]...'
+    
     echo -e '\nOPTIONS'
-    printf ' %-16s %s\n' \
+    printf ' %-10s %s\n' \
       '-h' 'Show this help message.' \
       '-q' 'Stay quiet and do not play beep sounds.'
+  
+    echo -e '\nCOMMANDS'
+  else
+    echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
 
     echo -e '\nCOMMANDS'
-    printf ' %-16s %s\n' \
-      'restore colors' 'Restore colors to currently active displays.' \
-      'restore layout' 'Restore the layout matching the current mapping.' \
-      'fix layout' 'Fix the positioning of the current layout.'
-
-    return 0
+    printf ' %-44s %s\n' \
+      'help' 'Show this help message.'
   fi
 
-  echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
-
-  echo -e '\nCOMMANDS'
   printf ' %-44s %s\n' \
-    'help' 'Show this help message.' \
-    '' '' \
     'show status' 'Show a report of the Xorg server and active outputs.' \
     'show logs [<lines>]' 'Show the last logs of the Xorg server.' \
     '' '' \
@@ -54,6 +51,7 @@ show_help () {
     'list layouts' 'List all layout settings.' \
     'delete layout [<index>]' 'Delete a layout setting.' \
     'restore layout' 'Restore the layout matching the current mapping.' \
+    'fix layout' 'Fix the positioning of the current layout.' \
     '' '' \
     'set color [<output> [<profile>]]' 'Set color profile of a display connected to an output.' \
     'reset color [<output>]' 'Reset color profile of a display connected to an output.' \
@@ -62,22 +60,55 @@ show_help () {
     'restore colors' 'Restore colors to currently active displays.'
 }
 
-loop () {
-  clear
+run () {
+  local opt=''
+
+  while getopts 'hq' opt; do
+    case "${opt}" in
+     'h')
+        show_help once
+        return 0;;
+     'q') QUIET='true';;
+     *)
+      fail 'Ooops, invalid or unknown option'
+      return $?;;
+    esac
+  done
+
+  shift $((OPTIND-1))
+
+  local mode='once'
+  if [[ $# -eq 0 ]]; then
+    mode='loop'
+    clear
+  fi
 
   while true; do
-    prompt displays && history -s "${REPLY}"
+    if [[ "${mode}" == "loop" ]]; then
+      prompt displays && history -s "${REPLY}"
+    else
+      REPLY="$@"
+    fi
 
     set -f
     set_separator line
     local args=($(xargs -n1 <<< "${REPLY}"))
     restore_separator && set +f
+    REPLY=''
 
     local cmd="${args[0]}"
     local obj="${args[1]}"
 
+    if [[ "${mode}" == "loop" ]]; then
+      case "${cmd}${obj:+ ${obj}}" in
+        'help') show_help loop && continue;;
+        'clear') clear && continue;;
+        'quit') break;;
+        '') continue;;
+      esac
+    fi
+
     case "${cmd}${obj:+ ${obj}}" in
-      'help') show_help;;
       'show status') show_status;;
       'show logs') show_logs "${args[2]}";;
       'show output') show_output "${args[2]}";;
@@ -99,50 +130,20 @@ loop () {
       'rotate output') rotate_output "${args[2]}" "${args[3]}";;
       'reflect output') reflect_output "${args[2]}" "${args[3]}";;
       'mirror_output') mirror_output "${args[2]}";;
-      'clear') clear && continue;;
-      'quit') break;;
-      '') continue;;
+      'fix layout') fix_layout;;
       *)
         echo 'Ooops, invalid or unknown command!'
         $(return 2);;
     esac && success || fail
 
-    REPLY=''
+    local exit_code=$?
+    if [[ "${mode}" == "once" ]]; then
+      return ${exit_code}
+    fi
   done
 
   clear
 }
 
-once () {
-  while getopts 'hq' opt; do
-    case "${opt}" in
-     'h')
-        show_help once
-        return 0;;
-     'q') QUIET='true';;
-     *)
-      echo 'Ooops, invalid or unknown option'
-      return 2;;
-    esac
-  done
+run "$@"
 
-  shift $((OPTIND-1))
-
-  local cmd="${1}"
-  local obj="${2}"
-
-  case "${cmd}${obj:+ ${obj}}" in
-    'restore layout') restore_layout;;
-    'restore colors') restore_colors;;
-    'fix layout') fix_layout;;
-    *)
-      echo 'Ooops, invalid or unknown command'
-      return 2;;
-  esac
-}
-
-if [[ $# -eq 0 ]]; then
-  loop
-else
-  once "$@" && success || fail
-fi

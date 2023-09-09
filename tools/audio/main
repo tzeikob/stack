@@ -7,39 +7,30 @@ source /opt/stack/audio/commands
 
 # Shows the help message.
 # Arguments:
-#  mode: once or none
+#  mode: loop or once
 # Outputs:
 #  A long help message.
 show_help () {
-  if [[ "${1}" == "once" ]]; then
-    echo 'Usage: audio [OPTIONS] COMMAND [OBJECT] [ARGUMENTS]...'
+  local mode="${1:-"once"}"
 
+  if [[ "${mode}" == "once" ]]; then
+    echo 'Usage: audio [OPTIONS] COMMAND [OBJECT] [ARGUMENTS]...'
+    
     echo -e '\nOPTIONS'
-    printf ' %-12s %s\n' \
+    printf ' %-10s %s\n' \
       '-h' 'Show this help message.' \
       '-q' 'Stay quiet and do not play beep sounds.'
+  
+    echo -e '\nCOMMANDS'
+  else
+    echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
 
     echo -e '\nCOMMANDS'
-    printf ' %-12s %s\n' \
-      'set profile' 'Set the active profile.' \
-      'set output' 'Set the active output.' \
-      '' '' \
-      'up' 'Increase the volume of active output.' \
-      'down' 'Decrease the volume of active output.' \
-      'mute' 'Mute the active output.' \
-      'unmute' 'Unmute the active output.' \
-      '' '' \
-      'restart' 'Restart the audio server.'
-
-    return 0
+    printf ' %-32s %s\n' \
+      'help' 'Show this help message.'
   fi
 
-  echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
-
-  echo -e '\nCOMMANDS'
   printf ' %-32s %s\n' \
-    'help' 'Show this help message.' \
-    '' '' \
     'show status' 'Show a report of the system audio.' \
     'show logs' 'Show the last logs of the audio service.' \
     'show card [<index>]' 'Show the data of a card.' \
@@ -61,22 +52,55 @@ show_help () {
     'restart' 'Restart the audio server.'
 }
 
-loop () {
-  clear
+run () {
+  local opt=''
+
+  while getopts 'hq' opt; do
+    case "${opt}" in
+     'h')
+        show_help once
+        return 0;;
+     'q') QUIET='true';;
+     *)
+      fail 'Ooops, invalid or unknown option'
+      return $?;;
+    esac
+  done
+
+  shift $((OPTIND-1))
+
+  local mode='once'
+  if [[ $# -eq 0 ]]; then
+    mode='loop'
+    clear
+  fi
 
   while true; do
-    prompt audio && history -s "${REPLY}"
+    if [[ "${mode}" == "loop" ]]; then
+      prompt audio && history -s "${REPLY}"
+    else
+      REPLY="$@"
+    fi
 
     set -f
     set_separator line
     local args=($(xargs -n1 <<< "${REPLY}"))
     restore_separator && set +f
+    REPLY=''
 
     local cmd="${args[0]}"
     local obj="${args[1]}"
 
+    if [[ "${mode}" == "loop" ]]; then
+      case "${cmd}${obj:+ ${obj}}" in
+        'help') show_help loop && continue;;
+        'clear') clear && continue;;
+        'quit') break;;
+        '') continue;;
+      esac
+    fi
+
     case "${cmd}${obj:+ ${obj}}" in
-      'help') show_help;;
       'show status') show_status;;
       'show logs') show_logs;;
       'show card') show_card "${args[2]}";;
@@ -94,55 +118,19 @@ loop () {
       'mute inputs') set_mute source 1;;
       'unmute outputs') set_mute sink 0;;
       'unmute inputs') set_mute source 0;;
-      'clear') clear && continue;;
-      'quit') break;;
-      '') continue;;
       *)
         echo 'Ooops, invalid or unknown command!'
         $(return 2);;
     esac && success || fail
 
-    REPLY=''
+    local exit_code=$?
+    if [[ "${mode}" == "once" ]]; then
+      return ${exit_code}
+    fi
   done
 
   clear
 }
 
-once () {
-  while getopts 'hq' opt; do
-    case "${opt}" in
-     'h')
-        show_help once
-        return 0;;
-     'q') QUIET='true';;
-     *)
-      echo 'Ooops, invalid or unknown option'
-      return 2;;
-    esac
-  done
-
-  shift $((OPTIND-1))
-
-  local cmd="${1}"
-  local obj="${2}"
-
-  case "${cmd}${obj:+ ${obj}}" in
-    'restart') restart;;
-    'set profile') set_profile;;
-    'set output') set_default sink;;
-    'mute') turn_default sink mute;;
-    'unmute') turn_default sink unmute;;
-    'up') turn_default sink up;;
-    'down') turn_default sink down;;
-    *)
-      echo 'Ooops, invalid or unknown command'
-      return 2;;
-  esac
-}
-
-if [[ $# -eq 0 ]]; then
-  loop
-else
-  once "$@" && success || fail
-fi
+run "$@"
 
