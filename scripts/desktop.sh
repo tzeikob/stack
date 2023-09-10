@@ -136,6 +136,12 @@ install_trash () {
 
   sudo pacman -S --noconfirm trash-cli || exit 1
 
+  sed -ri "/alias ls=.*/a alias tt='trash-put -i'" ~/.bashrc
+  sed -ri "/alias ls=.*/a alias rm='rm -i'" ~/.bashrc
+  
+  sudo sed -ri "/alias ls=.*/a alias tt='trash-put -i'" /root/.bashrc
+  sudo sed -ri "/alias ls=.*/a alias rm='rm -i'" /root/.bashrc
+
   echo "Trash has been installed"
 }
 

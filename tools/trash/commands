@@ -224,34 +224,3 @@ empty_files () {
   fi
 }
 
-# Puts the given files to the trash.
-# Arguments:
-#  files[]: a list of file paths
-trash_files () {
-  local files=("$@")
-  local len=${#files[@]}
-
-  if [[ ${len} -eq 0 ]]; then
-    abort 'No files have been given'
-  fi
-
-  local trashed_len=0
-  trashed_len="$(find_files | jq -cer 'length')" || return 1
-
-  local index=0
-  while [[ ${index} -lt ${len} ]]; do
-    local file="${files[index]}"
-
-    trash-put "${file}" &> /dev/null ||
-      echo "Cannot trash the file ${file}"
-
-    index=$((index + 1))
-  done
-
-  local post_trashed_len=0
-  post_trashed_len="$(find_files | jq -cer 'length')" || return 1
-  len=$((post_trashed_len - trashed_len))
-
-  echo "${len} file(s) have been trashed"
-}
-
