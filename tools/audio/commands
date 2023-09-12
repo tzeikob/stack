@@ -86,7 +86,7 @@ show_card () {
 
   if [[ -z "${index}" ]]; then
     pick_card 'Select an audio card:' || return $?
-    [[ -n "${REPLY}" ]] && index="${REPLY}" || return 0
+    index="${REPLY}"
   fi
 
   local card=''
@@ -128,21 +128,32 @@ show_card () {
 # Arguments:
 #  none
 restart () {
-  echo 'Restarting the audio server...'
+  echo 'Restarting audio services...'
 
-  systemctl --user restart pipewire.socket && sleep 0.5 &&
+  systemctl --user restart pipewire.socket &&
+    sleep 0.5 &&
     echo 'Pipewire socket restarted' &&
-  systemctl --user restart pipewire.service && sleep 0.5 &&
+  systemctl --user restart pipewire.service &&
+    sleep 0.5 &&
     echo 'Pipewire service restarted' &&
-  systemctl --user restart pipewire-session-manager.service && sleep 0.5 &&
-  systemctl --user restart pipewire-media-session.service && sleep 0.5 &&
-  systemctl --user restart pipewire-pulse.socket && sleep 0.5 &&
+  systemctl --user restart pipewire-session-manager.service &&
+    sleep 0.5 &&
+  systemctl --user restart pipewire-media-session.service &&
+    sleep 0.5 &&
+  systemctl --user restart pipewire-pulse.socket &&
+    sleep 0.5 &&
     echo 'Pulse socket restarted' &&
-  systemctl --user restart pipewire-pulse.service && sleep 0.5 &&
+  systemctl --user restart pipewire-pulse.service &&
+    sleep 0.5 &&
     echo 'Pulse service restarted' &&
-  echo 'Audio server has been restarted' &&
-  (~/.config/polybar/launch &> /dev/null &) ||
-    echo 'An error occurred restarting the audio server'
+  (~/.config/polybar/launch &> /dev/null &)
+
+  if [[ $? -ne 0 ]]; then
+    echo 'Failed to restart audio services'
+    return 2
+  fi
+
+  echo 'Audio services has been restarted'
 }
 
 # Shows the list of all audio cards of the system.
@@ -283,7 +294,7 @@ set_profile () {
 
   if [[ -z "${index}" ]]; then
     pick_card 'Select an audio card:' || return $?
-    [[ -n "${REPLY}" ]] && index="${REPLY}" || return 0
+    index="${REPLY}"
   fi
 
   local card=''
@@ -296,7 +307,7 @@ set_profile () {
 
   if [[ -z "${name}" ]]; then
     pick_profile 'Select a profile:' "${card}" || return $?
-    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+    name="${REPLY}"
   fi
 
   local exists=''
@@ -332,7 +343,7 @@ set_default () {
 
   if [[ -z "${index}" ]]; then
     pick_module 'Select an audio module:' "${type}" || return $?
-    [[ -n "${REPLY}" ]] && index="${REPLY}" || return 0
+    index="${REPLY}"
   fi
 
   local query=".[]|select(.index|tostring == \"${index}\")"
@@ -394,7 +405,8 @@ turn_default () {
       return 2
     fi
 
-    echo "Active $(label type "${type}") volume set to mute" && return 0
+    echo "Active $(label type "${type}") volume set to mute"
+    return 0
   elif [[ "${to}" == "unmute" ]]; then
     pactl set-${type}-mute "${module}" 0
 
@@ -403,7 +415,8 @@ turn_default () {
       return 2
     fi
 
-    echo "Active $(label type "${type}") volume set to unmute" && return 0
+    echo "Active $(label type "${type}") volume set to unmute"
+    return 0
   fi
 
   local volume="${to}"

@@ -60,7 +60,8 @@ run () {
         return 0;;
      'q') QUIET='true';;
      *)
-      fail 'Ooops, invalid or unknown option'
+      echo 'Ooops, invalid or unknown option'
+      $(exit 2) || beep
       return $?;;
     esac
   done
@@ -100,12 +101,12 @@ run () {
 
     case "${cmd}${obj:+ ${obj}}" in
       'show status') show_status;;
-      'set action') set_action "${args[2]}" "${args[3]}";;
-      'set screensaver') set_screensaver "${args[2]}";;
-      'set tlp') set_tlp "${args[2]}";;
-      'set charge') set_charge "${args[2]}" "${args[3]}";;
-      'reset actions') reset_actions;;
-      'init screensaver') init_screensaver;;
+      'set action') set_action "${args[2]}" "${args[3]}" && beep;;
+      'set screensaver') set_screensaver "${args[2]}" && beep;;
+      'set tlp') set_tlp "${args[2]}" && beep;;
+      'set charge') set_charge "${args[2]}" "${args[3]}" && beep;;
+      'reset actions') reset_actions && beep;;
+      'init screensaver') init_screensaver && beep;;
       'shutdown') shutdown_system;;
       'reboot') reboot_system;;
       'suspend') suspend_system;;
@@ -113,7 +114,7 @@ run () {
       *)
         echo 'Ooops, invalid or unknown command!'
         $(return 2);;
-    esac && success || fail
+    esac || beep
 
     local exit_code=$?
     if [[ "${mode}" == "once" ]]; then

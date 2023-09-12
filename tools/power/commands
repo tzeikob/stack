@@ -136,7 +136,7 @@ set_action () {
     handlers="[${handlers}]"
 
     pick_one 'Select a power handler:' "${handlers}" vertical || return $?
-    [[ -n "${REPLY}" ]] && handler="${REPLY}" || return 0
+    handler="${REPLY}"
   fi
 
   if [[ ! "${handler}" =~ ^(power|reboot|suspend|lid|docked)$ ]]; then
@@ -153,7 +153,7 @@ set_action () {
     actions="[${actions}]"
 
     pick_one 'Select an action:' "${actions}" vertical || return $?
-    [[ -n "${REPLY}" ]] && action="${REPLY}" || return 0
+    action="${REPLY}"
   fi
 
   if [[ ! "${action}" =~ ^(poweroff|reboot|suspend|ignore)$ ]]; then
@@ -208,7 +208,7 @@ reset_actions () {
   local config_file='/etc/systemd/logind.conf.d/00-main.conf'
 
   if [[ ! -f "${config_file}" ]]; then
-    echo 'Power actions are already set to defaults'
+    echo 'Actions already set to defaults'
     return 0
   fi
 
@@ -231,89 +231,79 @@ reset_actions () {
 # Sets the interval time of the screen saver, where
 # 0 means deactivate the screensaver.
 # Arguments:
-#  mins:    an integer interval in mins or 0
-#  persist: save or nosave, default is save
+#  interval: the number of minutes or 0
 set_screensaver () {
-  local mins="${1}"
-  local persist="${2:-"save"}"
+  local interval="${1}"
 
-  if [[ -z "${mins}" ]]; then
-    echo 'Missing the interval time'
-    return 2
-  elif [[ ! "${mins}" =~ ^[0-9]{,2}$ ]]; then
-    echo 'Invalid interval time'
-    return 2
-  elif [[ ${mins} -lt 0 ]] || [[ ${mins} -gt 60 ]]; then
-    echo 'Interval time out of range [0,60]'
-    return 2
+  if [[ -z "${interval}" ]]; then
+    ask 'Enter the interval in mins [0-60]:' || return $?
+    interval="${REPLY}"
   fi
-
-  if [[ ${mins} -gt 0 ]]; then
-    local secs=$((mins*60))
-    xset s "${secs}" "${secs}" &> /dev/null
-
-    if [[ $? -ne 0 ]]; then
-      echo 'Failed to set the screen saver'
-      return 2
-    fi
-
-    echo "Screen saver set to ${mins} mins"
-  else
-    xset s off &> /dev/null
-
-    if [[ $? -ne 0 ]]; then
-      echo 'Failed to disable screen saver'
-      return 2
-    fi
-
-    echo 'Screen saver has been disabled'
+  
+  if [[ ! "${interval}" =~ ^[0-9]{,2}$ ]]; then
+    echo 'Invalid or malformed interval'
+    return 2
+  elif [[ ${interval} -lt 0 ]] || [[ ${interval} -gt 60 ]]; then
+    echo 'Interval is out of range'
+    return 2
   fi
 
   # Save screen saver interval into settings file
-  if [[ "${persist}" == "save" ]]; then
-    local settings='{}'
-    local screensaver="{\"interval\": ${mins}}"
+  local settings='{}'
+  local screensaver="{\"interval\": ${interval}}"
 
-    if [[ -f "${SETTINGS_FILE}" ]]; then
-      settings="$(jq -e ".screensaver = ${screensaver} " "${SETTINGS_FILE}")" || return 1
-    else
-      settings="$(echo "{\"screensaver\": ${screensaver}}" | jq -e '.')" || return 1
-    fi
-
-    mkdir -p "${CONFIG_HOME}"
-    echo "${settings}" > "${SETTINGS_FILE}"
+  if [[ -f "${SETTINGS_FILE}" ]]; then
+    settings="$(jq -e ".screensaver = ${screensaver} " "${SETTINGS_FILE}")" || return 1
+  else
+    settings="$(echo "{\"screensaver\": ${screensaver}}" | jq -e '.')" || return 1
   fi
+
+  mkdir -p "${CONFIG_HOME}"
+  echo "${settings}" > "${SETTINGS_FILE}"
+
+  if [[ ${interval} -gt 0 ]]; then
+    local secs=$((interval*60))
+
+    xset s "${secs}" "${secs}" &> /dev/null
+  else
+    xset s off &> /dev/null
+  fi
+  
+  if [[ $? -ne 0 ]]; then
+    echo 'Failed to set the screen saver'
+    return 2
+  fi
+
+  echo "Screen saver set to ${interval} mins"
 }
 
-# Initializes the screen saver to settings being set
+# Initializes the screen saver to the interval saved
 # in the settings file.
 # Arguments:
 #  None
 init_screensaver () {
   if [[ ! -f "${SETTINGS_FILE}" ]]; then
     echo 'No screen saver settings found'
-    return 0
-  fi
-
-  local screensaver=''
-  screensaver="$(jq '.screensaver|if . then . else empty end' "${SETTINGS_FILE}")"
-
-  if [[ -z "${screensaver}" ]]; then
-    echo 'No screen saver settings found'
-    return 0
+    return 2
   fi
 
   local interval=''
-  interval="$(get "${screensaver}" '.interval')" || return 1
+  interval="$(jq '.screensaver.interval|if . then . else 5 end' "${SETTINGS_FILE}")"
 
-  set_screensaver "${interval}" nosave
+  if [[ ${interval} -gt 0 ]]; then
+    local secs=$((interval*60))
 
+    xset s "${secs}" "${secs}" &> /dev/null
+  else
+    xset s off &> /dev/null
+  fi
+  
   if [[ $? -ne 0 ]]; then
     echo 'Failed to initialize the screen saver'
     return 2
   fi
 
-  echo 'Screen saver has been initialized'
+  echo "Screen saver initialized to ${interval} mins"
 }
 
 # Enables or disables power saving mode via the tlp service.
@@ -323,20 +313,29 @@ set_tlp () {
   local status="${1}"
 
   if [[ -z "${status}" ]]; then
-    echo 'Missing the tlp status'
-    return 2
-  elif [[ ! "${status}" =~ ^(on|off)$ ]]; then
-    echo 'Invalid tlp status'
+    local statuses=''
+    statuses+='{"key":"on", "value":"On"},'
+    statuses+='{"key":"off", "value":"Off"}'
+    statuses="[${statuses}]"
+
+    pick_one 'Set TLP status to:' "${statuses}" horizontal || return $?
+    status="${REPLY}"
+  fi
+
+  if [[ ! "${status}" =~ ^(on|off)$ ]]; then
+    echo 'Invalid TLP status'
     return 2
   fi
 
   if [[ "${status}" == "on" ]]; then
+    echo 'Enabling TLP service...'
     sudo systemctl stop acpid.service &> /dev/null &&
     sudo systemctl disable acpid.service &> /dev/null &&
     sudo systemctl enable tlp.service &> /dev/null &&
     sudo systemctl start tlp.service &> /dev/null &&
     sudo systemctl daemon-reload
   else
+    echo 'Disabling TLP service...'
     sudo systemctl stop tlp.service &> /dev/null &&
     sudo systemctl disable tlp.service &> /dev/null &&
     sudo systemctl enable acpid.service &> /dev/null &&
@@ -345,7 +344,7 @@ set_tlp () {
   fi
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to set tlp to ${status}"
+    echo "Failed to set TLP to ${status}"
     return 2
   fi
 
@@ -362,21 +361,30 @@ set_charge () {
   local threshold="${2}"
 
   if [[ -z "${action}" ]]; then
-    echo 'Missing the charge action'
-    return 2
-  elif [[ ! "${action}" =~ ^(start|stop)$ ]]; then
+    local actions=''
+    actions+='{"key":"start", "value":"Start"},'
+    actions+='{"key":"stop", "value":"Stop"}'
+    actions="[${actions}]"
+
+    pick_one 'Which charge action to set:' "${actions}" horizontal || return $?
+    action="${REPLY}"
+  fi
+
+  if [[ ! "${action}" =~ ^(start|stop)$ ]]; then
     echo 'Invalid charge action'
     return 2
   fi
 
   if [[ -z "${threshold}" ]]; then
-    echo 'Missing the threshold value'
-    return 2
-  elif [[ ! "${threshold}" =~ ^[0-9]{1,3}$ ]]; then
-    echo 'Invalid threshold value'
+    ask 'Enter the charge threshold [0-100]:' || return $?
+    threshold="${REPLY}"
+  fi
+  
+  if [[ ! "${threshold}" =~ ^[0-9]{1,3}$ ]]; then
+    echo 'Invalid charge threshold value'
     return 2
   elif [[ ${threshold} -lt 0 ]] || [[ ${threshold} -gt 100 ]]; then
-    echo 'Threshold value out of range'
+    echo 'Charge threshold is out of range'
     return 2
   fi
 
@@ -463,7 +471,5 @@ blank_screen () {
     echo 'Unable to blank the screen'
     return 2
   fi
-
-  echo 'Screen has been blanked'
 }
 

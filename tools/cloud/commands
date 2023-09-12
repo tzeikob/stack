@@ -121,7 +121,7 @@ delete_remote () {
   
   if [[ -z "${name}" ]]; then
     pick_remote || return $?
-    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+    name="${REPLY}"
   fi
   
   if ! exists "${name}"; then
@@ -151,7 +151,7 @@ mount_remote () {
 
   if [[ -z "${name}" ]]; then
     pick_remote unmounted || return $?
-    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+    name="${REPLY}"
   fi
   
   if ! exists "${name}"; then
@@ -189,7 +189,7 @@ unmount_remote () {
 
   if [[ -z "${name}" ]]; then
     pick_remote mounted || return $?
-    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+    name="${REPLY}"
   fi
   
   if ! exists "${name}"; then

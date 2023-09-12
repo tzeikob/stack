@@ -64,7 +64,8 @@ run () {
         return 0;;
      'q') QUIET='true';;
      *)
-      fail 'Ooops, invalid or unknown option'
+      echo 'Ooops, invalid or unknown option'
+      $(exit 2) || beep
       return $?;;
     esac
   done
@@ -106,20 +107,20 @@ run () {
       'show status') show_status;;
       'show pointer') show_pointer "${args[2]}";;
       'show tablet') show_tablet "${args[2]}";;
-      'set wallpaper') set_wallpaper "${args[2]}" "${args[3]}";;
-      'speed pointer') set_pointer_speed "${args[2]}";;
-      'scale tablet') scale_tablet "${args[2]}" "${args[3]}";;
-      'map tablet') map_tablet "${args[2]}" "${args[3]}";;
+      'set wallpaper') set_wallpaper "${args[2]}" "${args[3]}" && beep;;
+      'speed pointer') set_pointer_speed "${args[2]}" && beep;;
+      'scale tablet') scale_tablet "${args[2]}" "${args[3]}" && beep;;
+      'map tablet') map_tablet "${args[2]}" "${args[3]}" && beep;;
       'list wallpapers') list_wallpapers;;
       'list pointers') list_pointers;;
       'list tablets') list_tablets;;
-      'init pointer') init_pointer;;
-      'init tablets') init_tablets;;
-      'init wallpaper') init_wallpaper;;
+      'init pointer') init_pointer && beep;;
+      'init tablets') init_tablets && beep;;
+      'init wallpaper') init_wallpaper && beep;;
       *)
         echo 'Ooops, invalid or unknown command!'
         $(return 2);;
-    esac && success || fail
+    esac || beep
 
     local exit_code=$?
     if [[ "${mode}" == "once" ]]; then

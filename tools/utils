@@ -424,53 +424,29 @@ download () {
   done
 }
 
-# Returns a zero exit code to declare success,
-# in addition it is printing an optionaly given
-# message and playing a success beep sound.
+# Plays a short success or failure beep sound according
+# to the exit status code set by the previous command.
 # Arguments:
-#  message: a message to print
+#  None
 # Returns:
-#  A zero exit code.
-success () {
-  local message="${1}"
-
-  if [[ -n "${message}" ]]; then
-    echo -e "${message}"
-  fi
-
-  if [[ -z "${QUIET}" ]] || [[ "${QUIET}" == "false" ]]; then
-    pw-play --volume=0.7 /usr/share/sounds/stack/normal.wav &
-  fi
-
-  return 0
-}
-
-# Returns a none zero exit code to declare failure
-# in addition it is printing the optionaly given
-# message and playing a fail beep sound. In the case
-# of a zero exit code set by the previous command
-# it forcefully returns 1.
-# Arguments:
-#  message: a message to print
-# Returns:
-#  A non-zero exit code.
-fail () {
+#  The exit status code set by previous command.
+beep () {
+  # Save exit code set by the previous command
   local exit_code=$?
-  [[ ${exit_code} -eq 0 ]] && exit_code=1
 
-  local message="${1}"
-
-  # Set a generic error message only for exit code 1
-  if [[ -z "${message}" ]] && [[ ${exit_code} -eq 1 ]]; then
-    message='Ooops, an unknwon error occurred!'
-  fi
-
-  if [[ -n "${message}" ]]; then
-    echo -e "${message}"
+  # Print a generic error message only for exit code 1
+  if [[ ${exit_code} -eq 1 ]]; then
+    echo 'Ooops, an unknwon error occurred!'
   fi
 
   if [[ -z "${QUIET}" ]] || [[ "${QUIET}" == "false" ]]; then
-    pw-play --volume=0.7 /usr/share/sounds/stack/critical.wav &
+    local sound='normal'
+
+    if [[ ${exit_code} -ne 0 ]]; then
+      sound='critical'
+    fi
+
+    pw-play --volume=0.7 "/usr/share/sounds/stack/${sound}.wav" &
   fi
 
   return ${exit_code}

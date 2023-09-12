@@ -49,7 +49,7 @@ show_help () {
     'mute outputs|inputs' 'Mute all outputs or inputs.' \
     'unmute outputs|inputs' 'Unmute all outputs or inputs.' \
     '' '' \
-    'restart' 'Restart the audio server.'
+    'restart' 'Restart the audio services.'
 }
 
 run () {
@@ -62,7 +62,8 @@ run () {
         return 0;;
      'q') QUIET='true';;
      *)
-      fail 'Ooops, invalid or unknown option'
+      echo 'Ooops, invalid or unknown option'
+      $(exit 2) || beep
       return $?;;
     esac
   done
@@ -109,19 +110,19 @@ run () {
       'list outputs') list_ports sink;;
       'list inputs') list_ports source;;
       'list playbacks') list_playbacks "${args[2]}";;
-      'set profile') set_profile "${args[2]}" "${args[3]}";;
-      'set ouptut') set_default sink "${args[2]}";;
-      'set input') set_default source "${args[2]}";;
-      'turn output') turn_default sink "${args[2]}";;
-      'turn input') turn_default source "${args[2]}";;
-      'mute outputs') set_mute sink 1;;
-      'mute inputs') set_mute source 1;;
-      'unmute outputs') set_mute sink 0;;
-      'unmute inputs') set_mute source 0;;
+      'set profile') set_profile "${args[2]}" "${args[3]}" && beep;;
+      'set output') set_default sink "${args[2]}" && beep;;
+      'set input') set_default source "${args[2]}" && beep;;
+      'turn output') turn_default sink "${args[2]}" && beep;;
+      'turn input') turn_default source "${args[2]}" && beep;;
+      'mute outputs') set_mute sink 1 && beep;;
+      'mute inputs') set_mute source 1 && beep;;
+      'unmute outputs') set_mute sink 0 && beep;;
+      'unmute inputs') set_mute source 0 && beep;;
       *)
         echo 'Ooops, invalid or unknown command!'
         $(return 2);;
-    esac && success || fail
+    esac || beep
 
     local exit_code=$?
     if [[ "${mode}" == "once" ]]; then

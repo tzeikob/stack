@@ -72,8 +72,8 @@ set_timezone () {
   local timezone="${1}"
 
   if [[ -z "${timezone}" ]]; then
-    pick_timezone || return $?
-    [[ -n "${REPLY}" ]] && timezone="${REPLY}" || return 0
+    pick_timezone 'Select a timezone:' || return $?
+    timezone="${REPLY}"
   fi
 
   if ! timedatectl list-timezones | grep -qw "${timezone}"; then
