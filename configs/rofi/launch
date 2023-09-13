@@ -31,12 +31,12 @@ show_power_menu () {
   local CHOSEN="$(printf "${options}" | rofi -dmenu -i -theme-str "${HIDE_PROMT} ${EXACT_LINES}")"
 
   case "$CHOSEN" in
-    "Shutdown") power shutdown;;
-    "Reboot") power reboot;;
-    "Suspend") power suspend;;
-    "Lock") security lock screen;;
-    "Blank") power blank;;
-    "Logout") security logout user;;
+    "Shutdown") power -q shutdown;;
+    "Reboot") power -q reboot;;
+    "Suspend") power -q suspend;;
+    "Lock") security -q lock screen;;
+    "Blank") power -q blank;;
+    "Logout") security -q logout user;;
     *) exit 1;;
   esac
 }
@@ -47,5 +47,8 @@ case "$1" in
  "windows") show_windows_menu;;
  "emoji") show_emoji_menu;;
  "power") show_power_menu;;
- *) abort "Missing or invalid launch menu";;
+ *)
+  echo 'Ooops, invalid launch menu!'
+  exit 1;;
 esac
+
