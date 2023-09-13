@@ -76,7 +76,7 @@ run () {
 
   while true; do
     if [[ "${mode}" == "loop" ]]; then
-      prompt power && history -s "${REPLY}"
+      prompt power
     else
       REPLY="$@"
     fi

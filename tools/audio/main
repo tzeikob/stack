@@ -78,7 +78,7 @@ run () {
 
   while true; do
     if [[ "${mode}" == "loop" ]]; then
-      prompt audio && history -s "${REPLY}"
+      prompt audio
     else
       REPLY="$@"
     fi

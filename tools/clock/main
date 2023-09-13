@@ -69,7 +69,7 @@ run () {
 
   while true; do
     if [[ "${mode}" == "loop" ]]; then
-      prompt clock && history -s "${REPLY}"
+      prompt clock
     else
       REPLY="$@"
     fi

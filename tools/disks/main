@@ -86,7 +86,7 @@ run () {
 
   while true; do
     if [[ "${mode}" == "loop" ]]; then
-      prompt disks && history -s "${REPLY}"
+      prompt disks
     else
       REPLY="$@"
     fi

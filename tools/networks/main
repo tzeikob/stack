@@ -84,7 +84,7 @@ run () {
 
   while true; do
     if [[ "${mode}" == "loop" ]]; then
-      prompt networks && history -s "${REPLY}"
+      prompt networks
     else
       REPLY="$@"
     fi

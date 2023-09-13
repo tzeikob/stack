@@ -72,7 +72,7 @@ run () {
 
   while true; do
     if [[ "${mode}" == "loop" ]]; then
-      prompt security && history -s "${REPLY}"
+      prompt security
     else
       REPLY="$@"
     fi

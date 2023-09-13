@@ -74,7 +74,7 @@ run () {
 
   while true; do
     if [[ "${mode}" == "loop" ]]; then
-      prompt notifications && history -s "${REPLY}"
+      prompt notifications
     else
       REPLY="$@"
     fi

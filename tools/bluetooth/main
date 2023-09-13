@@ -80,7 +80,7 @@ run () {
 
   while true; do
     if [[ "${mode}" == "loop" ]]; then
-      prompt bluetooth && history -s "${REPLY}"
+      prompt bluetooth
     else
       REPLY="$@"
     fi

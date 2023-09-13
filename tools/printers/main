@@ -80,7 +80,7 @@ run () {
 
   while true; do
     if [[ "${mode}" == "loop" ]]; then
-      prompt printers && history -s "${REPLY}"
+      prompt printers
     else
       REPLY="$@"
     fi

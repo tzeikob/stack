@@ -80,7 +80,7 @@ run () {
 
   while true; do
     if [[ "${mode}" == "loop" ]]; then
-      prompt desktop && history -s "${REPLY}"
+      prompt desktop
     else
       REPLY="$@"
     fi

@@ -95,6 +95,8 @@ prompt () {
   local label="${1:-"prompt"}"
 
   read -rep "${label}>> " REPLY
+  
+  history -s "${REPLY}"
 }
 
 # Asks the user to enter a value, which is validated

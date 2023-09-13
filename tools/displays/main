@@ -86,7 +86,7 @@ run () {
 
   while true; do
     if [[ "${mode}" == "loop" ]]; then
-      prompt displays && history -s "${REPLY}"
+      prompt displays
     else
       REPLY="$@"
     fi

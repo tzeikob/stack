@@ -76,7 +76,7 @@ run () {
 
   while true; do
     if [[ "${mode}" == "loop" ]]; then
-      prompt langs && history -s "${REPLY}"
+      prompt langs
     else
       REPLY="$@"
     fi
