@@ -102,7 +102,7 @@ run () {
 
     if [[ "${mode}" == "loop" ]]; then
       case "${cmd}${obj:+ ${obj}}" in
-        'help') show_help loop && continue;;
+        'help') clear && show_help loop && continue;;
         'clear') clear && continue;;
         'quit') break;;
         '') continue;;
