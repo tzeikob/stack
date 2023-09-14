@@ -74,7 +74,7 @@ set_screen_locker () {
   sleep 1
 
   if [[ ${mins} -gt 0 ]]; then
-    xautolock -locker 'security -q lock screen' -nowlocker 'security -q lock screen' -time "${mins}" -corners 0-00 -detectsleep &
+    xautolock -locker 'security -q lock screen' -nowlocker 'security -q lock screen' -time "${mins}" -corners 0-00 -detectsleep &> /dev/null &
     echo "Screen locker set to ${mins} mins"
   else
     echo 'Screen locker has been disabled'
