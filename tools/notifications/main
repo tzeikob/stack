@@ -58,7 +58,7 @@ run () {
         return 0;;
      'q') QUIET='true';;
      *)
-      echo 'Ooops, invalid or unknown option!'
+      echo "Ooops, invalid or unknown option -${OPTARG}!"
       $(exit 2) || beep
       return $?;;
     esac
