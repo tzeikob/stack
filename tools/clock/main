@@ -95,11 +95,11 @@ run () {
     case "${cmd}${obj:+ ${obj}}" in
       'show status') show_status;;
       'set ntp') set_ntp "${args[2]}" && beep;;
-      'set timezone') set_timezone "${args[2]}" && beep;;;
-      'set time') set_time "${args[2]}" && beep;;;
-      'set date') set_date "${args[2]}" && beep;;;
-      'set rtc') set_rtc "${args[2]}" && beep;;;
-      'sync rtc') sync_rtc && beep;;;
+      'set timezone') set_timezone "${args[2]}" && beep;;
+      'set time') set_time "${args[2]}" && beep;;
+      'set date') set_date "${args[2]}" && beep;;
+      'set rtc') set_rtc "${args[2]}" && beep;;
+      'sync rtc') sync_rtc && beep;;
       *)
         echo 'Ooops, invalid or unknown command!'
         $(return 2);;
