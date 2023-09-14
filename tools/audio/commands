@@ -188,26 +188,31 @@ list_cards () {
   echo "${cards}" | jq -cr "${query}" || return 1
 }
 
-# Shows a list of sink or source audio modules.
+# Shows a list of output or input audio modules.
 # Arguments:
-#  type: sink or source
+#  type: output or input
 # Outputs:
-#  The list of sink or source modules.
+#  The list of output or input modules.
 list_ports () {
   local type="${1}"
 
-  if [[ ! "${type}" =~ ^(sink|source)$ ]]; then
+  if [[ ! "${type}" =~ ^(output|input)$ ]]; then
     echo 'Invalid module type value'
     return 2
   fi
 
   local query='[.[]|select(.active_port)]'
 
+  local object='sinks'
+  if [[ "${type}" == "input" ]]; then
+    object='sources'
+  fi
+
   local modules=''
-  modules="$(pactl --format=json list "${type}"s | jq -cer "${query}")"
+  modules="$(pactl --format=json list "${object}" | jq -cer "${query}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to read $(label type "${type}") modules"
+    echo "Unable to read ${type} modules"
     return 2
   fi
 
@@ -215,7 +220,7 @@ list_ports () {
   len="$(count "${modules}")" || return 1
 
   if [[ ${len} == 0 ]]; then
-    echo "No $(label type "${type}") modules have found"
+    echo "No ${type} modules have found"
     return 0
   fi
 
@@ -328,15 +333,15 @@ set_profile () {
   echo "Profile has been set to ${name}"
 }
 
-# Sets the active sink or source module.
+# Sets the active output or input audio module.
 # Arguments:
-#  type:   sink, source
-#  index:  the index of an audio module
+#  type:  output or input
+#  index: the index of an output or input module
 set_default () {
   local type="${1}"
   local index="${2}"
 
-  if [[ ! "${type}" =~ ^(sink|source)$ ]]; then
+  if [[ ! "${type}" =~ ^(output|input)$ ]]; then
     echo 'Invalid module type value'
     return 2
   fi
@@ -348,35 +353,40 @@ set_default () {
 
   local query=".[]|select(.index|tostring == \"${index}\")"
 
+  local object='sink'
+  if [[ "${type}" == "input" ]]; then
+    object='source'
+  fi
+
   local exists=''
-  exists="$(pactl --format=json list "${type}"s | jq -cer "${query}")"
+  exists="$(pactl --format=json list "${object}s" | jq -cer "${query}")"
 
   if [[ -z "${exists}" ]]; then
     echo 'Invalid module index value'
     return 2
   fi
 
-  pactl set-default-${type} "${index}"
+  pactl set-default-${object} "${index}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to set active $(label type "${type}")"
+    echo "Failed to set active ${type}"
     return 2
   fi
 
-  echo "Active $(label type "${type}") set to module ${index}"
+  echo "Active ${type} set to module ${index}"
 }
 
-# Sets the volume of the active sink or source
-# to the given value. If the given value is up or
-# down the volume increases or decreases by 5%.
+# Sets the volume of the active output or input module
+# to the given value. If the given value is up or down
+# the volume increases or decreases by 5%.
 # Arguments:
-#  type: sink, source
-#  to:   up, down, mute, unmute or [0,150] 
+#  type: output or input
+#  to:   up, down, mute, unmute or any value in [0,150] 
 turn_default () {
   local type="${1}"
   local to="${2}"
 
-  if [[ ! "${type}" =~ ^(sink|source)$ ]]; then
+  if [[ ! "${type}" =~ ^(output|input)$ ]]; then
     echo 'Invalid module type value'
     return 2
   fi
@@ -389,33 +399,38 @@ turn_default () {
     return 2
   fi
 
+  local object='sink'
+  if [[ "${type}" == "input" ]]; then
+    object='source'
+  fi
+
   local module=''
-  module="$(pactl get-default-${type})"
+  module="$(pactl get-default-${object})"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to read the active $(label type "${type}")"
+    echo "Unable to read the active ${type}"
     return 2
   fi
   
   if [[ "${to}" == "mute" ]]; then
-    pactl set-${type}-mute "${module}" 1
+    pactl set-${object}-mute "${module}" 1
 
     if [[ $? -ne 0 ]]; then
-      echo "Failed to set active $(label type "${type}") to mute"
+      echo "Failed to set active ${type} to mute"
       return 2
     fi
 
-    echo "Active $(label type "${type}") volume set to mute"
+    echo "Active ${type} volume set to mute"
     return 0
   elif [[ "${to}" == "unmute" ]]; then
-    pactl set-${type}-mute "${module}" 0
+    pactl set-${object}-mute "${module}" 0
 
     if [[ $? -ne 0 ]]; then
-      echo "Failed to set active $(label type "${type}") to unmute"
+      echo "Failed to set active ${type} to unmute"
       return 2
     fi
 
-    echo "Active $(label type "${type}") volume set to unmute"
+    echo "Active ${type} volume set to unmute"
     return 0
   fi
 
@@ -427,26 +442,27 @@ turn_default () {
     volume='-5'
   fi
 
-  pactl set-${type}-mute "${module}" 0 &&
-  pactl set-${type}-volume "${module}" "${volume}%"
+  pactl set-${object}-mute "${module}" 0 &&
+  pactl set-${object}-volume "${module}" "${volume}%"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to set volume of active $(label type "${type}")"
+    echo "Failed to set volume of active ${type})"
     return 2
   fi
 
-  echo "Active $(label type "${type}") volume set to ${volume}%"
+  echo "Active ${type} volume set to ${volume}%"
 }
 
-# Sets all sink or source modules to mute or unmute mode.
+# Sets all output or input audio modules
+# to mute or unmute mode.
 # Arguments:
-#  type: sink or source
+#  type: output or input
 #  mode: 1 to mute or 0 to unmute
 set_mute () {
   local type="${1}"
   local mode="${2}"
 
-  if [[ ! "${type}" =~ ^(sink|source)$ ]]; then
+  if [[ ! "${type}" =~ ^(output|input)$ ]]; then
     echo 'Invalid module type value'
     return 2
   fi
@@ -456,21 +472,26 @@ set_mute () {
     return 2
   fi
 
+  local object='sink'
+  if [[ "${type}" == "input" ]]; then
+    object='source'
+  fi
+
   # Build pactl commands for each audio module
   local query=''
-  query+="\"pactl set-${type}-mute \(.name) ${mode}\""
+  query+="\"pactl set-${object}-mute \(.name) ${mode}\""
   query="[.[]|${query}]|join(\"\n\")"
 
   local pactl_cmds=''
-  pactl_cmds="$(pactl --format=json list "${type}"s | jq -cer "${query}")"
+  pactl_cmds="$(pactl --format=json list "${object}s" | jq -cer "${query}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to read $(label type "${type}") modules"
+    echo "Unable to read ${type} modules"
     return 2
   fi
 
   if [[ -z "${pactl_cmds}" ]]; then
-    echo "No $(label type "${type}") modules have found"
+    echo "No ${type} modules have found"
     return 0
   fi
 
@@ -486,11 +507,16 @@ set_mute () {
     fi
   done <<< "${pactl_cmds}"
 
-  if [[ "${failed}" == "true" ]]; then
-    echo "Failed to set mute mode for all $(label type "${type}") modules"
-    return 2
+  local status='unmute'
+  if [[ ${mode} == 1 ]]; then
+    status='mute'
   fi
 
-  echo "All $(label type "${type}") modules set to $(label mute "${mode}")"
+  if [[ "${failed}" == "true" ]]; then
+    echo "Failed to set all ${type} modules to ${status}"
+    return 2
+  fi
+  
+  echo "All ${type} modules set to ${status}"
 }
 

@@ -4,33 +4,6 @@ set -o pipefail
 
 source /opt/stack/utils
 
-# Converts the given raw value to its human friendly value.
-# Arguments:
-#  key:   the type of value
-#  value: the raw value
-# Outputs:
-#  A human friendly value.
-label () {
-  local key="${1}"
-  local value="${2}"
-
-  if [[ "${key}" == "type" ]]; then
-    case "${value}" in
-      sink) echo 'output';;
-      source) echo 'input';;
-      *) echo "${value}";;
-    esac
-  elif [[ "${key}" == "mute" ]]; then
-    case "${value}" in
-      0) echo 'unmute';;
-      1) echo 'mute';;
-      *) echo "${value}";;
-    esac
-  else
-    echo "${value}"
-  fi
-}
-
 # Returns the list of all audio cards.
 # Arguments:
 #  none
@@ -115,9 +88,9 @@ pick_profile () {
 # global var REPLY.
 # Arguments:
 #  prompt: a prompt text line
-#  type:   sink, source
+#  type:   output or input
 # Outputs:
-#  A menu of audio module names.
+#  A menu of audio output or input module names.
 pick_module () {
   local prompt="${1}"
   local type="${2}"
@@ -125,15 +98,20 @@ pick_module () {
   local query='{key: .index, value: "\(.name)'
   query+=' [\(.properties|if ."device.nick" then ."device.nick" else ."device.alias" end)]"}'
   query="[.[]|=.|map((.ports[] + {index, properties}))|.[]|${query}]"
+  
+  local object='sinks'
+  if [[ "${type}" == "input" ]]; then
+    object='sources'
+  fi
 
   local modules=''
-  modules="$(pactl --format=json list "${type}"s | jq -cer "${query}")" || return 1
+  modules="$(pactl --format=json list "${object}" | jq -cer "${query}")" || return 1
 
   local len=0
   len="$(count "${modules}")" || return 1
 
   if [[ ${len} == 0 ]]; then
-    echo "No $(label type "${type}") modules have found"
+    echo "No ${type} modules have found"
     return 2
   fi
   

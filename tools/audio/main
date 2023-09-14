@@ -107,18 +107,18 @@ run () {
       'show card') show_card "${args[2]}";;
       'restart') restart;;
       'list cards') list_cards;;
-      'list outputs') list_ports sink;;
-      'list inputs') list_ports source;;
+      'list outputs') list_ports output;;
+      'list inputs') list_ports input;;
       'list playbacks') list_playbacks "${args[2]}";;
       'set profile') set_profile "${args[2]}" "${args[3]}" && beep;;
-      'set output') set_default sink "${args[2]}" && beep;;
-      'set input') set_default source "${args[2]}" && beep;;
-      'turn output') turn_default sink "${args[2]}" && beep;;
-      'turn input') turn_default source "${args[2]}" && beep;;
-      'mute outputs') set_mute sink 1 && beep;;
-      'mute inputs') set_mute source 1 && beep;;
-      'unmute outputs') set_mute sink 0 && beep;;
-      'unmute inputs') set_mute source 0 && beep;;
+      'set output') set_default output "${args[2]}" && beep;;
+      'set input') set_default input "${args[2]}" && beep;;
+      'turn output') turn_default output "${args[2]}" && beep;;
+      'turn input') turn_default input "${args[2]}" && beep;;
+      'mute outputs') set_mute output 1 && beep;;
+      'mute inputs') set_mute input 1 && beep;;
+      'unmute outputs') set_mute output 0 && beep;;
+      'unmute inputs') set_mute input 0 && beep;;
       *)
         echo 'Ooops, invalid or unknown command!'
         $(return 2);;
