@@ -44,7 +44,7 @@ show_help () {
 run () {
   local opt=''
 
-  while getopts 'hq' opt; do
+  while getopts ':hq' opt; do
     case "${opt}" in
      'h')
         show_help once
