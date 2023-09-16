@@ -3,12 +3,9 @@
 set -o pipefail
 
 source /opt/stack/utils
-
-SETTINGS_FILE="${CONFIG_HOME}/security.json"
+source /opt/stack/security/helpers
 
 # Shows the current status of the system's security.
-# Arguments:
-#  None
 # Outputs:
 #  A verbose list of text data.
 show_status () {
@@ -20,18 +17,17 @@ show_status () {
       status="no password"
     }
 
-    print "User:      "$1
-    print "Status:    "status
-    print "Changed:   "$3
+    print "Password:         "status
+    print "Last Changed:     "$3
   }' || return 1
 
   cat /etc/security/faillock.conf | awk '{
     if ($0 ~ /^deny =.*/) {
-      print "Attempts:  "$3
+      print "Failed Attempts:  "$3
     } else if ($0 ~ /^unlock_time =.*/) {
-      print "Unblock:   "$3" secs"
+      print "Unblock Time:     "$3" secs"
     } else if ($0 ~ /^fail_interval =.*/) {
-      print "Interval:  "$3" secs"
+      print "Fail Interval:    "$3" secs"
     }
   }' || return 1
 
@@ -42,107 +38,94 @@ show_status () {
   if [[ -n "${locker_process}" ]]; then
     echo "${locker_process}" | awk '{
       match($0,/.* -time (.*) -corners.*/,a)
-      print "Locker:    "a[1]" mins"
+        print "Screen Locker:    "a[1]" mins"
     }'
   else
-    echo 'Locker:    off'
+    echo 'Screen Locker:    off'
   fi
 }
 
-# Sets the interval time of the screen locker, where
-# 0 means deactivate the locker.
+# Sets the screen locker given the interval
+# time in mins, where 0 means deactivate the
+# locker.
 # Arguments:
-#  mins:    an integer interval in mins or 0
-#  persist: save or nosave, default is save
+#  interval: the interval time in mins [0,60]
 set_screen_locker () {
-  local mins="${1}"
-  local persist="${2:-"save"}"
+  local interval="${1}"
 
-  if [[ -z "${mins}" ]]; then
-    echo 'Missing the interval time'
-    return 2
-  elif [[ ! "${mins}" =~ ^[0-9]{,2}$ ]]; then
+  if [[ -z "${interval}" ]]; then
+    ask 'Enter the interval time in mins [0,60]:' || return $?
+    interval="${REPLY}"
+  fi
+
+  if [[ ! "${interval}" =~ ^[0-9]{,2}$ ]]; then
     echo 'Invalid interval time'
     return 2
-  elif [[ ${mins} -lt 0 ]] || [[ ${mins} -gt 60 ]]; then
+  elif [[ ${interval} -lt 0 ]] || [[ ${interval} -gt 60 ]]; then
     echo 'Interval time out of range [0,60]'
     return 2
   fi
 
-  # Exit possibly running locker instance
-  xautolock -exit &> /dev/null
-  sleep 1
+  # Kill possibly running locker instances
+  kill_screen_locker || return 1
 
-  if [[ ${mins} -gt 0 ]]; then
-    xautolock -locker 'security -q lock screen' -nowlocker 'security -q lock screen' -time "${mins}" -corners 0-00 -detectsleep &> /dev/null &
-    echo "Screen locker set to ${mins} mins"
-  else
-    echo 'Screen locker has been disabled'
-  fi
-
-  # Save locker interval into settings file
-  if [[ "${persist}" == "save" ]]; then
-    local settings='{}'
-    local locker="{\"interval\": ${mins}}"
-
-    if [[ -f "${SETTINGS_FILE}" ]]; then
-      settings="$(jq -e ".locker = ${locker} " "${SETTINGS_FILE}")" || return 1
-    else
-      settings="$(echo "{\"locker\": ${locker}}" | jq -e '.')" || return 1
+  if [[ ${interval} -gt 0 ]]; then
+    xautolock -locker 'security -q lock screen' \
+      -nowlocker 'security -q lock screen' -time "${interval}" \
+      -corners 0-00 -detectsleep &> /dev/null &
+    
+    if [[ $? -ne 0 ]]; then
+      echo 'Failed to set screen locker'
+      return 2
     fi
-
-    mkdir -p "${CONFIG_HOME}"
-    echo "${settings}" > "${SETTINGS_FILE}"
+  
+    echo "Screen locker set to ${interval} mins"
+  else
+    echo "Screen locker has been disabled"
   fi
+  
+  # Save screen locker interval into settings
+  save_screen_locker "${interval}"
 }
 
-# Initializes the screen locker to interval being set
-# in the settings file.
-# Arguments:
-#  None
+# Initializes the screen locker from
+# the settings stored in settings file.
 init_screen_locker () {
-  if [[ ! -f "${SETTINGS_FILE}" ]]; then
-    echo 'No locker settings found'
-    return 0
+  local interval=8
+
+  if [[ -f "${SETTINGS_FILE}" ]]; then
+    interval="$(jq '.screen_locker.interval|if . then . else 8 end' "${SETTINGS_FILE}")"
   fi
 
-  local locker=''
-  locker="$(jq '.locker|if . then . else empty end' "${SETTINGS_FILE}")"
+  # Kill possibly running locker instances
+  kill_screen_locker || return 1
 
-  if [[ -z "${locker}" ]]; then
-    echo 'No locker settings found'
-    return 0
+  if [[ ${interval} -gt 0 ]]; then
+    xautolock -locker 'security -q lock screen' \
+      -nowlocker 'security -q lock screen' \
+      -time "${interval}" \
+      -corners 0-00 -detectsleep &> /dev/null &
+    
+    if [[ $? -ne 0 ]]; then
+      echo 'Failed to initialize the screen locker'
+      return 2
+    fi
+    
+    echo "Screen locker initialized to ${interval} mins"
+  else
+    echo "Screen locker has been disabled"
   fi
-
-  local interval=''
-  interval="$(get "${locker}" '.interval')" || return 1
-
-  set_screen_locker "${interval}" nosave
-
-  if [[ $? -ne 0 ]]; then
-    echo 'Failed to set locker'
-    return 2
-  fi
-
-  echo 'Locker has been set'
 }
 
 # Locks the screen making sure notifications stream is muted
 # before lock and resets it back to it's previous state
 # after user unlocks the screen.
-# Arguments:
-#  None
 lock_screen () {
-  local query=''
-  query+='[.[]|select(.command|test("xsecurelock.*"))]'
-  query+='|if length > 0 then "true" else "false" end'
-
-  local is_locked=''
-  is_locked="$(ps aux | grep -v 'jq' | jc --ps | jq -cr "${query}")" || return 1
-
+  local is_locked="$(is_screen_locked)" || return 1
+  
   if [[ "${is_locked}" == "true" ]]; then
     echo 'Screen locker is already running'
-    return 0
+    return 2
   fi
 
   local is_paused=''
@@ -169,15 +152,13 @@ lock_screen () {
   fi
 }
 
-# Change the password of the current user.
-# Arguments:
-#  None
+# Changes the password of the current user.
 set_user_password () {
   ask_secret 'Enter current password:'
   local password="${REPLY}"
 
   if ! authenticate_user "${password}"; then
-    echo 'Sorry incorrect password'
+    echo 'Sorry incorrect password!'
     return 2
   fi
 
@@ -185,7 +166,7 @@ set_user_password () {
   local new_password="${REPLY}"
 
   if ! confirm_secret 'Retype new password:' "${new_password}"; then
-    echo 'New password does not match'
+    echo 'New password does not match!'
     return 2
   fi
 
@@ -193,7 +174,7 @@ set_user_password () {
     passwd --quiet >/dev/null 2>&1
 
   if [[ $? -ne 0 ]]; then
-    echo 'Unable to set user password'
+    echo 'Failed to set user password'
     return 2
   fi
 
@@ -201,13 +182,11 @@ set_user_password () {
 }
 
 # Logs the user out, terminating the current xorg session.
-# Arguments:
-#  None
 logout_user () {
   bspc quit
 
   if [[ $? -ne 0 ]]; then
-    echo 'Unable to log the user out'
+    echo 'Failed to logout the user'
     return 2
   fi
 }
@@ -220,80 +199,85 @@ set_faillock_attempts () {
   local attempts="${1}"
 
   if [[ -z "${attempts}" ]]; then
-    echo 'Missing the attempts value'
-    return 2
-  elif [[ ! "${attempts}" =~ ^[1-9][0-9]*$ ]]; then
-    echo 'Invalid attempts value'
+    ask 'Enter the max number of failed attempts:' || return $?
+    attempts="${REPLY}"
+  fi
+  
+  if [[ ! "${attempts}" =~ ^[1-9][0-9]*$ ]]; then
+    echo 'Invalid attempts number'
     return 2
   elif [[ ! ${attempts} -gt 0 ]]; then
     echo 'Attempts should be greater than 0'
     return 2
   fi
 
-  sudo sed -ri "s;deny =.*;deny = ${attempts};" /etc/security/faillock.conf
+  sudo -k sed -ri "s;deny =.*;deny = ${attempts};" /etc/security/faillock.conf
 
   if [[ $? -ne 0 ]]; then
-    echo 'Unable to set faillock attempts'
+    echo 'Failed to set max failed attempts'
     return 2
   fi
 
-  echo "Failock attempts set to ${attempts}"
+  echo "Failed attempts set to ${attempts}"
 }
 
-# Sets the time after which a blocked password
-# should get unblocked.
+# Sets the time a blocked password should be unblocked.
 # Arguments:
-#  time: the secs to wait a password to be unblocked
+#  time: the time in secs to unblock the password
 set_faillock_unblock () {
   local time="${1}"
 
   if [[ -z "${time}" ]]; then
-    echo 'Missing the unblock time value'
-    return 2
-  elif [[ ! "${time}" =~ ^[1-9][0-9]*$ ]]; then
-    echo 'Invalid unblock time value'
+    ask 'Enter the unblock time in secs:' || return $?
+    time="${REPLY}"
+  fi
+  
+  if [[ ! "${time}" =~ ^[1-9][0-9]*$ ]]; then
+    echo 'Invalid unblock time'
     return 2
   elif [[ ! ${time} -gt 0 ]]; then
     echo 'Unblock time should be greater than 0'
     return 2
   fi
 
-  sudo sed -ri "s;unlock_time =.*;unlock_time = ${time};" /etc/security/faillock.conf
+  sudo -k sed -ri "s;unlock_time =.*;unlock_time = ${time};" /etc/security/faillock.conf
 
   if [[ $? -ne 0 ]]; then
-    echo 'Unable to set faillock unblock time'
+    echo 'Failed to set unblock time'
     return 2
   fi
 
-  echo "Failock unblock time set to ${time} secs"
+  echo "Unblock time set to ${time} secs"
 }
 
 # Sets the interval in which a failed password attempt
 # should be counted as consecutive attempt to trigger
 # a password block.
 # Arguments:
-#  time: the secs between consecutive failed attempts
+#  time: the time in secs between consecutive fails
 set_faillock_interval () {
   local time="${1}"
 
   if [[ -z "${time}" ]]; then
-    echo 'Missing the interval value'
-    return 2
-  elif [[ ! "${time}" =~ ^[1-9][0-9]*$ ]]; then
-    echo 'Invalid interval value'
+    ask 'Enter the fail interval in secs:' || return $?
+    time="${REPLY}"
+  fi
+
+  if [[ ! "${time}" =~ ^[1-9][0-9]*$ ]]; then
+    echo 'Invalid interval time'
     return 2
   elif [[ ! ${time} -gt 0 ]]; then
-    echo 'Interval should be greater than 0'
+    echo 'Interval time should be greater than 0'
     return 2
   fi
 
-  sudo sed -ri "s;fail_interval =.*;fail_interval = ${time};" /etc/security/faillock.conf
+  sudo -k sed -ri "s;fail_interval =.*;fail_interval = ${time};" /etc/security/faillock.conf
 
   if [[ $? -ne 0 ]]; then
-    echo 'Unable to set faillock interval'
+    echo 'Failed to set fail interval'
     return 2
   fi
 
-  echo "Failock interval set to ${time} secs"
+  echo "Fail interval set to ${time} secs"
 }
 

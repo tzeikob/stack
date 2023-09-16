@@ -17,30 +17,30 @@ show_help () {
     echo 'Usage: security [OPTIONS] COMMAND [OBJECT] [ARGUMENTS]...'
     
     echo -e '\nOPTIONS'
-    printf ' %-10s %s\n' \
+    printf ' %-8s %s\n' \
       '-h' 'Show this help message.' \
-      '-q' 'Stay quiet and do not play beep sounds.'
+      '-q' 'Do not play beep sounds.'
   
     echo -e '\nCOMMANDS'
   else
     echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
 
     echo -e '\nCOMMANDS'
-    printf ' %-28s %s\n' \
+    printf ' %-24s %s\n' \
       'help' 'Show this help message.'
   fi
 
-  printf ' %-28s %s\n' \
+  printf ' %-24s %s\n' \
     'show status' 'Show the status of the system security.' \
     '' '' \
     'set password' 'Set a new user password.' \
-    'set attempts <max>' 'Set max failed attempts before password is blocked.' \
-    'set unblock <time>' 'Set password unblock time in secs.' \
-    'set interval <time>' 'Set consecutive password fails interval in secs.' \
+    'set attempts <max>' 'Set max fails before password is blocked.' \
+    'set unblock <time>' 'Set the time in secs a password is unblocked.' \
+    'set interval <time>' 'Set the interval in secs between consecutive password fails.' \
     '' '' \
-    'set locker <mins>' 'Set the interval of the screen locker,' \
+    'set locker <interval>' 'Set the screen locker interval time in mins,' \
     '' 'where 0 means deactivate the locker.' \
-    'init locker' 'Initialize the screen locker.' \
+    'init locker' 'Initialize the screen locker from settings.' \
     '' '' \
     'lock screen' 'Lock the screen.' \
     'logout user' 'Logout the user.'
@@ -49,7 +49,7 @@ show_help () {
 run () {
   local opt=''
 
-  while getopts 'hq' opt; do
+  while getopts ':hq' opt; do
     case "${opt}" in
      'h')
         show_help once
