@@ -5,8 +5,6 @@ set -o pipefail
 source /opt/stack/utils
 
 # Returns the list of all trashed files.
-# Arguments:
-#  None
 # Outputs:
 #  A json array of trashed files.
 find_files () {
