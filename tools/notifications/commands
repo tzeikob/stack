@@ -5,15 +5,13 @@ set -o pipefail
 source /opt/stack/utils
 source /opt/stack/notifications/helpers
 
-SETTINGS_FILE="${CONFIG_HOME}/notifications.json"
-
 # Starts the notifications service.
-# Arguments:
-#  None
 start () {
-  if ps aux | grep dunst | grep -v grep > /dev/null 2>&1; then
+  local is_up="$(is_notifications_up)" || return 1
+  
+  if [[ "${is_up}" == "true"  ]]; then
     echo 'Notifications service is already runnning'
-    return 0
+    return 2
   fi
 
   echo 'Starting the notifications service...'
@@ -31,12 +29,12 @@ start () {
 }
 
 # Restarts the notifications service.
-# Arguments:
-#  None
 restart () {
   echo 'Restarting the notifications service...'
 
-  killall dunst &&
+  killall dunst || return 1
+  sleep 1
+
   dunst > /dev/null 2>&1 &
 
   local pid=$!
@@ -50,8 +48,6 @@ restart () {
 }
 
 # Returns the notifications state.
-# Arguments:
-#  None
 # Outputs:
 #  A json object of the notifiactions state.
 get_state () {
@@ -79,46 +75,36 @@ get_state () {
   fi
 
   local volume=100
+
   if [[ -f "${SETTINGS_FILE}" ]]; then
     local query='.volume|if . then (.*100) else 100 end'
     volume="$(jq -cr "${query}" "${SETTINGS_FILE}")" || return 1
   fi
 
-  state+="\"volume\": ${volume},"
-
-  # Remove the last extra comma after the last field
-  if [[ -n "${state}" ]]; then
-    state="${state::-1}"
-  fi
+  state+="\"volume\": ${volume}"
 
   echo "{${state}}"
 }
 
-# Shows the current status of the notification server.
-# Arguments:
-#  None
+# Shows the current status of the notification stream.
 # Outputs:
 #  A verbose list of text data.
 show_status () {
-  local query=''
-  query+='.[]|select(.command|test("^(/usr/bin/dunst|dunst)"))|.pid'
+  local is_up="$(is_notifications_up)" || return 1
 
-  local pid=''
-  pid="$(ps aux | jc --ps | jq -cr "${query}")" || return 1
-
-  if [[ -n "${pid}" ]]; then
-    echo 'Service:  up'
+  if [[ "${is_up}" == "true" ]]; then
+    echo 'Service Status:    up'
   else
-    echo 'Service:  down'
+    echo 'Service Status:    down'
   fi
 
   local query=''
-  query+='Muted:    \(.is_paused|if . then "yes" else "no" end)\n'
-  query+='Popup:    \(.popup|if . then "on" else "off" end)\n'
-  query+='Volume:   \(.volume)\n'
-  query+='Pending:  \(.pending)\n'
-  query+='Showing:  \(.displayed)\n'
-  query+='Sent:     \(.archived)'
+  query+='On Mute:           \(.is_paused|if . then "yes" else "no" end)\n'
+  query+='Pop-up Mode:       \(.popup|if . then "on" else "off" end)\n'
+  query+='Beep Volume:       \(.volume)%\n'
+  query+='Pending Messages:  \(.pending)\n'
+  query+='Showing Messages:  \(.displayed)\n'
+  query+='Sent Messages:     \(.archived)'
 
   get_state | jq -cer "\"${query}\"" || return 1
 }
@@ -166,8 +152,6 @@ list_all () {
 }
 
 # Pauses the notification stream.
-# Arguments:
-#  None
 mute_all () {
   dunstctl set-paused true
 
@@ -180,8 +164,6 @@ mute_all () {
 }
 
 # Restores the notification stream.
-# Arguments:
-#  None
 unmute_all () {
   dunstctl set-paused false
 
@@ -194,8 +176,6 @@ unmute_all () {
 }
 
 # Removes all the archived notifications.
-# Arguments:
-#  None
 clean_all () {
   dunstctl history-clear
 
@@ -212,6 +192,16 @@ clean_all () {
 #  mode: on or off
 set_popup () {
   local mode="${1}"
+
+  if [[ -z "${mode}" ]]; then
+    local modes=''
+    modes+='{"key": "on", "value": "on"},'
+    modes+='{"key": "off", "value": "off"}'
+    modes="[${modes}]"
+
+    pick_one 'Select the pop-up mode:' "${modes}" horizontal || return $?
+    mode="${REPLY}"
+  fi
 
   if [[ ! "${mode}" =~ ^(on|off)$ ]]; then
     echo 'Invalid pop-up mode'
@@ -252,30 +242,25 @@ set_volume () {
   local percent="${1}"
 
   if [[ -z "${percent}" ]]; then
-    ask 'Enter the volume [0, 100]:' '^[0-9]{1,3}$' || return $?
+    ask 'Enter the volume [0,100]:' || return $?
     percent="${REPLY}"
-  elif [[ ! "${percent}" =~ ^[0-9]{1,3}$ ]]; then
+  fi
+  
+  if [[ ! "${percent}" =~ ^[0-9]{1,3}$ ]]; then
     echo 'Invalid volume value'
     return 2
-  fi
-
-  if [[ ${percent} -lt 0 ]] || [[ ${percent} -gt 100 ]]; then
+  elif [[ ${percent} -lt 0 ]] || [[ ${percent} -gt 100 ]]; then
     echo 'Volume is out of range'
     return 2
   fi
 
-  # Scale down volume to [0,1] range
-  percent=$(echo "${percent}" | awk '{print $0/100}')
+  save_volume "${percent}"
 
-  local settings='{}'
-
-  if [[ -f "${SETTINGS_FILE}" ]]; then
-    settings="$(jq -e ".volume = ${percent}" "${SETTINGS_FILE}")" || return 1
-  else
-    settings="$(echo "{\"volume\": ${percent}}" | jq -e '.')" || return 1
+  if [[ $? -ne 0 ]]; then
+    echo 'Failed to set notifications volume'
+    return 2
   fi
 
-  mkdir -p "${CONFIG_HOME}"
-  echo "${settings}" > "${SETTINGS_FILE}"
+  echo "Notifications volume set to ${percent}%"
 }
 
