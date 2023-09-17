@@ -6,8 +6,6 @@ source /opt/stack/utils
 
 # Returns the list of all printing destinations,
 # which have been installed into the system.
-# Arguments:
-#  None
 # Outputs:
 #  A json array of print destination objects.
 find_destinations () {
@@ -43,8 +41,6 @@ find_destinations () {
 }
 
 # Returns the print destination with the given name.
-# Arguments:
-#  None
 # Outputs:
 #  A json object of print destination.
 find_destination () {
@@ -124,8 +120,6 @@ exists_destination () {
 }
 
 # Discovers any direct or network print destinations.
-# Arguments:
-#  None
 # Outputs:
 #  A json array of print destination objects.
 discover_destinations () {
@@ -173,8 +167,6 @@ discover_destinations () {
 }
 
 # Returns all the active queued print jobs.
-# Arguments:
-#  None
 # Outputs:
 #  A json array list of print job objects.
 find_jobs () {
@@ -223,8 +215,6 @@ exists_job () {
 
 # Shows a menu asking the user to select one printer,
 # where the answer is kept in the global var REPLY.
-# Arguments:
-#  None
 # Outputs:
 #  A menu of printers.
 pick_printer () {
@@ -238,7 +228,7 @@ pick_printer () {
   len="$(count "${destinations}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo 'No printer have found'
+    echo 'No printers have found'
     return 2
   fi
 
@@ -247,8 +237,6 @@ pick_printer () {
 
 # Shows a menu asking the user to select one driver,
 # where the answer is kept in the global var REPLY.
-# Arguments:
-#  None
 # Outputs:
 #  A menu of printer drivers.
 pick_driver () {
@@ -287,8 +275,6 @@ pick_driver () {
 
 # Shows a menu asking the user to select one print job,
 # where the answer is kept in the global var REPLY.
-# Arguments:
-#  None
 # Outputs:
 #  A menu of print jobs.
 pick_job () {
@@ -309,25 +295,37 @@ pick_job () {
   pick_one 'Select a print job:' "${jobs}" vertical || return $?
 }
 
-# Shows a menu asking the user to select a quality option,
+# Shows a menu asking the user to select a print option
 # where the answer is kept in the global var REPLY.
-# Arguments:
-#  None
+# Outputs:
+#  A menu of print options.
+pick_print_option () {
+  local options=''
+  options+='{"key": "Quality", "value": "print quality"},'
+  options+='{"key": "PageSize", "value": "page size"},'
+  options+='{"key": "MediaType", "value": "paper size"},'
+  options+='{"key": "TonerSaveMode", "value": "toner mode"},'
+  options+='{"key": "printer-error-policy", "value": "error policy"}'
+  options="[${options}]"
+
+  pick_one 'Select a print option:' "${options}" vertical || return $?
+}
+
+# Shows a menu asking the user to select a print quality
+# option, where the answer is kept in the global var REPLY.
 # Outputs:
 #  A menu of quality options.
-pick_quality () {
+pick_print_quality () {
   local values=''
   values+='{"key": "600dpi", "value": "Standard [600dpi]"},'
   values+='{"key": "1200dpi", "value": "High Resolution [1200dpi]"}'
   values="[${values}]"
 
-  pick_one 'Select a quality:' "${values}" vertical || return $?
+  pick_one 'Select a print quality:' "${values}" vertical || return $?
 }
 
 # Shows a menu asking the user to select a page size option,
 # where the answer is kept in the global var REPLY.
-# Arguments:
-#  None
 # Outputs:
 #  A menu of page size options.
 pick_page_size () {
@@ -353,8 +351,6 @@ pick_page_size () {
 
 # Shows a menu asking the user to select a paper type option,
 # where the answer is kept in the global var REPLY.
-# Arguments:
-#  None
 # Outputs:
 #  A menu of paper type options.
 pick_paper_type () {
@@ -379,8 +375,6 @@ pick_paper_type () {
 
 # Shows a menu asking the user to select a toner mode option,
 # where the answer is kept in the global var REPLY.
-# Arguments:
-#  None
 # Outputs:
 #  A menu of toner mode options.
 pick_toner_mode () {
@@ -394,8 +388,6 @@ pick_toner_mode () {
 
 # Shows a menu asking the user to select a error policy option,
 # where the answer is kept in the global var REPLY.
-# Arguments:
-#  None
 # Outputs:
 #  A menu of error policy options.
 pick_error_policy () {

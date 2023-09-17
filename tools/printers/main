@@ -17,33 +17,30 @@ show_help () {
     echo 'Usage: printers [OPTIONS] COMMAND [OBJECT] [ARGUMENTS]...'
     
     echo -e '\nOPTIONS'
-    printf ' %-10s %s\n' \
+    printf ' %-8s %s\n' \
       '-h' 'Show this help message.' \
-      '-q' 'Stay quiet and do not play beep sounds.'
+      '-q' 'Do not play beep sounds.'
   
     echo -e '\nCOMMANDS'
   else
     echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
 
     echo -e '\nCOMMANDS'
-    printf ' %-40s %s\n' \
-      'help' 'Show this help message.'
+    printf ' %-30s %s\n' \
+      'help' 'Show this help message.' \
+      '' ''
   fi
 
-  printf ' %-40s %s\n' \
+  printf ' %-30s %s\n' \
     'show status' 'Show a report of cups service and printers.' \
     'show printer [<name>]' 'Show the data of a printer.' \
     '' '' \
     'list printers' 'List all printers.' \
-    'add printer <name> [<uri>]' 'Add a new printer.' \
+    'add printer [<uri>]' 'Add a new printer.' \
     'remove printer [<name>]' 'Remove a printer.' \
     '' '' \
-    'set quality [<name> [600dpi|1200dpi]]' 'Set the print quality of a printer.' \
-    'set size [<name> [<size>]]' 'Set the default page size of a printer.' \
-    'set paper [<name> [<type>]]' 'Set the paper type of a printer.' \
-    'set toner [<name> [standard|save]]' 'Set the toner mode of a printer.' \
-    'set onerror [<name> [<policy>]]' 'Set the on error policy of a printer.' \
-    'set default [<name>]' 'Set a printer as default print destination.' \
+    'set default [<name>]' 'Set a printer as default destination.' \
+    'set option [<name>]' 'Set an option of a printer.' \
     '' '' \
     'share printer [<name>]' 'Share a printer to the local network.' \
     'unshare printer [<name>]' 'Unshare a printer of the local network.' \
@@ -108,16 +105,12 @@ run () {
       'show printer') show_printer "${args[2]}";;
       'list printers') list_printers;;
       'list jobs') list_jobs;;
-      'add printer') add_printer "${args[2]}" "${args[3]}" && beep;;
+      'add printer') add_printer "${args[2]}" && beep;;
       'remove printer') remove_printer "${args[2]}" && beep;;
       'share printer') share_printer "${args[2]}" && beep;;
       'unshare printer') unshare_printer "${args[2]}" && beep;;
-      'set quality') set_option "${args[2]}" 'Quality' "${args[3]}" && beep;;
-      'set size') set_option "${args[2]}" 'PageSize' "${args[3]}" && beep;;
-      'set paper') set_option "${args[2]}" 'MediaType' "${args[3]}" && beep;;
-      'set toner') set_option "${args[2]}" 'TonerSaveMode' "${args[3]}" && beep;;
-      'set onerror') set_option "${args[2]}" 'printer-error-policy' "${args[3]}" && beep;;
       'set default') set_default "${args[2]}" && beep;;
+      'set option') set_option "${args[2]}" && beep;;
       'cancel job') cancel_job "${args[2]}" && beep;;
       'restart') restart;;
       *)

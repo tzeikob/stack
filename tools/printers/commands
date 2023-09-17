@@ -6,8 +6,6 @@ source /opt/stack/utils
 source /opt/stack/printers/helpers
 
 # Shows a short status of cups service and printers.
-# Arguments:
-#  None
 # Outputs:
 #  A list of cups and printer data.
 show_status () {
@@ -48,8 +46,6 @@ show_status () {
 }
 
 # Shows the list of all printers.
-# Arguments:
-#  None
 # Outputs:
 #  A list of printers.
 list_printers () {
@@ -88,7 +84,12 @@ show_printer () {
 
   if [[ -z "${name}" ]]; then
     pick_printer || return $?
-    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+    name="${REPLY}"
+
+    if [[ -z "${name}" ]]; then
+      echo 'No printer selected'
+      return 2
+    fi
   fi
 
   if ! exists_destination "${name}"; then
@@ -119,19 +120,9 @@ show_printer () {
 
 # Adds the printer with the given uri.
 # Arguments:
-#  name: the name of print destination
-#  uri:  the uri of a print destination
+#  uri: the uri of a print destination
 add_printer () {
-  local name="${1}"
-  local uri="${2}"
-
-  if [[ -z "${name}" ]]; then
-    echo 'Missing the name value'
-    return 2
-  elif exists_destination "${name}"; then
-    echo "Printer with name ${name} already exists"
-    return 2
-  fi
+  local uri="${1}"
 
   if [[ -z "${uri}" ]]; then
     echo 'Discovering print destinations...'
@@ -141,29 +132,55 @@ add_printer () {
     query="[.[]|${query}]"
 
     local destinations=''
-    destinations="$(discover_destinations | jq -cer "${query}")" || return 1
+    destinations="$(discover_destinations | jq -cer "${query}")"
+
+    if [[ $? -ne 0 ]]; then
+      echo 'Unable to discover print destinations'
+      return 2
+    fi
 
     local len=0
     len="$(count "${destinations}")" || return 1
 
     if [[ ${len} -eq 0 ]]; then
       echo 'No printers have been discovered'
-      return 0
+      return 2
     fi
 
     pick_one 'Select a printer:' "${destinations}" vertical || return $?
-    [[ -n "${REPLY}" ]] && uri="${REPLY}" || return 0
+    uri="${REPLY}"
+
+    if [[ -z "${uri}" ]]; then
+      echo 'No printer selected'
+      return 2
+    fi
   fi
 
-  ask 'Enter a description:' '.+' || return $?
+  ask 'Enter the printer name:' || return $?
+  local name="${REPLY}"
+
+  if [[ -z "${name}" ]]; then
+    echo 'Printer name is required'
+    return 2
+  elif exists_destination "${name}"; then
+    echo "Printer with name ${name} already exists"
+    return 2
+  fi
+
+  ask 'Enter a description:' || return $?
   local desc="${REPLY}"
 
-  ask 'Enter a location name:' '.+' || return $?
+  ask 'Enter a location name:' || return $?
   local loc="${REPLY}"
 
   local driver=''
   pick_driver || return $?
-  [[ -n "${REPLY}" ]] && driver="${REPLY}" || return 0
+  driver="${REPLY}"
+
+  if [[ -z "${driver}" ]]; then
+    echo 'No driver selected'
+    return 2
+  fi
 
   lpadmin -p "${name}" -E \
     -o printer-is-shared=false \
@@ -174,13 +191,12 @@ add_printer () {
     return 2
   fi
 
-  local is_default=''
-  confirm 'Want to set this printer as default?' || return $?
-  [[ -n "${REPLY}" ]] && is_default="${REPLY}" || return 0
+  confirm 'Set printer as default destination?' || return $?
+  local is_default="${REPLY}"
 
   if [[ "${is_default}" == "yes" ]]; then
     lpoptions -d "${name}" &> /dev/null ||
-      echo 'Failed to set printer as default'
+      echo 'Unable to set printer as default destination'
   fi
 
   echo "Printer ${uri} has been added"
@@ -195,7 +211,12 @@ remove_printer () {
 
   if [[ -z "${name}" ]]; then
     pick_printer || return $?
-    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+    name="${REPLY}"
+
+    if [[ -z "${name}" ]]; then
+      echo 'No printer selected'
+      return 2
+    fi
   fi
 
   if ! exists_destination "${name}"; then
@@ -222,7 +243,12 @@ share_printer () {
 
   if [[ -z "${name}" ]]; then
     pick_printer || return $?
-    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+    name="${REPLY}"
+
+    if [[ -z "${name}" ]]; then
+      echo 'No printer selected'
+      return 2
+    fi
   fi
 
   if ! exists_destination "${name}"; then
@@ -249,7 +275,12 @@ unshare_printer () {
 
   if [[ -z "${name}" ]]; then
     pick_printer || return $?
-    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+    name="${REPLY}"
+
+    if [[ -z "${name}" ]]; then
+      echo 'No printer selected'
+      return 2
+    fi
   fi
 
   if ! exists_destination "${name}"; then
@@ -267,20 +298,20 @@ unshare_printer () {
   echo "Printer ${name} has been unshared"
 }
 
-# Sets the given option to the printer with
-# the given name.
+# Sets an option of the printer with the given name.
 # Arguments:
-#  name:  the name of a print destination
-#  key:   the key name of the option
-#  value: the value of the option
+#  name: the name of a print destination
 set_option () {
   local name="${1}"
-  local key="${2}"
-  local value="${3}"
 
   if [[ -z "${name}" ]]; then
     pick_printer || return $?
-    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+    name="${REPLY}"
+
+    if [[ -z "${name}" ]]; then
+      echo 'No printer selected'
+      return 2
+    fi
   fi
 
   if ! exists_destination "${name}"; then
@@ -288,47 +319,40 @@ set_option () {
     return 2
   fi
 
-  if [[ -z "${key}" ]]; then
-    echo 'Missing the option key value'
-    return 2
-  elif [[ ! "${key}" =~ ^(Quality|PageSize|MediaType|TonerSaveMode|printer-error-policy)$ ]]; then
-    echo "Option ${key} is not supported"
+  pick_print_option || return $?
+  local option="${REPLY}"
+
+  if [[ -z "${option}" ]]; then
+    echo 'No print option selected'
     return 2
   fi
+
+  case "${option}" in
+    Quality) pick_print_quality;;
+    PageSize) pick_page_size;;
+    MediaType) pick_paper_type;;
+    TonerSaveMode) pick_toner_mode;;
+    printer-error-policy) pick_error_policy;;
+    *)
+      echo 'Unknown or invalid print option'
+      return 2;;
+  esac || return $?
+
+  local value="${REPLY}"
 
   if [[ -z "${value}" ]]; then
-    case "${key}" in
-      Quality) pick_quality || return $?;;
-      PageSize) pick_page_size || return $?;;
-      MediaType) pick_paper_type || return $?;;
-      TonerSaveMode) pick_toner_mode || return $?;;
-      printer-error-policy) pick_error_policy || return $?;;
-      *) echo 'Unknown or invalid printer option' && return 2;;
-    esac
-
-    [[ -n "${REPLY}" ]] && value="${REPLY}" || return 0
-  fi
-
-  local re=''
-  re+='600dpi|1200dpi|'
-  re+='Letter|Legal|A4|A5|Executive|Folio|JB5|B5-ISO|COM10|Monarch|DL|C5|Oficio_S|PCard4x6|'
-  re+='Save|Standard|'
-  re+='None|Plain|Thick|Thin|Bond|Color|Card|Labels|Preprinted|Cotton|Archive|Recycled|Envelope|'
-  re+='abort-job|retry-current-job|retry-job|stop-printer'
-
-  if [[ ! "${value,,}" =~ ^(${re,,})$ ]]; then
-    echo 'Invalid option value'
+    echo "No option value selected"
     return 2
   fi
 
-  lpadmin -p "${name}" -o "${key}"="${value}"
+  lpadmin -p "${name}" -o "${option}"="${value}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to set printer option ${key}"
+    echo 'Failed to set printer option'
     return 2
   fi
 
-  echo "Printer ${key} set to ${value}"
+  echo "Option ${option} of printer ${name} set to ${value}"
 }
 
 # Sets the printer with the given name as default
@@ -340,7 +364,12 @@ set_default () {
 
   if [[ -z "${name}" ]]; then
     pick_printer || return $?
-    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+    name="${REPLY}"
+
+    if [[ -z "${name}" ]]; then
+      echo 'No printer selected'
+      return 2
+    fi
   fi
 
   if ! exists_destination "${name}"; then
@@ -351,16 +380,14 @@ set_default () {
   lpoptions -d "${name}" &> /dev/null
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to set ${name} as default printer"
+    echo "Failed to set printer ${name} as default destination"
     return 2
   fi
 
-  echo "Printer ${name} set as default"
+  echo "Printer ${name} set as default destination"
 }
 
 # Shows the list of all queued print jobs.
-# Arguments:
-#  None
 # Outputs:
 #  A list of print jobs.
 list_jobs () {
@@ -398,7 +425,12 @@ cancel_job () {
 
   if [[ -z "${id}" ]]; then
     pick_job || return $?
-    [[ -n "${REPLY}" ]] && id="${REPLY}" || return 0
+    id="${REPLY}"
+
+    if [[ -z "${id}" ]]; then
+      echo 'No print job selected'
+      return 2
+    fi
   fi
 
   if ! exists_job "${id}"; then
@@ -417,12 +449,10 @@ cancel_job () {
 }
 
 # Restarts the cup service.
-# Arguments:
-#  None
 restart () {
   sudo echo 'Restarting the cups service...'
 
-  sudo systemctl restart cups.service
+  sudo -k systemctl restart cups.service
 
   if [[ $? -ne 0 ]]; then
     echo 'Failed to restart cups service'
