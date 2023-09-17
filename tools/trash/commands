@@ -154,7 +154,7 @@ remove_files () {
     return 2
   fi
 
-  if [ "${#paths[@]}" -eq 0 ]; then
+  if [[ ${#paths[@]} -eq 0 ]]; then
     local query='[.[]|{key: .path, value: "\(.date) \(.path)"}]'
     files="$(echo "${files}" | jq -cer "${query}")" || return 1
 

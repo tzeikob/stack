@@ -35,22 +35,22 @@ show_help () {
     'show status' 'Show a report of the bluetooth service.' \
     'show logs' 'Show the last logs of the bluetooth service.' \
     '' '' \
-    'show controller <address>' 'Show the data of a controller.' \
-    'show device <address>' 'Show the data of a device.' \
+    'show controller [<address>]' 'Show the data of a controller.' \
+    'show device [<address>]' 'Show the data of a device.' \
     '' '' \
     'list controllers' 'List the available controllers.' \
     'list devices [<status>]' 'List the devices where status could be' \
     '' 'any of paired, connected, trusted or bonded.' \
     '' '' \
-    'set controller <address>' 'Set the default controller.' \
+    'set controller [<address>]' 'Set the default controller.' \
     'set power on|off' 'Set the default controller power to on or off.' \
     'set scan on|off' 'Set scanning mode to on or off.' \
     'set discoverable on|off' 'Set the default controller to be discoverable.' \
     'set pairable on|off' 'Set the default controller to be pairable.' \
     '' '' \
-    'connect device <address>' 'Connect a bluetooth device.' \
-    'disconnect device <address>' 'Disconnect a bluetooth device.' \
-    'remove device <address>' 'Removes a bluetooth device.' \
+    'connect device [<address>]' 'Connect a bluetooth device.' \
+    'disconnect device [<address>]' 'Disconnect a bluetooth device.' \
+    'remove device [<address>]' 'Removes a bluetooth device.' \
     '' '' \
     'restart' 'Restart the bluetooth service.'
 }

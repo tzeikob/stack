@@ -54,11 +54,9 @@ set_screen_locker () {
   local interval="${1}"
 
   if [[ -z "${interval}" ]]; then
-    ask 'Enter the interval time in mins [0,60]:' || return $?
-    interval="${REPLY}"
-  fi
-
-  if [[ ! "${interval}" =~ ^[0-9]{,2}$ ]]; then
+    echo 'Missing interval time'
+    return 2
+  elif [[ ! "${interval}" =~ ^[0-9]{,2}$ ]]; then
     echo 'Invalid interval time'
     return 2
   elif [[ ${interval} -lt 0 ]] || [[ ${interval} -gt 60 ]]; then
@@ -199,15 +197,13 @@ set_faillock_attempts () {
   local attempts="${1}"
 
   if [[ -z "${attempts}" ]]; then
-    ask 'Enter the max number of failed attempts:' || return $?
-    attempts="${REPLY}"
-  fi
-  
-  if [[ ! "${attempts}" =~ ^[1-9][0-9]*$ ]]; then
+    echo 'Missing attempts number'
+    return 2
+  elif [[ ! "${attempts}" =~ ^[1-9][0-9]*$ ]]; then
     echo 'Invalid attempts number'
     return 2
   elif [[ ! ${attempts} -gt 0 ]]; then
-    echo 'Attempts should be greater than 0'
+    echo 'Attempts number should be greater than 0'
     return 2
   fi
 
@@ -226,13 +222,11 @@ set_faillock_attempts () {
 #  time: the time in secs to unblock the password
 set_faillock_unblock () {
   local time="${1}"
-
-  if [[ -z "${time}" ]]; then
-    ask 'Enter the unblock time in secs:' || return $?
-    time="${REPLY}"
-  fi
   
-  if [[ ! "${time}" =~ ^[1-9][0-9]*$ ]]; then
+  if [[ -z "${time}" ]]; then
+    echo 'Missing unblock time'
+    return 2
+  elif [[ ! "${time}" =~ ^[1-9][0-9]*$ ]]; then
     echo 'Invalid unblock time'
     return 2
   elif [[ ! ${time} -gt 0 ]]; then
@@ -259,11 +253,9 @@ set_faillock_interval () {
   local time="${1}"
 
   if [[ -z "${time}" ]]; then
-    ask 'Enter the fail interval in secs:' || return $?
-    time="${REPLY}"
-  fi
-
-  if [[ ! "${time}" =~ ^[1-9][0-9]*$ ]]; then
+    echo 'Missing interval time'
+    return 2
+  elif [[ ! "${time}" =~ ^[1-9][0-9]*$ ]]; then
     echo 'Invalid interval time'
     return 2
   elif [[ ! ${time} -gt 0 ]]; then

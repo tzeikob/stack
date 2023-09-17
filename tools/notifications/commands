@@ -194,16 +194,9 @@ set_popup () {
   local mode="${1}"
 
   if [[ -z "${mode}" ]]; then
-    local modes=''
-    modes+='{"key": "on", "value": "on"},'
-    modes+='{"key": "off", "value": "off"}'
-    modes="[${modes}]"
-
-    pick_one 'Select the pop-up mode:' "${modes}" horizontal || return $?
-    mode="${REPLY}"
-  fi
-
-  if [[ ! "${mode}" =~ ^(on|off)$ ]]; then
+    echo 'Missing the pop-up mode'
+    return 2
+  elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
     echo 'Invalid pop-up mode'
     return 2
   fi
@@ -242,15 +235,13 @@ set_volume () {
   local percent="${1}"
 
   if [[ -z "${percent}" ]]; then
-    ask 'Enter the volume [0,100]:' || return $?
-    percent="${REPLY}"
-  fi
-  
-  if [[ ! "${percent}" =~ ^[0-9]{1,3}$ ]]; then
-    echo 'Invalid volume value'
+    echo 'Missing volume percent'
+    return 2
+  elif [[ ! "${percent}" =~ ^[0-9]{1,3}$ ]]; then
+    echo 'Invalid volume percent'
     return 2
   elif [[ ${percent} -lt 0 ]] || [[ ${percent} -gt 100 ]]; then
-    echo 'Volume is out of range'
+    echo 'Volume percent is out of range'
     return 2
   fi
 
