@@ -5,8 +5,6 @@ set -o pipefail
 source /opt/stack/utils
 
 # Returns all the available controllers.
-# Arguments:
-#  None
 # Outputs:
 #  A json array of controller objects.
 find_controllers () {
@@ -65,8 +63,6 @@ find_device () {
 
 # Checks if the scanning mode of default controller
 # is set to on.
-# Argmuments:
-#  None
 # Returns:
 #  0 if scanning is on otherwise 1.
 is_scanning_on () {
@@ -82,8 +78,6 @@ is_scanning_on () {
 
 # Shows a menu asking the user to select a controller,
 # where the answer is kept in the global var REPLY.
-# Arguments:
-#  None
 # Outputs:
 #  A menu of controllers.
 pick_controller () {
@@ -106,8 +100,6 @@ pick_controller () {
 
 # Shows a menu asking the user to select a device,
 # where the answer is kept in the global var REPLY.
-# Arguments:
-#  None
 # Outputs:
 #  A menu of devices.
 pick_device () {
@@ -126,5 +118,22 @@ pick_device () {
   fi
   
   pick_one 'Select a device:' "${devices}" vertical || return $?
+}
+
+# Kills any running bluetooth scanning proccesses.
+kill_scanning_proccesses () {
+  local query='.command|test("^bluetoothctl scan on")'
+  query=".[]|select(${query})|.pid"
+
+  local pids=''
+  pids="$(ps aux | jc --ps | jq -cr "${query}")" || return 1
+
+  # Clean any scanning processes one by one
+  if [[ -n "${pids}" ]]; then
+    local pid=''
+    while read -r pid; do
+      kill "${pid}"
+    done <<< "${pids}"
+  fi
 }
 

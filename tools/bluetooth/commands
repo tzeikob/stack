@@ -7,8 +7,6 @@ source /opt/stack/bluetooth/helpers
 
 # Shows the current status of bluetooth service
 # and connected devices.
-# Arguments:
-#  None
 # Outputs:
 #  A long list of bluetooth data.
 show_status () {
@@ -59,8 +57,6 @@ show_status () {
 }
 
 # Shows the logs of the bluetooth service.
-# Arguments:
-#  None
 # Outputs:
 #  A long list of log messages.
 show_logs () {
@@ -68,8 +64,6 @@ show_logs () {
 }
 
 # Shows the list of available controllers.
-# Arguments:
-#  None
 # Outputs:
 #  A list of bluetooth controllers.
 list_controllers () {
@@ -147,7 +141,12 @@ show_controller () {
 
   if [[ -z "${address}" ]]; then
     pick_controller || return $?
-    [[ -n "${REPLY}" ]] && address="${REPLY}" || return 0
+    address="${REPLY}"
+    
+    if [[ -z "${address}" ]]; then
+      echo 'No controller selected'
+      return 2
+    fi
   fi
 
   local controller=''
@@ -162,7 +161,7 @@ show_controller () {
   query+='Name:          \(.name)\n'
   query+='Address:       \(.address)\n'
   query+='\(.is_public|if . then "Public:        \(.)\n" else "" end)'
-  query+='alias:         \(.alias)\n'
+  query+='Alias:         \(.alias)\n'
   query+='Powered:       \(.powered)\n'
   query+='Discovering:   \(.discovering)\n'
   query+='Pairable:      \(.pairable)\n'
@@ -186,7 +185,12 @@ show_device () {
 
   if [[ -z "${address}" ]]; then
     pick_device || return $?
-    [[ -n "${REPLY}" ]] && address="${REPLY}" || return 0
+    address="${REPLY}"
+
+    if [[ -z "${address}" ]]; then
+      echo 'No device selected'
+      return 2
+    fi
   fi
 
   local device=''
@@ -227,7 +231,12 @@ set_controller () {
 
   if [[ -z "${address}" ]]; then
     pick_controller || return $?
-    [[ -n "${REPLY}" ]] && address="${REPLY}" || return 0
+    address="${REPLY}"
+
+    if [[ -z "${address}" ]]; then
+      echo 'No controller selected'
+      return 2
+    fi
   fi
 
   local controller=''
@@ -255,10 +264,10 @@ set_power () {
   local mode="${1}"
 
   if [[ -z "${mode}" ]]; then
-    echo 'Missing the power mode value'
+    echo 'Missing power mode'
     return 2
   elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
-    echo 'Invalid power mode value'
+    echo 'Invalid power mode'
     return 2
   fi
 
@@ -284,10 +293,10 @@ set_scan () {
   local mode="${1}"
 
   if [[ -z "${mode}" ]]; then
-    echo 'Missing scanning mode value'
+    echo 'Missing scanning mode'
     return 2
   elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
-    echo 'Invalid scanning mode value'
+    echo 'Invalid scanning mode'
     return 2
   fi
 
@@ -296,21 +305,9 @@ set_scan () {
     return 2
   fi
 
-  # Collect any running scanning processes
-  local query='.command|test("^bluetoothctl scan on")'
-  query=".[]|select(${query})|.pid"
-
-  local pids=''
-  pids="$(ps aux | jc --ps | jq -cr "${query}")" || return 1
-
-  # Clean any scanning processes before action
-  if [[ -n "${pids}" ]]; then
-    local pid=''
-    while read -r pid; do
-      kill "${pid}"
-    done <<< "${pids}"
-  fi
-
+  # Kill any running scanning proccesses
+  kill_scanning_proccesses || return 1
+  
   if [[ "${mode}" == "on" ]]; then
     bluetoothctl scan on &> /dev/null &
   fi
@@ -333,10 +330,10 @@ set_discoverable () {
   local mode="${1}"
 
   if [[ -z "${mode}" ]]; then
-    echo 'Missing the discoverable mode value'
+    echo 'Missing the discoverable mode'
     return 2
   elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
-    echo 'Invalid discoverable mode value'
+    echo 'Invalid discoverable mode'
     return 2
   fi
 
@@ -362,10 +359,10 @@ set_pairable () {
   local mode="${1}"
 
   if [[ -z "${mode}" ]]; then
-    echo 'Missing the pairable mode value'
+    echo 'Missing the pairable mode'
     return 2
   elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
-    echo 'Invalid pairable mode value'
+    echo 'Invalid pairable mode'
     return 2
   fi
 
@@ -392,7 +389,12 @@ connect_device () {
 
   if [[ -z "${address}" ]]; then
     pick_device || return $?
-    [[ -n "${REPLY}" ]] && address="${REPLY}" || return 0
+    address="${REPLY}"
+
+    if [[ -z "${address}" ]]; then
+      echo 'No device selected'
+      return 2
+    fi
   fi
 
   local device=''
@@ -423,7 +425,12 @@ disconnect_device () {
 
   if [[ -z "${address}" ]]; then
     pick_device || return $?
-    [[ -n "${REPLY}" ]] && address="${REPLY}" || return 0
+    address="${REPLY}"
+
+    if [[ -z "${address}" ]]; then
+      echo 'No device selected'
+      return 2
+    fi
   fi
 
   local device=''
@@ -452,7 +459,12 @@ remove_device () {
 
   if [[ -z "${address}" ]]; then
     pick_device || return $?
-    [[ -n "${REPLY}" ]] && address="${REPLY}" || return 0
+    address="${REPLY}"
+
+    if [[ -z "${address}" ]]; then
+      echo 'No device selected'
+      return 2
+    fi
   fi
 
   local device=''
@@ -474,12 +486,10 @@ remove_device () {
 }
 
 # Restarts the bluetooth service.
-# Arguments:
-#  None
 restart_bluetooth () {
   rfkill block bluetooth &&
   rfkill unblock bluetooth &&
-  sudo modprobe -r btusb &&
+  sudo -k modprobe -r btusb &&
   sudo modprobe -r btintel &&
   sudo modprobe btintel &&
   sudo modprobe btusb &&
