@@ -36,7 +36,7 @@ show_help () {
     'show printer [<name>]' 'Show the data of a printer.' \
     '' '' \
     'list printers' 'List all printers.' \
-    'add printer [<uri>]' 'Add a new printer.' \
+    'add printer [<uri> [<name> [<driver>]]]' 'Add a new printer.' \
     'remove printer [<name>]' 'Remove a printer.' \
     '' '' \
     'set default [<name>]' 'Set a printer as default destination.' \
@@ -105,7 +105,7 @@ run () {
       'show printer') show_printer "${args[2]}";;
       'list printers') list_printers;;
       'list jobs') list_jobs;;
-      'add printer') add_printer "${args[2]}" && beep;;
+      'add printer') add_printer "${args[2]}" "${args[3]}" "${args[4]}" && beep;;
       'remove printer') remove_printer "${args[2]}" && beep;;
       'share printer') share_printer "${args[2]}" && beep;;
       'unshare printer') unshare_printer "${args[2]}" && beep;;

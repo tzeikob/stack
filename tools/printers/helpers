@@ -235,11 +235,10 @@ pick_printer () {
   pick_one 'Select a printer:' "${destinations}" vertical || return $?
 }
 
-# Shows a menu asking the user to select one driver,
-# where the answer is kept in the global var REPLY.
+# Returns the list of available printer drivers.
 # Outputs:
-#  A menu of printer drivers.
-pick_driver () {
+#  A json array list of drivers.
+find_drivers () {
   local drivers=''
   drivers="$(lpinfo -m 2>&1 | awk '{
     desc=""
@@ -254,13 +253,38 @@ pick_driver () {
 
     printf schema, $1, desc
   }')" || return 1
-
+  
   # Remove the extra comma after the last element
   if [[ -n "${drivers}" ]]; then
     drivers="${drivers::-1}"
   fi
 
-  drivers="[${drivers}]"
+  echo "[${drivers}]"
+}
+
+# Checks if the given driver is available in the system.
+# Arguments:
+#  name: the key name of the driver
+# Returns:
+#  0 if it's available otherwise 1.
+is_driver_available () {
+  local name="${1}"
+
+  local drivers=''
+  drivers="$(find_drivers)" || return 1
+
+  local query=".[]|select(.key == \"${name}\")"
+
+  echo "${drivers}" | jq -cer "${query}" &> /dev/null || return 1
+}
+
+# Shows a menu asking the user to select one driver,
+# where the answer is kept in the global var REPLY.
+# Outputs:
+#  A menu of printer drivers.
+pick_driver () {
+  local drivers=''
+  drivers="$(find_drivers)" || return 1
   
   local len=0
   len="$(count "${drivers}")" || return 1

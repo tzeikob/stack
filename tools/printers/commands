@@ -118,11 +118,16 @@ show_printer () {
   find_destination "${name}" | jq -cer "${query}" || return 1
 }
 
-# Adds the printer with the given uri.
+# Adds the printer with the given uri, name
+# and driver.
 # Arguments:
-#  uri: the uri of a print destination
+#  uri:    the uri of a print destination
+#  name:   the name of the printer
+#  driver: the driver of the printer
 add_printer () {
   local uri="${1}"
+  local name="${2}"
+  local driver="${3}"
 
   if [[ -z "${uri}" ]]; then
     echo 'Discovering print destinations...'
@@ -156,47 +161,43 @@ add_printer () {
     fi
   fi
 
-  ask 'Enter the printer name:' || return $?
-  local name="${REPLY}"
-
   if [[ -z "${name}" ]]; then
-    echo 'Printer name is required'
-    return 2
-  elif exists_destination "${name}"; then
+    ask 'Enter the printer name:' || return $?
+    name="${REPLY}"
+    
+    if [[ -z "${name}" ]]; then
+      echo 'No printer name is given'
+      return 2
+    fi
+  fi
+
+  if exists_destination "${name}"; then
     echo "Printer with name ${name} already exists"
     return 2
   fi
 
-  ask 'Enter a description:' || return $?
-  local desc="${REPLY}"
-
-  ask 'Enter a location name:' || return $?
-  local loc="${REPLY}"
-
-  local driver=''
-  pick_driver || return $?
-  driver="${REPLY}"
-
   if [[ -z "${driver}" ]]; then
-    echo 'No driver selected'
+    pick_driver || return $?
+    driver="${REPLY}"
+
+    if [[ -z "${driver}" ]]; then
+      echo 'No driver selected'
+      return 2
+    fi
+  fi
+
+  if ! is_driver_available "${driver}"; then
+    echo "Driver ${driver} is not available"
     return 2
   fi
 
   lpadmin -p "${name}" -E \
     -o printer-is-shared=false \
-    -D "${desc}" -L "${loc}" -v "${uri}" -m "${driver}" &> /dev/null
+    -D "${name}" -L "${name}" -v "${uri}" -m "${driver}" &> /dev/null
 
   if [[ $? -ne 0 ]]; then
     echo "Failed to add printer ${uri}"
     return 2
-  fi
-
-  confirm 'Set printer as default destination?' || return $?
-  local is_default="${REPLY}"
-
-  if [[ "${is_default}" == "yes" ]]; then
-    lpoptions -d "${name}" &> /dev/null ||
-      echo 'Unable to set printer as default destination'
   fi
 
   echo "Printer ${uri} has been added"
