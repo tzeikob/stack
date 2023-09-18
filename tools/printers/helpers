@@ -325,11 +325,11 @@ pick_job () {
 #  A menu of print options.
 pick_print_option () {
   local options=''
-  options+='{"key": "Quality", "value": "print quality"},'
-  options+='{"key": "PageSize", "value": "page size"},'
-  options+='{"key": "MediaType", "value": "paper size"},'
-  options+='{"key": "TonerSaveMode", "value": "toner mode"},'
-  options+='{"key": "printer-error-policy", "value": "error policy"}'
+  options+='{"key": "Quality", "value": "Quality"},'
+  options+='{"key": "PageSize", "value": "Page Size"},'
+  options+='{"key": "MediaType", "value": "Paper Size"},'
+  options+='{"key": "TonerSaveMode", "value": "Toner Mode"},'
+  options+='{"key": "printer-error-policy", "value": "Error Policy"}'
   options="[${options}]"
 
   pick_one 'Select a print option:' "${options}" vertical || return $?
@@ -373,11 +373,11 @@ pick_page_size () {
   pick_one 'Select a page size:' "${values}" vertical || return $?
 }
 
-# Shows a menu asking the user to select a paper type option,
+# Shows a menu asking the user to select a media type option,
 # where the answer is kept in the global var REPLY.
 # Outputs:
-#  A menu of paper type options.
-pick_paper_type () {
+#  A menu of media type options.
+pick_media_type () {
   local values=''
   values+='{"key": "None", "value": "Printer Default [None]"},'
   values+='{"key": "Plain", "value": "Plain [Plain]"},'
@@ -394,7 +394,7 @@ pick_paper_type () {
   values+='{"key": "Envelope", "value": "Envelope [Envelope]"}'
   values="[${values}]"
 
-  pick_one 'Select a paper type:' "${values}" vertical || return $?
+  pick_one 'Select a media type:' "${values}" vertical || return $?
 }
 
 # Shows a menu asking the user to select a toner mode option,

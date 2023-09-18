@@ -26,12 +26,12 @@ show_help () {
     echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
 
     echo -e '\nCOMMANDS'
-    printf ' %-30s %s\n' \
+    printf ' %-43s %s\n' \
       'help' 'Show this help message.' \
       '' ''
   fi
 
-  printf ' %-30s %s\n' \
+  printf ' %-43s %s\n' \
     'show status' 'Show a report of cups service and printers.' \
     'show printer [<name>]' 'Show the data of a printer.' \
     '' '' \
@@ -40,7 +40,9 @@ show_help () {
     'remove printer [<name>]' 'Remove a printer.' \
     '' '' \
     'set default [<name>]' 'Set a printer as default destination.' \
-    'set option [<name>]' 'Set an option of a printer.' \
+    'set option [<name> [key] [value]]]' 'Set the option of a printer with key equal' \
+    '' 'to Quality, PageSize, MediaType, ToneSaveMode' \
+    '' 'or printer-error-policy.' \
     '' '' \
     'share printer [<name>]' 'Share a printer to the local network.' \
     'unshare printer [<name>]' 'Unshare a printer of the local network.' \
@@ -110,7 +112,7 @@ run () {
       'share printer') share_printer "${args[2]}" && beep;;
       'unshare printer') unshare_printer "${args[2]}" && beep;;
       'set default') set_default "${args[2]}" && beep;;
-      'set option') set_option "${args[2]}" && beep;;
+      'set option') set_option "${args[2]}" "${args[3]}" "${args[4]}" && beep;;
       'cancel job') cancel_job "${args[2]}" && beep;;
       'restart') restart;;
       *)
