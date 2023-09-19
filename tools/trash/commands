@@ -103,14 +103,35 @@ restore_files () {
 
   if [[ ${#paths[@]} -eq 0 ]]; then
     pick_many 'Select which trashed files to restore:' "${trashed_files}" '1,' vertical || return $?
-    selected="${REPLY}"
+    local picked="${REPLY}"
 
-    if [[ -z "${selected}" ]]; then
+    if [[ -z "${picked}" ]]; then
       echo 'No trashed files selected'
       return 2
     fi
 
-    selected="$(echo "${selected}" | jq -cer 'join(",")')" || return 1
+    picked="$(echo "${picked}" | jq -cer 'join(" ")')" || return 1
+
+    # Refuse to overwrite existing files
+    local key=''
+    for key in ${picked}; do
+      local query=".[]|select(.key == \"${key}\")|.value"
+
+      local path=''
+      path="$(echo "${trashed_files}" | jq -cr "${query}")"
+
+      if [[ -f "${path}" ]]; then
+        echo "Refused to overwrite file ${path}"
+        continue
+      fi
+
+      selected+="${key},"
+    done
+
+    # Remove extra comma from the last element
+    if [[ -n "${selected}" ]]; then
+      selected="${selected::-1}"
+    fi
   else
     local index=0
     for ((index = 0; index < ${#paths[@]}; index++)); do
@@ -122,14 +143,19 @@ restore_files () {
       key="$(echo "${trashed_files}" | jq -cer "${query}")"
 
       if [[ $? -ne 0 ]]; then
-        echo "File ${path} not found"
+        echo "File ${path} not found in trash"
+        continue
+      fi
+
+      if [[ -f "${path}" ]]; then
+        echo "Refused to overwrite file ${path}"
         continue
       fi
 
       selected+="${key},"
     done
-    
-    # Remove the extra comma after the last element
+
+    # Remove extra comma from the last element
     if [[ -n "${selected}" ]]; then
       selected="${selected::-1}"
     fi
@@ -209,7 +235,7 @@ remove_files () {
     echo "${trashed_files}" | jq -cer "${query}" &> /dev/null
 
     if [[ $? -ne 0 ]]; then
-      echo "File ${path} not found"
+      echo "File ${path} not found in trash"
       continue
     fi
 
