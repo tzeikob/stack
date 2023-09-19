@@ -19,8 +19,9 @@ show_help () {
     echo -e '\nOPTIONS'
     printf ' %-8s %s\n' \
       '-h' 'Show this help message.' \
-      '-q' 'Do not play beep sounds.'
-  
+      '-q' 'Do not play beep sounds.' \
+      '-f' 'Do not ask confirm when removing files.'
+
     echo -e '\nCOMMANDS'
   else
     echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
@@ -37,7 +38,7 @@ show_help () {
     'list files +<days>' 'List files trashed more than the given days ago.' \
     'list files <date>' 'List files trashed at a certain date.' \
     '' '' \
-    'restore files [<path>]' 'Restore files starting from / or the given path.' \
+    'restore files [<paths>]' 'Restore the given trashed files.' \
     'remove files [<paths>]' 'Remove the given trashed files.' \
     '' '' \
     'empty files' 'Remove all trashed files.' \
@@ -47,12 +48,13 @@ show_help () {
 run () {
   local opt=''
 
-  while getopts ':hq' opt; do
+  while getopts ':hqf' opt; do
     case "${opt}" in
      'h')
         show_help once
         return 0;;
      'q') QUIET='true';;
+     'f') FORCED='true';;
      *)
       echo "Ooops, invalid or unknown option -${OPTARG}!"
       $(exit 2) || beep
@@ -95,7 +97,7 @@ run () {
 
     case "${cmd}${obj:+ ${obj}}" in
       'list files') list_files "${args[2]}";;
-      'restore files') restore_files "${args[2]}" && beep;;
+      'restore files') restore_files "${args[@]:2}" && beep;;
       'remove files') remove_files "${args[@]:2}" && beep;;
       'empty files') empty_files "${args[2]}" && beep;;  
       *)
