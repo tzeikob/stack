@@ -155,9 +155,10 @@ restore_files () {
       selected+="${key},"
     done
 
-    # Remove extra comma from the last element
+    # Discard possible duplicated files
     if [[ -n "${selected}" ]]; then
-      selected="${selected::-1}"
+      selected="[${selected::-1}]"
+      selected="$(echo "${selected}" | jq -cr 'unique|join(",")')"
     fi
   fi
 
