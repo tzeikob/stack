@@ -27,7 +27,8 @@ show_help () {
 
     echo -e '\nCOMMANDS'
     printf ' %-24s %s\n' \
-      'help' 'Show this help message.'
+      'help' 'Show this help message.' \
+      '' ''
   fi
 
   printf ' %-24s %s\n' \
