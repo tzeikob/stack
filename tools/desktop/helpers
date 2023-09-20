@@ -4,10 +4,10 @@ set -o pipefail
 
 source /opt/stack/utils
 
+SETTINGS_FILE="${CONFIG_HOME}/desktop.json"
+
 # Returns the list of any wallpapers found under
 # the wallpapers home.
-# Arguments:
-#  None
 # Outputs:
 #  A json array of image objects.
 find_wallpapers () {
@@ -46,8 +46,6 @@ find_wallpapers () {
 
 # Shows a menu asking the user to select one wallpaper,
 # where the answer is kept in the global var REPLY.
-# Arguments:
-#  None
 # Outputs:
 #  A menu of wallpaper filenames.
 pick_wallpaper () {
@@ -66,7 +64,7 @@ pick_wallpaper () {
   len="$(count "${wallpapers}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo 'No wallpaper files have found'
+    echo 'No wallpaper files found'
     return 2
   fi
 
@@ -75,8 +73,6 @@ pick_wallpaper () {
 
 # Returns the list of pointing devices currently
 # connected to the system.
-# Arguments:
-#  None
 # Outputs:
 #  A json array of pointing device objects.
 find_pointers () {
@@ -165,8 +161,6 @@ find_pointer () {
 
 # Shows a menu asking the user to select one pointing device,
 # where the answer is kept in the global var REPLY.
-# Arguments:
-#  None
 # Outputs:
 #  A menu of pointing devices.
 pick_pointer () {
@@ -182,7 +176,7 @@ pick_pointer () {
   len="$(count "${pointers}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo 'No pointers have found'
+    echo 'No pointers found'
     return 2
   fi
 
@@ -194,8 +188,6 @@ pick_pointer () {
 
 # Returns the list of stylus-pen devices currently
 # connected to the system.
-# Arguments:
-#  None
 # Outputs:
 #  A json array of stylus-pen device objects.
 find_tablets () {
@@ -303,8 +295,6 @@ is_scalable () {
 
 # Shows a menu asking the user to select one tablet device,
 # where the answer is kept in the global var REPLY.
-# Arguments:
-#  None
 # Outputs:
 #  A menu of tablet devices.
 pick_tablet () {
@@ -328,5 +318,87 @@ pick_tablet () {
   tablets="$(echo "${tablets}" | jq -cer "${query}")" || return 1
 
   pick_one 'Select a tablet:' "${tablets}" vertical || return $?
+}
+
+# Saves the wallpaper with the given file name
+# into the settings file.
+# Arguments:
+#  name: the file name of the wallpaper
+#  mode: center, fill, max, scale or tile
+save_wallpaper () {
+  local name="${1}"
+  local mode="${2}"
+
+  local settings='{}'
+  local wallpaper="{\"name\": \"${name}\", \"mode\": \"${mode}\"}"
+
+  if [[ -f "${SETTINGS_FILE}" ]]; then
+    settings="$(jq -e ".wallpaper = ${wallpaper} " "${SETTINGS_FILE}")" || return 1
+  else
+    settings="$(echo "{\"wallpaper\": ${wallpaper}}" | jq -e '.')" || return 1
+  fi
+
+  mkdir -p "${CONFIG_HOME}"
+  echo "${settings}" > "${SETTINGS_FILE}"
+}
+
+# Saves the pointer speed factor into the settings file.
+# Arguments:
+#  factor: a speed factor between [0,1]
+save_pointer_speed_factor () {
+  local factor="${1}"
+
+  local settings='{}'
+  local pointer="{\"speed\": ${factor}}"
+
+  if [[ -f "${SETTINGS_FILE}" ]]; then
+    settings="$(jq -e ".pointer = ${pointer} " "${SETTINGS_FILE}")" || return 1
+  else
+    settings="$(echo "{\"pointer\": ${pointer}}" | jq -e '.')" || return 1
+  fi
+
+  mkdir -p "${CONFIG_HOME}"
+  echo "${settings}" > "${SETTINGS_FILE}"
+}
+
+# Saves the scale factor of the tablet with the given
+# name into the settings file.
+# Arguments:
+#  name:  the name of a tablet device
+#  scale: the scale factor [0.1,1]
+save_tablet_scale_factor () {
+  local name="${1}"
+  local scale="${2}"
+  
+  local settings='{}'
+  local tablet="{\"name\": \"${name}\", \"scale\": ${scale}}"
+
+  if [[ -f "${SETTINGS_FILE}" ]]; then
+    local tablets=''
+    tablets="$(jq '.tablets|if . then . else empty end' "${SETTINGS_FILE}")"
+
+    if [[ -n "${tablets}" ]]; then
+      local query=''
+      query=".tablets[]|select(.name == \"${name}\")"
+
+      local exists=''
+      exists="$(jq "${query}" "${SETTINGS_FILE}")"
+
+      if [[ -n "${exists}" ]]; then
+        query="(${query}|.scale)|= ${scale}"
+      else
+        query=".tablets += [${tablet}]"
+      fi
+
+      settings="$(jq -e "${query}" "${SETTINGS_FILE}")" || return 1
+    else
+      settings="$(jq -e ".tablets = [${tablet}] " "${SETTINGS_FILE}")" || return 1
+    fi
+  else
+    settings="$(echo "{\"tablets\": [${tablet}]}" | jq -e '.')" || return 1
+  fi
+
+  mkdir -p "${CONFIG_HOME}"
+  echo "${settings}" > "${SETTINGS_FILE}"
 }
 

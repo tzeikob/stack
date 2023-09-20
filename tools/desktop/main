@@ -17,9 +17,9 @@ show_help () {
     echo 'Usage: desktop [OPTIONS] COMMAND [OBJECT] [ARGUMENTS]...'
     
     echo -e '\nOPTIONS'
-    printf ' %-10s %s\n' \
+    printf ' %-8s %s\n' \
       '-h' 'Show this help message.' \
-      '-q' 'Stay quiet and do not play beep sounds.'
+      '-q' 'Do not play beep sounds.'
   
     echo -e '\nCOMMANDS'
   else
@@ -27,7 +27,8 @@ show_help () {
 
     echo -e '\nCOMMANDS'
     printf ' %-35s %s\n' \
-      'help' 'Show this help message.'
+      'help' 'Show this help message.' \
+      '' ''
   fi
 
   printf ' %-35s %s\n' \

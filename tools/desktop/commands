@@ -6,11 +6,7 @@ source /opt/stack/utils
 source /opt/stack/desktop/helpers
 source /opt/stack/displays/helpers
 
-SETTINGS_FILE="${CONFIG_HOME}/desktop.json"
-
 # Shows the current status of the desktop environment.
-# Arguments:
-#  None
 # Outputs:
 #  A verbose list of text data.
 show_status () {
@@ -65,13 +61,13 @@ show_status () {
   status="{${status}}"
 
   local query=''
-  query+='OS:          \(.os)\n'
+  query+='System:      \(.os)\n'
   query+='Kernel:      \(.kernel)\n'
   query+='Shell:       \(.shell)\n'
-  query+='Server:      \(.server)\n'
+  query+='Graphics:    \(.server)\n'
   query+='Compositor:  \(.compositor)\n'
-  query+='WM:          \(.wm)\n'
-  query+='Bars:        \(.bars)\n'
+  query+='Windows:     \(.wm)\n'
+  query+='Bars:        \(.bars)\n\n'
   query+='Theme:       \(.theme)\n'
   query+='Icons:       \(.icons)\n'
   query+='Wallpaper:   \(if .wallpaper then .wallpaper else "none" end)'
@@ -81,8 +77,6 @@ show_status () {
 
 # Shows the list of all the wallpapers found under
 # the wallpapers home.
-# Arguments:
-#  None
 # Outputs:
 #  A list of wallpaper data.
 list_wallpapers () {
@@ -98,16 +92,14 @@ list_wallpapers () {
   len="$(count "${wallpapers}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo 'No wallpaper files have found'
-    return 2
+    echo 'No wallpaper files found'
+    return 0
   fi
 
   local query=''
   query+='Name:        \(.name)\n'
-  query+='Type:        \(.type)\n'
-  query+='Color:       \(.color) \(.bit)\n'
-  query+='Size:        \(.size)\n'
-  query+='Resolution:  \(.resolution)'
+  query+='Resolution:  \(.resolution)\n'
+  query+='Size:        \(.size)'
   query="[.[]|\"${query}\"]|join(\"\n\n\")"
 
   echo "${wallpapers}" | jq -cer "${query}" || return 1
@@ -116,21 +108,24 @@ list_wallpapers () {
 # Sets the desktop wallpaper to the wallpaper with the given
 # file name and scale mode.
 # Arguments:
-#  name:    the filename of the wallpaper
-#  mode:    center, fill, max, scale or tile
-#  persist: save or nosave, default is save
+#  name: the filename of the wallpaper
+#  mode: center, fill, max, scale or tile
 set_wallpaper () {
   local name="${1}"
   local mode="${2}"
-  local persist="${3:-"save"}"
 
   if [[ -z "${name}" ]]; then
     pick_wallpaper || return $?
-    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+    name="${REPLY}"
+
+    if [[ -z "${name}" ]]; then
+      echo 'No wallpaper selected'
+      return 2
+    fi 
   fi
 
   if [[ "${name}" =~ /+ ]]; then
-    echo 'Invalid wallpaper name'
+    echo 'Invalid wallpaper file name'
     return 2
   fi
 
@@ -141,7 +136,7 @@ set_wallpaper () {
     echo 'Invalid wallpaper file type'
     return 2
   elif [[ ! -f "${wallpaper_file}" ]]; then
-    echo "No wallpaper found with name ${name}"
+    echo "No wallpaper file ${name} found"
     return 2
   fi
 
@@ -155,7 +150,12 @@ set_wallpaper () {
     modes="[${modes}]"
 
     pick_one 'Select a mode:' "${modes}" vertical || return $?
-    [[ -n "${REPLY}" ]] && mode="${REPLY}" || return 0
+    mode="${REPLY}"
+
+    if [[ -z "${mode}" ]]; then
+      echo 'No wallpaper mode selected'
+      return 2
+    fi
   fi
   
   if [[ ! "${mode}" =~ ^(center|fill|max|scale|tile)$ ]]; then
@@ -170,22 +170,11 @@ set_wallpaper () {
     return 2
   fi
 
-  echo "Wallpaper has been set to ${name}"
+  echo "Wallpaper set to ${name}"
 
   # Save wallpaper into settings file
-  if [[ "${persist}" == "save" ]]; then
-    local settings='{}'
-    local wallpaper="{\"name\": \"${name}\", \"mode\": \"${mode}\"}"
-
-    if [[ -f "${SETTINGS_FILE}" ]]; then
-      settings="$(jq -e ".wallpaper = ${wallpaper} " "${SETTINGS_FILE}")" || return 1
-    else
-      settings="$(echo "{\"wallpaper\": ${wallpaper}}" | jq -e '.')" || return 1
-    fi
-
-    mkdir -p "${CONFIG_HOME}"
-    echo "${settings}" > "${SETTINGS_FILE}"
-  fi
+  save_wallpaper "${name}" "${mode}" ||
+    echo 'Failed to save wallpaper into settings'
 }
 
 # Shows the data of the pointing device with the
@@ -199,7 +188,12 @@ show_pointer () {
 
   if [[ -z "${id}" ]]; then
     pick_pointer || return $?
-    [[ -n "${REPLY}" ]] && id="${REPLY}" || return 0
+    id="${REPLY}"
+
+    if [[ -z "${id}" ]]; then
+      echo 'No pointer id selected'
+      return 2
+    fi
   fi
 
   local pointer=''
@@ -211,22 +205,20 @@ show_pointer () {
   fi
 
   local query=''
-  query+='ID:          \(.id)\n'
-  query+='Name:        \(.name)'
-  query+='\(.node|if . then "\nNode:        \(.)" else "" end)'
-  query+='\(.enabled|if . then "\nEnabled:     \(.)" else "" end)'
-  query+='\(.accel_speed|if . then "\nSpeed:       \(.)" else "" end)'
-  query+='\(.accel|if . then "\nAccel:       \(.)" else "" end)'
-  query+='\(.velocity|if . then "\nVelocity:    \(.)" else "" end)'
-  query+='\(if .const_decel then "\nDecel:       \(.const_decel) \(.adapt_decel)" else "" end)'
+  query+='ID:       \(.id)\n'
+  query+='Name:     \(.name)'
+  query+='\(.node|if . then "\nNode:     \(.)" else "" end)'
+  query+='\(.enabled|if . then "\nEnabled:  \(.)" else "" end)'
+  query+='\(.accel_speed|if . then "\nSpeed:    \(.)" else "" end)'
+  query+='\(.accel|if . then "\nAccel:    \(.)" else "" end)'
+  query+='\(.velocity|if . then "\nVelocity:  \(.)" else "" end)'
+  query+='\(if .const_decel then "\nDecel:    \(.const_decel) \(.adapt_decel)" else "" end)'
 
   echo "${pointer}" | jq -cer "\"${query}\"" || return 1
 }
 
 # Shows the list of pointing devices currently
 # connected to the system.
-# Arguments:
-#  None
 # Outputs:
 #  A list of pointing devices.
 list_pointers () {
@@ -258,19 +250,15 @@ list_pointers () {
 # to the given speed factor, where 0 means slow and 1
 # means fast.
 # Arguments:
-#  factor:  a speed factor between [0, 1]
-#  persist: save or nosave, default is save
+#  factor: a speed factor between [0,1]
 set_pointer_speed () {
   local factor="${1}"
-  local persist="${2:-"save"}"
 
   if [[ -z "${factor}" ]]; then
-    ask 'Enter the speed factor [0,1]:' '^[0-9]+\.?[0-9]*$' || return $?
-    factor="${REPLY}"
-  fi
-
-  if [[ ! "${factor}" =~ ^[0-9]+\.?[0-9]*$ ]]; then
-    echo 'Invalid pointer speed'
+    echo 'Missing speed factor'
+    return 2
+  elif [[ ! "${factor}" =~ ^[0-9]+\.?[0-9]*$ ]]; then
+    echo 'Invalid speed factor'
     return 2
   elif (( $(echo "${factor} < 0" | bc) )); then
     echo 'Speed factor cannot be lower than 0'
@@ -330,20 +318,9 @@ set_pointer_speed () {
 
   echo "Pointer speed set to ${factor}"
 
-  # Save factor into settings file
-  if [[ "${persist}" == "save" ]]; then
-    local settings='{}'
-    local pointer="{\"speed\": ${factor}}"
-
-    if [[ -f "${SETTINGS_FILE}" ]]; then
-      settings="$(jq -e ".pointer = ${pointer} " "${SETTINGS_FILE}")" || return 1
-    else
-      settings="$(echo "{\"pointer\": ${pointer}}" | jq -e '.')" || return 1
-    fi
-
-    mkdir -p "${CONFIG_HOME}"
-    echo "${settings}" > "${SETTINGS_FILE}"
-  fi
+  # Save speed factor into settings file
+  save_pointer_speed_factor "${factor}" ||
+    echo 'Failed to save pointer speed factor into settings'
 }
 
 # Shows the data of the tablet device with the
@@ -357,7 +334,12 @@ show_tablet () {
 
   if [[ -z "${name}" ]]; then
     pick_tablet || return $?
-    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+    name="${REPLY}"
+
+    if [[ -z "${name}" ]]; then
+      echo 'No tablet selected'
+      return 2
+    fi
   fi
 
   local tablet=''
@@ -390,8 +372,6 @@ show_tablet () {
 
 # Shows the list of stylus-pen devices currently
 # connected to the system.
-# Arguments:
-#  None
 # Outputs:
 #  A list of stylus-pen devices.
 list_tablets () {
@@ -424,17 +404,20 @@ list_tablets () {
 # Scales the area of the tablet with the given name,
 # keeping the current aspect ratio.
 # Arguments:
-#  name:    the name of a tablet device
-#  scale:   the scale factor [0.1-1]
-#  persist: save or nosave, default is save
+#  name:  the name of a tablet device
+#  scale: the scale factor [0.1,1]
 scale_tablet () {
   local name="${1}"
   local scale="${2}"
-  local persist="${3:-"save"}"
 
   if [[ -z "${name}" ]]; then
     pick_tablet || return $?
-    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+    name="${REPLY}"
+
+    if [[ -z "${name}" ]]; then
+      echo 'No tablet selected'
+      return 2
+    fi
   fi
 
   local tablet=''
@@ -449,12 +432,10 @@ scale_tablet () {
   fi
 
   if [[ -z "${scale}" ]]; then
-    ask 'Enter the scale factor [0.1-1]:' '^[0-9]+\.?[0-9]*$' || return $?
-    scale="${REPLY}"
-  fi
-
-  if [[ ! "${scale}" =~ ^[0-9]+\.?[0-9]*$ ]]; then
-    echo 'Invalid pointer speed'
+    echo 'Missing scale factor'
+    return 2
+  elif [[ ! "${scale}" =~ ^[0-9]+\.?[0-9]*$ ]]; then
+    echo 'Invalid scale factor'
     return 2
   elif (( $(echo "${scale} <= 0" | bc) )); then
     echo 'Scale cannot be lower or equal to 0'
@@ -494,38 +475,8 @@ scale_tablet () {
   echo "Tablet ${name} scaled by ${scale}"
 
   # Save tablet's scale factor into settings file
-  if [[ "${persist}" == "save" ]]; then
-    local settings='{}'
-    local tablet="{\"name\": \"${name}\", \"scale\": ${scale}}"
-
-    if [[ -f "${SETTINGS_FILE}" ]]; then
-      local tablets=''
-      tablets="$(jq '.tablets|if . then . else empty end' "${SETTINGS_FILE}")"
-
-      if [[ -n "${tablets}" ]]; then
-        local query=''
-        query=".tablets[]|select(.name == \"${name}\")"
-
-        local exists=''
-        exists="$(jq "${query}" "${SETTINGS_FILE}")"
-
-        if [[ -n "${exists}" ]]; then
-          query="(${query}|.scale)|= ${scale}"
-        else
-          query=".tablets += [${tablet}]"
-        fi
-
-        settings="$(jq -e "${query}" "${SETTINGS_FILE}")" || return 1
-      else
-        settings="$(jq -e ".tablets = [${tablet}] " "${SETTINGS_FILE}")" || return 1
-      fi
-    else
-      settings="$(echo "{\"tablets\": [${tablet}]}" | jq -e '.')" || return 1
-    fi
-
-    mkdir -p "${CONFIG_HOME}"
-    echo "${settings}" > "${SETTINGS_FILE}"
-  fi
+  save_tablet_scale_factor "${name}" "${scale}" ||
+    echo 'Failed to save the tablet scale factor'
 }
 
 # Maps the area of the tablet with the given name
@@ -540,7 +491,12 @@ map_tablet () {
 
   if [[ -z "${name}" ]]; then
     pick_tablet || return $?
-    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+    name="${REPLY}"
+
+    if [[ -z "${name}" ]]; then
+      echo 'No tablet selected'
+      return 2
+    fi
   fi
 
   local tablet=''
@@ -556,7 +512,12 @@ map_tablet () {
 
   if [[ -z "${display}" ]]; then
     pick_output 'Select a display:' active || return $?
-    [[ -n "${REPLY}" ]] && display="${REPLY}" || return 0
+    display="${REPLY}"
+
+    if [[ -z "${display}" ]]; then
+      echo 'No display selected'
+      return 2
+    fi
   fi
 
   # Reset mapping and area if desktop is given
@@ -635,43 +596,22 @@ map_tablet () {
 
 # Applies the pointer settings being set in the
 # settings file.
-# Arguments:
-#  None
 init_pointer () {
-  if [[ ! -f "${SETTINGS_FILE}" ]]; then
-    echo 'No pointer settings found'
-    return 0
+  local speed='0.35'
+
+  if [[ -f "${SETTINGS_FILE}" ]]; then
+    speed="$(jq '.pointer.speed|if . then . else 0.35 end' "${SETTINGS_FILE}")"
   fi
 
-  local pointer=''
-  pointer="$(jq '.pointer|if . then . else empty end' "${SETTINGS_FILE}")"
-
-  if [[ -z "${pointer}" ]]; then
-    echo 'No pointer settings found'
-    return 0
-  fi
-
-  local speed=''
-  speed="$(get "${pointer}" '.speed')" || return 1
-
-  set_pointer_speed "${speed}" nosave
-
-  if [[ $? -ne 0 ]]; then
-    echo 'Failed to set pointer speed'
-    return 2
-  fi
-
-  echo 'Pointer speed has been set'
+  set_pointer_speed "${speed}"
 }
 
 # Applies the settings for those tablets being stored
 # in the settings file.
-# Arguments:
-#  None
 init_tablets () {
   if [[ ! -f "${SETTINGS_FILE}" ]]; then
     echo 'No tablets settings found'
-    return 0
+    return 2
   fi
 
   local tablets=''
@@ -679,7 +619,7 @@ init_tablets () {
 
   if [[ -z "${tablets}" ]]; then
     echo 'No tablets settings found'
-    return 0
+    return 2
   fi
 
   local output=''
@@ -688,36 +628,25 @@ init_tablets () {
   tablets="$(echo "${tablets}" | jq -cr '.[]|{name, scale}')" || return 1
 
   # Iterate over tablet commands and execute one by one
-  local failed='false'
   local tablet=''
-
   while read -r tablet; do
     local name=''
-    name="$(get "${tablet}" '.name')"
+    name="$(get "${tablet}" '.name')" || return 1
 
     local scale=1
-    scale="$(get "${tablet}" '.scale')"
+    scale="$(get "${tablet}" '.scale')" || return 1
 
-    scale_tablet "${name}" "${scale}" nosave &&
-    map_tablet "${name}" "${output}" || failed='true'
+    scale_tablet "${name}" "${scale}" &&
+    map_tablet "${name}" "${output}" || return $?
   done <<< "${tablets}"
-
-  if [[ "${failed}" == "true" ]]; then
-    echo 'Failed to set all tablets'
-    return 2
-  fi
-
-  echo 'Tablets have been set'
 }
 
 # Sets the desktop wallpaper to the wallpaper
 # being set in the settings file.
-# Arguments:
-#  None
 init_wallpaper () {
   if [[ ! -f "${SETTINGS_FILE}" ]]; then
     echo 'No wallpaper settings found'
-    return 0
+    return 2
   fi
 
   local wallpaper=''
@@ -725,27 +654,20 @@ init_wallpaper () {
 
   if [[ -z "${wallpaper}" ]]; then
     echo 'No wallpaper settings found'
-    return 0
+    return 2
   fi
 
   local name=''
   name="$(get "${wallpaper}" '.name')" || return 1
 
   if [[ ! -f "${WALLPAPERS_HOME}/${name}" ]]; then
-    echo "Wallpaper ${name} does not exist"
+    echo "Wallpaper ${name} not found"
     return 2
   fi
 
   local mode=''
   mode="$(get "${wallpaper}" '.mode')" || return 1
 
-  set_wallpaper "${name}" "${mode:-"center"}" nosave
-
-  if [[ $? -ne 0 ]]; then
-    echo 'Failed to set the wallpaper'
-    return 2
-  fi
-
-  echo 'Wallpaper has been set'
+  set_wallpaper "${name}" "${mode:-"center"}"
 }
 
