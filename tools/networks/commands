@@ -115,7 +115,7 @@ show_device () {
     name="${REPLY}"
   fi
 
-  if ! validate device "${name}"; then
+  if ! validate_device "${name}"; then
     echo "Network device ${name} not found"
     return 2
   fi
@@ -160,7 +160,7 @@ show_connection () {
     name="${REPLY}"
   fi
 
-  if ! validate connection "${name}"; then
+  if ! validate_connection "${name}"; then
     echo "Connection ${name} not found"
     return 2
   fi
@@ -271,7 +271,7 @@ list_wifis () {
     device="${REPLY}"
   fi
 
-  if ! validate device "${device}"; then
+  if ! validate_device "${device}" wifi; then
     echo "Wifi device ${device} not found"
     return 2
   fi
@@ -327,7 +327,7 @@ up_device () {
     name="${REPLY}"
   fi
 
-  if ! validate device "${name}"; then
+  if ! validate_device "${name}"; then
     echo "Network device ${name} not found"
     return 2
   fi
@@ -359,7 +359,7 @@ up_connection () {
     name="${REPLY}"
   fi
 
-  if ! validate connection "${name}"; then
+  if ! validate_connection "${name}"; then
     echo "Connection ${name} not found"
     return 2
   fi
@@ -391,7 +391,7 @@ down_device () {
     name="${REPLY}"
   fi
 
-  if ! validate device "${name}"; then
+  if ! validate_device "${name}"; then
     echo "Network device ${name} not found"
     return 2
   fi
@@ -423,7 +423,7 @@ down_connection () {
     name="${REPLY}"
   fi
 
-  if ! validate connection "${name}"; then
+  if ! validate_connection "${name}"; then
     echo "Connection ${name} not found"
     return 2
   fi
@@ -456,7 +456,7 @@ remove_device () {
     name="${REPLY}"
   fi
 
-  if ! validate device "${name}"; then
+  if ! validate_device "${name}"; then
     echo "Network device ${name} not found"
     return 2
   fi
@@ -488,7 +488,7 @@ remove_connection () {
     name="${REPLY}"
   fi
 
-  if ! validate connection "${name}"; then
+  if ! validate_connection "${name}"; then
     echo "Connection ${name} not found"
     return 2
   fi
@@ -528,7 +528,7 @@ add_ethernet () {
     device="${REPLY}"
   fi
 
-  if ! validate device "${device}"; then
+  if ! validate_device "${device}" ethernet; then
     echo "Ethernet device ${device} not found"
     return 2
   fi
@@ -605,7 +605,7 @@ add_dhcp () {
     device="${REPLY}"
   fi
 
-  if ! validate device "${device}"; then
+  if ! validate_device "${device}" ethernet; then
     echo "Ethernet device ${device} not found"
     return 2
   fi
@@ -656,7 +656,7 @@ add_wifi () {
     device="${REPLY}"
   fi
   
-  if ! validate device "${device}"; then
+  if ! validate_device "${device}" wifi; then
     echo "Wifi device ${device} not found"
     return 2
   fi

@@ -91,7 +91,7 @@ find_connection () {
     query+='signal: .signal_level'
     query="if (.|length>0 and .[0].frequency) then .[0]|{${query}} else {} end"
 
-    if validate device "${device}" ; then
+    if validate_device "${device}" ; then
       connection="$(iwconfig "${device}" 2> /dev/null | jc --iwconfig |
         jq -cer --argjson c "${connection}" "${query} + \$c")" || return 1
     fi
@@ -134,28 +134,42 @@ find_wifis () {
   echo "[${networks}]"
 }
 
-# Validates if the network object with the given name
+# Validates if the network device with the given name
 # exists and is a valid networking entity.
 # Arguments:
-#  object: device or connection
-#  name:   the name of the object
+#  name: the name of the device
+#  type: ethernet, wifi or bridge
 # Returns:
-#  0 if object is valid otherwise 1.
-validate () {
-  local object="${1}"
-  local name="${2}"
+#  0 if device is valid otherwise 1.
+validate_device () {
+  local name="${1}"
+  local type="${2}"
 
-  if [[ ! "${object}" =~ ^(device|connection)$ ]]; then
-    return 1
+  local query=".[]|select(.device == \"${name}\")"
+
+  if [[ -n "${type}" ]]; then
+    query+="|select(.type == \"${type}\")"
   fi
 
   local result=''
+  result="$(find_devices | jq -cer "${query}")"
 
-  if [[ "${object}" == "device" ]]; then
-    result="$(find_devices | jq -cer ".[]|select(.device == \"${name}\")")"
-  elif [[ "${object}" == "connection" ]]; then
-    result="$(find_connections | jq -cer ".[]|select(.name == \"${name}\")")"
+  if [[ $? -ne 0 ]] || [[ -z "${result}" ]]; then
+    return 1
   fi
+}
+
+# Validates if the connection with the given name
+# exists and is a valid networking entity.
+# Arguments:
+#  name: the name of the connection
+# Returns:
+#  0 if connection is valid otherwise 1.
+validate_connection () {
+  local name="${1}"
+
+  local result=''
+  result="$(find_connections | jq -cer ".[]|select(.name == \"${name}\")")"
 
   if [[ $? -ne 0 ]] || [[ -z "${result}" ]]; then
     return 1
