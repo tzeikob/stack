@@ -5,14 +5,11 @@ set -o pipefail
 source /opt/stack/utils
 source /opt/stack/networks/helpers
 
-SETTINGS_FILE="${CONFIG_HOME}/networks.json"
 SHELLRC_FILE="${HOME}/.bashrc"
 PROXY_ENV_FILE="${HOME}/.config/environment.d/proxy.conf"
 DOCKER_PROXY_FILE='/etc/systemd/system/docker.service.d/http-proxy.conf'
 
 # Shows the current status of the system networking.
-# Arguments:
-#  None
 # Outputs:
 #  A long list of networking data.
 show_status () {
@@ -100,21 +97,26 @@ show_status () {
   done <<< "${connections}"
 }
 
-# Shows the data of the network device with the given name.
+# Shows the data of the network device with
+# the given name.
 # Arguments:
 #  name: the name of a device
 # Outputs:
 #  A long list of device data.
 show_device () {
   local name="${1}"
-
+  
   if [[ -z "${name}" ]]; then
+    on_script_mode &&
+      echo 'Missing network device name' && return 2
+    
     pick_device || return $?
-    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+    require 'Network device name required' || return 2
+    name="${REPLY}"
   fi
 
   if ! validate device "${name}"; then
-    echo 'Invalid or unknown device'
+    echo "Network device ${name} not found"
     return 2
   fi
 
@@ -150,12 +152,16 @@ show_connection () {
   local name="${1}"
 
   if [[ -z "${name}" ]]; then
+    on_script_mode &&
+      echo 'Missing connection name' && return 2
+    
     pick_connection || return $?
-    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+    require 'Connection name required' || return 2
+    name="${REPLY}"
   fi
 
   if ! validate connection "${name}"; then
-    echo 'Invalid or unknown connection'
+    echo "Connection ${name} not found"
     return 2
   fi
 
@@ -187,8 +193,6 @@ show_connection () {
 }
 
 # Shows the list of networking devices.
-# Arguments:
-#  None
 # Outputs:
 #  A list of network devices.
 list_devices () {
@@ -219,8 +223,6 @@ list_devices () {
 }
 
 # Shows the list of networking connections.
-# Arguments:
-#  None
 # Outputs:
 #  A list of network connections.
 list_connections () {
@@ -228,7 +230,7 @@ list_connections () {
   connections="$(find_connections)"
 
   if [[ $? -ne 0 ]]; then
-    echo 'Unable to read network connections'
+    echo 'Unable to read connections'
     return 2
   fi
 
@@ -236,7 +238,7 @@ list_connections () {
   len="$(count "${connections}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo 'No network connections have found'
+    echo 'No connections have found'
     return 0
   fi
 
@@ -261,12 +263,16 @@ list_wifis () {
   local signal="${2:-"0"}"
 
   if [[ -z "${device}" ]]; then
+    on_script_mode &&
+      echo 'Missing wifi device name' && return 2
+    
     pick_device wifi || return $?
-    [[ -n "${REPLY}" ]] && device="${REPLY}" || return 0
+    require 'Wifi device name required' || return 2
+    device="${REPLY}"
   fi
 
   if ! validate device "${device}"; then
-    echo 'Invalid or unknown device'
+    echo "Wifi device ${device} not found"
     return 2
   fi
 
@@ -292,7 +298,7 @@ list_wifis () {
   len="$(count "${networks}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo 'No wifi networks have been detected'
+    echo 'No wifi networks detected'
     return 0
   fi
 
@@ -306,116 +312,165 @@ list_wifis () {
   echo "${networks}" | jq -cer "${query}" || return 1
 }
 
-# Enables the device or connection with the given name.
-# Arguments:
-#  object: device or connection
-#  name:   the name of a device or connection
-up () {
-  local object="${1}"
-  local name="${2}"
-
-  if [[ -z "${name}" ]]; then
-    if [[ "${object}" == "device" ]]; then
-      pick_device || return $?
-    elif [[ "${object}" == "connection" ]]; then
-      pick_connection || return $?
-    else
-      echo 'Invalid or unknown network object'
-      return 2
-    fi
-
-    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
-  fi
-
-  if ! validate "${object}" "${name}"; then
-    echo 'Invalid or unknown network object'
-    return 2
-  fi
-
-  echo "Enabling ${object} ${name}..."
-
-  if [[ "${object}" == "device" ]]; then
-    nmcli device connect "${name}" &> /dev/null
-  elif [[ "${object}" == "connection" ]]; then
-    nmcli connection up "${name}" --ask
-  fi
-
-  if [[ $? -ne 0 ]]; then
-    echo "Failed to enable ${object}"
-    return 2
-  fi
-
-  echo "${object^} ${name} has been enabled"
-}
-
-# Disables the device or connection with the given name.
-# Arguments:
-#  object: device or connection
-#  name:   the name of a device or connection
-down () {
-  local object="${1}"
-  local name="${2}"
-
-  if [[ -z "${name}" ]]; then
-    if [[ "${object}" == "device" ]]; then
-      pick_device || return $?
-    elif [[ "${object}" == "connection" ]]; then
-      pick_connection || return $?
-    else
-      echo 'Invalid or unknown network object'
-      return 2
-    fi
-
-    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
-  fi
-
-  if ! validate "${object}" "${name}"; then
-    echo 'Invalid or unknown network object'
-    return 2
-  fi
-
-  echo "Disabling ${object} ${name}..."
-
-  if [[ "${object}" == "device" ]]; then
-    nmcli device disconnect "${name}" &> /dev/null
-  elif [[ "${object}" == "connection" ]]; then
-    nmcli connection down "${name}" &> /dev/null
-  fi
-
-  if [[ $? -ne 0 ]]; then
-    echo "Failed to disable ${object}"
-    return 2
-  fi
-
-  echo "${object^} ${name} has been disabled"
-}
-
-# Removes the software device with the given name.
+# Enables the device with the given name.
 # Arguments:
 #  name: the name of a device
+up_device () {
+  local name="${1}"
+
+  if [[ -z "${name}" ]]; then
+    on_script_mode &&
+      echo 'Missing network device name' && return 2
+    
+    pick_device || return $?
+    require 'Network device name required' || return 2
+    name="${REPLY}"
+  fi
+
+  if ! validate device "${name}"; then
+    echo "Network device ${name} not found"
+    return 2
+  fi
+
+  echo "Enabling network device ${name}..."
+
+  nmcli device connect "${name}" &> /dev/null
+
+  if [[ $? -ne 0 ]]; then
+    echo 'Failed to enable network device'
+    return 2
+  fi
+
+  echo "Network device ${name} enabled"
+}
+
+# Enables the connection with the given name.
+# Arguments:
+#  name: the name of a connection
+up_connection () {
+  local name="${1}"
+
+  if [[ -z "${name}" ]]; then
+    on_script_mode &&
+      echo 'Missing connection name' && return 2
+    
+    pick_connection || return $?
+    require 'Connection name required' || return 2
+    name="${REPLY}"
+  fi
+
+  if ! validate connection "${name}"; then
+    echo "Connection ${name} not found"
+    return 2
+  fi
+
+  echo "Enabling connection ${name}..."
+
+  nmcli connection up "${name}" --ask
+
+  if [[ $? -ne 0 ]]; then
+    echo 'Failed to enable connection'
+    return 2
+  fi
+
+  echo "Connection ${name} enabled"
+}
+
+# Disables the device with the given name.
+# Arguments:
+#  name: the name of a device
+down_device () {
+  local name="${1}"
+
+  if [[ -z "${name}" ]]; then
+    on_script_mode &&
+      echo 'Missing network device name' && return 2
+    
+    pick_device || return $?
+    require 'Network device name required' || return 2
+    name="${REPLY}"
+  fi
+
+  if ! validate device "${name}"; then
+    echo "Network device ${name} not found"
+    return 2
+  fi
+
+  echo "Disabling network device ${name}..."
+
+  nmcli device disconnect "${name}" &> /dev/null
+
+  if [[ $? -ne 0 ]]; then
+    echo 'Failed to disable network device'
+    return 2
+  fi
+
+  echo "Network device ${name} disabled"
+}
+
+# Disables the connection with the given name.
+# Arguments:
+#  name: the name of a connection
+down_connection () {
+  local name="${1}"
+
+  if [[ -z "${name}" ]]; then
+    on_script_mode &&
+      echo 'Missing connection name' && return 2
+    
+    pick_connection || return $?
+    require 'Connection name required' || return 2
+    name="${REPLY}"
+  fi
+
+  if ! validate connection "${name}"; then
+    echo "Connection ${name} not found"
+    return 2
+  fi
+
+  echo "Disabling connection ${name}..."
+
+  nmcli connection down "${name}" &> /dev/null
+
+  if [[ $? -ne 0 ]]; then
+    echo 'Failed to disable connection'
+    return 2
+  fi
+
+  echo "Connection ${name} disabled"
+}
+
+# Removes the software network device with
+# the given name.
+# Arguments:
+#  name: the name of a network device
 remove_device () {
   local name="${1}"
 
   if [[ -z "${name}" ]]; then
+    on_script_mode &&
+      echo 'Missing network device name' && return 2
+    
     pick_device || return $?
-    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+    require 'Network device name required' || return 2
+    name="${REPLY}"
   fi
 
   if ! validate device "${name}"; then
-    echo 'Invalid or unknown device'
+    echo "Network device ${name} not found"
     return 2
   fi
 
-  echo "Removing device ${name}..."
+  echo "Removing network device ${name}..."
 
   nmcli device delete "${name}" &> /dev/null
 
   if [[ $? -ne 0 ]]; then
-    echo 'Failed to remove device'
+    echo 'Failed to remove network device'
     return 2
   fi
 
-  echo "Device ${name} has been removed"
+  echo "Network device ${name} removed"
 }
 
 # Removes the connection with the given name.
@@ -425,12 +480,16 @@ remove_connection () {
   local name="${1}"
 
   if [[ -z "${name}" ]]; then
+    on_script_mode &&
+      echo 'Missing connection name' && return 2
+    
     pick_connection || return $?
-    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+    require 'Connection name required' || return 2
+    name="${REPLY}"
   fi
 
   if ! validate connection "${name}"; then
-    echo 'Invalid or unknown connection'
+    echo "Connection ${name} not found"
     return 2
   fi
 
@@ -443,99 +502,187 @@ remove_connection () {
     return 2
   fi
 
-  echo "Connection ${name} has been removed"
+  echo "Connection ${name} removed"
 }
 
-# Adds a new ethernet connection.
+# Adds a new ethernet connection with static ip address.
 # Arguments:
-#  None
-add_ethernet_connection () {
-  ask 'Enter the connection name:' '.+' || return $?
-  local name="${REPLY}"
+#  device:  the name of ethernet device
+#  name:    the name of the connection
+#  ip:      the static ip address
+#  gateway: the gateway ip address
+#  dns:     comma separated dns servers
+add_ethernet () {
+  local device="${1}"
+  local name="${2}"
+  local ip="${3}"
+  local gateway="${4}"
+  local dns="${5}"
+
+  if [[ -z "${device}" ]]; then
+    on_script_mode &&
+      echo 'Missing ethernet device name' && return 2
+  
+    pick_device ethernet || return $?
+    require 'Ethernet device name required' || return 2
+    device="${REPLY}"
+  fi
+
+  if ! validate device "${device}"; then
+    echo "Ethernet device ${device} not found"
+    return 2
+  fi
+
+  if [[ -z "${name}" ]]; then
+    on_script_mode &&
+      echo 'Missing connection name' && return 2
+
+    ask 'Enter a connection name:' || return $?
+    require 'Connection name required' || return 2
+    name="${REPLY}"
+  fi
 
   if find_connection "${name}" &> /dev/null; then
     echo "Connection ${name} already exists"
     return 2
   fi
 
-  local device=''
-  pick_device ethernet || return $?
-  [[ -n "${REPLY}" ]] && device="${REPLY}" || return 0
+  if [[ -z "${ip}" ]]; then
+    on_script_mode &&
+      echo 'Missing static ip address' && return 2
 
-  local dhcp=''
-  confirm 'Want to enable DHCP mode?' || return $?
-  [[ -n "${REPLY}" ]] && dhcp="${REPLY}" || return 0
+    ask 'Enter static ip address:' || return $?
+    require 'Static ip address required' || return 2
+    ip="${REPLY}"
+  fi
+
+  if [[ -z "${gateway}" ]]; then
+    on_script_mode &&
+      echo 'Missing gateway address' && return 2
+
+    ask 'Enter gateway address:' || return $?
+    require 'Gateway address required' || return 2
+    gateway="${REPLY}"
+  fi
+
+  if [[ -z "${dns}" ]]; then
+    on_script_mode &&
+      echo 'Missing dns servers' && return 2
+
+    ask 'Enter dns servers:' || return $?
+    require 'Primary dns server required' || return 2
+    dns="${REPLY}"
+  fi
 
   echo "Creating ethernet connection ${name}..."
 
-  if [[ "${dhcp}" == "yes" ]]; then
-    nmcli connection add type ethernet \
-      con-name "${name}" ifname "${device}" ipv4.method auto
-  else
-    local re='^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$'
-
-    ask 'Enter the static ip:' "${re}" || return $?
-    local ip="${REPLY}"
-
-    ask 'Enter the gateway:' "${re}" || return $?
-    local gateway="${REPLY}"
-
-    ask 'Enter the primary DNS:' "${re}" || return $?
-    local dns="${REPLY}"
-
-    ask 'Enter the secondary DNS:' "${re}" || return $?
-    dns="${dns} ${REPLY}"
-
-    nmcli connection add type ethernet \
-      con-name "${name}" ifname "${device}" ipv4.method "manual" \
-      ipv4.addresses "${ip}/24" ipv4.gateway "${gateway}" ipv4.dns "${dns}"
-  fi
+  nmcli connection add type ethernet \
+    con-name "${name}" ifname "${device}" ipv4.method "manual" \
+    ipv4.addresses "${ip}/24" ipv4.gateway "${gateway}" ipv4.dns "${dns}"
 
   if [[ $? -ne 0 ]]; then
     echo 'Failed to create ethernet connection'
     return 2
   fi
 
-  echo "Ethernet connection ${name} has been created"
+  echo "Ethernet connection ${name} created"
+}
+
+# Adds a new dhcp ethernet connection.
+# Arguments:
+#  device: the name of ethernet device
+#  name:   the name of the connection
+add_dhcp () {
+  local device="${1}"
+  local name="${2}"
+
+  if [[ -z "${device}" ]]; then
+    on_script_mode &&
+      echo 'Missing ethernet device name' && return 2
+  
+    pick_device ethernet || return $?
+    require 'Ethernet device name required' || return 2
+    device="${REPLY}"
+  fi
+
+  if ! validate device "${device}"; then
+    echo "Ethernet device ${device} not found"
+    return 2
+  fi
+
+  if [[ -z "${name}" ]]; then
+    on_script_mode &&
+      echo 'Missing connection name' && return 2
+
+    ask 'Enter a connection name:' || return $?
+    require 'Connection name required' || return 2
+    name="${REPLY}"
+  fi
+
+  if find_connection "${name}" &> /dev/null; then
+    echo "Connection ${name} already exists"
+    return 2
+  fi
+
+  echo "Creating ethernet dhcp connection ${name}..."
+
+  nmcli connection add type ethernet \
+    con-name "${name}" ifname "${device}" ipv4.method auto
+  
+  if [[ $? -ne 0 ]]; then
+    echo 'Failed to create ethernet dhcp connection'
+    return 2
+  fi
+
+  echo "Ethernet dhcp connection ${name} created"
 }
 
 # Adds a wifi connection to wireless network.
 # Arguments:
-#  None
-add_wifi_connection () {
-  local device=''
-  pick_device wifi || return $?
-  [[ -n "${REPLY}" ]] && device="${REPLY}" || return 0
+#  device: the wifi device
+#  ssid:   the wifi network id
+#  secret: the private key of the wifi network
+add_wifi () {
+  local device="${1}"
+  local ssid="${2}"
+  local secret="${3}"
 
-  echo 'Detecting available wifi networks...'
+  if [[ -z "${device}" ]]; then
+    on_script_mode &&
+      echo 'Missing wifi device name' && return 2
 
-  local networks=''
-  networks="$(find_wifis "${device}")" || return 1
-
-  local len=0
-  len="$(count "${networks}")" || return 1
-
-  if [[ ${len} -eq 0 ]]; then
-    echo 'No wifi networks have been detected'
-    return 0
+    pick_device wifi || return $?
+    require 'Wifi device name required' || return 2
+    device="${REPLY}"
+  fi
+  
+  if ! validate device "${device}"; then
+    echo "Wifi device ${device} not found"
+    return 2
   fi
 
-  local query='{key: .ssid, value: "[\(.signal)] \(.ssid)"}'
-  query="[.[]|${query}]"
+  if [[ -z "${ssid}" ]]; then
+    on_script_mode &&
+      echo 'Missing network ssid' && return 2
 
-  networks="$(echo "${networks}" | jq -cer "${query}")" || return 1
+    pick_wifi "${device}" || return $?
+    require 'Network ssid required' || return 2
+    ssid="${REPLY}"
+  fi
 
-  local ssid=''
-  pick_one 'Select a wifi network:' "${networks}" vertical || return $?
-  [[ -n "${REPLY}" ]] && ssid="${REPLY}" || return 0
+  if [[ -z "${secret}" ]]; then
+    on_script_mode &&
+      echo 'Missing private key' && return 2
 
-  ask_secret 'Enter the private key:' || return $?
-  local key="${REPLY}"
+    ask_secret 'Enter private key:' || return $?
+    require 'Private key required' || return 2
+    secret="${REPLY}"
+  fi
 
   echo "Connecting to network ${ssid}..."
 
   local result=''
-  result="$(nmcli device wifi connect "${ssid}" password "${key}" \
+  result="$(nmcli device wifi connect "${ssid}" password "${secret}" \
     ifname "${device}" hidden yes 2> /dev/null)"
   
   if [[ $? -ne 0 ]] || [[ "${result}" =~ (E|e)rror ]]; then
@@ -543,18 +690,30 @@ add_wifi_connection () {
     return 2
   fi
 
-  echo "Connection to ${ssid} has been established"
+  echo "Connection to ${ssid} established"
 }
 
-# Adds a new vpn connection.
+# Adds a new vpn connection from the given ovpn file.
 # Arguments:
-#  None
-add_vpn_connection () {
-  ask 'Enter the path to ovpn file:' '^/.+' || return $?
-  local file_path="${REPLY}"
+#  file_path: the ovpn file path
+#  username:  the user name
+#  password:  the user password
+add_vpn () {
+  local file_path="${1}"
+  local username="${2}"
+  local password="${3}"
+
+  if [[ -z "${file_path}" ]]; then
+    on_script_mode &&
+      echo 'Missing ovpn file path' && return 2
+      
+    ask 'Enter path to ovpn file:' || return $?
+    require 'Ovpn file path required' || return 2
+    file_path="${REPLY}"
+  fi
 
   if [[ ! -f "${file_path}" ]]; then
-    echo "Invalid or unknown ${file_path} file"
+    echo "Ovpn file ${file_path} not found"
     return 2
   fi
 
@@ -567,11 +726,28 @@ add_vpn_connection () {
     return 2
   fi
 
-  ask 'Enter the username:' '.+' || return $?
-  local username="${REPLY}"
+  if find_connection "${name}" &> /dev/null; then
+    echo "Connection ${name} already exists"
+    return 2
+  fi
 
-  ask_secret 'Enter the password:' '.+' || return $?
-  local password="${REPLY}"
+  if [[ -z "${username}" ]]; then
+    on_script_mode &&
+      echo 'Missing the username' && return 2
+
+    ask 'Enter the username:' || return $?
+    require 'Username required' || return 2
+    username="${REPLY}"
+  fi
+
+  if [[ -z "${password}" ]]; then
+    on_script_mode &&
+      echo 'Missing password' && return 2
+
+    ask_secret 'Enter the password:' || return $?
+    require 'Password required' || return 2
+    password="${REPLY}"
+  fi
 
   echo "Creating VPN connection ${name}..."
 
@@ -585,86 +761,82 @@ add_vpn_connection () {
   nmcli connection modify "${name}" +vpn.data username="${username}" || return 1
   nmcli connection modify "${name}" +vpn.secrets password="${password}" || return 1
 
-  echo "VPN connection ${name} has been created"
+  echo "VPN connection ${name} created"
 }
 
-# Adds a new proxy profile with the given host,
-# port and authentication info.
+# Adds a new proxy profile with the given name.
 # Arguments:
-#  name: the name of the proxy profile
+#  name:     the name of the proxy profile
+#  host:     the host of the proxy server
+#  port:     the port of the proxy server
+#  username: the user name
+#  password: the password
+#  no_proxy: the hosts to ignore proxy
 add_proxy () {
   local name="${1}"
-
+  local host="${2}"
+  local port="${3}"
+  local username="${4}"
+  local password="${5}"
+  local no_proxy="${6}"
+  
   if [[ -z "${name}" ]]; then
-    echo 'Missing the proxy profile name'
+    on_script_mode &&
+      echo 'Missing proxy profile name' && return 2
+    
+    ask 'Enter a proxy profile name:' || return $?
+    require 'Proxy profile name required' || return 2
+    name="${REPLY}"
+  fi
+
+  if exists_proxy_profile "${name}"; then
+    echo "Proxy profile ${name} already exists"
     return 2
   fi
 
-  if [[ -f "${SETTINGS_FILE}" ]]; then
-    local query=''
-    query+=".proxies|if . then .[]|select(.name == \"${name}\") else empty end"
-  
-    local exists=''
-    exists="$(jq -cr "${query}" "${SETTINGS_FILE}")" || return 1
+  if [[ -z "${host}" ]]; then
+    on_script_mode &&
+      echo 'Missing proxy host server' && return 2
+    
+    ask 'Enter proxy host server:' || return $?
+    require 'Proxy host server required' || return 2
+    host="${REPLY}"
+  fi
 
-    if [[ -n "${exists}" ]]; then
-      echo "Proxy profile ${name} already exists"
-      return 2
+  if [[ -z "${port}" ]]; then
+    on_script_mode &&
+      echo 'Missing proxy server port' && return 2
+    
+    ask 'Enter proxy server port:' || return $?
+    require 'Proxy server port required' || return 2
+    port="${REPLY}"
+  fi
+
+  if ! on_script_mode; then
+    if [[ -z "${username}" ]]; then
+      ask 'Enter the username [optional]:' || return $?
+      username="${REPLY}"
+    fi
+    
+    if [[ -z "${password}" ]]; then
+      ask_secret 'Enter the password [optional]:' || return $?
+      password="${REPLY}"
+    fi
+    
+    if [[ -z "${no_proxy}" ]]; then
+      ask 'Enter no proxy hosts [optional]:' || return $?
+      no_proxy="${REPLY}"
+    fi
+
+    if [[ -n "${no_proxy}" ]]; then
+      local query='[split(",")|.[]|if . and .!="" then . else empty end]'
+      no_proxy="$(echo "\"${no_proxy}\"" | jq -cer "${query}")" || return 1
     fi
   fi
 
-  ask 'Enter the host:' '.+' || return $?
-  local host="${REPLY}"
-
-  ask 'Enter the port:' '^[0-9]+$' || return $?
-  local port="${REPLY}"
-
-  confirm 'Is this an authenticated proxy?' || return $?
-  [[ -z "${REPLY}" ]] && return 0
-
-  if [[ "${REPLY}" == "yes" ]]; then
-    ask 'Enter the username:' '.+' || return $?
-    local username="${REPLY}"
-
-    ask_secret 'Enter the password:' '.+' || return $?
-    local password="${REPLY}"
-  fi
-
-  local no_proxy='[]'
-  confirm 'Want to set no proxy hosts?' || return $?
-  [[ -z "${REPLY}" ]] && return 0
-
-  if [[ "${REPLY}" == "yes" ]]; then
-    ask 'Enter no proxy hosts:' '.*' || return $?
-
-    local query='[split(" ")|.[]|if . and .!="" then . else empty end]'
-    no_proxy="$(echo "\"${REPLY}\"" | jq -cer "${query}")" || return 1
-  fi
-
-  local proxy=''
-  proxy+="\"name\": \"${name}\","
-  proxy+="\"host\": \"${host}\","
-  proxy+="\"port\": \"${port}\","
-  proxy+="\"no_proxy\": ${no_proxy}"
-
-  if [[ -n "${username}" ]]; then
-    proxy+=",\"username\": \"${username}\""
-    proxy+=",\"password\": \"${password}\""
-  fi
-
-  proxy="{${proxy}}"
-
-  local settings='{}'
-  if [[ -f "${SETTINGS_FILE}" ]]; then
-    settings="$(jq -e ".proxies += [${proxy}]" "${SETTINGS_FILE}")" || return 1
-  else
-    settings="$(echo "{\"proxies\": [${proxy}]}" | jq -e '.')" || return 1
-  fi
-
-  mkdir -p "${CONFIG_HOME}"
-  echo "${settings}" > "${SETTINGS_FILE}"
-  
-  echo "Proxy profile ${name} has been added"
+  save_proxy "${name}" "${host}" "${port}" "${username}" "${password}" "${no_proxy}"
+    
+  echo "Proxy profile ${name} added"
 }
 
 # Removes the proxy profile with the given name.
@@ -673,21 +845,27 @@ add_proxy () {
 remove_proxy () {
   local name="${1}"
 
-  if [[ ! -f "${SETTINGS_FILE}" ]]; then
-    echo 'No proxy profiles have found'
-    return 0
+  if [[ -z "${name}" ]]; then
+    on_script_mode &&
+      echo 'Missing proxy profile name' && return 2
+
+    pick_proxy || return $?
+    require 'Proxy profile name required' || return 2
+    name="${REPLY}"
   fi
 
-  if [[ -z "${name}" ]]; then
-    pick_proxy || return $?
-    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+  if [[ ! -f "${SETTINGS_FILE}" ]]; then
+    echo 'No proxy profiles found'
+    return 2
   fi
+
+  local query=".proxies|if . then .[]|select(.name == \"${name}\") else empty end"
 
   local exists=''
-  exists="$(jq ".proxies|if . then .[]|select(.name == \"${name}\") else empty end" "${SETTINGS_FILE}")"
+  exists="$(jq "${query}" "${SETTINGS_FILE}")"
 
   if [[ -z "${exists}" ]]; then
-    echo "Cannot find proxy profile ${name}"
+    echo "Proxy profile ${name} not found"
     return 2
   fi
 
@@ -701,13 +879,11 @@ remove_proxy () {
 
   echo "${settings}" > "${SETTINGS_FILE}"
   
-  echo "Proxy profile ${name} has been deleted"
+  echo "Proxy profile ${name} deleted"
 }
 
 # Shows the list of all proxy profiles stored in the
 # settings file.
-# Arguments:
-#  None
 # Outputs:
 #  A list of proxy profiles.
 list_proxies () {
@@ -744,22 +920,28 @@ list_proxies () {
 #  name: the name of a proxy profile
 set_proxy () {
   local name="${1}"
+  
+  if [[ -z "${name}" ]]; then
+    on_script_mode &&
+      echo 'Missing proxy profile name' && return 2
+
+    pick_proxy || return $?
+    require 'Proxy profile name required' || return 2
+    name="${REPLY}"
+  fi
 
   if [[ ! -f "${SETTINGS_FILE}" ]]; then
     echo 'No proxy profiles have found'
     return 2
   fi
 
-  if [[ -z "${name}" ]]; then
-    pick_proxy || return $?
-    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
-  fi
+  local query=".proxies|if . then .[]|select(.name == \"${name}\") else empty end"
 
   local proxy=''
-  proxy="$(jq ".proxies|if . then .[]|select(.name == \"${name}\") else empty end" "${SETTINGS_FILE}")"
+  proxy="$(jq "${query}" "${SETTINGS_FILE}")"
 
   if [[ -z "${proxy}" ]]; then
-    echo "Cannot find proxy profile ${name}"
+    echo "Proxy profile ${name} not found"
     return 2
   fi
 
@@ -773,6 +955,8 @@ set_proxy () {
 
   local no_proxy=''
   no_proxy="$(echo "${proxy}" | jq -cer '[.no_proxy][]|join(",")')" || return 1
+
+  echo "Setting proxy server ${uri}..."
 
   mkdir -p "${HOME}/.config/environment.d"
 
@@ -868,9 +1052,9 @@ set_proxy () {
 
 # Reverts any proxy settings have been applied to
 # the system.
-# Arguments:
-#  None
 unset_proxy () {
+  echo 'Unsetting proxy server...'
+
   rm -f "${PROXY_ENV_FILE}" &&
   sed -i "\|source \"${PROXY_ENV_FILE}\"|d" "${SHELLRC_FILE}" ||
     echo 'Failed to unset environment proxy variables'
@@ -924,10 +1108,10 @@ power_network () {
   local mode="${1}"
 
   if [[ -z "${mode}" ]]; then
-    echo 'Missing mode value'
+    echo 'Missing network power mode'
     return 2
   elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
-    echo 'Invalid mode value'
+    echo 'Invalid network power mode'
     return 2
   fi
 
@@ -950,10 +1134,10 @@ power_wifi () {
   local mode="${1}"
 
   if [[ -z "${mode}" ]]; then
-    echo 'Missing mode value'
+    echo 'Missing wifi power mode'
     return 2
   elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
-    echo 'Invalid mode value'
+    echo 'Invalid wifi power mode'
     return 2
   fi
 

@@ -17,42 +17,47 @@ show_help () {
     echo 'Usage: networks [OPTIONS] COMMAND [OBJECT] [ARGUMENTS]...'
     
     echo -e '\nOPTIONS'
-    printf ' %-10s %s\n' \
+    printf ' %-8s %s\n' \
       '-h' 'Show this help message.' \
-      '-q' 'Stay quiet and do not play beep sounds.'
+      '-q' 'Do not play beep sounds.' \
+      '-s' 'Run on script mode'
   
     echo -e '\nCOMMANDS'
   else
     echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
 
     echo -e '\nCOMMANDS'
-    printf ' %-36s %s\n' \
-      'help' 'Show this help message.'
+    printf ' %-65s %s\n' \
+      'help' 'Show this help message.' \
+      '' ''
   fi
 
-  printf ' %-36s %s\n' \
+  printf ' %-65s %s\n' \
     'show status' 'Show the current status of networking.' \
-    'show device [<name>]' 'Show the data of a device.' \
-    'show connection [<name>]' 'Show the data of a connection.' \
+    'show device <name>' 'Show the data of a device.' \
+    'show connection <name>' 'Show the data of a connection.' \
     '' '' \
     'list devices' 'List the network devices.' \
     'list connections' 'List the network connections.' \
-    'list wifis [<device>] [<signal>]' 'Detect wifi networks with a min signal.' \
+    'list wifis <device> <signal>' 'Detect wifi networks with a min signal.' \
     '' '' \
-    'up device [<name>]' 'Enable a network device.' \
-    'down device [<name>]' 'Disable a network device.' \
-    'remove device [<name>]' 'Remove a software network device.' \
+    'up device <name>' 'Enable a network device.' \
+    'down device <name>' 'Disable a network device.' \
+    'remove device <name>' 'Remove a software network device.' \
     '' '' \
-    'up connection [<name>]' 'Enable a connection.' \
-    'down connection [<name>]' 'Disable a connection.' \
-    'add connection eth|wifi|vpn' 'Add an ethernet, wifi or vpn connection.' \
-    'remove connection [<name>]' 'Remove a connection.' \
+    'add ethernet <device> <name> <ip> <gate> <dns>' 'Add a static ethernet connection.' \
+    'add dhcp <device> <name>' 'Add a dhcp ethernet connection.' \
+    'add wifi <device> <ssid> <secret>' 'Add a wifi connection.' \
+    'add vpn <ovpn-file> <username> <password>' 'Add a vpn connection.' \
+    'up connection <name>' 'Enable a connection.' \
+    'down connection <name>' 'Disable a connection.' \
+    'remove connection <name>' 'Remove a connection.' \
     '' '' \
-    'add proxy <name>' 'Add a new proxy server profile.' \
-    'remove proxy [<name>]' 'Remove a proxy server profile.' \
+    'add proxy <name> <host> <port> <username> <password> <no-proxy>' 'Add a new proxy server profile.' \
+    'remove proxy <name>' 'Remove a proxy server profile.' \
     'list proxies' 'List all proxy server profiles.' \
-    'set proxy [<name>]' 'Applies proxy server settings.' \
-    'unset proxy' 'Disables proxy server settings.' \
+    'set proxy <name>' 'Applies proxy server settings.' \
+    'unset proxy' 'Disables any proxy server settings.' \
     '' '' \
     'power network on|off' 'Set the system network to on or off.' \
     'power wifi on|off' 'Set the wifi device to on or off.'
@@ -61,12 +66,13 @@ show_help () {
 run () {
   local opt=''
 
-  while getopts ':hq' opt; do
+  while getopts ':hqs' opt; do
     case "${opt}" in
      'h')
         show_help once
         return 0;;
      'q') QUIET='true';;
+     's') ON_SCRIPT_MODE='true';;
      *)
       echo "Ooops, invalid or unknown option -${OPTARG}!"
       $(exit 2) || beep
@@ -117,14 +123,15 @@ run () {
       'list proxies') list_proxies;;
       'power network') power_network "${args[2]}" && beep;;
       'power wifi') power_wifi "${args[2]}" && beep;;
-      'up device') up device "${args[2]}" && beep;;
-      'down device') down device "${args[2]}" && beep;;
-      'up connection') up connection "${args[2]}" && beep;;
-      'down connection') down connection "${args[2]}" && beep;;
-      'add connection eth') add_ethernet_connection && beep;;
-      'add connection wifi') add_wifi_connection && beep;;
-      'add connection vpn') add_vpn_connection && beep;;
-      'add proxy') add_proxy "${args[2]}" && beep;;
+      'up device') up_device "${args[2]}" && beep;;
+      'down device') down_device "${args[2]}" && beep;;
+      'up connection') up_connection "${args[2]}" && beep;;
+      'down connection') down_connection "${args[2]}" && beep;;
+      'add ethernet') add_ethernet "${args[2]}" "${args[3]}" "${args[4]}" "${args[5]}" "${args[6]}" && beep;;
+      'add dhcp') add_dhcp "${args[2]}" "${args[3]}" && beep;;
+      'add wifi') add_wifi "${args[2]}" "${args[3]}" "${args[4]}" && beep;;
+      'add vpn') add_vpn "${args[2]}" "${args[3]}" "${args[4]}" && beep;;
+      'add proxy') add_proxy "${args[2]}" "${args[3]}" "${args[4]}" "${args[5]}" "${args[6]}" "${args[7]}" && beep;;
       'remove device') remove_device "${args[2]}" && beep;;
       'remove connection') remove_connection "${args[2]}" && beep;;
       'remove proxy') remove_proxy "${args[2]}" && beep;;

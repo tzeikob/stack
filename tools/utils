@@ -107,21 +107,21 @@ prompt () {
 #  re:     an optional regular expression
 # Outputs:
 #  A prompt text line.
+# Returns:
+#  1 if optional validation failed otherwise 0.
 ask () {
   local prompt="${1}"
   local re="${2}"
 
   REPLY=''
 
-  if [[ -n "${re}" ]]; then
-    read -rep "${prompt} " REPLY
+  read -rep "${prompt} " REPLY
 
-    while [[ ! "${REPLY}" =~ ${re} ]]; do
-      read -rep 'Please enter a valid value: ' REPLY
-    done
-  else
-    read -rep "${prompt} " REPLY
+  if [[ -n "${re}" ]] && [[ ! "${REPLY}" =~ ${re} ]]; then
+    return 1
   fi
+
+  return 0
 }
 
 # Asks the user to enter a secret value, the answer is
@@ -436,5 +436,34 @@ beep () {
   fi
 
   return ${exit_code}
+}
+
+# Checks if we run on script mode or not by checking
+# if the flag ON_SCRIPT_MODE has been set indicating
+# the call was made by a not human.
+# Returns:
+#  0 if run on script mode otherwise 1.
+on_script_mode () {
+  if [[ -n "${ON_SCRIPT_MODE}" ]] && [[ "${ON_SCRIPT_MODE}" == "true" ]]; then
+    return 0
+  fi
+
+  return 1
+}
+
+# Checks if there is user input kept in the global variable
+# REPLY and if there is not, print the given error message
+# returning with a none-zero exit code.
+# Arguments:
+#  message: an error message to print
+# Returns:
+#  0 if check succeeds otherwise a none-zero code.
+require () {
+  local message="${1:-"User input is required"}"
+
+  if [[ -z "${REPLY}" ]]; then
+    echo "${message}"
+    return 2
+  fi
 }
 
