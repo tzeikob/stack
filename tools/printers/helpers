@@ -235,6 +235,36 @@ pick_printer () {
   pick_one 'Select a printer:' "${destinations}" vertical || return $?
 }
 
+# Shows a menu asking the user to select a uri print destination
+# where the answer is kept in the global var REPLY.
+# Outputs:
+#  A menu of uri print destinations.
+pick_uri () {
+  echo 'Discovering print uri destinations...'
+
+  local query=''
+  query+='{key: .uri, value: "\(.uri)\(.name|if (. and . != "") then " [\(.)]" else "" end)"}'
+  query="[.[]|${query}]"
+
+  local destinations=''
+  destinations="$(discover_destinations | jq -cer "${query}")"
+
+  if [[ $? -ne 0 ]]; then
+    echo 'Unable to discover print uri destinations'
+    return 2
+  fi
+
+  local len=0
+  len="$(count "${destinations}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo 'No print uri destinations discovered'
+    return 2
+  fi
+
+  pick_one 'Select print uri destination:' "${destinations}" vertical || return $?
+}
+
 # Returns the list of available printer drivers.
 # Outputs:
 #  A json array list of drivers.
@@ -294,7 +324,7 @@ pick_driver () {
     return 2
   fi
 
-  pick_one 'Select a driver:' "${drivers}" vertical || return $?
+  pick_one 'Select a print driver:' "${drivers}" vertical || return $?
 }
 
 # Shows a menu asking the user to select one print job,

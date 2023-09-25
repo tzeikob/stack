@@ -279,7 +279,7 @@ pick_proxy () {
     return 2
   fi
 
-  pick_one 'Select a proxy profile:' "${proxies}" vertical || return $?
+  pick_one 'Select proxy profile:' "${proxies}" vertical || return $?
 }
 
 # Saves the given proxy profile into settings.

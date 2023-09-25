@@ -20,7 +20,7 @@ show_help () {
     printf ' %-8s %s\n' \
       '-h' 'Show this help message.' \
       '-q' 'Do not play beep sounds.' \
-      '-s' 'Run on script mode'
+      '-s' 'Run on script mode.'
   
     echo -e '\nCOMMANDS'
   else

@@ -63,84 +63,61 @@ list_files () {
 restore_files () {
   local paths=("$@")
 
-  # Find all trashed files
-  local trashed_files=''
-  trashed_files="$(trash-restore / <<< "" | awk '/^ *[0-9]+ /{
-    schema="\"key\": \"%s\","
-    schema=schema"\"value\": \"%s\""
-    schema="{"schema"},"
-
-    path=""
-    for (i = 4; i <= NF; i++) {
-      path=path$i
-      if (i < NF) path=path" "
-    }
-
-    printf schema, $1, path
-  }')"
-
-  if [[ $? -ne 0 ]]; then
-    echo 'Unable to read trashed files'
-    return 2
-  fi
-
-  # Remove the extra comma after the last element
-  if [[ -n "${trashed_files}" ]]; then
-    trashed_files="${trashed_files::-1}"
-  fi
-  
-  trashed_files="[${trashed_files}]"
+  # Find all trashed files eligible for restoring
+  local files=''
+  files="$(find_restorable_files)" || return 1
 
   local len=0
-  len="$(count "${trashed_files}")" || return 1
+  len="$(count "${files}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
     echo 'No trashed files found'
     return 2
   fi
 
-  local selected=''
+  local file_keys=''
 
   if [[ ${#paths[@]} -eq 0 ]]; then
-    pick_many 'Select which trashed files to restore:' "${trashed_files}" '1,' vertical || return $?
+    on_script_mode &&
+      echo 'No file paths are given' && return 2
+
+    pick_many 'Select files to restore:' "${files}" '1,' vertical || return $?
+    require 'File paths are required' || return 2
     local picked="${REPLY}"
 
-    if [[ -z "${picked}" ]]; then
-      echo 'No trashed files selected'
-      return 2
-    fi
-
+    # Refuse to overwrite existing files
     picked="$(echo "${picked}" | jq -cer 'join(" ")')" || return 1
 
-    # Refuse to overwrite existing files
     local key=''
     for key in ${picked}; do
+      # Match file by trash-restore index key
       local query=".[]|select(.key == \"${key}\")|.value"
 
       local path=''
-      path="$(echo "${trashed_files}" | jq -cr "${query}")"
+      path="$(echo "${files}" | jq -cr "${query}")"
 
       if [[ -f "${path}" ]]; then
         echo "Refused to overwrite file ${path}"
         continue
       fi
 
-      selected+="${key},"
+      file_keys+="${key},"
     done
 
     # Remove extra comma from the last element
-    if [[ -n "${selected}" ]]; then
-      selected="${selected::-1}"
+    if [[ -n "${file_keys}" ]]; then
+      file_keys="${file_keys::-1}"
     fi
   else
     local index=0
     for ((index = 0; index < ${#paths[@]}; index++)); do
       local path="${paths[index]}"
 
+      # Match file by file path
       local query=".[]|select(.value == \"${path}\")|.key"
 
       local key=''
-      key="$(echo "${trashed_files}" | jq -cer "${query}")"
+      key="$(echo "${files}" | jq -cer "${query}")"
 
       if [[ $? -ne 0 ]]; then
         echo "File ${path} not found in trash"
@@ -152,20 +129,20 @@ restore_files () {
         continue
       fi
 
-      selected+="${key},"
+      file_keys+="${key},"
     done
 
     # Discard possible duplicated files
-    if [[ -n "${selected}" ]]; then
-      selected="[${selected::-1}]"
-      selected="$(echo "${selected}" | jq -cr 'unique|join(",")')"
+    if [[ -n "${file_keys}" ]]; then
+      file_keys="[${file_keys::-1}]"
+      file_keys="$(echo "${file_keys}" | jq -cr 'unique|join(",")')"
     fi
   fi
 
-  trash-restore / &> /dev/null <<< "${selected}"
+  trash-restore / &> /dev/null <<< "${file_keys}"
 
   if [[ $? -ne 0 ]]; then
-    echo 'Failed to restore trashed files'
+    echo 'Failed to restore files'
     return 2
   fi
 
@@ -174,7 +151,7 @@ restore_files () {
   len=$((len - post_len))
 
   if [[ ${len} -eq 0 ]]; then
-    echo 'No trashed files restored'
+    echo 'No files restored'
     return 2
   fi
 
@@ -187,35 +164,31 @@ restore_files () {
 remove_files () {
   local paths=("$@")
 
-  local trashed_files=''
-  trashed_files="$(find_files)"
-
-  if [[ $? -ne 0 ]]; then
-    echo 'Unable to read trashed files'
-    return 2
-  fi
+  # Collect all trashed files eligible for removal
+  local files=''
+  files="$(find_files)" || return 1
 
   local len=0
-  len="$(count "${trashed_files}")" || return 1
+  len="$(count "${files}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
     echo 'No trashed files found'
     return 2
   fi
 
+  # Convert file list into key-value pairs
   local query='[.[]|{key: .path, value: "\(.date) \(.path)"}]'
-  trashed_files="$(echo "${trashed_files}" | jq -cer "${query}")" || return 1
+  files="$(echo "${files}" | jq -cer "${query}")" || return 1
   
   if [[ ${#paths[@]} -eq 0 ]]; then
-    pick_many 'Select which trashed files to remove:' "${trashed_files}" '1,' vertical || return $?
-    local selected="${REPLY}"
+    on_script_mode &&
+      echo 'No file paths are given' && return 2
 
-    if [[ -z "${selected}" ]]; then
-      echo 'No trashed files selected'
-      return 2
-    fi
+    pick_many 'Select files to remove:' "${files}" '1,' vertical || return $?
+    require 'File paths are required' || return 2
+    local selected_paths="${REPLY}"
 
-    readarray -t paths < <(echo "${selected}" | jq -cr '.[]')
+    readarray -t paths < <(echo "${selected_paths}" | jq -cr '.[]')
   fi
 
   if [[ -z "${FORCED}" ]] || [[ "${FORCED}" != "true" ]]; then
@@ -233,7 +206,7 @@ remove_files () {
     
     local query=".[]|select(.key == \"${path}\")"
 
-    echo "${trashed_files}" | jq -cer "${query}" &> /dev/null
+    echo "${files}" | jq -cer "${query}" &> /dev/null
 
     if [[ $? -ne 0 ]]; then
       echo "File ${path} not found in trash"

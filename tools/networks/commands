@@ -742,7 +742,7 @@ add_vpn () {
 
   if [[ -z "${password}" ]]; then
     on_script_mode &&
-      echo 'Missing password' && return 2
+      echo 'Missing the password' && return 2
 
     ask_secret 'Enter the password:' || return $?
     require 'Password required' || return 2

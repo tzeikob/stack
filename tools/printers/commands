@@ -30,11 +30,9 @@ show_status () {
 
   if [[ -n "${destinations}" ]]; then
     local query=''
-    query+='Printer:   \(.name) \(if .is_shared == "true" then "[shared]" else "" end)\n'
-    query+='URI:       \(.uri)\n'
-    query+='Model:     \(.model)\n'
-    query+='Desc:      \(.description)\n'
-    query+='Location:  \(.location)'
+    query+='Printer:  \(.name) \(if .is_shared == "true" then "[shared]" else "" end)\n'
+    query+='URI:      \(.uri)'
+    query+='\(.model|if . and . != "" then "\nModel:    \(.model)" else "" end)'
     query="\"${query}\""
 
     local destination=''
@@ -83,13 +81,12 @@ show_printer () {
   local name="${1}"
 
   if [[ -z "${name}" ]]; then
-    pick_printer || return $?
-    name="${REPLY}"
+    on_script_mode &&
+      echo 'Printer name is not given' && return 2
 
-    if [[ -z "${name}" ]]; then
-      echo 'No printer selected'
-      return 2
-    fi
+    pick_printer || return $?
+    require 'Printer name is not selected' || return 2
+    name="${REPLY}"
   fi
 
   if ! exists_destination "${name}"; then
@@ -100,19 +97,20 @@ show_printer () {
   local query=''
   query+='Name:       \(.name)\n'
   query+='URI:        \(.uri)\n'
-  query+='Model:      \(.model)\n'
-  query+='Desc:       \(.description)\n'
-  query+='Location:   \(.location)\n'
-  query+='Protocol:   \(.protocol)\n'
-  query+='State:      \(.state)\n'
-  query+='Accepts:    \(.accepting_jobs)\n'
-  query+='Shared:     \(.is_shared)\n'
-  query+='Temporary:  \(.is_temp)\n'
-  query+='Color:      \(.ColorModel) [\(.color)]\n'
-  query+='Quality:    \(.Quality)\n'
-  query+='Toner:      \(.TonerSaveMode)\n'
-  query+='Page:       \(.PageSize)\n'
-  query+='Paper:      \(.MediaType)'
+  query+='Protocol:   \(.protocol)'
+  query+='\(.model|if . and . != "" then "\nModel:      \(.)" else "" end)'
+  query+='\(.description|if . and . != "" then "\nDesc:       \(.)" else "" end)'
+  query+='\(.location|if . and . != "" then "\nLocation:   \(.)" else "" end)'
+  query+='\(.state|if . and . != "" then "\nState:      \(.)" else "" end)'
+  query+='\(.accepting_jobs|if . and . != "" then "\nAccepts:    \(.)" else "" end)'
+  query+='\(.shared|if . and . != "" then "\nShared:     \(.)" else "" end)'
+  query+='\(.is_temp|if . and . != "" then "\nTemporary:  \(.)" else "" end)'
+  query+='\(.ColorModel|if . and . != "" then "\nColor:      \(.)" else "" end)'
+  query+='\(.color|if . and . != "" then " [\(.)]" else "" end)'
+  query+='\(.Quality|if . and . != "" then "\nQuality:    \(.)" else "" end)'
+  query+='\(.TonerSaveMode|if . and . != "" then "\nToner:      \(.)" else "" end)'
+  query+='\(.PageSize|if . and . != "" then "\nPage:       \(.)" else "" end)'
+  query+='\(.MediaType|if . and . != "" then "\nPaper:      \(.)" else "" end)'
   query="\"${query}\""
 
   find_destination "${name}" | jq -cer "${query}" || return 1
@@ -130,60 +128,35 @@ add_printer () {
   local driver="${3}"
 
   if [[ -z "${uri}" ]]; then
-    echo 'Discovering print destinations...'
+    on_script_mode &&
+      echo 'Printer uri is not given' && return 2
 
-    local query=''
-    query+='{key: .uri, value: "\(.uri)\(.name|if (. and . != "") then " [\(.)]" else "" end)"}'
-    query="[.[]|${query}]"
-
-    local destinations=''
-    destinations="$(discover_destinations | jq -cer "${query}")"
-
-    if [[ $? -ne 0 ]]; then
-      echo 'Unable to discover print destinations'
-      return 2
-    fi
-
-    local len=0
-    len="$(count "${destinations}")" || return 1
-
-    if [[ ${len} -eq 0 ]]; then
-      echo 'No printers have been discovered'
-      return 2
-    fi
-
-    pick_one 'Select a printer:' "${destinations}" vertical || return $?
+    pick_uri || return $?
+    require 'Printer uri is required' || return 2
     uri="${REPLY}"
-
-    if [[ -z "${uri}" ]]; then
-      echo 'No printer selected'
-      return 2
-    fi
   fi
 
   if [[ -z "${name}" ]]; then
+    on_script_mode &&
+      echo 'Missing the printer name' && return 2
+
     ask 'Enter the printer name:' || return $?
+    require 'Printer name is requried' || return 2
     name="${REPLY}"
-    
-    if [[ -z "${name}" ]]; then
-      echo 'No printer name is given'
-      return 2
-    fi
   fi
 
   if exists_destination "${name}"; then
-    echo "Printer with name ${name} already exists"
+    echo "Printer ${name} already exists"
     return 2
   fi
 
   if [[ -z "${driver}" ]]; then
-    pick_driver || return $?
-    driver="${REPLY}"
+    on_script_mode &&
+      echo 'Print driver is not given' && return 2
 
-    if [[ -z "${driver}" ]]; then
-      echo 'No driver selected'
-      return 2
-    fi
+    pick_driver || return $?
+    require 'Print driver is required' || return 2
+    driver="${REPLY}"
   fi
 
   if ! is_driver_available "${driver}"; then
@@ -191,16 +164,14 @@ add_printer () {
     return 2
   fi
 
-  lpadmin -p "${name}" -E \
-    -o printer-is-shared=false \
-    -D "${name}" -L "${name}" -v "${uri}" -m "${driver}" &> /dev/null
+  lpadmin -p "${name}" -E -o printer-is-shared=false  -v "${uri}" -m "${driver}" &> /dev/null
 
   if [[ $? -ne 0 ]]; then
     echo "Failed to add printer ${uri}"
     return 2
   fi
 
-  echo "Printer ${uri} has been added"
+  echo "Printer ${uri} added"
 }
 
 # Removes the printer destination with the
@@ -211,13 +182,12 @@ remove_printer () {
   local name="${1}"
 
   if [[ -z "${name}" ]]; then
-    pick_printer || return $?
-    name="${REPLY}"
+    on_script_mode &&
+      echo 'Missing printer name' && return 2
 
-    if [[ -z "${name}" ]]; then
-      echo 'No printer selected'
-      return 2
-    fi
+    pick_printer || return $?
+    require 'Printer name is required' || return 2
+    name="${REPLY}"
   fi
 
   if ! exists_destination "${name}"; then
@@ -243,13 +213,12 @@ share_printer () {
   local name="${1}"
 
   if [[ -z "${name}" ]]; then
-    pick_printer || return $?
-    name="${REPLY}"
+    on_script_mode &&
+      echo 'Missing printer name' && return 2
 
-    if [[ -z "${name}" ]]; then
-      echo 'No printer selected'
-      return 2
-    fi
+    pick_printer || return $?
+    require 'Printer name is required' || return 2
+    name="${REPLY}"
   fi
 
   if ! exists_destination "${name}"; then
@@ -275,13 +244,12 @@ unshare_printer () {
   local name="${1}"
 
   if [[ -z "${name}" ]]; then
-    pick_printer || return $?
-    name="${REPLY}"
+    on_script_mode &&
+      echo 'Missing printer name' && return 2
 
-    if [[ -z "${name}" ]]; then
-      echo 'No printer selected'
-      return 2
-    fi
+    pick_printer || return $?
+    require 'Printer name is required' || return 2
+    name="${REPLY}"
   fi
 
   if ! exists_destination "${name}"; then
@@ -310,13 +278,12 @@ set_option () {
   local value="${3}"
 
   if [[ -z "${name}" ]]; then
-    pick_printer || return $?
-    name="${REPLY}"
+    on_script_mode &&
+      echo 'Missing the printer name' && return 2
 
-    if [[ -z "${name}" ]]; then
-      echo 'No printer selected'
-      return 2
-    fi
+    pick_printer || return $?
+    require 'Printer name is required' || return 2
+    name="${REPLY}"
   fi
 
   if ! exists_destination "${name}"; then
@@ -325,21 +292,23 @@ set_option () {
   fi
 
   if [[ -z "${key}" ]]; then
-    pick_print_option || return $?
-    key="${REPLY}"
+    on_script_mode &&
+      echo 'Missing print option key' && return 2
 
-    if [[ -z "${key}" ]]; then
-      echo 'No print option selected'
-      return 2
-    fi
+    pick_print_option || return $?
+    require 'Print option key is required' || return 2
+    key="${REPLY}"
   fi
 
   if [[ ! "${key}" =~ ^(Quality|PageSize|MediaType|TonerSaveMode|printer-error-policy)$ ]]; then
-    echo 'Invalid print option'
+    echo 'Invalid print option key'
     return 2
   fi
 
   if [[ -z "${value}" ]]; then
+    on_script_mode &&
+      echo 'Missing the print option value' && return 2
+
     case "${key}" in
       Quality) pick_print_quality;;
       PageSize) pick_page_size;;
@@ -347,16 +316,11 @@ set_option () {
       TonerSaveMode) pick_toner_mode;;
       printer-error-policy) pick_error_policy;;
       *)
-        echo 'Unknown or invalid print option'
+        echo 'Unknown or invalid print option key'
         return 2;;
     esac || return $?
-
+    require 'Print option value is required' || return 2
     value="${REPLY}"
-
-    if [[ -z "${value}" ]]; then
-      echo 'No option value selected'
-      return 2
-    fi
   fi
    
   case "${key}" in
@@ -366,12 +330,12 @@ set_option () {
     TonerSaveMode) [[ "${value}" =~ ^(Save|Standard)$ ]];;
     printer-error-policy) [[ "${value}" =~ ^(abort-job|retry-current-job|retry-job|stop-printer)$ ]];;
     *)
-      echo 'Unknown or invalid print option'
+      echo 'Unknown or invalid print option key'
       return 2;;
   esac
 
   if [[ $? -ne 0 ]]; then
-    echo 'Invalid option value'
+    echo 'Invalid print option value'
     return 2
   fi
 
@@ -393,13 +357,12 @@ set_default () {
   local name="${1}"
 
   if [[ -z "${name}" ]]; then
-    pick_printer || return $?
-    name="${REPLY}"
+    on_script_mode &&
+      echo 'Missing the printer name' && return 2
 
-    if [[ -z "${name}" ]]; then
-      echo 'No printer selected'
-      return 2
-    fi
+    pick_printer || return $?
+    require 'Printer name is required' || return 2
+    name="${REPLY}"
   fi
 
   if ! exists_destination "${name}"; then
@@ -454,13 +417,12 @@ cancel_job () {
   local id="${1}"
 
   if [[ -z "${id}" ]]; then
-    pick_job || return $?
-    id="${REPLY}"
+    on_script_mode &&
+      echo 'Missing the print job id' && return 2
 
-    if [[ -z "${id}" ]]; then
-      echo 'No print job selected'
-      return 2
-    fi
+    pick_job || return $?
+    require 'Print job id is required' || return 2
+    id="${REPLY}"
   fi
 
   if ! exists_job "${id}"; then
@@ -480,7 +442,7 @@ cancel_job () {
 
 # Restarts the cup service.
 restart () {
-  sudo echo 'Restarting the cups service...'
+  echo 'Restarting the cups service...'
 
   sudo -k systemctl restart cups.service
 

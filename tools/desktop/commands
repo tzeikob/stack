@@ -115,13 +115,12 @@ set_wallpaper () {
   local mode="${2}"
 
   if [[ -z "${name}" ]]; then
-    pick_wallpaper || return $?
-    name="${REPLY}"
+    on_script_mode &&
+      echo 'Missing the wallpaper file name' && return 2
 
-    if [[ -z "${name}" ]]; then
-      echo 'No wallpaper selected'
-      return 2
-    fi 
+    pick_wallpaper || return $?
+    require 'Wallpaper file name required' || return 2
+    name="${REPLY}"
   fi
 
   if [[ "${name}" =~ /+ ]]; then
@@ -141,25 +140,16 @@ set_wallpaper () {
   fi
 
   if [[ -z "${mode}" ]]; then
-    local modes=''
-    modes+='{"key": "center", "value": "Center"},'
-    modes+='{"key": "fill", "value": "Fill"},'
-    modes+='{"key": "max", "value": "Max"},'
-    modes+='{"key": "scale", "value": "Scale"},'
-    modes+='{"key": "tile", "value": "Tile"}'
-    modes="[${modes}]"
+    on_script_mode &&
+      echo 'Missing the alignment mode' && return 2
 
-    pick_one 'Select a mode:' "${modes}" vertical || return $?
+    pick_alignment_mode || return $?
+    require 'Alignment mode is required' || return 2
     mode="${REPLY}"
-
-    if [[ -z "${mode}" ]]; then
-      echo 'No wallpaper mode selected'
-      return 2
-    fi
   fi
   
   if [[ ! "${mode}" =~ ^(center|fill|max|scale|tile)$ ]]; then
-    echo 'Invalid wallpaper mode'
+    echo 'Invalid alignment mode'
     return 2
   fi
 
@@ -178,41 +168,40 @@ set_wallpaper () {
 }
 
 # Shows the data of the pointing device with the
-# given id.
+# given name.
 # Arguments:
-#  id: the id of the pointing device
+#  name: the name of the pointing device
 # Outputs:
 #  A long list of pointing device data.
 show_pointer () {
-  local id="${1}"
+  local name="${1}"
 
-  if [[ -z "${id}" ]]; then
+  if [[ -z "${name}" ]]; then
+    on_script_mode &&
+      echo 'Missing pointer name' && return 2
+
     pick_pointer || return $?
-    id="${REPLY}"
-
-    if [[ -z "${id}" ]]; then
-      echo 'No pointer id selected'
-      return 2
-    fi
+    require 'Pointer name is required' || return 2
+    name="${REPLY}"
   fi
 
   local pointer=''
-  pointer="$(find_pointer "${id}")"
+  pointer="$(find_pointer "${name}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find pointer ${id}"
+    echo "Unable to find pointer ${name}"
     return 2
   fi
 
   local query=''
-  query+='ID:       \(.id)\n'
-  query+='Name:     \(.name)'
-  query+='\(.node|if . then "\nNode:     \(.)" else "" end)'
-  query+='\(.enabled|if . then "\nEnabled:  \(.)" else "" end)'
-  query+='\(.accel_speed|if . then "\nSpeed:    \(.)" else "" end)'
-  query+='\(.accel|if . then "\nAccel:    \(.)" else "" end)'
+  query+='ID:        \(.id)\n'
+  query+='Name:      \(.name)'
+  query+='\(.node|if . then "\nNode:      \(.)" else "" end)'
+  query+='\(.enabled|if . then "\nEnabled:   \(.)" else "" end)'
+  query+='\(.accel_speed|if . then "\nSpeed:     \(.)" else "" end)'
+  query+='\(.accel|if . then "\nAccel:     \(.)" else "" end)'
   query+='\(.velocity|if . then "\nVelocity:  \(.)" else "" end)'
-  query+='\(if .const_decel then "\nDecel:    \(.const_decel) \(.adapt_decel)" else "" end)'
+  query+='\(if .const_decel then "\nDecel:     \(.const_decel) \(.adapt_decel)" else "" end)'
 
   echo "${pointer}" | jq -cer "\"${query}\"" || return 1
 }
@@ -333,13 +322,12 @@ show_tablet () {
   local name="${1}"
 
   if [[ -z "${name}" ]]; then
-    pick_tablet || return $?
-    name="${REPLY}"
+    on_script_mode &&
+      echo 'Missing the table name' && return 2
 
-    if [[ -z "${name}" ]]; then
-      echo 'No tablet selected'
-      return 2
-    fi
+    pick_tablet || return $?
+    require 'Tablet name is required' || return 2
+    name="${REPLY}"
   fi
 
   local tablet=''
@@ -411,13 +399,12 @@ scale_tablet () {
   local scale="${2}"
 
   if [[ -z "${name}" ]]; then
-    pick_tablet || return $?
-    name="${REPLY}"
+    on_script_mode &&
+      echo 'Missing the tablet name' && return 2
 
-    if [[ -z "${name}" ]]; then
-      echo 'No tablet selected'
-      return 2
-    fi
+    pick_tablet || return $?
+    require 'Tablet name is required' || return 2
+    name="${REPLY}"
   fi
 
   local tablet=''
@@ -432,9 +419,15 @@ scale_tablet () {
   fi
 
   if [[ -z "${scale}" ]]; then
-    echo 'Missing scale factor'
-    return 2
-  elif [[ ! "${scale}" =~ ^[0-9]+\.?[0-9]*$ ]]; then
+    on_script_mode &&
+      echo 'Missing the scale factor' && return 2
+
+    ask 'Enter the scale factor [0.1-1]:' || return $?
+    require 'Scale factor is required' || return 2
+    scale="${REPLY}"
+  fi
+  
+  if [[ ! "${scale}" =~ ^[0-9]+\.?[0-9]*$ ]]; then
     echo 'Invalid scale factor'
     return 2
   elif (( $(echo "${scale} <= 0" | bc) )); then
@@ -480,23 +473,23 @@ scale_tablet () {
 }
 
 # Maps the area of the tablet with the given name
-# to a display device, where the special word desktop
-# resets the tablet's mapping and ratio.
+# to a target which could be any active display device
+# ot the special desktop value that resets the tablet's
+# mapping and ratio.
 # Arguments:
-#  name:    the name of a tablet device
-#  display: the name of a display device or desktop
+#  name:   the name of a tablet device
+#  target: the name of a display or desktop
 map_tablet () {
   local name="${1}"
-  local display="${2}"
+  local target="${2}"
 
   if [[ -z "${name}" ]]; then
-    pick_tablet || return $?
-    name="${REPLY}"
+    on_script_mode &&
+      echo 'Missing the tablet name' && return 2
 
-    if [[ -z "${name}" ]]; then
-      echo 'No tablet selected'
-      return 2
-    fi
+    pick_tablet || return $?
+    require 'Tablet name is required' || return 2
+    name="${REPLY}"
   fi
 
   local tablet=''
@@ -510,18 +503,17 @@ map_tablet () {
     return 2
   fi
 
-  if [[ -z "${display}" ]]; then
-    pick_output 'Select a display:' active || return $?
-    display="${REPLY}"
+  if [[ -z "${target}" ]]; then
+    on_script_mode &&
+      echo 'Missing the mapping target' && return 2
 
-    if [[ -z "${display}" ]]; then
-      echo 'No display selected'
-      return 2
-    fi
+    pick_mapping_target || return $?
+    require 'Mapping target is required' || return 2
+    target="${REPLY}"
   fi
 
-  # Reset mapping and area if desktop is given
-  if [[ "${display}" == "desktop" ]]; then
+  # Reset mapping and area if desktop is given as target
+  if [[ "${target}" == "desktop" ]]; then
     xsetwacom --set "${name}" MapToOutput desktop &> /dev/null
 
     if [[ $? -ne 0 ]]; then
@@ -553,13 +545,13 @@ map_tablet () {
   fi
 
   local output=''
-  output="$(find_output "${display}")"
+  output="$(find_output "${target}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find display ${display}"
+    echo "Unable to find display ${target}"
     return 2
   elif ! is_active "${output}"; then
-    echo "Display ${display} is not active"
+    echo "Display ${target} is not active"
     return 2
   fi
 
@@ -583,7 +575,7 @@ map_tablet () {
     print 0" "0" "width" "height
   }')" || return 1
 
-  xsetwacom --set "${name}" MapToOutput "${display}" &> /dev/null &&
+  xsetwacom --set "${name}" MapToOutput "${target}" &> /dev/null &&
   xsetwacom --set "${name}" area "${area}" &> /dev/null
 
   if [[ $? -ne 0 ]]; then
@@ -591,7 +583,7 @@ map_tablet () {
     return 2
   fi
 
-  echo "Tablet ${name} mapped to ${display}"
+  echo "Tablet ${name} mapped to ${target}"
 }
 
 # Applies the pointer settings being set in the

@@ -14,7 +14,7 @@ start () {
     return 2
   fi
 
-  echo 'Starting the notifications service...'
+  echo 'Starting notifications service...'
 
   dunst > /dev/null 2>&1 &
 
@@ -25,12 +25,12 @@ start () {
     return 2
   fi
 
-  echo 'Notifications service has been started'
+  echo 'Notifications service started'
 }
 
 # Restarts the notifications service.
 restart () {
-  echo 'Restarting the notifications service...'
+  echo 'Restarting notifications service...'
 
   killall dunst || return 1
   sleep 1
@@ -44,7 +44,7 @@ restart () {
     return 2
   fi
 
-  echo 'Notifications service has been restarted'
+  echo 'Notifications service restarted'
 }
 
 # Returns the notifications state.
@@ -113,25 +113,18 @@ show_status () {
 # optionally given field and order.
 # Arguments:
 #  sort_by: id or appname, default is id
-#  order:   asc or desc, default is asc
 # Outputs:
 #  A long list of notificaions data.
 list_all () {
-  local sort_by="${1:-"id"}"
-  local order="${2:-"asc"}"
+  local sort_by="${1:-id}"
 
   if [[ ! "${sort_by}" =~ ^(id|appname)$ ]]; then
     echo 'Invalid sorting field'
     return 2
   fi
 
-  if [[ -n "${order}" ]] && [[ ! "${order}" =~ ^(asc|desc)$ ]]; then
-    echo 'Invalid ordering value'
-    return 2
-  fi
-
   local notifications=''
-  notifications="$(find_all "${sort_by}" "${order}")" || return 1
+  notifications="$(find_all "${sort_by}" asc)" || return 1
 
   local len=0
   len="$(count "${notifications}")" || return 1
@@ -187,17 +180,17 @@ clean_all () {
   echo 'All notifications have been removed'
 }
 
-# Enables or disables pop-up notifications.
+# Enables or disables popup notifications.
 # Arguments:
 #  mode: on or off
 set_popup () {
   local mode="${1}"
 
   if [[ -z "${mode}" ]]; then
-    echo 'Missing the pop-up mode'
+    echo 'Missing popup mode'
     return 2
   elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
-    echo 'Invalid pop-up mode'
+    echo 'Invalid popup mode'
     return 2
   fi
 
@@ -218,14 +211,14 @@ set_popup () {
   sed -i "s/\([[:blank:]]*transparency\).*/\1 = ${value}/" "${config_file}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to set pop-up notifications to ${mode}"
+    echo "Failed to set popup notifications to ${mode}"
     return 2
   fi
 
   # Restart service so changes take effect
   restart
 
-  echo "Pop-up notifications set to ${mode}"
+  echo "Popup notifications set to ${mode}"
 }
 
 # Sets the volume of the notifications sound.

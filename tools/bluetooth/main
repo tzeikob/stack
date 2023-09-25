@@ -19,8 +19,9 @@ show_help () {
     echo -e '\nOPTIONS'
     printf ' %-8s %s\n' \
       '-h' 'Show this help message.' \
-      '-q' 'Do not play beep sounds.'
-  
+      '-q' 'Do not play beep sounds.' \
+      '-s' 'Run on script mode.'
+
     echo -e '\nCOMMANDS'
   else
     echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
@@ -35,22 +36,22 @@ show_help () {
     'show status' 'Show a report of the bluetooth service.' \
     'show logs' 'Show the last logs of the bluetooth service.' \
     '' '' \
-    'show controller [<address>]' 'Show the data of a controller.' \
-    'show device [<address>]' 'Show the data of a device.' \
+    'show controller <address>' 'Show the data of a controller.' \
+    'show device <address>' 'Show the data of a device.' \
     '' '' \
     'list controllers' 'List the available controllers.' \
-    'list devices [<status>]' 'List the devices where status could be' \
-    '' 'any of paired, connected, trusted or bonded.' \
+    'list devices <status>' 'List all devices or only those having status' \
+    '' 'paired, connected, trusted or bonded.' \
     '' '' \
-    'set controller [<address>]' 'Set the default controller.' \
+    'set controller <address>' 'Set the default controller.' \
     'set power on|off' 'Set the default controller power to on or off.' \
-    'set scan on|off' 'Set scanning mode to on or off.' \
+    'set scan on|off' 'Set the default controller scan mode to on or off.' \
     'set discoverable on|off' 'Set the default controller to be discoverable.' \
     'set pairable on|off' 'Set the default controller to be pairable.' \
     '' '' \
-    'connect device [<address>]' 'Connect a bluetooth device.' \
-    'disconnect device [<address>]' 'Disconnect a bluetooth device.' \
-    'remove device [<address>]' 'Removes a bluetooth device.' \
+    'connect device <address>' 'Connect a bluetooth device.' \
+    'disconnect device <address>' 'Disconnect a bluetooth device.' \
+    'remove device <address>' 'Removes a bluetooth device.' \
     '' '' \
     'restart' 'Restart the bluetooth service.'
 }
@@ -58,12 +59,13 @@ show_help () {
 run () {
   local opt=''
 
-  while getopts ':hq' opt; do
+  while getopts ':hqs' opt; do
     case "${opt}" in
      'h')
         show_help once
         return 0;;
      'q') QUIET='true';;
+     's') ON_SCRIPT_MODE='true';;
      *)
       echo "Ooops, invalid or unknown option -${OPTARG}!"
       $(exit 2) || beep

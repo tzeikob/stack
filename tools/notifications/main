@@ -19,26 +19,26 @@ show_help () {
     echo -e '\nOPTIONS'
     printf ' %-8s %s\n' \
       '-h' 'Show this help message.' \
-      '-q' 'Do not play beep sounds.'
+      '-q' 'Do not play beep sounds.' \
+      '-s' 'Run on script mode.'
 
     echo -e '\nCOMMANDS'
   else
     echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
 
     echo -e '\nCOMMANDS'
-    printf ' %-36s %s\n' \
+    printf ' %-28s %s\n' \
       'help' 'Show this help message.' \
       '' ''
   fi
 
-  printf ' %-36s %s\n' \
+  printf ' %-28s %s\n' \
     'show status' 'Show the status of notifications.' \
     'get state' 'Return the state of the notifications stream.' \
     '' '' \
-    'list all [<sort_by> [<order>]]' 'List all notifications sorted by either the' \
-    '' 'id or appname in asc or desc order.' \
+    'list all id|appname' 'List all notifications by id (default) or appname.' \
     '' '' \
-    'set popup on|off' 'Show or hide pop-up notifications.' \
+    'set popup on|off' 'Show or hide popup notifications.' \
     'set volume <percent>' 'Set the volume of the notifications sound.' \
     '' '' \
     'mute all' 'Pause the notifications stream.' \
@@ -52,12 +52,13 @@ show_help () {
 run () {
   local opt=''
 
-  while getopts ':hq' opt; do
+  while getopts ':hqs' opt; do
     case "${opt}" in
      'h')
         show_help once
         return 0;;
      'q') QUIET='true';;
+     's') ON_SCRIPT_MODE='true';;
      *)
       echo "Ooops, invalid or unknown option -${OPTARG}!"
       $(exit 2) || beep

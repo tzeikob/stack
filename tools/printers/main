@@ -19,36 +19,37 @@ show_help () {
     echo -e '\nOPTIONS'
     printf ' %-8s %s\n' \
       '-h' 'Show this help message.' \
-      '-q' 'Do not play beep sounds.'
+      '-q' 'Do not play beep sounds.' \
+      '-s' 'Run on script mode.'
   
     echo -e '\nCOMMANDS'
   else
     echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
 
     echo -e '\nCOMMANDS'
-    printf ' %-43s %s\n' \
+    printf ' %-36s %s\n' \
       'help' 'Show this help message.' \
       '' ''
   fi
 
-  printf ' %-43s %s\n' \
+  printf ' %-36s %s\n' \
     'show status' 'Show a report of cups service and printers.' \
-    'show printer [<name>]' 'Show the data of a printer.' \
+    'show printer <name>' 'Show the data of a printer.' \
     '' '' \
     'list printers' 'List all printers.' \
-    'add printer [<uri> [<name> [<driver>]]]' 'Add a new printer.' \
-    'remove printer [<name>]' 'Remove a printer.' \
+    'add printer <uri> <name> <driver>' 'Add a new printer.' \
+    'remove printer <name>' 'Remove a printer.' \
     '' '' \
-    'set default [<name>]' 'Set a printer as default destination.' \
-    'set option [<name> [key] [value]]]' 'Set the option of a printer with key equal' \
+    'set default <name>' 'Set a printer as default destination.' \
+    'set option <name> <key> <value>' 'Set the option of a printer with key equal' \
     '' 'to Quality, PageSize, MediaType, ToneSaveMode' \
     '' 'or printer-error-policy.' \
     '' '' \
-    'share printer [<name>]' 'Share a printer to the local network.' \
-    'unshare printer [<name>]' 'Unshare a printer of the local network.' \
+    'share printer <name>' 'Share a printer to the local network.' \
+    'unshare printer <name>' 'Unshare a printer of the local network.' \
     '' '' \
     'list jobs' 'List all queued print jobs.' \
-    'cancel job [<id>]' 'Cancel a queued print job.' \
+    'cancel job <id>' 'Cancel a queued print job.' \
     '' '' \
     'restart' 'Restart the cups service.'
 }
@@ -56,12 +57,13 @@ show_help () {
 run () {
   local opt=''
 
-  while getopts ':hq' opt; do
+  while getopts ':hqs' opt; do
     case "${opt}" in
      'h')
         show_help once
         return 0;;
      'q') QUIET='true';;
+     's') ON_SCRIPT_MODE='true';;
      *)
       echo "Ooops, invalid or unknown option -${OPTARG}!"
       $(exit 2) || beep

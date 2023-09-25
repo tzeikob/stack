@@ -19,7 +19,8 @@ show_help () {
     echo -e '\nOPTIONS'
     printf ' %-10s %s\n' \
       '-h' 'Show this help message.' \
-      '-q' 'Stay quiet and do not play beep sounds.'
+      '-q' 'Do not play beep sounds.' \
+      '-s' 'Run on script mode.'
   
     echo -e '\nCOMMANDS'
   else
@@ -53,12 +54,13 @@ show_help () {
 run () {
   local opt=''
 
-  while getopts ':hq' opt; do
+  while getopts ':hqs' opt; do
     case "${opt}" in
      'h')
         show_help once
         return 0;;
      'q') QUIET='true';;
+     's') ON_SCRIPT_MODE='true';;
      *)
       echo "Ooops, invalid or unknown option -${OPTARG}!"
       $(exit 2) || beep

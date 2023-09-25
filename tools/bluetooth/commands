@@ -102,7 +102,7 @@ list_devices () {
   local status="${1}"
 
   if [[ -n "${status}" ]] && [[ ! "${status}" =~ ^(paired|connected|trusted|bonded)$ ]]; then
-    echo 'Invalid status value'
+    echo 'Invalid device status'
     return 2
   fi
 
@@ -140,13 +140,12 @@ show_controller () {
   local address="${1}"
 
   if [[ -z "${address}" ]]; then
+    on_script_mode &&
+      echo 'Missing controller address' && return 2
+
     pick_controller || return $?
+    require 'Controller address required' || return 2
     address="${REPLY}"
-    
-    if [[ -z "${address}" ]]; then
-      echo 'No controller selected'
-      return 2
-    fi
   fi
 
   local controller=''
@@ -184,13 +183,12 @@ show_device () {
   local address="${1}"
 
   if [[ -z "${address}" ]]; then
+    on_script_mode &&
+      echo 'Missing device address' && return 2
+  
     pick_device || return $?
+    require 'Device address required' || return 2
     address="${REPLY}"
-
-    if [[ -z "${address}" ]]; then
-      echo 'No device selected'
-      return 2
-    fi
   fi
 
   local device=''
@@ -230,13 +228,12 @@ set_controller () {
   local address="${1}"
 
   if [[ -z "${address}" ]]; then
-    pick_controller || return $?
-    address="${REPLY}"
+    on_script_mode &&
+      echo 'Missing controller address' && return 2
 
-    if [[ -z "${address}" ]]; then
-      echo 'No controller selected'
-      return 2
-    fi
+    pick_controller || return $?
+    require 'Controller address required' || return 2
+    address="${REPLY}"
   fi
 
   local controller=''
@@ -330,7 +327,7 @@ set_discoverable () {
   local mode="${1}"
 
   if [[ -z "${mode}" ]]; then
-    echo 'Missing the discoverable mode'
+    echo 'No discoverable mode given'
     return 2
   elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
     echo 'Invalid discoverable mode'
@@ -359,7 +356,7 @@ set_pairable () {
   local mode="${1}"
 
   if [[ -z "${mode}" ]]; then
-    echo 'Missing the pairable mode'
+    echo 'No pairable mode given'
     return 2
   elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
     echo 'Invalid pairable mode'
@@ -388,13 +385,12 @@ connect_device () {
   local address="${1}"
 
   if [[ -z "${address}" ]]; then
+    on_script_mode &&
+      echo 'Missing device address' && return 2
+  
     pick_device || return $?
+    require 'Device address required' || return 2
     address="${REPLY}"
-
-    if [[ -z "${address}" ]]; then
-      echo 'No device selected'
-      return 2
-    fi
   fi
 
   local device=''
@@ -424,13 +420,12 @@ disconnect_device () {
   local address="${1}"
 
   if [[ -z "${address}" ]]; then
+    on_script_mode &&
+      echo 'Missing device address' && return 2
+  
     pick_device || return $?
+    require 'Device address required' || return 2
     address="${REPLY}"
-
-    if [[ -z "${address}" ]]; then
-      echo 'No device selected'
-      return 2
-    fi
   fi
 
   local device=''
@@ -458,13 +453,12 @@ remove_device () {
   local address="${1}"
 
   if [[ -z "${address}" ]]; then
+    on_script_mode &&
+      echo 'Missing device address' && return 2
+  
     pick_device || return $?
+    require 'Device address required' || return 2
     address="${REPLY}"
-
-    if [[ -z "${address}" ]]; then
-      echo 'No device selected'
-      return 2
-    fi
   fi
 
   local device=''

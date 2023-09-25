@@ -20,7 +20,8 @@ show_help () {
     printf ' %-8s %s\n' \
       '-h' 'Show this help message.' \
       '-q' 'Do not play beep sounds.' \
-      '-f' 'Do not ask confirm when removing files.'
+      '-f' 'Do not ask confirm when removing files.' \
+      '-s' 'Run on script mode.'
 
     echo -e '\nCOMMANDS'
   else
@@ -38,8 +39,8 @@ show_help () {
     'list files +<days>' 'List files trashed more than the given days ago.' \
     'list files <date>' 'List files trashed at a certain date.' \
     '' '' \
-    'restore files [<paths>]' 'Restore the given trashed files.' \
-    'remove files [<paths>]' 'Remove the given trashed files.' \
+    'restore files <paths>' 'Restore the given trashed files.' \
+    'remove files <paths>' 'Remove the given trashed files.' \
     '' '' \
     'empty files' 'Remove all trashed files.' \
     'empty files <days>' 'Remove files trashed more than the given days ago.'
@@ -48,13 +49,14 @@ show_help () {
 run () {
   local opt=''
 
-  while getopts ':hqf' opt; do
+  while getopts ':hqfs' opt; do
     case "${opt}" in
      'h')
         show_help once
         return 0;;
      'q') QUIET='true';;
      'f') FORCED='true';;
+     's') ON_SCRIPT_MODE='true';;
      *)
       echo "Ooops, invalid or unknown option -${OPTARG}!"
       $(exit 2) || beep

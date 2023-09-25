@@ -153,7 +153,7 @@ lock_screen () {
 
 # Changes the password of the current user.
 set_user_password () {
-  ask_secret 'Enter current password:'
+  ask_secret 'Enter current password:' || return $?
   local password="${REPLY}"
 
   if ! authenticate_user "${password}"; then
@@ -161,7 +161,8 @@ set_user_password () {
     return 2
   fi
 
-  ask_secret 'Enter new password:'
+  ask_secret 'Enter new password:' || return $?
+  require 'New password cannot be blank' || return 2
   local new_password="${REPLY}"
 
   if ! confirm_secret 'Retype new password:' "${new_password}"; then

@@ -95,7 +95,7 @@ pick_controller () {
     return 2
   fi
   
-  pick_one 'Select a controller:' "${controllers}" vertical || return $?
+  pick_one 'Select controller address:' "${controllers}" vertical || return $?
 }
 
 # Shows a menu asking the user to select a device,
@@ -117,7 +117,7 @@ pick_device () {
     return 2
   fi
   
-  pick_one 'Select a device:' "${devices}" vertical || return $?
+  pick_one 'Select device address:' "${devices}" vertical || return $?
 }
 
 # Kills any running bluetooth scanning proccesses.

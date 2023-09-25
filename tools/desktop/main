@@ -19,7 +19,8 @@ show_help () {
     echo -e '\nOPTIONS'
     printf ' %-8s %s\n' \
       '-h' 'Show this help message.' \
-      '-q' 'Do not play beep sounds.'
+      '-q' 'Do not play beep sounds.' \
+      '-s' 'Run on script mode.'
   
     echo -e '\nCOMMANDS'
   else
@@ -33,24 +34,24 @@ show_help () {
 
   printf ' %-35s %s\n' \
     'show status' 'Show the status of the desktop environment.' \
-    'show pointer [<id>]' 'Show a pointing device.' \
-    'show tablet [<name>]' 'Show a tablet device.' \
+    'show pointer <name>' 'Show a pointing device.' \
+    'show tablet <name>' 'Show a tablet device.' \
     '' '' \
     'list wallpapers' 'List the available wallapers.' \
     'list pointers' 'List the available pointing devices.' \
     'list tablets' 'List the connected tablets.' \
     '' '' \
-    'set wallpaper [<name> [<mode>]]' 'Set the desktop wallpaper in center' \
+    'set wallpaper <name> <mode>' 'Set the desktop wallpaper on center,' \
     '' 'fill, scale, max or tile mode.' \
     'init wallpaper' 'Initialize the desktop wallpaper.' \
     '' '' \
-    'speed pointer [<factor>]' 'Set the pointer speed to a factor between' \
+    'speed pointer <factor>' 'Set the pointer speed to a factor between' \
     '' '[0, 1] where 0 means slow and 1 fast.' \
     'init pointer' 'Initialize the pointer.' \
     '' '' \
-    'scale tablet [<name> [<factor>]]' 'Scale down the area of a tablet (e.g. 0.5)' \
-    '' 'or use factor 1 to reset scaling.' \
-    'map tablet [<name> [<display>]]' 'Map a tablet to a screen display' \
+    'scale tablet <name> <factor>' 'Scale down the tablet area in range [0.1-1],' \
+    '' 'where factor 1 means remove scaling.' \
+    'map tablet <name> <display>' 'Map a tablet to a screen display' \
     '' 'or just use desktop to reset mapping.' \
     'init tablets' 'Initialize any connected tablets.'
 }
@@ -58,12 +59,13 @@ show_help () {
 run () {
   local opt=''
 
-  while getopts ':hq' opt; do
+  while getopts ':hqs' opt; do
     case "${opt}" in
      'h')
         show_help once
         return 0;;
      'q') QUIET='true';;
+     's') ON_SCRIPT_MODE='true';;
      *)
       echo "Ooops, invalid or unknown option -${OPTARG}!"
       $(exit 2) || beep

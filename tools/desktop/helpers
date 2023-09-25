@@ -3,6 +3,7 @@
 set -o pipefail
 
 source /opt/stack/utils
+source /opt/stack/displays/helpers
 
 SETTINGS_FILE="${CONFIG_HOME}/desktop.json"
 
@@ -68,7 +69,25 @@ pick_wallpaper () {
     return 2
   fi
 
-  pick_one 'Select a wallpaper:' "${wallpapers}" vertical || return $?
+  pick_one 'Select wallpaper file:' "${wallpapers}" vertical || return $?
+}
+
+
+# Shows a menu asking the user to select one wallpaper
+# alignment mode, where the answer is kept in the global
+# var REPLY.
+# Outputs:
+#  A menu of wallpaper filenames.
+pick_alignment_mode () {
+  local modes=''
+  modes+='{"key": "center", "value": "Center"},'
+  modes+='{"key": "fill", "value": "Fill"},'
+  modes+='{"key": "max", "value": "Max"},'
+  modes+='{"key": "scale", "value": "Scale"},'
+  modes+='{"key": "tile", "value": "Tile"}'
+  modes="[${modes}]"
+
+  pick_one 'Select alignment mode:' "${modes}" vertical || return $?
 }
 
 # Returns the list of pointing devices currently
@@ -105,17 +124,17 @@ find_pointers () {
   echo "[${pointers}]"
 }
 
-# Returns the pointing device with the given id.
+# Returns the pointing device with the given name.
 # Arguments:
-#  id: the id of the pointing device
+#  name: the name of the pointing device
 # Outputs:
 #  A json object of pointing device.
 find_pointer () {
-  local id="${1}"
+  local name="${1}"
 
-  local name=''
-  name="$(find_pointers |
-    jq -cer ".[]|select(.id == \"${id}\")|.name")" || return 1
+  local id=''
+  id="$(find_pointers |
+    jq -cer ".[]|select(.name == \"${name}\")|.id")" || return 1
 
   local pointer=''
   pointer+="\"id\":\"${id}\","
@@ -180,10 +199,10 @@ pick_pointer () {
     return 2
   fi
 
-  local query='[.[]|{key: .id, value: "\(.id):\(.name)"}]'
+  local query='[.[]|{key: .name, value: "\(.name)"}]'
   pointers="$(echo "${pointers}" | jq -cer "${query}")" || return 1
 
-  pick_one 'Select a pointer:' "${pointers}" vertical || return $?
+  pick_one 'Select pointer name:' "${pointers}" vertical || return $?
 }
 
 # Returns the list of stylus-pen devices currently
@@ -317,7 +336,7 @@ pick_tablet () {
   local query='[.[]|{key: .name, value: .name}]'
   tablets="$(echo "${tablets}" | jq -cer "${query}")" || return 1
 
-  pick_one 'Select a tablet:' "${tablets}" vertical || return $?
+  pick_one 'Select tablet name:' "${tablets}" vertical || return $?
 }
 
 # Saves the wallpaper with the given file name
@@ -400,5 +419,28 @@ save_tablet_scale_factor () {
 
   mkdir -p "${CONFIG_HOME}"
   echo "${settings}" > "${SETTINGS_FILE}"
+}
+
+# Shows a menu asking user to select a mapping target which
+# could be any active display output or the special desktop
+# value, where the answer is kept in the global var REPLY.
+# Outputs:
+#  A menu of display namesi and desktop.
+pick_mapping_target () {
+  # Convert outputs list into an array of {key, value} options
+  local key='\(.device_name)'
+  local value='\(.device_name):[\(if .model_name then .model_name else "NA" end)]'
+
+  local query="[.[]|{key: \"${key}\", value: \"${value}\"}]"
+
+  local options=''
+  options="$(find_outputs active | jq -cer "${query}")" || return 1
+
+  # Append the special desktop option value into options
+  local desktop='[{"key": "desktop", "value": "Desktop:[ALL]"}]'
+
+  options="$(echo "${options}" | jq -cer --argjson d "${desktop}" '. + $d')" || return 1
+  
+  pick_one "Select mapping target:" "${options}" vertical || return $?
 }
 
