@@ -27,38 +27,39 @@ show_help () {
     echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
 
     echo -e '\nCOMMANDS'
-    printf ' %-44s %s\n' \
+    printf ' %-48s %s\n' \
       'help' 'Show this help message.'
   fi
 
-  printf ' %-44s %s\n' \
+  printf ' %-48s %s\n' \
     'show status' 'Show a report of the Xorg server and active outputs.' \
-    'show logs [<lines>]' 'Show the last logs of the Xorg server.' \
+    'show logs <lines>' 'Show the last logs of the Xorg server.' \
     '' '' \
-    'list outputs [<status>]' 'List outputs by their status,' \
-    '' 'all, connected, disconnected, active, inactive, primary.' \
-    'show output [<name>]' 'Show the data of an output.' \
+    'list outputs <status>' 'List all outputs or those with status,' \
+    '' 'connected, disconnected, active, inactive, primary.' \
+    'show output <name>' 'Show the data of an output.' \
     '' '' \
-    'set mode [<output> [<resolution> [<rate>]]]' 'Set the mode of an output.' \
-    'set primary [<output>]' 'Set an output as primary.' \
-    'set on|off [<output>]' 'Activate or de-activate an output.' \
-    'rotate output [<output> [<mode>]]' 'Rotate an output view to normal, right, left or inverted.' \
-    'reflect output [<output> [<mode>]]' 'Reflect an output view to normal, x, y or xy.' \
-    'mirror output [<output>]' 'Mirror an output to other outputs.' \
+    'set mode <name> <resolution> <rate>' 'Set the mode of an output.' \
+    'set primary <name>' 'Set an output as primary.' \
+    'set on|off <name>' 'Activate or de-activate an output.' \
+    'rotate output <name> <mode>' 'Rotate an output to normal, right, left or inverted.' \
+    'reflect output <name> <mode>' 'Reflect an output to normal, x, y or xy.' \
+    'mirror output <name> <resolution> <targets>' 'Mirror an output to other outputs.' \
     '' '' \
-    'set layout [mode]' 'Set the layout of active outputs to row-2, col-2, row-3,' \
-    '' 'col-3, gamma-3, gamma-rev-3, lambda-3 or lambda-rev-3.' \
+    'set layout <mode> <outputs>' 'Set the layout of active outputs to row-2, col-2, row-3,' \
+    '' 'col-3, gamma-3, gamma-rev-3, lambda-3 or lambda-rev-3,' \
+    '' 'grid-4, taph-4, taph-rev-4, taph-right-4, taph-left-4.' \
     'save layout' 'Save the current layout of active outputs.' \
-    'list layouts' 'List all layout settings.' \
-    'delete layout [<index>]' 'Delete a layout setting.' \
+    'list layouts' 'List all layouts.' \
+    'delete layout <index>' 'Delete a layout.' \
     'restore layout' 'Restore the layout matching the current mapping.' \
     'fix layout' 'Fix the positioning of the current layout.' \
     '' '' \
-    'set color [<output> [<profile>]]' 'Set color profile of a display connected to an output.' \
-    'reset color [<output>]' 'Reset color profile of a display connected to an output.' \
-    'list colors' 'List all color settings per display.' \
-    'delete color [<index>]' 'Delete a color setting.' \
-    'restore colors' 'Restore colors to currently active displays.'
+    'set color <output> <profile>' 'Set the color of a display connected to an output.' \
+    'reset color <output>' 'Reset the color of a display connected to an output.' \
+    'list colors' 'List all saved color settings per display.' \
+    'delete color <index>' 'Delete a saved color setting.' \
+    'restore colors' 'Restore color settings of any active displays.'
 }
 
 run () {
@@ -118,7 +119,7 @@ run () {
       'list outputs') list_outputs "${args[2]}";;
       'list colors') list_colors;;
       'list layouts') list_layouts;;
-      'set layout') set_layout && beep;;
+      'set layout') set_layout "${args[2]}" "${args[@]:3}" && beep;;
       'set mode') set_mode "${args[2]}" "${args[3]}" "${args[4]}" && beep;;
       'set primary') set_primary "${args[2]}" && beep;;
       'set on') set_on "${args[2]}" && beep;;
@@ -132,7 +133,7 @@ run () {
       'restore colors') restore_colors && beep;;
       'rotate output') rotate_output "${args[2]}" "${args[3]}" && beep;;
       'reflect output') reflect_output "${args[2]}" "${args[3]}" && beep;;
-      'mirror_output') mirror_output "${args[2]}" && beep;;
+      'mirror output') mirror_output "${args[2]}" "${args[3]}" "${args[@]:4}" && beep;;
       'fix layout') fix_layout && beep;;
       *)
         echo 'Ooops, invalid or unknown command!'

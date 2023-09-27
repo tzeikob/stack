@@ -259,11 +259,6 @@ pick_one () {
 # Arguments:
 #  prompt:  a text line
 #  options: a JSON array of {key, value} pairs
-#  size:    how many options must be selected
-#           all all must be selected
-#           a,b at least a and up to b
-#           a,  at least a
-#           ,b  up to b
 #  mode:    horizontal, vertical, tabular
 #  slots:   number of vertical or tabular slots
 # Outputs:
@@ -271,33 +266,14 @@ pick_one () {
 pick_many () {
   local prompt="${1}"
   local options="${2}"
-  local size="${3}"
-  local mode="${4}"
-  local slots="${5:-6}"
+  local mode="${3}"
+  local slots="${4:-6}"
 
   REPLY=''
 
   local len=0
   len="$(count "${options}")" || return 1
   [[ ${len} -eq 0 ]] && return 1
-
-  local min=0
-  local max=0
-  if [[ "${size}" =~ ^all$ ]]; then
-    min="${len}"
-    max="${len}"
-  elif [[ "${size}" =~ ^[1-9][0-9]*,$ ]]; then
-    min="$(echo "${size}" | cut -d ',' -f 1)"
-    max="${len}"
-  elif [[ "${size}" =~ ^,[1-9][0-9]*$ ]]; then
-    min=1
-    max="$(echo "${size}" | cut -d ',' -f 2)"
-  elif [[ "${size}" =~ ^[1-9][0-9]*,[1-9][0-9]*$ ]]; then
-    min="$(echo "${size}" | cut -d ',' -f 1)"
-    max="$(echo "${size}" | cut -d ',' -f 2)"
-  else
-    return 1
-  fi
 
   local args=()
   if [[ "${mode}" == "vertical" ]]; then
@@ -310,37 +286,26 @@ pick_many () {
   options="$(echo "${options}" |
     jq -cer '[.[]|("\(.key)'"${KVS}"'\(.value)")]|join("'"${AES}"'")')" || return 1
 
-  while true; do
-    echo "${prompt}"
-    REPLY="$(echo "${options}" |
-      smenu -nm -/ prefix -W "${AES_LN}" "${args[@]}" -S /\(.*"${KVS}"\)//v -P "${AES}")" || return 1
+  echo "${prompt}"
+  REPLY="$(echo "${options}" |
+    smenu -nm -/ prefix -W "${AES_LN}" "${args[@]}" -S /\(.*"${KVS}"\)//v -P "${AES}")" || return 1
 
-    [[ -z "${REPLY}" ]] && return 0
+  if [[ -n "${REPLY}" ]]; then
+    # Convert selected options to a JSON array of their keys
+    REPLY="$(echo "${REPLY}" | awk -F"${AES}" '{
+      out=""
+      for (i=1;i<=NF;i++) {
+        gsub(/('"${KVS}"'.*$)/, "", $i);
+        out=out "\""$i"\","
+      }
+      print out
+    }')"
 
-    # Validate the selection size matching the min/max limits
-    local selected="$(echo "${REPLY}" | awk -F"${AES}" '{print NF}')"
-
-    if [[ ${selected} -ge ${min} ]] && [[ ${selected} -le ${max} ]]; then
-      # Convert selected options to a JSON array of their keys
-      REPLY="$(echo "${REPLY}" | awk -F"${AES}" '{
-        out=""
-        for (i=1;i<=NF;i++) {
-          gsub(/('"${KVS}"'.*$)/, "", $i);
-          out=out "\""$i"\","
-        }
-        print out
-      }')"
-
-      # Remove last post fixed comma
-      [[ "${REPLY}" =~ ,$ ]] && REPLY="[${REPLY::-1}]"
-
-      return 0
+    # Remove last post fixed comma
+    if [[ "${REPLY}" =~ ,$ ]]; then
+      REPLY="[${REPLY::-1}]"
     fi
-
-    [[ ${min} -eq ${max} ]] &&
-      prompt="Please select exactly ${max} items:" ||
-      prompt="Please select at least ${min} or up to ${max} items:"
-  done
+  fi
 }
 
 # Gets a JSON object's property its key matching the
