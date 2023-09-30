@@ -1,14 +1,14 @@
 #!/bin/sh
 
-displays -q restore layout &
-displays -q restore colors &
-cloud -q mount remotes &
-desktop -q init pointer &
-desktop -q init tablets &
-desktop -q init wallpaper &
-security -q init locker &
-power -q init screensaver &
-notifications -q start &
+displays -qs restore layout &
+displays -qs restore colors &
+cloud -qs mount remotes &
+desktop -qs init pointer &
+desktop -qs init tablets &
+desktop -qs init wallpaper &
+security -qs init locker &
+power -qs init screensaver &
+notifications -qs start &
 
 pgrep -x sxhkd > /dev/null || sxhkd &
 $HOME/.config/polybar/launch &

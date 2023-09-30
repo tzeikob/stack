@@ -31,12 +31,12 @@ show_power_menu () {
   local CHOSEN="$(printf "${options}" | rofi -dmenu -i -theme-str "${HIDE_PROMT} ${EXACT_LINES}")"
 
   case "$CHOSEN" in
-    "Shutdown") power -q shutdown;;
-    "Reboot") power -q reboot;;
-    "Suspend") power -q suspend;;
-    "Lock") security -q lock screen;;
-    "Blank") power -q blank;;
-    "Logout") security -q logout user;;
+    "Shutdown") power -qs shutdown;;
+    "Reboot") power -qs reboot;;
+    "Suspend") power -qs suspend;;
+    "Lock") security -qs lock screen;;
+    "Blank") power -qs blank;;
+    "Logout") security -qs logout user;;
     *) exit 1;;
   esac
 }

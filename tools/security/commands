@@ -68,8 +68,8 @@ set_screen_locker () {
   kill_screen_locker || return 1
 
   if [[ ${interval} -gt 0 ]]; then
-    xautolock -locker 'security -q lock screen' \
-      -nowlocker 'security -q lock screen' -time "${interval}" \
+    xautolock -locker 'security -qs lock screen' \
+      -nowlocker 'security -qs lock screen' -time "${interval}" \
       -corners 0-00 -detectsleep &> /dev/null &
     
     if [[ $? -ne 0 ]]; then
@@ -99,8 +99,8 @@ init_screen_locker () {
   kill_screen_locker || return 1
 
   if [[ ${interval} -gt 0 ]]; then
-    xautolock -locker 'security -q lock screen' \
-      -nowlocker 'security -q lock screen' \
+    xautolock -locker 'security -qs lock screen' \
+      -nowlocker 'security -qs lock screen' \
       -time "${interval}" \
       -corners 0-00 -detectsleep &> /dev/null &
     
@@ -127,10 +127,10 @@ lock_screen () {
   fi
 
   local is_paused=''
-  is_paused="$(notifications -q get state | jq -cr '.is_paused')"
+  is_paused="$(notifications -qs get state | jq -cr '.is_paused')"
 
   if [[ "${is_paused}" == "false" ]]; then
-    notifications -q mute all
+    notifications -qs mute all
   fi
 
   env XSECURELOCK_FONT='PixelMix' \
@@ -146,7 +146,7 @@ lock_screen () {
 
   # Reset notifications stream to previous state
   if [[ "${is_paused}" == "false" ]]; then
-    notifications -q unmute all
+    notifications -qs unmute all
   fi
 }
 
