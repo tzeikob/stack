@@ -44,7 +44,7 @@ is_notifications_up () {
 # Stores the notification beep volume into settings file.
 # Arguments:
 #  volume: a percent integer value in [0,100]
-save_volume () {
+save_volume_to_settings () {
   local volume="${1}"
   
   # Scale down volume to [0,1] range

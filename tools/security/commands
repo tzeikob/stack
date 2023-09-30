@@ -82,8 +82,7 @@ set_screen_locker () {
     echo "Screen locker has been disabled"
   fi
   
-  # Save screen locker interval into settings
-  save_screen_locker "${interval}" ||
+  save_screen_locker_to_settings "${interval}" ||
     echo 'Failed to save screen locker into settings'
 }
 

@@ -344,7 +344,7 @@ pick_tablet () {
 # Arguments:
 #  name: the file name of the wallpaper
 #  mode: center, fill, max, scale or tile
-save_wallpaper () {
+save_wallpaper_to_settings () {
   local name="${1}"
   local mode="${2}"
 
@@ -364,7 +364,7 @@ save_wallpaper () {
 # Saves the pointer speed factor into the settings file.
 # Arguments:
 #  factor: a speed factor between [0,1]
-save_pointer_speed_factor () {
+save_pointer_speed_to_settings () {
   local factor="${1}"
 
   local settings='{}'
@@ -385,7 +385,7 @@ save_pointer_speed_factor () {
 # Arguments:
 #  name:  the name of a tablet device
 #  scale: the scale factor [0.1,1]
-save_tablet_scale_factor () {
+save_tablet_scale_to_settings () {
   local name="${1}"
   local scale="${2}"
   

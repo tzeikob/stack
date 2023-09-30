@@ -28,7 +28,7 @@ kill_screen_locker () {
 # the settings file.
 # Arguments:
 #  interval: the interval time in mins
-save_screen_locker () {
+save_screen_locker_to_settings () {
   local interval="${1}"
 
   local settings='{}'

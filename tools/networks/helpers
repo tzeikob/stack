@@ -290,7 +290,7 @@ pick_proxy () {
 #  username: the user name
 #  password: the password
 #  no_proxy: the hosts to ignore proxy
-save_proxy () {
+save_proxy_to_settings () {
   local name="${1}"
   local host="${2}"
   local port="${3}"

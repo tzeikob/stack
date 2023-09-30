@@ -834,8 +834,8 @@ add_proxy () {
     fi
   fi
 
-  save_proxy "${name}" "${host}" "${port}" "${username}" "${password}" "${no_proxy}"
-    
+  save_proxy_to_settings "${name}" "${host}" "${port}" "${username}" "${password}" "${no_proxy}"
+  
   echo "Proxy profile ${name} added"
 }
 

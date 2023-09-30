@@ -162,8 +162,7 @@ set_wallpaper () {
 
   echo "Wallpaper set to ${name}"
 
-  # Save wallpaper into settings file
-  save_wallpaper "${name}" "${mode}" ||
+  save_wallpaper_to_settings "${name}" "${mode}" ||
     echo 'Failed to save wallpaper into settings'
 }
 
@@ -307,8 +306,7 @@ set_pointer_speed () {
 
   echo "Pointer speed set to ${factor}"
 
-  # Save speed factor into settings file
-  save_pointer_speed_factor "${factor}" ||
+  save_pointer_speed_to_settings "${factor}" ||
     echo 'Failed to save pointer speed factor into settings'
 }
 
@@ -467,8 +465,7 @@ scale_tablet () {
 
   echo "Tablet ${name} scaled by ${scale}"
 
-  # Save tablet's scale factor into settings file
-  save_tablet_scale_factor "${name}" "${scale}" ||
+  save_tablet_scale_to_settings "${name}" "${scale}" ||
     echo 'Failed to save the tablet scale factor'
 }
 

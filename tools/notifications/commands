@@ -238,7 +238,7 @@ set_volume () {
     return 2
   fi
 
-  save_volume "${percent}"
+  save_volume_to_settings "${percent}"
 
   if [[ $? -ne 0 ]]; then
     echo 'Failed to set notifications volume'
