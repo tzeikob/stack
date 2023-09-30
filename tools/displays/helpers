@@ -167,8 +167,7 @@ has_rate () {
   echo "${output}" | jq -cer "${query}" &> /dev/null || return 1
 }
 
-# Shows a menu asking the user to select one output, where the
-# answer is kept in the global var REPLY.
+# Shows a menu asking the user to select one output.
 # Arguments:
 #  prompt: a prompt text line
 #  status: all, connected, disconnected, active,
@@ -199,9 +198,7 @@ pick_output () {
   pick_one "${prompt}" "${options}" vertical || return $?
 }
 
-# Shows a menu asking the user to select many outputs,
-# where the answer is kept in the global var REPLY as
-# a JSON array of output names in selection order.
+# Shows a menu asking the user to select many outputs.
 # Arguments:
 #  prompt:  a prompt text line
 #  status:  all, connected, disconnected, active,
@@ -239,8 +236,7 @@ pick_outputs () {
 }
 
 # Shows a menu of resolutions of the given output and waits
-# the user to pick one option. The selected option is kept
-# in the global var REPLY.
+# the user to pick one option.
 # Arguments:
 #  output: a json object of output
 # Outputs:
@@ -271,8 +267,7 @@ pick_resolution () {
 }
 
 # Shows a menu of resolution rates of the given output and
-# waits the user to pick one option. The selected option is
-# kept in the global var REPLY.
+# waits the user to pick one option.
 # Arguments:
 #  output: a json object of output
 # Outputs:
@@ -367,8 +362,7 @@ find_common_resolutions () {
 }
 
 # Show a menu of asking the user to select one of the
-# available layout modes, where the answer is kept in
-# the global var REPLY.
+# available layout modes.
 # Arguments
 #  size: the number of active outputs
 # Outputs:

@@ -76,8 +76,7 @@ is_scanning_on () {
   fi
 }
 
-# Shows a menu asking the user to select a controller,
-# where the answer is kept in the global var REPLY.
+# Shows a menu asking the user to select a controller.
 # Outputs:
 #  A menu of controllers.
 pick_controller () {
@@ -98,8 +97,7 @@ pick_controller () {
   pick_one 'Select controller address:' "${controllers}" vertical || return $?
 }
 
-# Shows a menu asking the user to select a device,
-# where the answer is kept in the global var REPLY.
+# Shows a menu asking the user to select a device.
 # Outputs:
 #  A menu of devices.
 pick_device () {

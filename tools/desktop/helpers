@@ -45,8 +45,7 @@ find_wallpapers () {
   echo "[${wallpapers}]"
 }
 
-# Shows a menu asking the user to select one wallpaper,
-# where the answer is kept in the global var REPLY.
+# Shows a menu asking the user to select one wallpaper.
 # Outputs:
 #  A menu of wallpaper filenames.
 pick_wallpaper () {
@@ -74,8 +73,7 @@ pick_wallpaper () {
 
 
 # Shows a menu asking the user to select one wallpaper
-# alignment mode, where the answer is kept in the global
-# var REPLY.
+# alignment mode.
 # Outputs:
 #  A menu of wallpaper filenames.
 pick_alignment_mode () {
@@ -178,8 +176,7 @@ find_pointer () {
   echo "{${pointer}}"
 }
 
-# Shows a menu asking the user to select one pointing device,
-# where the answer is kept in the global var REPLY.
+# Shows a menu asking the user to select one pointing device.
 # Outputs:
 #  A menu of pointing devices.
 pick_pointer () {
@@ -312,8 +309,7 @@ is_scalable () {
   fi
 }
 
-# Shows a menu asking the user to select one tablet device,
-# where the answer is kept in the global var REPLY.
+# Shows a menu asking the user to select one tablet device.
 # Outputs:
 #  A menu of tablet devices.
 pick_tablet () {
@@ -423,7 +419,7 @@ save_tablet_scale_to_settings () {
 
 # Shows a menu asking user to select a mapping target which
 # could be any active display output or the special desktop
-# value, where the answer is kept in the global var REPLY.
+# value.
 # Outputs:
 #  A menu of display namesi and desktop.
 pick_mapping_target () {

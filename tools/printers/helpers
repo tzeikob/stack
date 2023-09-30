@@ -213,8 +213,7 @@ exists_job () {
   fi
 }
 
-# Shows a menu asking the user to select one printer,
-# where the answer is kept in the global var REPLY.
+# Shows a menu asking the user to select one printer.
 # Outputs:
 #  A menu of printers.
 pick_printer () {
@@ -235,8 +234,8 @@ pick_printer () {
   pick_one 'Select a printer:' "${destinations}" vertical || return $?
 }
 
-# Shows a menu asking the user to select a uri print destination
-# where the answer is kept in the global var REPLY.
+# Shows a menu asking the user to select a uri
+# print destination.
 # Outputs:
 #  A menu of uri print destinations.
 pick_uri () {
@@ -308,8 +307,7 @@ is_driver_available () {
   echo "${drivers}" | jq -cer "${query}" &> /dev/null || return 1
 }
 
-# Shows a menu asking the user to select one driver,
-# where the answer is kept in the global var REPLY.
+# Shows a menu asking the user to select one driver.
 # Outputs:
 #  A menu of printer drivers.
 pick_driver () {
@@ -327,8 +325,7 @@ pick_driver () {
   pick_one 'Select a print driver:' "${drivers}" vertical || return $?
 }
 
-# Shows a menu asking the user to select one print job,
-# where the answer is kept in the global var REPLY.
+# Shows a menu asking the user to select one print job.
 # Outputs:
 #  A menu of print jobs.
 pick_job () {
@@ -349,8 +346,7 @@ pick_job () {
   pick_one 'Select a print job:' "${jobs}" vertical || return $?
 }
 
-# Shows a menu asking the user to select a print option
-# where the answer is kept in the global var REPLY.
+# Shows a menu asking the user to select a print option.
 # Outputs:
 #  A menu of print options.
 pick_print_option () {
@@ -366,7 +362,7 @@ pick_print_option () {
 }
 
 # Shows a menu asking the user to select a print quality
-# option, where the answer is kept in the global var REPLY.
+# option.
 # Outputs:
 #  A menu of quality options.
 pick_print_quality () {
@@ -378,8 +374,7 @@ pick_print_quality () {
   pick_one 'Select a print quality:' "${values}" vertical || return $?
 }
 
-# Shows a menu asking the user to select a page size option,
-# where the answer is kept in the global var REPLY.
+# Shows a menu asking the user to select a page size option.
 # Outputs:
 #  A menu of page size options.
 pick_page_size () {
@@ -403,8 +398,7 @@ pick_page_size () {
   pick_one 'Select a page size:' "${values}" vertical || return $?
 }
 
-# Shows a menu asking the user to select a media type option,
-# where the answer is kept in the global var REPLY.
+# Shows a menu asking the user to select a media type option.
 # Outputs:
 #  A menu of media type options.
 pick_media_type () {
@@ -427,8 +421,7 @@ pick_media_type () {
   pick_one 'Select a media type:' "${values}" vertical || return $?
 }
 
-# Shows a menu asking the user to select a toner mode option,
-# where the answer is kept in the global var REPLY.
+# Shows a menu asking the user to select a toner mode option.
 # Outputs:
 #  A menu of toner mode options.
 pick_toner_mode () {
@@ -440,8 +433,7 @@ pick_toner_mode () {
   pick_one 'Select a toner mode:' "${values}" vertical || return $?
 }
 
-# Shows a menu asking the user to select a error policy option,
-# where the answer is kept in the global var REPLY.
+# Shows a menu asking the user to select a error policy option.
 # Outputs:
 #  A menu of error policy options.
 pick_error_policy () {

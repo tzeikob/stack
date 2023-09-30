@@ -107,8 +107,7 @@ is_mounted () {
   grep -Eq "^${name}:.* fuse.rclone" /proc/mounts
 }
 
-# Shows a menu asking the user to select one remote, where the
-# answer is kept in the global var REPLY.
+# Shows a menu asking the user to select one remote.
 # Arguments:
 #  status: mounted or unmounted
 # Outputs:

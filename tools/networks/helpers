@@ -176,8 +176,7 @@ validate_connection () {
   fi
 }
 
-# Shows a menu asking the user to select one device, where the
-# answer is kept in the global var REPLY.
+# Shows a menu asking the user to select one device.
 # Arguments:
 #  type: ethernet, wifi or bridge
 # Outputs:
@@ -202,8 +201,7 @@ pick_device () {
   pick_one "Select ${type:-network} device name:" "${devices}" vertical || return $?
 }
 
-# Shows a menu asking the user to select one connection,
-# where the answer is kept in the global var REPLY.
+# Shows a menu asking the user to select one connection.
 # Outputs:
 #  A menu of connection names.
 pick_connection () {
@@ -224,8 +222,7 @@ pick_connection () {
   pick_one 'Select connection name:' "${connections}" vertical || return $?
 }
 
-# Shows a menu asking the user to select one wifi network,
-# where the answer is kept in the global var REPLY.
+# Shows a menu asking the user to select one wifi network.
 # Arguments:
 #  device: the name of a wifi network device
 # Outputs:
@@ -254,8 +251,7 @@ pick_wifi () {
   pick_one 'Select network ssid:' "${networks}" vertical || return $?
 }
 
-# Shows a menu asking the user to select one proxy profile,
-# where the answer is kept in the global var REPLY.
+# Shows a menu asking the user to select one proxy profile.
 # Outputs:
 #  A menu of proxy profiles.
 pick_proxy () {

@@ -27,8 +27,7 @@ find_card () {
   find_cards | jq -cer "${query}" || return 1
 }
 
-# Shows a menu asking the user to select an audio card,
-# where the answer is kept in the global var REPLY.
+# Shows a menu asking the user to select an audio card.
 # Arguments:
 #  prompt: a prompt text line
 # Outputs:
@@ -55,8 +54,7 @@ pick_card () {
 }
 
 # Shows a menu asking the user to select a profile of the
-# given audio card, where the answer is kept in the global
-# var REPLY.
+# given audio card.
 # Arguments:
 #  prompt: a prompt text line
 #  card:   a json object of an audio card
@@ -84,8 +82,7 @@ pick_profile () {
 }
 
 # Shows a menu asking the user to select an audio module
-# with the given type, where the answer is kept in the
-# global var REPLY.
+# with the given type.
 # Arguments:
 #  prompt: a prompt text line
 #  type:   output or input

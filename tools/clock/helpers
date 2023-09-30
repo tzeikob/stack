@@ -4,8 +4,7 @@ set -o pipefail
 
 source /opt/stack/utils
 
-# Shows a menu asking the user to select a timezone,
-# where the answer is kept in the global var REPLY.
+# Shows a menu asking the user to select a timezone.
 # Arguments:
 #  prompt: a prompt text line
 # Outputs:

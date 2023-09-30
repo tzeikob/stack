@@ -579,8 +579,8 @@ find_shared_folders () {
   echo "[${folders}]"
 }
 
-# Shows a menu asking the user to select one disk block device,
-# where the answer is kept in the global var REPLY.
+# Shows a menu asking the user to select one
+# disk block device.
 # Arguments:
 #  None
 # Outputs:
@@ -619,8 +619,7 @@ pick_disk () {
 }
 
 # Shows a menu asking the user to select one partition
-# of the disk with the given path, where the answer is
-# kept in the global var REPLY.
+# of the disk with the given path.
 # Arguments:
 #  path:   the path of a disk block device
 #  status: mounted, unmounted
@@ -662,7 +661,7 @@ pick_partition () {
 }
 
 # Shows a menu asking the user to select one rom block
-# device, where the answer is kept in the global var REPLY.
+# device.
 # Arguments:
 #  status: mounted, unmounted
 # Outputs:
@@ -703,8 +702,7 @@ pick_rom () {
   pick_one 'Select a rom:' "${roms}" vertical || return $?
 }
 
-# Shows a menu asking the user to select one host, where the
-# answer is kept in the global var REPLY.
+# Shows a menu asking the user to select one host.
 # Arguments:
 #  None
 # Outputs:
@@ -738,8 +736,7 @@ pick_host () {
   pick_one 'Select a host:' "${hosts}" vertical || return $?
 }
 
-# Shows a menu asking the user to select one file system type,
-# where the answer is kept in the global var REPLY.
+# Shows a menu asking the user to select one file system type.
 # Arguments:
 #  None
 # Outputs:
