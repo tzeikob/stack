@@ -34,7 +34,8 @@ show_help () {
   printf ' %-36s %s\n' \
     'show status' 'Show the power status of the system.' \
     '' '' \
-    'set action [<handler> [<action>]]' 'Set the action of a power handler to' \
+    'set action <handler> <action>' 'Set the action of a power handler like' \
+    '' 'power, reboot, suspend, lid or docked to' \
     '' 'poweroff, reboot, suspend or ignore.' \
     'reset actions' 'Reset to default action for all power handlers.' \
     '' '' \
@@ -43,7 +44,7 @@ show_help () {
     '' 'where 0 means deactivate the screensaver.' \
     '' '' \
     'set tlp on|off' 'Enable or disable power saving mode.' \
-    'set charge start|stop <percent>' 'Set the battery charge thresholds.' \
+    'set charging <start> <stop>' 'Set battery charging start and stop percent thresholds.' \
     '' '' \
     'shutdown' 'Shut the system down.' \
     'reboot' 'Reboot the system.' \
@@ -106,7 +107,7 @@ run () {
       'set action') set_action "${args[2]}" "${args[3]}" && beep;;
       'set screensaver') set_screensaver "${args[2]}" && beep;;
       'set tlp') set_tlp "${args[2]}" && beep;;
-      'set charge') set_charge "${args[2]}" "${args[3]}" && beep;;
+      'set charging') set_charging "${args[2]}" "${args[3]}" && beep;;
       'reset actions') reset_actions && beep;;
       'init screensaver') init_screensaver && beep;;
       'shutdown') shutdown_system;;
