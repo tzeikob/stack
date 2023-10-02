@@ -34,21 +34,17 @@ show_help () {
   printf ' %-35s %s\n' \
     'show status' 'Show the system locale and keyboard status.' \
     '' '' \
-    'set language [<language>]' 'Set the system language.' \
-    'set keymap [<map>]' 'Set the keyboard virtual console keymap.' \
-    'set options [<value>]' 'Set a keyboard layout options.' \
-    'set model [<name>]' 'Set the model of the keyboard.' \
+    'add locale <name>' 'Add a locale to the system locales.' \
+    'remove locale <name>' 'Remove a locale from the system locales.' \
+    'set locale <name>' 'Set the locale of the system.' \
     '' '' \
-    'set locale <name> [<locale>]' 'Set a locale variable, where name could be' \
-    '' 'ctype, numeric, time, collate, monetary,' \
-    '' 'messages, paper, name, address, telephone,' \
-    '' 'measurement, identification.' \
-    'add locale [<locale>]' 'Add a locale to the system locales.' \
-    'remove locale [<locale>]' 'Remove a locale from the system locales.' \
+    'add layout <code>' 'Add a keyboard layout.' \
+    'remove layout <code>' 'Remove a keyboard layout.' \
+    'order layouts <codes>' 'Set the order of keyboard layouts.' \
     '' '' \
-    'add layout [<language>]' 'Add a keyboard layout language.' \
-    'remove layout [<language>]' 'Remove a keyboard layout language.' \
-    'order layouts' 'Set the order of keyboard layouts.'
+    'set keymap <map>' 'Set the keyboard virtual console keymap.' \
+    'set options <value>' 'Set a keyboard layout options.' \
+    'set model <name>' 'Set the model of the keyboard.'
 }
 
 run () {
@@ -103,16 +99,15 @@ run () {
 
     case "${cmd}${obj:+ ${obj}}" in
       'show status') show_status;;
+      'add locale') add_locale "${args[2]}" && beep;;
+      'remove locale') remove_locale "${args[2]}" && beep;;
+      'set locale') set_locale "${args[2]}" && beep;;
+      'add layout') add_layout "${args[2]}" && beep;;
+      'remove layout') remove_layout "${args[2]}" && beep;;
+      'order layouts') order_layouts "${args[@]:2}" && beep;;
       'set keymap') set_keymap "${args[2]}" && beep;;
-      'set language') set_language "${args[2]}" && beep;;
-      'set locale') set_locale "${args[2]}" "${args[3]}" && beep;;
       'set options') set_options "${args[2]}" && beep;;
       'set model') set_model "${args[2]}" && beep;;
-      'add locale') add_locale "${args[2]}" && beep;;
-      'add layout') add_layout "${args[2]}" && beep;;
-      'remove locale') remove_locale "${args[2]}" && beep;;
-      'remove layout') remove_layout "${args[2]}" && beep;;
-      'order layouts') order_layouts && beep;;
       *)
         echo 'Ooops, invalid or unknown command!'
         $(return 2);;

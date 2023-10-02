@@ -1,0 +1,199 @@
+#!/bin/bash
+
+set -o pipefail
+
+source /opt/stack/utils
+
+# Shows a menu asking the user to select a keyboard map.
+# Outputs:
+#  A menu of keyboard maps.
+pick_keymap () {
+	local maps=''
+
+	maps="$(localectl --no-pager list-keymaps | awk '{
+	  print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
+	}')" || return 1
+
+	# Remove extra comma delimiter from the last element
+	maps="[${maps::-1}]"
+
+	pick_one 'Select a key map:' "${maps}" vertical || return $?
+}
+
+# Checks if the given keyboard map is valid.
+# Arguments:
+#  map: a keyboard map name
+# Returns:
+#  0 if map is valid otherwise 1.
+validate_keymap () {
+	local map="${1}"
+
+  if ! localectl --no-pager list-keymaps | grep -qE "^${map}$"; then
+    return 1
+  fi
+
+	return 0
+}
+
+# Shows a menu asking the user to select a locale.
+# In case the filter is given, all means all locales,
+# installed means those currently installed and
+# not_installed means those those currently not installed,
+# where the default is all.
+# Arguments:
+#  filter: all, installed, not_installed
+# Outputs:
+#  A menu of locales.
+pick_locale () {
+  local filter="${1:-all}"
+
+  local locales=''
+
+  if [[ "${filter}" == "not_installed" ]]; then
+    locales="$(cat /etc/locale.gen | tail -n +24 | trim | awk '/^\s*#/{
+      gsub(/#/,"",$0);
+      print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
+    }')" || return 1
+  elif [[ "${filter}" == "installed" ]]; then
+    locales="$(cat /etc/locale.gen | tail -n +24 | trim | awk '/^\s*[a-zA-Z\s0-9_.-]+/{
+      print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
+    }')" || return 1
+  else
+    locales="$(cat /etc/locale.gen | tail -n +24 | tr -d '#' | trim | awk '{
+      print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
+    }')" || return 1
+  fi
+  
+	# Removes the last comma delimiter from the last element
+  locales="[${locales::-1}]"
+
+  pick_one 'Select a locale:' "${locales}" vertical || return $?
+}
+
+# Checks if the given locale is valid.
+# Arguments:
+#  name: the name of a locale
+# Returns:
+#  0 if locale is valid otherwise 1.
+validate_locale () {
+	local name="${1}"
+	
+  if ! grep -qE "^\s*#?\s*${name}\s*$" /etc/locale.gen; then
+    return 1
+  fi
+
+	return 0
+}
+
+# Checks if the given locale is already installed.
+# Arguments:
+#  name: the name of a locale
+# Returns:
+#  0 if locale is set otherwise 1.
+is_locale_installed () {
+	local name="${1}"
+	
+  if grep -qE "^\s*${name}\s*$" /etc/locale.gen; then
+    return 0
+  fi
+
+	return 1
+}
+
+# Shows a menu asking the user to select a layout
+# options value.
+# Outputs:
+# A menu of keyboard layout options.
+pick_options_value () {
+  local options=''
+
+  options="$(localectl --no-pager list-x11-keymap-options | awk '{
+    print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
+  }')" ||  return 1
+
+  # Remove extra comma delimiter from last element
+  options="[${options::-1}]"
+
+  pick_one 'Select an options value:' "${options}" vertical || return $?
+}
+
+# Checks if the given layout options value
+# is valid.
+# Arguments:
+#  value: a layout options value
+# Returns:
+#  0 if value is valid otherwise 1.
+validate_layout_options () {
+  local value="${1}"
+  
+  if ! localectl --no-pager list-x11-keymap-options | grep -qw "${value}"; then
+    return 1
+  fi
+
+  return 0
+}
+
+# Shows a menu asking the user to select a keyboard model.
+# Outputs:
+#  A menu of keyboard models.
+pick_keyboard_model () {
+  local models=''
+
+  models="$(localectl --no-pager list-x11-keymap-models | awk '{
+    print "{\"key\":\""$1"\",\"value\":\""$1"\"},"
+  }')" || return 1
+
+  # Remove the extra comma delimiter from the last element
+  models="[${models::-1}]"
+
+  pick_one 'Select a model name:' "${models}" vertical || return $?
+}
+
+# Checks if the given keyboard model is valid.
+# Arguments:
+#  name: the name of a keyboard model
+# Returns:
+#  0 if model is valid otherwise 1.
+validate_keyboard_model () {
+  local name="${1}"
+  
+  if ! localectl --no-pager list-x11-keymap-models | grep -qw "${name}"; then
+    return 1
+  fi
+
+  return 0
+}
+
+# Shows a menu asking the user to select a keyboard layout.
+# Outputs:
+#  A menu of keyboard layouts.
+pick_layout () {
+  local layouts=''
+  
+  layouts="$(localectl --no-pager list-x11-keymap-layouts | awk '{
+    print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
+  }')" || return 1
+
+  # Remove the extra comma delimiter from last element
+  layouts="[${layouts::-1}]"
+
+  pick_one 'Select a layout code:' "${layouts}" vertical || return $?
+}
+
+# Cheks if the keyboard layout with the given code is valid.
+# Arguments:
+#  code: a layout code
+# Returns:
+#  0 if layout is valid otherwise 1.
+validate_layout () {
+  local code="${1}"
+
+  if [[ ! "${code}" =~ ^[a-z]{2,6}$ ]]; then
+    return 1
+  elif ! localectl --no-pager list-x11-keymap-layouts | grep -qw "${code}"; then
+    return 1
+  fi
+
+  return 0
+}
+

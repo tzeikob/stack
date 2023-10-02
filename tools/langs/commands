@@ -3,10 +3,9 @@
 set -o pipefail
 
 source /opt/stack/utils
+source /opt/stack/langs/helpers
 
 # Shows the current status of languages and locales.
-# Arguments:
-#  None
 # Outputs:
 #  A verbose list of text data.
 show_status () {
@@ -37,121 +36,88 @@ show_status () {
 # Sets the keymap of the console keyboard to the
 # given keymap.
 # Arguments:
-#  map: the name of a keymap
+#  map: the name of a keyboard map
 set_keymap () {
   local map="${1}"
 
   if [[ -z "${map}" ]]; then
-    local maps=''
-    maps="$(localectl --no-pager list-keymaps | awk '{
-      print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
-    }')" || return 1
-    maps="[${maps::-1}]"
+    on_script_mode &&
+      echo 'Missing the keyboard map' && return 2
 
-    pick_one 'Select a keymap:' "${maps}" vertical || return $?
-    [[ -n "${REPLY}" ]] && map="${REPLY}" || return 0
+    pick_keymap || return $?
+    require 'Keyboard map is required' || return 2
+    map="${REPLY}"
   fi
 
-  if ! localectl --no-pager list-keymaps | grep -qE "^${map}$"; then
-    echo 'Invalid keymap value'
+  if ! validate_keymap "${map}"; then
+    echo 'Invalid or unknown keyboard map'
     return 2
   fi
 
   localectl set-keymap --no-convert "${map}"
   
   if [[ $? -ne 0 ]]; then
-    echo 'Failed to set keymap'
+    echo 'Failed to set keyboard map'
     return 2
   fi
 
-  echo "Keymap set to ${map}"
+  echo "Keyboard map set to ${map}"
 }
 
-# Sets the system's language to the given language.
+# Sets the language and all locale variables to
+# the given locale.
 # Arguments:
-#  language: a language code
-set_language () {
-  local language="${1}"
-
-  if [[ -z "${language}" ]]; then
-    local languages=''
-    languages="$(cat /etc/locale.gen | tail -n +24 | tr -d '#' | trim | awk '{
-      print "{\"key\":\""$1"\",\"value\":\""$1"\"},"
-    }')" || return 1
-    languages="[${languages::-1}]"
-
-    pick_one 'Select a language:' "${languages}" vertical || return $?
-    [[ -n "${REPLY}" ]] && language="${REPLY}" || return 0
-  fi
-
-  if [[ ! "${language}" =~ ^[a-zA-Z0-9_.-]+$ ]]; then
-    echo 'Invalid language value'
-    return 2
-  elif ! cat /etc/locale.gen | grep -qE "^#?${language} .*$"; then
-    echo 'Invalid or unknown language'
-    return 2
-  fi
-
-  sudo sed -i "s/\(LANG=\).*/\1${language}/" /etc/locale.conf &&
-   sudo sed -i "s/\(LANGUAGE=\).*/\1${language}:en:C/" /etc/locale.conf &&
-   unset LANG LANGUAGE &&
-   source /etc/profile.d/locale.sh
-
-  if [[ $? -ne 0 ]]; then
-    echo 'Failed to set language'
-    return 2
-  fi
-
-  echo "Language set to ${language}"
-}
-
-# Sets the locale variable with the given name to the
-# given locale.
-# Arguments:
-#  name:   the name of the locale variable 
-#  locale: a locale value
+#  name: the name of a locale
 set_locale () {
-  local name="${1^^}"
-  local locale="${2}"
-
-  local properties=''
-  properties+='CTYPE|NUMERIC|TIME|COLLATE|MONETARY|MESSAGES|PAPER|'
-  properties+='NAME|ADDRESS|TELEPHONE|MEASUREMENT|IDENTIFICATION'
-
-  if [[ ! "${name}" =~ (${properties}) ]]; then
-    echo 'Invalid locale variable name'
-    return 2
-  fi
+  local name="${1}"
   
-  if [[ -z "${locale}" ]]; then
-    local locales=''
-    locales="$(cat /etc/locale.gen | tail -n +24 | tr -d '#' | trim | awk '{
-      print "{\"key\":\""$1"\",\"value\":\""$1"\"},"
-    }')" || return 1
-    locales="[${locales::-1}]"
+  if [[ -z "${name}" ]]; then
+    on_script_mode &&
+     echo 'Missing the locale name' && return 2
 
-    pick_one 'Select a locale:' "${locales}" vertical || return $?
-    [[ -n "${REPLY}" ]] && locale="${REPLY}" || return 0
+    pick_locale installed || return $?
+    require 'Locale name is required' || return 2
+    name="${REPLY}"
   fi
 
-  if [[ ! "${locale}" =~ ^[a-zA-Z0-9_.-]+$ ]]; then
-    echo 'Invalid locale value'
-    return 2
-  elif ! cat /etc/locale.gen | grep -qE "^#?${locale} .*$"; then
+  if ! validate_locale "${name}"; then
     echo 'Invalid or unknown locale'
     return 2
-  fi
-
-  sudo sed -i "s/\(${name}=\).*/\1${locale}/" /etc/locale.conf &&
-   unset "${name}" &&
-   source /etc/profile.d/locale.sh
-
-  if [[ $? -ne 0 ]]; then
-    echo 'Failed to set locale variable'
+  elif ! is_locale_installed "${name}"; then
+    echo "Locale ${name} is not currently added"
     return 2
   fi
 
-  echo "Locale variable ${name} set to ${locale}"
+  # Keep only the first part of locale
+  name="$(echo "${name}" | cut -d ' ' -f 1)"
+
+  # Set system language variable
+  sudo sed -i "s/\(LANG=\).*/\1${name}/" /etc/locale.conf &&
+    sudo sed -i "s/\(LANGUAGE=\).*/\1${name}:en:C/" /etc/locale.conf &&
+    unset LANG LANGUAGE
+
+  # Set system locale variables
+  local vars=(
+    CTYPE NUMERIC TIME COLLATE MONETARY MESSAGES PAPER
+    NAME ADDRESS TELEPHONE MEASUREMENT IDENTIFICATION
+  )
+
+  local index=0
+  for ((index = 0; index < ${#vars[@]}; index++)); do
+    local var="${vars[index]}"
+  
+    sudo sed -i "s/\(${var}=\).*/\1${name}/" /etc/locale.conf &&
+      unset "${var}"
+  done
+  
+  source /etc/profile.d/locale.sh
+
+  if [[ $? -ne 0 ]]; then
+    echo "Failed to set system locale"
+    return 2
+  fi
+
+  echo "System locale set to ${name} (re-login)"
 }
 
 # Sets a keyboard layout options.
@@ -161,18 +127,16 @@ set_options () {
   local value="${1}"
 
   if [[ -z "${value}" ]]; then
-    local options=''
-    options="$(localectl --no-pager list-x11-keymap-options | awk '{
-      print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
-    }')" ||  return 1
-    options="[${options::-1}]"
+    on_script_mode &&
+      echo 'Missing the options value' && return 2
 
-    pick_one 'Select an options value:' "${options}" vertical || return $?
-    [[ -n "${REPLY}" ]] && value="${REPLY}" || return 0
+    pick_options_value || return $?
+    require 'Options value is required' || return 2
+    value="${REPLY}"
   fi
-  
-  if ! localectl --no-pager list-x11-keymap-options | grep -qw "${value}"; then
-    echo 'Invalid keyboard options value'
+
+  if ! validate_layout_options "${value}"; then
+    echo 'Invalid or unknown options value'
     return 2
   fi
 
@@ -188,11 +152,11 @@ set_options () {
    setxkbmap -layout "${layouts}" -model "${model}" -option "${value}"
 
   if [[ $? -ne 0 ]]; then
-    echo 'Failed to set keyboard options'
+    echo 'Failed to set keyboard layout options'
     return 2
   fi
 
-  echo "Keyboard options ${value} has set"
+  echo "Keyboard layout options ${value} set"
 }
 
 # Sets the keyboard model to the given model.
@@ -202,18 +166,16 @@ set_model () {
   local name="${1}"
 
   if [[ -z "${name}" ]]; then
-    local models=''
-    models="$(localectl --no-pager list-x11-keymap-models | awk '{
-      print "{\"key\":\""$1"\",\"value\":\""$1"\"},"
-    }')" || return 1
-    models="[${models::-1}]"
+    on_script_mode &&
+      echo 'Missing the keyboard model name' && return 2
 
-    pick_one 'Select a model:' "${models}" vertical || return $?
-    [[ -n "${REPLY}" ]] && name="${REPLY}" || return 0
+    pick_keyboard_model || return $?
+    require 'Keyboard model name is required' || return 2
+    name="${REPLY}"
   fi
-  
-  if ! localectl --no-pager list-x11-keymap-models | grep -qw "${name}"; then
-    echo 'Invalid keyboard model value'
+
+  if ! validate_keyboard_model "${name}"; then
+    echo 'Invalid or unknown keyboard model name'
     return 2
   fi
 
@@ -238,34 +200,28 @@ set_model () {
 
 # Adds a locale to the system locales.
 # Arguments:
-#  locale: a locale name
+#  name: the name of a locale
 add_locale () {
-  local locale="${1}"
+  local name="${1}"
 
-  if [[ -z "${locale}" ]]; then
-    local locales=''
-    locales="$(cat /etc/locale.gen | tail -n +24 | trim | awk '{
-      gsub(/#/,"",$0);
-      print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
-    }')" || return 1
-    locales="[${locales::-1}]"
+  if [[ -z "${name}" ]]; then
+    on_script_mode &&
+      echo 'Missing the locale name' && return 2
 
-    pick_one 'Select a locale:' "${locales}" vertical || return $?
-    [[ -n "${REPLY}" ]] && locale="${REPLY}"  || return 0
+    pick_locale not_installed || return $?
+    require 'Locale name is required' || return 2
+    name="${REPLY}"
   fi
 
-  if [[ ! "${locale}" =~ ^[a-zA-Z[:blank:]0-9_.-]+$ ]]; then
-    echo 'Malformed locale value'
-    return 2
-  elif grep -qE "^\s*${locale}\s*$" /etc/locale.gen; then
-    echo "Locale ${locale} is already added"
-    return 2
-  elif ! grep -qE "^\s*#\s*${locale}\s*$" /etc/locale.gen; then
+  if ! validate_locale "${name}"; then
     echo 'Invalid or unknown locale'
     return 2
+  elif is_locale_installed "${name}"; then
+    echo "Locale ${name} is already added"
+    return 2
   fi
 
-  sudo sed -i "s/\s*#\s*\(${locale}\)\s*/\1/" /etc/locale.gen &&
+  sudo sed -i "s/\s*#\s*\(${name}\)\s*/\1/" /etc/locale.gen &&
    sudo locale-gen
 
   if [[ $? -ne 0 ]]; then
@@ -273,41 +229,36 @@ add_locale () {
     return 2
   fi
 
-  echo "Locale ${locale} has been added"  
+  echo "Locale ${name} has been added"  
 }
 
 # Removes the given locale from the system locales.
 # Arguments:
-#  locale: a locale name
+#  name: a locale name
 remove_locale () {
-  local locale="${1}"
+  local name="${1}"
 
-  if [[ -z "${locale}" ]]; then
-    local locales=''
-    locales="$(cat /etc/locale.gen | tail -n +24 | trim | awk '/^\s*[a-zA-Z\s0-9_.-]+/{
-      print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
-    }')" || return 1
-    locales="[${locales::-1}]"
+  if [[ -z "${name}" ]]; then
+    on_script_mode &&
+      echo 'Missing the locale name' && return 2
 
-    pick_one 'Select a locale:' "${locales}" vertical || return $?
-    [[ -n "${REPLY}" ]] && locale="${REPLY}" || return 0
+    pick_locale installed || return $?
+    require 'Locale name is required' || return 2
+    name="${REPLY}"
   fi
 
-  if [[ ! "${locale}" =~ ^[a-zA-Z[:blank:]0-9_.-]+$ ]]; then
-    echo 'Malformed locale value'
-    return 2
-  elif grep -qE "^\s*#\s*${locale}\s*$" /etc/locale.gen; then
-    echo "Locale ${locale} is already removed"
-    return 2
-  elif ! grep -qE "^\s*${locale}\s*$" /etc/locale.gen; then
+  if ! validate_locale "${name}"; then
     echo 'Invalid or unknown locale'
     return 2
-  elif [[ "${locale}" == "en_US.UTF-8 UTF-8" ]]; then
-    echo 'Cannot remove the default locale'
+  elif ! is_locale_installed "${name}"; then
+    echo "Locale ${name} is already removed"
+    return 2
+  elif [[ "${name}" == "en_US.UTF-8 UTF-8" ]]; then
+    echo 'Default locale cannot be removed'
     return 2
   fi
 
-  sudo sed -i "s/\s*\(${locale}\)\s*/#\1/" /etc/locale.gen &&
+  sudo sed -i "s/\s*\(${name}\)\s*/#\1/" /etc/locale.gen &&
    sudo locale-gen
 
   if [[ $? -ne 0 ]]; then
@@ -315,31 +266,26 @@ remove_locale () {
     return 2
   fi
 
-  echo "Locale ${locale} has been removed"
+  echo "Locale ${name} has been removed"
 }
 
-# Adds a new language to keyboard layouts.
+# Adds a new layout to keyboard layouts.
 # Arguments:
-#  language: a language name
+#  code: a layout code
 add_layout () {
-  local language="${1}"
+  local code="${1}"
 
-  if [[ -z "${language}" ]]; then
-    local languages=''
-    languages="$(localectl --no-pager list-x11-keymap-layouts | awk '{
-      print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
-    }')" || return 1
-    languages="[${languages::-1}]"
+  if [[ -z "${code}" ]]; then
+    on_script_mode &&
+      echo 'Missing the layout code' && return 2
 
-    pick_one 'Select a language:' "${languages}" vertical || return $?
-    [[ -n "${REPLY}" ]] && language="${REPLY}" || return 0
+    pick_layout || return $?
+    require 'Layout code is required' || return 2
+    code="${REPLY}"
   fi
 
-  if [[ ! "${language}" =~ ^[a-z]{2,6}$ ]]; then
-    echo 'Invalid language value'
-    return 2
-  elif ! localectl --no-pager list-x11-keymap-layouts | grep -qw "${language}"; then
-    echo 'Invalid or unknown language'
+  if ! validate_layout "${code}"; then
+    echo 'Invalid or unknown layout code'
     return 2
   fi
 
@@ -347,22 +293,15 @@ add_layout () {
   layouts="$(cat /etc/X11/xorg.conf.d/00-keyboard.conf |
     awk '/XkbLayout/{print $3}' | tr -d '"')" || return 1
 
-  if [[ "${layouts}" =~ "${language}" ]]; then
-    echo "Language ${language} is already added"
+  if [[ "${layouts}" =~ "${code}" ]]; then
+    echo "Layout ${code} is already added"
     return 2
   fi
 
   if [[ -n "${layouts}" ]]; then
-    confirm 'Want to set it as default?' || return $?
-    [[ -z "${REPLY}" ]] && return 0
-
-    if [[ "${REPLY}" == "yes" ]]; then
-      layouts="${language},${layouts}"
-    else
-      layouts="${layouts},${language}"
-    fi
+    layouts="${layouts},${code}"
   else
-    layouts="${language}"
+    layouts="${code}"
   fi
 
   local model=''
@@ -381,56 +320,57 @@ add_layout () {
     return 2
   fi
 
-  echo "Layout ${language} has been added"
+  echo "Layout ${code} has been added"
 }
 
-# Removes a language from keyboard layouts.
+# Removes a layout from keyboard layouts.
 # Arguments:
-#  language: a language name
+#  code: a layout code
 remove_layout () {
-  local language="${1}"
+  local code="${1}"
 
   local layouts=''
   layouts="$(cat /etc/X11/xorg.conf.d/00-keyboard.conf |
     awk '/XkbLayout/{print $3}' | tr -d '"')" || return 1
 
   if [[ -z "${layouts}" ]]; then
-    echo 'No keyboard layouts have set yet'
-    return 0
+    echo 'No layouts have set yet'
+    return 2
   fi
 
-  if [[ -z "${language}" ]]; then
-    local languages=''
-    languages="$(echo "${layouts}" | tr ',' '\n' | awk '{
+  if [[ -z "${code}" ]]; then
+    on_script_mode &&
+      echo 'Missing the layout code' && return 2
+
+    local codes=''
+    codes="$(echo "${layouts}" | tr ',' '\n' | awk '{
       print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
     }')" || return 1
-    languages="[${languages::-1}]"
+    codes="[${codes::-1}]"
 
-    pick_one 'Select a language:' "${languages}" horizontal || return $?
-    [[ -n "${REPLY}" ]] && language="${REPLY}" || return 0
+    pick_one 'Select a layout code:' "${codes}" horizontal || return $?
+    require 'Layout code is required' || return 2
+    code="${REPLY}"
   fi
 
-  if [[ ! "${language}" =~ ^[a-z]{2,6}$ ]]; then
-    echo 'Invalid language value'
+  if ! validate_layout "${code}"; then
+    echo 'Invalid or unknown layout code'
     return 2
-  elif ! localectl --no-pager list-x11-keymap-layouts | grep -qw "${language}"; then
-    echo 'Invalid or unknown language'
+  elif [[ "${code}" == "us" ]]; then
+    echo 'Default layout cannot be removed'
     return 2
-  elif [[ "${language}" == "us" ]]; then
-    echo 'Cannot remove the default layout'
+  elif [[ "${layouts}" == "${code}" ]]; then
+    echo 'Cannot remove the only layout'
     return 2
-  elif [[ "${layouts}" == "${language}" ]]; then
-    echo 'Cannot remove the only keyboard layout'
-    return 2
-  elif [[ ! "${layouts}" =~ "${language}" ]]; then
-    echo "Layout ${language} not found in layouts"
+  elif [[ ! "${layouts}" =~ "${code}" ]]; then
+    echo "Layout ${code} is already removed"
     return 2
   fi
 
-  if [[ "${layouts}" =~ "${language}," ]]; then
-    layouts=${layouts//${language},/}
+  if [[ "${layouts}" =~ "${code}," ]]; then
+    layouts=${layouts//${code},/}
   else
-    layouts=${layouts//,${language}/}
+    layouts=${layouts//,${code}/}
   fi
 
   local model=''
@@ -449,20 +389,23 @@ remove_layout () {
     return 2
   fi
 
-  echo "Layout ${language} has been removed"
+  echo "Layout ${code} has been removed"
 }
 
-# Asks user to select the layouts so they can be set
-# in that order in keyboard layouts.
+# Sets the order of the currently installed layouts to the
+# given layouts.
 # Arguments:
-#  None
+#  codes: a list of layout codes
 order_layouts () {
+  local codes=("$@")
+
+  # Collect currently installed layouts in json array
   local layouts=''
   layouts="$(cat /etc/X11/xorg.conf.d/00-keyboard.conf | awk '/XkbLayout/{
     gsub(/"/,"",$0);split($3,a,",");
     output=""
     for (i=1; i<=length(a); i++) {
-      output=output"{\"key\":\""a[i]"\",\"value\":\""toupper(a[i])"\"}"
+      output=output"{\"key\":\""a[i]"\",\"value\":\""a[i]"\"}"
       if (i < length(a)) output=output","
     }
     print "["output"]"
@@ -472,18 +415,52 @@ order_layouts () {
   len="$(count "${layouts}")" || return 1
 
   if [[ ${len} -eq 0 ]]; then
-    echo 'No keyboard layouts have set yet'
-    return 0
+    echo 'No layouts have set yet'
+    return 2
   elif [[ ${len} -eq 1 ]]; then
-    echo 'Only one layout has found'
-    return 0
+    echo 'Only one layout was found'
+    return 2
   fi
 
-  pick_many 'Pick layouts by order:' "${layouts}" all horizontal || return $?
-  [[ -z "${REPLY}" ]] && return 0
+  if [[ ${#codes[@]} -eq 0 ]]; then
+    on_script_mode &&
+      echo 'Missing layout codes' && return 2
 
-  local ordered=''
-  ordered="$(echo "${REPLY}" | jq -cer 'join(",")')" || return 1
+    pick_many 'Pick layout codes by order:' "${layouts}" horizontal || return $?
+    require 'Layout codes are required' || return 2
+    local selected="${REPLY}"
+
+    # Convert selection from json to array
+    readarray -t codes < <(echo "${selected}" | jq -cr '.[]')
+  fi
+  
+  # Convert layout codes to json array
+  codes="$(jq -ncer '$ARGS.positional' --args -- "${codes[@]}")" || return 1
+
+  # Check for duplicated values in layout codes
+  local query='length as $l|unique|if length != $l then true else false end'
+
+  local has_duplications=''
+  has_duplications="$(echo "${codes}" | jq -cr "${query}")" || return 1
+
+  if [[ "${has_duplications}" == "true" ]]; then
+    echo 'Layout codes should be unique values'
+    return 2
+  fi
+
+  # Check if given layout codes match the currently installed ones
+  local query=''
+  query+='([.[]|.key]|sort_by(.)) as $a'
+  query+=' |($o|sort_by(.)) as $b'
+  query+=' |if $a == $b then true else false end'
+
+  local match=''
+  match="$(echo "${layouts}" | jq -cr --argjson o "${codes}" "${query}")" || return 1
+
+  if [[ "${match}" == "false" ]]; then
+    echo 'Layout codes do not match with current layouts'
+    return 2
+  fi
 
   local model=''
   model="$(cat /etc/X11/xorg.conf.d/00-keyboard.conf |
@@ -493,14 +470,16 @@ order_layouts () {
   options="$(cat /etc/X11/xorg.conf.d/00-keyboard.conf |
     awk '/XkbOptions/{print $3}' | tr -d '"')" || return 1
 
-  localectl --no-convert set-x11-keymap "${ordered}" "${model}" '' "${options}" &&
-   setxkbmap -layout "${ordered}" -model "${model}" -option "${options}"
+  codes="$(echo "${codes}" | jq -cer 'join(",")')"
+
+  localectl --no-convert set-x11-keymap "${codes}" "${model}" '' "${options}" &&
+   setxkbmap -layout "${codes}" -model "${model}" -option "${options}"
 
   if [[ $? -ne 0 ]]; then
     echo 'Failed to set layouts order'
     return 2
   fi
 
-  echo "Layouts order set to ${ordered}"
+  echo "Layouts order set to ${codes}"
 }
 
