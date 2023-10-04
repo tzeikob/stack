@@ -6,8 +6,6 @@ source /opt/stack/utils
 source /opt/stack/disks/helpers
 
 # Shows a short status of the disks and filesystem.
-# Arguments:
-#  None
 # Outputs:
 #  A list of disks and filesystem data.
 show_status () {
@@ -69,22 +67,21 @@ show_disk () {
   local path="${1}"
 
   if [[ -z "${path}" ]]; then
+    on_script_mode &&
+      echo 'Missing the disk path' && return 2
+
     pick_disk || return $?
-    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
+    require 'Disk path is required' || return 2
+    path="${REPLY}"
   fi
 
-  if [[ ! -b "${path}" ]]; then
-    echo "Unable to find disk ${path}"
+  if ! is_disk "${path}"; then
+    echo "Path ${path} is not a disk device"
     return 2
   fi
 
   local disk=''
-  disk="$(find_disk "${path}")"
-
-  if [[ $? -ne 0 ]]; then
-    echo "Unable to find disk ${path}"
-    return 2
-  fi
+  disk="$(find_disk "${path}")" || return 1
 
   local alt_fstype='.children|'
   alt_fstype+='if . and length>0'
@@ -124,12 +121,7 @@ show_disk () {
   query+='State:      \(.state)\n'
   query+="Parts:      \(if .children then ${parts} else \"none\" end)"
 
-  echo "${disk}" | jq -cer "\"${query}\""
-
-  if [[ $? -ne 0 ]]; then
-    echo 'Failed to parse disk data'
-    return 2
-  fi
+  echo "${disk}" | jq -cer "\"${query}\"" || return 1
 }
 
 # Shows the data of the partition block device.
@@ -141,25 +133,25 @@ show_partition () {
   local path="${1}"
 
   if [[ -z "${path}" ]]; then
-    pick_disk || return $?
-    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
+    on_script_mode &&
+      echo 'Missing the partition path' && return 2
 
-    pick_partition "${path}" || return $?
-    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
+    pick_disk || return $?
+    require 'Disk path is required' || return 2
+    local disk="${REPLY}"
+
+    pick_partition "${disk}" || return $?
+    require 'Partition path is required' || return 2
+    path="${REPLY}"
   fi
   
-  if [[ ! -b "${path}" ]]; then
-    echo "Unable to find partition ${path}"
+  if ! is_partition "${path}"; then
+    echo "Path ${path} is not a partition device"
     return 2
   fi
 
   local part=''
-  part="$(find_partition "${path}")"
-
-  if [[ $? -ne 0 ]]; then
-    echo "Unable to find partition ${path}"
-    return 2
-  fi
+  part="$(find_partition "${path}")" || return 1
 
   local alt_fstype='.children|'
   alt_fstype+='if . and length>0'
@@ -208,12 +200,7 @@ show_partition () {
   query+='\(.veracrypt|if . then "\nMapped:       \(.device)" else "" end)'
   query+="\(if .mountpoint then \"\nMount:        \(.mountpoint)\" else ${alt_mountpoint} end)"
 
-  echo "${part}" | jq -cer "\"${query}\""
-
-  if [[ $? -ne 0 ]]; then
-    echo 'Failed to parse partition data'
-    return 2
-  fi
+  echo "${part}" | jq -cer "\"${query}\"" || return 1
 }
 
 # Shows the data of the rom block device with
@@ -226,22 +213,21 @@ show_rom () {
   local path="${1}"
 
   if [[ -z "${path}" ]]; then
+    on_script_mode &&
+      echo 'Missing rom path' && return 2
+
     pick_rom || return $?
-    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
+    require 'Rom path is required' || return 2
+    path="${REPLY}"
   fi
 
-  if [[ ! -b "${path}" ]]; then
-    echo "Unable to find rom ${path}"
+  if ! is_rom "${path}"; then
+    echo "Path ${path} is not a rom device"
     return 2
   fi
 
   local rom=''
-  rom="$(find_rom "${path}")"
-  
-  if [[ $? -ne 0 ]]; then
-    echo "Unable to find rom ${path}"
-    return 2
-  fi
+  rom="$(find_rom "${path}")" || return 1
 
   local query=''
   query+='Name:          \(.name)\n'
@@ -263,27 +249,15 @@ show_rom () {
   query+='State:         \(.state)'
   query+='\(if .mountpoint then "\nMount:         \(.mountpoint)" else "" end)'
 
-  echo "${rom}" | jq -cer "\"${query}\""
-
-  if [[ $? -ne 0 ]]; then
-    echo 'Failed to parse rom data'
-    return 2
-  fi
+  echo "${rom}" | jq -cer "\"${query}\"" || return 1
 }
 
 # Shows the list of disk block devices.
-# Arguments:
-#  None
 # Outputs:
 #  A list of disk block devices.
 list_disks () {
   local disks=''
-  disks="$(find_disks)"
-
-  if [[ $? -ne 0 ]]; then
-    echo 'Unable to find disks'
-    return 2
-  fi
+  disks="$(find_disks)" || return 1
 
   local len=0
   len="$(count "${disks}")" || return 1
@@ -307,29 +281,28 @@ list_disks () {
 # Shows the list of partitions of the disk block device
 # with the given path.
 # Arguments:
-#  path: the path of a disk block device
+#  disk: the path of a disk block device
 # Outputs:
 #  A list of parition block devices.
 list_partitions () {
-  local path="${1}"
+  local disk="${1}"
 
-  if [[ -z "${path}" ]]; then
+  if [[ -z "${disk}" ]]; then
+    on_script_mode &&
+      echo 'Missing the disk path' && return 2
+
     pick_disk || return $?
-    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
+    require 'Disk path is required' || return 2
+    disk="${REPLY}"
   fi
 
-  if [[ ! -b "${path}" ]] || ! is_disk "${path}"; then
-    echo "Unable to find disk ${path}"
+  if ! is_disk "${disk}"; then
+    echo "Path ${disk} is not a disk device"
     return 2
   fi
 
   local parts=''
-  parts="$(find_partitions "${path}")"
-
-  if [[ $? -ne 0 ]]; then
-    echo 'Unable to find partitions'
-    return 2
-  fi
+  parts="$(find_partitions "${disk}")" || return 1
 
   local len=0
   len="$(count "${parts}")" || return 1
@@ -350,18 +323,11 @@ list_partitions () {
 }
 
 # Shows the list of rom block devices.
-# Arguments:
-#  None
 # Outputs:
 #  A list of rom block devices.
 list_roms () {
   local roms=''
-  roms="$(find_roms)"
-
-  if [[ $? -ne 0 ]]; then
-    echo 'Unable to find roms'
-    return 2
-  fi
+  roms="$(find_roms)" || return 1
 
   local len=0
   len="$(count "${roms}")" || return 1
@@ -385,28 +351,55 @@ list_roms () {
 
 # Shows the list of shared folders of the given host.
 # Arguments:
-#  host: the name or ip of a host.
+#  host:     the name or ip of a host
+#  user:     the username
+#  group:    the user group
+#  password: the password
 # Outputs:
 #  A list of shared folders.
 list_shared_folders () {
   local host="${1}"
+  local user="${2}"
+  local group="${3}"
+  local password="${4}"
 
   if [[ -z "${host}" ]]; then
+    on_script_mode &&
+      echo 'Missing the host' && return 2
+
     pick_host || return $?
-    [[ -n "${REPLY}" ]] && host="${REPLY}" || return 0
+    require 'Host is required' || return 2
+    host="${REPLY}"
   fi
 
-  ask 'Enter the username:' || return $?
-  local username="${REPLY}"
+  if [[ -z "${user}" ]]; then
+    on_script_mode &&
+      echo 'Missing the username' && return 2
 
-  ask 'Enter the workgroup [WORKGROUP]:' || return $?
-  local workgroup="${REPLY:-"WORKGROUP"}"
+    ask 'Enter the username:' || return $?
+    require 'Username is required' || return 2
+    user="${REPLY}"
+  fi
 
-  ask_secret 'Enter the password:' || return $?
-  local password="${REPLY}"
+  if [[ -z "${group}" ]]; then
+    on_script_mode &&
+      echo 'Missing the user group' && return 2
+
+    ask 'Enter the user group [WORKGROUP]:' || return $?
+    group="${REPLY:-"WORKGROUP"}"
+  fi
+
+  if [[ -z "${password}" ]]; then
+    on_script_mode &&
+      echo 'Missing the password' && return 2
+
+    ask_secret 'Enter the password:' || return $?
+    require 'Password is required' || return 2
+    password="${REPLY}"
+  fi
 
   local folders=''
-  folders="$(find_shared_folders "${host}" "${username}" "${workgroup}" "${password}")"
+  folders="$(find_shared_folders "${host}" "${user}" "${group}" "${password}")"
 
   if [[ $? -ne 0 ]]; then
     echo 'Unable to find shared folders'
@@ -432,8 +425,6 @@ list_shared_folders () {
 
 # Shows the list of any mounted devices, images and/or
 # shared folders.
-# Arguments:
-#  None
 # Outputs:
 #  A list of mounting points.
 list_mounts () {
@@ -524,41 +515,83 @@ mount_partition () {
   local path="${1}"
 
   if [[ -z "${path}" ]]; then
-    pick_disk || return $?
-    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
+    on_script_mode &&
+      echo 'Missing the partition path' && return 2
 
-    pick_partition "${path}" unmounted || return $?
-    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
+    pick_disk || return $?
+    require 'Disk path is required' || return 2
+    local disk="${REPLY}"
+
+    pick_partition "${disk}" unmounted || return $?
+    require 'Partition path is required' || return 2
+    path="${REPLY}"
   fi
 
-  if [[ ! -b "${path}" ]] || ! is_partition "${path}"; then
-    echo "Unable to find partition ${path}"
+  if ! is_partition "${path}"; then
+    echo "Path ${path} is not a partition device"
     return 2
   elif is_mounted "${path}"; then
     echo "Partition ${path} is already mounted"
     return 2
   fi
 
-  # Try to mount it as normal partition
   mount_device "${path}"
 
-  if [[ $? -eq 0 ]]; then
-    echo "Partition ${path} has been mounted"
-    return 0
-  fi
-
-  # Otherwise try to mount it as encrypted partition
-  ask_secret 'Enter the encryption password:' || return $?
-  local password="${REPLY}"
-
-  mount_encrypted "${path}" "${password}"
-
   if [[ $? -ne 0 ]]; then
-    echo 'Failed to mount partition'
+    echo 'Failed to mount the partition'
     return 2
   fi
 
-  echo "Partition ${path} has been mounted"
+  echo "Partition ${path} mounted"
+}
+
+# Mounts the encrypted partition block device with
+# the given path.
+# Arguments:
+#  path: the path of an encrypted partition
+#  key:  the encryption key
+mount_encrypted () {
+  local path="${1}"
+  local key="${2}"
+
+  if [[ -z "${path}" ]]; then
+    on_script_mode &&
+      echo 'Missing the partition path' && return 2
+
+    pick_disk || return $?
+    require 'Disk path is required' || return 2
+    local disk="${REPLY}"
+
+    pick_partition "${disk}" unmounted || return $?
+    require 'Partition path is required' || return 2
+    path="${REPLY}"
+  fi
+
+  if ! is_partition "${path}"; then
+    echo "Path ${path} is not a partition device"
+    return 2
+  elif is_mounted "${path}"; then
+    echo "Partition ${path} is already mounted"
+    return 2
+  fi
+
+  if [[ -z "${key}" ]]; then
+    on_script_mode &&
+      echo 'Missing the encryption key' && return 2
+
+    ask_secret 'Enter the encryption key:' || return $?
+    require 'Encryption key is required' || return 2
+    key="${REPLY}"
+  fi
+
+  mount_encrypted_device "${path}" "${key}"
+
+  if [[ $? -ne 0 ]]; then
+    echo 'Failed to mount encrypted partition'
+    return 2
+  fi
+
+  echo "Encrypted partition ${path} mounted"
 }
 
 # Unmounts the partition block device with the
@@ -569,15 +602,20 @@ unmount_partition () {
   local path="${1}"
 
   if [[ -z "${path}" ]]; then
-    pick_disk || return $?
-    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
+    on_script_mode &&
+      echo 'Missing the partition path' && return 2
 
-    pick_partition "${path}" mounted || return $?
-    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
+    pick_disk || return $?
+    require 'Disk path is required' || return 2
+    local disk="${REPLY}"
+
+    pick_partition "${disk}" mounted || return $?
+    require 'Partition path is required' || return 2
+    path="${REPLY}"
   fi
 
-  if [[ ! -b "${path}" ]] || ! is_partition "${path}"; then
-    echo "Unable to find partition ${path}"
+  if ! is_partition "${path}"; then
+    echo "Path ${path} is not a partition device"
     return 2
   elif ! is_mounted "${path}"; then
     echo "Partition ${path} is already unmounted"
@@ -589,19 +627,53 @@ unmount_partition () {
 
   unmount_device "${path}"
 
-  if [[ $? -eq 0 ]]; then
-    echo "Partition ${path} has been unmounted"
-    return 0
-  fi
-
-  unmount_encrypted "${path}"
-
   if [[ $? -ne 0 ]]; then
     echo 'Failed to unmount partition'
     return 2
   fi
 
-  echo "Partition ${path} has been unmounted"
+  echo "Partition ${path} unmounted"
+}
+
+# Unmounts the encrypted partition block device with the
+# given path.
+# Arguments:
+#  path: the path of an encrypted partition
+unmount_encrypted () {
+  local path="${1}"
+
+  if [[ -z "${path}" ]]; then
+    on_script_mode &&
+      echo 'Missing the partition path' && return 2
+
+    pick_disk || return $?
+    require 'Disk path is required' || return 2
+    local disk="${REPLY}"
+
+    pick_partition "${disk}" mounted || return $?
+    require 'Partition path is required' || return 2
+    path="${REPLY}"
+  fi
+
+  if ! is_partition "${path}"; then
+    echo "Path ${path} is not a partition device"
+    return 2
+  elif ! is_mounted "${path}"; then
+    echo "Partition ${path} is already unmounted"
+    return 2
+  elif is_system_partition "${path}"; then
+    echo 'Cannot unmount system partition'
+    return 2
+  fi
+
+  unmount_encrypted_device "${path}"
+
+  if [[ $? -ne 0 ]]; then
+    echo 'Failed to unmount encrypted partition'
+    return 2
+  fi
+
+  echo "Encrypted partition ${path} unmounted"
 }
 
 # Mounts the rom block device with the given path.
@@ -611,12 +683,16 @@ mount_rom () {
   local path="${1}"
 
   if [[ -z "${path}" ]]; then
+    on_script_mode &&
+      echo 'Missing the rom path' && return 2
+
     pick_rom unmounted || return $?
-    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
+    require 'Rom path is required' || return 2
+    path="${REPLY}"
   fi
 
-  if [[ ! -b "${path}" ]] || ! is_rom "${path}"; then
-    echo "Unable to find rom ${path}"
+  if ! is_rom "${path}"; then
+    echo "Path ${path} is not a rom device"
     return 2
   elif is_mounted "${path}"; then
     echo "Rom ${path} is already mounted"
@@ -630,7 +706,7 @@ mount_rom () {
     return 2
   fi
 
-  echo "Rom ${path} has been mounted"
+  echo "Rom ${path} mounted"
 }
 
 # Unmounts the rom block device with the given path.
@@ -640,12 +716,16 @@ unmount_rom () {
   local path="${1}"
 
   if [[ -z "${path}" ]]; then
+    on_script_mode &&
+      echo 'Missing the rom path' && return 2
+
     pick_rom mounted || return $?
-    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
+    require 'Rom path is required' || return 2
+    path="${REPLY}"
   fi
 
-  if [[ ! -b "${path}" ]] || ! is_rom "${path}"; then
-    echo "Unable to find rom ${path}"
+  if ! is_rom "${path}"; then
+    echo "Path ${path} is not a rom device"
     return 2
   elif ! is_mounted "${path}"; then
     echo "Rom ${path} is not mounted"
@@ -659,7 +739,7 @@ unmount_rom () {
     return 2
   fi
 
-  echo "Rom ${path} has been unmounted"
+  echo "Rom ${path} unmounted"
 }
 
 # Mounts the image file system contained with in
@@ -669,8 +749,11 @@ unmount_rom () {
 mount_image () {
   local path="${1}"
 
-  if [[ ! -f "${path}" ]]; then
-    echo 'Not valid image file'
+  if [[ -z "${path}" ]]; then
+    echo 'Image file path is required'
+    return 2
+  elif [[ ! -f "${path}" ]]; then
+    echo "Path ${path} is not an image file"
     return 2
   fi
 
@@ -703,28 +786,12 @@ unmount_image () {
   local path="${1}"
 
   if [[ -z "${path}" ]]; then
-    local mounts=''
-    mounts="$(cat /proc/mounts | awk '/^fuseiso/{
-      print "{\"key\":\"" $2 "\",\"value\":\"" $2 "\"},"
-    }')" || return 1
+    on_script_mode &&
+      echo 'Missing the image mount path' && return 2
 
-    # Remove the extra comma after the last element
-    if [[ -n "${mounts}" ]]; then
-      mounts="${mounts::-1}"
-    fi
-
-    mounts="[${mounts}]"
-
-    local len=0
-    len="$(count "${mounts}")" || return 1
-
-    if [[ ${len} -eq 0 ]]; then
-      echo 'No image mounts have found'
-      return 0
-    fi
-
-    pick_one 'Select an image mount:' "${mounts}" vertical || return $?
-    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
+    pick_image_mount || return $?
+    require 'Image mount path is required' || return 2
+    path="${REPLY}"
   fi
 
   if [[ ! -d "${path}" ]]; then
@@ -741,44 +808,82 @@ unmount_image () {
 
   rm -rf "${path}"
 
-  echo "Image file system ${path} unmounted"
+  echo "Image file ${path} unmounted"
 }
 
 # Mounts a shared folder of the given host.
 # Arguments:
-#  host: the name or ip of a host
+#  host:     the name or ip of a host
+#  name:     the name of the shared folder
+#  user:     the username
+#  group:    the group of the user
+#  password: the password
 mount_shared_folder () {
   local host="${1}"
+  local name="${2}"
+  local user="${3}"
+  local group="${4}"
+  local password="${5}"
 
   if [[ -z "${host}" ]]; then
+    on_script_mode &&
+      echo 'Missing the host' && return 2
+
     pick_host || return $?
-    [[ -n "${REPLY}" ]] && host="${REPLY}" || return 0
+    require 'Host is required' || return 2
+    host="${REPLY}"
   fi
 
-  ask 'Enter a shared folder:' || return $?
-  local folder="${REPLY}"
+  if [[ -z "${name}" ]]; then
+    on_script_mode &&
+      echo 'Missing the folder name' && return 2
 
-  ask 'Enter the username:' || return $?
-  local username="${REPLY}"
+    ask 'Enter a folder name:' || return $?
+    require 'Folder name is required' || return 2
+    name="${REPLY}"
+  fi
 
-  ask 'Enter the workgroup [WORKGROUP]:' || return $?
-  local workgroup="${REPLY:-"WORKGROUP"}"
+  if [[ -z "${user}" ]]; then
+    on_script_mode &&
+      echo 'Missing the username' && return 2
 
-  local uri="smb://${workgroup};${username}@${host}/${folder,,}"
+    ask 'Enter the username:' || return $?
+    require 'Username is required' || return 2
+    user="${REPLY}"
+  fi
+
+  if [[ -z "${group}" ]]; then
+    on_script_mode &&
+      echo 'Missing the user group' && return 2
+    
+    ask 'Enter the user group [WORKGROUP]:' || return $?
+    group="${REPLY:-"WORKGROUP"}"
+  fi
+  
+  if [[ -z "${password}" ]]; then
+    on_script_mode &&
+      echo 'Missing the password' && return 2
+
+    ask_secret 'Enter the password:' || return $?
+    require 'Password is required' || return 2
+    password="${REPLY}"
+  fi
+
+  local uri="smb://${group};${user}@${host}/${name,,}"
 
   if gio mount -l | grep -q "${uri}"; then
-    echo 'Shared folder is already mounted'
+    echo "Shared folder ${name} is already mounted"
     return 2
   fi
 
-  gio mount "${uri}" 2> /dev/null
+  echo "${password}" | gio mount "${uri}" &> /dev/null
   
   if [[ $? -ne 0 ]]; then
     echo 'Failed to mount shared folder'
     return 2
   fi
 
-  echo "Shared folder ${folder} mounted"
+  echo "Shared folder ${name} mounted"
 
   local remote_home="${HOME}/mounts/remote"
 
@@ -790,35 +895,17 @@ mount_shared_folder () {
 
 # Unmounts the shared folder with the given uri.
 # Arguments:
-#  uri: the uri of the shared folder
+#  uri: the uri of a mount shared folder
 unmount_shared_folder () {
   local uri="${1}"
 
   if [[ -z "${uri}" ]]; then
-    local uris=''
-    uris="$(ls /run/user/${UID}/gvfs | awk '{
-      match($0, /domain=(.*),server=(.*),share=(.*),user=(.*)/, a);
-      key="smb://"a[1]";"a[4]"@"a[2]"/"a[3]
-      print "{\"key\": \""key"\", \"value\":\""key"\"},"
-    }')" || return 1
+    on_script_mode &&
+      echo 'Missing the mount uri' && return 2
 
-    # Remove the extra comma after the last element
-    if [[ -n "${uris}" ]]; then
-      uris="${uris::-1}"
-    fi
-
-    uris="[${uris}]"
-
-    local len=0
-    len="$(count "${uris}")" || return 1
-
-    if [[ ${len} -eq 0 ]]; then
-      echo 'No mounted shared folders have found'
-      return 0
-    fi
-
-    pick_one 'Select a shared folder:' "${uris}" vertical || return $?
-    [[ -n "${REPLY}" ]] && uri="${REPLY}" || return 0
+    pick_shared_folder_mount || return $?
+    require 'Mount uri is required' || return 2
+    uri="${REPLY}"
   fi
 
   if ! gio mount -l | grep -q "${uri}"; then
@@ -833,45 +920,75 @@ unmount_shared_folder () {
     return 2
   fi
 
-  echo "Shared folder ${uri} has been unmounted"
+  echo "Shared folder ${uri} unmounted"
 }
 
 # Formats the disk block device with the given path,
 # creating a new partition table of a single primary
 # partition.
 # Arguments:
-#  path: the path of a disk block device
+#  path:    the path of a disk block device
+#  label:   the new label of the disk
+#  fs_type: the new file system type  
 format_disk () {
   local path="${1}"
+  local label="${2}"
+  local fs_type="${3}"
 
   if [[ -z "${path}" ]]; then
+    on_script_mode &&
+      echo 'Missing the disk path' && return 2
+
     pick_disk || return $?
-    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
+    require 'Disk path is required' || return 2
+    path="${REPLY}"
   fi
 
-  if [[ ! -b "${path}" ]] || ! is_disk "${path}"; then
-    echo "Unable to find disk ${path}"
+  if ! is_disk "${path}"; then
+    echo "Path ${path} is not a disk device"
     return 2
   elif is_system_disk "${path}"; then
-    echo 'Cannot format the system disk'
+    echo 'System disk cannot be formatted'
     return 2
   fi
 
-  ask 'Enter the disk label:' '.+' || return $?
-  local label="${REPLY}"
+  if [[ -z "${label}" ]]; then
+    on_script_mode &&
+      echo 'Missing the disk label' && return 2
 
-  local fs_type=''
-  pick_fs_type || return $?
-  [[ -n "${REPLY}" ]] && fs_type="${REPLY}" || return 0
+    ask 'Enter the disk label:' || return $?
+    require 'Disk label is required' || return 2
+    label="${REPLY}"
+  fi
 
-  local model=''
-  model="$(find_disk "${path}" |
-    jq -cr '"\(.vendor|gsub("^\\s+|\\s+$";"")) \(.model) \(.size)"')" || return 1
+  if [[ -z "${fs_type}" ]]; then
+    on_script_mode &&
+      echo 'Missing the file system type' && return 2
 
-  echo "ALL DATA in ${model} [${path}],"
-  echo 'will be irreversibly gone forever!'
-  confirm 'Do you really want to proceed?' || return $?
-  [[ "${REPLY}" != "yes" ]] && return 0
+    pick_fs_type || return $?
+    require 'File system type is required' || return 2
+    fs_type="${REPLY}"
+  fi
+
+  if ! validate_fs_type "${fs_type}"; then
+    echo 'Invalid or unknown file system type'
+    return 2
+  fi
+
+  # Do not ask confirmation on script mode
+  if ! on_script_mode; then
+    local model=''
+    model="$(find_disk "${path}" |
+      jq -cr '"\(.vendor|gsub("^\\s+|\\s+$";"")) \(.model) \(.size)"')" || return 1
+
+    echo "ALL DATA in ${model} [${path}],"
+    echo 'will be irreversibly gone forever!'
+    confirm 'Do you really want to proceed?' || return $?
+    require 'Confirmation is required' || return 2
+    
+    [[ "${REPLY}" != "yes" ]] &&
+      echo 'Format operation is canceled' && return 2
+  fi
 
   echo 'Unmounting disk partitions...'
   unmount_partitions "${path}" || return 1
@@ -902,15 +1019,19 @@ eject_disk () {
   local path="${1}"
 
   if [[ -z "${path}" ]]; then
+    on_script_mode &&
+      echo 'Missing the disk path' && return 2
+
     pick_disk || return $?
-    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
+    require 'Disk path is required' || return 2
+    path="${REPLY}"
   fi
 
-  if [[ ! -b "${path}" ]] || ! is_disk "${path}"; then
-    echo "Unable to find disk ${path}"
+  if ! is_disk "${path}"; then
+    echo "Path ${path} is not a disk device"
     return 2
   elif is_system_disk "${path}"; then
-    echo 'Cannot eject the system disk'
+    echo 'System disk cannot be ejected'
     return 2
   fi
 
@@ -944,12 +1065,16 @@ scan_disk () {
   local path="${1}"
 
   if [[ -z "${path}" ]]; then
+    on_script_mode &&
+      echo 'Missing the disk path' && return 2
+
     pick_disk || return $?
-    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
+    require 'Disk path is required' || return 2
+    path="${REPLY}"
   fi
 
-  if [[ ! -b "${path}" ]] || ! is_disk "${path}"; then
-    echo "Unable to find disk ${path}"
+  if ! is_disk "${path}"; then
+    echo "Path ${path} is not a disk device"
     return 2
   fi
   
@@ -1035,43 +1160,72 @@ scan_disk () {
 # Creates an encrypted disk block device with the
 # given path.
 # Arguments:
-#  path: the path of a disk block device
+#  path:    the path of a disk block device
+#  fs_type: the new type of file system
+#  key:     the encryption key
 create_encrypted () {
   local path="${1}"
+  local fs_type="${2}"
+  local key="${3}"
 
   if [[ -z "${path}" ]]; then
+    on_script_mode &&
+      echo 'Missing the disk path' && return 2
+
     pick_disk || return $?
-    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
+    require 'Disk path is required' || return 2
+    path="${REPLY}"
   fi
 
-  if [[ ! -b "${path}" ]] || ! is_disk "${path}"; then
-    echo "Unable to find disk ${path}"
+  if ! is_disk "${path}"; then
+    echo "Path ${path} is not a disk device"
     return 2
   elif is_system_disk "${path}"; then
-    echo 'Cannot encrypt the system disk'
+    echo 'System disk cannot be encrypted'
     return 2
   fi
 
-  local fs_type=''
-  pick_fs_type || return $?
-  [[ -n "${REPLY}" ]] && fs_type="${REPLY}" || return 0
+  if [[ -z "${fs_type}" ]]; then
+    on_script_mode &&
+      echo 'Missing the file system type' && return 2
 
-  ask_secret 'Enter the encryption password:' '.+' || return $?
-  local password="${REPLY}"
+    pick_fs_type || return $?
+    require 'File system type is required' || return 2
+    fs_type="${REPLY}"
+  fi
 
-  if ! confirm_secret 'Retype the encryption password:' "${password}"; then
-    echo 'Encryption password does not match'
+  if ! validate_fs_type "${fs_type}"; then
+    echo 'Invalid or unknown file system type'
     return 2
   fi
 
-  local model=''
-  model="$(find_disk "${path}" |
-    jq -cr '"\(.vendor|gsub("^\\s+|\\s+$";"")) \(.model) \(.size)"')" || return 1
+  if [[ -z "${key}" ]]; then
+    on_script_mode &&
+      echo 'Missing the encryption key' && return 2
 
-  echo "ALL DATA in ${model} [${path}],"
-  echo 'will be irreversibly gone forever!'
-  confirm 'Do you really want to proceed?' || return $?
-  [[ "${REPLY}" != "yes" ]] && return 0
+    ask_secret 'Enter the encryption key:' || return $?
+    require 'Encryption key is required' || return 2
+    key="${REPLY}"
+  fi
+
+  if ! on_script_mode; then
+    if ! confirm_secret 'Retype the encryption key:' "${key}"; then
+      echo 'Encryption key does not match'
+      return 2
+    fi
+
+    local model=''
+    model="$(find_disk "${path}" |
+      jq -cr '"\(.vendor|gsub("^\\s+|\\s+$";"")) \(.model) \(.size)"')" || return 1
+
+    echo "ALL DATA in ${model} [${path}],"
+    echo 'will be irreversibly gone forever!'
+    confirm 'Do you really want to proceed?' || return $?
+    require 'Confirmation is required' || return 2
+    
+    [[ "${REPLY}" != "yes" ]] &&
+      echo 'Encryption operation is canceled' && return 2
+  fi
 
   echo 'Unmounting disk partitions...'
   unmount_partitions "${path}" || return 1
@@ -1094,12 +1248,12 @@ create_encrypted () {
   tr -dc 'A-Za-z0-9!"#$%&'\''()*+,-./:;<=>?@[\]^_`{|}~' < /dev/urandom |
     head -c 350 > "${rand_text_file}"
 
-  sudo veracrypt -t --create "${path}1" --password "${password}" \
+  sudo veracrypt -t --create "${path}1" --password "${key}" \
     --volume-type normal --encryption AES --hash sha-512 --filesystem "${fs_type}" \
     --pim 0 --keyfiles '' --random-source "${rand_text_file}"
 
   if [[ $? -ne 0 ]]; then
-    echo "Failed to encrypt disk ${path}"
+    echo 'Failed to encrypt disk'
     return 2
   fi
 
@@ -1108,107 +1262,64 @@ create_encrypted () {
 
 # Creates a bootable archlinux installation drive.
 # Arguments:
-#  path: the path of a disk block device
+#  path:     the path of a disk block device
+#  iso_file: the path to an archlinux iso file
 create_bootable () {
   local path="${1}"
+  local iso_file="${2}"
 
   if [[ -z "${path}" ]]; then
+    on_script_mode &&
+      echo 'Missing the disk path' && return 2
+
     pick_disk || return $?
-    [[ -n "${REPLY}" ]] && path="${REPLY}" || return 0
+    require 'Disk path is required' || return 2
+    path="${REPLY}"
   fi
 
-  if [[ ! -b "${path}" ]] || ! is_disk "${path}"; then
-    echo "Unable to find disk ${path}"
+  if ! is_disk "${path}"; then
+    echo "Path ${path} is not a disk device"
     return 2
   elif is_system_disk "${path}"; then
     echo 'Cannot create bootable on the system disk'
     return 2
   fi
 
-  confirm 'Do you want to download the latest iso?' || return $?
-  [[ -z "${REPLY}" ]] && return 0
+  if [[ -z "${iso_file}" ]]; then
+    on_script_mode &&
+      echo 'Missing the iso file path' && return 2
 
-  local iso_file_path=''
+    confirm 'Do you want to download the latest iso?' || return $?
+    require 'Bootable operation is canceled' || return 2
 
-  if [[ "${REPLY}" == "yes" ]]; then
-    local hosts=''
-    hosts+='{"key": "http://arch.phinau.de/iso/latest", "value": "Germany [phinau.de]"},'
-    hosts+='{"key": "http://mirrors.acm.wpi.edu/archlinux/iso/latest", "value": "USA [acm.wpi.edu]"},'
-    hosts+='{"key": "https://mirror.kamtv.ru/archlinux/iso/latest", "value": "Russia [kamtv.ru]"},'
-    hosts+='{"key": "https://mirrors.bfsu.edu.cn/archlinux/iso/latest", "value": "China [bfsu.edu.cn]"},'
-    hosts+='{"key": "https://mirror.vishmak.in/archlinux/iso/latest", "value": "India [vishmak.in]"},'
-    hosts+='{"key": "http://archlinux.c3sl.ufpr.br/iso/latest", "value": "Brazil [c3sl.ufpr.br]"},'
-    hosts+='{"key": "https://mirror.aarnet.edu.au/pub/archlinux/iso/latest", "value": "Australia [aarnet.edu.au]"}'
-    hosts="[${hosts}]"
-
-    local host=''
-    pick_one 'Select a mirror host:' "${hosts}" vertical || return $?
-    [[ -n "${REPLY}" ]] && host="${REPLY}" || return 0
-
-    local file='archlinux-x86_64.iso'
-    local output="${HOME}/downloads"
-
-    local files=(
-      "${host}/b2sums.txt"
-      "${host}/${file}.sig"
-    )
-
-    if [[ -f "${output}/${file}" ]]; then
-      echo 'An existing iso file is found'
+    if [[ "${REPLY}" == "yes" ]]; then
+      download_iso_file "${HOME}/downloads" 'archlinux-x86_64.iso' || return $?
+      iso_file="${HOME}/downloads/archlinux-x86_64.iso"
     else
-      files+=("${host}/${file}")
+      ask 'Enter the path to the iso file:' || return $?
+      require 'File path is required' || return 2
+      iso_file="${REPLY}"
     fi
-
-    # Clean up signature and checksum files
-    rm -f "${output}/b2sums.txt"
-    rm -f "${output}/${file}.sig"
-
-    download "${output}" "${files[@]}"
-
-    if [[ $? -ne 0 ]]; then
-      echo 'Unable to download archlinux files'
-      return 2
-    fi
-
-    sq --force wkd get pierre@archlinux.org -o "${output}/release-key.pgp"
-
-    if [[ $? -ne 0 ]]; then
-      echo 'Unable to fetch the release key'
-      return 2
-    fi
-
-    echo 'Verifying the integrity of files...'
-
-    cd ${output} &&
-    b2sum --ignore-missing -c b2sums.txt &&
-    sq verify --signer-file release-key.pgp --detached "${file}.sig" "${file}" 2>&1 | awk NF
-
-    if [[ $? -ne 0 ]]; then
-      echo 'Failed to verify archlinux files'
-      return 2
-    fi
-
-    echo 'Files have been verified successfully'
-
-    iso_file_path="${output}/${file}"
-  else
-    ask 'Enter the path to the iso file:' '^/.+' || return $?
-    iso_file_path="${REPLY}"
   fi
 
-  if [[ ! -f "${iso_file_path}" ]]; then
-    echo 'Invalid or unknown archlinux iso file'
+  if [[ ! -f "${iso_file}" ]]; then
+    echo 'Invalid or unknown iso file'
     return 2
   fi
 
-  local model=''
-  model="$(find_disk "${path}" | jq -cr '"\(.vendor) \(.model) \(.size)"')" || return 1
+  if ! on_script_mode; then
+    local model=''
+    model="$(find_disk "${path}" | jq -cr '"\(.vendor) \(.model) \(.size)"')" || return 1
 
-  echo ''
-  echo "ALL DATA in ${model} [${path}],"
-  echo 'will be irreversibly gone forever!'
-  confirm 'Do you really want to proceed?' || return $?
-  [[ "${REPLY}" != "yes" ]] && return 0
+    echo ''
+    echo "ALL DATA in ${model} [${path}],"
+    echo 'will be irreversibly gone forever!'
+    confirm 'Do you really want to proceed?' || return $?
+    require 'Confirmation is required' || return 2
+    
+    [[ "${REPLY}" != "yes" ]] &&
+      echo 'Bootable operation is canceled' && return 2
+  fi
 
   echo 'Unmounting disk partitions...'
   unmount_partitions "${path}" || return 1
@@ -1226,7 +1337,7 @@ create_bootable () {
 
   echo 'Flashing installation files...'
 
-  sudo dd "if=${iso_file_path}" "of=${path}" bs=4M conv=fsync oflag=direct status=progress
+  sudo dd "if=${iso_file}" "of=${path}" bs=4M conv=fsync oflag=direct status=progress
 
   if [[ $? -ne 0 ]]; then
     echo 'Failed to flash installation files'

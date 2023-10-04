@@ -27,38 +27,40 @@ show_help () {
     echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
 
     echo -e '\nCOMMANDS'
-    printf ' %-36s %s\n' \
+    printf ' %-58s %s\n' \
       'help' 'Show this help message.'
   fi
 
-  printf ' %-36s %s\n' \
+  printf ' %-58s %s\n' \
     'show status' 'Show a report of the file system.' \
     '' '' \
-    'show disk [<path>]' 'Show a disk block device.' \
-    'show partition [<path>]' 'Show a partition block device.' \
-    'show rom [<path>]' 'Show an optical drive block device.' \
+    'show disk <path>' 'Show a disk block device.' \
+    'show partition <path>' 'Show a partition block device.' \
+    'show rom <path>' 'Show an optical drive block device.' \
     '' '' \
     'list disks' 'List all disk block devices.' \
-    'list partitions [<path>]' 'List the partitions of a disk block device.' \
+    'list partitions <disk>' 'List the partitions of a disk block device.' \
     'list roms' 'List all optical block devices.' \
-    'list folders [<host>]' 'List the shared folders of a host.' \
+    'list folders <host> <user> <group> <password>' 'List the shared folders of a host.' \
     'list mounts' 'List all mounting points.' \
     '' '' \
-    'mount partition [<path>]' 'Mount a partition block device.' \
-    'unmount partition [<path>]' 'Unmount a partition block device.' \
-    'mount rom [<path>]' 'Mount an optical block device.' \
-    'unmount rom [<path>]' 'Unmount an optical block device.' \
+    'mount partition <path>' 'Mount a partition block device.' \
+    'unmount partition <path>' 'Unmount a partition block device.' \
+    'mount encrypted <path> <key>' 'Mount an encrypted partition block device.' \
+    'unmount encrypted <path>' 'Unmount an encrypted partition block device.' \
+    'mount rom <path>' 'Mount an optical block device.' \
+    'unmount rom <path>' 'Unmount an optical block device.' \
     'mount image <path>' 'Mount an iso, img image file system.' \
-    'unmount image [<path>]' 'Unmount an image file system.' \
-    'mount folder [<host>]' 'Mount a shared storage folder.' \
-    'unmount folder [<uri>]' 'Unmount a shared storage folder.' \
+    'unmount image <path>' 'Unmount an image file system.' \
+    'mount folder <host> <name> <user> <group> <password>' 'Mount a shared storage folder.' \
+    'unmount folder <uri>' 'Unmount a shared storage folder.' \
     '' '' \
-    'format disk [<path>]' 'Format a disk block device.' \
-    'eject disk [<path>]' 'Eject a disk block device.' \
-    'scan disk [<path>]' 'Scan a disk block device for SMART data.' \
+    'format disk <path> <label> <fs-type>' 'Format a disk block device.' \
+    'eject disk <path>' 'Eject a disk block device.' \
+    'scan disk <path>' 'Scan a disk block device for SMART data.' \
     '' '' \
-    'create encrypted [<path>]' 'Create an encrypted drive.' \
-    'create bootable [<path>]' 'Create a bootable installation drive.'
+    'create encrypted <path> <fs-type> <key>' 'Create an encrypted drive.' \
+    'create bootable <path> <iso-file>' 'Create a bootable installation drive.'
 }
 
 run () {
@@ -115,25 +117,27 @@ run () {
       'list disks') list_disks;;
       'list partitions') list_partitions "${args[2]}";;
       'list roms') list_roms;;
-      'list folders') list_shared_folders "${args[2]}";;
+      'list folders') list_shared_folders "${args[2]}" "${args[3]}" "${args[4]}" "${args[5]}";;
       'list mounts') list_mounts;;
       'show status') show_status;;
       'show disk') show_disk "${args[2]}";;
       'show partition') show_partition "${args[2]}";;
       'show rom') show_rom "${args[2]}";;
       'mount partition') mount_partition "${args[2]}" && beep;;
+      'mount encrypted') mount_encrypted "${args[2]}" "${args[3]}" && beep;;
       'mount rom') mount_rom "${args[2]}" && beep;;
       'mount image') mount_image "${args[2]}" && beep;;
-      'mount folder') mount_shared_folder "${args[2]}" && beep;;
+      'mount folder') mount_shared_folder "${args[2]}" "${args[3]}" "${args[4]}" "${args[5]}" "${args[6]}" && beep;;
       'unmount partition') unmount_partition "${args[2]}" && beep;;
+      'unmount encrypted') unmount_encrypted "${args[2]}" && beep;;
       'unmount rom') unmount_rom "${args[2]}" && beep;;
       'unmount image') unmount_image "${args[2]}" && beep;;
       'unmount folder') unmount_shared_folder "${args[2]}" && beep;;
-      'format disk') format_disk "${args[2]}" && beep;;
+      'format disk') format_disk "${args[2]}" "${args[3]}" "${args[4]}" && beep;;
       'eject disk') eject_disk "${args[2]}" && beep;;
       'scan disk') scan_disk "${args[2]}" && beep;;
-      'create encrypted') create_encrypted "${args[2]}" && beep;;
-      'create bootable') create_bootable "${args[2]}" && beep;;
+      'create encrypted') create_encrypted "${args[2]}" "${args[3]}" "${args[4]}" && beep;;
+      'create bootable') create_bootable "${args[2]}" "${args[3]}" && beep;;
       *)
         echo 'Ooops, invalid or unknown command!'
         $(return 2);;

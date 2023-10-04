@@ -5,8 +5,6 @@ set -o pipefail
 source /opt/stack/utils
 
 # Returns the list of disk block devices.
-# Arguments:
-#  None
 # Outputs:
 #  A json array of disk block device objects.
 find_disks () {
@@ -362,11 +360,11 @@ mount_device () {
 
 # Mounts the encrypted block device with the given path.
 # Arguments:
-#  path:     the path of an encrypted block device
-#  password: the encryption key pass
-mount_encrypted () {
+#  path: the path of an encrypted block device
+#  key:  the encryption key
+mount_encrypted_device () {
   local path="${1}"
-  local password="${2}"
+  local key="${2}"
 
   if [[ ! -b "${path}" ]]; then
     return 1
@@ -376,7 +374,7 @@ mount_encrypted () {
   local mount_point="${HOME}/mounts/encrypted/${folder_name}"
 
   mkdir -p "${mount_point}" &&
-  sudo veracrypt -t --mount "${path}" "${mount_point}" --password "${password}" \
+  sudo veracrypt -t --mount "${path}" "${mount_point}" --password "${key}" \
     --pim 0 --keyfiles '' --protect-hidden no --non-interactive &> /dev/null
 
   if [[ $? -ne 0 ]]; then
@@ -402,7 +400,7 @@ unmount_device () {
 # Unmounts the encrypted block device with the given path.
 # Arguments:
 #  path: the path of an encrypted block device
-unmount_encrypted () {
+unmount_encrypted_device () {
   local path="${1}"
 
   if [[ ! -b "${path}" ]]; then
@@ -442,7 +440,7 @@ unmount_partitions () {
   volumes="$(echo "${volumes}" | jc --veracrypt | jq -cr '.[]|.path')" || return 1
   
   if [[ -z "${parts}" ]] && [[ -z "${volumes}" ]]; then
-    echo 'No mounted partitions have found'
+    echo 'No mounted partitions found'
     return 0
   fi
 
@@ -463,7 +461,7 @@ unmount_partitions () {
   if [[ -n "${volumes}" ]]; then
     local volume=''
     while read -r volume; do
-      unmount_encrypted "${volume}"
+      unmount_encrypted_device "${volume}"
 
       if [[ $? -eq 0 ]]; then
         echo "Partition ${volume} has been unmounted"
@@ -555,20 +553,20 @@ format_partition () {
 # Returns the list of shared folders of the given
 # host available in the local network.
 # Arguments:
-#  host:      the name or ip of a host
-#  username:  the name of the user
-#  workgroup: the group of the user
-#  password:  the password of the user
+#  host:     the name or ip of a host
+#  user:     the name of the user
+#  group:    the group of the user
+#  password: the password of the user
 # Outputs:
 #  A json array of shared folder objects.
 find_shared_folders () {
   local host="${1}"
-  local username="${2}"
-  local workgroup="${3}"
+  local user="${2}"
+  local group="${3}"
   local password="${4}"
 
   local folders=''
-  folders="$(smbclient -L "${host}" -U "${username}" -W "${workgroup}" --password="${password}" |
+  folders="$(smbclient -L "${host}" -U "${user}" -W "${group}" --password="${password}" |
     awk '/Disk/{print "{\"name\":\""$1"\",\"type\":\""$2"\"},"}')" || return 1
 
   # Remove the extra comma after the last element
@@ -581,18 +579,11 @@ find_shared_folders () {
 
 # Shows a menu asking the user to select one
 # disk block device.
-# Arguments:
-#  None
 # Outputs:
 #  A menu of disk block devices.
 pick_disk () {
   local disks=''
-  disks="$(find_disks)"
-
-  if [[ $? -ne 0 ]]; then
-    echo 'Unable to find disks'
-    return 2
-  fi
+  disks="$(find_disks)" || return 1
 
   local len=0
   len="$(count "${disks}")" || return 1
@@ -615,7 +606,7 @@ pick_disk () {
 
   disks="$(echo "${disks}" | jq -cer "${query}")" || return 1
 
-  pick_one 'Select a disk:' "${disks}" vertical || return $?
+  pick_one 'Select a disk path:' "${disks}" vertical || return $?
 }
 
 # Shows a menu asking the user to select one partition
@@ -630,12 +621,7 @@ pick_partition () {
   local status="${2}"
 
   local parts=''
-  parts="$(find_partitions "${path}" "${status}")"
-
-  if [[ $? -ne 0 ]]; then
-    echo -e "Unable to find ${status:-\b} partitions"
-    return 2
-  fi
+  parts="$(find_partitions "${path}" "${status}")" || return 1
 
   local len=0
   len="$(count "${parts}")" || return 1
@@ -657,7 +643,7 @@ pick_partition () {
 
   parts="$(echo "${parts}" | jq -cer "${query}")" || return 1
 
-  pick_one 'Select a partition:' "${parts}" vertical || return $?
+  pick_one 'Select a partition path:' "${parts}" vertical || return $?
 }
 
 # Shows a menu asking the user to select one rom block
@@ -670,12 +656,7 @@ pick_rom () {
   local status="${1}"
 
   local roms=''
-  roms="$(find_roms "${status}")"
-
-  if [[ $? -ne 0 ]]; then
-    echo -e "Unable to find ${status:-\b} roms"
-    return 2
-  fi
+  roms="$(find_roms "${status}")" || return 1
 
   local len=0
   len="$(count "${roms}")" || return 1
@@ -699,12 +680,10 @@ pick_rom () {
 
   roms="$(echo "${roms}" | jq -cer "${query}")" || return 1
 
-  pick_one 'Select a rom:' "${roms}" vertical || return $?
+  pick_one 'Select a rom path:' "${roms}" vertical || return $?
 }
 
 # Shows a menu asking the user to select one host.
-# Arguments:
-#  None
 # Outputs:
 #  A menu of host names.
 pick_host () {
@@ -737,8 +716,6 @@ pick_host () {
 }
 
 # Shows a menu asking the user to select one file system type.
-# Arguments:
-#  None
 # Outputs:
 #  A menu of file system types.
 pick_fs_type () {
@@ -751,6 +728,148 @@ pick_fs_type () {
   values+='{"key": "fat32", "value": "FAT32"}'
   values="[${values}]"
 
-  pick_one 'Select a file system type:' "${values}" vertical || return $?
+  pick_one 'Select file system type:' "${values}" vertical || return $?
+}
+
+# Checks if the given file system type is valid.
+# Arguments:
+#  type: the type of file system
+# Returns:
+# 0 if type is valid otherwise 1.
+validate_fs_type () {
+  local type="${1}"
+
+  local types='ext4|ext3|ext2|ntfs|exfat|fat32'
+
+  if [[ ! "${type}" =~ ^(${types})$ ]]; then
+    return 1
+  fi
+
+  return 0
+}
+
+# Shows a menu asking the user to select a
+# mounted image path.
+# Outputs:
+#  A menu of moutned image paths.
+pick_image_mount () {
+  local mounts=''
+
+  mounts="$(cat /proc/mounts | awk '/^fuseiso/{
+    print "{\"key\":\"" $2 "\",\"value\":\"" $2 "\"},"
+  }')" || return 1
+
+  # Remove the extra comma after the last element
+  if [[ -n "${mounts}" ]]; then
+    mounts="${mounts::-1}"
+  fi
+
+  mounts="[${mounts}]"
+
+  local len=0
+  len="$(count "${mounts}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo 'No image mounts have found'
+    return 2
+  fi
+
+  pick_one 'Select image mount path:' "${mounts}" vertical || return $?
+}
+
+# Shows a menu asking the user to select a shared folder
+# mount uri.
+# Outputs:
+#  A menu of shared folder mount uris.
+pick_shared_folder_mount () {
+  local uris=''
+
+  uris="$(ls /run/user/${UID}/gvfs | awk '{
+    match($0, /domain=(.*),server=(.*),share=(.*),user=(.*)/, a);
+    key="smb://"a[1]";"a[4]"@"a[2]"/"a[3]
+    print "{\"key\": \""key"\", \"value\":\""key"\"},"
+  }')" || return 1
+
+  # Remove the extra comma after the last element
+  if [[ -n "${uris}" ]]; then
+    uris="${uris::-1}"
+  fi
+
+  uris="[${uris}]"
+
+  local len=0
+  len="$(count "${uris}")" || return 1
+
+  if [[ ${len} -eq 0 ]]; then
+    echo 'No mounted shared folders have found'
+    return 2
+  fi
+
+  pick_one 'Select a shared folder mount uri:' "${uris}" vertical || return $?
+}
+
+# Downloads the latest iso file and verifies its integrity
+# via signature.
+# Arguments:
+#  output:    the directory to download the iso file
+#  file_name: the name of the iso file to download
+download_iso_file () {
+  local output="${1}"
+  local file_name="${2}"
+
+  local hosts=''
+
+  hosts+='{"key": "http://arch.phinau.de/iso/latest", "value": "Germany [phinau.de]"},'
+  hosts+='{"key": "http://mirrors.acm.wpi.edu/archlinux/iso/latest", "value": "USA [acm.wpi.edu]"},'
+  hosts+='{"key": "https://mirror.kamtv.ru/archlinux/iso/latest", "value": "Russia [kamtv.ru]"},'
+  hosts+='{"key": "https://mirrors.bfsu.edu.cn/archlinux/iso/latest", "value": "China [bfsu.edu.cn]"},'
+  hosts+='{"key": "https://mirror.vishmak.in/archlinux/iso/latest", "value": "India [vishmak.in]"},'
+  hosts+='{"key": "http://archlinux.c3sl.ufpr.br/iso/latest", "value": "Brazil [c3sl.ufpr.br]"},'
+  hosts+='{"key": "https://mirror.aarnet.edu.au/pub/archlinux/iso/latest", "value": "Australia [aarnet.edu.au]"}'
+  hosts="[${hosts}]"
+
+  pick_one 'Select a mirror host:' "${hosts}" vertical || return $?
+  require 'Mirror host is required' || return 2
+  local host="${REPLY}"
+
+  local files=(
+    "${host}/${file_name}"
+    "${host}/b2sums.txt"
+    "${host}/${file_name}.sig"
+  )
+
+  # Clean up iso, signature and checksum files
+  rm -f "${output}/${file_name}"
+  rm -f "${output}/b2sums.txt"
+  rm -f "${output}/${file_name}.sig"
+
+  download "${output}" "${files[@]}"
+
+  if [[ $? -ne 0 ]]; then
+    echo 'Unable to download archlinux files'
+    return 2
+  fi
+
+  sq --force wkd get pierre@archlinux.org -o "${output}/release-key.pgp"
+
+  if [[ $? -ne 0 ]]; then
+    echo 'Unable to fetch the release key'
+    return 2
+  fi
+
+  echo 'Verifying the integrity of files...'
+
+  cd ${output} &&
+  b2sum --ignore-missing -c b2sums.txt &&
+  sq verify --signer-file release-key.pgp \
+    --detached "${file_name}.sig" "${file_name}" 2>&1 | awk NF
+
+  if [[ $? -ne 0 ]]; then
+    echo 'Failed to verify archlinux files'
+    return 2
+  fi
+
+  echo 'Files have been verified successfully'
+  echo "Image iso file saved to ${output}/${file_name}"
 }
 
