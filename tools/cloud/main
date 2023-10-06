@@ -27,19 +27,20 @@ show_help () {
     echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
 
     echo -e '\nCOMMANDS'
-    printf ' %-30s %s\n' \
+    printf ' %-48s %s\n' \
       'help' 'Show this help message.'
   fi
 
-  printf ' %-30s %s\n' \
-    'list remotes [service]' 'List all synced remotes by service.' \
-    'sync remote <service> <name>' 'Sync a remote service, where service' \
-    '' 'could be drive or dropbox.' \
-    'delete remote [<name>]' 'Delete a synced remote service.' \
+  printf ' %-48s %s\n' \
+    'list remotes <service>' 'List all synced remotes by service name.' \
     '' '' \
-    'mount remote [<name>]' 'Mount an already synced remote.' \
-    'unmount remote [<name>]' 'Unmount an already mounted remote.' \
-    'mount remotes' 'Mount all synced cloud remotes.'
+    'sync drive <name> <client> <secret> <folder>' 'Sync a google drive remote service.' \
+    'sync dropbox <name> <app> <secret>' 'Sync a dropbox remote service.' \
+    'delete remote <name>' 'Delete a synced remote service.' \
+    '' '' \
+    'mount remote <name>' 'Mount a synced remote.' \
+    'unmount remote <name>' 'Unmount a mounted remote.' \
+    'mount remotes' 'Mount all synced remotes.'
 }
 
 run () {
@@ -94,8 +95,8 @@ run () {
 
     case "${cmd}${obj:+ ${obj}}" in
       'list remotes') list_remotes "${args[2]}";;
-      'sync remote drive') sync_drive "${args[3]}" && beep;;
-      'sync remote dropbox') sync_dropbox "${args[3]}" && beep;;
+      'sync drive') sync_drive "${args[2]}" "${args[3]}" "${args[4]}" "${args[5]}" && beep;;
+      'sync dropbox') sync_dropbox "${args[2]}" "${args[3]}" "${args[4]}" && beep;;
       'delete remote') delete_remote "${args[2]}" && beep;;
       'mount remote') mount_remote "${args[2]}" && beep;;
       'unmount remote') unmount_remote "${args[2]}" && beep;;

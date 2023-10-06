@@ -87,7 +87,7 @@ find_remote () {
 #  name: the name of a service
 # Returns:
 #  0 if exists otherwise 1
-exists () {
+exists_remote () {
   local name="${1}"
 
   local query=".[]|select(.name == \"${name}\")"
@@ -101,7 +101,7 @@ exists () {
 #  name: the name of a service
 # Returns:
 #  0 if is mounted otherwise 1
-is_mounted () {
+is_remote_mounted () {
   local name="${1}"
 
   grep -Eq "^${name}:.* fuse.rclone" /proc/mounts
@@ -130,6 +130,6 @@ pick_remote () {
     return 2
   fi
 
-  pick_one "Select a remote:" "${remotes}" "vertical" || return $?
+  pick_one "Select remote name:" "${remotes}" "vertical" || return $?
 }
 
