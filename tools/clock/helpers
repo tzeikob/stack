@@ -31,3 +31,71 @@ pick_timezone () {
   pick_one "${prompt}" "${timezones}" vertical || return $?
 }
 
+# Checks if the given timezone name is valid or not.
+# Arguments:
+#  name: the name of a timezone
+# Returns:
+#  0 if timezone is valid otherwise 1.
+validate_timezone () {
+  local name="${1}"
+
+  if ! timedatectl list-timezones | grep -qw "${name}"; then
+    return 1
+  fi
+
+  return 0
+}
+
+# Checks if the given time is valid.
+# Arguments:
+#  time: 24h time in hh:mm form
+# Returns:
+#  0 if time is valid otherwise 1.
+validate_time () {
+  local time="${1}"
+
+  if [[ ! "${time}" =~ ^[0-9][0-9]:[0-9][0-9]$ ]]; then
+    return 1
+  fi
+
+  local hour=$(echo "${time}" | cut -d ':' -f 1)
+  local min=$(echo "${time}" | cut -d ':' -f 2)
+
+  if ((${hour} > 23)); then
+    return 1
+  fi
+
+  if ((${min} > 59)); then
+    return 1
+  fi
+
+  return 0
+}
+
+# Checks if the given date is valid.
+# Arguments:
+#  date: a date in yyyy-mm-dd form
+# Returns:
+#  0 if date is valid otherwise 1.
+validate_date () {
+  local date="${1}"
+  
+  if [[ ! "${date}" =~ ^[0-9][0-9]([0-9][0-9])?-[0-9][0-9]-[0-9][0-9]$ ]]; then
+    return 1
+  fi
+
+  local year=$(echo "${date}" | cut -d '-' -f 1)
+  local month=$(echo "${date}" | cut -d '-' -f 2)
+  local day=$(echo "${date}" | cut -d '-' -f 3)
+
+  if ((${month} == 0 || ${month} > 12)) ; then
+    return 1
+  fi
+
+  if ((${day} == 0 || ${day} > 31)); then
+    return 1
+  fi
+
+  return 0
+}
+

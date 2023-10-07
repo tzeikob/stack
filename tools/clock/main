@@ -34,14 +34,14 @@ show_help () {
   printf ' %-30s %s\n' \
     'show status' 'Show the system date time status.' \
     '' '' \
-    'set timezone [<Region/City>]' 'Set the system timezone.' \
-    'set time <HH:MM:SS>' 'Set the system local time.' \
-    'set date <YYYY-mm-dd>' 'Set the system date.' \
+    'set timezone <name>' 'Set system timezone in region/city form.' \
+    'set time <time>' 'Set system local time in hh:mm form.' \
+    'set date <date>' 'Set system date in yyyy-mm-dd form.' \
     '' '' \
-    'set ntp on|off' 'Enable or disable the NTP service.' \
-    'set rtc local|utc' 'Set the hardware clock to local or UTC time.' \
+    'set ntp on|off' 'Enable or disable the NTP sync service.' \
+    'set rtc local|utc' 'Set hardware clock to local or UTC time.' \
     '' '' \
-    'sync rtc' 'Sync the hardware clock from the system clock.'
+    'sync rtc' 'Sync hardware clock to system clock.'
 }
 
 run () {
