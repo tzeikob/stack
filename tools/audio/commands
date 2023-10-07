@@ -6,14 +6,11 @@ source /opt/stack/utils
 source /opt/stack/audio/helpers
 
 # Shows the current status of system's audio.
-# Arguments:
-#  None
 # Outputs:
 #  A verbose list of text data.
 show_status () {
   local query=''
   query+='Server:    \(.server_name)\n'
-  query+='Version:   \(.server_version)\n'
   query+='Sample:    \(.default_sample_specification)\n'
   query+='Channels:  \(.default_channel_map)'
 
@@ -67,8 +64,6 @@ show_status () {
 }
 
 # Shows the logs of the audio service.
-# Arguments:
-#  None
 # Outputs:
 #  A long list of log messages.
 show_logs () {
@@ -76,32 +71,36 @@ show_logs () {
 }
 
 # Shows the data of the card with identified by the
-# given index.
+# given name.
 # Arguments:
-#  index: a zero-based integer
+#  name: the name of an audio card
 # Outputs:
 #  A verbose list of text data.
 show_card () {
-  local index="${1}"
+  local name="${1}"
 
-  if [[ -z "${index}" ]]; then
-    pick_card 'Select an audio card:' || return $?
-    index="${REPLY}"
+  if [[ -z "${name}" ]]; then
+    on_script_mode &&
+      echo 'Missing the audio card name' && return 2
+
+    pick_card 'Select audio card name:' || return $?
+    require 'Audio card name is required'
+    name="${REPLY}"
   fi
 
   local card=''
-  card="$(find_card "${index}")"
+  card="$(find_card "${name}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find card with index ${index}"
+    echo "Audio card ${name} not found"
     return 2
   fi
 
   local query='("'
-  query+='Index:     \(.index)\n'
   query+='Model:     \(.properties|if ."device.nick" then ."device.nick" else ."device.alias" end)\n'
   query+='\(.properties."device.product.name"|if . then "Product:   \(.)\n" else "" end)'
   query+='\(.properties."device.vendor.name"|if . then "Vendor:    \(.)\n" else "" end)'
+  query+='Name:      \(.name)\n'
   query+='Driver:    \(.driver)\n'
   query+='Bus:       \(.properties."device.bus" | ascii_upcase)\n'
   query+='\(.properties."api.alsa.use-acp"|if . then "ACP:       \(.)\n" else "" end)'
@@ -163,12 +162,7 @@ restart () {
 #  The list of audio cards.
 list_cards () {
   local cards=''
-  cards="$(find_cards)"
-
-  if [[ $? -ne 0 ]]; then
-    echo 'Unable to read audio cards'
-    return 2
-  fi
+  cards="$(find_cards)" || return $?
 
   local len=0
   len="$(count "${cards}")" || return 1
@@ -179,9 +173,9 @@ list_cards () {
   fi
 
   local query=''
-  query+='Index:  \(.index)\n'
-  query+='Model:  \(.properties|if ."device.nick" then ."device.nick" else ."device.alias" end)'
-  query+='\(.properties."device.vendor.name"|if . then "\nVendor: \(.)" else "" end)'
+  query+='Model:  \(.properties|if ."device.nick" then ."device.nick" else ."device.alias" end)\n'
+  query+='\(.properties."device.vendor.name"|if . then "Vendor: \(.)\n" else "" end)'
+  query+='Name:   \(.name)'
 
   query="[.[]|\"${query}\"]|join(\"\n\n\")"
 
@@ -196,8 +190,11 @@ list_cards () {
 list_ports () {
   local type="${1}"
 
-  if [[ ! "${type}" =~ ^(output|input)$ ]]; then
-    echo 'Invalid module type value'
+  if [[ -z "${type}" ]]; then
+    echo 'Missing the module type'
+    return 2
+  elif [[ ! "${type}" =~ ^(output|input)$ ]]; then
+    echo 'Invalid module type'
     return 2
   fi
 
@@ -209,12 +206,7 @@ list_ports () {
   fi
 
   local modules=''
-  modules="$(pactl --format=json list "${object}" | jq -cer "${query}")"
-
-  if [[ $? -ne 0 ]]; then
-    echo "Unable to read ${type} modules"
-    return 2
-  fi
+  modules="$(pactl --format=json list "${object}" | jq -cer "${query}")" || return $?
 
   local len=0
   len="$(count "${modules}")" || return 1
@@ -234,7 +226,6 @@ list_ports () {
   query+='  }'
   query+=' ))'
   query+=' |.[]|"'
-  query+='Index:   \(.index)\n'
   query+='Name:    \(.name)\n'
   query+='Card:    \(.properties|if ."device.nick" then ."device.nick" else ."device.alias" end)\n'
   query+='Volume:  \(.volume) \(if .mute then "mute" else "" end)\n'
@@ -259,12 +250,7 @@ list_playbacks () {
   query="[.[]|select(.properties.\"application.name\"|test(\"${name}\"; \"i\"))]"
 
   local sink_inputs=''
-  sink_inputs="$(pactl --format=json list sink-inputs | jq -cer "${query}")"
-
-  if [[ $? -ne 0 ]]; then
-    echo 'Unable to read playback streams'
-    return 2
-  fi
+  sink_inputs="$(pactl --format=json list sink-inputs | jq -cer "${query}")" || return $?
 
   local len=0
   len="$(count "${sink_inputs}")" || return 1
@@ -275,7 +261,6 @@ list_playbacks () {
   fi
 
   query+='|.[]|"'
-  query+='Index:    \(.index)\n'
   query+='Name:     \(.properties."application.name")\n'
   query+='Media:    \(.properties."media.name")\n'
   query+='\(.properties."application.process.id"|if . then "Process:  \(.)\n" else "" end)'
@@ -289,69 +274,84 @@ list_playbacks () {
 }
 
 # Sets the profile of the audio card identified
-# by the given index.
+# by the given name.
 # Arguments:
-#  index: a zero-based integer
-#  name:  the name of a profile
+#  card_name:   the name of an audio card
+#  profile_name: a profile name of the card
 set_profile () {
-  local index="${1}"
-  local name="${2}"
+  local card_name="${1}"
+  local profile_name="${2}"
 
-  if [[ -z "${index}" ]]; then
-    pick_card 'Select an audio card:' || return $?
-    index="${REPLY}"
+  if [[ -z "${card_name}" ]]; then
+    on_script_mode &&
+      echo 'Missing the audio card name' && return 2
+
+    pick_card 'Select audio card name:' || return $?
+    require 'Audio card name is required' || return 2
+    card_name="${REPLY}"
   fi
 
   local card=''
-  card="$(find_card "${index}")"
+  card="$(find_card "${card_name}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find card with index ${index}"
+    echo "Audio card ${card_name} not found"
     return 2
   fi
 
-  if [[ -z "${name}" ]]; then
-    pick_profile 'Select a profile:' "${card}" || return $?
-    name="${REPLY}"
+  if [[ -z "${profile_name}" ]]; then
+    on_script_mode &&
+      echo 'Missing the profile name' && return 2
+
+    pick_profile 'Select profile name:' "${card}" || return $?
+    require 'Profile name is required' || return 2
+    profile_name="${REPLY}"
   fi
 
   local exists=''
-  exists="$(echo "${card}" | jq -cer ".profiles|has(\"${name}\")")"
+  exists="$(echo "${card}" | jq -cer ".profiles|has(\"${profile_name}\")")"
 
   if [[ "${exists}" == "false" ]]; then
-    echo 'Invalid profile name value'
+    echo 'Invalid or unknown profile name'
     return 2
   fi
 
-  pactl set-card-profile "${index}" "${name}"
+  pactl set-card-profile "${card_name}" "${profile_name}"
 
   if [[ $? -ne 0 ]]; then
     echo 'Failed to set profile'
     return 2
   fi
   
-  echo "Profile has been set to ${name}"
+  echo "Profile set to ${profile_name}"
 }
 
 # Sets the active output or input audio module.
 # Arguments:
-#  type:  output or input
-#  index: the index of an output or input module
+#  type: output or input
+#  name: the name of the output or input module
 set_default () {
   local type="${1}"
-  local index="${2}"
+  local name="${2}"
 
-  if [[ ! "${type}" =~ ^(output|input)$ ]]; then
-    echo 'Invalid module type value'
+  if [[ -z "${type}" ]]; then
+    echo 'Missing the module type'
+    return 2
+  elif [[ ! "${type}" =~ ^(output|input)$ ]]; then
+    echo 'Invalid module type'
     return 2
   fi
 
-  if [[ -z "${index}" ]]; then
-    pick_module 'Select an audio module:' "${type}" || return $?
-    index="${REPLY}"
+  if [[ -z "${name}" ]]; then
+    on_script_mode &&
+      echo "Missing ${type} module name" && return 2
+
+    pick_module "Select ${type} module name:" "${type}" || return $?
+    require "${type^} module name is required" || return 2
+    name="${REPLY}"
   fi
 
-  local query=".[]|select(.index|tostring == \"${index}\")"
+  local query=".[]|select(.name == \"${name}\")"
 
   local object='sink'
   if [[ "${type}" == "input" ]]; then
@@ -362,39 +362,47 @@ set_default () {
   exists="$(pactl --format=json list "${object}s" | jq -cer "${query}")"
 
   if [[ -z "${exists}" ]]; then
-    echo 'Invalid module index value'
+    echo "${type^} module ${name} not found"
     return 2
   fi
 
-  pactl set-default-${object} "${index}"
+  pactl set-default-${object} "${name}"
 
   if [[ $? -ne 0 ]]; then
     echo "Failed to set active ${type}"
     return 2
   fi
 
-  echo "Active ${type} set to module ${index}"
+  echo "Active ${type} set to module ${name}"
 }
 
 # Sets the volume of the active output or input module
-# to the given value. If the given value is up or down
-# the volume increases or decreases by 5%.
+# to the given ivolume value. If the given value is up
+# or down the volume increases or decreases by 5%.
 # Arguments:
-#  type: output or input
-#  to:   up, down, mute, unmute or any value in [0,150] 
+#  type:   output or input
+#  volume: up, down, mute, unmute or any value in [0,150] 
 turn_default () {
   local type="${1}"
-  local to="${2}"
+  local volume="${2}"
 
-  if [[ ! "${type}" =~ ^(output|input)$ ]]; then
-    echo 'Invalid module type value'
+  if [[ -z "${type}" ]]; then
+    echo 'Missing the module type'
+    return 2
+  elif [[ ! "${type}" =~ ^(output|input)$ ]]; then
+    echo 'Invalid module type'
     return 2
   fi
 
-  if [[ ! "${to}" =~ ^(up|down|mute|unmute|[0-9]+)$ ]]; then
+  if [[ -z "${volume}" ]]; then
+    echo 'Missing the volume value'
+    return 2
+  fi
+
+  if [[ ! "${volume}" =~ ^(up|down|mute|unmute|[0-9]+)$ ]]; then
     echo 'Invalid volume value'
     return 2
-  elif [[ "${to}" =~ ^[0-9]+$ ]] && ! ((${to} >= 0 && ${to} <= 150)); then
+  elif [[ "${volume}" =~ ^[0-9]+$ ]] && ! ((${volume} >= 0 && ${volume} <= 150)); then
     echo 'Volume value is out of range'
     return 2
   fi
@@ -412,7 +420,7 @@ turn_default () {
     return 2
   fi
   
-  if [[ "${to}" == "mute" ]]; then
+  if [[ "${volume}" == "mute" ]]; then
     pactl set-${object}-mute "${module}" 1
 
     if [[ $? -ne 0 ]]; then
@@ -422,7 +430,7 @@ turn_default () {
 
     echo "Active ${type} volume set to mute"
     return 0
-  elif [[ "${to}" == "unmute" ]]; then
+  elif [[ "${volume}" == "unmute" ]]; then
     pactl set-${object}-mute "${module}" 0
 
     if [[ $? -ne 0 ]]; then
@@ -434,12 +442,14 @@ turn_default () {
     return 0
   fi
 
-  local volume="${to}"
+  local action='set to'
 
-  if [[ "${to}" == "up" ]]; then
+  if [[ "${volume}" == "up" ]]; then
     volume='+5'
-  elif [[ "${to}" == "down" ]]; then
+    action='pumped up by'
+  elif [[ "${volume}" == "down" ]]; then
     volume='-5'
+    action='lowered by'
   fi
 
   pactl set-${object}-mute "${module}" 0 &&
@@ -450,7 +460,7 @@ turn_default () {
     return 2
   fi
 
-  echo "Active ${type} volume set to ${volume}%"
+  echo "Active ${type} volume ${action} ${volume}%"
 }
 
 # Sets all output or input audio modules
@@ -462,13 +472,19 @@ set_mute () {
   local type="${1}"
   local mode="${2}"
 
-  if [[ ! "${type}" =~ ^(output|input)$ ]]; then
-    echo 'Invalid module type value'
+  if [[ -z "${type}" ]]; then
+    echo 'Missing module type'
+    return 2
+  elif [[ ! "${type}" =~ ^(output|input)$ ]]; then
+    echo 'Invalid module type'
     return 2
   fi
 
-  if [[ ! "${mode}" =~ ^(1|0)$ ]]; then
-    echo 'Invalid mute mode value'
+  if [[ -z "${mode}" ]]; then
+    echo 'Missing the mute mode'
+    return 2
+  elif [[ ! "${mode}" =~ ^(1|0)$ ]]; then
+    echo 'Invalid mute mode'
     return 2
   fi
 
@@ -483,16 +499,11 @@ set_mute () {
   query="[.[]|${query}]|join(\"\n\")"
 
   local pactl_cmds=''
-  pactl_cmds="$(pactl --format=json list "${object}s" | jq -cer "${query}")"
-
-  if [[ $? -ne 0 ]]; then
-    echo "Unable to read ${type} modules"
-    return 2
-  fi
+  pactl_cmds="$(pactl --format=json list "${object}s" | jq -cer "${query}")" || return $?
 
   if [[ -z "${pactl_cmds}" ]]; then
     echo "No ${type} modules have found"
-    return 0
+    return 2
   fi
 
   # Execute each pactl command
@@ -513,7 +524,7 @@ set_mute () {
   fi
 
   if [[ "${failed}" == "true" ]]; then
-    echo "Failed to set all ${type} modules to ${status}"
+    echo "Some ${type} modules failed to ${status}"
     return 2
   fi
   

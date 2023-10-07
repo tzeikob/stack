@@ -5,24 +5,21 @@ set -o pipefail
 source /opt/stack/utils
 
 # Returns the list of all audio cards.
-# Arguments:
-#  none
 # Outputs:
 #  A json array of audio cards.
 find_cards () {
   pactl --format=json list cards || return 1
 }
 
-# Returns the audio card identified by the given
-# index number.
+# Returns the audio card identified by the given name.
 # Arguments:
-#  index: a zero-based integer
+#  name: the name of audio card
 # Outputs:
 #  A json object of an audio card.
 find_card () {
-  local index="${1}"
+  local name="${1}"
 
-  local query=".[]|select(.index|tostring == \"${index}\")"
+  local query=".[]|select(.name == \"${name}\")"
 
   find_cards | jq -cer "${query}" || return 1
 }
@@ -35,7 +32,7 @@ find_card () {
 pick_card () {
   local prompt="${1}"
 
-  local query='{key: .index, value: "\(.index):\(.properties|'
+  local query='{key: .name, value: "\(.properties|'
   query+='if ."device.nick" then ."device.nick" else ."device.alias" end)"}'
   query="[.[]|${query}]"
 
@@ -92,9 +89,9 @@ pick_module () {
   local prompt="${1}"
   local type="${2}"
 
-  local query='{key: .index, value: "\(.name)'
-  query+=' [\(.properties|if ."device.nick" then ."device.nick" else ."device.alias" end)]"}'
-  query="[.[]|=.|map((.ports[] + {index, properties}))|.[]|${query}]"
+  local query='{key: .parent.name, value: "\(.name)'
+  query+=' [\(.parent.properties|if ."device.nick" then ."device.nick" else ."device.alias" end)]"}'
+  query="[.[]|=.|map((.ports[] + {parent: {name, properties}}))|.[]|${query}]"
   
   local object='sinks'
   if [[ "${type}" == "input" ]]; then
