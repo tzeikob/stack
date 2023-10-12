@@ -9,6 +9,7 @@ source /opt/stack/utils
 #  A json array of trashed files.
 find_files () {
   local files=''
+
   files="$(trash-list | awk '{
     schema="\"date\": \"%s\","
     schema=schema"\"time\": \"%s\","
@@ -30,7 +31,7 @@ find_files () {
   }')" || return 1
 
   # Remove the extra comma after the last element
-  if [[ -n "${files}" ]]; then
+  if is_not_empty "${files}"; then
     files="${files::-1}"
   fi
 
@@ -43,6 +44,7 @@ find_files () {
 #  A json array of trashed files.
 find_restorable_files () {
   local files=''
+
   files="$(trash-restore / <<< "" | awk '/^ *[0-9]+ /{
     schema="\"key\": \"%s\","
     schema=schema"\"value\": \"%s\""
@@ -58,7 +60,7 @@ find_restorable_files () {
   }')" || return 1
 
   # Remove the extra comma after the last element
-  if [[ -n "${files}" ]]; then
+  if is_not_empty "${files}"; then
     files="${files::-1}"
   fi
   

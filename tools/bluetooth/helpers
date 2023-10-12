@@ -22,10 +22,11 @@ find_controller () {
   local address="${1}"
 
   local controller=''
-  if [[ -n "${address}" ]]; then
-    controller="$(bluetoothctl show "${address}")" || return 1
-  else
+
+  if is_empty "${address}"; then
     controller="$(bluetoothctl show)" || return 1
+  else
+    controller="$(bluetoothctl show "${address}")" || return 1
   fi
 
   echo "${controller}" | jc --bluetoothctl || return 1
@@ -41,10 +42,11 @@ find_devices () {
   local status="${1^}"
 
   local devices=''
-  if [[ -n "${status}" ]]; then
-    devices="$(bluetoothctl devices "${status}")" || return 1
-  else
+
+  if is_empty "${status}"; then
     devices="$(bluetoothctl devices)" || return 1
+  else
+    devices="$(bluetoothctl devices "${status}")" || return 1
   fi
 
   echo "${devices}" | jc --bluetoothctl || return 1
@@ -69,7 +71,7 @@ is_scanning_on () {
   local mode=''
   mode="$(find_controller | jq -cer '.[0]|.discovering')" || return 1
 
-  if [[ "${mode}" == "yes" ]]; then
+  if is_yes "${mode}"; then
     return 0
   else
     return 1
@@ -127,11 +129,35 @@ kill_scanning_proccesses () {
   pids="$(ps aux | jc --ps | jq -cr "${query}")" || return 1
 
   # Clean any scanning processes one by one
-  if [[ -n "${pids}" ]]; then
+  if is_not_empty "${pids}"; then
     local pid=''
     while read -r pid; do
       kill "${pid}"
     done <<< "${pids}"
   fi
+}
+
+# Checks if the given status is valid.
+# Arguments:
+#  status: a bluetooth device status
+# Returns:
+#  0 if status is valid otherwise 1.
+is_valid_status () {
+  local status="${1}"
+
+  if [[ ! "${status}" =~ ^(paired|connected|trusted|bonded)$ ]]; then
+    return 1
+  fi
+
+  return 0
+}
+
+# Checks if the given status is not valid.
+# Arguments:
+#  status: a bluetooth device status
+# Returns:
+#  0 if status is not valid otherwise 1.
+is_not_valid_status () {
+  is_valid_status "${1}" && return 1 || return 0
 }
 

@@ -28,7 +28,7 @@ show_status () {
   destinations="$(find_destinations |
     jq -cer 'if .|length>0 then .[]|.name else "" end')" || return 1
 
-  if [[ -n "${destinations}" ]]; then
+  if is_not_empty "${destinations}"; then
     local query=''
     query+='Printer:  \(.name) \(if .is_shared == "true" then "[shared]" else "" end)\n'
     query+='URI:      \(.uri)'
@@ -48,12 +48,7 @@ show_status () {
 #  A list of printers.
 list_printers () {
   local destinations=''
-  destinations="$(find_destinations)"
-
-  if [[ $? -ne 0 ]]; then
-    echo 'Unable to read print destinations'
-    return 2
-  fi
+  destinations="$(find_destinations)" || return 1
 
   local len=0
   len="$(count "${destinations}")" || return 1
@@ -80,7 +75,7 @@ list_printers () {
 show_printer () {
   local name="${1}"
 
-  if [[ -z "${name}" ]]; then
+  if is_not_given "${name}"; then
     on_script_mode &&
       echo 'Printer name is not given' && return 2
 
@@ -89,7 +84,7 @@ show_printer () {
     name="${REPLY}"
   fi
 
-  if ! exists_destination "${name}"; then
+  if not_exists_destination "${name}"; then
     echo "Cannot find printer ${name}"
     return 2
   fi
@@ -127,7 +122,7 @@ add_printer () {
   local name="${2}"
   local driver="${3}"
 
-  if [[ -z "${uri}" ]]; then
+  if is_not_given "${uri}"; then
     on_script_mode &&
       echo 'Printer uri is not given' && return 2
 
@@ -136,7 +131,7 @@ add_printer () {
     uri="${REPLY}"
   fi
 
-  if [[ -z "${name}" ]]; then
+  if is_not_given "${name}"; then
     on_script_mode &&
       echo 'Missing the printer name' && return 2
 
@@ -150,7 +145,7 @@ add_printer () {
     return 2
   fi
 
-  if [[ -z "${driver}" ]]; then
+  if is_not_given "${driver}"; then
     on_script_mode &&
       echo 'Print driver is not given' && return 2
 
@@ -159,7 +154,7 @@ add_printer () {
     driver="${REPLY}"
   fi
 
-  if ! is_driver_available "${driver}"; then
+  if is_driver_not_available "${driver}"; then
     echo "Driver ${driver} is not available"
     return 2
   fi
@@ -181,7 +176,7 @@ add_printer () {
 remove_printer () {
   local name="${1}"
 
-  if [[ -z "${name}" ]]; then
+  if is_not_given "${name}"; then
     on_script_mode &&
       echo 'Missing printer name' && return 2
 
@@ -190,7 +185,7 @@ remove_printer () {
     name="${REPLY}"
   fi
 
-  if ! exists_destination "${name}"; then
+  if not_exists_destination "${name}"; then
     echo "Cannot find printer ${name}"
     return 2
   fi
@@ -212,7 +207,7 @@ remove_printer () {
 share_printer () {
   local name="${1}"
 
-  if [[ -z "${name}" ]]; then
+  if is_not_given "${name}"; then
     on_script_mode &&
       echo 'Missing printer name' && return 2
 
@@ -221,7 +216,7 @@ share_printer () {
     name="${REPLY}"
   fi
 
-  if ! exists_destination "${name}"; then
+  if not_exists_destination "${name}"; then
     echo "Cannot find printer ${name}"
     return 2
   fi
@@ -243,7 +238,7 @@ share_printer () {
 unshare_printer () {
   local name="${1}"
 
-  if [[ -z "${name}" ]]; then
+  if is_not_given "${name}"; then
     on_script_mode &&
       echo 'Missing printer name' && return 2
 
@@ -252,7 +247,7 @@ unshare_printer () {
     name="${REPLY}"
   fi
 
-  if ! exists_destination "${name}"; then
+  if not_exists_destination "${name}"; then
     echo "Cannot find printer ${name}"
     return 2
   fi
@@ -277,7 +272,7 @@ set_option () {
   local key="${2}"
   local value="${3}"
 
-  if [[ -z "${name}" ]]; then
+  if is_not_given "${name}"; then
     on_script_mode &&
       echo 'Missing the printer name' && return 2
 
@@ -286,12 +281,12 @@ set_option () {
     name="${REPLY}"
   fi
 
-  if ! exists_destination "${name}"; then
+  if not_exists_destination "${name}"; then
     echo "Cannot find printer ${name}"
     return 2
   fi
 
-  if [[ -z "${key}" ]]; then
+  if is_not_given "${key}"; then
     on_script_mode &&
       echo 'Missing print option key' && return 2
 
@@ -300,12 +295,12 @@ set_option () {
     key="${REPLY}"
   fi
 
-  if [[ ! "${key}" =~ ^(Quality|PageSize|MediaType|TonerSaveMode|printer-error-policy)$ ]]; then
+  if is_not_print_option "${key}"; then
     echo 'Invalid print option key'
     return 2
   fi
 
-  if [[ -z "${value}" ]]; then
+  if is_not_given "${value}"; then
     on_script_mode &&
       echo 'Missing the print option value' && return 2
 
@@ -324,11 +319,11 @@ set_option () {
   fi
    
   case "${key}" in
-    Quality) [[ "${value}" =~ ^(600dpi|1200dpi)$ ]];;
-    PageSize) [[ "${value}" =~ ^(Letter|Legal|A4|A5|Executive|Folio|JB5|B5-ISO|COM10|Monarch|DL|C5|Oficio_S|PCard4x6)$ ]];;
-    MediaType) [[ "${value}" =~ ^(None|Plain|Thick|Thin|Bond|Color|Card|Labels|Preprinted|Cotton|Archive|Recycled|Envelope)$ ]];;
-    TonerSaveMode) [[ "${value}" =~ ^(Save|Standard)$ ]];;
-    printer-error-policy) [[ "${value}" =~ ^(abort-job|retry-current-job|retry-job|stop-printer)$ ]];;
+    Quality) is_valid_quality "${value}";;
+    PageSize) is_valid_page_size "${value}";;
+    MediaType) is_valid_media_type "${value}";;
+    TonerSaveMode) is_valid_toner_mode "${value}";;
+    printer-error-policy) is_valid_error_policy "${value}";;
     *)
       echo 'Unknown or invalid print option key'
       return 2;;
@@ -356,7 +351,7 @@ set_option () {
 set_default () {
   local name="${1}"
 
-  if [[ -z "${name}" ]]; then
+  if is_not_given "${name}"; then
     on_script_mode &&
       echo 'Missing the printer name' && return 2
 
@@ -365,7 +360,7 @@ set_default () {
     name="${REPLY}"
   fi
 
-  if ! exists_destination "${name}"; then
+  if not_exists_destination "${name}"; then
     echo "Cannot find printer ${name}"
     return 2
   fi
@@ -385,12 +380,7 @@ set_default () {
 #  A list of print jobs.
 list_jobs () {
   local jobs=''
-  jobs="$(find_jobs)"
-
-  if [[ $? -ne 0 ]]; then
-    echo 'Unable to read print jobs'
-    return 2
-  fi
+  jobs="$(find_jobs)" || return 1
 
   local len=0
   len="$(count "${jobs}")" || return 1
@@ -416,7 +406,7 @@ list_jobs () {
 cancel_job () {
   local id="${1}"
 
-  if [[ -z "${id}" ]]; then
+  if is_not_given "${id}"; then
     on_script_mode &&
       echo 'Missing the print job id' && return 2
 
@@ -425,7 +415,7 @@ cancel_job () {
     id="${REPLY}"
   fi
 
-  if ! exists_job "${id}"; then
+  if not_exists_job "${id}"; then
     echo "Cannot find print job ${id}"
     return 2
   fi

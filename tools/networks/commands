@@ -53,7 +53,7 @@ show_status () {
   fi
 
   local proxy=''
-  if [[ -f "${PROXY_ENV_FILE}" ]]; then
+  if file_exists "${PROXY_ENV_FILE}"; then
     proxy="$(cat "${PROXY_ENV_FILE}" | awk -F'=' '/export http_proxy=/ {
       split($2,a,"http://")
       if (a[2] ~ /@/) {
@@ -63,7 +63,7 @@ show_status () {
     }' | tr -d '"/')" || return 1
   fi
 
-  if [[ -n "${proxy}" ]]; then
+  if is_not_empty "${proxy}"; then
     echo "Proxy:       ${proxy}"
   fi
 
@@ -73,7 +73,7 @@ show_status () {
   local connections=''
   connections="$(nmcli connection show --active | jc --nmcli | jq -cr "${query}")" || return 1
 
-  if [[ -z "${connections}" ]]; then
+  if is_empty "${connections}"; then
     return 0
   fi
 
@@ -106,7 +106,7 @@ show_status () {
 show_device () {
   local name="${1}"
   
-  if [[ -z "${name}" ]]; then
+  if is_not_given "${name}"; then
     on_script_mode &&
       echo 'Missing network device name' && return 2
     
@@ -115,7 +115,7 @@ show_device () {
     name="${REPLY}"
   fi
 
-  if ! validate_device "${name}"; then
+  if is_not_network_device "${name}"; then
     echo "Network device ${name} not found"
     return 2
   fi
@@ -151,7 +151,7 @@ show_device () {
 show_connection () {
   local name="${1}"
 
-  if [[ -z "${name}" ]]; then
+  if is_not_given "${name}"; then
     on_script_mode &&
       echo 'Missing connection name' && return 2
     
@@ -160,7 +160,7 @@ show_connection () {
     name="${REPLY}"
   fi
 
-  if ! validate_connection "${name}"; then
+  if is_not_connection "${name}"; then
     echo "Connection ${name} not found"
     return 2
   fi
@@ -262,7 +262,7 @@ list_wifis () {
   local device="${1}"
   local signal="${2:-"0"}"
 
-  if [[ -z "${device}" ]]; then
+  if is_not_given "${device}"; then
     on_script_mode &&
       echo 'Missing wifi device name' && return 2
     
@@ -271,15 +271,15 @@ list_wifis () {
     device="${REPLY}"
   fi
 
-  if ! validate_device "${device}" wifi; then
+  if is_not_network_device "${device}" wifi; then
     echo "Wifi device ${device} not found"
     return 2
   fi
 
-  if [[ ! "${signal}" =~ ^[0-9][0-9]{,2}$ ]]; then
+  if is_not_positive_integer "${signal}"; then
     echo 'Invalid signal limit value'
     return 2
-  elif (( ${signal} < 0 || ${signal} > 100 )); then
+  elif signal_limit_is_out_of_range "${signal}"; then
     echo 'Signal limit value out of range'
     return 2
   fi
@@ -318,7 +318,7 @@ list_wifis () {
 up_device () {
   local name="${1}"
 
-  if [[ -z "${name}" ]]; then
+  if is_not_given "${name}"; then
     on_script_mode &&
       echo 'Missing network device name' && return 2
     
@@ -327,7 +327,7 @@ up_device () {
     name="${REPLY}"
   fi
 
-  if ! validate_device "${name}"; then
+  if is_not_network_device "${name}"; then
     echo "Network device ${name} not found"
     return 2
   fi
@@ -350,7 +350,7 @@ up_device () {
 up_connection () {
   local name="${1}"
 
-  if [[ -z "${name}" ]]; then
+  if is_not_given "${name}"; then
     on_script_mode &&
       echo 'Missing connection name' && return 2
     
@@ -359,7 +359,7 @@ up_connection () {
     name="${REPLY}"
   fi
 
-  if ! validate_connection "${name}"; then
+  if is_not_connection "${name}"; then
     echo "Connection ${name} not found"
     return 2
   fi
@@ -382,7 +382,7 @@ up_connection () {
 down_device () {
   local name="${1}"
 
-  if [[ -z "${name}" ]]; then
+  if is_not_given "${name}"; then
     on_script_mode &&
       echo 'Missing network device name' && return 2
     
@@ -391,7 +391,7 @@ down_device () {
     name="${REPLY}"
   fi
 
-  if ! validate_device "${name}"; then
+  if is_not_network_device "${name}"; then
     echo "Network device ${name} not found"
     return 2
   fi
@@ -414,7 +414,7 @@ down_device () {
 down_connection () {
   local name="${1}"
 
-  if [[ -z "${name}" ]]; then
+  if is_not_given "${name}" ]]; then
     on_script_mode &&
       echo 'Missing connection name' && return 2
     
@@ -423,7 +423,7 @@ down_connection () {
     name="${REPLY}"
   fi
 
-  if ! validate_connection "${name}"; then
+  if is_not_connection "${name}"; then
     echo "Connection ${name} not found"
     return 2
   fi
@@ -447,7 +447,7 @@ down_connection () {
 remove_device () {
   local name="${1}"
 
-  if [[ -z "${name}" ]]; then
+  if is_not_given "${name}"; then
     on_script_mode &&
       echo 'Missing network device name' && return 2
     
@@ -456,7 +456,7 @@ remove_device () {
     name="${REPLY}"
   fi
 
-  if ! validate_device "${name}"; then
+  if is_not_network_device "${name}"; then
     echo "Network device ${name} not found"
     return 2
   fi
@@ -479,7 +479,7 @@ remove_device () {
 remove_connection () {
   local name="${1}"
 
-  if [[ -z "${name}" ]]; then
+  if is_not_given "${name}"; then
     on_script_mode &&
       echo 'Missing connection name' && return 2
     
@@ -488,7 +488,7 @@ remove_connection () {
     name="${REPLY}"
   fi
 
-  if ! validate_connection "${name}"; then
+  if is_not_connection "${name}"; then
     echo "Connection ${name} not found"
     return 2
   fi
@@ -519,7 +519,7 @@ add_ethernet () {
   local gateway="${4}"
   local dns="${5}"
 
-  if [[ -z "${device}" ]]; then
+  if is_not_given "${device}"; then
     on_script_mode &&
       echo 'Missing ethernet device name' && return 2
   
@@ -528,12 +528,12 @@ add_ethernet () {
     device="${REPLY}"
   fi
 
-  if ! validate_device "${device}" ethernet; then
+  if is_not_network_device "${device}" ethernet; then
     echo "Ethernet device ${device} not found"
     return 2
   fi
 
-  if [[ -z "${name}" ]]; then
+  if is_not_given "${name}"; then
     on_script_mode &&
       echo 'Missing connection name' && return 2
 
@@ -547,7 +547,7 @@ add_ethernet () {
     return 2
   fi
 
-  if [[ -z "${ip}" ]]; then
+  if is_not_given "${ip}"; then
     on_script_mode &&
       echo 'Missing static ip address' && return 2
 
@@ -556,7 +556,7 @@ add_ethernet () {
     ip="${REPLY}"
   fi
 
-  if [[ -z "${gateway}" ]]; then
+  if is_not_given "${gateway}"; then
     on_script_mode &&
       echo 'Missing gateway address' && return 2
 
@@ -565,7 +565,7 @@ add_ethernet () {
     gateway="${REPLY}"
   fi
 
-  if [[ -z "${dns}" ]]; then
+  if is_not_given "${dns}"; then
     on_script_mode &&
       echo 'Missing dns servers' && return 2
 
@@ -596,7 +596,7 @@ add_dhcp () {
   local device="${1}"
   local name="${2}"
 
-  if [[ -z "${device}" ]]; then
+  if is_not_given "${device}"; then
     on_script_mode &&
       echo 'Missing ethernet device name' && return 2
   
@@ -605,12 +605,12 @@ add_dhcp () {
     device="${REPLY}"
   fi
 
-  if ! validate_device "${device}" ethernet; then
+  if is_not_network_device "${device}" ethernet; then
     echo "Ethernet device ${device} not found"
     return 2
   fi
 
-  if [[ -z "${name}" ]]; then
+  if is_not_given "${name}"; then
     on_script_mode &&
       echo 'Missing connection name' && return 2
 
@@ -647,7 +647,7 @@ add_wifi () {
   local ssid="${2}"
   local secret="${3}"
 
-  if [[ -z "${device}" ]]; then
+  if is_not_given "${device}"; then
     on_script_mode &&
       echo 'Missing wifi device name' && return 2
 
@@ -656,12 +656,12 @@ add_wifi () {
     device="${REPLY}"
   fi
   
-  if ! validate_device "${device}" wifi; then
+  if is_not_network_device "${device}" wifi; then
     echo "Wifi device ${device} not found"
     return 2
   fi
 
-  if [[ -z "${ssid}" ]]; then
+  if is_not_given "${ssid}"; then
     on_script_mode &&
       echo 'Missing network ssid' && return 2
 
@@ -670,7 +670,7 @@ add_wifi () {
     ssid="${REPLY}"
   fi
 
-  if [[ -z "${secret}" ]]; then
+  if is_not_given "${secret}"; then
     on_script_mode &&
       echo 'Missing private key' && return 2
 
@@ -703,7 +703,7 @@ add_vpn () {
   local username="${2}"
   local password="${3}"
 
-  if [[ -z "${file_path}" ]]; then
+  if is_not_given "${file_path}"; then
     on_script_mode &&
       echo 'Missing ovpn file path' && return 2
       
@@ -712,26 +712,23 @@ add_vpn () {
     file_path="${REPLY}"
   fi
 
-  if [[ ! -f "${file_path}" ]]; then
-    echo "Ovpn file ${file_path} not found"
+  if file_not_exists "${file_path}"; then
+    echo "File ${file_path} not found"
+    return 2
+  elif is_not_ovpn_file "${file_path}"; then
+    echo 'Invalid ovpn file type'
     return 2
   fi
 
   local name=$(basename -- "${file_path}")
-  local extension="${name##*.}"
   name="${name%.*}"
-
-  if [[ "${extension}" != "ovpn" ]]; then
-    echo 'Invalid ovpn file type'
-    return 2
-  fi
 
   if find_connection "${name}" &> /dev/null; then
     echo "Connection ${name} already exists"
     return 2
   fi
 
-  if [[ -z "${username}" ]]; then
+  if is_not_given "${username}"; then
     on_script_mode &&
       echo 'Missing the username' && return 2
 
@@ -740,7 +737,7 @@ add_vpn () {
     username="${REPLY}"
   fi
 
-  if [[ -z "${password}" ]]; then
+  if is_not_given "${password}"; then
     on_script_mode &&
       echo 'Missing the password' && return 2
 
@@ -780,7 +777,7 @@ add_proxy () {
   local password="${5}"
   local no_proxy="${6}"
   
-  if [[ -z "${name}" ]]; then
+  if is_not_given "${name}"; then
     on_script_mode &&
       echo 'Missing proxy profile name' && return 2
     
@@ -794,7 +791,7 @@ add_proxy () {
     return 2
   fi
 
-  if [[ -z "${host}" ]]; then
+  if is_not_given "${host}"; then
     on_script_mode &&
       echo 'Missing proxy host server' && return 2
     
@@ -803,7 +800,7 @@ add_proxy () {
     host="${REPLY}"
   fi
 
-  if [[ -z "${port}" ]]; then
+  if is_not_given "${port}"; then
     on_script_mode &&
       echo 'Missing proxy server port' && return 2
     
@@ -812,23 +809,23 @@ add_proxy () {
     port="${REPLY}"
   fi
 
-  if ! on_script_mode; then
-    if [[ -z "${username}" ]]; then
+  if not_on_script_mode; then
+    if is_not_given "${username}"; then
       ask 'Enter the username [optional]:' || return $?
       username="${REPLY}"
     fi
     
-    if [[ -z "${password}" ]]; then
+    if is_not_given "${password}"; then
       ask_secret 'Enter the password [optional]:' || return $?
       password="${REPLY}"
     fi
     
-    if [[ -z "${no_proxy}" ]]; then
+    if is_not_given "${no_proxy}"; then
       ask 'Enter no proxy hosts [optional]:' || return $?
       no_proxy="${REPLY}"
     fi
 
-    if [[ -n "${no_proxy}" ]]; then
+    if is_given "${no_proxy}"; then
       local query='[split(",")|.[]|if . and .!="" then . else empty end]'
       no_proxy="$(echo "\"${no_proxy}\"" | jq -cer "${query}")" || return 1
     fi
@@ -845,7 +842,7 @@ add_proxy () {
 remove_proxy () {
   local name="${1}"
 
-  if [[ -z "${name}" ]]; then
+  if is_not_given "${name}"; then
     on_script_mode &&
       echo 'Missing proxy profile name' && return 2
 
@@ -854,17 +851,17 @@ remove_proxy () {
     name="${REPLY}"
   fi
 
-  if [[ ! -f "${SETTINGS_FILE}" ]]; then
+  if file_not_exists "${SETTINGS_FILE}"; then
     echo 'No proxy profiles found'
     return 2
   fi
 
   local query=".proxies|if . then .[]|select(.name == \"${name}\") else empty end"
 
-  local exists=''
-  exists="$(jq "${query}" "${SETTINGS_FILE}")"
+  local match=''
+  match="$(jq "${query}" "${SETTINGS_FILE}")"
 
-  if [[ -z "${exists}" ]]; then
+  if is_empty "${match}"; then
     echo "Proxy profile ${name} not found"
     return 2
   fi
@@ -887,7 +884,7 @@ remove_proxy () {
 # Outputs:
 #  A list of proxy profiles.
 list_proxies () {
-  if [[ ! -f "${SETTINGS_FILE}" ]]; then
+  if file_not_exists "${SETTINGS_FILE}"; then
     echo 'No proxy profiles have found'
     return 0
   fi
@@ -921,7 +918,7 @@ list_proxies () {
 set_proxy () {
   local name="${1}"
   
-  if [[ -z "${name}" ]]; then
+  if is_not_given "${name}"; then
     on_script_mode &&
       echo 'Missing proxy profile name' && return 2
 
@@ -930,7 +927,7 @@ set_proxy () {
     name="${REPLY}"
   fi
 
-  if [[ ! -f "${SETTINGS_FILE}" ]]; then
+  if file_not_exists "${SETTINGS_FILE}"; then
     echo 'No proxy profiles have found'
     return 2
   fi
@@ -940,7 +937,7 @@ set_proxy () {
   local proxy=''
   proxy="$(jq "${query}" "${SETTINGS_FILE}")"
 
-  if [[ -z "${proxy}" ]]; then
+  if is_empty "${proxy}"; then
     echo "Proxy profile ${name} not found"
     return 2
   fi
@@ -1029,7 +1026,7 @@ set_proxy () {
   local password=''
   password="$(get "${proxy}" ".password")" || return 1
 
-  if [[ -n "${username}" ]]; then
+  if is_given "${username}"; then
     gsettings set org.gnome.system.proxy.http use-authentication true
     gsettings set org.gnome.system.proxy.http authentication-user "${username}"
     gsettings set org.gnome.system.proxy.http authentication-password "${password}"
@@ -1107,7 +1104,7 @@ unset_proxy () {
 power_network () {
   local mode="${1}"
 
-  if [[ -z "${mode}" ]]; then
+  if is_not_given "${mode}"; then
     echo 'Missing network power mode'
     return 2
   elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
@@ -1133,7 +1130,7 @@ power_network () {
 power_wifi () {
   local mode="${1}"
 
-  if [[ -z "${mode}" ]]; then
+  if is_not_given "${mode}"; then
     echo 'Missing wifi power mode'
     return 2
   elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then

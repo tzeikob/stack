@@ -39,7 +39,7 @@ show_status () {
   local devices=''
   devices="$(find_devices connected | jq -cer "${query}")" || return 1
 
-  if [[ -z "${devices}" ]]; then
+  if is_empty "${devices}"; then
     return 0
   fi
 
@@ -68,12 +68,7 @@ show_logs () {
 #  A list of bluetooth controllers.
 list_controllers () {
   local controllers=''
-  controllers="$(find_controllers)"
-
-  if [[ $? -ne 0 ]]; then
-    echo 'Unable to read controllers'
-    return 2
-  fi
+  controllers="$(find_controllers)" || return 1
 
   local len=0
   len="$(count "${controllers}")" || return 1
@@ -101,18 +96,13 @@ list_controllers () {
 list_devices () {
   local status="${1}"
 
-  if [[ -n "${status}" ]] && [[ ! "${status}" =~ ^(paired|connected|trusted|bonded)$ ]]; then
+  if is_given "${status}" && is_not_valid_status "${status}"; then
     echo 'Invalid device status'
     return 2
   fi
 
   local devices=''
-  devices="$(find_devices "${status^}")"
-
-  if [[ $? -ne 0 ]]; then
-    echo 'Unable to read devices'
-    return 2
-  fi
+  devices="$(find_devices "${status^}")" || return 1
 
   local len=0
   len="$(count "${devices}")" || return 1
@@ -139,7 +129,7 @@ list_devices () {
 show_controller () {
   local address="${1}"
 
-  if [[ -z "${address}" ]]; then
+  if is_not_given "${address}"; then
     on_script_mode &&
       echo 'Missing controller address' && return 2
 
@@ -152,7 +142,7 @@ show_controller () {
   controller="$(find_controller "${address}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find controller ${address}"
+    echo "Controller ${address} not found"
     return 2
   fi
 
@@ -182,7 +172,7 @@ show_controller () {
 show_device () {
   local address="${1}"
 
-  if [[ -z "${address}" ]]; then
+  if is_not_given "${address}"; then
     on_script_mode &&
       echo 'Missing device address' && return 2
   
@@ -195,7 +185,7 @@ show_device () {
   device="$(find_device "${address}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find device ${address}"
+    echo "Device ${address} not found"
     return 2
   fi
 
@@ -227,7 +217,7 @@ show_device () {
 set_controller () {
   local address="${1}"
 
-  if [[ -z "${address}" ]]; then
+  if is_not_given "${address}"; then
     on_script_mode &&
       echo 'Missing controller address' && return 2
 
@@ -240,7 +230,7 @@ set_controller () {
   controller="$(find_controller "${address}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find controller ${address}"
+    echo "Controller ${address} not found"
     return 2
   fi
 
@@ -260,7 +250,7 @@ set_controller () {
 set_power () {
   local mode="${1}"
 
-  if [[ -z "${mode}" ]]; then
+  if is_not_given "${mode}"; then
     echo 'Missing power mode'
     return 2
   elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
@@ -289,7 +279,7 @@ set_power () {
 set_scan () {
   local mode="${1}"
 
-  if [[ -z "${mode}" ]]; then
+  if is_not_given "${mode}"; then
     echo 'Missing scanning mode'
     return 2
   elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
@@ -326,7 +316,7 @@ set_scan () {
 set_discoverable () {
   local mode="${1}"
 
-  if [[ -z "${mode}" ]]; then
+  if is_not_given "${mode}"; then
     echo 'No discoverable mode given'
     return 2
   elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
@@ -355,7 +345,7 @@ set_discoverable () {
 set_pairable () {
   local mode="${1}"
 
-  if [[ -z "${mode}" ]]; then
+  if is_not_given "${mode}"; then
     echo 'No pairable mode given'
     return 2
   elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
@@ -384,7 +374,7 @@ set_pairable () {
 connect_device () {
   local address="${1}"
 
-  if [[ -z "${address}" ]]; then
+  if is_not_given "${address}"; then
     on_script_mode &&
       echo 'Missing device address' && return 2
   
@@ -397,7 +387,7 @@ connect_device () {
   device="$(find_device "${address}")"
 
   if [[ $? -ne 0 ]]; then
-    echo 'Unable to find the device'
+    echo "Device ${address} not found"
     return 2
   fi
 
@@ -419,7 +409,7 @@ connect_device () {
 disconnect_device () {
   local address="${1}"
 
-  if [[ -z "${address}" ]]; then
+  if is_not_given "${address}"; then
     on_script_mode &&
       echo 'Missing device address' && return 2
   
@@ -432,7 +422,7 @@ disconnect_device () {
   device="$(find_device "${address}")"
 
   if [[ $? -ne 0 ]]; then
-    echo 'Unable to find the device'
+    echo "Device ${address} not found"
     return 2
   fi
 
@@ -452,7 +442,7 @@ disconnect_device () {
 remove_device () {
   local address="${1}"
 
-  if [[ -z "${address}" ]]; then
+  if is_not_given "${address}"; then
     on_script_mode &&
       echo 'Missing device address' && return 2
   
@@ -465,7 +455,7 @@ remove_device () {
   device="$(find_device "${address}")"
 
   if [[ $? -ne 0 ]]; then
-    echo 'Unable to find the device'
+    echo "Device ${address} not found"
     return 2
   fi
 

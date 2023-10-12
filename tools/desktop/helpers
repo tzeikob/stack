@@ -12,7 +12,7 @@ SETTINGS_FILE="${CONFIG_HOME}/desktop.json"
 # Outputs:
 #  A json array of image objects.
 find_wallpapers () {
-  if [[ ! -d  "${WALLPAPERS_HOME}" ]]; then
+  if directory_not_exists "${WALLPAPERS_HOME}"; then
     echo '[]'
     return 0
   fi
@@ -38,7 +38,7 @@ find_wallpapers () {
   )"
   
   # Remove the extra comma after the last array element
-  if [[ -n "${wallpapers}" ]]; then
+  if is_not_empty "${wallpapers}"; then
     wallpapers="${wallpapers::-1}"
   fi
 
@@ -53,12 +53,7 @@ pick_wallpaper () {
   query="[.[]|${query}]"
 
   local wallpapers=''
-  wallpapers="$(find_wallpapers | jq -cer "${query}")"
-
-  if [[ $? -ne 0 ]]; then
-    echo 'Unable to find wallpaper files'
-    return 2
-  fi
+  wallpapers="$(find_wallpapers | jq -cer "${query}")" || return 1
 
   local len=0
   len="$(count "${wallpapers}")" || return 1
@@ -115,7 +110,7 @@ find_pointers () {
   }')" || return 1
 
   # Remove the extra comma after the last element
-  if [[ -n "${pointers}" ]]; then
+  if is_not_empty "${pointers}"; then
     pointers="${pointers::-1}"
   fi
 
@@ -169,7 +164,7 @@ find_pointer () {
   }')" || return 1
 
   # Remove the extra comma after the last element
-  if [[ -n "${pointer}" ]]; then
+  if is_not_empty "${pointer}"; then
     pointer="${pointer::-1}"
   fi
 
@@ -181,12 +176,7 @@ find_pointer () {
 #  A menu of pointing devices.
 pick_pointer () {
   local pointers=''
-  pointers="$(find_pointers)"
-
-  if [[ $? -ne 0 ]]; then
-    echo 'Unable to find pointers'
-    return 2
-  fi
+  pointers="$(find_pointers)" || return 1
 
   local len=0
   len="$(count "${pointers}")" || return 1
@@ -227,7 +217,7 @@ find_tablets () {
   }')" || return 1
 
   # Remove the extra comma after the last element
-  if [[ -n "${tablets}" ]]; then
+  if is_not_empty "${tablets}"; then
     tablets="${tablets::-1}"
   fi
 
@@ -259,7 +249,7 @@ find_tablet () {
     }')" || return 1
 
     # Remove the extra comma after the last key/value pair
-    if [[ -n "${props}" ]]; then
+    if is_not_empty "${props}"; then
       props="${props::-1}"
     fi
 
@@ -283,11 +273,21 @@ is_tablet () {
   local tablet=''
   tablet="$(find_tablets | jq -cer "${query}")" || return 1
 
-  if [[ -n "${tablet}" ]]; then
-    return 0
-  else
+  if is_empty "${tablet}"; then
     return 1
   fi
+
+  return 0
+}
+
+# Checks if the given name doen't corresponds to an
+# existing tablet device.
+# Arguments:
+#  name: the name of a tablet device
+# Returns:
+#  0 if it is not a tablet otherwise 1.
+is_not_tablet () {
+  is_tablet "${1}" && return 1 || return 0
 }
 
 # Checks if the tablet device with the given name
@@ -302,11 +302,21 @@ is_scalable () {
   local area=''
   area="$(find_tablet "${name}" | jq -cer '.Area')" || return 1
 
-  if [[ -n "${area}" ]]; then
-    return 0
-  else
+  if is_empty "${area}"; then
     return 1
   fi
+
+  return 0
+}
+
+# Checks if the tablet device with the given name
+# has not a scalable and mappable area.
+# Arguments:
+#  name: the name of a tablet device
+# Returns:
+#  0 if it is not scalable otherwise 1.
+is_not_scalable () {
+  is_scalable "${1}" && return 1 || return 0
 }
 
 # Shows a menu asking the user to select one tablet device.
@@ -314,12 +324,7 @@ is_scalable () {
 #  A menu of tablet devices.
 pick_tablet () {
   local tablets=''
-  tablets="$(find_tablets)"
-
-  if [[ $? -ne 0 ]]; then
-    echo 'Unable to find tablets'
-    return 2
-  fi
+  tablets="$(find_tablets)" || return 1
 
   local len=0
   len="$(count "${tablets}")" || return 1
@@ -347,7 +352,7 @@ save_wallpaper_to_settings () {
   local settings='{}'
   local wallpaper="{\"name\": \"${name}\", \"mode\": \"${mode}\"}"
 
-  if [[ -f "${SETTINGS_FILE}" ]]; then
+  if file_exists "${SETTINGS_FILE}"; then
     settings="$(jq -e ".wallpaper = ${wallpaper} " "${SETTINGS_FILE}")" || return 1
   else
     settings="$(echo "{\"wallpaper\": ${wallpaper}}" | jq -e '.')" || return 1
@@ -366,7 +371,7 @@ save_pointer_speed_to_settings () {
   local settings='{}'
   local pointer="{\"speed\": ${factor}}"
 
-  if [[ -f "${SETTINGS_FILE}" ]]; then
+  if file_exists "${SETTINGS_FILE}"; then
     settings="$(jq -e ".pointer = ${pointer} " "${SETTINGS_FILE}")" || return 1
   else
     settings="$(echo "{\"pointer\": ${pointer}}" | jq -e '.')" || return 1
@@ -388,21 +393,21 @@ save_tablet_scale_to_settings () {
   local settings='{}'
   local tablet="{\"name\": \"${name}\", \"scale\": ${scale}}"
 
-  if [[ -f "${SETTINGS_FILE}" ]]; then
+  if file_exists "${SETTINGS_FILE}"; then
     local tablets=''
     tablets="$(jq '.tablets|if . then . else empty end' "${SETTINGS_FILE}")"
 
-    if [[ -n "${tablets}" ]]; then
+    if is_given "${tablets}"; then
       local query=''
       query=".tablets[]|select(.name == \"${name}\")"
 
-      local exists=''
-      exists="$(jq "${query}" "${SETTINGS_FILE}")"
+      local match=''
+      match="$(jq "${query}" "${SETTINGS_FILE}")"
 
-      if [[ -n "${exists}" ]]; then
-        query="(${query}|.scale)|= ${scale}"
-      else
+      if is_empty "${match}" ]]; then
         query=".tablets += [${tablet}]"
+      else
+        query="(${query}|.scale)|= ${scale}"
       fi
 
       settings="$(jq -e "${query}" "${SETTINGS_FILE}")" || return 1
@@ -438,5 +443,113 @@ pick_mapping_target () {
   options="$(echo "${options}" | jq -cer --argjson d "${desktop}" '. + $d')" || return 1
   
   pick_one "Select mapping target:" "${options}" vertical || return $?
+}
+
+# Checks if the given file name is a valid wallpaper file.
+# Arguments:
+#  file_name: the name of a wallpaper file
+# Returns:
+#  0 if file is a wallpaper file otherwise 1.
+is_wallpaper_file () {
+  local file_name="${1}"
+
+  local file_path="${WALLPAPERS_HOME}/${file_name}"
+
+  if file_not_exists "${file_path}"; then
+    return 1
+  elif [[ ! "${file_path}" =~ .+\.(jpg|jpeg|png)$ ]]; then
+    return 1
+  fi
+
+  return 0
+}
+
+# Checks if the given file name is not a valid wallpaper file.
+# Arguments:
+#  file_name: the name of a wallpaper file
+# Returns:
+#  0 if file is not a wallpaper file otherwise 1.
+is_not_wallpaper_file () {
+  is_wallpaper_file "${1}" && return 1 || return 0
+}
+
+# Checks if the given mode is a valid wallpaper mode.
+# Arguments:
+#  mode: a wallpaper alignment mode
+# Returns:
+#  0 if mode is valid otherwise 1.
+is_wallpaper_mode () {
+  local mode="${1}"
+
+  if [[ ! "${mode}" =~ ^(center|fill|max|scale|tile)$ ]]; then
+    return 1
+  fi
+
+  return 0
+}
+
+# Checks if the given mode is not a valid wallpaper mode.
+# Arguments:
+#  mode: a wallpaper alignment mode
+# Returns:
+#  0 if mode is not valid otherwise 1.
+is_not_wallpaper_mode () {
+  is_wallpaper_mode "${1}" && return 1 || return 0
+}
+
+# Checks if the given factor is a valid pointer speed.
+# Arguments:
+#  factor: a pointer speed factor
+# Returns:
+#  0 if factor is valid otherwise 1.
+is_valid_pointer_speed () {
+  local factor="${1}"
+
+  if [[ ! "${factor}" =~ ^[0-9]+\.?[0-9]*$ ]]; then
+    return 1
+  elif (( $(echo "${factor} < 0" | bc) )); then
+    return 1
+  elif (( $(echo "${factor} > 1" | bc) )); then
+    return 1
+  fi
+
+  return 0
+}
+
+# Checks if the given factor is not a valid pointer speed.
+# Arguments:
+#  factor: a pointer speed factor
+# Returns:
+#  0 if factor is not valid otherwise 1.
+is_not_valid_pointer_speed () {
+  is_valid_pointer_speed "${1}" && return 1 || return 0
+}
+
+# Checks if the given scale factor is valid tablet scale.
+# Arguments:
+#  scale: a tablet scale factor
+# Returns:
+#  0 if factor is valid otherwise 1.
+is_valid_tablet_scale () {
+  local scale="${1}"
+
+  if [[ ! "${scale}" =~ ^[0-9]+\.?[0-9]*$ ]]; then
+    return 1
+  elif (( $(echo "${scale} <= 0" | bc) )); then
+    return 1
+  elif (( $(echo "${scale} > 1" | bc) )); then
+    return 1
+  fi
+
+  return 0
+}
+
+# Checks if the given scale factor is not valid tablet scale.
+# Arguments:
+#  scale: a tablet scale factor
+# Returns:
+#  0 if factor is not valid otherwise 1.
+is_not_valid_tablet_scale () {
+  is_valid_tablet_scale "${1}" && return 1 || return 0
 }
 

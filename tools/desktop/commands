@@ -37,7 +37,7 @@ show_status () {
   bars="$(polybar -v | head -n +1 | cut -d ' ' -f 2)" || return 1
   status+="\"bars\": \"Polybar ${bars}\","
 
-  if [[ -f "${SETTINGS_FILE}" ]]; then
+  if file_exists "${SETTINGS_FILE}"; then
     local query='.wallpaper|if . then "\(.name) [\(.mode|ascii_upcase)]" else "none" end'
     local wallpaper=''
     wallpaper="$(jq -cr "${query}" "${SETTINGS_FILE}")" || return 1
@@ -54,7 +54,7 @@ show_status () {
   )" || return 1
 
   # Remove the last extra comma after the last field
-  if [[ -n "${status}" ]]; then
+  if is_not_empty "${status}"; then
     status="${status::-1}"
   fi
 
@@ -81,12 +81,7 @@ show_status () {
 #  A list of wallpaper data.
 list_wallpapers () {
   local wallpapers=''
-  wallpapers="$(find_wallpapers)"
-
-  if [[ $? -ne 0 ]]; then
-    echo 'Unable to find wallpaper files'
-    return 2
-  fi
+  wallpapers="$(find_wallpapers)" || return 1
 
   local len=0
   len="$(count "${wallpapers}")" || return 1
@@ -114,7 +109,7 @@ set_wallpaper () {
   local name="${1}"
   local mode="${2}"
 
-  if [[ -z "${name}" ]]; then
+  if is_not_given "${name}"; then
     on_script_mode &&
       echo 'Missing the wallpaper file name' && return 2
 
@@ -123,23 +118,12 @@ set_wallpaper () {
     name="${REPLY}"
   fi
 
-  if [[ "${name}" =~ /+ ]]; then
-    echo 'Invalid wallpaper file name'
+  if is_not_wallpaper_file "${name}"; then
+    echo 'Invalid or unknown wallpaper file'
     return 2
   fi
 
-  name="$(basename "${name}")"
-  local wallpaper_file="${WALLPAPERS_HOME}/${name}"
-
-  if [[ ! "${wallpaper_file}" =~ .+\.(jpg|jpeg|png)$ ]]; then
-    echo 'Invalid wallpaper file type'
-    return 2
-  elif [[ ! -f "${wallpaper_file}" ]]; then
-    echo "No wallpaper file ${name} found"
-    return 2
-  fi
-
-  if [[ -z "${mode}" ]]; then
+  if is_not_given "${mode}"; then
     on_script_mode &&
       echo 'Missing the alignment mode' && return 2
 
@@ -148,12 +132,12 @@ set_wallpaper () {
     mode="${REPLY}"
   fi
   
-  if [[ ! "${mode}" =~ ^(center|fill|max|scale|tile)$ ]]; then
+  if is_not_wallpaper_mode "${mode}"; then
     echo 'Invalid alignment mode'
     return 2
   fi
 
-  feh --no-fehbg --bg-"${mode}" "${wallpaper_file}"
+  feh --no-fehbg --bg-"${mode}" "${WALLPAPERS_HOME}/${name}"
 
   if [[ $? -ne 0 ]]; then
     echo 'Failed to set wallpaper'
@@ -175,7 +159,7 @@ set_wallpaper () {
 show_pointer () {
   local name="${1}"
 
-  if [[ -z "${name}" ]]; then
+  if is_not_given "${name}"; then
     on_script_mode &&
       echo 'Missing pointer name' && return 2
 
@@ -188,7 +172,7 @@ show_pointer () {
   pointer="$(find_pointer "${name}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find pointer ${name}"
+    echo "Pointer ${name} not found"
     return 2
   fi
 
@@ -211,12 +195,7 @@ show_pointer () {
 #  A list of pointing devices.
 list_pointers () {
   local pointers=''
-  pointers="$(find_pointers)"
-
-  if [[ $? -ne 0 ]]; then
-    echo 'Unable to find pointers'
-    return 2
-  fi
+  pointers="$(find_pointers)" || return 1
 
   local len=0
   len="$(count "${pointers}")" || return 1
@@ -242,17 +221,11 @@ list_pointers () {
 set_pointer_speed () {
   local factor="${1}"
 
-  if [[ -z "${factor}" ]]; then
+  if is_not_given "${factor}"; then
     echo 'Missing speed factor'
     return 2
-  elif [[ ! "${factor}" =~ ^[0-9]+\.?[0-9]*$ ]]; then
+  elif is_not_valid_pointer_speed "${factor}"; then
     echo 'Invalid speed factor'
-    return 2
-  elif (( $(echo "${factor} < 0" | bc) )); then
-    echo 'Speed factor cannot be lower than 0'
-    return 2
-  elif (( $(echo "${factor} > 1" | bc) )); then
-    echo 'Speed factor cannot be greater than 1'
     return 2
   fi
 
@@ -319,7 +292,7 @@ set_pointer_speed () {
 show_tablet () {
   local name="${1}"
 
-  if [[ -z "${name}" ]]; then
+  if is_not_given "${name}"; then
     on_script_mode &&
       echo 'Missing the table name' && return 2
 
@@ -332,7 +305,7 @@ show_tablet () {
   tablet="$(find_tablet "${name}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find tablet ${name}"
+    echo "Tablet ${name} not found"
     return 2
   fi
 
@@ -362,12 +335,7 @@ show_tablet () {
 #  A list of stylus-pen devices.
 list_tablets () {
   local tablets=''
-  tablets="$(find_tablets)"
-
-  if [[ $? -ne 0 ]]; then
-    echo 'Unable to find tablets'
-    return 2
-  fi
+  tablets="$(find_tablets)" || return 1
 
   local len=0
   len="$(count "${tablets}")" || return 1
@@ -396,7 +364,7 @@ scale_tablet () {
   local name="${1}"
   local scale="${2}"
 
-  if [[ -z "${name}" ]]; then
+  if is_not_given "${name}"; then
     on_script_mode &&
       echo 'Missing the tablet name' && return 2
 
@@ -409,14 +377,14 @@ scale_tablet () {
   tablet="$(find_tablet "${name}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find tablet ${name}"
+    echo "Tablet ${name} not found"
     return 2
-  elif ! is_scalable "${name}"; then
+  elif is_not_scalable "${name}"; then
     echo "Tablet ${name} is not scalable"
     return 2
   fi
 
-  if [[ -z "${scale}" ]]; then
+  if is_not_given "${scale}"; then
     on_script_mode &&
       echo 'Missing the scale factor' && return 2
 
@@ -425,14 +393,8 @@ scale_tablet () {
     scale="${REPLY}"
   fi
   
-  if [[ ! "${scale}" =~ ^[0-9]+\.?[0-9]*$ ]]; then
+  if is_not_valid_tablet_scale "${scale}"; then
     echo 'Invalid scale factor'
-    return 2
-  elif (( $(echo "${scale} <= 0" | bc) )); then
-    echo 'Scale cannot be lower or equal to 0'
-    return 2
-  elif (( $(echo "${scale} > 1" | bc) )); then
-    echo 'Scale cannot be larger than 1'
     return 2
   fi
 
@@ -480,7 +442,7 @@ map_tablet () {
   local name="${1}"
   local target="${2}"
 
-  if [[ -z "${name}" ]]; then
+  if is_not_given "${name}"; then
     on_script_mode &&
       echo 'Missing the tablet name' && return 2
 
@@ -493,14 +455,14 @@ map_tablet () {
   tablet="$(find_tablet "${name}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find tablet ${name}"
+    echo "Tablet ${name} not found"
     return 2
-  elif ! is_scalable "${name}"; then
+  elif is_not_scalable "${name}"; then
     echo "Tablet ${name} is not scalable"
     return 2
   fi
 
-  if [[ -z "${target}" ]]; then
+  if is_not_given "${target}"; then
     on_script_mode &&
       echo 'Missing the mapping target' && return 2
 
@@ -545,9 +507,9 @@ map_tablet () {
   output="$(find_output "${target}")"
 
   if [[ $? -ne 0 ]]; then
-    echo "Unable to find display ${target}"
+    echo "Display ${target} not found"
     return 2
-  elif ! is_active "${output}"; then
+  elif is_not_active "${output}"; then
     echo "Display ${target} is not active"
     return 2
   fi
@@ -588,7 +550,7 @@ map_tablet () {
 init_pointer () {
   local speed='0.35'
 
-  if [[ -f "${SETTINGS_FILE}" ]]; then
+  if file_exists "${SETTINGS_FILE}"; then
     speed="$(jq '.pointer.speed|if . then . else 0.35 end' "${SETTINGS_FILE}")"
   fi
 
@@ -598,7 +560,7 @@ init_pointer () {
 # Applies the settings for those tablets being stored
 # in the settings file.
 init_tablets () {
-  if [[ ! -f "${SETTINGS_FILE}" ]]; then
+  if file_not_exists "${SETTINGS_FILE}"; then
     echo 'No tablets settings found'
     return 2
   fi
@@ -606,7 +568,7 @@ init_tablets () {
   local tablets=''
   tablets="$(jq '.tablets|if . then . else empty end' "${SETTINGS_FILE}")"
 
-  if [[ -z "${tablets}" ]]; then
+  if is_not_given "${tablets}"; then
     echo 'No tablets settings found'
     return 2
   fi
@@ -633,7 +595,7 @@ init_tablets () {
 # Sets the desktop wallpaper to the wallpaper
 # being set in the settings file.
 init_wallpaper () {
-  if [[ ! -f "${SETTINGS_FILE}" ]]; then
+  if file_not_exists "${SETTINGS_FILE}"; then
     echo 'No wallpaper settings found'
     return 2
   fi
@@ -641,7 +603,7 @@ init_wallpaper () {
   local wallpaper=''
   wallpaper="$(jq '.wallpaper|if . then . else empty end' "${SETTINGS_FILE}")"
 
-  if [[ -z "${wallpaper}" ]]; then
+  if is_not_given "${wallpaper}"; then
     echo 'No wallpaper settings found'
     return 2
   fi
@@ -649,7 +611,7 @@ init_wallpaper () {
   local name=''
   name="$(get "${wallpaper}" '.name')" || return 1
 
-  if [[ ! -f "${WALLPAPERS_HOME}/${name}" ]]; then
+  if file_not_exists "${WALLPAPERS_HOME}/${name}"; then
     echo "Wallpaper ${name} not found"
     return 2
   fi

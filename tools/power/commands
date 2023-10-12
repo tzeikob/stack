@@ -17,7 +17,7 @@ show_status () {
   local battery=''
   battery="$(find_battery)" || return 1
 
-  if [[ -n "${battery}" ]]; then
+  if is_not_empty "${battery}"; then
     local query=''
     query+='Battery:      yes\n'
     query+='State:        \(.state|ascii_downcase)\n'
@@ -30,12 +30,12 @@ show_status () {
     echo 'Battery:      no'
   fi
 
-  if [[ -f '/sys/class/power_supply/BAT0/current_now' ]]; then
+  if file_exists '/sys/class/power_supply/BAT0/current_now'; then
     local current_now="$(< /sys/class/power_supply/BAT0/current_now)"
     echo "Current:      ${current_now}mAh"
   fi
 
-  if [[ -f '/sys/class/power_supply/BAT0/charge_now' ]]; then
+  if file_exists '/sys/class/power_supply/BAT0/charge_now'; then
     local charge_now="$(< /sys/class/power_supply/BAT0/charge_now)"
     echo "Load:         ${charge_now}mAh"
   fi
@@ -45,7 +45,7 @@ show_status () {
   local acpid_status=''
   acpid_status="$(systemctl -a | jc --systemctl | jq -cr "${query}")" || return 1
 
-  if [[ -n "${acpid_status}" ]]; then
+  if is_not_empty "${acpid_status}"; then
     echo "${acpid_status}"
   fi
 
@@ -54,7 +54,7 @@ show_status () {
   local tlp_status=''
   tlp_status="$(systemctl -a | jc --systemctl | jq -cr "${query}")" || return 1
 
-  if [[ -n "${tlp_status}" ]]; then
+  if is_not_empty "${tlp_status}"; then
     echo "${tlp_status}"
   fi
 
@@ -68,18 +68,18 @@ show_status () {
     local stop=''
     stop="$(grep -E "^STOP_CHARGE_THRESH_BAT${index}=" "${config_file}" | cut -d '=' -f 2)"
     
-    if [[ -n "${start}" ]] || [[ -n "${stop}" ]]; then
+    if is_not_empty "${start}" || is_not_empty "${stop}"; then
       echo "Charge[${index}]:    [${start:-0}%, ${stop:-100}%]"
     fi
   done
 
-  if [[ -f "${SETTINGS_FILE}" ]]; then
+  if file_exists "${SETTINGS_FILE}"; then
     local query='.screensaver.interval|if . then . else "" end'
 
     local screensaver=''
     screensaver="$(jq -cr "${query}" "${SETTINGS_FILE}")" || return 1
     
-    if [[ -n "${screensaver}" ]] && [[ ${screensaver} -gt 0 ]]; then
+    if is_given "${screensaver}" && [[ ${screensaver} -gt 0 ]]; then
       echo "Screensaver:  ${screensaver} mins"
     else
       echo 'Screensaver:  off'
@@ -137,7 +137,7 @@ set_action () {
   local handler="${1}"
   local action="${2}"
 
-  if [[ -z "${handler}" ]]; then
+  if is_not_given "${handler}"; then
     on_script_mode &&
       echo 'Missing the power handler' && return 2
 
@@ -146,12 +146,12 @@ set_action () {
     handler="${REPLY}"
   fi
 
-  if ! validate_power_handler "${handler}"; then
+  if is_not_power_handler "${handler}"; then
     echo 'Invalid power handler'
     return 2
   fi
 
-  if [[ -z "${action}" ]]; then
+  if is_not_given "${action}"; then
     on_script_mode &&
       echo 'Missing power action' && return 2
 
@@ -160,7 +160,7 @@ set_action () {
     action="${REPLY}"
   fi
 
-  if ! validate_power_action "${action}"; then
+  if is_not_power_action "${action}"; then
     echo 'Invalid power action'
     return 2
   fi
@@ -171,7 +171,7 @@ set_action () {
   local config_file='/etc/systemd/logind.conf.d/00-main.conf'
 
   # Copy the default config file if not yet created
-  if [[ ! -f "${config_file}" ]]; then
+  if file_not_exists "${config_file}"; then
     sudo mkdir -p /etc/systemd/logind.conf.d
     sudo cp /etc/systemd/logind.conf "${config_file}"
   fi
@@ -196,7 +196,7 @@ set_action () {
 reset_actions () {
   local config_file='/etc/systemd/logind.conf.d/00-main.conf'
 
-  if [[ ! -f "${config_file}" ]]; then
+  if file_not_exists "${config_file}"; then
     echo 'Actions already set to defaults'
     return 2
   fi
@@ -224,13 +224,13 @@ reset_actions () {
 set_screensaver () {
   local interval="${1}"
 
-  if [[ -z "${interval}" ]]; then
+  if is_not_given "${interval}"; then
     echo 'Missing interval time'
     return 2
-  elif [[ ! "${interval}" =~ ^[0-9]{,2}$ ]]; then
+  elif is_not_positive_integer "${interval}"; then
     echo 'Invalid interval time'
     return 2
-  elif [[ ${interval} -lt 0 ]] || [[ ${interval} -gt 60 ]]; then
+  elif interval_is_out_of_range "${interval}"; then
     echo 'Interval time out of range'
     return 2
   fi
@@ -259,7 +259,7 @@ set_screensaver () {
 init_screensaver () {
   local interval=5
 
-  if [[ -f "${SETTINGS_FILE}" ]]; then
+  if file_exists "${SETTINGS_FILE}"; then
     interval="$(jq '.screensaver.interval|if . then . else 5 end' "${SETTINGS_FILE}")"
   fi
  
@@ -285,7 +285,7 @@ init_screensaver () {
 set_tlp () {
   local status="${1}"
 
-  if [[ -z "${status}" ]]; then
+  if is_not_given "${status}"; then
     echo 'Missing the power saving status'
     return 2
   elif [[ ! "${status}" =~ ^(on|off)$ ]]; then
@@ -326,24 +326,24 @@ set_charging () {
   local start="${1}"
   local stop="${2}"
 
-  if [[ -z "${start}" ]]; then
+  if is_not_given "${start}"; then
     echo 'Missing the charging start threshold'
     return 2
-  elif [[ ! "${start}" =~ ^[0-9]{1,3}$ ]]; then
+  elif is_not_positive_integer "${start}"; then
     echo 'Invalid charging start threshold'
     return 2
-  elif [[ ${start} -lt 0 ]] || [[ ${start} -gt 100 ]]; then
+  elif charge_limit_is_out_of_range "${start}"; then
     echo 'Charging start threshold is out of range'
     return 2
   fi
 
-  if [[ -z "${stop}" ]]; then
+  if is_not_given "${stop}"; then
     echo 'Missing the charging stop threshold'
     return 2
-  elif [[ ! "${stop}" =~ ^[0-9]{1,3}$ ]]; then
+  elif is_not_positive_integer "${stop}"; then
     echo 'Invalid charging stop threshold'
     return 2
-  elif [[ ${stop} -lt 0 ]] || [[ ${stop} -gt 100 ]]; then
+  elif charge_limit_is_out_of_range "${stop}"; then
     echo 'Charging stop threshold is out of range'
     return 2
   fi
@@ -355,7 +355,7 @@ set_charging () {
 
   local config_file='/etc/tlp.d/00-main.conf'
 
-  if [[ ! -f "${config_file}" ]]; then
+  if file_not_exists "${config_file}"; then
     sudo -k rm -f /etc/tlp.d/00-template.conf
     sudo touch "${config_file}"
   fi
@@ -381,7 +381,7 @@ set_charging () {
   local tlp_process=''
   tlp_process="$(systemctl -a | jc --systemctl | jq -cr "${query}")" || return 1
 
-  if [[ -n "${tlp_process}" ]]; then
+  if is_not_empty "${tlp_process}"; then
     sudo systemctl restart tlp.service &> /dev/null || return 1
   fi
 

@@ -32,16 +32,17 @@ show_status () {
   }' || return 1
 
   local locker_process=''
+
   locker_process="$(ps ax -o 'command' | jc --ps |
     jq '.[]|select(.command|test("^xautolock"))|.command')" || return 1
   
-  if [[ -n "${locker_process}" ]]; then
+  if is_empty "${locker_process}"; then
+    echo 'Screen Locker:    off'
+  else
     echo "${locker_process}" | awk '{
       match($0,/.* -time (.*) -corners.*/,a)
         print "Screen Locker:    "a[1]" mins"
     }'
-  else
-    echo 'Screen Locker:    off'
   fi
 }
 
@@ -53,13 +54,13 @@ show_status () {
 set_screen_locker () {
   local interval="${1}"
 
-  if [[ -z "${interval}" ]]; then
+  if is_not_given "${interval}"; then
     echo 'Missing interval time'
     return 2
-  elif [[ ! "${interval}" =~ ^[0-9]{,2}$ ]]; then
+  elif is_not_positive_integer "${interval}"; then
     echo 'Invalid interval time'
     return 2
-  elif [[ ${interval} -lt 0 ]] || [[ ${interval} -gt 60 ]]; then
+  elif is_interval_out_of_range "${interval}"; then
     echo 'Interval time out of range [0,60]'
     return 2
   fi
@@ -91,7 +92,7 @@ set_screen_locker () {
 init_screen_locker () {
   local interval=8
 
-  if [[ -f "${SETTINGS_FILE}" ]]; then
+  if file_exists "${SETTINGS_FILE}"; then
     interval="$(jq '.screen_locker.interval|if . then . else 8 end' "${SETTINGS_FILE}")"
   fi
 
@@ -154,8 +155,10 @@ lock_screen () {
 set_user_password () {
   ask_secret 'Enter current password:' || return $?
   local password="${REPLY}"
-
-  if ! authenticate_user "${password}"; then
+  
+  authenticate_user "${password}"
+  
+  if [[ $? -ne 0 ]] ; then
     echo 'Sorry incorrect password!'
     return 2
   fi
@@ -163,8 +166,10 @@ set_user_password () {
   ask_secret 'Enter new password:' || return $?
   require 'New password cannot be blank' || return 2
   local new_password="${REPLY}"
-
-  if ! confirm_secret 'Retype new password:' "${new_password}"; then
+  
+  confirm_secret 'Retype new password:' "${new_password}"
+  
+  if [[ $? -ne 0 ]] ; then
     echo 'New password does not match!'
     return 2
   fi
@@ -197,13 +202,13 @@ logout_user () {
 set_faillock_attempts () {
   local attempts="${1}"
 
-  if [[ -z "${attempts}" ]]; then
+  if is_not_given "${attempts}"; then
     echo 'Missing attempts number'
     return 2
-  elif [[ ! "${attempts}" =~ ^[1-9][0-9]*$ ]]; then
+  elif is_not_positive_integer "${attempts}"; then
     echo 'Invalid attempts number'
     return 2
-  elif [[ ! ${attempts} -gt 0 ]]; then
+  elif [[ ${attempts} -lt 1 ]]; then
     echo 'Attempts number should be greater than 0'
     return 2
   fi
@@ -224,13 +229,13 @@ set_faillock_attempts () {
 set_faillock_unblock () {
   local time="${1}"
   
-  if [[ -z "${time}" ]]; then
+  if is_not_given "${time}"; then
     echo 'Missing unblock time'
     return 2
-  elif [[ ! "${time}" =~ ^[1-9][0-9]*$ ]]; then
+  elif is_not_positive_integer "${time}"; then
     echo 'Invalid unblock time'
     return 2
-  elif [[ ! ${time} -gt 0 ]]; then
+  elif [[ ${time} -lt 1 ]]; then
     echo 'Unblock time should be greater than 0'
     return 2
   fi
@@ -253,13 +258,13 @@ set_faillock_unblock () {
 set_faillock_interval () {
   local time="${1}"
 
-  if [[ -z "${time}" ]]; then
+  if is_not_given "${time}"; then
     echo 'Missing interval time'
     return 2
-  elif [[ ! "${time}" =~ ^[1-9][0-9]*$ ]]; then
+  elif is_not_positive_integer "${time}"; then
     echo 'Invalid interval time'
     return 2
-  elif [[ ! ${time} -gt 0 ]]; then
+  elif [[ ${time} -lt 1 ]]; then
     echo 'Interval time should be greater than 0'
     return 2
   fi

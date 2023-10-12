@@ -76,7 +76,7 @@ get_state () {
 
   local volume=100
 
-  if [[ -f "${SETTINGS_FILE}" ]]; then
+  if file_exists "${SETTINGS_FILE}"; then
     local query='.volume|if . then (.*100) else 100 end'
     volume="$(jq -cr "${query}" "${SETTINGS_FILE}")" || return 1
   fi
@@ -118,7 +118,7 @@ show_status () {
 list_all () {
   local sort_by="${1:-id}"
 
-  if [[ ! "${sort_by}" =~ ^(id|appname)$ ]]; then
+  if is_not_valid_sort_field "${sort_by}"; then
     echo 'Invalid sorting field'
     return 2
   fi
@@ -186,7 +186,7 @@ clean_all () {
 set_popup () {
   local mode="${1}"
 
-  if [[ -z "${mode}" ]]; then
+  if is_not_given "${mode}"; then
     echo 'Missing popup mode'
     return 2
   elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
@@ -197,7 +197,7 @@ set_popup () {
   local config_file="${HOME}/.config/dunst/dunstrc"
 
   # Create the config file if none exists yet
-  if [[ ! -f "${config_file}" ]]; then
+  if file_not_exists "${config_file}"; then
     echo '[global]' > "${config_file}"
     echo '  transparency = 0' >> "${config_file}"
   fi
@@ -227,13 +227,13 @@ set_popup () {
 set_volume () {
   local percent="${1}"
 
-  if [[ -z "${percent}" ]]; then
+  if is_not_given "${percent}"; then
     echo 'Missing volume percent'
     return 2
-  elif [[ ! "${percent}" =~ ^[0-9]{1,3}$ ]]; then
+  elif is_not_positive_integer "${percent}"; then
     echo 'Invalid volume percent'
     return 2
-  elif [[ ${percent} -lt 0 ]] || [[ ${percent} -gt 100 ]]; then
+  elif is_volume_out_of_range "${percent}"; then
     echo 'Volume percent is out of range'
     return 2
   fi

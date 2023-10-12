@@ -66,7 +66,7 @@ show_status () {
 show_disk () {
   local path="${1}"
 
-  if [[ -z "${path}" ]]; then
+  if is_not_given "${path}"; then
     on_script_mode &&
       echo 'Missing the disk path' && return 2
 
@@ -75,7 +75,7 @@ show_disk () {
     path="${REPLY}"
   fi
 
-  if ! is_disk "${path}"; then
+  if is_not_disk "${path}"; then
     echo "Path ${path} is not a disk device"
     return 2
   fi
@@ -132,7 +132,7 @@ show_disk () {
 show_partition () {
   local path="${1}"
 
-  if [[ -z "${path}" ]]; then
+  if is_not_given "${path}"; then
     on_script_mode &&
       echo 'Missing the partition path' && return 2
 
@@ -145,7 +145,7 @@ show_partition () {
     path="${REPLY}"
   fi
   
-  if ! is_partition "${path}"; then
+  if is_not_partition "${path}"; then
     echo "Path ${path} is not a partition device"
     return 2
   fi
@@ -212,7 +212,7 @@ show_partition () {
 show_rom () {
   local path="${1}"
 
-  if [[ -z "${path}" ]]; then
+  if is_not_given "${path}"; then
     on_script_mode &&
       echo 'Missing rom path' && return 2
 
@@ -221,7 +221,7 @@ show_rom () {
     path="${REPLY}"
   fi
 
-  if ! is_rom "${path}"; then
+  if is_not_rom "${path}"; then
     echo "Path ${path} is not a rom device"
     return 2
   fi
@@ -287,7 +287,7 @@ list_disks () {
 list_partitions () {
   local disk="${1}"
 
-  if [[ -z "${disk}" ]]; then
+  if is_not_given "${disk}"; then
     on_script_mode &&
       echo 'Missing the disk path' && return 2
 
@@ -296,7 +296,7 @@ list_partitions () {
     disk="${REPLY}"
   fi
 
-  if ! is_disk "${disk}"; then
+  if is_not_disk "${disk}"; then
     echo "Path ${disk} is not a disk device"
     return 2
   fi
@@ -363,7 +363,7 @@ list_shared_folders () {
   local group="${3}"
   local password="${4}"
 
-  if [[ -z "${host}" ]]; then
+  if is_not_given "${host}"; then
     on_script_mode &&
       echo 'Missing the host' && return 2
 
@@ -372,7 +372,7 @@ list_shared_folders () {
     host="${REPLY}"
   fi
 
-  if [[ -z "${user}" ]]; then
+  if is_not_given "${user}"; then
     on_script_mode &&
       echo 'Missing the username' && return 2
 
@@ -381,7 +381,7 @@ list_shared_folders () {
     user="${REPLY}"
   fi
 
-  if [[ -z "${group}" ]]; then
+  if is_not_given "${group}"; then
     on_script_mode &&
       echo 'Missing the user group' && return 2
 
@@ -389,7 +389,7 @@ list_shared_folders () {
     group="${REPLY:-"WORKGROUP"}"
   fi
 
-  if [[ -z "${password}" ]]; then
+  if is_not_given "${password}"; then
     on_script_mode &&
       echo 'Missing the password' && return 2
 
@@ -462,7 +462,7 @@ list_mounts () {
   }')" || return 1
 
   # Remove the extra comma after the last element
-  if [[ -n "${folders}" ]]; then
+  if is_not_empty "${folders}"; then
     folders="${folders::-1}"
   fi
 
@@ -483,7 +483,7 @@ list_mounts () {
   }')" || return 1
 
   # Remove the extra comma after the last element
-  if [[ -n "${images}" ]]; then
+  if is_not_empty "${images}"; then
     images="${images::-1}"
   fi
 
@@ -514,7 +514,7 @@ list_mounts () {
 mount_partition () {
   local path="${1}"
 
-  if [[ -z "${path}" ]]; then
+  if is_not_given "${path}"; then
     on_script_mode &&
       echo 'Missing the partition path' && return 2
 
@@ -527,7 +527,7 @@ mount_partition () {
     path="${REPLY}"
   fi
 
-  if ! is_partition "${path}"; then
+  if is_not_partition "${path}"; then
     echo "Path ${path} is not a partition device"
     return 2
   elif is_mounted "${path}"; then
@@ -554,7 +554,7 @@ mount_encrypted () {
   local path="${1}"
   local key="${2}"
 
-  if [[ -z "${path}" ]]; then
+  if is_not_given "${path}"; then
     on_script_mode &&
       echo 'Missing the partition path' && return 2
 
@@ -567,7 +567,7 @@ mount_encrypted () {
     path="${REPLY}"
   fi
 
-  if ! is_partition "${path}"; then
+  if is_not_partition "${path}"; then
     echo "Path ${path} is not a partition device"
     return 2
   elif is_mounted "${path}"; then
@@ -575,7 +575,7 @@ mount_encrypted () {
     return 2
   fi
 
-  if [[ -z "${key}" ]]; then
+  if is_not_given "${key}"; then
     on_script_mode &&
       echo 'Missing the encryption key' && return 2
 
@@ -601,7 +601,7 @@ mount_encrypted () {
 unmount_partition () {
   local path="${1}"
 
-  if [[ -z "${path}" ]]; then
+  if is_not_given "${path}"; then
     on_script_mode &&
       echo 'Missing the partition path' && return 2
 
@@ -614,10 +614,10 @@ unmount_partition () {
     path="${REPLY}"
   fi
 
-  if ! is_partition "${path}"; then
+  if is_not_partition "${path}"; then
     echo "Path ${path} is not a partition device"
     return 2
-  elif ! is_mounted "${path}"; then
+  elif is_not_mounted "${path}"; then
     echo "Partition ${path} is already unmounted"
     return 2
   elif is_system_partition "${path}"; then
@@ -642,7 +642,7 @@ unmount_partition () {
 unmount_encrypted () {
   local path="${1}"
 
-  if [[ -z "${path}" ]]; then
+  if is_not_given "${path}"; then
     on_script_mode &&
       echo 'Missing the partition path' && return 2
 
@@ -655,10 +655,10 @@ unmount_encrypted () {
     path="${REPLY}"
   fi
 
-  if ! is_partition "${path}"; then
+  if is_not_partition "${path}"; then
     echo "Path ${path} is not a partition device"
     return 2
-  elif ! is_mounted "${path}"; then
+  elif is_not_mounted "${path}"; then
     echo "Partition ${path} is already unmounted"
     return 2
   elif is_system_partition "${path}"; then
@@ -682,7 +682,7 @@ unmount_encrypted () {
 mount_rom () {
   local path="${1}"
 
-  if [[ -z "${path}" ]]; then
+  if is_not_given "${path}"; then
     on_script_mode &&
       echo 'Missing the rom path' && return 2
 
@@ -691,7 +691,7 @@ mount_rom () {
     path="${REPLY}"
   fi
 
-  if ! is_rom "${path}"; then
+  if is_not_rom "${path}"; then
     echo "Path ${path} is not a rom device"
     return 2
   elif is_mounted "${path}"; then
@@ -715,7 +715,7 @@ mount_rom () {
 unmount_rom () {
   local path="${1}"
 
-  if [[ -z "${path}" ]]; then
+  if is_not_given "${path}"; then
     on_script_mode &&
       echo 'Missing the rom path' && return 2
 
@@ -724,10 +724,10 @@ unmount_rom () {
     path="${REPLY}"
   fi
 
-  if ! is_rom "${path}"; then
+  if is_not_rom "${path}"; then
     echo "Path ${path} is not a rom device"
     return 2
-  elif ! is_mounted "${path}"; then
+  elif is_not_mounted "${path}"; then
     echo "Rom ${path} is not mounted"
     return 2
   fi
@@ -749,10 +749,10 @@ unmount_rom () {
 mount_image () {
   local path="${1}"
 
-  if [[ -z "${path}" ]]; then
+  if is_not_given "${path}"; then
     echo 'Image file path is required'
     return 2
-  elif [[ ! -f "${path}" ]]; then
+  elif file_not_exists "${path}"; then
     echo "Path ${path} is not an image file"
     return 2
   fi
@@ -760,7 +760,7 @@ mount_image () {
   local folder_name="$(basename "${path}")"
   local mount_point="${HOME}/mounts/virtual/${folder_name}"
 
-  if [[ -d "${mount_point}" ]]; then
+  if directory_exists "${mount_point}"; then
     echo "Image ${path} is already mounted"
     return 2
   fi
@@ -785,7 +785,7 @@ mount_image () {
 unmount_image () {
   local path="${1}"
 
-  if [[ -z "${path}" ]]; then
+  if is_not_given "${path}"; then
     on_script_mode &&
       echo 'Missing the image mount path' && return 2
 
@@ -794,7 +794,7 @@ unmount_image () {
     path="${REPLY}"
   fi
 
-  if [[ ! -d "${path}" ]]; then
+  if directory_not_exists "${path}"; then
     echo 'No valid image mount path'
     return 2
   fi
@@ -825,7 +825,7 @@ mount_shared_folder () {
   local group="${4}"
   local password="${5}"
 
-  if [[ -z "${host}" ]]; then
+  if is_not_given "${host}"; then
     on_script_mode &&
       echo 'Missing the host' && return 2
 
@@ -834,7 +834,7 @@ mount_shared_folder () {
     host="${REPLY}"
   fi
 
-  if [[ -z "${name}" ]]; then
+  if is_not_given "${name}"; then
     on_script_mode &&
       echo 'Missing the folder name' && return 2
 
@@ -843,7 +843,7 @@ mount_shared_folder () {
     name="${REPLY}"
   fi
 
-  if [[ -z "${user}" ]]; then
+  if is_not_given "${user}"; then
     on_script_mode &&
       echo 'Missing the username' && return 2
 
@@ -852,7 +852,7 @@ mount_shared_folder () {
     user="${REPLY}"
   fi
 
-  if [[ -z "${group}" ]]; then
+  if is_not_given "${group}"; then
     on_script_mode &&
       echo 'Missing the user group' && return 2
     
@@ -860,7 +860,7 @@ mount_shared_folder () {
     group="${REPLY:-"WORKGROUP"}"
   fi
   
-  if [[ -z "${password}" ]]; then
+  if is_not_given "${password}"; then
     on_script_mode &&
       echo 'Missing the password' && return 2
 
@@ -887,7 +887,7 @@ mount_shared_folder () {
 
   local remote_home="${HOME}/mounts/remote"
 
-  if [[ -d "/run/user/${UID}/gvfs" ]] && [[ ! -L "${remote_home}/gvfs" ]]; then
+  if directory_exists "/run/user/${UID}/gvfs" && symlink_not_exists "${remote_home}/gvfs"; then
     mkdir -p "${remote_home}"
     ln -s "/run/user/${UID}/gvfs" "${remote_home}"
   fi
@@ -899,7 +899,7 @@ mount_shared_folder () {
 unmount_shared_folder () {
   local uri="${1}"
 
-  if [[ -z "${uri}" ]]; then
+  if is_not_given "${uri}"; then
     on_script_mode &&
       echo 'Missing the mount uri' && return 2
 
@@ -935,7 +935,7 @@ format_disk () {
   local label="${2}"
   local fs_type="${3}"
 
-  if [[ -z "${path}" ]]; then
+  if is_not_given "${path}"; then
     on_script_mode &&
       echo 'Missing the disk path' && return 2
 
@@ -944,7 +944,7 @@ format_disk () {
     path="${REPLY}"
   fi
 
-  if ! is_disk "${path}"; then
+  if is_not_disk "${path}"; then
     echo "Path ${path} is not a disk device"
     return 2
   elif is_system_disk "${path}"; then
@@ -952,7 +952,7 @@ format_disk () {
     return 2
   fi
 
-  if [[ -z "${label}" ]]; then
+  if is_not_given "${label}"; then
     on_script_mode &&
       echo 'Missing the disk label' && return 2
 
@@ -961,7 +961,7 @@ format_disk () {
     label="${REPLY}"
   fi
 
-  if [[ -z "${fs_type}" ]]; then
+  if is_not_given "${fs_type}"; then
     on_script_mode &&
       echo 'Missing the file system type' && return 2
 
@@ -970,13 +970,13 @@ format_disk () {
     fs_type="${REPLY}"
   fi
 
-  if ! validate_fs_type "${fs_type}"; then
+  if is_not_valid_fs_type "${fs_type}"; then
     echo 'Invalid or unknown file system type'
     return 2
   fi
 
   # Do not ask confirmation on script mode
-  if ! on_script_mode; then
+  if not_on_script_mode; then
     local model=''
     model="$(find_disk "${path}" |
       jq -cr '"\(.vendor|gsub("^\\s+|\\s+$";"")) \(.model) \(.size)"')" || return 1
@@ -986,7 +986,7 @@ format_disk () {
     confirm 'Do you really want to proceed?' || return $?
     require 'Confirmation is required' || return 2
     
-    [[ "${REPLY}" != "yes" ]] &&
+    is_not_yes "${REPLY}" &&
       echo 'Format operation is canceled' && return 2
   fi
 
@@ -1018,7 +1018,7 @@ format_disk () {
 eject_disk () {
   local path="${1}"
 
-  if [[ -z "${path}" ]]; then
+  if is_not_given "${path}"; then
     on_script_mode &&
       echo 'Missing the disk path' && return 2
 
@@ -1027,7 +1027,7 @@ eject_disk () {
     path="${REPLY}"
   fi
 
-  if ! is_disk "${path}"; then
+  if is_not_disk "${path}"; then
     echo "Path ${path} is not a disk device"
     return 2
   elif is_system_disk "${path}"; then
@@ -1064,7 +1064,7 @@ eject_disk () {
 scan_disk () {
   local path="${1}"
 
-  if [[ -z "${path}" ]]; then
+  if is_not_given "${path}"; then
     on_script_mode &&
       echo 'Missing the disk path' && return 2
 
@@ -1073,7 +1073,7 @@ scan_disk () {
     path="${REPLY}"
   fi
 
-  if ! is_disk "${path}"; then
+  if is_not_disk "${path}"; then
     echo "Path ${path} is not a disk device"
     return 2
   fi
@@ -1168,7 +1168,7 @@ create_encrypted () {
   local fs_type="${2}"
   local key="${3}"
 
-  if [[ -z "${path}" ]]; then
+  if is_not_given "${path}"; then
     on_script_mode &&
       echo 'Missing the disk path' && return 2
 
@@ -1177,7 +1177,7 @@ create_encrypted () {
     path="${REPLY}"
   fi
 
-  if ! is_disk "${path}"; then
+  if is_not_disk "${path}"; then
     echo "Path ${path} is not a disk device"
     return 2
   elif is_system_disk "${path}"; then
@@ -1185,7 +1185,7 @@ create_encrypted () {
     return 2
   fi
 
-  if [[ -z "${fs_type}" ]]; then
+  if is_not_given "${fs_type}"; then
     on_script_mode &&
       echo 'Missing the file system type' && return 2
 
@@ -1194,12 +1194,12 @@ create_encrypted () {
     fs_type="${REPLY}"
   fi
 
-  if ! validate_fs_type "${fs_type}"; then
+  if is_not_valid_fs_type "${fs_type}"; then
     echo 'Invalid or unknown file system type'
     return 2
   fi
 
-  if [[ -z "${key}" ]]; then
+  if is_not_given "${key}"; then
     on_script_mode &&
       echo 'Missing the encryption key' && return 2
 
@@ -1208,7 +1208,7 @@ create_encrypted () {
     key="${REPLY}"
   fi
 
-  if ! on_script_mode; then
+  if not_on_script_mode; then
     if ! confirm_secret 'Retype the encryption key:' "${key}"; then
       echo 'Encryption key does not match'
       return 2
@@ -1223,7 +1223,7 @@ create_encrypted () {
     confirm 'Do you really want to proceed?' || return $?
     require 'Confirmation is required' || return 2
     
-    [[ "${REPLY}" != "yes" ]] &&
+    is_not_yes "${REPLY}" &&
       echo 'Encryption operation is canceled' && return 2
   fi
 
@@ -1268,7 +1268,7 @@ create_bootable () {
   local path="${1}"
   local iso_file="${2}"
 
-  if [[ -z "${path}" ]]; then
+  if is_not_given "${path}"; then
     on_script_mode &&
       echo 'Missing the disk path' && return 2
 
@@ -1277,7 +1277,7 @@ create_bootable () {
     path="${REPLY}"
   fi
 
-  if ! is_disk "${path}"; then
+  if is_not_disk "${path}"; then
     echo "Path ${path} is not a disk device"
     return 2
   elif is_system_disk "${path}"; then
@@ -1285,14 +1285,14 @@ create_bootable () {
     return 2
   fi
 
-  if [[ -z "${iso_file}" ]]; then
+  if is_not_given "${iso_file}"; then
     on_script_mode &&
       echo 'Missing the iso file path' && return 2
 
     confirm 'Do you want to download the latest iso?' || return $?
     require 'Bootable operation is canceled' || return 2
 
-    if [[ "${REPLY}" == "yes" ]]; then
+    if is_yes "${REPLY}"; then
       download_iso_file "${HOME}/downloads" 'archlinux-x86_64.iso' || return $?
       iso_file="${HOME}/downloads/archlinux-x86_64.iso"
     else
@@ -1302,12 +1302,12 @@ create_bootable () {
     fi
   fi
 
-  if [[ ! -f "${iso_file}" ]]; then
+  if file_not_exists "${iso_file}"; then
     echo 'Invalid or unknown iso file'
     return 2
   fi
 
-  if ! on_script_mode; then
+  if not_on_script_mode; then
     local model=''
     model="$(find_disk "${path}" | jq -cr '"\(.vendor) \(.model) \(.size)"')" || return 1
 
@@ -1317,7 +1317,7 @@ create_bootable () {
     confirm 'Do you really want to proceed?' || return $?
     require 'Confirmation is required' || return 2
     
-    [[ "${REPLY}" != "yes" ]] &&
+    is_not_yes "${REPLY}" &&
       echo 'Bootable operation is canceled' && return 2
   fi
 

@@ -20,7 +20,6 @@ show_help () {
     printf ' %-8s %s\n' \
       '-h' 'Show this help message.' \
       '-q' 'Do not play beep sounds.' \
-      '-f' 'Do not ask confirm when removing files.' \
       '-s' 'Run on script mode.'
 
     echo -e '\nCOMMANDS'
@@ -55,7 +54,6 @@ run () {
         show_help once
         return 0;;
      'q') QUIET='true';;
-     'f') FORCED='true';;
      's') ON_SCRIPT_MODE='true';;
      *)
       echo "Ooops, invalid or unknown option -${OPTARG}!"

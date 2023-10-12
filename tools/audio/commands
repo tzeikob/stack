@@ -79,7 +79,7 @@ show_logs () {
 show_card () {
   local name="${1}"
 
-  if [[ -z "${name}" ]]; then
+  if is_not_given "${name}"; then
     on_script_mode &&
       echo 'Missing the audio card name' && return 2
 
@@ -190,10 +190,10 @@ list_cards () {
 list_ports () {
   local type="${1}"
 
-  if [[ -z "${type}" ]]; then
+  if is_not_given "${type}"; then
     echo 'Missing the module type'
     return 2
-  elif [[ ! "${type}" =~ ^(output|input)$ ]]; then
+  elif is_not_module_type "${type}"; then
     echo 'Invalid module type'
     return 2
   fi
@@ -282,7 +282,7 @@ set_profile () {
   local card_name="${1}"
   local profile_name="${2}"
 
-  if [[ -z "${card_name}" ]]; then
+  if is_not_given "${card_name}"; then
     on_script_mode &&
       echo 'Missing the audio card name' && return 2
 
@@ -299,7 +299,7 @@ set_profile () {
     return 2
   fi
 
-  if [[ -z "${profile_name}" ]]; then
+  if is_not_given "${profile_name}"; then
     on_script_mode &&
       echo 'Missing the profile name' && return 2
 
@@ -334,15 +334,15 @@ set_default () {
   local type="${1}"
   local name="${2}"
 
-  if [[ -z "${type}" ]]; then
+  if is_not_given "${type}"; then
     echo 'Missing the module type'
     return 2
-  elif [[ ! "${type}" =~ ^(output|input)$ ]]; then
+  elif is_not_module_type "${type}"; then
     echo 'Invalid module type'
     return 2
   fi
 
-  if [[ -z "${name}" ]]; then
+  if is_not_given "${name}"; then
     on_script_mode &&
       echo "Missing ${type} module name" && return 2
 
@@ -358,10 +358,10 @@ set_default () {
     object='source'
   fi
 
-  local exists=''
-  exists="$(pactl --format=json list "${object}s" | jq -cer "${query}")"
+  local match=''
+  match="$(pactl --format=json list "${object}s" | jq -cer "${query}")"
 
-  if [[ -z "${exists}" ]]; then
+  if is_empty "${match}"; then
     echo "${type^} module ${name} not found"
     return 2
   fi
@@ -386,23 +386,21 @@ turn_default () {
   local type="${1}"
   local volume="${2}"
 
-  if [[ -z "${type}" ]]; then
+  if is_not_given "${type}"; then
     echo 'Missing the module type'
     return 2
-  elif [[ ! "${type}" =~ ^(output|input)$ ]]; then
+  elif is_not_module_type "${type}"; then
     echo 'Invalid module type'
     return 2
   fi
 
-  if [[ -z "${volume}" ]]; then
+  if is_not_given "${volume}"; then
     echo 'Missing the volume value'
     return 2
-  fi
-
-  if [[ ! "${volume}" =~ ^(up|down|mute|unmute|[0-9]+)$ ]]; then
+  elif is_not_valid_volume "${volume}"; then
     echo 'Invalid volume value'
     return 2
-  elif [[ "${volume}" =~ ^[0-9]+$ ]] && ! ((${volume} >= 0 && ${volume} <= 150)); then
+  elif is_positive_integer "${volume}" && is_volume_out_of_range "${volume}"; then
     echo 'Volume value is out of range'
     return 2
   fi
@@ -472,18 +470,18 @@ set_mute () {
   local type="${1}"
   local mode="${2}"
 
-  if [[ -z "${type}" ]]; then
+  if is_not_given "${type}"; then
     echo 'Missing module type'
     return 2
-  elif [[ ! "${type}" =~ ^(output|input)$ ]]; then
+  elif is_not_module_type "${type}"; then
     echo 'Invalid module type'
     return 2
   fi
 
-  if [[ -z "${mode}" ]]; then
+  if is_not_given "${mode}"; then
     echo 'Missing the mute mode'
     return 2
-  elif [[ ! "${mode}" =~ ^(1|0)$ ]]; then
+  elif is_not_mute_mode "${mode}"; then
     echo 'Invalid mute mode'
     return 2
   fi
@@ -501,7 +499,7 @@ set_mute () {
   local pactl_cmds=''
   pactl_cmds="$(pactl --format=json list "${object}s" | jq -cer "${query}")" || return $?
 
-  if [[ -z "${pactl_cmds}" ]]; then
+  if is_empty "${pactl_cmds}"; then
     echo "No ${type} modules have found"
     return 2
   fi

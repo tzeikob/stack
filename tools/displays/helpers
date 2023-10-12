@@ -6,19 +6,39 @@ source /opt/stack/utils
 
 SETTINGS_FILE="${CONFIG_HOME}/displays.json"
 
+# Checks if the given status is among the valid
+# xrandr output statuses.
+# Arguments:
+#  status: an output status
+# Returns:
+# 0 if status is valid otherwise 0
+is_output_status () {
+  local status="${1}"
+
+  if [[ ! "${status}" =~ ^(connected|disconnected|active|inactive|primary)$ ]]; then
+    return 1
+  fi
+
+  return 0
+}
+
+# Checks if the given status is not among the valid
+# xrandr output statuses.
+# Arguments:
+#  status: an output status
+# Returns:
+# 0 if status is not valid otherwise 1
+is_not_output_status () {
+  is_output_status "${1}" && return 1 || return 0
+}
+
 # Returns a list of outputs having the given status.
 # Arguments:
-#  status: all, connected, disconnected,
-#          active, inactive, primary
+#  status: connected, disconnected, active, inactive or primary
 # Outputs:
 #  A json array of outputs.
 find_outputs () {
-  local status="${1:-"all"}"
-
-  local states='all|connected|disconnected|active|inactive|primary'
-  if [[ ! "${status}" =~ ^(${states})$ ]]; then
-    return 1
-  fi
+  local status="${1}"
 
   local criteria='true'
   if [[ "${status}" == "connected" ]]; then
@@ -57,7 +77,7 @@ find_output () {
 
   local query=".[]|select(.device_name == \"${name}\")"
 
-  find_outputs all | jq -cer "${query}" || return 1
+  find_outputs | jq -cer "${query}" || return 1
 }
 
 # Returns a unique hashed signature of the list of the given
@@ -101,6 +121,15 @@ is_connected () {
   echo "${output}" | jq -cer "${query}" &> /dev/null || return 1
 }
 
+# Asserts if the given output is not connected.
+# Arguments:
+#  output: a json object output
+# Returns:
+#  0 if is not connected otherwise 1.
+is_not_connected () {
+  is_connected "${1}" && return 1 || return 0
+}
+
 # Asserts if the given output is active.
 # Arguments:
 #  output: a json object output
@@ -114,6 +143,15 @@ is_active () {
   echo "${output}" | jq -cer "${query}" &> /dev/null || return 1
 }
 
+# Asserts if the given output is not active.
+# Arguments:
+#  output: a json object output
+# Returns:
+#  0 if is not active otherwise 1.
+is_not_active () {
+  is_active "${1}" && return 1 || return 0
+}
+
 # Asserts if the given output is primary.
 # Arguments:
 #  output: a json object output
@@ -125,6 +163,39 @@ is_primary () {
   local query='select(.is_primary)'
 
   echo "${output}" | jq -cer "${query}" &> /dev/null || return 1
+}
+
+# Asserts if the given output is not primary.
+# Arguments:
+#  output: a json object output
+# Returns:
+#  0 if is not primary otherwise 1.
+is_not_primary () {
+  is_primary "${1}" && return 1 || return 0
+}
+
+# Checks if the given value is a valid output resolution.
+# Arguments:
+#  resolution: an output resolution
+# Returns:
+#  0 if resolution is valid otherwise 1.
+is_resolution () {
+  local resolution="${1}"
+
+  if [[ ! "${resolution}" =~ ^[0-9]+x[0-9]+i?$ ]]; then
+    return 1
+  fi
+
+  return 0
+}
+
+# Checks if the given value is not a valid output resolution.
+# Arguments:
+#  resolution: an output resolution
+# Returns:
+#  0 if resolution is not valid otherwise 1.
+is_not_resolution () {
+  is_resolution "${1}" && return 1 || return 0
 }
 
 # Asserts if an output supports the given resolution.
@@ -143,6 +214,40 @@ has_resolution () {
   query+=" |select(\$res == \"${resolution}\")"
 
   echo "${output}" | jq -cer "${query}" &> /dev/null || return 1
+}
+
+# Asserts if an output does not supports the given resolution.
+# Arguments:
+#  output:     a json object of output
+#  resolution: an output resolution
+# Returns:
+#  0 if output does not supports the resolution otherwise 1.
+has_no_resolution () {
+  has_resolution "${1}" "${2}" && return 1 || return 0
+}
+
+# Checks if the given resolution rate is valid.
+# Arguments:
+#  rate: a resolution rate
+# Returns:
+#  0 if rate is valid otherwise 1.
+is_rate () {
+  local rate="${1}"
+  
+  if [[ ! "${rate}" =~ ^[0-9][0-9]+(.[0-9][0-9])?$ ]]; then
+    return 1
+  fi
+
+  return 0
+}
+
+# Checks if the given resolution rate is not valid.
+# Arguments:
+#  rate: a resolution rate
+# Returns:
+#  0 if rate is not valid otherwise 1.
+is_not_rate () {
+  is_rate "${1}" && return 1 || return 0
 }
 
 # Asserts if an output at a resolution supports
@@ -167,11 +272,22 @@ has_rate () {
   echo "${output}" | jq -cer "${query}" &> /dev/null || return 1
 }
 
+# Asserts if an output at a resolution does not support
+# the given refresh rate.
+# Arguments:
+#  output:     a json object of output
+#  resolution: an output resolution
+#  rate:       a refresh rate
+# Returns:
+#  0 if output does not supports the refresh rate otherwise 1.
+has_no_rate () {
+  has_rate "${1}" "${2}" "${3}" && return 1 || return 0
+}
+
 # Shows a menu asking the user to select one output.
 # Arguments:
 #  prompt: a prompt text line
-#  status: all, connected, disconnected, active,
-#          inactive, primary
+#  status: connected, disconnected, active, inactive or primary
 # Outputs:
 #  A menu of output names.
 pick_output () {
@@ -201,8 +317,7 @@ pick_output () {
 # Shows a menu asking the user to select many outputs.
 # Arguments:
 #  prompt:  a prompt text line
-#  status:  all, connected, disconnected, active,
-#           inactive, primary
+#  status:  connected, disconnected, active, inactive or primary
 #  skip:    the name of output to except from selection
 # Outputs:
 #  A menu of output names.
@@ -212,7 +327,7 @@ pick_outputs () {
   local skip="${3}"
 
   local except='select(true)'
-  [[ -n "${skip}" ]] && except="select(.device_name != \"${skip}\")"
+  is_not_empty "${skip}" && except="select(.device_name != \"${skip}\")"
 
   # Convert outputs list into an array of {key, value} options
   local key='\(.device_name)'
@@ -315,6 +430,28 @@ pick_reflection_mode () {
   pick_one 'Select reflection mode:' "${modes}" horizontal || return $?
 }
 
+# Checks if the given mode is a valid reflection mode.
+# Arguments:
+#  mode: a reflection mode
+# Returns:
+#  0 if reflection mode is valid otherwise 1.
+is_reflection_mode () {
+  local mode="${1}"
+  
+  if [[ ! "${mode}" =~ ^(normal|x|y|xy)$ ]]; then
+    return 1
+  fi
+}
+
+# Checks if the given mode is not a valid reflection mode.
+# Arguments:
+#  mode: a reflection mode
+# Returns:
+#  0 if reflection mode is not valid otherwise 1.
+is_not_reflection_mode () {
+  is_reflection_mode "${1}" && return 1 || return 0 
+}
+
 # Shows a menu asking the user to select a rotation mode.
 # Outputs:
 #  A menu of rotation modes.
@@ -329,6 +466,28 @@ pick_rotation_mode () {
   pick_one 'Select rotation mode:' "${modes}" horizontal || return $?
 }
 
+# Checks if the given mode is a valid rotation mode.
+# Arguments:
+#  mode: a rotation mode
+# Returns:
+#  0 if rotation mode is valid otherwise 1.
+is_rotation_mode () {
+  local mode="${1}"
+  
+  if [[ ! "${mode}" =~ ^(normal|right|left|inverted)$ ]]; then
+    return 1
+  fi
+}
+
+# Checks if the given mode is not a valid rotation mode.
+# Arguments:
+#  mode: a rotation mode
+# Returns:
+#  0 if rotation mode is not valid otherwise 1.
+is_not_rotation_mode () {
+  is_rotation_mode "${1}" && return 1 || return 0 
+}
+
 # Returns the common resolution if any among the
 # outputs with the given names.
 # Arguments:
@@ -339,7 +498,7 @@ find_common_resolutions () {
   local names=("${@}")
 
   local outputs=''
-  outputs="$(find_outputs all)" || return 1
+  outputs="$(find_outputs)" || return 1
 
   local len=0
   len="$(count "${outputs}")" || return 1
@@ -405,7 +564,7 @@ pick_layout_mode () {
 #  size: the number of active outputs
 # Returns:
 #  0 if layout mode corresponds to active outputs otherwise 1.
-validate_layout_mode () {
+is_eligible_layout_mode () {
   local mode="${1}"
   local size="${2}"
 
@@ -418,8 +577,7 @@ validate_layout_mode () {
   elif [[ ${size} -eq 4 ]]; then
     modes='grid-4|taph-4|taph-rev-4|taph-right-4|taph-left-4'
   else
-    echo "No layout mode found for ${size} outputs"
-    return 2
+    return 1
   fi
   
   if [[ ! "${mode}" =~ ^(${modes})$ ]]; then
@@ -427,6 +585,19 @@ validate_layout_mode () {
   fi
 
   return 0
+}
+
+# Checks if the given layout mode is not valid for the given active
+# outputs.
+# Arguments:
+#  mode: row-2, col-2, row-3, col-3, gamma-3, gamma-rev-3,
+#        lambda-3, lambda-rev-3, grid-4, taph-4, taph-rev-4,
+#        taph-right-4, taph-left-4
+#  size: the number of active outputs
+# Returns:
+#  0 if layout mode does not correspond to active outputs otherwise 1.
+is_not_eligible_layout_mode () {
+  is_eligible_layout_mode "${1}" "${2}" && return 1 || return 0
 }
 
 # Shows the layout topology map that corresponds to the
@@ -652,6 +823,7 @@ layout_to_xrandr_template () {
 
 # Saves the layout with the given signature and map
 # into the settings file.
+# Arguments:
 #  map: the map of outputs
 #  sig: the unique signature of the mapping
 save_layout_to_settings () {
@@ -662,18 +834,18 @@ save_layout_to_settings () {
 
   local settings='{}'
 
-  if [[ -f "${SETTINGS_FILE}" ]]; then
+  if file_exists "${SETTINGS_FILE}"; then
     local layouts=''
     layouts="$(jq 'if .layouts then .layouts else empty end' "${SETTINGS_FILE}")"
 
-    if [[ -n "${layouts}" ]]; then
+    if is_not_empty "${layouts}"; then
       local query=''
       query=".layouts[]|select(.sig == \"${sig}\")"
 
-      local exists=''
-      exists="$(jq "${query}" "${SETTINGS_FILE}")"
+      local match=''
+      match="$(jq "${query}" "${SETTINGS_FILE}")"
 
-      if [[ -n "${exists}" ]]; then
+      if is_not_empty "${match}" ]]; then
         query="(${query}|.map)|= ${map}"
       else
         query=".layouts += [${layout}]"
@@ -783,21 +955,21 @@ save_color_to_settings () {
 
   local settings='{}'
 
-  if [[ -f "${SETTINGS_FILE}" ]]; then
+  if file_exists "${SETTINGS_FILE}"; then
     local colors=''
     colors="$(jq 'if .colors then .colors else empty end' "${SETTINGS_FILE}")"
 
-    if [[ -n "${colors}" ]]; then
+    if is_not_empty "${colors}"; then
       local query=''
       query+='.model_name == $c.model_name and '
       query+='.product_id == $c.product_id and '
       query+='.serial_number == $c.serial_number'
       query=".colors[]|select(${query})"
 
-      local exists=''
-      exists="$(jq --argjson c "${color}" "${query}" "${SETTINGS_FILE}")"
+      local match=''
+      match="$(jq --argjson c "${color}" "${query}" "${SETTINGS_FILE}")"
 
-      if [[ -n "${exists}" ]]; then
+      if is_not_empty "${match}"; then
         query="(${query}|.profile)|=\"${profile}\""
       else
         query=".colors += [${color}]"
@@ -821,7 +993,7 @@ save_color_to_settings () {
 remove_color_from_settings () {
   local output="${1}"
 
-  if [[ ! -f "${SETTINGS_FILE}" ]]; then
+  if file_not_exists "${SETTINGS_FILE}"; then
     return 0
   fi
 
@@ -835,5 +1007,31 @@ remove_color_from_settings () {
   settings="$(jq -e --argjson o "${output}" "del(${query})" "${SETTINGS_FILE}")" || return 1
 
   echo "${settings}" > "${SETTINGS_FILE}"
+}
+
+# Checks if the given file name is a valid color
+# profile file type.
+#  Arguments:
+#   file_name: a file name
+# Returns:
+#  0 if file is of color profile type otherwise 1.
+is_profile_file () {
+  local file_name="${1}"
+  
+  if [[ ! "${file_name}" =~ .ic(c|m)$ ]]; then
+    return 1
+  fi
+
+  return 0
+}
+
+# Checks if the given file name is not a valid color
+# profile file type.
+#  Arguments:
+#   file_name: a file name
+# Returns:
+#  0 if file is not of color profile type otherwise 1.
+is_not_profile_file () {
+ is_profile_file "${1}" && return 1 || return 0
 }
 

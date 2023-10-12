@@ -31,12 +31,12 @@ pick_timezone () {
   pick_one "${prompt}" "${timezones}" vertical || return $?
 }
 
-# Checks if the given timezone name is valid or not.
+# Checks if the given timezone name is valid.
 # Arguments:
 #  name: the name of a timezone
 # Returns:
 #  0 if timezone is valid otherwise 1.
-validate_timezone () {
+is_timezone () {
   local name="${1}"
 
   if ! timedatectl list-timezones | grep -qw "${name}"; then
@@ -46,12 +46,21 @@ validate_timezone () {
   return 0
 }
 
+# Checks if the given timezone name is not valid.
+# Arguments:
+#  name: the name of a timezone
+# Returns:
+#  0 if timezone is not valid otherwise 1.
+is_not_timezone () {
+  is_timezone "${1}" && return 1 || return 0
+}
+
 # Checks if the given time is valid.
 # Arguments:
 #  time: 24h time in hh:mm form
 # Returns:
 #  0 if time is valid otherwise 1.
-validate_time () {
+is_valid_time () {
   local time="${1}"
 
   if [[ ! "${time}" =~ ^[0-9][0-9]:[0-9][0-9]$ ]]; then
@@ -72,12 +81,21 @@ validate_time () {
   return 0
 }
 
+# Checks if the given time is not valid.
+# Arguments:
+#  time: 24h time in hh:mm form
+# Returns:
+#  0 if time is not valid otherwise 1.
+is_not_valid_time () {
+  is_valid_time "${1}" && return 1 || return 0
+}
+
 # Checks if the given date is valid.
 # Arguments:
 #  date: a date in yyyy-mm-dd form
 # Returns:
 #  0 if date is valid otherwise 1.
-validate_date () {
+is_valid_date () {
   local date="${1}"
   
   if [[ ! "${date}" =~ ^[0-9][0-9]([0-9][0-9])?-[0-9][0-9]-[0-9][0-9]$ ]]; then
@@ -97,5 +115,62 @@ validate_date () {
   fi
 
   return 0
+}
+
+# Checks if the given date is not valid.
+# Arguments:
+#  date: a date in yyyy-mm-dd form
+# Returns:
+#  0 if date is not valid otherwise 1.
+is_not_valid_date () {
+  is_valid_date "${1}" && return 1 || return 0
+}
+
+# Checks if the given status is valid.
+# Arguments:
+#  status: a status value
+# Returns:
+#  0 if status is valid otherwise 1.
+is_valid_status () {
+  local status="${1}"
+
+  if [[ ! "${status}" =~ ^(on|off)$ ]]; then
+    return 1
+  fi
+
+  return 0
+}
+
+# Checks if the given status is not valid.
+# Arguments:
+#  status: a status value
+# Returns:
+#  0 if status is not valid otherwise 1.
+is_not_valid_status () {
+  is_valid_status "${1}" && return 1 || return 0
+}
+
+# Checks if the given mode is a valid RTC mode.
+# Arguments:
+#  mode: an rtc mode value
+# Returns:
+#  0 if mode is valid otherwise 1.
+is_rtc_mode () {
+  local mode="${1}"
+
+  if [[ ! "${mode}" =~ ^(local|utc)$ ]]; then
+    return 1
+  fi
+
+  return 0
+}
+
+# Checks if the given mode is not a valid RTC mode.
+# Arguments:
+#  mode: an rtc mode value
+# Returns:
+#  0 if mode is not valid otherwise 1.
+is_not_rtc_mode () {
+  is_rtc_mode "${1}" && return 1 || return 0
 }
 

@@ -49,7 +49,7 @@ sync_drive () {
   local secret="${3}"
   local folder="${4}"
 
-  if [[ -z "${name}" ]]; then
+  if is_not_given "${name}"; then
     on_script_mode &&
       echo 'Missing the remote name' && return 2
 
@@ -63,7 +63,7 @@ sync_drive () {
     return 2
   fi
   
-  if [[ -z "${client}" ]]; then
+  if is_not_given "${client}"; then
     on_script_mode &&
       echo 'Missing the client id' && return 2
 
@@ -72,7 +72,7 @@ sync_drive () {
     client="${REPLY}"
   fi
   
-  if [[ -z "${secret}" ]]; then
+  if is_not_given "${secret}"; then
     on_script_mode &&
       echo 'Missing the client secret' && return 2
 
@@ -81,7 +81,7 @@ sync_drive () {
     secret="${REPLY}"
   fi
   
-  if [[ -z "${folder}" ]] && ! on_script_mode; then
+  if is_not_given "${folder}" && not_on_script_mode; then
     ask 'Enter the root folder id [none]:' || return $?
     folder="${REPLY}"
   fi
@@ -110,7 +110,7 @@ sync_dropbox () {
   local app="${2}"
   local secret="${3}"
 
-  if [[ -z "${name}" ]]; then
+  if is_not_given "${name}"; then
     on_script_mode &&
       echo 'Missing the remote name' && return 2
 
@@ -124,7 +124,7 @@ sync_dropbox () {
     return 2
   fi
 
-  if [[ -z "${app}" ]]; then
+  if is_not_given "${app}"; then
     on_script_mode &&
       echo 'Missing the application key' && return 2
 
@@ -133,7 +133,7 @@ sync_dropbox () {
     app="${REPLY}"
   fi
 
-  if [[ -z "${secret}" ]]; then
+  if is_not_given "${secret}"; then
     on_script_mode &&
       echo 'Missing the application secret' && return 2
 
@@ -162,7 +162,7 @@ sync_dropbox () {
 delete_remote () {
   local name="${1}"
   
-  if [[ -z "${name}" ]]; then
+  if is_not_given "${name}"; then
     on_script_mode &&
       echo 'Missing the remote name' && return 2
 
@@ -171,7 +171,7 @@ delete_remote () {
     name="${REPLY}"
   fi
   
-  if ! exists_remote "${name}"; then
+  if not_exists_remote "${name}"; then
     echo "Remote ${name} not found"
     return 2
   elif is_remote_mounted "${name}"; then
@@ -179,12 +179,12 @@ delete_remote () {
     return 2
   fi
 
-  if ! on_script_mode; then
+  if not_on_script_mode; then
     echo "Remote ${name} will be deleted!"
     confirm 'Do you realy want to proceed?' || return $?
     require 'Confirmation is required' || return 2
     
-    [[ "${REPLY}" != "yes" ]] &&
+    is_not_yes "${REPLY}" &&
       echo 'Deletion operation is canceled' && return 2
   fi
 
@@ -204,7 +204,7 @@ delete_remote () {
 mount_remote () {
   local name="${1}"
 
-  if [[ -z "${name}" ]]; then
+  if is_not_given "${name}"; then
     on_script_mode &&
       echo 'Missing the remote name' && return 2
 
@@ -213,7 +213,7 @@ mount_remote () {
     name="${REPLY}"
   fi
   
-  if ! exists_remote "${name}"; then
+  if not_exists_remote "${name}"; then
     echo "Remote ${name} not found"
     return 2
   elif is_remote_mounted "${name}"; then
@@ -249,7 +249,7 @@ mount_remote () {
 unmount_remote () {
   local name="${1}"
 
-  if [[ -z "${name}" ]]; then
+  if is_not_given "${name}"; then
     on_script_mode &&
       echo 'Missing the remote name' && return 2
     
@@ -258,10 +258,10 @@ unmount_remote () {
     name="${REPLY}"
   fi
   
-  if ! exists_remote "${name}"; then
+  if not_exists_remote "${name}"; then
     echo "Remote ${name} not found"
     return 2
-  elif ! is_remote_mounted "${name}"; then
+  elif is_not_remote_mounted "${name}"; then
     echo "Remote ${name} is not mounted"
     return 2
   fi

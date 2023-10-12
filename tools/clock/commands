@@ -41,10 +41,10 @@ show_status () {
 set_ntp () {
   local status="${1}"
 
-  if [[ -z "${status}" ]]; then
+  if is_not_given "${status}"; then
     echo 'Missing the status mode'
     return 2
-  elif [[ ! "${status}" =~ ^(on|off)$ ]]; then
+  elif is_not_valid_status "${status}"; then
     echo 'Invalid or unknown status mode'
     return 2
   fi
@@ -65,7 +65,7 @@ set_ntp () {
 set_timezone () {
   local name="${1}"
 
-  if [[ -z "${name}" ]]; then
+  if is_not_given "${name}"; then
     on_script_mode &&
       echo 'Missing the timezone' && return 2
 
@@ -74,7 +74,7 @@ set_timezone () {
     name="${REPLY}"
   fi
 
-  if ! validate_timezone "${name}"; then
+  if is_not_timezone "${name}"; then
     echo 'Invalid or unknown timezone value'
     return 2
   fi
@@ -95,10 +95,10 @@ set_timezone () {
 set_time () {
   local time="${1}"
 
-  if [[ -z "${time}" ]]; then
+  if is_not_given "${time}"; then
     echo 'Missing the time'
     return 2
-  elif ! validate_time "${time}"; then
+  elif is_not_valid_time "${time}"; then
     echo 'Invalid or malformed time'
     return 2
   fi
@@ -119,10 +119,10 @@ set_time () {
 set_date () {
   local date="${1}"
 
-  if [[ -z "${date}" ]]; then
+  if is_not_given "${date}"; then
     echo 'Missing the date'
     return 2
-  elif ! validate_date "${date}"; then
+  elif is_not_valid_date "${date}"; then
     echo 'Invalid or malformed date'
     return 2
   fi
@@ -145,10 +145,10 @@ set_date () {
 set_rtc () {
   local mode="${1}"
 
-  if [[ -z "${mode}" ]]; then
+  if is_not_given "${mode}"; then
     echo 'Missing the rtc mode'
     return 2
-  elif [[ ! "${mode}" =~ ^(local|utc)$ ]]; then
+  elif is_not_rtc_mode "${mode}"; then
     echo 'Invalid or unknwon rtc mode'
     return 2
   fi

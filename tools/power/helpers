@@ -43,7 +43,7 @@ pick_power_handler () {
 #  handler: the name of a power handler
 # Returns:
 #  0 if it is valid otherwise 1.
-validate_power_handler () {
+is_power_handler () {
   local handler="${1}"
   
   if [[ ! "${handler}" =~ ^(power|reboot|suspend|lid|docked)$ ]]; then
@@ -51,6 +51,15 @@ validate_power_handler () {
   fi
 
   return 0
+}
+
+# Checks if the given power handler is not valid.
+# Arguments:
+#  handler: the name of a power handler
+# Returns:
+#  0 if it is not valid otherwise 1.
+is_not_power_handler () {
+  is_power_handler "${1}" && return 1 || return 0
 }
 
 # Shows a menu asking the user to select a power action.
@@ -72,7 +81,7 @@ pick_power_action () {
 #  action: the name of a power action
 # Returns:
 #  0 if it is valid otherwise 1.
-validate_power_action () {
+is_power_action () {
   local action="${1}"
   
   if [[ ! "${action}" =~ ^(poweroff|reboot|suspend|ignore)$ ]]; then
@@ -80,6 +89,15 @@ validate_power_action () {
   fi
 
   return 0
+}
+
+# Checks if the given power action is not valid.
+# Arguments:
+#  action: the name of a power action
+# Returns:
+#  0 if it is not valid otherwise 1.
+is_not_power_action () {
+  is_power_action "${1}" && return 1 || return 0
 }
 
 # Resolves the corresponding logind config option
@@ -116,7 +134,7 @@ save_screen_saver_to_settings () {
   local settings='{}'
   local screensaver="{\"interval\": ${interval}}"
 
-  if [[ -f "${SETTINGS_FILE}" ]]; then
+  if file_exists "${SETTINGS_FILE}"; then
     settings="$(jq -e ".screensaver = ${screensaver} " "${SETTINGS_FILE}")" || return 1
   else
     settings="$(echo "{\"screensaver\": ${screensaver}}" | jq -e '.')" || return 1
@@ -124,5 +142,53 @@ save_screen_saver_to_settings () {
 
   mkdir -p "${CONFIG_HOME}"
   echo "${settings}" > "${SETTINGS_FILE}"
+}
+
+# Checks if the given value is a valid screensaver interval.
+# Arguments:
+#  interval: an integer value
+# Returns:
+#  0 if interval is valid otherwise 1.
+interval_is_with_in_range () {
+  local interval="${1}"
+
+  if [[ ${interval} -lt 0 ]] || [[ ${interval} -gt 60 ]]; then
+    return 1
+  fi
+
+  return 0
+}
+
+# Checks if the given value is not valid screensaver interval.
+# Arguments:
+#  interval: an integer value
+# Returns:
+#  0 if interval is not valid otherwise 1.
+interval_is_out_of_range () {
+  interval_is_with_in_range "${1}" && return 1 || return 0
+}
+
+# Checks if the given value is a valid charging limit.
+# Arguments:
+#  limit: a percentage integer value
+# Returns:
+#  0 if value is valid otherwise 1.
+charge_limit_is_with_in_range () {
+  local limit="${1}"
+
+  if [[ ${limit} -lt 0 ]] || [[ ${limit} -gt 100 ]]; then
+    return 1
+  fi
+
+  return 0
+}
+
+# Checks if the given value is not valid charging limit.
+# Arguments:
+#  limit: a percentage integer value
+# Returns:
+#  0 if value is not valid otherwise 1.
+charge_limit_is_out_of_range () {
+  charge_limit_is_with_in_range "${1}" && return 1 || return 0
 }
 

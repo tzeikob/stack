@@ -16,7 +16,7 @@ kill_screen_locker () {
   pids="$(ps aux | jc --ps | jq -cr "${query}")" || return 1
 
   # Kill processes one by one
-  if [[ -n "${pids}" ]]; then
+  if is_not_empty "${pids}"; then
     local pid=''
     while read -r pid; do
       kill "${pid}"
@@ -34,7 +34,7 @@ save_screen_locker_to_settings () {
   local settings='{}'
   local object="{\"interval\": ${interval}}"
 
-  if [[ -f "${SETTINGS_FILE}" ]]; then
+  if file_exists "${SETTINGS_FILE}"; then
     settings="$(jq -e ".screen_locker = ${object} " "${SETTINGS_FILE}")" || return 1
   else
     settings="$(echo "{\"screen_locker\": ${object}}" | jq -e '.')" || return 1
@@ -56,5 +56,29 @@ is_screen_locked () {
   is_locked="$(ps aux | grep -v 'jq' | jc --ps | jq -cr "${query}")" || return 1
 
   echo "${is_locked}"
+}
+
+# Checks if the given interval time is valid.
+# Arguments:
+#  interval: an integer value
+# Returns:
+#  0 if interval is valid otherwise 1.
+is_interval_with_in_range () {
+  local interval="${1}"
+  
+  if [[ ${interval} -lt 0 ]] || [[ ${interval} -gt 60 ]]; then
+    return 1
+  fi
+
+  return 0
+}
+
+# Checks if the given interval time is not valid.
+# Arguments:
+#  interval: an integer value
+# Returns:
+#  0 if interval is not valid otherwise 1.
+is_interval_out_of_range () {
+  is_interval_with_in_range "${1}" && return 1 || return 0
 }
 

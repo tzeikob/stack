@@ -21,15 +21,15 @@ list_files () {
 
   local query=''
 
-  if [[ "${filter}" =~ ^[0-9]+$ ]]; then
+  if is_positive_integer "${filter}"; then
     query="[.[]|select((now - .epoch) / 86400 < ${filter})]"
-  elif [[ "${filter}" =~ ^\+[0-9]+$ ]]; then
+  elif is_positive_integer "${filter}" && [[ "${filter}" =~ ^\+ ]]; then
     filter="$(echo "${filter}" | tr -d '+')"
     query="[.[]|select((now - .epoch) / 86400 > ${filter})]"
-  elif [[ "${filter}" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] && date -d "${filter}" &> /dev/null; then
+  elif is_date "${filter}"; then
     filter="$(date -d ${filter} +%s)"
     query="[.[]|select(${filter} - .epoch_date == 0)]"
-  elif [[ -z "${filter}" ]]; then
+  elif is_not_given "${filter}"; then
     query='.'
   else
     echo 'Invalid filter value'
@@ -37,12 +37,7 @@ list_files () {
   fi
 
   local files=''
-  files="$(find_files | jq -cer "${query}")"
-
-  if [[ $? -ne 0 ]]; then
-    echo 'Unable to read trashed files'
-    return 2
-  fi
+  files="$(find_files | jq -cer "${query}")" || return 1
 
   local len=0
   len="$(count "${files}")" || return 1
@@ -81,7 +76,7 @@ restore_files () {
     on_script_mode &&
       echo 'No file paths are given' && return 2
 
-    pick_many 'Select files to restore:' "${files}" '1,' vertical || return $?
+    pick_many 'Select files to restore:' "${files}" vertical || return $?
     require 'File paths are required' || return 2
     local picked="${REPLY}"
 
@@ -96,7 +91,7 @@ restore_files () {
       local path=''
       path="$(echo "${files}" | jq -cr "${query}")"
 
-      if [[ -f "${path}" ]]; then
+      if file_exists "${path}"; then
         echo "Refused to overwrite file ${path}"
         continue
       fi
@@ -105,7 +100,7 @@ restore_files () {
     done
 
     # Remove extra comma from the last element
-    if [[ -n "${file_keys}" ]]; then
+    if is_not_empty "${file_keys}"; then
       file_keys="${file_keys::-1}"
     fi
   else
@@ -124,7 +119,7 @@ restore_files () {
         continue
       fi
 
-      if [[ -f "${path}" ]]; then
+      if file_exists "${path}"; then
         echo "Refused to overwrite file ${path}"
         continue
       fi
@@ -133,7 +128,7 @@ restore_files () {
     done
 
     # Discard possible duplicated files
-    if [[ -n "${file_keys}" ]]; then
+    if is_not_empty "${file_keys}"; then
       file_keys="[${file_keys::-1}]"
       file_keys="$(echo "${file_keys}" | jq -cr 'unique|join(",")')"
     fi
@@ -184,20 +179,18 @@ remove_files () {
     on_script_mode &&
       echo 'No file paths are given' && return 2
 
-    pick_many 'Select files to remove:' "${files}" '1,' vertical || return $?
+    pick_many 'Select files to remove:' "${files}" vertical || return $?
     require 'File paths are required' || return 2
     local selected_paths="${REPLY}"
 
     readarray -t paths < <(echo "${selected_paths}" | jq -cr '.[]')
   fi
 
-  if [[ -z "${FORCED}" ]] || [[ "${FORCED}" != "true" ]]; then
+  if not_on_script_mode; then
     confirm 'File(s) will be gone forever, proceed?' || return $?
   
-    if [[ "${REPLY}" != "yes" ]]; then
-      echo 'No trashed files removed'
-      return 2
-    fi
+    is_not_yes "${REPLY}" &&
+      echo 'No trashed files removed' && return 2
   fi
 
   local index=0
@@ -235,7 +228,7 @@ remove_files () {
 empty_files () {
   local days="${1}"
   
-  if [[ -n "${days}" ]] && [[ ! "${days}" =~ ^[0-9]+$ ]]; then
+  if is_given "${days}" && is_not_positive_integer "${days}"; then
     echo 'Invalid days filter'
     return 2
   fi
@@ -248,10 +241,10 @@ empty_files () {
     return 2
   fi
   
-  if [[ -z "${FORCED}" ]] || [[ "${FORCED}" != "true" ]]; then
+  if not_on_script_mode; then
     local prompt=''
 
-    if [[ -z "${days}" ]]; then
+    if is_not_given "${days}"; then
       prompt='ALL trashed files will be gone, proceed?'
     else
       prompt="Files trashed more than ${days} days ago will be gone, proceed?"
@@ -259,10 +252,8 @@ empty_files () {
   
     confirm "${prompt}" || return $?
 
-    if [[ "${REPLY}" != "yes" ]]; then
-      echo 'No trashed files removed'
-      return 2
-    fi
+    is_not_yes "${REPLY}" &&
+      echo 'No trashed files removed' && return 2
   fi
 
   trash-empty -f "${days:-0}"

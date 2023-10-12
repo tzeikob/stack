@@ -26,7 +26,7 @@ show_status () {
   locales="$(locale -a | awk '{ORS=", ";} {print $0}')" || return 1
 
   # Remove extra comma after the last locale element
-  if [[ -n "${locales}" ]]; then
+  if is_not_empty "${locales}"; then
     locales="${locales::-2}"
   fi
 
@@ -40,7 +40,7 @@ show_status () {
 set_keymap () {
   local map="${1}"
 
-  if [[ -z "${map}" ]]; then
+  if is_not_given "${map}"; then
     on_script_mode &&
       echo 'Missing the keyboard map' && return 2
 
@@ -49,7 +49,7 @@ set_keymap () {
     map="${REPLY}"
   fi
 
-  if ! validate_keymap "${map}"; then
+  if is_not_keymap "${map}"; then
     echo 'Invalid or unknown keyboard map'
     return 2
   fi
@@ -71,7 +71,7 @@ set_keymap () {
 set_locale () {
   local name="${1}"
   
-  if [[ -z "${name}" ]]; then
+  if is_not_given "${name}"; then
     on_script_mode &&
      echo 'Missing the locale name' && return 2
 
@@ -80,10 +80,10 @@ set_locale () {
     name="${REPLY}"
   fi
 
-  if ! validate_locale "${name}"; then
+  if is_not_locale "${name}"; then
     echo 'Invalid or unknown locale'
     return 2
-  elif ! is_locale_installed "${name}"; then
+  elif is_locale_not_installed "${name}"; then
     echo "Locale ${name} is not currently added"
     return 2
   fi
@@ -126,7 +126,7 @@ set_locale () {
 set_options () {
   local value="${1}"
 
-  if [[ -z "${value}" ]]; then
+  if is_not_given "${value}"; then
     on_script_mode &&
       echo 'Missing the options value' && return 2
 
@@ -135,7 +135,7 @@ set_options () {
     value="${REPLY}"
   fi
 
-  if ! validate_layout_options "${value}"; then
+  if is_not_layout_options "${value}"; then
     echo 'Invalid or unknown options value'
     return 2
   fi
@@ -165,7 +165,7 @@ set_options () {
 set_model () {
   local name="${1}"
 
-  if [[ -z "${name}" ]]; then
+  if is_not_given "${name}"; then
     on_script_mode &&
       echo 'Missing the keyboard model name' && return 2
 
@@ -174,7 +174,7 @@ set_model () {
     name="${REPLY}"
   fi
 
-  if ! validate_keyboard_model "${name}"; then
+  if is_not_keyboard_model "${name}"; then
     echo 'Invalid or unknown keyboard model name'
     return 2
   fi
@@ -204,7 +204,7 @@ set_model () {
 add_locale () {
   local name="${1}"
 
-  if [[ -z "${name}" ]]; then
+  if is_not_given "${name}"; then
     on_script_mode &&
       echo 'Missing the locale name' && return 2
 
@@ -213,7 +213,7 @@ add_locale () {
     name="${REPLY}"
   fi
 
-  if ! validate_locale "${name}"; then
+  if is_not_locale "${name}"; then
     echo 'Invalid or unknown locale'
     return 2
   elif is_locale_installed "${name}"; then
@@ -238,7 +238,7 @@ add_locale () {
 remove_locale () {
   local name="${1}"
 
-  if [[ -z "${name}" ]]; then
+  if is_not_given "${name}"; then
     on_script_mode &&
       echo 'Missing the locale name' && return 2
 
@@ -247,10 +247,10 @@ remove_locale () {
     name="${REPLY}"
   fi
 
-  if ! validate_locale "${name}"; then
+  if is_not_locale "${name}"; then
     echo 'Invalid or unknown locale'
     return 2
-  elif ! is_locale_installed "${name}"; then
+  elif is_locale_not_installed "${name}"; then
     echo "Locale ${name} is already removed"
     return 2
   elif [[ "${name}" == "en_US.UTF-8 UTF-8" ]]; then
@@ -275,7 +275,7 @@ remove_locale () {
 add_layout () {
   local code="${1}"
 
-  if [[ -z "${code}" ]]; then
+  if is_not_given "${code}"; then
     on_script_mode &&
       echo 'Missing the layout code' && return 2
 
@@ -284,7 +284,7 @@ add_layout () {
     code="${REPLY}"
   fi
 
-  if ! validate_layout "${code}"; then
+  if is_not_layout "${code}"; then
     echo 'Invalid or unknown layout code'
     return 2
   fi
@@ -298,7 +298,7 @@ add_layout () {
     return 2
   fi
 
-  if [[ -n "${layouts}" ]]; then
+  if is_not_empty "${layouts}"; then
     layouts="${layouts},${code}"
   else
     layouts="${code}"
@@ -329,37 +329,28 @@ add_layout () {
 remove_layout () {
   local code="${1}"
 
-  local layouts=''
-  layouts="$(cat /etc/X11/xorg.conf.d/00-keyboard.conf |
-    awk '/XkbLayout/{print $3}' | tr -d '"')" || return 1
-
-  if [[ -z "${layouts}" ]]; then
-    echo 'No layouts have set yet'
-    return 2
-  fi
-
-  if [[ -z "${code}" ]]; then
+  if is_not_given "${code}"; then
     on_script_mode &&
       echo 'Missing the layout code' && return 2
 
-    local codes=''
-    codes="$(echo "${layouts}" | tr ',' '\n' | awk '{
-      print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
-    }')" || return 1
-    codes="[${codes::-1}]"
-
-    pick_one 'Select a layout code:' "${codes}" horizontal || return $?
+    pick_layout installed || return $?
     require 'Layout code is required' || return 2
     code="${REPLY}"
   fi
 
-  if ! validate_layout "${code}"; then
+  if is_not_layout "${code}"; then
     echo 'Invalid or unknown layout code'
     return 2
   elif [[ "${code}" == "us" ]]; then
     echo 'Default layout cannot be removed'
     return 2
-  elif [[ "${layouts}" == "${code}" ]]; then
+  fi
+
+  local layouts=''
+  layouts="$(cat /etc/X11/xorg.conf.d/00-keyboard.conf |
+      awk '/XkbLayout/{print $3}' | tr -d '"')" || return 1
+  
+  if [[ "${layouts}" == "${code}" ]]; then
     echo 'Cannot remove the only layout'
     return 2
   elif [[ ! "${layouts}" =~ "${code}" ]]; then
