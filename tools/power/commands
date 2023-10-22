@@ -288,12 +288,12 @@ set_tlp () {
   if is_not_given "${status}"; then
     echo 'Missing the power saving status'
     return 2
-  elif [[ ! "${status}" =~ ^(on|off)$ ]]; then
+  elif is_not_toggle "${status}"; then
     echo 'Invalid power saving status'
     return 2
   fi
 
-  if [[ "${status}" == "on" ]]; then
+  if is_on "${status}" ]]; then
     echo 'Enabling power saving mode...'
     sudo systemctl stop acpid.service &> /dev/null &&
     sudo systemctl disable acpid.service &> /dev/null &&

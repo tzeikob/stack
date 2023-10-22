@@ -1107,7 +1107,7 @@ power_network () {
   if is_not_given "${mode}"; then
     echo 'Missing network power mode'
     return 2
-  elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
+  elif is_not_toggle "${mode}"; then
     echo 'Invalid network power mode'
     return 2
   fi
@@ -1133,7 +1133,7 @@ power_wifi () {
   if is_not_given "${mode}"; then
     echo 'Missing wifi power mode'
     return 2
-  elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
+  elif is_not_toggle "${mode}"; then
     echo 'Invalid wifi power mode'
     return 2
   fi

@@ -253,7 +253,7 @@ set_power () {
   if is_not_given "${mode}"; then
     echo 'Missing power mode'
     return 2
-  elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
+  elif is_not_toggle "${mode}"; then
     echo 'Invalid power mode'
     return 2
   fi
@@ -282,7 +282,7 @@ set_scan () {
   if is_not_given "${mode}"; then
     echo 'Missing scanning mode'
     return 2
-  elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
+  elif is_not_toggle "${mode}"; then
     echo 'Invalid scanning mode'
     return 2
   fi
@@ -295,16 +295,14 @@ set_scan () {
   # Kill any running scanning proccesses
   kill_scanning_proccesses || return 1
   
-  if [[ "${mode}" == "on" ]]; then
+  if is_on "${mode}"; then
     bluetoothctl scan on &> /dev/null &
-  fi
 
-  if [[ "${mode}" == "on" ]] && ! is_scanning_on ; then
-    echo 'Failed to set scanning mode to on'
-    return 2
-  elif [[ "${mode}" == "off" ]] && is_scanning_on ; then
-    echo 'Failed to set scanning mode to off'
-    return 2
+    is_not_scanning &&
+      echo 'Failed to enable scanning mode' && return 2
+  else
+    is_scanning &&
+      echo 'Failed to disable scanning mode' && return 2
   fi
 
   echo "Scanning mode set to ${mode}"
@@ -319,7 +317,7 @@ set_discoverable () {
   if is_not_given "${mode}"; then
     echo 'No discoverable mode given'
     return 2
-  elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
+  elif is_not_toggle "${mode}"; then
     echo 'Invalid discoverable mode'
     return 2
   fi
@@ -348,7 +346,7 @@ set_pairable () {
   if is_not_given "${mode}"; then
     echo 'No pairable mode given'
     return 2
-  elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
+  elif is_not_toggle "${mode}"; then
     echo 'Invalid pairable mode'
     return 2
   fi

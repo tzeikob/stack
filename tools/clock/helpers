@@ -126,30 +126,6 @@ is_not_valid_date () {
   is_valid_date "${1}" && return 1 || return 0
 }
 
-# Checks if the given status is valid.
-# Arguments:
-#  status: a status value
-# Returns:
-#  0 if status is valid otherwise 1.
-is_valid_status () {
-  local status="${1}"
-
-  if [[ ! "${status}" =~ ^(on|off)$ ]]; then
-    return 1
-  fi
-
-  return 0
-}
-
-# Checks if the given status is not valid.
-# Arguments:
-#  status: a status value
-# Returns:
-#  0 if status is not valid otherwise 1.
-is_not_valid_status () {
-  is_valid_status "${1}" && return 1 || return 0
-}
-
 # Checks if the given mode is a valid RTC mode.
 # Arguments:
 #  mode: an rtc mode value

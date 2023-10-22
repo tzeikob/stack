@@ -63,11 +63,10 @@ find_device () {
   bluetoothctl info "${address}" | jc --bluetoothctl || return 1
 }
 
-# Checks if the scanning mode of default controller
-# is set to on.
+# Checks if the default controller is on scanning mode
 # Returns:
 #  0 if scanning is on otherwise 1.
-is_scanning_on () {
+is_scanning () {
   local mode=''
   mode="$(find_controller | jq -cer '.[0]|.discovering')" || return 1
 
@@ -76,6 +75,13 @@ is_scanning_on () {
   else
     return 1
   fi
+}
+
+# Checks if the default controller is not in scanning mode.
+# Returns:
+#  0 if scanning is off otherwise 1.
+is_not_scanning () {
+  is_scanning && return 1 || return 0
 }
 
 # Shows a menu asking the user to select a controller.

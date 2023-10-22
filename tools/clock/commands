@@ -44,7 +44,7 @@ set_ntp () {
   if is_not_given "${status}"; then
     echo 'Missing the status mode'
     return 2
-  elif is_not_valid_status "${status}"; then
+  elif is_not_toggle "${status}"; then
     echo 'Invalid or unknown status mode'
     return 2
   fi

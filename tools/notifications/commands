@@ -189,7 +189,7 @@ set_popup () {
   if is_not_given "${mode}"; then
     echo 'Missing popup mode'
     return 2
-  elif [[ ! "${mode}" =~ ^(on|off)$ ]]; then
+  elif is_not_toggle "${mode}"; then
     echo 'Invalid popup mode'
     return 2
   fi
@@ -204,7 +204,7 @@ set_popup () {
 
   # Convert mode to transparency value
   local value=0
-  if [[ "${mode}" == "off" ]]; then
+  if is_off "${mode}"; then
     value=100
   fi
 
