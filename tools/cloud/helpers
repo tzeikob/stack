@@ -63,9 +63,7 @@ find_remotes () {
     done;)" || return 1
   
   # Remove extra comma after the last array element
-  if is_not_empty "${remotes}"; then
-    remotes="${remotes::-1}"
-  fi
+  remotes="${remotes:+${remotes::-1}}"
 
   echo "[${remotes}]"
 }

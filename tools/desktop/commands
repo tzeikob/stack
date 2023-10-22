@@ -54,9 +54,7 @@ show_status () {
   )" || return 1
 
   # Remove the last extra comma after the last field
-  if is_not_empty "${status}"; then
-    status="${status::-1}"
-  fi
+  status="${status:+${status::-1}}"
 
   status="{${status}}"
 

@@ -462,9 +462,7 @@ list_mounts () {
   }')" || return 1
 
   # Remove the extra comma after the last element
-  if is_not_empty "${folders}"; then
-    folders="${folders::-1}"
-  fi
+  folders="${folders:+${folders::-1}}"
 
   folders="[${folders}]"
 
@@ -483,9 +481,7 @@ list_mounts () {
   }')" || return 1
 
   # Remove the extra comma after the last element
-  if is_not_empty "${images}"; then
-    images="${images::-1}"
-  fi
+  images="${images:+${images::-1}}"
 
   images="[${images}]"
 

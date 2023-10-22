@@ -38,9 +38,7 @@ find_wallpapers () {
   )"
   
   # Remove the extra comma after the last array element
-  if is_not_empty "${wallpapers}"; then
-    wallpapers="${wallpapers::-1}"
-  fi
+  wallpapers="${wallpapers:+${wallpapers::-1}}"
 
   echo "[${wallpapers}]"
 }
@@ -110,9 +108,7 @@ find_pointers () {
   }')" || return 1
 
   # Remove the extra comma after the last element
-  if is_not_empty "${pointers}"; then
-    pointers="${pointers::-1}"
-  fi
+  pointers="${pointers:+${pointers::-1}}"
 
   echo "[${pointers}]"
 }
@@ -164,9 +160,7 @@ find_pointer () {
   }')" || return 1
 
   # Remove the extra comma after the last element
-  if is_not_empty "${pointer}"; then
-    pointer="${pointer::-1}"
-  fi
+  pointer="${pointer:+${pointer::-1}}"
 
   echo "{${pointer}}"
 }
@@ -217,9 +211,7 @@ find_tablets () {
   }')" || return 1
 
   # Remove the extra comma after the last element
-  if is_not_empty "${tablets}"; then
-    tablets="${tablets::-1}"
-  fi
+  tablets="${tablets:+${tablets::-1}}"
 
   echo "[${tablets}]"
 }
@@ -249,9 +241,7 @@ find_tablet () {
     }')" || return 1
 
     # Remove the extra comma after the last key/value pair
-    if is_not_empty "${props}"; then
-      props="${props::-1}"
-    fi
+    props="${props:+${props::-1}}"
 
     tablet="$(echo "${tablet}" | jq -cer --argjson p "{${props}}" '. + $p')" || return 1
   fi

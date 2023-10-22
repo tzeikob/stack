@@ -18,7 +18,9 @@ pick_timezone () {
   }')" || return 1
 
   # Remove the extra comma after the last array element
-  timezones="[${timezones::-1}]"
+  timezones="${timezones:+${timezones::-1}}"
+
+  timezones="[${timezones}]"
 
   local len=0
   len=$(count "${timezones}") || return 1

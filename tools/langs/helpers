@@ -15,7 +15,9 @@ pick_keymap () {
 	}')" || return 1
 
 	# Remove extra comma delimiter from the last element
-	maps="[${maps::-1}]"
+	maps="${maps:+${maps::-1}}"
+
+  maps="[${maps}]"
 
 	pick_one 'Select a key map:' "${maps}" vertical || return $?
 }
@@ -74,7 +76,9 @@ pick_locale () {
   fi
   
 	# Removes the last comma delimiter from the last element
-  locales="[${locales::-1}]"
+  locales="${locales:+${locales::-1}}"
+
+  locales="[${locales}]"
 
   pick_one 'Select a locale:' "${locales}" vertical || return $?
 }
@@ -139,7 +143,9 @@ pick_options_value () {
   }')" ||  return 1
 
   # Remove extra comma delimiter from last element
-  options="[${options::-1}]"
+  options="${options:+${options::-1}}"
+
+  options="[${options}]"
 
   pick_one 'Select an options value:' "${options}" vertical || return $?
 }
@@ -181,7 +187,9 @@ pick_keyboard_model () {
   }')" || return 1
 
   # Remove the extra comma delimiter from the last element
-  models="[${models::-1}]"
+  models="${models:+${models::-1}}"
+
+  models="[${models}]"
 
   pick_one 'Select a model name:' "${models}" vertical || return $?
 }
@@ -238,7 +246,9 @@ pick_layout () {
   fi
   
   # Remove the extra comma delimiter from last element
-  layouts="[${layouts::-1}]"
+  layouts="${layouts:+${layouts::-1}}"
+
+  layouts="[${layouts}]"
 
   pick_one 'Select a layout code:' "${layouts}" vertical || return $?
 }

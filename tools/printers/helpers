@@ -33,9 +33,7 @@ find_destinations () {
   }')"
 
   # Remove the extra comma after the last element
-  if is_not_empty "${destinations}"; then
-    destinations="${destinations::-1}"
-  fi
+  destinations="${destinations:+${destinations::-1}}"
 
   echo "[${destinations}]"
 }
@@ -60,9 +58,7 @@ find_destination () {
   }')" || return 1
 
   # Remove the extra comma after the last pair
-  if is_not_empty "${options}"; then
-    options="${options::-1}"
-  fi
+  options="${options:+${options::-1}}"
 
   options="{${options}}"
 
@@ -168,9 +164,7 @@ discover_destinations () {
   }')" || return 1
 
   # Remove the extra comma after the last element
-  if is_not_empty "${destinations}"; then
-    destinations="${destinations::-1}"
-  fi
+  destinations="${destinations:+${destinations::-1}}"
 
   echo "[${destinations}]"
 }
@@ -196,9 +190,7 @@ find_jobs () {
   }')" || return 1
 
   # Remove the extra comma after the last element
-  if is_not_empty "${jobs}"; then
-    jobs="${jobs::-1}"
-  fi
+  jobs="${jobs:+${jobs::-1}}"
 
   echo "[${jobs}]"
 }
@@ -304,9 +296,7 @@ find_drivers () {
   }')" || return 1
   
   # Remove the extra comma after the last element
-  if is_not_empty "${drivers}"; then
-    drivers="${drivers::-1}"
-  fi
+  drivers="${drivers:+${drivers::-1}}"
 
   echo "[${drivers}]"
 }

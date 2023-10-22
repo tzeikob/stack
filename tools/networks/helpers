@@ -128,9 +128,7 @@ find_wifis () {
   )" || return 1
 
   # Remove the last comma after the last element
-  if is_not_empty "${networks}"; then
-    networks="${networks::-1}"
-  fi
+  networks="${networks:+${networks::-1}}"
 
   echo "[${networks}]"
 }

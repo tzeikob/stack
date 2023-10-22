@@ -100,9 +100,7 @@ restore_files () {
     done
 
     # Remove extra comma from the last element
-    if is_not_empty "${file_keys}"; then
-      file_keys="${file_keys::-1}"
-    fi
+    file_keys="${file_keys:+${file_keys::-1}}"
   else
     local index=0
     for ((index = 0; index < ${#paths[@]}; index++)); do
@@ -127,11 +125,13 @@ restore_files () {
       file_keys+="${key},"
     done
 
+    # Remove the extra comma delimiter from last element
+    file_keys="${file_keys:+${file_keys::-1}}"
+
+    file_keys="[${file_keys}]"
+
     # Discard possible duplicated files
-    if is_not_empty "${file_keys}"; then
-      file_keys="[${file_keys::-1}]"
-      file_keys="$(echo "${file_keys}" | jq -cr 'unique|join(",")')"
-    fi
+    file_keys="$(echo "${file_keys}" | jq -cr 'unique|join(",")')"
   fi
 
   trash-restore / &> /dev/null <<< "${file_keys}"

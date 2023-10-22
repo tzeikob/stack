@@ -610,9 +610,7 @@ find_shared_folders () {
     awk '/Disk/{print "{\"name\":\""$1"\",\"type\":\""$2"\"},"}')" || return 1
 
   # Remove the extra comma after the last element
-  if is_not_empty "${folders}"; then
-    folders="${folders::-1}"
-  fi
+  folders="${folders:+${folders::-1}}"
 
   echo "[${folders}]"
 }
@@ -809,9 +807,7 @@ pick_image_mount () {
   }')" || return 1
 
   # Remove the extra comma after the last element
-  if is_not_empty "${mounts}"; then
-    mounts="${mounts::-1}"
-  fi
+  mounts="${mounts:+${mounts::-1}}"
 
   mounts="[${mounts}]"
 
@@ -840,9 +836,7 @@ pick_shared_folder_mount () {
   }')" || return 1
 
   # Remove the extra comma after the last element
-  if is_not_empty "${uris}"; then
-    uris="${uris::-1}"
-  fi
+  uris="${uris:+${uris::-1}}"
 
   uris="[${uris}]"
 

@@ -31,9 +31,7 @@ find_files () {
   }')" || return 1
 
   # Remove the extra comma after the last element
-  if is_not_empty "${files}"; then
-    files="${files::-1}"
-  fi
+  files="${files:+${files::-1}}"
 
   echo "[${files}]"
 }
@@ -60,9 +58,7 @@ find_restorable_files () {
   }')" || return 1
 
   # Remove the extra comma after the last element
-  if is_not_empty "${files}"; then
-    files="${files::-1}"
-  fi
+  files="${files:+${files::-1}}"
   
   echo "[${files}]"
 }

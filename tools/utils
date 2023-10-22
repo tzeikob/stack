@@ -78,9 +78,7 @@ find_hosts () {
   done <<< "${ips}"
 
   # Remove the extra comma after the last element
-  if is_not_empty "${hosts}"; then
-    hosts="${hosts::-1}"
-  fi
+  hosts="${hosts:+${hosts::-1}}"
 
   echo "[${hosts}]"
 }
