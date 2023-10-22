@@ -311,7 +311,7 @@ set_profile () {
   local exists=''
   exists="$(echo "${card}" | jq -cer ".profiles|has(\"${profile_name}\")")"
 
-  if [[ "${exists}" == "false" ]]; then
+  if is_false "${exists}"; then
     echo 'Invalid or unknown profile name'
     return 2
   fi
@@ -521,7 +521,7 @@ set_mute () {
     status='mute'
   fi
 
-  if [[ "${failed}" == "true" ]]; then
+  if is_true "${failed}"; then
     echo "Some ${type} modules failed to ${status}"
     return 2
   fi

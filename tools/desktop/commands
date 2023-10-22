@@ -272,7 +272,7 @@ set_pointer_speed () {
     succeed='true'
   done <<< "${devices}"
 
-  if [[ "${succeed}" == "false" ]]; then
+  if is_false "${succeed}"; then
     echo 'Failed to set pointer speed'
     return 2
   fi

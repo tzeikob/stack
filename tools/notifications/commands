@@ -9,7 +9,7 @@ source /opt/stack/notifications/helpers
 start () {
   local is_up="$(is_notifications_up)" || return 1
   
-  if [[ "${is_up}" == "true"  ]]; then
+  if is_true "${is_up}"; then
     echo 'Notifications service is already runnning'
     return 2
   fi
@@ -92,7 +92,7 @@ get_state () {
 show_status () {
   local is_up="$(is_notifications_up)" || return 1
 
-  if [[ "${is_up}" == "true" ]]; then
+  if is_true "${is_up}"; then
     echo 'Service Status:    up'
   else
     echo 'Service Status:    down'

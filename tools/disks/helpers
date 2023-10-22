@@ -226,7 +226,7 @@ is_system_disk () {
   local result=''
   result="$(echo "${disk}" | jq -cr "${query}")" || return 1
 
-  if [[ "${result}" == "true" ]]; then
+  if is_true "${result}"; then
     return 0
   fi
 
@@ -237,7 +237,7 @@ is_system_disk () {
 
   result="$(echo "${disk}" | jq -cr "${query}")" || return 1
 
-  if [[ "${result}" == "true" ]]; then
+  if is_true "${result}"; then
     return 0
   else
     return 1
@@ -303,7 +303,7 @@ is_system_partition () {
   local result=''
   result="$(find_partition "${path}" | jq -cer "${query}")" || return 1
 
-  if [[ "${result}" == "true" ]]; then
+  if is_true "${result}"; then
     return 0
   else
     return 1

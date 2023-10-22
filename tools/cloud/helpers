@@ -43,7 +43,7 @@ find_remotes () {
       remote+="\"service\": \"${service}\","
       remote+="\"is_mounted\": ${is_mounted}"
 
-      if [[ "${is_mounted}" == "true" ]]; then
+      if is_true "${is_mounted}"; then
         remote+=",\"mount_point\": \"${mount_point}\""
       fi
 
@@ -51,11 +51,11 @@ find_remotes () {
 
       case "${status}" in
         mounted)
-          if [[ "${is_mounted}" == "true" ]]; then
+          if is_true "${is_mounted}"; then
             echo -n "${remote},"
           fi;;
         unmounted)
-          if [[ "${is_mounted}" == "false" ]]; then
+          if is_false "${is_mounted}"; then
             echo -n "${remote},"
           fi;;
         *) echo -n "${remote},";;

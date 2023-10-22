@@ -434,7 +434,7 @@ order_layouts () {
   local has_duplications=''
   has_duplications="$(echo "${codes}" | jq -cr "${query}")" || return 1
 
-  if [[ "${has_duplications}" == "true" ]]; then
+  if is_true "${has_duplications}"; then
     echo 'Layout codes should be unique values'
     return 2
   fi
@@ -448,7 +448,7 @@ order_layouts () {
   local match=''
   match="$(echo "${layouts}" | jq -cr --argjson o "${codes}" "${query}")" || return 1
 
-  if [[ "${match}" == "false" ]]; then
+  if is_false "${match}"; then
     echo 'Layout codes do not match with current layouts'
     return 2
   fi

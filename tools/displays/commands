@@ -1296,7 +1296,7 @@ restore_colors () {
     fi
   done <<< "${xcalib_cmds}"
 
-  if [[ "${failed}" == "true" ]]; then
+  if is_true "${failed}"; then
     echo 'Failed to restore color settings'
     return 2
   fi

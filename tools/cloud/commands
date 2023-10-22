@@ -318,7 +318,7 @@ mount_all () {
     echo "Remote ${remote} has been mounted"
   done <<< "${remotes}"
 
-  if [[ "${failed}" == "true" ]]; then
+  if is_true "${failed}"; then
     echo 'Some remotes failed to be mounted'
     return 2
   fi

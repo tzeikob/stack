@@ -122,7 +122,7 @@ init_screen_locker () {
 lock_screen () {
   local is_locked="$(is_screen_locked)" || return 1
   
-  if [[ "${is_locked}" == "true" ]]; then
+  if is_true "${is_locked}"; then
     echo 'Screen locker is already running'
     return 2
   fi
@@ -130,7 +130,7 @@ lock_screen () {
   local is_paused=''
   is_paused="$(notifications -qs get state | jq -cr '.is_paused')"
 
-  if [[ "${is_paused}" == "false" ]]; then
+  if is_false "${is_paused}"; then
     notifications -qs mute all
   fi
 
@@ -146,7 +146,7 @@ lock_screen () {
   fi
 
   # Reset notifications stream to previous state
-  if [[ "${is_paused}" == "false" ]]; then
+  if is_false "${is_paused}"; then
     notifications -qs unmute all
   fi
 }
