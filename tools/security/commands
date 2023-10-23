@@ -73,7 +73,7 @@ set_screen_locker () {
       -nowlocker 'security -qs lock screen' -time "${interval}" \
       -corners 0-00 -detectsleep &> /dev/null &
     
-    if [[ $? -ne 0 ]]; then
+    if has_failed; then
       echo 'Failed to set screen locker'
       return 2
     fi
@@ -105,7 +105,7 @@ init_screen_locker () {
       -time "${interval}" \
       -corners 0-00 -detectsleep &> /dev/null &
     
-    if [[ $? -ne 0 ]]; then
+    if has_failed; then
       echo 'Failed to initialize the screen locker'
       return 2
     fi
@@ -140,7 +140,7 @@ lock_screen () {
     XSECURELOCK_BLANK_TIMEOUT=-1 \
     xsecurelock >/dev/null 2>&1
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Unable to lock the screen'
     return 2
   fi
@@ -158,7 +158,7 @@ set_user_password () {
   
   authenticate_user "${password}"
   
-  if [[ $? -ne 0 ]] ; then
+  if has_failed; then
     echo 'Sorry incorrect password!'
     return 2
   fi
@@ -169,7 +169,7 @@ set_user_password () {
   
   confirm_secret 'Retype new password:' "${new_password}"
   
-  if [[ $? -ne 0 ]] ; then
+  if has_failed; then
     echo 'New password does not match!'
     return 2
   fi
@@ -177,7 +177,7 @@ set_user_password () {
   echo -e "${password}\n${new_password}\n${new_password}" |
     passwd --quiet >/dev/null 2>&1
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to set user password'
     return 2
   fi
@@ -189,7 +189,7 @@ set_user_password () {
 logout_user () {
   bspc quit
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to logout the user'
     return 2
   fi
@@ -215,7 +215,7 @@ set_faillock_attempts () {
 
   sudo -k sed -ri "s;deny =.*;deny = ${attempts};" /etc/security/faillock.conf
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to set max failed attempts'
     return 2
   fi
@@ -242,7 +242,7 @@ set_faillock_unblock () {
 
   sudo -k sed -ri "s;unlock_time =.*;unlock_time = ${time};" /etc/security/faillock.conf
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to set unblock time'
     return 2
   fi
@@ -271,7 +271,7 @@ set_faillock_interval () {
 
   sudo -k sed -ri "s;fail_interval =.*;fail_interval = ${time};" /etc/security/faillock.conf
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to set fail interval'
     return 2
   fi

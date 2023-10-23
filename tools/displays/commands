@@ -29,7 +29,7 @@ show_status () {
     if ($1) printf "%-8s  %s\n",$1":",$2
   }'
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Unable to read xdpy info'
     return 2
   fi
@@ -70,7 +70,7 @@ show_status () {
 
   find_outputs active | jq -cer --argjson c "${colors}" "${query}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Unable to read active outputs'
     return 2
   fi
@@ -181,7 +181,7 @@ show_output () {
 
   find_outputs | jq -cer --argjson c "${colors}" "${query}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Output ${name} not found"
     return 2
   fi
@@ -243,7 +243,7 @@ set_mode () {
   local output=''
   output="$(find_output "${name}")"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Output ${name} not found"
     return 2
   fi
@@ -292,7 +292,7 @@ set_mode () {
 
   xrandr --output "${name}" --mode "${resolution}" --rate "${rate}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to set output mode'
     return 2
   fi
@@ -318,7 +318,7 @@ set_primary () {
   local output=''
   output="$(find_output "${name}")"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Output ${name} not found"
     return 2
   fi
@@ -336,7 +336,7 @@ set_primary () {
 
   xrandr --output "${name}" --primary
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to set as primary output'
     return 2
   fi
@@ -362,7 +362,7 @@ set_on () {
   local output=''
   output="$(find_output "${name}")"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Output ${name} not found"
     return 2
   fi
@@ -389,7 +389,7 @@ set_on () {
     xrandr --output "${name}" --auto
   fi
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to activate output'
     return 2
   fi
@@ -415,7 +415,7 @@ set_off () {
   local output=''
   output="$(find_output "${name}")"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Output ${name} not found"
     return 2
   fi
@@ -433,7 +433,7 @@ set_off () {
 
   xrandr --output "${name}" --off
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to deactivate output'
     return 2
   fi
@@ -461,7 +461,7 @@ reflect_output () {
   local output=''
   output="$(find_output "${name}")"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Output ${name} not found"
     return 2
   fi
@@ -490,7 +490,7 @@ reflect_output () {
 
   xrandr --output "${name}" --reflect "${mode}"
     
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to reflect output'
     return 2
   fi
@@ -518,7 +518,7 @@ rotate_output () {
   local output=''
   output="$(find_output "${name}")"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Output ${name} not found"
     return 2
   fi
@@ -547,7 +547,7 @@ rotate_output () {
 
   xrandr --output "${name}" --rotate "${mode}"
     
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to rotate output'
     return 2
   fi
@@ -589,7 +589,7 @@ mirror_output () {
   local source=''
   source="$(find_output "${name}")"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Output ${name} not found"
     return 2
   fi
@@ -644,7 +644,7 @@ mirror_output () {
     local target=''
     target="$(find_output "${target_name}")"
 
-    if [[ $? -ne 0 ]]; then
+    if has_failed; then
       echo "Output ${target_name} not found"
       return 2
     fi
@@ -692,7 +692,7 @@ mirror_output () {
 
   xrandr --output "${name}" --mode "${resolution}" ${mirrors}
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Failed to mirror output ${name}"
     return 2
   fi
@@ -764,7 +764,7 @@ set_layout () {
     local output=''
     output="$(find_output "${name}")"
 
-    if [[ $? -ne 0 ]]; then
+    if has_failed; then
       echo "Output ${name} not found"
       return 2
     fi
@@ -790,7 +790,7 @@ set_layout () {
 
   xrandr ${layout}
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Failed to set layout ${mode,,}"
     return 2
   fi
@@ -842,7 +842,7 @@ save_layout () {
   local map=''
   map="$(echo "${outputs}" | jq -cer "${query}")"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Unable to parse mapping'
     return 2
   fi
@@ -853,7 +853,7 @@ save_layout () {
 
   save_layout_to_settings "${map}" "${sig}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to save layout'
     return 2
   fi
@@ -909,7 +909,7 @@ restore_layout () {
 
   xrandr ${layout}
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to restore the layout'
     return 2
   fi
@@ -955,7 +955,7 @@ fix_layout () {
 
   xrandr ${disconnected} ${inactive}
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to fix the layout'
     return 2
   fi
@@ -1016,7 +1016,7 @@ delete_layout () {
   local settings=''
   settings="$(jq -e "del(.layouts|.[${index}])" "${SETTINGS_FILE}")"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to delete layout'
     return 2
   fi
@@ -1079,7 +1079,7 @@ set_color () {
   local output=''
   output="$(find_output "${name}")"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Output ${name} not found"
     return 2
   fi
@@ -1115,7 +1115,7 @@ set_color () {
   local result=''
   result="$(xcalib -d "${DISPLAY}" -s 0 -o "${index}" "${COLORS_HOME}/${profile}" 2>&1)"
 
-  if [[ $? -ne 0 ]] || is_not_empty "${result}"; then
+  if has_failed || is_not_empty "${result}"; then
     echo 'Failed to set output color'
     return 2
   fi
@@ -1146,7 +1146,7 @@ reset_color () {
   local output=''
   output="$(find_output "${name}")"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Output ${name} not found"
     return 2
   fi
@@ -1165,7 +1165,7 @@ reset_color () {
   local result=''
   result="$(xcalib -d "${DISPLAY}" -s 0 -o "${index}" -c 2>&1)"
 
-  if [[ $? -ne 0 ]] || is_not_empty "${result}"; then
+  if has_failed || is_not_empty "${result}"; then
     echo 'Failed to reset output color'
     return 2
   fi
@@ -1212,7 +1212,7 @@ delete_color () {
   local settings='{}'
   settings="$(jq -e "del(.colors|.[${index}])" "${SETTINGS_FILE}")"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to delete color setting'
     return 2
   fi
@@ -1291,7 +1291,7 @@ restore_colors () {
   while read -r xcalib_cmd; do
     local result="$(${xcalib_cmd} 2>&1)"
 
-    if [[ $? -ne 0 ]] || is_not_empty "${result}"; then
+    if has_failed || is_not_empty "${result}"; then
       failed='true'
     fi
   done <<< "${xcalib_cmds}"

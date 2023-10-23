@@ -184,7 +184,7 @@ set_action () {
 
   systemctl kill -s HUP systemd-logind
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Failed to set ${handler} action"
     return 2
   fi
@@ -209,7 +209,7 @@ reset_actions () {
 
   systemctl kill -s HUP systemd-logind
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to reset power actions'
     return 2
   fi
@@ -243,7 +243,7 @@ set_screensaver () {
     xset s off &> /dev/null
   fi
   
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to set the screen saver'
     return 2
   fi
@@ -271,7 +271,7 @@ init_screensaver () {
     xset s off &> /dev/null
   fi
   
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to initialize the screen saver'
     return 2
   fi
@@ -309,7 +309,7 @@ set_tlp () {
     sudo systemctl daemon-reload
   fi
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Failed to set power saving mode to ${status}"
     return 2
   fi
@@ -392,7 +392,7 @@ set_charging () {
 shutdown_system () {
   systemctl poweroff
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to shutdown the system'
     return 2
   fi
@@ -402,7 +402,7 @@ shutdown_system () {
 reboot_system () {
   systemctl reboot
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to reboot the system'
     return 2
   fi
@@ -412,7 +412,7 @@ reboot_system () {
 suspend_system () {
   systemctl suspend
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to suspend the system'
     return 2
   fi
@@ -422,7 +422,7 @@ suspend_system () {
 blank_screen () {
   xset dpms force off
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to blank the screen'
     return 2
   fi

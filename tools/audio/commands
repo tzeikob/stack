@@ -91,7 +91,7 @@ show_card () {
   local card=''
   card="$(find_card "${name}")"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Audio card ${name} not found"
     return 2
   fi
@@ -147,7 +147,7 @@ restart () {
     echo 'Pulse service restarted' &&
   (~/.config/polybar/launch &> /dev/null &)
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to restart audio services'
     return 2
   fi
@@ -294,7 +294,7 @@ set_profile () {
   local card=''
   card="$(find_card "${card_name}")"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Audio card ${card_name} not found"
     return 2
   fi
@@ -318,7 +318,7 @@ set_profile () {
 
   pactl set-card-profile "${card_name}" "${profile_name}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to set profile'
     return 2
   fi
@@ -368,7 +368,7 @@ set_default () {
 
   pactl set-default-${object} "${name}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Failed to set active ${type}"
     return 2
   fi
@@ -413,7 +413,7 @@ turn_default () {
   local module=''
   module="$(pactl get-default-${object})"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Unable to read the active ${type}"
     return 2
   fi
@@ -421,7 +421,7 @@ turn_default () {
   if [[ "${volume}" == "mute" ]]; then
     pactl set-${object}-mute "${module}" 1
 
-    if [[ $? -ne 0 ]]; then
+    if has_failed; then
       echo "Failed to set active ${type} to mute"
       return 2
     fi
@@ -431,7 +431,7 @@ turn_default () {
   elif [[ "${volume}" == "unmute" ]]; then
     pactl set-${object}-mute "${module}" 0
 
-    if [[ $? -ne 0 ]]; then
+    if has_failed; then
       echo "Failed to set active ${type} to unmute"
       return 2
     fi
@@ -453,7 +453,7 @@ turn_default () {
   pactl set-${object}-mute "${module}" 0 &&
   pactl set-${object}-volume "${module}" "${volume}%"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Failed to set volume of active ${type})"
     return 2
   fi
@@ -511,7 +511,7 @@ set_mute () {
   while read -r pactl_cmd; do
     ${pactl_cmd}
 
-    if [[ $? -ne 0 ]]; then
+    if has_failed; then
       failed='true'
     fi
   done <<< "${pactl_cmds}"

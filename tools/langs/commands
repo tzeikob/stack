@@ -56,7 +56,7 @@ set_keymap () {
 
   localectl set-keymap --no-convert "${map}"
   
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to set keyboard map'
     return 2
   fi
@@ -112,7 +112,7 @@ set_locale () {
   
   source /etc/profile.d/locale.sh
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Failed to set system locale"
     return 2
   fi
@@ -151,7 +151,7 @@ set_options () {
   localectl --no-convert set-x11-keymap "${layouts}" "${model}" '' "${value}" &&
    setxkbmap -layout "${layouts}" -model "${model}" -option "${value}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to set keyboard layout options'
     return 2
   fi
@@ -190,7 +190,7 @@ set_model () {
   localectl --no-convert set-x11-keymap "${layouts}" "${name}" '' "${options}" &&
    setxkbmap -layout "${layouts}" -model "${value}" -option "${options}"
   
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to set keyboard model'
     return 2
   fi
@@ -224,7 +224,7 @@ add_locale () {
   sudo sed -i "s/\s*#\s*\(${name}\)\s*/\1/" /etc/locale.gen &&
    sudo locale-gen
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to add locale'
     return 2
   fi
@@ -261,7 +261,7 @@ remove_locale () {
   sudo sed -i "s/\s*\(${name}\)\s*/#\1/" /etc/locale.gen &&
    sudo locale-gen
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to remove locale'
     return 2
   fi
@@ -315,7 +315,7 @@ add_layout () {
   localectl --no-convert set-x11-keymap "${layouts}" "${model}" '' "${options}" &&
    setxkbmap -layout "${layouts}" -model "${model}" -option "${options}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to add layout'
     return 2
   fi
@@ -375,7 +375,7 @@ remove_layout () {
   localectl --no-convert set-x11-keymap "${layouts}" "${model}" '' "${options}" &&
    setxkbmap -layout "${layouts}" -model "${model}" -option "${options}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to remove layout'
     return 2
   fi
@@ -466,7 +466,7 @@ order_layouts () {
   localectl --no-convert set-x11-keymap "${codes}" "${model}" '' "${options}" &&
    setxkbmap -layout "${codes}" -model "${model}" -option "${options}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to set layouts order'
     return 2
   fi

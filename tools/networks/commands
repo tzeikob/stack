@@ -26,7 +26,7 @@ show_status () {
   local devices=''
   devices="$(find_devices)"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Unable to read network devices'
     return 2
   fi
@@ -48,7 +48,7 @@ show_status () {
 
   curl -s 'http://ip-api.com/json' | jq -cer "\"${query}\""
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'ISP:         Unavailable'
   fi
 
@@ -199,7 +199,7 @@ list_devices () {
   local devices=''
   devices="$(find_devices)"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Unable to read network devices'
     return 2
   fi
@@ -229,7 +229,7 @@ list_connections () {
   local connections=''
   connections="$(find_connections)"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Unable to read connections'
     return 2
   fi
@@ -289,7 +289,7 @@ list_wifis () {
   local networks=''
   networks="$(find_wifis "${device}" "${signal}")"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Unable to detect wifi networks'
     return 2
   fi
@@ -336,7 +336,7 @@ up_device () {
 
   nmcli device connect "${name}" &> /dev/null
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to enable network device'
     return 2
   fi
@@ -368,7 +368,7 @@ up_connection () {
 
   nmcli connection up "${name}" --ask
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to enable connection'
     return 2
   fi
@@ -400,7 +400,7 @@ down_device () {
 
   nmcli device disconnect "${name}" &> /dev/null
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to disable network device'
     return 2
   fi
@@ -432,7 +432,7 @@ down_connection () {
 
   nmcli connection down "${name}" &> /dev/null
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to disable connection'
     return 2
   fi
@@ -465,7 +465,7 @@ remove_device () {
 
   nmcli device delete "${name}" &> /dev/null
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to remove network device'
     return 2
   fi
@@ -497,7 +497,7 @@ remove_connection () {
 
   nmcli connection delete "${name}" &> /dev/null
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to remove connection'
     return 2
   fi
@@ -580,7 +580,7 @@ add_ethernet () {
     con-name "${name}" ifname "${device}" ipv4.method "manual" \
     ipv4.addresses "${ip}/24" ipv4.gateway "${gateway}" ipv4.dns "${dns}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to create ethernet connection'
     return 2
   fi
@@ -629,7 +629,7 @@ add_dhcp () {
   nmcli connection add type ethernet \
     con-name "${name}" ifname "${device}" ipv4.method auto
   
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to create ethernet dhcp connection'
     return 2
   fi
@@ -685,7 +685,7 @@ add_wifi () {
   result="$(nmcli device wifi connect "${ssid}" password "${secret}" \
     ifname "${device}" hidden yes 2> /dev/null)"
   
-  if [[ $? -ne 0 ]] || [[ "${result}" =~ (E|e)rror ]]; then
+  if has_failed || [[ "${result}" =~ (E|e)rror ]]; then
     echo "Failed to connect to ${ssid}"
     return 2
   fi
@@ -750,7 +750,7 @@ add_vpn () {
 
   nmcli connection import type openvpn file "${file_path}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to create VPN connection'
     return 2
   fi
@@ -869,7 +869,7 @@ remove_proxy () {
   local settings=''
   settings="$(jq -e "del(.proxies[]|select(.name == \"${name}\"))" "${SETTINGS_FILE}")"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Failed to delete proxy profile ${name}"
     return 2
   fi
@@ -1116,7 +1116,7 @@ power_network () {
 
   nmcli networking "${mode}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Failed to power network ${mode}"
     return 2
   fi
@@ -1142,7 +1142,7 @@ power_wifi () {
 
   nmcli radio wifi "${mode}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Failed to power wifi ${mode}"
     return 2
   fi

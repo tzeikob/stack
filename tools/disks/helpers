@@ -61,7 +61,7 @@ find_partitions () {
   local volumes=''
   volumes="$(veracrypt -t --list 2>&1)"
 
-  if [[ $? -ne 0 ]] && [[ ! "${volumes}" =~ "No volumes mounted" ]]; then
+  if has_failed && [[ ! "${volumes}" =~ "No volumes mounted" ]]; then
     return 1
   fi
 
@@ -112,7 +112,7 @@ find_partition () {
   local volume=''
   volume="$(veracrypt -t --volume-properties "${path}" 2>&1)"
 
-  if [[ $? -ne 0 ]] && [[ ! "${volume}" =~ "No such volume is mounted" ]]; then
+  if has_failed && [[ ! "${volume}" =~ "No such volume is mounted" ]]; then
     return 1
   fi
 
@@ -417,7 +417,7 @@ mount_encrypted_device () {
   sudo veracrypt -t --mount "${path}" "${mount_point}" --password "${key}" \
     --pim 0 --keyfiles '' --protect-hidden no --non-interactive &> /dev/null
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     rm -rf "${mount_point}"
     return 1
   fi
@@ -473,7 +473,7 @@ unmount_partitions () {
   local volumes=''
   volumes="$(veracrypt -t --list 2>&1)"
   
-  if [[ $? -ne 0 ]] && [[ ! "${volumes}" =~ "No volumes mounted" ]]; then
+  if has_failed && [[ ! "${volumes}" =~ "No volumes mounted" ]]; then
     return 1
   fi
   
@@ -489,12 +489,12 @@ unmount_partitions () {
     while read -r part; do
       unmount_device "${part}"
 
-      if [[ $? -eq 0 ]]; then
-        echo "Partition ${part} has been unmounted"
-      else
+      if has_failed; then
         echo "Failed to unmount partition ${part}"
         return 2
       fi
+    
+      echo "Partition ${part} has been unmounted"
     done <<< "${parts}"
   fi
 
@@ -503,12 +503,12 @@ unmount_partitions () {
     while read -r volume; do
       unmount_encrypted_device "${volume}"
 
-      if [[ $? -eq 0 ]]; then
-        echo "Partition ${volume} has been unmounted"
-      else
+      if has_failed; then
         echo "Failed to unmount partition ${volume}"
         return 2
       fi
+      
+      echo "Partition ${volume} has been unmounted"
     done <<< "${volumes}"
   fi
 }
@@ -585,7 +585,7 @@ format_partition () {
     *) return 1;;
   esac
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     return 1
   fi
 }
@@ -730,7 +730,7 @@ pick_host () {
   local hosts=''
   hosts="$(find_hosts)"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Unable to find hosts'
     return 2
   fi
@@ -888,14 +888,14 @@ download_iso_file () {
 
   download "${output}" "${files[@]}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Unable to download archlinux files'
     return 2
   fi
 
   sq --force wkd get pierre@archlinux.org -o "${output}/release-key.pgp"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Unable to fetch the release key'
     return 2
   fi
@@ -907,7 +907,7 @@ download_iso_file () {
   sq verify --signer-file release-key.pgp \
     --detached "${file_name}.sig" "${file_name}" 2>&1 | awk NF
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to verify archlinux files'
     return 2
   fi

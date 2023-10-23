@@ -112,7 +112,7 @@ restore_files () {
       local key=''
       key="$(echo "${files}" | jq -cer "${query}")"
 
-      if [[ $? -ne 0 ]]; then
+      if has_failed; then
         echo "File ${path} not found in trash"
         continue
       fi
@@ -136,7 +136,7 @@ restore_files () {
 
   trash-restore / &> /dev/null <<< "${file_keys}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to restore files'
     return 2
   fi
@@ -201,7 +201,7 @@ remove_files () {
 
     echo "${files}" | jq -cer "${query}" &> /dev/null
 
-    if [[ $? -ne 0 ]]; then
+    if has_failed; then
       echo "File ${path} not found in trash"
       continue
     fi
@@ -258,7 +258,7 @@ empty_files () {
 
   trash-empty -f "${days:-0}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to remove trashed files'
     return 2
   fi

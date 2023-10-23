@@ -12,12 +12,12 @@ find_destinations () {
   local destinations=''
   destinations="$(lpstat -v 2>&1)"
 
-  local error_code=$?
+  local exit_code=$?
 
   if [[ "${destinations}" =~ "No destinations added" ]]; then
     echo '[]'
     return 0
-  elif [[ ${error_code} -ne 0 ]]; then
+  elif has_failed "${exit_code}"; then
     return 1
   fi
   
@@ -259,7 +259,7 @@ pick_uri () {
   local destinations=''
   destinations="$(discover_destinations | jq -cer "${query}")"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Unable to discover print uri destinations'
     return 2
   fi

@@ -148,7 +148,7 @@ list_all () {
 mute_all () {
   dunstctl set-paused true
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to mute notifications'
     return 2
   fi
@@ -160,7 +160,7 @@ mute_all () {
 unmute_all () {
   dunstctl set-paused false
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to unmute notifications'
     return 2
   fi
@@ -172,7 +172,7 @@ unmute_all () {
 clean_all () {
   dunstctl history-clear
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to remove all notifications'
     return 2
   fi
@@ -210,7 +210,7 @@ set_popup () {
 
   sed -i "s/\([[:blank:]]*transparency\).*/\1 = ${value}/" "${config_file}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Failed to set popup notifications to ${mode}"
     return 2
   fi
@@ -240,7 +240,7 @@ set_volume () {
 
   save_volume_to_settings "${percent}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to set notifications volume'
     return 2
   fi

@@ -24,7 +24,7 @@ show_status () {
   local ntp_status=''
   ntp_status="$(timedatectl timesync-status 2> /dev/null)"
 
-  if [[ $? -eq 0 ]]; then
+  if has_not_failed; then
     local query=''
     query+='Server:  \(.server)\n'
     query+='Poll:    \(.poll_interval)\n'
@@ -51,7 +51,7 @@ set_ntp () {
 
   timedatectl set-ntp "${status}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Failed to set NTP to ${status}"
     return 2
   fi
@@ -81,7 +81,7 @@ set_timezone () {
 
   timedatectl set-timezone "${name}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to set the timezone'
     return 2
   fi
@@ -105,7 +105,7 @@ set_time () {
 
   timedatectl set-time "${time}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to set the time'
     return 2
   fi
@@ -131,7 +131,7 @@ set_date () {
 
   timedatectl set-time "${date} ${time}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to set the date'
     return 2
   fi
@@ -159,7 +159,7 @@ set_rtc () {
     timedatectl --adjust-system-clock set-local-rtc off
   fi
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to set hardware clock'
     return 2
   fi
@@ -171,7 +171,7 @@ set_rtc () {
 sync_rtc () {
   sudo hwclock --systohc --utc
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to sync hardware clock'
     return 2
   fi

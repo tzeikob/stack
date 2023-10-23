@@ -161,7 +161,7 @@ add_printer () {
 
   lpadmin -p "${name}" -E -o printer-is-shared=false  -v "${uri}" -m "${driver}" &> /dev/null
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Failed to add printer ${uri}"
     return 2
   fi
@@ -192,7 +192,7 @@ remove_printer () {
 
   lpadmin -x "${name}" &> /dev/null
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Failed to remove printer ${name}"
     return 2
   fi
@@ -223,7 +223,7 @@ share_printer () {
 
   lpadmin -p "${name}" -o printer-is-shared=true &> /dev/null
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Failed to share printer ${name}"
     return 2
   fi
@@ -254,7 +254,7 @@ unshare_printer () {
 
   lpadmin -p "${name}" -o printer-is-shared=false &> /dev/null
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Failed to unshare printer ${name}"
     return 2
   fi
@@ -329,14 +329,14 @@ set_option () {
       return 2;;
   esac
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Invalid print option value'
     return 2
   fi
 
   lpadmin -p "${name}" -o "${key}"="${value}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to set printer option'
     return 2
   fi
@@ -367,7 +367,7 @@ set_default () {
 
   lpoptions -d "${name}" &> /dev/null
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to set default print destination'
     return 2
   fi
@@ -422,7 +422,7 @@ cancel_job () {
 
   cancel -x "${id}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Failed to cancel print job ${id}"
     return 2
   fi
@@ -436,7 +436,7 @@ restart () {
 
   sudo -k systemctl restart cups.service
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to restart cups service'
     return 2
   fi

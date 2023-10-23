@@ -401,7 +401,7 @@ list_shared_folders () {
   local folders=''
   folders="$(find_shared_folders "${host}" "${user}" "${group}" "${password}")"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Unable to find shared folders'
     return 2
   fi
@@ -533,7 +533,7 @@ mount_partition () {
 
   mount_device "${path}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to mount the partition'
     return 2
   fi
@@ -582,7 +582,7 @@ mount_encrypted () {
 
   mount_encrypted_device "${path}" "${key}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to mount encrypted partition'
     return 2
   fi
@@ -623,7 +623,7 @@ unmount_partition () {
 
   unmount_device "${path}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to unmount partition'
     return 2
   fi
@@ -664,7 +664,7 @@ unmount_encrypted () {
 
   unmount_encrypted_device "${path}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to unmount encrypted partition'
     return 2
   fi
@@ -697,7 +697,7 @@ mount_rom () {
 
   mount_device "${path}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to mount rom'
     return 2
   fi
@@ -730,7 +730,7 @@ unmount_rom () {
 
   unmount_device "${path}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to unmount rom'
     return 2
   fi
@@ -764,7 +764,7 @@ mount_image () {
   mkdir -p "${mount_point}" &&
   fuseiso -p "${path}" "${mount_point}" &> /dev/null
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to mount image file'
 
     rm -rf "${mount_point}"
@@ -797,7 +797,7 @@ unmount_image () {
 
   fusermount -u "${path}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to unmount image file system'
     return 2
   fi
@@ -874,7 +874,7 @@ mount_shared_folder () {
 
   echo "${password}" | gio mount "${uri}" &> /dev/null
   
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to mount shared folder'
     return 2
   fi
@@ -911,7 +911,7 @@ unmount_shared_folder () {
 
   sync && gio mount -u "${uri}" 2> /dev/null
   
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to umount shared folder'
     return 2
   fi
@@ -1000,7 +1000,7 @@ format_disk () {
   echo 'Formatting disk partition...'
   format_partition "${path}" 1 "${fs_type}" "${label}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Failed to format disk ${path}"
     return 2
   fi
@@ -1035,20 +1035,21 @@ eject_disk () {
 
   unmount_partitions "${path}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to unmount disk partitions'
     return 2
   fi
 
   udisksctl power-off -b "${path}" &> /dev/null
 
-  if [[ $? -eq 0 ]]; then
-    echo 'Disk power set to off'
-    echo 'Unplug safely the disk device'
-  else
+  if has_failed; then
     echo 'Unable to power disk off'
     echo 'Unplug the disk device at your own risk'
+    return 0
   fi
+
+  echo 'Disk power set to off'
+  echo 'Unplug safely the disk device'
 }
 
 # Scans the disk block device with the given path
@@ -1248,7 +1249,7 @@ create_encrypted () {
     --volume-type normal --encryption AES --hash sha-512 --filesystem "${fs_type}" \
     --pim 0 --keyfiles '' --random-source "${rand_text_file}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to encrypt disk'
     return 2
   fi
@@ -1335,7 +1336,7 @@ create_bootable () {
 
   sudo dd "if=${iso_file}" "of=${path}" bs=4M conv=fsync oflag=direct status=progress
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to flash installation files'
   fi
 

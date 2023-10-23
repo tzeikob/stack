@@ -137,7 +137,7 @@ set_wallpaper () {
 
   feh --no-fehbg --bg-"${mode}" "${WALLPAPERS_HOME}/${name}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to set wallpaper'
     return 2
   fi
@@ -169,7 +169,7 @@ show_pointer () {
   local pointer=''
   pointer="$(find_pointer "${name}")"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Pointer ${name} not found"
     return 2
   fi
@@ -302,7 +302,7 @@ show_tablet () {
   local tablet=''
   tablet="$(find_tablet "${name}")"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Tablet ${name} not found"
     return 2
   fi
@@ -374,7 +374,7 @@ scale_tablet () {
   local tablet=''
   tablet="$(find_tablet "${name}")"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Tablet ${name} not found"
     return 2
   elif is_not_scalable "${name}"; then
@@ -418,7 +418,7 @@ scale_tablet () {
 
   xsetwacom --set "${name}" area "${area}" &> /dev/null
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Unable to scale tablet ${name}"
     return 2
   fi
@@ -452,7 +452,7 @@ map_tablet () {
   local tablet=''
   tablet="$(find_tablet "${name}")"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Tablet ${name} not found"
     return 2
   elif is_not_scalable "${name}"; then
@@ -473,7 +473,7 @@ map_tablet () {
   if [[ "${target}" == "desktop" ]]; then
     xsetwacom --set "${name}" MapToOutput desktop &> /dev/null
 
-    if [[ $? -ne 0 ]]; then
+    if has_failed; then
       echo 'Failed to reset mapping'
       return 2
     fi
@@ -504,7 +504,7 @@ map_tablet () {
   local output=''
   output="$(find_output "${target}")"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Display ${target} not found"
     return 2
   elif is_not_active "${output}"; then
@@ -535,7 +535,7 @@ map_tablet () {
   xsetwacom --set "${name}" MapToOutput "${target}" &> /dev/null &&
   xsetwacom --set "${name}" area "${area}" &> /dev/null
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Failed to map tablet ${name}"
     return 2
   fi

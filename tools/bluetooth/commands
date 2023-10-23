@@ -29,7 +29,7 @@ show_status () {
   
   find_controller | jq -cer ".[0]|\"${query}\""
   
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Controller:    none'
   fi
 
@@ -141,7 +141,7 @@ show_controller () {
   local controller=''
   controller="$(find_controller "${address}")"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Controller ${address} not found"
     return 2
   fi
@@ -184,7 +184,7 @@ show_device () {
   local device=''
   device="$(find_device "${address}")"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Device ${address} not found"
     return 2
   fi
@@ -229,14 +229,14 @@ set_controller () {
   local controller=''
   controller="$(find_controller "${address}")"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Controller ${address} not found"
     return 2
   fi
 
   bluetoothctl select "${address}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to set default controller'
     return 2
   fi
@@ -265,7 +265,7 @@ set_power () {
 
   bluetoothctl power "${mode}" &> /dev/null
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Failed to set power mode to ${mode}"
     return 2
   fi
@@ -329,7 +329,7 @@ set_discoverable () {
 
   bluetoothctl discoverable "${mode}" &> /dev/null
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Failed to set discoverable mode to ${mode}"
     return 2
   fi
@@ -358,7 +358,7 @@ set_pairable () {
 
   bluetoothctl pairable "${mode}" &> /dev/null
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Failed to set pairable mode to ${mode}"
     return 2
   fi
@@ -384,7 +384,7 @@ connect_device () {
   local device=''
   device="$(find_device "${address}")"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Device ${address} not found"
     return 2
   fi
@@ -393,7 +393,7 @@ connect_device () {
   bluetoothctl trust "${address}" &> /dev/null &&
   bluetoothctl connect "${address}" &> /dev/null
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Failed to connect device ${address}"
     return 2
   fi
@@ -419,14 +419,14 @@ disconnect_device () {
   local device=''
   device="$(find_device "${address}")"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Device ${address} not found"
     return 2
   fi
 
   bluetoothctl disconnect "${address}" &> /dev/null
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Failed to disconnect device ${address}"
     return 2
   fi
@@ -452,14 +452,14 @@ remove_device () {
   local device=''
   device="$(find_device "${address}")"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Device ${address} not found"
     return 2
   fi
 
   bluetoothctl remove "${address}" &> /dev/null
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo "Failed to remove device ${address}"
     return 2
   fi
@@ -477,7 +477,7 @@ restart_bluetooth () {
   sudo modprobe btusb &&
   sudo systemctl restart bluetooth.service
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to restart the bluetooth service'
     return 2
   fi

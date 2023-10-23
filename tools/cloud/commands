@@ -91,7 +91,7 @@ sync_drive () {
   rclone config create "${name}" drive scope=drive client_id="${client}" \
     client_secret="${secret}" root_folder_id="${folder}" &> /dev/null
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to sync drive remote'
     rclone config delete "${name}"
     return 2
@@ -147,7 +147,7 @@ sync_dropbox () {
   rclone config create "${name}" dropbox \
     client_id="${app}" client_secret="${secret}" &> /dev/null
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to sync dropbox remote'
     rclone config delete "${name}"
     return 2
@@ -190,7 +190,7 @@ delete_remote () {
 
   rclone config delete "${name}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to delete remote'
     return 2
   fi
@@ -232,7 +232,7 @@ mount_remote () {
     --vfs-cache-max-size=150G --vfs-cache-max-age=12h \
     --log-level=INFO --log-file="/tmp/rclone/${name}.log" --daemon
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     # Remove the dangling root mount folder if it is empty
     find "${mount_folder}" -maxdepth 0 -empty -exec rm -rf {} \;
 
@@ -276,7 +276,7 @@ unmount_remote () {
 
   fusermount -uz "${mount_point}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     echo 'Failed to unmount remote'
     return 2
   fi
@@ -309,7 +309,7 @@ mount_all () {
   while read -r remote; do
     mount_remote "${remote}"
 
-    if [[ $? -ne 0 ]]; then
+    if has_failed; then
       echo "Failed to mount remote ${remote}"
       failed='true'
       continue

@@ -153,7 +153,7 @@ authenticate_user () {
 
   python -c "${cmd}"
 
-  if [[ $? -ne 0 ]]; then
+  if has_failed; then
     return 1
   fi
 
@@ -391,7 +391,7 @@ beep () {
   if is_empty "${QUIET}" || is_false "${QUIET}"; then
     local sound='normal'
 
-    if [[ ${exit_code} -ne 0 ]]; then
+    if has_failed "${exit_code}"; then
       sound='critical'
     fi
 
@@ -814,5 +814,40 @@ is_boolean () {
 #  0 if value is not boolean otherwise 1.
 is_not_boolean () {
   is_boolean "${1}" && return 1 || return 0
+}
+
+# Checks if the given exit status code is non-zero
+# which indicates the last command has failed. If no
+# code is given the function will consider as exit
+# code the current value of $?.
+# Arguments:
+#  code: an exit status code
+# Returns:
+#  0 if exit code is non-zero otherwise 1.
+has_failed () {
+  # Save exit code set by the previous command
+  local code=$?
+
+  if is_given "${1}"; then
+    code="${1}"
+  fi
+
+  if [[ ${code} -ne 0 ]]; then
+    return 0
+  fi
+
+  return 1
+}
+
+# Checks if the given exit status code is zero
+# which indicates the last command has not failed.
+# If no code is given the function will consider
+# as exit code the current value of $?.
+# Arguments:
+#  code: an exit status code
+# Returns:
+#  0 if exit code is zero otherwise 1.
+has_not_failed () {
+  has_failed "${1}" && return 1 || return 0
 }
 
