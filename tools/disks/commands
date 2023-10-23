@@ -1145,13 +1145,6 @@ scan_disk () {
   query+="\(${attrs})"
 
   sudo smartctl -iHj "${path}" | jq -cer "\"${query}\""
-
-  local code=$?
-
-  if [[ ${code} -ne 0 ]] && [[ ${code} -ne 24 ]]; then
-    echo 'Failed to parse SMART data'
-    return 2
-  fi
 }
 
 # Creates an encrypted disk block device with the
