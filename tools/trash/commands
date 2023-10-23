@@ -23,7 +23,7 @@ list_files () {
 
   if is_positive_integer "${filter}"; then
     query="[.[]|select((now - .epoch) / 86400 < ${filter})]"
-  elif is_positive_integer "${filter}" && [[ "${filter}" =~ ^\+ ]]; then
+  elif is_positive_integer "${filter}" && match "${filter}" '^\+'; then
     filter="$(echo "${filter}" | tr -d '+')"
     query="[.[]|select((now - .epoch) / 86400 > ${filter})]"
   elif is_date "${filter}"; then

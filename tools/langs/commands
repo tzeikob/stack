@@ -293,7 +293,7 @@ add_layout () {
   layouts="$(cat /etc/X11/xorg.conf.d/00-keyboard.conf |
     awk '/XkbLayout/{print $3}' | tr -d '"')" || return 1
 
-  if [[ "${layouts}" =~ "${code}" ]]; then
+  if match "${layouts}" "${code}"; then
     echo "Layout ${code} is already added"
     return 2
   fi
@@ -353,12 +353,12 @@ remove_layout () {
   if [[ "${layouts}" == "${code}" ]]; then
     echo 'Cannot remove the only layout'
     return 2
-  elif [[ ! "${layouts}" =~ "${code}" ]]; then
+  elif not_match "${layouts}" "${code}"; then
     echo "Layout ${code} is already removed"
     return 2
   fi
 
-  if [[ "${layouts}" =~ "${code}," ]]; then
+  if match "${layouts}" "${code},"; then
     layouts=${layouts//${code},/}
   else
     layouts=${layouts//,${code}/}

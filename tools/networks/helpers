@@ -81,7 +81,7 @@ find_connection () {
   local type=''
   type="$(get "${connection}" ".connection_type")" || return 1
 
-  if [[ "${type}" =~ "wireless" ]]; then
+  if match "${type}" 'wireless'; then
     local device=''
     device="$(get "${connection}" ".connection_interface_name")" || return 1
 

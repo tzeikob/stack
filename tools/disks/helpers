@@ -61,7 +61,7 @@ find_partitions () {
   local volumes=''
   volumes="$(veracrypt -t --list 2>&1)"
 
-  if has_failed && [[ ! "${volumes}" =~ "No volumes mounted" ]]; then
+  if has_failed && not_match "${volumes}" 'No volumes mounted'; then
     return 1
   fi
 
@@ -112,7 +112,7 @@ find_partition () {
   local volume=''
   volume="$(veracrypt -t --volume-properties "${path}" 2>&1)"
 
-  if has_failed && [[ ! "${volume}" =~ "No such volume is mounted" ]]; then
+  if has_failed && not_match "${volume}" 'No such volume is mounted'; then
     return 1
   fi
 
@@ -473,7 +473,7 @@ unmount_partitions () {
   local volumes=''
   volumes="$(veracrypt -t --list 2>&1)"
   
-  if has_failed && [[ ! "${volumes}" =~ "No volumes mounted" ]]; then
+  if has_failed && not_match "${volumes}" 'No volumes mounted'; then
     return 1
   fi
   
@@ -571,7 +571,7 @@ format_partition () {
   fi
 
   # Add path postfix for nvme and mmcblk disks
-  if [[ "${path}" =~ ^/dev/(nvme|mmcblk) ]]; then
+  if match "${path}" '^/dev/(nvme|mmcblk)'; then
     path="${path}p"
   fi
 
@@ -779,7 +779,7 @@ is_valid_fs_type () {
 
   local types='ext4|ext3|ext2|ntfs|exfat|fat32'
 
-  if [[ ! "${type}" =~ ^(${types})$ ]]; then
+  if not_match "${type}" "^(${types})$"; then
     return 1
   fi
 

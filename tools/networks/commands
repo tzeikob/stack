@@ -685,7 +685,7 @@ add_wifi () {
   result="$(nmcli device wifi connect "${ssid}" password "${secret}" \
     ifname "${device}" hidden yes 2> /dev/null)"
   
-  if has_failed || [[ "${result}" =~ (E|e)rror ]]; then
+  if has_failed || match "${result}" '(E|e)rror'; then
     echo "Failed to connect to ${ssid}"
     return 2
   fi

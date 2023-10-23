@@ -15,7 +15,7 @@ SETTINGS_FILE="${CONFIG_HOME}/displays.json"
 is_output_status () {
   local status="${1}"
 
-  if [[ ! "${status}" =~ ^(connected|disconnected|active|inactive|primary)$ ]]; then
+  if not_match "${status}" '^(connected|disconnected|active|inactive|primary)$'; then
     return 1
   fi
 
@@ -182,7 +182,7 @@ is_not_primary () {
 is_resolution () {
   local resolution="${1}"
 
-  if [[ ! "${resolution}" =~ ^[0-9]+x[0-9]+i?$ ]]; then
+  if not_match "${resolution}" '^[0-9]+x[0-9]+i?$'; then
     return 1
   fi
 
@@ -234,7 +234,7 @@ has_no_resolution () {
 is_rate () {
   local rate="${1}"
   
-  if [[ ! "${rate}" =~ ^[0-9][0-9]+(.[0-9][0-9])?$ ]]; then
+  if not_match "${rate}" '^[0-9][0-9]+(.[0-9][0-9])?$'; then
     return 1
   fi
 
@@ -438,7 +438,7 @@ pick_reflection_mode () {
 is_reflection_mode () {
   local mode="${1}"
   
-  if [[ ! "${mode}" =~ ^(normal|x|y|xy)$ ]]; then
+  if not_match "${mode}" '^(normal|x|y|xy)$'; then
     return 1
   fi
 }
@@ -474,7 +474,7 @@ pick_rotation_mode () {
 is_rotation_mode () {
   local mode="${1}"
   
-  if [[ ! "${mode}" =~ ^(normal|right|left|inverted)$ ]]; then
+  if not_match "${mode}" '^(normal|right|left|inverted)$'; then
     return 1
   fi
 }
@@ -580,7 +580,7 @@ is_eligible_layout_mode () {
     return 1
   fi
   
-  if [[ ! "${mode}" =~ ^(${modes})$ ]]; then
+  if not_match "${mode}" "^(${modes})$"; then
     return 1
   fi
 
@@ -1018,7 +1018,7 @@ remove_color_from_settings () {
 is_profile_file () {
   local file_name="${1}"
   
-  if [[ ! "${file_name}" =~ .ic(c|m)$ ]]; then
+  if not_match "${file_name}" '.ic(c|m)$'; then
     return 1
   fi
 

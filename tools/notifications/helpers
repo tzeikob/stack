@@ -19,7 +19,7 @@ find_all () {
 
   local query='.data[0]'
 
-  if [[ "${sort_by}" =~ ^(id|appname)$ ]]; then
+  if match "${sort_by}" '^(id|appname)$'; then
     query+="|sort_by(.${sort_by})"
 
     [[ "${order}" == "desc" ]] && query+='|reverse'
@@ -70,7 +70,7 @@ save_volume_to_settings () {
 is_valid_sort_field () {
   local field="${1}"
 
-  if [[ ! "${field}" =~ ^(id|appname)$ ]]; then
+  if not_match "${field}" '^(id|appname)$'; then
     return 1
   fi
 

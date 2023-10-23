@@ -46,7 +46,7 @@ pick_power_handler () {
 is_power_handler () {
   local handler="${1}"
   
-  if [[ ! "${handler}" =~ ^(power|reboot|suspend|lid|docked)$ ]]; then
+  if not_match "${handler}" '^(power|reboot|suspend|lid|docked)$'; then
     return 1
   fi
 
@@ -84,7 +84,7 @@ pick_power_action () {
 is_power_action () {
   local action="${1}"
   
-  if [[ ! "${action}" =~ ^(poweroff|reboot|suspend|ignore)$ ]]; then
+  if not_match "${action}" '^(poweroff|reboot|suspend|ignore)$'; then
     return 1
   fi
 

@@ -120,7 +120,7 @@ pick_module () {
 is_module_type () {
   local type"${1}"
   
-  if [[ ! "${type}" =~ ^(output|input)$ ]]; then
+  if not_match "${type}" '^(output|input)$'; then
     return 1
   fi
 
@@ -144,7 +144,7 @@ is_not_module_type () {
 is_valid_volume () {
   local volume="${1}"
   
-  if [[ ! "${volume}" =~ ^(up|down|mute|unmute|[0-9]+)$ ]]; then
+  if not_match "${volume}" '^(up|down|mute|unmute|[0-9]+)$'; then
     return 1
   fi
 
@@ -194,7 +194,7 @@ is_volume_out_of_range () {
 is_mute_mode () {
   local mode="${1}"
 
-  if [[ ! "${mode}" =~ ^(1|0)$ ]]; then
+  if not_match "${mode}" '^(1|0)$'; then
     return 1
   fi
 

@@ -151,7 +151,7 @@ kill_scanning_proccesses () {
 is_valid_status () {
   local status="${1}"
 
-  if [[ ! "${status}" =~ ^(paired|connected|trusted|bonded)$ ]]; then
+  if not_match "${status}" '^(paired|connected|trusted|bonded)$'; then
     return 1
   fi
 

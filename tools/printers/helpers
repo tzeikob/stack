@@ -14,7 +14,7 @@ find_destinations () {
 
   local exit_code=$?
 
-  if [[ "${destinations}" =~ "No destinations added" ]]; then
+  if match "${destinations}" 'No destinations added'; then
     echo '[]'
     return 0
   elif has_failed "${exit_code}"; then
@@ -388,7 +388,9 @@ pick_print_option () {
 is_print_option () {
   local key="${1}"
 
-  if [[ ! "${key}" =~ ^(Quality|PageSize|MediaType|TonerSaveMode|printer-error-policy)$ ]]; then
+  local options='Quality|PageSize|MediaType|TonerSaveMode|printer-error-policy'
+
+  if not_match "${key}" "^(${options})$"; then
     return 1
   fi
 
@@ -425,7 +427,7 @@ pick_print_quality () {
 is_valid_quality () {
   local value="${1}"
 
-  if [[ ! "${value}" =~ ^(600dpi|1200dpi)$ ]]; then
+  if not_match "${value}" '^(600dpi|1200dpi)$'; then
     return 1
   fi
 
@@ -473,7 +475,9 @@ pick_page_size () {
 is_valid_page_size () {
   local value="${1}"
 
-  if [[ ! "${value}" =~ ^(Letter|Legal|A4|A5|Executive|Folio|JB5|B5-ISO|COM10|Monarch|DL|C5|Oficio_S|PCard4x6)$ ]]; then
+  local sizes='Letter|Legal|A4|A5|Executive|Folio|JB5|B5-ISO|COM10|Monarch|DL|C5|Oficio_S|PCard4x6'
+
+  if not_match "${value}" "^(${sizes})$"; then
     return 1
   fi
 
@@ -520,7 +524,9 @@ pick_media_type () {
 is_valid_media_type () {
   local value="${1}"
 
-  if [[ ! "${value}" =~ ^(None|Plain|Thick|Thin|Bond|Color|Card|Labels|Preprinted|Cotton|Archive|Recycled|Envelope)$ ]]; then
+  local types='None|Plain|Thick|Thin|Bond|Color|Card|Labels|Preprinted|Cotton|Archive|Recycled|Envelope'
+
+  if not_match "${value}" "^(${types})$"; then
     return 1
   fi
 
@@ -556,7 +562,7 @@ pick_toner_mode () {
 is_valid_toner_mode () {
   local value="${1}"
 
-  if [[ ! "${value}" =~ ^(Save|Standard)$ ]]; then
+  if not_match "${value}" '^(Save|Standard)$'; then
     return 1
   fi
 
@@ -594,7 +600,9 @@ pick_error_policy () {
 is_valid_error_policy () {
   local value="${1}"
 
-  if [[ ! "${value}" =~ ^(abort-job|retry-current-job|retry-job|stop-printer)$ ]]; then
+  local policies='abort-job|retry-current-job|retry-job|stop-printer'
+
+  if not_match "${value}" "^(${policies})$"; then
     return 1
   fi
 
