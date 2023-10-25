@@ -22,7 +22,7 @@ list_remotes () {
   local len=0
   len="$(count "${remotes}")" || return 1
     
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo -e "No ${service:-\b} remotes found"
     return 0
   fi
@@ -295,7 +295,7 @@ mount_all () {
   local len=0
   len="$(count "${remotes}")" || return 1
 
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No remotes have been found'
     return 2
   fi

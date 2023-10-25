@@ -25,7 +25,7 @@ pick_timezone () {
   local len=0
   len=$(count "${timezones}") || return 1
 
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No timezones have found'
     return 2
   fi
@@ -72,11 +72,11 @@ is_valid_time () {
   local hour=$(echo "${time}" | cut -d ':' -f 1)
   local min=$(echo "${time}" | cut -d ':' -f 2)
 
-  if ((${hour} > 23)); then
+  if is_not_true "0 <= ${hour} <= 23"; then
     return 1
   fi
 
-  if ((${min} > 59)); then
+  if is_not_true "0 <= ${min} <= 59"; then
     return 1
   fi
 
@@ -108,11 +108,11 @@ is_valid_date () {
   local month=$(echo "${date}" | cut -d '-' -f 2)
   local day=$(echo "${date}" | cut -d '-' -f 3)
 
-  if ((${month} == 0 || ${month} > 12)) ; then
+  if is_not_true "1 <= ${month} <= 12"; then
     return 1
   fi
 
-  if ((${day} == 0 || ${day} > 31)); then
+  if is_not_true "1 <= ${day} <= 31"; then
     return 1
   fi
 

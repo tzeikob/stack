@@ -227,7 +227,10 @@ pick_one () {
 
   local len=0
   len="$(count "${options}")" || return 1
-  [[ ${len} -eq 0 ]] && return 1
+  
+  if is_true "${len} = 0"; then
+    return 1
+  fi
 
   local args=()
   if equals "${mode}" 'vertical'; then
@@ -271,7 +274,10 @@ pick_many () {
 
   local len=0
   len="$(count "${options}")" || return 1
-  [[ ${len} -eq 0 ]] && return 1
+  
+  if is_true "${len} = 0"; then
+    return 1
+  fi
 
   local args=()
   if equals "${mode}" 'vertical'; then
@@ -384,7 +390,7 @@ beep () {
   local exit_code=$?
 
   # Print a generic error message only for exit code 1
-  if [[ ${exit_code} -eq 1 ]]; then
+  if is_true "${exit_code} = 1"; then
     echo 'Ooops, an unknwon error occurred!'
   fi
 
@@ -684,7 +690,7 @@ is_not_yes () {
 is_on () {
   local value="${1}"
 
-  if not_match "${value}" '^on$'; then
+  if not_equals "${value}" 'on'; then
     return 1
   fi
 
@@ -708,7 +714,7 @@ is_not_on () {
 is_off () {
   local value="${1}"
 
-  if not_match "${value}" '^off$'; then
+  if not_equals "${value}" 'off'; then
     return 1
   fi
 
@@ -748,48 +754,52 @@ is_not_toggle () {
   is_toggle "${1}" && return 1 || return 0
 }
 
-# Checks if the given value is true.
+# Checks if the given value or expression is true,
+# where expression could be any mathematical comparison
+# like 0 < 5 < 10 or so.
 # Arguments:
-#  value: any value
+#  value: any boolean value or expression
 # Returns:
 #  0 if value is true otherwise 1.
 is_true () {
   local value="${1}"
 
-  if not_match "${value}" '^true$'; then
+  local result="$(kalker "${value}")" || return 1
+
+  if not_equals "${result}" 'true'; then
     return 1
   fi
 
   return 0
 }
 
-# Checks if the given value is not true.
+# Checks if the given value or expression is not true,
+# where expression could be any mathematical comparison
+# like 0 < 5 < 10 or so.
 # Arguments:
-#  value: any value
+#  value: any boolean value or expression
 # Returns:
 #  0 if value is not true otherwise 1.
 is_not_true () {
   is_true "${1}" && return 1 || return 0
 }
 
-# Checks if the given value is false.
+# Checks if the given value or expression is false,
+# where expression could be any mathematical comparison
+# like 0 < 5 < 10 or so.
 # Arguments:
-#  value: any value
+#  value: any boolean value or expression
 # Returns:
 #  0 if value is false otherwise 1.
 is_false () {
-  local value="${1}"
-
-  if not_match "${value}" '^false$'; then
-    return 1
-  fi
-
-  return 0
+  is_true "${1}" && return 1 || return 0
 }
 
-# Checks if the given value is not false.
+# Checks if the given value or expression is not false,
+# where expression could be any mathematical comparison
+# like 0 < 5 < 10 or so.
 # Arguments:
-#  value: any value
+#  value: any boolean value or expression
 # Returns:
 #  0 if value is not false otherwise 1.
 is_not_false () {
@@ -836,7 +846,7 @@ has_failed () {
     code="${1}"
   fi
 
-  if [[ ${code} -ne 0 ]]; then
+  if is_true "${code} != 0"; then
     return 0
   fi
 

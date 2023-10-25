@@ -79,7 +79,7 @@ show_status () {
     local screensaver=''
     screensaver="$(jq -cr "${query}" "${SETTINGS_FILE}")" || return 1
     
-    if is_given "${screensaver}" && [[ ${screensaver} -gt 0 ]]; then
+    if is_given "${screensaver}" && is_true "${screensaver} > 0"; then
       echo "Screensaver:  ${screensaver} mins"
     else
       echo 'Screensaver:  off'
@@ -230,12 +230,12 @@ set_screensaver () {
   elif is_not_positive_integer "${interval}"; then
     echo 'Invalid interval time'
     return 2
-  elif interval_is_out_of_range "${interval}"; then
+  elif is_interval_out_of_range "${interval}"; then
     echo 'Interval time out of range'
     return 2
   fi
 
-  if [[ ${interval} -gt 0 ]]; then
+  if is_true "${interval} > 0"; then
     local secs=$((interval*60))
 
     xset s "${secs}" "${secs}" &> /dev/null
@@ -263,7 +263,7 @@ init_screensaver () {
     interval="$(jq '.screensaver.interval|if . then . else 5 end' "${SETTINGS_FILE}")"
   fi
  
-  if [[ ${interval} -gt 0 ]]; then
+  if is_true "${interval} > 0"; then
     local secs=$((interval*60))
 
     xset s "${secs}" "${secs}" &> /dev/null
@@ -332,7 +332,7 @@ set_charging () {
   elif is_not_positive_integer "${start}"; then
     echo 'Invalid charging start threshold'
     return 2
-  elif charge_limit_is_out_of_range "${start}"; then
+  elif is_charge_limit_out_of_range "${start}"; then
     echo 'Charging start threshold is out of range'
     return 2
   fi
@@ -343,12 +343,12 @@ set_charging () {
   elif is_not_positive_integer "${stop}"; then
     echo 'Invalid charging stop threshold'
     return 2
-  elif charge_limit_is_out_of_range "${stop}"; then
+  elif is_charge_limit_out_of_range "${stop}"; then
     echo 'Charging stop threshold is out of range'
     return 2
   fi
 
-  if [[ ${start} -ge ${stop} ]]; then
+  if is_true "${start} >= ${stop}"; then
     echo 'Start threshold should be lower than stop'
     return 2
   fi

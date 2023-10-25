@@ -405,15 +405,15 @@ order_layouts () {
   local len=0
   len="$(count "${layouts}")" || return 1
 
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No layouts have set yet'
     return 2
-  elif [[ ${len} -eq 1 ]]; then
+  elif is_true "${len} = 1"; then
     echo 'Only one layout was found'
     return 2
   fi
 
-  if [[ ${#codes[@]} -eq 0 ]]; then
+  if is_true "${#codes[@]} = 0"; then
     on_script_mode &&
       echo 'Missing layout codes' && return 2
 

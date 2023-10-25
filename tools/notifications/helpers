@@ -96,7 +96,7 @@ is_not_valid_sort_field () {
 is_volume_with_in_range () {
   local volume="${1}"
 
-  if [[ ${volume} -lt 0 ]] || [[ ${volume} -gt 100 ]]; then
+  if is_not_true "0 <= ${volume} <= 100"; then
     return 1
   fi
 

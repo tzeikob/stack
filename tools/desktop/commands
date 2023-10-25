@@ -84,7 +84,7 @@ list_wallpapers () {
   local len=0
   len="$(count "${wallpapers}")" || return 1
 
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No wallpaper files found'
     return 0
   fi
@@ -198,7 +198,7 @@ list_pointers () {
   local len=0
   len="$(count "${pointers}")" || return 1
 
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No pointers have found'
     return 0
   fi
@@ -338,7 +338,7 @@ list_tablets () {
   local len=0
   len="$(count "${tablets}")" || return 1
 
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No tablets have found'
     return 0
   fi

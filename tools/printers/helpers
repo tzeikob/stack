@@ -237,7 +237,7 @@ pick_printer () {
   local len=0
   len="$(count "${destinations}")" || return 1
 
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No printers have found'
     return 2
   fi
@@ -267,7 +267,7 @@ pick_uri () {
   local len=0
   len="$(count "${destinations}")" || return 1
 
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No print uri destinations discovered'
     return 2
   fi
@@ -336,7 +336,7 @@ pick_driver () {
   local len=0
   len="$(count "${drivers}")" || return 1
 
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No drivers have found'
     return 2
   fi
@@ -357,7 +357,7 @@ pick_job () {
   local len=0
   len="$(count "${jobs}")" || return 1
 
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No print jobs have found'
     return 2
   fi

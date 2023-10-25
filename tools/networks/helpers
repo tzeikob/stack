@@ -213,7 +213,7 @@ pick_device () {
   local len=0
   len="$(count "${devices}")" || return 1
 
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo "No ${type:-network} devices found"
     return 2
   fi
@@ -234,7 +234,7 @@ pick_connection () {
   local len=0
   len="$(count "${connections}")" || return 1
 
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No connections have found'
     return 2
   fi
@@ -258,7 +258,7 @@ pick_wifi () {
   local len=0
   len="$(count "${networks}")" || return 1
 
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No wifi networks detected'
     return 2
   fi
@@ -290,7 +290,7 @@ pick_proxy () {
   local len=0
   len="$(count "${proxies}")" || return 1
 
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo "No proxy profiles have found"
     return 2
   fi
@@ -370,7 +370,7 @@ exists_proxy_profile () {
 signal_limit_is_with_in_range () {
   local limit="${1}"
   
-  if (( ${limit} < 0 || ${limit} > 100 )); then
+  if is_not_true "0 <= ${limit} <= 100"; then
     return 1
   fi
 

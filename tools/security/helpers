@@ -66,7 +66,7 @@ is_screen_locked () {
 is_interval_with_in_range () {
   local interval="${1}"
   
-  if [[ ${interval} -lt 0 ]] || [[ ${interval} -gt 60 ]]; then
+  if is_not_true "0 <= ${interval} <= 60"; then
     return 1
   fi
 

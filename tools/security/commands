@@ -68,7 +68,7 @@ set_screen_locker () {
   # Kill possibly running locker instances
   kill_screen_locker || return 1
 
-  if [[ ${interval} -gt 0 ]]; then
+  if is_true "${interval} > 0"; then
     xautolock -locker 'security -qs lock screen' \
       -nowlocker 'security -qs lock screen' -time "${interval}" \
       -corners 0-00 -detectsleep &> /dev/null &
@@ -99,7 +99,7 @@ init_screen_locker () {
   # Kill possibly running locker instances
   kill_screen_locker || return 1
 
-  if [[ ${interval} -gt 0 ]]; then
+  if is_true "${interval} > 0"; then
     xautolock -locker 'security -qs lock screen' \
       -nowlocker 'security -qs lock screen' \
       -time "${interval}" \
@@ -208,7 +208,7 @@ set_faillock_attempts () {
   elif is_not_positive_integer "${attempts}"; then
     echo 'Invalid attempts number'
     return 2
-  elif [[ ${attempts} -lt 1 ]]; then
+  elif is_true "${attempts} < 1"; then
     echo 'Attempts number should be greater than 0'
     return 2
   fi
@@ -235,7 +235,7 @@ set_faillock_unblock () {
   elif is_not_positive_integer "${time}"; then
     echo 'Invalid unblock time'
     return 2
-  elif [[ ${time} -lt 1 ]]; then
+  elif is_true "${time} < 1"; then
     echo 'Unblock time should be greater than 0'
     return 2
   fi
@@ -264,7 +264,7 @@ set_faillock_interval () {
   elif is_not_positive_integer "${time}"; then
     echo 'Invalid interval time'
     return 2
-  elif [[ ${time} -lt 1 ]]; then
+  elif is_true "${time} < 1"; then
     echo 'Interval time should be greater than 0'
     return 2
   fi

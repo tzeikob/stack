@@ -628,7 +628,7 @@ pick_disk () {
   local len=0
   len="$(count "${disks}")" || return 1
   
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No disks have found'
     return 2
   fi
@@ -666,7 +666,7 @@ pick_partition () {
   local len=0
   len="$(count "${parts}")" || return 1
   
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo -e "No ${status:-\b} partitions have found"
     return 2
   fi
@@ -701,7 +701,7 @@ pick_rom () {
   local len=0
   len="$(count "${roms}")" || return 1
   
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo -e "No ${status:-\b} roms have found"
     return 2
   fi
@@ -740,7 +740,7 @@ pick_host () {
   local len=0
   len="$(count "${hosts}")" || return 1
   
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No hosts have found'
     return 2
   fi
@@ -816,7 +816,7 @@ pick_image_mount () {
   local len=0
   len="$(count "${mounts}")" || return 1
 
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No image mounts have found'
     return 2
   fi
@@ -845,7 +845,7 @@ pick_shared_folder_mount () {
   local len=0
   len="$(count "${uris}")" || return 1
 
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No mounted shared folders have found'
     return 2
   fi

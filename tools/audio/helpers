@@ -42,7 +42,7 @@ pick_card () {
   local len=0
   len=$(count "${cards}") || return 1
 
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No audio cards have found'
     return 2
   fi
@@ -70,7 +70,7 @@ pick_profile () {
   local len=0
   len="$(count "${profiles}")" || return 1
 
-  if [[ ${len} == 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No audio profiles found'
     return 2
   fi
@@ -104,7 +104,7 @@ pick_module () {
   local len=0
   len="$(count "${modules}")" || return 1
 
-  if [[ ${len} == 0 ]]; then
+  if is_true "${len} = 0"; then
     echo "No ${type} modules have found"
     return 2
   fi
@@ -169,7 +169,7 @@ is_not_valid_volume () {
 is_volume_within_range () {
   local volume="${1}"
 
-  if ! ((${volume} >= 0 && ${volume} <= 150)); then
+  if is_not_true "0 <= ${volume} <= 150"; then
     return 1
   fi
 

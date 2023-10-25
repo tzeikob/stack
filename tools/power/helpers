@@ -149,10 +149,10 @@ save_screen_saver_to_settings () {
 #  interval: an integer value
 # Returns:
 #  0 if interval is valid otherwise 1.
-interval_is_with_in_range () {
+is_interval_with_in_range () {
   local interval="${1}"
 
-  if [[ ${interval} -lt 0 ]] || [[ ${interval} -gt 60 ]]; then
+  if is_not_true "0 <= ${interval} <= 60"; then
     return 1
   fi
 
@@ -164,8 +164,8 @@ interval_is_with_in_range () {
 #  interval: an integer value
 # Returns:
 #  0 if interval is not valid otherwise 1.
-interval_is_out_of_range () {
-  interval_is_with_in_range "${1}" && return 1 || return 0
+is_interval_out_of_range () {
+  is_interval_with_in_range "${1}" && return 1 || return 0
 }
 
 # Checks if the given value is a valid charging limit.
@@ -173,10 +173,10 @@ interval_is_out_of_range () {
 #  limit: a percentage integer value
 # Returns:
 #  0 if value is valid otherwise 1.
-charge_limit_is_with_in_range () {
+is_charge_limit_with_in_range () {
   local limit="${1}"
 
-  if [[ ${limit} -lt 0 ]] || [[ ${limit} -gt 100 ]]; then
+  if is_not_true "0 <= ${limit} <= 100"; then
     return 1
   fi
 
@@ -188,7 +188,7 @@ charge_limit_is_with_in_range () {
 #  limit: a percentage integer value
 # Returns:
 #  0 if value is not valid otherwise 1.
-charge_limit_is_out_of_range () {
-  charge_limit_is_with_in_range "${1}" && return 1 || return 0
+is_charge_limit_out_of_range () {
+  is_charge_limit_with_in_range "${1}" && return 1 || return 0
 }
 

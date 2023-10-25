@@ -167,7 +167,7 @@ list_cards () {
   local len=0
   len="$(count "${cards}")" || return 1
 
-  if [[ ${len} == 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No audio cards have found'
     return 0
   fi
@@ -211,7 +211,7 @@ list_ports () {
   local len=0
   len="$(count "${modules}")" || return 1
 
-  if [[ ${len} == 0 ]]; then
+  if is_true "${len} = 0"; then
     echo "No ${type} modules have found"
     return 0
   fi
@@ -255,7 +255,7 @@ list_playbacks () {
   local len=0
   len="$(count "${sink_inputs}")" || return 1
 
-  if [[ ${len} == 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No playbacks have found'
     return 0
   fi
@@ -517,7 +517,7 @@ set_mute () {
   done <<< "${pactl_cmds}"
 
   local status='unmute'
-  if [[ ${mode} == 1 ]]; then
+  if is_true "${mode} = 1"; then
     status='mute'
   fi
 

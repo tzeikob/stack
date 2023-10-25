@@ -262,7 +262,7 @@ list_disks () {
   local len=0
   len="$(count "${disks}")" || return 1
 
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No disks have found'
     return 0
   fi
@@ -307,7 +307,7 @@ list_partitions () {
   local len=0
   len="$(count "${parts}")" || return 1
 
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No partitions have found'
     return 0
   fi
@@ -332,7 +332,7 @@ list_roms () {
   local len=0
   len="$(count "${roms}")" || return 1
 
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No roms have found'
     return 0
   fi
@@ -409,7 +409,7 @@ list_shared_folders () {
   local len=0
   len="$(count "${folders}")" || return 1
 
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No shared folders have found'
     return 0
   fi
@@ -491,7 +491,7 @@ list_mounts () {
   local len=0
   len="$(count "${mounts}")" || return 1
 
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No mounts have found'
     return 0
   fi

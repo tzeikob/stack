@@ -97,7 +97,7 @@ pick_controller () {
   local len=0
   len=$(count "${controllers}") || return 1
 
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No controllers have found'
     return 2
   fi
@@ -118,7 +118,7 @@ pick_device () {
   local len=0
   len=$(count "${devices}") || return 1
 
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No devices have found'
     return 2
   fi

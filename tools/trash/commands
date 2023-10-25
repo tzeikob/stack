@@ -42,7 +42,7 @@ list_files () {
   local len=0
   len="$(count "${files}")" || return 1
 
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No trashed files have found'
     return 0
   fi
@@ -65,14 +65,14 @@ restore_files () {
   local len=0
   len="$(count "${files}")" || return 1
 
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No trashed files found'
     return 2
   fi
 
   local file_keys=''
 
-  if [[ ${#paths[@]} -eq 0 ]]; then
+  if is_true "${#paths[@]} = 0"; then
     on_script_mode &&
       echo 'No file paths are given' && return 2
 
@@ -145,7 +145,7 @@ restore_files () {
   post_len="$(find_files | jq -cer 'length')" || return 1
   len=$((len - post_len))
 
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No files restored'
     return 2
   fi
@@ -166,7 +166,7 @@ remove_files () {
   local len=0
   len="$(count "${files}")" || return 1
 
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No trashed files found'
     return 2
   fi
@@ -175,7 +175,7 @@ remove_files () {
   local query='[.[]|{key: .path, value: "\(.date) \(.path)"}]'
   files="$(echo "${files}" | jq -cer "${query}")" || return 1
   
-  if [[ ${#paths[@]} -eq 0 ]]; then
+  if is_true "${#paths[@]} = 0"; then
     on_script_mode &&
       echo 'No file paths are given' && return 2
 
@@ -213,7 +213,7 @@ remove_files () {
   post_len="$(find_files | jq -cer 'length')" || return 1
   len=$((len - post_len))
 
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No trashed files removed'
     return 2
   fi
@@ -236,7 +236,7 @@ empty_files () {
   local len=0
   len="$(find_files | jq -cer 'length')" || return 1
 
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No trashed files found'
     return 2
   fi
@@ -267,7 +267,7 @@ empty_files () {
   post_len="$(find_files | jq -cer 'length')" || return 1
   len=$((len - post_len))
 
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No trashed files removed'
     return 2
   fi

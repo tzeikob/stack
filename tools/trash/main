@@ -65,7 +65,7 @@ run () {
   shift $((OPTIND-1))
 
   local mode='once'
-  if [[ $# -eq 0 ]]; then
+  if is_true "$# = 0"; then
     mode='loop'
     clear
   fi

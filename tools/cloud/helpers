@@ -142,7 +142,7 @@ pick_remote () {
   local len=0
   len="$(count "${remotes}")" || return 1
 
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo -e "No ${status:-\b} remotes have found"
     return 2
   fi

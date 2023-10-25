@@ -53,7 +53,7 @@ list_printers () {
   local len=0
   len="$(count "${destinations}")" || return 1
 
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No printers have found'
     return 0
   fi
@@ -385,7 +385,7 @@ list_jobs () {
   local len=0
   len="$(count "${jobs}")" || return 1
 
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No active print jobs have found'
     return 0
   fi

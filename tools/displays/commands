@@ -572,7 +572,7 @@ mirror_output () {
   local len=0
   len="$(find_outputs active | jq -cer 'length')" || return 1
 
-  if [[ ${len} -lt 2 ]]; then
+  if is_true "${len} < 2"; then
     echo 'No other active outputs found'
     return 2
   fi
@@ -619,7 +619,7 @@ mirror_output () {
     return 2
   fi
 
-  if [[ ${#targets[@]} -eq 0 ]]; then
+  if is_true "${#targets[@]} = 0"; then
     on_script_mode &&
       echo 'Missing target output name(s)' && return 2
 
@@ -662,7 +662,10 @@ mirror_output () {
   local resolutions=''
   resolutions="$(find_common_resolutions "${name}" "${targets}")" || return 1
 
-  if [[ "$(count "${resolutions}")" -eq 0 ]]; then
+  local resolutions_len=0
+  resolutions_len="$(count "${resolutions}")"
+
+  if is_true "${resolutions_len} = 0"; then
     echo 'No common resolutions found among outputs'
     return 2
   fi
@@ -716,10 +719,10 @@ set_layout () {
   local len=0
   len="$(find_outputs active | jq -cer 'length')" || return 1
 
-  if [[ ${len} -lt 2 ]]; then
+  if is_true "${len} < 2"; then
     echo 'No multiple active outputs found'
     return 2
-  elif [[ ${len} -gt 4 ]]; then
+  elif is_true "${len} > 4"; then
     echo 'No layout mode exists for more than 4 outputs'
     return 2
   fi
@@ -738,7 +741,7 @@ set_layout () {
     return 2
   fi
 
-  if [[ ${#outputs[@]} -eq 0 ]]; then
+  if is_true "${#outputs[@]} = 0"; then
     on_script_mode &&
       echo 'Missing output name(s)' && return 2
 
@@ -751,7 +754,7 @@ set_layout () {
     readarray -t outputs < <(echo "${selected}" | jq -cr '.[]')
   fi
 
-  if [[ ${#outputs[@]} -ne ${len} ]]; then
+  if is_true "${#outputs[@]} != ${len}"; then
     echo "Exactly ${len} outputs required"
     return 2
   fi
@@ -808,7 +811,7 @@ save_layout () {
   local len=0
   len="$(count "${outputs}")" || return 1
 
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No outputs have found'
     return 2
   fi
@@ -884,7 +887,7 @@ restore_layout () {
   local len=0
   len="$(count "${outputs}")" || return 1
 
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No outputs have found'
     return 2
   fi
@@ -927,7 +930,7 @@ fix_layout () {
   local len=0
   len="$(count "${outputs}")" || return 1
 
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No outputs have found'
     return 2
   fi
@@ -1264,7 +1267,7 @@ restore_colors () {
   local len=0
   len="$(count "${colors}")" || return 1
 
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     echo 'No color settings have found'
     return 2
   fi
