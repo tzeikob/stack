@@ -94,7 +94,7 @@ pick_module () {
   query="[.[]|=.|map((.ports[] + {parent: {name, properties}}))|.[]|${query}]"
   
   local object='sinks'
-  if [[ "${type}" == "input" ]]; then
+  if equals "${type}" 'input'; then
     object='sources'
   fi
 

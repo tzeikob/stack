@@ -14,7 +14,7 @@ find_destinations () {
 
   local exit_code=$?
 
-  if match "${destinations}" 'No destinations added'; then
+  if equals "${destinations}" 'No destinations added'; then
     echo '[]'
     return 0
   elif has_failed "${exit_code}"; then
@@ -475,7 +475,8 @@ pick_page_size () {
 is_valid_page_size () {
   local value="${1}"
 
-  local sizes='Letter|Legal|A4|A5|Executive|Folio|JB5|B5-ISO|COM10|Monarch|DL|C5|Oficio_S|PCard4x6'
+  local sizes='Letter|Legal|A4|A5|Executive|Folio|JB5'
+  sizes+='|B5-ISO|COM10|Monarch|DL|C5|Oficio_S|PCard4x6'
 
   if not_match "${value}" "^(${sizes})$"; then
     return 1
@@ -524,7 +525,8 @@ pick_media_type () {
 is_valid_media_type () {
   local value="${1}"
 
-  local types='None|Plain|Thick|Thin|Bond|Color|Card|Labels|Preprinted|Cotton|Archive|Recycled|Envelope'
+  local types='None|Plain|Thick|Thin|Bond|Color|Card|Labels'
+  types+='|Preprinted|Cotton|Archive|Recycled|Envelope'
 
   if not_match "${value}" "^(${types})$"; then
     return 1

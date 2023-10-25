@@ -13,7 +13,7 @@ source /opt/stack/trash/commands
 show_help () {
   local mode="${1:-"once"}"
 
-  if [[ "${mode}" == "once" ]]; then
+  if equals "${mode}" 'once'; then
     echo 'Usage: trash [OPTIONS] COMMAND [OBJECT] [ARGUMENTS]...'
     
     echo -e '\nOPTIONS'
@@ -71,7 +71,7 @@ run () {
   fi
 
   while true; do
-    if [[ "${mode}" == "loop" ]]; then
+    if equals "${mode}" 'loop'; then
       prompt trash
     else
       REPLY="$@"
@@ -86,7 +86,7 @@ run () {
     local cmd="${args[0]}"
     local obj="${args[1]}"
 
-    if [[ "${mode}" == "loop" ]]; then
+    if equals "${mode}" 'loop'; then
       case "${cmd}${obj:+ ${obj}}" in
         'help') clear && show_help loop && continue;;
         'clear') clear && continue;;
@@ -106,7 +106,7 @@ run () {
     esac || beep
 
     local exit_code=$?
-    if [[ "${mode}" == "once" ]]; then
+    if equals "${mode}" 'once'; then
       return ${exit_code}
     fi
   done

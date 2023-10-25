@@ -636,7 +636,7 @@ mirror_output () {
   for ((index = 0; index < ${#targets[@]}; index++)); do
     local target_name="${targets[index]}"
     
-    if [[ "${target_name}" == "${name}" ]]; then
+    if equals "${target_name}" "${name}"; then
       echo 'Source output cannot be in targets'
       return 2
     fi
@@ -865,7 +865,7 @@ save_layout () {
 # the signature of the mapping between current outputs and 
 # connected devices.
 restore_layout () {
-  if file_not_exists "${SETTINGS_FILE}" ]]; then
+  if file_not_exists "${SETTINGS_FILE}"; then
     echo 'No layouts have found'
     return 2
   fi

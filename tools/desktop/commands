@@ -470,7 +470,7 @@ map_tablet () {
   fi
 
   # Reset mapping and area if desktop is given as target
-  if [[ "${target}" == "desktop" ]]; then
+  if equals "${target}" 'desktop'; then
     xsetwacom --set "${name}" MapToOutput desktop &> /dev/null
 
     if has_failed; then

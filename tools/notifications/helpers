@@ -22,7 +22,9 @@ find_all () {
   if match "${sort_by}" '^(id|appname)$'; then
     query+="|sort_by(.${sort_by})"
 
-    [[ "${order}" == "desc" ]] && query+='|reverse'
+    if equals "${order}" 'desc'; then
+      query+='|reverse'
+    fi
   fi
 
   dunstctl history | jq -cr "${query}" || return 1

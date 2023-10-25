@@ -45,7 +45,7 @@ find_device () {
   local type=''
   type="$(get "${device}" ".type")" || return 1
 
-  if [[ "${type}" == "wifi" ]]; then
+  if equals "${type}" 'wifi'; then
     local query=''
     query+='freq: .frequency,'
     query+='rate: .bit_rate,'
@@ -81,7 +81,7 @@ find_connection () {
   local type=''
   type="$(get "${connection}" ".connection_type")" || return 1
 
-  if match "${type}" 'wireless'; then
+  if equals "${type}" 'wireless'; then
     local device=''
     device="$(get "${connection}" ".connection_interface_name")" || return 1
 
@@ -92,7 +92,7 @@ find_connection () {
     query+='signal: .signal_level'
     query="if (.|length>0 and .[0].frequency) then .[0]|{${query}} else {} end"
 
-    if is_network_device "${device}" ; then
+    if is_network_device "${device}"; then
       connection="$(iwconfig "${device}" 2> /dev/null | jc --iwconfig |
         jq -cer --argjson c "${connection}" "${query} + \$c")" || return 1
     fi
@@ -399,7 +399,7 @@ is_ovpn_file () {
   local name=$(basename -- "${file_path}")
   local extension="${name##*.}"
 
-  if [[ "${extension}" != "ovpn" ]]; then
+  if not_equals "${extension}" 'ovpn'; then
     return 1
   fi
 

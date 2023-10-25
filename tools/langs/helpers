@@ -60,12 +60,12 @@ pick_locale () {
 
   local locales=''
 
-  if [[ "${filter}" == "not_installed" ]]; then
+  if equals "${filter}" 'not_installed'; then
     locales="$(cat /etc/locale.gen | tail -n +24 | trim | awk '/^\s*#/{
       gsub(/#/,"",$0);
       print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
     }')" || return 1
-  elif [[ "${filter}" == "installed" ]]; then
+  elif equals "${filter}" 'installed'; then
     locales="$(cat /etc/locale.gen | tail -n +24 | trim | awk '/^\s*[a-zA-Z\s0-9_.-]+/{
       print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
     }')" || return 1
@@ -229,7 +229,7 @@ pick_layout () {
 
   local layouts=''
 
-  if [[ "${status}" == "installed" ]]; then
+  if equals "${status}" 'installed'; then
     layouts="$(cat /etc/X11/xorg.conf.d/00-keyboard.conf |
       awk '/XkbLayout/{print $3}' | tr -d '"' | tr ',' '\n' | awk '{
       print "{\"key\":\""$0"\",\"value\":\""$0"\"},"

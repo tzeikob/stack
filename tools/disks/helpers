@@ -61,7 +61,7 @@ find_partitions () {
   local volumes=''
   volumes="$(veracrypt -t --list 2>&1)"
 
-  if has_failed && not_match "${volumes}" 'No volumes mounted'; then
+  if has_failed && not_equals "${volumes}" 'No volumes mounted'; then
     return 1
   fi
 
@@ -75,9 +75,9 @@ find_partitions () {
   # Merge partitions and volumes data by path into an array
   local query='$p + $v | group_by(.path) | map(add)'
 
-  if [[ "${status}" == "mounted" ]]; then
+  if equals "${status}" 'mounted'; then
     query+='|.[]|select(.mountpoint != null or .veracrypt.mountpoint != null)'
-  elif [[ "${status}" == "unmounted" ]]; then
+  elif equals "${status}" 'unmounted'; then
     query+='|.[]|select(.mountpoint == null and .veracrypt.mountpoint == null)'
   fi
 
@@ -112,7 +112,7 @@ find_partition () {
   local volume=''
   volume="$(veracrypt -t --volume-properties "${path}" 2>&1)"
 
-  if has_failed && not_match "${volume}" 'No such volume is mounted'; then
+  if has_failed && not_equals "${volume}" 'No such volume is mounted'; then
     return 1
   fi
 
@@ -138,9 +138,9 @@ find_roms () {
 
   local query='.blockdevices[]|select(.type == "rom")'
 
-  if [[ "${status}" == "mounted" ]]; then
+  if equals "${status}" 'mounted'; then
     query+='|select(.mountpoint != null)'
-  elif [[ "${status}" == "unmounted" ]]; then
+  elif equals "${status}" 'unmounted'; then
     query+='|select(.mountpoint == null)'
   fi
 
@@ -182,7 +182,7 @@ is_disk () {
   local type=''
   type="$(find_disk "${path}" | jq -cer '.type')" || return 1
 
-  if [[ "${type}" == "disk" ]]; then
+  if equals "${type}" 'disk'; then
     return 0
   else
     return 1
@@ -260,7 +260,7 @@ is_partition () {
   local type=''
   type="$(find_partition "${path}" | jq -cer '.type')" || return 1
 
-  if [[ "${type}" == "part" ]]; then
+  if equals "${type}" 'part'; then
     return 0
   else
     return 1
@@ -326,7 +326,7 @@ is_rom () {
   local type=''
   type="$(find_rom "${path}" | jq -cer '.type')" || return 1
 
-  if [[ "${type}" == "rom" ]]; then
+  if equals "${type}" 'rom'; then
     return 0
   else
     return 1
@@ -473,7 +473,7 @@ unmount_partitions () {
   local volumes=''
   volumes="$(veracrypt -t --list 2>&1)"
   
-  if has_failed && not_match "${volumes}" 'No volumes mounted'; then
+  if has_failed && not_equals "${volumes}" 'No volumes mounted'; then
     return 1
   fi
   
@@ -547,7 +547,9 @@ create_partition () {
   fi
 
   # Use ntfs as fs type for exfat file systems
-  [[ "${fs_type}" == "exfat" ]] && fs_type='ntfs'
+  if equals "${fs_type}" 'exfat'; then
+    fs_type='ntfs'
+  fi
   
   sudo parted --script -a optimal -- "${path}" mkpart primary "${fs_type}" "${start}" "${end}" &&
   sudo parted --script -- "${path}" align-check optimal 1 || return 1

@@ -528,7 +528,7 @@ add_ethernet () {
     device="${REPLY}"
   fi
 
-  if is_not_network_device "${device}" ethernet; then
+  if is_not_network_device "${device}" 'ethernet'; then
     echo "Ethernet device ${device} not found"
     return 2
   fi
@@ -605,7 +605,7 @@ add_dhcp () {
     device="${REPLY}"
   fi
 
-  if is_not_network_device "${device}" ethernet; then
+  if is_not_network_device "${device}" 'ethernet'; then
     echo "Ethernet device ${device} not found"
     return 2
   fi
@@ -656,7 +656,7 @@ add_wifi () {
     device="${REPLY}"
   fi
   
-  if is_not_network_device "${device}" wifi; then
+  if is_not_network_device "${device}" 'wifi'; then
     echo "Wifi device ${device} not found"
     return 2
   fi

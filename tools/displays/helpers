@@ -15,7 +15,9 @@ SETTINGS_FILE="${CONFIG_HOME}/displays.json"
 is_output_status () {
   local status="${1}"
 
-  if not_match "${status}" '^(connected|disconnected|active|inactive|primary)$'; then
+  local statuses='connected|disconnected|active|inactive|primary'
+
+  if not_match "${status}" "^(${statuses})$"; then
     return 1
   fi
 
@@ -41,15 +43,15 @@ find_outputs () {
   local status="${1}"
 
   local criteria='true'
-  if [[ "${status}" == "connected" ]]; then
+  if equals "${status}" 'connected'; then
     criteria='.is_connected == true'
-  elif [[ "${status}" == "disconnected" ]]; then
+  elif equals "${status}" 'disconnected'; then
     criteria='.is_connected == false'
-  elif [[ "${status}" == "active" ]]; then
+  elif equals "${status}" 'active'; then
     criteria='.is_connected == true and .resolution_width != null'
-  elif [[ "${status}" == "inactive" ]]; then
+  elif equals "${status}" 'inactive'; then
     criteria='.is_connected == true and .resolution_width == null'
-  elif [[ "${status}" == "primary" ]]; then
+  elif equals "${status}" 'primary'; then
     criteria='.is_primary == true'
   fi
 
@@ -845,7 +847,7 @@ save_layout_to_settings () {
       local match=''
       match="$(jq "${query}" "${SETTINGS_FILE}")"
 
-      if is_not_empty "${match}" ]]; then
+      if is_not_empty "${match}"; then
         query="(${query}|.map)|= ${map}"
       else
         query=".layouts += [${layout}]"

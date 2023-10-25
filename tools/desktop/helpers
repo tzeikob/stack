@@ -233,7 +233,7 @@ find_tablet () {
   vendor="$(get "${tablet}" '.vendor')" || return 1
 
   # Merge properties specific to wacom devices
-  if [[ "${vendor}" == "wacom" ]]; then
+  if equals "${vendor}" 'wacom'; then
     local props=''
     props="$(xsetwacom --get "${name}" all 2>&1 | awk '/^Option/{
       match($0, "Option \"(.*)\" \"(.*)\"", a)
@@ -394,7 +394,7 @@ save_tablet_scale_to_settings () {
       local match=''
       match="$(jq "${query}" "${SETTINGS_FILE}")"
 
-      if is_empty "${match}" ]]; then
+      if is_empty "${match}"; then
         query=".tablets += [${tablet}]"
       else
         query="(${query}|.scale)|= ${scale}"

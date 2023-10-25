@@ -253,7 +253,7 @@ remove_locale () {
   elif is_locale_not_installed "${name}"; then
     echo "Locale ${name} is already removed"
     return 2
-  elif [[ "${name}" == "en_US.UTF-8 UTF-8" ]]; then
+  elif equals "${name}" 'en_US.UTF-8 UTF-8'; then
     echo 'Default locale cannot be removed'
     return 2
   fi
@@ -341,7 +341,7 @@ remove_layout () {
   if is_not_layout "${code}"; then
     echo 'Invalid or unknown layout code'
     return 2
-  elif [[ "${code}" == "us" ]]; then
+  elif equals "${code}" 'us'; then
     echo 'Default layout cannot be removed'
     return 2
   fi
@@ -350,7 +350,7 @@ remove_layout () {
   layouts="$(cat /etc/X11/xorg.conf.d/00-keyboard.conf |
       awk '/XkbLayout/{print $3}' | tr -d '"')" || return 1
   
-  if [[ "${layouts}" == "${code}" ]]; then
+  if equals "${layouts}" "${code}"; then
     echo 'Cannot remove the only layout'
     return 2
   elif not_match "${layouts}" "${code}"; then
