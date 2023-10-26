@@ -29,8 +29,10 @@ pick_keymap () {
 #  0 if map is valid otherwise 1.
 is_keymap () {
 	local map="${1}"
-
-  if ! localectl --no-pager list-keymaps | grep -qE "^${map}$"; then
+  
+  localectl --no-pager list-keymaps | grep -qE "^${map}$"
+  
+  if has_failed; then
     return 1
   fi
 
@@ -90,8 +92,10 @@ pick_locale () {
 #  0 if locale is valid otherwise 1.
 is_locale () {
 	local name="${1}"
-	
-  if ! grep -qE "^\s*#?\s*${name}\s*$" /etc/locale.gen; then
+  
+  grep -qE "^\s*#?\s*${name}\s*$" /etc/locale.gen
+
+  if has_failed; then
     return 1
   fi
 
@@ -159,7 +163,9 @@ pick_options_value () {
 is_layout_options () {
   local value="${1}"
   
-  if ! localectl --no-pager list-x11-keymap-options | grep -qw "${value}"; then
+  localectl --no-pager list-x11-keymap-options | grep -qw "${value}"
+  
+  if has_failed; then
     return 1
   fi
 
@@ -202,7 +208,9 @@ pick_keyboard_model () {
 is_keyboard_model () {
   local name="${1}"
   
-  if ! localectl --no-pager list-x11-keymap-models | grep -qw "${name}"; then
+  localectl --no-pager list-x11-keymap-models | grep -qw "${name}"
+
+  if has_failed; then
     return 1
   fi
 
@@ -263,7 +271,11 @@ is_layout () {
 
   if not_match "${code}" '^[a-z]{2,6}$'; then
     return 1
-  elif ! localectl --no-pager list-x11-keymap-layouts | grep -qw "${code}"; then
+  fi
+
+  localectl --no-pager list-x11-keymap-layouts | grep -qw "${code}"
+  
+  if has_failed; then
     return 1
   fi
 

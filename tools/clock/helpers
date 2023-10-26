@@ -40,8 +40,10 @@ pick_timezone () {
 #  0 if timezone is valid otherwise 1.
 is_timezone () {
   local name="${1}"
-
-  if ! timedatectl list-timezones | grep -qw "${name}"; then
+  
+  timedatectl list-timezones | grep -qw "${name}"
+  
+  if has_failed; then
     return 1
   fi
 

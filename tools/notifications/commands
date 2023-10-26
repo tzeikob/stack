@@ -20,7 +20,9 @@ start () {
 
   local pid=$!
 
-  if ! ps -p "${pid}" > /dev/null; then
+  ps -p "${pid}" > /dev/null
+  
+  if has_failed; then
     echo 'Failed to start notifications service'
     return 2
   fi
@@ -39,7 +41,9 @@ restart () {
 
   local pid=$!
 
-  if ! ps -p "${pid}" > /dev/null; then
+  ps -p "${pid}" > /dev/null
+  
+  if has_failed; then
     echo 'Failed to restart notifications service'
     return 2
   fi

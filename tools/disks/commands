@@ -903,8 +903,10 @@ unmount_shared_folder () {
     require 'Mount uri is required' || return 2
     uri="${REPLY}"
   fi
+  
+  gio mount -l | grep -q "${uri}"
 
-  if ! gio mount -l | grep -q "${uri}"; then
+  if has_failed; then
     echo 'Shared folder is not mounted'
     return 2
   fi
@@ -1075,7 +1077,9 @@ scan_disk () {
     return 2
   fi
   
-  if ! sudo smartctl -i "${path}" &> /dev/null; then
+  sudo smartctl -i "${path}" &> /dev/null
+  
+  if has_failed; then
     echo 'Unable to retrieve SMART data'
     return 2
   fi
@@ -1199,7 +1203,9 @@ create_encrypted () {
   fi
 
   if not_on_script_mode; then
-    if ! confirm_secret 'Retype the encryption key:' "${key}"; then
+    confirm_secret 'Retype the encryption key:' "${key}"
+
+    if has_failed; then
       echo 'Encryption key does not match'
       return 2
     fi

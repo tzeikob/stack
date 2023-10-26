@@ -258,7 +258,9 @@ set_power () {
     return 2
   fi
 
-  if ! find_controller &> /dev/null; then
+  find_controller &> /dev/null
+  
+  if has_failed; then
     echo 'Unable to find default controller'
     return 2
   fi
@@ -287,7 +289,9 @@ set_scan () {
     return 2
   fi
 
-  if ! find_controller &> /dev/null; then
+  find_controller &> /dev/null
+  
+  if has_failed; then
     echo 'Unable to find default controller'
     return 2
   fi
@@ -322,7 +326,9 @@ set_discoverable () {
     return 2
   fi
 
-  if ! find_controller &> /dev/null; then
+  find_controller &> /dev/null
+  
+  if has_failed; then
     echo 'Unable to find default controller'
     return 2
   fi
@@ -351,7 +357,9 @@ set_pairable () {
     return 2
   fi
 
-  if ! find_controller &> /dev/null; then
+  find_controller &> /dev/null
+
+  if has_failed; then
     echo 'Unable to find default controller'
     return 2
   fi
