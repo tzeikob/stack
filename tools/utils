@@ -368,7 +368,7 @@ download () {
 
   echo "Downloading files to ${output}:"
   echo ${urls} | awk '{
-    for(i=1; i<=NF; i++) {
+    for (i=1; i<=NF; i++) {
       print " "$i
     }
   }'
@@ -766,7 +766,8 @@ is_not_toggle () {
 is_true () {
   local value="${1}"
 
-  local result="$(kalker "${value}")" || return 1
+  local result='false'
+  result="$(kalker -p 100 "${value}")" || return 1
 
   if not_equals "${result}" 'true'; then
     return 1
@@ -923,5 +924,22 @@ equals () {
 #  0 if value a not equals b otherwise 1.
 not_equals () {
   equals "${1}" "${2}" && return 1 || return 0
+}
+
+# Calculates the given arithmetic expression.
+# Arguments:
+#  expression: any arithmetic expression
+# Outputs:
+#  The result of the arithmetic expression.
+calc () {
+  local expression="${1}"
+
+  local result=0
+  result="$(kalker -p 100 "${expression}")" || return 1
+
+  # Make sure scientific formats like 3e-9 convert to regular form
+  result="$(echo "${result}" | awk '{print $0 + 0}')" || return 1
+
+  echo "${result}"
 }
 

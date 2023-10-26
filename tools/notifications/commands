@@ -7,7 +7,8 @@ source /opt/stack/notifications/helpers
 
 # Starts the notifications service.
 start () {
-  local is_up="$(is_notifications_up)" || return 1
+  local is_up='false'
+  is_up="$(is_notifications_up)" || return 1
   
   if is_true "${is_up}"; then
     echo 'Notifications service is already runnning'
@@ -94,7 +95,8 @@ get_state () {
 # Outputs:
 #  A verbose list of text data.
 show_status () {
-  local is_up="$(is_notifications_up)" || return 1
+  local is_up='false'
+  is_up="$(is_notifications_up)" || return 1
 
   if is_true "${is_up}"; then
     echo 'Service Status:    up'

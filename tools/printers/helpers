@@ -283,7 +283,7 @@ find_drivers () {
 
   drivers="$(lpinfo -m 2>&1 | awk '{
     desc=""
-    for(i=2; i<=NF; i++) {
+    for (i=2; i<=NF; i++) {
       if (i>2) desc=desc" " 
       desc=desc$i
     }

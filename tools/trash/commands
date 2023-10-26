@@ -141,7 +141,7 @@ restore_files () {
 
   local post_len=0
   post_len="$(find_files | jq -cer 'length')" || return 1
-  len=$((len - post_len))
+  len="$(calc "${len} - ${post_len}")" || return 1
 
   if is_true "${len} = 0"; then
     echo 'No files restored'
@@ -207,7 +207,7 @@ remove_files () {
 
   local post_len=0
   post_len="$(find_files | jq -cer 'length')" || return 1
-  len=$((len - post_len))
+  len="$(calc "${len} - ${post_len}")" || return 1
 
   if is_true "${len} = 0"; then
     echo 'No trashed files removed'
@@ -261,7 +261,7 @@ empty_files () {
 
   local post_len=0
   post_len="$(find_files | jq -cer 'length')" || return 1
-  len=$((len - post_len))
+  len="$(calc "${len} - ${post_len}")" || return 1
 
   if is_true "${len} = 0"; then
     echo 'No trashed files removed'

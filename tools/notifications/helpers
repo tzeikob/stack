@@ -49,8 +49,8 @@ is_notifications_up () {
 save_volume_to_settings () {
   local volume="${1}"
   
-  # Scale down volume to [0,1] range
-  volume=$(echo "${volume}" | awk '{print $0/100}')
+  # Scale volume down to [0,1] range
+  volume="$(calc "${volume} / 100")"
 
   local settings='{}'
 

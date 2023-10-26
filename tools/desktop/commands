@@ -229,19 +229,13 @@ set_pointer_speed () {
 
   # Convert factor to acceleration speed [-1,1]
   local speed=0
-  speed="$(echo "${factor}" | awk '{print 2*$0 - 1}')" || return 1
+  speed="$(calc "(2 * ${factor}) - 1")" || return 1
 
-  # Convert factor to velocity [0,10]
-  local velocity=0
-  velocity="$(echo "${factor}" | awk '{
-    if ($0 == 0) {
-      velocity=0.001
-    } else {
-      velocity=10*$0
-    }
-
-    print velocity
-  }')" || return 1
+  # Convert factor to velocity [0.001,10]
+  local velocity=0.001
+  if is_true "${factor} > 0"; then
+    velocity="$(calc "10 * ${factor}")" || return 1
+  fi
 
   local devices=''
   devices="$(xinput --list | awk '{
@@ -396,27 +390,33 @@ scale_tablet () {
     return 2
   fi
 
-  # Read the current aspect ratio
+  # Calculate tablet's ratio
+  local area=''
+  area="$(get "${tablet}" '.Area')" || return 1
+
+  local width="$(echo "${area}" | cut -d ' ' -f 3)"
+  local height="$(echo "${area}" | cut -d ' ' -f 4)"
+
   local ratio=0
-  ratio="$(get "${tablet}" '.Area' | awk '{print $3/$4}')" || return 1
+  ratio="$(calc "${width} / ${height}")" || return 1
+
+  # Inverse aspect ratio for portrait layouts
+  if is_true "${ratio} > 1"; then
+    ratio="$(calc "1 / ${ratio}")" || return 1
+  fi
 
   # Reset tablet area before applying the new scaling
   xsetwacom --set "${name}" ResetArea &> /dev/null || return 1
 
-  # Restore the aspect ratio
   tablet="$(find_tablet "${name}")" || return 1
+  area="$(get "${tablet}" '.Area')" || return 1
+  width="$(echo "${area}" | cut -d ' ' -f 3)"
 
-  local area=0
-  area="$(get "${tablet}" '.Area' | awk -v "scale=${scale}" -v "ratio=${ratio}" '{
-    if (ratio > 1) ratio=1/ratio
+  # Apply scaling factor
+  width="$(calc "floor(${width} * ${scale})")" || return 1
+  height="$(calc "floor(${width} * ${ratio})")"|| return 1
 
-    width=int($3*scale)
-    height=int(width*ratio)
-
-    print 0" "0" "width" "height
-  }')" || return 1
-
-  xsetwacom --set "${name}" area "${area}" &> /dev/null
+  xsetwacom --set "${name}" area "0 0 ${width} ${height}" &> /dev/null
 
   if has_failed; then
     echo "Unable to scale tablet ${name}"
@@ -479,23 +479,27 @@ map_tablet () {
     fi
 
     # Restore area keeping the current scale
-    local width=0
-    width="$(get "${tablet}" '.Area' | awk '{print $3}')" || return 1
+    local area=''
+    area="$(get "${tablet}" '.Area')" || return 1
+    local previous_width="$(echo "${area}" | cut -d ' ' -f 3)"
 
+    # Reset tablets area to default size
     xsetwacom --set "${name}" ResetArea &> /dev/null || return 1
 
     tablet="$(find_tablet "${name}")" || return 1
+    area="$(get "${tablet}" '.Area')" || return 1
 
-    local area=''
-    area="$(get "${tablet}" '.Area' | awk -v "width=${width}" '{
-      scale=width/$3
-      width=int($3*scale)
-      height=int($4*scale)
+    local width="$(echo "${area}" | cut -d ' ' -f 3)"
+    local height="$(echo "${area}" | cut -d ' ' -f 4)"
 
-      print 0" "0" "width" "height
-    }')" || return 1
+    # Calculate the scaling factor
+    local scale=0
+    scale="$(calc "${previous_width} / ${width}")" || return 1
 
-    xsetwacom --set "${name}" area "${area}" &> /dev/null || return 1
+    width="$(calc "${floor(${width} * ${scale})}")" || return 1
+    height="$(calc "${floor(${height} * ${scale})}")" || return 1
+
+    xsetwacom --set "${name}" area "0 0 ${width} ${height}" &> /dev/null || return 1
 
     echo 'Tablet mapping has been reset'
     return 0
@@ -520,20 +524,22 @@ map_tablet () {
   display_height="$(get "${output}" '.resolution_height')" || return 1
 
   local ratio=0
-  ratio="$(echo "${display_width} ${display_height}" | awk '{print $1/$2}')" || return 1
+  ratio="$(calc "${display_width} / ${display_height}")" || return 1
+
+  # Inverse aspect ratio for portrait layouts
+  if is_true "${ratio} > 1"; then
+    ratio="$(calc "1 / ${ratio}")" || return 1
+  fi
 
   local area=0
-  area="$(get "${tablet}" '.Area' | awk -v "ratio=${ratio}" '{
-    if (ratio > 1) ratio=1/ratio
+  area="$(get "${tablet}" '.Area')" || return 1
 
-    width=$3
-    height=int(width*ratio)
-
-    print 0" "0" "width" "height
-  }')" || return 1
+  local width="$(echo "${area}" | cut -d ' ' -f 3)"
+  local height=0
+  height="$(calc "floor(${width} * ${ratio})")" || return 1
 
   xsetwacom --set "${name}" MapToOutput "${target}" &> /dev/null &&
-  xsetwacom --set "${name}" area "${area}" &> /dev/null
+  xsetwacom --set "${name}" area "0 0 ${width} ${height}" &> /dev/null
 
   if has_failed; then
     echo "Failed to map tablet ${name}"

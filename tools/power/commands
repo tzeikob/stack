@@ -166,7 +166,8 @@ set_action () {
   fi
 
   # Resolve the logind config option for the handler
-  local option="$(convert_handler_to_option "${handler}")" || return $?
+  local option=''
+  option="$(convert_handler_to_option "${handler}")" || return $?
 
   local config_file='/etc/systemd/logind.conf.d/00-main.conf'
 
@@ -236,7 +237,8 @@ set_screensaver () {
   fi
 
   if is_true "${interval} > 0"; then
-    local secs=$((interval*60))
+    local secs=0
+    secs="$(calc "${interval} * 60")" || return 1
 
     xset s "${secs}" "${secs}" &> /dev/null
   else
@@ -264,7 +266,8 @@ init_screensaver () {
   fi
  
   if is_true "${interval} > 0"; then
-    local secs=$((interval*60))
+    local secs=0
+    secs="$(calc "${interval} * 60")" || return 1
 
     xset s "${secs}" "${secs}" &> /dev/null
   else
