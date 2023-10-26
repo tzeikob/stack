@@ -632,10 +632,8 @@ mirror_output () {
   fi
 
   # Validate each one of the given targets
-  local index=0
-  for ((index = 0; index < ${#targets[@]}; index++)); do
-    local target_name="${targets[index]}"
-    
+  local target_name=''
+  for target_name in "${targets[@]}"; do
     if equals "${target_name}" "${name}"; then
       echo 'Source output cannot be in targets'
       return 2
@@ -760,10 +758,8 @@ set_layout () {
   fi
 
   # Validate each one of the given outputs
-  local index=0
-  for ((index = 0; index < ${#outputs[@]}; index++)); do
-    local name="${outputs[index]}"
-    
+  local name=''
+  for name in "${outputs[@]}"; do
     local output=''
     output="$(find_output "${name}")"
 

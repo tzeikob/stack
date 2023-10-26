@@ -102,12 +102,9 @@ set_locale () {
     NAME ADDRESS TELEPHONE MEASUREMENT IDENTIFICATION
   )
 
-  local index=0
-  for ((index = 0; index < ${#vars[@]}; index++)); do
-    local var="${vars[index]}"
-  
-    sudo sed -i "s/\(${var}=\).*/\1${name}/" /etc/locale.conf &&
-      unset "${var}"
+  local var=''
+  for var in "${vars[@]}"; do
+    sudo sed -i "s/\(${var}=\).*/\1${name}/" /etc/locale.conf && unset "${var}"
   done
   
   source /etc/profile.d/locale.sh

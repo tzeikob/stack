@@ -102,10 +102,8 @@ restore_files () {
     # Remove extra comma from the last element
     file_keys="${file_keys:+${file_keys::-1}}"
   else
-    local index=0
-    for ((index = 0; index < ${#paths[@]}; index++)); do
-      local path="${paths[index]}"
-
+    local path=''
+    for path in "${paths[@]}"; do
       # Match file by file path
       local query=".[]|select(.value == \"${path}\")|.key"
 
@@ -193,10 +191,8 @@ remove_files () {
       echo 'No trashed files removed' && return 2
   fi
 
-  local index=0
-  for ((index = 0; index < ${#paths[@]}; index++)); do
-    local path="${paths[index]}"
-    
+  local path=''
+  for path in "${paths[@]}"; do
     local query=".[]|select(.key == \"${path}\")"
 
     echo "${files}" | jq -cer "${query}" &> /dev/null
