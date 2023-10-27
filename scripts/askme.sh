@@ -610,11 +610,11 @@ what_password () {
     read -rsp " Please enter a valid password: " PASSWORD && echo
   done
 
-  local COMFIRMED=""
-  read -rsp "Re-enter the password: " COMFIRMED && echo
+  local CONFIRMED=""
+  read -rsp "Re-enter the password: " CONFIRMED && echo
 
-  # Repeat until password comfirmed 
-  while [ "$PASSWORD" != "$COMFIRMED" ]; do
+  # Repeat until password confirmed 
+  while [ "$PASSWORD" != "$CONFIRMED" ]; do
     echo " Ooops, passwords do not match"
     read -rsp "Please enter a new password: " PASSWORD && echo
 
@@ -622,7 +622,7 @@ what_password () {
       read -rsp " Please enter a valid password: " PASSWORD && echo
     done
 
-    read -rsp "Re-enter the password: " COMFIRMED && echo
+    read -rsp "Re-enter the password: " CONFIRMED && echo
   done
 
   save_string "${SUBJECT}_PASSWORD" "$PASSWORD"

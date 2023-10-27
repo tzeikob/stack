@@ -186,6 +186,7 @@ remove_files () {
 
   if not_on_script_mode; then
     confirm 'File(s) will be gone forever, proceed?' || return $?
+    require 'Confirmation is required' || return 2
   
     is_not_yes "${REPLY}" &&
       echo 'No trashed files removed' && return 2
@@ -247,6 +248,7 @@ empty_files () {
     fi
   
     confirm "${prompt}" || return $?
+    require 'Confirmation is required' || return 2
 
     is_not_yes "${REPLY}" &&
       echo 'No trashed files removed' && return 2

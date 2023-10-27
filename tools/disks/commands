@@ -1286,7 +1286,7 @@ create_bootable () {
       echo 'Missing the iso file path' && return 2
 
     confirm 'Do you want to download the latest iso?' || return $?
-    require 'Bootable operation is canceled' || return 2
+    require 'Confirmation is required' || return 2
 
     if is_yes "${REPLY}"; then
       download_iso_file "${HOME}/downloads" 'archlinux-x86_64.iso' || return $?
