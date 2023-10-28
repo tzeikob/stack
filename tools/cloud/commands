@@ -305,7 +305,7 @@ mount_all () {
   # Iterate over remote names and mount remotes one by one
   remotes="$(echo "${remotes}" | jq -cr '.[]|.name')" || return 1
 
-  local failed='false'
+  local failed=0
   local remote=''
 
   while read -r remote; do
@@ -313,15 +313,15 @@ mount_all () {
 
     if has_failed; then
       echo "Failed to mount remote ${remote}"
-      failed='true'
+      failed="$(calc "${failed} + 1")" || return 1
       continue
     fi
   
     echo "Remote ${remote} has been mounted"
   done <<< "${remotes}"
 
-  if is_true "${failed}"; then
-    echo 'Some remotes failed to be mounted'
+  if is_true "${failed} > 0"; then
+    echo "${failed} remotes failed to be mounted"
     return 2
   fi
 

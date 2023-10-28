@@ -250,8 +250,8 @@ set_pointer_speed () {
   }')" || return 1
 
   local succeed='false'
-
   local device=''
+
   while read -r device; do
     # Assume this is a mouse device and set its acceleration speed
     xinput --set-prop "${device}" 'libinput Accel Speed' "${speed}" &> /dev/null &&
@@ -584,6 +584,7 @@ init_tablets () {
 
   # Iterate over tablet commands and execute one by one
   local tablet=''
+
   while read -r tablet; do
     local name=''
     name="$(get "${tablet}" '.name')" || return 1

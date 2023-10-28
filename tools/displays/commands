@@ -1284,19 +1284,19 @@ restore_colors () {
   xcalib_cmds="$(echo "${outputs}" | jq -cr --argjson c "${colors}" "${query}")" || return 1
 
   # Iterate over xcalib commands and execute one by one
-  local failed='false'
+  local failed=0
   local xcalib_cmd=''
 
   while read -r xcalib_cmd; do
     local result="$(${xcalib_cmd} 2>&1)"
 
     if has_failed || is_not_empty "${result}"; then
-      failed='true'
+      failed="$(calc "${failed} + 1")" || return 1
     fi
   done <<< "${xcalib_cmds}"
 
-  if is_true "${failed}"; then
-    echo 'Failed to restore color settings'
+  if is_true "${failed} > 0"; then
+    echo "${failed} color settings failed to be restored"
     return 2
   fi
 
