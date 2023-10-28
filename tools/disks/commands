@@ -984,8 +984,10 @@ format_disk () {
     confirm 'Do you really want to proceed?' || return $?
     require 'Confirmation is required' || return 2
     
-    is_not_yes "${REPLY}" &&
-      echo 'Format operation is canceled' && return 2
+    if is_not_yes "${REPLY}"; then
+      echo 'Format operation is canceled'
+      return 2
+    fi
   fi
 
   echo 'Unmounting disk partitions...'
@@ -1219,8 +1221,10 @@ create_encrypted () {
     confirm 'Do you really want to proceed?' || return $?
     require 'Confirmation is required' || return 2
     
-    is_not_yes "${REPLY}" &&
-      echo 'Encryption operation is canceled' && return 2
+    if is_not_yes "${REPLY}"; then
+      echo 'Encryption operation is canceled'
+      return 2
+    fi
   fi
 
   echo 'Unmounting disk partitions...'
@@ -1313,8 +1317,10 @@ create_bootable () {
     confirm 'Do you really want to proceed?' || return $?
     require 'Confirmation is required' || return 2
     
-    is_not_yes "${REPLY}" &&
-      echo 'Bootable operation is canceled' && return 2
+    if is_not_yes "${REPLY}"; then
+      echo 'Bootable operation is canceled'
+      return 2
+    fi
   fi
 
   echo 'Unmounting disk partitions...'

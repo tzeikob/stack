@@ -184,8 +184,10 @@ delete_remote () {
     confirm 'Do you realy want to proceed?' || return $?
     require 'Confirmation is required' || return 2
     
-    is_not_yes "${REPLY}" &&
-      echo 'Deletion operation is canceled' && return 2
+    if is_not_yes "${REPLY}"; then
+      echo 'Deletion operation is canceled'
+      return 2
+    fi
   fi
 
   rclone config delete "${name}"

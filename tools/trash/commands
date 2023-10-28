@@ -188,8 +188,10 @@ remove_files () {
     confirm 'File(s) will be gone forever, proceed?' || return $?
     require 'Confirmation is required' || return 2
   
-    is_not_yes "${REPLY}" &&
-      echo 'No trashed files removed' && return 2
+    if is_not_yes "${REPLY}"; then
+      echo 'No trashed files removed'
+      return 2
+    fi
   fi
 
   local path=''
@@ -250,8 +252,10 @@ empty_files () {
     confirm "${prompt}" || return $?
     require 'Confirmation is required' || return 2
 
-    is_not_yes "${REPLY}" &&
-      echo 'No trashed files removed' && return 2
+    if is_not_yes "${REPLY}"; then
+      echo 'No trashed files removed'
+      return 2
+    fi
   fi
 
   trash-empty -f "${days:-0}"
