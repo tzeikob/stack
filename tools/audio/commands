@@ -84,7 +84,7 @@ show_card () {
       echo 'Missing the audio card name' && return 2
 
     pick_card 'Select audio card name:' || return $?
-    require 'Audio card name is required'
+    require 'Audio card name is required' || return 2
     name="${REPLY}"
   fi
 
