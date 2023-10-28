@@ -162,7 +162,7 @@ restart () {
 #  The list of audio cards.
 list_cards () {
   local cards=''
-  cards="$(find_cards)" || return $?
+  cards="$(find_cards)" || return 1
 
   local len=0
   len="$(count "${cards}")" || return 1
@@ -206,7 +206,7 @@ list_ports () {
   fi
 
   local modules=''
-  modules="$(pactl --format=json list "${object}" | jq -cer "${query}")" || return $?
+  modules="$(pactl --format=json list "${object}" | jq -cer "${query}")" || return 1
 
   local len=0
   len="$(count "${modules}")" || return 1
@@ -250,7 +250,7 @@ list_playbacks () {
   query="[.[]|select(.properties.\"application.name\"|test(\"${name}\"; \"i\"))]"
 
   local sink_inputs=''
-  sink_inputs="$(pactl --format=json list sink-inputs | jq -cer "${query}")" || return $?
+  sink_inputs="$(pactl --format=json list sink-inputs | jq -cer "${query}")" || return 1
 
   local len=0
   len="$(count "${sink_inputs}")" || return 1
@@ -497,7 +497,7 @@ set_mute () {
   query="[.[]|${query}]|join(\"\n\")"
 
   local pactl_cmds=''
-  pactl_cmds="$(pactl --format=json list "${object}s" | jq -cer "${query}")" || return $?
+  pactl_cmds="$(pactl --format=json list "${object}s" | jq -cer "${query}")" || return 1
 
   if is_empty "${pactl_cmds}"; then
     echo "No ${type} modules have found"

@@ -167,7 +167,7 @@ set_action () {
 
   # Resolve the logind config option for the handler
   local option=''
-  option="$(convert_handler_to_option "${handler}")" || return $?
+  option="$(convert_handler_to_option "${handler}")" || return 1
 
   local config_file='/etc/systemd/logind.conf.d/00-main.conf'
 

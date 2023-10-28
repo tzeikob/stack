@@ -144,7 +144,7 @@ pick_options_value () {
 
   options="$(localectl --no-pager list-x11-keymap-options | awk '{
     print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
-  }')" ||  return 1
+  }')" || return 1
 
   # Remove extra comma delimiter from last element
   options="${options:+${options::-1}}"

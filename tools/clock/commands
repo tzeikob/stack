@@ -19,7 +19,7 @@ show_status () {
   query+='Synced:  \(.system_clock_synchronized)\n'
   query+='NTP:     \(.ntp_service)'
 
-  timedatectl | jc --timedatectl | jq -cer "\"${query}\"" || return $?
+  timedatectl | jc --timedatectl | jq -cer "\"${query}\"" || return 1
 
   local ntp_status=''
   ntp_status="$(timedatectl timesync-status 2> /dev/null)"

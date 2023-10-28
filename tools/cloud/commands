@@ -17,7 +17,7 @@ list_remotes () {
   query="[.[]|select(.service|test(\"${service}\"; \"i\"))]"
 
   local remotes=''
-  remotes="$(find_remotes | jq -cer "${query}")" || return $?
+  remotes="$(find_remotes | jq -cer "${query}")" || return 1
 
   local len=0
   len="$(count "${remotes}")" || return 1
@@ -292,7 +292,7 @@ unmount_remote () {
 # Mounts all the synced remotes.
 mount_all () {
   local remotes=''
-  remotes="$(find_remotes)" || return $?
+  remotes="$(find_remotes)" || return 1
 
   local len=0
   len="$(count "${remotes}")" || return 1
