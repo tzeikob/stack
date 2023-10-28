@@ -80,7 +80,7 @@ show_printer () {
       echo 'Printer name is not given' && return 2
 
     pick_printer || return $?
-    require 'Printer name is not selected' || return 2
+    is_empty "${REPLY}" && echo 'Printer name is not selected' && return 2
     name="${REPLY}"
   fi
 
@@ -127,7 +127,7 @@ add_printer () {
       echo 'Printer uri is not given' && return 2
 
     pick_uri || return $?
-    require 'Printer uri is required' || return 2
+    is_empty "${REPLY}" && echo 'Printer uri is required' && return 2
     uri="${REPLY}"
   fi
 
@@ -136,7 +136,7 @@ add_printer () {
       echo 'Missing the printer name' && return 2
 
     ask 'Enter the printer name:' || return $?
-    require 'Printer name is requried' || return 2
+    is_empty "${REPLY}" && echo 'Printer name is requried' && return 2
     name="${REPLY}"
   fi
 
@@ -150,7 +150,7 @@ add_printer () {
       echo 'Print driver is not given' && return 2
 
     pick_driver || return $?
-    require 'Print driver is required' || return 2
+    is_empty "${REPLY}" && echo 'Print driver is required' && return 2
     driver="${REPLY}"
   fi
 
@@ -181,7 +181,7 @@ remove_printer () {
       echo 'Missing printer name' && return 2
 
     pick_printer || return $?
-    require 'Printer name is required' || return 2
+    is_empty "${REPLY}" && echo 'Printer name is required' && return 2
     name="${REPLY}"
   fi
 
@@ -212,7 +212,7 @@ share_printer () {
       echo 'Missing printer name' && return 2
 
     pick_printer || return $?
-    require 'Printer name is required' || return 2
+    is_empty "${REPLY}" && echo 'Printer name is required' && return 2
     name="${REPLY}"
   fi
 
@@ -243,7 +243,7 @@ unshare_printer () {
       echo 'Missing printer name' && return 2
 
     pick_printer || return $?
-    require 'Printer name is required' || return 2
+    is_empty "${REPLY}" && echo 'Printer name is required' && return 2
     name="${REPLY}"
   fi
 
@@ -277,7 +277,7 @@ set_option () {
       echo 'Missing the printer name' && return 2
 
     pick_printer || return $?
-    require 'Printer name is required' || return 2
+    is_empty "${REPLY}" && echo 'Printer name is required' && return 2
     name="${REPLY}"
   fi
 
@@ -291,7 +291,7 @@ set_option () {
       echo 'Missing print option key' && return 2
 
     pick_print_option || return $?
-    require 'Print option key is required' || return 2
+    is_empty "${REPLY}" && echo 'Print option key is required' && return 2
     key="${REPLY}"
   fi
 
@@ -314,7 +314,7 @@ set_option () {
         echo 'Unknown or invalid print option key'
         return 2;;
     esac || return $?
-    require 'Print option value is required' || return 2
+    is_empty "${REPLY}" && echo 'Print option value is required' && return 2
     value="${REPLY}"
   fi
    
@@ -356,7 +356,7 @@ set_default () {
       echo 'Missing the printer name' && return 2
 
     pick_printer || return $?
-    require 'Printer name is required' || return 2
+    is_empty "${REPLY}" && echo 'Printer name is required' && return 2
     name="${REPLY}"
   fi
 
@@ -411,7 +411,7 @@ cancel_job () {
       echo 'Missing the print job id' && return 2
 
     pick_job || return $?
-    require 'Print job id is required' || return 2
+    is_empty "${REPLY}" && echo 'Print job id is required' && return 2
     id="${REPLY}"
   fi
 

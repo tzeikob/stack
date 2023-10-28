@@ -77,7 +77,7 @@ restore_files () {
       echo 'No file paths are given' && return 2
 
     pick_many 'Select files to restore:' "${files}" vertical || return $?
-    require 'File paths are required' || return 2
+    is_empty "${REPLY}" && echo 'File paths are required' && return 2
     local picked="${REPLY}"
 
     # Refuse to overwrite existing files
@@ -178,7 +178,7 @@ remove_files () {
       echo 'No file paths are given' && return 2
 
     pick_many 'Select files to remove:' "${files}" vertical || return $?
-    require 'File paths are required' || return 2
+    is_empty "${REPLY}" && echo 'File paths are required' && return 2
     local selected_paths="${REPLY}"
 
     readarray -t paths < <(echo "${selected_paths}" | jq -cr '.[]')
@@ -186,7 +186,7 @@ remove_files () {
 
   if not_on_script_mode; then
     confirm 'File(s) will be gone forever, proceed?' || return $?
-    require 'Confirmation is required' || return 2
+    is_empty "${REPLY}" && echo 'Confirmation is required' && return 2
   
     if is_not_yes "${REPLY}"; then
       echo 'No trashed files removed'
@@ -250,7 +250,7 @@ empty_files () {
     fi
   
     confirm "${prompt}" || return $?
-    require 'Confirmation is required' || return 2
+    is_empty "${REPLY}" && echo 'Confirmation is required' && return 2
 
     if is_not_yes "${REPLY}"; then
       echo 'No trashed files removed'

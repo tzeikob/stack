@@ -111,7 +111,7 @@ show_device () {
       echo 'Missing network device name' && return 2
     
     pick_device || return $?
-    require 'Network device name required' || return 2
+    is_empty "${REPLY}" && echo 'Network device name required' && return 2
     name="${REPLY}"
   fi
 
@@ -156,7 +156,7 @@ show_connection () {
       echo 'Missing connection name' && return 2
     
     pick_connection || return $?
-    require 'Connection name required' || return 2
+    is_empty "${REPLY}" && echo 'Connection name required' && return 2
     name="${REPLY}"
   fi
 
@@ -267,7 +267,7 @@ list_wifis () {
       echo 'Missing wifi device name' && return 2
     
     pick_device wifi || return $?
-    require 'Wifi device name required' || return 2
+    is_empty "${REPLY}" && echo 'Wifi device name required' && return 2
     device="${REPLY}"
   fi
 
@@ -323,7 +323,7 @@ up_device () {
       echo 'Missing network device name' && return 2
     
     pick_device || return $?
-    require 'Network device name required' || return 2
+    is_empty "${REPLY}" && echo 'Network device name required' && return 2
     name="${REPLY}"
   fi
 
@@ -355,7 +355,7 @@ up_connection () {
       echo 'Missing connection name' && return 2
     
     pick_connection || return $?
-    require 'Connection name required' || return 2
+    is_empty "${REPLY}" && echo 'Connection name required' && return 2
     name="${REPLY}"
   fi
 
@@ -387,7 +387,7 @@ down_device () {
       echo 'Missing network device name' && return 2
     
     pick_device || return $?
-    require 'Network device name required' || return 2
+    is_empty "${REPLY}" && echo 'Network device name required' && return 2
     name="${REPLY}"
   fi
 
@@ -419,7 +419,7 @@ down_connection () {
       echo 'Missing connection name' && return 2
     
     pick_connection || return $?
-    require 'Connection name required' || return 2
+    is_empty "${REPLY}" && echo 'Connection name required' && return 2
     name="${REPLY}"
   fi
 
@@ -452,7 +452,7 @@ remove_device () {
       echo 'Missing network device name' && return 2
     
     pick_device || return $?
-    require 'Network device name required' || return 2
+    is_empty "${REPLY}" && echo 'Network device name required' && return 2
     name="${REPLY}"
   fi
 
@@ -484,7 +484,7 @@ remove_connection () {
       echo 'Missing connection name' && return 2
     
     pick_connection || return $?
-    require 'Connection name required' || return 2
+    is_empty "${REPLY}" && echo 'Connection name required' && return 2
     name="${REPLY}"
   fi
 
@@ -524,7 +524,7 @@ add_ethernet () {
       echo 'Missing ethernet device name' && return 2
   
     pick_device ethernet || return $?
-    require 'Ethernet device name required' || return 2
+    is_empty "${REPLY}" && echo 'Ethernet device name required' && return 2
     device="${REPLY}"
   fi
 
@@ -538,7 +538,7 @@ add_ethernet () {
       echo 'Missing connection name' && return 2
 
     ask 'Enter a connection name:' || return $?
-    require 'Connection name required' || return 2
+    is_empty "${REPLY}" && echo 'Connection name required' && return 2
     name="${REPLY}"
   fi
 
@@ -552,7 +552,7 @@ add_ethernet () {
       echo 'Missing static ip address' && return 2
 
     ask 'Enter static ip address:' || return $?
-    require 'Static ip address required' || return 2
+    is_empty "${REPLY}" && echo 'Static ip address required' && return 2
     ip="${REPLY}"
   fi
 
@@ -561,7 +561,7 @@ add_ethernet () {
       echo 'Missing gateway address' && return 2
 
     ask 'Enter gateway address:' || return $?
-    require 'Gateway address required' || return 2
+    is_empty "${REPLY}" && echo 'Gateway address required' && return 2
     gateway="${REPLY}"
   fi
 
@@ -570,7 +570,7 @@ add_ethernet () {
       echo 'Missing dns servers' && return 2
 
     ask 'Enter dns servers:' || return $?
-    require 'Primary dns server required' || return 2
+    is_empty "${REPLY}" && echo 'Primary dns server required' && return 2
     dns="${REPLY}"
   fi
 
@@ -601,7 +601,7 @@ add_dhcp () {
       echo 'Missing ethernet device name' && return 2
   
     pick_device ethernet || return $?
-    require 'Ethernet device name required' || return 2
+    is_empty "${REPLY}" && echo 'Ethernet device name required' && return 2
     device="${REPLY}"
   fi
 
@@ -615,7 +615,7 @@ add_dhcp () {
       echo 'Missing connection name' && return 2
 
     ask 'Enter a connection name:' || return $?
-    require 'Connection name required' || return 2
+    is_empty "${REPLY}" && echo 'Connection name required' && return 2
     name="${REPLY}"
   fi
 
@@ -652,7 +652,7 @@ add_wifi () {
       echo 'Missing wifi device name' && return 2
 
     pick_device wifi || return $?
-    require 'Wifi device name required' || return 2
+    is_empty "${REPLY}" && echo 'Wifi device name required' && return 2
     device="${REPLY}"
   fi
   
@@ -666,7 +666,7 @@ add_wifi () {
       echo 'Missing network ssid' && return 2
 
     pick_wifi "${device}" || return $?
-    require 'Network ssid required' || return 2
+    is_empty "${REPLY}" && echo 'Network ssid required' && return 2
     ssid="${REPLY}"
   fi
 
@@ -675,7 +675,7 @@ add_wifi () {
       echo 'Missing private key' && return 2
 
     ask_secret 'Enter private key:' || return $?
-    require 'Private key required' || return 2
+    is_empty "${REPLY}" && echo 'Private key required' && return 2
     secret="${REPLY}"
   fi
 
@@ -708,7 +708,7 @@ add_vpn () {
       echo 'Missing ovpn file path' && return 2
       
     ask 'Enter path to ovpn file:' || return $?
-    require 'Ovpn file path required' || return 2
+    is_empty "${REPLY}" && echo 'Ovpn file path required' && return 2
     file_path="${REPLY}"
   fi
 
@@ -733,7 +733,7 @@ add_vpn () {
       echo 'Missing the username' && return 2
 
     ask 'Enter the username:' || return $?
-    require 'Username required' || return 2
+    is_empty "${REPLY}" && echo 'Username required' && return 2
     username="${REPLY}"
   fi
 
@@ -742,7 +742,7 @@ add_vpn () {
       echo 'Missing the password' && return 2
 
     ask_secret 'Enter the password:' || return $?
-    require 'Password required' || return 2
+    is_empty "${REPLY}" && echo 'Password required' && return 2
     password="${REPLY}"
   fi
 
@@ -782,7 +782,7 @@ add_proxy () {
       echo 'Missing proxy profile name' && return 2
     
     ask 'Enter a proxy profile name:' || return $?
-    require 'Proxy profile name required' || return 2
+    is_empty "${REPLY}" && echo 'Proxy profile name required' && return 2
     name="${REPLY}"
   fi
 
@@ -796,7 +796,7 @@ add_proxy () {
       echo 'Missing proxy host server' && return 2
     
     ask 'Enter proxy host server:' || return $?
-    require 'Proxy host server required' || return 2
+    is_empty "${REPLY}" && echo 'Proxy host server required' && return 2
     host="${REPLY}"
   fi
 
@@ -805,7 +805,7 @@ add_proxy () {
       echo 'Missing proxy server port' && return 2
     
     ask 'Enter proxy server port:' || return $?
-    require 'Proxy server port required' || return 2
+    is_empty "${REPLY}" && echo 'Proxy server port required' && return 2
     port="${REPLY}"
   fi
 
@@ -847,7 +847,7 @@ remove_proxy () {
       echo 'Missing proxy profile name' && return 2
 
     pick_proxy || return $?
-    require 'Proxy profile name required' || return 2
+    is_empty "${REPLY}" && echo 'Proxy profile name required' && return 2
     name="${REPLY}"
   fi
 
@@ -923,7 +923,7 @@ set_proxy () {
       echo 'Missing proxy profile name' && return 2
 
     pick_proxy || return $?
-    require 'Proxy profile name required' || return 2
+    is_empty "${REPLY}" && echo 'Proxy profile name required' && return 2
     name="${REPLY}"
   fi
 

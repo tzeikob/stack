@@ -45,7 +45,7 @@ set_keymap () {
       echo 'Missing the keyboard map' && return 2
 
     pick_keymap || return $?
-    require 'Keyboard map is required' || return 2
+    is_empty "${REPLY}" && echo 'Keyboard map is required' && return 2
     map="${REPLY}"
   fi
 
@@ -76,7 +76,7 @@ set_locale () {
      echo 'Missing the locale name' && return 2
 
     pick_locale installed || return $?
-    require 'Locale name is required' || return 2
+    is_empty "${REPLY}" && echo 'Locale name is required' && return 2
     name="${REPLY}"
   fi
 
@@ -128,7 +128,7 @@ set_options () {
       echo 'Missing the options value' && return 2
 
     pick_options_value || return $?
-    require 'Options value is required' || return 2
+    is_empty "${REPLY}" && echo 'Options value is required' && return 2
     value="${REPLY}"
   fi
 
@@ -167,7 +167,7 @@ set_model () {
       echo 'Missing the keyboard model name' && return 2
 
     pick_keyboard_model || return $?
-    require 'Keyboard model name is required' || return 2
+    is_empty "${REPLY}" && echo 'Keyboard model name is required' && return 2
     name="${REPLY}"
   fi
 
@@ -206,7 +206,7 @@ add_locale () {
       echo 'Missing the locale name' && return 2
 
     pick_locale not_installed || return $?
-    require 'Locale name is required' || return 2
+    is_empty "${REPLY}" && echo 'Locale name is required' && return 2
     name="${REPLY}"
   fi
 
@@ -240,7 +240,7 @@ remove_locale () {
       echo 'Missing the locale name' && return 2
 
     pick_locale installed || return $?
-    require 'Locale name is required' || return 2
+    is_empty "${REPLY}" && echo 'Locale name is required' && return 2
     name="${REPLY}"
   fi
 
@@ -277,7 +277,7 @@ add_layout () {
       echo 'Missing the layout code' && return 2
 
     pick_layout || return $?
-    require 'Layout code is required' || return 2
+    is_empty "${REPLY}" && echo 'Layout code is required' && return 2
     code="${REPLY}"
   fi
 
@@ -331,7 +331,7 @@ remove_layout () {
       echo 'Missing the layout code' && return 2
 
     pick_layout installed || return $?
-    require 'Layout code is required' || return 2
+    is_empty "${REPLY}" && echo 'Layout code is required' && return 2
     code="${REPLY}"
   fi
 
@@ -415,7 +415,7 @@ order_layouts () {
       echo 'Missing layout codes' && return 2
 
     pick_many 'Pick layout codes by order:' "${layouts}" horizontal || return $?
-    require 'Layout codes are required' || return 2
+    is_empty "${REPLY}" && echo 'Layout codes are required' && return 2
     local selected="${REPLY}"
 
     # Convert selection from json to array

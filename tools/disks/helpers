@@ -874,7 +874,7 @@ download_iso_file () {
   hosts="[${hosts}]"
 
   pick_one 'Select a mirror host:' "${hosts}" vertical || return $?
-  require 'Mirror host is required' || return 2
+  is_empty "${REPLY}" && echo 'Mirror host is required' && return 2
   local host="${REPLY}"
 
   local files=(

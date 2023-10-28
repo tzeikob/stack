@@ -117,7 +117,7 @@ show_output () {
       echo 'Missing the output name' && return 2
 
     pick_output 'Select an output name:' || return $?
-    require 'Output name is required' || return 2
+    is_empty "${REPLY}" && echo 'Output name is required' && return 2
     name="${REPLY}"
   fi
 
@@ -236,7 +236,7 @@ set_mode () {
       echo 'Missing the output name' && return 2
 
     pick_output 'Select an output name:' active || return $?
-    require 'Output name is required' || return 2
+    is_empty "${REPLY}" && echo 'Output name is required' && return 2
     name="${REPLY}"
   fi
 
@@ -261,7 +261,7 @@ set_mode () {
       echo 'Missing the resolution' && return 2
 
     pick_resolution "${output}" || return $?
-    require 'Resolution is required' || return 2
+    is_empty "${REPLY}" && echo 'Resolution is required' && return 2
     resolution="${REPLY}"
   fi
   
@@ -278,7 +278,7 @@ set_mode () {
       echo 'Missing the refresh rate' && return 2
 
     pick_rate "${output}" "${resolution}" || return $?
-    require 'Refresh rate is required' || return 2
+    is_empty "${REPLY}" && echo 'Refresh rate is required' && return 2
     rate="${REPLY}"
   fi
   
@@ -311,7 +311,7 @@ set_primary () {
       echo 'Missing the output name' && return 2
 
     pick_output 'Select an output name:' active || return $?
-    require 'Output name is required' || return 2
+    is_empty "${REPLY}" && echo 'Output name is required' && return 2
     name="${REPLY}"
   fi
 
@@ -355,7 +355,7 @@ set_on () {
       echo 'Missing the output name' && return 2
 
     pick_output 'Select an output name:' inactive || return $?
-    require 'Output name is required' || return 2
+    is_empty "${REPLY}" && echo 'Output name is required' && return 2
     name="${REPLY}"
   fi
 
@@ -408,7 +408,7 @@ set_off () {
       echo 'Missing the output name' && return 2
 
     pick_output 'Select an output name:' active || return $?
-    require 'Output name is required' || return 2
+    is_empty "${REPLY}" && echo 'Output name is required' && return 2
     name="${REPLY}"
   fi
 
@@ -454,7 +454,7 @@ reflect_output () {
       echo 'Missing the output name' && return 2
 
     pick_output 'Select an output name:' active || return $?
-    require 'Output name is required' || return 2
+    is_empty "${REPLY}" && echo 'Output name is required' && return 2
     name="${REPLY}"
   fi
 
@@ -479,7 +479,7 @@ reflect_output () {
       echo 'Missing the reflection mode' && return 2
 
     pick_reflection_mode || return $?
-    require 'Reflection mode is required' || return 2
+    is_empty "${REPLY}" && echo 'Reflection mode is required' && return 2
     mode="${REPLY}"
   fi
   
@@ -511,7 +511,7 @@ rotate_output () {
       echo 'Missing the output name' && return 2
 
     pick_output 'Select an output name:' active || return $?
-    require 'Output name is required' || return 2
+    is_empty "${REPLY}" && echo 'Output name is required' && return 2
     name="${REPLY}"
   fi
 
@@ -536,7 +536,7 @@ rotate_output () {
       echo 'Missing the rotation mode' && return 2
 
     pick_rotation_mode || return $?
-    require 'Rotation mode is required' || return 2
+    is_empty "${REPLY}" && echo 'Rotation mode is required' && return 2
     mode="${REPLY}"
   fi
   
@@ -582,7 +582,7 @@ mirror_output () {
       echo 'Missing the output name' && return 2
 
     pick_output 'Select output name:' active || return $?
-    require 'Output name is required' || return 2
+    is_empty "${REPLY}" && echo 'Output name is required' && return 2
     name="${REPLY}"
   fi
 
@@ -607,7 +607,7 @@ mirror_output () {
       echo 'Missing resolution' && return 2
 
     pick_resolution "${source}" || return $?
-    require 'Resolution is required' || return 2
+    is_empty "${REPLY}" && echo 'Resolution is required' && return 2
     resolution="${REPLY}"
   fi
 
@@ -624,7 +624,7 @@ mirror_output () {
       echo 'Missing target output name(s)' && return 2
 
     pick_outputs 'Select at least one target output:' active "${name}" || return $?
-    require 'At least one target output is required' || return 2
+    is_empty "${REPLY}" && echo 'At least one target output is required' && return 2
     local selected="${REPLY}"
 
     # Convert json to array
@@ -730,7 +730,7 @@ set_layout () {
       echo 'Missing layout mode' && return 2
 
     pick_layout_mode "${len}" || return $?
-    require 'Layout mode is required' || return 2
+    is_empty "${REPLY}" && echo 'Layout mode is required' && return 2
     mode="${REPLY}"
   fi
 
@@ -745,7 +745,7 @@ set_layout () {
 
     show_layout_map "${mode}"
     pick_outputs 'Select output names by order:' active || return $?
-    require 'Output names are required' || return 2
+    is_empty "${REPLY}" && echo 'Output names are required' && return 2
     local selected="${REPLY}"
 
     # Convert json to array   
@@ -995,7 +995,7 @@ delete_layout () {
       echo 'Missing the layout index' && return 2
 
     pick_layout || return $?
-    require 'Layout index is required' || return 2
+    is_empty "${REPLY}" && echo 'Layout index is required' && return 2
     index="${REPLY}"
   fi
 
@@ -1071,7 +1071,7 @@ set_color () {
       echo 'Missing output name' && return 2
 
     pick_output 'Select an output name:' active || return $?
-    require 'Output name is required' || return 2
+    is_empty "${REPLY}" && echo 'Output name is required' && return 2
     name="${REPLY}"
   fi
   
@@ -1096,7 +1096,7 @@ set_color () {
       echo 'Missing the profile file' && return 2
 
     pick_color_profile || return $?
-    require 'Profile file is required' || return 2
+    is_empty "${REPLY}" && echo 'Profile file is required' && return 2
     profile="${REPLY}"
   fi
 
@@ -1138,7 +1138,7 @@ reset_color () {
       echo 'Missing the output name' && return 2
 
     pick_output 'Select output name:' active || return $?
-    require 'Output name is required' || return 2
+    is_empty "${REPLY}" && echo 'Output name is required' && return 2
     name="${REPLY}"
   fi
 
@@ -1191,7 +1191,7 @@ delete_color () {
       echo 'Missing the color setting index' && return 2
 
     pick_color_setting || return $?
-    require 'Color setting index is required' || return 2
+    is_empty "${REPLY}" && echo 'Color setting index is required' && return 2
     index="${REPLY}"
   fi
 

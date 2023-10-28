@@ -71,7 +71,7 @@ show_disk () {
       echo 'Missing the disk path' && return 2
 
     pick_disk || return $?
-    require 'Disk path is required' || return 2
+    is_empty "${REPLY}" && echo 'Disk path is required' && return 2
     path="${REPLY}"
   fi
 
@@ -137,11 +137,11 @@ show_partition () {
       echo 'Missing the partition path' && return 2
 
     pick_disk || return $?
-    require 'Disk path is required' || return 2
+    is_empty "${REPLY}" && echo 'Disk path is required' && return 2
     local disk="${REPLY}"
 
     pick_partition "${disk}" || return $?
-    require 'Partition path is required' || return 2
+    is_empty "${REPLY}" && echo 'Partition path is required' && return 2
     path="${REPLY}"
   fi
   
@@ -217,7 +217,7 @@ show_rom () {
       echo 'Missing rom path' && return 2
 
     pick_rom || return $?
-    require 'Rom path is required' || return 2
+    is_empty "${REPLY}" && echo 'Rom path is required' && return 2
     path="${REPLY}"
   fi
 
@@ -292,7 +292,7 @@ list_partitions () {
       echo 'Missing the disk path' && return 2
 
     pick_disk || return $?
-    require 'Disk path is required' || return 2
+    is_empty "${REPLY}" && echo 'Disk path is required' && return 2
     disk="${REPLY}"
   fi
 
@@ -368,7 +368,7 @@ list_shared_folders () {
       echo 'Missing the host' && return 2
 
     pick_host || return $?
-    require 'Host is required' || return 2
+    is_empty "${REPLY}" && echo 'Host is required' && return 2
     host="${REPLY}"
   fi
 
@@ -377,7 +377,7 @@ list_shared_folders () {
       echo 'Missing the username' && return 2
 
     ask 'Enter the username:' || return $?
-    require 'Username is required' || return 2
+    is_empty "${REPLY}" && echo 'Username is required' && return 2
     user="${REPLY}"
   fi
 
@@ -394,7 +394,7 @@ list_shared_folders () {
       echo 'Missing the password' && return 2
 
     ask_secret 'Enter the password:' || return $?
-    require 'Password is required' || return 2
+    is_empty "${REPLY}" && echo 'Password is required' && return 2
     password="${REPLY}"
   fi
 
@@ -515,11 +515,11 @@ mount_partition () {
       echo 'Missing the partition path' && return 2
 
     pick_disk || return $?
-    require 'Disk path is required' || return 2
+    is_empty "${REPLY}" && echo 'Disk path is required' && return 2
     local disk="${REPLY}"
 
     pick_partition "${disk}" unmounted || return $?
-    require 'Partition path is required' || return 2
+    is_empty "${REPLY}" && echo 'Partition path is required' && return 2
     path="${REPLY}"
   fi
 
@@ -555,11 +555,11 @@ mount_encrypted () {
       echo 'Missing the partition path' && return 2
 
     pick_disk || return $?
-    require 'Disk path is required' || return 2
+    is_empty "${REPLY}" && echo 'Disk path is required' && return 2
     local disk="${REPLY}"
 
     pick_partition "${disk}" unmounted || return $?
-    require 'Partition path is required' || return 2
+    is_empty "${REPLY}" && echo 'Partition path is required' && return 2
     path="${REPLY}"
   fi
 
@@ -576,7 +576,7 @@ mount_encrypted () {
       echo 'Missing the encryption key' && return 2
 
     ask_secret 'Enter the encryption key:' || return $?
-    require 'Encryption key is required' || return 2
+    is_empty "${REPLY}" && echo 'Encryption key is required' && return 2
     key="${REPLY}"
   fi
 
@@ -602,11 +602,11 @@ unmount_partition () {
       echo 'Missing the partition path' && return 2
 
     pick_disk || return $?
-    require 'Disk path is required' || return 2
+    is_empty "${REPLY}" && echo 'Disk path is required' && return 2
     local disk="${REPLY}"
 
     pick_partition "${disk}" mounted || return $?
-    require 'Partition path is required' || return 2
+    is_empty "${REPLY}" && echo 'Partition path is required' && return 2
     path="${REPLY}"
   fi
 
@@ -643,11 +643,11 @@ unmount_encrypted () {
       echo 'Missing the partition path' && return 2
 
     pick_disk || return $?
-    require 'Disk path is required' || return 2
+    is_empty "${REPLY}" && echo 'Disk path is required' && return 2
     local disk="${REPLY}"
 
     pick_partition "${disk}" mounted || return $?
-    require 'Partition path is required' || return 2
+    is_empty "${REPLY}" && echo 'Partition path is required' && return 2
     path="${REPLY}"
   fi
 
@@ -683,7 +683,7 @@ mount_rom () {
       echo 'Missing the rom path' && return 2
 
     pick_rom unmounted || return $?
-    require 'Rom path is required' || return 2
+    is_empty "${REPLY}" && echo 'Rom path is required' && return 2
     path="${REPLY}"
   fi
 
@@ -716,7 +716,7 @@ unmount_rom () {
       echo 'Missing the rom path' && return 2
 
     pick_rom mounted || return $?
-    require 'Rom path is required' || return 2
+    is_empty "${REPLY}" && echo 'Rom path is required' && return 2
     path="${REPLY}"
   fi
 
@@ -786,7 +786,7 @@ unmount_image () {
       echo 'Missing the image mount path' && return 2
 
     pick_image_mount || return $?
-    require 'Image mount path is required' || return 2
+    is_empty "${REPLY}" && echo 'Image mount path is required' && return 2
     path="${REPLY}"
   fi
 
@@ -826,7 +826,7 @@ mount_shared_folder () {
       echo 'Missing the host' && return 2
 
     pick_host || return $?
-    require 'Host is required' || return 2
+    is_empty "${REPLY}" && echo 'Host is required' && return 2
     host="${REPLY}"
   fi
 
@@ -835,7 +835,7 @@ mount_shared_folder () {
       echo 'Missing the folder name' && return 2
 
     ask 'Enter a folder name:' || return $?
-    require 'Folder name is required' || return 2
+    is_empty "${REPLY}" && echo 'Folder name is required' && return 2
     name="${REPLY}"
   fi
 
@@ -844,7 +844,7 @@ mount_shared_folder () {
       echo 'Missing the username' && return 2
 
     ask 'Enter the username:' || return $?
-    require 'Username is required' || return 2
+    is_empty "${REPLY}" && echo 'Username is required' && return 2
     user="${REPLY}"
   fi
 
@@ -861,7 +861,7 @@ mount_shared_folder () {
       echo 'Missing the password' && return 2
 
     ask_secret 'Enter the password:' || return $?
-    require 'Password is required' || return 2
+    is_empty "${REPLY}" && echo 'Password is required' && return 2
     password="${REPLY}"
   fi
 
@@ -900,7 +900,7 @@ unmount_shared_folder () {
       echo 'Missing the mount uri' && return 2
 
     pick_shared_folder_mount || return $?
-    require 'Mount uri is required' || return 2
+    is_empty "${REPLY}" && echo 'Mount uri is required' && return 2
     uri="${REPLY}"
   fi
   
@@ -938,7 +938,7 @@ format_disk () {
       echo 'Missing the disk path' && return 2
 
     pick_disk || return $?
-    require 'Disk path is required' || return 2
+    is_empty "${REPLY}" && echo 'Disk path is required' && return 2
     path="${REPLY}"
   fi
 
@@ -955,7 +955,7 @@ format_disk () {
       echo 'Missing the disk label' && return 2
 
     ask 'Enter the disk label:' || return $?
-    require 'Disk label is required' || return 2
+    is_empty "${REPLY}" && echo 'Disk label is required' && return 2
     label="${REPLY}"
   fi
 
@@ -964,7 +964,7 @@ format_disk () {
       echo 'Missing the file system type' && return 2
 
     pick_fs_type || return $?
-    require 'File system type is required' || return 2
+    is_empty "${REPLY}" && echo 'File system type is required' && return 2
     fs_type="${REPLY}"
   fi
 
@@ -982,7 +982,7 @@ format_disk () {
     echo "ALL DATA in ${model} [${path}],"
     echo 'will be irreversibly gone forever!'
     confirm 'Do you really want to proceed?' || return $?
-    require 'Confirmation is required' || return 2
+    is_empty "${REPLY}" && echo 'Confirmation is required' && return 2
     
     if is_not_yes "${REPLY}"; then
       echo 'Format operation is canceled'
@@ -1023,7 +1023,7 @@ eject_disk () {
       echo 'Missing the disk path' && return 2
 
     pick_disk || return $?
-    require 'Disk path is required' || return 2
+    is_empty "${REPLY}" && echo 'Disk path is required' && return 2
     path="${REPLY}"
   fi
 
@@ -1070,7 +1070,7 @@ scan_disk () {
       echo 'Missing the disk path' && return 2
 
     pick_disk || return $?
-    require 'Disk path is required' || return 2
+    is_empty "${REPLY}" && echo 'Disk path is required' && return 2
     path="${REPLY}"
   fi
 
@@ -1169,7 +1169,7 @@ create_encrypted () {
       echo 'Missing the disk path' && return 2
 
     pick_disk || return $?
-    require 'Disk path is required' || return 2
+    is_empty "${REPLY}" && echo 'Disk path is required' && return 2
     path="${REPLY}"
   fi
 
@@ -1186,7 +1186,7 @@ create_encrypted () {
       echo 'Missing the file system type' && return 2
 
     pick_fs_type || return $?
-    require 'File system type is required' || return 2
+    is_empty "${REPLY}" && echo 'File system type is required' && return 2
     fs_type="${REPLY}"
   fi
 
@@ -1200,7 +1200,7 @@ create_encrypted () {
       echo 'Missing the encryption key' && return 2
 
     ask_secret 'Enter the encryption key:' || return $?
-    require 'Encryption key is required' || return 2
+    is_empty "${REPLY}" && echo 'Encryption key is required' && return 2
     key="${REPLY}"
   fi
 
@@ -1219,7 +1219,7 @@ create_encrypted () {
     echo "ALL DATA in ${model} [${path}],"
     echo 'will be irreversibly gone forever!'
     confirm 'Do you really want to proceed?' || return $?
-    require 'Confirmation is required' || return 2
+    is_empty "${REPLY}" && echo 'Confirmation is required' && return 2
     
     if is_not_yes "${REPLY}"; then
       echo 'Encryption operation is canceled'
@@ -1273,7 +1273,7 @@ create_bootable () {
       echo 'Missing the disk path' && return 2
 
     pick_disk || return $?
-    require 'Disk path is required' || return 2
+    is_empty "${REPLY}" && echo 'Disk path is required' && return 2
     path="${REPLY}"
   fi
 
@@ -1290,14 +1290,14 @@ create_bootable () {
       echo 'Missing the iso file path' && return 2
 
     confirm 'Do you want to download the latest iso?' || return $?
-    require 'Confirmation is required' || return 2
+    is_empty "${REPLY}" && echo 'Confirmation is required' && return 2
 
     if is_yes "${REPLY}"; then
       download_iso_file "${HOME}/downloads" 'archlinux-x86_64.iso' || return $?
       iso_file="${HOME}/downloads/archlinux-x86_64.iso"
     else
       ask 'Enter the path to the iso file:' || return $?
-      require 'File path is required' || return 2
+      is_empty "${REPLY}" && echo 'File path is required' && return 2
       iso_file="${REPLY}"
     fi
   fi
@@ -1315,7 +1315,7 @@ create_bootable () {
     echo "ALL DATA in ${model} [${path}],"
     echo 'will be irreversibly gone forever!'
     confirm 'Do you really want to proceed?' || return $?
-    require 'Confirmation is required' || return 2
+    is_empty "${REPLY}" && echo 'Confirmation is required' && return 2
     
     if is_not_yes "${REPLY}"; then
       echo 'Bootable operation is canceled'

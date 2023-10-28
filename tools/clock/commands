@@ -70,7 +70,7 @@ set_timezone () {
       echo 'Missing the timezone' && return 2
 
     pick_timezone 'Select timezone:' || return $?
-    require 'Timezone is required' || return 2
+    is_empty "${REPLY}" && echo 'Timezone is required' && return 2
     name="${REPLY}"
   fi
 

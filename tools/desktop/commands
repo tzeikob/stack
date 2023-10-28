@@ -112,7 +112,7 @@ set_wallpaper () {
       echo 'Missing the wallpaper file name' && return 2
 
     pick_wallpaper || return $?
-    require 'Wallpaper file name required' || return 2
+    is_empty "${REPLY}" && echo 'Wallpaper file name required' && return 2
     name="${REPLY}"
   fi
 
@@ -126,7 +126,7 @@ set_wallpaper () {
       echo 'Missing the alignment mode' && return 2
 
     pick_alignment_mode || return $?
-    require 'Alignment mode is required' || return 2
+    is_empty "${REPLY}" && echo 'Alignment mode is required' && return 2
     mode="${REPLY}"
   fi
   
@@ -162,7 +162,7 @@ show_pointer () {
       echo 'Missing pointer name' && return 2
 
     pick_pointer || return $?
-    require 'Pointer name is required' || return 2
+    is_empty "${REPLY}" && echo 'Pointer name is required' && return 2
     name="${REPLY}"
   fi
 
@@ -289,7 +289,7 @@ show_tablet () {
       echo 'Missing the table name' && return 2
 
     pick_tablet || return $?
-    require 'Tablet name is required' || return 2
+    is_empty "${REPLY}" && echo 'Tablet name is required' && return 2
     name="${REPLY}"
   fi
 
@@ -361,7 +361,7 @@ scale_tablet () {
       echo 'Missing the tablet name' && return 2
 
     pick_tablet || return $?
-    require 'Tablet name is required' || return 2
+    is_empty "${REPLY}" && echo 'Tablet name is required' && return 2
     name="${REPLY}"
   fi
 
@@ -381,7 +381,7 @@ scale_tablet () {
       echo 'Missing the scale factor' && return 2
 
     ask 'Enter the scale factor [0.1-1]:' || return $?
-    require 'Scale factor is required' || return 2
+    is_empty "${REPLY}" && echo 'Scale factor is required' && return 2
     scale="${REPLY}"
   fi
   
@@ -445,7 +445,7 @@ map_tablet () {
       echo 'Missing the tablet name' && return 2
 
     pick_tablet || return $?
-    require 'Tablet name is required' || return 2
+    is_empty "${REPLY}" && echo 'Tablet name is required' && return 2
     name="${REPLY}"
   fi
 
@@ -465,7 +465,7 @@ map_tablet () {
       echo 'Missing the mapping target' && return 2
 
     pick_mapping_target || return $?
-    require 'Mapping target is required' || return 2
+    is_empty "${REPLY}" && echo 'Mapping target is required' && return 2
     target="${REPLY}"
   fi
 

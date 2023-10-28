@@ -142,7 +142,7 @@ set_action () {
       echo 'Missing the power handler' && return 2
 
     pick_power_handler || return $?
-    require 'Power handler is required' || return 2
+    is_empty "${REPLY}" && echo 'Power handler is required' && return 2
     handler="${REPLY}"
   fi
 
@@ -156,7 +156,7 @@ set_action () {
       echo 'Missing power action' && return 2
 
     pick_power_action || return $?
-    require 'Power action is required' || return 2
+    is_empty "${REPLY}" && echo 'Power action is required' && return 2
     action="${REPLY}"
   fi
 

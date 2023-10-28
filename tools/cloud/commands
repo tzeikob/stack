@@ -54,7 +54,7 @@ sync_drive () {
       echo 'Missing the remote name' && return 2
 
     ask 'Enter a remote name:' || return $?
-    require 'Remote name is required' || return 2
+    is_empty "${REPLY}" && echo 'Remote name is required' && return 2
     name="${REPLY}"
   fi
   
@@ -68,7 +68,7 @@ sync_drive () {
       echo 'Missing the client id' && return 2
 
     ask 'Enter the client id:' || return $?
-    require 'Client id is required' || return 2
+    is_empty "${REPLY}" && echo 'Client id is required' && return 2
     client="${REPLY}"
   fi
   
@@ -77,7 +77,7 @@ sync_drive () {
       echo 'Missing the client secret' && return 2
 
     ask 'Enter the client secret:' || return $?
-    require 'Client secret is required' || return 2
+    is_empty "${REPLY}" && echo 'Client secret is required' && return 2
     secret="${REPLY}"
   fi
   
@@ -115,7 +115,7 @@ sync_dropbox () {
       echo 'Missing the remote name' && return 2
 
     ask 'Enter the remote name:' || return $?
-    require 'Remote name is required' || return 2
+    is_empty "${REPLY}" && echo 'Remote name is required' && return 2
     name="${REPLY}"
   fi
   
@@ -129,7 +129,7 @@ sync_dropbox () {
       echo 'Missing the application key' && return 2
 
     ask 'Enter the application key:' || return $?
-    require 'Application key is required' || return 2
+    is_empty "${REPLY}" && echo 'Application key is required' && return 2
     app="${REPLY}"
   fi
 
@@ -138,7 +138,7 @@ sync_dropbox () {
       echo 'Missing the application secret' && return 2
 
     ask 'Enter the application secret:' || return $?
-    require 'Application secret is required' || return 2
+    is_empty "${REPLY}" && echo 'Application secret is required' && return 2
     secret="${REPLY}"
   fi
 
@@ -167,7 +167,7 @@ delete_remote () {
       echo 'Missing the remote name' && return 2
 
     pick_remote unmounted || return $?
-    require 'Remote name is required' || return 2
+    is_empty "${REPLY}" && echo 'Remote name is required' && return 2
     name="${REPLY}"
   fi
   
@@ -182,7 +182,7 @@ delete_remote () {
   if not_on_script_mode; then
     echo "Remote ${name} will be deleted!"
     confirm 'Do you realy want to proceed?' || return $?
-    require 'Confirmation is required' || return 2
+    is_empty "${REPLY}" && echo 'Confirmation is required' && return 2
     
     if is_not_yes "${REPLY}"; then
       echo 'Deletion operation is canceled'
@@ -211,7 +211,7 @@ mount_remote () {
       echo 'Missing the remote name' && return 2
 
     pick_remote unmounted || return $?
-    require 'Remote name is required' || return 2
+    is_empty "${REPLY}" && echo 'Remote name is required' && return 2
     name="${REPLY}"
   fi
   
@@ -256,7 +256,7 @@ unmount_remote () {
       echo 'Missing the remote name' && return 2
     
     pick_remote mounted || return $?
-    require 'Remote name is required' || return 2
+    is_empty "${REPLY}" && echo 'Remote name is required' && return 2
     name="${REPLY}"
   fi
   

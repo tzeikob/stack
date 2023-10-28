@@ -134,7 +134,7 @@ show_controller () {
       echo 'Missing controller address' && return 2
 
     pick_controller || return $?
-    require 'Controller address required' || return 2
+    is_empty "${REPLY}" && echo 'Controller address required' && return 2
     address="${REPLY}"
   fi
 
@@ -177,7 +177,7 @@ show_device () {
       echo 'Missing device address' && return 2
   
     pick_device || return $?
-    require 'Device address required' || return 2
+    is_empty "${REPLY}" && echo 'Device address required' && return 2
     address="${REPLY}"
   fi
 
@@ -222,7 +222,7 @@ set_controller () {
       echo 'Missing controller address' && return 2
 
     pick_controller || return $?
-    require 'Controller address required' || return 2
+    is_empty "${REPLY}" && echo 'Controller address required' && return 2
     address="${REPLY}"
   fi
 
@@ -385,7 +385,7 @@ connect_device () {
       echo 'Missing device address' && return 2
   
     pick_device || return $?
-    require 'Device address required' || return 2
+    is_empty "${REPLY}" && echo 'Device address required' && return 2
     address="${REPLY}"
   fi
 
@@ -420,7 +420,7 @@ disconnect_device () {
       echo 'Missing device address' && return 2
   
     pick_device || return $?
-    require 'Device address required' || return 2
+    is_empty "${REPLY}" && echo 'Device address required' && return 2
     address="${REPLY}"
   fi
 
@@ -453,7 +453,7 @@ remove_device () {
       echo 'Missing device address' && return 2
   
     pick_device || return $?
-    require 'Device address required' || return 2
+    is_empty "${REPLY}" && echo 'Device address required' && return 2
     address="${REPLY}"
   fi
 

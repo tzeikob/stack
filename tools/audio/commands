@@ -84,7 +84,7 @@ show_card () {
       echo 'Missing the audio card name' && return 2
 
     pick_card 'Select audio card name:' || return $?
-    require 'Audio card name is required' || return 2
+    is_empty "${REPLY}" && echo 'Audio card name is required' && return 2
     name="${REPLY}"
   fi
 
@@ -287,7 +287,7 @@ set_profile () {
       echo 'Missing the audio card name' && return 2
 
     pick_card 'Select audio card name:' || return $?
-    require 'Audio card name is required' || return 2
+    is_empty "${REPLY}" && echo 'Audio card name is required' && return 2
     card_name="${REPLY}"
   fi
 
@@ -304,7 +304,7 @@ set_profile () {
       echo 'Missing the profile name' && return 2
 
     pick_profile 'Select profile name:' "${card}" || return $?
-    require 'Profile name is required' || return 2
+    is_empty "${REPLY}" && echo 'Profile name is required' && return 2
     profile_name="${REPLY}"
   fi
 
@@ -347,7 +347,7 @@ set_default () {
       echo "Missing ${type} module name" && return 2
 
     pick_module "Select ${type} module name:" "${type}" || return $?
-    require "${type^} module name is required" || return 2
+    is_empty "${REPLY}" && echo "${type^} module name is required" && return 2
     name="${REPLY}"
   fi
 

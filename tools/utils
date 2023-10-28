@@ -427,22 +427,6 @@ not_on_script_mode () {
   on_scipt_mode && return 1 || return 0
 }
 
-# Checks if there is user input kept in the global variable
-# REPLY and if there is not, print the given error message
-# returning with a none-zero exit code.
-# Arguments:
-#  message: an error message to print
-# Returns:
-#  0 if check succeeds otherwise a none-zero code.
-require () {
-  local message="${1:-"User input is required"}"
-
-  if is_empty "${REPLY}"; then
-    echo "${message}"
-    return 2
-  fi
-}
-
 # Checks if the given value is empty.
 # Arguments:
 #  value: any value
