@@ -853,68 +853,62 @@ pick_shared_folder_mount () {
   pick_one 'Select a shared folder mount uri:' "${uris}" vertical || return $?
 }
 
-# Downloads the latest iso file and verifies its integrity
-# via signature.
+# Asks a user to select an archlinux iso file mirror host.
+# Outputs:
+#  A menu of mirror hosts.
+pick_mirror () {
+  local mirrors=''
+
+  mirrors+='{"key": "http://arch.phinau.de/iso/latest", "value": "Germany [phinau.de]"},'
+  mirrors+='{"key": "http://mirrors.acm.wpi.edu/archlinux/iso/latest", "value": "USA [acm.wpi.edu]"},'
+  mirrors+='{"key": "https://mirror.kamtv.ru/archlinux/iso/latest", "value": "Russia [kamtv.ru]"},'
+  mirrors+='{"key": "https://mirrors.bfsu.edu.cn/archlinux/iso/latest", "value": "China [bfsu.edu.cn]"},'
+  mirrors+='{"key": "https://mirror.vishmak.in/archlinux/iso/latest", "value": "India [vishmak.in]"},'
+  mirrors+='{"key": "http://archlinux.c3sl.ufpr.br/iso/latest", "value": "Brazil [c3sl.ufpr.br]"},'
+  mirrors+='{"key": "https://mirror.aarnet.edu.au/pub/archlinux/iso/latest", "value": "Australia [aarnet.edu.au]"}'
+  mirrors="[${mirrors}]"
+
+  pick_one 'Select a mirror:' "${mirrors}" vertical || return $?
+}
+
+# Downloads the latest iso file from the given mirror host.
 # Arguments:
-#  output:    the directory to download the iso file
-#  file_name: the name of the iso file to download
+#  mirror:        the uri of the mirror server
+#  file_name:     the name of the iso file to download
+#  output_folder: the directory to download the iso file
 download_iso_file () {
-  local output="${1}"
+  local mirror="${1}"
   local file_name="${2}"
-
-  local hosts=''
-
-  hosts+='{"key": "http://arch.phinau.de/iso/latest", "value": "Germany [phinau.de]"},'
-  hosts+='{"key": "http://mirrors.acm.wpi.edu/archlinux/iso/latest", "value": "USA [acm.wpi.edu]"},'
-  hosts+='{"key": "https://mirror.kamtv.ru/archlinux/iso/latest", "value": "Russia [kamtv.ru]"},'
-  hosts+='{"key": "https://mirrors.bfsu.edu.cn/archlinux/iso/latest", "value": "China [bfsu.edu.cn]"},'
-  hosts+='{"key": "https://mirror.vishmak.in/archlinux/iso/latest", "value": "India [vishmak.in]"},'
-  hosts+='{"key": "http://archlinux.c3sl.ufpr.br/iso/latest", "value": "Brazil [c3sl.ufpr.br]"},'
-  hosts+='{"key": "https://mirror.aarnet.edu.au/pub/archlinux/iso/latest", "value": "Australia [aarnet.edu.au]"}'
-  hosts="[${hosts}]"
-
-  pick_one 'Select a mirror host:' "${hosts}" vertical || return $?
-  is_empty "${REPLY}" && echo 'Mirror host is required' && return 2
-  local host="${REPLY}"
+  local output_folder="${3}"
 
   local files=(
-    "${host}/${file_name}"
-    "${host}/b2sums.txt"
-    "${host}/${file_name}.sig"
+    "${mirror}/${file_name}"
+    "${mirror}/b2sums.txt"
+    "${mirror}/${file_name}.sig"
   )
 
   # Clean up iso, signature and checksum files
-  rm -f "${output}/${file_name}"
-  rm -f "${output}/b2sums.txt"
-  rm -f "${output}/${file_name}.sig"
+  rm -f "${output_folder}/${file_name}"
+  rm -f "${output_folder}/b2sums.txt"
+  rm -f "${output_folder}/${file_name}.sig"
 
-  download "${output}" "${files[@]}"
+  download "${output_fodler}" "${files[@]}" || return 1
+}
 
-  if has_failed; then
-    echo 'Unable to download archlinux files'
-    return 2
-  fi
+# Verifies the integrity of the archlinux iso file with
+# the given name.
+# Arguments:
+#  folder:    the directory of the iso file
+#  file_name: the name of the iso file
+verify_iso_file () {
+  local folder="${1}"
+  local file_name="${2}"
 
-  sq --force wkd get pierre@archlinux.org -o "${output}/release-key.pgp"
+  sq --force wkd get pierre@archlinux.org -o "${folder}/release-key.pgp" || return 1
 
-  if has_failed; then
-    echo 'Unable to fetch the release key'
-    return 2
-  fi
-
-  echo 'Verifying the integrity of files...'
-
-  cd ${output} &&
-  b2sum --ignore-missing -c b2sums.txt &&
-  sq verify --signer-file release-key.pgp \
-    --detached "${file_name}.sig" "${file_name}" 2>&1 | awk NF
-
-  if has_failed; then
-    echo 'Failed to verify archlinux files'
-    return 2
-  fi
-
-  echo 'Files have been verified successfully'
-  echo "Image iso file saved to ${output}/${file_name}"
+  cd ${folder} &&
+   b2sum --ignore-missing -c b2sums.txt &&
+   sq verify --signer-file release-key.pgp \
+    --detached "${file_name}.sig" "${file_name}" 2>&1 | awk NF || return 1
 }
 

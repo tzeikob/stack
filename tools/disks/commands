@@ -1293,8 +1293,34 @@ create_bootable () {
     is_empty "${REPLY}" && echo 'Confirmation is required' && return 2
 
     if is_yes "${REPLY}"; then
-      download_iso_file "${HOME}/downloads" 'archlinux-x86_64.iso' || return $?
-      iso_file="${HOME}/downloads/archlinux-x86_64.iso"
+      pick_mirror || return $?
+      is_empty "${REPLY}" && echo 'Mirror is required' && return 2
+      local mirror="${REPLY}"
+
+      local file_name='archlinux-x86_64.iso'
+      local output_folder="${HOME}/downloads"
+
+      download_iso_file "${mirror}" "${file_name}" "${output_folder}"
+
+      if has_failed; then
+        echo 'Failed to download the iso file'
+        return 2
+      fi
+
+      echo "ISO file saved to ${output_folder}/${file_name}"
+
+      echo "Verifying the ${file_name} file..."
+
+      verify_iso_file "${output_folder}" "${file_name}"
+
+      if has_failed; then
+        echo 'Failed to verify the iso file'
+        return 2
+      fi
+
+      echo 'File has been verified successfully'
+      
+      iso_file="${output_folder}/${file_name}"
     else
       ask 'Enter the path to the iso file:' || return $?
       is_empty "${REPLY}" && echo 'File path is required' && return 2

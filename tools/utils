@@ -375,7 +375,7 @@ download () {
 
   local url=''
   for url in ${urls}; do
-    wget -P "${output}" "${url}" -q --show-progress
+    wget -P "${output}" "${url}" -q --show-progress || return 1
   done
 }
 
