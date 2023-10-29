@@ -142,7 +142,7 @@ lock_screen () {
     xsecurelock >/dev/null 2>&1
 
   if has_failed; then
-    echo 'Unable to lock the screen'
+    echo 'Failed to lock the screen'
     return 2
   fi
 

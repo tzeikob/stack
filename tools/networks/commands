@@ -24,12 +24,7 @@ show_status () {
     }' || return 1
 
   local devices=''
-  devices="$(find_devices)"
-
-  if has_failed; then
-    echo 'Unable to read network devices'
-    return 2
-  fi
+  devices="$(find_devices)" || return 1
 
   local query=''
   query+='\([$d[]|select((.type == "wifi" or .type == "ethernet") and .state == "connected")]'
@@ -197,12 +192,7 @@ show_connection () {
 #  A list of network devices.
 list_devices () {
   local devices=''
-  devices="$(find_devices)"
-
-  if has_failed; then
-    echo 'Unable to read network devices'
-    return 2
-  fi
+  devices="$(find_devices)" || return 1
 
   local len=0
   len="$(count "${devices}")" || return 1
@@ -227,12 +217,7 @@ list_devices () {
 #  A list of network connections.
 list_connections () {
   local connections=''
-  connections="$(find_connections)"
-
-  if has_failed; then
-    echo 'Unable to read connections'
-    return 2
-  fi
+  connections="$(find_connections)" || return 1
 
   local len=0
   len="$(count "${connections}")" || return 1

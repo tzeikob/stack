@@ -260,7 +260,7 @@ pick_uri () {
   destinations="$(discover_destinations | jq -cer "${query}")"
 
   if has_failed; then
-    echo 'Unable to discover print uri destinations'
+    echo 'Unable to discover print destinations'
     return 2
   fi
 

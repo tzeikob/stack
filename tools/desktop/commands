@@ -419,7 +419,7 @@ scale_tablet () {
   xsetwacom --set "${name}" area "0 0 ${width} ${height}" &> /dev/null
 
   if has_failed; then
-    echo "Unable to scale tablet ${name}"
+    echo "Failed to scale tablet ${name}"
     return 2
   fi
 
