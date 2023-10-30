@@ -134,6 +134,8 @@ show_status () {
 #  handler: power, reboot, suspend, lid or docked
 #  action:  poweroff, reboot, suspend or ignore
 set_action () {
+  authenticate_user || return $?
+
   local handler="${1}"
   local action="${2}"
 
@@ -183,7 +185,7 @@ set_action () {
     echo "${option}=${action}" | sudo tee -a "${config_file}" > /dev/null
   fi
 
-  systemctl kill -s HUP systemd-logind
+  sudo systemctl kill -s HUP systemd-logind
 
   if has_failed; then
     echo "Failed to set ${handler} action"
@@ -195,6 +197,8 @@ set_action () {
 
 # Resets the action of all power handlers.
 reset_actions () {
+  authenticate_user || return $?
+
   local config_file='/etc/systemd/logind.conf.d/00-main.conf'
 
   if file_not_exists "${config_file}"; then
@@ -208,7 +212,7 @@ reset_actions () {
   sudo sed -i '/^HandleLidSwitch=.*/d' "${config_file}"
   sudo sed -i '/^HandleLidSwitchDocked=.*/d' "${config_file}"
 
-  systemctl kill -s HUP systemd-logind
+  sudo systemctl kill -s HUP systemd-logind
 
   if has_failed; then
     echo 'Failed to reset power actions'
@@ -286,6 +290,8 @@ init_screensaver () {
 # Arguments:
 #  status: on or off
 set_tlp () {
+  authenticate_user || return $?
+
   local status="${1}"
 
   if is_not_given "${status}"; then
@@ -326,6 +332,8 @@ set_tlp () {
 #  start: the percent of capacity to start charging
 #  stop:  the percent of capacity to stop charging
 set_charging () {
+  authenticate_user || return $?
+
   local start="${1}"
   local stop="${2}"
 
@@ -359,7 +367,7 @@ set_charging () {
   local config_file='/etc/tlp.d/00-main.conf'
 
   if file_not_exists "${config_file}"; then
-    sudo -k rm -f /etc/tlp.d/00-template.conf
+    sudo rm -f /etc/tlp.d/00-template.conf
     sudo touch "${config_file}"
   fi
 

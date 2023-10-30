@@ -169,6 +169,8 @@ set_rtc () {
 
 # Synchronizes the hardware clock from the system clock.
 sync_rtc () {
+  authenticate_user || return $?
+
   sudo hwclock --systohc --utc
 
   if has_failed; then

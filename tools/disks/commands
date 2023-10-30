@@ -547,6 +547,8 @@ mount_partition () {
 #  path: the path of an encrypted partition
 #  key:  the encryption key
 mount_encrypted () {
+  authenticate_user || return $?
+
   local path="${1}"
   local key="${2}"
 
@@ -636,6 +638,8 @@ unmount_partition () {
 # Arguments:
 #  path: the path of an encrypted partition
 unmount_encrypted () {
+  authenticate_user || return $?
+
   local path="${1}"
 
   if is_not_given "${path}"; then
@@ -929,6 +933,8 @@ unmount_shared_folder () {
 #  label:   the new label of the disk
 #  fs_type: the new file system type  
 format_disk () {
+  authenticate_user || return $?
+
   local path="${1}"
   local label="${2}"
   local fs_type="${3}"
@@ -1016,6 +1022,8 @@ format_disk () {
 # Arguments:
 #  path: the path of a disk block device
 eject_disk () {
+  authenticate_user || return $?
+
   local path="${1}"
 
   if is_not_given "${path}"; then
@@ -1063,6 +1071,8 @@ eject_disk () {
 # Outputs:
 #  A long list of health and status data.
 scan_disk () {
+  authenticate_user || return $?
+
   local path="${1}"
 
   if is_not_given "${path}"; then
@@ -1160,6 +1170,8 @@ scan_disk () {
 #  fs_type: the new type of file system
 #  key:     the encryption key
 create_encrypted () {
+  authenticate_user || return $?
+
   local path="${1}"
   local fs_type="${2}"
   local key="${3}"
@@ -1265,6 +1277,8 @@ create_encrypted () {
 #  path:     the path of a disk block device
 #  iso_file: the path to an archlinux iso file
 create_bootable () {
+  authenticate_user || return $?
+
   local path="${1}"
   local iso_file="${2}"
 

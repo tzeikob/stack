@@ -38,6 +38,8 @@ show_status () {
 # Arguments:
 #  map: the name of a keyboard map
 set_keymap () {
+  authenticate_user || return $?
+
   local map="${1}"
 
   if is_not_given "${map}"; then
@@ -54,7 +56,7 @@ set_keymap () {
     return 2
   fi
 
-  localectl set-keymap --no-convert "${map}"
+  sudo localectl set-keymap --no-convert "${map}"
   
   if has_failed; then
     echo 'Failed to set keyboard map'
@@ -69,6 +71,8 @@ set_keymap () {
 # Arguments:
 #  name: the name of a locale
 set_locale () {
+  authenticate_user || return $?
+
   local name="${1}"
   
   if is_not_given "${name}"; then
@@ -121,6 +125,8 @@ set_locale () {
 # Arguments:
 #  value: a layout options value
 set_options () {
+  authenticate_user || return $?
+
   local value="${1}"
 
   if is_not_given "${value}"; then
@@ -145,7 +151,7 @@ set_options () {
   model="$(cat /etc/X11/xorg.conf.d/00-keyboard.conf |
     awk '/XkbModel/{print $3}' | tr -d '"')" || return 1
 
-  localectl --no-convert set-x11-keymap "${layouts}" "${model}" '' "${value}" &&
+  sudo localectl --no-convert set-x11-keymap "${layouts}" "${model}" '' "${value}" &&
    setxkbmap -layout "${layouts}" -model "${model}" -option "${value}"
 
   if has_failed; then
@@ -160,6 +166,8 @@ set_options () {
 # Arguments:
 #  name: the name of the model
 set_model () {
+  authenticate_user || return $?
+
   local name="${1}"
 
   if is_not_given "${name}"; then
@@ -184,7 +192,7 @@ set_model () {
   options="$(cat /etc/X11/xorg.conf.d/00-keyboard.conf |
     awk '/XkbOptions/{print $3}' | tr -d '"')" || return 1
 
-  localectl --no-convert set-x11-keymap "${layouts}" "${name}" '' "${options}" &&
+  sudo localectl --no-convert set-x11-keymap "${layouts}" "${name}" '' "${options}" &&
    setxkbmap -layout "${layouts}" -model "${value}" -option "${options}"
   
   if has_failed; then
@@ -199,6 +207,8 @@ set_model () {
 # Arguments:
 #  name: the name of a locale
 add_locale () {
+  authenticate_user || return $?
+
   local name="${1}"
 
   if is_not_given "${name}"; then
@@ -233,6 +243,8 @@ add_locale () {
 # Arguments:
 #  name: a locale name
 remove_locale () {
+  authenticate_user || return $?
+
   local name="${1}"
 
   if is_not_given "${name}"; then
@@ -270,6 +282,8 @@ remove_locale () {
 # Arguments:
 #  code: a layout code
 add_layout () {
+  authenticate_user || return $?
+
   local code="${1}"
 
   if is_not_given "${code}"; then
@@ -309,7 +323,7 @@ add_layout () {
   options="$(cat /etc/X11/xorg.conf.d/00-keyboard.conf |
     awk '/XkbOptions/{print $3}' | tr -d '"')" || return 1
 
-  localectl --no-convert set-x11-keymap "${layouts}" "${model}" '' "${options}" &&
+  sudo localectl --no-convert set-x11-keymap "${layouts}" "${model}" '' "${options}" &&
    setxkbmap -layout "${layouts}" -model "${model}" -option "${options}"
 
   if has_failed; then
@@ -324,6 +338,8 @@ add_layout () {
 # Arguments:
 #  code: a layout code
 remove_layout () {
+  authenticate_user || return $?
+
   local code="${1}"
 
   if is_not_given "${code}"; then
@@ -369,7 +385,7 @@ remove_layout () {
   options="$(cat /etc/X11/xorg.conf.d/00-keyboard.conf |
     awk '/XkbOptions/{print $3}' | tr -d '"')" || return 1
 
-  localectl --no-convert set-x11-keymap "${layouts}" "${model}" '' "${options}" &&
+  sudo localectl --no-convert set-x11-keymap "${layouts}" "${model}" '' "${options}" &&
    setxkbmap -layout "${layouts}" -model "${model}" -option "${options}"
 
   if has_failed; then
@@ -385,6 +401,8 @@ remove_layout () {
 # Arguments:
 #  codes: a list of layout codes
 order_layouts () {
+  authenticate_user || return $?
+
   local codes=("$@")
 
   # Collect currently installed layouts in json array
@@ -460,7 +478,7 @@ order_layouts () {
 
   codes="$(echo "${codes}" | jq -cer 'join(",")')"
 
-  localectl --no-convert set-x11-keymap "${codes}" "${model}" '' "${options}" &&
+  sudo localectl --no-convert set-x11-keymap "${codes}" "${model}" '' "${options}" &&
    setxkbmap -layout "${codes}" -model "${model}" -option "${options}"
 
   if has_failed; then

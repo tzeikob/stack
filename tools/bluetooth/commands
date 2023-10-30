@@ -477,9 +477,11 @@ remove_device () {
 
 # Restarts the bluetooth service.
 restart_bluetooth () {
+  authenticate_user || return $?
+
   rfkill block bluetooth &&
   rfkill unblock bluetooth &&
-  sudo -k modprobe -r btusb &&
+  sudo modprobe -r btusb &&
   sudo modprobe -r btintel &&
   sudo modprobe btintel &&
   sudo modprobe btusb &&

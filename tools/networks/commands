@@ -901,6 +901,8 @@ list_proxies () {
 # Arguments:
 #  name: the name of a proxy profile
 set_proxy () {
+  authenticate_user || return $?
+
   local name="${1}"
   
   if is_not_given "${name}"; then
@@ -1035,6 +1037,8 @@ set_proxy () {
 # Reverts any proxy settings have been applied to
 # the system.
 unset_proxy () {
+  authenticate_user || return $?
+
   echo 'Unsetting proxy server...'
 
   rm -f "${PROXY_ENV_FILE}" &&

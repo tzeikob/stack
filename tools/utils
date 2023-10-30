@@ -136,25 +136,22 @@ ask_secret () {
   read -srep "${prompt} " REPLY
 }
 
-# Authenticates current user's password.
-# Arguments:
-#  password: the password in plain text.
+# Invalidates user's cached credentials and enforcing
+# new password authentication.
 # Returns:
-#  0 if authentication succeeded otherwise 1.
+#  0 if succeeded otherwise 1.
 authenticate_user () {
-  local password="${1}"
+  echo 'Permission needed for this operation'
 
-  local cmd=''
-  cmd+='import pam, sys;'
-  cmd+='from getpass import getuser;'
-  cmd+='p = pam.pam();'
-  cmd+="p.authenticate(getuser(), \"${password}\");"
-  cmd+='sys.exit(p.code)'
+  # Invalidate user's cached credentials
+  sudo -K
 
-  python -c "${cmd}"
+  # Mimic authentication with a dry run
+  sudo /usr/bin/true &> /dev/null
 
   if has_failed; then
-    return 1
+    echo 'Sorry incorrect password!'
+    return 2
   fi
 
   return 0

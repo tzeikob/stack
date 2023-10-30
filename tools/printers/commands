@@ -432,9 +432,11 @@ cancel_job () {
 
 # Restarts the cup service.
 restart () {
+  authenticate_user || return $?
+
   echo 'Restarting the cups service...'
 
-  sudo -k systemctl restart cups.service
+  sudo systemctl restart cups.service
 
   if has_failed; then
     echo 'Failed to restart cups service'

@@ -154,15 +154,7 @@ lock_screen () {
 
 # Changes the password of the current user.
 set_user_password () {
-  ask_secret 'Enter current password:' || return $?
-  local password="${REPLY}"
-  
-  authenticate_user "${password}"
-  
-  if has_failed; then
-    echo 'Sorry incorrect password!'
-    return 2
-  fi
+  authenticate_user || return $?
 
   ask_secret 'Enter new password:' || return $?
   is_empty "${REPLY}" && echo 'New password cannot be blank' && return 2
@@ -175,8 +167,8 @@ set_user_password () {
     return 2
   fi
 
-  echo -e "${password}\n${new_password}\n${new_password}" |
-    passwd --quiet >/dev/null 2>&1
+  echo -e "${new_password}\n${new_password}" |
+    sudo passwd --quiet "${USER}" &> /dev/null
 
   if has_failed; then
     echo 'Failed to set user password'
@@ -201,6 +193,8 @@ logout_user () {
 # Arguments:
 #  attempts: the max number of failed password attempts
 set_faillock_attempts () {
+  authenticate_user || return $?
+
   local attempts="${1}"
 
   if is_not_given "${attempts}"; then
@@ -214,7 +208,7 @@ set_faillock_attempts () {
     return 2
   fi
 
-  sudo -k sed -ri "s;deny =.*;deny = ${attempts};" /etc/security/faillock.conf
+  sudo sed -ri "s;deny =.*;deny = ${attempts};" /etc/security/faillock.conf
 
   if has_failed; then
     echo 'Failed to set max failed attempts'
@@ -228,6 +222,8 @@ set_faillock_attempts () {
 # Arguments:
 #  time: the time in secs to unblock the password
 set_faillock_unblock () {
+  authenticate_user || return $?
+
   local time="${1}"
   
   if is_not_given "${time}"; then
@@ -241,7 +237,7 @@ set_faillock_unblock () {
     return 2
   fi
 
-  sudo -k sed -ri "s;unlock_time =.*;unlock_time = ${time};" /etc/security/faillock.conf
+  sudo sed -ri "s;unlock_time =.*;unlock_time = ${time};" /etc/security/faillock.conf
 
   if has_failed; then
     echo 'Failed to set unblock time'
@@ -257,6 +253,8 @@ set_faillock_unblock () {
 # Arguments:
 #  time: the time in secs between consecutive fails
 set_faillock_interval () {
+  authenticate_user || return $?
+
   local time="${1}"
 
   if is_not_given "${time}"; then
@@ -270,7 +268,7 @@ set_faillock_interval () {
     return 2
   fi
 
-  sudo -k sed -ri "s;fail_interval =.*;fail_interval = ${time};" /etc/security/faillock.conf
+  sudo sed -ri "s;fail_interval =.*;fail_interval = ${time};" /etc/security/faillock.conf
 
   if has_failed; then
     echo 'Failed to set fail interval'
