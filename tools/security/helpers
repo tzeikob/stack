@@ -4,7 +4,7 @@ set -o pipefail
 
 source /opt/stack/utils
 
-SETTINGS_FILE="${CONFIG_HOME}/security.json"
+SECURITY_SETTINGS="${CONFIG_HOME}/security.json"
 
 # Kills any proccesses of possibly
 # running screen locker instances.
@@ -34,14 +34,14 @@ save_screen_locker_to_settings () {
   local settings='{}'
   local object="{\"interval\": ${interval}}"
 
-  if file_exists "${SETTINGS_FILE}"; then
-    settings="$(jq -e ".screen_locker = ${object} " "${SETTINGS_FILE}")" || return 1
+  if file_exists "${SECURITY_SETTINGS}"; then
+    settings="$(jq -e ".screen_locker = ${object} " "${SECURITY_SETTINGS}")" || return 1
   else
     settings="$(echo "{\"screen_locker\": ${object}}" | jq -e '.')" || return 1
   fi
 
   mkdir -p "${CONFIG_HOME}"
-  echo "${settings}" > "${SETTINGS_FILE}"
+  echo "${settings}" > "${SECURITY_SETTINGS}"
 }
 
 # Checks if the screen is locked.

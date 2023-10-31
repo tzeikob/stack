@@ -836,7 +836,7 @@ remove_proxy () {
     name="${REPLY}"
   fi
 
-  if file_not_exists "${SETTINGS_FILE}"; then
+  if file_not_exists "${NETWORKS_SETTINGS}"; then
     echo 'No proxy profiles found'
     return 2
   fi
@@ -844,7 +844,7 @@ remove_proxy () {
   local query=".proxies|if . then .[]|select(.name == \"${name}\") else empty end"
 
   local match=''
-  match="$(jq "${query}" "${SETTINGS_FILE}")"
+  match="$(jq "${query}" "${NETWORKS_SETTINGS}")"
 
   if is_empty "${match}"; then
     echo "Proxy profile ${name} not found"
@@ -852,14 +852,14 @@ remove_proxy () {
   fi
 
   local settings=''
-  settings="$(jq -e "del(.proxies[]|select(.name == \"${name}\"))" "${SETTINGS_FILE}")"
+  settings="$(jq -e "del(.proxies[]|select(.name == \"${name}\"))" "${NETWORKS_SETTINGS}")"
 
   if has_failed; then
     echo "Failed to delete proxy profile ${name}"
     return 2
   fi
 
-  echo "${settings}" > "${SETTINGS_FILE}"
+  echo "${settings}" > "${NETWORKS_SETTINGS}"
   
   echo "Proxy profile ${name} deleted"
 }
@@ -869,13 +869,13 @@ remove_proxy () {
 # Outputs:
 #  A list of proxy profiles.
 list_proxies () {
-  if file_not_exists "${SETTINGS_FILE}"; then
+  if file_not_exists "${NETWORKS_SETTINGS}"; then
     echo 'No proxy profiles have found'
     return 0
   fi
 
   local proxies=''
-  proxies="$(jq -cer '.proxies|if length>0 then . else [] end' "${SETTINGS_FILE}")" || return 1
+  proxies="$(jq -cer '.proxies|if length>0 then . else [] end' "${NETWORKS_SETTINGS}")" || return 1
   
   local len=0
   len="$(count "${proxies}")" || return 1
@@ -914,7 +914,7 @@ set_proxy () {
     name="${REPLY}"
   fi
 
-  if file_not_exists "${SETTINGS_FILE}"; then
+  if file_not_exists "${NETWORKS_SETTINGS}"; then
     echo 'No proxy profiles have found'
     return 2
   fi
@@ -922,7 +922,7 @@ set_proxy () {
   local query=".proxies|if . then .[]|select(.name == \"${name}\") else empty end"
 
   local proxy=''
-  proxy="$(jq "${query}" "${SETTINGS_FILE}")"
+  proxy="$(jq "${query}" "${NETWORKS_SETTINGS}")"
 
   if is_empty "${proxy}"; then
     echo "Proxy profile ${name} not found"

@@ -4,7 +4,7 @@ set -o pipefail
 
 source /opt/stack/utils
 
-SETTINGS_FILE="${CONFIG_HOME}/power.json"
+POWER_SETTINGS="${CONFIG_HOME}/power.json"
 
 # Finds the ac power adapter data.
 # Outputs:
@@ -134,14 +134,14 @@ save_screen_saver_to_settings () {
   local settings='{}'
   local screensaver="{\"interval\": ${interval}}"
 
-  if file_exists "${SETTINGS_FILE}"; then
-    settings="$(jq -e ".screensaver = ${screensaver} " "${SETTINGS_FILE}")" || return 1
+  if file_exists "${POWER_SETTINGS}"; then
+    settings="$(jq -e ".screensaver = ${screensaver} " "${POWER_SETTINGS}")" || return 1
   else
     settings="$(echo "{\"screensaver\": ${screensaver}}" | jq -e '.')" || return 1
   fi
 
   mkdir -p "${CONFIG_HOME}"
-  echo "${settings}" > "${SETTINGS_FILE}"
+  echo "${settings}" > "${POWER_SETTINGS}"
 }
 
 # Checks if the given value is a valid screensaver interval.

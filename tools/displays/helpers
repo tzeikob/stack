@@ -4,7 +4,7 @@ set -o pipefail
 
 source /opt/stack/utils
 
-SETTINGS_FILE="${CONFIG_HOME}/displays.json"
+DISPLAYS_SETTINGS="${CONFIG_HOME}/displays.json"
 
 # Checks if the given status is among the valid
 # xrandr output statuses.
@@ -839,16 +839,16 @@ save_layout_to_settings () {
 
   local settings='{}'
 
-  if file_exists "${SETTINGS_FILE}"; then
+  if file_exists "${DISPLAYS_SETTINGS}"; then
     local layouts=''
-    layouts="$(jq 'if .layouts then .layouts else empty end' "${SETTINGS_FILE}")"
+    layouts="$(jq 'if .layouts then .layouts else empty end' "${DISPLAYS_SETTINGS}")"
 
     if is_not_empty "${layouts}"; then
       local query=''
       query=".layouts[]|select(.sig == \"${sig}\")"
 
       local match=''
-      match="$(jq "${query}" "${SETTINGS_FILE}")"
+      match="$(jq "${query}" "${DISPLAYS_SETTINGS}")"
 
       if is_not_empty "${match}"; then
         query="(${query}|.map)|= ${map}"
@@ -856,16 +856,16 @@ save_layout_to_settings () {
         query=".layouts += [${layout}]"
       fi
 
-      settings="$(jq -e "${query}" "${SETTINGS_FILE}")" || return 1
+      settings="$(jq -e "${query}" "${DISPLAYS_SETTINGS}")" || return 1
     else
-      settings="$(jq -e ".layouts = [${layout}] " "${SETTINGS_FILE}")" || return 1
+      settings="$(jq -e ".layouts = [${layout}] " "${DISPLAYS_SETTINGS}")" || return 1
     fi
   else
     settings="$(echo "{\"layouts\": [${layout}]}" | jq -e '.')" || return 1
   fi
 
   mkdir -p "${CONFIG_HOME}"
-  echo "${settings}" > "${SETTINGS_FILE}"
+  echo "${settings}" > "${DISPLAYS_SETTINGS}"
 }
 
 # Show a menu asking the user to select a saved layout.
@@ -881,7 +881,7 @@ pick_layout () {
   query="if .layouts|length > 0 then [.layouts|to_entries[]|${query}] else [] end"
 
   local layouts=''
-  layouts="$(jq -cer "${query}" "${SETTINGS_FILE}")" || return 1
+  layouts="$(jq -cer "${query}" "${DISPLAYS_SETTINGS}")" || return 1
   
   local len=0
   len="$(count "${layouts}")" || return 1
@@ -927,7 +927,7 @@ pick_color_setting () {
   query="if .colors|length > 0 then [.colors|to_entries[]|${query}] else [] end"
 
   local colors=''
-  colors="$(jq -cer "${query}" "${SETTINGS_FILE}")" || return 1
+  colors="$(jq -cer "${query}" "${DISPLAYS_SETTINGS}")" || return 1
   
   local len=0
   len="$(count "${colors}")" || return 1
@@ -960,9 +960,9 @@ save_color_to_settings () {
 
   local settings='{}'
 
-  if file_exists "${SETTINGS_FILE}"; then
+  if file_exists "${DISPLAYS_SETTINGS}"; then
     local colors=''
-    colors="$(jq 'if .colors then .colors else empty end' "${SETTINGS_FILE}")"
+    colors="$(jq 'if .colors then .colors else empty end' "${DISPLAYS_SETTINGS}")"
 
     if is_not_empty "${colors}"; then
       local query=''
@@ -972,7 +972,7 @@ save_color_to_settings () {
       query=".colors[]|select(${query})"
 
       local match=''
-      match="$(jq --argjson c "${color}" "${query}" "${SETTINGS_FILE}")"
+      match="$(jq --argjson c "${color}" "${query}" "${DISPLAYS_SETTINGS}")"
 
       if is_not_empty "${match}"; then
         query="(${query}|.profile)|=\"${profile}\""
@@ -980,16 +980,16 @@ save_color_to_settings () {
         query=".colors += [${color}]"
       fi
 
-      settings="$(jq -e --argjson c "${color}" "${query}" "${SETTINGS_FILE}")" || return 1
+      settings="$(jq -e --argjson c "${color}" "${query}" "${DISPLAYS_SETTINGS}")" || return 1
     else
-      settings="$(jq -e ".colors = [${color}]" "${SETTINGS_FILE}")" || return 1
+      settings="$(jq -e ".colors = [${color}]" "${DISPLAYS_SETTINGS}")" || return 1
     fi
   else
     settings="$(echo "{\"colors\": [${color}]}" | jq -e '.')" || return 1
   fi
 
   mkdir -p "${CONFIG_HOME}"
-  echo "${settings}" > "${SETTINGS_FILE}"
+  echo "${settings}" > "${DISPLAYS_SETTINGS}"
 }
 
 # Deletes the matching color setting for the given output.
@@ -998,7 +998,7 @@ save_color_to_settings () {
 remove_color_from_settings () {
   local output="${1}"
 
-  if file_not_exists "${SETTINGS_FILE}"; then
+  if file_not_exists "${DISPLAYS_SETTINGS}"; then
     return 0
   fi
 
@@ -1009,9 +1009,9 @@ remove_color_from_settings () {
   query="if .colors then .colors[]|select(${query}) else empty end"
 
   local settings=''
-  settings="$(jq -e --argjson o "${output}" "del(${query})" "${SETTINGS_FILE}")" || return 1
+  settings="$(jq -e --argjson o "${output}" "del(${query})" "${DISPLAYS_SETTINGS}")" || return 1
 
-  echo "${settings}" > "${SETTINGS_FILE}"
+  echo "${settings}" > "${DISPLAYS_SETTINGS}"
 }
 
 # Checks if the given file name is a valid color

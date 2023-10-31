@@ -81,9 +81,9 @@ get_state () {
 
   local volume=100
 
-  if file_exists "${SETTINGS_FILE}"; then
+  if file_exists "${NOTIFICATIONS_SETTINGS}"; then
     local query='.volume|if . then (.*100) else 100 end'
-    volume="$(jq -cr "${query}" "${SETTINGS_FILE}")" || return 1
+    volume="$(jq -cr "${query}" "${NOTIFICATIONS_SETTINGS}")" || return 1
   fi
 
   state+="\"volume\": ${volume}"

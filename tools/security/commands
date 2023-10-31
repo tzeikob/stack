@@ -92,8 +92,8 @@ set_screen_locker () {
 init_screen_locker () {
   local interval=8
 
-  if file_exists "${SETTINGS_FILE}"; then
-    interval="$(jq '.screen_locker.interval|if . then . else 8 end' "${SETTINGS_FILE}")"
+  if file_exists "${SECURITY_SETTINGS}"; then
+    interval="$(jq '.screen_locker.interval|if . then . else 8 end' "${SECURITY_SETTINGS}")"
   fi
 
   # Kill possibly running locker instances

@@ -4,7 +4,7 @@ set -o pipefail
 
 source /opt/stack/utils
 
-SETTINGS_FILE="${CONFIG_HOME}/networks.json"
+NETWORKS_SETTINGS="${CONFIG_HOME}/networks.json"
 
 # Returns the general status of the networking.
 # Outputs:
@@ -275,7 +275,7 @@ pick_wifi () {
 # Outputs:
 #  A menu of proxy profiles.
 pick_proxy () {
-  if file_not_exists "${SETTINGS_FILE}"; then
+  if file_not_exists "${NETWORKS_SETTINGS}"; then
     echo 'No proxy profiles have found'
     return 2
   fi
@@ -285,7 +285,7 @@ pick_proxy () {
   query=".proxies|if .|length>0 then [.[]|${query}] else [] end"
 
   local proxies=''
-  proxies="$(jq -cer "${query}" "${SETTINGS_FILE}")" || return 1
+  proxies="$(jq -cer "${query}" "${NETWORKS_SETTINGS}")" || return 1
   
   local len=0
   len="$(count "${proxies}")" || return 1
@@ -326,14 +326,14 @@ save_proxy_to_settings () {
 
   local settings='{}'
 
-  if file_exists "${SETTINGS_FILE}"; then
-    settings="$(jq -e ".proxies += [${proxy}]" "${SETTINGS_FILE}")" || return 1
+  if file_exists "${NETWORKS_SETTINGS}"; then
+    settings="$(jq -e ".proxies += [${proxy}]" "${NETWORKS_SETTINGS}")" || return 1
   else
     settings="$(echo "{\"proxies\": [${proxy}]}" | jq -e '.')" || return 1
   fi
 
   mkdir -p "${CONFIG_HOME}"
-  echo "${settings}" > "${SETTINGS_FILE}"
+  echo "${settings}" > "${NETWORKS_SETTINGS}"
 }
 
 # Checks if the proxy profile with the given name
@@ -345,14 +345,14 @@ save_proxy_to_settings () {
 exists_proxy_profile () {
   local name="${1}"
 
-  if file_not_exists "${SETTINGS_FILE}"; then
+  if file_not_exists "${NETWORKS_SETTINGS}"; then
     return 1
   fi
 
   local query=''
   query+=".proxies|if . then .[]|select(.name == \"${name}\") else empty end"
   
-  local proxy="$(jq -cr "${query}" "${SETTINGS_FILE}")"
+  local proxy="$(jq -cr "${query}" "${NETWORKS_SETTINGS}")"
 
   if is_empty "${proxy}"; then
     return 1

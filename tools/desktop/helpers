@@ -5,7 +5,7 @@ set -o pipefail
 source /opt/stack/utils
 source /opt/stack/displays/helpers
 
-SETTINGS_FILE="${CONFIG_HOME}/desktop.json"
+DESKTOP_SETTINGS="${CONFIG_HOME}/desktop.json"
 
 # Returns the list of any wallpapers found under
 # the wallpapers home.
@@ -342,14 +342,14 @@ save_wallpaper_to_settings () {
   local settings='{}'
   local wallpaper="{\"name\": \"${name}\", \"mode\": \"${mode}\"}"
 
-  if file_exists "${SETTINGS_FILE}"; then
-    settings="$(jq -e ".wallpaper = ${wallpaper} " "${SETTINGS_FILE}")" || return 1
+  if file_exists "${DESKTOP_SETTINGS}"; then
+    settings="$(jq -e ".wallpaper = ${wallpaper} " "${DESKTOP_SETTINGS}")" || return 1
   else
     settings="$(echo "{\"wallpaper\": ${wallpaper}}" | jq -e '.')" || return 1
   fi
 
   mkdir -p "${CONFIG_HOME}"
-  echo "${settings}" > "${SETTINGS_FILE}"
+  echo "${settings}" > "${DESKTOP_SETTINGS}"
 }
 
 # Saves the pointer speed factor into the settings file.
@@ -361,14 +361,14 @@ save_pointer_speed_to_settings () {
   local settings='{}'
   local pointer="{\"speed\": ${factor}}"
 
-  if file_exists "${SETTINGS_FILE}"; then
-    settings="$(jq -e ".pointer = ${pointer} " "${SETTINGS_FILE}")" || return 1
+  if file_exists "${DESKTOP_SETTINGS}"; then
+    settings="$(jq -e ".pointer = ${pointer} " "${DESKTOP_SETTINGS}")" || return 1
   else
     settings="$(echo "{\"pointer\": ${pointer}}" | jq -e '.')" || return 1
   fi
 
   mkdir -p "${CONFIG_HOME}"
-  echo "${settings}" > "${SETTINGS_FILE}"
+  echo "${settings}" > "${DESKTOP_SETTINGS}"
 }
 
 # Saves the scale factor of the tablet with the given
@@ -383,16 +383,16 @@ save_tablet_scale_to_settings () {
   local settings='{}'
   local tablet="{\"name\": \"${name}\", \"scale\": ${scale}}"
 
-  if file_exists "${SETTINGS_FILE}"; then
+  if file_exists "${DESKTOP_SETTINGS}"; then
     local tablets=''
-    tablets="$(jq '.tablets|if . then . else empty end' "${SETTINGS_FILE}")"
+    tablets="$(jq '.tablets|if . then . else empty end' "${DESKTOP_SETTINGS}")"
 
     if is_given "${tablets}"; then
       local query=''
       query=".tablets[]|select(.name == \"${name}\")"
 
       local match=''
-      match="$(jq "${query}" "${SETTINGS_FILE}")"
+      match="$(jq "${query}" "${DESKTOP_SETTINGS}")"
 
       if is_empty "${match}"; then
         query=".tablets += [${tablet}]"
@@ -400,16 +400,16 @@ save_tablet_scale_to_settings () {
         query="(${query}|.scale)|= ${scale}"
       fi
 
-      settings="$(jq -e "${query}" "${SETTINGS_FILE}")" || return 1
+      settings="$(jq -e "${query}" "${DESKTOP_SETTINGS}")" || return 1
     else
-      settings="$(jq -e ".tablets = [${tablet}] " "${SETTINGS_FILE}")" || return 1
+      settings="$(jq -e ".tablets = [${tablet}] " "${DESKTOP_SETTINGS}")" || return 1
     fi
   else
     settings="$(echo "{\"tablets\": [${tablet}]}" | jq -e '.')" || return 1
   fi
 
   mkdir -p "${CONFIG_HOME}"
-  echo "${settings}" > "${SETTINGS_FILE}"
+  echo "${settings}" > "${DESKTOP_SETTINGS}"
 }
 
 # Shows a menu asking user to select a mapping target which

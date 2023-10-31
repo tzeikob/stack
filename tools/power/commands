@@ -73,11 +73,11 @@ show_status () {
     fi
   done
 
-  if file_exists "${SETTINGS_FILE}"; then
+  if file_exists "${POWER_SETTINGS}"; then
     local query='.screensaver.interval|if . then . else "" end'
 
     local screensaver=''
-    screensaver="$(jq -cr "${query}" "${SETTINGS_FILE}")" || return 1
+    screensaver="$(jq -cr "${query}" "${POWER_SETTINGS}")" || return 1
     
     if is_given "${screensaver}" && is_true "${screensaver} > 0"; then
       echo "Screensaver:  ${screensaver} mins"
@@ -265,8 +265,8 @@ set_screensaver () {
 init_screensaver () {
   local interval=5
 
-  if file_exists "${SETTINGS_FILE}"; then
-    interval="$(jq '.screensaver.interval|if . then . else 5 end' "${SETTINGS_FILE}")"
+  if file_exists "${POWER_SETTINGS}"; then
+    interval="$(jq '.screensaver.interval|if . then . else 5 end' "${POWER_SETTINGS}")"
   fi
  
   if is_true "${interval} > 0"; then

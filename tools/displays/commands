@@ -36,8 +36,8 @@ show_status () {
 
   local colors='[]'
 
-  if file_exists "${SETTINGS_FILE}"; then
-    colors="$(jq -cr 'if .colors then .colors else [] end' "${SETTINGS_FILE}")"
+  if file_exists "${DISPLAYS_SETTINGS}"; then
+    colors="$(jq -cr 'if .colors then .colors else [] end' "${DISPLAYS_SETTINGS}")"
   fi
 
   local rate=''
@@ -123,8 +123,8 @@ show_output () {
 
   local colors='[]'
 
-  if file_exists "${SETTINGS_FILE}"; then
-    colors="$(jq -cr 'if .colors then .colors else [] end' "${SETTINGS_FILE}")"
+  if file_exists "${DISPLAYS_SETTINGS}"; then
+    colors="$(jq -cr 'if .colors then .colors else [] end' "${DISPLAYS_SETTINGS}")"
   fi
 
   local base=''
@@ -864,13 +864,13 @@ save_layout () {
 # the signature of the mapping between current outputs and 
 # connected devices.
 restore_layout () {
-  if file_not_exists "${SETTINGS_FILE}"; then
+  if file_not_exists "${DISPLAYS_SETTINGS}"; then
     echo 'No layouts have found'
     return 2
   fi
 
   local layouts=''
-  layouts="$(jq '.layouts|if . then . else empty end' "${SETTINGS_FILE}")"
+  layouts="$(jq '.layouts|if . then . else empty end' "${DISPLAYS_SETTINGS}")"
 
   if is_empty "${layouts}"; then
     echo 'No layouts have found'
@@ -985,7 +985,7 @@ fix_layout () {
 delete_layout () {
   local index="${1}"
 
-  if file_not_exists "${SETTINGS_FILE}"; then
+  if file_not_exists "${DISPLAYS_SETTINGS}"; then
     echo 'No layouts have found'
     return 2
   fi
@@ -1005,7 +1005,7 @@ delete_layout () {
   fi
 
   local match=''
-  match="$(jq "select(.layouts[${index}])" "${SETTINGS_FILE}")"
+  match="$(jq "select(.layouts[${index}])" "${DISPLAYS_SETTINGS}")"
 
   if is_empty "${match}"; then
     echo "Cannot find layout with index ${index}"
@@ -1013,14 +1013,14 @@ delete_layout () {
   fi
 
   local settings=''
-  settings="$(jq -e "del(.layouts|.[${index}])" "${SETTINGS_FILE}")"
+  settings="$(jq -e "del(.layouts|.[${index}])" "${DISPLAYS_SETTINGS}")"
 
   if has_failed; then
     echo 'Failed to delete layout'
     return 2
   fi
 
-  echo "${settings}" > "${SETTINGS_FILE}"
+  echo "${settings}" > "${DISPLAYS_SETTINGS}"
   
   echo 'Layout has been deleted'
 }
@@ -1029,7 +1029,7 @@ delete_layout () {
 # Outputs:
 #  A list of layout settings.
 list_layouts () {
-  if file_not_exists "${SETTINGS_FILE}"; then
+  if file_not_exists "${DISPLAYS_SETTINGS}"; then
     echo 'No layouts have found'
     return 0
   fi
@@ -1052,7 +1052,7 @@ list_layouts () {
 
   query="[${query}]|join(\"\n\n\")"
 
-  jq -cer "${query}" "${SETTINGS_FILE}" || return 1
+  jq -cer "${query}" "${DISPLAYS_SETTINGS}" || return 1
 }
 
 # Sets the color profile of the device connected to the output
@@ -1181,7 +1181,7 @@ reset_color () {
 delete_color () {
   local index="${1}"
 
-  if file_not_exists "${SETTINGS_FILE}"; then
+  if file_not_exists "${DISPLAYS_SETTINGS}"; then
     echo 'No color settings have found'
     return 2
   fi
@@ -1201,7 +1201,7 @@ delete_color () {
   fi
 
   local match=''
-  match="$(jq "select(.colors[${index}])" "${SETTINGS_FILE}")"
+  match="$(jq "select(.colors[${index}])" "${DISPLAYS_SETTINGS}")"
 
   if is_empty "${match}"; then
     echo "Color setting with index ${index} not found"
@@ -1209,14 +1209,14 @@ delete_color () {
   fi
 
   local settings='{}'
-  settings="$(jq -e "del(.colors|.[${index}])" "${SETTINGS_FILE}")"
+  settings="$(jq -e "del(.colors|.[${index}])" "${DISPLAYS_SETTINGS}")"
 
   if has_failed; then
     echo 'Failed to delete color setting'
     return 2
   fi
 
-  echo "${settings}" > "${SETTINGS_FILE}"
+  echo "${settings}" > "${DISPLAYS_SETTINGS}"
 
   echo 'Color setting has been deleted'
 }
@@ -1226,7 +1226,7 @@ delete_color () {
 # Outputs:
 #  A list of color settings.
 list_colors () {
-  if file_not_exists "${SETTINGS_FILE}"; then
+  if file_not_exists "${DISPLAYS_SETTINGS}"; then
     echo 'No color settings have found'
     return 0
   fi
@@ -1246,19 +1246,19 @@ list_colors () {
 
   query="[${query}]|join(\"\n\n\")"
 
-  jq -cer "${query}" "${SETTINGS_FILE}" || return 1
+  jq -cer "${query}" "${DISPLAYS_SETTINGS}" || return 1
 }
 
 # Restores the color settings of any devices currently
 # connected to an output.
 restore_colors () {
-  if file_not_exists "${SETTINGS_FILE}"; then
+  if file_not_exists "${DISPLAYS_SETTINGS}"; then
     echo 'No color settings have found'
     return 2
   fi
 
   local colors=''
-  colors="$(jq -cr 'if .colors then .colors else [] end' "${SETTINGS_FILE}")" || return 1
+  colors="$(jq -cr 'if .colors then .colors else [] end' "${DISPLAYS_SETTINGS}")" || return 1
 
   local len=0
   len="$(count "${colors}")" || return 1
