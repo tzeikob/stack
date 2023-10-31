@@ -107,8 +107,8 @@ run () {
       'clean all') clean_all && beep;;
       'set popup') set_popup "${args[2]}" && beep;;
       'set volume') set_volume "${args[2]}" && beep;;
-      'start') start;;
-      'restart') restart;;
+      'start') start && beep;;
+      'restart') restart && beep;;
       'get state') get_state;;
       *)
         echo 'Ooops, invalid or unknown command!'

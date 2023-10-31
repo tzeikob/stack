@@ -116,7 +116,7 @@ run () {
       'set default') set_default "${args[2]}" && beep;;
       'set option') set_option "${args[2]}" "${args[3]}" "${args[4]}" && beep;;
       'cancel job') cancel_job "${args[2]}" && beep;;
-      'restart') restart;;
+      'restart') restart && beep;;
       *)
         echo 'Ooops, invalid or unknown command!'
         $(return 2);;

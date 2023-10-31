@@ -108,7 +108,7 @@ run () {
       'show status') show_status;;
       'show logs') show_logs;;
       'show card') show_card "${args[2]}";;
-      'restart') restart;;
+      'restart') restart && beep;;
       'list cards') list_cards;;
       'list outputs') list_ports output;;
       'list inputs') list_ports input;;

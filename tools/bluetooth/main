@@ -121,7 +121,7 @@ run () {
       'connect device') connect_device "${args[2]}" && beep;;
       'disconnect device') disconnect_device "${args[2]}" && beep;;
       'remove device') remove_device "${args[2]}" && beep;;
-      'restart') restart_bluetooth;;
+      'restart') restart_bluetooth && beep;;
       *)
         echo 'Ooops, invalid or unknown command!'
         $(return 2);;
