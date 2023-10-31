@@ -27,8 +27,6 @@ set_separator () {
 }
 
 # Restores the IFS to the default value.
-# Arguments:
-#  None
 restore_separator () {
   IFS=$' \n\t'
 }
@@ -46,8 +44,6 @@ trim () {
 
 # Returns the list of any detected hosts in the
 # local network.
-# Arguments:
-#  None
 # Outputs:
 #  A json array list of host objects.
 find_hosts () {
@@ -378,8 +374,6 @@ download () {
 
 # Plays a short success or failure beep sound according
 # to the exit status code set by the previous command.
-# Arguments:
-#  None
 # Returns:
 #  The exit status code set by previous command.
 beep () {
