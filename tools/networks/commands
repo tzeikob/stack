@@ -5,10 +5,6 @@ set -o pipefail
 source /opt/stack/utils
 source /opt/stack/networks/helpers
 
-SHELLRC_FILE="${HOME}/.bashrc"
-PROXY_ENV_FILE="${HOME}/.config/environment.d/proxy.conf"
-DOCKER_PROXY_FILE='/etc/systemd/system/docker.service.d/http-proxy.conf'
-
 # Shows the current status of the system networking.
 # Outputs:
 #  A long list of networking data.
