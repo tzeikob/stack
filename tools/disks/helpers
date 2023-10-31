@@ -61,7 +61,7 @@ find_partitions () {
   local volumes=''
   volumes="$(veracrypt -t --list 2>&1)"
 
-  if has_failed && not_equals "${volumes}" 'No volumes mounted'; then
+  if has_failed && not_match "${volumes}" 'No volumes mounted'; then
     return 1
   fi
 
@@ -112,7 +112,7 @@ find_partition () {
   local volume=''
   volume="$(veracrypt -t --volume-properties "${path}" 2>&1)"
 
-  if has_failed && not_equals "${volume}" 'No such volume is mounted'; then
+  if has_failed && not_match "${volume}" 'No such volume is mounted'; then
     return 1
   fi
 
@@ -473,7 +473,7 @@ unmount_partitions () {
   local volumes=''
   volumes="$(veracrypt -t --list 2>&1)"
   
-  if has_failed && not_equals "${volumes}" 'No volumes mounted'; then
+  if has_failed && not_match "${volumes}" 'No volumes mounted'; then
     return 1
   fi
   

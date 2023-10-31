@@ -14,7 +14,7 @@ find_destinations () {
 
   local exit_code=$?
 
-  if equals "${destinations}" 'No destinations added'; then
+  if match "${destinations}" 'No destinations added'; then
     echo '[]'
     return 0
   elif has_failed "${exit_code}"; then
