@@ -184,7 +184,7 @@ remove_files () {
     readarray -t paths < <(echo "${selected_paths}" | jq -cr '.[]')
   fi
 
-  if not_on_script_mode; then
+  if on_user_mode; then
     confirm 'File(s) will be gone forever, proceed?' || return $?
     is_empty "${REPLY}" && echo 'Confirmation is required' && return 2
   
@@ -240,7 +240,7 @@ empty_files () {
     return 2
   fi
   
-  if not_on_script_mode; then
+  if on_user_mode; then
     local prompt=''
 
     if is_not_given "${days}"; then

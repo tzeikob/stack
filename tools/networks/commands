@@ -790,7 +790,7 @@ add_proxy () {
     port="${REPLY}"
   fi
 
-  if not_on_script_mode; then
+  if on_user_mode; then
     if is_not_given "${username}"; then
       ask 'Enter the username [optional]:' || return $?
       username="${REPLY}"

@@ -81,7 +81,7 @@ sync_drive () {
     secret="${REPLY}"
   fi
   
-  if is_not_given "${folder}" && not_on_script_mode; then
+  if is_not_given "${folder}" && on_user_mode; then
     ask 'Enter the root folder id [none]:' || return $?
     folder="${REPLY}"
   fi
@@ -179,7 +179,7 @@ delete_remote () {
     return 2
   fi
 
-  if not_on_script_mode; then
+  if on_user_mode; then
     echo "Remote ${name} will be deleted!"
     confirm 'Do you realy want to proceed?' || return $?
     is_empty "${REPLY}" && echo 'Confirmation is required' && return 2

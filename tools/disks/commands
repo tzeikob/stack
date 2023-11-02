@@ -980,7 +980,7 @@ format_disk () {
   fi
 
   # Do not ask confirmation on script mode
-  if not_on_script_mode; then
+  if on_user_mode; then
     local model=''
     model="$(find_disk "${path}" |
       jq -cr '"\(.vendor|gsub("^\\s+|\\s+$";"")) \(.model) \(.size)"')" || return 1
@@ -1216,7 +1216,7 @@ create_encrypted () {
     key="${REPLY}"
   fi
 
-  if not_on_script_mode; then
+  if on_user_mode; then
     confirm_secret 'Retype the encryption key:' "${key}"
 
     if has_failed; then
@@ -1347,7 +1347,7 @@ create_bootable () {
     return 2
   fi
 
-  if not_on_script_mode; then
+  if on_user_mode; then
     local model=''
     model="$(find_disk "${path}" | jq -cr '"\(.vendor) \(.model) \(.size)"')" || return 1
 
