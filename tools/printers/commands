@@ -84,7 +84,7 @@ show_printer () {
     name="${REPLY}"
   fi
 
-  if not_exists_destination "${name}"; then
+  if destination_not_exists "${name}"; then
     echo "Cannot find printer ${name}"
     return 2
   fi
@@ -140,7 +140,7 @@ add_printer () {
     name="${REPLY}"
   fi
 
-  if exists_destination "${name}"; then
+  if destination_exists "${name}"; then
     echo "Printer ${name} already exists"
     return 2
   fi
@@ -185,7 +185,7 @@ remove_printer () {
     name="${REPLY}"
   fi
 
-  if not_exists_destination "${name}"; then
+  if destination_not_exists "${name}"; then
     echo "Cannot find printer ${name}"
     return 2
   fi
@@ -216,7 +216,7 @@ share_printer () {
     name="${REPLY}"
   fi
 
-  if not_exists_destination "${name}"; then
+  if destination_not_exists "${name}"; then
     echo "Cannot find printer ${name}"
     return 2
   fi
@@ -247,7 +247,7 @@ unshare_printer () {
     name="${REPLY}"
   fi
 
-  if not_exists_destination "${name}"; then
+  if destination_not_exists "${name}"; then
     echo "Cannot find printer ${name}"
     return 2
   fi
@@ -281,7 +281,7 @@ set_option () {
     name="${REPLY}"
   fi
 
-  if not_exists_destination "${name}"; then
+  if destination_not_exists "${name}"; then
     echo "Cannot find printer ${name}"
     return 2
   fi
@@ -360,7 +360,7 @@ set_default () {
     name="${REPLY}"
   fi
 
-  if not_exists_destination "${name}"; then
+  if destination_not_exists "${name}"; then
     echo "Cannot find printer ${name}"
     return 2
   fi
@@ -415,7 +415,7 @@ cancel_job () {
     id="${REPLY}"
   fi
 
-  if not_exists_job "${id}"; then
+  if job_not_exists "${id}"; then
     echo "Cannot find print job ${id}"
     return 2
   fi

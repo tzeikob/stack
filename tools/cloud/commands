@@ -58,7 +58,7 @@ sync_drive () {
     name="${REPLY}"
   fi
   
-  if exists_remote "${name}"; then
+  if remote_exists "${name}"; then
     echo "Remote ${name} already exists"
     return 2
   fi
@@ -119,7 +119,7 @@ sync_dropbox () {
     name="${REPLY}"
   fi
   
-  if exists_remote "${name}"; then
+  if remote_exists "${name}"; then
     echo "Remote ${name} already exists"
     return 2
   fi
@@ -171,7 +171,7 @@ delete_remote () {
     name="${REPLY}"
   fi
   
-  if not_exists_remote "${name}"; then
+  if remote_not_exists "${name}"; then
     echo "Remote ${name} not found"
     return 2
   elif is_remote_mounted "${name}"; then
@@ -215,7 +215,7 @@ mount_remote () {
     name="${REPLY}"
   fi
   
-  if not_exists_remote "${name}"; then
+  if remote_not_exists "${name}"; then
     echo "Remote ${name} not found"
     return 2
   elif is_remote_mounted "${name}"; then
@@ -260,10 +260,10 @@ unmount_remote () {
     name="${REPLY}"
   fi
   
-  if not_exists_remote "${name}"; then
+  if remote_not_exists "${name}"; then
     echo "Remote ${name} not found"
     return 2
-  elif is_not_remote_mounted "${name}"; then
+  elif is_remote_not_mounted "${name}"; then
     echo "Remote ${name} is not mounted"
     return 2
   fi

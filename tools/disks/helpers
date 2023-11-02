@@ -189,12 +189,7 @@ is_disk () {
   fi
 }
 
-# Checks if the block device with the given path
-# is not a disk device.
-# Arguments:
-#  path: the path of a block device
-# Returns:
-#  0 if it is not disk otherwise 1.
+# An inverse version of is_disk.
 is_not_disk () {
   is_disk "${1}" && return 1 || return 0
 }
@@ -244,6 +239,11 @@ is_system_disk () {
   fi
 }
 
+# An inverse version of is_system_disk.
+is_not_system_disk () {
+  is_system_disk "${1}" && return 1 || return 0
+}
+
 # Checks if the block device with the given path
 # is a partition device.
 # Arguments:
@@ -267,12 +267,7 @@ is_partition () {
   fi
 }
 
-# Checks if the block device with the given path
-# is not a partition device.
-# Arguments:
-#  path: the path of a block device
-# Returns:
-#  0 if it is not partition otherwise 1.
+# An inverse version of is_partition.
 is_not_partition () {
   is_partition "${1}" && return 1 || return 0
 }
@@ -310,6 +305,11 @@ is_system_partition () {
   fi
 }
 
+# An inverse version of is_system_partition.
+is_not_system_partition () {
+  is_system_partition "${1}" && return 1 || return 0
+}
+
 # Checks if the block device with the given path
 # is a rom device.
 # Arguments:
@@ -333,12 +333,7 @@ is_rom () {
   fi
 }
 
-# Checks if the block device with the given path
-# is not a rom device.
-# Arguments:
-#  path: the path of a block device
-# Returns:
-#  0 if it is not rom otherwise 1.
+# An inverse version of is_rom.
 is_not_rom () {
   is_rom "${1}" && return 1 || return 0
 }
@@ -367,12 +362,7 @@ is_mounted () {
   return 1
 }
 
-# Checks if the block device with the given path
-# is not mounted.
-# Arguments:
-#  path: the path of a mountable block device
-# Returns:
-#  0 if it is not mounted otherwise 1.
+# An inverse version of is_mounted.
 is_not_mounted () {
   is_mounted "${1}" && return 1 || return 0
 }
@@ -788,11 +778,7 @@ is_valid_fs_type () {
   return 0
 }
 
-# Checks if the given file system type is not valid.
-# Arguments:
-#  type: the type of file system
-# Returns:
-# 0 if type is not valid otherwise 1.
+# An inverse version of is_valid_fs_type.
 is_not_valid_fs_type () {
   is_valid_fs_type "${1}" && return 1 || return 0
 }

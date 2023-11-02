@@ -423,18 +423,14 @@ on_script_mode () {
   return 0
 }
 
-# Checks if we not run on script mode.
-# Returns:
-#  0 if not run on script mode otherwise 1.
+# An inverse version of on_script_mode.
 not_on_script_mode () {
   on_script_mode && return 1 || return 0
 }
 
-# Checks if we not run on script mode.
-# Returns:
-#  0 if not run on script mode otherwise 1.
+# An alias version of not_on_script_mode.
 on_user_mode () {
-  on_script_mode && return 1 || return 0
+  not_on_script_mode && return 0 || return 1
 }
 
 # Sets the quiet mode to on or off by setting a
@@ -467,20 +463,14 @@ on_quiet_mode () {
   return 0
 }
 
-# Checks if the script is not running on quiet mode by
-# checking if the global quiet variable has set.
-# Returns:
-#  0 if not run on quiet mode otherwise 1.
+# An inverse version of on_quiet_mode.
 not_on_quiet_mode () {
   on_quiet_mode && return 1 || return 0
 }
 
-# Checks if the script is not running on quiet mode by
-# checking if the global quiet variable has set.
-# Returns:
-#  0 if not run on quiet mode otherwise 1.
+# An alias version of not_on_quiet_mode.
 on_loud_mode () {
-  on_quiet_mode && return 1 || return 0
+  not_on_quiet_mode && return 0 || return 1
 }
 
 # Checks if the given value is empty.
@@ -498,31 +488,19 @@ is_empty () {
   return 1
 }
 
-# Checks if the given value is not empty.
-# Arguments:
-#  value: any value
-# Returns:
-#  0 if value is not empty otherwise 1.
+# An alias version of is_empty.
+is_not_given () {
+  is_empty "${1}" && return 0 || return 1
+}
+
+# An inverse version of is_empty.
 is_not_empty () {
   is_empty "${1}" && return 1 || return 0
 }
 
-# Checks if the given value is not empty.
-# Arguments:
-#  value: any value
-# Returns:
-#  0 if value is not empty otherwise 1.
+# A alias version of is_not_empty.
 is_given () {
   is_not_empty "${1}" && return 0 || return 1
-}
-
-# Checks if the given value is empty.
-# Arguments:
-#  value: any value
-# Returns:
-#  0 if value is empty otherwise 1.
-is_not_given () {
-  is_empty "${1}" && return 0 || return 1
 }
 
 # Checks if the given value is integer number.
@@ -540,11 +518,7 @@ is_integer () {
   return 0
 }
 
-# Checks if the given value is not an integer number.
-# Arguments:
-#  value: any number value
-# Returns:
-#  0 if value is not integer otherwise 1.
+# An inverse version of is_integer.
 is_not_integer () {
   is_integer "${1}" && return 1 || return 0
 }
@@ -564,11 +538,7 @@ is_positive_integer () {
   return 0
 }
 
-# Checks if the given value is not a positive integer number.
-# Arguments:
-#  value: any number value
-# Returns:
-#  0 if value is not positive integer otherwise 1.
+# An inverse version of is_positive_integer.
 is_not_positive_integer () {
   is_positive_integer "${1}" && return 1 || return 0
 }
@@ -588,12 +558,7 @@ file_exists () {
   return 0
 }
 
-# Checks if the file with the given path does
-# not exist.
-# Arguments:
-#  path: the path of a file
-# Returns:
-#  0 if file not exists otherwise 1.
+# An inverse version of file_exists.
 file_not_exists () {
    file_exists "${1}" && return 1 || return 0
 }
@@ -613,11 +578,7 @@ directory_exists () {
   return 0
 }
 
-# Checks if the directory with the given path not exists.
-# Arguments:
-#  path: the path of a directory
-# Returns:
-#  0 if directory not exists otherwise 1.
+# An inverse version of directory_exists.
 directory_not_exists () {
  directory_exists "${1}" && return 1 || return 0
 }
@@ -637,11 +598,7 @@ symlink_exists () {
   return 0
 }
 
-# Checks if the symlink with the given path not exists.
-# Arguments:
-#  path: a symlink path
-# Returns:
-#  0 if symlink not exists otherwise 1.
+# An inverse version of symlink_exists.
 symlink_not_exists () {
   symlink_exists "${1}" && return 1 || return 0
 }
@@ -661,11 +618,7 @@ is_block_device () {
   return 0
 }
 
-# Checks if the given path is not a block device.
-# Arguments:
-#  path: any path
-# Returns:
-#  0 if path is not block device otherwise 1.
+# An inverse version of is_block_device.
 is_not_block_device () {
   is_block_device "${1}" && return 1 || return 0
 }
@@ -691,11 +644,7 @@ is_date () {
   return 0
 }
 
-# Checks if the given value is not a valid date.
-# Arguments:
-#  value: a date value
-# Returns:
-#  0 if value is not date otherwise 1.
+# An inverse version of is_date.
 is_not_date () {
   is_date "${1}" && return 1 || return 0
 }
@@ -715,11 +664,7 @@ is_yes () {
   return 0
 }
 
-# Checks if the given value equals to not yes.
-# Arguments:
-#  value: any value
-# Returns:
-#  0 if value is not yes otherwise 1.
+# An inverse version of is_yes.
 is_not_yes () {
   is_yes "${1}" && return 1 || return 0
 }
@@ -739,11 +684,7 @@ is_on () {
   return 0
 }
 
-# Checks if the given value equals to not on.
-# Arguments:
-#  value: any value
-# Returns:
-#  0 if value is not on otherwise 1.
+# An inverse version of is_on.
 is_not_on () {
   is_on "${1}" && return 1 || return 0
 }
@@ -763,11 +704,7 @@ is_off () {
   return 0
 }
 
-# Checks if the given value equals to not off.
-# Arguments:
-#  value: any value
-# Returns:
-#  0 if value is not off otherwise 1.
+# An inverse version of is_off.
 is_not_off () {
   is_off "${1}" && return 1 || return 0
 }
@@ -787,11 +724,7 @@ is_toggle () {
   return 0
 }
 
-# Checks if the given value is not a valid on/off toggle.
-# Arguments:
-#  value: any value
-# Returns:
-#  0 if value is neither on nor off otherwise 1.
+# An inverse version of is_toggle.
 is_not_toggle () {
   is_toggle "${1}" && return 1 || return 0
 }
@@ -816,35 +749,17 @@ is_true () {
   return 0
 }
 
-# Checks if the given value or expression is not true,
-# where expression could be any mathematical comparison
-# like 0 < 5 < 10 or so.
-# Arguments:
-#  value: any boolean value or expression
-# Returns:
-#  0 if value is not true otherwise 1.
+# An inverse version of is_true.
 is_not_true () {
   is_true "${1}" && return 1 || return 0
 }
 
-# Checks if the given value or expression is false,
-# where expression could be any mathematical comparison
-# like 0 < 5 < 10 or so.
-# Arguments:
-#  value: any boolean value or expression
-# Returns:
-#  0 if value is false otherwise 1.
+# A alias version of is_not_true.
 is_false () {
-  is_true "${1}" && return 1 || return 0
+  is_not_true "${1}" && return 0 || return 1
 }
 
-# Checks if the given value or expression is not false,
-# where expression could be any mathematical comparison
-# like 0 < 5 < 10 or so.
-# Arguments:
-#  value: any boolean value or expression
-# Returns:
-#  0 if value is not false otherwise 1.
+# An inverse version of is_false.
 is_not_false () {
   is_false "${1}" && return 1 || return 0
 }
@@ -864,11 +779,7 @@ is_boolean () {
   return 0
 }
 
-# Checks if the given value is not boolean.
-# Arguments:
-#  value: any value
-# Returns:
-#  0 if value is not boolean otherwise 1.
+# An inverse version of is_boolean.
 is_not_boolean () {
   is_boolean "${1}" && return 1 || return 0
 }
@@ -896,14 +807,7 @@ has_failed () {
   return 1
 }
 
-# Checks if the given exit status code is zero
-# which indicates the last command has not failed.
-# If no code is given the function will consider
-# as exit code the current value of $?.
-# Arguments:
-#  code: an exit status code
-# Returns:
-#  0 if exit code is zero otherwise 1.
+# An inverse version of has_failed.
 has_not_failed () {
   has_failed "${1}" && return 1 || return 0
 }
@@ -929,12 +833,7 @@ match () {
   return 0
 }
 
-# Checks if the given value is not matching with the given regex.
-# Arguments:
-#  value: any value
-#  re:    a regular expression
-# Returns:
-#  0 if there is not match otherwise 1.
+# An inverse version of match.
 not_match () {
   match "${1}" "${2}" && return 1 || return 0
 }
@@ -956,12 +855,7 @@ equals () {
   return 0
 }
 
-# Checks if the given values are not equal.
-# Arguments:
-#  a: any value
-#  b: any value
-# Returns:
-#  0 if value a not equals b otherwise 1.
+# An inverse version of equals.
 not_equals () {
   equals "${1}" "${2}" && return 1 || return 0
 }

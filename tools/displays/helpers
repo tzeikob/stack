@@ -24,12 +24,7 @@ is_output_status () {
   return 0
 }
 
-# Checks if the given status is not among the valid
-# xrandr output statuses.
-# Arguments:
-#  status: an output status
-# Returns:
-# 0 if status is not valid otherwise 1
+# An inverse version of is_output_status.
 is_not_output_status () {
   is_output_status "${1}" && return 1 || return 0
 }
@@ -123,11 +118,7 @@ is_connected () {
   echo "${output}" | jq -cer "${query}" &> /dev/null || return 1
 }
 
-# Asserts if the given output is not connected.
-# Arguments:
-#  output: a json object output
-# Returns:
-#  0 if is not connected otherwise 1.
+# An inverse version of is_connected.
 is_not_connected () {
   is_connected "${1}" && return 1 || return 0
 }
@@ -145,11 +136,7 @@ is_active () {
   echo "${output}" | jq -cer "${query}" &> /dev/null || return 1
 }
 
-# Asserts if the given output is not active.
-# Arguments:
-#  output: a json object output
-# Returns:
-#  0 if is not active otherwise 1.
+# An inverse version of is_active.
 is_not_active () {
   is_active "${1}" && return 1 || return 0
 }
@@ -167,11 +154,7 @@ is_primary () {
   echo "${output}" | jq -cer "${query}" &> /dev/null || return 1
 }
 
-# Asserts if the given output is not primary.
-# Arguments:
-#  output: a json object output
-# Returns:
-#  0 if is not primary otherwise 1.
+# An inverse version of is_primary.
 is_not_primary () {
   is_primary "${1}" && return 1 || return 0
 }
@@ -191,11 +174,7 @@ is_resolution () {
   return 0
 }
 
-# Checks if the given value is not a valid output resolution.
-# Arguments:
-#  resolution: an output resolution
-# Returns:
-#  0 if resolution is not valid otherwise 1.
+# An inverse version of is_resolution.
 is_not_resolution () {
   is_resolution "${1}" && return 1 || return 0
 }
@@ -218,12 +197,7 @@ has_resolution () {
   echo "${output}" | jq -cer "${query}" &> /dev/null || return 1
 }
 
-# Asserts if an output does not supports the given resolution.
-# Arguments:
-#  output:     a json object of output
-#  resolution: an output resolution
-# Returns:
-#  0 if output does not supports the resolution otherwise 1.
+# An inverse version of has_resolution.
 has_no_resolution () {
   has_resolution "${1}" "${2}" && return 1 || return 0
 }
@@ -243,11 +217,7 @@ is_rate () {
   return 0
 }
 
-# Checks if the given resolution rate is not valid.
-# Arguments:
-#  rate: a resolution rate
-# Returns:
-#  0 if rate is not valid otherwise 1.
+# An inverse version of is_rate.
 is_not_rate () {
   is_rate "${1}" && return 1 || return 0
 }
@@ -274,14 +244,7 @@ has_rate () {
   echo "${output}" | jq -cer "${query}" &> /dev/null || return 1
 }
 
-# Asserts if an output at a resolution does not support
-# the given refresh rate.
-# Arguments:
-#  output:     a json object of output
-#  resolution: an output resolution
-#  rate:       a refresh rate
-# Returns:
-#  0 if output does not supports the refresh rate otherwise 1.
+# An inverse version of has_rate.
 has_no_rate () {
   has_rate "${1}" "${2}" "${3}" && return 1 || return 0
 }
@@ -448,11 +411,7 @@ is_reflection_mode () {
   fi
 }
 
-# Checks if the given mode is not a valid reflection mode.
-# Arguments:
-#  mode: a reflection mode
-# Returns:
-#  0 if reflection mode is not valid otherwise 1.
+# An inverse version of is_reflection_mode.
 is_not_reflection_mode () {
   is_reflection_mode "${1}" && return 1 || return 0 
 }
@@ -484,11 +443,7 @@ is_rotation_mode () {
   fi
 }
 
-# Checks if the given mode is not a valid rotation mode.
-# Arguments:
-#  mode: a rotation mode
-# Returns:
-#  0 if rotation mode is not valid otherwise 1.
+# An inverse version of is_rotation_mode.
 is_not_rotation_mode () {
   is_rotation_mode "${1}" && return 1 || return 0 
 }
@@ -592,15 +547,7 @@ is_eligible_layout_mode () {
   return 0
 }
 
-# Checks if the given layout mode is not valid for the given active
-# outputs.
-# Arguments:
-#  mode: row-2, col-2, row-3, col-3, gamma-3, gamma-rev-3,
-#        lambda-3, lambda-rev-3, grid-4, taph-4, taph-rev-4,
-#        taph-right-4, taph-left-4
-#  size: the number of active outputs
-# Returns:
-#  0 if layout mode does not correspond to active outputs otherwise 1.
+# An inverse version of is_eligible_layout_mode.
 is_not_eligible_layout_mode () {
   is_eligible_layout_mode "${1}" "${2}" && return 1 || return 0
 }
@@ -1030,12 +977,7 @@ is_profile_file () {
   return 0
 }
 
-# Checks if the given file name is not a valid color
-# profile file type.
-#  Arguments:
-#   file_name: a file name
-# Returns:
-#  0 if file is not of color profile type otherwise 1.
+# An inverse version of is_profile_file.
 is_not_profile_file () {
  is_profile_file "${1}" && return 1 || return 0
 }

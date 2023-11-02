@@ -39,11 +39,7 @@ is_keymap () {
 	return 0
 }
 
-# Checks if the given keyboard map is not valid.
-# Arguments:
-#  map: a keyboard map name
-# Returns:
-#  0 if map is not valid otherwise 1.
+# An inverse version of is_keymap.
 is_not_keymap () {
   is_keymap "${1}" && return 1 || return 0
 }
@@ -102,11 +98,7 @@ is_locale () {
 	return 0
 }
 
-# Checks if the given locale is not valid.
-# Arguments:
-#  name: the name of a locale
-# Returns:
-#  0 if locale is not valid otherwise 1.
+# An inverse version of is_locale.
 is_not_locale () {
   is_locale "${1}" && return 1 || return 0
 }
@@ -126,11 +118,7 @@ is_locale_installed () {
 	return 1
 }
 
-# Checks if the given locale is not installed.
-# Arguments:
-#  name: the name of a locale
-# Returns:
-#  0 if locale is not set otherwise 1.
+# An inverse version of is_locale_installed.
 is_locale_not_installed () {
 	is_locale_installed "${1}" && return 1 || return 0
 }
@@ -172,12 +160,7 @@ is_layout_options () {
   return 0
 }
 
-# Checks if the given layout options value
-# is not valid.
-# Arguments:
-#  value: a layout options value
-# Returns:
-#  0 if value is not valid otherwise 1.
+# An inverse version of is_layout_options.
 is_not_layout_options () {
   is_layout_options "${1}" && return 1 || return 0
 }
@@ -217,11 +200,7 @@ is_keyboard_model () {
   return 0
 }
 
-# Checks if the given keyboard model is not valid.
-# Arguments:
-#  name: the name of a keyboard model
-# Returns:
-#  0 if model is not valid otherwise 1.
+# An inverse version of is_keyboard_model.
 is_not_keyboard_model () {
   is_keyboard_model "${1}" && return 1 || return 0
 }
@@ -282,12 +261,7 @@ is_layout () {
   return 0
 }
 
-# Checks if the keyboard layout with the given code
-# is not valid.
-# Arguments:
-#  code: a layout code
-# Returns:
-#  0 if layout is not valid otherwise 1.
+# An inverse version of is_layout.
 is_not_layout () {
   is_layout "${1}" && return 1 || return 0
 }

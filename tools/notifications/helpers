@@ -79,11 +79,7 @@ is_valid_sort_field () {
   return 0
 }
 
-# Checks if the given value is not a valid sort field.
-# Arguments:
-#  field: a sort field name
-# Returns:
-#  0 if field is not valid otherwise 1.
+# An inverse version of is_valid_sort_field.
 is_not_valid_sort_field () {
   is_valid_sort_field "${1}" && return 1 || return 0
 }
@@ -93,7 +89,7 @@ is_not_valid_sort_field () {
 #  volume: a positive integer value
 # Returns:
 #  0 if volume is valid otherwise 1.
-is_volume_with_in_range () {
+is_volume_within_range () {
   local volume="${1}"
 
   if is_not_true "0 <= ${volume} <= 100"; then
@@ -103,12 +99,8 @@ is_volume_with_in_range () {
   return 0
 }
 
-# Checks if the given volume is out of range.
-# Arguments:
-#  volume: a positive integer value
-# Returns:
-#  0 if volume is not valid otherwise 1.
+# An inverse version of is_volume_within_range.
 is_volume_out_of_range () {
-  is_volume_with_in_range "${1}" && return 1 || return 0
+  is_volume_within_range "${1}" && return 1 || return 0
 }
 

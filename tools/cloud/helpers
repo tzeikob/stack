@@ -86,7 +86,7 @@ find_remote () {
 #  name: the name of a service
 # Returns:
 #  0 if exists otherwise 1
-exists_remote () {
+remote_exists () {
   local name="${1}"
 
   local query=".[]|select(.name == \"${name}\")"
@@ -94,13 +94,9 @@ exists_remote () {
   find_remotes | jq -cer "${query}" &> /dev/null || return 1
 }
 
-# Checks if the service with the given name does not exist.
-# Arguments:
-#  name: the name of a service
-# Returns:
-#  0 if not exists otherwise 1
-not_exists_remote () {
-  exists_remote "${1}" && return 1 || return 0
+# An inverse version of remote_exists.
+remote_not_exists () {
+  remote_exists "${1}" && return 1 || return 0
 }
 
 # Checks if the remote with the given name is mounted
@@ -115,12 +111,8 @@ is_remote_mounted () {
   grep -Eq "^${name}:.* fuse.rclone" /proc/mounts
 }
 
-# Checks if the remote with the given name is not mounted.
-# Arguments:
-#  name: the name of a service
-# Returns:
-#  0 if is not mounted otherwise 1
-is_not_remote_mounted () {
+# An inverse version of is_remote_mounted.
+is_remote_not_mounted () {
   is_remote_mounted "${1}" && return 1 || return 0
 }
 

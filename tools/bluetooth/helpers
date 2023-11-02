@@ -77,9 +77,7 @@ is_scanning () {
   fi
 }
 
-# Checks if the default controller is not in scanning mode.
-# Returns:
-#  0 if scanning is off otherwise 1.
+# An inverse version of is_scanning.
 is_not_scanning () {
   is_scanning && return 1 || return 0
 }
@@ -158,11 +156,7 @@ is_valid_status () {
   return 0
 }
 
-# Checks if the given status is not valid.
-# Arguments:
-#  status: a bluetooth device status
-# Returns:
-#  0 if status is not valid otherwise 1.
+# An inverse version of is_valid_status.
 is_not_valid_status () {
   is_valid_status "${1}" && return 1 || return 0
 }
