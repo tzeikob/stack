@@ -62,13 +62,14 @@ run () {
   while getopts ':hqs' opt; do
     case "${opt}" in
      'h')
+        set_quiet_mode 'on'
         show_help once
         return 0;;
-     'q') QUIET='true';;
+     'q') set_quiet_mode 'on';;
      's') ON_SCRIPT_MODE='true';;
      *)
       echo "Ooops, invalid or unknown option -${OPTARG}!"
-      $(exit 2) || beep
+      beep 2
       return $?;;
     esac
   done
@@ -110,22 +111,30 @@ run () {
       'show status') show_status;;
       'show pointer') show_pointer "${args[2]}";;
       'show tablet') show_tablet "${args[2]}";;
-      'set wallpaper') set_wallpaper "${args[2]}" "${args[3]}" && beep;;
-      'speed pointer') set_pointer_speed "${args[2]}" && beep;;
-      'scale tablet') scale_tablet "${args[2]}" "${args[3]}" && beep;;
-      'map tablet') map_tablet "${args[2]}" "${args[3]}" && beep;;
+      'set wallpaper') set_wallpaper "${args[2]}" "${args[3]}";;
+      'speed pointer') set_pointer_speed "${args[2]}";;
+      'scale tablet') scale_tablet "${args[2]}" "${args[3]}";;
+      'map tablet') map_tablet "${args[2]}" "${args[3]}";;
       'list wallpapers') list_wallpapers;;
       'list pointers') list_pointers;;
       'list tablets') list_tablets;;
-      'init pointer') init_pointer && beep;;
-      'init tablets') init_tablets && beep;;
-      'init wallpaper') init_wallpaper && beep;;
+      'init pointer') init_pointer;;
+      'init tablets') init_tablets;;
+      'init wallpaper') init_wallpaper;;
       *)
         echo 'Ooops, invalid or unknown command!'
         $(return 2);;
-    esac || beep
+    esac
 
+    # Save exit status code of the last executed cmd
     local exit_code=$?
+  
+    if is_true "${exit_code} = 1"; then
+      echo 'Ooops, an unknwon error occurred!'
+    fi
+
+    on_loud_mode && beep "${exit_code}"
+
     if equals "${mode}" 'once'; then
       return ${exit_code}
     fi

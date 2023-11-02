@@ -55,13 +55,14 @@ run () {
   while getopts ':hqs' opt; do
     case "${opt}" in
      'h')
+        set_quiet_mode 'on'
         show_help once
         return 0;;
-     'q') QUIET='true';;
+     'q') set_quiet_mode 'on';;
      's') ON_SCRIPT_MODE='true';;
      *)
       echo "Ooops, invalid or unknown option -${OPTARG}!"
-      $(exit 2) || beep
+      beep 2
       return $?;;
     esac
   done
@@ -102,20 +103,28 @@ run () {
     case "${cmd}${obj:+ ${obj}}" in
       'show status') show_status;;
       'list all') list_all "${args[2]}" "${args[3]}";;
-      'mute all') mute_all && beep;;
-      'unmute all') unmute_all && beep;;
-      'clean all') clean_all && beep;;
-      'set popup') set_popup "${args[2]}" && beep;;
-      'set volume') set_volume "${args[2]}" && beep;;
-      'start') start && beep;;
-      'restart') restart && beep;;
+      'mute all') mute_all;;
+      'unmute all') unmute_all;;
+      'clean all') clean_all;;
+      'set popup') set_popup "${args[2]}";;
+      'set volume') set_volume "${args[2]}";;
+      'start') start;;
+      'restart') restart;;
       'get state') get_state;;
       *)
         echo 'Ooops, invalid or unknown command!'
         $(return 2);;
-    esac || beep
+    esac
 
+    # Save exit status code of the last executed cmd
     local exit_code=$?
+  
+    if is_true "${exit_code} = 1"; then
+      echo 'Ooops, an unknwon error occurred!'
+    fi
+
+    on_loud_mode && beep "${exit_code}"
+
     if equals "${mode}" 'once'; then
       return ${exit_code}
     fi

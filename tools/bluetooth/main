@@ -62,13 +62,14 @@ run () {
   while getopts ':hqs' opt; do
     case "${opt}" in
      'h')
+        set_quiet_mode 'on'
         show_help once
         return 0;;
-     'q') QUIET='true';;
+     'q') set_quiet_mode 'on';;
      's') ON_SCRIPT_MODE='true';;
      *)
       echo "Ooops, invalid or unknown option -${OPTARG}!"
-      $(exit 2) || beep
+      beep 2
       return $?;;
     esac
   done
@@ -113,21 +114,29 @@ run () {
       'show device') show_device "${args[2]}";;
       'list controllers') list_controllers;;
       'list devices') list_devices "${args[2]}";;
-      'set controller') set_controller "${args[2]}" && beep;;
-      'set power') set_power "${args[2]}" && beep;;
-      'set scan') set_scan "${args[2]}" && beep;;
-      'set discoverable') set_discoverable "${args[2]}" && beep;;
-      'set pairable') set_pairable "${args[2]}" && beep;;
-      'connect device') connect_device "${args[2]}" && beep;;
-      'disconnect device') disconnect_device "${args[2]}" && beep;;
-      'remove device') remove_device "${args[2]}" && beep;;
-      'restart') restart_bluetooth && beep;;
+      'set controller') set_controller "${args[2]}";;
+      'set power') set_power "${args[2]}";;
+      'set scan') set_scan "${args[2]}";;
+      'set discoverable') set_discoverable "${args[2]}";;
+      'set pairable') set_pairable "${args[2]}";;
+      'connect device') connect_device "${args[2]}";;
+      'disconnect device') disconnect_device "${args[2]}";;
+      'remove device') remove_device "${args[2]}";;
+      'restart') restart_bluetooth;;
       *)
         echo 'Ooops, invalid or unknown command!'
         $(return 2);;
-    esac || beep
+    esac
 
+    # Save exit status code of the last executed cmd
     local exit_code=$?
+  
+    if is_true "${exit_code} = 1"; then
+      echo 'Ooops, an unknwon error occurred!'
+    fi
+
+    on_loud_mode && beep "${exit_code}"
+
     if equals "${mode}" 'once'; then
       return ${exit_code}
     fi

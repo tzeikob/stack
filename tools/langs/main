@@ -53,13 +53,14 @@ run () {
   while getopts ':hqs' opt; do
     case "${opt}" in
      'h')
+        set_quiet_mode 'on'
         show_help once
         return 0;;
-     'q') QUIET='true';;
+     'q') set_quiet_mode 'on';;
      's') ON_SCRIPT_MODE='true';;
      *)
       echo "Ooops, invalid or unknown option -${OPTARG}!"
-      $(exit 2) || beep
+      beep 2
       return $?;;
     esac
   done
@@ -99,21 +100,29 @@ run () {
 
     case "${cmd}${obj:+ ${obj}}" in
       'show status') show_status;;
-      'add locale') add_locale "${args[2]}" && beep;;
-      'remove locale') remove_locale "${args[2]}" && beep;;
-      'set locale') set_locale "${args[2]}" && beep;;
-      'add layout') add_layout "${args[2]}" && beep;;
-      'remove layout') remove_layout "${args[2]}" && beep;;
-      'order layouts') order_layouts "${args[@]:2}" && beep;;
-      'set keymap') set_keymap "${args[2]}" && beep;;
-      'set options') set_options "${args[2]}" && beep;;
-      'set model') set_model "${args[2]}" && beep;;
+      'add locale') add_locale "${args[2]}";;
+      'remove locale') remove_locale "${args[2]}";;
+      'set locale') set_locale "${args[2]}";;
+      'add layout') add_layout "${args[2]}";;
+      'remove layout') remove_layout "${args[2]}";;
+      'order layouts') order_layouts "${args[@]:2}";;
+      'set keymap') set_keymap "${args[2]}";;
+      'set options') set_options "${args[2]}";;
+      'set model') set_model "${args[2]}";;
       *)
         echo 'Ooops, invalid or unknown command!'
         $(return 2);;
-    esac || beep
+    esac
 
+    # Save exit status code of the last executed cmd
     local exit_code=$?
+  
+    if is_true "${exit_code} = 1"; then
+      echo 'Ooops, an unknwon error occurred!'
+    fi
+
+    on_loud_mode && beep "${exit_code}"
+
     if equals "${mode}" 'once'; then
       return ${exit_code}
     fi

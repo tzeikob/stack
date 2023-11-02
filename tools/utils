@@ -373,27 +373,21 @@ download () {
 }
 
 # Plays a short success or failure beep sound according
-# to the exit status code set by the previous command.
+# to the given exit status code which then passes it back.
+# Arguments:
+#  exit_code: an integer positive value
 # Returns:
-#  The exit status code set by previous command.
+#  The same given exit code.
 beep () {
-  # Save exit code set by the previous command
-  local exit_code=$?
+  local exit_code="${1}"
 
-  # Print a generic error message only for exit code 1
-  if is_true "${exit_code} = 1"; then
-    echo 'Ooops, an unknwon error occurred!'
+  local sound='normal'
+
+  if has_failed "${exit_code}"; then
+    sound='critical'
   fi
 
-  if is_empty "${QUIET}" || is_false "${QUIET}"; then
-    local sound='normal'
-
-    if has_failed "${exit_code}"; then
-      sound='critical'
-    fi
-
-    pw-play --volume=0.7 "/usr/share/sounds/stack/${sound}.wav" &
-  fi
+  pw-play --volume=0.7 "/usr/share/sounds/stack/${sound}.wav" &
 
   return ${exit_code}
 }
@@ -416,6 +410,52 @@ on_script_mode () {
 #  0 if not run on script mode otherwise 1.
 not_on_script_mode () {
   on_script_mode && return 1 || return 0
+}
+
+# Sets the quiet mode to on or off by setting a
+# global variable with name ON_QUIET_MODE.
+# Arguments:
+#  mode: either on or off
+set_quiet_mode () {
+  local mode="${1}"
+
+  if equals "${mode}" 'on'; then
+    ON_QUIET_MODE='true'
+  else
+    ON_QUIET_MODE='false'
+  fi
+}
+
+# Checks if the script is running on quiet mode by
+# checking if the global quiet variable has set.
+# Returns:
+#  0 if run on quiet mode otherwise 1.
+on_quiet_mode () {
+  if is_empty "${ON_QUIET_MODE}"; then
+    return 1
+  fi
+
+  if is_not_true "${ON_QUIET_MODE}"; then
+    return 1
+  fi
+
+  return 0
+}
+
+# Checks if the script is not running on quiet mode by
+# checking if the global quiet variable has set.
+# Returns:
+#  0 if not run on quiet mode otherwise 1.
+not_on_quiet_mode () {
+  on_quiet_mode && return 1 || return 0
+}
+
+# Checks if the script is not running on quiet mode by
+# checking if the global quiet variable has set.
+# Returns:
+#  0 if not run on quiet mode otherwise 1.
+on_loud_mode () {
+  on_quiet_mode && return 1 || return 0
 }
 
 # Checks if the given value is empty.

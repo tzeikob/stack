@@ -58,13 +58,14 @@ run () {
   while getopts ':hqs' opt; do
     case "${opt}" in
      'h')
+        set_quiet_mode 'on'
         show_help once
         return 0;;
-     'q') QUIET='true';;
+     'q') set_quiet_mode 'on';;
      's') ON_SCRIPT_MODE='true';;
      *)
       echo "Ooops, invalid or unknown option -${OPTARG}!"
-      $(exit 2) || beep
+      beep 2
       return $?;;
     esac
   done
@@ -104,12 +105,12 @@ run () {
 
     case "${cmd}${obj:+ ${obj}}" in
       'show status') show_status;;
-      'set action') set_action "${args[2]}" "${args[3]}" && beep;;
-      'set screensaver') set_screensaver "${args[2]}" && beep;;
-      'set tlp') set_tlp "${args[2]}" && beep;;
-      'set charging') set_charging "${args[2]}" "${args[3]}" && beep;;
-      'reset actions') reset_actions && beep;;
-      'init screensaver') init_screensaver && beep;;
+      'set action') set_action "${args[2]}" "${args[3]}";;
+      'set screensaver') set_screensaver "${args[2]}";;
+      'set tlp') set_tlp "${args[2]}";;
+      'set charging') set_charging "${args[2]}" "${args[3]}";;
+      'reset actions') reset_actions;;
+      'init screensaver') init_screensaver;;
       'shutdown') shutdown_system;;
       'reboot') reboot_system;;
       'suspend') suspend_system;;
@@ -117,9 +118,17 @@ run () {
       *)
         echo 'Ooops, invalid or unknown command!'
         $(return 2);;
-    esac || beep
+    esac
 
+    # Save exit status code of the last executed cmd
     local exit_code=$?
+  
+    if is_true "${exit_code} = 1"; then
+      echo 'Ooops, an unknwon error occurred!'
+    fi
+
+    on_loud_mode && beep "${exit_code}"
+
     if equals "${mode}" 'once'; then
       return ${exit_code}
     fi

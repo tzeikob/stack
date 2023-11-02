@@ -51,13 +51,14 @@ run () {
   while getopts ':hqfs' opt; do
     case "${opt}" in
      'h')
+        set_quiet_mode 'on'
         show_help once
         return 0;;
-     'q') QUIET='true';;
+     'q') set_quiet_mode 'on';;
      's') ON_SCRIPT_MODE='true';;
      *)
       echo "Ooops, invalid or unknown option -${OPTARG}!"
-      $(exit 2) || beep
+      beep 2
       return $?;;
     esac
   done
@@ -97,15 +98,23 @@ run () {
 
     case "${cmd}${obj:+ ${obj}}" in
       'list files') list_files "${args[2]}";;
-      'restore files') restore_files "${args[@]:2}" && beep;;
-      'remove files') remove_files "${args[@]:2}" && beep;;
-      'empty files') empty_files "${args[2]}" && beep;;  
+      'restore files') restore_files "${args[@]:2}";;
+      'remove files') remove_files "${args[@]:2}";;
+      'empty files') empty_files "${args[2]}";;  
       *)
         echo 'Ooops, invalid or unknown command!'
         $(return 2);;
-    esac || beep
+    esac
 
+    # Save exit status code of the last executed cmd
     local exit_code=$?
+  
+    if is_true "${exit_code} = 1"; then
+      echo 'Ooops, an unknwon error occurred!'
+    fi
+
+    on_loud_mode && beep "${exit_code}"
+
     if equals "${mode}" 'once'; then
       return ${exit_code}
     fi

@@ -68,13 +68,14 @@ run () {
   while getopts ':hqs' opt; do
     case "${opt}" in
      'h')
+        set_quiet_mode 'on'
         show_help once
         return 0;;
-     'q') QUIET='true';;
+     'q') set_quiet_mode 'on';;
      's') ON_SCRIPT_MODE='true';;
      *)
       echo "Ooops, invalid or unknown option -${OPTARG}!"
-      $(exit 2) || beep
+      beep 2
       return $?;;
     esac
   done
@@ -119,28 +120,36 @@ run () {
       'list outputs') list_outputs "${args[2]}";;
       'list colors') list_colors;;
       'list layouts') list_layouts;;
-      'set layout') set_layout "${args[2]}" "${args[@]:3}" && beep;;
-      'set mode') set_mode "${args[2]}" "${args[3]}" "${args[4]}" && beep;;
-      'set primary') set_primary "${args[2]}" && beep;;
-      'set on') set_on "${args[2]}" && beep;;
-      'set off') set_off "${args[2]}" && beep;;
-      'set color') set_color "${args[2]}" "${args[3]}" && beep;;
-      'reset color') reset_color "${args[2]}" && beep;;
-      'save layout') save_layout && beep;;
-      'delete layout') delete_layout "${args[2]}" && beep;;
-      'delete color') delete_color "${args[2]}" && beep;;
-      'restore layout') restore_layout && beep;;
-      'restore colors') restore_colors && beep;;
-      'rotate output') rotate_output "${args[2]}" "${args[3]}" && beep;;
-      'reflect output') reflect_output "${args[2]}" "${args[3]}" && beep;;
-      'mirror output') mirror_output "${args[2]}" "${args[3]}" "${args[@]:4}" && beep;;
-      'fix layout') fix_layout && beep;;
+      'set layout') set_layout "${args[2]}" "${args[@]:3}";;
+      'set mode') set_mode "${args[2]}" "${args[3]}" "${args[4]}";;
+      'set primary') set_primary "${args[2]}";;
+      'set on') set_on "${args[2]}";;
+      'set off') set_off "${args[2]}";;
+      'set color') set_color "${args[2]}" "${args[3]}";;
+      'reset color') reset_color "${args[2]}";;
+      'save layout') save_layout;;
+      'delete layout') delete_layout "${args[2]}";;
+      'delete color') delete_color "${args[2]}";;
+      'restore layout') restore_layout;;
+      'restore colors') restore_colors;;
+      'rotate output') rotate_output "${args[2]}" "${args[3]}";;
+      'reflect output') reflect_output "${args[2]}" "${args[3]}";;
+      'mirror output') mirror_output "${args[2]}" "${args[3]}" "${args[@]:4}";;
+      'fix layout') fix_layout;;
       *)
         echo 'Ooops, invalid or unknown command!'
         $(return 2);;
-    esac || beep
+    esac
 
+    # Save exit status code of the last executed cmd
     local exit_code=$?
+  
+    if is_true "${exit_code} = 1"; then
+      echo 'Ooops, an unknwon error occurred!'
+    fi
+
+    on_loud_mode && beep "${exit_code}"
+
     if equals "${mode}" 'once'; then
       return ${exit_code}
     fi
