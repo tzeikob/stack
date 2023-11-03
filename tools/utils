@@ -631,7 +631,7 @@ is_not_block_device () {
 is_date () {
   local value="${1}"
 
-  if not_match "${value}" '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'; then
+  if not_match "${value}" '^[0-9]{2}([0-9]{2})?-[0-9]{2}-[0-9]{2}$'; then
     return 1
   fi
   
