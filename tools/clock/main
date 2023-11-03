@@ -35,7 +35,7 @@ show_help () {
     'show status' 'Show the system date time status.' \
     '' '' \
     'set timezone <name>' 'Set system timezone in region/city form.' \
-    'set time <time>' 'Set system local time in hh:mm form.' \
+    'set time <time>' 'Set system local time in hh:mm:ss form.' \
     'set date <date>' 'Set system date in yyyy-mm-dd form.' \
     '' '' \
     'set ntp on|off' 'Enable or disable the NTP sync service.' \

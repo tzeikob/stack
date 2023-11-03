@@ -91,14 +91,14 @@ set_timezone () {
 
 # Sets the system time to the given hours and minutes.
 # Arguments:
-#  time: a 24h time in hh:mm form
+#  time: a time in hh:mm:ss form
 set_time () {
   local time="${1}"
 
   if is_not_given "${time}"; then
     echo 'Missing the time'
     return 2
-  elif is_not_valid_time "${time}"; then
+  elif is_not_time "${time}"; then
     echo 'Invalid or malformed time'
     return 2
   fi
@@ -122,7 +122,7 @@ set_date () {
   if is_not_given "${date}"; then
     echo 'Missing the date'
     return 2
-  elif is_not_valid_date "${date}"; then
+  elif is_not_date "${date}"; then
     echo 'Invalid or malformed date'
     return 2
   fi
