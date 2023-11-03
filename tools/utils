@@ -387,7 +387,7 @@ beep () {
     sound='critical'
   fi
 
-  pw-play --volume=0.7 "/usr/share/sounds/stack/${sound}.wav" &
+  pw-play "/usr/share/sounds/stack/${sound}.wav" &
 
   return ${exit_code}
 }
