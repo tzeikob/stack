@@ -39,6 +39,8 @@ show_status () {
 # Arguments:
 #  status: on or off
 set_ntp () {
+  authenticate_user || return $?
+
   local status="${1}"
 
   if is_not_given "${status}"; then
@@ -49,7 +51,7 @@ set_ntp () {
     return 2
   fi
 
-  timedatectl set-ntp "${status}"
+  sudo timedatectl set-ntp "${status}"
 
   if has_failed; then
     echo "Failed to set NTP to ${status}"
@@ -63,6 +65,8 @@ set_ntp () {
 # Arguments:
 #  name: the name of a timezone in region/city form
 set_timezone () {
+  authenticate_user || return $?
+
   local name="${1}"
 
   if is_not_given "${name}"; then
@@ -79,7 +83,7 @@ set_timezone () {
     return 2
   fi
 
-  timedatectl set-timezone "${name}"
+  sudo timedatectl set-timezone "${name}"
 
   if has_failed; then
     echo 'Failed to set the timezone'
@@ -93,6 +97,8 @@ set_timezone () {
 # Arguments:
 #  time: a time in hh:mm:ss form
 set_time () {
+  authenticate_user || return $?
+  
   local time="${1}"
 
   if is_not_given "${time}"; then
@@ -103,7 +109,7 @@ set_time () {
     return 2
   fi
 
-  timedatectl set-time "${time}"
+  sudo timedatectl set-time "${time}"
 
   if has_failed; then
     echo 'Failed to set the time'
@@ -117,6 +123,8 @@ set_time () {
 # Arguments:
 #  date: the date in yyyy-mm-dd form
 set_date () {
+  authenticate_user || return $?
+  
   local date="${1}"
 
   if is_not_given "${date}"; then
@@ -129,7 +137,7 @@ set_date () {
 
   local time=$(date +"%H:%M:%S")
 
-  timedatectl set-time "${date} ${time}"
+  sudo timedatectl set-time "${date} ${time}"
 
   if has_failed; then
     echo 'Failed to set the date'
@@ -143,6 +151,8 @@ set_date () {
 # Arguments:
 #  mode: local or utc
 set_rtc () {
+  authenticate_user || return $?
+  
   local mode="${1}"
 
   if is_not_given "${mode}"; then
@@ -154,9 +164,9 @@ set_rtc () {
   fi
 
   if equals "${mode}" 'local'; then
-    timedatectl --adjust-system-clock set-local-rtc on
+    sudo timedatectl --adjust-system-clock set-local-rtc on
   else
-    timedatectl --adjust-system-clock set-local-rtc off
+    sudo timedatectl --adjust-system-clock set-local-rtc off
   fi
 
   if has_failed; then
