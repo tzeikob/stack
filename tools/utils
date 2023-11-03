@@ -657,23 +657,13 @@ is_not_date () {
 is_time () {
   local time="${1}"
 
-  if not_match "${time}" '^[0-9][0-9]:[0-9][0-9]:[0-9][0-9]$'; then
+  if not_match "${time}" '^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$'; then
     return 1
   fi
 
-  local hour=$(echo "${time}" | cut -d ':' -f 1)
-  local min=$(echo "${time}" | cut -d ':' -f 2)
-  local sec=$(echo "${time}" | cut -d ':' -f 3)
+  date -d "1970-01-01T${time}" &> /dev/null
 
-  if is_not_true "0 <= ${hour} <= 23"; then
-    return 1
-  fi
-
-  if is_not_true "0 <= ${min} <= 59"; then
-    return 1
-  fi
-
-  if is_not_true "0 <= ${sec} <= 59"; then
+  if has_failed; then
     return 1
   fi
 
