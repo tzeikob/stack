@@ -2,6 +2,8 @@
 
 set -o pipefail
 
+export LC_ALL=en_US.UTF-8
+
 CONFIG_HOME="${HOME}/.config/stack"
 
 RESOURCES_HOME="${HOME}/.local/share"
