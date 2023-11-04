@@ -11,7 +11,7 @@ source /opt/stack/desktop/commands
 # Outputs:
 #  A long help message.
 show_help () {
-  local mode="${1:-"once"}"
+  local mode="${1}"
 
   if equals "${mode}" 'once'; then
     echo 'Usage: desktop [OPTIONS] COMMAND [OBJECT] [ARGUMENTS]...'
@@ -100,7 +100,7 @@ run () {
 
     if equals "${mode}" 'loop'; then
       case "${cmd}${obj:+ ${obj}}" in
-        'help') clear && show_help loop && continue;;
+        'help') clear && show_help && continue;;
         'clear') clear && continue;;
         'quit') break;;
         '') continue;;
