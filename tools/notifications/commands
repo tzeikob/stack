@@ -74,9 +74,9 @@ get_state () {
   }')" || return 1
 
   if grep -qsE '[[:blank:]]*transparency = 100' "${HOME}/.config/dunst/dunstrc"; then
-    state+='"popup": false,'
+    state+='"popup": false'
   else
-    state+='"popup": true,'
+    state+='"popup": true'
   fi
 
   echo "{${state}}"
@@ -90,18 +90,17 @@ show_status () {
   is_up="$(is_notifications_up)" || return 1
 
   if is_true "${is_up}"; then
-    echo 'Service Status:    up'
+    echo 'Service:  up'
   else
-    echo 'Service Status:    down'
+    echo 'Service:  down'
   fi
 
   local query=''
-  query+='On Mute:           \(.is_paused|if . then "yes" else "no" end)\n'
-  query+='Pop-up Mode:       \(.popup|if . then "on" else "off" end)\n'
-  query+='Beep Volume:       \(.volume)%\n'
-  query+='Pending Messages:  \(.pending)\n'
-  query+='Showing Messages:  \(.displayed)\n'
-  query+='Sent Messages:     \(.archived)'
+  query+='Mute:     \(.is_paused|if . then "yes" else "no" end)\n'
+  query+='Popup:    \(.popup|if . then "on" else "off" end)\n'
+  query+='Pending:  \(.pending)\n'
+  query+='Showing:  \(.displayed)\n'
+  query+='Sent:     \(.archived)'
 
   get_state | jq -cer "\"${query}\"" || return 1
 }
