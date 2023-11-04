@@ -74,10 +74,18 @@ run () {
     esac
   done
 
+  # Collect command arguments
   shift $((OPTIND-1))
+  local args_len=$#
+
+  if is_true "${args_len} = 0" && on_script_mode; then
+    echo 'Option -s cannot be used in loop mode'
+    beep 2
+    return $?
+  fi
 
   local mode='once'
-  if is_true "$# = 0"; then
+  if is_true "${args_len} = 0"; then
     mode='loop'
     clear
   fi
