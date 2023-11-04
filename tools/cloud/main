@@ -43,6 +43,31 @@ show_help () {
     'mount remotes' 'Mount all synced remotes.'
 }
 
+# Routes to the corresponding operation by matching
+# the given command and object along with the list
+# of arguments.
+# Arguments:
+#   command: the command to execute
+#   object:  the object the command should operate on
+#   args:    a list of arguments
+execute () {
+  local command="${1}"
+  local object="${2}"
+  
+  case "${command} ${object}" in
+    'list remotes') list_remotes "${3}";;
+    'sync drive') sync_drive "${3}" "${4}" "${5}" "${6}";;
+    'sync dropbox') sync_dropbox "${3}" "${4}" "${5}";;
+    'delete remote') delete_remote "${3}";;
+    'mount remote') mount_remote "${3}";;
+    'unmount remote') unmount_remote "${3}";;
+    'mount remotes') mount_all;;
+    *)
+      echo 'Ooops, invalid or unknown command!'
+      return 2;;
+  esac
+}
+
 run () {
   local opt=''
 
@@ -79,43 +104,24 @@ run () {
 
   while true; do
     if equals "${mode}" 'loop'; then
-      prompt cloud
-    else
-      REPLY="$@"
-    fi
+      prompt audio
 
-    set -f
-    set_separator line
-    local args=($(xargs -n1 <<< "${REPLY}"))
-    restore_separator && set +f
-    REPLY=''
+      local command=''
+      command="$(echo "${REPLY}" | awk '{print (NF == 1) ? $1 : $0}')"
 
-    local cmd="${args[0]}"
-    local obj="${args[1]}"
-
-    if equals "${mode}" 'loop'; then
-      case "${cmd}${obj:+ ${obj}}" in
+      case "${command}" in
         'help') clear && show_help && continue;;
         'clear') clear && continue;;
         'quit') break;;
         '') continue;;
       esac
+      
+      eval "execute ${REPLY[@]}"
+    else
+      execute "$@"
     fi
 
-    case "${cmd}${obj:+ ${obj}}" in
-      'list remotes') list_remotes "${args[2]}";;
-      'sync drive') sync_drive "${args[2]}" "${args[3]}" "${args[4]}" "${args[5]}";;
-      'sync dropbox') sync_dropbox "${args[2]}" "${args[3]}" "${args[4]}";;
-      'delete remote') delete_remote "${args[2]}";;
-      'mount remote') mount_remote "${args[2]}";;
-      'unmount remote') unmount_remote "${args[2]}";;
-      'mount remotes') mount_all;;
-      *)
-        echo 'Ooops, invalid or unknown command!'
-        $(return 2);;
-    esac
-
-    # Save exit status code of the last executed cmd
+    # Save exit status code of the last executed operation
     local exit_code=$?
   
     if is_true "${exit_code} = 1"; then

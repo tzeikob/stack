@@ -62,6 +62,46 @@ show_help () {
     'restore colors' 'Restore color settings of any active displays.'
 }
 
+# Routes to the corresponding operation by matching
+# the given command and object along with the list
+# of arguments.
+# Arguments:
+#   command: the command to execute
+#   object:  the object the command should operate on
+#   args:    a list of arguments
+execute () {
+  local command="${1}"
+  local object="${2}"
+  
+  case "${command} ${object}" in
+    'show status') show_status;;
+    'show logs') show_logs "${3}";;
+    'show output') show_output "${3}";;
+    'list outputs') list_outputs "${3}";;
+    'list colors') list_colors;;
+    'list layouts') list_layouts;;
+    'set layout') set_layout "${3}" "${@:4}";;
+    'set mode') set_mode "${3}" "${4}" "${5}";;
+    'set primary') set_primary "${3}";;
+    'set on') set_on "${3}";;
+    'set off') set_off "${3}";;
+    'set color') set_color "${3}" "${4}";;
+    'reset color') reset_color "${3}";;
+    'save layout') save_layout;;
+    'delete layout') delete_layout "${3}";;
+    'delete color') delete_color "${3}";;
+    'restore layout') restore_layout;;
+    'restore colors') restore_colors;;
+    'rotate output') rotate_output "${3}" "${4}";;
+    'reflect output') reflect_output "${3}" "${4}";;
+    'mirror output') mirror_output "${3}" "${4}" "${@:5}";;
+    'fix layout') fix_layout;;
+    *)
+      echo 'Ooops, invalid or unknown command!'
+      return 2;;
+  esac
+}
+
 run () {
   local opt=''
 
@@ -99,57 +139,23 @@ run () {
   while true; do
     if equals "${mode}" 'loop'; then
       prompt displays
-    else
-      REPLY="$@"
-    fi
 
-    set -f
-    set_separator line
-    local args=($(xargs -n1 <<< "${REPLY}"))
-    restore_separator && set +f
-    REPLY=''
+      local command=''
+      command="$(echo "${REPLY}" | awk '{print (NF == 1) ? $1 : $0}')"
 
-    local cmd="${args[0]}"
-    local obj="${args[1]}"
-
-    if equals "${mode}" 'loop'; then
-      case "${cmd}${obj:+ ${obj}}" in
+      case "${command}" in
         'help') clear && show_help && continue;;
         'clear') clear && continue;;
         'quit') break;;
         '') continue;;
       esac
+      
+      eval "execute ${REPLY[@]}"
+    else
+      execute "$@"
     fi
 
-    case "${cmd}${obj:+ ${obj}}" in
-      'show status') show_status;;
-      'show logs') show_logs "${args[2]}";;
-      'show output') show_output "${args[2]}";;
-      'list outputs') list_outputs "${args[2]}";;
-      'list colors') list_colors;;
-      'list layouts') list_layouts;;
-      'set layout') set_layout "${args[2]}" "${args[@]:3}";;
-      'set mode') set_mode "${args[2]}" "${args[3]}" "${args[4]}";;
-      'set primary') set_primary "${args[2]}";;
-      'set on') set_on "${args[2]}";;
-      'set off') set_off "${args[2]}";;
-      'set color') set_color "${args[2]}" "${args[3]}";;
-      'reset color') reset_color "${args[2]}";;
-      'save layout') save_layout;;
-      'delete layout') delete_layout "${args[2]}";;
-      'delete color') delete_color "${args[2]}";;
-      'restore layout') restore_layout;;
-      'restore colors') restore_colors;;
-      'rotate output') rotate_output "${args[2]}" "${args[3]}";;
-      'reflect output') reflect_output "${args[2]}" "${args[3]}";;
-      'mirror output') mirror_output "${args[2]}" "${args[3]}" "${args[@]:4}";;
-      'fix layout') fix_layout;;
-      *)
-        echo 'Ooops, invalid or unknown command!'
-        $(return 2);;
-    esac
-
-    # Save exit status code of the last executed cmd
+    # Save exit status code of the last executed operation
     local exit_code=$?
   
     if is_true "${exit_code} = 1"; then

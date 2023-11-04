@@ -54,6 +54,36 @@ show_help () {
     'restart' 'Restart the cups service.'
 }
 
+# Routes to the corresponding operation by matching
+# the given command and object along with the list
+# of arguments.
+# Arguments:
+#   command: the command to execute
+#   object:  the object the command should operate on
+#   args:    a list of arguments
+execute () {
+  local command="${1}"
+  local object="${2}"
+  
+  case "${command} ${object}" in
+    'show status') show_status;;
+    'show printer') show_printer "${3}";;
+    'list printers') list_printers;;
+    'list jobs') list_jobs;;
+    'add printer') add_printer "${3}" "${4}" "${5}";;
+    'remove printer') remove_printer "${3}";;
+    'share printer') share_printer "${3}";;
+    'unshare printer') unshare_printer "${3}";;
+    'set default') set_default "${3}";;
+    'set option') set_option "${3}" "${4}" "${5}";;
+    'cancel job') cancel_job "${3}";;
+    'restart') restart;;
+    *)
+      echo 'Ooops, invalid or unknown command!'
+      return 2;;
+  esac
+}
+
 run () {
   local opt=''
 
@@ -91,47 +121,23 @@ run () {
   while true; do
     if equals "${mode}" 'loop'; then
       prompt printers
-    else
-      REPLY="$@"
-    fi
 
-    set -f
-    set_separator line
-    local args=($(xargs -n1 <<< "${REPLY}"))
-    restore_separator && set +f
-    REPLY=''
+      local command=''
+      command="$(echo "${REPLY}" | awk '{print (NF == 1) ? $1 : $0}')"
 
-    local cmd="${args[0]}"
-    local obj="${args[1]}"
-
-    if equals "${mode}" 'loop'; then
-      case "${cmd}${obj:+ ${obj}}" in
+      case "${command}" in
         'help') clear && show_help && continue;;
         'clear') clear && continue;;
         'quit') break;;
         '') continue;;
       esac
+      
+      eval "execute ${REPLY[@]}"
+    else
+      execute "$@"
     fi
 
-    case "${cmd}${obj:+ ${obj}}" in
-      'show status') show_status;;
-      'show printer') show_printer "${args[2]}";;
-      'list printers') list_printers;;
-      'list jobs') list_jobs;;
-      'add printer') add_printer "${args[2]}" "${args[3]}" "${args[4]}";;
-      'remove printer') remove_printer "${args[2]}";;
-      'share printer') share_printer "${args[2]}";;
-      'unshare printer') unshare_printer "${args[2]}";;
-      'set default') set_default "${args[2]}";;
-      'set option') set_option "${args[2]}" "${args[3]}" "${args[4]}";;
-      'cancel job') cancel_job "${args[2]}";;
-      'restart') restart;;
-      *)
-        echo 'Ooops, invalid or unknown command!'
-        $(return 2);;
-    esac
-
-    # Save exit status code of the last executed cmd
+    # Save exit status code of the last executed operation
     local exit_code=$?
   
     if is_true "${exit_code} = 1"; then

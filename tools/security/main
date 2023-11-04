@@ -48,6 +48,33 @@ show_help () {
     'logout user' 'Logout the user.'
 }
 
+# Routes to the corresponding operation by matching
+# the given command and object along with the list
+# of arguments.
+# Arguments:
+#   command: the command to execute
+#   object:  the object the command should operate on
+#   args:    a list of arguments
+execute () {
+  local command="${1}"
+  local object="${2}"
+  
+  case "${command} ${object}" in
+    'show status') show_status;;
+    'set locker') set_screen_locker "${3}";;
+    'set password') set_user_password;;
+    'set attempts') set_faillock_attempts "${3}";;
+    'set unblock') set_faillock_unblock "${3}";;
+    'set interval') set_faillock_interval "${3}";;
+    'init locker') init_screen_locker;;
+    'lock screen') lock_screen;;
+    'logout user') logout_user;;
+    *)
+      echo 'Ooops, invalid or unknown command!'
+      return 2;;
+  esac
+}
+
 run () {
   local opt=''
 
@@ -85,44 +112,23 @@ run () {
   while true; do
     if equals "${mode}" 'loop'; then
       prompt security
-    else
-      REPLY="$@"
-    fi
 
-    set -f
-    set_separator line
-    local args=($(xargs -n1 <<< "${REPLY}"))
-    restore_separator && set +f
-    REPLY=''
+      local command=''
+      command="$(echo "${REPLY}" | awk '{print (NF == 1) ? $1 : $0}')"
 
-    local cmd="${args[0]}"
-    local obj="${args[1]}"
-
-    if equals "${mode}" 'loop'; then
-      case "${cmd}${obj:+ ${obj}}" in
+      case "${command}" in
         'help') clear && show_help && continue;;
         'clear') clear && continue;;
         'quit') break;;
         '') continue;;
       esac
+      
+      eval "execute ${REPLY[@]}"
+    else
+      execute "$@"
     fi
 
-    case "${cmd}${obj:+ ${obj}}" in
-      'show status') show_status;;
-      'set locker') set_screen_locker "${args[2]}";;
-      'set password') set_user_password;;
-      'set attempts') set_faillock_attempts "${args[2]}";;
-      'set unblock') set_faillock_unblock "${args[2]}";;
-      'set interval') set_faillock_interval "${args[2]}";;
-      'init locker') init_screen_locker;;
-      'lock screen') lock_screen;;
-      'logout user') logout_user;;
-      *)
-        echo 'Ooops, invalid or unknown command!'
-        $(return 2);;
-    esac
-
-    # Save exit status code of the last executed cmd
+    # Save exit status code of the last executed operation
     local exit_code=$?
   
     if is_true "${exit_code} = 1"; then

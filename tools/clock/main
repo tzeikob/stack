@@ -44,6 +44,31 @@ show_help () {
     'sync rtc' 'Sync hardware clock to system clock.'
 }
 
+# Routes to the corresponding operation by matching
+# the given command and object along with the list
+# of arguments.
+# Arguments:
+#   command: the command to execute
+#   object:  the object the command should operate on
+#   args:    a list of arguments
+execute () {
+  local command="${1}"
+  local object="${2}"
+  
+  case "${command} ${object}" in
+    'show status') show_status;;
+    'set ntp') set_ntp "${3}";;
+    'set timezone') set_timezone "${3}";;
+    'set time') set_time "${3}";;
+    'set date') set_date "${3}";;
+    'set rtc') set_rtc "${3}";;
+    'sync rtc') sync_rtc;;
+    *)
+      echo 'Ooops, invalid or unknown command!'
+      return 2;;
+  esac
+}
+
 run () {
   local opt=''
 
@@ -81,42 +106,23 @@ run () {
   while true; do
     if equals "${mode}" 'loop'; then
       prompt clock
-    else
-      REPLY="$@"
-    fi
 
-    set -f
-    set_separator line
-    local args=($(xargs -n1 <<< "${REPLY}"))
-    restore_separator && set +f
-    REPLY=''
+      local command=''
+      command="$(echo "${REPLY}" | awk '{print (NF == 1) ? $1 : $0}')"
 
-    local cmd="${args[0]}"
-    local obj="${args[1]}"
-
-    if equals "${mode}" 'loop'; then
-      case "${cmd}${obj:+ ${obj}}" in
+      case "${command}" in
         'help') clear && show_help && continue;;
         'clear') clear && continue;;
         'quit') break;;
         '') continue;;
       esac
+      
+      eval "execute ${REPLY[@]}"
+    else
+      execute "$@"
     fi
 
-    case "${cmd}${obj:+ ${obj}}" in
-      'show status') show_status;;
-      'set ntp') set_ntp "${args[2]}";;
-      'set timezone') set_timezone "${args[2]}";;
-      'set time') set_time "${args[2]}";;
-      'set date') set_date "${args[2]}";;
-      'set rtc') set_rtc "${args[2]}";;
-      'sync rtc') sync_rtc;;
-      *)
-        echo 'Ooops, invalid or unknown command!'
-        $(return 2);;
-    esac
-
-    # Save exit status code of the last executed cmd
+    # Save exit status code of the last executed operation
     local exit_code=$?
   
     if is_true "${exit_code} = 1"; then

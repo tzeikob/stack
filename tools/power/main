@@ -52,6 +52,35 @@ show_help () {
     'blank' 'Blank the screen.'
 }
 
+# Routes to the corresponding operation by matching
+# the given command and object along with the list
+# of arguments.
+# Arguments:
+#   command: the command to execute
+#   object:  the object the command should operate on
+#   args:    a list of arguments
+execute () {
+  local command="${1}"
+  local object="${2}"
+  
+  case "${command} ${object}" in
+    'show status') show_status;;
+    'set action') set_action "${3}" "${4}";;
+    'set screensaver') set_screensaver "${3}";;
+    'set tlp') set_tlp "${3}";;
+    'set charging') set_charging "${3}" "${4}";;
+    'reset actions') reset_actions;;
+    'init screensaver') init_screensaver;;
+    'shutdown') shutdown_system;;
+    'reboot') reboot_system;;
+    'suspend') suspend_system;;
+    'blank') blank_screen;;
+    *)
+      echo 'Ooops, invalid or unknown command!'
+      return 2;;
+  esac
+}
+
 run () {
   local opt=''
 
@@ -89,46 +118,23 @@ run () {
   while true; do
     if equals "${mode}" 'loop'; then
       prompt power
-    else
-      REPLY="$@"
-    fi
 
-    set -f
-    set_separator line
-    local args=($(xargs -n1 <<< "${REPLY}"))
-    restore_separator && set +f
-    REPLY=''
+      local command=''
+      command="$(echo "${REPLY}" | awk '{print (NF == 1) ? $1 : $0}')"
 
-    local cmd="${args[0]}"
-    local obj="${args[1]}"
-
-    if equals "${mode}" 'loop'; then
-      case "${cmd}${obj:+ ${obj}}" in
+      case "${command}" in
         'help') clear && show_help && continue;;
         'clear') clear && continue;;
         'quit') break;;
         '') continue;;
       esac
+      
+      eval "execute ${REPLY[@]}"
+    else
+      execute "$@"
     fi
 
-    case "${cmd}${obj:+ ${obj}}" in
-      'show status') show_status;;
-      'set action') set_action "${args[2]}" "${args[3]}";;
-      'set screensaver') set_screensaver "${args[2]}";;
-      'set tlp') set_tlp "${args[2]}";;
-      'set charging') set_charging "${args[2]}" "${args[3]}";;
-      'reset actions') reset_actions;;
-      'init screensaver') init_screensaver;;
-      'shutdown') shutdown_system;;
-      'reboot') reboot_system;;
-      'suspend') suspend_system;;
-      'blank') blank_screen;;
-      *)
-        echo 'Ooops, invalid or unknown command!'
-        $(return 2);;
-    esac
-
-    # Save exit status code of the last executed cmd
+    # Save exit status code of the last executed operation
     local exit_code=$?
   
     if is_true "${exit_code} = 1"; then
