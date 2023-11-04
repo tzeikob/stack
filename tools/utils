@@ -2,7 +2,7 @@
 
 set -o pipefail
 
-export LC_ALL=en_US.UTF-8
+export LC_ALL='en_US.UTF-8'
 
 CONFIG_HOME="${HOME}/.config/stack"
 
@@ -389,7 +389,7 @@ beep () {
     sound='critical'
   fi
 
-  pw-play "/usr/share/sounds/stack/${sound}.wav" &
+  pw-play --volume=0.5 "/usr/share/sounds/stack/${sound}.wav" &
 
   return ${exit_code}
 }

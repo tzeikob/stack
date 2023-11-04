@@ -4,8 +4,6 @@ set -o pipefail
 
 source /opt/stack/utils
 
-NOTIFICATIONS_SETTINGS="${CONFIG_HOME}/notifications.json"
-
 # Returns the list of all archived notifications 
 # sorted by the given field in the given order.
 # Arguments:
@@ -43,27 +41,6 @@ is_notifications_up () {
   echo "${is_up}"
 }
 
-# Stores the notification beep volume into settings file.
-# Arguments:
-#  volume: a percent integer value in [0,100]
-save_volume_to_settings () {
-  local volume="${1}"
-  
-  # Scale volume down to [0,1] range
-  volume="$(calc "${volume} / 100")"
-
-  local settings='{}'
-
-  if file_exists "${NOTIFICATIONS_SETTINGS}"; then
-    settings="$(jq -e ".volume = ${volume}" "${NOTIFICATIONS_SETTINGS}")" || return 1
-  else
-    settings="$(echo "{\"volume\": ${volume}}" | jq -e '.')" || return 1
-  fi
-
-  mkdir -p "${CONFIG_HOME}"
-  echo "${settings}" > "${NOTIFICATIONS_SETTINGS}"
-}
-
 # Checks if the given value is a valid sort field.
 # Arguments:
 #  field: a sort field name
@@ -82,25 +59,5 @@ is_valid_sort_field () {
 # An inverse version of is_valid_sort_field.
 is_not_valid_sort_field () {
   is_valid_sort_field "${1}" && return 1 || return 0
-}
-
-# Checks if the given volume is with in range.
-# Arguments:
-#  volume: a positive integer value
-# Returns:
-#  0 if volume is valid otherwise 1.
-is_volume_within_range () {
-  local volume="${1}"
-
-  if is_not_true "0 <= ${volume} <= 100"; then
-    return 1
-  fi
-
-  return 0
-}
-
-# An inverse version of is_volume_within_range.
-is_volume_out_of_range () {
-  is_volume_within_range "${1}" && return 1 || return 0
 }
 

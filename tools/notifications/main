@@ -39,8 +39,6 @@ show_help () {
     'list all id|appname' 'List all notifications by id (default) or appname.' \
     '' '' \
     'set popup on|off' 'Show or hide popup notifications.' \
-    'set volume <percent>' 'Set the volume of the notifications sound.' \
-    '' '' \
     'mute all' 'Pause the notifications stream.' \
     'unmute all' 'Restore the notifications stream.' \
     'clean all' 'Remove all notifications.' \
@@ -107,7 +105,6 @@ run () {
       'unmute all') unmute_all;;
       'clean all') clean_all;;
       'set popup') set_popup "${args[2]}";;
-      'set volume') set_volume "${args[2]}";;
       'start') start;;
       'restart') restart;;
       'get state') get_state;;

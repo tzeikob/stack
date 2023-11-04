@@ -2,7 +2,7 @@
 
 set -o pipefail
 
-SETTINGS_FILE="${HOME}/.config/stack/notifications.json"
+export LC_ALL='en_US.UTF-8'
 
 # Plays the popup sound for the incoming notification
 # based on the notification's parameters.
@@ -24,14 +24,8 @@ play_popup_sound () {
     sound='critical'
   fi
 
-  local volume=0
-  volume="$(jq -cer '.volume' "${SETTINGS_FILE}")"
-
-  if [[ $? -ne 0 ]]; then
-    volume=1
-  fi
-
-  pw-play --volume="${volume}" "/usr/share/sounds/stack/${sound}.wav"
+  pw-play --volume=0.5 "/usr/share/sounds/stack/${sound}.wav"
 }
 
 play_popup_sound "$@"
+

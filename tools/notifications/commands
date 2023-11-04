@@ -79,15 +79,6 @@ get_state () {
     state+='"popup": true,'
   fi
 
-  local volume=100
-
-  if file_exists "${NOTIFICATIONS_SETTINGS}"; then
-    local query='.volume|if . then (.*100) else 100 end'
-    volume="$(jq -cr "${query}" "${NOTIFICATIONS_SETTINGS}")" || return 1
-  fi
-
-  state+="\"volume\": ${volume}"
-
   echo "{${state}}"
 }
 
@@ -225,32 +216,5 @@ set_popup () {
   restart
 
   echo "Popup notifications set to ${mode}"
-}
-
-# Sets the volume of the notifications sound.
-# Arguments:
-#  percent: a value between 0 and 100
-set_volume () {
-  local percent="${1}"
-
-  if is_not_given "${percent}"; then
-    echo 'Missing volume percent'
-    return 2
-  elif is_not_positive_integer "${percent}"; then
-    echo 'Invalid volume percent'
-    return 2
-  elif is_volume_out_of_range "${percent}"; then
-    echo 'Volume percent is out of range'
-    return 2
-  fi
-
-  save_volume_to_settings "${percent}"
-
-  if has_failed; then
-    echo 'Failed to set notifications volume'
-    return 2
-  fi
-
-  echo "Notifications volume set to ${percent}%"
 }
 
