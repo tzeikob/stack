@@ -65,7 +65,7 @@ execute () {
   local command="${1}"
   local object="${2}"
   
-  case "${command} ${object}" in
+  case "${command}${object:+ ${object}}" in
     'show status') show_status;;
     'show printer') show_printer "${3}";;
     'list printers') list_printers;;

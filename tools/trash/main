@@ -56,7 +56,7 @@ execute () {
   local command="${1}"
   local object="${2}"
   
-  case "${command} ${object}" in
+  case "${command}${object:+ ${object}}" in
     'list files') list_files "${3}";;
     'restore files') restore_files "${@:3}";;
     'remove files') remove_files "${@:3}";;

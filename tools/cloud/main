@@ -53,8 +53,8 @@ show_help () {
 execute () {
   local command="${1}"
   local object="${2}"
-  
-  case "${command} ${object}" in
+    
+  case "${command}${object:+ ${object}}" in
     'list remotes') list_remotes "${3}";;
     'sync drive') sync_drive "${3}" "${4}" "${5}" "${6}";;
     'sync dropbox') sync_dropbox "${3}" "${4}" "${5}";;

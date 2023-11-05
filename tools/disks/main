@@ -74,7 +74,7 @@ execute () {
   local command="${1}"
   local object="${2}"
   
-  case "${command} ${object}" in
+  case "${command}${object:+ ${object}}" in
     'list disks') list_disks;;
     'list partitions') list_partitions "${3}";;
     'list roms') list_roms;;

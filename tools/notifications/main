@@ -58,7 +58,7 @@ execute () {
   local command="${1}"
   local object="${2}"
   
-  case "${command} ${object}" in
+  case "${command}${object:+ ${object}}" in
     'show status') show_status;;
     'list all') list_all "${3}" "${4}";;
     'mute all') mute_all;;

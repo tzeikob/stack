@@ -66,8 +66,8 @@ show_help () {
 execute () {
   local command="${1}"
   local object="${2}"
-  
-  case "${command} ${object}" in
+    
+  case "${command}${object:+ ${object}}" in
     'show status') show_status;;
     'show pointer') show_pointer "${3}";;
     'show tablet') show_tablet "${3}";;

@@ -58,8 +58,8 @@ show_help () {
 execute () {
   local command="${1}"
   local object="${2}"
-  
-  case "${command} ${object}" in
+    
+  case "${command}${object:+ ${object}}" in
     'show status') show_status;;
     'set locker') set_screen_locker "${3}";;
     'set password') set_user_password;;
