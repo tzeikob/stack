@@ -135,9 +135,25 @@ list_all () {
   query+='App:      \(.appname.data)'
   query+='\(.summary.data|if . and . != "" then "\nSummary:  \(.)" else "" end)'
   query+='\(.body.data|if . and . != "" then "\nBody:     \(.)" else "" end)'
+  query+='\(.timestamp.data|if . and . != "" then "\nSent:     \(.)" else "" end)'
   query="[.[]|\"${query}\"]|join(\"\n\n\")"
 
-  echo "${notifications}" | jq -cer "${query}" || return 1
+  # Read the current uptime secs of the system
+  local uptime=''
+  uptime="$(cut -d '.' -f 1 /proc/uptime)" || return 1
+
+  echo "${notifications}" | jq -cer "${query}" | awk -v uptime="${uptime}" '{
+      # Catch the sent timestamp line of each notification
+      if ($0 ~ /^Sent:/) {
+        # Convert timestamp given as secs ago to datetime
+        timestamp=$2
+        secs_ago=int(uptime - (timestamp / 1000000))
+        ("date \"+%H:%M:%S %d-%m-%Y\" -d \"" secs_ago " seconds ago\"") | getline dt
+        printf "%-9s %s\n", "Sent:", dt
+      } else {
+        print $0
+      } 
+    }'|| return 1
 }
 
 # Pauses the notification stream.
