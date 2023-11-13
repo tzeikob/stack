@@ -22,13 +22,12 @@ install_compositor () {
 
   if [ "$VIRTUAL_VENDOR" = "oracle" ]; then
     echo "Virtual box machine detected"
-
-    sed -i 's/vsync = true;/vsync = false;/' "$CONFIG_HOME/picom.conf"
-
+ 
+    sed -i 's/\(vsync =\).*/\1 false;/' "$CONFIG_HOME/picom.conf"
     echo -e "Vsync has been disabled"
   fi
 
-  echo "picom --fade-in-step=1 --fade-out-step=1 --fade-delta=0 &" >> ~/.xinitrc
+  echo "picom -b" >> ~/.xinitrc
 
   echo "Configuration has been set under ~/.config/picom"
   echo "Compositor has been installed"
