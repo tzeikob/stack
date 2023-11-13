@@ -53,7 +53,10 @@ show_help () {
     '' 'where factor 1 means remove scaling.' \
     'map tablet <name> <display>' 'Map a tablet to a screen display' \
     '' 'or just use desktop to reset mapping.' \
-    'init tablets' 'Initialize any connected tablets.'
+    'init tablets' 'Initialize any connected tablets.' \
+    '' '' \
+    'set backend xrender|glx' 'Set the compositor backend engine.' \
+    'set vsync on|off' 'Enable or disable compositor vsync mode.'
 }
 
 # Routes to the corresponding operation by matching
@@ -81,6 +84,8 @@ execute () {
     'init pointer') init_pointer;;
     'init tablets') init_tablets;;
     'init wallpaper') init_wallpaper;;
+    'set backend') set_backend "${3}";;
+    'set vsync') set_vsync "${3}";;
     *)
       echo 'Ooops, invalid or unknown command!'
       return 2;;

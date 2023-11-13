@@ -627,3 +627,59 @@ init_wallpaper () {
   set_wallpaper "${name}" "${mode:-"center"}"
 }
 
+# Sets the compositor backend to the given engine.
+# Arguments:
+#  engine: xrender or glx
+set_backend () {
+  local engine="${1}"
+
+  if is_not_given "${engine}"; then
+    echo 'Backend engine is required'
+    return 2
+  elif is_not_backend_engine "${engine}"; then
+    echo 'Invalid or unknown backend engine'
+    return 2
+  fi
+
+  local conf_file="${HOME}/.config/picom/picom.conf"
+  sed -i "s/\(backend =\).*/\1 \"${engine}\";/" "${conf_file}"
+
+  if has_failed; then
+    echo "Failed to set backend to ${engine}"
+    return 2
+  fi
+
+  echo "Backend set to ${engine}"
+}
+
+# Sets the vsync mode of the compositor to on or off.
+# Arguments:
+#  mode: on or off
+set_vsync () {
+  local mode="${1}"
+
+  if is_not_given "${mode}"; then
+    echo 'Vsync mode is required'
+    return 2
+  elif is_not_toggle "${mode}"; then
+    echo 'Invalid or unknown vsync mode'
+    return 2
+  fi
+
+  if equals "${mode}" 'on'; then
+    mode='true'
+  else
+    mode='false'
+  fi
+
+  local conf_file="${HOME}/.config/picom/picom.conf"
+  sed -i "s/\(vsync =\).*/\1 ${mode};/" "${conf_file}"
+
+  if has_failed; then
+    echo "Failed to set vsync mode to ${mode}"
+    return 2
+  fi
+
+  echo "Vsync mode set to ${mode}"
+}
+
