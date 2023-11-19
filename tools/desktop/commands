@@ -741,3 +741,8 @@ init_workspaces () {
   done <<< "${monitors}"
 }
 
+# Initializes desktop status bars.
+init_bars () {
+  ${HOME}/.config/polybar/launch &
+}
+

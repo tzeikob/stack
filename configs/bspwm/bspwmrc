@@ -5,6 +5,7 @@ set -o pipefail
 displays -qs restore layout
 displays -qs restore colors &
 desktop -qs init workspaces &
+desktop -qs init bars &
 desktop -qs init pointer &
 desktop -qs init tablets &
 desktop -qs init wallpaper &
@@ -14,7 +15,6 @@ power -qs init screensaver &
 cloud -qs mount remotes &
 
 pgrep -x sxhkd > /dev/null || sxhkd &
-${HOME}/.config/polybar/launch &
 
 bspc config border_width 1
 bspc config window_gap 10
