@@ -743,11 +743,11 @@ init_workspaces () {
 
 # Initializes desktop status bars.
 init_bars () {
-  ${HOME}/.config/polybar/launch &
+  ${HOME}/.config/polybar/launch > /dev/null &
 }
 
 # Initializes keyboard bindings.
 init_bindings () {
-  pgrep -x sxhkd > /dev/null || sxhkd &
+  pgrep -x sxhkd > /dev/null || sxhkd > /dev/null &
 }
 
