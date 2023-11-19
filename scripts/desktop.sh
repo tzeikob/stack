@@ -27,7 +27,7 @@ install_compositor () {
     echo -e "Vsync has been disabled"
   fi
 
-  echo "picom -b" >> ~/.xinitrc
+  echo "picom &" >> ~/.xinitrc
 
   echo "Configuration has been set under ~/.config/picom"
   echo "Compositor has been installed"
