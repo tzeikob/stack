@@ -4,21 +4,21 @@ set -o pipefail
 
 displays -qs restore layout
 displays -qs restore colors &
+
 desktop -qs init workspaces &
 desktop -qs init bars &
+desktop -qs init bindings &
 desktop -qs init pointer &
 desktop -qs init tablets &
 desktop -qs init wallpaper &
+
 notifications -qs start &
 security -qs init locker &
 power -qs init screensaver &
 cloud -qs mount remotes &
 
-pgrep -x sxhkd > /dev/null || sxhkd &
-
 bspc config border_width 1
 bspc config window_gap 10
-
 bspc config split_ratio 0.5
 bspc config borderless_monocle true
 bspc config gapless_monocle false

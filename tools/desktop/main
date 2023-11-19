@@ -58,7 +58,8 @@ show_help () {
     'set backend xrender|glx' 'Set the compositor backend engine.' \
     'set vsync on|off' 'Enable or disable compositor vsync mode.' \
     'init workspaces' 'Initialize workspaces per active monitor.' \
-    'init bars' 'Initialize desktop status bars.'
+    'init bars' 'Initialize desktop status bars.' \
+    'init bindings' 'Initialize keyboard bindings.'
 }
 
 # Routes to the corresponding operation by matching
@@ -90,6 +91,7 @@ execute () {
     'set vsync') set_vsync "${3}";;
     'init workspaces') init_workspaces;;
     'init bars') init_bars;;
+    'init bindings') init_bindings;;
     *)
       echo 'Ooops, invalid or unknown command!'
       return 2;;
