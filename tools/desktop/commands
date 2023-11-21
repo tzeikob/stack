@@ -686,7 +686,7 @@ set_vsync () {
 # Creates and assigns workspaces for all active monitors,
 # starting from the primary and continues for the other
 # secondary ones.
-init_workspaces () {  
+init_workspaces () {
   local query=''
   query+='is_primary: (if .is_primary then 1 else 0 end),'
   query+='device_name,'
@@ -695,9 +695,9 @@ init_workspaces () {
   query+='serial_number,'
   query+='offset_width,'
   query+='offset_height'
-  query="[.[]|{${query}}]|sort_by(-.is_primary, .offset_width)"
+  query="[.[]|{${query}}]|sort_by(-.is_primary)"
 
-  # List all active monitors primary first and sorted by width offset
+  # List all active monitors primary first
   local outputs=''
   outputs="$(find_outputs 'active' | jq -cer "${query}")"
 
@@ -705,40 +705,42 @@ init_workspaces () {
     echo 'Failed to read active outputs'
     return 2
   fi
+  
+  local len=0
+  len="$(count "${outputs}")" || return 1
+
+  if is_true "${len} = 0"; then
+    echo 'No active monitors have found'
+    return 2
+  fi
 
   # Set primary monitor's workspaces
   local primary=''
   primary="$(echo "${outputs}" | jq -cr '.[0]|.device_name')"
 
-  bspc monitor "${primary}" -d 1 2 3 4
+  bspc monitor "${primary}" -d A B C D
 
   if has_failed; then
     echo 'Failed to assign workspaces to primary monitor'
     return 2
   fi
 
-  echo 'Primary monitor has given workspaces 1, 2, 3, 4'
+  # Assign workspaces to any existing secondary monitors
+  if is_true "${len} > 1"; then
+    local secondaries=''
+    secondaries="$(echo "${outputs}" | jq -rc '.[1:]|.[]|.device_name')"
 
-  local monitors=''
-  monitors="$(echo "${outputs}" | jq -rc '.[1:]|.[]|.device_name')"
+    while read -r secondary; do
+      bspc monitor "${secondary}" -d A B
 
-  local index=4
-  while read -r monitor; do
-    index="$(calc "${index} + 1")"
-    local a="${index}"
+      if has_failed; then
+        echo "Failed to assign workspaces to monitor ${secondary}"
+        return 2
+      fi
+    done <<< "${secondaries}"
+  fi
 
-    index="$(calc "${index} + 1")"
-    local b="${index}"
-
-    bspc monitor "${monitor}" -d "${a}" "${b}"
-
-    if has_failed; then
-      echo "Failed to assign workspaces to monitor ${monitor}"
-      continue
-    fi
-
-    echo "Monitor ${monitor} has given workspaces ${a}, ${b}"
-  done <<< "${monitors}"
+  echo 'Desktop workspaces have set'
 }
 
 # Initializes desktop status bars.
