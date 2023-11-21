@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# Toggles the scratchpad terminal window on and off,
+# if none running terminal is found, a new instance
+# terminal is launched.
+run () {
+  local pids=''
+  pids="$(xdotool search --class 'scratch')"
+
+  if [[ -z "${pids}" ]]; then
+    ${TERMINAL} --class scratch,scratch &
+    sleep 0.5
+  fi
+  
+  while [[ -z "${pids}" ]]; do
+    pids="$(xdotool search --class 'scratch')"
+  done
+
+  for pid in "${pids}"; do
+    bspc node "${pid}" --flag hidden -d focused -f
+  done
+}
+
+run "$@"
+

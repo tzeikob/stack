@@ -146,6 +146,10 @@ super + alt + Page_UP
 super + Return
   $TERMINAL
 
+# Toggle on/off the scratchpad termimal
+alt + Return
+  scratchpad
+
 # Launch file manager
 super + n
   $TERMINAL -e nnn -$NNN_OPTS
@@ -161,3 +165,4 @@ super + alt + s
 # Cast a region of the screen
 super + alt + ctrl + s
   $TERMINAL -e screencast -S -n $HOME/videos/$(date +"%Y-%m-%d-%H-%M-%S")-screencast.mkv
+

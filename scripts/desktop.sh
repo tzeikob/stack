@@ -49,6 +49,9 @@ install_window_manager () {
 
   cp ~/stack/configs/bspwm/resize "$CONFIG_HOME"
   chmod 755 "$CONFIG_HOME/resize"
+  
+  sudo cp ~/stack/configs/bspwm/scratchpad /usr/local/bin
+  sudo chmod 755 /usr/local/bin/scratchpad
 
   echo "exec bspwm" >> ~/.xinitrc
 
