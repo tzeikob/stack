@@ -743,6 +743,11 @@ init_workspaces () {
   echo 'Desktop workspaces have set'
 }
 
+# Initializes a sticky scratchpad terminal window.
+init_scratchpad () {  
+  ${TERMINAL} --class scratch,scratch > /dev/null &
+}
+
 # Initializes desktop status bars.
 init_bars () {
   ${HOME}/.config/polybar/launch > /dev/null &

@@ -6,6 +6,7 @@ displays -qs restore layout
 displays -qs restore colors &
 
 desktop -qs init workspaces &
+desktop -qs init scratchpad &
 desktop -qs init bars &
 desktop -qs init bindings &
 desktop -qs init pointer &
