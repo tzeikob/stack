@@ -744,7 +744,16 @@ init_workspaces () {
 }
 
 # Initializes a sticky scratchpad terminal window.
-init_scratchpad () {  
+init_scratchpad () { 
+  local pids=''
+  pids="$(xdotool search --class 'scratch')"
+
+  # Don't launch another instance if already running
+  if is_not_empty "${pids}"; then
+    echo 'Scratchpad is already running'
+    return 0
+  fi
+  
   ${TERMINAL} --class scratch,scratch > /dev/null &
 }
 
