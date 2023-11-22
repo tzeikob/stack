@@ -148,7 +148,7 @@ super + Return
 
 # Toggle on/off the scratchpad termimal
 alt + Return
-  scratchpad
+  ${HOME}/.config/bspwm/scratchpad
 
 # Launch file manager
 super + n
