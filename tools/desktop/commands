@@ -744,7 +744,7 @@ init_workspaces () {
 }
 
 # Initializes a sticky scratchpad terminal window.
-init_scratchpad () { 
+init_scratchpad () {
   local pids=''
   pids="$(xdotool search --class 'scratch')"
 
@@ -755,15 +755,57 @@ init_scratchpad () {
   fi
   
   ${TERMINAL} --class scratch,scratch > /dev/null &
+
+  sleep 1
+  pids="$(xdotool search --class 'scratch')"
+
+  if is_empty "${pids}"; then
+    echo 'Failed to launch scratchpad'
+    return 2
+  fi
+
+  echo 'Scratchpad has been launched'
 }
 
 # Initializes desktop status bars.
 init_bars () {
   ${HOME}/.config/polybar/launch > /dev/null &
+
+  sleep 1
+
+  local query=''
+  query+='[.[]|select(.command|test("polybar.*"))]'
+  query+='|if length > 0 then "true" else "false" end'
+
+  local is_up=''
+  is_up="$(ps aux | grep -v 'jq' | jc --ps | jq -cr "${query}")" || return 1
+
+  if is_not_true "${is_up}"; then
+    echo 'Failed to launch desktop bars'
+    return 2
+  fi
+
+  echo 'Desktop bars have been launched'
 }
 
 # Initializes keyboard bindings.
 init_bindings () {
   pgrep -x sxhkd > /dev/null || sxhkd > /dev/null &
+
+  sleep 1
+
+  local query=''
+  query+='[.[]|select(.command|test("sxhkd.*"))]'
+  query+='|if length > 0 then "true" else "false" end'
+
+  local is_up=''
+  is_up="$(ps aux | grep -v 'jq' | jc --ps | jq -cr "${query}")" || return 1
+
+  if is_not_true "${is_up}"; then
+    echo 'Failed to launch keyboard bindings'
+    return 2
+  fi
+
+  echo 'Keyboard bindings have been launched'
 }
 
