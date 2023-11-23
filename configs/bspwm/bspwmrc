@@ -2,9 +2,6 @@
 
 set -o pipefail
 
-displays -qs restore layout
-displays -qs restore colors &
-
 desktop -qs init workspaces &
 desktop -qs init scratchpad &
 desktop -qs init bars &
@@ -12,11 +9,6 @@ desktop -qs init bindings &
 desktop -qs init pointer &
 desktop -qs init tablets &
 desktop -qs init wallpaper &
-
-notifications -qs start &
-security -qs init locker &
-power -qs init screensaver &
-cloud -qs mount remotes &
 
 bspc config border_width 1
 bspc config window_gap 10

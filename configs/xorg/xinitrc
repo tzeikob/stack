@@ -31,3 +31,15 @@ fi
 
 hsetroot -solid '#000000'
 xsetroot -cursor_name left_ptr
+
+displays -qs restore layout
+displays -qs restore colors &
+
+notifications -qs start &
+security -qs init locker &
+power -qs init screensaver &
+cloud -qs mount remotes &
+
+picom &
+exec bspwm
+
