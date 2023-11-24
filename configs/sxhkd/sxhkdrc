@@ -139,7 +139,7 @@ super + alt + Page_Down
 # Increase brightness
 XF86MonBrightnessUp
   xbacklight -inc 10 &
-super + alt + Page_UP
+super + alt + Page_Up
   xbacklight -inc 10 &
 
 # Launch terminal emulator

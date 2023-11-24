@@ -683,9 +683,9 @@ set_vsync () {
   echo "Vsync mode set to ${mode}"
 }
 
-# Creates and assigns workspaces for all active monitors,
+# Initializes the workspaces for all active monitors,
 # starting from the primary and continues for the other
-# secondary ones.
+# secondary monitors.
 init_workspaces () {
   local query=''
   query+='is_primary: (if .is_primary then 1 else 0 end),'
@@ -743,23 +743,23 @@ init_workspaces () {
   echo 'Desktop workspaces have set'
 }
 
-# Initializes a sticky scratchpad terminal window.
+# Initializes the sticky scratchpad terminal window.
 init_scratchpad () {
-  local pids=''
-  pids="$(xdotool search --class 'scratch')"
+  local scratchpad="${TERMINAL} --class scratch,scratch"
 
-  # Don't launch another instance if already running
-  if is_not_empty "${pids}"; then
-    echo 'Scratchpad is already running'
-    return 0
-  fi
-  
-  ${TERMINAL} --class scratch,scratch > /dev/null &
+  # Kill any other instances of scratchpad terminals
+  kill_process "${scratchpad}"
 
-  sleep 1
-  pids="$(xdotool search --class 'scratch')"
+  # Make sure the scratchpad PWD is set to home  
+  cd "${HOME}"
 
-  if is_empty "${pids}"; then
+  # Launch a new instance of scratchpad terminal
+  ${scratchpad} &
+
+  # Dettach it from the current shell to suppress kill outputs
+  disown $! && sleep 1
+
+  if is_process_down "${scratchpad}"; then
     echo 'Failed to launch scratchpad'
     return 2
   fi
@@ -769,18 +769,12 @@ init_scratchpad () {
 
 # Initializes desktop status bars.
 init_bars () {
+  # Use polybar's launch script to restart a new instance
   ${HOME}/.config/polybar/launch > /dev/null &
 
   sleep 1
 
-  local query=''
-  query+='[.[]|select(.command|test("polybar.*"))]'
-  query+='|if length > 0 then "true" else "false" end'
-
-  local is_up=''
-  is_up="$(ps aux | grep -v 'jq' | jc --ps | jq -cr "${query}")" || return 1
-
-  if is_not_true "${is_up}"; then
+  if is_process_down '^polybar.*'; then
     echo 'Failed to launch desktop bars'
     return 2
   fi
@@ -790,18 +784,16 @@ init_bars () {
 
 # Initializes keyboard bindings.
 init_bindings () {
-  pgrep -x sxhkd > /dev/null || sxhkd > /dev/null &
+  # Kill any running sxhkd processes
+  kill_process '^sxhkd.*'
+  
+  # Launch a new instance of sxhkd process
+  sxhkd &> /dev/null &
+  
+  # Dettach it from the current shell to suppress kill outputs
+  disown $! && sleep 1
 
-  sleep 1
-
-  local query=''
-  query+='[.[]|select(.command|test("sxhkd.*"))]'
-  query+='|if length > 0 then "true" else "false" end'
-
-  local is_up=''
-  is_up="$(ps aux | grep -v 'jq' | jc --ps | jq -cr "${query}")" || return 1
-
-  if is_not_true "${is_up}"; then
+  if is_process_down '^sxhkd.*'; then
     echo 'Failed to launch keyboard bindings'
     return 2
   fi
