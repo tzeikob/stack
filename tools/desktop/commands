@@ -687,58 +687,53 @@ set_vsync () {
 # starting from the primary and continues for the other
 # secondary monitors.
 init_workspaces () {
-  local query=''
-  query+='is_primary: (if .is_primary then 1 else 0 end),'
-  query+='device_name,'
-  query+='model_name,'
-  query+='product_id,'
-  query+='serial_number,'
-  query+='offset_width,'
-  query+='offset_height'
-  query="[.[]|{${query}}]|sort_by(-.is_primary)"
-
-  # List all active monitors primary first
-  local outputs=''
-  outputs="$(find_outputs 'active' | jq -cer "${query}")"
+  # Find the primary monitor output
+  local primary=''
+  primary="$(find_outputs 'primary' | jq -cer '.[0]|.device_name')"
 
   if has_failed; then
-    echo 'Failed to read active outputs'
+    echo 'Unable to find primary monitor'
     return 2
   fi
   
-  local len=0
-  len="$(count "${outputs}")" || return 1
+  local monitors=''
+  monitors="$(bspc query --monitors --names)" || return 1
 
-  if is_true "${len} = 0"; then
+  if is_empty "${monitors}"; then
     echo 'No active monitors have found'
     return 2
   fi
 
-  # Set primary monitor's workspaces
-  local primary=''
-  primary="$(echo "${outputs}" | jq -cr '.[0]|.device_name')"
+  # Assign workspaces to monitors by order
+  local index=1
+  local monitor=''
 
-  bspc monitor "${primary}" -d A B C D
+  while read -r monitor; do
+    local slots=2
 
-  if has_failed; then
-    echo 'Failed to assign workspaces to primary monitor'
-    return 2
-  fi
+    # Give four workspace slots to the primary monitor
+    if equals "${monitor}" "${primary}"; then
+      slots=4
+    fi
 
-  # Assign workspaces to any existing secondary monitors
-  if is_true "${len} > 1"; then
-    local secondaries=''
-    secondaries="$(echo "${outputs}" | jq -rc '.[1:]|.[]|.device_name')"
+    # Compute the index of the last slot
+    local last=0
+    last="$(calc "${index} + ${slots} - 1")"
 
-    while read -r secondary; do
-      bspc monitor "${secondary}" -d A B
+    # Generate the index sequence of monitor's workspaces
+    local indices=''
+    indices="$(seq -s ' ' ${index} ${last})"
+    
+    bspc monitor "${monitor}" -d ${indices}
 
-      if has_failed; then
-        echo "Failed to assign workspaces to monitor ${secondary}"
-        return 2
-      fi
-    done <<< "${secondaries}"
-  fi
+    if has_failed; then
+      echo "Failed to assign workspaces to monitor ${monitor}"
+      return 2
+    fi
+
+    # Move to the next workspace index
+    index="$(calc "${last} + 1")"
+  done <<< "${monitors}"
 
   echo 'Desktop workspaces have set'
 }
