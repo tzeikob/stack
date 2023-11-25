@@ -715,13 +715,10 @@ add_workspace () {
     return 2
   fi
 
-  # Find the total number of workspace slots
-  local slots=0
-  slots="$(bspc query -D | wc -l)" || return 1
-
-  # Give to the new workspace a temporal index
+  # Give to the new workspace the maximun of the existing indices
   local index=0
-  index="$(calc "${slots} + 1")"
+  index="$(bspc query -D --names | awk '$0>x{x=$0};END{print x}')" || return 1
+  index="$(calc "${index} + 1")"
 
   # Add new workspace and fix workspaces order
   bspc monitor "${monitor}" -a "${index}" && reorder_workspaces
