@@ -683,6 +683,116 @@ set_vsync () {
   echo "Vsync mode set to ${mode}"
 }
 
+# Adds a new empty workspace to the monitor with
+# the given output name.
+# Arguments:
+#  monitor: the output name of an active monitor
+add_workspace () {
+  local monitor="${1}"
+
+  if is_not_given "${monitor}"; then
+    on_script_mode &&
+      echo 'Missing the monitor name' && return 2
+
+    pick_output 'Select a monitor name:' active || return $?
+    is_empty "${REPLY}" && echo 'Monitor name is required' && return 2
+    monitor="${REPLY}"
+  fi
+
+  local output=''
+  output="$(find_output "${monitor}")"
+
+  if has_failed; then
+    echo "Monitor ${monitor} not found"
+    return 2
+  fi
+  
+  if is_not_connected "${output}"; then
+    echo "Monitor ${monitor} is disconnected"
+    return 2
+  elif is_not_active "${output}"; then
+    echo "Monitor ${monitor} is inactive"
+    return 2
+  fi
+
+  # Find the total number of workspace slots
+  local slots=0
+  slots="$(bspc query -D | wc -l)" || return 1
+
+  # Give to the new workspace a temporal index
+  local index=0
+  index="$(calc "${slots} + 1")"
+
+  # Add new workspace and fix workspaces order
+  bspc monitor "${monitor}" -a "${index}" && reorder_workspaces
+
+  if has_failed; then
+    echo "Failed to add workspace to monitor ${monitor}"
+    return 2
+  fi
+
+  echo "Workspace added to monitor ${monitor}"
+}
+
+# Removes a workspace with the given index from the
+# monitor with the given output name.
+# Arguments:
+#  monitor: the output name of an active monitor
+#  index:   the index of a workspace
+remove_workspace () {
+  local monitor="${1}"
+  local index="${2}"
+
+  if is_not_given "${monitor}"; then
+    on_script_mode &&
+      echo 'Missing the monitor name' && return 2
+
+    pick_output 'Select a monitor name:' active || return $?
+    is_empty "${REPLY}" && echo 'Monitor name is required' && return 2
+    monitor="${REPLY}"
+  fi
+
+  local output=''
+  output="$(find_output "${monitor}")"
+
+  if has_failed; then
+    echo "Monitor ${monitor} not found"
+    return 2
+  fi
+  
+  if is_not_connected "${output}"; then
+    echo "Monitor ${monitor} is disconnected"
+    return 2
+  elif is_not_active "${output}"; then
+    echo "Monitor ${monitor} is inactive"
+    return 2
+  fi
+
+  if is_not_given "${index}"; then
+    on_script_mode &&
+      echo 'Missing the workspace index' && return 2
+
+    pick_workspace "${monitor}" || return $?
+    is_empty "${REPLY}" && echo 'Workspace index is required' && return 2
+    index="${REPLY}"
+  fi
+
+  if monitor_has_not_workspace "${monitor}" "${index}"; then
+    echo "Monitor has not workspace ${index}"
+    return 2
+  fi
+
+  # Remove workspace, fix workspaces order and adopt orphan windows
+  bspc desktop "${index}" --remove && reorder_workspaces && bspc wm --adopt-orphans
+
+  if has_failed; then
+    echo "Failed to remove workspace from monitor ${monitor}"
+    return 2
+  fi
+
+  echo "Workspace removed from monitor ${monitor}"
+}
+
 # Initializes the workspaces for all active monitors,
 # starting from the primary and continues for the other
 # secondary monitors.
