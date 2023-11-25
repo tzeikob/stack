@@ -833,8 +833,9 @@ init_workspaces () {
     # Generate the index sequence of monitor's workspaces
     local indices=''
     indices="$(seq -s ' ' ${index} ${last})"
-    
-    bspc monitor "${monitor}" -d ${indices}
+
+    # Set desktop workspace and adopt possible orphan windows
+    bspc monitor "${monitor}" -d ${indices} && bspc wm --adopt-orphans
 
     if has_failed; then
       echo "Failed to assign workspaces to monitor ${monitor}"
