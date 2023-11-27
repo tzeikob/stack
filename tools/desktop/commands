@@ -757,10 +757,10 @@ remove_workspace () {
   echo "Workspace ${index} has been removed"
 }
 
-# Initializes the workspaces for all active monitors,
-# starting from the primary and continues for the other
-# secondary monitors.
-init_workspaces () {
+# Initializes the desktop workspaces for any active
+# display monitor. This operation removes any extra
+# workspaces given to a monitor.
+init_workspaces () {  
   # Find the primary monitor output
   local primary=''
   primary="$(find_outputs 'primary' | jq -cer '.[0]|.device_name')"
@@ -778,7 +778,39 @@ init_workspaces () {
     return 2
   fi
 
-  # Assign workspaces to monitors by order
+  # Remove any possible extra workspaces per monitor
+  local monitor=''
+
+  while read -r monitor; do
+    local slots=2
+
+    # Give four workspace slots to the primary monitor
+    if equals "${monitor}" "${primary}"; then
+      slots=4
+    fi
+
+    # Find the current number of monitor's workspaces
+    local desktops=''
+    desktops="$(bspc query -T -m "${monitor}" | jq -cer '.desktops')" || return 1
+  
+    local current_slots=0
+    current_slots="$(echo "${desktops}" | jq -cer 'length')" || return 1
+
+    local subtract="$(calc "${current_slots} - ${slots}")"
+
+    # Remove extra desktops one by one
+    if is_true "${subtract} > 0"; then
+      local extras=''
+      extras="$(echo "${desktops}" | jq -cer "[.[]|.name]|.[length - ${subtract}:]|.[]")" || return 1
+
+      local extra=''
+      while read -r extra; do
+        bspc desktop "${extra}" -r && bspc wm --adopt-orphans
+      done <<< "${extras}"
+    fi
+  done <<< "${monitors}"
+
+  # Loop again monitors to fill possible empty workspace slots
   local index=1
   local monitor=''
 
