@@ -55,7 +55,7 @@ show_help () {
     '' 'or just use desktop to reset mapping.' \
     'init tablets' 'Initialize any connected tablets.' \
     '' '' \
-    'add workspace <monitor>' 'Add a workspace to a monitor.' \
+    'add workspace <monitor>' 'Add a desktop workspace to the given or current monitor.' \
     'remove workspace <monitor> <index>' 'Remove a workspace from a monitor.' \
     'init workspaces' 'Initialize workspaces per active monitor.' \
     '' '' \

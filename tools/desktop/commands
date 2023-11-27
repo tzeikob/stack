@@ -684,35 +684,30 @@ set_vsync () {
 }
 
 # Adds a new empty workspace to the monitor with
-# the given output name.
+# the given output name. If no monitor is given
+# the workspace will be assigned to the focused
+# monitor.
 # Arguments:
 #  monitor: the output name of an active monitor
 add_workspace () {
   local monitor="${1}"
 
-  if is_not_given "${monitor}"; then
-    on_script_mode &&
-      echo 'Missing the monitor name' && return 2
+  if is_given "${monitor}"; then
+    local output=''
+    output="$(find_output "${monitor}")"
 
-    pick_output 'Select a monitor name:' active || return $?
-    is_empty "${REPLY}" && echo 'Monitor name is required' && return 2
-    monitor="${REPLY}"
-  fi
-
-  local output=''
-  output="$(find_output "${monitor}")"
-
-  if has_failed; then
-    echo "Monitor ${monitor} not found"
-    return 2
-  fi
+    if has_failed; then
+      echo "Monitor ${monitor} not found"
+      return 2
+    fi
   
-  if is_not_connected "${output}"; then
-    echo "Monitor ${monitor} is disconnected"
-    return 2
-  elif is_not_active "${output}"; then
-    echo "Monitor ${monitor} is inactive"
-    return 2
+    if is_not_connected "${output}"; then
+      echo "Monitor ${monitor} is disconnected"
+      return 2
+    elif is_not_active "${output}"; then
+      echo "Monitor ${monitor} is inactive"
+      return 2
+    fi
   fi
 
   # Give to the new workspace the maximun of the existing indices
@@ -721,14 +716,14 @@ add_workspace () {
   index="$(calc "${index} + 1")"
 
   # Add new workspace and fix workspaces order
-  bspc monitor "${monitor}" -a "${index}" && reorder_workspaces
+  bspc monitor ${monitor} -a "${index}" && reorder_workspaces
 
   if has_failed; then
-    echo "Failed to add workspace to monitor ${monitor}"
+    echo "Failed to add workspace to the ${monitr:-"current"} monitor"
     return 2
   fi
 
-  echo "Workspace added to monitor ${monitor}"
+  echo "Workspace added to the ${monitor:-"current"} monitor"
 }
 
 # Removes a workspace with the given index from the
