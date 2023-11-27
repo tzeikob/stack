@@ -2,7 +2,7 @@
 
 set -o pipefail
 
-desktop -qs init workspaces &
+desktop -qs init workspaces
 desktop -qs init scratchpad &
 desktop -qs init bars &
 desktop -qs init bindings &
