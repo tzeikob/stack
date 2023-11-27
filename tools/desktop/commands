@@ -719,7 +719,7 @@ add_workspace () {
   bspc monitor ${monitor} -a "${index}" && reorder_workspaces
 
   if has_failed; then
-    echo "Failed to add workspace to the ${monitr:-"current"} monitor"
+    echo "Failed to add workspace to the ${monitor:-"current"} monitor"
     return 2
   fi
 
