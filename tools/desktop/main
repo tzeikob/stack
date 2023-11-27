@@ -56,12 +56,12 @@ show_help () {
     'init tablets' 'Initialize any connected tablets.' \
     '' '' \
     'add workspace <monitor>' 'Add a desktop workspace to the given or current monitor.' \
-    'remove workspace <monitor> <index>' 'Remove a workspace from a monitor.' \
+    'remove workspace <index>' 'Remove a desktop workspace with the given index.' \
     'init workspaces' 'Initialize workspaces per active monitor.' \
     '' '' \
     'set backend xrender|glx' 'Set the compositor backend engine.' \
     'set vsync on|off' 'Enable or disable compositor vsync mode.' \
-    'init scratchpad'  'Initialize the sticky scratchpad terminal.' \
+    'init scratchpad' 'Initialize the sticky scratchpad terminal.' \
     'init bars' 'Initialize desktop status bars.' \
     'init bindings' 'Initialize keyboard bindings.'
 }
@@ -94,7 +94,7 @@ execute () {
     'set backend') set_backend "${3}";;
     'set vsync') set_vsync "${3}";;
     'add workspace') add_workspace "${3}";;
-    'remove workspace') remove_workspace "${3}" "${4}";;
+    'remove workspace') remove_workspace "${3}";;
     'init workspaces') init_workspaces;;
     'init scratchpad') init_scratchpad;;
     'init bars') init_bars;;

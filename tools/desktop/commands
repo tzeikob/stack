@@ -726,51 +726,23 @@ add_workspace () {
   echo "Workspace added to the ${monitor:-"current"} monitor"
 }
 
-# Removes a workspace with the given index from the
-# monitor with the given output name.
+# Removes a workspace with the given index.
 # Arguments:
-#  monitor: the output name of an active monitor
-#  index:   the index of a workspace
+#  index: the index name of a workspace
 remove_workspace () {
-  local monitor="${1}"
-  local index="${2}"
-
-  if is_not_given "${monitor}"; then
-    on_script_mode &&
-      echo 'Missing the monitor name' && return 2
-
-    pick_output 'Select a monitor name:' active || return $?
-    is_empty "${REPLY}" && echo 'Monitor name is required' && return 2
-    monitor="${REPLY}"
-  fi
-
-  local output=''
-  output="$(find_output "${monitor}")"
-
-  if has_failed; then
-    echo "Monitor ${monitor} not found"
-    return 2
-  fi
-  
-  if is_not_connected "${output}"; then
-    echo "Monitor ${monitor} is disconnected"
-    return 2
-  elif is_not_active "${output}"; then
-    echo "Monitor ${monitor} is inactive"
-    return 2
-  fi
+  local index="${1}"
 
   if is_not_given "${index}"; then
     on_script_mode &&
       echo 'Missing the workspace index' && return 2
 
-    pick_workspace "${monitor}" || return $?
+    pick_workspace || return $?
     is_empty "${REPLY}" && echo 'Workspace index is required' && return 2
     index="${REPLY}"
   fi
 
-  if monitor_has_not_workspace "${monitor}" "${index}"; then
-    echo "Monitor has not workspace ${index}"
+  if workspace_not_exists "${index}"; then
+    echo 'Unknown or invalid workspace index'
     return 2
   fi
 
@@ -778,11 +750,11 @@ remove_workspace () {
   bspc desktop "${index}" --remove && reorder_workspaces && bspc wm --adopt-orphans
 
   if has_failed; then
-    echo "Failed to remove workspace from monitor ${monitor}"
+    echo "Failed to remove workspace ${index}"
     return 2
   fi
 
-  echo "Workspace removed from monitor ${monitor}"
+  echo "Workspace ${index} has been removed"
 }
 
 # Initializes the workspaces for all active monitors,

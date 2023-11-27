@@ -563,18 +563,14 @@ reorder_workspaces () {
   done <<< "${monitors}"
 }
 
-# Shows a menu of workspaces for the given monitor.
-# Arguments:
-#  monitor: the output name of a monitor
+# Shows a menu of all desktop workspaces.
 # Outputs:
 #  A menu of workspace indexes.
-pick_workspace () {
-  local monitor="${1}"
-
-  local query='[.desktops[]|{key: .name, value: .name}]'
+pick_workspace () {  
+  local query='[.[]|{key: ., value: .}]'
   
   local workspaces=''
-  workspaces="$(bspc query -T -m "${monitor}" | jq -cer "${query}")" || return 1
+  workspaces="$(bspc query -D --names | jq --slurp . | jq -cr "${query}")" || return 1
 
   local len=0
   len="$(count "${workspaces}")" || return 1
@@ -587,24 +583,21 @@ pick_workspace () {
   pick_one 'Select workspace index:' "${workspaces}" horizontal || return $?
 }
 
-# Checks if the monitor with the given output
-# name has a workspace with the given index.
+# Checks if the workspace with the given index exists.
 # Arguments:
-#  monitor: the output name of a monitor
-#  index:   the index of a workspace
+#  index: the index name of a workspace
 # Returns:
-#  0 if monitor has that workspace otherwise 1.
-monitor_has_workspace () {
-  local monitor="${1}"
-  local index="${2}"
+#  0 if workspace exists otherwise 1.
+workspace_exists () {
+  local index="${1}"
 
-  local query=".desktops[]|select(.name == \"${index}\")"
+  local query=".[]|select(. == ${index})"
 
-  bspc query -T -m "${monitor}" | jq -cer "${query}" &> /dev/null || return 1  
+  bspc query -D --names | jq --slurp . | jq -cer "${query}" || return 1  
 }
 
-# An inverse version of monitor_has_workspace.
-monitor_has_not_workspace () {
-  monitor_has_workspace "${1}" "${2}" && return 1 || return 0
+# An inverse version of workspace_exists.
+workspace_not_exists () {
+  workspace_exists "${1}" && return 1 || return 0
 }
 
