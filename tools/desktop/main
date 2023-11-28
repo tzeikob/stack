@@ -55,8 +55,9 @@ show_help () {
     '' 'or just use desktop to reset mapping.' \
     'init tablets' 'Initialize any connected tablets.' \
     '' '' \
-    'add workspace <monitor>' 'Add a desktop workspace to the given or current monitor.' \
-    'remove workspace <index>' 'Remove a desktop workspace with the given index.' \
+    'add workspace <monitor>' 'Add a workspace to the given or current monitor.' \
+    'remove workspace <index>' 'Remove a workspace with the given index.' \
+    'fix workspaces' 'Fix dangling or misordered workspaces.' \
     'init workspaces' 'Initialize workspaces per active monitor.' \
     '' '' \
     'set backend xrender|glx' 'Set the compositor backend engine.' \
@@ -95,6 +96,7 @@ execute () {
     'set vsync') set_vsync "${3}";;
     'add workspace') add_workspace "${3}";;
     'remove workspace') remove_workspace "${3}";;
+    'fix workspaces') fix_workspaces;;
     'init workspaces') init_workspaces;;
     'init scratchpad') init_scratchpad;;
     'init bars') init_bars;;

@@ -716,7 +716,7 @@ add_workspace () {
   index="$(calc "${index} + 1")"
 
   # Add new workspace and fix workspaces order
-  bspc monitor ${monitor} -a "${index}" && reorder_workspaces
+  bspc monitor ${monitor} -a "${index}" && fix_workspaces
 
   if has_failed; then
     echo "Failed to add workspace to the ${monitor:-"current"} monitor"
@@ -746,8 +746,8 @@ remove_workspace () {
     return 2
   fi
 
-  # Remove workspace, fix workspaces order and adopt orphan windows
-  bspc desktop "${index}" --remove && reorder_workspaces && bspc wm --adopt-orphans
+  # Remove workspace, fix workspaces order and adopt orphans
+  bspc desktop "${index}" --remove && fix_workspaces
 
   if has_failed; then
     echo "Failed to remove workspace ${index}"
@@ -755,6 +755,57 @@ remove_workspace () {
   fi
 
   echo "Workspace ${index} has been removed"
+}
+
+# Repairs any possible inconsistencies among workspaces
+# like orphan workspaces, misordered slots or dangling
+# inactive monitors.
+fix_workspaces () {
+  local active=''
+  active="$(find_outputs active | jq -cer '[.[]|.device_name]|join(" ")')" || return 1
+
+  local monitors=''
+  monitors="$(bspc query --monitors --names)" || return 1
+
+  # Find which monitors are inactive and remove them
+  local monitor=''
+
+  while read -r monitor; do
+    if not_match "${active}" "${monitor}"; then
+      bspc monitor "${monitor}" -r || return 1
+      bspc wm --adopt-orphans || return 1
+    fi
+  done <<< "${monitors}"
+
+  # Update monitors list
+  monitors="$(bspc query --monitors --names)" || return 1
+
+  # Assign workspaces to monitors by order
+  local index=1
+  local monitor=''
+
+  while read -r monitor; do
+    local slots=0
+    slots="$(bspc query -T -m "${monitor}" | jq -cer '.desktops|length')" || return 1
+
+    # Compute the index of the last slot
+    local last=0
+    last="$(calc "${index} + ${slots} - 1")"
+
+    # Generate the index sequence of monitor's workspaces
+    local indices=''
+    indices="$(seq -s ' ' ${index} ${last})"
+    
+    bspc monitor "${monitor}" -d ${indices} || return 1
+
+    # Move to the next workspace index
+    index="$(calc "${last} + 1")"
+  done <<< "${monitors}"
+
+  # Adopt any possible orphan windows
+  bspc wm --adopt-orphans || return 1
+
+  echo 'Workspaces have been fixed'
 }
 
 # Initializes the desktop workspaces for any active

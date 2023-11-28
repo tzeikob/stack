@@ -534,35 +534,6 @@ is_not_backend_engine () {
   is_backend_engine "${1}" && return 1 || return 0
 }
 
-# Reorders the workspaces indexing according to the
-# order each monitor has sorted by BSPWM.
-reorder_workspaces () {
-  local monitors=''
-  monitors="$(bspc query --monitors --names)" || return 1
-
-  # Assign workspaces to monitors by order
-  local index=1
-  local monitor=''
-
-  while read -r monitor; do
-    local slots=0
-    slots="$(bspc query -T -m "${monitor}" | jq -cer '.desktops|length')" || return 1
-
-    # Compute the index of the last slot
-    local last=0
-    last="$(calc "${index} + ${slots} - 1")"
-
-    # Generate the index sequence of monitor's workspaces
-    local indices=''
-    indices="$(seq -s ' ' ${index} ${last})"
-    
-    bspc monitor "${monitor}" -d ${indices}
-
-    # Move to the next workspace index
-    index="$(calc "${last} + 1")"
-  done <<< "${monitors}"
-}
-
 # Shows a menu of all desktop workspaces.
 # Outputs:
 #  A menu of workspace indexes.
