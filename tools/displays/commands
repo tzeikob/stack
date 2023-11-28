@@ -437,6 +437,14 @@ set_off () {
     echo 'Failed to deactivate output'
     return 2
   fi
+
+  # Fix possible inconsistencies among desktop workspaces
+  desktop -qs fix workspaces &> /dev/null
+
+  if has_failed; then
+    echo 'Failed to fix desktop workspaces'
+    return 2
+  fi
   
   echo "Output ${name} has been deactivated"
 }
@@ -794,6 +802,14 @@ set_layout () {
     return 2
   fi
 
+  # Fix possible inconsistencies among desktop workspaces
+  desktop -qs fix workspaces &> /dev/null
+
+  if has_failed; then
+    echo 'Failed to fix desktop workspaces'
+    return 2
+  fi
+
   echo "Layout has been set to ${mode,,}"
 }
 
@@ -913,6 +929,14 @@ restore_layout () {
     return 2
   fi
 
+  # Fix possible inconsistencies among desktop workspaces
+  desktop -qs fix workspaces &> /dev/null
+
+  if has_failed; then
+    echo 'Failed to fix desktop workspaces'
+    return 2
+  fi
+
   echo 'Layout has been restored'
 }
 
@@ -974,6 +998,14 @@ fix_layout () {
     new_primary="$(echo "${outputs}" | jq -cr "${query}")"
 
     is_not_empty "${new_primary}" && set_primary "${new_primary}"
+  fi
+
+  # Fix possible inconsistencies among desktop workspaces
+  desktop -qs fix workspaces &> /dev/null
+
+  if has_failed; then
+    echo 'Failed to fix desktop workspaces'
+    return 2
   fi
 
   echo 'Layout has been fixed'
