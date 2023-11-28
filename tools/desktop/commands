@@ -715,14 +715,22 @@ add_workspace () {
   index="$(bspc query -D --names | awk '$0>x{x=$0};END{print x}')" || return 1
   index="$(calc "${index} + 1")"
 
-  # Add new workspace and fix workspaces order
-  bspc monitor ${monitor} -a "${index}" && fix_workspaces
+  # Add new workspace to the monitor
+  bspc monitor ${monitor} -a "${index}"
 
   if has_failed; then
     echo "Failed to add workspace to the ${monitor:-"current"} monitor"
     return 2
   fi
 
+  # Fix workspaces order and possible inconsistencies
+  fix_workspaces &> /dev/null
+
+  if has_failed; then
+    echo "Failed to fix workspaces"
+    return 2
+  fi
+  
   echo "Workspace added to the ${monitor:-"current"} monitor"
 }
 
@@ -746,11 +754,19 @@ remove_workspace () {
     return 2
   fi
 
-  # Remove workspace, fix workspaces order and adopt orphans
-  bspc desktop "${index}" --remove && fix_workspaces
+  # Remove workspace
+  bspc desktop "${index}" --remove
 
   if has_failed; then
     echo "Failed to remove workspace ${index}"
+    return 2
+  fi
+
+  # Fix workspaces order and possible inconsistencies
+  fix_workspaces &> /dev/null
+
+  if has_failed; then
+    echo "Failed to fix workspaces"
     return 2
   fi
 
