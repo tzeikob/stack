@@ -761,23 +761,10 @@ remove_workspace () {
 # like orphan workspaces, misordered slots or dangling
 # inactive monitors.
 fix_workspaces () {
-  local active=''
-  active="$(find_outputs active | jq -cer '[.[]|.device_name]|join(" ")')" || return 1
+  # Remove dangling monitors and adopt orphan windows
+  remove_dangling_monitors || return 1
 
   local monitors=''
-  monitors="$(bspc query --monitors --names)" || return 1
-
-  # Find which monitors are inactive and remove them
-  local monitor=''
-
-  while read -r monitor; do
-    if not_match "${active}" "${monitor}"; then
-      bspc monitor "${monitor}" -r || return 1
-      bspc wm --adopt-orphans || return 1
-    fi
-  done <<< "${monitors}"
-
-  # Update monitors list
   monitors="$(bspc query --monitors --names)" || return 1
 
   # Assign workspaces to monitors by order
@@ -812,6 +799,9 @@ fix_workspaces () {
 # display monitor. This operation removes any extra
 # workspaces given to a monitor.
 init_workspaces () {  
+  # Remove dangling monitors and adopt orphan windows
+  remove_dangling_monitors || return 1
+
   # Find the primary monitor output
   local primary=''
   primary="$(find_outputs 'primary' | jq -cer '.[0]|.device_name')"
