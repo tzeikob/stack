@@ -899,6 +899,12 @@ init_workspaces () {
     index="$(calc "${last} + 1")"
   done <<< "${monitors}"
 
+  # Initialize desktop workspaces every time a new monitor is added
+  local args=()
+  bspc subscribe monitor_add | while read -a args; do
+    bspc monitor "${args[1]}" -d 1 2
+  done &
+
   echo 'Desktop workspaces have set'
 }
 
