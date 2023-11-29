@@ -393,14 +393,6 @@ set_on () {
     echo 'Failed to activate output'
     return 2
   fi
-
-  # Fix possible inconsistencies among desktop workspaces
-  desktop -qs fix workspaces &> /dev/null
-
-  if has_failed; then
-    echo 'Failed to fix desktop workspaces'
-    return 2
-  fi
   
   echo "Output ${name} has been activated"
 }

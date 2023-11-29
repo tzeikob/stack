@@ -901,8 +901,14 @@ init_workspaces () {
 
   # Initialize desktop workspaces every time a new monitor is added
   local args=()
+
   bspc subscribe monitor_add | while read -a args; do
-    bspc monitor "${args[1]}" -d 1 2
+    local query='[.[]|select(.|test("^[0-9]+$"))]|max'
+    local max="$(bspc query -D --names | jq --raw-input . | jq -rcs "${query}")"
+    local a="$(calc "${max} + 1")"
+    local b="$(calc "${a} + 1")"
+
+    bspc monitor "${args[1]}" -d "${a}" "${b}"
   done &
 
   echo 'Desktop workspaces have set'
