@@ -706,6 +706,20 @@ mirror_output () {
     return 2
   fi
 
+  # Give time to xrandr to settle
+  sleep 1
+
+  # Remove all targets from window manager and adopt orphan windows
+  local monitor=''
+
+  for monitor in "${targets[@]}"; do
+    bspc monitor "${monitor}" -r || return 1
+    bspc wm --adopt-orphans || return 1
+  done
+
+  # Fix any possible inconsistencies among left desktop workspaces
+  desktop -qs fix workspaces &> /dev/null
+
   # Convert targets into a string of comma separated output names
   targets="$(jq -ncer '$ARGS.positional|join(", ")' --args -- "${targets[@]}")" || return 1
   
