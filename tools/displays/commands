@@ -439,7 +439,7 @@ set_off () {
   fi
 
   # Fix possible inconsistencies among desktop workspaces
-  desktop -qs fix workspaces &> /dev/null
+  sleep 1 && desktop -qs fix workspaces &> /dev/null
 
   if has_failed; then
     echo 'Failed to fix desktop workspaces'
@@ -803,7 +803,7 @@ set_layout () {
   fi
 
   # Fix possible inconsistencies among desktop workspaces
-  desktop -qs fix workspaces &> /dev/null
+  sleep 1 && desktop -qs fix workspaces &> /dev/null
 
   if has_failed; then
     echo 'Failed to fix desktop workspaces'
@@ -930,7 +930,7 @@ restore_layout () {
   fi
 
   # Fix possible inconsistencies among desktop workspaces
-  desktop -qs fix workspaces &> /dev/null
+  sleep 1 && desktop -qs fix workspaces &> /dev/null
 
   if has_failed; then
     echo 'Failed to fix desktop workspaces'
@@ -1001,7 +1001,7 @@ fix_layout () {
   fi
 
   # Fix possible inconsistencies among desktop workspaces
-  desktop -qs fix workspaces &> /dev/null
+  sleep 1 && desktop -qs fix workspaces &> /dev/null
 
   if has_failed; then
     echo 'Failed to fix desktop workspaces'
