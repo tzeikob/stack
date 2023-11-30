@@ -438,8 +438,11 @@ set_off () {
     return 2
   fi
 
+  # Give time to xrandr to settle
+  sleep 1
+
   # Fix possible inconsistencies among desktop workspaces
-  sleep 1 && desktop -qs fix workspaces &> /dev/null
+  desktop -qs fix workspaces &> /dev/null
 
   if has_failed; then
     echo 'Failed to fix desktop workspaces'
@@ -720,6 +723,11 @@ mirror_output () {
   # Fix any possible inconsistencies among left desktop workspaces
   desktop -qs fix workspaces &> /dev/null
 
+  if has_failed; then
+    echo 'Failed to fix desktop workspaces'
+    return 2
+  fi
+
   # Convert targets into a string of comma separated output names
   targets="$(jq -ncer '$ARGS.positional|join(", ")' --args -- "${targets[@]}")" || return 1
   
@@ -816,8 +824,11 @@ set_layout () {
     return 2
   fi
 
+  # Give time to xrandr to settle
+  sleep 1
+
   # Fix possible inconsistencies among desktop workspaces
-  sleep 1 && desktop -qs fix workspaces &> /dev/null
+  desktop -qs fix workspaces &> /dev/null
 
   if has_failed; then
     echo 'Failed to fix desktop workspaces'
@@ -943,8 +954,11 @@ restore_layout () {
     return 2
   fi
 
+  # Give time to xrandr to settle
+  sleep 1
+
   # Fix possible inconsistencies among desktop workspaces
-  sleep 1 && desktop -qs fix workspaces &> /dev/null
+  desktop -qs fix workspaces &> /dev/null
 
   if has_failed; then
     echo 'Failed to fix desktop workspaces'
@@ -1014,8 +1028,11 @@ fix_layout () {
     is_not_empty "${new_primary}" && set_primary "${new_primary}"
   fi
 
+  # Give time to xrandr to settle
+  sleep 1
+
   # Fix possible inconsistencies among desktop workspaces
-  sleep 1 && desktop -qs fix workspaces &> /dev/null
+  desktop -qs fix workspaces &> /dev/null
 
   if has_failed; then
     echo 'Failed to fix desktop workspaces'
