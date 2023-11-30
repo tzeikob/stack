@@ -808,6 +808,9 @@ fix_workspaces () {
   # Adopt any possible orphan windows
   bspc wm --adopt-orphans || return 1
 
+  # Set back the wallpaper for any monitor
+  init_wallpaper &> /dev/null
+
   echo 'Workspaces have been fixed'
 }
 
