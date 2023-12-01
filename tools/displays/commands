@@ -393,6 +393,14 @@ set_on () {
     echo 'Failed to activate output'
     return 2
   fi
+
+  # Reset desktop wallpaper so the new monitor gets it
+  desktop -qs init wallpaper &> /dev/null
+
+  if has_failed; then
+    echo 'Failed to set desktop wallpaper'
+    return 2
+  fi
   
   echo "Output ${name} has been activated"
 }
