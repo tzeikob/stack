@@ -12,10 +12,6 @@ show_windows_menu () {
   rofi -show window
 }
 
-show_emoji_menu () {
-  rofi -show emoji
-}
-
 show_power_menu () {
   local options=''
   options+='Shutdown\n'
@@ -45,7 +41,6 @@ case "$1" in
  "apps") show_apps_menu;;
  "run") show_run_menu;;
  "windows") show_windows_menu;;
- "emoji") show_emoji_menu;;
  "power") show_power_menu;;
  *)
   echo 'Ooops, invalid launch menu!'

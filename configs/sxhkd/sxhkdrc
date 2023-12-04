@@ -14,10 +14,6 @@ super + Home
 super + Insert
   ~/.config/rofi/launch windows
 
-# Open emoji icons launcher
-super + e
-  ~/.config/rofi/launch emoji
-
 # Open power manager launcher
 super + End
   ~/.config/rofi/launch power
