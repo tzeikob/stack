@@ -1,160 +1,114 @@
-# Reload me
-super + Escape
-  pkill -USR1 -x sxhkd
+# Close the focused window.
+super + alt + apostrophe
+  bspc node -c
 
-# Open applications launcher
-super + @space
-  ~/.config/rofi/launch apps
+# Kill the focused window.
+super + alt + semicolon
+  bspc node -k
 
-# Open window launcher
-super + Insert
-  ~/.config/rofi/launch windows
+# Set window to tiled, fullscreen, floating.
+super + {bracketright, backslash, bracketleft}
+  bspc node -t {tiled,floating,fullscreen}
 
-# Open power manager launcher
-super + End
-  ~/.config/rofi/launch power
+# Set window to private, locked, sticky, marked.
+super + {p, o, i, u}
+  bspc node -g {marked,locked,sticky,private}
 
-# Quit/restart bspwm
-super + alt + {q,r}
-  bspc {quit,wm -r}
-
-# Close and kill
-super + {_,shift + }w
-  bspc node -{c,k}
-
-# Alternate between the tiled and monocle layout
+# Switch between tiled and monocle layout.
 super + m
   bspc desktop -l next
 
-# Send the newest marked node to the newest preselected node
-super + y
-  bspc node newest.marked.local -n newest.!automatic.local
+# Show and hide the scratchpad termimal.
+super + Return
+  ${HOME}/.config/bspwm/scratchpad
 
-# Swap the current node and the biggest window
-super + g
-  bspc node -s biggest.window
+# Focus the window to the given direction.
+super + {Left, Down, Up, Right}
+  bspc node -f {west,south,north,east}
+  
+# Swap windows to the given direction.
+super + alt + {Left, Down, Up, Right}
+  bspc node -s {west,south,north,east}
 
-# Set the window state
-super + {t,shift + t,s,f}
-  bspc node -t {tiled,pseudo_tiled,floating,fullscreen}
-
-# Set the node flags
-super + ctrl + {m,x,y,z}
-  bspc node -g {marked,locked,sticky,private}
-
-# Focus the node in the given direction
-super + {_,shift + }{h,j,k,l}
-  bspc node -{f,s} {west,south,north,east}
-
-# Focus the node for the given path jump
-super + {p,b,comma,period}
-  bspc node -f @{parent,brother,first,second}
-
-# Focus the next/previous window in the current desktop
-super + {_,shift + }c
-  bspc node -f {next,prev}.local.!hidden.window
-
-# Focus the next/previous desktop in the current monitor
-super + bracket{left,right}
-  bspc desktop -f {prev,next}.local
-
-# Focus the last node/desktop
-super + {grave,Tab}
-  bspc {node,desktop} -f last
-
-# Focus the older or newer node in the focus history
-super + {o,i}
-  bspc wm -h off; \
-  bspc node {older,newer} -f; \
-  bspc wm -h on
-
-# Focus or send to the given desktop
-super + {_,shift + }{1-9,0}
-  bspc {desktop -f,node -d} '^{1-9,10}'
-
-# Preselect the direction
-super + ctrl + {h,j,k,l}
-  bspc node -p {west,south,north,east}
-
-# Preselect the ratio
-super + ctrl + {1-9}
-  bspc node -o 0.{1-9}
-
-# Cancel the preselection for the focused node
-super + ctrl + space
-  bspc node -p cancel
-
-# Cancel the preselection for the focused desktop
-super + ctrl + shift + space
-  bspc query -N -d | xargs -I id -n 1 bspc node id -p cancel
-
-# Expand/contract a window by moving one of its sides inwards/outwards
-super + alt + {Left,Down,Up,Right}
+# Resize a window inwards or outwards.
+super + shift + {Left, Down, Up, Right}
   ~/.config/bspwm/resize {left,down,up,right} 20
 
-# Move a floating window
-super + {Left,Down,Up,Right}
+# Move a floating window.
+super + ctrl + alt + {Left, Down, Up, Right}
   bspc node -v {-20 0,0 20,0 -20,20 0}
 
-# Lock the screen
+# Focus to the next or previous desktop.
+super + ctrl + {Left, Right}
+  bspc desktop -f {prev,next}
+
+# Focus to desktop 1-12.
+super + {1-9, 0, minus, equal}
+  bspc desktop -f '^{1-9,10,11,12}'
+
+# Send window to desktop 1-12.
+super + shift + {1-9, 0, minus, equal}
+  bspc node -d '^{1-9,10,11,12}'
+
+# Show the application launcher.
+super + space
+  ~/.config/rofi/launch apps
+
+# Show the menu of currently open windows.
+super + alt + space
+  ~/.config/rofi/launch windows
+
+# Show the power and logout menu.
+super + ctrl + alt + Escape
+  ~/.config/rofi/launch power
+
+# Lock the screen.
 super + x
   security -qs lock screen
 
-# Blank the screen
-super + ctrl + b
+# Blank the screen.
+super + alt + x
   power -qs blank
 
-# Decrease audio
-XF86AudioLowerVolume
-  amixer set Master 2%-
-super + Page_Down
-  amixer set Master 2%-
-
-# Increase audio
-XF86AudioRaiseVolume
-  amixer set Master 2%+
-super + Page_Up
-  amixer set Master 2%+
-
-# Toggle mute
-XF86AudioMute
-  amixer set Master toggle
-super + Pause
-  amixer set Master toggle
-
-# Decrease brightness
+#! Decrease screen brightness.
 XF86MonBrightnessDown
   xbacklight -dec 10 &
-super + alt + Page_Down
-  xbacklight -dec 10 &
 
-# Increase brightness
+#! Increase screen brightness.
 XF86MonBrightnessUp
   xbacklight -inc 10 &
-super + alt + Page_Up
-  xbacklight -inc 10 &
 
-# Launch terminal emulator
-super + Return
+# Turn audio volume down.
+super + comma
+  amixer set Master 1%-
+XF86AudioLowerVolume
+  amixer set Master 1%-
+
+# Turn audio volume up.
+super + period
+  amixer set Master 1%+
+XF86AudioRaiseVolume
+  amixer set Master 1%+
+
+# Mute or unmute audio volume.
+super + slash
+  amixer set Master toggle
+XF86AudioMute
+  amixer set Master toggle
+
+# Open a new terminal window.
+super + alt + Return
   $TERMINAL
 
-# Toggle on/off the scratchpad termimal
-alt + Return
-  ${HOME}/.config/bspwm/scratchpad
-
-# Launch file manager
-super + n
-  $TERMINAL -e nnn -$NNN_OPTS
-
-# Launch music player
-super + alt + m
-  $TERMINAL -e mocp
-
-# Shot a region of the screen
-super + alt + s
+# Take a screen shot.
+super + Print
   scrot -s $HOME/images/$(date +"%Y-%m-%d-%H-%M-%S")-screenshot.png
 
-# Cast a region of the screen
-super + alt + ctrl + s
+# Start recording your screen.
+super + alt + Print
   $TERMINAL -e screencast -S -n $HOME/videos/$(date +"%Y-%m-%d-%H-%M-%S")-screencast.mkv
+
+# Restart the desktop environment.
+super + ctrl + alt + r
+  desktop -qs restart
 
