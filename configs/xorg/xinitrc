@@ -40,6 +40,5 @@ security -qs init locker &
 power -qs init screensaver &
 cloud -qs mount remotes &
 
-picom &
-exec bspwm
+desktop -qs start
 

@@ -980,3 +980,51 @@ init_bindings () {
   echo 'Keyboard bindings have been launched'
 }
 
+# Starts the desktop user interface by launcing the
+# compositor along with the window manager. In case
+# window manager is already running it restarts it.
+start () {
+  # Start compositor if it is down
+  if is_process_down '^picom.*'; then
+    picom &
+  fi
+  
+  # Restart window manager if it is already up
+  if is_process_up '^bspwm.*'; then
+    restart && return 0 || return $?
+  fi
+  
+  exec bspwm &> /dev/null
+
+  if has_failed; then
+    echo 'Failed to start desktop'
+    return 2
+  fi
+
+  echo 'Desktop has been started'
+}
+
+# Restarts the desktop user interface along with
+# various complementary services like key bindings,
+# wallpaper, scratchpad and etc.
+restart () {
+  # Kill any running picom processes
+  kill_process '^picom.*'
+  
+  # Launch a new instance of picom process
+  picom &> /dev/null &
+  
+  # Dettach it from the current shell to suppress kill outputs
+  disown $! && sleep 1
+
+  # Restart window manager
+  bspc wm -r &> /dev/null
+
+  if has_failed; then
+    echo 'Failed to restart desktop'
+    return 2
+  fi
+
+  echo 'Desktop has been restarted'
+}
+
