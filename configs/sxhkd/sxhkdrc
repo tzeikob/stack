@@ -6,10 +6,6 @@ super + Escape
 super + @space
   ~/.config/rofi/launch apps
 
-# Open run launcher
-super + Home
-  ~/.config/rofi/launch run
-
 # Open window launcher
 super + Insert
   ~/.config/rofi/launch windows

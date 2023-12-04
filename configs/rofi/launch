@@ -4,10 +4,6 @@ show_apps_menu () {
   rofi -show drun
 }
 
-show_run_menu () {
-  rofi -show run
-}
-
 show_windows_menu () {
   rofi -show window
 }
@@ -39,7 +35,6 @@ show_power_menu () {
 
 case "$1" in
  "apps") show_apps_menu;;
- "run") show_run_menu;;
  "windows") show_windows_menu;;
  "power") show_power_menu;;
  *)
