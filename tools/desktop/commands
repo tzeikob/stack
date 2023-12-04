@@ -984,6 +984,10 @@ init_bindings () {
 # compositor along with the window manager. In case
 # window manager is already running it restarts it.
 start () {
+  # Set pointer and background color to defaults
+  hsetroot -solid '#000000'
+  xsetroot -cursor_name left_ptr
+
   # Start compositor if it is down
   if is_process_down '^picom.*'; then
     picom &
