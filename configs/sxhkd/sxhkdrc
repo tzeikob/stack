@@ -58,6 +58,10 @@ super + space
 super + alt + space
   ~/.config/rofi/launch windows
 
+# Show the key bindings menu.
+super + b
+  ~/.config/rofi/launch bindings
+
 # Show the power and logout menu.
 super + ctrl + alt + Escape
   ~/.config/rofi/launch power
