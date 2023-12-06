@@ -42,6 +42,10 @@ super + shift + {Left, Down, Up, Right}
 super + ctrl + alt + {Left, Down, Up, Right}
   bspc node -v {-20 0,0 20,0 -20,20 0}
 
+# Focus to the next or previous floating window.
+super + ctrl + {Prior, Next}
+  bspc node '{prev,next}.local.!focused.!hidden.floating' -f
+
 # Focus to the next or previous desktop.
 super + ctrl + {Left, Right}
   bspc desktop -f {prev,next}
