@@ -1,14 +1,29 @@
 #!/bin/bash
 
+source /opt/stack/utils
+
 # Toggles the scratchpad terminal window on and off,
 # if none running terminal is found, a new instance
 # terminal is launched.
 run () {
+  # Find the currently focused desktop
+  local current_desktop=''
+  current_desktop="$(bspc query -D -d focused)"
+
   local pids=''
   pids="$(xdotool search --class 'scratch')"
 
   for pid in "${pids}"; do
-    bspc node "${pid}" --flag hidden -d focused -f
+    # Find to which desktop the scratchpad window is now
+    local scratchpad_desktop=''
+    scratchpad_desktop="$(bspc query -D -n "${pid}")"
+
+    # Toggle scratchpad on/off or bring it to the currently focused desktop
+    if equals "${current_desktop}" "${scratchpad_desktop}"; then
+      bspc node "${pid}" --flag hidden -d focused -f
+    else
+      bspc node "${pid}" --flag hidden=off -d "${current_desktop}" -f
+    fi
   done
 }
 
