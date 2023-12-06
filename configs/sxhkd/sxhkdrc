@@ -25,7 +25,11 @@ super + Return
 # Focus the window to the given direction.
 super + {Left, Down, Up, Right}
   bspc node -f {west,south,north,east}
-  
+
+# Focus the last focused window.
+super + Tab
+  bspc node -f last
+
 # Swap windows to the given direction.
 super + alt + {Left, Down, Up, Right}
   bspc node -s {west,south,north,east}
@@ -49,6 +53,11 @@ super + {1-9, 0, minus, equal}
 # Send window to desktop 1-12.
 super + shift + {1-9, 0, minus, equal}
   bspc node -d '^{1-9,10,11,12}'
+
+# Swap focused desktop with the given.
+super + ctrl + {1-9, 0, minus, equal}
+  bspc desktop -s '^{1-9,10,11,12}' --follow && \
+    desktop -qs fix workspaces
 
 # Show the application launcher.
 super + space
