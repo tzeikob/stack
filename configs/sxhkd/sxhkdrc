@@ -7,8 +7,8 @@ super + alt + semicolon
   bspc node -k
 
 # Set window to tiled, fullscreen, floating.
-super + {bracketright, backslash, bracketleft}
-  bspc node -t {tiled,floating,fullscreen}
+super + {bracketleft, bracketright, backslash}
+  bspc node -t {tiled,fullscreen,floating}
 
 # Set window to private, locked, sticky, marked.
 super + {p, o, i, u}
