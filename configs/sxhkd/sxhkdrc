@@ -56,8 +56,7 @@ super + shift + {1-9, 0, minus, equal}
 
 # Swap focused desktop with the given.
 super + ctrl + {1-9, 0, minus, equal}
-  bspc desktop -s '^{1-9,10,11,12}' --follow && \
-    desktop -qs fix workspaces
+  ~/.config/bspwm/swap '^{1-9,10,11,12}'
 
 # Show the application launcher.
 super + space
