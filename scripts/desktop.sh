@@ -27,8 +27,6 @@ install_compositor () {
     echo -e "Vsync has been disabled"
   fi
 
-  echo "picom -b" >> ~/.xinitrc
-
   echo "Configuration has been set under ~/.config/picom"
   echo "Compositor has been installed"
 }
@@ -50,7 +48,8 @@ install_window_manager () {
   cp ~/stack/configs/bspwm/resize "$CONFIG_HOME"
   chmod 755 "$CONFIG_HOME/resize"
 
-  echo "exec bspwm" >> ~/.xinitrc
+  cp ~/stack/configs/bspwm/scratchpad "$CONFIG_HOME"
+  chmod 755 "$CONFIG_HOME/scratchpad"
 
   echo "Window manager has been installed"
 }

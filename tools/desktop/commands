@@ -683,3 +683,352 @@ set_vsync () {
   echo "Vsync mode set to ${mode}"
 }
 
+# Adds a new empty workspace to the monitor with
+# the given output name. If no monitor is given
+# the workspace will be assigned to the focused
+# monitor.
+# Arguments:
+#  monitor: the output name of an active monitor
+add_workspace () {
+  local monitor="${1}"
+
+  if is_given "${monitor}"; then
+    local output=''
+    output="$(find_output "${monitor}")"
+
+    if has_failed; then
+      echo "Monitor ${monitor} not found"
+      return 2
+    fi
+  
+    if is_not_connected "${output}"; then
+      echo "Monitor ${monitor} is disconnected"
+      return 2
+    elif is_not_active "${output}"; then
+      echo "Monitor ${monitor} is inactive"
+      return 2
+    fi
+  fi
+
+  # Give to the new workspace the maximun of the existing indices
+  local index=0
+  index="$(bspc query -D --names | awk '$0>x{x=$0};END{print x}')" || return 1
+  index="$(calc "${index} + 1")"
+
+  # Add new workspace to the monitor
+  bspc monitor ${monitor} -a "${index}"
+
+  if has_failed; then
+    echo "Failed to add workspace to the ${monitor:-"current"} monitor"
+    return 2
+  fi
+
+  # Fix workspaces order and possible inconsistencies
+  fix_workspaces &> /dev/null
+
+  if has_failed; then
+    echo "Failed to fix workspaces"
+    return 2
+  fi
+  
+  echo "Workspace added to the ${monitor:-"current"} monitor"
+}
+
+# Removes a workspace with the given index.
+# Arguments:
+#  index: the index name of a workspace
+remove_workspace () {
+  local index="${1}"
+
+  if is_not_given "${index}"; then
+    on_script_mode &&
+      echo 'Missing the workspace index' && return 2
+
+    pick_workspace || return $?
+    is_empty "${REPLY}" && echo 'Workspace index is required' && return 2
+    index="${REPLY}"
+  fi
+
+  if workspace_not_exists "${index}"; then
+    echo 'Unknown or invalid workspace index'
+    return 2
+  fi
+
+  # Remove workspace
+  bspc desktop "${index}" --remove
+
+  if has_failed; then
+    echo "Failed to remove workspace ${index}"
+    return 2
+  fi
+
+  # Fix workspaces order and possible inconsistencies
+  fix_workspaces &> /dev/null
+
+  if has_failed; then
+    echo "Failed to fix workspaces"
+    return 2
+  fi
+
+  echo "Workspace ${index} has been removed"
+}
+
+# Repairs any possible inconsistencies among workspaces
+# like orphan workspaces, misordered slots or dangling
+# inactive monitors.
+fix_workspaces () {
+  # Remove dangling monitors and adopt orphan windows
+  remove_dangling_monitors || return 1
+
+  local monitors=''
+  monitors="$(bspc query --monitors --names)" || return 1
+
+  # Assign workspaces to monitors by order
+  local index=1
+  local monitor=''
+
+  while read -r monitor; do
+    local slots=0
+    slots="$(bspc query -T -m "${monitor}" | jq -cer '.desktops|length')" || return 1
+
+    # Compute the index of the last slot
+    local last=0
+    last="$(calc "${index} + ${slots} - 1")"
+
+    # Generate the index sequence of monitor's workspaces
+    local indices=''
+    indices="$(seq -s ' ' ${index} ${last})"
+    
+    bspc monitor "${monitor}" -d ${indices} || return 1
+
+    # Move to the next workspace index
+    index="$(calc "${last} + 1")"
+  done <<< "${monitors}"
+
+  # Adopt any possible orphan windows
+  bspc wm --adopt-orphans || return 1
+
+  # Set back the wallpaper for any monitor
+  init_wallpaper &> /dev/null
+
+  echo 'Workspaces have been fixed'
+}
+
+# Initializes the desktop workspaces for any active
+# display monitor. This operation removes any extra
+# workspaces given to a monitor.
+init_workspaces () {  
+  # Remove dangling monitors and adopt orphan windows
+  remove_dangling_monitors || return 1
+
+  # Find the primary monitor output
+  local primary=''
+  primary="$(find_outputs 'primary' | jq -cer '.[0]|.device_name')"
+
+  if has_failed; then
+    echo 'Unable to find primary monitor'
+    return 2
+  fi
+  
+  local monitors=''
+  monitors="$(bspc query --monitors --names)" || return 1
+
+  if is_empty "${monitors}"; then
+    echo 'No active monitors have found'
+    return 2
+  fi
+
+  # Remove any possible extra workspaces per monitor
+  local monitor=''
+
+  while read -r monitor; do
+    local slots=2
+
+    # Give four workspace slots to the primary monitor
+    if equals "${monitor}" "${primary}"; then
+      slots=4
+    fi
+
+    # Find the current number of monitor's workspaces
+    local desktops=''
+    desktops="$(bspc query -T -m "${monitor}" | jq -cer '.desktops')" || return 1
+  
+    local current_slots=0
+    current_slots="$(echo "${desktops}" | jq -cer 'length')" || return 1
+
+    local subtract="$(calc "${current_slots} - ${slots}")"
+
+    # Remove extra desktops one by one
+    if is_true "${subtract} > 0"; then
+      local extras=''
+      extras="$(echo "${desktops}" | jq -cer "[.[]|.name]|.[length - ${subtract}:]|.[]")" || return 1
+
+      local extra=''
+      while read -r extra; do
+        bspc desktop "${extra}" -r && bspc wm --adopt-orphans
+      done <<< "${extras}"
+    fi
+  done <<< "${monitors}"
+
+  # Loop again monitors to fill possible empty workspace slots
+  local index=1
+  local monitor=''
+
+  while read -r monitor; do
+    local slots=2
+
+    # Give four workspace slots to the primary monitor
+    if equals "${monitor}" "${primary}"; then
+      slots=4
+    fi
+
+    # Compute the index of the last slot
+    local last=0
+    last="$(calc "${index} + ${slots} - 1")"
+
+    # Generate the index sequence of monitor's workspaces
+    local indices=''
+    indices="$(seq -s ' ' ${index} ${last})"
+
+    # Set desktop workspace and adopt possible orphan windows
+    bspc monitor "${monitor}" -d ${indices} && bspc wm --adopt-orphans
+
+    if has_failed; then
+      echo "Failed to assign workspaces to monitor ${monitor}"
+      return 2
+    fi
+
+    # Move to the next workspace index
+    index="$(calc "${last} + 1")"
+  done <<< "${monitors}"
+
+  # Initialize desktop workspaces every time a new monitor is added
+  local args=()
+
+  bspc subscribe monitor_add | while read -a args; do
+    # Make sure new monitor respects padding configuration
+    bspc config left_padding 0
+    bspc config right_padding 0
+    bspc config bottom_padding 0
+    
+    local query='[.[]|select(.|test("^[0-9]+$"))]|max'
+    local max="$(bspc query -D --names | jq --raw-input . | jq -rcs "${query}")"
+    local a="$(calc "${max} + 1")"
+    local b="$(calc "${a} + 1")"
+
+    bspc monitor "${args[1]}" -d "${a}" "${b}"
+  done &
+
+  echo 'Desktop workspaces have set'
+}
+
+# Initializes the sticky scratchpad terminal window.
+init_scratchpad () {
+  local scratchpad="${TERMINAL} --class scratch,scratch"
+
+  # Kill any other instances of scratchpad terminals
+  kill_process "${scratchpad}"
+
+  # Make sure the scratchpad PWD is set to home  
+  cd "${HOME}"
+
+  # Launch a new instance of scratchpad terminal
+  ${scratchpad} &
+
+  # Dettach it from the current shell to suppress kill outputs
+  disown $! && sleep 1
+
+  if is_process_down "${scratchpad}"; then
+    echo 'Failed to launch scratchpad'
+    return 2
+  fi
+
+  echo 'Scratchpad has been launched'
+}
+
+# Initializes desktop status bars.
+init_bars () {
+  # Use polybar's launch script to restart a new instance
+  ${HOME}/.config/polybar/launch > /dev/null &
+
+  sleep 1
+
+  if is_process_down '^polybar.*'; then
+    echo 'Failed to launch desktop bars'
+    return 2
+  fi
+
+  echo 'Desktop bars have been launched'
+}
+
+# Initializes keyboard bindings.
+init_bindings () {
+  # Kill any running sxhkd processes
+  kill_process '^sxhkd.*'
+  
+  # Launch a new instance of sxhkd process
+  sxhkd &> /dev/null &
+  
+  # Dettach it from the current shell to suppress kill outputs
+  disown $! && sleep 1
+
+  if is_process_down '^sxhkd.*'; then
+    echo 'Failed to launch keyboard bindings'
+    return 2
+  fi
+
+  echo 'Keyboard bindings have been launched'
+}
+
+# Starts the desktop user interface by launcing the
+# compositor along with the window manager. In case
+# window manager is already running it restarts it.
+start () {
+  # Set pointer and background color to defaults
+  hsetroot -solid '#000000'
+  xsetroot -cursor_name left_ptr
+
+  # Start compositor if it is down
+  if is_process_down '^picom.*'; then
+    picom &
+  fi
+  
+  # Restart window manager if it is already up
+  if is_process_up '^bspwm.*'; then
+    restart && return 0 || return $?
+  fi
+  
+  exec bspwm &> /dev/null
+
+  if has_failed; then
+    echo 'Failed to start desktop'
+    return 2
+  fi
+
+  echo 'Desktop has been started'
+}
+
+# Restarts the desktop user interface along with
+# various complementary services like key bindings,
+# wallpaper, scratchpad and etc.
+restart () {
+  # Kill any running picom processes
+  kill_process '^picom.*'
+  
+  # Launch a new instance of picom process
+  picom &> /dev/null &
+  
+  # Dettach it from the current shell to suppress kill outputs
+  disown $! && sleep 1
+
+  # Restart window manager
+  bspc wm -r &> /dev/null
+
+  if has_failed; then
+    echo 'Failed to restart desktop'
+    return 2
+  fi
+
+  echo 'Desktop has been restarted'
+}
+

@@ -1,163 +1,126 @@
-# Reload me
-super + Escape
-  pkill -USR1 -x sxhkd
-
-# Open applications launcher
-super + @space
-  ~/.config/rofi/launch apps
-
-# Open run launcher
-super + Home
-  ~/.config/rofi/launch run
-
-# Open window launcher
-super + Insert
-  ~/.config/rofi/launch windows
-
-# Open emoji icons launcher
-super + e
-  ~/.config/rofi/launch emoji
-
-# Open power manager launcher
-super + End
-  ~/.config/rofi/launch power
-
-# Quit/restart bspwm
-super + alt + {q,r}
-  bspc {quit,wm -r}
-
-# Close and kill
-super + {_,shift + }w
+# Close or kill the focused window.
+super + alt + {apostrophe, semicolon}
   bspc node -{c,k}
 
-# Alternate between the tiled and monocle layout
+# Set window to tiled, fullscreen, floating state.
+super + {bracketleft, bracketright, backslash}
+  bspc node -t {tiled,fullscreen,floating}
+
+# Switch between tiled and monocle layout.
 super + m
   bspc desktop -l next
 
-# Send the newest marked node to the newest preselected node
-super + y
-  bspc node newest.marked.local -n newest.!automatic.local
-
-# Swap the current node and the biggest window
-super + g
-  bspc node -s biggest.window
-
-# Set the window state
-super + {t,shift + t,s,f}
-  bspc node -t {tiled,pseudo_tiled,floating,fullscreen}
-
-# Set the node flags
-super + ctrl + {m,x,y,z}
+# Set window as private, locked, sticky, marked.
+super + {p, o, i, u}
   bspc node -g {marked,locked,sticky,private}
 
-# Focus the node in the given direction
-super + {_,shift + }{h,j,k,l}
-  bspc node -{f,s} {west,south,north,east}
+# Focus the window to the given direction.
+super + {Left, Down, Up, Right}
+  bspc node -f {west,south,north,east}
 
-# Focus the node for the given path jump
-super + {p,b,comma,period}
-  bspc node -f @{parent,brother,first,second}
+# Focus to the next or previous floating window.
+super + ctrl + {Up, Down}
+  bspc node '{prev,next}.local.!focused.!hidden.floating' -f
 
-# Focus the next/previous window in the current desktop
-super + {_,shift + }c
-  bspc node -f {next,prev}.local.!hidden.window
+# Focus the last focused window.
+super + Tab
+  bspc node -f last
 
-# Focus the next/previous desktop in the current monitor
-super + bracket{left,right}
-  bspc desktop -f {prev,next}.local
+# Swap windows to the given direction.
+super + alt + {Left, Down, Up, Right}
+  bspc node -s {west,south,north,east}
 
-# Focus the last node/desktop
-super + {grave,Tab}
-  bspc {node,desktop} -f last
-
-# Focus the older or newer node in the focus history
-super + {o,i}
-  bspc wm -h off; \
-  bspc node {older,newer} -f; \
-  bspc wm -h on
-
-# Focus or send to the given desktop
-super + {_,shift + }{1-9,0}
-  bspc {desktop -f,node -d} '^{1-9,10}'
-
-# Preselect the direction
-super + ctrl + {h,j,k,l}
-  bspc node -p {west,south,north,east}
-
-# Preselect the ratio
-super + ctrl + {1-9}
-  bspc node -o 0.{1-9}
-
-# Cancel the preselection for the focused node
-super + ctrl + space
-  bspc node -p cancel
-
-# Cancel the preselection for the focused desktop
-super + ctrl + shift + space
-  bspc query -N -d | xargs -I id -n 1 bspc node id -p cancel
-
-# Expand/contract a window by moving one of its sides inwards/outwards
-super + alt + {Left,Down,Up,Right}
+# Resize a window inwards or outwards.
+super + shift + {Left, Down, Up, Right}
   ~/.config/bspwm/resize {left,down,up,right} 20
 
-# Move a floating window
-super + {Left,Down,Up,Right}
+# Move a floating window.
+super + ctrl + shift + {Left, Down, Up, Right}
   bspc node -v {-20 0,0 20,0 -20,20 0}
 
-# Lock the screen
+# Focus to the next or previous desktop.
+super + ctrl + {Left, Right}
+  bspc desktop -f {prev,next}
+
+# Focus to desktop 1-12.
+super + {1-9, 0, minus, equal}
+  bspc desktop -f '^{1-9,10,11,12}'
+
+# Send window to desktop 1-12.
+super + alt + {1-9, 0, minus, equal}
+  bspc node -d '^{1-9,10,11,12}'
+
+# Swap focused desktop with the given desktop.
+super + ctrl + {1-9, 0, minus, equal}
+  ~/.config/bspwm/swap '^{1-9,10,11,12}'
+
+# Show and hide the scratchpad termimal.
+super + Return
+  ${HOME}/.config/bspwm/scratchpad
+
+# Open a new terminal window.
+super + alt + Return
+  $TERMINAL
+
+# Show the application launcher.
+super + space
+  ~/.config/rofi/launch apps
+
+# Show the menu of currently open windows.
+super + alt + space
+  ~/.config/rofi/launch windows
+
+# Show the key bindings menu.
+super + b
+  ~/.config/rofi/launch bindings
+
+# Show the power and logout menu.
+super + Escape
+  ~/.config/rofi/launch power
+
+# Lock the screen.
 super + x
   security -qs lock screen
 
-# Blank the screen
-super + ctrl + b
+# Blank the screen.
+super + alt + x
   power -qs blank
 
-# Decrease audio
-XF86AudioLowerVolume
-  amixer set Master 2%-
-super + Page_Down
-  amixer set Master 2%-
-
-# Increase audio
-XF86AudioRaiseVolume
-  amixer set Master 2%+
-super + Page_Up
-  amixer set Master 2%+
-
-# Toggle mute
-XF86AudioMute
-  amixer set Master toggle
-super + Pause
-  amixer set Master toggle
-
-# Decrease brightness
+#! Decrease screen brightness.
 XF86MonBrightnessDown
   xbacklight -dec 10 &
-super + alt + Page_Down
-  xbacklight -dec 10 &
 
-# Increase brightness
+#! Increase screen brightness.
 XF86MonBrightnessUp
   xbacklight -inc 10 &
-super + alt + Page_UP
-  xbacklight -inc 10 &
 
-# Launch terminal emulator
-super + Return
-  $TERMINAL
+# Turn audio volume down.
+super + comma
+  amixer set Master 1%-
+XF86AudioLowerVolume
+  amixer set Master 1%-
 
-# Launch file manager
-super + n
-  $TERMINAL -e nnn -$NNN_OPTS
+# Turn audio volume up.
+super + period
+  amixer set Master 1%+
+XF86AudioRaiseVolume
+  amixer set Master 1%+
 
-# Launch music player
-super + alt + m
-  $TERMINAL -e mocp
+# Mute or unmute audio volume.
+super + slash
+  amixer set Master toggle
+XF86AudioMute
+  amixer set Master toggle
 
-# Shot a region of the screen
-super + alt + s
+# Take a screen shot.
+super + Print
   scrot -s $HOME/images/$(date +"%Y-%m-%d-%H-%M-%S")-screenshot.png
 
-# Cast a region of the screen
-super + alt + ctrl + s
+# Start recording your screen.
+super + alt + Print
   $TERMINAL -e screencast -S -n $HOME/videos/$(date +"%Y-%m-%d-%H-%M-%S")-screencast.mkv
+
+# Restart the desktop environment.
+super + ctrl + alt + r
+  desktop -qs restart
+

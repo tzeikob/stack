@@ -4,16 +4,35 @@ show_apps_menu () {
   rofi -show drun
 }
 
-show_run_menu () {
-  rofi -show run
-}
-
 show_windows_menu () {
   rofi -show window
 }
 
-show_emoji_menu () {
-  rofi -show emoji
+show_key_bindings () {
+  awk '{
+    if ($0 ~ /^# /) {
+      text=$0
+      gsub(/\043 /, "", text)
+
+      getline combo
+      combo=tolower(combo)
+
+      gsub(/bracketleft/, "[", combo)
+      gsub(/bracketright/, "]", combo)
+      gsub(/comma/, ",", combo)
+      gsub(/period/, ".", combo)
+      gsub(/semicolon/, "\073", combo)
+      gsub(/apostrophe/, "\047", combo)
+      gsub(/minus/, "-", combo)
+      gsub(/equal/, "=", combo)
+      gsub(/backslash/, "\\", combo)
+      gsub(/{/, "", combo)
+      gsub(/}/, "", combo)
+
+      printf "%-45s  %-30s\n", combo, text
+    }
+  }' "${HOME}/.config/sxhkd/sxhkdrc" |
+   rofi -dmenu -i -p 'Search' -theme-str "window {width: 60%;}"
 }
 
 show_power_menu () {
@@ -43,9 +62,8 @@ show_power_menu () {
 
 case "$1" in
  "apps") show_apps_menu;;
- "run") show_run_menu;;
  "windows") show_windows_menu;;
- "emoji") show_emoji_menu;;
+ "bindings") show_key_bindings;;
  "power") show_power_menu;;
  *)
   echo 'Ooops, invalid launch menu!'

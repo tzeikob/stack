@@ -905,3 +905,33 @@ calc () {
   echo "${result}"
 }
 
+# Checks if any processes with the given command
+# are running.
+# Arguments:
+#  re: any regular expression
+is_process_up () {
+  local re="${1}"
+  
+  local query=".command|test(\"${re}\")"
+  query=".[]|select(${query})"
+  
+  ps aux | grep -v 'jq' | jc --ps | jq -cer "${query}" &> /dev/null || return 1
+}
+
+# An inverse version of is_up.
+is_process_down () {
+  is_process_up "${1}" && return 1 || return 0
+}
+
+# Kills all the processes the command of which match
+# the given regular expression.
+# Arguments:
+#  re: any regular expression
+kill_process () {
+  local re="${1}"
+
+  pkill --full "${re}" &> /dev/null
+
+  sleep 1
+}
+

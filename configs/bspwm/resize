@@ -1,33 +1,53 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
-SIDE=$1
-DELTA=${2:-"10"}
+set -o pipefail
 
-case $SIDE in
-  "right")
-    ORIENTATION="horizontal"
-    DELTA=$((1 * DELTA));;
-  "left")
-    ORIENTATION="horizontal"
-    DELTA=$((-1 * DELTA));;
-  "up")
-    ORIENTATION="vertical"
-    DELTA=$((-1 * DELTA));;
-  "down")
-    ORIENTATION="vertical"
-    DELTA=$((1 * DELTA));;
-esac
+source /opt/stack/utils
 
-X=0; Y=0;
+# Resizes the windows according to the given direction
+# and delta factors.
+# Arguments:
+#  side:  left, right, up, down
+#  delta: an integer number
+run () {
+  local side="${1}"
+  local delta="${2:-"10"}"
 
-if [ "$ORIENTATION" = "horizontal" ]; then
-  X=$DELTA
-  DIRECTION="right"
-  OPPOSITE="left"
-elif [ "$ORIENTATION" = "vertical" ]; then
-  Y=$DELTA
-  DIRECTION="top"
-  OPPOSITE="bottom"
-fi
+  local orientation=''
 
-bspc node -z "$DIRECTION" "$X" "$Y" || bspc node -z "$OPPOSITE" "$X" "$Y"
+  case "${side}" in
+    'right')
+      orientation='horizontal'
+      delta=$(calc "1 * ${delta}");;
+    'left')
+      orientation='horizontal'
+      delta=$(calc "-1 * ${delta}");;
+    'up')
+      orientation='vertical'
+      delta=$(calc "-1 * ${delta}");;
+    'down')
+      orientation='vertical'
+      delta=$(calc "1 * ${delta}");;
+  esac
+
+  local x=0
+  local y=0
+  local direction=''
+  local opposite=''
+
+  if equals "${orientation}" 'horizontal'; then
+    x=${delta}
+    direction='right'
+    opposite='left'
+  elif equals "${orientation}" 'vertical'; then
+    y=${delta}
+    direction='top'
+    opposite='bottom'
+  fi
+
+  bspc node -z "${direction}" "${x}" "${y}" ||
+    bspc node -z "${opposite}" "${x}" "${y}"
+}
+
+run "$@"
+

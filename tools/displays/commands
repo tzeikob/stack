@@ -393,6 +393,14 @@ set_on () {
     echo 'Failed to activate output'
     return 2
   fi
+
+  # Reset desktop wallpaper so the new monitor gets it
+  desktop -qs init wallpaper &> /dev/null
+
+  if has_failed; then
+    echo 'Failed to set desktop wallpaper'
+    return 2
+  fi
   
   echo "Output ${name} has been activated"
 }
@@ -435,6 +443,17 @@ set_off () {
 
   if has_failed; then
     echo 'Failed to deactivate output'
+    return 2
+  fi
+
+  # Give time to xrandr to settle
+  sleep 1
+
+  # Fix possible inconsistencies among desktop workspaces
+  desktop -qs fix workspaces &> /dev/null
+
+  if has_failed; then
+    echo 'Failed to fix desktop workspaces'
     return 2
   fi
   
@@ -698,6 +717,25 @@ mirror_output () {
     return 2
   fi
 
+  # Give time to xrandr to settle
+  sleep 1
+
+  # Remove all targets from window manager and adopt orphan windows
+  local monitor=''
+
+  for monitor in "${targets[@]}"; do
+    bspc monitor "${monitor}" -r || return 1
+    bspc wm --adopt-orphans || return 1
+  done
+
+  # Fix any possible inconsistencies among left desktop workspaces
+  desktop -qs fix workspaces &> /dev/null
+
+  if has_failed; then
+    echo 'Failed to fix desktop workspaces'
+    return 2
+  fi
+
   # Convert targets into a string of comma separated output names
   targets="$(jq -ncer '$ARGS.positional|join(", ")' --args -- "${targets[@]}")" || return 1
   
@@ -791,6 +829,17 @@ set_layout () {
 
   if has_failed; then
     echo "Failed to set layout ${mode,,}"
+    return 2
+  fi
+
+  # Give time to xrandr to settle
+  sleep 1
+
+  # Fix possible inconsistencies among desktop workspaces
+  desktop -qs fix workspaces &> /dev/null
+
+  if has_failed; then
+    echo 'Failed to fix desktop workspaces'
     return 2
   fi
 
@@ -913,6 +962,17 @@ restore_layout () {
     return 2
   fi
 
+  # Give time to xrandr to settle
+  sleep 1
+
+  # Fix possible inconsistencies among desktop workspaces
+  desktop -qs fix workspaces &> /dev/null
+
+  if has_failed; then
+    echo 'Failed to fix desktop workspaces'
+    return 2
+  fi
+
   echo 'Layout has been restored'
 }
 
@@ -974,6 +1034,17 @@ fix_layout () {
     new_primary="$(echo "${outputs}" | jq -cr "${query}")"
 
     is_not_empty "${new_primary}" && set_primary "${new_primary}"
+  fi
+
+  # Give time to xrandr to settle
+  sleep 1
+
+  # Fix possible inconsistencies among desktop workspaces
+  desktop -qs fix workspaces &> /dev/null
+
+  if has_failed; then
+    echo 'Failed to fix desktop workspaces'
+    return 2
   fi
 
   echo 'Layout has been fixed'

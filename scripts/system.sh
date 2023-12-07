@@ -186,9 +186,9 @@ install_packages () {
     base-devel pacman-contrib pkgstats grub mtools dosfstools ntfs-3g exfatprogs gdisk fuseiso veracrypt \
     parted curl wget udisks2 udiskie gvfs gvfs-smb bash-completion \
     man-db man-pages texinfo cups cups-pdf cups-filters usbutils bluez bluez-utils unzip terminus-font \
-    vim nano git tree arch-audit atool zip xz unace p7zip gzip lzop feh \
+    vim nano git tree arch-audit atool zip xz unace p7zip gzip lzop feh hsetroot \
     bzip2 unrar dialog inetutils dnsutils openssh nfs-utils openbsd-netcat ipset \
-    neofetch age imagemagick gpick fuse2 rclone smartmontools glib2 jq jc sequoia-sq xf86-input-wacom bc \
+    neofetch age imagemagick gpick fuse2 rclone smartmontools glib2 jq jc sequoia-sq xf86-input-wacom bc xdotool \
     $([ "$UEFI" = "yes" ] && echo 'efibootmgr') || exit 1
 
   echo -e "\nReplacing iptables with nft tables..."

@@ -1,12 +1,22 @@
-#!/bin/sh
+#!/bin/bash
 
-WID=$1
-CLASS=$2
+set -o pipefail
 
-case "$CLASS" in
-  *)
-    case "$(xprop -id "$WID" | awk '/WM_WINDOW_ROLE/ {print $3}')" in
-      '"GtkFileChooserDialog"' )
-        echo rectangle=900x500+0+0;;
-    esac;;
-esac
+source /opt/stack/utils
+
+# Sets the size of any file chooser dialog.
+# Arguments:
+#  wid: the id of the window
+rule_file_chooser () {
+  local wid="${1}"
+
+  local class=''
+  class="$(xprop -id "${wid}" | awk '/WM_WINDOW_ROLE/ {print $3}')"
+  
+  if equals "${class}" '"GtkFileChooserDialog"'; then
+    echo 'rectangle=900x500+0+0'
+  fi
+}
+
+rule_file_chooser "$@"
+
