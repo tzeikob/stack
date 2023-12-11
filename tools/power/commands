@@ -260,7 +260,7 @@ set_screensaver () {
     echo 'Failed to save screen saver to settings'
 }
 
-# Initializes the screen saver to the interval saved
+# Initiates the screen saver to the interval saved
 # in the settings file.
 init_screensaver () {
   local interval=5

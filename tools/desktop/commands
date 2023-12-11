@@ -814,7 +814,7 @@ fix_workspaces () {
   echo 'Workspaces have been fixed'
 }
 
-# Initializes the desktop workspaces for any active
+# Initiates the desktop workspaces for any active
 # display monitor. This operation removes any extra
 # workspaces given to a monitor.
 init_workspaces () {  
@@ -922,7 +922,7 @@ init_workspaces () {
   echo 'Desktop workspaces have set'
 }
 
-# Initializes the sticky scratchpad terminal window.
+# Initiates the sticky scratchpad terminal window.
 init_scratchpad () {
   local scratchpad="${TERMINAL} --class scratch,scratch"
 
@@ -946,7 +946,7 @@ init_scratchpad () {
   echo 'Scratchpad has been launched'
 }
 
-# Initializes desktop status bars.
+# Initiates desktop status bars.
 init_bars () {  
   # Terminate already running bar instances
   polybar-msg cmd quit &> /dev/null
@@ -982,7 +982,7 @@ init_bars () {
   echo 'Desktop bars have been launched'
 }
 
-# Initializes keyboard bindings.
+# Initiates keyboard bindings.
 init_bindings () {
   # Kill any running sxhkd processes
   kill_process '^sxhkd.*'

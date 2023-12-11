@@ -87,7 +87,7 @@ set_screen_locker () {
     echo 'Failed to save screen locker into settings'
 }
 
-# Initializes the screen locker from
+# Initiates the screen locker from
 # the settings stored in settings file.
 init_screen_locker () {
   local interval=8
