@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -o pipefail
-
 source /opt/stack/utils
 
 # Sets the size of any file chooser dialog.

@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -o pipefail
-
 desktop -qs init workspaces
 desktop -qs init wallpaper &
 desktop -qs init scratchpad &
