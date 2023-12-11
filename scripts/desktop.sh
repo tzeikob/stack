@@ -202,7 +202,7 @@ install_notifier () {
 install_launchers () {
   echo "Setting up the launchers via rofi..."
 
-  sudo pacman -S --noconfirm rofi rofi-emoji xsel || exit 1
+  sudo pacman -S --noconfirm rofi || exit 1
 
   local CONFIG_HOME=~/.config/rofi
   mkdir -p "$CONFIG_HOME"
@@ -211,6 +211,7 @@ install_launchers () {
   chmod 644 "$CONFIG_HOME/config.rasi"
 
   cp ~/stack/configs/rofi/launch "$CONFIG_HOME"
+  chmod +x "${CONFIG_HOME}/launch"
 
   echo "Launchers has been installed"
 }
