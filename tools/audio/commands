@@ -144,13 +144,15 @@ restart () {
     echo 'Pulse socket restarted' &&
   systemctl --user restart pipewire-pulse.service &&
     sleep 0.5 &&
-    echo 'Pulse service restarted' &&
-    desktop -qs init bars &> /dev/null
+    echo 'Pulse service restarted'
 
   if has_failed; then
     echo 'Failed to restart audio services'
     return 2
   fi
+
+  # Try to restart status bars
+  desktop -qs init bars &> /dev/null
 
   echo 'Audio services has been restarted'
 }
