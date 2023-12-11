@@ -48,6 +48,9 @@ install_window_manager () {
   cp ~/stack/configs/bspwm/resize "$CONFIG_HOME"
   chmod 755 "$CONFIG_HOME/resize"
 
+  cp ~/stack/configs/bspwm/swap "$CONFIG_HOME"
+  chmod 755 "$CONFIG_HOME/swap"
+
   cp ~/stack/configs/bspwm/scratchpad "$CONFIG_HOME"
   chmod 755 "$CONFIG_HOME/scratchpad"
 
@@ -155,6 +158,18 @@ install_bars () {
 
   cp ~/stack/configs/polybar/config.ini "$CONFIG_HOME"
   chmod 644 "$CONFIG_HOME/config.ini"
+  
+  cp ~/stack/configs/polybar/modules.ini "$CONFIG_HOME"
+  chmod 644 "$CONFIG_HOME/modules.ini"
+  
+  cp ~/stack/configs/polybar/theme.ini "$CONFIG_HOME"
+  chmod 644 "$CONFIG_HOME/theme.ini"
+
+  local SCRIPTS_HOME="${CONFIG_HOME}/scripts"
+  mkdir -p "${SCRIPTS_HOME}"
+
+  cp ~/stack/configs/polybar/scripts/time "${SCRIPTS_HOME}"
+  chmod +x "${SCRIPTS_HOME}/time"
 
   echo "Status bars have been installed"
 }
