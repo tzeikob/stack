@@ -145,7 +145,7 @@ restart () {
   systemctl --user restart pipewire-pulse.service &&
     sleep 0.5 &&
     echo 'Pulse service restarted' &&
-  (~/.config/polybar/launch &> /dev/null &)
+    desktop -qs init bars &> /dev/null
 
   if has_failed; then
     echo 'Failed to restart audio services'

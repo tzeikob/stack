@@ -156,10 +156,6 @@ install_bars () {
   cp ~/stack/configs/polybar/config.ini "$CONFIG_HOME"
   chmod 644 "$CONFIG_HOME/config.ini"
 
-  cp ~/stack/configs/polybar/launch "$CONFIG_HOME"
-  chmod 755 "$CONFIG_HOME/launch"
-
-  echo "Polybar launcher script has been installed"
   echo "Status bars have been installed"
 }
 
