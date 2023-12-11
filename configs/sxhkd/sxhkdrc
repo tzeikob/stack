@@ -32,7 +32,7 @@ super + alt + {Left, Down, Up, Right}
 
 # Resize a window inwards or outwards.
 super + shift + {Left, Down, Up, Right}
-  ~/.config/bspwm/resize {left,down,up,right} 20
+  ${HOME}/.config/bspwm/resize {left,down,up,right} 20
 
 # Move a floating window.
 super + ctrl + shift + {Left, Down, Up, Right}
@@ -52,7 +52,7 @@ super + alt + {1-9, 0, minus, equal}
 
 # Swap focused desktop with the given desktop.
 super + ctrl + {1-9, 0, minus, equal}
-  ~/.config/bspwm/swap '^{1-9,10,11,12}'
+  ${HOME}/.config/bspwm/swap '^{1-9,10,11,12}'
 
 # Show and hide the scratchpad termimal.
 super + Return
@@ -64,19 +64,19 @@ super + alt + Return
 
 # Show the application launcher.
 super + space
-  ~/.config/rofi/launch apps
+  ${HOME}/.config/rofi/launch apps
 
 # Show the menu of currently open windows.
 super + alt + space
-  ~/.config/rofi/launch windows
+  ${HOME}/.config/rofi/launch windows
 
 # Show the key bindings menu.
 super + b
-  ~/.config/rofi/launch bindings
+  ${HOME}/.config/rofi/launch bindings
 
 # Show the power and logout menu.
 super + Escape
-  ~/.config/rofi/launch power
+  ${HOME}/.config/rofi/launch power
 
 # Lock the screen.
 super + x
