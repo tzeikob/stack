@@ -954,23 +954,26 @@ init_bars () {
   # Start new loggin section
   echo "---" | tee -a /tmp/polybar.log > /dev/null
 
-  # Launch bar for the primary monitor
+  # Launch top/bottom bars for the primary monitor
   local primary=''
   primary="$(polybar -m | awk -F':' '/primary/{print $1}')"
 
   MONITOR="${primary}" polybar -r primary 2>&1 |
     tee -a /tmp/polybar.log > /dev/null & disown
+  
+  MONITOR="${primary}" polybar -r secondary 2>&1 |
+    tee -a /tmp/polybar.log > /dev/null & disown
 
-  # Launch bar for each secondary monitor
-  local secondaries=''
-  secondaries="$(polybar -m | awk -F':' '!/primary/{print $1}')"
+  # Launch bar for each other monitor
+  local others=''
+  others="$(polybar -m | awk -F':' '!/primary/{print $1}')"
 
   local monitor=''
 
   while read -r monitor; do
-   MONITOR="${monitor}" polybar -r secondary 2>&1 |
+   MONITOR="${monitor}" polybar -r tertiary 2>&1 |
       tee -a /tmp/polybar.log > /dev/null & disown
-  done <<< "${secondaries}"
+  done <<< "${others}"
 
   sleep 1
 
