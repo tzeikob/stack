@@ -1,8 +1,12 @@
 #!/bin/bash
 
 # Print the current time endlessly
-while true; do
-  echo "$(date +"%T.%2N")"
-  sleep 0.08
-done
+run () {
+  while true; do
+    echo "$(date +"%T.%2N")"
+    sleep 0.08
+  done
+}
+
+run "$@"
 
