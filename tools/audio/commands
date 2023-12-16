@@ -324,6 +324,10 @@ set_profile () {
     echo 'Failed to set profile'
     return 2
   fi
+
+  # Update audio status bars
+  polybar-msg hook speakers 1 &> /dev/null &
+  polybar-msg hook microphone 1 &> /dev/null &
   
   echo "Profile set to ${profile_name}"
 }
@@ -373,6 +377,13 @@ set_default () {
   if has_failed; then
     echo "Failed to set active ${type}"
     return 2
+  fi
+
+  # Update audio status bars
+  if equals "${type}" 'output'; then
+    polybar-msg hook speakers 1 &> /dev/null &
+  else
+    polybar-msg hook microphone 1 &> /dev/null &
   fi
 
   echo "Active ${type} set to module ${name}"
@@ -460,6 +471,13 @@ turn_default () {
     return 2
   fi
 
+  # Update audio status bars
+  if equals "${type}" 'output'; then
+    polybar-msg hook speakers 1 &> /dev/null &
+  else
+    polybar-msg hook microphone 1 &> /dev/null &
+  fi
+
   echo "Active ${type} volume ${action} ${volume}%"
 }
 
@@ -498,6 +516,13 @@ toggle_default () {
     return 2
   fi
 
+  # Update audio status bars
+  if equals "${type}" 'output'; then
+    polybar-msg hook speakers 1 &> /dev/null &
+  else
+    polybar-msg hook microphone 1 &> /dev/null &
+  fi
+  
   echo "Mute of active ${type} toggled"  
 }
 
@@ -564,6 +589,13 @@ set_mute () {
   if is_true "${failed}"; then
     echo "Some ${type} modules failed to ${status}"
     return 2
+  fi
+
+  # Update audio status bars
+  if equals "${type}" 'output'; then
+    polybar-msg hook speakers 1 &> /dev/null &
+  else
+    polybar-msg hook microphone 1 &> /dev/null &
   fi
   
   echo "All ${type} modules set to ${status}"
