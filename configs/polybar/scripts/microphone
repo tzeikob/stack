@@ -1,0 +1,32 @@
+#!/bin/bash
+
+set -o pipefail
+
+source /opt/stack/utils
+
+# Returns the current audio input's volume.
+run () {
+  # Find the current input source name
+  local name=''
+  name="$(pactl get-default-source)" || echo 'Err!'
+  
+  local query=".[]|select(.name == \"${name}\")"
+  
+  local source=''
+  source="$(pactl --format=json list sources | jq -cer "${query}")" || echo 'Err!'
+  
+  local mute=''
+  mute=$(echo "${source}" | jq -cr '.mute')
+
+  # Report muted and return
+  if is_true "${mute}"; then
+    echo 'Muted'
+    return 0		
+  fi
+
+  # Otherwise resolve current volume
+  echo "${source}" | jq -cr '.volume|map(.)|.[0].value_percent'
+}
+
+run "$@"
+

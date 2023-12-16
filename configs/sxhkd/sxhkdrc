@@ -94,23 +94,35 @@ XF86MonBrightnessDown
 XF86MonBrightnessUp
   xbacklight -inc 10 &
 
-# Turn audio volume down.
+# Turn speakers volume down.
 super + comma
-  amixer set Master 1%-
-XF86AudioLowerVolume
-  amixer set Master 1%-
+  audio -qs turn output down
+XF86AudioLowerVolume  
+  audio -qs turn output down
 
-# Turn audio volume up.
+# Turn speakers volume up.
 super + period
-  amixer set Master 1%+
+  audio -qs turn output up
 XF86AudioRaiseVolume
-  amixer set Master 1%+
+  audio -qs turn output up
 
-# Mute or unmute audio volume.
+# Mute or unmute speakers volume.
 super + slash
-  amixer set Master toggle
+  audio -qs toggle output
 XF86AudioMute
-  amixer set Master toggle
+  audio -qs toggle output
+
+# Turn microphone volume down.
+super + alt + comma
+  audio -qs turn input down
+
+# Turn microphone volume up.
+super + alt + period
+  audio -qs turn input up
+
+# Mute or unmute microphone volume.
+super + alt + slash
+  audio -qs toggle input
 
 # Take a screen shot.
 super + Print

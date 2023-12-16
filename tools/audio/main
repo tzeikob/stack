@@ -48,6 +48,7 @@ show_help () {
     '' '' \
     'turn output|input <volume>' 'Turn the volume of active output/input to,' \
     '' 'up, down, mute, unmute or a percentage value.' \
+    'toggle output/input' 'Toggle output/input to mute/unmute.' \
     'mute outputs|inputs' 'Mute all outputs or inputs.' \
     'unmute outputs|inputs' 'Unmute all outputs or inputs.' \
     '' '' \
@@ -79,6 +80,8 @@ execute () {
     'set input') set_default input "${3}";;
     'turn output') turn_default output "${3}";;
     'turn input') turn_default input "${3}";;
+    'toggle output') toggle_default output;;
+    'toggle input') toggle_default input;;
     'mute outputs') set_mute output 1;;
     'mute inputs') set_mute input 1;;
     'unmute outputs') set_mute output 0;;

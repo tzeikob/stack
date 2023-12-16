@@ -383,7 +383,7 @@ set_default () {
 # or down the volume increases or decreases by 5%.
 # Arguments:
 #  type:   output or input
-#  volume: up, down, mute, unmute or any value in [0,150] 
+#  volume: up, down, mute, unmute or any value in [0,150]
 turn_default () {
   local type="${1}"
   local volume="${2}"
@@ -445,10 +445,10 @@ turn_default () {
   local action='set to'
 
   if equals "${volume}" 'up'; then
-    volume='+5'
+    volume='+1'
     action='pumped up by'
   elif equals "${volume}" 'down'; then
-    volume='-5'
+    volume='-1'
     action='lowered by'
   fi
 
@@ -461,6 +461,44 @@ turn_default () {
   fi
 
   echo "Active ${type} volume ${action} ${volume}%"
+}
+
+# Toggles the volume of the active output or input module
+# to mute/unmute.
+# Arguments:
+#  type: output or input
+toggle_default () {
+  local type="${1}"
+
+  if is_not_given "${type}"; then
+    echo 'Missing the module type'
+    return 2
+  elif is_not_module_type "${type}"; then
+    echo 'Invalid module type'
+    return 2
+  fi
+
+  local object='sink'
+  if equals "${type}" 'input'; then
+    object='source'
+  fi
+
+  local module=''
+  module="$(pactl get-default-${object})"
+
+  if has_failed; then
+    echo "Unable to read the active ${type}"
+    return 2
+  fi
+  
+  pactl set-${object}-mute "${module}" toggle
+
+  if has_failed; then
+    echo "Failed to toggle mute of active ${type}"
+    return 2
+  fi
+
+  echo "Mute of active ${type} toggled"  
 }
 
 # Sets all output or input audio modules

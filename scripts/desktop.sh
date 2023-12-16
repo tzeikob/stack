@@ -171,6 +171,9 @@ install_bars () {
   cp ~/stack/configs/polybar/scripts/time "${SCRIPTS_HOME}"
   chmod +x "${SCRIPTS_HOME}/time"
 
+  cp ~/stack/configs/polybar/scripts/microphone "${SCRIPTS_HOME}"
+  chmod +x "${SCRIPTS_HOME}/microphone"
+
   echo "Status bars have been installed"
 }
 
