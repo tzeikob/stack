@@ -324,10 +324,6 @@ set_profile () {
     echo 'Failed to set profile'
     return 2
   fi
-
-  # Update audio status bars
-  polybar-msg hook speakers 1 &> /dev/null &
-  polybar-msg hook microphone 1 &> /dev/null &
   
   echo "Profile set to ${profile_name}"
 }
@@ -379,13 +375,6 @@ set_default () {
     return 2
   fi
 
-  # Update audio status bars
-  if equals "${type}" 'output'; then
-    polybar-msg hook speakers 1 &> /dev/null &
-  else
-    polybar-msg hook microphone 1 &> /dev/null &
-  fi
-
   echo "Active ${type} set to module ${name}"
 }
 
@@ -422,17 +411,9 @@ turn_default () {
   if equals "${type}" 'input'; then
     object='source'
   fi
-
-  local module=''
-  module="$(pactl get-default-${object})"
-
-  if has_failed; then
-    echo "Unable to read the active ${type}"
-    return 2
-  fi
   
   if equals "${volume}" 'mute'; then
-    pactl set-${object}-mute "${module}" 1
+    pactl set-${object}-mute "@DEFAULT_${object^^}@" 1
 
     if has_failed; then
       echo "Failed to set active ${type} to mute"
@@ -442,7 +423,7 @@ turn_default () {
     echo "Active ${type} volume set to mute"
     return 0
   elif equals "${volume}" 'unmute'; then
-    pactl set-${object}-mute "${module}" 0
+    pactl set-${object}-mute "@DEFAULT_${object^^}@" 0
 
     if has_failed; then
       echo "Failed to set active ${type} to unmute"
@@ -463,67 +444,15 @@ turn_default () {
     action='lowered by'
   fi
 
-  pactl set-${object}-mute "${module}" 0 &&
-  pactl set-${object}-volume "${module}" "${volume}%"
+  pactl set-${object}-mute "@DEFAULT_${object^^}@" 0
+  pactl set-${object}-volume  "@DEFAULT_${object^^}@" "${volume}%"
 
   if has_failed; then
     echo "Failed to set volume of active ${type})"
     return 2
   fi
 
-  # Update audio status bars
-  if equals "${type}" 'output'; then
-    polybar-msg hook speakers 1 &> /dev/null &
-  else
-    polybar-msg hook microphone 1 &> /dev/null &
-  fi
-
   echo "Active ${type} volume ${action} ${volume}%"
-}
-
-# Toggles the volume of the active output or input module
-# to mute/unmute.
-# Arguments:
-#  type: output or input
-toggle_default () {
-  local type="${1}"
-
-  if is_not_given "${type}"; then
-    echo 'Missing the module type'
-    return 2
-  elif is_not_module_type "${type}"; then
-    echo 'Invalid module type'
-    return 2
-  fi
-
-  local object='sink'
-  if equals "${type}" 'input'; then
-    object='source'
-  fi
-
-  local module=''
-  module="$(pactl get-default-${object})"
-
-  if has_failed; then
-    echo "Unable to read the active ${type}"
-    return 2
-  fi
-  
-  pactl set-${object}-mute "${module}" toggle
-
-  if has_failed; then
-    echo "Failed to toggle mute of active ${type}"
-    return 2
-  fi
-
-  # Update audio status bars
-  if equals "${type}" 'output'; then
-    polybar-msg hook speakers 1 &> /dev/null &
-  else
-    polybar-msg hook microphone 1 &> /dev/null &
-  fi
-  
-  echo "Mute of active ${type} toggled"  
 }
 
 # Sets all output or input audio modules
@@ -589,13 +518,6 @@ set_mute () {
   if is_true "${failed}"; then
     echo "Some ${type} modules failed to ${status}"
     return 2
-  fi
-
-  # Update audio status bars
-  if equals "${type}" 'output'; then
-    polybar-msg hook speakers 1 &> /dev/null &
-  else
-    polybar-msg hook microphone 1 &> /dev/null &
   fi
   
   echo "All ${type} modules set to ${status}"

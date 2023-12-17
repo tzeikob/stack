@@ -96,33 +96,33 @@ XF86MonBrightnessUp
 
 # Turn speakers volume down.
 super + comma
-  audio -qs turn output down
-XF86AudioLowerVolume  
-  audio -qs turn output down
+  amixer set Master 1%-
+XF86AudioLowerVolume
+  amixer set Master 1%-
 
 # Turn speakers volume up.
 super + period
-  audio -qs turn output up
+  amixer set Master 1%+
 XF86AudioRaiseVolume
-  audio -qs turn output up
+  amixer set Master 1%+
 
 # Mute or unmute speakers volume.
 super + slash
-  audio -qs toggle output
+  amixer set Master toggle
 XF86AudioMute
-  audio -qs toggle output
+  amixer set Master toggle
 
 # Turn microphone volume down.
 super + alt + comma
-  audio -qs turn input down
+  amixer set Capture 1%-
 
 # Turn microphone volume up.
 super + alt + period
-  audio -qs turn input up
+  amixer set Capture 1%+
 
 # Mute or unmute microphone volume.
 super + alt + slash
-  audio -qs toggle input
+  amixer set Capture toggle
 
 # Take a screen shot.
 super + Print
