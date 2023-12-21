@@ -220,7 +220,8 @@ install_display_server () {
   pacman -S --noconfirm xorg xorg-xinit xorg-xrandr xorg-xdpyinfo arandr || exit 1
 
   cp /root/stack/configs/xorg/xorg.conf /etc/X11
-  cp /root/stack/configs/xorg/keyboard.conf /etc/X11/xorg.conf.d/00-keyboard.conf
+  cp /root/stack/configs/xorg/keyboard.conf /etc/X11/xorg.conf.d/00-keyboard.conf  
+  cp /root/stack/configs/xorg/locale.conf /etc/profile.d
 
   local stack_config_home="/home/${USERNAME}/.config/stack/" 
   mkdir -p "${stack_config_home}"

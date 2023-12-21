@@ -96,21 +96,25 @@ set_locale () {
   # Keep only the first part of locale
   name="$(echo "${name}" | cut -d ' ' -f 1)"
 
-  # Set system language variable
-  sudo sed -i "s/\(LANG=\).*/\1${name}/" /etc/locale.conf &&
-    sudo sed -i "s/\(LANGUAGE=\).*/\1${name}:en:C/" /etc/locale.conf &&
-    unset LANG LANGUAGE
+  # Clear locales.conf file
+  sudo rm -f /etc/locale.conf
+  sudo touch /etc/locale.conf
 
   # Set system locale variables
   local vars=(
-    CTYPE NUMERIC TIME COLLATE MONETARY MESSAGES PAPER
-    NAME ADDRESS TELEPHONE MEASUREMENT IDENTIFICATION
+    LANG LANGUAGE LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES
+    LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT LC_IDENTIFICATION
   )
 
   local var=''
   for var in "${vars[@]}"; do
-    sudo sed -i "s/\(${var}=\).*/\1${name}/" /etc/locale.conf && unset "${var}"
+    echo "${var}=${name}" | sudo tee -a /etc/locale.conf &> /dev/null
+    unset ${var}
   done
+
+  # Make sure LC_ALL is unset
+  echo "LC_ALL=" | sudo tee -a /etc/locale.conf &> /dev/null
+  unset LC_ALL
   
   source /etc/profile.d/locale.sh
 
@@ -119,7 +123,8 @@ set_locale () {
     return 2
   fi
 
-  echo "System locale set to ${name} (re-login)"
+  echo "System locale set to ${name}"
+  echo 'Please restart so changes take effect!'
 }
 
 # Sets a keyboard layout options.
