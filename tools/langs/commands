@@ -56,14 +56,15 @@ set_keymap () {
     return 2
   fi
 
-  sudo localectl set-keymap --no-convert "${map}"
+  save_keymap_to_settings "${map}" &&
+   apply_langs_settings
   
   if has_failed; then
-    echo 'Failed to set keyboard map'
+    echo "Failed to set keyboard map ${map}"
     return 2
   fi
 
-  echo "Keyboard map set to ${map}"
+  echo "Keyboard map set to ${map}"  
 }
 
 # Sets the language and all locale variables to
@@ -143,23 +144,15 @@ set_options () {
     return 2
   fi
 
-  local layouts=''
-  layouts="$(cat /etc/X11/xorg.conf.d/00-keyboard.conf |
-    awk '/XkbLayout/{print $3}' | tr -d '"')" || return 1
-
-  local model=''
-  model="$(cat /etc/X11/xorg.conf.d/00-keyboard.conf |
-    awk '/XkbModel/{print $3}' | tr -d '"')" || return 1
-
-  sudo localectl --no-convert set-x11-keymap "${layouts}" "${model}" '' "${value}" &&
-   setxkbmap -layout "${layouts}" -model "${model}" -option "${value}"
-
+  save_options_to_settings "${value}" &&
+   apply_langs_settings
+  
   if has_failed; then
     echo 'Failed to set keyboard layout options'
     return 2
   fi
 
-  echo "Keyboard layout options ${value} set"
+  echo "Keyboard layout options ${value} set"  
 }
 
 # Sets the keyboard model to the given model.
@@ -184,23 +177,15 @@ set_model () {
     return 2
   fi
 
-  local layouts=''
-  layouts="$(cat /etc/X11/xorg.conf.d/00-keyboard.conf |
-    awk '/XkbLayout/{print $3}' | tr -d '"')" || return 1
-
-  local options=''
-  options="$(cat /etc/X11/xorg.conf.d/00-keyboard.conf |
-    awk '/XkbOptions/{print $3}' | tr -d '"')" || return 1
-
-  sudo localectl --no-convert set-x11-keymap "${layouts}" "${name}" '' "${options}" &&
-   setxkbmap -layout "${layouts}" -model "${value}" -option "${options}"
+  save_model_to_settings "${name}" &&
+   apply_langs_settings
   
   if has_failed; then
     echo 'Failed to set keyboard model'
     return 2
   fi
 
-  echo "Keyboard model set to ${name}"
+  echo "Keyboard model set to ${name}"  
 }
 
 # Adds a locale to the system locales.
@@ -280,11 +265,13 @@ remove_locale () {
 
 # Adds a new layout to keyboard layouts.
 # Arguments:
-#  code: a layout code
+#  code:    a layout code
+#  variant: a variant of the layout or default
 add_layout () {
   authenticate_user || return $?
 
   local code="${1}"
+  local variant="${2}"
 
   if is_not_given "${code}"; then
     on_script_mode &&
@@ -299,193 +286,135 @@ add_layout () {
     echo 'Invalid or unknown layout code'
     return 2
   fi
+  
+  if is_not_given "${variant}"; then
+    on_script_mode &&
+      echo 'Missing the layout variant' && return 2
 
-  local layouts=''
-  layouts="$(cat /etc/X11/xorg.conf.d/00-keyboard.conf |
-    awk '/XkbLayout/{print $3}' | tr -d '"')" || return 1
+    pick_layout_variant "${code}" || return $?
+    is_empty "${REPLY}" && echo 'Layout variant is required' && return 2
+    variant="${REPLY}"
+  fi
 
-  if match "${layouts}" "${code}"; then
-    echo "Layout ${code} is already added"
+  if is_not_layout_variant "${code}" "${variant}"; then
+    echo 'Invalid or unknown layout variant'
     return 2
   fi
 
-  if is_not_empty "${layouts}"; then
-    layouts="${layouts},${code}"
-  else
-    layouts="${code}"
+  if is_layout_installed "${code}" "${variant}"; then
+    echo "Layout ${code}${variant:+ ${variant}} is already added"
+    return 2
   fi
 
-  local model=''
-  model="$(cat /etc/X11/xorg.conf.d/00-keyboard.conf |
-    awk '/XkbModel/{print $3}' | tr -d '"')" || return 1
-
-  local options=''
-  options="$(cat /etc/X11/xorg.conf.d/00-keyboard.conf |
-    awk '/XkbOptions/{print $3}' | tr -d '"')" || return 1
-
-  sudo localectl --no-convert set-x11-keymap "${layouts}" "${model}" '' "${options}" &&
-   setxkbmap -layout "${layouts}" -model "${model}" -option "${options}"
+  save_layout_to_settings "${code}" "${variant}" &&
+   apply_langs_settings
 
   if has_failed; then
-    echo 'Failed to add layout'
+    echo "Failed to add layout ${code}${variant:+ ${variant}}"
     return 2
   fi
 
-  echo "Layout ${code} has been added"
+  echo "Layout ${code}${variant:+ ${variant}} has been added"
 }
 
 # Removes a layout from keyboard layouts.
 # Arguments:
-#  code: a layout code
+#  code:    a layout code
+#  variant: a variant of the layout
 remove_layout () {
   authenticate_user || return $?
 
   local code="${1}"
+  local variant="${2}"
 
-  if is_not_given "${code}"; then
-    on_script_mode &&
-      echo 'Missing the layout code' && return 2
-
-    pick_layout installed || return $?
-    is_empty "${REPLY}" && echo 'Layout code is required' && return 2
-    code="${REPLY}"
+  if on_script_mode; then
+    is_not_given "${code}" && echo 'Missing the layout code' && return 2
+    is_not_given "${variant}" && echo 'Missing the layout variant' && return 2
+  else
+    if is_not_given "${code}" && is_not_given "${variant}"; then
+      pick_installed_layout || return $?
+      is_empty "${REPLY}" && echo 'Layout is required' && return 2
+      code="$(echo ${REPLY} | cut -d ':' -f 1)"
+      variant="$(echo ${REPLY} | cut -d ':' -f 2)"
+    fi
   fi
 
   if is_not_layout "${code}"; then
     echo 'Invalid or unknown layout code'
     return 2
-  elif equals "${code}" 'us'; then
+  elif equals "${code}" 'us' && equals "${variant}" 'default'; then
     echo 'Default layout cannot be removed'
     return 2
-  fi
-
-  local layouts=''
-  layouts="$(cat /etc/X11/xorg.conf.d/00-keyboard.conf |
-      awk '/XkbLayout/{print $3}' | tr -d '"')" || return 1
-  
-  if equals "${layouts}" "${code}"; then
-    echo 'Cannot remove the only layout'
-    return 2
-  elif not_match "${layouts}" "${code}"; then
-    echo "Layout ${code} is already removed"
+  elif is_layout_not_installed "${code}" "${variant}"; then
+    echo "Layout ${code}${variant:+ ${variant}} is not installed"
     return 2
   fi
 
-  if match "${layouts}" "${code},"; then
-    layouts=${layouts//${code},/}
-  else
-    layouts=${layouts//,${code}/}
-  fi
-
-  local model=''
-  model="$(cat /etc/X11/xorg.conf.d/00-keyboard.conf |
-    awk '/XkbModel/{print $3}' | tr -d '"')" || return 1
-
-  local options=''
-  options="$(cat /etc/X11/xorg.conf.d/00-keyboard.conf |
-    awk '/XkbOptions/{print $3}' | tr -d '"')" || return 1
-
-  sudo localectl --no-convert set-x11-keymap "${layouts}" "${model}" '' "${options}" &&
-   setxkbmap -layout "${layouts}" -model "${model}" -option "${options}"
+  delete_layout_from_settings "${code}" "${variant}" &&
+   apply_langs_settings
 
   if has_failed; then
-    echo 'Failed to remove layout'
+    echo "Failed to remove layout ${code}${variant:+ ${variant}}"
     return 2
   fi
 
-  echo "Layout ${code} has been removed"
+  echo "Layout ${code}${variant:+ ${variant}} has been removed"
 }
 
 # Sets the order of the currently installed layouts to the
 # given layouts.
 # Arguments:
-#  codes: a list of layout codes
+#  layouts: a list of layout <code:variant> pairs
 order_layouts () {
   authenticate_user || return $?
 
-  local codes=("$@")
+  local layouts=("$@")
 
-  # Collect currently installed layouts in json array
-  local layouts=''
-  layouts="$(cat /etc/X11/xorg.conf.d/00-keyboard.conf | awk '/XkbLayout/{
-    gsub(/"/,"",$0);split($3,a,",");
-    output=""
-    for (i=1; i<=length(a); i++) {
-      output=output"{\"key\":\""a[i]"\",\"value\":\""a[i]"\"}"
-      if (i < length(a)) output=output","
-    }
-    print "["output"]"
-  }')" || return 1
-  
-  local len=0
-  len="$(count "${layouts}")" || return 1
-
-  if is_true "${len} = 0"; then
-    echo 'No layouts have set yet'
-    return 2
-  elif is_true "${len} = 1"; then
-    echo 'Only one layout was found'
-    return 2
-  fi
-
-  if is_true "${#codes[@]} = 0"; then
+  if is_true "${#layouts[@]} = 0"; then
     on_script_mode &&
-      echo 'Missing layout codes' && return 2
+      echo 'Missing layouts pairs' && return 2
 
-    pick_many 'Pick layout codes by order:' "${layouts}" horizontal || return $?
-    is_empty "${REPLY}" && echo 'Layout codes are required' && return 2
-    local selected="${REPLY}"
-
-    # Convert selection from json to array
-    readarray -t codes < <(echo "${selected}" | jq -cr '.[]')
+    pick_installed_layouts || return $?
+    is_empty "${REPLY}" && echo 'Layouts are required' && return 2
+    layouts="${REPLY}"
+  else
+    # Convert given layouts args to json array
+    layouts="$(jq -ncer '$ARGS.positional' --args -- "${layouts[@]}")" || return 1
   fi
   
-  # Convert layout codes to json array
-  codes="$(jq -ncer '$ARGS.positional' --args -- "${codes[@]}")" || return 1
+  # Check for duplicated values in given layouts
+  local query='(.|unique|length) as $len'
+  query+=' | if $len != (.|length) then true else false end'
 
-  # Check for duplicated values in layout codes
-  local query='length as $l|unique|if length != $l then true else false end'
+  local has_dups='false'
+  has_dups="$(echo "${layouts}" | jq -cr "${query}")"
 
-  local has_duplications=''
-  has_duplications="$(echo "${codes}" | jq -cr "${query}")" || return 1
+  if is_true "${has_dups}"; then
+    echo 'Layouts should not have duplicated values'
+    return 2
+  fi
+  
+  # Check if given layouts match the currently installed ones
+  local query='[.layouts[]|"\(.code):\(.variant)"] as $cl'
+  query+=' | ($cl - $l | length) as $len1'
+  query+=' | ($l - $cl | length) as $len2'
+  query+=' | if $len1 == 0 and $len2 == 0 then $l|join(" ") else empty end'
 
-  if is_true "${has_duplications}"; then
-    echo 'Layout codes should be unique values'
+  layouts="$(jq -cr --argjson l "${layouts}" "${query}" "${LANGS_SETTINGS}")" || return 1
+
+  if is_empty "${layouts}"; then
+    echo 'Layouts do not match with current layouts'
     return 2
   fi
 
-  # Check if given layout codes match the currently installed ones
-  local query=''
-  query+='([.[]|.key]|sort_by(.)) as $a'
-  query+=' |($o|sort_by(.)) as $b'
-  query+=' |if $a == $b then true else false end'
-
-  local match=''
-  match="$(echo "${layouts}" | jq -cr --argjson o "${codes}" "${query}")" || return 1
-
-  if is_false "${match}"; then
-    echo 'Layout codes do not match with current layouts'
-    return 2
-  fi
-
-  local model=''
-  model="$(cat /etc/X11/xorg.conf.d/00-keyboard.conf |
-    awk '/XkbModel/{print $3}' | tr -d '"')" || return 1
-
-  local options=''
-  options="$(cat /etc/X11/xorg.conf.d/00-keyboard.conf |
-    awk '/XkbOptions/{print $3}' | tr -d '"')" || return 1
-
-  codes="$(echo "${codes}" | jq -cer 'join(",")')"
-
-  sudo localectl --no-convert set-x11-keymap "${codes}" "${model}" '' "${options}" &&
-   setxkbmap -layout "${codes}" -model "${model}" -option "${options}"
+  save_layouts_to_settings ${layouts} &&
+   apply_langs_settings
 
   if has_failed; then
     echo 'Failed to set layouts order'
     return 2
   fi
 
-  echo "Layouts order set to ${codes}"
+  echo "Layouts order set to ${layouts}"
 }
 

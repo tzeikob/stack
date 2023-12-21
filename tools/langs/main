@@ -38,9 +38,9 @@ show_help () {
     'remove locale <name>' 'Remove a locale from the system locales.' \
     'set locale <name>' 'Set the locale of the system.' \
     '' '' \
-    'add layout <code>' 'Add a keyboard layout.' \
-    'remove layout <code>' 'Remove a keyboard layout.' \
-    'order layouts <codes>' 'Set the order of keyboard layouts.' \
+    'add layout <code> <variant>' 'Add a keyboard layout.' \
+    'remove layout <code> <variant>' 'Remove a keyboard layout.' \
+    'order layouts <code:variant>...' 'Set the order of keyboard layouts.' \
     '' '' \
     'set keymap <map>' 'Set the keyboard virtual console keymap.' \
     'set options <value>' 'Set a keyboard layout options.' \
@@ -63,8 +63,8 @@ execute () {
     'add locale') add_locale "${3}";;
     'remove locale') remove_locale "${3}";;
     'set locale') set_locale "${3}";;
-    'add layout') add_layout "${3}";;
-    'remove layout') remove_layout "${3}";;
+    'add layout') add_layout "${3}" "${4}";;
+    'remove layout') remove_layout "${3}" "${4}";;
     'order layouts') order_layouts "${@:3}";;
     'set keymap') set_keymap "${3}";;
     'set options') set_options "${3}";;

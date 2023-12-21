@@ -222,6 +222,11 @@ install_display_server () {
   cp /root/stack/configs/xorg/xorg.conf /etc/X11
   cp /root/stack/configs/xorg/keyboard.conf /etc/X11/xorg.conf.d/00-keyboard.conf
 
+  local stack_config_home="/home/${USERNAME}/.config/stack/" 
+  mkdir -p "${stack_config_home}"
+  cp /root/stack/configs/xorg/langs.json "${stack_config_home}"
+  chown -R "${USERNAME}":"${USERNAME}" "${stack_config_home}"
+
   echo "Server configurations have been saved under /etc/X11"
 
   local OLD_IFS=$IFS && IFS=","

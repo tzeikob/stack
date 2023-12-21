@@ -4,6 +4,8 @@ set -o pipefail
 
 source /opt/stack/utils
 
+LANGS_SETTINGS="${CONFIG_HOME}/langs.json"
+
 # Shows a menu asking the user to select a keyboard map.
 # Outputs:
 #  A menu of keyboard maps.
@@ -206,31 +208,13 @@ is_not_keyboard_model () {
 }
 
 # Shows a menu asking the user to select a keyboard layout.
-# If status is given options will be limited to this value.
-# Arguments:
-#  status: installed or none
 # Outputs:
 #  A menu of keyboard layouts.
 pick_layout () {
-  local status="${1}"
-
   local layouts=''
-
-  if equals "${status}" 'installed'; then
-    layouts="$(cat /etc/X11/xorg.conf.d/00-keyboard.conf |
-      awk '/XkbLayout/{print $3}' | tr -d '"' | tr ',' '\n' | awk '{
-      print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
-    }')" || return 1
-
-    if is_empty "${layouts}"; then
-      echo 'No installed layouts have found'
-      return 2
-    fi
-  else
-    layouts="$(localectl --no-pager list-x11-keymap-layouts | awk '{
-      print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
-    }')" || return 1
-  fi
+  layouts="$(localectl --no-pager list-x11-keymap-layouts | awk '{
+    print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
+  }')" || return 1
   
   # Remove the extra comma delimiter from last element
   layouts="${layouts:+${layouts::-1}}"
@@ -238,6 +222,56 @@ pick_layout () {
   layouts="[${layouts}]"
 
   pick_one 'Select a layout code:' "${layouts}" vertical || return $?
+}
+
+# Shows a menu asking the user to select an installed
+# keyboard layout.
+# Outputs:
+#  A menu of keyboard layouts.
+pick_installed_layout () {
+  local query=''
+  query='[.layouts[]|{"key": "\(.code):\(.variant)", "value": "\(.code):\(.variant)"}]'
+  
+  local layouts=''
+  layouts="$(jq -c "${query}" "${LANGS_SETTINGS}")"
+  
+  pick_one 'Select a layout:' "${layouts}" vertical || return $?
+}
+
+# Shows a menu asking the user to select all installed
+# keyboard layouts in a specific order.
+# Outputs:
+#  A menu of keyboard layouts.
+pick_installed_layouts () {
+  local query=''
+  query='[.layouts[]|{"key": "\(.code):\(.variant)", "value": "\(.code):\(.variant)"}]'
+  
+  local layouts=''
+  layouts="$(jq -c "${query}" "${LANGS_SETTINGS}")"
+  
+  pick_many 'Select layouts in order:' "${layouts}" vertical || return $?
+}
+
+# Shows a menu asking the user to select a variant
+# of the given keyboard layout code.
+# Arguments:
+#  code: a keyboard layout code
+# Outputs:
+#  A menu of keyboard layout variants.
+pick_layout_variant () {
+  local code="${1}"
+
+  local variants='{"key": "default", "value": "default"},'
+  variants+="$(localectl --no-pager list-x11-keymap-variants "${code}" | awk '{
+    print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
+  }')" || return 1
+  
+  # Remove the extra comma delimiter from last element
+  variants="${variants:+${variants::-1}}"
+
+  variants="[${variants}]"
+
+  pick_one 'Select a layout variant:' "${variants}" vertical || return $?
 }
 
 # Checks if the keyboard layout with the given code is valid.
@@ -264,5 +298,234 @@ is_layout () {
 # An inverse version of is_layout.
 is_not_layout () {
   is_layout "${1}" && return 1 || return 0
+}
+
+# Checks if the keyboard layout with the given code
+# and variant is valid.
+# Arguments:
+#  code:    a layout code
+#  variant: a variant of the layout
+# Returns:
+#  0 if layout variant is valid otherwise 1.
+is_layout_variant () {
+  local code="${1}"
+  local variant="${2}"
+
+  if equals "${variant}" 'default'; then
+    return 0
+  fi
+
+  localectl --no-pager list-x11-keymap-variants "${code}" | grep -qw "${variant}"
+  
+  if has_failed; then
+    return 1
+  fi
+
+  return 0
+}
+
+# An inverse version of is_layout_variant.
+is_not_layout_variant () {
+  is_layout_variant "${1}" "${2}" && return 1 || return 0
+}
+
+# Saves the keymap into settings.
+# Arguments:
+#  keymap: a keyboard map
+save_keymap_to_settings () {
+  local keymap="${1}"
+
+  local settings='{}'
+
+  if file_exists "${LANGS_SETTINGS}"; then
+    settings="$(jq -e ".keymap = \"${keymap}\"" "${LANGS_SETTINGS}")" || return 1
+  else
+    settings="$(echo "{\"keymap\": \"${keymap}\"}" | jq -e '.')" || return 1
+  fi
+
+  mkdir -p "${CONFIG_HOME}"
+  echo "${settings}" > "${LANGS_SETTINGS}"
+}
+
+# Saves the keyboard model into settings.
+# Arguments:
+#  model: a keyboard model
+save_model_to_settings () {
+  local model="${1}"
+
+  local settings='{}'
+
+  if file_exists "${LANGS_SETTINGS}"; then
+    settings="$(jq -e ".model = \"${model}\"" "${LANGS_SETTINGS}")" || return 1
+  else
+    settings="$(echo "{\"model\": \"${model}\"}" | jq -e '.')" || return 1
+  fi
+
+  mkdir -p "${CONFIG_HOME}"
+  echo "${settings}" > "${LANGS_SETTINGS}"
+}
+
+# Saves the keyboard options value into settings.
+# Arguments:
+#  options: a keyboard options value
+save_options_to_settings () {
+  local options="${1}"
+
+  local settings='{}'
+
+  if file_exists "${LANGS_SETTINGS}"; then
+    settings="$(jq -e ".options = \"${options}\"" "${LANGS_SETTINGS}")" || return 1
+  else
+    settings="$(echo "{\"options\": \"${options}\"}" | jq -e '.')" || return 1
+  fi
+
+  mkdir -p "${CONFIG_HOME}"
+  echo "${settings}" > "${LANGS_SETTINGS}"
+}
+
+# Saves the keyboard layout into settings.
+# Arguments:
+#  code:    a keyboard layout code
+#  variant: a variant of the given layout code
+save_layout_to_settings () {
+  local code="${1}"
+  local variant="${2}"
+
+  local layout="{ \"code\": \"${code}\", \"variant\": \"${variant}\"}"
+
+  local settings='{}'
+
+  if file_exists "${LANGS_SETTINGS}"; then
+    local layouts=''
+    layouts="$(jq 'if .layouts then .layouts else empty end' "${LANGS_SETTINGS}")"
+
+    if is_not_empty "${layouts}"; then
+      local query=".[]|select(.code == \"${code}\" and .variant == \"${variant}\")"
+
+      local match=''
+      match="$(echo "${layouts}" | jq -cr "${query}")"
+
+      # Skip and return if the layout is already saved
+      if is_not_empty "${match}"; then
+        return 0
+      fi
+      
+      settings="$(jq -e ".layouts += [${layout}]" "${LANGS_SETTINGS}")" || return 1
+    else
+      settings="$(jq -e ".layouts = [${layout}]" "${LANGS_SETTINGS}")" || return 1
+    fi
+  else
+    settings="$(echo "{\"layouts\": [${layout}]}" | jq -e '.')" || return 1
+  fi
+
+  mkdir -p "${CONFIG_HOME}"
+  echo "${settings}" > "${LANGS_SETTINGS}"
+}
+
+# Replaces the keyboard layouts into settings.
+# Arguments:
+#  layouts: a list of <code:variant> layout pairs
+save_layouts_to_settings () {
+  local layouts=("$@")
+
+  # Convert arguments to json array
+  layouts="$(jq -ncer '$ARGS.positional' --args -- "${layouts[@]}")" || return 1
+
+  # Build the layouts settings object from <code>:<variant> pairs
+  local query='[.[]|split(":")|{code: .[0], variant: .[1]}]'
+
+  layouts="$(echo "${layouts}" | jq -cer "${query}")" || return 1
+
+  local settings='{}'
+
+  if file_exists "${LANGS_SETTINGS}"; then
+    settings="$(jq -e ".layouts = ${layouts}" "${LANGS_SETTINGS}")" || return 1
+  else
+    settings="$(echo "{\"layouts\": ${layouts}}" | jq -e '.')" || return 1
+  fi
+
+  mkdir -p "${CONFIG_HOME}"
+  echo "${settings}" > "${LANGS_SETTINGS}"
+}
+
+# Deletes the keyboard layout from settings.
+# Arguments:
+#  code:    a keyboard layout code
+#  variant: a variant of the given layout code
+delete_layout_from_settings () {
+  local code="${1}"
+  local variant="${2}"
+
+  if file_not_exists "${LANGS_SETTINGS}"; then
+    return 0
+  fi
+
+  local query='.code == $c and .variant == $v'
+  query="if .layouts then .layouts[]|select(${query}) else empty end"
+
+  local settings=''
+  settings="$(jq -e --arg c "${code}" --arg v "${variant}" "del(${query})" "${LANGS_SETTINGS}")" || return 1
+
+  echo "${settings}" > "${LANGS_SETTINGS}"
+}
+
+# Reads the langs settings file and applies them
+# to actual localectl and setxkbmap settings.
+apply_langs_settings () {
+  local settings=''
+  settings="$(jq -cr '.' "${LANGS_SETTINGS}")"
+  
+  # Colect layout codes in the same given order
+  local query='[.layouts[].code] | join(",")'
+
+  local codes=''
+  codes="$(echo "${settings}" | jq -cr "${query}")"
+
+  # Collect layout variants in the same order codes are given
+  local query='[.layouts[].variant | if . == "default" then "" else . end] | join(",")'
+
+  local variants=''
+  variants="$(echo "${settings}" | jq -cr "${query}")"
+  
+  local model=''
+  model="$(echo "${settings}" | jq -cr '.model')"
+
+  local options=''
+  options="$(echo "${settings}" | jq -cr '.options')"
+  
+  local map=''
+  map="$(echo "${settings}" | jq -cr '.keymap')"
+
+  sudo localectl set-keymap --no-convert "${map}" &&
+   sudo localectl --no-convert set-x11-keymap "${codes}" "${model}" "${variants}" "${options}" &&
+   setxkbmap -layout "${codes}" -variant "${variants}" -model "${model}" -option "${options}"
+}
+
+# Checks if the given layout is already installed.
+# Arguments:
+#  code:    a layout code
+#  variant: a variant of layout
+# Returns:
+#  0 if layout is installed otherwise 1.
+is_layout_installed () {
+  local code="${1}"
+  local variant="${2}"
+  
+  local query=''
+  query+=".layouts[] | select(.code == \"${code}\" and .variant == \"${variant}\")"
+
+  local match=''
+  match="$(jq -cr "${query}" "${LANGS_SETTINGS}")"
+
+  if is_empty "${match}"; then
+    return 1
+  fi
+
+  return 0
+}
+
+# An inversed alias of is_layout_installed.
+is_layout_not_installed () {
+  is_layout_installed "${1}" "${2}" && return 1 || return 0
 }
 
