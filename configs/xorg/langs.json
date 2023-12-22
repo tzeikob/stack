@@ -1,4 +1,5 @@
 {
+  "keymap": "us",
   "model": "pc105",
   "options": "grp:alt_shift_toggle",
   "layouts": [

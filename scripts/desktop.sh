@@ -5,7 +5,7 @@ set -Eeo pipefail
 install_packages () {
   echo -e "\nInstalling various system packages..."
 
-  yay -S --noconfirm --removemake digimend-kernel-drivers-dkms-git || exit 1
+  yay -S --noconfirm --removemake digimend-kernel-drivers-dkms-git xkblayout-state-git || exit 1
   
   echo "Packages have been installed"
 }
