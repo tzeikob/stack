@@ -9,17 +9,24 @@ source /opt/stack/langs/helpers
 # Outputs:
 #  A verbose list of text data.
 show_status () {
-  localectl status | awk -F':' '{
-    i=index($0,":")
-    if (i > 0) {
-      l=$1
-      gsub(/^[ \t]+|[ \t]+$/, "", l)
-      split(l,a," ")
-      printf "%-8s %s\n", a[2]":", substr($0, i+1)
+  localectl status | awk '{
+    label=""
+    
+    if ($0 ~ /^.* VC Keymap/) {
+      label="Keymap"
+    } else if ($0 ~ /^.* X11 Layout/) {
+      label="Layouts"
+    } else if ($0 ~ /^.* X11 Variant/) {
+      label="Variants"
+    } else if ($0 ~ /^.* X11 Options/) {
+      label="Options"
+    } else if ($0 ~ /^.* X11 Model/) {
+      label="Model"
     } else {
-      gsub(/ /,"")
-      printf "%-8s %s\n", "", " "$0
+      next
     }
+
+    printf "%-10s %s\n", label":", $3
   }'
 
   local locales=''
@@ -30,7 +37,29 @@ show_status () {
     locales="${locales::-2}"
   fi
 
-  echo "Locales:  ${locales}"
+  echo "Locales:   ${locales}"
+
+  echo
+  locale | awk -F'=' '{
+    switch ($1) {
+      case "LANG": $1="Lang"; break;
+      case "LC_CTYPE": $1="Type"; break;
+      case "LC_NUMERIC": $1="Numeric"; break;
+      case "LC_TIME": $1="Time"; break;
+      case "LC_COLLATE": $1="Collate"; break;
+      case "LC_MONETARY": $1="Money"; break;
+      case "LC_MESSAGES": $1="Message"; break;
+      case "LC_PAPER": $1="Paper"; break;
+      case "LC_NAME": $1="Name"; break;
+      case "LC_ADDRESS": $1="Address"; break;
+      case "LC_TELEPHONE": $1="Telephone"; break;
+      case "LC_MEASUREMENT": $1="Measures"; break;
+      case "LC_IDENTIFICATION": $1="Ids"; break;
+      default: next;
+    }
+    
+    printf "%-10s %s\n", $1":", $2
+  }'
 }
 
 # Sets the keymap of the console keyboard to the
@@ -96,26 +125,30 @@ set_locale () {
   # Keep only the first part of locale
   name="$(echo "${name}" | cut -d ' ' -f 1)"
 
-  # Clear locales.conf file
-  sudo rm -f /etc/locale.conf
-  sudo touch /etc/locale.conf
-
   # Set system locale variables
-  local vars=(
-    LANG LANGUAGE LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES
-    LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT LC_IDENTIFICATION
-  )
+  printf '%s\n' \
+    "LANG=${name}" \
+    "LANGUAGE=${name}:en:C" \
+    "LC_CTYPE=${name}" \
+    "LC_NUMERIC=${name}" \
+    "LC_TIME=${name}" \
+    "LC_COLLATE=${name}" \
+    "LC_MONETARY=${name}" \
+    "LC_MESSAGES=${name}" \
+    "LC_PAPER=${name}" \
+    "LC_NAME=${name}" \
+    "LC_ADDRESS=${name}" \
+    "LC_TELEPHONE=${name}" \
+    "LC_MEASUREMENT=${name}" \
+    "LC_IDENTIFICATION=${name}" \
+    "LC_ALL=" | sudo tee /etc/locale.conf &> /dev/null
 
-  local var=''
-  for var in "${vars[@]}"; do
-    echo "${var}=${name}" | sudo tee -a /etc/locale.conf &> /dev/null
-    unset ${var}
-  done
+  # Unset previous set variables
+  unset LANG LANGUAGE LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE \
+        LC_MONETARY LC_MESSAGES LC_PAPER LC_NAME LC_ADDRESS \
+        LC_TELEPHONE LC_MEASUREMENT LC_IDENTIFICATION LC_ALL
 
-  # Make sure LC_ALL is unset
-  echo "LC_ALL=" | sudo tee -a /etc/locale.conf &> /dev/null
-  unset LC_ALL
-  
+  # Reload locale env variables
   source /etc/profile.d/locale.sh
 
   if has_failed; then
