@@ -10,7 +10,7 @@ source /opt/stack/langs/helpers
 #  A verbose list of text data.
 show_status () {
   local current_layout=''
-  current_layout="$(xkblayout-state print "%n %s %v")" || return 1
+  current_layout="$(xkblayout-state print "%s:%v [%n]")" || return 1
 
   localectl status | awk -v layout="${current_layout}" '{
     label=""
@@ -458,5 +458,97 @@ order_layouts () {
   fi
 
   echo "Layouts order set to ${layouts}"
+}
+
+# Gives an alias name to the layout with the
+# given code and variant.
+# Arguments:
+#  code:    a layout code
+#  variant: a layout variant
+#  alias:   an alias name
+name_layout () {
+  authenticate_user || return $?
+
+  local code="$1"
+  local variant="$2"
+  local alias="$3"
+
+  if is_not_given "${code}"; then
+    on_script_mode &&
+     echo 'Missing the layout code' && return 2
+    
+    pick_installed_layout || return $?
+    is_empty "${REPLY}" && echo 'Layout is required' && return 2
+    code="$(echo ${REPLY} | cut -d ':' -f 1)"
+    variant="$(echo ${REPLY} | cut -d ':' -f 2)"
+  fi
+
+  if is_not_layout "${code}"; then
+    echo 'Invalid or unknown layout code'
+    return 2
+  fi
+
+  if is_not_given "${variant}"; then
+    echo 'Missing the layout variant'
+    return 2
+  fi
+
+  if is_layout_not_installed "${code}" "${variant}"; then
+    echo "Layout ${code}${variant:+ ${variant}} is not installed"
+    return 2
+  fi
+
+  if is_not_given "${alias}"; then
+    on_script_mode &&
+     echo 'Missing the alias name' && return 2
+    
+    ask 'Enter an alias name:' || return $?
+    is_empty "${REPLY}" && echo 'Alias name is required' && return 2
+    alias="${REPLY}"
+  fi
+
+  local symbol_file="/usr/share/X11/xkb/symbols/${code}"
+
+  # Backup the symbol file if no yet done
+  if file_not_exists "${symbol_file}.bkp"; then
+    sudo cp "${symbol_file}" "${symbol_file}.bkp"
+  fi
+
+  # Find the corresponding name line in the layout's symbol file
+  local index=0
+  local index="$(awk -v v="${variant}" '{
+    re="^[ \t]*xkb_symbols[ \t]*\""v"\""
+
+    if (v == "default") {
+      re="default[ \t]*partial"
+    }
+
+    if ($0 ~ re) {
+     while (!($0 ~ /^[ \t]*name\[Group1\][ \t]*=.*/)) {
+       getline
+     }
+
+     print NR
+     exit
+    } else {
+      next
+    }
+  }' "${symbol_file}")"
+
+  if is_empty "${index}" || is_not_integer "${index}" || is_true "${index} < 1"; then
+    echo "Unable to find name of ${code}${variant:+ ${variant}} layout"
+    return 2
+  fi
+
+  # Replace the layout name line
+  sudo sed -i "${index} s;.*;   name[Group1]= \"${alias}\"\;;" "${symbol_file}" &> /dev/null
+
+  if has_failed; then
+    echo "Failed to name layout ${code}${variant:+ ${variant}}"
+    return 2
+  fi
+
+  echo "Layout ${code}${variant:+ ${variant}} name to ${alias}"
+  echo 'Please restart so changes take effect!'
 }
 

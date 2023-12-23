@@ -27,11 +27,11 @@ show_help () {
     echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
 
     echo -e '\nCOMMANDS'
-    printf ' %-35s %s\n' \
+    printf ' %-39s %s\n' \
       'help' 'Show this help message.'
   fi
 
-  printf ' %-35s %s\n' \
+  printf ' %-39s %s\n' \
     'show status' 'Show the system locale and keyboard status.' \
     '' '' \
     'add locale <name>' 'Add a locale to the system locales.' \
@@ -40,6 +40,7 @@ show_help () {
     '' '' \
     'add layout <code> <variant>' 'Add a keyboard layout.' \
     'remove layout <code> <variant>' 'Remove a keyboard layout.' \
+    'name layout <code> <variant> <alias>' 'Give an alias display name to a layout.' \
     'order layouts <code:variant>...' 'Set the order of keyboard layouts.' \
     '' '' \
     'set keymap <map>' 'Set the keyboard virtual console keymap.' \
@@ -65,6 +66,7 @@ execute () {
     'set locale') set_locale "${3}";;
     'add layout') add_layout "${3}" "${4}";;
     'remove layout') remove_layout "${3}" "${4}";;
+    'name layout') name_layout "${3}" "${4}" "${5}";;
     'order layouts') order_layouts "${@:3}";;
     'set keymap') set_keymap "${3}";;
     'set options') set_options "${3}";;
