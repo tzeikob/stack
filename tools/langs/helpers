@@ -553,7 +553,7 @@ apply_alias_to_layout () {
     re="^[ \t]*xkb_symbols[ \t]*\""v"\""
 
     if (v == "default") {
-      re="default[ \t]*partial"
+      re="^default[ \t]*(partial)?"
     }
 
     if ($0 ~ re) {
