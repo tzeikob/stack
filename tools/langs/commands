@@ -369,22 +369,27 @@ remove_layout () {
   local code="${1}"
   local variant="${2}"
 
-  if on_script_mode; then
-    is_not_given "${code}" && echo 'Missing the layout code' && return 2
-    is_not_given "${variant}" && echo 'Missing the layout variant' && return 2
-  else
-    if is_not_given "${code}" && is_not_given "${variant}"; then
-      pick_installed_layout || return $?
-      is_empty "${REPLY}" && echo 'Layout is required' && return 2
-      code="$(echo ${REPLY} | cut -d ':' -f 1)"
-      variant="$(echo ${REPLY} | cut -d ':' -f 2)"
-    fi
+  if is_not_given "${code}"; then
+    on_script_mode &&
+     echo 'Missing the layout code' && return 2
+    
+    pick_installed_layout || return $?
+    is_empty "${REPLY}" && echo 'Layout is required' && return 2
+    code="$(echo ${REPLY} | cut -d ':' -f 1)"
+    variant="$(echo ${REPLY} | cut -d ':' -f 2)"
   fi
 
   if is_not_layout "${code}"; then
     echo 'Invalid or unknown layout code'
     return 2
-  elif equals "${code}" 'us' && equals "${variant}" 'default'; then
+  fi
+  
+  if is_not_given "${variant}"; then
+    echo 'Missing the layout variant'
+    return 2
+  fi
+
+  if equals "${code}" 'us' && equals "${variant}" 'default'; then
     echo 'Default layout cannot be removed'
     return 2
   elif is_layout_not_installed "${code}" "${variant}"; then
