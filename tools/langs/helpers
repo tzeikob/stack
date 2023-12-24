@@ -529,3 +529,50 @@ is_layout_not_installed () {
   is_layout_installed "${1}" "${2}" && return 1 || return 0
 }
 
+# Replaces the current layout's group name to the
+# given alias name.
+# Arguments:
+#  code:    a layout code
+#  variant: a variant of the layout code
+#  alias:   an alias name
+apply_alias_to_layout () {
+  local code="${1}"
+  local variant="${2}"
+  local alias="${3}"
+  
+  local symbol_file="/usr/share/X11/xkb/symbols/${code}"
+
+  # Backup the symbol file if no yet done
+  if file_not_exists "${symbol_file}.bkp"; then
+    sudo cp "${symbol_file}" "${symbol_file}.bkp"
+  fi
+
+  # Find the corresponding name line in the layout's symbol file
+  local index=0
+  local index="$(awk -v v="${variant}" '{
+    re="^[ \t]*xkb_symbols[ \t]*\""v"\""
+
+    if (v == "default") {
+      re="default[ \t]*partial"
+    }
+
+    if ($0 ~ re) {
+     while (!($0 ~ /^[ \t]*name\[Group1\][ \t]*=.*/)) {
+       getline
+     }
+
+     print NR
+     exit
+    } else {
+      next
+    }
+  }' "${symbol_file}")"
+
+  if is_not_integer "${index}" || is_true "${index} < 1"; then
+    return 1
+  fi
+
+  # Replace the layout name line
+  sudo sed -i "${index} s;.*;   name[Group1]= \"${alias}\"\;;" "${symbol_file}" &> /dev/null
+}
+

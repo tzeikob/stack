@@ -305,15 +305,18 @@ remove_locale () {
   echo "Locale ${name} has been removed"
 }
 
-# Adds a new layout to keyboard layouts.
+# Adds a new layout to keyboard layouts with
+# the optionally given alias.
 # Arguments:
 #  code:    a layout code
 #  variant: a variant of the layout or default
+#  alias:   an alias name of the layout
 add_layout () {
   authenticate_user || return $?
 
   local code="${1}"
   local variant="${2}"
+  local alias="${3}"
 
   if is_not_given "${code}"; then
     on_script_mode &&
@@ -348,6 +351,11 @@ add_layout () {
     return 2
   fi
 
+  if not_on_script_mode && is_not_given "${alias}"; then
+    ask 'Enter an alias name (blank to skip):' || return $?
+    alias="${REPLY}"
+  fi
+
   save_layout_to_settings "${code}" "${variant}" &&
    apply_langs_settings
 
@@ -356,7 +364,13 @@ add_layout () {
     return 2
   fi
 
+  if is_given "${alias}"; then
+    apply_alias_to_layout "${code}" "${variant}" "${alias}" ||
+     echo 'Failed to apply layout alias'
+  fi
+
   echo "Layout ${code}${variant:+ ${variant}} has been added"
+  echo 'Please restart so changes take effect!'
 }
 
 # Removes a layout from keyboard layouts.
@@ -512,42 +526,8 @@ name_layout () {
     alias="${REPLY}"
   fi
 
-  local symbol_file="/usr/share/X11/xkb/symbols/${code}"
-
-  # Backup the symbol file if no yet done
-  if file_not_exists "${symbol_file}.bkp"; then
-    sudo cp "${symbol_file}" "${symbol_file}.bkp"
-  fi
-
-  # Find the corresponding name line in the layout's symbol file
-  local index=0
-  local index="$(awk -v v="${variant}" '{
-    re="^[ \t]*xkb_symbols[ \t]*\""v"\""
-
-    if (v == "default") {
-      re="default[ \t]*partial"
-    }
-
-    if ($0 ~ re) {
-     while (!($0 ~ /^[ \t]*name\[Group1\][ \t]*=.*/)) {
-       getline
-     }
-
-     print NR
-     exit
-    } else {
-      next
-    }
-  }' "${symbol_file}")"
-
-  if is_empty "${index}" || is_not_integer "${index}" || is_true "${index} < 1"; then
-    echo "Unable to find name of ${code}${variant:+ ${variant}} layout"
-    return 2
-  fi
-
-  # Replace the layout name line
-  sudo sed -i "${index} s;.*;   name[Group1]= \"${alias}\"\;;" "${symbol_file}" &> /dev/null
-
+  apply_alias_to_layout "${code}" "${variant}" "${alias}"
+  
   if has_failed; then
     echo "Failed to name layout ${code}${variant:+ ${variant}}"
     return 2

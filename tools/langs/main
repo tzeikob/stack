@@ -38,7 +38,7 @@ show_help () {
     'remove locale <name>' 'Remove a locale from the system locales.' \
     'set locale <name>' 'Set the locale of the system.' \
     '' '' \
-    'add layout <code> <variant>' 'Add a keyboard layout.' \
+    'add layout <code> <variant> <alias>' 'Add a keyboard layout.' \
     'remove layout <code> <variant>' 'Remove a keyboard layout.' \
     'name layout <code> <variant> <alias>' 'Give an alias display name to a layout.' \
     'order layouts <code:variant>...' 'Set the order of keyboard layouts.' \
@@ -64,7 +64,7 @@ execute () {
     'add locale') add_locale "${3}";;
     'remove locale') remove_locale "${3}";;
     'set locale') set_locale "${3}";;
-    'add layout') add_layout "${3}" "${4}";;
+    'add layout') add_layout "${3}" "${4}" "${5}";;
     'remove layout') remove_layout "${3}" "${4}";;
     'name layout') name_layout "${3}" "${4}" "${5}";;
     'order layouts') order_layouts "${@:3}";;
