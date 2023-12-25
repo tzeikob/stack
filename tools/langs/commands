@@ -113,7 +113,7 @@ set_locale () {
     on_script_mode &&
      echo 'Missing the locale name' && return 2
 
-    pick_locale installed || return $?
+    pick_installed_locale || return $?
     is_empty "${REPLY}" && echo 'Locale name is required' && return 2
     name="${REPLY}"
   fi
@@ -122,7 +122,7 @@ set_locale () {
     echo 'Invalid or unknown locale'
     return 2
   elif is_locale_not_installed "${name}"; then
-    echo "Locale ${name} is not currently added"
+    echo "Locale ${name} is not installed"
     return 2
   fi
 
@@ -242,7 +242,7 @@ add_locale () {
     on_script_mode &&
       echo 'Missing the locale name' && return 2
 
-    pick_locale not_installed || return $?
+    pick_locale || return $?
     is_empty "${REPLY}" && echo 'Locale name is required' && return 2
     name="${REPLY}"
   fi
@@ -251,11 +251,12 @@ add_locale () {
     echo 'Invalid or unknown locale'
     return 2
   elif is_locale_installed "${name}"; then
-    echo "Locale ${name} is already added"
+    echo "Locale ${name} is already installed"
     return 2
   fi
-
-  sudo sed -i "s/\s*#\s*\(${name}\)\s*/\1/" /etc/locale.gen &&
+  
+  save_locale_to_settings "${name}" &&
+   echo "${name}" | sudo tee -a /etc/locale.gen &&
    sudo locale-gen
 
   if has_failed; then
@@ -278,7 +279,7 @@ remove_locale () {
     on_script_mode &&
       echo 'Missing the locale name' && return 2
 
-    pick_locale installed || return $?
+    pick_installed_locale || return $?
     is_empty "${REPLY}" && echo 'Locale name is required' && return 2
     name="${REPLY}"
   fi
@@ -287,14 +288,18 @@ remove_locale () {
     echo 'Invalid or unknown locale'
     return 2
   elif is_locale_not_installed "${name}"; then
-    echo "Locale ${name} is already removed"
+    echo "Locale ${name} is not installed"
     return 2
   elif equals "${name}" 'en_US.UTF-8 UTF-8'; then
     echo 'Default locale cannot be removed'
     return 2
+  elif is_locale_set "${name}"; then
+    echo 'Cannot remove a locale which is set'
+    return 2
   fi
 
-  sudo sed -i "s/\s*\(${name}\)\s*/#\1/" /etc/locale.gen &&
+  delete_locale_from_settings "${name}" &&
+  sudo sed -i "/^\s*${name}\s*/d" /etc/locale.gen &&
    sudo locale-gen
 
   if has_failed; then
