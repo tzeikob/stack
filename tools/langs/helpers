@@ -459,9 +459,9 @@ delete_layout_from_settings () {
   echo "${settings}" > "${LANGS_SETTINGS}"
 }
 
-# Reads the langs settings file and applies them
-# to actual localectl and setxkbmap settings.
-apply_langs_settings () {
+# Reads the settings file and applies the keyboard
+# settings via the localectl and setxkbmap.
+apply_keyboard_settings () {
   local settings=''
   settings="$(jq -cr '.' "${LANGS_SETTINGS}")"
   
@@ -658,5 +658,74 @@ is_locale_set () {
 # An inversed alias of the is_locale_set.
 is_locale_not_set () {
   is_locale_set "${1}" && return 1 || return 0
+}
+
+# Save the given system locale into settings.
+# Arguments:
+#  name: a locale name
+save_system_locale_to_settings () {
+  local name="${1}"
+
+  local settings='{}'
+
+  if file_exists "${LANGS_SETTINGS}"; then
+    settings="$(jq -e ".locale = \"${name}\"" "${LANGS_SETTINGS}")" || return 1
+  else
+    settings="$(echo "{\"locale\": \"${name}\"}" | jq -e '.')" || return 1
+  fi
+
+  mkdir -p "${CONFIG_HOME}"
+  echo "${settings}" > "${LANGS_SETTINGS}"
+}
+
+# Reads the settings and applies the system's locale
+# settings into the locale.conf file.
+apply_system_locale_settings () {
+  local locale=''
+  locale="$(jq -cr '.locale' "${LANGS_SETTINGS}")"
+
+  # Set system locale variables
+  printf '%s\n' \
+    "LANG=${locale}" \
+    "LANGUAGE=${locale}:en:C" \
+    "LC_CTYPE=${locale}" \
+    "LC_NUMERIC=${locale}" \
+    "LC_TIME=${locale}" \
+    "LC_COLLATE=${locale}" \
+    "LC_MONETARY=${locale}" \
+    "LC_MESSAGES=${locale}" \
+    "LC_PAPER=${locale}" \
+    "LC_NAME=${locale}" \
+    "LC_ADDRESS=${locale}" \
+    "LC_TELEPHONE=${locale}" \
+    "LC_MEASUREMENT=${locale}" \
+    "LC_IDENTIFICATION=${locale}" \
+    "LC_ALL=" | sudo tee /etc/locale.conf &> /dev/null
+
+  # Unset previous set variables
+  unset LANG LANGUAGE LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE \
+        LC_MONETARY LC_MESSAGES LC_PAPER LC_NAME LC_ADDRESS \
+        LC_TELEPHONE LC_MEASUREMENT LC_IDENTIFICATION LC_ALL
+
+  # Reload locale env variables
+  source /etc/profile.d/locale.sh
+}
+
+# Reads the settings file and applies the locales
+# via the locale.gen file.
+apply_locale_settings () {
+  # Clear any installed locales from locale.gen file
+  sudo sed -i "/^\s*[a-z][a-z].*/d" /etc/locale.gen
+
+  # Apply the locales set in the settings file
+  local locales=''
+  locales="$(jq -cr '.locales[]' "${LANGS_SETTINGS}")"
+
+  local locale=''
+  while read -r locale; do
+    echo "${locale}" | sudo tee -a /etc/locale.gen &> /dev/null
+  done <<< "${locales}"
+
+  sudo locale-gen
 }
 

@@ -90,7 +90,7 @@ set_keymap () {
   fi
 
   save_keymap_to_settings "${map}" &&
-   apply_langs_settings
+   apply_keyboard_settings
   
   if has_failed; then
     echo "Failed to set keyboard map ${map}"
@@ -129,32 +129,9 @@ set_locale () {
   # Keep only the first part of locale
   name="$(echo "${name}" | cut -d ' ' -f 1)"
 
-  # Set system locale variables
-  printf '%s\n' \
-    "LANG=${name}" \
-    "LANGUAGE=${name}:en:C" \
-    "LC_CTYPE=${name}" \
-    "LC_NUMERIC=${name}" \
-    "LC_TIME=${name}" \
-    "LC_COLLATE=${name}" \
-    "LC_MONETARY=${name}" \
-    "LC_MESSAGES=${name}" \
-    "LC_PAPER=${name}" \
-    "LC_NAME=${name}" \
-    "LC_ADDRESS=${name}" \
-    "LC_TELEPHONE=${name}" \
-    "LC_MEASUREMENT=${name}" \
-    "LC_IDENTIFICATION=${name}" \
-    "LC_ALL=" | sudo tee /etc/locale.conf &> /dev/null
-
-  # Unset previous set variables
-  unset LANG LANGUAGE LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE \
-        LC_MONETARY LC_MESSAGES LC_PAPER LC_NAME LC_ADDRESS \
-        LC_TELEPHONE LC_MEASUREMENT LC_IDENTIFICATION LC_ALL
-
-  # Reload locale env variables
-  source /etc/profile.d/locale.sh
-
+  save_system_locale_to_settings "${name}" &&
+    apply_system_locale_settings
+  
   if has_failed; then
     echo "Failed to set system locale"
     return 2
@@ -187,7 +164,7 @@ set_options () {
   fi
 
   save_options_to_settings "${value}" &&
-   apply_langs_settings
+   apply_keyboard_settings
   
   if has_failed; then
     echo 'Failed to set keyboard layout options'
@@ -220,7 +197,7 @@ set_model () {
   fi
 
   save_model_to_settings "${name}" &&
-   apply_langs_settings
+   apply_keyboard_settings
   
   if has_failed; then
     echo 'Failed to set keyboard model'
@@ -256,8 +233,7 @@ add_locale () {
   fi
   
   save_locale_to_settings "${name}" &&
-   echo "${name}" | sudo tee -a /etc/locale.gen &&
-   sudo locale-gen
+   apply_locale_settings
 
   if has_failed; then
     echo 'Failed to add locale'
@@ -299,8 +275,7 @@ remove_locale () {
   fi
 
   delete_locale_from_settings "${name}" &&
-  sudo sed -i "/^\s*${name}\s*/d" /etc/locale.gen &&
-   sudo locale-gen
+    apply_locale_settings
 
   if has_failed; then
     echo 'Failed to remove locale'
@@ -362,7 +337,7 @@ add_layout () {
   fi
 
   save_layout_to_settings "${code}" "${variant}" &&
-   apply_langs_settings
+   apply_keyboard_settings
 
   if has_failed; then
     echo "Failed to add layout ${code}${variant:+ ${variant}}"
@@ -417,7 +392,7 @@ remove_layout () {
   fi
 
   delete_layout_from_settings "${code}" "${variant}" &&
-   apply_langs_settings
+   apply_keyboard_settings
 
   if has_failed; then
     echo "Failed to remove layout ${code}${variant:+ ${variant}}"
@@ -474,7 +449,7 @@ order_layouts () {
   fi
 
   save_layouts_to_settings ${layouts} &&
-   apply_langs_settings
+   apply_keyboard_settings
 
   if has_failed; then
     echo 'Failed to set layouts order'
