@@ -40,6 +40,7 @@ show_help () {
     '' '' \
     'format time <mode> <precision>' 'Set the status bar clock 12h/24h mode' \
     '' 'and precision to mins, secs or nanos.' \
+    'format date <pattern>' 'Set the status bar date format.' \
     '' '' \
     'set ntp on|off' 'Enable or disable the NTP sync service.' \
     'set rtc local|utc' 'Set hardware clock to local or UTC time.' \
@@ -65,6 +66,7 @@ execute () {
     'set time') set_time "${3}";;
     'set date') set_date "${3}";;
     'format time') format_time "${3}" "${4}";;
+    'format date') format_date "${3}";;
     'set rtc') set_rtc "${3}";;
     'sync rtc') sync_rtc;;
     *)

@@ -129,14 +129,14 @@ save_time_format_to_settings () {
 
   if file_exists "${CLOCK_SETTINGS}"; then
     local query=''
-    query+=".mode = \"${mode}\"|"
-    query+=".precision = \"${precision}\""
+    query+=".time_mode = \"${mode}\"|"
+    query+=".time_precision = \"${precision}\""
     
     settings="$(jq -e "${query}" "${CLOCK_SETTINGS}")" || return 1
   else
     local object=''
-    object+="\"mode\": \"${mode}\","
-    object+="\"precision\": \"${precision}\""
+    object+="\"time_mode\": \"${mode}\","
+    object+="\"time_precision\": \"${precision}\""
     object="{${object}}"
     
     settings="$(echo "${object}" | jq -e '.')" || return 1
@@ -144,5 +144,31 @@ save_time_format_to_settings () {
 
   mkdir -p "${CONFIG_HOME}"
   echo "${settings}" > "${CLOCK_SETTINGS}"
+}
+
+# Saves the date format into settings and the
+# corresponding polybar date module.
+# Arguments:
+#  pattern: a date format
+save_date_format_to_settings () {
+  local pattern="${1}"
+
+  local settings='{}'
+
+  if file_exists "${CLOCK_SETTINGS}"; then
+    local query=".date_pattern = \"${pattern}\""
+    
+    settings="$(jq -e "${query}" "${CLOCK_SETTINGS}")" || return 1
+  else
+    local object="{\"date_pattern\": \"${pattern}\"}"
+    
+    settings="$(echo "${object}" | jq -e '.')" || return 1
+  fi
+
+  mkdir -p "${CONFIG_HOME}"
+  echo "${settings}" > "${CLOCK_SETTINGS}"
+
+  # Update the format in the corresponding polybar date module
+  sed -i "s;^date =.*;date = ${pattern};" "${HOME}/.config/polybar/modules.ini" &> /dev/null
 }
 

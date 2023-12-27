@@ -16,8 +16,8 @@ run () {
     local settings=''
     settings="$(jq -cr '.' "${CLOCK_SETTINGS}")"
 
-    mode="$(echo "${settings}" | jq -cr '.mode')"
-    precision="$(echo "${settings}" | jq -cr '.precision')"
+    mode="$(echo "${settings}" | jq -cr '.time_mode')"
+    precision="$(echo "${settings}" | jq -cr '.time_precision')"
   fi
 
   local hour='H'

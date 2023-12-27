@@ -228,3 +228,27 @@ format_time () {
   echo "Time format set to ${mode} mode and ${precision} precision"
 }
 
+# Sets the format of the date that is displayed
+# on the user desktop status bars.
+# Arguments:
+#  pattern: a valid date format
+format_date () {
+  local pattern="${1}"
+  
+  if is_not_given "${pattern}"; then
+    echo 'Date pattern is required'
+    return 2
+  fi
+
+  # Save date format and restart status bars
+  save_date_format_to_settings "${pattern}" &&
+   desktop -qs init bars &> /dev/null
+
+  if has_failed; then
+    echo 'Failed to set date format'
+    return 2
+  fi
+
+  echo "Date format set to ${pattern}"
+}
+
