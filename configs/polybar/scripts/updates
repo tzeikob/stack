@@ -1,0 +1,40 @@
+#!/bin/bash
+
+set -o pipefail
+
+source /opt/stack/utils
+
+# Prints the number of packages need to be update.
+run () {
+  # Count pacman outdated packages
+  local pac_updates=0
+  pac_updates="$(checkupdates 2> /dev/null | wc -l)"
+
+  if has_failed; then
+    pac_updates=0
+  fi
+
+  # Count yay outdated packages
+  local yay_updates=0
+  yay_updates="$(yay -Qum 2> /dev/null | wc -l)"
+
+  if has_failed; then
+    yay_updates=0
+  fi
+
+  local total=0
+  total="$(calc "${pac_updates} + ${yay_updates}")"
+
+  local output="${total}"
+  local color='F27D52'
+
+  if is_true "${total} = 0"; then
+    output='Ready'
+    color='B2E39C'
+  fi
+
+  echo "${output}%{F#000000}:%{F-}%{F#${color}}●%{F-}"
+}
+
+run "$@"
+
