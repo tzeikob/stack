@@ -25,7 +25,7 @@ run () {
     util_color="CB2C31"
   fi
 
-  echo "${usage}MiB%{F#000000}:%{F-}%{F#${util_color}}●%{F-}"
+  echo "${usage}MiB%{F#00000000}:%{F-}%{F#${util_color}}●%{F-}"
 }
 
 run "$@"

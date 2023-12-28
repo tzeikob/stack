@@ -33,7 +33,7 @@ run () {
     color='B2E39C'
   fi
 
-  echo "${output}%{F#000000}:%{F-}%{F#${color}}●%{F-}"
+  echo "${output}%{F#00000000}:%{F-}%{F#${color}}●%{F-}"
 }
 
 run "$@"

@@ -26,7 +26,7 @@ run () {
     util_color="CB2C31"
   fi
 
-  echo "${avg_freq}MHz%{F#000000}:%{F-}%{F#${util_color}}●%{F-}"
+  echo "${avg_freq}MHz%{F#00000000}:%{F-}%{F#${util_color}}●%{F-}"
 }
 
 run "$@"
