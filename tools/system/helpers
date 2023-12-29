@@ -18,3 +18,32 @@ find_installed_packages () {
   echo "{\"pacman\": ${pacman_pkgs}, \"aur\": ${aur_pkgs}}"
 }
 
+# Find the list of packages need to be updated.
+# Returns:
+#  A JSON object with pacman and aur list of outdated packages.
+find_outdated_packages () {
+  local query=''
+  query+='name: .[0]|split(" ")|.[0],'
+  query+='current: .[0]|split(" ")|.[1],'
+  query+='latest: .[1]'
+  query="[inputs|split(\" -> \")|{${query}}]"
+  
+  # List all outdated packages installed via pacman
+  local pacman_pkgs='[]'
+  pacman_pkgs="$(checkupdates 2> /dev/null | jq -Rn "${query}")"
+
+  if has_failed; then
+    pacman_pkgs='[]'
+  fi
+
+  # List all outdated packages installed via the aur repos
+  local aur_pkgs='[]'
+  aur_pkgs="$(yay -Qum 2> /dev/null | jq -Rn "${query}")"
+
+  if has_failed; then
+    aur_pkgs='[]'
+  fi
+
+  echo "{\"pacman\": ${pacman_pkgs}, \"aur\": ${aur_pkgs}}"
+}
+
