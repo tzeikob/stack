@@ -26,30 +26,33 @@ show_status () {
   status="{${status}}"
 
   local query=''
-  query+='System:   \(.os)\n'
-  query+='Kernel:   \(.kernel)\n'
-  query+='Shell:    \(.shell)'
+  query+='System:    \(.os)\n'
+  query+='Kernel:    \(.kernel)\n'
+  query+='Shell:     \(.shell)'
 
   echo "${status}" | jq -cer "\"${query}\"" || return 1
-
-  local pacman_version=''
-  pacman_version="$(pacman -V | grep "Pacman v" | awk '{print $3}' | sed 's/v\(.*\)/\1/')"
-  
-  echo "Pacman:   ${pacman_version}"
-  
-  local yay_version=''
-  yay_version="$(yay -V | awk '{print $2}' | sed 's/v\(.*\)/\1/')"
-  
-  echo "Yay:      ${yay_version}"
   
   local libalpm_version=''
   libalpm_version="$(pacman -V | grep "Pacman v" | awk '{print $6}' | sed 's/v\(.*\)/\1/')"
   
-  echo "Libalpm:  ${libalpm_version}"
+  echo "Libalpm:   ${libalpm_version}"
 
-  local total_packages=0
-  total_packages="$(pacman -Q | wc -l 2> /dev/null)" || return 1
+  local pacman_version=''
+  pacman_version="$(pacman -V | grep "Pacman v" | awk '{print $3}' | sed 's/v\(.*\)/\1/')"
+  
+  echo "Pacman:    ${pacman_version}"
+  
+  local yay_version=''
+  yay_version="$(yay -V | awk '{print $2}' | sed 's/v\(.*\)/\1/')"
+  
+  echo "Yay:       ${yay_version}"
+  
+  local pkgs=0
+  pkgs="$(find_installed_packages)" || return 1
 
-  echo "Pckgs:    ${total_packages}"
+  echo
+  echo "Packages:  $(echo ${pkgs} | jq -cr '(.pacman|length) + (.aur|length)')"
+  echo "Pacman:    $(echo ${pkgs} | jq -cr '.pacman|length')"
+  echo "AUR:       $(echo ${pkgs} | jq -cr '.aur|length')"
 }
 

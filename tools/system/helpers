@@ -4,3 +4,17 @@ set -o pipefail
 
 source /opt/stack/utils
 
+# Find all the packages installed to the system
+# via the package managers pacman and yay (aur).
+# Returns:
+#  A JSON object with the pacman and aur list packages.
+find_installed_packages () {
+  local query='[inputs|split(" ")|{name: .[0], version: .[1]}]'
+  
+  local pacman_pkgs="$(pacman -Qn | jq -Rn "${query}")" || return 1
+  
+  local aur_pkgs="$(pacman -Qm | jq -Rn "${query}")" || return 1
+
+  echo "{\"pacman\": ${pacman_pkgs}, \"aur\": ${aur_pkgs}}"
+}
+
