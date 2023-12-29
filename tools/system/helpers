@@ -1,0 +1,6 @@
+#!/bin/bash
+
+set -o pipefail
+
+source /opt/stack/utils
+

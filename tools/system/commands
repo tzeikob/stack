@@ -1,0 +1,55 @@
+#!/bin/bash
+
+set -o pipefail
+
+source /opt/stack/utils
+source /opt/stack/system/helpers
+
+# Shows the current status of system.
+# Outputs:
+#  A verbose list of text data.
+show_status () {
+  local fields='OS|Kernel|Shell'
+
+  local status=''
+  status+="$(neofetch --off --stdout |
+    awk -F':' '/^('"${fields}"')/{
+      gsub(/^[ \t]+/,"",$2)
+      gsub(/[ \t]+$/,"",$2)
+      printf "\"%s\":\"%s\",",tolower($1),$2
+    }'
+  )" || return 1
+
+  # Remove the last extra comma after the last field
+  status="${status:+${status::-1}}"
+
+  status="{${status}}"
+
+  local query=''
+  query+='System:   \(.os)\n'
+  query+='Kernel:   \(.kernel)\n'
+  query+='Shell:    \(.shell)'
+
+  echo "${status}" | jq -cer "\"${query}\"" || return 1
+
+  local pacman_version=''
+  pacman_version="$(pacman -V | grep "Pacman v" | awk '{print $3}' | sed 's/v\(.*\)/\1/')"
+  
+  echo "Pacman:   ${pacman_version}"
+  
+  local yay_version=''
+  yay_version="$(yay -V | awk '{print $2}' | sed 's/v\(.*\)/\1/')"
+  
+  echo "Yay:      ${yay_version}"
+  
+  local libalpm_version=''
+  libalpm_version="$(pacman -V | grep "Pacman v" | awk '{print $6}' | sed 's/v\(.*\)/\1/')"
+  
+  echo "Libalpm:  ${libalpm_version}"
+
+  local total_packages=0
+  total_packages="$(pacman -Q | wc -l 2> /dev/null)" || return 1
+
+  echo "Pckgs:    ${total_packages}"
+}
+

@@ -317,6 +317,7 @@ install_tools () {
   ln -sf "${STACK_HOME}/printers/main" /usr/local/bin/printers
   ln -sf "${STACK_HOME}/security/main" /usr/local/bin/security
   ln -sf "${STACK_HOME}/trash/main" /usr/local/bin/trash
+  ln -sf "${STACK_HOME}/system/main" /usr/local/bin/system
 
   echo "System tools have been installed"
 }
