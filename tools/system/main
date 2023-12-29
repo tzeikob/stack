@@ -27,12 +27,15 @@ show_help () {
     echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
 
     echo -e '\nCOMMANDS'
-    printf ' %-20s %s\n' \
+    printf ' %-26s %s\n' \
       'help' 'Show this help message.'
   fi
 
-  printf ' %-20s %s\n' \
-    'show status' 'Show the system overall status.'
+  printf ' %-26s %s\n' \
+    'show status' 'Show the system overall status.' \
+    '' '' \
+    'list packages pacman|aur' 'Show the list of installed packages.' \
+    'list updates pacman|aur' 'Show the list of outdated packages.'
 }
 
 # Routes to the corresponding operation by matching
@@ -48,6 +51,8 @@ execute () {
   
   case "${command}${object:+ ${object}}" in
     'show status') show_status;;
+    'list packages') list_packages "${3}";;
+    'list updates') list_updates "${3}";;
     *)
       echo 'Ooops, invalid or unknown command!'
       return 2;;
