@@ -4,6 +4,8 @@ set -o pipefail
 
 source /opt/stack/utils
 
+UPDATES_FILE=/tmp/updates
+
 # Find all the packages installed to the system
 # via the package managers pacman and yay (aur).
 # Returns:
@@ -22,6 +24,9 @@ find_installed_packages () {
 # Returns:
 #  A JSON object with pacman and aur list of outdated packages.
 find_outdated_packages () {
+  # Delete temporary updates registry file
+  rm -f "${UPDATES_FILE}"
+  
   local query=''
   query+='name: .[0]|split(" ")|.[0],'
   query+='current: .[0]|split(" ")|.[1],'
@@ -44,7 +49,12 @@ find_outdated_packages () {
     aur_pkgs='[]'
   fi
 
-  echo "{\"pacman\": ${pacman_pkgs}, \"aur\": ${aur_pkgs}}"
+  local pkgs="{\"pacman\": ${pacman_pkgs}, \"aur\": ${aur_pkgs}}"
+
+  # Dump the number of outdated pcks in the updates registry file
+  echo "${pkgs}" | jq -cr '(.pacman|length) + (.aur|length)' > "${UPDATES_FILE}"
+
+  echo "${pkgs}"
 }
 
 # Checks if the given value is a valid package repository.

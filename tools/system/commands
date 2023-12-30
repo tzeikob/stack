@@ -102,13 +102,13 @@ list_packages () {
   echo "${pkgs}" | jq -cer "${query}" || return 1
 }
 
-# List the currently outdated packages filtered
+# Checks for currently outdated packages filtered
 # by the given repository.
 # Arguments:
 #  repository: pacman, aur or none
 # Outputs:
 #  A long list of packages.
-list_updates () {
+check_updates () {
   local repository="${1}"
 
   if is_given "${repository}" && is_not_package_repository "${repository}"; then

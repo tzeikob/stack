@@ -170,6 +170,15 @@ install_bars () {
 
   cp ~/stack/configs/polybar/scripts/time "${SCRIPTS_HOME}"
   chmod +x "${SCRIPTS_HOME}/time"
+  
+  cp ~/stack/configs/polybar/scripts/cpu "${SCRIPTS_HOME}"
+  chmod +x "${SCRIPTS_HOME}/cpu"
+  
+  cp ~/stack/configs/polybar/scripts/memory "${SCRIPTS_HOME}"
+  chmod +x "${SCRIPTS_HOME}/memory"
+  
+  cp ~/stack/configs/polybar/scripts/updates "${SCRIPTS_HOME}"
+  chmod +x "${SCRIPTS_HOME}/updates"
 
   echo "Status bars have been installed"
 }

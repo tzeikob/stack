@@ -35,7 +35,8 @@ show_help () {
     'show status' 'Show the system overall status.' \
     '' '' \
     'list packages pacman|aur' 'Show the list of installed packages.' \
-    'list updates pacman|aur' 'Show the list of outdated packages.'
+    '' '' \
+    'check updates pacman|aur' 'Shows the list of possible outdated packages.'
 }
 
 # Routes to the corresponding operation by matching
@@ -52,7 +53,7 @@ execute () {
   case "${command}${object:+ ${object}}" in
     'show status') show_status;;
     'list packages') list_packages "${3}";;
-    'list updates') list_updates "${3}";;
+    'check updates') check_updates "${3}";;
     *)
       echo 'Ooops, invalid or unknown command!'
       return 2;;
