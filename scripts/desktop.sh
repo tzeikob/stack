@@ -179,6 +179,9 @@ install_bars () {
   
   cp ~/stack/configs/polybar/scripts/updates "${SCRIPTS_HOME}"
   chmod +x "${SCRIPTS_HOME}/updates"
+  
+  cp ~/stack/configs/polybar/scripts/power "${SCRIPTS_HOME}"
+  chmod +x "${SCRIPTS_HOME}/power"
 
   echo "Status bars have been installed"
 }
