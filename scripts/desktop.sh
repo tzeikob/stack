@@ -185,6 +185,9 @@ install_bars () {
   
   cp ~/stack/configs/polybar/scripts/flash-drives "${SCRIPTS_HOME}"
   chmod +x "${SCRIPTS_HOME}/flash-drives"
+  
+  cp ~/stack/configs/polybar/scripts/remotes "${SCRIPTS_HOME}"
+  chmod +x "${SCRIPTS_HOME}/remotes"
 
   echo "Status bars have been installed"
 }
