@@ -182,6 +182,9 @@ install_bars () {
   
   cp ~/stack/configs/polybar/scripts/power "${SCRIPTS_HOME}"
   chmod +x "${SCRIPTS_HOME}/power"
+  
+  cp ~/stack/configs/polybar/scripts/flash-drives "${SCRIPTS_HOME}"
+  chmod +x "${SCRIPTS_HOME}/flash-drives"
 
   echo "Status bars have been installed"
 }
