@@ -52,36 +52,6 @@ restart () {
   echo 'Notifications service restarted'
 }
 
-# Returns the notifications state.
-# Outputs:
-#  A json object of the notifiactions state.
-get_state () {
-  local state=''
-
-  state+="$(dunstctl is-paused |
-    awk '{print "\"is_paused\":"$0","}')" || return 1
-
-  state+="$(dunstctl count | awk '{
-    split($0, a, ":")
-
-    if (a[1] ~ "Waiting") {
-      print "\"pending\":"a[2]","
-    } else if (a[1] ~ "Currently displayed") {
-      print "\"displayed\":"a[2]","
-    } else if (a[1] ~ "History") {
-      print "\"archived\":"a[2]","
-    }
-  }')" || return 1
-
-  if grep -qsE '[[:blank:]]*transparency = 100' "${HOME}/.config/dunst/dunstrc"; then
-    state+='"popup": false'
-  else
-    state+='"popup": true'
-  fi
-
-  echo "{${state}}"
-}
-
 # Shows the current status of the notification stream.
 # Outputs:
 #  A verbose list of text data.
@@ -97,12 +67,11 @@ show_status () {
 
   local query=''
   query+='Mute:     \(.is_paused|if . then "yes" else "no" end)\n'
-  query+='Popup:    \(.popup|if . then "on" else "off" end)\n'
   query+='Pending:  \(.pending)\n'
   query+='Showing:  \(.displayed)\n'
   query+='Sent:     \(.archived)'
 
-  get_state | jq -cer "\"${query}\"" || return 1
+  get_notifications_state | jq -cer "\"${query}\"" || return 1
 }
 
 # Shows the list of archived notifications sorted by the
@@ -190,46 +159,5 @@ clean_all () {
   fi
 
   echo 'All notifications have been removed'
-}
-
-# Enables or disables popup notifications.
-# Arguments:
-#  mode: on or off
-set_popup () {
-  local mode="${1}"
-
-  if is_not_given "${mode}"; then
-    echo 'Missing popup mode'
-    return 2
-  elif is_not_toggle "${mode}"; then
-    echo 'Invalid popup mode'
-    return 2
-  fi
-
-  local config_file="${HOME}/.config/dunst/dunstrc"
-
-  # Create the config file if none exists yet
-  if file_not_exists "${config_file}"; then
-    echo '[global]' > "${config_file}"
-    echo '  transparency = 0' >> "${config_file}"
-  fi
-
-  # Convert mode to transparency value
-  local value=0
-  if is_off "${mode}"; then
-    value=100
-  fi
-
-  sed -i "s/\([[:blank:]]*transparency\).*/\1 = ${value}/" "${config_file}"
-
-  if has_failed; then
-    echo "Failed to set popup notifications to ${mode}"
-    return 2
-  fi
-
-  # Restart service so changes take effect
-  restart
-
-  echo "Popup notifications set to ${mode}"
 }
 

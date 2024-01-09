@@ -191,6 +191,9 @@ install_bars () {
   
   cp ~/stack/configs/polybar/scripts/bluetooth "${SCRIPTS_HOME}"
   chmod +x "${SCRIPTS_HOME}/bluetooth"
+  
+  cp ~/stack/configs/polybar/scripts/notifications "${SCRIPTS_HOME}"
+  chmod +x "${SCRIPTS_HOME}/notifications"
 
   echo "Status bars have been installed"
 }

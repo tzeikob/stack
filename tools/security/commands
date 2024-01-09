@@ -4,6 +4,7 @@ set -o pipefail
 
 source /opt/stack/utils
 source /opt/stack/security/helpers
+source /opt/stack/notifications/helpers
 
 # Shows the current status of the system's security.
 # Outputs:
@@ -129,7 +130,7 @@ lock_screen () {
   fi
 
   local is_paused=''
-  is_paused="$(notifications -qs get state | jq -cr '.is_paused')"
+  is_paused="$(get_notifications_state | jq -cr '.is_paused')"
 
   if is_false "${is_paused}"; then
     notifications -qs mute all

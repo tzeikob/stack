@@ -34,11 +34,9 @@ show_help () {
 
   printf ' %-28s %s\n' \
     'show status' 'Show the status of notifications.' \
-    'get state' 'Return the state of the notifications stream.' \
     '' '' \
     'list all id|appname' 'List all notifications by id (default) or appname.' \
     '' '' \
-    'set popup on|off' 'Show or hide popup notifications.' \
     'mute all' 'Pause the notifications stream.' \
     'unmute all' 'Restore the notifications stream.' \
     'clean all' 'Remove all notifications.' \
@@ -64,10 +62,8 @@ execute () {
     'mute all') mute_all;;
     'unmute all') unmute_all;;
     'clean all') clean_all;;
-    'set popup') set_popup "${3}";;
     'start') start;;
     'restart') restart;;
-    'get state') get_state;;
     *)
       echo 'Ooops, invalid or unknown command!'
       return 2;;
