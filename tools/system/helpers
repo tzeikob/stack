@@ -34,19 +34,21 @@ find_outdated_packages () {
   query="[inputs|split(\" -> \")|{${query}}]"
   
   # List all outdated packages installed via pacman
-  local pacman_pkgs='[]'
+  local pacman_pkgs=''
   pacman_pkgs="$(checkupdates 2> /dev/null | jq -Rn "${query}")"
 
   if has_failed; then
-    pacman_pkgs='[]'
+    echo 'null' > "${UPDATES_FILE}"
+    return 1
   fi
 
   # List all outdated packages installed via the aur repos
-  local aur_pkgs='[]'
+  local aur_pkgs=''
   aur_pkgs="$(yay -Qum 2> /dev/null | jq -Rn "${query}")"
 
   if has_failed; then
-    aur_pkgs='[]'
+    echo 'null' > "${UPDATES_FILE}"
+    return 1
   fi
 
   local pkgs="{\"pacman\": ${pacman_pkgs}, \"aur\": ${aur_pkgs}}"
