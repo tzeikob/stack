@@ -2,8 +2,8 @@
 
 set -o pipefail
 
-source /opt/stack/utils
-source /opt/stack/bluetooth/commands
+source /opt/tools/utils
+source /opt/tools/bluetooth/commands
 
 # Shows the help message.
 # Arguments:

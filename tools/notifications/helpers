@@ -2,7 +2,7 @@
 
 set -o pipefail
 
-source /opt/stack/utils
+source /opt/tools/utils
 
 # Returns the list of all archived notifications 
 # sorted by the given field in the given order.

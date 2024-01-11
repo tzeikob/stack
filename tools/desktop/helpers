@@ -2,8 +2,8 @@
 
 set -o pipefail
 
-source /opt/stack/utils
-source /opt/stack/displays/helpers
+source /opt/tools/utils
+source /opt/tools/displays/helpers
 
 DESKTOP_SETTINGS="${CONFIG_HOME}/desktop.json"
 

@@ -2,8 +2,8 @@
 
 set -o pipefail
 
-source /opt/stack/utils
-source /opt/stack/printers/commands
+source /opt/tools/utils
+source /opt/tools/printers/commands
 
 # Shows the help message.
 # Arguments:

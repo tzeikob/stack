@@ -2,8 +2,8 @@
 
 set -o pipefail
 
-source /opt/stack/utils
-source /opt/stack/cloud/helpers
+source /opt/tools/utils
+source /opt/tools/cloud/helpers
 
 # Shows the list of remotes matching the given service.
 # Arguments:

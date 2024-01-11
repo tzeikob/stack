@@ -2,7 +2,7 @@
 
 set -o pipefail
 
-source /opt/stack/utils
+source /opt/tools/utils
 
 # Returns the remote services having the given status.
 # If status is not given all remotes will be returned.
@@ -13,59 +13,62 @@ source /opt/stack/utils
 find_remotes () {
   local status="${1}"
 
+  local remotes=''
+  remotes="$(rclone listremotes --long 2> /dev/null)" || return 1
+
+  if is_empty "${remotes}"; then
+    echo '[]'
+    return 0
+  fi
+
   local mounts="$(< /proc/mounts)"
 
+  local results=''
   local remote=''
-  local remotes=''
 
-  remotes="$(rclone listremotes --long |
-    while read -r remote; do
-      if is_empty "${remote}"; then
-        continue
-      fi
+  while read -r remote; do
+    if is_empty "${remote}"; then
+      continue
+    fi
 
-      local name="$(echo "${remote}" | cut -d ':' -f 1)"
-      local service="$(echo "${remote}" | cut -d ':' -f 2 | trim)"
+    local name="$(echo "${remote}" | cut -d ':' -f 1)"
+    local service="$(echo "${remote}" | cut -d ':' -f 2 | trim)"
 
-      # Check if the remote name exists in the mounts
-      local mount="$(grep "^${name}:.* fuse.rclone" <<< "${mounts}")"
+    # Check if the remote name exists in the mounts
+    local mount="$(grep "^${name}:.* fuse.rclone" <<< "${mounts}")"
 
-      local is_mounted='false'
-      local mount_point=''
+    local is_mounted='false'
+    local mount_point=''
 
-      if is_not_empty "${mount}"; then
-        is_mounted='true'
-        mount_point="$(echo "${mount}" | awk '{print $2}')"
-      fi
+    if is_not_empty "${mount}"; then
+      is_mounted='true'
+      mount_point="$(echo "${mount}" | awk '{print $2}')"
+    fi
 
-      remote=''
-      remote+="\"name\": \"${name}\","
-      remote+="\"service\": \"${service}\","
-      remote+="\"is_mounted\": ${is_mounted}"
+    remote=''
+    remote+="\"name\": \"${name}\","
+    remote+="\"service\": \"${service}\","
+    remote+="\"is_mounted\": ${is_mounted}"
 
-      if is_true "${is_mounted}"; then
-        remote+=",\"mount_point\": \"${mount_point}\""
-      fi
+    if is_true "${is_mounted}"; then
+      remote+=",\"mount_point\": \"${mount_point}\""
+    fi
 
-      remote="{${remote}}"
+    remote="{${remote}}"
 
-      case "${status}" in
-        mounted)
-          if is_true "${is_mounted}"; then
-            echo -n "${remote},"
-          fi;;
-        unmounted)
-          if is_false "${is_mounted}"; then
-            echo -n "${remote},"
-          fi;;
-        *) echo -n "${remote},";;
-      esac
-    done;)" || return 1
+    if equals "${status}" 'mounted'; then
+      is_true "${is_mounted}" && results+="${remote},"
+    elif equals "${status}" 'unmounted'; then
+      is_false "${is_mounted}" && results+="${remote},"
+    else
+      results+="${remote},"
+    fi
+  done; <<< "${remotes}"
   
   # Remove extra comma after the last array element
-  remotes="${remotes:+${remotes::-1}}"
+  results="${results:+${results::-1}}"
 
-  echo "[${remotes}]"
+  echo "[${results}]"
 }
 
 # Returns the remote with the given name.

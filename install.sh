@@ -1,32 +1,43 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
-set -a
-HOME="$(cd $(dirname "$(test -L "$0" && readlink "$0" || echo "$0")") && pwd)"
-OPTIONS="$HOME/.options"
-LOG="$HOME/all.log"
-set +a
+set -Eeo pipefail
 
+source /opt/stack/scripts/utils.sh
+
+# Executes the script with the given file name as the
+# current user being in the archiso's shell session.
+# Arguments:
+#  file_name: the name of the script file
 run () {
-  bash "$HOME/scripts/${1}.sh" > >(tee -a "$LOG") 2>&1
+  local file_name="${1}"
+
+  bash "/opt/stack/scripts/${file_name}.sh" > >(tee -a /opt/stack/stack.log) 2>&1
 }
 
+# Changes to the shell session of the mounted installation disk
+# as the root or sudoer user and executes the script with the given
+# file name which corresponds to the part of the system that is
+# about to be installed.
+# Arguments:
+#  file_name: the name of the script file
 install () {
-  local ME="root"
-  local SCRIPT_FILE="/${ME}/stack/scripts/${1}.sh"
+  local file_name="${1}"
 
-  if [[ "$1" =~ ^(desktop|apps)$ ]]; then
-    source "$OPTIONS" || exit 1
+  local script_file="/opt/stack/scripts/${file_name}.sh"
 
-    ME="$USERNAME"
-    SCRIPT_FILE="/home/${ME}/stack/scripts/${1}.sh"
+  local user_name='root'
+
+  # Impersonate the sudoer user on desktop, stack and tools installation
+  if match "${1}" '^(desktop|stack|tools)$'; then
+    user_name="$(get_setting 'user_name')" || abort
   fi
 
-  arch-chroot /mnt runuser -u "$ME" -- "$SCRIPT_FILE" > >(tee -a "$LOG") 2>&1
+  arch-chroot /mnt runuser -u "${user_name}" -- "${script_file}" > >(tee -a /opt/stack/stack.log) 2>&1
 }
 
+# Exit the installation process immediately.
 abort () {
-  echo -e "\nError: something fatal went wrong"
-  echo "Process exiting with code 1..."
+  echo 'Process exiting with status code 1...'
   exit 1
 }
 
@@ -38,31 +49,24 @@ cat << EOF
 ░░░▀▀▀░░▀░░▀░▀░▀▀▀░▀░▀░░░
 EOF
 
-echo -e "\nWelcome to Stack v1.0.0"
-echo -e "Have your development environment on archlinux\n"
+echo -e '\nWelcome to Stack Installer, v1.0.0.alpha.'
+echo -e 'Base your development workflow on archlinux!\n'
 
-if [[ ! -e /etc/arch-release ]]; then
-  echo "Error: this is not an archlinux media"
-  echo "Process exiting with code 1..."
-  exit 1
-fi
+echo "Let's start by picking some installation settings..."
+confirm 'Do you want to proceed?' || abort
 
-echo "Let's start by configuring your system"
-read -rep "Do you want to proceed? [Y/n] " REPLY
-REPLY="${REPLY:-"yes"}"
-REPLY="${REPLY,,}"
-
-if [[ ! "$REPLY" =~ ^(y|yes)$ ]]; then
-  echo "Exiting stack installation..."
-  exit 0
+if is_not_given "${REPLY}" || is_no "${REPLY}"; then
+  echo 'Installation process canceled'
+  abort
 fi
 
 echo
 
-run "askme" &&
-  run "diskpart" &&
-  run "bootstrap" &&
-  install "system" &&
-  install "desktop" &&
-  install "apps" &&
-  run "reboot" || abort
+run askme &&
+  run diskpart &&
+  run bootstrap &&
+  install system &&
+  install desktop &&
+  install stack &&
+  install tools &&
+  run reboot || abort

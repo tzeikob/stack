@@ -2,9 +2,9 @@
 
 set -o pipefail
 
-source /opt/stack/utils
-source /opt/stack/desktop/helpers
-source /opt/stack/displays/helpers
+source /opt/tools/utils
+source /opt/tools/desktop/helpers
+source /opt/tools/displays/helpers
 
 # Shows the current status of the desktop environment.
 # Outputs:
@@ -964,16 +964,18 @@ init_bars () {
   MONITOR="${primary}" polybar -r secondary 2>&1 |
     tee -a /tmp/polybar.log > /dev/null & disown
 
-  # Launch bar for each other monitor
+  # Launch tertiary bars for each other monitor
   local others=''
   others="$(polybar -m | awk -F':' '!/primary/{print $1}')"
 
-  local monitor=''
+  if is_not_empty "${others}"; then
+    local monitor=''
 
-  while read -r monitor; do
-   MONITOR="${monitor}" polybar -r tertiary 2>&1 |
-      tee -a /tmp/polybar.log > /dev/null & disown
-  done <<< "${others}"
+    while read -r monitor; do
+      MONITOR="${monitor}" polybar -r tertiary 2>&1 |
+        tee -a /tmp/polybar.log > /dev/null & disown
+    done <<< "${others}"
+  fi
 
   sleep 1
 

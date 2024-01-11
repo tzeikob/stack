@@ -2,8 +2,8 @@
 
 set -o pipefail
 
-source /opt/stack/utils
-source /opt/stack/audio/helpers
+source /opt/tools/utils
+source /opt/tools/audio/helpers
 
 # Shows the current status of system's audio.
 # Outputs:
@@ -402,7 +402,7 @@ turn_default () {
   elif is_not_valid_volume "${volume}"; then
     echo 'Invalid volume value'
     return 2
-  elif is_positive_integer "${volume}" && is_volume_out_of_range "${volume}"; then
+  elif is_integer "${volume}" '[0,150]'; then
     echo 'Volume value is out of range'
     return 2
   fi

@@ -1,134 +1,147 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 set -Eeo pipefail
 
+source /opt/stack/scripts/utils.sh
+
+# Synchronizes the system clock to the current time.
 sync_clock () {
-  echo "Updating the system clock..."
+  echo 'Updating the system clock...'
 
-  timedatectl set-timezone "$TIMEZONE"
+  local timezone=''
+  timezone="$(get_setting 'timezone')" || exit 1
 
-  echo "Timezone has been set to $TIMEZONE"
+  timedatectl set-timezone "${timezone}" || exit 1
 
-  timedatectl set-ntp true
+  echo "Timezone has been set to ${timezone}"
 
-  echo "NTP has been enabled"
+  timedatectl set-ntp true || exit 1
 
-  timedatectl status > "$HOME/.ntp"
+  echo 'NTP mode has been enabled'
 
-  while cat "$HOME/.ntp" | grep -q "System clock synchronized: no"; do
+  while timedatectl status | grep -q 'System clock synchronized: no'; do
     sleep 1
-    timedatectl status > "$HOME/.ntp"
   done
 
   timedatectl status
 
-  echo "System clock has been updated"
+  echo 'System clock has been updated'
 }
 
+# Sets the pacman mirrors list.
 set_mirrors () {
-  echo "Setting up pacman and mirrors list..."
+  echo 'Setting up pacman mirrors list...'
 
-  local OLD_IFS=$IFS && IFS=","
-  MIRRORS="${MIRRORS[*]}" && IFS=$OLD_IFS
+  local mirrors=''
+  mirrors="$(get_setting 'mirrors' | jq -cer 'join(",")')" || exit 1
 
-  reflector --country "$MIRRORS" --age 48 --sort age --latest 20 \
-    --save /etc/pacman.d/mirrorlist || exit 1
+  reflector --country "${mirrors}" --age 48 --sort age --latest 40 \
+    --save /etc/pacman.d/mirrorlist
 
-  echo "Mirror list set to $MIRRORS"
+  if has_failed; then
+    echo "Reflector failed to retrieve ${mirrors} mirrors"
+    echo 'Falling back to default mirrors'
+  else
+    echo "Pacman mirrors list set to ${mirrors}"
+  fi
 }
 
-sync_packages () {
-  echo "Starting synchronizing packages..."
+# Synchronizes package databases with the master.
+sync_package_databases () {
+  echo 'Starting to synchronize package databases...'
 
-  if [[ -f /var/lib/pacman/db.lck ]]; then
-    echo "Pacman database seems to be blocked"
+  local lock_file='/var/lib/pacman/db.lck'
 
-    rm -f /var/lib/pacman/db.lck
+  if file_exists "${lock_file}"; then
+    echo 'Package databases seem to be locked'
 
-    echo "Lock file has been removed"
+    rm -f "${lock_file}" || exit 1
+
+    echo "Lock file ${lock_file} has been removed"
   fi
 
-  echo "keyserver hkp://keyserver.ubuntu.com" >> /etc/pacman.d/gnupg/gpg.conf
+  local keyserver='hkp://keyserver.ubuntu.com'
 
-  echo "GPG keyserver has been set to hkp://keyserver.ubuntu.com"
+  echo "keyserver ${keyserver}" >> /etc/pacman.d/gnupg/gpg.conf
+
+  echo "GPG keyserver has been set to ${keyserver}"
 
   sed -i 's/^#ParallelDownloads/ParallelDownloads/' /etc/pacman.conf
 
-  echo "Pacman parallel downloading has been enabled"
-
   pacman -Syy || exit 1
 
-  echo "Packages have been synchronized with master"
+  echo 'Package databases synchronized with the master'
 }
 
+# Updates the keyring package.
 update_keyring () {
-  echo "Updating keyring package..."
+  echo 'Updating keyring package...'
 
-  pacman --noconfirm -Sy archlinux-keyring || exit 1
+  pacman -Sy --noconfirm archlinux-keyring || exit 1
 
-  echo "Keyring has been updated successfully"
+  echo 'Keyring has been updated successfully'
 }
 
+# Installs the linux kernels.
 install_kernels () {
-  echo "Installing the linux kernels..."
+  echo 'Installing the linux kernels...'
 
-  local KERNEL_PKGS=""
+  local kernels=''
+  kernels="$(get_setting 'kernels' | jq -cer 'join(" ")')" || exit 1
 
-  if [[ "${KERNELS[@]}" =~ stable ]]; then
-    KERNEL_PKGS="linux linux-headers"
+  local pckgs=''
+
+  if match "${kernels}" 'stable'; then
+    pckgs='linux linux-headers'
   fi
 
-  if [[ "${KERNELS[@]}" =~ lts ]]; then
-    KERNEL_PKGS="$KERNEL_PKGS linux-lts linux-lts-headers"
+  if match "${kernels}" 'lts'; then
+    pckgs+=' linux-lts linux-lts-headers'
   fi
 
-  if [ -z "$KERNEL_PKGS" ]; then
-    echo "Error: no linux kernel packages set for installation"
+  if is_empty "${pckgs}"; then
+    echo 'No linux kernel packages set for installation'
     exit 1
   fi
 
-  pacstrap /mnt base $KERNEL_PKGS linux-firmware archlinux-keyring reflector rsync sudo || exit 1
+  pacstrap /mnt base ${pckgs} linux-firmware archlinux-keyring reflector rsync sudo jq || exit 1
 
-  echo -e "Kernels have been installed"
+  echo 'Linux kernels have been installed'
 }
 
-grant () {
-  local PERMISSION=$1
+# Grants the nopasswd permission to the wheel user group.
+grant_permissions () {
+  local rule='%wheel ALL=(ALL:ALL) NOPASSWD: ALL'
 
-  case "$PERMISSION" in
-    "nopasswd")
-      local RULE="%wheel ALL=(ALL:ALL) NOPASSWD: ALL"
-      sed -i "s/^# \($RULE\)/\1/" /mnt/etc/sudoers
+  sed -i "s/^# \(${rule}\)/\1/" /mnt/etc/sudoers || exit 1
 
-      if ! cat /mnt/etc/sudoers | grep -q "^$RULE"; then
-        echo "Error: failed to grant nopasswd permission to wheel group"
-        exit 1
-      fi;;
-  esac
+  if ! grep -q "^${rule}" /mnt/etc/sudoers; then
+    echo 'Failed to grant nopasswd permission to wheel user group'
+    exit 1
+  fi
 
-  echo "Sudoing permision $PERMISSION has been granted"
+  echo 'Permission nopasswd granted to wheel user group'
 }
 
-copy_files () {
-  echo "Start copying installation files..."
+# Copies the stack files to the installation disk.
+copy_installation_files () {
+  echo 'Start copying installation files...'
 
-  cp -R "$HOME" /mnt/root || exit 1
+  cp -r /opt/stack /mnt/opt || exit 1
 
-  echo "Installation files have been copied to /root"
+  echo 'Installation files moved to /mnt/opt/stack'
 }
 
-echo -e "\nStarting the bootstrap process..."
-
-source "$OPTIONS"
+echo -e '\nStarting the bootstrap process...'
 
 sync_clock &&
   set_mirrors &&
-  sync_packages &&
+  sync_package_databases &&
   update_keyring &&
   install_kernels &&
-  grant "nopasswd" &&
-  copy_files
+  grant_permissions &&
+  copy_installation_files
 
-echo -e "\nBootstrap process has been completed successfully"
-echo "Moving to the next process..."
+echo -e '\nBootstrap process has been completed successfully'
+echo 'Moving to the system installation process...'
 sleep 5

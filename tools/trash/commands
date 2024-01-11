@@ -2,8 +2,8 @@
 
 set -o pipefail
 
-source /opt/stack/utils
-source /opt/stack/trash/helpers
+source /opt/tools/utils
+source /opt/tools/trash/helpers
 
 # Show the list of trashed files filtered by the given
 # value. If the filter is an integer number the filter
@@ -21,11 +21,10 @@ list_files () {
 
   local query=''
 
-  if is_positive_integer "${filter}"; then
+  if is_integer "${filter}" '[0,]'; then
     query="[.[]|select((now - .epoch) / 86400 < ${filter})]"
-  elif is_positive_integer "${filter}" && match "${filter}" '^\+'; then
-    filter="$(echo "${filter}" | tr -d '+')"
-    query="[.[]|select((now - .epoch) / 86400 > ${filter})]"
+  elif match "${filter}" '^\+' && is_integer "${filter:1}" '[0,]'; then
+    query="[.[]|select((now - .epoch) / 86400 > ${filter:1})]"
   elif is_date "${filter}"; then
     filter="$(date -d ${filter} +%s)"
     query="[.[]|select(${filter} - .epoch_date == 0)]"
@@ -227,7 +226,7 @@ remove_files () {
 empty_files () {
   local days="${1}"
   
-  if is_given "${days}" && is_not_positive_integer "${days}"; then
+  if is_given "${days}" && is_not_integer "${days}" '[0,]'; then
     echo 'Invalid days filter'
     return 2
   fi

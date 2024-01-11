@@ -2,8 +2,8 @@
 
 set -o pipefail
 
-source /opt/stack/utils
-source /opt/stack/system/helpers
+source /opt/tools/utils
+source /opt/tools/system/helpers
 
 # Shows the current status of system.
 # Outputs:
@@ -56,6 +56,7 @@ show_status () {
   echo "AUR:       $(echo ${pkgs} | jq -cr '.aur|length')"
 
   echo -ne 'Updates:   Processing...'
+  
   local total_updates=''
   total_updates="$(find_outdated_packages | jq -cr '(.pacman|length) + (.aur|length)')" || return 1
 

@@ -3,10 +3,9 @@ configuration {
   display-run: "Run";
   display-drun: "Launch";
   display-window: "Switch";
-  display-emoji: "Copy";
   drun-display-format: "{name}";
   font: "Fira Code 10";
-  modi: "run,drun,window,emoji";
+  modi: "run,drun,window";
 }
 
 /* Theme (default v1.7.3) */

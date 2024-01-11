@@ -74,13 +74,52 @@ iwctl
 [iwd] station <device> connect <SSID>
 ```
 
+### Prepare the installation environment
+
+Increase available space on the installation media:
+
+```sh
+mount -o remount,size=16G /run/archiso/cowspace
+```
+
+Create a sudoer user name 'arch':
+
+```sh
+useradd -G wheel -m arch
+passwd arch
+```
+
+Enable sudo for the wheel user group:
+
+```sh
+EDITOR=nano visudo
+```
+
+Change current user to the `arch` user:
+
+```sh
+su - arch
+```
+
+Install base dependencies and other packages:
+
+```sh
+sudo pacman -Syy
+sudo pacman -S base-devel git jq
+
+git clone https://aur.archlinux.org/yay.git
+cd yay
+makepkg -si --noconfirm
+
+yay -S smenu
+```
+
 ### Download stack installation files
 
 To download the stack installation files use git to clone them like so:
 
 ```sh
-pacman -Syy
-pacman -S git
+cd ~
 git clone https://github.com/tzeikob/stack
 ```
 

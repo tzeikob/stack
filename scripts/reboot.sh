@@ -1,48 +1,57 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 set -Eeo pipefail
 
-revoke () {
-  local PERMISSION=$1
+source /opt/stack/scripts/utils.sh
 
-  case "$PERMISSION" in
-   "nopasswd")
-      local RULE="%wheel ALL=(ALL:ALL) NOPASSWD: ALL"
-      sed -i "s/^\($RULE\)/# \1/" /mnt/etc/sudoers
+# Revokes the nopasswd permission from the wheel user group.
+revoke_permissions () {
+  local rule='%wheel ALL=(ALL:ALL) NOPASSWD: ALL'
 
-      if ! cat /mnt/etc/sudoers | grep -q "^# $RULE"; then
-        echo "Error: failed to revoke nopasswd permission from wheel group"
-        exit 1
-      fi;;
-  esac
+  sed -i "s/^\(${rule}\)/# \1/" /mnt/etc/sudoers || exit 1
 
-  echo "Permission $PERMISSION has been revoked"
+  if ! grep -q "^# ${rule}" /mnt/etc/sudoers; then
+    echo 'Failed to revoke nopasswd permission from wheel user group'
+    exit 1
+  fi
+
+  echo 'Permission nopasswd revoked from wheel user group'
 }
 
+# Cleans up the new system of any remnants installation files.
 clean_up () {
-  echo "Cleaning up the system..."
+  echo 'Cleaning up the system...'
 
-  rm -rf /mnt/root/stack
-  rm -rf "/mnt/home/$USERNAME/stack"
+  rm -rf /mnt/opt/stack || exit 1
 
-  echo "Installation files have been removed"
-  echo "System clean up has been completed"
+  echo 'Installation files have been removed'
+
+  echo 'System clean up has been completed'
 }
 
-restart () {
-  echo "Rebooting the system in 15 secs (ctrl-c to skip)..."
+# Copies the installation log file to the new system.
+copy_log_file () {
+  echo "Log file saved to /home/${user_name}/stack.log"
+  echo "Installation process completed at $(date)"
 
-  cp "$LOG" "/mnt/home/$USERNAME/stack.log"
-  umount -R /mnt || echo "Ignoring busy mount points"
+  local user_name=''
+  user_name="$(get_setting 'user_name')" || exit 1
+
+  cp /opt/stack/stack.log "/mnt/home/${user_name}" || exit 1
+}
+
+# Restarts for the first login into the system.
+restart () {
+  echo 'Rebooting the system in 15 secs...'
 
   sleep 15
+  umount -R /mnt || echo 'Ignoring busy mount points'
   reboot
 }
 
-echo -e "\nBooting into the system for the first time..."
+echo -e '\nBooting into the system for the first time...'
 
-source "$OPTIONS"
-
-revoke "nopasswd" &&
+revoke_permissions &&
   clean_up &&
+  copy_log_file &&
   restart

@@ -35,9 +35,16 @@ restore_separator () {
 # from the given string or input.
 # Arguments:
 #  input: a string or input of a pipeline
+# Outputs:
+#  The given input trimmed of trailing spaces.
 trim () {
   local input=''
-  [[ -p /dev/stdin ]] && input="$(cat -)" || input="${@}"
+
+  if [[ -p /dev/stdin ]]; then
+    input="$(cat -)"
+  else
+    input="$@"
+  fi
 
   echo "${input}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'
 }
@@ -153,29 +160,6 @@ authenticate_user () {
   return 0
 }
 
-# Asks the user to retype the given secret value
-# and confirms it.
-# Arguments:
-#  prompt: a text line
-#  secret: the secret value to be confirmed
-# Outputs:
-#  A prompt text line.
-# Returns:
-#  0 if secret is confirmed otherwise 1.
-confirm_secret () {
-  local prompt="${1}"
-  local secret="${2}"
-
-  local retyped_secret=''
-  read -srep "${prompt} " retyped_secret
-
-  if not_equals "${secret}" "${retyped_secret}"; then
-    return 1
-  fi
-
-  return 0
-}
-
 # Shows a Yes/No menu and asks user to select an option,
 # where the selection is kept in the global var REPLY
 # either as a yes or no value.
@@ -191,11 +175,12 @@ confirm () {
   local options="no${KVS}No${AES}yes${KVS}Yes"
 
   echo "${prompt}"
+
   REPLY="$(echo "${options}" |
     smenu -nm -/ prefix -W "${AES_LN}" -S /\(.*"${KVS}"\)//v)" || return 1
 
+  # Remove the value part from the selected option
   if is_given "${REPLY}"; then
-    # Remove the value part from the selected option
     REPLY="$(echo "${REPLY}" | sed -r "s/(.*)${KVS}.*/\1/")"
   fi
 }
@@ -237,11 +222,12 @@ pick_one () {
     jq -cer '[.[]|("\(.key)'"${KVS}"'\(.value)")]|join("'"${AES}"'")')" || return 1
 
   echo "${prompt}"
+
   REPLY="$(echo "${options}" |
     LC_CTYPE=en_US.UTF-8 smenu -nm -/ prefix -W "${AES_LN}" "${args[@]}" -S /\(.*"${KVS}"\)//v)" || return 1
 
+  # Remove the value part from the selected option
   if is_given "${REPLY}"; then
-    # Remove the value part from the selected option
     REPLY="$(echo "${REPLY}" | sed -r "s/(.*)${KVS}.*/\1/")"
   fi
 }
@@ -284,11 +270,12 @@ pick_many () {
     jq -cer '[.[]|("\(.key)'"${KVS}"'\(.value)")]|join("'"${AES}"'")')" || return 1
 
   echo "${prompt}"
+
   REPLY="$(echo "${options}" |
     LC_CTYPE=en_US.UTF-8 smenu -nm -/ prefix -W "${AES_LN}" "${args[@]}" -S /\(.*"${KVS}"\)//v -P "${AES}")" || return 1
 
+  # Convert selected options to a JSON array of their keys
   if is_given "${REPLY}"; then
-    # Convert selected options to a JSON array of their keys
     REPLY="$(echo "${REPLY}" | awk -F"${AES}" '{
       out=""
       for (i=1;i<=NF;i++) {
@@ -481,16 +468,11 @@ on_loud_mode () {
 is_empty () {
   local value="${1}"
 
-  if [[ -z "${value}" ]] || [[ "${value}" == "" ]]; then
+  if [[ -z "${value}" ]] || [[ "${value}" == '' ]]; then
     return 0
   fi
 
   return 1
-}
-
-# An alias version of is_empty.
-is_not_given () {
-  is_empty "${1}" && return 0 || return 1
 }
 
 # An inverse version of is_empty.
@@ -498,21 +480,51 @@ is_not_empty () {
   is_empty "${1}" && return 1 || return 0
 }
 
-# A alias version of is_not_empty.
+# An inverse version of is_empty.
 is_given () {
-  is_not_empty "${1}" && return 0 || return 1
+  is_empty "${1}" && return 1 || return 0
 }
 
-# Checks if the given value is integer number.
+# An inverse version of is_given.
+is_not_given () {
+  is_given "${1}" && return 1 || return 0
+}
+
+# Checks if the given value is integer number within
+# the optionalyy given range.
 # Arguments:
 #  value: any number value
+#  range: [min,max] or none
 # Returns:
 #  0 if value is integer otherwise 1.
 is_integer () {
   local value="${1}"
+  local range="${2}"
 
-  if not_match "${value}" '^(0|-?[1-9][0-9]*)$'; then
+  local integer='(0|-?[1-9][0-9]*)'
+
+  if not_match "${value}" "^${integer}\$"; then
     return 1
+  fi
+
+  if is_given "${range}"; then
+    if not_match "${range}" "\[${integer}?,${integer}?\]"; then
+      return 1
+    fi
+
+    local min=''
+    min="$(echo "${range:1:-1}" | cut -d ',' -f 1)"
+
+    if is_given "${min}" && [[ ${value} -lt ${min} ]]; then
+      return 1
+    fi
+
+    local max=''
+    max="$(echo "${range:1:-1}" | cut -d ',' -f 2)"
+
+    if is_given "${max}" && [[ ${value} -gt ${max} ]]; then
+      return 1
+    fi
   fi
 
   return 0
@@ -520,27 +532,7 @@ is_integer () {
 
 # An inverse version of is_integer.
 is_not_integer () {
-  is_integer "${1}" && return 1 || return 0
-}
-
-# Checks if the given value is a positive integer number.
-# Arguments:
-#  value: any number value
-# Returns:
-#  0 if value is positive integer otherwise 1.
-is_positive_integer () {
-  local value="${1}"
-
-  if not_match "${value}" '^(0|[1-9][0-9]*)$'; then
-    return 1
-  fi
-
-  return 0
-}
-
-# An inverse version of is_positive_integer.
-is_not_positive_integer () {
-  is_positive_integer "${1}" && return 1 || return 0
+  is_integer "${1}" "${2}" && return 1 || return 0
 }
 
 # Checks if the file with the given path exists.
@@ -695,6 +687,26 @@ is_not_yes () {
   is_yes "${1}" && return 1 || return 0
 }
 
+# Checks if the given value equals to no.
+# Arguments:
+#  value: any value
+# Returns:
+#  0 if value is no otherwise 1.
+is_no () {
+  local value="${1}"
+
+  if not_match "${value}" '^(n|no)$'; then
+    return 1
+  fi
+
+  return 0
+}
+
+# An inverse version of is_no.
+is_not_no () {
+  is_no "${1}" && return 1 || return 0
+}
+
 # Checks if the given value equals to on.
 # Arguments:
 #  value: any value
@@ -766,13 +778,13 @@ is_true () {
   local value="${1}"
 
   local result='false'
-  result="$(kalker -p 100 "${value}")" || return 1
+  result="$(qalc -t "${value}")" || return 1
 
-  if not_equals "${result}" 'true'; then
-    return 1
+  if equals "${result}" 'true' || [[ ${result} -eq 1 ]]; then
+    return 0
   fi
 
-  return 0
+  return 1
 }
 
 # An inverse version of is_true.
@@ -826,7 +838,7 @@ has_failed () {
     code="${1}"
   fi
 
-  if is_true "${code} != 0"; then
+  if [[ ${code} -ne 0 ]]; then
     return 0
   fi
 
@@ -895,7 +907,7 @@ calc () {
   local expression="${1}"
 
   local result=0
-  result="$(kalker -p 100 "${expression}")" || return 1
+  result="$(qalc -t "${expression}")" || return 1
 
   # Make sure scientific formats like 3e-9 convert to regular form
   result="$(echo "${result}" | awk '{print $0 + 0}')" || return 1

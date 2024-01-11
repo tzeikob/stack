@@ -1,9 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=Irssi
-comment=Console IRC Client
-Exec=irssi
-Terminal=true
-Icon=irssi
-Catogories=Chat;IRC;Console
-Keywords=Chat;IRC;Console

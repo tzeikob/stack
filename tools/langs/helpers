@@ -2,7 +2,7 @@
 
 set -o pipefail
 
-source /opt/stack/utils
+source /opt/tools/utils
 
 LANGS_SETTINGS="${CONFIG_HOME}/langs.json"
 

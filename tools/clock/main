@@ -2,8 +2,8 @@
 
 set -o pipefail
 
-source /opt/stack/utils
-source /opt/stack/clock/commands
+source /opt/tools/utils
+source /opt/tools/clock/commands
 
 # Shows the help message.
 # Arguments:

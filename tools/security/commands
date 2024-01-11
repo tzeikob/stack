@@ -2,9 +2,9 @@
 
 set -o pipefail
 
-source /opt/stack/utils
-source /opt/stack/security/helpers
-source /opt/stack/notifications/helpers
+source /opt/tools/utils
+source /opt/tools/security/helpers
+source /opt/tools/notifications/helpers
 
 # Shows the current status of the system's security.
 # Outputs:
@@ -58,10 +58,10 @@ set_screen_locker () {
   if is_not_given "${interval}"; then
     echo 'Missing interval time'
     return 2
-  elif is_not_positive_integer "${interval}"; then
+  elif is_not_integer "${interval}"; then
     echo 'Invalid interval time'
     return 2
-  elif is_interval_out_of_range "${interval}"; then
+  elif is_not_integer "${interval}" '[0,60]'; then
     echo 'Interval time out of range [0,60]'
     return 2
   fi
@@ -70,12 +70,14 @@ set_screen_locker () {
   kill_screen_locker || return 1
 
   if is_true "${interval} > 0"; then
-    xautolock -locker 'security -qs lock screen' \
-      -nowlocker 'security -qs lock screen' -time "${interval}" \
+    xautolock -locker "security -qs lock screen" \
+      -nowlocker "security -qs lock screen" -time "${interval}" \
       -corners 0-00 -detectsleep &> /dev/null &
     
-    if has_failed; then
-      echo 'Failed to set screen locker'
+    sleep 1
+
+    if is_process_down '^xautolock'; then
+      echo 'Failed to set the screen locker'
       return 2
     fi
   
@@ -101,12 +103,13 @@ init_screen_locker () {
   kill_screen_locker || return 1
 
   if is_true "${interval} > 0"; then
-    xautolock -locker 'security -qs lock screen' \
-      -nowlocker 'security -qs lock screen' \
-      -time "${interval}" \
+    xautolock -locker "security -qs lock screen" \
+      -nowlocker "security -qs lock screen" -time "${interval}" \
       -corners 0-00 -detectsleep &> /dev/null &
     
-    if has_failed; then
+    sleep 1
+
+    if is_process_down '^xautolock'; then
       echo 'Failed to initialize the screen locker'
       return 2
     fi
@@ -161,9 +164,9 @@ set_user_password () {
   is_empty "${REPLY}" && echo 'New password cannot be blank' && return 2
   local new_password="${REPLY}"
   
-  confirm_secret 'Retype new password:' "${new_password}"
+  ask_secret 'Retype new password:' || return $?
   
-  if has_failed; then
+  if not_equals "${REPLY}" "${new_password}"; then
     echo 'New password does not match!'
     return 2
   fi
@@ -201,7 +204,7 @@ set_faillock_attempts () {
   if is_not_given "${attempts}"; then
     echo 'Missing attempts number'
     return 2
-  elif is_not_positive_integer "${attempts}"; then
+  elif is_not_integer "${attempts}" '[0,]'; then
     echo 'Invalid attempts number'
     return 2
   elif is_true "${attempts} < 1"; then
@@ -230,7 +233,7 @@ set_faillock_unblock () {
   if is_not_given "${time}"; then
     echo 'Missing unblock time'
     return 2
-  elif is_not_positive_integer "${time}"; then
+  elif is_not_integer "${time}" '[0,]'; then
     echo 'Invalid unblock time'
     return 2
   elif is_true "${time} < 1"; then
@@ -261,7 +264,7 @@ set_faillock_interval () {
   if is_not_given "${time}"; then
     echo 'Missing interval time'
     return 2
-  elif is_not_positive_integer "${time}"; then
+  elif is_not_integer "${time}" '[0,]'; then
     echo 'Invalid interval time'
     return 2
   elif is_true "${time} < 1"; then
