@@ -814,7 +814,7 @@ fix_workspaces () {
   echo 'Workspaces have been fixed'
 }
 
-# Initializes the desktop workspaces for any active
+# Initiates the desktop workspaces for any active
 # display monitor. This operation removes any extra
 # workspaces given to a monitor.
 init_workspaces () {  
@@ -922,7 +922,7 @@ init_workspaces () {
   echo 'Desktop workspaces have set'
 }
 
-# Initializes the sticky scratchpad terminal window.
+# Initiates the sticky scratchpad terminal window.
 init_scratchpad () {
   local scratchpad="${TERMINAL} --class scratch,scratch"
 
@@ -946,10 +946,34 @@ init_scratchpad () {
   echo 'Scratchpad has been launched'
 }
 
-# Initializes desktop status bars.
-init_bars () {
-  # Use polybar's launch script to restart a new instance
-  ${HOME}/.config/polybar/launch > /dev/null &
+# Initiates desktop status bars.
+init_bars () {  
+  # Terminate already running bar instances
+  polybar-msg cmd quit &> /dev/null
+
+  # Start new loggin section
+  echo "---" | tee -a /tmp/polybar.log > /dev/null
+
+  # Launch top/bottom bars for the primary monitor
+  local primary=''
+  primary="$(polybar -m | awk -F':' '/primary/{print $1}')"
+
+  MONITOR="${primary}" polybar -r primary 2>&1 |
+    tee -a /tmp/polybar.log > /dev/null & disown
+  
+  MONITOR="${primary}" polybar -r secondary 2>&1 |
+    tee -a /tmp/polybar.log > /dev/null & disown
+
+  # Launch bar for each other monitor
+  local others=''
+  others="$(polybar -m | awk -F':' '!/primary/{print $1}')"
+
+  local monitor=''
+
+  while read -r monitor; do
+   MONITOR="${monitor}" polybar -r tertiary 2>&1 |
+      tee -a /tmp/polybar.log > /dev/null & disown
+  done <<< "${others}"
 
   sleep 1
 
@@ -961,7 +985,7 @@ init_bars () {
   echo 'Desktop bars have been launched'
 }
 
-# Initializes keyboard bindings.
+# Initiates keyboard bindings.
 init_bindings () {
   # Kill any running sxhkd processes
   kill_process '^sxhkd.*'

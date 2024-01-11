@@ -1,9 +1,5 @@
 #!/bin/bash
 
-set -o pipefail
-
-export LC_ALL='en_US.UTF-8'
-
 # Plays the popup sound for the incoming notification
 # based on the notification's parameters.
 # Arguments:
@@ -24,7 +20,7 @@ play_popup_sound () {
     sound='critical'
   fi
 
-  pw-play --volume=0.5 "/usr/share/sounds/stack/${sound}.wav"
+  LC_ALL=en_US.UTF-8 pw-play --volume=0.5 "/usr/share/sounds/stack/${sound}.wav"
 }
 
 play_popup_sound "$@"

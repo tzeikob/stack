@@ -1,0 +1,38 @@
+#!/bin/bash
+
+set -o pipefail
+
+source /opt/stack/utils
+source /opt/stack/cloud/helpers
+
+# Reads for synced remote cloud services
+# and prints them out one by one.
+run () {
+  local remotes=''
+  remotes="$(find_remotes)"
+
+  if has_failed; then
+    echo 'Err!'
+    return 0
+  fi
+
+  local service='.service|'
+  service+='if . == "drive" then "gg" '
+  service+='elif . == "dropbox" then "db" '
+  service+='else . end'
+
+  local status='if .is_mounted '
+  status+='then "%{F#B2E39C}●%{F-}" '
+  status+='else "%{F#555555}●%{F-}" end'
+
+  local query="[.[]|\"\(.name):\(${service}) \(${status})\"]"
+  query+='|join("%{F#444444} | %{F-}")'
+
+  local output=''
+  output+="$(echo "${remotes}" | jq -cr "${query}")"
+
+  echo "${output}"
+}
+
+run "$@"
+

@@ -1,0 +1,46 @@
+#!/bin/bash
+
+set -o pipefail
+
+source /opt/stack/utils
+
+UPDATES_FILE=/tmp/updates
+
+# Reads the special update file which should contain
+# a positive integer value corresponding to the number
+# of packages need to be updated. If the number is 0
+# this means the system is up to date, on the other
+# hand a missing file means wait until the systen
+# processes the next updates file.
+run () {
+  local output=''
+  local color=''
+  
+  if file_exists "${UPDATES_FILE}"; then
+    local packages="$(< "${UPDATES_FILE}")"
+
+    if is_not_integer "${packages}"; then
+      output='Err!'
+    elif is_true "${packages} < 0"; then
+      output='Updating'
+      color='2222FF'
+    elif is_true "${packages} = 0"; then
+      output='Ready'
+      color='B2E39C'
+    else
+      output="$(printf '%03d' ${packages})"
+      color='F27D52'
+    fi
+  else
+    output='Processing'
+  fi
+
+  if is_not_empty "${color}"; then
+    output="${output}%{F#00000000}:%{F-}%{F#${color}}●%{F-}"
+  fi
+
+  echo "${output}"
+}
+
+run "$@"
+

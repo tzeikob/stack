@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -o pipefail
-
 source /opt/stack/utils
 
 # Resizes the windows according to the given direction

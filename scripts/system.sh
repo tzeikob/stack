@@ -187,7 +187,7 @@ install_packages () {
     parted curl wget udisks2 udiskie gvfs gvfs-smb bash-completion \
     man-db man-pages texinfo cups cups-pdf cups-filters usbutils bluez bluez-utils unzip terminus-font \
     vim nano git tree arch-audit atool zip xz unace p7zip gzip lzop feh hsetroot \
-    bzip2 unrar dialog inetutils dnsutils openssh nfs-utils openbsd-netcat ipset \
+    bzip2 unrar dialog inetutils dnsutils openssh nfs-utils openbsd-netcat ipset xsel \
     neofetch age imagemagick gpick fuse2 rclone smartmontools glib2 jq jc sequoia-sq xf86-input-wacom bc xdotool \
     $([ "$UEFI" = "yes" ] && echo 'efibootmgr') || exit 1
 
@@ -221,6 +221,11 @@ install_display_server () {
 
   cp /root/stack/configs/xorg/xorg.conf /etc/X11
   cp /root/stack/configs/xorg/keyboard.conf /etc/X11/xorg.conf.d/00-keyboard.conf
+
+  local stack_config_home="/home/${USERNAME}/.config/stack/" 
+  mkdir -p "${stack_config_home}"
+  cp /root/stack/configs/xorg/langs.json "${stack_config_home}"
+  chown -R "${USERNAME}":"${USERNAME}" "${stack_config_home}"
 
   echo "Server configurations have been saved under /etc/X11"
 
@@ -312,6 +317,7 @@ install_tools () {
   ln -sf "${STACK_HOME}/printers/main" /usr/local/bin/printers
   ln -sf "${STACK_HOME}/security/main" /usr/local/bin/security
   ln -sf "${STACK_HOME}/trash/main" /usr/local/bin/trash
+  ln -sf "${STACK_HOME}/system/main" /usr/local/bin/system
 
   echo "System tools have been installed"
 }

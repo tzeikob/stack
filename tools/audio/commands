@@ -144,13 +144,15 @@ restart () {
     echo 'Pulse socket restarted' &&
   systemctl --user restart pipewire-pulse.service &&
     sleep 0.5 &&
-    echo 'Pulse service restarted' &&
-  (~/.config/polybar/launch &> /dev/null &)
+    echo 'Pulse service restarted'
 
   if has_failed; then
     echo 'Failed to restart audio services'
     return 2
   fi
+
+  # Try to restart status bars
+  desktop -qs init bars &> /dev/null
 
   echo 'Audio services has been restarted'
 }
@@ -381,7 +383,7 @@ set_default () {
 # or down the volume increases or decreases by 5%.
 # Arguments:
 #  type:   output or input
-#  volume: up, down, mute, unmute or any value in [0,150] 
+#  volume: up, down, mute, unmute or any value in [0,150]
 turn_default () {
   local type="${1}"
   local volume="${2}"
@@ -409,17 +411,9 @@ turn_default () {
   if equals "${type}" 'input'; then
     object='source'
   fi
-
-  local module=''
-  module="$(pactl get-default-${object})"
-
-  if has_failed; then
-    echo "Unable to read the active ${type}"
-    return 2
-  fi
   
   if equals "${volume}" 'mute'; then
-    pactl set-${object}-mute "${module}" 1
+    pactl set-${object}-mute "@DEFAULT_${object^^}@" 1
 
     if has_failed; then
       echo "Failed to set active ${type} to mute"
@@ -429,7 +423,7 @@ turn_default () {
     echo "Active ${type} volume set to mute"
     return 0
   elif equals "${volume}" 'unmute'; then
-    pactl set-${object}-mute "${module}" 0
+    pactl set-${object}-mute "@DEFAULT_${object^^}@" 0
 
     if has_failed; then
       echo "Failed to set active ${type} to unmute"
@@ -443,15 +437,15 @@ turn_default () {
   local action='set to'
 
   if equals "${volume}" 'up'; then
-    volume='+5'
+    volume='+1'
     action='pumped up by'
   elif equals "${volume}" 'down'; then
-    volume='-5'
+    volume='-1'
     action='lowered by'
   fi
 
-  pactl set-${object}-mute "${module}" 0 &&
-  pactl set-${object}-volume "${module}" "${volume}%"
+  pactl set-${object}-mute "@DEFAULT_${object^^}@" 0
+  pactl set-${object}-volume  "@DEFAULT_${object^^}@" "${volume}%"
 
   if has_failed; then
     echo "Failed to set volume of active ${type})"

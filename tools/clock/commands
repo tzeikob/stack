@@ -191,3 +191,64 @@ sync_rtc () {
   echo 'Hardware clock synced to system clock'
 }
 
+# Sets the time format of the clock that is displayed
+# on the user desktop status bars.
+# Arguments:
+#  mode:      12h or 24h
+#  precision: mins, secs or nanos
+format_time () {
+  local mode="${1}"
+  local precision="${2}"
+  
+  if is_not_given "${mode}"; then
+    echo 'Time mode is required'
+    return 2
+  elif is_not_time_mode "${mode}"; then
+    echo 'Invalid or unknown time mode'
+    return 2
+  fi
+
+  if is_not_given "${precision}"; then
+    echo 'Time precision is required'
+    return 2
+  elif is_not_time_precision "${precision}"; then
+    echo 'Invalid or unknown time precision'
+    return 2
+  fi
+
+  # Save time format and restart status bars
+  save_time_format_to_settings "${mode}" "${precision}" &&
+   desktop -qs init bars &> /dev/null
+
+  if has_failed; then
+    echo 'Failed to set time format'
+    return 2
+  fi
+
+  echo "Time format set to ${mode} mode and ${precision} precision"
+}
+
+# Sets the format of the date that is displayed
+# on the user desktop status bars.
+# Arguments:
+#  pattern: a valid date format
+format_date () {
+  local pattern="${1}"
+  
+  if is_not_given "${pattern}"; then
+    echo 'Date pattern is required'
+    return 2
+  fi
+
+  # Save date format and restart status bars
+  save_date_format_to_settings "${pattern}" &&
+   desktop -qs init bars &> /dev/null
+
+  if has_failed; then
+    echo 'Failed to set date format'
+    return 2
+  fi
+
+  echo "Date format set to $(date "+${pattern}")"
+}
+

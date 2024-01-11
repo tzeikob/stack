@@ -18,7 +18,7 @@
     progress_bar_corner_radius = 0
 
     indicate_hidden = yes
-    transparency = 100
+    transparency = 0
     separator_height = 2
     padding = 15
     horizontal_padding = 15
@@ -29,7 +29,7 @@
     gap_size = 0
     separator_color = frame
     sort = yes
-    idle_threshold = 0
+    idle_threshold = 15m
 
     font = Pixelmix 11
     line_height = 6
@@ -72,17 +72,17 @@
 [urgency_low]
     background = "#282a36"
     foreground = "#ff557f"
-    timeout = 4
+    timeout = 0
 
 [urgency_normal]
     background = "#282a36"
     foreground = "#ff557f"
-    timeout = 6
+    timeout = 0
 
 [urgency_critical]
     background = "#282a36"
     foreground = "#ff557f"
-    timeout = 10
+    timeout = 0
 
 [fullscreen_pushback_everything]
     fullscreen = pushback

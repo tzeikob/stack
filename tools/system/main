@@ -3,7 +3,7 @@
 set -o pipefail
 
 source /opt/stack/utils
-source /opt/stack/langs/commands
+source /opt/stack/system/commands
 
 # Shows the help message.
 # Arguments:
@@ -14,7 +14,7 @@ show_help () {
   local mode="${1}"
 
   if equals "${mode}" 'once'; then
-    echo 'Usage: langs [OPTIONS] COMMAND [OBJECT] [ARGUMENTS]...'
+    echo 'Usage: system [OPTIONS] COMMAND [OBJECT] [ARGUMENTS]...'
     
     echo -e '\nOPTIONS'
     printf ' %-10s %s\n' \
@@ -27,25 +27,16 @@ show_help () {
     echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
 
     echo -e '\nCOMMANDS'
-    printf ' %-39s %s\n' \
+    printf ' %-26s %s\n' \
       'help' 'Show this help message.'
   fi
 
-  printf ' %-39s %s\n' \
-    'show status' 'Show the system locale and keyboard status.' \
+  printf ' %-26s %s\n' \
+    'show status' 'Show the system overall status.' \
     '' '' \
-    'add locale <name>' 'Add a locale to the system locales.' \
-    'remove locale <name>' 'Remove a locale from the system locales.' \
-    'set locale <name>' 'Set the locale of the system.' \
+    'list packages pacman|aur' 'Show the list of installed packages.' \
     '' '' \
-    'add layout <code> <variant> <alias>' 'Add a keyboard layout.' \
-    'remove layout <code> <variant>' 'Remove a keyboard layout.' \
-    'name layout <code> <variant> <alias>' 'Give an alias display name to a layout.' \
-    'order layouts <code:variant>...' 'Set the order of keyboard layouts.' \
-    '' '' \
-    'set keymap <map>' 'Set the keyboard virtual console keymap.' \
-    'set options <value>' 'Set a keyboard layout options.' \
-    'set model <name>' 'Set the model of the keyboard.'
+    'check updates pacman|aur' 'Shows the list of possible outdated packages.'
 }
 
 # Routes to the corresponding operation by matching
@@ -61,16 +52,8 @@ execute () {
   
   case "${command}${object:+ ${object}}" in
     'show status') show_status;;
-    'add locale') add_locale "${3}";;
-    'remove locale') remove_locale "${3}";;
-    'set locale') set_locale "${3}";;
-    'add layout') add_layout "${3}" "${4}" "${5}";;
-    'remove layout') remove_layout "${3}" "${4}";;
-    'name layout') name_layout "${3}" "${4}" "${5}";;
-    'order layouts') order_layouts "${@:3}";;
-    'set keymap') set_keymap "${3}";;
-    'set options') set_options "${3}";;
-    'set model') set_model "${3}";;
+    'list packages') list_packages "${3}";;
+    'check updates') check_updates "${3}";;
     *)
       echo 'Ooops, invalid or unknown command!'
       return 2;;
@@ -113,7 +96,7 @@ run () {
 
   while true; do
     if equals "${mode}" 'loop'; then
-      prompt langs
+      prompt system
 
       local command=''
       command="$(echo "${REPLY}" | awk '{print (NF == 1) ? $1 : $0}')"

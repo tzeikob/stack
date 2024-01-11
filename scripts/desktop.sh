@@ -5,7 +5,7 @@ set -Eeo pipefail
 install_packages () {
   echo -e "\nInstalling various system packages..."
 
-  yay -S --noconfirm --removemake digimend-kernel-drivers-dkms-git || exit 1
+  yay -S --noconfirm --removemake digimend-kernel-drivers-dkms-git xkblayout-state-git || exit 1
   
   echo "Packages have been installed"
 }
@@ -47,6 +47,9 @@ install_window_manager () {
 
   cp ~/stack/configs/bspwm/resize "$CONFIG_HOME"
   chmod 755 "$CONFIG_HOME/resize"
+
+  cp ~/stack/configs/bspwm/swap "$CONFIG_HOME"
+  chmod 755 "$CONFIG_HOME/swap"
 
   cp ~/stack/configs/bspwm/scratchpad "$CONFIG_HOME"
   chmod 755 "$CONFIG_HOME/scratchpad"
@@ -110,8 +113,6 @@ install_file_manager () {
     --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 || exit 1
   HOME=~/ sh "$CONFIG_HOME/getplugs" > /dev/null || exit 1
 
-  sed -ri 's/(.*)# mocp$/\1\$TERMINAL -e mocp \&/' "$CONFIG_HOME/plugins/mocq"
-
   echo "Extra plugins have been installed"
 
   mkdir -p ~/downloads ~/documents ~/images ~/audios ~/videos ~/virtuals ~/sources ~/data ~/mounts
@@ -155,11 +156,43 @@ install_bars () {
 
   cp ~/stack/configs/polybar/config.ini "$CONFIG_HOME"
   chmod 644 "$CONFIG_HOME/config.ini"
+  
+  cp ~/stack/configs/polybar/modules.ini "$CONFIG_HOME"
+  chmod 644 "$CONFIG_HOME/modules.ini"
+  
+  cp ~/stack/configs/polybar/theme.ini "$CONFIG_HOME"
+  chmod 644 "$CONFIG_HOME/theme.ini"
 
-  cp ~/stack/configs/polybar/launch "$CONFIG_HOME"
-  chmod 755 "$CONFIG_HOME/launch"
+  local SCRIPTS_HOME="${CONFIG_HOME}/scripts"
+  mkdir -p "${SCRIPTS_HOME}"
 
-  echo "Polybar launcher script has been installed"
+  cp ~/stack/configs/polybar/scripts/time "${SCRIPTS_HOME}"
+  chmod +x "${SCRIPTS_HOME}/time"
+  
+  cp ~/stack/configs/polybar/scripts/cpu "${SCRIPTS_HOME}"
+  chmod +x "${SCRIPTS_HOME}/cpu"
+  
+  cp ~/stack/configs/polybar/scripts/memory "${SCRIPTS_HOME}"
+  chmod +x "${SCRIPTS_HOME}/memory"
+  
+  cp ~/stack/configs/polybar/scripts/updates "${SCRIPTS_HOME}"
+  chmod +x "${SCRIPTS_HOME}/updates"
+  
+  cp ~/stack/configs/polybar/scripts/power "${SCRIPTS_HOME}"
+  chmod +x "${SCRIPTS_HOME}/power"
+  
+  cp ~/stack/configs/polybar/scripts/flash-drives "${SCRIPTS_HOME}"
+  chmod +x "${SCRIPTS_HOME}/flash-drives"
+  
+  cp ~/stack/configs/polybar/scripts/remotes "${SCRIPTS_HOME}"
+  chmod +x "${SCRIPTS_HOME}/remotes"
+  
+  cp ~/stack/configs/polybar/scripts/bluetooth "${SCRIPTS_HOME}"
+  chmod +x "${SCRIPTS_HOME}/bluetooth"
+  
+  cp ~/stack/configs/polybar/scripts/notifications "${SCRIPTS_HOME}"
+  chmod +x "${SCRIPTS_HOME}/notifications"
+
   echo "Status bars have been installed"
 }
 
@@ -191,7 +224,7 @@ install_notifier () {
 install_launchers () {
   echo "Setting up the launchers via rofi..."
 
-  sudo pacman -S --noconfirm rofi rofi-emoji xsel || exit 1
+  sudo pacman -S --noconfirm rofi || exit 1
 
   local CONFIG_HOME=~/.config/rofi
   mkdir -p "$CONFIG_HOME"
@@ -200,6 +233,7 @@ install_launchers () {
   chmod 644 "$CONFIG_HOME/config.rasi"
 
   cp ~/stack/configs/rofi/launch "$CONFIG_HOME"
+  chmod +x "${CONFIG_HOME}/launch"
 
   echo "Launchers has been installed"
 }
@@ -295,45 +329,71 @@ install_calculator () {
   echo "Calculator has been installed"
 }
 
-install_media_apps () {
-  echo "Installing media applications..."
+install_media_viewer () {
+  echo 'Installing media viewer...'
 
-  sudo pacman -S --noconfirm moc mpv sxiv || exit 1
-
-  echo "Installing codecs and various dependecies..."
-
-  sudo pacman -S --noconfirm --asdeps --needed \
-    faad2 ffmpeg4.4 libmodplug libmpcdec speex taglib wavpack || exit 1
-
-  local CONFIG_HOME=~/.moc
-  mkdir -p "$CONFIG_HOME" "$CONFIG_HOME/themes"
-
-  cp ~/stack/configs/moc/config "$CONFIG_HOME"
-  chmod 644 "$CONFIG_HOME/config"
-
-  cp ~/stack/configs/moc/dark "$CONFIG_HOME/themes"
-  chmod 644 "$CONFIG_HOME/themes/dark"
-
-  mkdir -p ~/.local/share/applications
-  cp ~/stack/configs/moc/desktop ~/.local/share/applications/moc.desktop
+  sudo pacman -S --noconfirm sxiv || exit 1
 
   printf '%s\n' \
     'image/jpeg=sxiv.desktop' \
     'image/jpg=sxiv.desktop' \
     'image/png=sxiv.desktop' \
-    'image/tiff=sxiv.desktop' \
-    'audio/mpeg=moc.desktop' \
-    'audio/mp3=moc.desktop' \
-    'audio/flac=moc.desktop' \
-    'audio/midi=moc.desktop' \
+    'image/tiff=sxiv.desktop' >> ~/.config/mimeapps.list
+  
+  echo -e 'Media viewer has been installed'
+}
+
+install_music_player () {
+  echo 'Installing music player...'
+  
+  sudo pacman -S --noconfirm mpd ncmpcpp || exit 1
+
+  local mpd_home=~/.config/mpd
+  mkdir -p "${mpd_home}" "${mpd_home}/playlists" "${mpd_home}/database"
+
+  cp ~/stack/configs/mpd/conf "${mpd_home}/mpd.conf"
+
+  local ncmpcpp_home=~/.config/ncmpcpp
+  mkdir -p "${ncmpcpp_home}"
+
+  cp ~/stack/configs/ncmpcpp/config "${ncmpcpp_home}/config"
+
+  sudo systemctl --user enable mpd.service
+
+  mkdir -p ~/.local/share/applications
+  cp ~/stack/configs/ncmpcpp/desktop ~/.local/share/applications/ncmpcpp.desktop
+  
+  printf '%s\n' \
+    'audio/mpeg=ncmpcpp.desktop' \
+    'audio/mp3=ncmpcpp.desktop' \
+    'audio/flac=ncmpcpp.desktop' \
+    'audio/midi=ncmpcpp.desktop' >> ~/.config/mimeapps.list
+  
+  echo 'Music player has been installed'
+}
+
+install_video_player () {
+  echo 'Installing video player...'
+
+  sudo pacman -S --noconfirm mpv || exit 1
+
+  printf '%s\n' \
     'video/mp4=mpv.desktop' \
     'video/mkv=mpv.desktop' \
     'video/mov=mpv.desktop' \
     'video/mpeg=mpv.desktop' \
     'video/avi=mpv.desktop' >> ~/.config/mimeapps.list
   
-  echo "Mime types have been added"
-  echo -e "Media applications have been installed"
+  echo 'Video player has been installed'
+}
+
+install_codecs () {
+  echo 'Installing media codecs...'
+
+  sudo pacman -S --noconfirm \
+    faad2 ffmpeg4.4 libmodplug libmpcdec speex taglib wavpack || exit 1
+
+  echo 'Media codecs have been installed'
 }
 
 install_theme () {
@@ -478,7 +538,10 @@ install_packages &&
   install_screenlocker &&
   install_screencasters &&
   install_calculator &&
-  install_media_apps &&
+  install_media_viewer &&
+  install_music_player &&
+  install_video_player &&
+  install_media_codecs &&
   install_theme &&
   install_fonts &&
   setup_bindings

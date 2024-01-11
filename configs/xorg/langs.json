@@ -1,0 +1,11 @@
+{
+  "locale": "en_US.UTF-8",
+  "locales": ["en_US.UTF-8 UTF-8"],
+  "keymap": "us",
+  "model": "pc105",
+  "options": "grp:alt_shift_toggle",
+  "layouts": [
+    {"code": "us", "variant": "default"}
+  ]
+}
+
