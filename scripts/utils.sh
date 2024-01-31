@@ -38,9 +38,11 @@ save_setting () {
   # Check if the given value is of invalid type
   echo "${value}" | jq -cer 'type' &> /dev/null
 
-  # Consider any value of invalid type as string
+  # Enforce string quotes around values of invalid type or empty ones
   if has_failed; then
     value="\"${value}\""
+  elif is_empty "${value}" || match "${value}" '^ *$'; then
+    value='""'
   fi
 
   local settings=''
