@@ -31,11 +31,11 @@ clean_up () {
 
 # Copies the installation log file to the new system.
 copy_log_file () {
-  echo "Log file saved to /home/${user_name}/stack.log"
-  echo "Installation process completed at $(date)"
-
   local user_name=''
   user_name="$(get_setting 'user_name')" || exit 1
+
+  echo "Log file saved to /home/${user_name}/stack.log"
+  echo "Installation process completed at $(date)"
 
   cp /opt/stack/stack.log "/mnt/home/${user_name}" || exit 1
 }
