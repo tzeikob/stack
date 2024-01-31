@@ -36,7 +36,7 @@ install_dbeaver () {
   echo 'Installing the dbeaver client...'
 
   # Select the jre provider instead of jdk
-  echo -e '2\ny' | sudo pacman -S dbeaver || exit 1
+  printf '%s\n' 2 y | sudo pacman -S dbeaver || exit 1
 
   echo -e 'Dbeaver client has been installed\n'
 }
