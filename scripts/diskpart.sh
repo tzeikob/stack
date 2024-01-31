@@ -270,7 +270,7 @@ report () {
   lsblk "${disk}" -o NAME,SIZE,TYPE,MOUNTPOINTS | awk '{print " "$0}'
 }
 
-echo -e "\nInstallation process started at $(date)"
+echo -e "\nInstallation process started at $(date -u)"
 echo 'Starting disk partitioning...'
 
 wipe_disk &&

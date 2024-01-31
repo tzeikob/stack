@@ -35,7 +35,7 @@ copy_log_file () {
   user_name="$(get_setting 'user_name')" || exit 1
 
   echo "Log file saved to /home/${user_name}/stack.log"
-  echo "Installation process completed at $(date)"
+  echo "Installation process completed at $(date -u)"
 
   cp /opt/stack/stack.log "/mnt/home/${user_name}" || exit 1
 }
