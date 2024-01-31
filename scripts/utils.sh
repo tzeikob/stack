@@ -6,24 +6,99 @@ AES=$'╬'
 AES_LN=$'╬\n'
 KVS=$'▒'
 
-SETTINGS_FILE='/opt/stack/settings.json'
+LOG_FILE='/var/log/stack.log'
+SETTINGS_FILE='/opt/stack/.settings'
+
+# Logs the given message to the output stream indicated by the
+# given target option which should be either console or file,
+# where no target option means log to both console and file.
+# Options:
+#  -t: console or file
+# Arguments:
+#  message: any text message
+# Outputs:
+#  The given text message if console target is not skipped.
+log () {
+  local target=''
+
+  local OPTIND OPTARG opt
+  while getopts ':t:' opt; do
+    case "${opt}" in
+      't') target="${OPTARG}";;
+      *)
+        return 1;;
+    esac
+  done
+
+  # Shift respectivelly to collect the message argument
+  shift $((OPTIND-1))
+
+  local message="${1}"
+
+  # Skip empty messages
+  if is_empty "${message}"; then
+    return 0
+  fi
+
+  if is_not_given "${target}" || equals "${target}" 'console'; then
+    echo -e "${message}"
+  fi
+
+  if is_not_given "${target}" || equals "${target}" 'file'; then
+    echo -e "${message}" >> "${LOG_FILE}"
+  fi
+}
+
+# Logs the current global output to the log file,
+# prints the error message if such message is given
+# and exits the process immediately.
+# Arguments:
+#  message: an optional error message
+# Outputs:
+#  The given error message or none.
+fail () {
+  local message="${1:-"A fatal error has been occurred"}"
+
+  if is_not_empty "${OUTPUT}"; then
+    log -t file "${OUTPUT}"
+  fi
+
+  log "${message}"
+
+  exit 1
+}
+
+# Checks if the given exit status code is non-zero
+# which indicates the last command has failed. If no
+# code is given the function will consider as exit
+# code the current value of $?.
+# Arguments:
+#  code: an exit status code
+# Returns:
+#  0 if exit code is non-zero otherwise 1.
+has_failed () {
+  # Save exit code set by the previous command
+  local code=$?
+
+  if is_given "${1}"; then
+    code="${1}"
+  fi
+
+  if [[ ${code} -ne 0 ]]; then
+    return 0
+  fi
+
+  return 1
+}
+
+# An inverse version of has_failed.
+has_not_failed () {
+  has_failed "${1}" && return 1 || return 0
+}
 
 # Resets the installation settings.
 init_settings () {
   echo '{}' > "${SETTINGS_FILE}"
-}
-
-# Prints the installation settings, where any sensitive
-# settings like passwords are hidden.
-# Outputs:
-#  The installation settings as a JSON object.
-print_settings () {
-  local mode="${1}"
-
-  # Hide password like properties
-  local query='.user_password = "***" | .root_password = "***"'
-
-  jq "${query}" "${SETTINGS_FILE}"
 }
 
 # Saves the installation setting with the given key
@@ -49,6 +124,13 @@ save_setting () {
   settings="$(jq -cr ".${key} = ${value}" "${SETTINGS_FILE}")"
 
   echo "${settings}" > "${SETTINGS_FILE}"
+}
+
+# Returns the content of the installation settings file.
+# Outputs:
+#  The installation settings as a JSON object.
+get_settings () {
+  jq '.' "${SETTINGS_FILE}"
 }
 
 # Gets the value of the installation setting with the given key.
@@ -113,9 +195,10 @@ trim () {
 ask () {
   local prompt="${1}"
 
-  REPLY=''
+  echo -ne "${prompt} "
 
-  read -rep "${prompt} " REPLY
+  REPLY=''
+  read -re REPLY
 }
 
 # Asks the user to enter a secret value, the answer is
@@ -127,9 +210,10 @@ ask () {
 ask_secret () {
   local prompt="${1}"
 
-  REPLY=''
+  echo -ne "${prompt} "
 
-  read -srep "${prompt} " REPLY
+  REPLY=''
+  read -sre REPLY
 }
 
 # Shows a Yes/No menu and asks user to select an option,
@@ -356,7 +440,7 @@ file_exists () {
 
 # An inverse version of file_exists.
 file_not_exists () {
-   file_exists "${1}" && return 1 || return 0
+  file_exists "${1}" && return 1 || return 0
 }
 
 # Checks if the directory with the given path exists.
@@ -376,7 +460,7 @@ directory_exists () {
 
 # An inverse version of directory_exists.
 directory_not_exists () {
- directory_exists "${1}" && return 1 || return 0
+  directory_exists "${1}" && return 1 || return 0
 }
 
 # Checks if the symlink with the given path exists.
@@ -499,34 +583,6 @@ is_not_off () {
   is_off "${1}" && return 1 || return 0
 }
 
-# Checks if the given exit status code is non-zero
-# which indicates the last command has failed. If no
-# code is given the function will consider as exit
-# code the current value of $?.
-# Arguments:
-#  code: an exit status code
-# Returns:
-#  0 if exit code is non-zero otherwise 1.
-has_failed () {
-  # Save exit code set by the previous command
-  local code=$?
-
-  if is_given "${1}"; then
-    code="${1}"
-  fi
-
-  if [[ ${code} -ne 0 ]]; then
-    return 0
-  fi
-
-  return 1
-}
-
-# An inverse version of has_failed.
-has_not_failed () {
-  has_failed "${1}" && return 1 || return 0
-}
-
 # Checks if the given value is matching with the given regex.
 # Arguments:
 #  value: any value
@@ -574,4 +630,3 @@ equals () {
 not_equals () {
   equals "${1}" "${2}" && return 1 || return 0
 }
-

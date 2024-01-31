@@ -11,7 +11,7 @@ source /opt/stack/scripts/utils.sh
 run () {
   local file_name="${1}"
 
-  bash "/opt/stack/scripts/${file_name}.sh" > >(tee -a /opt/stack/stack.log) 2>&1
+  bash "/opt/stack/scripts/${file_name}.sh"
 }
 
 # Changes to the shell session of the mounted installation disk
@@ -29,16 +29,30 @@ install () {
 
   # Impersonate the sudoer user on desktop, stack and tools installation
   if match "${1}" '^(desktop|stack|tools)$'; then
-    user_name="$(get_setting 'user_name')" || abort
+    user_name="$(get_setting 'user_name')" || fail
   fi
 
-  arch-chroot /mnt runuser -u "${user_name}" -- "${script_file}" > >(tee -a /opt/stack/stack.log) 2>&1
+  arch-chroot /mnt runuser -u "${user_name}" -- "${script_file}"
 }
 
-# Exit the installation process immediately.
-abort () {
-  echo 'Process exiting with status code 1...'
-  exit 1
+# Cleans up the new system and revokes permissions.
+clean_up () {
+  log -t console 'Cleaning up the system...'
+
+  rm -rf /mnt/opt/stack
+
+  # Revoke nopasswd permissions
+  local rule='%wheel ALL=(ALL:ALL) NOPASSWD: ALL'
+  sed -i "s/^\(${rule}\)/# \1/" /mnt/etc/sudoers
+}
+
+# Restarts the system.
+restart () {
+  log -t console 'Rebooting the system in 15 secs...'
+
+  sleep 15
+  umount -R /mnt || log -t console 'Ignoring busy mount points'
+  reboot
 }
 
 clear
@@ -49,18 +63,15 @@ cat << EOF
 ░░░▀▀▀░░▀░░▀░▀░▀▀▀░▀░▀░░░
 EOF
 
-echo -e '\nWelcome to Stack Installer, v1.0.0.alpha.'
-echo -e 'Base your development workflow on archlinux!\n'
+log -t console '\nWelcome to StackOS Installer, v1.0.0.alpha.'
+log -t console 'Base your development stack on archlinux!\n'
 
-echo "Let's start by picking some installation settings..."
-confirm 'Do you want to proceed?' || abort
+log -t console "Let's start by picking some installation settings..."
+confirm 'Do you want to proceed?' || fail
 
 if is_not_given "${REPLY}" || is_no "${REPLY}"; then
-  echo 'Installation process canceled'
-  abort
+  fail 'Installation has been canceled'
 fi
-
-echo
 
 run askme &&
   run diskpart &&
@@ -69,4 +80,5 @@ run askme &&
   install desktop &&
   install stack &&
   install tools &&
-  run reboot || abort
+  clean_up &&
+  restart

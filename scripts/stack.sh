@@ -6,110 +6,146 @@ source /opt/stack/scripts/utils.sh
 
 # Installs the node javascript runtime engine.
 install_node () {
-  echo 'Installing the node runtime engine...'
+  log 'Installing the node runtime engine...'
 
   local user_name=''
-  user_name="$(get_setting 'user_name')" || exit 1
+  user_name="$(get_setting 'user_name')" || fail
 
   local nvm_home="/home/${user_name}/.nvm"
 
-  export NVM_DIR="${nvm_home}" && (
-    git clone https://github.com/nvm-sh/nvm.git "${NVM_DIR}"
-    cd "${NVM_DIR}"
-    git checkout `git describe --abbrev=0 --tags --match "v[0-9]*" $(git rev-list --tags --max-count=1)`
-  ) && \. "${NVM_DIR}/nvm.sh" || exit 1
+  OUTPUT="$(
+    git clone https://github.com/nvm-sh/nvm.git "${nvm_home}" 2>&1 &&
+      cd "${nvm_home}" &&
+      git checkout `git describe --abbrev=0 --tags --match "v[0-9]*" $(git rev-list --tags --max-count=1)` 2>&1 &&
+      cd ~
+  )" || fail
+
+  log -t file "${OUTPUT}"
 
   local bashrc_file="/home/${user_name}/.bashrc"
 
   echo -e '\nexport NVM_DIR="${HOME}/.nvm"' >> "${bashrc_file}" &&
     echo '[ -s "${NVM_DIR}/nvm.sh" ] && \. "${NVM_DIR}/nvm.sh"' >> "${bashrc_file}" &&
-    echo '[ -s "${NVM_DIR}/bash_completion" ] && \. "${NVM_DIR}/bash_completion"' >> "${bashrc_file}" || exit 1
+    echo '[ -s "${NVM_DIR}/bash_completion" ] && \. "${NVM_DIR}/bash_completion"' >> "${bashrc_file}" || fail
 
-  echo 'Node version manager has been installed'
+  log 'Node version manager has been installed'
 
-  echo 'Installing the latest node version...'
+  log 'Installing the latest node version...'
 
-  nvm install --no-progress node || exit 1
+  OUTPUT="$(
+    \. "${nvm_home}/nvm.sh" 2>&1 &&
+      nvm install --no-progress node 2>&1
+  )" || fail
 
-  echo "Node latest version $(nvm current) has been installed"
+  log -t file "${OUTPUT}"
 
-  echo 'export PATH="./node_modules/.bin:${PATH}"' >> "${bashrc_file}" || exit 1
+  log 'Node latest version has been installed'
 
-  echo -e 'Node runtime engine has been installed\n'
+  echo 'export PATH="./node_modules/.bin:${PATH}"' >> "${bashrc_file}" || fail
+
+  log 'Node runtime engine has been installed\n'
 }
 
 # Installs the deno javascript runtime engine.
 install_deno () {
-  echo 'Installing the deno runtime engine...'
+  log 'Installing the deno runtime engine...'
 
-  sudo pacman -S --noconfirm deno || exit 1
+  OUTPUT="$(
+    sudo pacman -S --noconfirm deno 2>&1
+  )" || fail
 
-  echo -e 'Deno runtime engine has been installed\n'
+  log -t file "${OUTPUT}"
+
+  log 'Deno runtime engine has been installed\n'
 }
 
 # Installs the bun javascript runtime engine.
 install_bun () {
-  echo 'Installing the bun runtime engine...'
+  log 'Installing the bun runtime engine...'
 
   local url='https://bun.sh/install'
 
-  curl "${url}" -sSLo /tmp/bun-install.sh \
-    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 || exit 1
+  OUTPUT="$(
+    curl "${url}" -sSLo /tmp/bun-install.sh \
+      --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 2>&1 &&
+      bash /tmp/bun-install.sh 2>&1
+  )" || fail
 
-  bash /tmp/bun-install.sh || exit 1
+  log -t file "${OUTPUT}"
 
-  echo -e 'Bun runtime engine has been installed\n'
+  log 'Bun runtime engine has been installed\n'
 }
 
 # Installs the go programming language.
 install_go () {
-  echo 'Installing the go programming language...'
+  log 'Installing the go programming language...'
 
-  sudo pacman -S --noconfirm go go-tools || exit 1
+  OUTPUT="$(
+    sudo pacman -S --noconfirm go go-tools 2>&1
+  )" || fail
 
-  echo -e 'Go programming language has been installed\n'
+  log -t file "${OUTPUT}"
+
+  log 'Go programming language has been installed\n'
 }
 
 # Installs the rust programming language.
 install_rust () {
-  echo 'Installing the rust programming language...'
+  log 'Installing the rust programming language...'
 
-  sudo pacman -S --noconfirm rustup || exit 1
+  OUTPUT="$(
+    sudo pacman -S --noconfirm rustup 2>&1
+  )" || fail
 
-  rustup default stable || exit 1
+  log -t file "${OUTPUT}"
 
-  echo 'Rust default tool chain set to stable'
+  log 'Setting default tool chain...'
 
-  echo -e 'Rust programming language has been installed\n'
+  OUTPUT="$(
+    rustup default stable 2>&1
+  )" || fail
+
+  log -t file "${OUTPUT}"
+
+  log 'Rust default tool chain set to stable'
+
+  log 'Rust programming language has been installed\n'
 }
 
 # Installs the docker egine.
 install_docker () {
-  echo 'Installing the docker engine...'
+  log 'Installing the docker engine...'
 
-  sudo pacman -S --noconfirm docker docker-compose || exit 1
+  OUTPUT="$(
+    sudo pacman -S --noconfirm docker docker-compose 2>&1
+  )" || fail
 
-  echo 'Enabling the docker service...'
+  log -t file "${OUTPUT}"
 
-  sudo systemctl enable docker.service || exit 1
+  log 'Enabling the docker service...'
 
-  echo 'Docker service has been enabled'
+  OUTPUT="$(
+    sudo systemctl enable docker.service 2>&1
+  )" || fail
+
+  log -t file "${OUTPUT}"
+
+  log 'Docker service has been enabled'
 
   local user_name=''
-  user_name="$(get_setting 'user_name')" || exit 1
+  user_name="$(get_setting 'user_name')" || fail
 
-  sudo usermod -aG docker "${user_name}" || exit 1
+  sudo usermod -aG docker "${user_name}" || fail
 
-  echo "User ${user_name} added to the docker user group"
+  log "User ${user_name} added to the docker user group"
 
-  echo -e 'Docker egine has been installed\n'
+  log 'Docker egine has been installed\n'
 }
 
-echo -e '\nStarting the stack installation process...'
+log '\nStarting the stack installation process...'
 
 if equals "$(id -u)" 0; then
-  echo -e '\nProcess must be run as non root user'
-  exit 1
+  fail 'Script stack.sh must be run as non root user'
 fi
 
 install_node &&
@@ -119,6 +155,4 @@ install_node &&
   install_rust &&
   install_docker
 
-echo -e '\nStack installation process has been completed'
-echo 'Moving to the tools installation process...'
-sleep 5
+sleep 3
