@@ -45,7 +45,12 @@ log () {
   fi
 
   if is_not_given "${target}" || equals "${target}" 'file'; then
-    echo -e "${message}" >> "${LOG_FILE}"
+    # After the bootstrap step the log file is expected to be under /mnt/var/log
+    if file_exists "/mnt/${LOG_FILE}"; then
+      echo -e "${message}" >> "/mnt/${LOG_FILE}"
+    else
+      echo -e "${message}" >> "${LOG_FILE}"
+    fi
   fi
 }
 
