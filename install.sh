@@ -11,7 +11,12 @@ source /opt/stack/scripts/utils.sh
 run () {
   local file_name="${1}"
 
-  bash "/opt/stack/scripts/${file_name}.sh"
+  echo -e "Running the ${file_name}..."
+
+  bash "/opt/stack/scripts/${file_name}.sh" \
+    2>&1 >> /var/log/stack.log
+  
+  echo "Script ${file_name} has been completed"
 }
 
 # Changes to the shell session of the mounted installation disk
@@ -32,26 +37,45 @@ install () {
     user_name="$(get_setting 'user_name')" || fail
   fi
 
-  arch-chroot /mnt runuser -u "${user_name}" -- "${script_file}"
+  echo -e "Installing the ${file_name}..."
+
+  arch-chroot /mnt runuser -u "${user_name}" -- "${script_file}" \
+    2>&1 >> /var/log/stack.log
+  
+  echo -e "The ${file_name} installation has been completed"
 }
 
 # Cleans up the new system and revokes permissions.
-clean_up () {
-  log -t console 'Cleaning up the system...'
+clean () {
+  echo -e 'Cleaning up the new system...'
 
-  rm -rf /mnt/opt/stack
+  rm -rf /mnt/opt/stack || fail 'Unable to remove installation files'
 
-  # Revoke nopasswd permissions
+  echo -e 'Installation files have been removed'
+
+  # Revoke nopasswd permission
   local rule='%wheel ALL=(ALL:ALL) NOPASSWD: ALL'
-  sed -i "s/^\(${rule}\)/# \1/" /mnt/etc/sudoers
+
+  sed -i "s/^\(${rule}\)/# \1/" /mnt/etc/sudoers ||
+    fail 'Failed to revoke nopasswd permission'
+
+  if ! grep -q "^${rule}" /mnt/etc/sudoers; then
+    fail 'Failed to revoke nopasswd permission'
+  fi
+
+  echo -e 'Sudoer nopasswd permission has been revoked'
+
+  cp /var/log/stack.log /mnt/var/log/stack.log
+
+  echo -e 'Log file copied to /var/log/stack.log'
 }
 
 # Restarts the system.
 restart () {
-  log -t console 'Rebooting the system in 15 secs...'
+  echo -e 'Rebooting the system in 15 secs...'
 
   sleep 15
-  umount -R /mnt || log -t console 'Ignoring busy mount points'
+  umount -R /mnt || echo -e 'Ignoring busy mount points'
   reboot
 }
 
@@ -63,14 +87,14 @@ cat << EOF
 ░░░▀▀▀░░▀░░▀░▀░▀▀▀░▀░▀░░░
 EOF
 
-log -t console '\nWelcome to StackOS Installer, v1.0.0.alpha.'
-log -t console 'Base your development stack on archlinux!\n'
+echo -e '\nWelcome to StackOS Installer, v1.0.0.alpha.'
+echo -e 'Base your development stack on archlinux!'
 
-log -t console "Let's start by picking some installation settings..."
 confirm 'Do you want to proceed?' || fail
 
 if is_not_given "${REPLY}" || is_no "${REPLY}"; then
-  fail 'Installation has been canceled'
+  echo -e 'Sure, maybe next time!'
+  exit 0
 fi
 
 run askme &&
@@ -80,5 +104,5 @@ run askme &&
   install desktop &&
   install stack &&
   install tools &&
-  clean_up &&
+  clean &&
   restart

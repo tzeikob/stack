@@ -6,69 +6,18 @@ AES=$'╬'
 AES_LN=$'╬\n'
 KVS=$'▒'
 
-LOG_FILE='/var/log/stack.log'
 SETTINGS_FILE='/opt/stack/.settings'
 
-# Logs the given message to the output stream indicated by the
-# given target option which should be either console or file,
-# where no target option means log to both console and file.
-# Options:
-#  -t: console or file
-# Arguments:
-#  message: any text message
-# Outputs:
-#  The given text message if console target is not skipped.
-log () {
-  local target=''
-
-  local OPTIND OPTARG opt
-  while getopts ':t:' opt; do
-    case "${opt}" in
-      't') target="${OPTARG}";;
-      *)
-        return 1;;
-    esac
-  done
-
-  # Shift respectivelly to collect the message argument
-  shift $((OPTIND-1))
-
-  local message="${1}"
-
-  # Skip empty messages
-  if is_empty "${message}"; then
-    return 0
-  fi
-
-  if is_not_given "${target}" || equals "${target}" 'console'; then
-    echo -e "${message}"
-  fi
-
-  if is_not_given "${target}" || equals "${target}" 'file'; then
-    # After the bootstrap step the log file is expected to be under /mnt/var/log
-    if file_exists "/mnt/${LOG_FILE}"; then
-      echo -e "${message}" >> "/mnt/${LOG_FILE}"
-    else
-      echo -e "${message}" >> "${LOG_FILE}"
-    fi
-  fi
-}
-
-# Logs the current global output to the log file,
-# prints the error message if such message is given
-# and exits the process immediately.
+# Prints the optionally given message and exits
+# the process immediately with status code 1.
 # Arguments:
 #  message: an optional error message
 # Outputs:
-#  The given error message or none.
+#  The given error message or the default message.
 fail () {
   local message="${1:-"A fatal error has been occurred"}"
 
-  if is_not_empty "${OUTPUT}"; then
-    log -t file "${OUTPUT}"
-  fi
-
-  log "${message}"
+  echo -e "${message}"
 
   exit 1
 }

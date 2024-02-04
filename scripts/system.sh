@@ -6,28 +6,28 @@ source /opt/stack/scripts/utils.sh
 
 # Sets host related settings.
 set_host () {
-  log '\nSetting up host name...'
+  echo -e 'Setting up the host...'
 
   local host_name=''
   host_name="$(get_setting 'host_name')" || fail
 
-  echo "${host_name}" > /etc/hostname || fail
+  echo "${host_name}" > /etc/hostname || fail 'Failed to set the host name'
 
-  log "Host name has been set to ${host_name}"
+  echo -e "Host name has been set to ${host_name}"
 
   printf '%s\n' \
     '127.0.0.1    localhost' \
     '::1          localhost' \
-    "127.0.1.1    ${host_name}" > /etc/hosts || fail
+    "127.0.1.1    ${host_name}" > /etc/hosts || fail 'Failed to add host name to hosts'
 
-  log 'Host name added to the hosts file'
+  echo -e 'Host name has been added to the hosts'
 
-  log 'Host name has been set successfully'
+  echo -e 'Host has been set successfully'
 }
 
 # Sets up the root and sudoer users of the system.
 set_users () {
-  log '\nSetting up system users...'
+  echo -e 'Setting up the system users...'
 
   local groups='wheel,audio,video,optical,storage'
 
@@ -39,181 +39,172 @@ set_users () {
   local user_name=''
   user_name="$(get_setting 'user_name')" || fail
 
-  OUTPUT="$(
-    useradd -m -G "${groups}" -s /bin/bash "${user_name}" 2>&1
-  )" || fail
+  useradd -m -G "${groups}" -s /bin/bash "${user_name}" || fail 'Failed to create the sudoer user'
 
-  log -t file "${OUTPUT}"
+  echo -e "Sudoer user ${user_name} has been created"
 
   local config_home="/home/${user_name}/.config"
 
   mkdir -p "${config_home}" &&
-    chown -R ${user_name}:${user_name} "${config_home}" || fail
+    chown -R ${user_name}:${user_name} "${config_home}" || fail 'Failed to create the user config folder'
+
+  echo -e 'User config folder created under ~/.config'
 
   local rule='%wheel ALL=(ALL:ALL) ALL'
-  sed -i "s/^# \(${rule}\)/\1/" /etc/sudoers || fail
+
+  sed -i "s/^# \(${rule}\)/\1/" /etc/sudoers || fail 'Failed to grant sudo permissions to wheel group'
 
   if ! grep -q "^${rule}" /etc/sudoers; then
-    fail 'Failed to grant sudo permissions to wheel user group'
+    fail 'Failed to grant sudo permissions to wheel group'
   fi
 
-  log "Sudoer user ${user_name} has been created"
+  echo -e 'Sudo permissions have been granted to sudoer user'
 
   local user_password=''
   user_password="$(get_setting 'user_password')" || fail
 
-  echo "${user_name}:${user_password}" | chpasswd || fail
+  echo "${user_name}:${user_password}" | chpasswd || fail "Failed to set password to user ${user_name}"
 
-  log "Password has been given to user ${user_name}"
+  echo -e "Password has been given to user ${user_name}"
 
   local root_password=''
   root_password="$(get_setting 'root_password')" || fail
 
-  echo "root:${root_password}" | chpasswd || fail
+  echo "root:${root_password}" | chpasswd || fail 'Failed to set password to root user'
 
-  log 'Password has been given to the root user'
+  echo -e 'Password has been given to the root user'
 
-  cp /etc/skel/.bash_profile /root || fail
-  cp /etc/skel/.bashrc /root || fail
+  cp /etc/skel/.bash_profile /root || fail 'Failed to create root .bash_profile file'
+  cp /etc/skel/.bashrc /root || fail 'Failed to create root .bashrc file'
 
-  log 'System users have been set up'
+  echo -e 'System users have been set up'
 }
 
 # Sets the pacman package database mirrors.
 set_mirrors () {
-  log '\nSetting up pacman package database mirrors...'
+  echo -e 'Setting up the package databases mirrors...'
 
   local mirrors=''
   mirrors="$(get_setting 'mirrors' | jq -cer 'join(",")')" || fail
 
-  OUTPUT="$(
-    reflector --country "${mirrors}" --age 48 --sort age --latest 40 \
-      --save /etc/pacman.d/mirrorlist 2>&1
-  )" || fail
-
-  log -t file "${OUTPUT}"
+  reflector --country "${mirrors}" --age 48 --sort age --latest 40 \
+    --save /etc/pacman.d/mirrorlist || fail 'Unable to fetch package databases mirrors'
 
   local conf_file='/etc/xdg/reflector/reflector.conf'
 
   sed -i "s/# --country.*/--country ${mirrors}/" "${conf_file}" &&
     sed -i 's/^--latest.*/--latest 40/' "${conf_file}" &&
-    echo '--age 48' >> "${conf_file}" || fail
+    echo '--age 48' >> "${conf_file}" || fail 'Failed to save mirrors settings to reflector'
 
-  log "Pacman database mirrors set to ${mirrors}"
+  echo -e "Package databases mirrors set to ${mirrors}"
 }
 
 # Configures pacman package manager.
 configure_pacman () {
-  log '\nConfiguring the pacman package manager...'
+  echo -e 'Configuring the pacman manager...'
 
-  sed -i 's/^#ParallelDownloads/ParallelDownloads/' /etc/pacman.conf || fail
+  sed -i 's/^#ParallelDownloads/ParallelDownloads/' /etc/pacman.conf ||
+    fail 'Failed to set parallel download'
 
-  log 'Parallel downloading has been enabled'
+  echo -e 'Parallel download has been enabled'
 
   local keyserver='hkp://keyserver.ubuntu.com'
 
-  echo "keyserver ${keyserver}" >> /etc/pacman.d/gnupg/gpg.conf || fail
+  echo "keyserver ${keyserver}" >> /etc/pacman.d/gnupg/gpg.conf ||
+    fail 'Failed to add the GPG keyserver'
 
-  log "GPG keyserver has been set to ${keyserver}"
+  echo -e "GPG keyserver has been set to ${keyserver}"
 
-  cp /opt/stack/configs/pacman/orphans.hook /usr/share/libalpm/hooks || fail
+  cp /opt/stack/configs/pacman/orphans.hook /usr/share/libalpm/hooks ||
+    fail 'Failed to add the orphans packages hook'
 
-  log 'Orphan packages post hook has been created'
-  log 'Pacman has been configured'
+  echo -e 'Orphan packages post hook has been created'
+
+  echo -e 'Pacman manager has been configured'
 }
 
 # Synchronizes the package databases to the master.
 sync_package_databases () {
-  log '\nStarting to synchronize package databases...'
+  echo -e 'Starting to synchronize package databases...'
 
   local lock_file='/var/lib/pacman/db.lck'
 
   if file_exists "${lock_file}"; then
-    log 'Package databases seem to be locked'
+    echo -e 'Package databases seem to be locked'
 
-    rm -f "${lock_file}" || fail
+    rm -f "${lock_file}" || fail "Failed to remove the lock file ${lock_file}"
 
-    log "Lock file ${lock_file} has been removed"
+    echo -e "Lock file ${lock_file} has been removed"
   fi
 
-  OUTPUT="$(
-    pacman -Syy 2>&1
-  )" || fail
+  pacman -Syy || fail 'Failed to synchronize package databases'
 
-  log -t file "${OUTPUT}"
-
-  log 'Packages database has been synchronized with master'
+  echo -e 'Package databases synchronized to the master'
 }
 
 # Installs the base packages of the system.
 install_base_packages () {
-  log '\nInstalling the base packages...'
+  echo -e 'Installing the base packages...'
 
   local extra_pckgs=''
   if is_setting 'uefi_mode' 'yes'; then
     extra_pckgs='efibootmgr'
   fi
 
-  OUTPUT="$(
-    pacman -S --noconfirm \
-      base-devel pacman-contrib pkgstats grub mtools dosfstools ntfs-3g exfatprogs gdisk fuseiso veracrypt \
-      python-pip parted curl wget udisks2 udiskie gvfs gvfs-smb bash-completion \
-      man-db man-pages texinfo cups cups-pdf cups-filters usbutils bluez bluez-utils unzip terminus-font \
-      vim nano git tree arch-audit atool zip xz unace p7zip gzip lzop feh hsetroot \
-      bzip2 unrar dialog inetutils dnsutils openssh nfs-utils openbsd-netcat ipset xsel \
-      neofetch age imagemagick gpick fuse2 rclone smartmontools glib2 jq jc sequoia-sq xf86-input-wacom \
-      cairo bc xdotool ${extra_pckgs} 2>&1
-  )" || fail
+  pacman -S --noconfirm \
+    base-devel pacman-contrib pkgstats grub mtools dosfstools ntfs-3g exfatprogs gdisk fuseiso veracrypt \
+    python-pip parted curl wget udisks2 udiskie gvfs gvfs-smb bash-completion \
+    man-db man-pages texinfo cups cups-pdf cups-filters usbutils bluez bluez-utils unzip terminus-font \
+    vim nano git tree arch-audit atool zip xz unace p7zip gzip lzop feh hsetroot \
+    bzip2 unrar dialog inetutils dnsutils openssh nfs-utils openbsd-netcat ipset xsel \
+    neofetch age imagemagick gpick fuse2 rclone smartmontools glib2 jq jc sequoia-sq xf86-input-wacom \
+    cairo bc xdotool ${extra_pckgs} || fail 'Failed to install base packages'
 
-  log -t file "${OUTPUT}"
+  echo -e 'Replacing iptables with nft tables...'
 
-  log '\nReplacing iptables with nft tables...'
+  printf '%s\n' y y | pacman -S nftables iptables-nft || fail 'Failed to install the nft tables'
 
-  OUTPUT="$(
-    printf '%s\n' y y | pacman -S nftables iptables-nft 2>&1
-  )" || fail
+  echo -e 'Iptables have been replaced by nft tables'
 
-  log -t file "${OUTPUT}"
-
-  log 'Base packages have been installed'
+  echo -e 'Base packages have been installed'
 }
 
 # Installs the Xorg display server packages.
 install_display_server () {
-  log 'Installing the display server...'
+  echo -e 'Installing the display server...'
 
-  OUTPUT="$(
-    pacman -S --noconfirm xorg xorg-xinit xorg-xrandr xorg-xdpyinfo 2>&1
-  )" || fail
+  pacman -S --noconfirm xorg xorg-xinit xorg-xrandr xorg-xdpyinfo || fail 'Failed to install xorg packages'
 
-  log -t file "${OUTPUT}"
+  echo -e 'Xorg packages have been installed'
 
-  cp /opt/stack/configs/xorg/xorg.conf /etc/X11 || fail
+  cp /opt/stack/configs/xorg/xorg.conf /etc/X11 || fail 'Failed to copy the xorg config file'
 
-  log 'Xorg configurations have been saved under /etc/X11'
+  echo -e 'Xorg confg have been saved under /etc/X11/xorg.conf'
 
   local user_name=''
   user_name="$(get_setting 'user_name')" || fail
 
   cp /opt/stack/configs/xorg/xinitrc "/home/${user_name}/.xinitrc" &&
-    chown ${user_name}:${user_name} "/home/${user_name}/.xinitrc" || fail
+    chown ${user_name}:${user_name} "/home/${user_name}/.xinitrc" || fail 'Failed to set the .xinitrc file'
 
-  log "Xinitrc has been saved to /home/${user_name}/.xinitrc"
+  echo -e "Xinitrc has been saved to /home/${user_name}/.xinitrc"
 
   local bash_profile_file="/home/${user_name}/.bash_profile"
 
-  echo '[[ -z $DISPLAY && $XDG_VTNR -eq 1 ]] && exec startx' >> "${bash_profile_file}" || fail
+  echo '[[ -z $DISPLAY && $XDG_VTNR -eq 1 ]] && exec startx' >> "${bash_profile_file}" ||
+    fail 'Failed to add startx hook to .bash_profile'
 
   sed -ri '/^ExecStart=.*/i Environment=XDG_SESSION_TYPE=x11' \
-    /usr/lib/systemd/system/getty@.service || fail
+    /usr/lib/systemd/system/getty@.service || fail 'Failed to set getty to start X11 session after login'
 
-  log 'Xorg session has been set to start after login'
-  log 'Display server has been installed'
+  echo -e 'Getty has been set to start X11 session after login'
+
+  echo -e 'Display server has been installed'
 }
 
 # Installs hardware and system drivers.
 install_drivers () {
-  log '\nInstalling system drivers...'
+  echo -e 'Installing system drivers...'
 
   local cpu_pckgs=''
 
@@ -258,41 +249,33 @@ install_drivers () {
     vm_pckgs='virtualbox-guest-utils'
   fi
 
-  OUTPUT="$(
-    pacman -S --noconfirm \
-      acpi acpi_call acpid tlp xcalib \
-      networkmanager networkmanager-openvpn wireless_tools netctl wpa_supplicant \
-      nmap dhclient smbclient libnma \
-      alsa-utils pipewire pipewire-alsa pipewire-pulse pipewire-jack \
-      ${cpu_pckgs} ${gpu_pckgs} ${other_pckgs} ${vm_pckgs} 2>&1
-  )" || fail
+  pacman -S --noconfirm \
+    acpi acpi_call acpid tlp xcalib \
+    networkmanager networkmanager-openvpn wireless_tools netctl wpa_supplicant \
+    nmap dhclient smbclient libnma \
+    alsa-utils pipewire pipewire-alsa pipewire-pulse pipewire-jack \
+    ${cpu_pckgs} ${gpu_pckgs} ${other_pckgs} ${vm_pckgs} || fail 'Failed to install system drivers'
 
-  log -t file "${OUTPUT}"
-
-  log 'System drivers have been installed'
+  echo -e 'System drivers have been installed'
 }
 
 # Installs the user repository package manager.
 install_aur_package_manager () {
-  log '\nInstalling the user repository package manager...'
+  echo 'Installing the AUR package manager...'
 
   local user_name=''
   user_name="$(get_setting 'user_name')" || fail
 
-  OUTPUT="$(
-    cd "/home/${user_name}" &&
-      git clone https://aur.archlinux.org/yay.git 2>&1 &&
-      chown -R ${user_name}:${user_name} yay &&
-      cd yay &&
-      sudo -u "${user_name}" makepkg -si --noconfirm 2>&1
-  )" || fail
+  local yay_home="/home/${user_name}/yay"
 
-  log -t file "${OUTPUT}"
+  git clone https://aur.archlinux.org/yay.git "${yay_home}" &&
+    chown -R ${user_name}:${user_name} "${yay_home}" &&
+    cd "${yay_home}" &&
+    sudo -u "${user_name}" makepkg -si --noconfirm &&
+    cd ~ &&
+    rm -rf "${yay_home}" || fail 'Failed to install the AUR package manager'
 
-  cd ~
-  rm -rf "/home/${user_name}/yay" || fail
-
-  log 'User repository package manager has been installed'
+  echo -e 'AUR package manager has been installed'
 }
 
 # Sets the system locale along with the locale environment variables.
@@ -300,17 +283,13 @@ set_locales () {
   local locales=''
   locales="$(get_setting 'locales')" || fail
 
-  log 'Generating system locales...'
+  echo -e 'Generating system locales...'
 
   echo "${locales}" | jq -cer '.[]' >> /etc/locale.gen || fail
 
-  OUTPUT="$(
-    locale-gen 2>&1
-  )" || fail
+  locale-gen || fail 'Failed to generate system locales'
 
-  log -t file "${OUTPUT}"
-
-  log 'System locales have been generated'
+  echo -e 'System locales have been generated'
 
   # Set as system locale the locale selected first
   local locale=''
@@ -331,7 +310,7 @@ set_locales () {
     "LC_TELEPHONE=${locale}" \
     "LC_MEASUREMENT=${locale}" \
     "LC_IDENTIFICATION=${locale}" \
-    "LC_ALL=" | tee /etc/locale.conf > /dev/null || fail
+    "LC_ALL=" | tee /etc/locale.conf > /dev/null || fail 'Failed to set locale env variables'
 
   # Unset previous set variables
   unset LANG LANGUAGE LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE \
@@ -355,31 +334,28 @@ set_locales () {
     settings="$(jq -e --argjson s "${settings}" '. + $s' "${settings_file}")" || fail
   fi
 
-  echo "${settings}" > "${settings_file}" || fail
+  echo "${settings}" > "${settings_file}" &&
+    chown -R ${user_name}:${user_name} "${config_home}" || fail 'Failed to save locales into the langs setting file'
+  
+  echo -e 'Locales has been save into the langs settings'
 
-  chown -R ${user_name}:${user_name} "${config_home}" || fail
-
-  log "Locale has been set to ${locale}"
+  echo -e "Locale has been set to ${locale}"
 }
 
 # Sets keyboard related settings.
 set_keyboard () {
-  log '\nApplying keyboard settings...'
+  echo -e 'Applying keyboard settings...'
 
   local keyboard_map=''
   keyboard_map="$(get_setting 'keyboard_map')" || fail
 
-  echo "KEYMAP=${keyboard_map}" > /etc/vconsole.conf || fail
+  echo "KEYMAP=${keyboard_map}" > /etc/vconsole.conf || fail 'Failed to add keymap to vconsole'
 
-  log "Virtual console keymap set to ${keyboard_map}"
+  echo -e "Virtual console keymap set to ${keyboard_map}"
 
-  OUTPUT="$(
-    loadkeys "${keyboard_map}" 2>&1
-  )" || fail
+  loadkeys "${keyboard_map}" || fail 'Failed to load keyboard map keys'
 
-  log -t file "${OUTPUT}"
-
-  log 'Keyboard map keys has been loaded'
+  echo -e 'Keyboard map keys has been loaded'
 
   local keyboard_model=''
   keyboard_model="$(get_setting 'keyboard_model')" || fail
@@ -397,9 +373,10 @@ set_keyboard () {
    "  Option \"XkbLayout\" \"$(echo ${keyboard_layouts} | jq -cr 'join(",")')\"" \
    "  Option \"XkbModel\" \"${keyboard_model}\"" \
    "  Option \"XkbOptions\" \"${keyboard_options}\"" \
-   'EndSection' | tee /etc/X11/xorg.conf.d/00-keyboard.conf > /dev/null || fail
+   'EndSection' | tee /etc/X11/xorg.conf.d/00-keyboard.conf > /dev/null ||
+     fail 'Failed to add keyboard setting into the xorg config file'
 
-  log 'Xorg keyboard settings have been added'
+  echo -e 'Xorg keyboard settings have been added'
 
   # Save keyboard settings to the user config
   local user_name=''
@@ -425,101 +402,149 @@ set_keyboard () {
     settings="$(jq -e --argjson s "${settings}" '. + $s' "${settings_file}")" || fail
   fi
 
-  echo "${settings}" > "${settings_file}" || fail
+  echo "${settings}" > "${settings_file}" &&
+    chown -R ${user_name}:${user_name} "${config_home}" || fail 'Failed to save keymap to langs settings file'
   
-  chown -R ${user_name}:${user_name} "${config_home}" || fail
+  echo -e 'Keymap saved to langs settings file'
 
-  log 'Keyboard settings have been applied'
+  echo -e 'Keyboard settings have been applied'
 }
 
 # Sets the system timezone.
 set_timezone () {
-  log '\nSetting the system timezone...'
+  echo -e 'Setting the system timezone...'
 
   local timezone=''
   timezone="$(get_setting 'timezone')" || fail
 
-  ln -sf "/usr/share/zoneinfo/${timezone}" /etc/localtime || fail
+  ln -sf "/usr/share/zoneinfo/${timezone}" /etc/localtime ||
+    fail 'Failed to set the timezone'
+
+  echo -e "Timezone has been set to ${timezone}"
 
   local ntp_server='time.google.com'
 
-  sed -i "s/^#NTP=/NTP=${ntp_server}/" /etc/systemd/timesyncd.conf || fail
+  sed -i "s/^#NTP=/NTP=${ntp_server}/" /etc/systemd/timesyncd.conf ||
+    fail 'Failed to set the NTP server'
 
-  log "NTP server has been set to ${ntp_server}"
+  echo "NTP server has been set to ${ntp_server}"
 
-  OUTPUT="$(
-    hwclock --systohc --utc 2>&1
-  )" || fail
+  hwclock --systohc --utc || fail 'Failed to sync hardware to system clock'
 
-  log -t file "${OUTPUT}"
-
-  log 'Hardware clock has been synchronized to system clock'
-
-  log "Timezone has been set to ${timezone}\n"
+  echo -e 'Hardware clock has been synchronized to system clock'
 }
 
 # Boost system's make and build performance.
 boost_builds () {
-  log 'Boosting system build performance...'
+  echo -e 'Boosting system build performance...'
 
-  OUTPUT="$(
-    grep -c '^processor' /proc/cpuinfo 2>&1
-  )" || fail
-
-  local cores="${OUTPUT}"
+  local cores=''
+  cores="$(
+    grep -c '^processor' /proc/cpuinfo
+  )" || fail 'Failed to read cpu data'
 
   if is_not_integer "${cores}" '[1,]'; then
-    log 'Unable to resolve CPU cores, boosting is skipped'
-    return 0
+    fail 'Unable to resolve CPU cores'
   fi
 
-  log "Detected a CPU with a total of ${cores} logical cores"
+  echo -e "Detected a CPU with a total of ${cores} logical cores"
 
   local conf_file='/etc/makepkg.conf'
 
-  sed -i "s/#MAKEFLAGS=\"-j2\"/MAKEFLAGS=\"-j${cores}\"/g" "${conf_file}" || fail
+  sed -i "s/#MAKEFLAGS=\"-j2\"/MAKEFLAGS=\"-j${cores}\"/g" "${conf_file}" ||
+    fail 'Failed to set the make flags setting'
 
-  log "Make flags have been set to ${cores} CPU cores"
+  echo -e "Make flags have been set to ${cores} CPU cores"
 
-  sed -i "s/COMPRESSXZ=(xz -c -z -)/COMPRESSXZ=(xz -c -z --threads=${cores} -)/g" "${conf_file}" || fail
-  sed -i "s/COMPRESSZST=(zstd -c -z -q -)/COMPRESSZST=(zstd -c -z -q --threads=${cores} -)/g" "${conf_file}" || fail
+  sed -i "s/COMPRESSXZ=(xz -c -z -)/COMPRESSXZ=(xz -c -z --threads=${cores} -)/g" "${conf_file}" ||
+    fail 'Failed to set the compressXZ threads'
+  
+  sed -i "s/COMPRESSZST=(zstd -c -z -q -)/COMPRESSZST=(zstd -c -z -q --threads=${cores} -)/g" "${conf_file}" ||
+    fail 'Failed to set the compressZST threads'
 
-  log 'Compression threads has been set'
-  log 'Boosting has been completed'
+  echo -e 'Compression threads have been set'
+
+  echo -e 'Boosting has been completed'
 }
 
 # Applies varius system power settings.
 configure_power () {
-  log '\nConfiguring power settings...'
+  echo -e 'Configuring power settings...'
   
   local logind_conf='/etc/systemd/logind.conf.d/00-main.conf'
   
   mkdir -p /etc/systemd/logind.conf.d &&
-    cp /etc/systemd/logind.conf "${logind_conf}" || fail
+    cp /etc/systemd/logind.conf "${logind_conf}" || fail 'Failed to create the logind config file'
 
-  echo 'HandleHibernateKey=ignore' >> "${logind_conf}" &&
-    echo 'HandleHibernateKeyLongPress=ignore' >> "${logind_conf}" &&
-    echo 'HibernateKeyIgnoreInhibited=no' >> "${logind_conf}" &&
-    echo 'HandlePowerKey=suspend' >> "${logind_conf}" &&
-    echo 'HandleRebootKey=reboot' >> "${logind_conf}" &&
-    echo 'HandleSuspendKey=suspend' >> "${logind_conf}" &&
-    echo 'HandleLidSwitch=suspend' >> "${logind_conf}" &&
-    echo 'HandleLidSwitchDocked=ignore' >> "${logind_conf}" || fail
+  echo 'HandleHibernateKey=ignore' >> "${logind_conf}" ||
+    fail 'Failed set hibernate key to ignore'
+
+  echo -e 'Hiberante key set to ignore'
+
+  echo 'HandleHibernateKeyLongPress=ignore' >> "${logind_conf}" ||
+    fail 'Failed to set hibernate key long press to ignore'
+
+  echo -e 'Hiberante key long press set to ignore'
+
+  echo 'HibernateKeyIgnoreInhibited=no' >> "${logind_conf}" ||
+    fail 'Failed to set hibernate key to ignore inhibited'
+
+  echo -e 'Hibernate key set to ignore inhibited'
+
+  echo 'HandlePowerKey=suspend' >> "${logind_conf}" ||
+    fail 'Failed to set power key to suspend'
+
+  echo -e 'Power key set to suspend'
+
+  echo 'HandleRebootKey=reboot' >> "${logind_conf}" ||
+    fail 'Failed to set reboot key to reboot'
+  
+  echo -e 'Reboot key set to reboot'
+
+  echo 'HandleSuspendKey=suspend' >> "${logind_conf}" ||
+    fail 'Failed to set suspend key to suspend'
+  
+  echo -e 'Suspend key set to suspend'
+
+  echo 'HandleLidSwitch=suspend' >> "${logind_conf}" ||
+    fail 'Failed to set lid switch to suspend'
+  
+  echo -e 'Lid switch set to suspend'
+
+  echo 'HandleLidSwitchDocked=ignore' >> "${logind_conf}" ||
+    fail 'Failed to set lid switch docked to ignore'
+  
+  echo -e 'Lid switch docked set to ignore'
 
   local sleep_conf='/etc/systemd/sleep.conf.d/00-main.conf'
 
   mkdir -p /etc/systemd/sleep.conf.d &&
-    cp /etc/systemd/sleep.conf "${sleep_conf}" || fail
+    cp /etc/systemd/sleep.conf "${sleep_conf}" || fail 'Failed to create the sleep config file'
 
-  echo 'AllowSuspend=yes' >> "${sleep_conf}" &&
-    echo 'AllowHibernation=no' >> "${sleep_conf}" &&
-    echo 'AllowSuspendThenHibernate=no' >> "${sleep_conf}" &&
-    echo 'AllowHybridSleep=no' >> "${sleep_conf}" || fail
+  echo 'AllowSuspend=yes' >> "${sleep_conf}" ||
+    fail 'Failed to set allow suspend to yes'
+  
+  echo -e 'Allow suspend set to yes'
+
+  echo 'AllowHibernation=no' >> "${sleep_conf}" ||
+    fail 'Failed to set allow hibernation to no'
+  
+  echo -e 'Allow hibernation set to no'
+
+  echo 'AllowSuspendThenHibernate=no' >> "${sleep_conf}" ||
+    fail 'Failed to set allow suspend then hibernate to no'
+
+  echo -e 'Allow suspend then to hibernate set to no'
+
+  echo 'AllowHybridSleep=no' >> "${sleep_conf}" ||
+    fail 'Failed to set allow hybrid sleep to no'
+
+  echo -e 'Allow hybrid sleep set to no'
 
   local tlp_conf='/etc/tlp.d/00-main.conf'
 
   echo 'SOUND_POWER_SAVE_ON_AC=0' >> "${tlp_conf}" &&
-    echo 'SOUND_POWER_SAVE_ON_BAT=0' >> "${tlp_conf}" || fail
+    echo 'SOUND_POWER_SAVE_ON_BAT=0' >> "${tlp_conf}" || fail 'Failed to set no sound on power save mode'
 
   rm -f /etc/tlp.d/00-template.conf || fail
 
@@ -535,64 +560,89 @@ configure_power () {
 
   local settings_file="${config_home}/power.json"
 
-  echo "${settings}" > "${settings_file}" || fail
+  echo "${settings}" > "${settings_file}" &&
+    chown -R ${user_name}:${user_name} "${config_home}" ||
+    fail 'Failed to save screen saver interval to power settings file'
+  
+  echo -e 'Screen saver interval saved to power settings file'
 
-  chown -R ${user_name}:${user_name} "${config_home}" || fail
-
-  log 'Power configurations have been set'
+  echo -e 'Power configurations have been set'
 }
 
 # Applies various system security settings.
 configure_security () {
-  log '\nHardening system security...'
+  echo -e 'Hardening system security...'
 
-  sed -i '/# Defaults maxseq = 1000/a Defaults badpass_message="Sorry incorrect password!"' /etc/sudoers &&
-    sed -i '/# Defaults maxseq = 1000/a Defaults passwd_timeout=0' /etc/sudoers &&
-    sed -i '/# Defaults maxseq = 1000/a Defaults passwd_tries=2' /etc/sudoers &&
-    sed -i '/# Defaults maxseq = 1000/a Defaults passprompt="Enter current password: "' /etc/sudoers || fail
+  sed -i '/# Defaults maxseq = 1000/a Defaults badpass_message="Sorry incorrect password!"' /etc/sudoers ||
+    fail 'Failed to set badpass message'
+  
+  echo -e 'Default bad pass message has been set'
 
-  log 'Sudo configuration has been done'
+  sed -i '/# Defaults maxseq = 1000/a Defaults passwd_timeout=0' /etc/sudoers ||
+    fail 'Failed to set password timeout interval'
+  
+  echo -e 'Password timeout interval set to 0'
 
-  sed -ri 's;# dir =.*;dir = /var/lib/faillock;' /etc/security/faillock.conf &&
-    sed -ri 's;# deny =.*;deny = 3;' /etc/security/faillock.conf &&
-    sed -ri 's;# fail_interval =.*;fail_interval = 180;' /etc/security/faillock.conf &&
-    sed -ri 's;# unlock_time =.*;unlock_time = 120;' /etc/security/faillock.conf || fail
+  sed -i '/# Defaults maxseq = 1000/a Defaults passwd_tries=2' /etc/sudoers ||
+    fail 'Failed to set password failed tries'
+  
+  echo -e 'Password failed tries set to 2'
 
-  log 'Faillocks set to be persistent after system reboot'
+  sed -i '/# Defaults maxseq = 1000/a Defaults passprompt="Enter current password: "' /etc/sudoers ||
+    fail 'Failed to set password prompt'
+  
+  echo -e 'Password prompt has been set'
 
-  sed -i 's/#PermitRootLogin .*/PermitRootLogin no/' /etc/ssh/sshd_config || fail
+  sed -ri 's;# dir =.*;dir = /var/lib/faillock;' /etc/security/faillock.conf ||
+    fail 'Failed to set faillock file path'
+  
+  echo -e 'Faillock file path has been set to /var/lib/faillock'
 
-  log 'SSH login permission disabled for the root user'
+  sed -ri 's;# deny =.*;deny = 3;' /etc/security/faillock.conf ||
+    fail 'Failed to set deny'
+  
+  echo -e 'Deny has been set to 3'
 
-  log 'Setting up a simple stateful firewall...'
+  sed -ri 's;# fail_interval =.*;fail_interval = 180;' /etc/security/faillock.conf ||
+    fail 'Failed to set fail interval time'
+  
+  echo -e 'Fail interval time set to 180 secs'
 
-  OUTPUT="$(
-    nft flush ruleset 2>&1 &&
-      nft add table inet my_table 2>&1 &&
-      nft add chain inet my_table my_input '{ type filter hook input priority 0 ; policy drop ; }' 2>&1 &&
-      nft add chain inet my_table my_forward '{ type filter hook forward priority 0 ; policy drop ; }' 2>&1 &&
-      nft add chain inet my_table my_output '{ type filter hook output priority 0 ; policy accept ; }' 2>&1 &&
-      nft add chain inet my_table my_tcp_chain 2>&1 &&
-      nft add chain inet my_table my_udp_chain 2>&1 &&
-      nft add rule inet my_table my_input ct state related,established accept 2>&1 &&
-      nft add rule inet my_table my_input iif lo accept 2>&1 &&
-      nft add rule inet my_table my_input ct state invalid drop 2>&1 &&
-      nft add rule inet my_table my_input meta l4proto ipv6-icmp accept 2>&1 &&
-      nft add rule inet my_table my_input meta l4proto icmp accept 2>&1 &&
-      nft add rule inet my_table my_input ip protocol igmp accept 2>&1 &&
-      nft add rule inet my_table my_input meta l4proto udp ct state new jump my_udp_chain 2>&1 &&
-      nft add rule inet my_table my_input 'meta l4proto tcp tcp flags & (fin|syn|rst|ack) == syn ct state new jump my_tcp_chain' 2>&1 &&
-      nft add rule inet my_table my_input meta l4proto udp reject 2>&1 &&
-      nft add rule inet my_table my_input meta l4proto tcp reject with tcp reset 2>&1 &&
-      nft add rule inet my_table my_input counter reject with icmpx port-unreachable 2>&1
-  )" || fail
+  sed -ri 's;# unlock_time =.*;unlock_time = 120;' /etc/security/faillock.conf ||
+    fail 'Failed to set unlock time'
+  
+  echo -e 'Unlock time set to 120 secs'
 
-  log -t file "${OUTPUT}"
+  sed -i 's/#PermitRootLogin .*/PermitRootLogin no/' /etc/ssh/sshd_config ||
+    fail 'Failed to set permit root login to no'
+
+  echo -e 'SSH login permission disabled for the root user'
+
+  echo -e 'Setting up a simple stateful firewall...'
+
+  nft flush ruleset &&
+    nft add table inet my_table &&
+    nft add chain inet my_table my_input '{ type filter hook input priority 0 ; policy drop ; }' &&
+    nft add chain inet my_table my_forward '{ type filter hook forward priority 0 ; policy drop ; }' &&
+    nft add chain inet my_table my_output '{ type filter hook output priority 0 ; policy accept ; }' &&
+    nft add chain inet my_table my_tcp_chain &&
+    nft add chain inet my_table my_udp_chain &&
+    nft add rule inet my_table my_input ct state related,established accept &&
+    nft add rule inet my_table my_input iif lo accept &&
+    nft add rule inet my_table my_input ct state invalid drop &&
+    nft add rule inet my_table my_input meta l4proto ipv6-icmp accept &&
+    nft add rule inet my_table my_input meta l4proto icmp accept &&
+    nft add rule inet my_table my_input ip protocol igmp accept &&
+    nft add rule inet my_table my_input meta l4proto udp ct state new jump my_udp_chain &&
+    nft add rule inet my_table my_input 'meta l4proto tcp tcp flags & (fin|syn|rst|ack) == syn ct state new jump my_tcp_chain' &&
+    nft add rule inet my_table my_input meta l4proto udp reject &&
+    nft add rule inet my_table my_input meta l4proto tcp reject with tcp reset &&
+    nft add rule inet my_table my_input counter reject with icmpx port-unreachable || fail 'Failed to add NFT table rules'
 
   mv /etc/nftables.conf /etc/nftables.conf.bak &&
-    nft -s list ruleset > /etc/nftables.conf || fail
+    nft -s list ruleset > /etc/nftables.conf || fail 'Failed to flush NFT tables rules'
 
-  log 'Firewall ruleset has been saved to /etc/nftables.conf'
+  echo -e 'Firewall ruleset has been flushed to /etc/nftables.conf'
 
   # Save screen locker settings to the user config
   local user_name=''
@@ -606,105 +656,128 @@ configure_security () {
 
   local settings_file="${config_home}/security.json"
 
-  echo "${settings}" > "${settings_file}" || fail
+  echo "${settings}" > "${settings_file}" &&
+    chown -R ${user_name}:${user_name} "${config_home}" ||
+    fail 'Failed to save screen locker interval to security settings'
+  
+  echo -e 'Screen locker interval saved to the security settings'
 
-  chown -R ${user_name}:${user_name} "${config_home}" || fail
-
-  log 'Security configuration has been completed'
+  echo -e 'Security configuration has been completed'
 }
 
 # Increases the max limit of inotify watchers.
 increase_watchers () {
-  log '\nIncreasing the limit of inotify watchers...'
+  echo -e 'Increasing the limit of inotify watches...'
 
   local limit=524288
-  echo "fs.inotify.max_user_watches=${limit}" >> /etc/sysctl.conf || fail
+  echo "fs.inotify.max_user_watches=${limit}" >> /etc/sysctl.conf ||
+    fail 'Failed to set the max limit of inotify watches'
 
-  OUTPUT="$(
-    sysctl --system 2>&1
-  )" || fail
+  sysctl --system || fail 'Failed to update the max limit to inotify watches'
 
-  log -t file "${OUTPUT}"
-
-  log "Inotify watchers limit has been set to ${limit}"
+  echo -e "Inotify watchers limit has been set to ${limit}"
 }
 
-# Installs and configures the bootloader.
+# Installs and configures the boot loader.
 install_boot_loader () {
-  log '\nSetting up the boot loader...'
+  echo -e 'Setting up the boot loader...'
 
   if is_setting 'uefi_mode' 'yes'; then
-    OUTPUT="$(
-      grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB 2>&1
-    )" || fail
+    grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB ||
+      fail 'Failed to install grub boot loader on x86_64-efi'
+    
+    echo -e 'Grub boot loader has been installed on x86_64-efi'
   else
     local disk=''
     disk="$(get_setting 'disk')" || fail
 
-    OUTPUT="$(
-      grub-install --target=i386-pc "${disk}" 2>&1
-    )" || fail
+    grub-install --target=i386-pc "${disk}" ||
+      fail 'Failed to install grub boot on i386-pc'
+    
+    echo -e 'Grub boot loader has been installed on i386-pc'
   fi
 
-  log -t file "${OUTPUT}"
-
-  log 'Boot loader has been installed'
-
-  log 'Configuring the boot loader...'
+  echo -e 'Configuring the boot loader...'
 
   sed -ri 's/(GRUB_CMDLINE_LINUX_DEFAULT=".*)"/\1 consoleblank=300"/' /etc/default/grub &&
     sed -i '/#GRUB_SAVEDEFAULT=true/i GRUB_DEFAULT=saved' /etc/default/grub &&
     sed -i 's/#GRUB_SAVEDEFAULT=true/GRUB_SAVEDEFAULT=true/' /etc/default/grub &&
-    sed -i 's/#GRUB_DISABLE_SUBMENU=y/GRUB_DISABLE_SUBMENU=y/' /etc/default/grub || fail
+    sed -i 's/#GRUB_DISABLE_SUBMENU=y/GRUB_DISABLE_SUBMENU=y/' /etc/default/grub ||
+    fail 'Failed to set boot loader properties'
 
-  OUTPUT="$(
-    grub-mkconfig -o /boot/grub/grub.cfg 2>&1
-  )" || fail
+  grub-mkconfig -o /boot/grub/grub.cfg || fail 'Failed to create the boot loader config file'
 
-  log -t file "${OUTPUT}"
-
-  log 'Boot loader has been configured'
+  echo -e 'Boot loader config file created successfully'
 
   if is_setting 'uefi_mode' 'yes' && is_setting 'vm_vendor' 'oracle'; then
     mkdir -p /boot/EFI/BOOT &&
       cp /boot/EFI/GRUB/grubx64.efi /boot/EFI/BOOT/BOOTX64.EFI || fail
   fi
 
-  log 'Boot loader has been set up'
+  echo -e 'Boot loader has been set up successfully'
 }
 
 # Enables system services.
 enable_services () {
-  log '\nEnabling system services...'
+  echo -e 'Enabling system services...'
 
-  OUTPUT="$(
-    systemctl enable systemd-timesyncd.service 2>&1 &&
-      systemctl enable NetworkManager.service 2>&1 &&
-      systemctl enable bluetooth.service 2>&1 &&
-      systemctl enable acpid.service 2>&1 &&
-      systemctl enable cups.service 2>&1 &&
-      systemctl enable sshd.service 2>&1 &&
-      systemctl enable nftables.service 2>&1 &&
-      systemctl enable reflector.timer 2>&1 &&
-      systemctl enable paccache.timer 2>&1
-  )" || fail
+  systemctl enable systemd-timesyncd.service ||
+    fail 'Failed to enable timesyncd service'
 
-  log -t file "${OUTPUT}"
+  echo -e 'Service timesyncd has been enabled'
+
+  systemctl enable NetworkManager.service ||
+    fail 'Failed to enable network manager service'
+
+  echo -e 'Service network manager has been enabled'
+
+  systemctl enable bluetooth.service ||
+    fail 'Failed to enable bluetooth service'
+
+  echo -e 'Service bluetooth has been enabled'
+
+  systemctl enable acpid.service ||
+    fail 'Failed to enable acpid service'
+
+  echo -e 'Service acpid has been enabled'
+
+  systemctl enable cups.service ||
+    fail 'Failed to enable cups service'
+
+  echo -e 'Service cups has been enabled'
+
+  systemctl enable sshd.service ||
+    fail 'Failed to enable sshd service'
+  
+  echo -e 'Service sshd has been enabled'
+
+  systemctl enable nftables.service ||
+    fail 'Failed to enable nftables service'
+  
+  echo -e 'Service nftables has been enabled'
+
+  systemctl enable reflector.timer ||
+    fail 'Failed to enable reflector.timer service'
+
+  echo -e 'Service reflector.timer has been enabled'
+
+  systemctl enable paccache.timer ||
+    fail 'Failed to enable paccache.timer service'
+
+  echo -e 'Service paccache.timer has been enabled'
 
   if is_setting 'trim_disk' 'yes'; then
-    OUTPUT="$(
-      systemctl enable fstrim.timer 2>&1
-    )" || fail
-
-    log -t file "${OUTPUT}"
+    systemctl enable fstrim.timer ||
+      fail 'Failed to enable fstrim.timer service'
+    
+    echo -e 'Service fstrim.timer has been enabled'
   fi
 
   if is_setting 'vm' 'yes' && is_setting 'vm_vendor' 'oracle'; then
-    OUTPUT="$(
-      systemctl enable vboxservice.service 2>&1
-    )" || fail
+    systemctl enable vboxservice.service ||
+      fail 'Failed to enable virtual box service'
 
-    log -t file "${OUTPUT}"
+    echo -e 'Service virtual box has been enabled'
   fi
   
   local user_name=''
@@ -712,32 +785,57 @@ enable_services () {
   
   local config_home="/home/${user_name}/.config"
 
-  mkdir -p "${config_home}/systemd/user" &&
-    cp /opt/stack/services/init-pointer.service "${config_home}/systemd/user" &&
-    cp /opt/stack/services/init-tablets.service "${config_home}/systemd/user" &&
-    cp /opt/stack/services/fix-layout.service "${config_home}/systemd/user" || fail
+  mkdir -p "${config_home}/systemd/user" || fail 'Failed to create the user systemd folder'
 
-  chown -R ${user_name}:${user_name} "${config_home}/systemd" || fail
+  cp /opt/stack/services/init-pointer.service "${config_home}/systemd/user" ||
+    fail 'Failed to set the init-pointer service'
+
+  echo -e 'Service init-pointer has been set'
+
+  cp /opt/stack/services/init-tablets.service "${config_home}/systemd/user" ||
+    fail 'Failed to set the init-tablets service'
+
+  echo -e 'Service init-tablets has been set'
+
+  cp /opt/stack/services/fix-layout.service "${config_home}/systemd/user" ||
+    fail 'Failed to set the fix-layout service'
   
-  sed -i "s/#USER/${user_name}/g" "${config_home}/systemd/user/fix-layout.service" || fail
+  echo -e 'Service fix-layout has been set'
 
-  log 'System services have been enabled'
+  chown -R ${user_name}:${user_name} "${config_home}/systemd" ||
+    fail 'Failed to change user ownership to user systemd services'
+  
+  sed -i "s/#USER/${user_name}/g" "${config_home}/systemd/user/fix-layout.service" ||
+    fail 'Failed to set the user name in the fix-layout service file'
+
+  echo -e 'System services have been enabled'
 }
 
 # Adds system rules for udev.
 add_rules () {
-  log '\nAdding system udev rules...'
+  echo -e 'Adding system udev rules...'
 
   local rules_home='/etc/udev/rules.d'
 
-  cp /opt/stack/rules/90-init-pointer.rules "${rules_home}" &&
-    cp /opt/stack/rules/91-init-tablets.rules "${rules_home}" &&
-    cp /opt/stack/rules/92-fix-layout.rules "${rules_home}" || fail
+  cp /opt/stack/rules/90-init-pointer.rules "${rules_home}" ||
+    fail 'Failed to add the init-pointer rules'
 
-  log 'System udev rules have been added'
+  echo -e 'Rules init-pointer have been added'
+
+  cp /opt/stack/rules/91-init-tablets.rules "${rules_home}" ||
+    fail 'Failed to add the init-tablets rules'
+
+  echo -e 'Rules init-tablets have been added'
+
+  cp /opt/stack/rules/92-fix-layout.rules "${rules_home}" ||
+    fail 'Failed to add the fix-layout rules'
+    
+  echo -e 'Rules fix0layout have been set'
+
+  echo -e 'System udev rules have been added'
 }
 
-log '\nStarting the system installation process...'
+echo -e 'Installing the system...'
 
 if not_equals "$(id -u)" 0; then
   fail 'Script system.sh must be run as root user'

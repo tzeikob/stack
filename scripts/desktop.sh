@@ -6,13 +6,9 @@ source /opt/stack/scripts/utils.sh
 
 # Installs the desktop compositor.
 install_compositor () {
-  log 'Installing the desktop compositor...'
+  echo -e 'Installing the desktop compositor...'
 
-  OUTPUT="$(
-    sudo pacman -S --noconfirm picom 2>&1
-  )" || fail
-
-  log -t file "${OUTPUT}"
+  sudo pacman -S --noconfirm picom || fail 'Failed to install picom'
 
   local user_name=''
   user_name="$(get_setting 'user_name')" || fail
@@ -21,28 +17,26 @@ install_compositor () {
 
   mkdir -p "${config_home}" || fail
 
-  cp /opt/stack/configs/picom/picom.conf "${config_home}" || fail
+  cp /opt/stack/configs/picom/picom.conf "${config_home}" ||
+    fail 'Failed to copy compositor config file'
 
   if is_setting 'vm' 'yes' && is_setting 'vm_vendor' 'oracle'; then
-    log 'Virtual box machine detected'
+    echo -e 'Virtual box machine detected'
 
-    sed -i 's/\(vsync =\).*/\1 false;/' "${config_home}/picom.conf" || fail
+    sed -i 's/\(vsync =\).*/\1 false;/' "${config_home}/picom.conf" ||
+      fail 'Failed to disable vsync mode'
 
-    log 'Vsync option has been disabled'
+    echo -e 'Vsync mode has been disabled'
   fi
 
-  log 'Desktop compositor has been installed'
+  echo -e 'Desktop compositor picom has been installed'
 }
 
 # Installs the window manager.
 install_window_manager () {
-  log 'Installing the window manager...'
+  echo -e 'Installing the window manager...'
 
-  OUTPUT="$(
-    sudo pacman -S --noconfirm bspwm 2>&1
-  )" || fail
-
-  log -t file "${OUTPUT}"
+  sudo pacman -S --noconfirm bspwm || fail 'Failed to install bspwm'
 
   local user_name=''
   user_name="$(get_setting 'user_name')" || fail
@@ -52,32 +46,24 @@ install_window_manager () {
   mkdir -p "${config_home}" || fail
 
   cp /opt/stack/configs/bspwm/bspwmrc "${config_home}" &&
-    chmod 755 "${config_home}/bspwmrc" || fail
-  
-  cp /opt/stack/configs/bspwm/rules "${config_home}" &&
-    chmod 755 "${config_home}/rules" || fail
+    chmod 755 "${config_home}/bspwmrc" &&
+    cp /opt/stack/configs/bspwm/rules "${config_home}" &&
+    chmod 755 "${config_home}/rules" &&
+    cp /opt/stack/configs/bspwm/resize "${config_home}" &&
+    chmod 755 "${config_home}/resize" &&
+    cp /opt/stack/configs/bspwm/swap "${config_home}" &&
+    chmod 755 "${config_home}/swap" &&
+    cp /opt/stack/configs/bspwm/scratchpad "${config_home}" &&
+    chmod 755 "${config_home}/scratchpad" || fail 'Failed to copy the bspwm config files'
 
-  cp /opt/stack/configs/bspwm/resize "${config_home}" &&
-    chmod 755 "${config_home}/resize" || fail
-
-  cp /opt/stack/configs/bspwm/swap "${config_home}" &&
-    chmod 755 "${config_home}/swap" || fail
-
-  cp /opt/stack/configs/bspwm/scratchpad "${config_home}" &&
-    chmod 755 "${config_home}/scratchpad" || fail
-
-  log 'Window manager has been installed'
+  echo -e 'Window manager bspwm has been installed'
 }
 
 # Installs the desktop status bars.
 install_status_bars () {
-  log 'Installing the desktop status bars...'
+  echo -e 'Installing the desktop status bars...'
 
-  OUTPUT="$(
-    sudo pacman -S --noconfirm polybar 2>&1
-  )" || fail
-
-  log -t file "${OUTPUT}"
+  sudo pacman -S --noconfirm polybar || fail 'Failed to install polybar'
 
   local user_name=''
   user_name="$(get_setting 'user_name')" || fail
@@ -87,35 +73,27 @@ install_status_bars () {
   mkdir -p "${config_home}" || fail
 
   cp /opt/stack/configs/polybar/config.ini "${config_home}" &&
-    chmod 644 "${config_home}/config.ini" || fail
-  
-  cp /opt/stack/configs/polybar/modules.ini "${config_home}" &&
-    chmod 644 "${config_home}/modules.ini" || fail
-  
-  cp /opt/stack/configs/polybar/theme.ini "${config_home}" &&
-    chmod 644 "${config_home}/theme.ini" || fail
+    chmod 644 "${config_home}/config.ini" &&
+    cp /opt/stack/configs/polybar/modules.ini "${config_home}" &&
+    chmod 644 "${config_home}/modules.ini" &&
+    cp /opt/stack/configs/polybar/theme.ini "${config_home}" &&
+    chmod 644 "${config_home}/theme.ini" &&
+    cp -r /opt/stack/configs/polybar/scripts "${config_home}" &&
+    chmod +x "${config_home}"/scripts/* || fail 'Failed to copy polybar config files'
 
-  cp -r /opt/stack/configs/polybar/scripts "${config_home}" &&
-    chmod +x "${config_home}"/scripts/* || fail
-
-  log 'Status bars have been installed'
+  echo -e 'Status bars have been installed'
 }
 
 # Installs the utility tools for managing system settings.
 install_settings_manager () {
-  log '\nInstalling settings manager tools...'
+  echo -e 'Installing settings manager tools...'
 
-  OUTPUT="$(
-    yay -S --noconfirm --removemake smenu 2>&1
-  )" || fail
-
-  log -t file "${OUTPUT}"
+  yay -S --noconfirm --removemake smenu || fail 'Failed to install smenu'
 
   local tools_home='/opt/tools'
 
-  sudo mkdir -p "${tools_home}" || fail
-  
-  sudo cp -r /opt/stack/tools/* "${tools_home}" || fail
+  sudo mkdir -p "${tools_home}" &&
+    sudo cp -r /opt/stack/tools/* "${tools_home}" || fail 'Failed to install setting manager tools'
 
   local bin_home='/usr/local/bin'
 
@@ -134,228 +112,212 @@ install_settings_manager () {
     sudo ln -sf "${tools_home}/printers/main" "${bin_home}/printers" &&
     sudo ln -sf "${tools_home}/security/main" "${bin_home}/security" &&
     sudo ln -sf "${tools_home}/trash/main" "${bin_home}/trash" &&
-    sudo ln -sf "${tools_home}/system/main" "${bin_home}/system" || fail
+    sudo ln -sf "${tools_home}/system/main" "${bin_home}/system" ||
+    fail 'Failed to create symlinks to /usr/local/bin'
 
-  log 'Settings manager tools have been installed'
+  echo -e 'Settings manager tools have been installed'
 }
 
 # Installs the desktop launchers.
 install_launchers () {
-  log 'Installing the desktop launchers...'
+  echo -e 'Installing the desktop launchers...'
 
-  OUTPUT="$(
-    sudo pacman -S --noconfirm rofi 2>&1
-  )" || fail
-
-  log -t file "${OUTPUT}"
+  sudo pacman -S --noconfirm rofi || fail 'Failed to install rofi'
 
   local user_name=''
   user_name="$(get_setting 'user_name')" || fail
 
   local config_home="/home/${user_name}/.config/rofi"
 
-  mkdir -p "${config_home}" || fail
+  mkdir -p "${config_home}" &&
+    cp /opt/stack/configs/rofi/config.rasi "${config_home}" &&
+    chmod 644 "${config_home}/config.rasi" &&
+    cp /opt/stack/configs/rofi/launch "${config_home}" &&
+    chmod +x "${config_home}/launch" || fail 'Failed to copy rofi config files'
 
-  cp /opt/stack/configs/rofi/config.rasi "${config_home}" &&
-    chmod 644 "${config_home}/config.rasi" || fail
-
-  cp /opt/stack/configs/rofi/launch "${config_home}" &&
-    chmod +x "${config_home}/launch" || fail
-
-  log 'Desktop launchers have been installed'
+  echo -e 'Desktop launchers have been installed'
 }
 
 # Installs the keyboard key bindinds and shortcuts.
 install_keyboard_bindings () {
-  log 'Installing the keyboard key bindings...'
+  echo -e 'Setting up the keyboard key bindings...'
 
-  OUTPUT="$(
-    sudo pacman -S --noconfirm sxhkd 2>&1
-  )" || fail
-
-  log -t file "${OUTPUT}"
+  sudo pacman -S --noconfirm sxhkd || fail 'Failed to install sxhkd'
 
   local user_name=''
   user_name="$(get_setting 'user_name')" || fail
 
   local config_home="/home/${user_name}/.config/sxhkd"
 
-  mkdir -p "${config_home}" || fail
+  mkdir -p "${config_home}" &&
+    cp /opt/stack/configs/sxhkd/sxhkdrc "${config_home}" &&
+    chmod 644 "${config_home}/sxhkdrc" || fail 'Failed to copy sxhkdrc configs files'
 
-  cp /opt/stack/configs/sxhkd/sxhkdrc "${config_home}" &&
-    chmod 644 "${config_home}/sxhkdrc" || fail
-
-  log 'Keyboard key bindings have been set'
+  echo -e 'Keyboard key bindings have been set'
 }
 
 # Installs the login screen.
 install_login_screen () {
-  log 'Installing the login screen...'
+  echo -e 'Installing the login screen...'
 
-  OUTPUT="$(
-    sudo pacman -S --noconfirm figlet 2>&1 &&
-      yay -S --noconfirm --removemake figlet-fonts figlet-fonts-extra 2>&1
-  )" || fail
+  sudo pacman -S --noconfirm figlet &&
+    yay -S --noconfirm --removemake figlet-fonts figlet-fonts-extra ||
+    fail 'Failed to install figlet packages'
+  
+  echo -e 'Figlet packages have been installed'
 
-  log -t file "${OUTPUT}"
+  sudo mv /etc/issue /etc/issue.bak || fail 'Failed to backup the issue file'
 
-  sudo mv /etc/issue /etc/issue.bak || fail
+  echo -e 'The issue file has been backed up to /etc/issue.bak'
 
   local host_name=''
   host_name="$(get_setting 'host_name')" || fail
 
-  OUTPUT="$(
-    figlet -f pagga " ${host_name} " 2>&1
-  )" || fail
+  figlet -f pagga " ${host_name} " | sudo tee /etc/issue > /dev/null ||
+    fail 'Failed to create the new issue file'
+  
+  echo -e 'The new issue file has been created'
 
-  local logo="${OUTPUT}"
+  sudo sed -ri "s;(ExecStart=-/sbin/agetty)(.*);\1 --nohostname\2;" \
+    /lib/systemd/system/getty@.service || fail 'Failed to set no hostname mode to getty service'
 
-  echo -e "${logo}\n" | sudo tee /etc/issue > /dev/null || fail
+  sudo sed -ri "s;(ExecStart=-/sbin/agetty)(.*);\1 --nohostname\2;" \
+    /lib/systemd/system/serial-getty@.service || fail 'Failed to set no hostname mode to serial getty service'
 
-  sudo sed -ri "s;(ExecStart=-/sbin/agetty)(.*);\1 --nohostname\2;" /lib/systemd/system/getty@.service || fail
-  sudo sed -ri "s;(ExecStart=-/sbin/agetty)(.*);\1 --nohostname\2;" /lib/systemd/system/serial-getty@.service || fail
-
-  log 'Login screen has been installed'
+  echo -e 'Login screen has been installed'
 }
 
 # Installs the screen locker.
 install_screen_locker () {
-  log 'Installing the screen locker...'
+  echo -e 'Installing the screen locker...'
 
-  OUTPUT="$(
-    sudo pacman -S --noconfirm xautolock python-cairo python-pam 2>&1 &&
-      yay -S --noconfirm --removemake python-screeninfo 2>&1
-  )" || fail
+  sudo pacman -S --noconfirm xautolock python-cairo python-pam &&
+    yay -S --noconfirm --removemake python-screeninfo ||
+    fail 'Failed to install the locker dependencies'
 
-  log -t file "${OUTPUT}"
+  echo -e 'Locker dependencies have been installed'
 
   local user_name=''
   user_name="$(get_setting 'user_name')" || fail
 
-  OUTPUT="$(
-    cd "/home/${user_name}" &&
-      git clone https://github.com/tzeikob/xsecurelock.git 2>&1 &&
-      cd xsecurelock &&
-      sh autogen.sh 2>&1 &&
-      ./configure --with-pam-service-name=system-auth 2>&1 &&
-      make 2>&1 &&
-      sudo make install 2>&1
-  )" || fail
+  local xsecurelock_home="/home/${user_name}/xsecurelock"
 
-  log -t file "${OUTPUT}"
+  git clone https://github.com/tzeikob/xsecurelock.git "${xsecurelock_home}" &&
+    cd "${xsecurelock_home}" &&
+    sh autogen.sh &&
+    ./configure --with-pam-service-name=system-auth &&
+    make &&
+    sudo make install &&
+    cd ~ &&
+    rm -rf "${xsecurelock_home}" || fail 'Failed to install xsecurelock'
+  
+  echo -e 'Xsecurelock has been installed'
 
-  cd "/home/${user_name}" || fail
-  rm -rf "/home/${user_name}/xsecurelock" || fail
-
-  sudo cp /opt/stack/configs/xsecurelock/hook /usr/lib/systemd/system-sleep/locker || fail
+  sudo cp /opt/stack/configs/xsecurelock/hook /usr/lib/systemd/system-sleep/locker ||
+    fail 'Failed to copy the sleep hook'
+  
+  echo -e 'Sleep hook has been copied'
 
   local user_id=''
-  user_id="$(id -u "${user_name}")" || fail
+  user_id="$(id -u "${user_name}")" || fail 'Failed to get the user id'
 
-  sudo cp /opt/stack/configs/xsecurelock/service /etc/systemd/system/lock@.service || fail
-  sudo sed -i "s/#USER_ID/${user_id}/g" /etc/systemd/system/lock@.service || fail
+  local service_file="/etc/systemd/system/lock@.service"
 
-  OUTPUT="$(
-    sudo systemctl enable lock@${user_name}.service 2>&1
-  )" || fail
+  sudo cp /opt/stack/configs/xsecurelock/service "${service_file}" &&
+    sudo sed -i "s/#USER_ID/${user_id}/g" "${service_file}" &&
+    sudo systemctl enable lock@${user_name}.service ||
+    fail 'Failed to enable locker service'
 
-  log -t file "${OUTPUT}"
+  echo -e 'Locker service has been enabled'
 
-  log 'Screen locker has been installed'
+  echo -e 'Screen locker has been installed'
 }
 
 # Installs the notifications server.
 install_notification_server () {
-  log 'Installing notifications server...'
+  echo -e 'Installing notifications server...'
 
-  OUTPUT="$(
-    sudo pacman -S --noconfirm dunst 2>&1
-  )" || fail
+  sudo pacman -S --noconfirm dunst || fail 'Failed to install dunst'
 
-  log -t file "${OUTPUT}"
+  echo -e 'Dunst has been installed'
 
   local user_name=''
   user_name="$(get_setting 'user_name')" || fail
 
   local config_home="/home/${user_name}/.config/dunst"
 
-  mkdir -p "${config_home}" || fail
+  mkdir -p "${config_home}" &&
+    cp /opt/stack/configs/dunst/dunstrc "${config_home}" &&
+    cp /opt/stack/configs/dunst/hook "${config_home}" ||
+    fail 'Failed to copy notifications server config files'
 
-  cp /opt/stack/configs/dunst/dunstrc "${config_home}" || fail
-  cp /opt/stack/configs/dunst/hook "${config_home}" || fail
-
-  log 'Notifications server has been installed'
+  echo -e 'Notifications server has been installed'
 }
 
 # Installs the file manager.
 install_file_manager () {
-  log 'Installing the file manager...'
+  echo -e 'Installing the file manager...'
 
-  OUTPUT="$(
-    sudo pacman -S --noconfirm nnn fzf 2>&1
-  )" || fail
+  sudo pacman -S --noconfirm nnn fzf || fail 'Failed to install nnn'
 
-  log -t file "${OUTPUT}"
+  echo -e 'Nnn has been installed'
 
   local user_name=''
   user_name="$(get_setting 'user_name')" || fail
 
   local config_home="/home/${user_name}/.config/nnn"
 
-  mkdir -p "${config_home}" || fail
+  mkdir -p "${config_home}" &&
+    cp /opt/stack/configs/nnn/env "${config_home}" || fail 'Failed to copy the env file'
+  
+  echo -e 'Env file has been copied'
 
-  cp /opt/stack/configs/nnn/env "${config_home}" || fail
-
-  log 'Installing file manager plugins...'
+  echo -e 'Installing file manager plugins...'
 
   # Todo: get current working directory error
   local pluggins_url='https://raw.githubusercontent.com/jarun/nnn/master/plugins/getplugs'
 
-  OUTPUT="$(
-    curl "${pluggins_url}" -sSLo "${config_home}/getplugs" \
-      --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 2>&1 &&
-      cd "/home/${user_name}" &&
-      HOME="/home/${user_name}" sh "${config_home}/getplugs" 2>&1
-  )" || fail
+  curl "${pluggins_url}" -sSLo "${config_home}/getplugs" \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 &&
+    cd "/home/${user_name}" &&
+    HOME="/home/${user_name}" sh "${config_home}/getplugs" ||
+    fail 'Failed to install extra plugins'
 
-  log -t file "${OUTPUT}"
-
-  log 'Extra plugins have been installed'
+  echo -e 'Extra plugins have been installed'
 
   local bashrc_file="/home/${user_name}/.bashrc"
 
   echo -e '\nsource "${HOME}/.config/nnn/env"' >> "${bashrc_file}" &&
-    echo 'alias N="sudo -E nnn -dH"' >> "${bashrc_file}" || fail
+    echo 'alias N="sudo -E nnn -dH"' >> "${bashrc_file}" ||
+    fail 'Failed to add hooks in .bashrc file'
 
-  log 'File manager hooks added in the bashrc file'
+  echo -e 'File manager hooks added in .bashrc file'
 
-  mkdir -p "/home/${user_name}"/{downloads,documents,data,sources,mounts} || fail
-  mkdir -p "/home/${user_name}"/{images,audios,videos} || fail
-
-  cp /opt/stack/configs/nnn/user.dirs "/home/${user_name}/.config/user-dirs.dirs" || fail
-
-  log 'User home directories have been created'
+  mkdir -p "/home/${user_name}"/{downloads,documents,data,sources,mounts} &&
+    mkdir -p "/home/${user_name}"/{images,audios,videos} &&
+    cp /opt/stack/configs/nnn/user.dirs "/home/${user_name}/.config/user-dirs.dirs" ||
+    fail 'Failed to create home directories'
+  
+  echo -e 'Home directories have been created'
 
   printf '%s\n' \
     '[Default Applications]' \
-    'inode/directory=nnn.desktop' > "/home/${user_name}/.config/mimeapps.list" || fail
-  
-  chmod 644 "/home/${user_name}/.config/mimeapps.list" || fail
+    'inode/directory=nnn.desktop' > "/home/${user_name}/.config/mimeapps.list" &&
+    chmod 644 "/home/${user_name}/.config/mimeapps.list" ||
+    fail 'Failed to create the applications mime type file'
 
-  log 'Application mime types file has been created'
+  echo -e 'Application mime types file has been created'
 
-  log 'File manager has been installed'
+  echo -e 'File manager has been installed'
 }
 
 # Installs the trash manager.
 install_trash_manager () {
-  log 'Installing the trash manager...'
+  echo -e 'Installing the trash manager...'
 
-  OUTPUT="$(
-    sudo pacman -S --noconfirm trash-cli 2>&1
-  )" || fail
+  sudo pacman -S --noconfirm trash-cli || fail 'Failed to install trash-cli'
 
-  log -t file "${OUTPUT}"
+  echo -e 'Trash-cli has been installed'
 
   local user_name=''
   user_name="$(get_setting 'user_name')" || fail
@@ -364,93 +326,96 @@ install_trash_manager () {
 
   echo -e "\nalias sudo='sudo '" >> "${bashrc_file}" &&
     echo "alias tt='trash-put -i'" >> "${bashrc_file}" &&
-    echo "alias rm='rm -i'" >> "${bashrc_file}" || fail
+    echo "alias rm='rm -i'" >> "${bashrc_file}" || fail 'Failed to add aliases to .bashrc file'
+  
+  echo -e 'Aliases have been added to .bashrc file'
 
   bashrc_file='/root/.bashrc'
   
   echo -e "\nalias sudo='sudo '" | sudo tee -a "${bashrc_file}" > /dev/null &&
     echo "alias tt='trash-put -i'" | sudo tee -a "${bashrc_file}" > /dev/null &&
-    echo "alias rm='rm -i'" | sudo tee -a "${bashrc_file}" > /dev/null || fail
+    echo "alias rm='rm -i'" | sudo tee -a "${bashrc_file}" > /dev/null ||
+    fail 'Failed to add aliases to root .bashrc file'
+  
+  echo -e 'Aliases have been added to root .bashrc file'
 
-  log 'Trash manager has been installed'
+  echo -e 'Trash manager has been installed'
 }
 
 # Installs the virtual terminals.
 install_terminals () {
-  log 'Installing virtual terminals...'
+  echo -e 'Installing virtual terminals...'
 
-  OUTPUT="$(
-    sudo pacman -S --noconfirm alacritty cool-retro-term 2>&1
-  )" || fail
+  sudo pacman -S --noconfirm alacritty cool-retro-term ||
+    fail 'Failed to install terminal packages'
 
-  log -t file "${OUTPUT}"
+  echo -e 'Alacritty and cool-retro-term have been installed'
 
   local user_name=''
   user_name="$(get_setting 'user_name')" || fail
 
   local config_home="/home/${user_name}/.config/alacritty"
 
-  mkdir -p "${config_home}" || fail
-
-  cp /opt/stack/configs/alacritty/alacritty.toml "${config_home}" || fail
+  mkdir -p "${config_home}" &&
+    cp /opt/stack/configs/alacritty/alacritty.toml "${config_home}" ||
+    fail 'Failed to copy the alacritty config file'
+  
+  echo -e 'Alacritty config file has been copied'
 
   local bashrc_file="/home/${user_name}/.bashrc"
 
   echo -e '\nexport TERMINAL=alacritty' >> "${bashrc_file}" &&
     sed -i '/PS1.*/d' "${bashrc_file}" &&
-    cat /opt/stack/configs/alacritty/user.prompt >> "${bashrc_file}" || fail
+    cat /opt/stack/configs/alacritty/user.prompt >> "${bashrc_file}" ||
+    fail 'Failed to add hooks in the .bashrc file'
+  
+  echo -e 'Hooks have been added in the .bashrc file'
 
-  sudo sed -i '/PS1.*/d' /root/.bashrc || fail
-  cat /opt/stack/configs/alacritty/root.prompt | sudo tee -a /root/.bashrc > /dev/null || fail
+  sudo sed -i '/PS1.*/d' /root/.bashrc &&
+    cat /opt/stack/configs/alacritty/root.prompt | sudo tee -a /root/.bashrc > /dev/null ||
+    fail 'Failed to add hooks in the root .bashrc file'
 
-  log 'Terminal prompt hooks have been set'
+  echo -e 'Hooks have been added in the root .bashrc file'
 
-  log 'Virtual terminals have been installed'
+  echo -e 'Virtual terminals have been installed'
 }
 
 # Installs the text editor.
 install_text_editor () {
-  log 'Installing the text editor...'
+  echo -e 'Installing the text editor...'
 
-  OUTPUT="$(
-    sudo pacman -S --noconfirm helix 2>&1
-  )" || fail
+  sudo pacman -S --noconfirm helix || fail 'Failed to install helix'
 
-  log -t file "${OUTPUT}"
+  echo -e 'Helix has been installed'
 
   local user_name=''
   user_name="$(get_setting 'user_name')" || fail
 
   local bashrc_file="/home/${user_name}/.bashrc"
 
-  echo -e '\nexport EDITOR=helix' >> "${bashrc_file}" || fail
+  echo -e '\nexport EDITOR=helix' >> "${bashrc_file}" ||
+    fail 'Failed to set helix as default editor'
 
-  log 'Text editor has been installed\n'
+  echo -e 'Helix set as default editor'
+
+  echo -e 'Text editor has been installed'
 }
 
 # Installs the web browsers.
 install_web_browsers () {
-  log 'Installing the web browsers...'
+  echo -e 'Installing the web browsers...'
 
-  OUTPUT="$(
-    sudo pacman -S --noconfirm firefox torbrowser-launcher 2>&1 &&
-      yay -S --noconfirm --removemake google-chrome brave-bin 2>&1
-  )" || fail
+  sudo pacman -S --noconfirm firefox torbrowser-launcher &&
+    yay -S --noconfirm --removemake google-chrome brave-bin || fail 'Failed to install web browsers'
 
-  log -t file "${OUTPUT}"
-
-  log 'Web browser have been installed\n'
+  echo -e 'Web browsers have been installed'
 }
 
 # Installing monitoring tools.
 install_monitoring_tools () {
-  log 'Installing monitoring tools...'
+  echo -e 'Installing monitoring tools...'
 
-  OUTPUT="$(
-    sudo pacman -S --noconfirm htop glances 2>&1
-  )" || fail
-
-  log -t file "${OUTPUT}"
+  sudo pacman -S --noconfirm htop glances || fail 'Failed to install monitoring tools'
 
   local desktop_home='/usr/local/share/applications'
 
@@ -467,34 +432,28 @@ install_monitoring_tools () {
    'Terminal=true' \
    'Icon=glances' \
    'Catogories=Monitor;Resources;System;Console' \
-   'Keywords=Monitor;Resources;System' | sudo tee "${desktop_file}" > /dev/null || fail
+   'Keywords=Monitor;Resources;System' | sudo tee "${desktop_file}" > /dev/null ||
+   fail 'Failed to create the desktop file'
 
-  log 'Monitoring tools have been installed'
+  echo -e 'Monitoring tools have been installed'
 }
 
 # Installs the print screen and recording casters.
 install_screen_casters () {
-  log 'Installing screen casting tools...'
+  echo -e 'Installing screen casting tools...'
 
-  OUTPUT="$(
-    sudo pacman -S --noconfirm scrot 2>&1 &&
-      yay -S --noconfirm --removemake --mflags --nocheck slop screencast 2>&1
-  )" || fail
+  sudo pacman -S --noconfirm scrot &&
+    yay -S --noconfirm --removemake --mflags --nocheck slop screencast ||
+    fail 'Failed to install screen casting tools'
 
-  log -t file "${OUTPUT}"
-
-  log 'Screen casting tools have been installed'
+  echo -e 'Screen casting tools have been installed'
 }
 
 # Installs the calculator.
 install_calculator () {
-  log 'Installing the calculator...'
+  echo -e 'Installing the calculator...'
 
-  OUTPUT="$(
-    yay -S --noconfirm --removemake libqalculate 2>&1
-  )" || fail
-
-  log -t file "${OUTPUT}"
+  yay -S --noconfirm --removemake libqalculate || fail 'Failed to install qalculate'
 
   local desktop_home='/usr/local/share/applications'
 
@@ -511,20 +470,17 @@ install_calculator () {
     'Terminal=true' \
     'Icon=qalculate' \
     'Catogories=Math;Calculator;Console' \
-    'Keywords=Calc;Math' | sudo tee "${desktop_file}" > /dev/null || fail
+    'Keywords=Calc;Math' | sudo tee "${desktop_file}" > /dev/null ||
+    fail 'Failed to create desktop file'
 
-  log 'Calculators has been installed'
+  echo -e 'Calculator has been installed'
 }
 
 # Installs the media viewer.
 install_media_viewer () {
-  log 'Installing the media viewer...'
+  echo -e 'Installing the media viewer...'
 
-  OUTPUT="$(
-    sudo pacman -S --noconfirm sxiv 2>&1
-  )" || fail
-
-  log -t file "${OUTPUT}"
+  sudo pacman -S --noconfirm sxiv || fail 'Failed to install sxiv'
 
   local user_name=''
   user_name="$(get_setting 'user_name')" || fail
@@ -535,20 +491,19 @@ install_media_viewer () {
     'image/jpeg=sxiv.desktop' \
     'image/jpg=sxiv.desktop' \
     'image/png=sxiv.desktop' \
-    'image/tiff=sxiv.desktop' >> "${config_home}/mimeapps.list" || fail
+    'image/tiff=sxiv.desktop' >> "${config_home}/mimeapps.list" ||
+    fail 'Failed to add image mime types'
   
-  log 'Media viewer has been installed'
+  echo -e 'Image mime types have been added'
+  
+  echo -e 'Media viewer has been installed'
 }
 
 # Installs the music player.
 install_music_player () {
-  log 'Installing the music player...'
+  echo -e 'Installing the music player...'
   
-  OUTPUT="$(
-    sudo pacman -S --noconfirm mpd ncmpcpp 2>&1
-  )" || fail
-
-  log -t file "${OUTPUT}"
+  sudo pacman -S --noconfirm mpd ncmpcpp || fail 'Failed to install the music player'
 
   local user_name=''
   user_name="$(get_setting 'user_name')" || fail
@@ -557,21 +512,21 @@ install_music_player () {
 
   local mpd_home="/${config_home}/mpd"
 
-  mkdir -p "${mpd_home}"/{playlists,database} || fail
+  mkdir -p "${mpd_home}"/{playlists,database} ||
+    fail 'Failed to create mpd config directories'
 
-  cp /opt/stack/configs/mpd/conf "${mpd_home}/mpd.conf" || fail
+  cp /opt/stack/configs/mpd/conf "${mpd_home}/mpd.conf" ||
+    fail 'Failed to copy the mpd config file'
 
   local ncmpcpp_home="/${config_home}/ncmpcpp"
 
-  mkdir -p "${ncmpcpp_home}" || fail
+  mkdir -p "${ncmpcpp_home}" &&
+    cp /opt/stack/configs/ncmpcpp/config "${ncmpcpp_home}/config" ||
+    fail 'Failed to copy ncmpcpp config file'
 
-  cp /opt/stack/configs/ncmpcpp/config "${ncmpcpp_home}/config" || fail
+  sudo systemctl --user enable mpd.service || fail 'Failed to enable mpd service'
 
-  OUTPUT="$(
-    sudo systemctl --user enable mpd.service 2>&1
-  )" || fail
-
-  log -t file "${OUTPUT}"
+  echo -e 'Mpd service has been enabled'
 
   local desktop_home='/usr/local/share/applications'
 
@@ -589,26 +544,26 @@ install_music_player () {
     'Icon=ncmpcpp' \
     'MimeType=audio/mpeg' \
     'Catogories=Music;Player;ConsoleOnly' \
-    'Keywords=Music;Player;Audio' | sudo tee "${desktop_file}" > /dev/null || fail
+    'Keywords=Music;Player;Audio' | sudo tee "${desktop_file}" > /dev/null ||
+    fail 'Failed to create the desktop file'
   
   printf '%s\n' \
     'audio/mpeg=ncmpcpp.desktop' \
     'audio/mp3=ncmpcpp.desktop' \
     'audio/flac=ncmpcpp.desktop' \
-    'audio/midi=ncmpcpp.desktop' >> "${config_home}/mimeapps.list" || fail
+    'audio/midi=ncmpcpp.desktop' >> "${config_home}/mimeapps.list" ||
+    fail 'Failed to add audio mime types'
   
-  log 'Music player has been installed'
+  echo -e 'Audio mime types have been added'
+  
+  echo -e 'Music player has been installed'
 }
 
 # Installs the video media player.
 install_video_player () {
-  log 'Installing video media player...'
+  echo -e 'Installing video media player...'
 
-  OUTPUT="$(
-    sudo pacman -S --noconfirm mpv 2>&1
-  )" || fail
-
-  log -t file "${OUTPUT}"
+  sudo pacman -S --noconfirm mpv || fail 'Failed to install mpv'
 
   local user_name=''
   user_name="$(get_setting 'user_name')" || fail
@@ -620,48 +575,42 @@ install_video_player () {
     'video/mkv=mpv.desktop' \
     'video/mov=mpv.desktop' \
     'video/mpeg=mpv.desktop' \
-    'video/avi=mpv.desktop' >> "${config_home}/mimeapps.list" || fail
+    'video/avi=mpv.desktop' >> "${config_home}/mimeapps.list" ||
+    fail 'Failed to add video mime types'
   
-  log 'Video media player has been installed'
+  echo -e 'Video mime types have been added'
+  
+  echo -e 'Video media player has been installed'
 }
 
 # Installs the audio and video media codecs.
 install_media_codecs () {
-  log 'Installing audio and video media codecs...'
+  echo -e 'Installing audio and video media codecs...'
 
-  OUTPUT="$(
-    sudo pacman -S --noconfirm \
-      faad2 ffmpeg4.4 libmodplug libmpcdec speex taglib wavpack 2>&1
-  )" || fail
+  sudo pacman -S --noconfirm \
+    faad2 ffmpeg4.4 libmodplug libmpcdec speex taglib wavpack ||
+    fail 'Failed to install audio and video codecs'
 
-  log -t file "${OUTPUT}"
-
-  log 'Media codecs have been installed'
+  echo -e 'Media codecs have been installed'
 }
 
 # Installs the office tools.
 install_office_tools () {
-  log 'Installing the office tools...'
+  echo -e 'Installing the office tools...'
 
-  OUTPUT="$(
-    sudo pacman -S --noconfirm libreoffice-fresh 2>&1
-  )" || fail
+  sudo pacman -S --noconfirm libreoffice-fresh ||
+    fail 'Failed to install office tools'
 
-  log -t file "${OUTPUT}"
-
-  log 'Office tools have been installed\n'
+  echo -e 'Office tools have been installed'
 }
 
 # Installs the pdf and epub readers.
 install_readers () {
-  log 'Installing pdf and epub readers...'
+  echo -e 'Installing pdf and epub readers...'
 
-  OUTPUT="$(
-    sudo pacman -S --noconfirm foliate 2>&1 &&
-      yay -S --noconfirm --useask --removemake --diffmenu=false evince-no-gnome poppler 2>&1
-  )" || fail
-
-  log -t file "${OUTPUT}"
+  sudo pacman -S --noconfirm foliate &&
+    yay -S --noconfirm --useask --removemake --diffmenu=false evince-no-gnome poppler ||
+    fail 'Failed to install pdf and epub readers'
 
   local user_name=''
   user_name="$(get_setting 'user_name')" || fail
@@ -670,83 +619,77 @@ install_readers () {
 
   printf '%s\n' \
     'application/epub+zip=com.github.johnfactotum.Foliate.desktop' \
-    'application/pdf=org.gnome.Evince.desktop' >> "${config_home}/mimeapps.list" || fail
+    'application/pdf=org.gnome.Evince.desktop' >> "${config_home}/mimeapps.list" ||
+    fail 'Failed to add pdf and epub mime types'
+  
+  echo -e 'Pdf and epub mime types have been added'
 
-  log 'Pdf and epub readers have been installed\n'
+  echo -e 'Pdf and epub readers have been installed'
 }
 
 # Installs the torrent client.
 install_torrent_client () {
-  log 'Installing the torrent client...'
+  echo -e 'Installing the torrent client...'
 
-  OUTPUT="$(
-    sudo pacman -S --noconfirm transmission-cli 2>&1
-  )" || fail
+  sudo pacman -S --noconfirm transmission-cli || fail 'Failed to install transmission-cli'
 
-  log -t file "${OUTPUT}"
-
-  log 'Torrent client has been installed\n'
+  echo -e 'Torrent client has been installed'
 }
 
 # Installs the desktop and ui theme.
 install_theme () {
-  log 'Installing the desktop theme...'
+  echo -e 'Installing the desktop theme...'
 
   local theme_url='https://github.com/dracula/gtk/archive/master.zip'
 
-  OUTPUT="$(
-    sudo curl "${theme_url}" -sSLo /usr/share/themes/Dracula.zip \
-      --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 2>&1 &&
-      sudo unzip -q /usr/share/themes/Dracula.zip -d /usr/share/themes 2>&1 &&
-      sudo mv /usr/share/themes/gtk-master /usr/share/themes/Dracula &&
-      sudo rm -f /usr/share/themes/Dracula.zip
-  )" || fail
+  sudo curl "${theme_url}" -sSLo /usr/share/themes/Dracula.zip \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 &&
+    sudo unzip -q /usr/share/themes/Dracula.zip -d /usr/share/themes &&
+    sudo mv /usr/share/themes/gtk-master /usr/share/themes/Dracula &&
+    sudo rm -f /usr/share/themes/Dracula.zip ||
+    fail 'Failed to install theme files'
 
-  log -t file "${OUTPUT}"
-
-  log 'Theme has been installed'
+  echo -e 'Theme files have been installed'
 
   local icons_url='https://github.com/dracula/gtk/files/5214870/Dracula.zip'
 
-  OUTPUT="$(
-    sudo curl "${icons_url}" -sSLo /usr/share/icons/Dracula.zip \
-      --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 2>&1 &&
-      sudo unzip -q /usr/share/icons/Dracula.zip -d /usr/share/icons 2>&1 &&
-      sudo rm -f /usr/share/icons/Dracula.zip
-  )" || fail
+  sudo curl "${icons_url}" -sSLo /usr/share/icons/Dracula.zip \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 &&
+    sudo unzip -q /usr/share/icons/Dracula.zip -d /usr/share/icons &&
+    sudo rm -f /usr/share/icons/Dracula.zip ||
+    fail 'Failed to install icon files'
 
-  log -t file "${OUTPUT}"
-
-  log 'Theme icons have been installed'
+  echo -e 'Icon files have been installed'
 
   local cursors_url='https://www.dropbox.com/s/mqt8s1pjfgpmy66/Breeze-Snow.tgz?dl=1'
 
-  OUTPUT="$(
-    sudo wget "${cursors_url}" -qO /usr/share/icons/breeze-snow.tgz \
-      --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 3 2>&1 &&
-      sudo tar -xzf /usr/share/icons/breeze-snow.tgz -C /usr/share/icons 2>&1 &&
-      sudo sed -ri 's/Inherits=.*/Inherits=Breeze-Snow/' /usr/share/icons/default/index.theme &&
-      sudo rm -f /usr/share/icons/breeze-snow.tgz
-  )" || fail
+  sudo wget "${cursors_url}" -qO /usr/share/icons/breeze-snow.tgz \
+    --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 3 &&
+    sudo tar -xzf /usr/share/icons/breeze-snow.tgz -C /usr/share/icons &&
+    sudo sed -ri 's/Inherits=.*/Inherits=Breeze-Snow/' /usr/share/icons/default/index.theme &&
+    sudo rm -f /usr/share/icons/breeze-snow.tgz ||
+    fail 'Failed to install cursors'
 
-  log -t file "${OUTPUT}"
-
-  log 'Cursors have been installed'
+  echo -e 'Cursors have been installed'
 
   local user_name=''
   user_name="$(get_setting 'user_name')" || fail
 
   local config_home="/home/${user_name}/.config/gtk-3.0"
   
-  mkdir -p "${config_home}" || fail
+  mkdir -p "${config_home}" &&
+    cp /opt/stack/configs/gtk/settings.ini "${config_home}" ||
+    fail 'Failed to copy gtk settings file'
 
-  cp /opt/stack/configs/gtk/settings.ini "${config_home}" || fail
+  echo -e 'Gtk settings file has been copied'
 
   local wallpapers_home="/home/${user_name}/.local/share/wallpapers"
 
-  mkdir -p "${wallpapers_home}" || fail
-
-  cp /opt/stack/resources/wallpapers/* "${wallpapers_home}" || fail
+  mkdir -p "${wallpapers_home}" &&
+    cp /opt/stack/resources/wallpapers/* "${wallpapers_home}" ||
+    fail 'Failed to copy wallpapers'
+  
+  echo -e 'Wallpapers have been copied'
 
   config_home="/home/${user_name}/.config/stack"
 
@@ -754,20 +697,21 @@ install_theme () {
 
   local settings='{"wallpaper": {"name": "default.jpeg", "mode": "fill"}}'
 
-  echo "${settings}" > "${config_home}/desktop.json" || fail
+  echo "${settings}" > "${config_home}/desktop.json" ||
+   fail 'Failed to add wallpaper into the desktop settings file'
 
-  log 'Default wallpaper has been set'
+  echo -e 'Wallpaper has been set into the desktop settings file'
 
-  log 'Desktop theme has been setup'
+  echo -e 'Desktop theme has been setup'
 }
 
 # Installs extras system fonts.
 install_fonts () {
-  log '\nInstalling extra fonts...'
+  echo -e 'Installing extra fonts...'
 
   local fonts_home='/usr/share/fonts/extra-fonts'
 
-  sudo mkdir -p "${fonts_home}" || fail
+  sudo mkdir -p "${fonts_home}" || fail 'Failed to create fonts home directory'
 
   local fonts=(
     "FiraCode https://github.com/tonsky/FiraCode/releases/download/6.2/Fira_Code_v6.2.zip"
@@ -793,67 +737,56 @@ install_fonts () {
     local url=''
     url="$(echo "${font}" | cut -d ' ' -f 2)" || fail
 
-    OUTPUT="$(
-      sudo curl "${url}" -sSLo "${fonts_home}/${name}.zip" \
-        --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 2>&1 &&
-        sudo unzip -q "${fonts_home}/${name}.zip" -d "${fonts_home}/${name}" 2>&1 &&
-        sudo chmod -R 755 "${fonts_home}/${name}" &&
-        sudo rm -f "${fonts_home}/${name}.zip"
-    )" || fail
+    sudo curl "${url}" -sSLo "${fonts_home}/${name}.zip" \
+      --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 &&
+      sudo unzip -q "${fonts_home}/${name}.zip" -d "${fonts_home}/${name}" &&
+      sudo chmod -R 755 "${fonts_home}/${name}" &&
+      sudo rm -f "${fonts_home}/${name}.zip" ||
+      fail "Failed to install font ${name}"
 
-    log -t file "${OUTPUT}"
-
-    log "Font ${name} has been installed"
+    echo -e "Font ${name} has been installed"
   done
 
-  OUTPUT="$(
-    fc-cache -f 2>&1
-  )" || fail
+  echo -e 'Update the fonts cache...'
 
-  log -t file "${OUTPUT}"
+  fc-cache -f || fail 'Failed to update the fonts cache'
 
-  log "Fonts have been installed under ${fonts_home}"
+  echo -e 'Fonts cache has been updated'
 
-  log '\nInstalling some extra font glyphs...'
+  echo -e 'Installing some extra glyphs...'
 
-  OUTPUT="$(
-    sudo pacman -S --noconfirm \
-      ttf-font-awesome noto-fonts-emoji 2>&1
-  )" || fail
+  sudo pacman -S --noconfirm \
+    ttf-font-awesome noto-fonts-emoji || fail 'Failed to install extra glyphs'
 
-  log -t file "${OUTPUT}"
-
-  log 'Extra font glyphs have been installed'
+  echo -e 'Extra glyphs have been installed'
 }
 
 # Installs various system sound resources.
 install_sounds () {
-  log 'Installing extra system sounds...'
+  echo -e 'Installing extra system sounds...'
 
   local sounds_home='/usr/share/sounds/stack'
   
   sudo mkdir -p "${sounds_home}" &&
     sudo cp /opt/stack/resources/sounds/normal.wav "${sounds_home}" &&
-    sudo cp /opt/stack/resources/sounds/critical.wav "${sounds_home}" || fail
+    sudo cp /opt/stack/resources/sounds/critical.wav "${sounds_home}" ||
+    fail 'Failed to copy system sound files'
 
-  log 'System sounds have been installed'
+  echo -e 'System sounds have been installed'
 }
 
 # Installs various extra packages.
 install_extra_packages () {
-  log '\nInstalling some extra packages...'
+  echo -e 'Installing some extra packages...'
 
-  OUTPUT="$(
-    yay -S --noconfirm --removemake \
-      digimend-kernel-drivers-dkms-git xkblayout-state-git 2>&1
-  )" || fail
-
-  log -t file "${OUTPUT}"
+  yay -S --noconfirm --removemake \
+    digimend-kernel-drivers-dkms-git xkblayout-state-git ||
+    fail 'Failed to install extra packages'
   
-  log 'Extra packages have been installed'
+  echo -e 'Extra packages have been installed'
 }
 
-log '\nStarting the desktop installation process...'
+echo -e 'Installing the desktop...'
 
 if equals "$(id -u)" 0; then
   fail 'Script desktop.sh must be run as non root user'
