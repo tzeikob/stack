@@ -11,12 +11,18 @@ source /opt/stack/scripts/utils.sh
 run () {
   local file_name="${1}"
 
-  echo -e "Running the ${file_name}..."
+  # Do not log while running the askme screens
+  if equals "${file_name}" 'askme'; then
+    bash "/opt/stack/scripts/${file_name}.sh"
+    return 0
+  fi
+
+  echo -e "Running the script ${file_name}..."
 
   bash "/opt/stack/scripts/${file_name}.sh" \
     2>&1 >> /var/log/stack.log
   
-  echo "Script ${file_name} has been completed"
+  echo -e "The script ${file_name} has been completed"
 }
 
 # Changes to the shell session of the mounted installation disk
@@ -33,16 +39,16 @@ install () {
   local user_name='root'
 
   # Impersonate the sudoer user on desktop, stack and tools installation
-  if match "${1}" '^(desktop|stack|tools)$'; then
+  if match "${file_name}" '^(desktop|stack|tools)$'; then
     user_name="$(get_setting 'user_name')" || fail
   fi
 
-  echo -e "Installing the ${file_name}..."
+  echo -e "Running the script ${file_name}..."
 
   arch-chroot /mnt runuser -u "${user_name}" -- "${script_file}" \
     2>&1 >> /var/log/stack.log
-  
-  echo -e "The ${file_name} installation has been completed"
+
+  echo -e "The script ${file_name} has been completed"
 }
 
 # Cleans up the new system and revokes permissions.
@@ -90,7 +96,7 @@ EOF
 echo -e '\nWelcome to StackOS Installer, v1.0.0.alpha.'
 echo -e 'Base your development stack on archlinux!'
 
-confirm 'Do you want to proceed?' || fail
+confirm 'Do you want to proceed?'
 
 if is_not_given "${REPLY}" || is_no "${REPLY}"; then
   echo -e 'Sure, maybe next time!'
