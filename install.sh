@@ -14,7 +14,7 @@ run () {
   # Do not log while running the askme screens
   if equals "${file_name}" 'askme'; then
     bash "/opt/stack/scripts/${file_name}.sh"
-    return 0
+    return $?
   fi
 
   echo -e "Running the script ${file_name}..."

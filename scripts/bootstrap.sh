@@ -6,80 +6,89 @@ source /opt/stack/scripts/utils.sh
 
 # Synchronizes the system clock to the current time.
 sync_clock () {
-  echo -e 'Updating the system clock...'
+  log 'Updating the system clock...'
 
   local timezone=''
   timezone="$(get_setting 'timezone')" || fail
 
-  timedatectl set-timezone "${timezone}" || fail 'Unable to set timezone'
+  timedatectl set-timezone "${timezone}" 2>&1 ||
+    fail 'Unable to set timezone'
 
-  echo -e "Timezone has been set to ${timezone}"
+  log "Timezone has been set to ${timezone}"
 
-  timedatectl set-ntp true || fail 'Failed to enable NTP mode'
+  timedatectl set-ntp true 2>&1 ||
+    fail 'Failed to enable NTP mode'
 
-  echo -e 'NTP mode has been enabled'
+  log 'NTP mode has been enabled'
 
-  while timedatectl status | grep -q 'System clock synchronized: no'; do
+  while timedatectl status 2>&1 | grep -q 'System clock synchronized: no'; do
     sleep 1
   done
 
-  timedatectl status || fail 'Failed to show system time status'
+  timedatectl status 2>&1 ||
+    fail 'Failed to show system time status'
 
-  echo -e 'System clock has been updated'
+  log 'System clock has been updated'
 }
 
 # Sets the pacman mirrors list.
 set_mirrors () {
-  echo -e 'Setting up package databases mirrors list...'
+  log 'Setting up package databases mirrors list...'
 
   local mirrors=''
   mirrors="$(get_setting 'mirrors' | jq -cer 'join(",")')" || fail
 
-  reflector --country "${mirrors}" --age 48 --sort age --latest 40 \
-    --save /etc/pacman.d/mirrorlist || fail 'Failed to fetch package databases mirrors'
+  reflector --country "${mirrors}" \
+    --age 48 --sort age --latest 40 --save /etc/pacman.d/mirrorlist 2>&1 ||
+    fail 'Failed to fetch package databases mirrors'
 
-  echo -e "Package databases mirrors set to ${mirrors}"
+  log "Package databases mirrors set to ${mirrors}"
 }
 
 # Synchronizes package databases with the master.
 sync_package_databases () {
-  echo -e 'Starting to synchronize package databases...'
+  log 'Starting to synchronize package databases...'
 
   local lock_file='/var/lib/pacman/db.lck'
 
   if file_exists "${lock_file}"; then
-    echo -e 'Package databases seem to be locked'
+    log WARN 'Package databases seem to be locked'
 
-    rm -f "${lock_file}" || fail "Unable to remove the lock file ${lock_file}"
+    rm -f "${lock_file}" ||
+      fail "Unable to remove the lock file ${lock_file}"
 
-    echo -e "Lock file ${lock_file} has been removed"
+    log "Lock file ${lock_file} has been removed"
   fi
 
   local keyserver='hkp://keyserver.ubuntu.com'
 
-  echo "keyserver ${keyserver}" >> /etc/pacman.d/gnupg/gpg.conf || fail 'Failed to add the GPG keyserver'
+  echo "keyserver ${keyserver}" >> /etc/pacman.d/gnupg/gpg.conf ||
+    fail 'Failed to add the GPG keyserver'
 
-  echo -e "GPG keyserver has been set to ${keyserver}"
+  log "GPG keyserver has been set to ${keyserver}"
 
-  sed -i 's/^#ParallelDownloads/ParallelDownloads/' /etc/pacman.conf || fail 'Failed to enable parallel downloads'
+  sed -i 's/^#ParallelDownloads/ParallelDownloads/' /etc/pacman.conf ||
+    fail 'Failed to enable parallel downloads'
 
-  pacman -Syy || fail 'Failed to synchronize pacjage databases'
+  pacman -Syy 2>&1 ||
+    fail 'Failed to synchronize pacjage databases'
 
-  echo -e 'Package databases synchronized to the master'
+  log 'Package databases synchronized to the master'
 }
 
 # Updates the keyring package.
 update_keyring () {
-  echo -e 'Updating the archlinux keyring...'
+  log 'Updating the archlinux keyring...'
 
-  pacman -Sy --noconfirm archlinux-keyring || fail 'Failed to update keyring'
+  pacman -Sy --noconfirm archlinux-keyring 2>&1 ||
+    fail 'Failed to update keyring'
 
-  echo -e 'Keyring has been updated successfully'
+  log 'Keyring has been updated successfully'
 }
 
 # Installs the linux kernels.
 install_kernels () {
-  echo -e 'Installing the linux kernels...'
+  log 'Installing the linux kernels...'
 
   local kernels=''
   kernels="$(get_setting 'kernels' | jq -cer 'join(" ")')" || fail
@@ -98,10 +107,10 @@ install_kernels () {
     fail 'No linux kernel packages set for installation'
   fi
 
-  pacstrap /mnt base ${pckgs} linux-firmware archlinux-keyring \
-    reflector rsync sudo jq || fail 'Failed to pacstrap kernels and base packages'
+  pacstrap /mnt base ${pckgs} linux-firmware archlinux-keyring reflector rsync sudo jq 2>&1 ||
+    fail 'Failed to pacstrap kernels and base packages'
 
-  echo -e 'Linux kernels have been installed'
+  log 'Linux kernels have been installed'
 }
 
 # Grants the nopasswd permission to the wheel user group.
@@ -115,19 +124,20 @@ grant_permissions () {
     fail 'Failed to grant nopasswd permission'
   fi
 
-  echo -e 'Sudoer nopasswd permission has been granted'
+  log 'Sudoer nopasswd permission has been granted'
 }
 
 # Copies the installation to the new system.
 copy_installation_files () {
-  echo -e 'Copying installation files...'
+  log 'Copying installation files...'
 
-  cp -r /opt/stack /mnt/opt || fail 'Unable to copy installation file to /mnt'
+  cp -r /opt/stack /mnt/opt ||
+    fail 'Unable to copy installation file to /mnt'
 
-  echo -e 'Installation files copied to /mnt'
+  log 'Installation files copied to /mnt'
 }
 
-echo -e 'Starting the bootstrap process...'
+log 'Starting the bootstrap process...'
 
 sync_clock &&
   set_mirrors &&

@@ -6,76 +6,81 @@ source /opt/stack/scripts/utils.sh
 
 # Installs the postman client.
 install_postman () {
-  echo -e 'Installing the postman client...'
+  log 'Installing the postman client...'
 
-  yay -S --noconfirm --removemake postman-bin || fail 'Failed to install postman'
+  yay -S --noconfirm --removemake postman-bin 2>&1 ||
+    fail 'Failed to install postman'
 
-  echo -e 'Postman client has been installed'
+  log 'Postman client has been installed'
 }
 
 # Installs the mongodb compass client.
 install_compass () {
-  echo -e 'Installing the mongodb compass client...'
+  log 'Installing the mongodb compass client...'
 
-  yay -S --noconfirm --removemake mongodb-compass || fail 'Failed to install mongo compass'
+  yay -S --noconfirm --removemake mongodb-compass 2>&1 ||
+    fail 'Failed to install mongo compass'
 
-  echo -e 'Mongodb compass client has been installed'
+  log 'Mongodb compass client has been installed'
 }
 
 # Installs the free version of the studio3t client.
 install_studio3t () {
-  echo -e 'Installing the studio3t client...'
+  log 'Installing the studio3t client...'
 
-  yay -S --noconfirm --removemake studio-3t || fail 'Failed to install studio-3t'
+  yay -S --noconfirm --removemake studio-3t 2>&1 ||
+    fail 'Failed to install studio-3t'
 
-  echo -e 'Studio3t client has been installed'
+  log 'Studio3t client has been installed'
 }
 
 # Installs the free version of the dbeaver client.
 install_dbeaver () {
-  echo -e 'Installing the dbeaver client...'
+  log 'Installing the dbeaver client...'
 
   # Select the jre provider instead of jdk
-  printf '%s\n' 2 y | sudo pacman -S dbeaver ||
+  printf '%s\n' 2 y | sudo pacman -S dbeaver 2>&1 ||
     fail 'Failed to install dbeaver client'
 
-  echo -e 'Dbeaver client has been installed'
+  log 'Dbeaver client has been installed'
 }
 
 # Installs the discord.
 install_discord () {
-  echo -e 'Installing the discord...'
+  log 'Installing the discord...'
 
-  sudo pacman -S --noconfirm discord || fail 'Failed to install discord'
+  sudo pacman -S --noconfirm discord 2>&1 ||
+    fail 'Failed to install discord'
 
-  echo -e 'Discord has been installed'
+  log 'Discord has been installed'
 }
 
 # Installs the slack.
 install_slack () {
-  echo -e 'Installing the slack...'
+  log 'Installing the slack...'
 
-  yay -S --noconfirm --removemake slack-desktop ||
+  yay -S --noconfirm --removemake slack-desktop 2>&1 ||
     fail 'Failed to install slack'
 
-  echo -e 'Slack has been installed'
+  log 'Slack has been installed'
 }
 
 # Installs the skype.
 install_skype () {
-  echo -e 'Installing the skype...'
+  log 'Installing the skype...'
 
-  yay -S --noconfirm --removemake skypeforlinux-stable-bin ||
+  yay -S --noconfirm --removemake skypeforlinux-stable-bin 2>&1 ||
     fail 'Failed to install skype'
 
-  echo -e 'Skype has been installed'
+  log 'Skype has been installed'
 }
 
 # Installs the irssi client.
 install_irssi () {
-  echo -e 'Installing the irssi client...'
+  log 'Installing the irssi client...'
 
-  sudo pacman -S --noconfirm irssi || fail 'Failed to install irssi client'
+  sudo pacman -S --noconfirm irssi 2>&1 ||
+    fail 'Failed to install irssi client'
 
   local desktop_home='/usr/local/share/applications'
 
@@ -95,24 +100,23 @@ install_irssi () {
     'Keywords=Chat;IRC;Console' | sudo tee "${desktop_file}" > /dev/null ||
     fail 'Failed to create desktop file'
   
-  echo -e 'Desktop file has been created'
-
-  echo -e 'Irssi client has been installed'
+  log 'Desktop file has been created'
+  log 'Irssi client has been installed'
 }
 
 # Installs the filezilla client.
 install_filezilla () {
-  echo -e 'Installing the filezilla client...'
+  log 'Installing the filezilla client...'
 
-  sudo pacman -S --noconfirm filezilla ||
+  sudo pacman -S --noconfirm filezilla 2>&1 ||
     fail 'Failed to install filezilla'
 
-  echo -e 'Filezilla client has been installed'
+  log 'Filezilla client has been installed'
 }
 
 # Installs the virtual box.
 install_virtual_box () {
-  echo -e 'Installing the virtual box...'
+  log 'Installing the virtual box...'
 
   local kernels=''
   kernels="$(get_setting 'kernels' | jq -cer 'join(" ")')" || fail
@@ -127,41 +131,40 @@ install_virtual_box () {
     pckgs+=' virtualbox-host-dkms'
   fi
 
-  sudo pacman -S --noconfirm ${pckgs} || fail 'Failed to install virtual box packages'
+  sudo pacman -S --noconfirm ${pckgs} 2>&1 ||
+    fail 'Failed to install virtual box packages'
 
   local user_name=''
   user_name="$(get_setting 'user_name')" || fail
 
-  sudo usermod -aG vboxusers "${user_name}" ||
+  sudo usermod -aG vboxusers "${user_name}" 2>&1 ||
     fail 'Failed to add user to vboxusers group'
 
-  echo -e 'User added to the vboxusers user group'
-
-  echo -e 'Virtual box has been installed'
+  log 'User added to the vboxusers user group'
+  log 'Virtual box has been installed'
 }
 
 # Installs the vmware.
 install_vmware () {
-  echo -e 'Installing the vmware...'
+  log 'Installing the vmware...'
 
-  sudo pacman -S --noconfirm fuse2 gtkmm pcsclite libcanberra &&
-    yay -S --noconfirm --needed --removemake vmware-workstation ||
+  sudo pacman -S --noconfirm fuse2 gtkmm pcsclite libcanberra 2>&1 &&
+    yay -S --noconfirm --needed --removemake vmware-workstation 2>&1 ||
     fail 'Failed to install vmware packages'
 
-  sudo systemctl enable vmware-networks.service ||
+  sudo systemctl enable vmware-networks.service 2>&1 ||
     fail 'Failed to enable vmware-networks service'
   
-  echo -e 'Service vmware-networks has been enabled'
+  log 'Service vmware-networks has been enabled'
 
-  sudo systemctl enable vmware-usbarbitrator.service ||
+  sudo systemctl enable vmware-usbarbitrator.service 2>&1 ||
     fail 'Failed to enabled vmware-usbarbitrator service'
   
-  echo -e 'Service vmware-usbarbitrator has been enabled'
-
-  echo -e 'Vmware has been installed'
+  log 'Service vmware-usbarbitrator has been enabled'
+  log 'Vmware has been installed'
 }
 
-echo -e 'Installing the some extra tools...'
+log 'Installing some extra tools...'
 
 if equals "$(id -u)" 0; then
   fail 'Script tools.sh must be run as non root user'

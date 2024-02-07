@@ -8,6 +8,28 @@ KVS=$'▒'
 
 SETTINGS_FILE='/opt/stack/.settings'
 
+# Prints the given log message prefixed with the given log level.
+# Arguments:
+#  level:   INFO, WARN, ERROR
+#  message: any text message
+# Outputs:
+#  Prints the message in <level> <message> form.
+log () {
+  local level message
+
+  if [[ $# -eq 2 ]]; then
+    level="${1}"
+    message="${2}"
+  elif [[ $# -eq 1 ]]; then
+    level='INFO'
+    message="${1}"
+  else
+    return
+  fi
+
+  echo -e "${level} ${message}"
+}
+
 # Prints the optionally given message and exits
 # the process immediately with status code 1.
 # Arguments:
@@ -17,7 +39,7 @@ SETTINGS_FILE='/opt/stack/.settings'
 fail () {
   local message="${1:-"A fatal error has been occurred"}"
 
-  echo -e "${message}"
+  log ERROR "${message}"
 
   exit 1
 }

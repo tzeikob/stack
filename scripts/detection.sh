@@ -14,28 +14,32 @@ is_uefi () {
 
   save_setting 'uefi_mode' "${uefi_mode}"
 
-  echo -e "UEFI mode is set to ${uefi_mode}"
+  log "UEFI mode is set to ${uefi_mode}"
 }
 
 # Resolves if the the system is a virtual machine.
 is_virtual_machine () {
-  local vm_vendor="$(systemd-detect-virt)"
+  local vm_vendor="$(
+    systemd-detect-virt 2>&1
+  )"
 
   if is_not_empty "${vm_vendor}" && not_equals "${vm_vendor}" 'none'; then
     save_setting 'vm' 'yes'
     save_setting 'vm_vendor' "${vm_vendor}"
 
-    echo -e 'Virtual machine is set to yes'
-    echo -e "Virtual machine vendor is set to ${vm_vendor}"
+    log 'Virtual machine is set to yes'
+    log "Virtual machine vendor is set to ${vm_vendor}"
   else
     save_setting 'vm' 'no'
   fi
 }
 
-# Resolves the vendor of the CPU installed CPU on the system.
+# Resolves the vendor of the CPU installed on the system.
 resolve_cpu () {
   local cpu_data=''
-  cpu_data="$(lscpu)" || fail 'Unable to read CPU data'
+  cpu_data="$(
+    lscpu 2>&1
+  )" || fail 'Unable to read CPU data'
 
   local cpu_vendor='generic'
 
@@ -47,13 +51,15 @@ resolve_cpu () {
 
   save_setting 'cpu_vendor' "${cpu_vendor}"
 
-  echo -e "CPU vendor is set to ${cpu_vendor}"
+  log "CPU vendor is set to ${cpu_vendor}"
 }
 
 # Resolves the vendor of the GPU installed on the system.
 resolve_gpu () {
   local gpu_data=''
-  gpu_data="$(lspci)" || fail 'Unable to read GPU data'
+  gpu_data="$(
+    lspci 2>&1
+  )" || fail 'Unable to read GPU data'
 
   local gpu_vendor='generic'
 
@@ -69,17 +75,17 @@ resolve_gpu () {
 
   save_setting 'gpu_vendor' "${gpu_vendor}"
 
-  echo -e "GPU vendor is set to ${gpu_vendor}"
+  log "GPU vendor is set to ${gpu_vendor}"
 }
 
 # Resolves if the installation disk supports TRIM.
 is_disk_trimmable () {
   local disk=''
-  disk="$(get_setting 'disk')"
+  disk="$(get_setting 'disk')" || fail
 
   local discards=''
   discards="$(
-    lsblk -dn --discard -o DISC-GRAN,DISC-MAX "${disk}"
+    lsblk -dn --discard -o DISC-GRAN,DISC-MAX "${disk}" 2>&1
   )" || fail 'Unable to list disk block devices'
 
   local trim_disk='no'
@@ -90,7 +96,7 @@ is_disk_trimmable () {
 
   save_setting 'trim_disk' "${trim_disk}"
 
-  echo -e "Disk trim mode is set to ${trim_disk}"
+  log "Disk trim mode is set to ${trim_disk}"
 }
 
 # Resolves the synaptics touch pad.
@@ -100,13 +106,13 @@ resolve_synaptics () {
   if grep -Rq "${query}" /proc/bus/input/devices; then
     save_setting 'synaptics' 'yes'
 
-    echo -e "Synaptics touch pad set to yes"
+    log 'Synaptics touch pad set to yes'
   else
     save_setting 'synaptics' 'no'
   fi
 }
 
-echo -e "Resolving system hardware data..."
+log 'Resolving system hardware data...'
 
 is_uefi &&
   is_virtual_machine &&
