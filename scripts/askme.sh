@@ -32,13 +32,13 @@ select_disk () {
     echo "${disks}" | jq -cer "${query}"
   )" || fail
 
-  pick_one 'Select the installation disk:' "${disks}" 'vertical' || fail
+  pick_one 'Select the installation disk:' "${disks}" 'vertical'
   is_not_given "${REPLY}" && fail 'Installation has been canceled'
 
   local disk="${REPLY}"
 
   echo -e "\nCAUTION, all data in \"${disk}\" will be lost!"
-  confirm 'Do you want to proceed with this disk?' || fail
+  confirm 'Do you want to proceed with this disk?'
 
   if is_not_given "${REPLY}" || is_no "${REPLY}"; then
     fail 'Installation has been canceled'
@@ -51,7 +51,7 @@ select_disk () {
 
 # Asks the user to enable or not the swap space.
 opt_in_swap_space () {
-  confirm 'Do you want to enable swap space?' || fail
+  confirm 'Do you want to enable swap space?'
   is_not_given "${REPLY}" && fail 'Installation has been canceled'
 
   if is_no "${REPLY}"; then
@@ -65,11 +65,11 @@ opt_in_swap_space () {
 
   echo -e 'Swap is set to yes'
 
-  ask 'Enter the size of the swap space in GBs:' || fail
+  ask 'Enter the size of the swap space in GBs:'
 
   while is_not_integer "${REPLY}" '[1,]'; do
     echo -e ' Swap space size should be a positive integer'
-    ask ' Please enter a valid swap space size in GBs:' || fail
+    ask ' Please enter a valid swap space size in GBs:'
   done
 
   local swap_size="${REPLY}"
@@ -83,7 +83,7 @@ opt_in_swap_space () {
   swap_types+='{"key": "partition", "value":"Partition"}'
   swap_types="[${swap_types}]"
 
-  pick_one 'Which type of swap to setup:' "${swap_types}" 'horizontal' || fail
+  pick_one 'Which type of swap to setup:' "${swap_types}" 'horizontal'
   is_not_given "${REPLY}" && fail 'Installation has been canceled'
 
   local swap_type="${REPLY}"
@@ -109,7 +109,7 @@ select_mirrors () {
   # Remove the extra comma from the last element
   mirrors="[${mirrors:+${mirrors::-1}}]"
 
-  pick_many 'Select package databases mirrors:' "${mirrors}" 'vertical' || fail
+  pick_many 'Select package databases mirrors:' "${mirrors}" 'vertical'
   is_not_given "${REPLY}" && fail 'Installation has been canceled'
 
   mirrors="${REPLY}"
@@ -131,7 +131,7 @@ select_timezone () {
   # Remove the extra comma after the last array element
   timezones="[${timezones:+${timezones::-1}}]"
 
-  pick_one 'Select the system timezone:' "${timezones}" 'vertical' || fail
+  pick_one 'Select the system timezone:' "${timezones}" 'vertical'
   is_not_given "${REPLY}" && fail 'Installation has been canceled'
 
   local timezone="${REPLY}"
@@ -153,7 +153,7 @@ select_locales () {
   # Removes the last comma delimiter from the last element
   locales="[${locales:+${locales::-1}}]"
 
-  pick_many 'Select system locales by order:' "${locales}" 'vertical' || fail
+  pick_many 'Select system locales by order:' "${locales}" 'vertical'
   is_not_given "${REPLY}" && fail 'Installation has been canceled'
 
   locales="${REPLY}"
@@ -179,7 +179,7 @@ select_keyboard_model () {
   # Remove the extra comma delimiter from the last element
   models="[${models:+${models::-1}}]"
 
-  pick_one 'Select a keyboard model:' "${models}" 'vertical' || fail
+  pick_one 'Select a keyboard model:' "${models}" 'vertical'
   is_not_given "${REPLY}" && fail 'Installation has been canceled'
 
   local keyboard_model="${REPLY}"
@@ -201,7 +201,7 @@ select_keyboard_map () {
   # Remove extra comma delimiter from the last element
   maps="[${maps:+${maps::-1}}]"
 
-  pick_one 'Select a keyboard map:' "${maps}" 'vertical' || fail
+  pick_one 'Select a keyboard map:' "${maps}" 'vertical'
   is_not_given "${REPLY}" && fail 'Installation has been canceled'
 
   local keyboard_map="${REPLY}"
@@ -227,7 +227,7 @@ select_keyboard_layouts () {
   # Remove the extra comma delimiter from last element
   layouts="[${layouts:+${layouts::-1}}]"
 
-  pick_many 'Select keyboard layouts:' "${layouts}" 'vertical' || fail
+  pick_many 'Select keyboard layouts:' "${layouts}" 'vertical'
   is_not_given "${REPLY}" && fail 'Installation has been canceled'
 
   keyboard_layouts="${REPLY}"
@@ -253,7 +253,7 @@ select_keyboard_options () {
   # Remove extra comma delimiter from last element
   options="[${options:+${options::-1}}]"
 
-  pick_one 'Select the keyboard options value:' "${options}" 'vertical' || fail
+  pick_one 'Select the keyboard options value:' "${options}" 'vertical'
   is_not_given "${REPLY}" && fail 'Installation has been canceled'
 
   keyboard_options="${REPLY}"
@@ -265,11 +265,11 @@ select_keyboard_options () {
 
 # Asks the user to set the name of the host.
 enter_host_name () {
-  ask 'Enter the name of the host:' || fail
+  ask 'Enter the name of the host:'
 
   while not_match "${REPLY}" '^[a-z][a-z0-9_-]+$'; do
     echo -e ' Host name should start with a latin char'
-    ask ' Please enter a valid host name:' || fail
+    ask ' Please enter a valid host name:'
   done
 
   local host_name="${REPLY}"
@@ -281,11 +281,11 @@ enter_host_name () {
 
 # Asks the user to set the name of the sudoer user.
 enter_user_name () {
-  ask 'Enter the name of the user:' || fail
+  ask 'Enter the name of the user:'
 
   while not_match "${REPLY}" '^[a-z][a-z0-9_-]+$'; do
     echo -e ' Host name should start with a latin char'
-    ask ' Please enter a valid user name:' || fail
+    ask ' Please enter a valid user name:'
   done
 
   local user_name="${REPLY}"
@@ -297,19 +297,19 @@ enter_user_name () {
 
 # Asks the user to set the password of the sudoer user.
 enter_user_password () {
-  ask_secret 'Enter the user password:' || fail
+  ask_secret 'Enter the user password:'
 
   while not_match "${REPLY}" '^[a-zA-Z0-9@&!#%\$_-]{4,}$'; do
     echo -e ' Password must be at least 4 chars of a-z A-Z 0-9 @&!#%\$_-'
-    ask_secret ' Please enter a stronger user password:' || fail
+    ask_secret ' Please enter a stronger user password:'
   done
 
   local password="${REPLY}"
 
-  ask_secret 'Re-type the given password:' || fail
+  ask_secret 'Re-type the given password:'
 
   while not_equals "${REPLY}" "${password}"; do
-    ask_secret ' Not matched, please re-type the given password:' || fail
+    ask_secret ' Not matched, please re-type the given password:'
   done
 
   save_setting 'user_password' "${password}"
@@ -319,19 +319,19 @@ enter_user_password () {
 
 # Asks the user to set the password of the root user.
 enter_root_password () {
-  ask_secret 'Enter the root password:' || fail
+  ask_secret 'Enter the root password:'
 
   while not_match "${REPLY}" '^[a-zA-Z0-9@&!#%\$_-]{4,}$'; do
     echo -e ' Password must be at least 4 chars of a-z A-Z 0-9 @&!#%\$_-'
-    ask_secret ' Please enter a stronger root password:' || fail
+    ask_secret ' Please enter a stronger root password:'
   done
 
   local password="${REPLY}"
 
-  ask_secret 'Re-type the given password:' || fail
+  ask_secret 'Re-type the given password:'
 
   while not_equals "${REPLY}" "${password}"; do
-    ask_secret ' Not matched, please re-type the given password:' || fail
+    ask_secret ' Not matched, please re-type the given password:'
   done
 
   save_setting 'root_password' "${password}"
@@ -346,7 +346,7 @@ select_kernels () {
   kernels+='{"key": "lts", "value": "LTS"}'
   kernels="[${kernels}]"
 
-  pick_many 'Select which linux kernels to install:' "${kernels}" 'horizontal' || fail
+  pick_many 'Select which linux kernels to install:' "${kernels}" 'horizontal'
   is_not_given "${REPLY}" && fail 'Installation has been canceled'
 
   kernels="${REPLY}"
@@ -388,7 +388,7 @@ while true; do
     select_kernels &&
     report
 
-  confirm 'Do you want to go with these settings?' || fail
+  confirm 'Do you want to go with these settings?'
   is_not_given "${REPLY}" && fail 'Installation has been canceled'
 
   if is_yes "${REPLY}"; then
@@ -401,7 +401,7 @@ done
 echo -e '\nCAUTION, THIS IS THE LAST WARNING!'
 echo -e 'ALL data in the disk will be LOST FOREVER!'
 
-confirm 'Do you want to proceed?' || fail
+confirm 'Do you want to proceed?'
 
 if is_not_given "${REPLY}" || is_no "${REPLY}"; then
   fail 'Installation has been canceled'
