@@ -68,8 +68,7 @@ opt_in_swap_space () {
   ask 'Enter the size of the swap space in GBs:'
 
   while is_not_integer "${REPLY}" '[1,]'; do
-    echo -e ' Swap space size should be a positive integer'
-    ask ' Please enter a valid swap space size in GBs:'
+    ask 'Please enter a valid swap space size in GBs:'
   done
 
   local swap_size="${REPLY}"
@@ -268,8 +267,7 @@ enter_host_name () {
   ask 'Enter the name of the host:'
 
   while not_match "${REPLY}" '^[a-z][a-z0-9_-]+$'; do
-    echo -e ' Host name should start with a latin char'
-    ask ' Please enter a valid host name:'
+    ask 'Please enter a valid host name:'
   done
 
   local host_name="${REPLY}"
@@ -284,8 +282,7 @@ enter_user_name () {
   ask 'Enter the name of the user:'
 
   while not_match "${REPLY}" '^[a-z][a-z0-9_-]+$'; do
-    echo -e ' Host name should start with a latin char'
-    ask ' Please enter a valid user name:'
+    ask 'Please enter a valid user name:'
   done
 
   local user_name="${REPLY}"
@@ -300,8 +297,7 @@ enter_user_password () {
   ask_secret 'Enter the user password:'
 
   while not_match "${REPLY}" '^[a-zA-Z0-9@&!#%\$_-]{4,}$'; do
-    echo -e ' Password must be at least 4 chars of a-z A-Z 0-9 @&!#%\$_-'
-    ask_secret ' Please enter a stronger user password:'
+    ask_secret 'Please enter a stronger user password:'
   done
 
   local password="${REPLY}"
@@ -309,7 +305,7 @@ enter_user_password () {
   ask_secret 'Re-type the given password:'
 
   while not_equals "${REPLY}" "${password}"; do
-    ask_secret ' Not matched, please re-type the given password:'
+    ask_secret 'Not matched, please re-type the given password:'
   done
 
   save_setting 'user_password' "${password}"
@@ -322,8 +318,7 @@ enter_root_password () {
   ask_secret 'Enter the root password:'
 
   while not_match "${REPLY}" '^[a-zA-Z0-9@&!#%\$_-]{4,}$'; do
-    echo -e ' Password must be at least 4 chars of a-z A-Z 0-9 @&!#%\$_-'
-    ask_secret ' Please enter a stronger root password:'
+    ask_secret 'Please enter a stronger root password:'
   done
 
   local password="${REPLY}"
@@ -331,7 +326,7 @@ enter_root_password () {
   ask_secret 'Re-type the given password:'
 
   while not_equals "${REPLY}" "${password}"; do
-    ask_secret ' Not matched, please re-type the given password:'
+    ask_secret 'Not matched, please re-type the given password:'
   done
 
   save_setting 'root_password' "${password}"
