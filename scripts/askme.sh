@@ -4,59 +4,6 @@ set -Eeo pipefail
 
 source /opt/stack/scripts/utils.sh
 
-# Resolves if UEFI mode is supported by the system.
-is_uefi () {
-  local uefi_mode='no'
-
-  if directory_exists '/sys/firmware/efi/efivars'; then
-    uefi_mode='yes'
-  fi
-
-  save_setting 'uefi_mode' "${uefi_mode}"
-
-  echo -e "UEFI mode is set to ${uefi_mode}"
-}
-
-# Resolves the vendor of the CPU installed CPU on the system.
-resolve_cpu () {
-  local cpu_data=''
-  cpu_data="$(lscpu)" || fail 'Unable to read CPU data'
-
-  local cpu_vendor='generic'
-
-  if grep -Eq 'AuthenticAMD' <<< "${cpu_data}"; then
-    cpu_vendor='amd'
-  elif grep -Eq 'GenuineIntel' <<< "${cpu_data}"; then
-    cpu_vendor='intel'
-  fi
-
-  save_setting 'cpu_vendor' "${cpu_vendor}"
-
-  echo -e "CPU vendor is set to ${cpu_vendor}"
-}
-
-# Resolves the vendor of the GPU installed on the system.
-resolve_gpu () {
-  local gpu_data=''
-  gpu_data="$(lspci)" || fail 'Unable to read GPU data'
-
-  local gpu_vendor='generic'
-
-  if grep -Eq 'NVIDIA|GeForce' <<< ${gpu_data}; then
-    gpu_vendor='nvidia'
-  elif grep -Eq 'Radeon|AMD' <<< ${gpu_data}; then
-    gpu_vendor='amd'
-  elif grep -Eq 'Integrated Graphics Controller' <<< ${gpu_data}; then
-    gpu_vendor='intel'
-  elif grep -Eq 'Intel Corporation UHD' <<< ${gpu_data}; then
-    gpu_vendor='intel'
-  fi
-
-  save_setting 'gpu_vendor' "${gpu_vendor}"
-
-  echo -e "GPU vendor is set to ${gpu_vendor}"
-}
-
 # Asks the user to install or not the synaptics touch drivers.
 opt_in_synaptics () {
   confirm 'Do you want to install synaptics touch pad drivers?' || fail
@@ -71,29 +18,6 @@ opt_in_synaptics () {
   save_setting 'synaptics' "${synaptics}"
 
   echo -e "Synaptics touch pad drivers are set to ${synaptics}"
-}
-
-# Resolves information and option of the system's hardware.
-resolve_hardware () {
-  echo -e 'Resolving system hardware...'
-
-  is_uefi || fail 'Unable to resolve UEFI mode'
-
-  local vm_vendor="$(systemd-detect-virt)"
-
-  if is_not_empty "${vm_vendor}" && not_equals "${vm_vendor}" 'none'; then
-    save_setting 'vm' 'yes'
-    save_setting 'vm_vendor' "${vm_vendor}"
-
-    echo -e 'Virtual machine is set to yes'
-    echo -e "Virtual machine vendor is set to ${vm_vendor}"
-  else
-    save_setting 'vm' 'no'
-
-    resolve_cpu && resolve_gpu && opt_in_synaptics || fail 'Failed to resolve hardware data'
-  fi
-
-  echo -e 'Hardware has been resolved successfully'
 }
 
 # Asks the user to select the installation disk.
@@ -139,39 +63,6 @@ select_disk () {
   save_setting 'disk' "${disk}"
 
   echo -e "Installation disk set to block device ${disk}"
-
-  confirm 'Is this disk an SSD drive?' || fail
-  is_not_given "${REPLY}" && fail 'Installation has been canceled'
-
-  local is_ssd='no'
-  
-  if is_yes "${REPLY}"; then
-    is_ssd='yes'
-  fi
-
-  save_setting 'is_ssd' "${is_ssd}"
-
-  echo -e "Disk ssd type is set to ${is_ssd}"
-
-  local discards=''
-  discards="$(
-    lsblk -dn --discard -o DISC-GRAN,DISC-MAX "${disk}"
-  )" || fail
-
-  local trim_disk='no'
-
-  if match "${discards}" ' *[1-9]+[TGMB] *[1-9]+[TGMB] *'; then
-    confirm 'Do you want to enable trim on this disk?' || fail
-    is_not_given "${REPLY}" && fail 'Installation has been canceled'
-
-    if is_yes "${REPLY}"; then
-      trim_disk='yes'
-    fi
-  fi
-
-  save_setting 'trim_disk' "${trim_disk}"
-
-  echo -e "Disk trim mode is set to ${trim_disk}"
 }
 
 # Asks the user to enable or not the swap space.
@@ -497,7 +388,7 @@ echo -e "Let's set some installation properties..."
 
 while true; do
   init_settings &&
-    resolve_hardware &&
+    opt_in_synaptics &&
     select_disk &&
     opt_in_swap_space &&
     select_mirrors &&

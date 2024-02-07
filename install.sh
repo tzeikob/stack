@@ -104,6 +104,7 @@ if is_not_given "${REPLY}" || is_no "${REPLY}"; then
 fi
 
 run askme &&
+  run detection &&
   run diskpart &&
   run bootstrap &&
   install system &&
