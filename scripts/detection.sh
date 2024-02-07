@@ -93,12 +93,26 @@ is_disk_trimmable () {
   echo -e "Disk trim mode is set to ${trim_disk}"
 }
 
+# Resolves the synaptics touch pad.
+resolve_synaptics () {
+  local query='.*SynPS/2.*Synaptics.*TouchPad.*'
+
+  if grep -Rq "${query}" /proc/bus/input/devices; then
+    save_setting 'synaptics' 'yes'
+
+    echo -e "Synaptics touch pad set to yes"
+  else
+    save_setting 'synaptics' 'no'
+  fi
+}
+
 echo -e "Resolving system hardware data..."
 
 is_uefi &&
   is_virtual_machine &&
   resolve_cpu &&
   resolve_gpu &&
-  is_disk_trimmable
+  is_disk_trimmable &&
+  resolve_synaptics
 
 sleep 3

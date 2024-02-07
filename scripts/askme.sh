@@ -4,22 +4,6 @@ set -Eeo pipefail
 
 source /opt/stack/scripts/utils.sh
 
-# Asks the user to install or not the synaptics touch drivers.
-opt_in_synaptics () {
-  confirm 'Do you want to install synaptics touch pad drivers?' || fail
-  is_not_given "${REPLY}" && fail 'Installation has been canceled'
-
-  local synaptics='no'
-  
-  if is_yes "${REPLY}"; then
-    synaptics='yes'
-  fi
-
-  save_setting 'synaptics' "${synaptics}"
-
-  echo -e "Synaptics touch pad drivers are set to ${synaptics}"
-}
-
 # Asks the user to select the installation disk.
 select_disk () {
   local fields='name,path,type,size,rm,ro,tran,hotplug,state,'
@@ -388,7 +372,6 @@ echo -e "Let's set some installation properties..."
 
 while true; do
   init_settings &&
-    opt_in_synaptics &&
     select_disk &&
     opt_in_swap_space &&
     select_mirrors &&
