@@ -51,31 +51,6 @@ install () {
   echo -e "The script ${file_name} has been completed"
 }
 
-# Cleans up the new system and revokes permissions.
-clean () {
-  echo -e 'Cleaning up the new system...'
-
-  rm -rf /mnt/opt/stack || fail 'Unable to remove installation files'
-
-  echo -e 'Installation files have been removed'
-
-  # Revoke nopasswd permission
-  local rule='%wheel ALL=(ALL:ALL) NOPASSWD: ALL'
-
-  sed -i "s/^\(${rule}\)/# \1/" /mnt/etc/sudoers ||
-    fail 'Failed to revoke nopasswd permission'
-
-  if ! grep -q "^${rule}" /mnt/etc/sudoers; then
-    fail 'Failed to revoke nopasswd permission'
-  fi
-
-  echo -e 'Sudoer nopasswd permission has been revoked'
-
-  cp /var/log/stack.log /mnt/var/log/stack.log
-
-  echo -e 'Log file copied to /var/log/stack.log'
-}
-
 # Restarts the system.
 restart () {
   echo -e 'Rebooting the system in 15 secs...'
@@ -111,5 +86,5 @@ run askme &&
   install desktop &&
   install stack &&
   install tools &&
-  clean &&
+  run cleaner &&
   restart
