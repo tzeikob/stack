@@ -80,7 +80,7 @@ sync_package_databases () {
 update_keyring () {
   log 'Updating the archlinux keyring...'
 
-  pacman -Sy --noconfirm archlinux-keyring 2>&1 ||
+  pacman -Sy --needed --noconfirm archlinux-keyring 2>&1 ||
     fail 'Failed to update keyring'
 
   log 'Keyring has been updated successfully'

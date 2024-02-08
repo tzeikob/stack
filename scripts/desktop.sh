@@ -8,7 +8,7 @@ source /opt/stack/scripts/utils.sh
 install_compositor () {
   log 'Installing the desktop compositor...'
 
-  sudo pacman -S --noconfirm picom 2>&1 ||
+  sudo pacman -S --needed --noconfirm picom 2>&1 ||
     fail 'Failed to install picom'
 
   local user_name=''
@@ -28,7 +28,7 @@ install_compositor () {
 install_window_manager () {
   log 'Installing the window manager...'
 
-  sudo pacman -S --noconfirm bspwm 2>&1 ||
+  sudo pacman -S --needed --noconfirm bspwm 2>&1 ||
     fail 'Failed to install bspwm'
 
   local user_name=''
@@ -57,7 +57,7 @@ install_window_manager () {
 install_status_bars () {
   log 'Installing the desktop status bars...'
 
-  sudo pacman -S --noconfirm polybar 2>&1 ||
+  sudo pacman -S --needed --noconfirm polybar 2>&1 ||
     fail 'Failed to install polybar'
 
   local user_name=''
@@ -84,7 +84,7 @@ install_status_bars () {
 install_settings_manager () {
   log 'Installing settings manager tools...'
 
-  yay -S --noconfirm --removemake smenu 2>&1 ||
+  yay -S --needed --noconfirm --removemake smenu 2>&1 ||
     fail 'Failed to install smenu'
 
   local tools_home='/opt/tools'
@@ -120,7 +120,7 @@ install_settings_manager () {
 install_launchers () {
   log 'Installing the desktop launchers...'
 
-  sudo pacman -S --noconfirm rofi 2>&1 ||
+  sudo pacman -S --needed --noconfirm rofi 2>&1 ||
     fail 'Failed to install rofi'
 
   local user_name=''
@@ -142,7 +142,7 @@ install_launchers () {
 install_keyboard_bindings () {
   log 'Setting up the keyboard key bindings...'
 
-  sudo pacman -S --noconfirm sxhkd 2>&1 ||
+  sudo pacman -S --needed --noconfirm sxhkd 2>&1 ||
     fail 'Failed to install sxhkd'
 
   local user_name=''
@@ -162,8 +162,8 @@ install_keyboard_bindings () {
 install_login_screen () {
   log 'Installing the login screen...'
 
-  sudo pacman -S --noconfirm figlet 2>&1 &&
-    yay -S --noconfirm --removemake figlet-fonts figlet-fonts-extra 2>&1 ||
+  sudo pacman -S --needed --noconfirm figlet 2>&1 &&
+    yay -S --needed --noconfirm --removemake figlet-fonts figlet-fonts-extra 2>&1 ||
     fail 'Failed to install figlet packages'
   
   log 'Figlet packages have been installed'
@@ -196,8 +196,8 @@ install_login_screen () {
 install_screen_locker () {
   log 'Installing the screen locker...'
 
-  sudo pacman -S --noconfirm xautolock python-cairo python-pam 2>&1 &&
-    yay -S --noconfirm --removemake python-screeninfo 2>&1 ||
+  sudo pacman -S --needed --noconfirm xautolock python-cairo python-pam 2>&1 &&
+    yay -S --needed --noconfirm --removemake python-screeninfo 2>&1 ||
     fail 'Failed to install the locker dependencies'
 
   log 'Locker dependencies have been installed'
@@ -244,7 +244,7 @@ install_screen_locker () {
 install_notification_server () {
   log 'Installing notifications server...'
 
-  sudo pacman -S --noconfirm dunst 2>&1 ||
+  sudo pacman -S --needed --noconfirm dunst 2>&1 ||
     fail 'Failed to install dunst'
 
   log 'Dunst has been installed'
@@ -266,7 +266,7 @@ install_notification_server () {
 install_file_manager () {
   log 'Installing the file manager...'
 
-  sudo pacman -S --noconfirm nnn fzf 2>&1 ||
+  sudo pacman -S --needed --noconfirm nnn fzf 2>&1 ||
     fail 'Failed to install nnn'
 
   log 'Nnn has been installed'
@@ -324,7 +324,7 @@ install_file_manager () {
 install_trash_manager () {
   log 'Installing the trash manager...'
 
-  sudo pacman -S --noconfirm trash-cli 2>&1 ||
+  sudo pacman -S --needed --noconfirm trash-cli 2>&1 ||
     fail 'Failed to install trash-cli'
 
   log 'Trash-cli has been installed'
@@ -356,7 +356,7 @@ install_trash_manager () {
 install_terminals () {
   log 'Installing virtual terminals...'
 
-  sudo pacman -S --noconfirm alacritty cool-retro-term 2>&1 ||
+  sudo pacman -S --needed --noconfirm alacritty cool-retro-term 2>&1 ||
     fail 'Failed to install terminal packages'
 
   log 'Alacritty and cool-retro-term have been installed'
@@ -393,7 +393,7 @@ install_terminals () {
 install_text_editor () {
   log 'Installing the text editor...'
 
-  sudo pacman -S --noconfirm helix 2>&1 ||
+  sudo pacman -S --needed --noconfirm helix 2>&1 ||
     fail 'Failed to install helix'
 
   log 'Helix has been installed'
@@ -414,8 +414,8 @@ install_text_editor () {
 install_web_browsers () {
   log 'Installing the web browsers...'
 
-  sudo pacman -S --noconfirm firefox torbrowser-launcher 2>&1 &&
-    yay -S --noconfirm --removemake google-chrome brave-bin 2>&1 ||
+  sudo pacman -S --needed --noconfirm firefox torbrowser-launcher 2>&1 &&
+    yay -S --needed --noconfirm --removemake google-chrome brave-bin 2>&1 ||
     fail 'Failed to install web browsers'
 
   log 'Web browsers have been installed'
@@ -425,7 +425,7 @@ install_web_browsers () {
 install_monitoring_tools () {
   log 'Installing monitoring tools...'
 
-  sudo pacman -S --noconfirm htop glances 2>&1 ||
+  sudo pacman -S --needed --noconfirm htop glances 2>&1 ||
     fail 'Failed to install monitoring tools'
 
   local desktop_home='/usr/local/share/applications'
@@ -453,8 +453,8 @@ install_monitoring_tools () {
 install_screen_casters () {
   log 'Installing screen casting tools...'
 
-  sudo pacman -S --noconfirm scrot 2>&1 &&
-    yay -S --noconfirm --removemake --mflags --nocheck slop screencast 2>&1 ||
+  sudo pacman -S --needed --noconfirm scrot 2>&1 &&
+    yay -S --needed --noconfirm --removemake --mflags --nocheck slop screencast 2>&1 ||
     fail 'Failed to install screen casting tools'
 
   log 'Screen casting tools have been installed'
@@ -464,7 +464,7 @@ install_screen_casters () {
 install_calculator () {
   log 'Installing the calculator...'
 
-  yay -S --noconfirm --removemake libqalculate 2>&1 ||
+  yay -S --needed --noconfirm --removemake libqalculate 2>&1 ||
     fail 'Failed to install qalculate'
 
   local desktop_home='/usr/local/share/applications'
@@ -492,7 +492,7 @@ install_calculator () {
 install_media_viewer () {
   log 'Installing the media viewer...'
 
-  sudo pacman -S --noconfirm sxiv 2>&1 ||
+  sudo pacman -S --needed --noconfirm sxiv 2>&1 ||
     fail 'Failed to install sxiv'
 
   local user_name=''
@@ -515,7 +515,7 @@ install_media_viewer () {
 install_music_player () {
   log 'Installing the music player...'
   
-  sudo pacman -S --noconfirm mpd ncmpcpp 2>&1 ||
+  sudo pacman -S --needed --noconfirm mpd ncmpcpp 2>&1 ||
     fail 'Failed to install the music player'
 
   local user_name=''
@@ -576,7 +576,7 @@ install_music_player () {
 install_video_player () {
   log 'Installing video media player...'
 
-  sudo pacman -S --noconfirm mpv 2>&1 ||
+  sudo pacman -S --needed --noconfirm mpv 2>&1 ||
     fail 'Failed to install mpv'
 
   local user_name=''
@@ -600,7 +600,7 @@ install_video_player () {
 install_media_codecs () {
   log 'Installing audio and video media codecs...'
 
-  sudo pacman -S --noconfirm \
+  sudo pacman -S --needed --noconfirm \
     faad2 ffmpeg4.4 libmodplug libmpcdec speex taglib wavpack 2>&1 ||
     fail 'Failed to install audio and video codecs'
 
@@ -611,7 +611,7 @@ install_media_codecs () {
 install_office_tools () {
   log 'Installing the office tools...'
 
-  sudo pacman -S --noconfirm libreoffice-fresh 2>&1 ||
+  sudo pacman -S --needed --noconfirm libreoffice-fresh 2>&1 ||
     fail 'Failed to install office tools'
 
   log 'Office tools have been installed'
@@ -621,8 +621,8 @@ install_office_tools () {
 install_readers () {
   log 'Installing pdf and epub readers...'
 
-  sudo pacman -S --noconfirm foliate 2>&1 &&
-    yay -S --noconfirm --useask --removemake --diffmenu=false evince-no-gnome poppler 2>&1 ||
+  sudo pacman -S --needed --noconfirm foliate 2>&1 &&
+    yay -S --needed --noconfirm --useask --removemake --diffmenu=false evince-no-gnome poppler 2>&1 ||
     fail 'Failed to install pdf and epub readers'
 
   local user_name=''
@@ -643,7 +643,7 @@ install_readers () {
 install_torrent_client () {
   log 'Installing the torrent client...'
 
-  sudo pacman -S --noconfirm transmission-cli 2>&1 ||
+  sudo pacman -S --needed --noconfirm transmission-cli 2>&1 ||
     fail 'Failed to install transmission-cli'
 
   log 'Torrent client has been installed'
@@ -760,7 +760,7 @@ install_fonts () {
     log "Font ${name} has been installed"
   done
 
-  log 'Update the fonts cache...'
+  log 'Updating the fonts cache...'
 
   fc-cache -f 2>&1 ||
     fail 'Failed to update the fonts cache'
@@ -768,7 +768,7 @@ install_fonts () {
   log 'Fonts cache has been updated'
   log 'Installing some extra glyphs...'
 
-  sudo pacman -S --noconfirm ttf-font-awesome noto-fonts-emoji 2>&1 ||
+  sudo pacman -S --needed --noconfirm ttf-font-awesome noto-fonts-emoji 2>&1 ||
     fail 'Failed to install extra glyphs'
 
   log 'Extra glyphs have been installed'
@@ -792,7 +792,7 @@ install_sounds () {
 install_extra_packages () {
   log 'Installing some extra packages...'
 
-  yay -S --noconfirm --removemake \
+  yay -S --needed --noconfirm --removemake \
     digimend-kernel-drivers-dkms-git xkblayout-state-git 2>&1 ||
     fail 'Failed to install extra packages'
   

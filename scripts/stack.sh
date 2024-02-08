@@ -48,7 +48,7 @@ install_node () {
 install_deno () {
   log 'Installing the deno runtime engine...'
 
-  sudo pacman -S --noconfirm deno 2>&1 ||
+  sudo pacman -S --needed --noconfirm deno 2>&1 ||
     fail 'Failed to install deno'
 
   log 'Deno runtime engine has been installed'
@@ -72,7 +72,7 @@ install_bun () {
 install_go () {
   log 'Installing the go programming language...'
 
-  sudo pacman -S --noconfirm go go-tools 2>&1 ||
+  sudo pacman -S --needed --noconfirm go go-tools 2>&1 ||
     fail 'Failed to install go'
 
   log 'Go programming language has been installed'
@@ -82,7 +82,7 @@ install_go () {
 install_rust () {
   log 'Installing the rust programming language...'
 
-  sudo pacman -S --noconfirm rustup 2>&1 ||
+  sudo pacman -S --needed --noconfirm rustup 2>&1 ||
     fail 'Failed to install rustup'
 
   log 'Rustup has been installed'
@@ -100,7 +100,7 @@ install_rust () {
 install_docker () {
   log 'Installing the docker engine...'
 
-  sudo pacman -S --noconfirm docker docker-compose 2>&1 ||
+  sudo pacman -S --needed --noconfirm docker docker-compose 2>&1 ||
     fail 'Failed to install docker packages'
 
   log 'Docker packages have been installed'

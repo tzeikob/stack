@@ -163,7 +163,7 @@ install_base_packages () {
     extra_pckgs='efibootmgr'
   fi
 
-  pacman -S --noconfirm \
+  pacman -S --needed --noconfirm \
     base-devel pacman-contrib pkgstats grub mtools dosfstools ntfs-3g exfatprogs gdisk fuseiso veracrypt \
     python-pip parted curl wget udisks2 udiskie gvfs gvfs-smb bash-completion \
     man-db man-pages texinfo cups cups-pdf cups-filters usbutils bluez bluez-utils unzip terminus-font \
@@ -175,7 +175,7 @@ install_base_packages () {
 
   log 'Replacing iptables with nft tables...'
 
-  printf '%s\n' y y | pacman -S nftables iptables-nft 2>&1 ||
+  printf '%s\n' y y | pacman -S --needed nftables iptables-nft 2>&1 ||
     fail 'Failed to install the nft tables'
 
   log 'Iptables have been replaced by nft tables'
@@ -186,7 +186,7 @@ install_base_packages () {
 install_display_server () {
   log 'Installing the display server...'
 
-  pacman -S --noconfirm xorg xorg-xinit xorg-xrandr xorg-xdpyinfo 2>&1 ||
+  pacman -S --needed --noconfirm xorg xorg-xinit xorg-xrandr xorg-xdpyinfo 2>&1 ||
     fail 'Failed to install xorg packages'
 
   log 'Xorg packages have been installed'
@@ -265,7 +265,7 @@ install_drivers () {
     vm_pckgs='virtualbox-guest-utils'
   fi
 
-  pacman -S --noconfirm \
+  pacman -S --needed --noconfirm \
     acpi acpi_call acpid tlp xcalib \
     networkmanager networkmanager-openvpn wireless_tools netctl wpa_supplicant \
     nmap dhclient smbclient libnma \
@@ -855,7 +855,7 @@ add_rules () {
   cp /opt/stack/rules/92-fix-layout.rules "${rules_home}" ||
     fail 'Failed to add the fix-layout rules'
     
-  log 'Rules fix0layout have been set'
+  log 'Rules fix-layout have been set'
   log 'System udev rules have been added'
 }
 

@@ -8,7 +8,7 @@ source /opt/stack/scripts/utils.sh
 install_postman () {
   log 'Installing the postman client...'
 
-  yay -S --noconfirm --removemake postman-bin 2>&1 ||
+  yay -S --needed --noconfirm --removemake postman-bin 2>&1 ||
     fail 'Failed to install postman'
 
   log 'Postman client has been installed'
@@ -18,7 +18,7 @@ install_postman () {
 install_compass () {
   log 'Installing the mongodb compass client...'
 
-  yay -S --noconfirm --removemake mongodb-compass 2>&1 ||
+  yay -S --needed --noconfirm --removemake mongodb-compass 2>&1 ||
     fail 'Failed to install mongo compass'
 
   log 'Mongodb compass client has been installed'
@@ -28,7 +28,7 @@ install_compass () {
 install_studio3t () {
   log 'Installing the studio3t client...'
 
-  yay -S --noconfirm --removemake studio-3t 2>&1 ||
+  yay -S --needed --noconfirm --removemake studio-3t 2>&1 ||
     fail 'Failed to install studio-3t'
 
   log 'Studio3t client has been installed'
@@ -39,7 +39,7 @@ install_dbeaver () {
   log 'Installing the dbeaver client...'
 
   # Select the jre provider instead of jdk
-  printf '%s\n' 2 y | sudo pacman -S dbeaver 2>&1 ||
+  printf '%s\n' 2 y | sudo pacman -S --needed dbeaver 2>&1 ||
     fail 'Failed to install dbeaver client'
 
   log 'Dbeaver client has been installed'
@@ -49,7 +49,7 @@ install_dbeaver () {
 install_discord () {
   log 'Installing the discord...'
 
-  sudo pacman -S --noconfirm discord 2>&1 ||
+  sudo pacman -S --needed --noconfirm discord 2>&1 ||
     fail 'Failed to install discord'
 
   log 'Discord has been installed'
@@ -59,7 +59,7 @@ install_discord () {
 install_slack () {
   log 'Installing the slack...'
 
-  yay -S --noconfirm --removemake slack-desktop 2>&1 ||
+  yay -S --needed --noconfirm --removemake slack-desktop 2>&1 ||
     fail 'Failed to install slack'
 
   log 'Slack has been installed'
@@ -69,7 +69,7 @@ install_slack () {
 install_skype () {
   log 'Installing the skype...'
 
-  yay -S --noconfirm --removemake skypeforlinux-stable-bin 2>&1 ||
+  yay -S --needed --noconfirm --removemake skypeforlinux-stable-bin 2>&1 ||
     fail 'Failed to install skype'
 
   log 'Skype has been installed'
@@ -79,7 +79,7 @@ install_skype () {
 install_irssi () {
   log 'Installing the irssi client...'
 
-  sudo pacman -S --noconfirm irssi 2>&1 ||
+  sudo pacman -S --needed --noconfirm irssi 2>&1 ||
     fail 'Failed to install irssi client'
 
   local desktop_home='/usr/local/share/applications'
@@ -108,7 +108,7 @@ install_irssi () {
 install_filezilla () {
   log 'Installing the filezilla client...'
 
-  sudo pacman -S --noconfirm filezilla 2>&1 ||
+  sudo pacman -S --needed --noconfirm filezilla 2>&1 ||
     fail 'Failed to install filezilla'
 
   log 'Filezilla client has been installed'
@@ -131,7 +131,7 @@ install_virtual_box () {
     pckgs+=' virtualbox-host-dkms'
   fi
 
-  sudo pacman -S --noconfirm ${pckgs} 2>&1 ||
+  sudo pacman -S --needed --noconfirm ${pckgs} 2>&1 ||
     fail 'Failed to install virtual box packages'
 
   local user_name=''
@@ -148,8 +148,8 @@ install_virtual_box () {
 install_vmware () {
   log 'Installing the vmware...'
 
-  sudo pacman -S --noconfirm fuse2 gtkmm pcsclite libcanberra 2>&1 &&
-    yay -S --noconfirm --needed --removemake vmware-workstation 2>&1 ||
+  sudo pacman -S --needed --noconfirm fuse2 gtkmm pcsclite libcanberra 2>&1 &&
+    yay -S --needed --noconfirm --needed --removemake vmware-workstation 2>&1 ||
     fail 'Failed to install vmware packages'
 
   sudo systemctl enable vmware-networks.service 2>&1 ||
