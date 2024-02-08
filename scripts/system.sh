@@ -457,9 +457,9 @@ set_timezone () {
   log 'Hardware clock has been synchronized to system clock'
 }
 
-# Boost system's make and build performance.
-boost_builds () {
-  log 'Boosting system build performance...'
+# Boost system performance on various tasks.
+boost_performance () {
+  log 'Boosting system performance...'
 
   local cores=''
   cores="$(
@@ -486,6 +486,18 @@ boost_builds () {
     fail 'Failed to set the compressZST threads'
 
   log 'Compression threads have been set'
+
+  log 'Increasing the limit of inotify watches...'
+
+  local limit=524288
+  echo "fs.inotify.max_user_watches=${limit}" >> /etc/sysctl.conf ||
+    fail 'Failed to set the max limit of inotify watches'
+
+  sysctl --system 2>&1 ||
+    fail 'Failed to update the max limit to inotify watches'
+
+  log "Inotify watches limit has been set to ${limit}"
+
   log 'Boosting has been completed'
 }
 
@@ -689,20 +701,6 @@ configure_security () {
   log 'Security configuration has been completed'
 }
 
-# Increases the max limit of inotify watchers.
-increase_watchers () {
-  log 'Increasing the limit of inotify watches...'
-
-  local limit=524288
-  echo "fs.inotify.max_user_watches=${limit}" >> /etc/sysctl.conf ||
-    fail 'Failed to set the max limit of inotify watches'
-
-  sysctl --system 2>&1 ||
-    fail 'Failed to update the max limit to inotify watches'
-
-  log "Inotify watchers limit has been set to ${limit}"
-}
-
 # Installs and configures the boot loader.
 install_boot_loader () {
   log 'Setting up the boot loader...'
@@ -879,10 +877,9 @@ set_host &&
   set_locales &&
   set_keyboard &&
   set_timezone &&
-  boost_builds &&
+  boost_performance &&
   configure_power &&
   configure_security &&
-  increase_watchers &&
   install_boot_loader &&
   enable_services &&
   add_rules
