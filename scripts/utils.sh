@@ -206,7 +206,7 @@ confirm () {
   
   local options="no${KVS}No${AES}yes${KVS}Yes"
 
-  echo "${prompt}"
+  echo -e "${prompt}"
 
   REPLY="$(echo "${options}" |
     smenu -nm -/ prefix -W "${AES_LN}" -S /\(.*"${KVS}"\)//v)" || return 1
@@ -253,7 +253,7 @@ pick_one () {
   options="$(echo "${options}" |
     jq -cer '[.[]|("\(.key)'"${KVS}"'\(.value)")]|join("'"${AES}"'")')" || return 1
 
-  echo "${prompt}"
+  echo -e "${prompt}"
 
   REPLY="$(echo "${options}" |
     smenu -nm -/ prefix -W "${AES_LN}" "${args[@]}" -S /\(.*"${KVS}"\)//v)" || return 1
@@ -301,7 +301,7 @@ pick_many () {
   options="$(echo "${options}" |
     jq -cer '[.[]|("\(.key)'"${KVS}"'\(.value)")]|join("'"${AES}"'")')" || return 1
 
-  echo "${prompt}"
+  echo -e "${prompt}"
 
   REPLY="$(echo "${options}" |
     smenu -nm -/ prefix -W "${AES_LN}" "${args[@]}" -S /\(.*"${KVS}"\)//v -P "${AES}")" || return 1

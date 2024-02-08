@@ -383,7 +383,7 @@ while true; do
     select_kernels &&
     report
 
-  confirm 'Do you want to go with these settings?'
+  confirm '\nDo you want to go with these settings?'
   is_not_given "${REPLY}" && fail 'Installation has been canceled'
 
   if is_yes "${REPLY}"; then
