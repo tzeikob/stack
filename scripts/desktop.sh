@@ -21,15 +21,6 @@ install_compositor () {
   cp /opt/stack/configs/picom/picom.conf "${config_home}" ||
     fail 'Failed to copy compositor config file'
 
-  if is_setting 'vm' 'yes' && is_setting 'vm_vendor' 'oracle'; then
-    log 'Virtual box machine detected'
-
-    sed -i 's/\(vsync =\).*/\1 false;/' "${config_home}/picom.conf" ||
-      fail 'Failed to disable vsync mode'
-
-    log WARN 'Vsync mode has been disabled'
-  fi
-
   log 'Desktop compositor picom has been installed'
 }
 
