@@ -176,7 +176,8 @@ install_login_screen () {
   local host_name=''
   host_name="$(get_setting 'host_name')" || fail
 
-  figlet -f pagga " ${host_name} " 2>&1 | sudo tee /etc/issue > /dev/null ||
+  echo -e " ${host_name} \n" | figlet -f pagga 2>&1 |
+    sudo tee /etc/issue > /dev/null ||
     fail 'Failed to create the new issue file'
   
   log 'The new issue file has been created'
