@@ -112,6 +112,18 @@ resolve_synaptics () {
   fi
 }
 
+# Report the collected installation settings.
+report () {
+  local query=''
+  query='.user_password = "***" | .root_password = "***"'
+
+  local settings=''
+  settings="$(get_settings | jq "${query}")" || fail
+
+  echo -e '\nInstallation properties have been set to:'
+  echo -e "${settings}\n"
+}
+
 log 'Resolving system hardware data...'
 
 is_uefi &&
@@ -119,6 +131,7 @@ is_uefi &&
   resolve_cpu &&
   resolve_gpu &&
   is_disk_trimmable &&
-  resolve_synaptics
+  resolve_synaptics &&
+  report
 
 sleep 3
