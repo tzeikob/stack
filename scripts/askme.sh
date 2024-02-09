@@ -44,7 +44,7 @@ select_disk () {
     fail 'Installation has been canceled'
   fi
 
-  save_setting 'disk' "${disk}"
+  save_setting 'disk' "\"${disk}\""
 
   echo -e "Installation disk set to block device ${disk}"
 }
@@ -55,13 +55,13 @@ opt_in_swap_space () {
   is_not_given "${REPLY}" && fail 'Installation has been canceled'
 
   if is_no "${REPLY}"; then
-    save_setting 'swap_on' 'no'
+    save_setting 'swap_on' '"no"'
 
     echo -e 'Swap is set to off'
     return 0
   fi
 
-  save_setting 'swap_on' 'yes'
+  save_setting 'swap_on' '"yes"'
 
   echo -e 'Swap is set to yes'
 
@@ -87,7 +87,7 @@ opt_in_swap_space () {
 
   local swap_type="${REPLY}"
 
-  save_setting 'swap_type' "${swap_type}"
+  save_setting 'swap_type' "\"${swap_type}\""
 
   echo -e "Swap type is set to ${swap_type}"
 }
@@ -135,7 +135,7 @@ select_timezone () {
 
   local timezone="${REPLY}"
 
-  save_setting 'timezone' "${timezone}"
+  save_setting 'timezone' "\"${timezone}\""
 
   echo -e "Timezone is set to ${timezone}"
 }
@@ -165,7 +165,7 @@ select_locales () {
 # Asks the user to select the keyboard model.
 select_keyboard_model () {
   # TODO: localectl needs xorg deps to provide x11 kb models
-  save_setting 'keyboard_model' 'pc105'
+  save_setting 'keyboard_model' '"pc105"'
   return 0
 
   local models=''
@@ -183,7 +183,7 @@ select_keyboard_model () {
 
   local keyboard_model="${REPLY}"
 
-  save_setting 'keyboard_model' "${keyboard_model}"
+  save_setting 'keyboard_model' "\"${keyboard_model}\""
 
   echo -e "Keyboard model is set to ${keyboard_model}"
 }
@@ -205,7 +205,7 @@ select_keyboard_map () {
 
   local keyboard_map="${REPLY}"
 
-  save_setting 'keyboard_map' "${keyboard_map}"
+  save_setting 'keyboard_map' "\"${keyboard_map}\""
 
   echo -e "Keyboard map is set to ${keyboard_map}"
 }
@@ -239,7 +239,7 @@ select_keyboard_layouts () {
 # Asks the user to select keyboard switch options.
 select_keyboard_options () {
   # TODO: localectl needs xorg deps to provide x11 kb options
-  save_setting 'keyboard_options' 'grp:alt_shift_toggle'
+  save_setting 'keyboard_options' '"grp:alt_shift_toggle"'
   return 0
 
   local options=''
@@ -257,7 +257,7 @@ select_keyboard_options () {
 
   keyboard_options="${REPLY}"
 
-  save_setting 'keyboard_options' "${keyboard_options}"
+  save_setting 'keyboard_options' "\"${keyboard_options}\""
 
   echo -e "Keyboard layouts are set to ${keyboard_options}"
 }
@@ -272,7 +272,7 @@ enter_host_name () {
 
   local host_name="${REPLY}"
 
-  save_setting 'host_name' "${host_name}"
+  save_setting 'host_name' "\"${host_name}\""
 
   echo -e "Hostname is set to ${host_name}"
 }
@@ -287,7 +287,7 @@ enter_user_name () {
 
   local user_name="${REPLY}"
 
-  save_setting 'user_name' "${user_name}"
+  save_setting 'user_name' "\"${user_name}\""
 
   echo -e "User name is set to ${user_name}"
 }
@@ -308,7 +308,7 @@ enter_user_password () {
     ask_secret 'Not matched, please re-type the given password:'
   done
 
-  save_setting 'user_password' "${password}"
+  save_setting 'user_password' "\"${password}\""
 
   echo -e 'User password is set successfully'
 }
@@ -329,7 +329,7 @@ enter_root_password () {
     ask_secret 'Not matched, please re-type the given password:'
   done
 
-  save_setting 'root_password' "${password}"
+  save_setting 'root_password' "\"${password}\""
 
   echo -e 'Root password is set successfully'
 }

@@ -12,7 +12,7 @@ is_uefi () {
     uefi_mode='yes'
   fi
 
-  save_setting 'uefi_mode' "${uefi_mode}"
+  save_setting 'uefi_mode' "\"${uefi_mode}\""
 
   log "UEFI mode is set to ${uefi_mode}"
 }
@@ -24,13 +24,13 @@ is_virtual_machine () {
   )"
 
   if is_not_empty "${vm_vendor}" && not_equals "${vm_vendor}" 'none'; then
-    save_setting 'vm' 'yes'
-    save_setting 'vm_vendor' "${vm_vendor}"
+    save_setting 'vm' '"yes"'
+    save_setting 'vm_vendor' "\"${vm_vendor}\""
 
     log 'Virtual machine is set to yes'
     log "Virtual machine vendor is set to ${vm_vendor}"
   else
-    save_setting 'vm' 'no'
+    save_setting 'vm' '"no"'
   fi
 }
 
@@ -49,7 +49,7 @@ resolve_cpu () {
     cpu_vendor='intel'
   fi
 
-  save_setting 'cpu_vendor' "${cpu_vendor}"
+  save_setting 'cpu_vendor' "\"${cpu_vendor}\""
 
   log "CPU vendor is set to ${cpu_vendor}"
 }
@@ -73,7 +73,7 @@ resolve_gpu () {
     gpu_vendor='intel'
   fi
 
-  save_setting 'gpu_vendor' "${gpu_vendor}"
+  save_setting 'gpu_vendor' "\"${gpu_vendor}\""
 
   log "GPU vendor is set to ${gpu_vendor}"
 }
@@ -94,7 +94,7 @@ is_disk_trimmable () {
     trim_disk='yes'
   fi
 
-  save_setting 'trim_disk' "${trim_disk}"
+  save_setting 'trim_disk' "\"${trim_disk}\""
 
   log "Disk trim mode is set to ${trim_disk}"
 }
@@ -103,12 +103,12 @@ is_disk_trimmable () {
 resolve_synaptics () {
   local query='.*SynPS/2.*Synaptics.*TouchPad.*'
 
-  if grep -Rq "${query}" /proc/bus/input/devices; then
-    save_setting 'synaptics' 'yes'
-
+  if grep -Eq "${query}" /proc/bus/input/devices; then
+    save_setting 'synaptics' '"yes"'
+    
     log 'Synaptics touch pad set to yes'
   else
-    save_setting 'synaptics' 'no'
+    save_setting 'synaptics' '"no"'
   fi
 }
 
