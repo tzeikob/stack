@@ -13,16 +13,20 @@ run () {
 
   # Do not log while running the askme screens
   if equals "${file_name}" 'askme'; then
-    bash "/opt/stack/scripts/${file_name}.sh"
-    return $?
+    bash /opt/stack/scripts/askme.sh || exit 1
+  else
+    echo -e "Running the script ${file_name}..."
+
+    bash "/opt/stack/scripts/${file_name}.sh" \
+      2>&1 >> /var/log/stack.log
+
+    if has_failed; then
+      echo -e "The script ${file_name} has been failed"
+      exit 1
+    fi
+
+    echo -e "The script ${file_name} has been completed"
   fi
-
-  echo -e "Running the script ${file_name}..."
-
-  bash "/opt/stack/scripts/${file_name}.sh" \
-    2>&1 >> /var/log/stack.log
-  
-  echo -e "The script ${file_name} has been completed"
 }
 
 # Changes to the shell session of the mounted installation disk
@@ -40,13 +44,23 @@ install () {
 
   # Impersonate the sudoer user on desktop, stack and tools installation
   if match "${file_name}" '^(desktop|stack|tools)$'; then
-    user_name="$(get_setting 'user_name')" || fail
+    user_name="$(get_setting 'user_name')"
+
+    if has_failed; then
+      echo -e 'Unable to get the user name'
+      exit 1
+    fi
   fi
 
   echo -e "Running the script ${file_name}..."
 
   arch-chroot /mnt runuser -u "${user_name}" -- "${script_file}" \
     2>&1 >> /var/log/stack.log
+  
+  if has_failed; then
+    echo "The script ${file_name} has been failed"
+    exit 1
+  fi
 
   echo -e "The script ${file_name} has been completed"
 }
