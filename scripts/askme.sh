@@ -14,7 +14,7 @@ select_disk () {
 
   local disks=''
   disks="$(
-    lsblk -J -o "${fields}" | jq -cer "${query}"
+    lsblk -J -o "${fields}" | jq -cer "${query}" 2> /dev/null
   )" || fail 'Unable to list disk block devices'
 
   local trim='.|gsub("^\\s+|\\s+$";"")'
@@ -96,7 +96,7 @@ opt_in_swap_space () {
 select_mirrors () {
   local mirrors=''
   mirrors="$(
-    reflector --list-countries | tail -n +3 | awk '{
+    reflector --list-countries 2> /dev/null | tail -n +3 | awk '{
       match($0, /(.*)([A-Z]{2})\s+([0-9]+)/, a)
       gsub(/[ \t]+$/, "", a[1])
 
@@ -122,7 +122,7 @@ select_mirrors () {
 select_timezone () {
   local timezones=''
   timezones="$(
-    timedatectl list-timezones | awk '{
+    timedatectl list-timezones 2> /dev/null | awk '{
       print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
     }'
   )" || fail 'Unable to list timezones'
@@ -170,7 +170,7 @@ select_keyboard_model () {
 
   local models=''
   models="$(
-    localectl --no-pager list-x11-keymap-models | awk '{
+    localectl --no-pager list-x11-keymap-models 2> /dev/null | awk '{
       print "{\"key\":\""$1"\",\"value\":\""$1"\"},"
     }'
   )" || fail 'Unable to list keyboard models'
@@ -192,7 +192,7 @@ select_keyboard_model () {
 select_keyboard_map () {
   local maps=''
   maps="$(
-    localectl --no-pager list-keymaps | awk '{
+    localectl --no-pager list-keymaps 2> /dev/null | awk '{
       print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
     }'
   )" || fail 'Unable to list keyboard maps'
@@ -218,7 +218,7 @@ select_keyboard_layouts () {
 
   local layouts=''
   layouts="$(
-    localectl --no-pager list-x11-keymap-layouts | awk '{
+    localectl --no-pager list-x11-keymap-layouts 2> /dev/null | awk '{
       print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
     }'
   )" || fail 'Unable to list keyboard layouts'
@@ -244,7 +244,7 @@ select_keyboard_options () {
 
   local options=''
   options="$(
-    localectl --no-pager list-x11-keymap-options | awk '{
+    localectl --no-pager list-x11-keymap-options 2> /dev/null | awk '{
       print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
     }'
   )" || fail 'Unable to list keyboard options'
