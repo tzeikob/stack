@@ -179,6 +179,7 @@ install_postman &&
   install_skype &&
   install_irssi &&
   install_filezilla &&
+  install_virtual_box &&
   install_vmware
 
 sleep 3
