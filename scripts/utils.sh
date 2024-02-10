@@ -39,7 +39,7 @@ log () {
 fail () {
   local message="${1:-"A fatal error has been occurred"}"
 
-  log ERROR "${message}"
+  log EROR "${message}"
 
   exit 1
 }
