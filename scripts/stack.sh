@@ -16,30 +16,39 @@ install_node () {
   git clone https://github.com/nvm-sh/nvm.git "${nvm_home}" 2>&1 &&
     cd "${nvm_home}" &&
     git checkout `git describe --abbrev=0 --tags --match "v[0-9]*" $(git rev-list --tags --max-count=1)` 2>&1 &&
-    cd ~ ||
-    fail 'Failed to install nvm'
+    cd ~
+  
+  if has_failed; then
+    log WARN 'Failed to install node version manager'
+    return 0
+  fi
 
-  log 'Nvm has been installed'
+  log 'Node version manager has been installed'
 
   local bashrc_file="/home/${user_name}/.bashrc"
 
   echo -e '\nexport NVM_DIR="${HOME}/.nvm"' >> "${bashrc_file}" &&
-    echo '[ -s "${NVM_DIR}/nvm.sh" ] && \. "${NVM_DIR}/nvm.sh"' >> "${bashrc_file}" &&
-    echo '[ -s "${NVM_DIR}/bash_completion" ] && \. "${NVM_DIR}/bash_completion"' >> "${bashrc_file}" ||
-    fail 'Failed to add hooks to the .bashrc file'
+    log 'Nvm export hook added to the .bashrc file' ||
+    log WARN 'Failed to add export hook to the .bashrc file'
 
-  log 'Hooks have been added to the .bashrc file'
+  echo '[ -s "${NVM_DIR}/nvm.sh" ] && \. "${NVM_DIR}/nvm.sh"' >> "${bashrc_file}" &&
+    log 'Nvm source hook added to the .bashrc file' ||
+    log WARN 'Failed to add source hook to the .bashrc file'
+  
+  echo '[ -s "${NVM_DIR}/bash_completion" ] && \. "${NVM_DIR}/bash_completion"' >> "${bashrc_file}" &&
+    log 'Nvm completion hook added to the .bashrc file' ||
+    log WARN 'Failed to add completion hook to the .bashrc file'
 
   log 'Installing the latest node version...'
 
   \. "${nvm_home}/nvm.sh" 2>&1 &&
-    nvm install --no-progress node 2>&1 ||
-    fail 'Failed to install node'
+    nvm install --no-progress node 2>&1 &&
+    log 'Node latest version has been installed' ||
+    log WARN 'Failed to install the latest version of node'
 
-  log 'Node latest version has been installed'
-
-  echo 'export PATH="./node_modules/.bin:${PATH}"' >> "${bashrc_file}" ||
-    fail 'Failed to add node moules into the PATH'
+  echo 'export PATH="./node_modules/.bin:${PATH}"' >> "${bashrc_file}" &&
+    log 'Node modules path added to the PATH' ||
+    log WARN 'Failed to add node modules path into the PATH'
 
   log 'Node runtime engine has been installed'
 }
@@ -48,8 +57,12 @@ install_node () {
 install_deno () {
   log 'Installing the deno runtime engine...'
 
-  sudo pacman -S --needed --noconfirm deno 2>&1 ||
-    fail 'Failed to install deno'
+  sudo pacman -S --needed --noconfirm deno 2>&1
+
+  if has_failed; then
+    log WARN 'Failed to install deno'
+    return 0
+  fi
 
   log 'Deno runtime engine has been installed'
 }
@@ -62,8 +75,12 @@ install_bun () {
 
   curl "${url}" -sSLo /tmp/bun-install.sh \
     --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 2>&1 &&
-    bash /tmp/bun-install.sh 2>&1 ||
-    fail 'Failed to install bun'
+    bash /tmp/bun-install.sh 2>&1
+  
+  if has_failed; then
+    log WARN 'Failed to install bun'
+    return 0
+  fi
 
   log 'Bun runtime engine has been installed'
 }
@@ -72,8 +89,12 @@ install_bun () {
 install_go () {
   log 'Installing the go programming language...'
 
-  sudo pacman -S --needed --noconfirm go go-tools 2>&1 ||
-    fail 'Failed to install go'
+  sudo pacman -S --needed --noconfirm go go-tools 2>&1
+
+  if has_failed; then
+    log WARN 'Failed to install go programming language'
+    return 0
+  fi
 
   log 'Go programming language has been installed'
 }
@@ -82,17 +103,21 @@ install_go () {
 install_rust () {
   log 'Installing the rust programming language...'
 
-  sudo pacman -S --needed --noconfirm rustup 2>&1 ||
-    fail 'Failed to install rustup'
+  sudo pacman -S --needed --noconfirm rustup 2>&1
+  
+  if has_failed; then
+    log WARN 'Failed to install rust programming language'
+    return 0
+  fi
 
   log 'Rustup has been installed'
 
   log 'Setting the default tool chain...'
 
-  rustup default stable 2>&1 ||
-    fail 'Failed to set default tool chain'
+  rustup default stable 2>&1 &&
+    log 'Rust default tool chain set to stable' ||
+    log WARN 'Failed to set default tool chain'
 
-  log 'Rust default tool chain set to stable'
   log 'Rust programming language has been installed'
 }
 
@@ -100,23 +125,26 @@ install_rust () {
 install_docker () {
   log 'Installing the docker engine...'
 
-  sudo pacman -S --needed --noconfirm docker docker-compose 2>&1 ||
-    fail 'Failed to install docker packages'
+  sudo pacman -S --needed --noconfirm docker docker-compose 2>&1
+  
+  if has_failed; then
+    log WARN 'Failed to install docker engine'
+    return 0
+  fi
 
   log 'Docker packages have been installed'
 
-  sudo systemctl enable docker.service 2>&1 ||
-    fail 'Failed to enable docker service'
-
-  log 'Docker service has been enabled'
+  sudo systemctl enable docker.service 2>&1 &&
+    log 'Docker service has been enabled' ||
+    log WARN 'Failed to enable docker service'
 
   local user_name=''
   user_name="$(get_setting 'user_name')" || fail
 
-  sudo usermod -aG docker "${user_name}" 2>&1 ||
-    fail 'Failed to add user to docker group'
+  sudo usermod -aG docker "${user_name}" 2>&1 &&
+    log 'User added to the docker user group' ||
+    log WARN 'Failed to add user to docker group'
 
-  log 'User added to the docker user group'
   log 'Docker egine has been installed'
 }
 
