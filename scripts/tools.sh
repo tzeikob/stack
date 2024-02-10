@@ -230,7 +230,7 @@ install_vmware () {
   log 'Installing the vmware...'
 
   sudo pacman -S --needed --noconfirm fuse2 gtkmm pcsclite libcanberra 2>&1 &&
-    yay -S --needed --noconfirm --needed --removemake vmware-workstation 2>&1
+    yay -S --needed --noconfirm --removemake vmware-workstation 2>&1
   
   if has_failed; then
     log WARN 'Failed to install vmware'
