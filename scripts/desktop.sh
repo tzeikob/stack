@@ -411,17 +411,6 @@ install_text_editor () {
   log 'Text editor has been installed'
 }
 
-# Installs the web browsers.
-install_web_browsers () {
-  log 'Installing the web browsers...'
-
-  sudo pacman -S --needed --noconfirm firefox torbrowser-launcher 2>&1 &&
-    yay -S --needed --noconfirm --removemake google-chrome brave-bin 2>&1 ||
-    fail 'Failed to install web browsers'
-
-  log 'Web browsers have been installed'
-}
-
 # Installing monitoring tools.
 install_monitoring_tools () {
   log 'Installing monitoring tools...'
@@ -608,48 +597,6 @@ install_media_codecs () {
   log 'Media codecs have been installed'
 }
 
-# Installs the office tools.
-install_office_tools () {
-  log 'Installing the office tools...'
-
-  sudo pacman -S --needed --noconfirm libreoffice-fresh 2>&1 ||
-    fail 'Failed to install office tools'
-
-  log 'Office tools have been installed'
-}
-
-# Installs the pdf and epub readers.
-install_readers () {
-  log 'Installing pdf and epub readers...'
-
-  sudo pacman -S --needed --noconfirm foliate 2>&1 &&
-    yay -S --needed --noconfirm --useask --removemake --diffmenu=false evince-no-gnome poppler 2>&1 ||
-    fail 'Failed to install pdf and epub readers'
-
-  local user_name=''
-  user_name="$(get_setting 'user_name')" || fail
-
-  local config_home="/home/${user_name}/.config"
-
-  printf '%s\n' \
-    'application/epub+zip=com.github.johnfactotum.Foliate.desktop' \
-    'application/pdf=org.gnome.Evince.desktop' >> "${config_home}/mimeapps.list" ||
-    fail 'Failed to add pdf and epub mime types'
-  
-  log 'Pdf and epub mime types have been added'
-  log 'Pdf and epub readers have been installed'
-}
-
-# Installs the torrent client.
-install_torrent_client () {
-  log 'Installing the torrent client...'
-
-  sudo pacman -S --needed --noconfirm transmission-cli 2>&1 ||
-    fail 'Failed to install transmission-cli'
-
-  log 'Torrent client has been installed'
-}
-
 # Installs the desktop and ui theme.
 install_theme () {
   log 'Installing the desktop theme...'
@@ -819,7 +766,6 @@ install_compositor &&
   install_trash_manager &&
   install_terminals &&
   install_text_editor &&
-  install_web_browsers &&
   install_monitoring_tools &&
   install_screen_casters &&
   install_calculator &&
@@ -827,9 +773,6 @@ install_compositor &&
   install_music_player &&
   install_video_player &&
   install_media_codecs &&
-  install_office_tools &&
-  install_readers &&
-  install_torrent_client &&
   install_theme &&
   install_fonts &&
   install_sounds &&

@@ -4,6 +4,48 @@ set -Eeo pipefail
 
 source /opt/stack/scripts/utils.sh
 
+# Installs the google chrome web browser.
+install_chrome () {
+  log 'Installing the chrome web browser...'
+
+  yay -S --needed --noconfirm --removemake google-chrome 2>&1
+  
+  if has_failed; then
+    log WARN 'Failed to install the chrome web browser'
+    return 0
+  fi
+
+  log 'Chrome web browser has been installed'
+}
+
+# Installs the firefox web browser.
+install_firefox () {
+  log 'Installing the firefox web browser...'
+
+  sudo pacman -S --needed --noconfirm firefox 2>&1
+  
+  if has_failed; then
+    log WARN 'Failed to install the firefox web browser'
+    return 0
+  fi
+
+  log 'Firefox web browser has been installed'
+}
+
+# Installs the tor web browser.
+install_tor () {
+  log 'Installing the tor web browser...'
+
+  sudo pacman -S --needed --noconfirm torbrowser-launcher 2>&1
+  
+  if has_failed; then
+    log WARN 'Failed to install the tor web browser'
+    return 0
+  fi
+
+  log 'Tor web browser has been installed'
+}
+
 # Installs the postman client.
 install_postman () {
   log 'Installing the postman client...'
@@ -206,13 +248,93 @@ install_vmware () {
   log 'Vmware has been installed'
 }
 
+# Installs the libre office.
+install_libre_office () {
+  log 'Installing the libre office...'
+
+  sudo pacman -S --needed --noconfirm libreoffice-fresh 2>&1
+
+  if has_failed; then
+    log WARN 'Failed to install libre office'
+    return 0
+  fi
+
+  log 'Libre office has been installed'
+}
+
+# Installs the evince pdf reader.
+install_evince () {
+  log 'Installing the evince pdf reader...'
+
+  yay -S --needed --noconfirm --useask --removemake \
+    --diffmenu=false evince-no-gnome poppler 2>&1
+
+  if has_failed; then
+    log WARN 'Failed to install evince pdf reader'
+    return 0
+  fi
+
+  local user_name=''
+  user_name="$(get_setting 'user_name')" || fail
+
+  local config_home="/home/${user_name}/.config"
+
+  printf '%s\n' \
+    'application/pdf=org.gnome.Evince.desktop' >> "${config_home}/mimeapps.list" &&
+    log 'Pdf mime type has been added' ||
+    log WARN 'Failed to add pdf mime type'
+  
+  log 'Evice pdf reader has been installed'
+}
+
+# Installs the foliate epub reader.
+install_foliate () {
+  log 'Installing foliate epub reader...'
+
+  sudo pacman -S --needed --noconfirm foliate 2>&1
+  
+  if has_failed; then
+    log WARN 'Failed to install foliate epub reader'
+    return 0
+  fi
+
+  local user_name=''
+  user_name="$(get_setting 'user_name')" || fail
+
+  local config_home="/home/${user_name}/.config"
+
+  printf '%s\n' \
+    'application/epub+zip=com.github.johnfactotum.Foliate.desktop' >> "${config_home}/mimeapps.list" &&
+    log 'Epub mime type has been added' ||
+    log WARN 'Failed to add epub mime types'
+  
+  log 'Foliate epub reader has been installed'
+}
+
+# Installs the transmission torrent client.
+install_transmission () {
+  log 'Installing the transmission torrent client...'
+
+  sudo pacman -S --needed --noconfirm transmission-cli 2>&1
+
+  if has_failed; then
+    log WARN 'Failed to install transmission torrent client'
+    return 0
+  fi
+
+  log 'Transmission torrent client has been installed'
+}
+
 log 'Installing some extra tools...'
 
 if equals "$(id -u)" 0; then
   fail 'Script tools.sh must be run as non root user'
 fi
 
-install_postman &&
+install_chrome &&
+  install_firefox &&
+  install_tor &&
+  install_postman &&
   install_compass &&
   install_studio3t &&
   install_dbeaver &&
@@ -222,6 +344,10 @@ install_postman &&
   install_irssi &&
   install_filezilla &&
   install_virtual_box &&
-  install_vmware
+  install_vmware &&
+  install_libre_office &&
+  install_evince &&
+  install_foliate &&
+  install_transmission
 
 sleep 3
