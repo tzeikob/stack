@@ -6,8 +6,12 @@ source /opt/stack/scripts/utils.sh
 
 # Deletes any remnants installation files from the new system.
 remove_installation_files () {
-  rm -rf /mnt/opt/stack ||
-    fail 'Unable to remove installation files'
+  rm -rf /mnt/opt/stack
+
+  if has_failed; then
+    log WARN 'Unable to remove installation files'
+    return 0
+  fi
 
   log 'Installation files have been removed'
 }
@@ -17,11 +21,16 @@ revoke_permissions () {
   # Revoke nopasswd permission
   local rule='%wheel ALL=(ALL:ALL) NOPASSWD: ALL'
 
-  sed -i "s/^\(${rule}\)/# \1/" /mnt/etc/sudoers ||
-    fail 'Failed to revoke nopasswd permission'
+  sed -i "s/^\(${rule}\)/# \1/" /mnt/etc/sudoers
+
+  if has_failed; then
+    log WARN 'Failed to revoke nopasswd permission'
+    return 0
+  fi
 
   if ! grep -q "^${rule}" /mnt/etc/sudoers; then
-    fail 'Failed to revoke nopasswd permission'
+    log WARN 'Failed to revoke nopasswd permission'
+    return 0
   fi
 
   log 'Permission nopasswd revoked from wheel group'
@@ -29,10 +38,8 @@ revoke_permissions () {
 
 # Copies the installation log file to the new system.
 copy_log_file () {
-  log 'Log file will be copied to /var/log/stack.log'
-
   cp /var/log/stack.log /mnt/var/log/stack.log ||
-    fail 'Unable to copy log file to /mnt/var/log/stack.log'
+    log WARN 'Failed to copy log file to /mnt/var/log/stack.log'
 }
 
 log 'Cleaning up the new system...'
