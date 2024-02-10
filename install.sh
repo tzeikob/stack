@@ -4,6 +4,8 @@ set -Eeo pipefail
 
 source /opt/stack/scripts/utils.sh
 
+LOG_FILE=/var/log/stack.log
+
 # Executes the script with the given file name as the
 # current user being in the archiso's shell session.
 # Arguments:
@@ -15,17 +17,21 @@ run () {
   if equals "${file_name}" 'askme'; then
     bash /opt/stack/scripts/askme.sh || exit 1
   else
-    echo -e "Running the script ${file_name}..."
+    log "Script ${file_name}.sh started" |
+      tee -a "${LOG_FILE}"
 
-    bash "/opt/stack/scripts/${file_name}.sh" \
-      2>&1 >> /var/log/stack.log
+    bash "/opt/stack/scripts/${file_name}.sh" 2>&1 |
+      tee -a "${LOG_FILE}" | grep -E '^(INFO|WARN|EROR) '
 
     if has_failed; then
-      echo -e "The script ${file_name} has been failed"
+      log EROR "Script ${file_name}.sh has failed" |
+        tee -a "${LOG_FILE}"
+
       exit 1
     fi
 
-    echo -e "The script ${file_name} has been completed"
+    log "Script ${file_name}.sh has finished" |
+      tee -a "${LOG_FILE}"
   fi
 }
 
@@ -47,30 +53,36 @@ install () {
     user_name="$(get_setting 'user_name')"
 
     if has_failed; then
-      echo -e 'Unable to get the user name'
+      log EROR 'Unable to get the user name setting' |
+        tee -a "${LOG_FILE}"
+
       exit 1
     fi
   fi
 
-  echo -e "Running the script ${file_name}..."
+  log "Script ${file_name}.sh started" |
+    tee -a "${LOG_FILE}"
 
-  arch-chroot /mnt runuser -u "${user_name}" -- "${script_file}" \
-    2>&1 >> /var/log/stack.log
+  arch-chroot /mnt runuser -u "${user_name}" -- "${script_file}" 2>&1 |
+    tee -a "${LOG_FILE}" | grep -E '^(INFO|WARN|EROR) '
   
   if has_failed; then
-    echo "The script ${file_name} has been failed"
+    log EROR "Script ${file_name}.sh has failed" |
+      tee -a "${LOG_FILE}"
+
     exit 1
   fi
 
-  echo -e "The script ${file_name} has been completed"
+  log "Script ${file_name}.sh has finished" |
+    tee -a "${LOG_FILE}"
 }
 
 # Restarts the system.
 restart () {
-  echo -e 'Rebooting the system in 15 secs...'
+  log 'Rebooting the system in 15 secs...'
 
   sleep 15
-  umount -R /mnt || echo -e 'Ignoring busy mount points'
+  umount -R /mnt || log WARN 'Ignoring busy mount points'
   reboot
 }
 
