@@ -36,16 +36,61 @@ revoke_permissions () {
   log 'Permission nopasswd revoked from wheel group'
 }
 
-# Copies the installation log file to the new system.
+# Appends all log files into one installation log file and
+# saves it to the new system.
 copy_log_file () {
-  cp /var/log/stack.log /mnt/var/log/stack.log ||
-    log WARN 'Failed to copy log file to /mnt/var/log/stack.log'
+  cat /var/log/stack/detection.log \
+    /var/log/stack/diskpart.log \
+    /var/log/stack/bootstrap.log > /mnt/var/log/stack.log ||
+    log WARN 'Failed to append log files to /mnt/var/log/stack.log'
+
+
+  cat /mnt/var/log/stack/system.log \
+    /mnt/var/log/stack/desktop.log \
+    /mnt/var/log/stack/stack.log \
+    /mnt/var/log/stack/tools.log \
+    /var/log/stack/cleaner.log >> /mnt/var/log/stack.log ||
+    log WARN 'Failed to append log files to /mnt/var/log/stack.log'
+  
+  rm -rf /var/log/stack ||
+    log WARN 'Failed to remove /var/log/stack folder'
+
+  rm -rf /mnt/var/log/stack ||
+    log WARN 'Failed to remove /mnt/var/log/stack folder'
 }
 
+# Resolves the installaction script by addressing
+# some extra post execution tasks.
+resolve () {
+  # Read the current progress as the number of log lines
+  local lines=0
+  lines=$(cat /var/log/stack/cleaner.log | wc -l) ||
+    fail 'Unable to read the current log lines'
+
+  local total=12
+
+  # Fill the log file with fake lines to trick tqdm bar on completion
+  if [[ ${lines} -lt ${total} ]]; then
+    local lines_to_append=0
+    lines_to_append=$((total - lines))
+
+    while [[ ${lines_to_append} -gt 0 ]]; do
+      echo '~'
+      sleep 0.15
+      lines_to_append=$((lines_to_append - 1))
+    done
+  fi
+
+  return 0
+}
+
+log 'Script cleaner.sh started'
 log 'Cleaning up the new system...'
 
 remove_installation_files &&
   revoke_permissions &&
   copy_log_file
 
-sleep 3
+log 'Script cleaner.sh has finished'
+
+resolve && sleep 3

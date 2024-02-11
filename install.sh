@@ -2,9 +2,20 @@
 
 set -Eeo pipefail
 
+BAR_FORMAT='{desc:11} {percentage:3.0f}%|{bar}| T{elapsed:8}'
+
 source /opt/stack/scripts/utils.sh
 
-LOG_FILE=/var/log/stack.log
+# Initializes the installer.
+init () {
+  # Reset the log files
+  mkdir -p /var/log/stack &&
+    rm -rf /var/log/stack/* ||
+    fail 'Failed to reset the log files under /var/log/stack'
+  
+  # Initialize the settings file
+  init_settings
+}
 
 # Executes the script with the given file name as the
 # current user being in the archiso's shell session.
@@ -16,22 +27,27 @@ run () {
   # Do not log while running the askme screens
   if equals "${file_name}" 'askme'; then
     bash /opt/stack/scripts/askme.sh || exit 1
-  else
-    log "Script ${file_name}.sh started" |
-      tee -a "${LOG_FILE}"
+    return 0
+  fi
 
-    bash "/opt/stack/scripts/${file_name}.sh" 2>&1 |
-      tee -a "${LOG_FILE}" | grep -E '^(INFO|WARN|EROR) '
+  local total=0
 
-    if has_failed; then
-      log EROR "Script ${file_name}.sh has failed" |
-        tee -a "${LOG_FILE}"
+  case "${file_name}" in
+    'detection') total=65;;
+    'diskpart') total=90;;
+    'bootstrap') total=660;;
+    'cleaner') total=12;;
+  esac
+  
+  local log_file="/var/log/stack/${file_name}.log"
 
-      exit 1
-    fi
+  bash "/opt/stack/scripts/${file_name}.sh" 2>&1 |
+    tee -a "${log_file}" 2>&1 |
+    tqdm --desc "${file_name^}:" --ncols 80 \
+      --bar-format "${BAR_FORMAT}" --total ${total} >> "${log_file}.tqdm"
 
-    log "Script ${file_name}.sh has finished" |
-      tee -a "${LOG_FILE}"
+  if has_failed; then
+    fail "Script ${file_name}.sh has failed" >> "${log_file}"
   fi
 }
 
@@ -44,37 +60,35 @@ run () {
 install () {
   local file_name="${1}"
 
-  local script_file="/opt/stack/scripts/${file_name}.sh"
+  local log_file="/mnt/var/log/stack/${file_name}.log"
 
   local user_name='root'
 
   # Impersonate the sudoer user on desktop, stack and tools installation
   if match "${file_name}" '^(desktop|stack|tools)$'; then
-    user_name="$(get_setting 'user_name')"
-
-    if has_failed; then
-      log EROR 'Unable to get the user name setting' |
-        tee -a "${LOG_FILE}"
-
-      exit 1
-    fi
+    user_name="$(get_setting 'user_name')" ||
+      fail 'Unable to read the user_name setting' >> "${log_file}"
   fi
 
-  log "Script ${file_name}.sh started" |
-    tee -a "${LOG_FILE}"
+  local total=0
+
+  case "${file_name}" in
+    'system') total=2060;;
+    'desktop') total=2750;;
+    'stack') total=1000;;
+    'tools') total=6300;;
+  esac
+
+  local script_file="/opt/stack/scripts/${file_name}.sh"
 
   arch-chroot /mnt runuser -u "${user_name}" -- "${script_file}" 2>&1 |
-    tee -a "${LOG_FILE}" | grep -E '^(INFO|WARN|EROR) '
+    tee -a "${log_file}" 2>&1 |
+    tqdm --desc "${file_name^}:" --ncols 80 \
+      --bar-format "${BAR_FORMAT}" --total ${total} >> "${log_file}.tqdm"
   
   if has_failed; then
-    log EROR "Script ${file_name}.sh has failed" |
-      tee -a "${LOG_FILE}"
-
-    exit 1
+    fail "Script ${file_name}.sh has failed" >> "${log_file}"
   fi
-
-  log "Script ${file_name}.sh has finished" |
-    tee -a "${LOG_FILE}"
 }
 
 # Restarts the system.
@@ -104,7 +118,8 @@ if is_not_given "${REPLY}" || is_no "${REPLY}"; then
   exit 0
 fi
 
-run askme &&
+init &&
+  run askme &&
   run detection &&
   run diskpart &&
   run bootstrap &&

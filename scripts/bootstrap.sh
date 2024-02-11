@@ -132,11 +132,40 @@ copy_installation_files () {
   log 'Copying installation files...'
 
   cp -r /opt/stack /mnt/opt ||
-    fail 'Unable to copy installation file to /mnt'
+    fail 'Unable to copy installation file to /mnt/opt'
+  
+  mkdir -p /mnt/var/log/stack ||
+    fail 'Failed to create logs home under /mnt/var/log/stack'
 
-  log 'Installation files copied to /mnt'
+  log 'Installation files copied to /mnt/opt'
 }
 
+# Resolves the installaction script by addressing
+# some extra post execution tasks.
+resolve () {
+  # Read the current progress as the number of log lines
+  local lines=0
+  lines=$(cat /var/log/stack/bootstrap.log | wc -l) ||
+    fail 'Unable to read the current log lines'
+
+  local total=660
+
+  # Fill the log file with fake lines to trick tqdm bar on completion
+  if [[ ${lines} -lt ${total} ]]; then
+    local lines_to_append=0
+    lines_to_append=$((total - lines))
+
+    while [[ ${lines_to_append} -gt 0 ]]; do
+      echo '~'
+      sleep 0.15
+      lines_to_append=$((lines_to_append - 1))
+    done
+  fi
+
+  return 0
+}
+
+log 'Script bootstrap.sh started'
 log 'Starting the bootstrap process...'
 
 sync_clock &&
@@ -147,4 +176,6 @@ sync_clock &&
   grant_permissions &&
   copy_installation_files
 
-sleep 3
+log 'Script bootstrap.sh has finished'
+
+resolve && sleep 3
