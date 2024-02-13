@@ -28,7 +28,7 @@ revoke_permissions () {
     return 0
   fi
 
-  if ! grep -q "^${rule}" /mnt/etc/sudoers; then
+  if ! grep -q "^# ${rule}" /mnt/etc/sudoers; then
     log WARN 'Failed to revoke nopasswd permission'
     return 0
   fi
