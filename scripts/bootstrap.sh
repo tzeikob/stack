@@ -87,22 +87,19 @@ update_keyring () {
   log 'Keyring has been updated successfully'
 }
 
-# Installs the linux kernels.
-install_kernels () {
-  log 'Installing the linux kernels...'
+# Installs the linux kernel.
+install_kernel () {
+  log 'Installing the linux kernel...'
 
-  local kernels=''
-  kernels="$(get_setting 'kernels' | jq -cer 'join(" ")')" ||
-    fail 'Unable to read kernels setting'
+  local kernel=''
+  kernel="$(get_setting 'kernel')" || fail 'Unable to read kernel setting'
 
   local pckgs=''
 
-  if match "${kernels}" 'stable'; then
+  if equals "${kernel}" 'stable'; then
     pckgs='linux linux-headers'
-  fi
-
-  if match "${kernels}" 'lts'; then
-    pckgs+=' linux-lts linux-lts-headers'
+  elif equals "${kernel}" 'lts'; then
+    pckgs='linux-lts linux-lts-headers'
   fi
 
   if is_empty "${pckgs}"; then
@@ -110,9 +107,9 @@ install_kernels () {
   fi
 
   pacstrap /mnt base ${pckgs} linux-firmware archlinux-keyring reflector rsync sudo jq 2>&1 ||
-    fail 'Failed to pacstrap kernels and base packages'
+    fail 'Failed to pacstrap kernel and base packages'
 
-  log 'Linux kernels have been installed'
+  log 'Linux kernel has been installed'
 }
 
 # Grants the nopasswd permission to the wheel user group.
@@ -174,7 +171,7 @@ sync_clock &&
   set_mirrors &&
   sync_package_databases &&
   update_keyring &&
-  install_kernels &&
+  install_kernel &&
   grant_permissions &&
   copy_installation_files
 

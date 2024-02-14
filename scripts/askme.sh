@@ -334,21 +334,21 @@ enter_root_password () {
   echo -e 'Root password is set successfully'
 }
 
-# Asks the user which linux kernels to install.
-select_kernels () {
+# Asks the user which linux kernel to install.
+select_kernel () {
   local kernels=''
   kernels+='{"key": "stable", "value": "Stable"},'
   kernels+='{"key": "lts", "value": "LTS"}'
   kernels="[${kernels}]"
 
-  pick_many 'Select which linux kernels to install:' "${kernels}" 'horizontal'
+  pick_one 'Select which linux kernel to install:' "${kernels}" 'horizontal'
   is_not_given "${REPLY}" && fail 'Installation has been canceled'
 
-  kernels="${REPLY}"
+  local kernel="${REPLY}"
 
-  save_setting 'kernels' "${kernels}"
+  save_setting 'kernel' "\"${kernel}\""
 
-  echo -e "Linux kernels are set to ${kernels}"
+  echo -e "Linux kernel is set to ${kernel}"
 }
 
 # Report the collected installation settings.
@@ -380,7 +380,7 @@ while true; do
     enter_user_name &&
     enter_user_password &&
     enter_root_password &&
-    select_kernels &&
+    select_kernel &&
     report
 
   confirm '\nDo you want to go with these settings?'

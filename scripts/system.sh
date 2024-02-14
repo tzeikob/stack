@@ -233,16 +233,13 @@ install_drivers () {
   local gpu_pckgs=''
 
   if is_setting 'gpu_vendor' 'nvidia'; then
-    local kernels=''
-    kernels="$(get_setting 'kernels' | jq -cer 'join(" ")')" ||
-      fail 'Unable to read kernels setting'
+    local kernel=''
+    kernel="$(get_setting 'kernel')" || fail 'Unable to read kernel setting'
 
-    if match "${kernels}" 'stable'; then
+    if equals "${kernel}" 'stable'; then
       gpu_pckgs='nvidia'
-    fi
-
-    if match "${kernels}" 'lts'; then
-      gpu_pckgs+=' nvidia-lts'
+    elif equals "${kernel}" 'lts'; then
+      gpu_pckgs='nvidia-lts'
     fi
 
     gpu_pckgs+=' nvidia-utils nvidia-settings'

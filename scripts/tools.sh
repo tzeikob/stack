@@ -195,17 +195,14 @@ install_filezilla () {
 install_virtual_box () {
   log 'Installing the virtual box...'
 
-  local kernels=''
-  kernels="$(get_setting 'kernels' | jq -cer 'join(" ")')" ||
-    fail 'Unable to read kernels setting'
+  local kernel=''
+  kernel="$(get_setting 'kernel')" || fail 'Unable to read kernel setting'
 
   local pckgs='virtualbox virtualbox-guest-iso'
 
-  if match "${kernels}" 'stable'; then
+  if equals "${kernel}" 'stable'; then
     pckgs+=' virtualbox-host-modules-arch'
-  fi
-
-  if match "${kernels}" 'lts'; then
+  elif equals "${kernel}" 'lts'; then
     pckgs+=' virtualbox-host-dkms'
   fi
 
