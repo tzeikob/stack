@@ -180,7 +180,7 @@ install_login_screen () {
     sudo tee /etc/issue > /dev/null ||
     fail 'Failed to create the new issue file'
   
-  echo -e '\n' | sudo tee -a /et/issue > /dev/null ||
+  echo -e '\n' | sudo tee -a /etc/issue > /dev/null ||
     fail 'Failed to create the new issue file'
   
   log 'The new issue file has been created'
