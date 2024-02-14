@@ -9,7 +9,7 @@ set_host () {
   log 'Setting up the host...'
 
   local host_name=''
-  host_name="$(get_setting 'host_name')" || fail
+  host_name="$(get_setting 'host_name')" || fail 'Unable to read host_name setting'
 
   echo "${host_name}" > /etc/hostname ||
     fail 'Failed to set the host name'
@@ -38,7 +38,7 @@ set_users () {
   fi
 
   local user_name=''
-  user_name="$(get_setting 'user_name')" || fail
+  user_name="$(get_setting 'user_name')" || fail 'Unable to read user_name setting'
 
   useradd -m -G "${groups}" -s /bin/bash "${user_name}" 2>&1 ||
     fail 'Failed to create the sudoer user'
@@ -65,7 +65,7 @@ set_users () {
   log 'Sudo permissions have been granted to sudoer user'
 
   local user_password=''
-  user_password="$(get_setting 'user_password')" || fail
+  user_password="$(get_setting 'user_password')" || fail 'Unable to read user_password setting'
 
   echo "${user_name}:${user_password}" | chpasswd 2>&1 ||
     fail "Failed to set password to user ${user_name}"
@@ -73,7 +73,7 @@ set_users () {
   log "Password has been given to user ${user_name}"
 
   local root_password=''
-  root_password="$(get_setting 'root_password')" || fail
+  root_password="$(get_setting 'root_password')" || fail 'Unable to read root_password setting'
 
   echo "root:${root_password}" | chpasswd 2>&1 ||
     fail 'Failed to set password to root user'
@@ -94,7 +94,7 @@ set_mirrors () {
   log 'Setting up the package databases mirrors...'
 
   local mirrors=''
-  mirrors="$(get_setting 'mirrors' | jq -cer 'join(",")')" || fail
+  mirrors="$(get_setting 'mirrors' | jq -cer 'join(",")')" || fail 'Unable to read mirrors setting'
 
   reflector --country "${mirrors}" \
     --age 48 --sort age --latest 40 --save /etc/pacman.d/mirrorlist 2>&1 ||
@@ -197,7 +197,7 @@ install_display_server () {
   log 'Xorg confg have been saved under /etc/X11/xorg.conf'
 
   local user_name=''
-  user_name="$(get_setting 'user_name')" || fail
+  user_name="$(get_setting 'user_name')" || fail 'Unable to read user_name setting'
 
   cp /opt/stack/configs/xorg/xinitrc "/home/${user_name}/.xinitrc" &&
     chown ${user_name}:${user_name} "/home/${user_name}/.xinitrc" ||
@@ -234,7 +234,8 @@ install_drivers () {
 
   if is_setting 'gpu_vendor' 'nvidia'; then
     local kernels=''
-    kernels="$(get_setting 'kernels' | jq -cer 'join(" ")')" || fail
+    kernels="$(get_setting 'kernels' | jq -cer 'join(" ")')" ||
+      fail 'Unable to read kernels setting'
 
     if match "${kernels}" 'stable'; then
       gpu_pckgs='nvidia'
@@ -281,7 +282,7 @@ install_aur_package_manager () {
   log 'Installing the AUR package manager...'
 
   local user_name=''
-  user_name="$(get_setting 'user_name')" || fail
+  user_name="$(get_setting 'user_name')" || fail 'Unable to read user_name setting'
 
   local yay_home="/home/${user_name}/yay"
 
@@ -299,7 +300,7 @@ install_aur_package_manager () {
 # Sets the system locale along with the locale environment variables.
 set_locales () {
   local locales=''
-  locales="$(get_setting 'locales')" || fail
+  locales="$(get_setting 'locales')" || fail 'Unable to read locales setting'
 
   log 'Generating system locales...'
 
@@ -339,7 +340,7 @@ set_locales () {
   
   # Save locale settings to the user config
   local user_name=''
-  user_name="$(get_setting 'user_name')" || fail
+  user_name="$(get_setting 'user_name')" || fail 'Unable to read user_name setting'
 
   local config_home="/home/${user_name}/.config/stack"
 
@@ -367,7 +368,8 @@ set_keyboard () {
   log 'Applying keyboard settings...'
 
   local keyboard_map=''
-  keyboard_map="$(get_setting 'keyboard_map')" || fail
+  keyboard_map="$(get_setting 'keyboard_map')" ||
+    fail 'Unable to read keyboard_map setting'
 
   echo "KEYMAP=${keyboard_map}" > /etc/vconsole.conf ||
     fail 'Failed to add keymap to vconsole'
@@ -380,13 +382,16 @@ set_keyboard () {
   log 'Keyboard map keys has been loaded'
 
   local keyboard_model=''
-  keyboard_model="$(get_setting 'keyboard_model')" || fail
+  keyboard_model="$(get_setting 'keyboard_model')" ||
+    fail 'Unable to read keyboard_model setting'
 
   local keyboard_layouts=''
-  keyboard_layouts="$(get_setting 'keyboard_layouts')" || fail
+  keyboard_layouts="$(get_setting 'keyboard_layouts')" ||
+    fail 'Unable to read keyboard_layouts setting'
 
   local keyboard_options=''
-  keyboard_options="$(get_setting 'keyboard_options')" || fail
+  keyboard_options="$(get_setting 'keyboard_options')" ||
+    fail 'Unable to read keyboard_options setting'
 
   printf '%s\n' \
    'Section "InputClass"' \
@@ -402,7 +407,7 @@ set_keyboard () {
 
   # Save keyboard settings to the user config
   local user_name=''
-  user_name="$(get_setting 'user_name')" || fail
+  user_name="$(get_setting 'user_name')" || fail 'Unable to read user_name setting'
 
   local config_home="/home/${user_name}/.config/stack"
 
@@ -437,7 +442,7 @@ set_timezone () {
   log 'Setting the system timezone...'
 
   local timezone=''
-  timezone="$(get_setting 'timezone')" || fail
+  timezone="$(get_setting 'timezone')" || fail 'Unable to read timezone setting'
 
   ln -sf "/usr/share/zoneinfo/${timezone}" /etc/localtime ||
     fail 'Failed to set the timezone'
@@ -587,7 +592,7 @@ configure_power () {
 
   # Save screensaver settings to the user config
   local user_name=''
-  user_name="$(get_setting 'user_name')" || fail
+  user_name="$(get_setting 'user_name')" || fail 'Unable to read user_name setting'
 
   local config_home="/home/${user_name}/.config/stack"
 
@@ -683,7 +688,7 @@ configure_security () {
 
   # Save screen locker settings to the user config
   local user_name=''
-  user_name="$(get_setting 'user_name')" || fail
+  user_name="$(get_setting 'user_name')" || fail 'Unable to read user_name setting'
 
   local config_home="/home/${user_name}/.config/stack"
 
@@ -712,7 +717,7 @@ install_boot_loader () {
     log 'Grub boot loader has been installed on x86_64-efi'
   else
     local disk=''
-    disk="$(get_setting 'disk')" || fail
+    disk="$(get_setting 'disk')" || fail 'Unable to read disk setting'
 
     grub-install --target=i386-pc "${disk}" 2>&1 ||
       fail 'Failed to install grub boot on i386-pc'
@@ -805,7 +810,7 @@ enable_services () {
   fi
   
   local user_name=''
-  user_name="$(get_setting 'user_name')" || fail
+  user_name="$(get_setting 'user_name')" || fail 'Unable to read user_name setting'
   
   local config_home="/home/${user_name}/.config"
 

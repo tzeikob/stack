@@ -81,7 +81,7 @@ resolve_gpu () {
 # Resolves if the installation disk supports TRIM.
 is_disk_trimmable () {
   local disk=''
-  disk="$(get_setting 'disk')" || fail
+  disk="$(get_setting 'disk')" || fail 'Unable to read disk setting'
 
   local discards=''
   discards="$(
@@ -118,7 +118,8 @@ report () {
   query='.user_password = "***" | .root_password = "***"'
 
   local settings=''
-  settings="$(get_settings | jq "${query}")" || fail
+  settings="$(get_settings | jq "${query}")" ||
+    fail 'Unable to read settings'
 
   echo -e '\nInstallation properties have been set to:'
   echo -e "${settings}\n"

@@ -9,7 +9,7 @@ sync_clock () {
   log 'Updating the system clock...'
 
   local timezone=''
-  timezone="$(get_setting 'timezone')" || fail
+  timezone="$(get_setting 'timezone')" || fail 'Unable to read timezone setting'
 
   timedatectl set-timezone "${timezone}" 2>&1 ||
     fail 'Unable to set timezone'
@@ -36,7 +36,8 @@ set_mirrors () {
   log 'Setting up package databases mirrors list...'
 
   local mirrors=''
-  mirrors="$(get_setting 'mirrors' | jq -cer 'join(",")')" || fail
+  mirrors="$(get_setting 'mirrors' | jq -cer 'join(",")')" ||
+    fail 'Unable to read mirrors setting'
 
   reflector --country "${mirrors}" \
     --age 48 --sort age --latest 40 --save /etc/pacman.d/mirrorlist 2>&1 ||
@@ -91,7 +92,8 @@ install_kernels () {
   log 'Installing the linux kernels...'
 
   local kernels=''
-  kernels="$(get_setting 'kernels' | jq -cer 'join(" ")')" || fail
+  kernels="$(get_setting 'kernels' | jq -cer 'join(" ")')" ||
+    fail 'Unable to read kernels setting'
 
   local pckgs=''
 

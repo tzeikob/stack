@@ -357,7 +357,7 @@ report () {
   query='.user_password = "***" | .root_password = "***"'
 
   local settings=''
-  settings="$(get_settings | jq "${query}")" || fail
+  settings="$(get_settings | jq "${query}")" || fail 'Unable to read settings'
 
   echo -e '\nInstallation properties have been set to:'
   echo -e "${settings}"

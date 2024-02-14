@@ -27,7 +27,7 @@ wipe_disk () {
   log 'Start now erasing disk data...'
 
   local disk=''
-  disk="$(get_setting 'disk')" || fail
+  disk="$(get_setting 'disk')" || fail 'Unable to read disk setting'
 
   wipefs -a "${disk}" 2>&1 ||
     fail 'Failed to wipe the disk file system'
@@ -40,7 +40,7 @@ create_gpt_partitions () {
   log 'Creating a clean GPT partition table...'
 
   local disk=''
-  disk="$(get_setting 'disk')" || fail
+  disk="$(get_setting 'disk')" || fail 'Unable to read disk setting'
 
   parted --script "${disk}" mklabel gpt 2>&1 ||
     fail 'Failed to create partition table'
@@ -64,7 +64,7 @@ create_gpt_partitions () {
 
   if is_setting 'swap_on' 'yes' && is_setting 'swap_type' 'partition'; then
     local swap_size=0
-    swap_size=$(get_setting 'swap_size') || fail
+    swap_size=$(get_setting 'swap_size') || fail 'Unable to read swap_size setting'
 
     end=$((start + (swap_size * 1024)))
 
@@ -91,7 +91,7 @@ create_mbr_partitions () {
   log 'Creating a clean MBR partition table...'
 
   local disk=''
-  disk="$(get_setting 'disk')" || fail
+  disk="$(get_setting 'disk')" || fail 'Unable to read disk setting'
 
   parted --script "${disk}" mklabel msdos 2>&1 ||
     fail 'Failed to create partition table'
@@ -103,7 +103,7 @@ create_mbr_partitions () {
 
   if is_setting 'swap_on' 'yes' && is_setting 'swap_type' 'partition'; then
     local swap_size=0
-    swap_size=$(get_setting 'swap_size') || fail
+    swap_size=$(get_setting 'swap_size') || fail 'Unable to read swap_size setting'
 
     local end=$((start + (swap_size * 1024)))
 
@@ -149,7 +149,7 @@ format_partitions () {
   log 'Formatting disk partitions...'
 
   local disk=''
-  disk="$(get_setting 'disk')" || fail
+  disk="$(get_setting 'disk')" || fail 'Unable to read disk setting'
 
   local postfix=''
   if match "${disk}" '^/dev/nvme'; then
@@ -199,7 +199,7 @@ mount_file_system () {
   log 'Mounting disk partitions...'
   
   local disk=''
-  disk="$(get_setting 'disk')" || fail
+  disk="$(get_setting 'disk')" || fail 'Unable to read disk setting'
 
   local postfix=''
   if match "${disk}" '/dev/^nvme'; then
@@ -250,7 +250,7 @@ make_swap_space () {
   log 'Setting up the swap space...'
 
   local disk=''
-  disk="$(get_setting 'disk')" || fail
+  disk="$(get_setting 'disk')" || fail 'Unable to read disk setting'
 
   local postfix=''
   if match "${disk}" '/dev/^nvme'; then
@@ -273,7 +273,8 @@ make_swap_space () {
     log 'Swap partition has been enabled'
   elif is_setting 'swap_type' 'file'; then
     local swap_size=0
-    swap_size=$(get_setting 'swap_size' | jq -cer '. * 1024') || fail
+    swap_size=$(get_setting 'swap_size' | jq -cer '. * 1024') ||
+      fail 'Unable to read swap_size setting'
 
     local swap_file='/mnt/swapfile'
 
@@ -288,7 +289,7 @@ make_swap_space () {
 
     log "Swap file has been set to ${swap_file}"
   else
-    log "Skipping swap space, invalid swap type ${swap_type}"
+    log 'Skipping swap space, invalid swap type'
   fi
 }
 
@@ -308,7 +309,7 @@ report () {
   log 'Disk layout is now set to:\n'
 
   local disk=''
-  disk="$(get_setting 'disk')" || fail
+  disk="$(get_setting 'disk')" || fail 'Unable to read disk setting'
 
   parted --script "${disk}" print 2>&1 |
     awk '{print " "$0}' || fail 'Unable to list disk info'

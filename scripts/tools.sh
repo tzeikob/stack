@@ -196,7 +196,8 @@ install_virtual_box () {
   log 'Installing the virtual box...'
 
   local kernels=''
-  kernels="$(get_setting 'kernels' | jq -cer 'join(" ")')" || fail
+  kernels="$(get_setting 'kernels' | jq -cer 'join(" ")')" ||
+    fail 'Unable to read kernels setting'
 
   local pckgs='virtualbox virtualbox-guest-iso'
 
@@ -216,7 +217,7 @@ install_virtual_box () {
   fi
 
   local user_name=''
-  user_name="$(get_setting 'user_name')" || fail
+  user_name="$(get_setting 'user_name')" || fail 'Unable to read user_name setting'
 
   sudo usermod -aG vboxusers "${user_name}" 2>&1 &&
     log 'User added to the vboxusers user group' ||
@@ -275,7 +276,7 @@ install_evince () {
   fi
 
   local user_name=''
-  user_name="$(get_setting 'user_name')" || fail
+  user_name="$(get_setting 'user_name')" || fail 'Unable to read user_name setting'
 
   local config_home="/home/${user_name}/.config"
 
@@ -299,7 +300,7 @@ install_foliate () {
   fi
 
   local user_name=''
-  user_name="$(get_setting 'user_name')" || fail
+  user_name="$(get_setting 'user_name')" || fail 'Unable to read user_name setting'
 
   local config_home="/home/${user_name}/.config"
 
