@@ -402,4 +402,6 @@ if is_not_given "${REPLY}" || is_no "${REPLY}"; then
   fail 'Installation has been canceled'
 fi
 
-sleep 3
+echo -e '\nInstallation process will start in 5 secs...'
+
+sleep 5

@@ -2,7 +2,7 @@
 
 set -Eeo pipefail
 
-BAR_FORMAT='{desc:11} {percentage:3.0f}%|{bar}| T{elapsed:8}'
+BAR_FORMAT='{desc:10}  {percentage:3.0f}%|{bar}|  T-{elapsed:8}'
 
 source /opt/stack/scripts/utils.sh
 
@@ -93,6 +93,7 @@ install () {
 
 # Restarts the system.
 restart () {
+  log 'Installation process has been completed'
   log 'Rebooting the system in 15 secs...'
 
   sleep 15
