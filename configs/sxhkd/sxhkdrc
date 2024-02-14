@@ -60,7 +60,7 @@ super + Return
 
 # Open a new terminal window.
 super + alt + Return
-  $TERMINAL
+  ${TERMINAL}
 
 # Show the application launcher.
 super + space
@@ -126,11 +126,11 @@ super + alt + slash
 
 # Take a screen shot.
 super + Print
-  scrot -s $HOME/images/$(date +"%Y-%m-%d-%H-%M-%S")-screenshot.png
+  scrot -s "${HOME}/images/$(date +"%Y-%m-%d-%H-%M-%S")-screenshot.png"
 
 # Start recording your screen.
 super + alt + Print
-  $TERMINAL -e screencast -S -n $HOME/videos/$(date +"%Y-%m-%d-%H-%M-%S")-screencast.mkv
+  ${TERMINAL} -e screencast -S -n "${HOME}/videos/$(date +"%Y-%m-%d-%H-%M-%S")-screencast.mkv"
 
 # Restart the desktop environment.
 super + ctrl + alt + r

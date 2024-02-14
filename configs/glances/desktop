@@ -1,9 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=Glances
-comment=Console Monitor
-Exec=glances
-Terminal=true
-Icon=glances
-Catogories=Monitor;Resources;System;Console
-Keywords=Monitor;Resources;System

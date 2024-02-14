@@ -2,8 +2,8 @@
 
 set -o pipefail
 
-source /opt/stack/utils
-source /opt/stack/bluetooth/helpers
+source /opt/tools/utils
+source /opt/tools/bluetooth/helpers
 
 # Reads the status of the default bluetooth
 # controller and prints its name out.

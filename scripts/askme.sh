@@ -1,735 +1,407 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 set -Eeo pipefail
 
-save_option () {
-  local KEY=$1
-  local VALUE=$2
+source /opt/stack/scripts/utils.sh
 
-  if [ ! -f "$OPTIONS" ]; then
-    echo "Error: no options file found"
-    exit 1
+# Asks the user to select the installation disk.
+select_disk () {
+  local fields='name,path,type,size,rm,ro,tran,hotplug,state,'
+  fields+='vendor,model,rev,serial,mountpoint,mountpoints,'
+  fields+='label,uuid,fstype,fsver,fsavail,fsused,fsuse%'
+
+  local query='[.blockdevices[]|select(.type == "disk")]'
+
+  local disks=''
+  disks="$(
+    lsblk -J -o "${fields}" | jq -cer "${query}" 2> /dev/null
+  )" || fail 'Unable to list disk block devices'
+
+  local trim='.|gsub("^\\s+|\\s+$";"")'
+  local vendor="\(.vendor|if . then .|${trim} else empty end)"
+
+  local value=''
+  value+="[\"${vendor}\", .rev, .serial, .size]|join(\" \")"
+  value="\(${value}|if . != \"\" then \" [\(.|${trim})]\" else empty end)"
+  value="\(.path)${value}"
+
+  local query=''
+  query="[.[]|{key: .path, value: \"${value}\"}]"
+
+  disks="$(
+    echo "${disks}" | jq -cer "${query}"
+  )" || fail
+
+  pick_one 'Select the installation disk:' "${disks}" 'vertical'
+  is_not_given "${REPLY}" && fail 'Installation has been canceled'
+
+  local disk="${REPLY}"
+
+  echo -e "\nCAUTION, all data in \"${disk}\" will be lost!"
+  confirm 'Do you want to proceed with this disk?'
+
+  if is_not_given "${REPLY}" || is_no "${REPLY}"; then
+    fail 'Installation has been canceled'
   fi
 
-  # Override pre-existing option
-  if grep -Eq "^${KEY}.*" "$OPTIONS"; then
-    sed -i -e "/^${KEY}.*/d" "$OPTIONS"
-  fi
+  save_setting 'disk' "\"${disk}\""
 
-  echo "${KEY}=${VALUE}" >> "$OPTIONS"
+  echo -e "Installation disk set to block device ${disk}"
 }
 
-save_string () {
-  save_option "$1" "\"$2\""
-}
-
-save_array () {
-  save_option "$1" "($2)"
-}
-
-append_array () {
-  local KEY=$1
-  local VALUE=$2
-
-  if [ ! -f "$OPTIONS" ]; then
-    echo "Error: no options file found"
-    exit 1
-  fi
-
-  if grep -Eq "^${KEY}.*" "$OPTIONS"; then
-    sed -ri "s/^${KEY}=\((.*)\)/${KEY}=(\1 ${VALUE})/" "$OPTIONS"
-    sed -ri "s/^${KEY}=\( (.*)/${KEY}=(\1/" "$OPTIONS"
-  fi
-}
-
-trim () {
-  local INPUT=""
-  [[ -p /dev/stdin ]] && INPUT="$(cat -)" || INPUT="${@}"
-
-  echo "$INPUT" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'
-}
-
-no_breaks () {
-  local INPUT=""
-  [[ -p /dev/stdin ]] && INPUT="$(cat -)" || INPUT="${@}"
-
-  echo "$INPUT" | tr -d '\n'
-}
-
-remove_dups () {
-  local ARR=("${@}")
-  echo "${ARR[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '
-}
-
-contains () {
-  local ITEM=$1 && shift
-
-  local ARR=("${@}")
-  local LEN=${#ARR[@]}
-
-  for ((i = 0; i < $LEN; i++)); do
-    if [ "$ITEM" = "${ARR[$i]}" ]; then
-      return 0
-    fi
-  done
-
-  return 1
-}
-
-print () {
-  local COLS=$1 && shift
-  local PADDING=$1 && shift
-
-  local ARR=("${@}")
-  local LEN=${#ARR[@]}
-
-  # Calculate total rows for the given length and columns
-  local ROWS=$(((LEN + COLS - 1) / COLS))
-
-  for ((i = 0; i < $ROWS; i++)); do
-    for ((j = 0; j < $COLS; j++)); do
-      # Map the index of the item to print vertically
-      local INDX=$((i + (j * ROWS)))
-
-      if [ ! -z "${ARR[$INDX]}" ]; then
-        local TEXT="$(no_breaks "${ARR[$INDX]}")"
-
-        printf "%-${PADDING}s\t" "$TEXT"
-      fi
-    done
-
-    printf "\n"
-  done
-}
-
-init_options () {
-  rm -f "$OPTIONS" && touch "$OPTIONS" || exit 1
-
-  save_array "APPS" ""
-}
-
-is_uefi () {
-  local UEFI="no"
-
-  if [ -d "/sys/firmware/efi/efivars" ]; then
-    UEFI="yes"
-
-    echo "UEFI mode has been detected"
-  else
-    echo "No UEFI mode has been detected"
-  fi
-
-  save_string "UEFI" "$UEFI"
-  echo "UEFI is set to \"$UEFI\""
-}
-
-what_cpu () {
-  echo "Start detecting CPU vendor..."
-
-  local CPU=$(lscpu)
-
-  if grep -Eq "AuthenticAMD" <<< ${CPU}; then
-    CPU="amd"
-  elif grep -Eq "GenuineIntel" <<< ${CPU}; then
-    CPU="intel"
-  else
-    CPU="generic"
-  fi
-
-  local REPLY=""
-  read -rep "Seems your system is running an ${CPU} CPU, right? [Y/n] " REPLY
-  REPLY="${REPLY:-"yes"}"
-  REPLY="${REPLY,,}"
-
-  if [[ ! "$REPLY" =~ ^(y|yes)$ ]]; then
-    read -rep "Okay, which CPU is running then? [amd/intel] " CPU
-    CPU="${CPU,,}"
-
-    while [[ ! "$CPU" =~ ^(amd|intel)$ ]]; do
-      read -rep " Please enter a valid CPU vendor: " CPU
-      CPU="${CPU,,}"
-    done
-  fi
-
-  save_string "CPU" "$CPU"
-
-  echo "CPU vendor is set to \"$CPU\""
-}
-
-what_gpu () {
-  echo "Start detecting GPU vendor..."
-
-  local GPU=$(lspci)
-
-  if grep -Eq "NVIDIA|GeForce" <<< ${GPU}; then
-    GPU="nvidia"
-  elif grep -Eq "Radeon|AMD" <<< ${GPU}; then
-    GPU="amd"
-  elif grep -Eq "Integrated Graphics Controller" <<< ${GPU}; then
-    GPU="intel"
-  elif grep -Eq "Intel Corporation UHD" <<< ${GPU}; then
-    GPU="intel"
-  else
-    GPU="generic"
-  fi
-
-  local REPLY=""
-  read -rep "Is your system using an ${GPU} GPU, right? [Y/n] " REPLY
-  REPLY="${REPLY:-"yes"}"
-  REPLY="${REPLY,,}"
-
-  if [[ ! "$REPLY" =~ ^(y|yes)$ ]]; then
-    read -rep "Really? Which GPU is it then? [nvidia/amd/intel] " GPU
-    GPU="${GPU,,}"
-
-    while [[ ! "$GPU" =~ ^(nvidia|amd|intel)$ ]]; do
-      read -rep " Please enter a valid GPU vendor: " GPU
-      GPU="${GPU,,}"
-    done
-  fi
-
-  save_string "GPU" "$GPU"
-
-  echo "GPU vendor is set to \"$GPU\""
-}
-
-want_synaptics () {
-  local REPLY=""
-  read -rep "Do you want to install synaptic drivers? [y/N] " REPLY
-  REPLY="${REPLY:-"no"}"
-  REPLY="${REPLY,,}"
-
-  local SYNAPTICS="no"
-
-  if [[ "$REPLY" =~ ^(y|yes)$ ]]; then
-    SYNAPTICS="yes"
-  fi
-
-  save_string "SYNAPTICS" "$SYNAPTICS"
-  echo -e "Synaptics is set to \"$SYNAPTICS\"\n"
-}
-
-what_hardware () {
-  echo "Started resolving system hardware..."
-
-  is_uefi
-
-  local VIRTUAL_VENDOR=$(systemd-detect-virt)
-
-  if [ "$VIRTUAL_VENDOR" != "none" ]; then
-    save_string "VIRTUAL" "yes"
-    save_string "VIRTUAL_VENDOR" "$VIRTUAL_VENDOR"
-
-    echo "Virtual is set to \"yes\""
-    echo "Virtual vendor set to \"$VIRTUAL_VENDOR\""
-  else
-    save_string "VIRTUAL" "no"
-    echo "Virtual is set to \"no\""
-
-    what_cpu
-    what_gpu
-    want_synaptics
-  fi
-
-  echo -e "Hardware has been resolved successfully\n"
-}
-
-which_disk () {
-  lsblk -dA -o NAME,SIZE,FSUSE%,FSTYPE,TYPE,MOUNTPOINTS,LABEL
-
-  local DEVICE=""
-  read -rep "Enter the installation disk: " DEVICE
-  DEVICE="/dev/$DEVICE"
-
-  while [ ! -b "$DEVICE" ]; do
-    read -rep " Please enter a valid disk block device: " DEVICE
-    DEVICE="/dev/$DEVICE"
-  done
-
-  echo -e "\nCAUTION, all data in \"$DEVICE\" will be lost"
-
-  local REPLY=""
-  read -rep "Proceed and use it as installation disk? [y/N] " REPLY
-  REPLY="${REPLY:-"no"}"
-  REPLY="${REPLY,,}"
-
-  while [[ ! "$REPLY" =~ ^(y|yes)$ ]]; do
-    read -rep "Enter another disk block device: " DEVICE
-    DEVICE="/dev/$DEVICE"
-
-    while [ ! -b "$DEVICE" ]; do
-      read -rep " Please enter a valid disk block device: " DEVICE
-      DEVICE="/dev/$DEVICE"
-    done
-
-    echo -e "\nCAUTION, all data in \"$DEVICE\" will be lost"
-    read -rep "Proceed and use it as installation disk? [y/N] " REPLY
-    REPLY="${REPLY:-"no"}"
-    REPLY="${REPLY,,}"
-  done
-
-  save_string "DISK" "$DEVICE"
-
-  read -rep "Is this disk an SSD drive? [Y/n] " REPLY
-  REPLY="${REPLY:-"yes"}"
-  REPLY="${REPLY,,}"
-
-  if [[ "$REPLY" =~ ^(y|yes)$ ]]; then
-    save_string "DISK_SSD" "yes"
-  else
-    save_string "DISK_SSD" "no"
-  fi
-
-  local DISCARDS=($(lsblk -dn --discard -o DISC-GRAN,DISC-MAX $DEVICE))
-
-  if [[ "$DISCARDS[1]" =~ [1-9]+[TGMB] && "$DISCARDS[2]" =~ [1-9]+[TGMB] ]]; then
-    read -rep "Do you want to enable trim on this disk? [Y/n] " REPLY
-    REPLY="${REPLY:-"yes"}"
-    REPLY="${REPLY,,}"
-
-    if [[ "$REPLY" =~ ^(y|yes)$ ]]; then
-      save_string "DISK_TRIM" "yes"
-    else
-      save_string "DISK_TRIM" "no"
-    fi
-  else
-    save_string "DISK_TRIM" "no"
-  fi
-
-  echo -e "Installation disk is set to block device \"$DEVICE\"\n"
-}
-
-want_swap () {
-  local REPLY=""
-  read -rep "Do you want to enable swap? [Y/n] " REPLY
-  REPLY="${REPLY:-"yes"}"
-  REPLY="${REPLY,,}"
-
-  if [[ ! "$REPLY" =~ ^(y|yes)$ ]]; then
-    save_string "SWAP" "no"
-    echo -e "Swap is set to \"no\"\n"
+# Asks the user to enable or not the swap space.
+opt_in_swap_space () {
+  confirm 'Do you want to enable swap space?'
+  is_not_given "${REPLY}" && fail 'Installation has been canceled'
+
+  if is_no "${REPLY}"; then
+    save_setting 'swap_on' '"no"'
+
+    echo -e 'Swap is set to off'
     return 0
-  else
-    save_string "SWAP" "yes"
   fi
 
-  local SWAP_SIZE=""
-  read -rep "Enter the size of the swap in GBytes: " SWAP_SIZE
+  save_setting 'swap_on' '"yes"'
 
-  while [[ ! "$SWAP_SIZE" =~ ^[1-9][0-9]{,2}$ ]]; do
-    read -rep " Please enter a valid swap size in GBytes: " SWAP_SIZE
+  echo -e 'Swap is set to yes'
+
+  ask 'Enter the size of the swap space in GBs:'
+
+  while is_not_integer "${REPLY}" '[1,]'; do
+    ask 'Please enter a valid swap space size in GBs:'
   done
 
-  local SWAP_TYPE=""
-  read -rep "Enter the swap type: [FILE/partition] " SWAP_TYPE
-  SWAP_TYPE="${SWAP_TYPE:-"file"}"
-  SWAP_TYPE="${SWAP_TYPE,,}"
+  local swap_size="${REPLY}"
 
-  while [[ ! "$SWAP_TYPE" =~ ^(file|partition)$ ]]; do
-    read -rep " Enter a valid swap type: " SWAP_TYPE
-    SWAP_TYPE="${SWAP_TYPE,,}"
-  done
+  save_setting 'swap_size' "${swap_size}"
 
-  save_string "SWAP_SIZE" "$SWAP_SIZE"
-  save_string "SWAP_TYPE" "$SWAP_TYPE"
+  echo -e "Swap size is set to ${swap_size}GB"
 
-  echo "Swap is set to \"$SWAP_TYPE\""
-  echo -e "Swap size is set to \"${SWAP_SIZE}GB\"\n"
+  local swap_types=''
+  swap_types+='{"key": "file", "value":"File"},'
+  swap_types+='{"key": "partition", "value":"Partition"}'
+  swap_types="[${swap_types}]"
+
+  pick_one 'Which type of swap to setup:' "${swap_types}" 'horizontal'
+  is_not_given "${REPLY}" && fail 'Installation has been canceled'
+
+  local swap_type="${REPLY}"
+
+  save_setting 'swap_type' "\"${swap_type}\""
+
+  echo -e "Swap type is set to ${swap_type}"
 }
 
-which_mirrors () {
-  local OLD_IFS=$IFS
-  IFS=","
+# Asks the user to select the mirror countries used for installation and updates.
+select_mirrors () {
+  local mirrors=''
+  mirrors="$(
+    reflector --list-countries 2> /dev/null | tail -n +3 | awk '{
+      match($0, /(.*)([A-Z]{2})\s+([0-9]+)/, a)
+      gsub(/[ \t]+$/, "", a[1])
 
-  reflector --list-countries > "$HOME/.mirrors" || exit 1
+      frm="{\"key\": \"%s\", \"value\": \"%s\"},"
+      printf frm, a[2], a[1]" ["a[3]"]"
+    }'
+  )" || fail 'Unable to fetch package databases mirrors'
 
-  local COUNTRIES=($(
-    cat "$HOME/.mirrors" |
-      tail -n +3 |
-      awk '{split($0,a,/[A-Z]{2}/); print a[1]}' |
-      trim |
-      awk '{print $0","}' |
-      no_breaks
-  ))
+  # Remove the extra comma from the last element
+  mirrors="[${mirrors:+${mirrors::-1}}]"
 
-  IFS=$OLD_IFS
+  pick_many 'Select package databases mirrors:' "${mirrors}" 'vertical'
+  is_not_given "${REPLY}" && fail 'Installation has been canceled'
 
-  print 4 25 "${COUNTRIES[@]}"
+  mirrors="${REPLY}"
 
-  local COUNTRY=""
-  read -rep "Enter the primary mirror country: [Greece] " COUNTRY
-  COUNTRY="${COUNTRY:-"Greece"}"
+  save_setting 'mirrors' "${mirrors}"
 
-  while ! contains "$COUNTRY" "${COUNTRIES[@]}"; do
-    read -rep " Please enter a valid country: " COUNTRY
-  done
-
-  local MIRROR_SET="\"$COUNTRY\""
-
-  while true; do
-    read -rep "Enter another secondary mirror country (none to skip): " COUNTRY
-
-    [ -z "$COUNTRY" ] && break
-
-    while ! contains "$COUNTRY" "${COUNTRIES[@]}"; do
-      read -rep " Please enter a valid country: " COUNTRY
-    done
-
-    [[ ! "$MIRROR_SET" =~ $COUNTRY ]] && MIRROR_SET="$MIRROR_SET \"$COUNTRY\""
-  done
-
-  save_array "MIRRORS" "$MIRROR_SET"
-  echo -e "Mirror countries are set to [$MIRROR_SET]\n"
+  echo -e "Package databases mirrors are set to ${mirrors}"
 }
 
-which_timezone () {
-  local CONTINENTS=(
-    "Africa" "America" "Antarctica" "Arctic" "Asia"
-    "Atlantic" "Australia" "Europe" "Indian" "Pacific"
-  )
+# Asks the user to select the system's timezone.
+select_timezone () {
+  local timezones=''
+  timezones="$(
+    timedatectl list-timezones 2> /dev/null | awk '{
+      print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
+    }'
+  )" || fail 'Unable to list timezones'
 
-  print 4 15 "${CONTINENTS[@]}"
+  # Remove the extra comma after the last array element
+  timezones="[${timezones:+${timezones::-1}}]"
 
-  local CONTINENT=""
-  read -rep "Select your continent: [Europe] " CONTINENT
-  CONTINENT="${CONTINENT:-"Europe"}"
+  pick_one 'Select the system timezone:' "${timezones}" 'vertical'
+  is_not_given "${REPLY}" && fail 'Installation has been canceled'
 
-  while ! contains "$CONTINENT" "${CONTINENTS[@]}"; do
-    read -rep " Please enter a valid continent: " CONTINENT
-  done
+  local timezone="${REPLY}"
 
-  ls -1 -pU "/usr/share/zoneinfo/$CONTINENT" > "$HOME/.cities" || exit 1
+  save_setting 'timezone' "\"${timezone}\""
 
-  local CITIES=($(cat "$HOME/.cities" | grep -v /))
-
-  echo && print 4 20 "${CITIES[@]}"
-
-  local CITY=""
-  read -rep "Enter the city closer to your timezone? " CITY
-
-  while [ ! -f "/usr/share/zoneinfo/$CONTINENT/$CITY" ]; do
-    read -rep " Please enter a valid timezone city: " CITY
-  done
-
-  local TIMEZONE="$CONTINENT/$CITY"
-
-  save_string "TIMEZONE" "$TIMEZONE"
-  echo -e "Current timezone is set to \"$TIMEZONE\"\n"
+  echo -e "Timezone is set to ${timezone}"
 }
 
-which_keymap () {
-  local OLD_IFS=$IFS
-  IFS=","
+# Asks the user to select which locales to install.
+select_locales () {
+  local locales=''
+  locales="$(
+    cat /etc/locale.gen | tail -n +24 | grep -E '^\s*#.*' | tr -d '#' | trim | awk '{
+      print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
+    }'
+  )" || fail 'Unable to list the locales'
+  
+  # Removes the last comma delimiter from the last element
+  locales="[${locales:+${locales::-1}}]"
 
-  local EXTRA="apple|mac|window|sun|atari|amiga|ttwin|ruwin"
-  EXTRA="$EXTRA|wangbe|adnw|applkey|backspace|bashkir|bone"
-  EXTRA="$EXTRA|carpalx|croat|colemak|ctrl|defkeymap|euro|keypad|koy"
+  pick_many 'Select system locales by order:' "${locales}" 'vertical'
+  is_not_given "${REPLY}" && fail 'Installation has been canceled'
 
-  localectl --no-pager list-keymaps > "$HOME/.keymaps" || exit 1
+  locales="${REPLY}"
 
-  local MAPS=($(
-    cat "$HOME/.keymaps" |
-      trim |
-      awk '{print $0","}' |
-      sed -n -E "/$EXTRA/!p"
-  ))
+  save_setting 'locales' "${locales}"
 
-  local EXTRA=($(
-    cat "$HOME/.keymaps" |
-      trim |
-      awk '{print $0","}' |
-      sed -n -E "/$EXTRA/p"
-  ))
-
-  IFS=$OLD_IFS
-
-  print 4 25 "${MAPS[@]}"
-
-  local KEYMAP=""
-  read -rep "Enter your keyboard's keymap (extra for more): [us] " KEYMAP
-  KEYMAP="${KEYMAP:-"us"}"
-
-  if [ "$KEYMAP" = "extra" ]; then
-    echo && print 4 30 "${EXTRA[@]}"
-
-    read -rep "Enter your keyboard's keymap: " KEYMAP
-  fi
-
-  while [ -z "$(find /usr/share/kbd/keymaps/ -type f -name "$KEYMAP.map.gz")" ]; do
-    read -rep " Please enter a valid keyboard map: " KEYMAP
-  done
-
-  save_string "KEYMAP" "$KEYMAP"
-  echo -e "Keyboard keymap is set to \"$KEYMAP\"\n"
+  echo -e "Locales are set to ${locales}"
 }
 
-which_layouts () {
-  local LAYOUTS=(
-    af al am ara at au az ba bd be bg br brai bt bw by ca cd ch cm cn cz
-    de dk dz ee epo es et fi fo fr gb ge gh gn gr hr hu id ie il in iq ir
-    is it jp ke kg kh kr kz la latam lk lt lv ma mao md me mk ml mm mn mt
-    mv my ng nl no np ph pk pl pt ro rs ru se si sk sn sy tg th tj tm tr
-    tw tz ua uz vnza
-  )
+# Asks the user to select the keyboard model.
+select_keyboard_model () {
+  # TODO: localectl needs xorg deps to provide x11 kb models
+  save_setting 'keyboard_model' '"pc105"'
+  return 0
 
-  print 8 6 "${LAYOUTS[@]}"
+  local models=''
+  models="$(
+    localectl --no-pager list-x11-keymap-models 2> /dev/null | awk '{
+      print "{\"key\":\""$1"\",\"value\":\""$1"\"},"
+    }'
+  )" || fail 'Unable to list keyboard models'
 
-  local LAYOUT=""
-  read -rep "Enter your primary keyboard layout: [us] " LAYOUT
-  LAYOUT="${LAYOUT:-"us"}"
+  # Remove the extra comma delimiter from the last element
+  models="[${models:+${models::-1}}]"
 
-  while ! contains "$LAYOUT" "${LAYOUTS[@]}"; do
-    read -rep " Please enter a valid layout: " LAYOUT
-  done
+  pick_one 'Select a keyboard model:' "${models}" 'vertical'
+  is_not_given "${REPLY}" && fail 'Installation has been canceled'
 
-  local LAYOUT_SET="\"$LAYOUT\""
+  local keyboard_model="${REPLY}"
 
-  while true; do
-    read -rep "Enter another secondary layout (none to skip): " LAYOUT
+  save_setting 'keyboard_model' "\"${keyboard_model}\""
 
-    [ -z "$LAYOUT" ] && break
-
-    while ! contains "$LAYOUT" "${LAYOUTS[@]}"; do
-      read -rep " Please enter a valid layout: " LAYOUT
-    done
-
-    [[ ! "$LAYOUT_SET" =~ $LAYOUT ]] && LAYOUT_SET="$LAYOUT_SET \"$LAYOUT\""
-  done
-
-  save_array "LAYOUTS" "$LAYOUT_SET"
-  echo -e "Keyboard layouts are set to [$LAYOUT_SET]\n"
+  echo -e "Keyboard model is set to ${keyboard_model}"
 }
 
-which_locale () {
-  local OLD_IFS=$IFS
-  IFS=" "
+# Asks the user to select the keyboard map.
+select_keyboard_map () {
+  local maps=''
+  maps="$(
+    localectl --no-pager list-keymaps 2> /dev/null | awk '{
+      print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
+    }'
+  )" || fail 'Unable to list keyboard maps'
+  
+  # Remove extra comma delimiter from the last element
+  maps="[${maps:+${maps::-1}}]"
 
-  local LANGS=($(
-    cat /etc/locale.gen |
-    tail -n +24 |
-    tr -d '#' |
-    awk '{split($0,a,/ /); print a[1]}' |
-    awk '{split($0,a,/_/); print a[1]}' |
-    trim |
-    awk '{print $0" "}'
-  ))
+  pick_one 'Select a keyboard map:' "${maps}" 'vertical'
+  is_not_given "${REPLY}" && fail 'Installation has been canceled'
 
-  IFS=$OLD_IFS
+  local keyboard_map="${REPLY}"
 
-  LANGS=($(remove_dups "${LANGS[@]}"))
+  save_setting 'keyboard_map' "\"${keyboard_map}\""
 
-  print 8 10 "${LANGS[@]}"
-
-  local LANG=""
-  read -rep "Enter the language of your locale: [en] " LANG
-  LANG="${LANG:-"en"}"
-
-  while ! contains "$LANG" "${LANGS[@]}"; do
-    read -rep " Please enter a valid language: " LANG
-  done
-
-  IFS=","
-
-  local LOCALES=($(
-    cat /etc/locale.gen |
-    tail -n +24 |
-    tr -d '#' |
-    awk "/^$LANG/{print}" |
-    trim |
-    awk '{print $0","}' |
-    no_breaks
-  ))
-
-  IFS=$OLD_IFS
-
-  echo && print 5 20 "${LOCALES[@]}"
-
-  local LOCALE=""
-  read -rep "Enter your locale: " LOCALE
-
-  while ! contains "$LOCALE" "${LOCALES[@]}"; do
-    read -rep " Please enter a valid locale: " LOCALE
-  done
-
-  save_string "LOCALE" "$LOCALE"
-  echo -e "Locale is set to \"$LOCALE\"\n"
+  echo -e "Keyboard map is set to ${keyboard_map}"
 }
 
-what_hostname () {
-  local HOSTNAME=""
-  local RE="^[a-z][a-z0-9_-]+$"
+# Asks the user to select keyboard layouts.
+select_keyboard_layouts () {
+  # TODO: localectl needs xorg deps to provide x11 kb layouts
+  save_setting 'keyboard_layouts' '["us", "gr", "de"]'
+  return 0
 
-  read -rep "Enter a name for your host: [arch] " HOSTNAME
-  HOSTNAME="${HOSTNAME:-"arch"}"
+  local layouts=''
+  layouts="$(
+    localectl --no-pager list-x11-keymap-layouts 2> /dev/null | awk '{
+      print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
+    }'
+  )" || fail 'Unable to list keyboard layouts'
+  
+  # Remove the extra comma delimiter from last element
+  layouts="[${layouts:+${layouts::-1}}]"
 
-  if [[ ! "$HOSTNAME" =~ $RE ]]; then
-    echo " Hostname should be at least 2 chars of [a-z0-9_-]"
-    echo " First char must always be a latin letter"
-  fi
+  pick_many 'Select keyboard layouts:' "${layouts}" 'vertical'
+  is_not_given "${REPLY}" && fail 'Installation has been canceled'
 
-  while [[ ! "$HOSTNAME" =~ $RE ]]; do
-    read -rep " Please enter a valid hostname: " HOSTNAME
-  done
+  keyboard_layouts="${REPLY}"
 
-  save_string "HOSTNAME" "$HOSTNAME"
-  echo -e "Hostname is set to \"$HOSTNAME\"\n"
+  save_setting 'keyboard_layouts' "${keyboard_layouts}"
+
+  echo -e "Keyboard layouts are set to ${keyboard_layouts}"
 }
 
-what_username () {
-  local USERNAME=""
-  local RE="^[a-z][a-z0-9_-]+$"
+# Asks the user to select keyboard switch options.
+select_keyboard_options () {
+  # TODO: localectl needs xorg deps to provide x11 kb options
+  save_setting 'keyboard_options' '"grp:alt_shift_toggle"'
+  return 0
 
-  read -rep "Enter a username for your user: [bob] " USERNAME
-  USERNAME="${USERNAME:-"bob"}"
+  local options=''
+  options="$(
+    localectl --no-pager list-x11-keymap-options 2> /dev/null | awk '{
+      print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
+    }'
+  )" || fail 'Unable to list keyboard options'
 
-  if [[ ! "$USERNAME" =~ $RE ]]; then
-    echo " Username should be at least 2 chars of [a-z0-9_-]"
-    echo " First char must always be a latin letter"
-  fi
+  # Remove extra comma delimiter from last element
+  options="[${options:+${options::-1}}]"
 
-  while [[ ! "$USERNAME" =~ $RE ]]; do
-    read -rep " Please enter a valid username: " USERNAME
-  done
+  pick_one 'Select the keyboard options value:' "${options}" 'vertical'
+  is_not_given "${REPLY}" && fail 'Installation has been canceled'
 
-  save_string "USERNAME" "$USERNAME"
-  echo -e "Username is set to \"$USERNAME\"\n"
+  keyboard_options="${REPLY}"
+
+  save_setting 'keyboard_options' "\"${keyboard_options}\""
+
+  echo -e "Keyboard layouts are set to ${keyboard_options}"
 }
 
-what_password () {
-  local SUBJECT=$1
-  local RE="^[a-zA-Z0-9@&!#%\$_-]{4,}$"
-  local MESSAGE="Password must be at least 4 chars of a-z A-Z 0-9 @&!#%\$_-"
+# Asks the user to set the name of the host.
+enter_host_name () {
+  ask 'Enter the name of the host:'
 
-  echo "Setting password for the ${SUBJECT,,}"
-  echo "$MESSAGE"
-
-  local PASSWORD=""
-  read -rsp "Enter a new password: " PASSWORD && echo
-
-  while [[ ! "$PASSWORD" =~ $RE ]]; do
-    read -rsp " Please enter a valid password: " PASSWORD && echo
+  while not_match "${REPLY}" '^[a-z][a-z0-9_-]+$'; do
+    ask 'Please enter a valid host name:'
   done
 
-  local CONFIRMED=""
-  read -rsp "Re-enter the password: " CONFIRMED && echo
+  local host_name="${REPLY}"
 
-  # Repeat until password confirmed 
-  while [ "$PASSWORD" != "$CONFIRMED" ]; do
-    echo " Ooops, passwords do not match"
-    read -rsp "Please enter a new password: " PASSWORD && echo
+  save_setting 'host_name' "\"${host_name}\""
 
-    while [[ ! "$PASSWORD" =~ $RE ]]; do
-      read -rsp " Please enter a valid password: " PASSWORD && echo
-    done
+  echo -e "Hostname is set to ${host_name}"
+}
 
-    read -rsp "Re-enter the password: " CONFIRMED && echo
+# Asks the user to set the name of the sudoer user.
+enter_user_name () {
+  ask 'Enter the name of the user:'
+
+  while not_match "${REPLY}" '^[a-z][a-z0-9_-]+$'; do
+    ask 'Please enter a valid user name:'
   done
 
-  save_string "${SUBJECT}_PASSWORD" "$PASSWORD"
-  echo -e "Password for the ${SUBJECT,,} is set successfully\n"
+  local user_name="${REPLY}"
+
+  save_setting 'user_name' "\"${user_name}\""
+
+  echo -e "User name is set to ${user_name}"
 }
 
-which_kernels () {
-  local KERNELS=""
-  read -rep "Which linux kernels to install: [STABLE/lts/all] " KERNELS
-  KERNELS="${KERNELS:-"stable"}"
-  KERNELS="${KERNELS,,}"
+# Asks the user to set the password of the sudoer user.
+enter_user_password () {
+  ask_secret 'Enter the user password:'
 
-  while [[ ! "$KERNELS" =~ ^(stable|lts|all)$ ]]; do
-    read -rep " Please enter a valid kernel option: " KERNELS
-    KERNELS="${KERNELS,,}"
+  while not_match "${REPLY}" '^[a-zA-Z0-9@&!#%\$_-]{4,}$'; do
+    ask_secret 'Please enter a stronger user password:'
   done
 
-  if [ "$KERNELS" = "all" ]; then
-    KERNELS="\"stable\" \"lts\""
-  else
-    KERNELS="\"$KERNELS\""
-  fi
+  local password="${REPLY}"
 
-  save_array "KERNELS" "$KERNELS"
-  echo -e "Linux kernels are set to [$KERNELS]\n"
+  ask_secret 'Re-type the given password:'
+
+  while not_equals "${REPLY}" "${password}"; do
+    ask_secret 'Not matched, please re-type the given password:'
+  done
+
+  save_setting 'user_password' "\"${password}\""
+
+  echo -e 'User password is set successfully'
 }
 
-opt_in () {
-  local APPS_GROUP=${1,,} && shift
-  local APPS=("${@}")
-  local LEN=${#APPS[@]}
+# Asks the user to set the password of the root user.
+enter_root_password () {
+  ask_secret 'Enter the root password:'
 
-  local COLS=1
-  [ "$LEN" -gt 5 ] && COLS=2
-  print "$COLS" 10 "${APPS[@]}"
+  while not_match "${REPLY}" '^[a-zA-Z0-9@&!#%\$_-]{4,}$'; do
+    ask_secret 'Please enter a stronger root password:'
+  done
 
-  local REPLY=""
-  read -rep "Which ${APPS_GROUP} apps you want to install? [All/none] " REPLY
-  REPLY="${REPLY:-"all"}"
-  REPLY="${REPLY,,}"
+  local password="${REPLY}"
 
-  if [[ "$REPLY" =~ ^all$ ]]; then
-    local ALL=$(trim "$(printf " \"%s\"" "${APPS[@]}")")
+  ask_secret 'Re-type the given password:'
 
-    append_array "APPS" "$ALL"
-    echo "You opted in for $ALL"
-  elif [[ "$REPLY" =~ ^none$ ]]; then
-    echo "You opted out all ${APPS_GROUP} apps"
-  else
-    local REPLIES=($REPLY)
-    local APPS_SET=""
+  while not_equals "${REPLY}" "${password}"; do
+    ask_secret 'Not matched, please re-type the given password:'
+  done
 
-    for APP in "${REPLIES[@]}"; do
-      while ! contains "$APP" "${APPS[@]}"; do
-        read -rep " Unknown $APP application, enter a valid name: " APP
-        APP="${APP,,}"
-      done
+  save_setting 'root_password' "\"${password}\""
 
-      [[ ! "$APPS_SET" =~ "$APP" ]] && APPS_SET="$APPS_SET \"$APP\""
-    done
-
-    APPS_SET=$(trim "$APPS_SET")
-
-    append_array "APPS" "$APPS_SET"
-    echo "You opted in for $APPS_SET"
-  fi
-
-  echo
+  echo -e 'Root password is set successfully'
 }
+
+# Asks the user which linux kernel to install.
+select_kernel () {
+  local kernels=''
+  kernels+='{"key": "stable", "value": "Stable"},'
+  kernels+='{"key": "lts", "value": "LTS"}'
+  kernels="[${kernels}]"
+
+  pick_one 'Select which linux kernel to install:' "${kernels}" 'horizontal'
+  is_not_given "${REPLY}" && fail 'Installation has been canceled'
+
+  local kernel="${REPLY}"
+
+  save_setting 'kernel' "\"${kernel}\""
+
+  echo -e "Linux kernel is set to ${kernel}"
+}
+
+# Report the collected installation settings.
+report () {
+  local query=''
+  query='.user_password = "***" | .root_password = "***"'
+
+  local settings=''
+  settings="$(get_settings | jq "${query}")" || fail 'Unable to read settings'
+
+  echo -e '\nInstallation properties have been set to:'
+  echo -e "${settings}"
+}
+
+echo -e "Let's set some installation properties..."
 
 while true; do
-  init_options &&
-    what_hardware &&
-    which_disk &&
-    want_swap &&
-    which_mirrors &&
-    which_timezone &&
-    which_keymap &&
-    which_layouts &&
-    which_locale &&
-    what_hostname &&
-    what_username &&
-    what_password "USER" &&
-    what_password "ROOT" &&
-    which_kernels &&
-    opt_in "browser" "firefox" "chrome" "brave" "tor" &&
-    opt_in "langs" "node" "deno" "bun" "java" "rust" "go" "php" "ruby" &&
-    opt_in "editor" "code" "sublime" "neovim" "eclipse" "intellij" \
-                    "webstorm" "goland" "phpstorm" "pycharm" "rubymine" &&
-    opt_in "client" "postman" "compass" "robo3t" "studio3t" "dbeaver" &&
-    opt_in "chat" "slack" "discord" "skype" "teams" "irssi" &&
-    opt_in "office" "libreoffice" "xournal" "foliate" "evince" &&
-    opt_in "remote" "teamviewer" "anydesk" "tigervnc" &&
-    opt_in "file" "filezilla" "transmission" &&
-    opt_in "virtualization" "docker" "virtualbox" "vmware"
+  init_settings &&
+    select_disk &&
+    opt_in_swap_space &&
+    select_mirrors &&
+    select_timezone &&
+    select_locales &&
+    select_keyboard_model &&
+    select_keyboard_map &&
+    select_keyboard_layouts &&
+    select_keyboard_options &&
+    enter_host_name &&
+    enter_user_name &&
+    enter_user_password &&
+    enter_root_password &&
+    select_kernel &&
+    report
 
-  echo "Configuration options have been set to:"
-  cat "$OPTIONS" | awk '!/PASSWORD/ {print " "$0}'
+  confirm '\nDo you want to go with these settings?'
+  is_not_given "${REPLY}" && fail 'Installation has been canceled'
 
-  echo -e "\nCAUTION, THIS IS THE LAST WARNING!"
-  echo "ALL data in the disk will be LOST FOREVER!"
-  read -rep "Do you want to re-run configuration? [y/N] " REPLY
-  REPLY="${REPLY:-"no"}"
-  REPLY="${REPLY,,}"
+  if is_yes "${REPLY}"; then
+    break
+  fi
 
-  [[ ! "$REPLY" =~ ^(y|yes)$ ]] && break || clear
+  echo -e "Let's set other installation properties..."
 done
 
-echo "Moving to the next process..."
+echo -e '\nCAUTION, THIS IS THE LAST WARNING!'
+echo -e 'ALL data in the disk will be LOST FOREVER!'
+
+confirm 'Do you want to proceed?'
+
+if is_not_given "${REPLY}" || is_no "${REPLY}"; then
+  fail 'Installation has been canceled'
+fi
+
+echo -e '\nInstallation process will start in 5 secs...'
+
 sleep 5

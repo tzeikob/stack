@@ -2,8 +2,8 @@
 
 set -o pipefail
 
-source /opt/stack/utils
-source /opt/stack/printers/helpers
+source /opt/tools/utils
+source /opt/tools/printers/helpers
 
 # Shows a short status of cups service and printers.
 # Outputs:

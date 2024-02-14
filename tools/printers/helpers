@@ -2,7 +2,7 @@
 
 set -o pipefail
 
-source /opt/stack/utils
+source /opt/tools/utils
 
 # Returns the list of all printing destinations,
 # which have been installed into the system.

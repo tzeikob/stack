@@ -2,8 +2,8 @@
 
 set -o pipefail
 
-source /opt/stack/utils
-source /opt/stack/disks/helpers
+source /opt/tools/utils
+source /opt/tools/disks/helpers
 
 # Shows a short status of the disks and filesystem.
 # Outputs:
@@ -1217,9 +1217,9 @@ create_encrypted () {
   fi
 
   if on_user_mode; then
-    confirm_secret 'Retype the encryption key:' "${key}"
+    ask_secret 'Retype the encryption key:' || return $?
 
-    if has_failed; then
+    if not_equals "${REPLY}" "${key}"; then
       echo 'Encryption key does not match'
       return 2
     fi

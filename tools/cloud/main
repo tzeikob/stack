@@ -2,8 +2,8 @@
 
 set -o pipefail
 
-source /opt/stack/utils
-source /opt/stack/cloud/commands
+source /opt/tools/utils
+source /opt/tools/cloud/commands
 
 # Shows the help message.
 # Arguments:

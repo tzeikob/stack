@@ -2,7 +2,7 @@
 
 set -o pipefail
 
-source /opt/stack/utils
+source /opt/tools/utils
 
 # Reads for hooked in usb removable flash
 # drives and prints them out one by one.

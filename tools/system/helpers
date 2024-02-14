@@ -2,7 +2,7 @@
 
 set -o pipefail
 
-source /opt/stack/utils
+source /opt/tools/utils
 
 UPDATES_FILE=/tmp/updates
 
@@ -37,9 +37,11 @@ find_outdated_packages () {
   local pacman_pkgs=''
   pacman_pkgs="$(checkupdates 2> /dev/null | jq -Rn "${query}")"
 
-  if has_failed; then
+  if is_true "$? = 1"; then
     echo 'null' > "${UPDATES_FILE}"
     return 1
+  elif is_true "$? = 2"; then
+    pacman_pkgs='[]'
   fi
 
   # List all outdated packages installed via the aur repos
@@ -47,8 +49,7 @@ find_outdated_packages () {
   aur_pkgs="$(yay -Qum 2> /dev/null | jq -Rn "${query}")"
 
   if has_failed; then
-    echo 'null' > "${UPDATES_FILE}"
-    return 1
+    aur_pkgs='[]'
   fi
 
   local pkgs="{\"pacman\": ${pacman_pkgs}, \"aur\": ${aur_pkgs}}"

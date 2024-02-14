@@ -2,8 +2,8 @@
 
 set -o pipefail
 
-source /opt/stack/utils
-source /opt/stack/langs/helpers
+source /opt/tools/utils
+source /opt/tools/langs/helpers
 
 # Shows the current status of languages and locales.
 # Outputs:

@@ -2,7 +2,7 @@
 
 set -o pipefail
 
-source /opt/stack/utils
+source /opt/tools/utils
 
 CLOCK_SETTINGS="${HOME}/.config/stack/clock.json"
 

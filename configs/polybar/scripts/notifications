@@ -2,8 +2,8 @@
 
 set -o pipefail
 
-source /opt/stack/utils
-source /opt/stack/notifications/helpers
+source /opt/tools/utils
+source /opt/tools/notifications/helpers
 
 # Reads the state of notifications and prints
 # out the total number of pending ones.

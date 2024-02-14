@@ -2,8 +2,8 @@
 
 set -o pipefail
 
-source /opt/stack/utils
-source /opt/stack/bluetooth/helpers
+source /opt/tools/utils
+source /opt/tools/bluetooth/helpers
 
 # Shows the current status of bluetooth service
 # and connected devices.

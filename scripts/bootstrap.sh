@@ -1,134 +1,180 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 set -Eeo pipefail
 
+source /opt/stack/scripts/utils.sh
+
+# Synchronizes the system clock to the current time.
 sync_clock () {
-  echo "Updating the system clock..."
+  log 'Updating the system clock...'
 
-  timedatectl set-timezone "$TIMEZONE"
+  local timezone=''
+  timezone="$(get_setting 'timezone')" || fail 'Unable to read timezone setting'
 
-  echo "Timezone has been set to $TIMEZONE"
+  timedatectl set-timezone "${timezone}" 2>&1 ||
+    fail 'Unable to set timezone'
 
-  timedatectl set-ntp true
+  log "Timezone has been set to ${timezone}"
 
-  echo "NTP has been enabled"
+  timedatectl set-ntp true 2>&1 ||
+    fail 'Failed to enable NTP mode'
 
-  timedatectl status > "$HOME/.ntp"
+  log 'NTP mode has been enabled'
 
-  while cat "$HOME/.ntp" | grep -q "System clock synchronized: no"; do
+  while timedatectl status 2>&1 | grep -q 'System clock synchronized: no'; do
     sleep 1
-    timedatectl status > "$HOME/.ntp"
   done
 
-  timedatectl status
+  timedatectl status 2>&1 ||
+    fail 'Failed to show system time status'
 
-  echo "System clock has been updated"
+  log 'System clock has been updated'
 }
 
+# Sets the pacman mirrors list.
 set_mirrors () {
-  echo "Setting up pacman and mirrors list..."
+  log 'Setting up package databases mirrors list...'
 
-  local OLD_IFS=$IFS && IFS=","
-  MIRRORS="${MIRRORS[*]}" && IFS=$OLD_IFS
+  local mirrors=''
+  mirrors="$(get_setting 'mirrors' | jq -cer 'join(",")')" ||
+    fail 'Unable to read mirrors setting'
 
-  reflector --country "$MIRRORS" --age 48 --sort age --latest 20 \
-    --save /etc/pacman.d/mirrorlist || exit 1
+  reflector --country "${mirrors}" \
+    --age 48 --sort age --latest 40 --save /etc/pacman.d/mirrorlist 2>&1 ||
+    fail 'Failed to fetch package databases mirrors'
 
-  echo "Mirror list set to $MIRRORS"
+  log "Package databases mirrors set to ${mirrors}"
 }
 
-sync_packages () {
-  echo "Starting synchronizing packages..."
+# Synchronizes package databases with the master.
+sync_package_databases () {
+  log 'Starting to synchronize package databases...'
 
-  if [[ -f /var/lib/pacman/db.lck ]]; then
-    echo "Pacman database seems to be blocked"
+  local lock_file='/var/lib/pacman/db.lck'
 
-    rm -f /var/lib/pacman/db.lck
+  if file_exists "${lock_file}"; then
+    log WARN 'Package databases seem to be locked'
 
-    echo "Lock file has been removed"
+    rm -f "${lock_file}" ||
+      fail "Unable to remove the lock file ${lock_file}"
+
+    log "Lock file ${lock_file} has been removed"
   fi
 
-  echo "keyserver hkp://keyserver.ubuntu.com" >> /etc/pacman.d/gnupg/gpg.conf
+  local keyserver='hkp://keyserver.ubuntu.com'
 
-  echo "GPG keyserver has been set to hkp://keyserver.ubuntu.com"
+  echo "keyserver ${keyserver}" >> /etc/pacman.d/gnupg/gpg.conf ||
+    fail 'Failed to add the GPG keyserver'
 
-  sed -i 's/^#ParallelDownloads/ParallelDownloads/' /etc/pacman.conf
+  log "GPG keyserver has been set to ${keyserver}"
 
-  echo "Pacman parallel downloading has been enabled"
+  sed -i 's/^#ParallelDownloads/ParallelDownloads/' /etc/pacman.conf ||
+    fail 'Failed to enable parallel downloads'
 
-  pacman -Syy || exit 1
+  pacman -Syy 2>&1 ||
+    fail 'Failed to synchronize pacjage databases'
 
-  echo "Packages have been synchronized with master"
+  log 'Package databases synchronized to the master'
 }
 
+# Updates the keyring package.
 update_keyring () {
-  echo "Updating keyring package..."
+  log 'Updating the archlinux keyring...'
 
-  pacman --noconfirm -Sy archlinux-keyring || exit 1
+  pacman -Sy --needed --noconfirm archlinux-keyring 2>&1 ||
+    fail 'Failed to update keyring'
 
-  echo "Keyring has been updated successfully"
+  log 'Keyring has been updated successfully'
 }
 
-install_kernels () {
-  echo "Installing the linux kernels..."
+# Installs the linux kernel.
+install_kernel () {
+  log 'Installing the linux kernel...'
 
-  local KERNEL_PKGS=""
+  local kernel=''
+  kernel="$(get_setting 'kernel')" || fail 'Unable to read kernel setting'
 
-  if [[ "${KERNELS[@]}" =~ stable ]]; then
-    KERNEL_PKGS="linux linux-headers"
+  local pckgs=''
+
+  if equals "${kernel}" 'stable'; then
+    pckgs='linux linux-headers'
+  elif equals "${kernel}" 'lts'; then
+    pckgs='linux-lts linux-lts-headers'
   fi
 
-  if [[ "${KERNELS[@]}" =~ lts ]]; then
-    KERNEL_PKGS="$KERNEL_PKGS linux-lts linux-lts-headers"
+  if is_empty "${pckgs}"; then
+    fail 'No linux kernel packages set for installation'
   fi
 
-  if [ -z "$KERNEL_PKGS" ]; then
-    echo "Error: no linux kernel packages set for installation"
-    exit 1
+  pacstrap /mnt base ${pckgs} linux-firmware archlinux-keyring reflector rsync sudo jq 2>&1 ||
+    fail 'Failed to pacstrap kernel and base packages'
+
+  log 'Linux kernel has been installed'
+}
+
+# Grants the nopasswd permission to the wheel user group.
+grant_permissions () {
+  local rule='%wheel ALL=(ALL:ALL) NOPASSWD: ALL'
+
+  sed -i "s/^# \(${rule}\)/\1/" /mnt/etc/sudoers ||
+    fail 'Failed to grant nopasswd permission'
+
+  if ! grep -q "^${rule}" /mnt/etc/sudoers; then
+    fail 'Failed to grant nopasswd permission'
   fi
 
-  pacstrap /mnt base $KERNEL_PKGS linux-firmware archlinux-keyring reflector rsync sudo || exit 1
-
-  echo -e "Kernels have been installed"
+  log 'Sudoer nopasswd permission has been granted'
 }
 
-grant () {
-  local PERMISSION=$1
+# Copies the installation to the new system.
+copy_installation_files () {
+  log 'Copying installation files...'
 
-  case "$PERMISSION" in
-    "nopasswd")
-      local RULE="%wheel ALL=(ALL:ALL) NOPASSWD: ALL"
-      sed -i "s/^# \($RULE\)/\1/" /mnt/etc/sudoers
+  cp -r /opt/stack /mnt/opt ||
+    fail 'Unable to copy installation file to /mnt/opt'
+  
+  mkdir -p /mnt/var/log/stack ||
+    fail 'Failed to create logs home under /mnt/var/log/stack'
 
-      if ! cat /mnt/etc/sudoers | grep -q "^$RULE"; then
-        echo "Error: failed to grant nopasswd permission to wheel group"
-        exit 1
-      fi;;
-  esac
-
-  echo "Sudoing permision $PERMISSION has been granted"
+  log 'Installation files copied to /mnt/opt'
 }
 
-copy_files () {
-  echo "Start copying installation files..."
+# Resolves the installaction script by addressing
+# some extra post execution tasks.
+resolve () {
+  # Read the current progress as the number of log lines
+  local lines=0
+  lines=$(cat /var/log/stack/bootstrap.log | wc -l) ||
+    fail 'Unable to read the current log lines'
 
-  cp -R "$HOME" /mnt/root || exit 1
+  local total=660
 
-  echo "Installation files have been copied to /root"
+  # Fill the log file with fake lines to trick tqdm bar on completion
+  if [[ ${lines} -lt ${total} ]]; then
+    local lines_to_append=0
+    lines_to_append=$((total - lines))
+
+    while [[ ${lines_to_append} -gt 0 ]]; do
+      echo '~'
+      sleep 0.15
+      lines_to_append=$((lines_to_append - 1))
+    done
+  fi
+
+  return 0
 }
 
-echo -e "\nStarting the bootstrap process..."
-
-source "$OPTIONS"
+log 'Script bootstrap.sh started'
+log 'Starting the bootstrap process...'
 
 sync_clock &&
   set_mirrors &&
-  sync_packages &&
+  sync_package_databases &&
   update_keyring &&
-  install_kernels &&
-  grant "nopasswd" &&
-  copy_files
+  install_kernel &&
+  grant_permissions &&
+  copy_installation_files
 
-echo -e "\nBootstrap process has been completed successfully"
-echo "Moving to the next process..."
-sleep 5
+log 'Script bootstrap.sh has finished'
+
+resolve && sleep 3

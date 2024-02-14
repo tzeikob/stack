@@ -2,7 +2,7 @@
 
 set -o pipefail
 
-source /opt/stack/utils
+source /opt/tools/utils
 
 SECURITY_SETTINGS="${CONFIG_HOME}/security.json"
 
@@ -57,24 +57,3 @@ is_screen_locked () {
 
   echo "${is_locked}"
 }
-
-# Checks if the given interval time is valid.
-# Arguments:
-#  interval: an integer value
-# Returns:
-#  0 if interval is valid otherwise 1.
-is_interval_within_range () {
-  local interval="${1}"
-  
-  if is_not_true "0 <= ${interval} <= 60"; then
-    return 1
-  fi
-
-  return 0
-}
-
-# An inverse version of is_interval_within_range.
-is_interval_out_of_range () {
-  is_interval_within_range "${1}" && return 1 || return 0
-}
-

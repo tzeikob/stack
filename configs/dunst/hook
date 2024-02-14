@@ -1,5 +1,9 @@
 #!/bin/bash
 
+set -o pipefail
+
+source /opt/tools/utils
+
 # Plays the popup sound for the incoming notification
 # based on the notification's parameters.
 # Arguments:
@@ -8,7 +12,7 @@
 #  body:    the body of the notification
 #  icon:    the notification icon
 #  urgency: the urgency value
-play_popup_sound () {
+run () {
   local appname="${1}"
   local summary="${2}"
   local body="${3}"
@@ -16,12 +20,12 @@ play_popup_sound () {
 
   local sound='normal'
 
-  if [[ "${urgency}" == "CRITICAL" ]]; then
+  if equals "${urgency}" 'CRITICAL'; then
     sound='critical'
   fi
 
   LC_ALL=en_US.UTF-8 pw-play --volume=0.5 "/usr/share/sounds/stack/${sound}.wav"
 }
 
-play_popup_sound "$@"
+run "$@"
 

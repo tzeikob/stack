@@ -1,13 +1,27 @@
 #!/bin/bash
 
-# Delay suspend to give some time to the locker to take action
-if [[ "${1}" == "pre" ]] && [[ "${2}" == "suspend" ]]; then
-  sleep 2
-fi
+set -o pipefail
 
-# On resume prompt for authentication
-if [[ "${1}" == "post" ]]; then
-  pkill -x -USR2 xsecurelock
-fi
+source /opt/tools/utils
 
-exit 0
+# Applies various hook actions to handle user experience
+# during suspend and wake up of the system.
+# Arguments:
+#  phase:  pre, post
+#  action: suspend, reboot etc.
+run () {
+  local phase="${1}"
+  local action="${2}"
+
+  # Delay suspend to give some time to the locker to take action
+  if equals "${phase}" 'pre' && equals "${action}" 'suspend'; then
+    sleep 2
+  fi
+
+  # On resume prompt for authentication
+  if equals "${phase}" 'post'; then
+    pkill -x -USR2 xsecurelock
+  fi
+}
+
+run "$@"

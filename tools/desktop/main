@@ -2,8 +2,8 @@
 
 set -o pipefail
 
-source /opt/stack/utils
-source /opt/stack/desktop/commands
+source /opt/tools/utils
+source /opt/tools/desktop/commands
 
 # Shows the help message.
 # Arguments:

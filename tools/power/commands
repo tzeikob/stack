@@ -2,8 +2,8 @@
 
 set -o pipefail
 
-source /opt/stack/utils
-source /opt/stack/power/helpers
+source /opt/tools/utils
+source /opt/tools/power/helpers
 
 # Shows the current status of the system's power.
 # Outputs:
@@ -232,10 +232,10 @@ set_screensaver () {
   if is_not_given "${interval}"; then
     echo 'Missing interval time'
     return 2
-  elif is_not_positive_integer "${interval}"; then
+  elif is_not_integer "${interval}"; then
     echo 'Invalid interval time'
     return 2
-  elif is_interval_out_of_range "${interval}"; then
+  elif is_not_integer "${interval}" '[0,60]'; then
     echo 'Interval time out of range'
     return 2
   fi
@@ -340,10 +340,10 @@ set_charging () {
   if is_not_given "${start}"; then
     echo 'Missing the charging start threshold'
     return 2
-  elif is_not_positive_integer "${start}"; then
+  elif is_not_integer "${start}"; then
     echo 'Invalid charging start threshold'
     return 2
-  elif is_charge_limit_out_of_range "${start}"; then
+  elif is_not_integer "${start}" '[0,100]'; then
     echo 'Charging start threshold is out of range'
     return 2
   fi
@@ -351,10 +351,10 @@ set_charging () {
   if is_not_given "${stop}"; then
     echo 'Missing the charging stop threshold'
     return 2
-  elif is_not_positive_integer "${stop}"; then
+  elif is_not_integer "${stop}"; then
     echo 'Invalid charging stop threshold'
     return 2
-  elif is_charge_limit_out_of_range "${stop}"; then
+  elif is_not_integer "${stop}" '[0,100]'; then
     echo 'Charging stop threshold is out of range'
     return 2
   fi

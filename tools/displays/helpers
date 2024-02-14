@@ -2,7 +2,7 @@
 
 set -o pipefail
 
-source /opt/stack/utils
+source /opt/tools/utils
 
 DISPLAYS_SETTINGS="${CONFIG_HOME}/displays.json"
 
@@ -50,16 +50,10 @@ find_outputs () {
     criteria='.is_primary == true'
   fi
 
-  local a=''
-  a+='.screens[]|select(.screen_number==0)'
-  a+=" |.associated_device|select(${criteria})"
-  a="[${a}]"
-
-  local b=''
-  b+=".unassociated_devices[]|select(${criteria})"
-  b="[${b}]"
-
-  local query="[${a}+${b}|to_entries[]|{index: .key} + .value]"
+  local query=''
+  query+='.screens[]|select(.screen_number == 0)'
+  query+=" |.devices[]|select(${criteria})"
+  query="[[${query}]|to_entries[]|{index: .key} + .value]"
 
   xrandr --props | jc --xrandr | jq -cer "${query}" || return 1
 }

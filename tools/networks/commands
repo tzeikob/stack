@@ -2,8 +2,8 @@
 
 set -o pipefail
 
-source /opt/stack/utils
-source /opt/stack/networks/helpers
+source /opt/tools/utils
+source /opt/tools/networks/helpers
 
 # Shows the current status of the system networking.
 # Outputs:
@@ -257,10 +257,10 @@ list_wifis () {
     return 2
   fi
 
-  if is_not_positive_integer "${signal}"; then
+  if is_not_integer "${signal}"; then
     echo 'Invalid signal limit value'
     return 2
-  elif signal_limit_is_out_of_range "${signal}"; then
+  elif is_not_integer "${signal}" '[0,100]'; then
     echo 'Signal limit value out of range'
     return 2
   fi

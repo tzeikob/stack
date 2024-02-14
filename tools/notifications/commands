@@ -2,8 +2,8 @@
 
 set -o pipefail
 
-source /opt/stack/utils
-source /opt/stack/notifications/helpers
+source /opt/tools/utils
+source /opt/tools/notifications/helpers
 
 # Starts the notifications service.
 start () {

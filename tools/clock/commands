@@ -2,8 +2,8 @@
 
 set -o pipefail
 
-source /opt/stack/utils
-source /opt/stack/clock/helpers
+source /opt/tools/utils
+source /opt/tools/clock/helpers
 
 # Shows the current status of system clock.
 # Outputs:
