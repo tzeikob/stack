@@ -36,29 +36,6 @@ revoke_permissions () {
   log 'Permission nopasswd revoked from wheel group'
 }
 
-# Appends all log files into one installation log file and
-# saves it to the new system.
-copy_log_file () {
-  cat /var/log/stack/detection.log \
-    /var/log/stack/diskpart.log \
-    /var/log/stack/bootstrap.log > /mnt/var/log/stack.log ||
-    log WARN 'Failed to append log files to /mnt/var/log/stack.log'
-
-
-  cat /mnt/var/log/stack/system.log \
-    /mnt/var/log/stack/desktop.log \
-    /mnt/var/log/stack/stack.log \
-    /mnt/var/log/stack/tools.log \
-    /var/log/stack/cleaner.log >> /mnt/var/log/stack.log ||
-    log WARN 'Failed to append log files to /mnt/var/log/stack.log'
-  
-  rm -rf /var/log/stack ||
-    log WARN 'Failed to remove /var/log/stack folder'
-
-  rm -rf /mnt/var/log/stack ||
-    log WARN 'Failed to remove /mnt/var/log/stack folder'
-}
-
 # Resolves the installaction script by addressing
 # some extra post execution tasks.
 resolve () {
@@ -88,8 +65,7 @@ log 'Script cleaner.sh started'
 log 'Cleaning up the new system...'
 
 remove_installation_files &&
-  revoke_permissions &&
-  copy_log_file
+  revoke_permissions
 
 log 'Script cleaner.sh has finished'
 

@@ -93,6 +93,25 @@ install () {
 
 # Restarts the system.
 restart () {
+  # Copy the installation log files to the new system
+  cp /var/log/stack/* /mnt/var/log/stack ||
+    log WARN 'Failed to copy installation log files'
+
+  # Append all logs in chronological order
+  cat /mnt/var/log/stack/detection.log \
+    /mnt/var/log/stack/diskpart.log \
+    /mnt/var/log/stack/bootstrap.log \
+    /mnt/var/log/stack/system.log \
+    /mnt/var/log/stack/desktop.log \
+    /mnt/var/log/stack/stack.log \
+    /mnt/var/log/stack/tools.log \
+    /mnt/var/log/stack/cleaner.log >> /mnt/var/log/stack/all.log ||
+    log WARN 'Failed to append log files to /mnt/var/log/stack/all.log'
+
+  # Clean redundant log files from archiso media
+  rm -rf /var/log/stack ||
+    log WARN 'Failed to remove /var/log/stack folder'
+  
   log 'Installation process has been completed'
   log 'Rebooting the system in 15 secs...'
 
