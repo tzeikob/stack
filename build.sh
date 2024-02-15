@@ -87,7 +87,6 @@ copy_installer () {
   cp -r ./scripts "${installer_home}"
   cp -r ./services "${installer_home}"
   cp -r ./tools "${installer_home}"
-
   cp ./install.sh "${installer_home}"
 
   echo -e 'Installer files have been copied under /airootfs/opt/stack'
@@ -98,8 +97,14 @@ set_file_permissions () {
 
   local permissions_file=.dist/archlive/profiledef.sh
 
-  sed -i '/file_permissions=(/a ["/opt/stack/tools"]="0:0:755"' "${permissions_file}"
-  sed -i '/file_permissions=(/a ["/opt/stack/scripts"]="0:0:755"' "${permissions_file}"
+  sed -i '/file_permissions=(/a ["/opt/stack/configs/bspwm/"]="0:0:755"' "${permissions_file}"
+  sed -i '/file_permissions=(/a ["/opt/stack/configs/dunst/hook"]="0:0:755"' "${permissions_file}"
+  sed -i '/file_permissions=(/a ["/opt/stack/configs/nnn/env"]="0:0:755"' "${permissions_file}"
+  sed -i '/file_permissions=(/a ["/opt/stack/configs/polybar/scripts/"]="0:0:755"' "${permissions_file}"
+  sed -i '/file_permissions=(/a ["/opt/stack/configs/rofi/launch"]="0:0:755"' "${permissions_file}"
+  sed -i '/file_permissions=(/a ["/opt/stack/configs/xsecurelock/hook"]="0:0:755"' "${permissions_file}"
+  sed -i '/file_permissions=(/a ["/opt/stack/tools/"]="0:0:755"' "${permissions_file}"
+  sed -i '/file_permissions=(/a ["/opt/stack/scripts/"]="0:0:755"' "${permissions_file}"
   sed -i '/file_permissions=(/a ["/opt/stack/install.sh"]="0:0:755"' "${permissions_file}"
 
   echo -e 'Root fs permissions have been defined'
