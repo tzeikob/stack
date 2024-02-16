@@ -143,13 +143,19 @@ copy_installer () {
 
   mkdir -p "${installer_home}"
 
-  cp -r ./configs "${installer_home}"
-  cp -r ./resources "${installer_home}"
-  cp -r ./rules "${installer_home}"
-  cp -r ./scripts "${installer_home}"
-  cp -r ./services "${installer_home}"
-  cp -r ./tools "${installer_home}"
-  cp ./install.sh "${installer_home}"
+  cp -r configs "${installer_home}"
+  cp -r resources "${installer_home}"
+  cp -r rules "${installer_home}"
+  cp -r scripts "${installer_home}"
+  cp -r services "${installer_home}"
+  cp -r tools "${installer_home}"
+  cp install.sh "${installer_home}"
+
+  local bin_home=.dist/archlive/airootfs/usr/local/bin
+
+  mkdir -p "${bin_home}"
+
+  ln -sf /opt/stack/install.sh "${bin_home}/install_os"
 
   echo -e 'Installer files have been copied'
 }
