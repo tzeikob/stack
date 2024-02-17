@@ -6,12 +6,12 @@
 add_packages () {
   local names=(${@})
 
-  local pkgs_file=.dist/archlive/packages.x86_64
+  local pkgs_file=.dist/profile/packages.x86_64
 
   local name=''
   for name in "${names[@]}"; do
     if grep -Eq "${name}" "${pkgs_file}"; then
-      echo -e "Package ${name} skipped"
+      echo -e "Package ${name} is skipped"
       continue
     fi
 
@@ -23,15 +23,8 @@ add_packages () {
 init () {
   echo -e 'Cleaning up existing build files...'
 
-  # Remove any pre-existing distribution files
   rm -rf .dist
-  rm -rf /tmp/stack
-
-  # Create distribution directories
-  mkdir -p .dist
-  mkdir -p .dist/work
-  mkdir -p .dist/out
-  mkdir -p /tmp/stack
+  mkdir .dist
 
   echo -e 'Build and distribution files removed'
 }
@@ -40,7 +33,7 @@ init () {
 copy_profile () {
   echo -e 'Copying the custom archiso profile'
 
-  cp -r /usr/share/archiso/configs/releng .dist/archlive
+  cp -r /usr/share/archiso/configs/releng .dist/profile
 
   echo -e 'The releng archiso profile has been copied'
 }
@@ -71,7 +64,7 @@ add_display_server_packages () {
 
   echo -e 'Xorg packages added'
 
-  local root_home=.dist/archlive/airootfs/root
+  local root_home=.dist/profile/airootfs/root
 
   cp configs/xorg/xinitrc "${root_home}/.xinitrc"
 
@@ -100,7 +93,7 @@ add_aur_packages () {
 
   local previous_dir=${PWD}
 
-  local repo_home=.dist/archlive/local/repo
+  local repo_home=.dist/profile/local/repo
 
   mkdir -p "${repo_home}"
 
@@ -110,21 +103,22 @@ add_aur_packages () {
 
   local name=''
   for name in "${names[@]}"; do
-    git clone "https://aur.archlinux.org/${name}.git" "/tmp/stack/aur/${name}"
+    git clone "https://aur.archlinux.org/${name}.git" ".dist/aur/${name}"
   
-    cd "/tmp/stack/aur/${name}"
+    cd ".dist/aur/${name}"
     makepkg
     cd ${previous_dir}
 
-    cp /tmp/stack/aur/"${name}"/"${name}"-*-x86_64.pkg.tar.zst "${repo_home}"
-    repo-add "${repo_home}/custom.db.tar.gz" ${repo_home}/"${name}"-*-x86_64.pkg.tar.zst
+    cp .dist/aur/"${name}"/"${name}"-*-x86_64.pkg.tar.zst "${repo_home}"
+    rm -rf ".dist/aur/${name}"
 
+    repo-add "${repo_home}/custom.db.tar.gz" ${repo_home}/"${name}"-*-x86_64.pkg.tar.zst
     add_packages "${name}"
   done
 
   echo -e 'The AUR package files have been built'
 
-  local pacman_conf=.dist/archlive/pacman.conf
+  local pacman_conf=.dist/profile/pacman.conf
 
   echo -e '\n[custom]' >> "${pacman_conf}"
   echo -e 'SigLevel = Optional TrustAll' >> "${pacman_conf}"
@@ -139,7 +133,7 @@ add_aur_packages () {
 copy_installer () {
   echo -e 'Copying the installer files...'
 
-  local installer_home=.dist/archlive/airootfs/opt/stack
+  local installer_home=.dist/profile/airootfs/opt/stack
 
   mkdir -p "${installer_home}"
 
@@ -151,7 +145,7 @@ copy_installer () {
   cp -r tools "${installer_home}"
   cp install.sh "${installer_home}"
 
-  local bin_home=.dist/archlive/airootfs/usr/local/bin
+  local bin_home=.dist/profile/airootfs/usr/local/bin
 
   mkdir -p "${bin_home}"
 
@@ -162,13 +156,13 @@ copy_installer () {
 
 # Copies and setups aliases for the settings manager tools.
 copy_settings_manager () {
-  local tools_home=.dist/archlive/airootfs/opt/tools
+  local tools_home=.dist/profile/airootfs/opt/tools
 
   mkdir -p "${tools_home}"
 
   cp -r tools/* "${tools_home}"
 
-  local bin_home=.dist/archlive/airootfs/usr/local/bin
+  local bin_home=.dist/profile/airootfs/usr/local/bin
 
   mkdir -p "${bin_home}"
 
@@ -199,7 +193,7 @@ setup_desktop () {
 
   echo -e 'Desktop pre-requisite packages added'
 
-  local config_home=.dist/archlive/airootfs/root/.config
+  local config_home=.dist/profile/airootfs/root/.config
 
   # Copy the picom configuration files
   local picom_home="${config_home}/picom"
@@ -272,7 +266,7 @@ setup_desktop () {
   cp configs/dunst/hook "${dunst_home}"
 
   # Set up trash-cli aliases
-  local zshrc_file=.dist/archlive/airootfs/root/.zshrc
+  local zshrc_file=.dist/profile/airootfs/root/.zshrc
 
   echo -e "\nalias sudo='sudo '" >> "${zshrc_file}"
   echo "alias tt='trash-put -i'" >> "${zshrc_file}"
@@ -287,7 +281,9 @@ setup_desktop () {
 setup_theme () {
   echo -e 'Setting up the Dracula theme...'
 
-  local themes_home=.dist/archlive/airootfs/usr/share/themes
+  local root_fs=.dist/profile/airootfs
+
+  local themes_home="${root_fs}/usr/share/themes"
 
   mkdir -p "${themes_home}"
 
@@ -302,7 +298,7 @@ setup_theme () {
 
   echo -e 'Setting up the Dracula icons...'
 
-  local icons_home=.dist/archlive/airootfs/usr/share/icons
+  local icons_home="${root_fs}/usr/share/icons"
 
   mkdir -p "${icons_home}"
   
@@ -316,7 +312,7 @@ setup_theme () {
 
   echo -e 'Setting up the Breeze cursors...'
 
-  local cursors_home=.dist/archlive/airootfs/usr/share/icons
+  local cursors_home="${root_fs}/usr/share/icons"
 
   mkdir -p "${cursors_home}"
 
@@ -332,7 +328,7 @@ setup_theme () {
 
   echo -e 'Breeze cursors have been installed'
 
-  local gtk_home=.dist/archlive/airootfs/root/.config/gtk-3.0
+  local gtk_home="${root_fs}/root/.config/gtk-3.0"
   
   mkdir -p "${gtk_home}"
   cp configs/gtk/settings.ini "${gtk_home}"
@@ -341,12 +337,12 @@ setup_theme () {
 
   echo -e 'Setting the desktop wallpaper...'
 
-  local wallpapers_home=.dist/archlive/airootfs/root/.local/share/wallpapers
+  local wallpapers_home="${root_fs}/root/.local/share/wallpapers"
 
   mkdir -p "${wallpapers_home}"
   cp resources/wallpapers/* "${wallpapers_home}"
 
-  local settings_home=.dist/archlive/airootfs/root/.config/stack
+  local settings_home="${root_fs}/root/.config/stack"
 
   mkdir -p "${settings_home}"
 
@@ -361,7 +357,7 @@ setup_theme () {
 setup_fonts () {
   echo -e 'Setting up extra system fonts...'
 
-  local fonts_home=.dist/archlive/airootfs/usr/share/fonts/extra-fonts
+  local fonts_home=.dist/profile/airootfs/usr/share/fonts/extra-fonts
 
   mkdir -p "${fonts_home}"
 
@@ -401,7 +397,7 @@ setup_fonts () {
 setup_sounds () {
   echo -e 'Setting up extra system sounds...'
 
-  local sounds_home=.dist/archlive/airootfs/usr/share/sounds/stack
+  local sounds_home=.dist/profile/airootfs/usr/share/sounds/stack
   
   mkdir -p "${sounds_home}"
   cp resources/sounds/normal.wav "${sounds_home}"
@@ -413,7 +409,7 @@ setup_sounds () {
 set_file_permissions () {
   echo -e 'Defining the file permissions...'
 
-  local permissions_file=.dist/archlive/profiledef.sh
+  local permissions_file=.dist/profile/profiledef.sh
 
   sed -i '/file_permissions=(/a ["/opt/stack/configs/bspwm/"]="0:0:755"' "${permissions_file}"
   sed -i '/file_permissions=(/a ["/opt/stack/configs/dunst/hook"]="0:0:755"' "${permissions_file}"
@@ -437,7 +433,12 @@ set_file_permissions () {
 make_archiso () {
   echo -e 'Building the archiso file...'
 
-  sudo mkarchiso -v -w .dist/work -o .dist/out .dist/archlive
+  mkdir -p .dist/work
+
+  sudo mkarchiso -v -w .dist/work -o .dist .dist/profile
+
+  sudo rm -rf .dist/work
+  rm -rf .dist/profile
 }
 
 echo -e 'Build process will start in 5 secs...'
