@@ -278,8 +278,9 @@ setup_desktop () {
   echo "alias tt='trash-put -i'" >> "${zshrc_file}"
   echo "alias rm='rm -i'" >> "${zshrc_file}"
 
-  # Set the defauilt text editor to helix
-  echo -e '\nexport EDITOR=helix' >> "${zshrc_file}"
+  # Set the defauilt terminal and text editor
+  echo -e '\nexport TERMINAL=cool-retro-term' >> "${zshrc_file}"
+  echo -e 'export EDITOR=helix' >> "${zshrc_file}"
 }
 
 # Copies and sets up the theme of the live media.
