@@ -49,8 +49,7 @@ add_base_packages () {
     vim nano git tree arch-audit atool zip xz unace p7zip gzip lzop feh hsetroot \
     bzip2 unrar dialog inetutils dnsutils openssh nfs-utils ipset xsel \
     neofetch age imagemagick gpick fuse2 rclone smartmontools glib2 jq jc sequoia-sq xf86-input-wacom \
-    cairo bc xdotool \
-    python-tqdm libqalculate firefox
+    cairo bc xdotool python-tqdm libqalculate
 
   echo -e 'Base packages have been added'
 }
@@ -189,7 +188,7 @@ setup_desktop () {
   echo -e 'Setting up the desktop...'
 
   add_packages picom bspwm sxhkd polybar rofi dunst \
-    trash-cli cool-retro-term helix
+    trash-cli cool-retro-term helix firefox
 
   echo -e 'Desktop pre-requisite packages added'
 
