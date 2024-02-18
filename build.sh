@@ -23,7 +23,7 @@ add_packages () {
 init () {
   echo -e 'Cleaning up existing build files...'
 
-  rm -rf .dist
+  sudo rm -rf .dist
   mkdir .dist
 
   echo -e 'Build and distribution files removed'
@@ -436,8 +436,7 @@ make_archiso () {
 
   sudo mkarchiso -v -w .dist/work -o .dist .dist/profile
 
-  sudo rm -rf .dist/work
-  rm -rf .dist/profile
+  echo -e 'Archiso file has been exported at .dist/'
 }
 
 echo -e 'Build process will start in 5 secs...'
