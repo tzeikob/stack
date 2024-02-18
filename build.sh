@@ -434,7 +434,7 @@ make_archiso () {
 
   mkdir -p .dist/work
 
-  sudo mkarchiso -v -w .dist/work -o .dist .dist/profile
+  sudo mkarchiso -v -r -w .dist/work -o .dist .dist/profile
 
   echo -e 'Archiso file has been exported at .dist/'
 }
