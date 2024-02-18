@@ -405,6 +405,7 @@ setup_sounds () {
   echo -e 'System sounds have been set'
 }
 
+# Define the root files permissions.
 set_file_permissions () {
   echo -e 'Defining the file permissions...'
 
@@ -427,6 +428,21 @@ set_file_permissions () {
   sed -i '/file_permissions=(/a ["/opt/tools/"]="0:0:755"' "${permissions_file}"
 
   echo -e 'File permissions have been defined'
+}
+
+# Sets the metadata file of the os release.
+set_release_metadata () {
+  local root_home=.dist/profile/airootfs
+
+  cp release "${root_home}/usr/lib/os-release"
+  
+  local date_time="$(date +%Y-%m-%dT%H-%M-%S)"
+
+  sed -i "s/\(IMAGE_VERSION=\)/\1\"${date_time}\"" "${root_home}/usr/lib/os-release"
+  
+  ln -sf /usr/lib/os-release "${root_home}/etc/os-release"
+  
+  echo -e 'Release os metadata have been set'
 }
 
 make_archiso () {
@@ -455,6 +471,7 @@ init &&
   setup_fonts &&
   setup_sounds &&
   set_file_permissions &&
+  set_release_metadata &&
   make_archiso &&
   echo -e 'Build process completed successfully' ||
   echo -e 'Build process has failed'
