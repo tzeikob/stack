@@ -489,13 +489,22 @@ set_file_permissions () {
 
 # Sets the metadata file of the os release.
 set_release_metadata () {
-  cp release "${ROOT_FS}/etc/os-release"
+  printf '%s\n' \
+    'NAME="StackOS"' \
+    'PRETTY_NAME="StackOS"' \
+    'ID="StackOS"' \
+    'BUILD_ID="rolling"' \
+    'ANSI_COLOR="38;2;23;147;209"' \
+    'HOME_URL="https://github.com/tzeikob/stack.git/"' \
+    'DOCUMENTATION_URL="https://github.com/tzeikob/stack.git/README.md"' \
+    'SUPPORT_URL="https://github.com/tzeikob/stack.git/README.md"' \
+    'BUG_REPORT_URL="https://github.com/tzeikob/stack.git/issues"' \
+    'PRIVACY_POLICY_URL="https://github.com/tzeikob/stack.git/LICENSE"' \
+    'LOGO="archlinux-logo"' \
+    'IMAGE_ID="archlinux-stackos"' \
+    "IMAGE_VERSION=\"$(date +%Y-%m-%dT%H-%M-%S)\"" > "${ROOT_FS}/etc/os-release"
   
-  local date_time="$(date +%Y-%m-%dT%H-%M-%S)"
-
-  sed -i "s/\(IMAGE_VERSION=\)/\1\"${date_time}\"/" "${ROOT_FS}/etc/os-release"
-  
-  echo -e 'Release os metadata have been set'
+  echo -e 'Release metadata have been set in /etc/os-release'
 }
 
 # Creates the iso file of the live media.

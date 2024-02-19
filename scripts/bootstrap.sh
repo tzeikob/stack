@@ -114,7 +114,7 @@ install_kernel () {
 
 # Sets the metadata file of the os release.
 set_release_metadata () {
-  cp /usr/lib/os-release /mnt/usr/lib/os-release
+  cp /etc/os-release /mnt/usr/lib/os-release
   
   ln -sf /mnt/usr/lib/os-release /etc/os-release
   
