@@ -489,15 +489,11 @@ set_file_permissions () {
 
 # Sets the metadata file of the os release.
 set_release_metadata () {
-  mkdir -p "${ROOT_FS}/usr/lib"
-
-  cp release "${ROOT_FS}/usr/lib/os-release"
+  cp release "${ROOT_FS}/etc/os-release"
   
   local date_time="$(date +%Y-%m-%dT%H-%M-%S)"
 
-  sed -i "s/\(IMAGE_VERSION=\)/\1\"${date_time}\"/" "${ROOT_FS}/usr/lib/os-release"
-  
-  ln -sf /usr/lib/os-release "${ROOT_FS}/etc/os-release"
+  sed -i "s/\(IMAGE_VERSION=\)/\1\"${date_time}\"/" "${ROOT_FS}/etc/os-release"
   
   echo -e 'Release os metadata have been set'
 }
