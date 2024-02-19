@@ -1,11 +1,17 @@
 #!/bin/bash
 
+DIST_DIR=.dist
+WORK_DIR="${DIST_DIR}/work"
+AUR_DIR="${DIST_DIR}/aur"
+PROFILE_DIR="${DIST_DIR}/profile"
+ROOT_FS="${PROFILE_DIR}/airootfs"
+
 # Initializes build and distribution files.
 init () {
   echo -e 'Starting the clean up process...'
 
-  rm -rf .dist
-  mkdir .dist
+  rm -rf "${DIST_DIR}"
+  mkdir "${DIST_DIR}"
 
   echo -e 'Clean up has been completed'
 }
@@ -14,9 +20,9 @@ init () {
 copy_profile () {
   echo -e 'Copying the custom archiso profile...'
 
-  cp -r /usr/share/archiso/configs/releng .dist/profile
+  cp -r /usr/share/archiso/configs/releng "${PROFILE_DIR}"
 
-  echo -e 'The releng profile copied to .dist/profile'
+  echo -e "The releng profile copied to ${PROFILE_DIR}"
 }
 
 # Adds the package with the given name into the list of packages
@@ -25,7 +31,7 @@ copy_profile () {
 add_package () {
   local name="${1}"
 
-  local pkgs_file=.dist/profile/packages.x86_64
+  local pkgs_file="${PROFILE_DIR}/packages.x86_64"
 
   if grep -Eq "${name}" "${pkgs_file}"; then
     echo -e "Skipping ${name}"
@@ -89,7 +95,7 @@ add_aur_packages () {
 
   local previous_dir=${PWD}
 
-  local repo_home=.dist/profile/local/repo
+  local repo_home="${PROFILE_DIR}/local/repo"
 
   mkdir -p "${repo_home}"
 
@@ -100,24 +106,24 @@ add_aur_packages () {
   local name=''
   for name in "${names[@]}"; do
     # Build the next AUR package
-    git clone "https://aur.archlinux.org/${name}.git" ".dist/aur/${name}"
+    git clone "https://aur.archlinux.org/${name}.git" "${AUR_DIR}/${name}"
   
-    cd ".dist/aur/${name}"
+    cd "${AUR_DIR}/${name}"
     makepkg
     cd ${previous_dir}
 
     # Create the custom local repo database
-    cp .dist/aur/"${name}"/"${name}"-*-x86_64.pkg.tar.zst "${repo_home}"
-    repo-add "${repo_home}/custom.db.tar.gz" ${repo_home}/"${name}"-*-x86_64.pkg.tar.zst
+    cp ${AUR_DIR}/${name}/${name}-*-x86_64.pkg.tar.zst "${repo_home}"
+    repo-add "${repo_home}/custom.db.tar.gz" ${repo_home}/${name}-*-x86_64.pkg.tar.zst
 
     add_package "${name}"
   done
 
-  rm -rf .dist/aur
+  rm -rf "${AUR_DIR}"
 
   echo -e 'The AUR package files have been built'
 
-  local pacman_conf=.dist/profile/pacman.conf
+  local pacman_conf="${PROFILE_DIR}/pacman.conf"
 
   echo -e '\n[custom]' >> "${pacman_conf}"
   echo -e 'SigLevel = Optional TrustAll' >> "${pacman_conf}"
@@ -132,7 +138,7 @@ add_aur_packages () {
 copy_installer () {
   echo -e 'Copying the installer files...'
 
-  local installer_home=.dist/profile/airootfs/opt/stack
+  local installer_home="${ROOT_FS}/opt/stack"
 
   mkdir -p "${installer_home}"
 
@@ -145,7 +151,7 @@ copy_installer () {
   cp install.sh "${installer_home}"
 
   # Create a global alias to launch the installer
-  local bin_home=.dist/profile/airootfs/usr/local/bin
+  local bin_home="${ROOT_FS}/usr/local/bin"
 
   mkdir -p "${bin_home}"
 
@@ -158,14 +164,14 @@ copy_installer () {
 copy_settings_manager () {
   echo -e 'Copying the setting manager tools...'
 
-  local tools_home=.dist/profile/airootfs/opt/tools
+  local tools_home="${ROOT_FS}/opt/tools"
 
   mkdir -p "${tools_home}"
 
   cp -r tools/* "${tools_home}"
 
   # Create global aliases for each setting tool main entry
-  local bin_home=.dist/profile/airootfs/usr/local/bin
+  local bin_home="${ROOT_FS}/usr/local/bin"
 
   mkdir -p "${bin_home}"
 
@@ -190,14 +196,12 @@ copy_settings_manager () {
 
 # Sets up the display server configuration and hooks.
 setup_display_server () {
-  local root_home=.dist/profile/airootfs
-
-  cp configs/xorg/xinitrc "${root_home}/root/.xinitrc"
+  cp configs/xorg/xinitrc "${ROOT_FS}/root/.xinitrc"
 
   echo -e 'The .xinitrc file copied to /root/.xinitrc'
 
-  mkdir -p "${root_home}/etc/X11"
-  cp configs/xorg/xorg.conf "${root_home}/etc/X11"
+  mkdir -p "${ROOT_FS}/etc/X11"
+  cp configs/xorg/xorg.conf "${ROOT_FS}/etc/X11"
 
   echo -e 'The xorg.conf file copied to /etc/X11/xorg.conf'
 }
@@ -206,13 +210,11 @@ setup_display_server () {
 setup_keyboard () {
   echo -e 'Applying keyboard settings...'
 
-  local root_home=.dist/profile/airootfs
-
-  echo 'KEYMAP=us' > "${root_home}/etc/vconsole.conf"
+  echo 'KEYMAP=us' > "${ROOT_FS}/etc/vconsole.conf"
 
   echo -e 'Keyboard map keys has been set to us'
 
-  mkdir -p "${root_home}/etc/X11/xorg.conf.d"
+  mkdir -p "${ROOT_FS}/etc/X11/xorg.conf.d"
 
   printf '%s\n' \
    'Section "InputClass"' \
@@ -221,12 +223,12 @@ setup_keyboard () {
    '  Option "XkbLayout" "us"' \
    '  Option "XkbModel" "pc105"' \
    '  Option "XkbOptions" "grp:alt_shift_toggle"' \
-   'EndSection' > "${root_home}/etc/X11/xorg.conf.d/00-keyboard.conf"
+   'EndSection' > "${ROOT_FS}/etc/X11/xorg.conf.d/00-keyboard.conf"
 
   echo -e 'Xorg keyboard settings have been set'
 
   # Save keyboard settings to the user langs json file
-  local config_home="${root_home}/root/.config/stack"
+  local config_home="${ROOT_FS}/root/.config/stack"
 
   mkdir -p "${config_home}"
 
@@ -243,7 +245,7 @@ setup_keyboard () {
 
 # Sets up the sheel environment files.
 setup_shell_environment () {
-  local zshrc_file=.dist/profile/airootfs/root/.zshrc
+  local zshrc_file="${ROOT_FS}/root/.zshrc"
 
   # Set the defauilt terminal and text editor
   echo -e 'export TERMINAL=cool-retro-term' >> "${zshrc_file}"
@@ -262,7 +264,7 @@ setup_shell_environment () {
 setup_desktop () {
   echo -e 'Setting up the desktop configurations...'
 
-  local config_home=.dist/profile/airootfs/root/.config
+  local config_home="${ROOT_FS}/root/.config"
 
   # Copy the picom configuration files
   local picom_home="${config_home}/picom"
@@ -341,9 +343,7 @@ setup_desktop () {
 setup_theme () {
   echo -e 'Setting up the Dracula theme...'
 
-  local root_fs=.dist/profile/airootfs
-
-  local themes_home="${root_fs}/usr/share/themes"
+  local themes_home="${ROOT_FS}/usr/share/themes"
 
   mkdir -p "${themes_home}"
 
@@ -358,7 +358,7 @@ setup_theme () {
 
   echo -e 'Setting up the Dracula icons...'
 
-  local icons_home="${root_fs}/usr/share/icons"
+  local icons_home="${ROOT_FS}/usr/share/icons"
 
   mkdir -p "${icons_home}"
   
@@ -372,7 +372,7 @@ setup_theme () {
 
   echo -e 'Setting up the Breeze cursors...'
 
-  local cursors_home="${root_fs}/usr/share/icons"
+  local cursors_home="${ROOT_FS}/usr/share/icons"
 
   mkdir -p "${cursors_home}"
 
@@ -388,7 +388,7 @@ setup_theme () {
 
   echo -e 'Breeze cursors have been installed'
 
-  local gtk_home="${root_fs}/root/.config/gtk-3.0"
+  local gtk_home="${ROOT_FS}/root/.config/gtk-3.0"
   
   mkdir -p "${gtk_home}"
   cp configs/gtk/settings.ini "${gtk_home}"
@@ -397,12 +397,12 @@ setup_theme () {
 
   echo -e 'Setting the desktop wallpaper...'
 
-  local wallpapers_home="${root_fs}/root/.local/share/wallpapers"
+  local wallpapers_home="${ROOT_FS}/root/.local/share/wallpapers"
 
   mkdir -p "${wallpapers_home}"
   cp resources/wallpapers/* "${wallpapers_home}"
 
-  local settings_home="${root_fs}/root/.config/stack"
+  local settings_home="${ROOT_FS}/root/.config/stack"
 
   mkdir -p "${settings_home}"
 
@@ -417,7 +417,7 @@ setup_theme () {
 setup_fonts () {
   echo -e 'Setting up extra system fonts...'
 
-  local fonts_home=.dist/profile/airootfs/usr/share/fonts/extra-fonts
+  local fonts_home="${ROOT_FS}/usr/share/fonts/extra-fonts"
 
   mkdir -p "${fonts_home}"
 
@@ -443,7 +443,7 @@ setup_fonts () {
     chmod -R 755 "${fonts_home}/${name}"
     rm -f "${fonts_home}/${name}.zip"
 
-    echo -e "Font ${name} has been installed"
+    echo -e "Font ${name} installed"
   done
 
   echo -e 'Fonts have been setup'
@@ -453,7 +453,7 @@ setup_fonts () {
 setup_sounds () {
   echo -e 'Setting up extra system sounds...'
 
-  local sounds_home=.dist/profile/airootfs/usr/share/sounds/stack
+  local sounds_home="${ROOT_FS}/usr/share/sounds/stack"
   
   mkdir -p "${sounds_home}"
   cp resources/sounds/normal.wav "${sounds_home}"
@@ -466,7 +466,7 @@ setup_sounds () {
 set_file_permissions () {
   echo -e 'Defining the file permissions...'
 
-  local permissions_file=.dist/profile/profiledef.sh
+  local permissions_file="${PROFILE_DIR}/profiledef.sh"
 
   sed -i '/file_permissions=(/a  ["/opt/stack/configs/bspwm/"]="0:0:755"' "${permissions_file}"
   sed -i '/file_permissions=(/a  ["/opt/stack/configs/dunst/hook"]="0:0:755"' "${permissions_file}"
@@ -489,27 +489,29 @@ set_file_permissions () {
 
 # Sets the metadata file of the os release.
 set_release_metadata () {
-  local root_home=.dist/profile/airootfs
+  mkdir -p "${ROOT_FS}/usr/lib"
 
-  cp release "${root_home}/usr/lib/os-release"
+  cp release "${ROOT_FS}/usr/lib/os-release"
   
   local date_time="$(date +%Y-%m-%dT%H-%M-%S)"
 
-  sed -i "s/\(IMAGE_VERSION=\)/\1\"${date_time}\"" "${root_home}/usr/lib/os-release"
+  sed -i "s/\(IMAGE_VERSION=\)/\1\"${date_time}\"/" "${ROOT_FS}/usr/lib/os-release"
   
-  ln -sf /usr/lib/os-release "${root_home}/etc/os-release"
+  ln -sf /usr/lib/os-release "${ROOT_FS}/etc/os-release"
   
   echo -e 'Release os metadata have been set'
 }
 
+# Creates the iso file of the live media.
 make_iso_file () {
   echo -e 'Building the archiso file...'
 
-  mkdir -p .dist/work
+  mkdir -p "${WORK_DIR}"
 
-  sudo mkarchiso -v -r -A stackos -L stackos -w .dist/work -o .dist .dist/profile
+  sudo mkarchiso -v -r -A stackos -L stackos \
+    -w "${WORK_DIR}" -o "${DIST_DIR}" "${PROFILE_DIR}"
 
-  echo -e 'Archiso file has been exported at .dist/'
+  echo -e "Archiso file has been exported at ${DIST_DIR}"
 }
 
 echo -e 'Build process will start in 5 secs...'
@@ -522,6 +524,7 @@ init &&
   copy_installer &&
   copy_settings_manager &&
   setup_display_server &&
+  setup_keyboard &&
   setup_shell_environment &&
   setup_desktop &&
   setup_theme &&
