@@ -1,94 +1,91 @@
 #!/bin/bash
 
-# Adds the given packages to the list of packages.
-# Arguments:
-#  names: the list of package names
-add_packages () {
-  local names=(${@})
-
-  local pkgs_file=.dist/profile/packages.x86_64
-
-  local name=''
-  for name in "${names[@]}"; do
-    if grep -Eq "${name}" "${pkgs_file}"; then
-      echo -e "Package ${name} is skipped"
-      continue
-    fi
-
-    echo "${name}" >> "${pkgs_file}"
-  done
-}
-
 # Initializes build and distribution files.
 init () {
-  echo -e 'Cleaning up existing build files...'
+  echo -e 'Starting the clean up process...'
 
   rm -rf .dist
   mkdir .dist
 
-  echo -e 'Build and distribution files removed'
+  echo -e 'Clean up has been completed'
 }
 
-# Copies the archiso custom releng profile.
+# Copies the archiso custom profile.
 copy_profile () {
-  echo -e 'Copying the custom archiso profile'
+  echo -e 'Copying the custom archiso profile...'
 
   cp -r /usr/share/archiso/configs/releng .dist/profile
 
-  echo -e 'The releng archiso profile has been copied'
+  echo -e 'The releng profile copied to .dist/profile'
 }
 
-# Adds the base and system packages into the list of packages.
-add_base_packages () {
-  echo -e 'Adding base packages...'
+# Adds the package with the given name into the list of packages
+# Arguments:
+#  name: the name of a package
+add_package () {
+  local name="${1}"
 
-  add_packages reflector rsync sudo \
-    base-devel pacman-contrib pkgstats grub mtools dosfstools ntfs-3g exfatprogs gdisk fuseiso veracrypt \
-    python-pip parted curl wget udisks2 udiskie gvfs gvfs-smb bash-completion \
-    man-db man-pages texinfo cups cups-pdf cups-filters usbutils bluez bluez-utils unzip terminus-font \
-    vim nano git tree arch-audit atool zip xz unace p7zip gzip lzop feh hsetroot \
-    bzip2 unrar dialog inetutils dnsutils openssh nfs-utils ipset xsel \
-    neofetch age imagemagick gpick fuse2 rclone smartmontools glib2 jq jc sequoia-sq xf86-input-wacom \
+  local pkgs_file=.dist/profile/packages.x86_64
+
+  if grep -Eq "${name}" "${pkgs_file}"; then
+    echo -e "Skipping ${name}"
+    return 0
+  fi
+
+  echo "${name}" >> "${pkgs_file}"
+}
+
+# Adds the pakacge dependencies into the list of packages.
+add_packages () {
+  echo -e 'Adding system and desktop packages...'
+
+  local pkgs=()
+
+  # Add the base and system packages
+  pkgs+=(
+    reflector rsync sudo
+    base-devel pacman-contrib pkgstats grub mtools dosfstools ntfs-3g exfatprogs gdisk fuseiso veracrypt
+    python-pip parted curl wget udisks2 udiskie gvfs gvfs-smb bash-completion
+    man-db man-pages texinfo cups cups-pdf cups-filters usbutils bluez bluez-utils unzip terminus-font
+    vim nano git tree arch-audit atool zip xz unace p7zip gzip lzop feh hsetroot
+    bzip2 unrar dialog inetutils dnsutils openssh nfs-utils ipset xsel
+    neofetch age imagemagick gpick fuse2 rclone smartmontools glib2 jq jc sequoia-sq xf86-input-wacom
     cairo bc xdotool python-tqdm libqalculate
+  )
+  
+  # Add the display server and graphics packages
+  pkgs+=(
+    xorg xorg-xinit xorg-xrandr xorg-xdpyinfo xf86-video-qxl
+  )
 
-  echo -e 'Base packages have been added'
-}
-
-# Adds the display server packages and sets up
-# the configuration files.
-add_display_server_packages () {
-  echo -e 'Adding the display server packages...'
-
-  add_packages xorg xorg-xinit xorg-xrandr xorg-xdpyinfo
-
-  echo -e 'Xorg packages added'
-
-  local root_home=.dist/profile/airootfs/root
-
-  cp configs/xorg/xinitrc "${root_home}/.xinitrc"
-
-  echo '[[ -z $DISPLAY && $XDG_VTNR -eq 1 ]] && exec startx' >> "${root_home}/.zsh_profile"
-
-  echo -e 'Xorg configuration files and hooks have been set'
-}
-
-# Adds the drivers packages into the list of packages.
-add_drivers_packages () {
-  echo -e 'Adding driver packages...'
-
-  add_packages xf86-video-qxl xf86-input-synaptics \
-    acpi acpi_call acpid tlp xcalib \
-    networkmanager networkmanager-openvpn wireless_tools netctl wpa_supplicant \
-    nmap dhclient smbclient libnma \
+  # Add various hardware and driver packages
+  pkgs+=(
+    acpi acpi_call acpid tlp xcalib
+    networkmanager networkmanager-openvpn wireless_tools netctl wpa_supplicant
+    nmap dhclient smbclient libnma
     alsa-utils pipewire pipewire-alsa pipewire-pulse pipewire-jack
+    xf86-input-synaptics
+  )
 
-  echo -e 'Drivers packages have been added'
+  # Add the desktop prerequisite packages
+  pkgs+=(
+    picom bspwm sxhkd polybar rofi dunst
+    trash-cli cool-retro-term helix firefox
+    ttf-font-awesome noto-fonts-emoji
+  )
+
+  local pkg=''
+  for pkg in "${pkgs[@]}"; do
+    add_package "${pkg}"
+  done
+
+  echo -e 'All packages added into the package list'
 }
 
 # Builds and adds the AUR packages into the packages list
-# via an local custom repo.
+# via a local custom repo.
 add_aur_packages () {
-  echo -e 'Building AUR package files...'
+  echo -e 'Building the AUR package files...'
 
   local previous_dir=${PWD}
 
@@ -97,23 +94,26 @@ add_aur_packages () {
   mkdir -p "${repo_home}"
 
   local names=(
-    yay smenu
+    yay smenu xkblayout-state-git
   )
 
   local name=''
   for name in "${names[@]}"; do
+    # Build the next AUR package
     git clone "https://aur.archlinux.org/${name}.git" ".dist/aur/${name}"
   
     cd ".dist/aur/${name}"
     makepkg
     cd ${previous_dir}
 
+    # Create the custom local repo database
     cp .dist/aur/"${name}"/"${name}"-*-x86_64.pkg.tar.zst "${repo_home}"
-    rm -rf ".dist/aur/${name}"
-
     repo-add "${repo_home}/custom.db.tar.gz" ${repo_home}/"${name}"-*-x86_64.pkg.tar.zst
-    add_packages "${name}"
+
+    add_package "${name}"
   done
+
+  rm -rf .dist/aur
 
   echo -e 'The AUR package files have been built'
 
@@ -123,9 +123,9 @@ add_aur_packages () {
   echo -e 'SigLevel = Optional TrustAll' >> "${pacman_conf}"
   echo -e "Server = file://$(realpath "${repo_home}")" >> "${pacman_conf}"
 
-  echo -e 'Custom local repo added to pacman'
+  echo -e 'The custom local repo added to pacman'
   
-  echo -e 'AUR packages have been added'
+  echo -e 'All AUR packages added into the package list'
 }
 
 # Copies the files of the installer.
@@ -144,6 +144,7 @@ copy_installer () {
   cp -r tools "${installer_home}"
   cp install.sh "${installer_home}"
 
+  # Create a global alias to launch the installer
   local bin_home=.dist/profile/airootfs/usr/local/bin
 
   mkdir -p "${bin_home}"
@@ -153,14 +154,17 @@ copy_installer () {
   echo -e 'Installer files have been copied'
 }
 
-# Copies and setups aliases for the settings manager tools.
+# Copies the files of the settings manager tools.
 copy_settings_manager () {
+  echo -e 'Copying the setting manager tools...'
+
   local tools_home=.dist/profile/airootfs/opt/tools
 
   mkdir -p "${tools_home}"
 
   cp -r tools/* "${tools_home}"
 
+  # Create global aliases for each setting tool main entry
   local bin_home=.dist/profile/airootfs/usr/local/bin
 
   mkdir -p "${bin_home}"
@@ -180,17 +184,43 @@ copy_settings_manager () {
   ln -sf /opt/tools/security/main "${bin_home}/security"
   ln -sf /opt/tools/trash/main "${bin_home}/trash"
   ln -sf /opt/tools/system/main "${bin_home}/system"
+
+  echo -e 'Settings manager tools have been copied'
 }
 
-# Adds the desktop pre-requisite packages and sets up
-# the corresponding configurations.
+# Sets up the display server configuration and hooks.
+setup_display_server () {
+  local root_home=.dist/profile/airootfs/root
+
+  cp configs/xorg/xinitrc "${root_home}/.xinitrc"
+
+  echo -e 'The .xinitrc file copied to /root/.xinitrc'
+
+  cp configs/xorg/xorg.conf "${root_home}/etc/X11"
+
+  echo -e 'The xorg.conf file copied to /etc/X11/xorg.conf'
+}
+
+# Sets up the sheel environment files.
+setup_shell_environment () {
+  local zshrc_file=.dist/profile/airootfs/root/.zshrc
+
+  # Set the defauilt terminal and text editor
+  echo -e 'export TERMINAL=cool-retro-term' >> "${zshrc_file}"
+  echo -e 'export EDITOR=helix' >> "${zshrc_file}"
+
+  # Set up trash-cli aliases
+  echo -e "\nalias sudo='sudo '" >> "${zshrc_file}"
+  echo "alias tt='trash-put -i'" >> "${zshrc_file}"
+  echo "alias rm='rm -i'" >> "${zshrc_file}"
+
+  echo -e 'Shell environment configs saved in /root/.zshrc'
+}
+
+# Sets up the corresponding configurations for
+# each desktop module.
 setup_desktop () {
-  echo -e 'Setting up the desktop...'
-
-  add_packages picom bspwm sxhkd polybar rofi dunst \
-    trash-cli cool-retro-term helix firefox
-
-  echo -e 'Desktop pre-requisite packages added'
+  echo -e 'Setting up the desktop configurations...'
 
   local config_home=.dist/profile/airootfs/root/.config
 
@@ -264,19 +294,10 @@ setup_desktop () {
   cp configs/dunst/dunstrc "${dunst_home}"
   cp configs/dunst/hook "${dunst_home}"
 
-  # Set up trash-cli aliases
-  local zshrc_file=.dist/profile/airootfs/root/.zshrc
-
-  echo -e "\nalias sudo='sudo '" >> "${zshrc_file}"
-  echo "alias tt='trash-put -i'" >> "${zshrc_file}"
-  echo "alias rm='rm -i'" >> "${zshrc_file}"
-
-  # Set the defauilt terminal and text editor
-  echo -e '\nexport TERMINAL=cool-retro-term' >> "${zshrc_file}"
-  echo -e 'export EDITOR=helix' >> "${zshrc_file}"
+  echo -e 'Dunst configuration has been set'
 }
 
-# Copies and sets up the theme of the live media.
+# Sets up the theme of the desktop environment.
 setup_theme () {
   echo -e 'Setting up the Dracula theme...'
 
@@ -352,7 +373,7 @@ setup_theme () {
   echo -e 'Desktop wallpaper has been set'
 }
 
-# Sets up sopme extra system fonts.
+# Sets up some extra system fonts.
 setup_fonts () {
   echo -e 'Setting up extra system fonts...'
 
@@ -385,10 +406,6 @@ setup_fonts () {
     echo -e "Font ${name} has been installed"
   done
 
-  echo -e 'Adding some extra glyph fonts...'
-
-  add_packages ttf-font-awesome noto-fonts-emoji
-
   echo -e 'Fonts have been setup'
 }
 
@@ -411,21 +428,21 @@ set_file_permissions () {
 
   local permissions_file=.dist/profile/profiledef.sh
 
-  sed -i '/file_permissions=(/a ["/opt/stack/configs/bspwm/"]="0:0:755"' "${permissions_file}"
-  sed -i '/file_permissions=(/a ["/opt/stack/configs/dunst/hook"]="0:0:755"' "${permissions_file}"
-  sed -i '/file_permissions=(/a ["/opt/stack/configs/nnn/env"]="0:0:755"' "${permissions_file}"
-  sed -i '/file_permissions=(/a ["/opt/stack/configs/polybar/scripts/"]="0:0:755"' "${permissions_file}"
-  sed -i '/file_permissions=(/a ["/opt/stack/configs/rofi/launch"]="0:0:755"' "${permissions_file}"
-  sed -i '/file_permissions=(/a ["/opt/stack/configs/xsecurelock/hook"]="0:0:755"' "${permissions_file}"
-  sed -i '/file_permissions=(/a ["/opt/stack/tools/"]="0:0:755"' "${permissions_file}"
-  sed -i '/file_permissions=(/a ["/opt/stack/scripts/"]="0:0:755"' "${permissions_file}"
-  sed -i '/file_permissions=(/a ["/opt/stack/install.sh"]="0:0:755"' "${permissions_file}"
+  sed -i '/file_permissions=(/a  ["/opt/stack/configs/bspwm/"]="0:0:755"' "${permissions_file}"
+  sed -i '/file_permissions=(/a  ["/opt/stack/configs/dunst/hook"]="0:0:755"' "${permissions_file}"
+  sed -i '/file_permissions=(/a  ["/opt/stack/configs/nnn/env"]="0:0:755"' "${permissions_file}"
+  sed -i '/file_permissions=(/a  ["/opt/stack/configs/polybar/scripts/"]="0:0:755"' "${permissions_file}"
+  sed -i '/file_permissions=(/a  ["/opt/stack/configs/rofi/launch"]="0:0:755"' "${permissions_file}"
+  sed -i '/file_permissions=(/a  ["/opt/stack/configs/xsecurelock/hook"]="0:0:755"' "${permissions_file}"
+  sed -i '/file_permissions=(/a  ["/opt/stack/tools/"]="0:0:755"' "${permissions_file}"
+  sed -i '/file_permissions=(/a  ["/opt/stack/scripts/"]="0:0:755"' "${permissions_file}"
+  sed -i '/file_permissions=(/a  ["/opt/stack/install.sh"]="0:0:755"' "${permissions_file}"
 
-  sed -i '/file_permissions=(/a ["/root/.config/bspwm/"]="0:0:755"' "${permissions_file}"
-  sed -i '/file_permissions=(/a ["/root/.config/polybar/scripts/"]="0:0:755"' "${permissions_file}"
-  sed -i '/file_permissions=(/a ["/root/.config/rofi/launch"]="0:0:755"' "${permissions_file}"
-  sed -i '/file_permissions=(/a ["/root/.config/dunst/hook"]="0:0:755"' "${permissions_file}"
-  sed -i '/file_permissions=(/a ["/opt/tools/"]="0:0:755"' "${permissions_file}"
+  sed -i '/file_permissions=(/a  ["/root/.config/bspwm/"]="0:0:755"' "${permissions_file}"
+  sed -i '/file_permissions=(/a  ["/root/.config/polybar/scripts/"]="0:0:755"' "${permissions_file}"
+  sed -i '/file_permissions=(/a  ["/root/.config/rofi/launch"]="0:0:755"' "${permissions_file}"
+  sed -i '/file_permissions=(/a  ["/root/.config/dunst/hook"]="0:0:755"' "${permissions_file}"
+  sed -i '/file_permissions=(/a  ["/opt/tools/"]="0:0:755"' "${permissions_file}"
 
   echo -e 'File permissions have been defined'
 }
@@ -445,7 +462,7 @@ set_release_metadata () {
   echo -e 'Release os metadata have been set'
 }
 
-make_archiso () {
+make_iso_file () {
   echo -e 'Building the archiso file...'
 
   mkdir -p .dist/work
@@ -460,18 +477,18 @@ sleep 5
 
 init &&
   copy_profile &&
-  add_base_packages &&
-  add_display_server_packages &&
-  add_drivers_packages &&
+  add_packages &&
   add_aur_packages &&
   copy_installer &&
   copy_settings_manager &&
+  setup_display_server &&
+  setup_shell_environment &&
   setup_desktop &&
   setup_theme &&
   setup_fonts &&
   setup_sounds &&
   set_file_permissions &&
   set_release_metadata &&
-  make_archiso &&
+  make_iso_file &&
   echo -e 'Build process completed successfully' ||
   echo -e 'Build process has failed'
