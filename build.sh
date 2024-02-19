@@ -190,15 +190,55 @@ copy_settings_manager () {
 
 # Sets up the display server configuration and hooks.
 setup_display_server () {
-  local root_home=.dist/profile/airootfs/root
+  local root_home=.dist/profile/airootfs
 
-  cp configs/xorg/xinitrc "${root_home}/.xinitrc"
+  cp configs/xorg/xinitrc "${root_home}/root/.xinitrc"
 
   echo -e 'The .xinitrc file copied to /root/.xinitrc'
 
+  mkdir -p "${root_home}/etc/X11"
   cp configs/xorg/xorg.conf "${root_home}/etc/X11"
 
   echo -e 'The xorg.conf file copied to /etc/X11/xorg.conf'
+}
+
+# Sets up the keyboard settings.
+setup_keyboard () {
+  echo -e 'Applying keyboard settings...'
+
+  local root_home=.dist/profile/airootfs
+
+  echo 'KEYMAP=us' > "${root_home}/etc/vconsole.conf"
+
+  echo -e 'Keyboard map keys has been set to us'
+
+  mkdir -p "${root_home}/etc/X11/xorg.conf.d"
+
+  printf '%s\n' \
+   'Section "InputClass"' \
+   '  Identifier "system-keyboard"' \
+   '  MatchIsKeyboard "on"' \
+   '  Option "XkbLayout" "us"' \
+   '  Option "XkbModel" "pc105"' \
+   '  Option "XkbOptions" "grp:alt_shift_toggle"' \
+   'EndSection' > "${root_home}/etc/X11/xorg.conf.d/00-keyboard.conf"
+
+  echo -e 'Xorg keyboard settings have been set'
+
+  # Save keyboard settings to the user langs json file
+  local config_home="${root_home}/root/.config/stack"
+
+  mkdir -p "${config_home}"
+
+  printf '%s\n' \
+    '{' \
+    '  keymap: "us",' \
+    '  model: "pc105",' \
+    '  options: "grp:alt_shift_toggle",' \
+    '  layouts: [{code: "us", variant: "default"}]' \
+    '}' > "${config_home}/langs.json"
+  
+  echo -e 'Keyboard settings have been applied'
 }
 
 # Sets up the sheel environment files.
