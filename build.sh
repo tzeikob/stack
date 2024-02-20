@@ -304,15 +304,14 @@ setup_desktop () {
   cp configs/polybar/modules.ini "${polybar_home}"
   cp configs/polybar/theme.ini "${polybar_home}"
 
-  sed -i "s/\(modules-right = \)cpu.*/\1 date time user/" "${polybar_home}/config.ini"
-  sed -i "s/\(modules-right = \)notifications.*/\1 power audio keyboard/" "${polybar_home}/config.ini"
+  sed -i "s/\(modules-right = \)cpu.*/\1 date time/" "${polybar_home}/config.ini"
+  sed -i "s/\(modules-right = \)notifications.*/\1 audio keyboard/" "${polybar_home}/config.ini"
   sed -i "s/\(modules-left = \)wlan.*/\1 wlan eth flash-drives/" "${polybar_home}/config.ini"
 
   mkdir -p "${polybar_home}/scripts"
 
   cp -r configs/polybar/scripts/flash-drives "${polybar_home}/scripts"
   cp -r configs/polybar/scripts/time "${polybar_home}/scripts"
-  cp -r configs/polybar/scripts/power "${polybar_home}/scripts"
 
   echo -e 'Polybar configuration has been set'
 
