@@ -468,21 +468,21 @@ set_file_permissions () {
 
   local permissions_file="${PROFILE_DIR}/profiledef.sh"
 
-  sed -i '/file_permissions=(/a  ["/opt/stack/configs/bspwm/"]="0:0:755"' "${permissions_file}"
-  sed -i '/file_permissions=(/a  ["/opt/stack/configs/dunst/hook"]="0:0:755"' "${permissions_file}"
-  sed -i '/file_permissions=(/a  ["/opt/stack/configs/nnn/env"]="0:0:755"' "${permissions_file}"
-  sed -i '/file_permissions=(/a  ["/opt/stack/configs/polybar/scripts/"]="0:0:755"' "${permissions_file}"
-  sed -i '/file_permissions=(/a  ["/opt/stack/configs/rofi/launch"]="0:0:755"' "${permissions_file}"
-  sed -i '/file_permissions=(/a  ["/opt/stack/configs/xsecurelock/hook"]="0:0:755"' "${permissions_file}"
-  sed -i '/file_permissions=(/a  ["/opt/stack/tools/"]="0:0:755"' "${permissions_file}"
-  sed -i '/file_permissions=(/a  ["/opt/stack/scripts/"]="0:0:755"' "${permissions_file}"
-  sed -i '/file_permissions=(/a  ["/opt/stack/install.sh"]="0:0:755"' "${permissions_file}"
+  sed -i '/file_permissions=(/a ["/opt/stack/configs/bspwm/"]="0:0:755"' "${permissions_file}"
+  sed -i '/file_permissions=(/a ["/opt/stack/configs/dunst/hook"]="0:0:755"' "${permissions_file}"
+  sed -i '/file_permissions=(/a ["/opt/stack/configs/nnn/env"]="0:0:755"' "${permissions_file}"
+  sed -i '/file_permissions=(/a ["/opt/stack/configs/polybar/scripts/"]="0:0:755"' "${permissions_file}"
+  sed -i '/file_permissions=(/a ["/opt/stack/configs/rofi/launch"]="0:0:755"' "${permissions_file}"
+  sed -i '/file_permissions=(/a ["/opt/stack/configs/xsecurelock/hook"]="0:0:755"' "${permissions_file}"
+  sed -i '/file_permissions=(/a ["/opt/stack/tools/"]="0:0:755"' "${permissions_file}"
+  sed -i '/file_permissions=(/a ["/opt/stack/scripts/"]="0:0:755"' "${permissions_file}"
+  sed -i '/file_permissions=(/a ["/opt/stack/install.sh"]="0:0:755"' "${permissions_file}"
 
-  sed -i '/file_permissions=(/a  ["/root/.config/bspwm/"]="0:0:755"' "${permissions_file}"
-  sed -i '/file_permissions=(/a  ["/root/.config/polybar/scripts/"]="0:0:755"' "${permissions_file}"
-  sed -i '/file_permissions=(/a  ["/root/.config/rofi/launch"]="0:0:755"' "${permissions_file}"
-  sed -i '/file_permissions=(/a  ["/root/.config/dunst/hook"]="0:0:755"' "${permissions_file}"
-  sed -i '/file_permissions=(/a  ["/opt/tools/"]="0:0:755"' "${permissions_file}"
+  sed -i '/file_permissions=(/a ["/root/.config/bspwm/"]="0:0:755"' "${permissions_file}"
+  sed -i '/file_permissions=(/a ["/root/.config/polybar/scripts/"]="0:0:755"' "${permissions_file}"
+  sed -i '/file_permissions=(/a ["/root/.config/rofi/launch"]="0:0:755"' "${permissions_file}"
+  sed -i '/file_permissions=(/a ["/root/.config/dunst/hook"]="0:0:755"' "${permissions_file}"
+  sed -i '/file_permissions=(/a ["/opt/tools/"]="0:0:755"' "${permissions_file}"
 
   echo -e 'File permissions have been defined'
 }
@@ -505,6 +505,16 @@ set_release_metadata () {
     "IMAGE_VERSION=\"$(date +%Y-%m-%dT%H-%M-%S)\"" > "${ROOT_FS}/etc/os-release"
   
   echo -e 'Release metadata have been set in /etc/os-release'
+
+  local profile_file="${PROFILE_DIR}/profiledef.sh"
+
+  sed -i 's/^\(iso_name\).*/\1="stackos"/' "${profile_file}"
+  sed -i 's/^\(iso_label="\)ARCH_\(.*\)/\1STACKOS_\2/' "${profile_file}"
+  sed -i 's;^\(iso_publisher\).*;\1="StackOS <https://github.com/tzeikob/stack.git>";' "${profile_file}"
+  sed -i 's;^\(iso_application\).*;\1="StackOS Live/Rescue Disk";' "${profile_file}"
+  sed -i 's/^\(install_dir\).*/\1="stackos"/' "${profile_file}"
+
+  echo -e 'Publisher metadata have been set in profiledef.sh'
 }
 
 # Creates the iso file of the live media.
