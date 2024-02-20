@@ -511,8 +511,6 @@ set_release_metadata () {
 make_iso_file () {
   echo -e 'Building the archiso file...'
 
-  mkdir -p "${WORK_DIR}"
-
   sudo mkarchiso -v -r -A stackos -L stackos \
     -w "${WORK_DIR}" -o "${DIST_DIR}" "${PROFILE_DIR}"
 
