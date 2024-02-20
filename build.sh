@@ -206,6 +206,13 @@ setup_display_server () {
   echo -e 'The xorg.conf file copied to /etc/X11/xorg.conf'
 }
 
+# Sets the host name of the iso live media.
+set_host_name () {
+  echo 'stackiso' > "${ROOT_FS}/etc/hostname"
+
+  echo -e 'Host name has been set to stackiso'
+}
+
 # Sets up the keyboard settings.
 setup_keyboard () {
   echo -e 'Applying keyboard settings...'
@@ -234,10 +241,10 @@ setup_keyboard () {
 
   printf '%s\n' \
     '{' \
-    '  keymap: "us",' \
-    '  model: "pc105",' \
-    '  options: "grp:alt_shift_toggle",' \
-    '  layouts: [{code: "us", variant: "default"}]' \
+    '  "keymap": "us",' \
+    '  "model": "pc105",' \
+    '  "options": "grp:alt_shift_toggle",' \
+    '  "layouts": [{"code": "us", "variant": "default"}]' \
     '}' > "${config_home}/langs.json"
   
   echo -e 'Keyboard settings have been applied'
@@ -501,7 +508,7 @@ set_release_metadata () {
     'BUG_REPORT_URL="https://github.com/tzeikob/stack.git/issues"' \
     'PRIVACY_POLICY_URL="https://github.com/tzeikob/stack.git/LICENSE"' \
     'LOGO="archlinux-logo"' \
-    'IMAGE_ID="archlinux-stackos"' \
+    'IMAGE_ID="stackos"' \
     "IMAGE_VERSION=\"$(date +%Y-%m-%dT%H-%M-%S)\"" > "${ROOT_FS}/etc/os-release"
   
   echo -e 'Release metadata have been set in /etc/os-release'
@@ -537,6 +544,7 @@ init &&
   copy_installer &&
   copy_settings_manager &&
   setup_display_server &&
+  set_host_name &&
   setup_keyboard &&
   setup_shell_environment &&
   setup_desktop &&
