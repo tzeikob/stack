@@ -168,7 +168,18 @@ copy_settings_manager () {
 
   mkdir -p "${tools_home}"
 
-  cp -r tools/* "${tools_home}"
+  # Copy settings tools needed to the live media only
+  cp -r tools/displays "${tools_home}"
+  cp -r tools/desktop "${tools_home}"
+  cp -r tools/audio "${tools_home}"
+  cp -r tools/clock "${tools_home}"
+  cp -r tools/networks "${tools_home}"
+  cp -r tools/disks "${tools_home}"
+  cp -r tools/langs "${tools_home}"
+  cp -r tools/notifications "${tools_home}"
+  cp -r tools/power "${tools_home}"
+  cp -r tools/trash "${tools_home}"
+  cp tools/utils "${tools_home}"
 
   # Create global aliases for each setting tool main entry
   local bin_home="${ROOT_FS}/usr/local/bin"
@@ -179,24 +190,28 @@ copy_settings_manager () {
   ln -sf /opt/tools/desktop/main "${bin_home}/desktop"
   ln -sf /opt/tools/audio/main "${bin_home}/audio"
   ln -sf /opt/tools/clock/main "${bin_home}/clock"
-  ln -sf /opt/tools/cloud/main "${bin_home}/cloud"
   ln -sf /opt/tools/networks/main "${bin_home}/networks"
   ln -sf /opt/tools/disks/main "${bin_home}/disks"
-  ln -sf /opt/tools/bluetooth/main "${bin_home}/bluetooth"
   ln -sf /opt/tools/langs/main "${bin_home}/langs"
   ln -sf /opt/tools/notifications/main "${bin_home}/notifications"
   ln -sf /opt/tools/power/main "${bin_home}/power"
-  ln -sf /opt/tools/printers/main "${bin_home}/printers"
-  ln -sf /opt/tools/security/main "${bin_home}/security"
   ln -sf /opt/tools/trash/main "${bin_home}/trash"
-  ln -sf /opt/tools/system/main "${bin_home}/system"
 
   echo -e 'Settings manager tools have been copied'
 }
 
 # Sets up the display server configuration and hooks.
 setup_display_server () {
-  cp configs/xorg/xinitrc "${ROOT_FS}/root/.xinitrc"
+  local xinitrc_file="${ROOT_FS}/root/.xinitrc"
+
+  cp configs/xorg/xinitrc "${xinitrc_file}"
+
+  # Keep functionality relatated to live media only
+  sed -i '/system -qs/d' "${xinitrc_file}"
+  sed -i '/displays -qs/d' "${xinitrc_file}"
+  sed -i '/security -qs/d' "${xinitrc_file}"
+  sed -i '/power -qs/d' "${xinitrc_file}"
+  sed -i '/cloud -qs/d' "${xinitrc_file}"
 
   echo -e 'The .xinitrc file copied to /root/.xinitrc'
 
@@ -297,12 +312,16 @@ setup_desktop () {
   cp configs/polybar/modules.ini "${polybar_home}"
   cp configs/polybar/theme.ini "${polybar_home}"
 
-  sed -i "s/\(modules-right = \)cpu.*/\1 date time/" "${polybar_home}/config.ini"
-  sed -i "s/\(modules-right = \)notifications.*/\1 audio keyboard/" "${polybar_home}/config.ini"
-  sed -i "s/\(modules-left = \)wlan.*/\1 wlan eth flash-drives/" "${polybar_home}/config.ini"
+  local config_ini="${polybar_home}/config.ini"
+
+  # Remove modules not needed by the live media
+  sed -i "s/\(modules-right = \)cpu.*/\1 date time/" "${config_ini}"
+  sed -i "s/\(modules-right = \)notifications.*/\1 flash-drives keyboard/" "${config_ini}"
+  sed -i "s/\(modules-left = \)wlan.*/\1 wlan eth/" "${config_ini}"
 
   mkdir -p "${polybar_home}/scripts"
 
+  # Keep only scripts needed by the live media
   cp -r configs/polybar/scripts/flash-drives "${polybar_home}/scripts"
   cp -r configs/polybar/scripts/time "${polybar_home}/scripts"
 
@@ -315,6 +334,13 @@ setup_desktop () {
 
   cp configs/sxhkd/sxhkdrc "${sxhkd_home}"
 
+  local sxhkdrc_file="${sxhkd_home}/sxhkdrc"
+
+  # Remove key bindings not needed by the live media
+  sed -i '/# Lock the screen/,+3d' "${sxhkdrc_file}"
+  sed -i '/# Take a screen shot/,+3d' "${sxhkdrc_file}"
+  sed -i '/# Start recording your screen/,+3d' "${sxhkdrc_file}"
+
   echo -e 'Sxhkd configuration has been set'
 
   # Copy rofi configuration files
@@ -324,6 +350,16 @@ setup_desktop () {
 
   cp configs/rofi/config.rasi "${rofi_home}"
   cp configs/rofi/launch "${rofi_home}"
+
+  local launch_file="${rofi_home}/launch"
+
+  sed -i "/options+='Lock\\\n'/d" "${launch_file}"
+  sed -i "/options+='Blank\\\n'/d" "${launch_file}"
+  sed -i "/options+='Logout'/d" "${launch_file}"
+  sed -i "s/\(  local exact_lines='listview {lines:\) 6\(;}\)'/\1 3\2/" "${launch_file}"
+  sed -i "/'Lock') security -qs lock screen;;/d" "${launch_file}"
+  sed -i "/'Blank') power -qs blank;;/d" "${launch_file}"
+  sed -i "/'Logout') security -qs logout user;;/d" "${launch_file}"
 
   echo -e 'Rofi configuration has been set'
 
