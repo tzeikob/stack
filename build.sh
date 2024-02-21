@@ -206,13 +206,6 @@ setup_display_server () {
   echo -e 'The xorg.conf file copied to /etc/X11/xorg.conf'
 }
 
-# Sets the host name of the iso live media.
-set_host_name () {
-  echo 'stackiso' > "${ROOT_FS}/etc/hostname"
-
-  echo -e 'Host name has been set to stackiso'
-}
-
 # Sets up the keyboard settings.
 setup_keyboard () {
   echo -e 'Applying keyboard settings...'
@@ -493,42 +486,11 @@ set_file_permissions () {
   echo -e 'File permissions have been defined'
 }
 
-# Sets the metadata file of the os release.
-set_release_metadata () {
-  printf '%s\n' \
-    'NAME="StackOS"' \
-    'PRETTY_NAME="StackOS"' \
-    'ID="StackOS"' \
-    'BUILD_ID="rolling"' \
-    'ANSI_COLOR="38;2;23;147;209"' \
-    'HOME_URL="https://github.com/tzeikob/stack.git/"' \
-    'DOCUMENTATION_URL="https://github.com/tzeikob/stack.git/README.md"' \
-    'SUPPORT_URL="https://github.com/tzeikob/stack.git/README.md"' \
-    'BUG_REPORT_URL="https://github.com/tzeikob/stack.git/issues"' \
-    'PRIVACY_POLICY_URL="https://github.com/tzeikob/stack.git/LICENSE"' \
-    'LOGO="archlinux-logo"' \
-    'IMAGE_ID="stackos"' \
-    "IMAGE_VERSION=\"$(date +%Y-%m-%dT%H-%M-%S)\"" > "${ROOT_FS}/etc/os-release"
-  
-  echo -e 'Release metadata have been set in /etc/os-release'
-
-  local profile_file="${PROFILE_DIR}/profiledef.sh"
-
-  sed -i 's/^\(iso_name\).*/\1="stackos"/' "${profile_file}"
-  sed -i 's/^\(iso_label="\)ARCH_\(.*\)/\1STACKOS_\2/' "${profile_file}"
-  sed -i 's;^\(iso_publisher\).*;\1="StackOS <https://github.com/tzeikob/stack.git>";' "${profile_file}"
-  sed -i 's;^\(iso_application\).*;\1="StackOS Live/Rescue Disk";' "${profile_file}"
-  sed -i 's/^\(install_dir\).*/\1="stackos"/' "${profile_file}"
-
-  echo -e 'Publisher metadata have been set in profiledef.sh'
-}
-
 # Creates the iso file of the live media.
 make_iso_file () {
   echo -e 'Building the archiso file...'
 
-  sudo mkarchiso -v -r -A stackos -L stackos \
-    -w "${WORK_DIR}" -o "${DIST_DIR}" "${PROFILE_DIR}"
+  sudo mkarchiso -v -r -w "${WORK_DIR}" -o "${DIST_DIR}" "${PROFILE_DIR}"
 
   echo -e "Archiso file has been exported at ${DIST_DIR}"
 }
@@ -543,7 +505,6 @@ init &&
   copy_installer &&
   copy_settings_manager &&
   setup_display_server &&
-  set_host_name &&
   setup_keyboard &&
   setup_shell_environment &&
   setup_desktop &&
@@ -551,7 +512,6 @@ init &&
   setup_fonts &&
   setup_sounds &&
   set_file_permissions &&
-  set_release_metadata &&
   make_iso_file &&
   echo -e 'Build process completed successfully' ||
   echo -e 'Build process has failed'

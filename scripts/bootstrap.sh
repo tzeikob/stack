@@ -112,15 +112,6 @@ install_kernel () {
   log 'Linux kernel has been installed'
 }
 
-# Sets the metadata file of the os release.
-set_release_metadata () {
-  cp /etc/os-release /mnt/usr/lib/os-release
-  
-  ln -sf /mnt/usr/lib/os-release /etc/os-release
-  
-  log 'Release os metadata have been set'
-}
-
 # Grants the nopasswd permission to the wheel user group.
 grant_permissions () {
   local rule='%wheel ALL=(ALL:ALL) NOPASSWD: ALL'
@@ -181,7 +172,6 @@ sync_clock &&
   sync_package_databases &&
   update_keyring &&
   install_kernel &&
-  set_release_metadata &&
   grant_permissions &&
   copy_installation_files
 
