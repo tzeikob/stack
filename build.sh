@@ -178,6 +178,9 @@ copy_settings_manager () {
   cp -r tools/trash "${tools_home}"
   cp tools/utils "${tools_home}"
 
+  # Remove LC_CTYPE on smenu calls as live media doesn't need it
+  sed -i 's/\(.*\)LC_CTYPE=.* \(smenu .*\)/\1\2/' "${tools_home}/utils"
+
   # Create global aliases for each setting tool main entry
   local bin_home="${ROOT_FS}/usr/local/bin"
 
