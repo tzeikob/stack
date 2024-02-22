@@ -68,9 +68,7 @@ add_packages () {
   pkgs+=(
     acpi acpi_call acpid tlp xcalib
     networkmanager networkmanager-openvpn wireless_tools netctl wpa_supplicant
-    nmap dhclient smbclient libnma
-    alsa-utils pipewire pipewire-alsa pipewire-pulse pipewire-jack
-    xf86-input-synaptics
+    nmap dhclient smbclient libnma alsa-utils xf86-input-synaptics
   )
 
   # Add the desktop prerequisite packages
@@ -171,7 +169,6 @@ copy_settings_manager () {
   # Copy settings tools needed to the live media only
   cp -r tools/displays "${tools_home}"
   cp -r tools/desktop "${tools_home}"
-  cp -r tools/audio "${tools_home}"
   cp -r tools/clock "${tools_home}"
   cp -r tools/networks "${tools_home}"
   cp -r tools/disks "${tools_home}"
@@ -188,7 +185,6 @@ copy_settings_manager () {
 
   ln -sf /opt/tools/displays/main "${bin_home}/displays"
   ln -sf /opt/tools/desktop/main "${bin_home}/desktop"
-  ln -sf /opt/tools/audio/main "${bin_home}/audio"
   ln -sf /opt/tools/clock/main "${bin_home}/clock"
   ln -sf /opt/tools/networks/main "${bin_home}/networks"
   ln -sf /opt/tools/disks/main "${bin_home}/disks"
@@ -315,7 +311,7 @@ setup_desktop () {
   local config_ini="${polybar_home}/config.ini"
 
   # Remove modules not needed by the live media
-  sed -i "s/\(modules-right = \)cpu.*/\1 date time/" "${config_ini}"
+  sed -i "s/\(modules-right = \)cpu.*/\1 alsa-audio date time/" "${config_ini}"
   sed -i "s/\(modules-right = \)notifications.*/\1 flash-drives keyboard/" "${config_ini}"
   sed -i "s/\(modules-left = \)wlan.*/\1 wlan eth/" "${config_ini}"
 
