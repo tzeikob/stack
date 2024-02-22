@@ -352,7 +352,7 @@ setup_desktop () {
   sed -i "/options+='Lock\\\n'/d" "${launch_file}"
   sed -i "/options+='Blank\\\n'/d" "${launch_file}"
   sed -i "/options+='Logout'/d" "${launch_file}"
-  sed -i "s/\(  local exact_lines='listview {lines:\) 6\(;}\)'/\1 3\2/" "${launch_file}"
+  sed -i "s/\(  local exact_lines='listview {lines:\) 6\(;}'\)/\1 3\2/" "${launch_file}"
   sed -i "/'Lock') security -qs lock screen;;/d" "${launch_file}"
   sed -i "/'Blank') power -qs blank;;/d" "${launch_file}"
   sed -i "/'Logout') security -qs logout user;;/d" "${launch_file}"
