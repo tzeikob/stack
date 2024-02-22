@@ -144,6 +144,11 @@ ask_secret () {
 # Returns:
 #  0 if succeeded otherwise 1.
 authenticate_user () {
+  # Skip authentication for the root user
+  if equals "$(id -u)" 0; then
+    return 0
+  fi
+
   echo 'Permission needed for this operation'
 
   # Invalidate user's cached credentials
