@@ -181,6 +181,12 @@ copy_settings_manager () {
   # Remove LC_CTYPE on smenu calls as live media doesn't need it
   sed -i 's/\(.*\)LC_CTYPE=.* \(smenu .*\)/\1\2/' "${tools_home}/utils"
 
+  # Disable init scratchpad command for the live media
+  local desktop_main="${tools_home}/desktop/main"
+
+  sed -i "/'init scratchpad' 'Initialize the sticky scratchpad terminal.'/d" "${desktop_main}"
+  sed -i "/'init scratchpad') init_scratchpad;;/d" "${desktop_main}"
+
   # Create global aliases for each setting tool main entry
   local bin_home="${ROOT_FS}/usr/local/bin"
 
@@ -297,8 +303,11 @@ setup_desktop () {
   cp configs/bspwm/bspwmrc "${bspwm_home}"
   cp configs/bspwm/resize "${bspwm_home}"
   cp configs/bspwm/rules "${bspwm_home}"
-  cp configs/bspwm/scratchpad "${bspwm_home}"
   cp configs/bspwm/swap "${bspwm_home}"
+
+  # Remove init scratchpad initializer from the bspwmrc
+  sed -i '/desktop -qs init scratchpad &/d' "${bspwm_home}/bspwmrc"
+  sed -i '/bspc rule -a scratch sticky=off state=floating hidden=on/d' "${bspwm_home}/bspwmrc"
 
   echo -e 'Bspwm configuration has been set'
 
@@ -339,6 +348,7 @@ setup_desktop () {
   sed -i '/# Lock the screen/,+3d' "${sxhkdrc_file}"
   sed -i '/# Take a screen shot/,+3d' "${sxhkdrc_file}"
   sed -i '/# Start recording your screen/,+3d' "${sxhkdrc_file}"
+  sed -i ';${HOME}/.config/bspwm/scratchpad;,-3d' "${sxhkdrc_file}"
 
   echo -e 'Sxhkd configuration has been set'
 
