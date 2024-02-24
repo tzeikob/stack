@@ -345,10 +345,10 @@ setup_desktop () {
   local sxhkdrc_file="${sxhkd_home}/sxhkdrc"
 
   # Remove key bindings not needed by the live media
-  sed -i '/# Lock the screen/,+3d' "${sxhkdrc_file}"
-  sed -i '/# Take a screen shot/,+3d' "${sxhkdrc_file}"
-  sed -i '/# Start recording your screen/,+3d' "${sxhkdrc_file}"
-  sed -i ';${HOME}/.config/bspwm/scratchpad;,-3d' "${sxhkdrc_file}"
+  sed -i '/# Lock the screen./,+3d' "${sxhkdrc_file}"
+  sed -i '/# Take a screen shot./,+3d' "${sxhkdrc_file}"
+  sed -i '/# Start recording your screen./,+3d' "${sxhkdrc_file}"
+  sed -i '/# Show and hide the scratchpad termimal./,+3d' "${sxhkdrc_file}"
 
   echo -e 'Sxhkd configuration has been set'
 
