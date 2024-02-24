@@ -172,9 +172,11 @@ copy_settings_manager () {
   cp -r tools/clock "${tools_home}"
   cp -r tools/networks "${tools_home}"
   cp -r tools/disks "${tools_home}"
+  cp -r tools/bluetooth "${tools_home}"
   cp -r tools/langs "${tools_home}"
   cp -r tools/notifications "${tools_home}"
   cp -r tools/power "${tools_home}"
+  cp -r tools/printers "${tools_home}"
   cp -r tools/trash "${tools_home}"
   cp tools/utils "${tools_home}"
 
@@ -197,9 +199,11 @@ copy_settings_manager () {
   ln -sf /opt/tools/clock/main "${bin_home}/clock"
   ln -sf /opt/tools/networks/main "${bin_home}/networks"
   ln -sf /opt/tools/disks/main "${bin_home}/disks"
+  ln -sf /opt/tools/bluetooth/main "${bin_home}/bluetooth"
   ln -sf /opt/tools/langs/main "${bin_home}/langs"
   ln -sf /opt/tools/notifications/main "${bin_home}/notifications"
   ln -sf /opt/tools/power/main "${bin_home}/power"
+  ln -sf /opt/tools/printers/main "${bin_home}/printers"
   ln -sf /opt/tools/trash/main "${bin_home}/trash"
 
   echo -e 'Settings manager tools have been copied'
