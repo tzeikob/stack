@@ -510,6 +510,21 @@ setup_sounds () {
   echo -e 'System sounds have been set'
 }
 
+# Adds input and output devices rules.
+add_device_rules () {
+  echo -e 'Adding system udev rules...'
+
+  local rules_home="${ROOT_FS}/etc/udev/rules.d"
+
+  mkdir -p "${rules_home}"
+
+  cp rules/90-init-pointer.rules "${rules_home}"
+  cp rules/91-init-tablets.rules "${rules_home}"
+  cp rules/92-fix-layout.rules "${rules_home}"
+    
+  echo -e 'Device rules have been set'
+}
+
 # Define the root files permissions.
 set_file_permissions () {
   echo -e 'Defining the file permissions...'
@@ -560,6 +575,7 @@ init &&
   setup_theme &&
   setup_fonts &&
   setup_sounds &&
+  add_device_rules &&
   set_file_permissions &&
   make_iso_file &&
   echo -e 'Build process completed successfully' ||
