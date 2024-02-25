@@ -74,8 +74,8 @@ add_packages () {
   # Add the desktop prerequisite packages
   pkgs+=(
     picom bspwm sxhkd polybar rofi dunst
-    trash-cli cool-retro-term helix firefox
-    ttf-font-awesome noto-fonts-emoji
+    trash-cli cool-retro-term helix firefox torbrowser-launcher
+    irssi ttf-font-awesome noto-fonts-emoji
   )
 
   local pkg=''
@@ -98,7 +98,7 @@ add_aur_packages () {
   mkdir -p "${repo_home}"
 
   local names=(
-    yay smenu xkblayout-state-git
+    yay libqalculate smenu xkblayout-state-git
   )
 
   local name=''
