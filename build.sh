@@ -98,7 +98,7 @@ add_aur_packages () {
   mkdir -p "${repo_home}"
 
   local names=(
-    yay libqalculate smenu xkblayout-state-git
+    yay smenu xkblayout-state-git
   )
 
   local name=''

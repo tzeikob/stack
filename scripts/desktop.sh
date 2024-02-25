@@ -457,7 +457,7 @@ install_screen_casters () {
 install_calculator () {
   log 'Installing the calculator...'
 
-  yay -S --needed --noconfirm --removemake libqalculate 2>&1 ||
+  sudo pacman -S --needed --noconfirm libqalculate 2>&1 ||
     fail 'Failed to install qalculate'
 
   local desktop_home='/usr/local/share/applications'
