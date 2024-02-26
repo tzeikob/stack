@@ -510,6 +510,32 @@ setup_sounds () {
   echo -e 'System sounds have been set'
 }
 
+# Enables various system services.
+enable_services () {
+  echo -e 'Enabling system services...'
+
+  local systemd_home="${ROOT_FS}/etc/systemd/system"
+
+  mkdir -p "${systemd_home}"
+
+  ln -s /usr/lib/systemd/system/NetworkManager-dispatcher.service \
+    "${systemd_home}/dbus-org.freedesktop.nm-dispatcher.service"
+
+  local multi_user="${systemd_home}/multi-user.target.wants"
+
+  mkdir -p "${multi_user}"
+
+  ln -s /usr/lib/systemd/system/NetworkManager.service "${multi_user}"
+
+  local network_online="${systemd_home}/network-online.target.wants"
+
+  mkdir -p "${network_online}"
+
+  ln -s /usr/lib/systemd/system/NetworkManager-wait-online.service "${network_online}"
+
+  echo -e 'Network manager services enabled'
+}
+
 # Adds input and output devices rules.
 add_device_rules () {
   echo -e 'Adding system udev rules...'
@@ -525,7 +551,7 @@ add_device_rules () {
   echo -e 'Device rules have been set'
 }
 
-# Define the root files permissions.
+# Defines the root files permissions.
 set_file_permissions () {
   echo -e 'Defining the file permissions...'
 
@@ -575,6 +601,7 @@ init &&
   setup_theme &&
   setup_fonts &&
   setup_sounds &&
+  enable_services &&
   add_device_rules &&
   set_file_permissions &&
   make_iso_file &&
