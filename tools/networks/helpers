@@ -305,6 +305,13 @@ save_proxy_to_settings () {
   local username="${4}"
   local password="${5}"
   local no_proxy="${6}"
+
+  if is_given "${no_proxy}"; then
+    local query='[split(",")|.[]|if . and .!="" then . else empty end]'
+    no_proxy="$(echo "\"${no_proxy}\"" | jq -cer "${query}")" || return 1
+  else
+    no_proxy='[]'
+  fi
   
   local proxy=''
   proxy+="\"name\": \"${name}\","

@@ -805,11 +805,6 @@ add_proxy () {
       ask 'Enter no proxy hosts [optional]:' || return $?
       no_proxy="${REPLY}"
     fi
-
-    if is_given "${no_proxy}"; then
-      local query='[split(",")|.[]|if . and .!="" then . else empty end]'
-      no_proxy="$(echo "\"${no_proxy}\"" | jq -cer "${query}")" || return 1
-    fi
   fi
 
   save_proxy_to_settings "${name}" "${host}" "${port}" "${username}" "${password}" "${no_proxy}"
