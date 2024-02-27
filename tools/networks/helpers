@@ -5,9 +5,6 @@ set -o pipefail
 source /opt/tools/utils
 
 NETWORKS_SETTINGS="${CONFIG_HOME}/networks.json"
-SHELLRC_FILE="${HOME}/.bashrc"
-PROXY_ENV_FILE="${HOME}/.config/environment.d/proxy.conf"
-DOCKER_PROXY_FILE='/etc/systemd/system/docker.service.d/http-proxy.conf'
 
 # Returns the general status of the networking.
 # Outputs:

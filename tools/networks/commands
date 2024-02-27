@@ -43,9 +43,11 @@ show_status () {
     echo 'ISP:         Unavailable'
   fi
 
+  local proxy_env="${HOME}/.config/environment.d/proxy.conf"
+
   local proxy=''
-  if file_exists "${PROXY_ENV_FILE}"; then
-    proxy="$(cat "${PROXY_ENV_FILE}" | awk -F'=' '/export http_proxy=/ {
+  if file_exists "${proxy_env}"; then
+    proxy="$(cat "${proxy_env}" | awk -F'=' '/export http_proxy=/ {
       split($2,a,"http://")
       if (a[2] ~ /@/) {
         split(a[2],b,"@")
@@ -935,21 +937,35 @@ set_proxy () {
 
   mkdir -p "${HOME}/.config/environment.d"
 
-  echo "export http_proxy=\"http://${uri}/\"" > "${PROXY_ENV_FILE}" &&
-  echo "export HTTP_PROXY=\"http://${uri}/\"" >> "${PROXY_ENV_FILE}" &&
-  echo "export https_proxy=\"https://${uri}/\"" >> "${PROXY_ENV_FILE}" &&
-  echo "export HTTPS_PROXY=\"https://${uri}/\"" >> "${PROXY_ENV_FILE}" &&
-  echo "export ftp_proxy=\"ftp://${uri}/\"" >> "${PROXY_ENV_FILE}" &&
-  echo "export FTP_PROXY=\"ftp://${uri}/\"" >> "${PROXY_ENV_FILE}" &&
-  echo "export rsync_proxy=\"rsync://${uri}/\"" >> "${PROXY_ENV_FILE}" &&
-  echo "export RSYNC_PROXY=\"rsync://${uri}/\"" >> "${PROXY_ENV_FILE}" &&
-  echo "export all_proxy=\"https://${uri}/\"" >> "${PROXY_ENV_FILE}" &&
-  echo "export ALL_PROXY=\"https://${uri}/\"" >> "${PROXY_ENV_FILE}" &&
-  echo "export no_proxy=\"${no_proxy}\"" >> "${PROXY_ENV_FILE}" &&
-  echo "export NO_PROXY=\"${no_proxy}\"" >> "${PROXY_ENV_FILE}" &&
-  sed -i "\|source \"${PROXY_ENV_FILE}\"|d" "${SHELLRC_FILE}" &&
-  echo "source \"${PROXY_ENV_FILE}\"" >> "${SHELLRC_FILE}" ||
+  local proxy_env="${HOME}/.config/environment.d/proxy.conf"
+
+  echo "export http_proxy=\"http://${uri}/\"" > "${proxy_env}" &&
+  echo "export HTTP_PROXY=\"http://${uri}/\"" >> "${proxy_env}" &&
+  echo "export https_proxy=\"https://${uri}/\"" >> "${proxy_env}" &&
+  echo "export HTTPS_PROXY=\"https://${uri}/\"" >> "${proxy_env}" &&
+  echo "export ftp_proxy=\"ftp://${uri}/\"" >> "${proxy_env}" &&
+  echo "export FTP_PROXY=\"ftp://${uri}/\"" >> "${proxy_env}" &&
+  echo "export rsync_proxy=\"rsync://${uri}/\"" >> "${proxy_env}" &&
+  echo "export RSYNC_PROXY=\"rsync://${uri}/\"" >> "${proxy_env}" &&
+  echo "export all_proxy=\"https://${uri}/\"" >> "${proxy_env}" &&
+  echo "export ALL_PROXY=\"https://${uri}/\"" >> "${proxy_env}" &&
+  echo "export no_proxy=\"${no_proxy}\"" >> "${proxy_env}" &&
+  echo "export NO_PROXY=\"${no_proxy}\"" >> "${proxy_env}" ||
     echo 'Failed to set environment proxy variables'
+  
+  local shell_rc=''
+
+  if file_exists "${HOME}/.bashrc"; then
+    shell_rc="${HOME}/.bashrc"
+  elif file_exists "${HOME}/.zshrc"; then
+    shell_rc="${HOME}/.zshrc"
+  fi
+
+  if is_not_empty "${shell_rc}"; then
+    sed -i "\|source \"${proxy_env}\"|d" "${shell_rc}" &&
+    echo "source \"${proxy_env}\"" >> "${shell_rc}" ||
+      echo 'Failed to set environment proxy variables'
+  fi
 
   if which git &> /dev/null; then
     git config --global http.proxy "http://${uri}/" &&
@@ -972,12 +988,14 @@ set_proxy () {
   if which docker &> /dev/null; then
     sudo mkdir -p /etc/systemd/system/docker.service.d
 
+    local docker_proxy='/etc/systemd/system/docker.service.d/http-proxy.conf'
+
     printf '%s\n%s%s%s%s' \
       '[Service]' \
       'Environment=' \
       "\"HTTP_PROXY=http://${uri}/\" " \
       "\"HTTPS_PROXY=https://${uri}/\" " \
-      "\"NO_PROXY=${no_proxy}\"" | sudo tee "${DOCKER_PROXY_FILE}" > /dev/null &&
+      "\"NO_PROXY=${no_proxy}\"" | sudo tee "${docker_proxy}" > /dev/null &&
     sudo systemctl daemon-reload ||
       echo 'Failed to set docker proxy settings'
   fi
@@ -1032,9 +1050,22 @@ unset_proxy () {
 
   echo 'Unsetting proxy server...'
 
-  rm -f "${PROXY_ENV_FILE}" &&
-  sed -i "\|source \"${PROXY_ENV_FILE}\"|d" "${SHELLRC_FILE}" ||
-    echo 'Failed to unset environment proxy variables'
+  local proxy_env="${HOME}/.config/environment.d/proxy.conf"
+
+  rm -f "${proxy_env}"
+
+  local shell_rc=''
+
+  if file_exists "${HOME}/.bashrc"; then
+    shell_rc="${HOME}/.bashrc"
+  elif file_exists "${HOME}/.zshrc"; then
+    shell_rc="${HOME}/.zshrc"
+  fi
+
+  if is_not_empty "${shell_rc}"; then
+    sed -i "\|source \"${proxy_env}\"|d" "${shell_rc}" ||
+      echo 'Failed to unset environment proxy variables'
+  fi
 
   if which git &> /dev/null &&
     git config --global --get http.proxy &> /dev/null; then
@@ -1056,7 +1087,9 @@ unset_proxy () {
   fi
 
   if which docker &> /dev/null; then
-    sudo rm -f "${DOCKER_PROXY_FILE}" &&
+    local docker_proxy='/etc/systemd/system/docker.service.d/http-proxy.conf'
+
+    sudo rm -f "${docker_proxy}" &&
     sudo systemctl daemon-reload ||
       echo 'Failed to unset docker proxy settings'
   fi
