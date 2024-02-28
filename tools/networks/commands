@@ -37,7 +37,7 @@ show_status () {
   query+='Public IP:   \(.query)\n'
   query+='Country:     \(.city|if . then "\(.), " else "" end)\(.country)'
 
-  curl -s 'http://ip-api.com/json' | jq -cer "\"${query}\""
+  curl -s 'http://ip-api.com/json' | jq -cer "\"${query}\"" 2> /dev/null
 
   if has_failed; then
     echo 'ISP:         Unavailable'
