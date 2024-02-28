@@ -967,6 +967,18 @@ set_proxy () {
       echo 'Failed to set environment proxy variables'
   fi
 
+  if which wget &> /dev/null; then
+    if file_not_exists "${HOME}/.wgetrc"; then
+      cp /etc/wgetrc "${HOME}/.wgetrc"
+    fi
+
+    sed -Ei "s;^#?https_proxy.*;https_proxy = https://${uri}/;" "${HOME}/.wgetrc" &&
+    sed -Ei "s;^#?http_proxy.*;http_proxy = http://${uri}/;" "${HOME}/.wgetrc" &&
+    sed -Ei "s;^#?ftp_proxy.*;ftp_proxy = ftp://${uri}/;" "${HOME}/.wgetrc" &&
+    sed -Ei "s;^#?use_proxy.*;use_proxy = on;" "${HOME}/.wgetrc" ||
+      echo 'Failed to set wget proxy settings'
+  fi
+
   if which git &> /dev/null; then
     git config --global http.proxy "http://${uri}/" &&
     git config --global https.proxy "https://${uri}/" ||
@@ -1065,6 +1077,18 @@ unset_proxy () {
   if is_not_empty "${shell_rc}"; then
     sed -i "\|source \"${proxy_env}\"|d" "${shell_rc}" ||
       echo 'Failed to unset environment proxy variables'
+  fi
+
+  if which wget &> /dev/null; then
+    if file_not_exists "${HOME}/.wgetrc"; then
+      cp /etc/wgetrc "${HOME}/.wgetrc"
+    fi
+
+    sed -Ei "s;^\(https_proxy.*\);#\1;" "${HOME}/.wgetrc" &&
+    sed -Ei "s;^\(http_proxy.*\);#\1;" "${HOME}/.wgetrc" &&
+    sed -Ei "s;^\(ftp_proxy.*\);#\1;" "${HOME}/.wgetrc" &&
+    sed -Ei "s;^\(use_proxy.*\);#\1;" "${HOME}/.wgetrc" ||
+      echo 'Failed to set wget proxy settings'
   fi
 
   if which git &> /dev/null &&
