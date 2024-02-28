@@ -963,7 +963,8 @@ set_proxy () {
 
   if is_not_empty "${shell_rc}"; then
     sed -i "\|source \"${proxy_env}\"|d" "${shell_rc}" &&
-    echo "source \"${proxy_env}\"" >> "${shell_rc}" ||
+    echo "source \"${proxy_env}\"" >> "${shell_rc}" &&
+    source "${shell_rc}" ||
       echo 'Failed to set environment proxy variables'
   fi
 
@@ -1065,6 +1066,11 @@ unset_proxy () {
   local proxy_env="${HOME}/.config/environment.d/proxy.conf"
 
   rm -f "${proxy_env}"
+
+  unset http_proxy HTTP_PROXY https_proxy HTTPS_PROXY \
+    ftp_proxy FTP_PROXY rsync_proxy RSYNC_PROXY \
+    all_proxy ALL_PROXY no_proxy NO_PROXY ||
+    echo 'Failed to unset environment proxy variables'
 
   local shell_rc=''
 
