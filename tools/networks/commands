@@ -1084,10 +1084,10 @@ unset_proxy () {
       cp /etc/wgetrc "${HOME}/.wgetrc"
     fi
 
-    sed -Ei "s;^\(https_proxy.*\);#\1;" "${HOME}/.wgetrc" &&
-    sed -Ei "s;^\(http_proxy.*\);#\1;" "${HOME}/.wgetrc" &&
-    sed -Ei "s;^\(ftp_proxy.*\);#\1;" "${HOME}/.wgetrc" &&
-    sed -Ei "s;^\(use_proxy.*\);#\1;" "${HOME}/.wgetrc" ||
+    sed -Ei "s;^https_proxy.*;#https_proxy = ;" "${HOME}/.wgetrc" &&
+    sed -Ei "s;^http_proxy.*;#http_proxy = ;" "${HOME}/.wgetrc" &&
+    sed -Ei "s;^ftp_proxy.*;#ftp_proxy = ;" "${HOME}/.wgetrc" &&
+    sed -Ei "s;^use_proxy.*;#use_proxy = ;" "${HOME}/.wgetrc" ||
       echo 'Failed to set wget proxy settings'
   fi
 
