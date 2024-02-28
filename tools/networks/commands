@@ -882,7 +882,7 @@ list_proxies () {
   query+='Name:    \(.name)\n'
   query+='Host:    \(.host)\n'
   query+='Port:    \(.port)'
-  query+='\(.username|if . and .!="" then "\nAuth:    \(.)" else "" end)'
+  query+='\(.username|if . and .!= "" then "\nAuth:    \(.)" else "" end)'
   query+='\(.no_proxy|if .|length>0 then "\nIgnore:  \([.[]]|join(", "))" else "" end)'
   query="[.[]|\"${query}\"]|join(\"\n\n\")"
 
@@ -923,7 +923,7 @@ set_proxy () {
   fi
 
   local query=''
-  query+='\(if .username then "\(.username):\(.password)@" else "" end)'
+  query+='\(if .username and .username != "" then "\(.username):\(.password)@" else "" end)'
   query+='\(.host):\(.port)'
   query="\"${query}\""
 
