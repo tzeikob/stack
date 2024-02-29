@@ -72,7 +72,7 @@ sync_package_databases () {
     fail 'Failed to enable parallel downloads'
 
   pacman -Syy 2>&1 ||
-    fail 'Failed to synchronize pacjage databases'
+    fail 'Failed to synchronize package databases'
 
   log 'Package databases synchronized to the master'
 }
@@ -110,6 +110,24 @@ install_kernel () {
     fail 'Failed to pacstrap kernel and base packages'
 
   log 'Linux kernel has been installed'
+}
+
+# Adds various extra sudoers rules.
+add_sudoers_rules () {
+  local proxy_rule='Defaults env_keep += "'
+  proxy_rule+='http_proxy HTTP_PROXY '
+  proxy_rule+='https_proxy HTTPS_PROXY '
+  proxy_rule+='ftp_proxy FTP_PROXY '
+  proxy_rule+='rsync_proxy RSYNC_PROXY '
+  proxy_rule+='all_proxy ALL_PROXY '
+  proxy_rule+='no_proxy NO_PROXY"'
+
+  mkdir -p /mnt/etc/sudoers.d
+
+  echo "${proxy_rule}" > /mnt/etc/sudoers.d/proxy_rules
+  chmod 440 /mnt/etc/sudoers.d/proxy_rules
+
+  log 'Proxy rules have been added to sudoers'
 }
 
 # Grants the nopasswd permission to the wheel user group.
@@ -172,6 +190,7 @@ sync_clock &&
   sync_package_databases &&
   update_keyring &&
   install_kernel &&
+  add_sudoers_rules &&
   grant_permissions &&
   copy_installation_files
 

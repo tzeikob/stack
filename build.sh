@@ -551,11 +551,32 @@ add_device_rules () {
   echo -e 'Device rules have been set'
 }
 
+# Adds various extra sudoers rules.
+add_sudoers_rules () {
+  echo -e 'Adding proxy rules to sudoers...'
+
+  local proxy_rule='Defaults env_keep += "'
+  proxy_rule+='http_proxy HTTP_PROXY '
+  proxy_rule+='https_proxy HTTPS_PROXY '
+  proxy_rule+='ftp_proxy FTP_PROXY '
+  proxy_rule+='rsync_proxy RSYNC_PROXY '
+  proxy_rule+='all_proxy ALL_PROXY '
+  proxy_rule+='no_proxy NO_PROXY"'
+
+  mkdir -p "${ROOT_FS}/etc/sudoers.d"
+
+  echo "${proxy_rule}" > "${ROOT_FS}/etc/sudoers.d/proxy_rules"
+
+  echo -e 'Proxy rules have been added to sudoers'
+}
+
 # Defines the root files permissions.
 set_file_permissions () {
   echo -e 'Defining the file permissions...'
 
   local permissions_file="${PROFILE_DIR}/profiledef.sh"
+
+  sed -i '/file_permissions=(/a ["/etc/sudoers.d/"]="0:0:440"' "${permissions_file}"
 
   sed -i '/file_permissions=(/a ["/opt/stack/configs/bspwm/"]="0:0:755"' "${permissions_file}"
   sed -i '/file_permissions=(/a ["/opt/stack/configs/dunst/hook"]="0:0:755"' "${permissions_file}"
@@ -603,6 +624,7 @@ init &&
   setup_sounds &&
   enable_services &&
   add_device_rules &&
+  add_sudoers_rules &&
   set_file_permissions &&
   make_iso_file &&
   echo -e 'Build process completed successfully' ||
