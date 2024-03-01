@@ -33,7 +33,7 @@ add_package () {
 
   local pkgs_file="${PROFILE_DIR}/packages.x86_64"
 
-  if grep -Eq "${name}" "${pkgs_file}"; then
+  if grep -Eq "^${name}$" "${pkgs_file}"; then
     echo -e "Skipping ${name}"
     return 0
   fi
