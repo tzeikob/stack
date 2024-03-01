@@ -56,7 +56,7 @@ add_packages () {
     vim nano git tree arch-audit atool zip xz unace p7zip gzip lzop feh hsetroot
     bzip2 unrar dialog inetutils dnsutils openssh nfs-utils ipset xsel
     neofetch age imagemagick gpick fuse2 rclone smartmontools glib2 jq jc sequoia-sq xf86-input-wacom
-    cairo bc xdotool python-tqdm libqalculate
+    cairo bc xdotool python-tqdm libqalculate nftables iptables-nft virtualbox-guest-utils
   )
   
   # Add the display server and graphics packages
