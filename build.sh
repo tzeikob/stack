@@ -41,6 +41,17 @@ add_package () {
   echo "${name}" >> "${pkgs_file}"
 }
 
+# Removes the package with the given name from the list of packages
+# Arguments:
+#  name: the name of a package
+remove_package () {
+  local name="${1}"
+
+  local pkgs_file="${PROFILE_DIR}/packages.x86_64"
+
+  sed -Ei "/^${name}$/d" "${pkgs_file}"
+}
+
 # Adds the pakacge dependencies into the list of packages.
 add_packages () {
   echo -e 'Adding system and desktop packages...'
@@ -82,6 +93,9 @@ add_packages () {
   for pkg in "${pkgs[@]}"; do
     add_package "${pkg}"
   done
+
+  # Remove conflicting no x server virtualbox utils
+  remove_package virtualbox-guest-utils-nox
 
   echo -e 'All packages added into the package list'
 }
