@@ -67,10 +67,18 @@ pick_locale () {
 # Outputs:
 #  A menu of locales.
 pick_installed_locale () {
-  local query='[.locales[]|{key: ., value: .}]'
+  local query='[.locales|if length > 0 then .[]|{key: ., value: .} else empty end]'
 
   local locales=''
   locales="$(jq -cr "${query}" "${LANGS_SETTINGS}")" || return 1
+
+  local len=0
+  len="$(count "${locales}")" || return 1
+
+  if is_true "${len} = 0"; then
+    echo 'No installed locales found'
+    return 2
+  fi
   
   pick_one 'Select a locale:' "${locales}" vertical || return $?
 }
@@ -105,7 +113,7 @@ is_not_locale () {
 is_locale_installed () {
 	local name="${1}"
 
-  local query=".locales[]|select(. == \"${name}\")"
+  local query=".locales|if length > 0 then .[]|select(. == \"${name}\" else empty end)"
 
   jq -cer "${query}" "${LANGS_SETTINGS}" &> /dev/null || return 1
 }
@@ -611,7 +619,7 @@ delete_locale_from_settings () {
   fi
 
   local query=". == \"${name}\""
-  query="if .locales then .locales[]|select(${query}) else empty end"
+  query=".locales | if . and length > 0 then .[]|select(${query}) else empty end"
 
   local settings=''
   settings="$(jq -e "del(${query})" "${LANGS_SETTINGS}")" || return 1
