@@ -45,6 +45,12 @@ show_status () {
 
   echo
   locale | awk -F'=' '{
+    if ($2 == "") {
+      next
+    }
+
+    gsub(/"/, "", $2)
+
     switch ($1) {
       case "LANG": $1="Lang"; break;
       case "LC_CTYPE": $1="Type"; break;
