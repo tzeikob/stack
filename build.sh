@@ -548,6 +548,16 @@ enable_services () {
   ln -s /usr/lib/systemd/system/NetworkManager-wait-online.service "${network_online}"
 
   echo -e 'Network manager services enabled'
+
+  ln -s /usr/lib/systemd/system/bluetooth.service "${systemd_home}/dbus-org.bluez.service"
+
+  local bluetooth_target="${systemd_home}/bluetooth.target.wants"
+
+  mkdir -p "${bluetooth_target}"
+
+  ln -s /usr/lib/systemd/system/bluetooth.service "${bluetooth_target}/bluetooth.service"
+
+  echo -e 'Bluetooth services enabled'
 }
 
 # Adds input and output devices rules.
