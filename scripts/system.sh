@@ -856,7 +856,7 @@ add_rules () {
 
   cp /opt/stack/rules/92-fix-layout.rules "${rules_home}" ||
     fail 'Failed to add the fix-layout rules'
-    
+  
   log 'Rules fix-layout have been set'
   log 'System udev rules have been added'
 }

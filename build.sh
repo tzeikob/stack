@@ -528,36 +528,83 @@ setup_sounds () {
 enable_services () {
   echo -e 'Enabling system services...'
 
-  local systemd_home="${ROOT_FS}/etc/systemd/system"
-
-  mkdir -p "${systemd_home}"
+  mkdir -p "${ROOT_FS}/etc/systemd/system"
 
   ln -s /usr/lib/systemd/system/NetworkManager-dispatcher.service \
-    "${systemd_home}/dbus-org.freedesktop.nm-dispatcher.service"
+    "${ROOT_FS}/etc/systemd/system/dbus-org.freedesktop.nm-dispatcher.service"
 
-  local multi_user="${systemd_home}/multi-user.target.wants"
+  mkdir -p "${ROOT_FS}/etc/systemd/system/multi-user.target.wants"
 
-  mkdir -p "${multi_user}"
+  ln -s /usr/lib/systemd/system/NetworkManager.service \
+    "${ROOT_FS}/etc/systemd/system/multi-user.target.wants/NetworkManager.service"
 
-  ln -s /usr/lib/systemd/system/NetworkManager.service "${multi_user}"
+  mkdir -p "${ROOT_FS}/etc/systemd/system/network-online.target.wants"
 
-  local network_online="${systemd_home}/network-online.target.wants"
-
-  mkdir -p "${network_online}"
-
-  ln -s /usr/lib/systemd/system/NetworkManager-wait-online.service "${network_online}"
+  ln -s /usr/lib/systemd/system/NetworkManager-wait-online.service \
+    "${ROOT_FS}/etc/systemd/system/network-online.target.wants/NetworkManager-wait-online.service"
 
   echo -e 'Network manager services enabled'
 
-  ln -s /usr/lib/systemd/system/bluetooth.service "${systemd_home}/dbus-org.bluez.service"
+  ln -s /usr/lib/systemd/system/bluetooth.service \
+    "${ROOT_FS}/etc/systemd/system/dbus-org.bluez.service"
 
-  local bluetooth_target="${systemd_home}/bluetooth.target.wants"
+  mkdir -p "${ROOT_FS}/etc/systemd/system/bluetooth.target.wants"
 
-  mkdir -p "${bluetooth_target}"
-
-  ln -s /usr/lib/systemd/system/bluetooth.service "${bluetooth_target}/bluetooth.service"
+  ln -s /usr/lib/systemd/system/bluetooth.service \
+    "${ROOT_FS}/etc/systemd/system/bluetooth.target.wants/bluetooth.service"
 
   echo -e 'Bluetooth services enabled'
+
+  ln -s /usr/lib/systemd/system/acpid.service \
+    "${ROOT_FS}/etc/systemd/system/multi-user.target.wants/acpid.service"
+
+  echo -e 'Acpid service enabled'
+
+  mkdir -p "${ROOT_FS}/etc/systemd/system/printer.target.wants"
+
+  ln -s /usr/lib/systemd/system/cups.service \
+    "${ROOT_FS}/etc/systemd/system/printer.target.wants/cups.service"
+
+  ln -s /usr/lib/systemd/system/cups.service \
+    "${ROOT_FS}/etc/systemd/system/multi-user.target.wants/cups.service"
+
+  mkdir -p "${ROOT_FS}/etc/systemd/system/sockets.target.wants"
+
+  ln -s /usr/lib/systemd/system/cups.socket \
+    "${ROOT_FS}/etc/systemd/system/sockets.target.wants/cups.socket"
+
+  ln -s /usr/lib/systemd/system/cups.path \
+    "${ROOT_FS}/etc/systemd/system/multi-user.target.wants/cups.path"
+
+  echo -e 'Cups services enabled'
+
+  ln -s /usr/lib/systemd/system/nftables.service \
+    "${ROOT_FS}/etc/systemd/system/multi-user.target.wants/nftables.service"
+
+  echo -e 'Nftables service enabled'
+
+  mkdir -p "${ROOT_FS}/root/.config/systemd/user"
+
+  cp services/init-pointer.service \
+    "${ROOT_FS}/root/.config/systemd/user/init-pointer.service"
+
+  echo -e 'Pointer init service enabled'
+
+  cp services/init-tablets.service \
+    "${ROOT_FS}/root/.config/systemd/user/init-tablets.service"
+
+  echo -e 'Tablets init service enabled'
+
+  cp services/fix-layout.service \
+    "${ROOT_FS}/root/.config/systemd/user/fix-layout.service"
+  
+  sed -i 's;^\(Environment=HOME\).*;\1=/root;' \
+    "${ROOT_FS}/root/.config/systemd/user/fix-layout.service"
+  
+  sed -i 's;^\(Environment=XAUTHORITY\).*;\1=/root/.Xauthority;' \
+    "${ROOT_FS}/root/.config/systemd/user/fix-layout.service"
+  
+  echo -e 'Fix layout service enabled'
 }
 
 # Adds input and output devices rules.
@@ -571,7 +618,7 @@ add_device_rules () {
   cp rules/90-init-pointer.rules "${rules_home}"
   cp rules/91-init-tablets.rules "${rules_home}"
   cp rules/92-fix-layout.rules "${rules_home}"
-    
+  
   echo -e 'Device rules have been set'
 }
 
