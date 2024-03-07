@@ -281,6 +281,55 @@ setup_keyboard () {
   echo -e 'Keyboard settings have been applied'
 }
 
+# Sets up various system power settings.
+setup_power () {
+  rm -rf "${ROOT_FS}/etc/systemd/logind.conf.d"
+  mkdir "${ROOT_FS}/etc/systemd/logind.conf.d"
+  
+  local logind_conf="${ROOT_FS}/etc/systemd/logind.conf.d/00-main.conf"
+
+  echo '[Login]' > "${logind_conf}"
+  echo 'HandleHibernateKey=ignore' >> "${logind_conf}"
+  echo 'HandleHibernateKeyLongPress=ignore' >> "${logind_conf}"
+  echo 'HibernateKeyIgnoreInhibited=no' >> "${logind_conf}"
+  echo 'HandlePowerKey=suspend' >> "${logind_conf}"
+  echo 'HandleRebootKey=reboot' >> "${logind_conf}"
+  echo 'HandleSuspendKey=suspend' >> "${logind_conf}"
+  echo 'HandleLidSwitch=suspend' >> "${logind_conf}"
+  echo 'HandleLidSwitchDocked=ignore' >> "${logind_conf}"
+
+  echo -e 'Logind power hander actions have been set'
+
+  rm -rf "${ROOT_FS}/etc/systemd/sleep.conf.d"
+  mkdir "${ROOT_FS}/etc/systemd/sleep.conf.d"
+  
+  local sleep_conf="${ROOT_FS}/etc/systemd/sleep.conf.d/00-main.conf"
+
+  echo '[Sleep]' > "${sleep_conf}"
+  echo 'AllowSuspend=yes' >> "${sleep_conf}"
+  echo 'AllowHibernation=no' >> "${sleep_conf}"
+  echo 'AllowSuspendThenHibernate=no' >> "${sleep_conf}"
+  echo 'AllowHybridSleep=no' >> "${sleep_conf}"
+
+  mkdir "${ROOT_FS}/etc/tlp.d"
+
+  local tlp_conf="${ROOTS_FS}/etc/tlp.d/00-main.conf"
+
+  echo 'SOUND_POWER_SAVE_ON_AC=0' > "${tlp_conf}"
+  echo 'SOUND_POWER_SAVE_ON_BAT=0' >> "${tlp_conf}"
+
+  local config_home="${ROOT_FS}/root/.config/stack"
+
+  mkdir -p "${config_home}"
+
+  printf '%s\n' \
+  '{' \
+  '  "screensaver": {"interval": 15}' \
+  '}' > "${config_home}/power.json"
+
+  echo -e 'Power settings have been applied'
+}
+
 # Sets up the sheel environment files.
 setup_shell_environment () {
   local zshrc_file="${ROOT_FS}/root/.zshrc"
@@ -648,6 +697,9 @@ set_file_permissions () {
   local permissions_file="${PROFILE_DIR}/profiledef.sh"
 
   sed -i '/file_permissions=(/a ["/etc/sudoers.d/"]="0:0:440"' "${permissions_file}"
+  sed -i '/file_permissions=(/a ["/etc/tlp.d/"]="0:0:644"' "${permissions_file}"
+  sed -i '/file_permissions=(/a ["/etc/systemd/sleep.conf.d/"]="0:0:644"' "${permissions_file}"
+  sed -i '/file_permissions=(/a ["/etc/systemd/logind.conf.d/"]="0:0:644"' "${permissions_file}"
 
   sed -i '/file_permissions=(/a ["/opt/stack/configs/bspwm/"]="0:0:755"' "${permissions_file}"
   sed -i '/file_permissions=(/a ["/opt/stack/configs/dunst/hook"]="0:0:755"' "${permissions_file}"
@@ -663,6 +715,7 @@ set_file_permissions () {
   sed -i '/file_permissions=(/a ["/root/.config/polybar/scripts/"]="0:0:755"' "${permissions_file}"
   sed -i '/file_permissions=(/a ["/root/.config/rofi/launch"]="0:0:755"' "${permissions_file}"
   sed -i '/file_permissions=(/a ["/root/.config/dunst/hook"]="0:0:755"' "${permissions_file}"
+  sed -i '/file_permissions=(/a ["/root/.config/stack"]="0:0:664"' "${permissions_file}"
   sed -i '/file_permissions=(/a ["/opt/tools/"]="0:0:755"' "${permissions_file}"
 
   echo -e 'File permissions have been defined'
@@ -688,6 +741,7 @@ init &&
   copy_settings_manager &&
   setup_display_server &&
   setup_keyboard &&
+  setup_power &&
   setup_shell_environment &&
   setup_desktop &&
   setup_theme &&
