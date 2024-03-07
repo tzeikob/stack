@@ -298,7 +298,7 @@ setup_power () {
   echo 'HandleLidSwitch=suspend' >> "${logind_conf}"
   echo 'HandleLidSwitchDocked=ignore' >> "${logind_conf}"
 
-  echo -e 'Logind power hander actions have been set'
+  echo -e 'Logind action handlers have been set'
 
   rm -rf "${ROOT_FS}/etc/systemd/sleep.conf.d"
   mkdir "${ROOT_FS}/etc/systemd/sleep.conf.d"
@@ -311,12 +311,16 @@ setup_power () {
   echo 'AllowSuspendThenHibernate=no' >> "${sleep_conf}"
   echo 'AllowHybridSleep=no' >> "${sleep_conf}"
 
+  echo -e 'Sleep action handlers have been set'
+
   mkdir "${ROOT_FS}/etc/tlp.d"
 
   local tlp_conf="${ROOT_FS}/etc/tlp.d/00-main.conf"
 
   echo 'SOUND_POWER_SAVE_ON_AC=0' > "${tlp_conf}"
   echo 'SOUND_POWER_SAVE_ON_BAT=0' >> "${tlp_conf}"
+
+  echo -e 'Battery action handlers have been set'
 
   local config_home="${ROOT_FS}/root/.config/stack"
 
@@ -327,7 +331,7 @@ setup_power () {
   '  "screensaver": {"interval": 15}' \
   '}' > "${config_home}/power.json"
 
-  echo -e 'Power settings have been applied'
+  echo -e 'Screensaver interval setting has been set'
 }
 
 # Sets up the sheel environment files.
