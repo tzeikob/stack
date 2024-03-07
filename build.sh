@@ -313,7 +313,7 @@ setup_power () {
 
   mkdir "${ROOT_FS}/etc/tlp.d"
 
-  local tlp_conf="${ROOTS_FS}/etc/tlp.d/00-main.conf"
+  local tlp_conf="${ROOT_FS}/etc/tlp.d/00-main.conf"
 
   echo 'SOUND_POWER_SAVE_ON_AC=0' > "${tlp_conf}"
   echo 'SOUND_POWER_SAVE_ON_BAT=0' >> "${tlp_conf}"
