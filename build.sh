@@ -696,27 +696,35 @@ set_file_permissions () {
 
   local permissions_file="${PROFILE_DIR}/profiledef.sh"
 
-  sed -i '/file_permissions=(/a ["/etc/sudoers.d/"]="0:0:440"' "${permissions_file}"
-  sed -i '/file_permissions=(/a ["/etc/tlp.d/"]="0:0:644"' "${permissions_file}"
-  sed -i '/file_permissions=(/a ["/etc/systemd/sleep.conf.d/"]="0:0:644"' "${permissions_file}"
-  sed -i '/file_permissions=(/a ["/etc/systemd/logind.conf.d/"]="0:0:644"' "${permissions_file}"
+  local defs=(
+    '0:0:440,/etc/sudoers.d/'
+    '0:0:644,/etc/tlp.d/'
+    '0:0:644,/etc/systemd/sleep.conf.d/'
+    '0:0:644,/etc/systemd/logind.conf.d/'
+    '0:0:755,/opt/stack/configs/bspwm/'
+    '0:0:755,/opt/stack/configs/dunst/hook'
+    '0:0:755,/opt/stack/configs/nnn/env'
+    '0:0:755,/opt/stack/configs/polybar/scripts/'
+    '0:0:755,/opt/stack/configs/rofi/launch'
+    '0:0:755,/opt/stack/configs/xsecurelock/hook'
+    '0:0:755,/opt/stack/tools/'
+    '0:0:755,/opt/stack/scripts/'
+    '0:0:755,/opt/stack/install.sh'
+    '0:0:755,/root/.config/bspwm/'
+    '0:0:755,/root/.config/polybar/scripts/'
+    '0:0:755,/root/.config/rofi/launch'
+    '0:0:755,/root/.config/dunst/hook'
+    '0:0:664,/root/.config/stack'
+    '0:0:755,/opt/tools/'
+  )
 
-  sed -i '/file_permissions=(/a ["/opt/stack/configs/bspwm/"]="0:0:755"' "${permissions_file}"
-  sed -i '/file_permissions=(/a ["/opt/stack/configs/dunst/hook"]="0:0:755"' "${permissions_file}"
-  sed -i '/file_permissions=(/a ["/opt/stack/configs/nnn/env"]="0:0:755"' "${permissions_file}"
-  sed -i '/file_permissions=(/a ["/opt/stack/configs/polybar/scripts/"]="0:0:755"' "${permissions_file}"
-  sed -i '/file_permissions=(/a ["/opt/stack/configs/rofi/launch"]="0:0:755"' "${permissions_file}"
-  sed -i '/file_permissions=(/a ["/opt/stack/configs/xsecurelock/hook"]="0:0:755"' "${permissions_file}"
-  sed -i '/file_permissions=(/a ["/opt/stack/tools/"]="0:0:755"' "${permissions_file}"
-  sed -i '/file_permissions=(/a ["/opt/stack/scripts/"]="0:0:755"' "${permissions_file}"
-  sed -i '/file_permissions=(/a ["/opt/stack/install.sh"]="0:0:755"' "${permissions_file}"
+  local def=''
+  for def in "${defs[@]}"; do
+    local perms="$(echo "${def}" | cut -d ',' -f 1)"
+    local path="$(echo "${def}" | cut -d ',' -f 2)"
 
-  sed -i '/file_permissions=(/a ["/root/.config/bspwm/"]="0:0:755"' "${permissions_file}"
-  sed -i '/file_permissions=(/a ["/root/.config/polybar/scripts/"]="0:0:755"' "${permissions_file}"
-  sed -i '/file_permissions=(/a ["/root/.config/rofi/launch"]="0:0:755"' "${permissions_file}"
-  sed -i '/file_permissions=(/a ["/root/.config/dunst/hook"]="0:0:755"' "${permissions_file}"
-  sed -i '/file_permissions=(/a ["/root/.config/stack"]="0:0:664"' "${permissions_file}"
-  sed -i '/file_permissions=(/a ["/opt/tools/"]="0:0:755"' "${permissions_file}"
+    sed -i "/file_permissions=(/a [\"${path}\"]=\"${perms}\"" "${permissions_file}"
+  done
 
   echo -e 'File permissions have been defined'
 }
