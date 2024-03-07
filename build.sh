@@ -701,8 +701,8 @@ set_file_permissions () {
   local permissions_file="${PROFILE_DIR}/profiledef.sh"
 
   local defs=(
-    '0:0:440,/etc/sudoers.d/'
-    '0:0:644,/etc/tlp.d/'
+    '0:0:750,/etc/sudoers.d/'
+    '0:0:755,/etc/tlp.d/'
     '0:0:644,/etc/systemd/sleep.conf.d/'
     '0:0:644,/etc/systemd/logind.conf.d/'
     '0:0:755,/opt/stack/configs/bspwm/'
@@ -718,7 +718,7 @@ set_file_permissions () {
     '0:0:755,/root/.config/polybar/scripts/'
     '0:0:755,/root/.config/rofi/launch'
     '0:0:755,/root/.config/dunst/hook'
-    '0:0:664,/root/.config/stack'
+    '0:0:664,/root/.config/stack/'
     '0:0:755,/opt/tools/'
   )
 
