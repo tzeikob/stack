@@ -382,7 +382,7 @@ mount_device () {
   # Create symlink to the local mount folder
   local local_home="${HOME}/mounts/local"
 
-  if directory_exists "/run/media/${USER}" && symlink_not_exists "${local_home}"; then
+  if directory_exists "/run/media/${USER}" && symlink_not_exists "${local_home}/${USER}"; then
     mkdir -p "${local_home}"
     ln -s "/run/media/${USER}" "${local_home}"
   fi
