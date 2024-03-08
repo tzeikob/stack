@@ -496,8 +496,8 @@ map_tablet () {
     local scale=0
     scale="$(calc "${previous_width} / ${width}")" || return 1
 
-    width="$(calc "${floor(${width} * ${scale})}")" || return 1
-    height="$(calc "${floor(${height} * ${scale})}")" || return 1
+    width="$(calc "floor(${width} * ${scale})")" || return 1
+    height="$(calc "floor(${height} * ${scale})")" || return 1
 
     xsetwacom --set "${name}" area "0 0 ${width} ${height}" &> /dev/null || return 1
 
