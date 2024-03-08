@@ -233,7 +233,6 @@ setup_display_server () {
   sed -i '/system -qs/d' "${xinitrc_file}"
   sed -i '/displays -qs/d' "${xinitrc_file}"
   sed -i '/security -qs/d' "${xinitrc_file}"
-  sed -i '/power -qs/d' "${xinitrc_file}"
   sed -i '/cloud -qs/d' "${xinitrc_file}"
 
   echo -e 'The .xinitrc file copied to /root/.xinitrc'

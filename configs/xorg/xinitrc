@@ -30,14 +30,11 @@ if [ -d /etc/X11/xinit/xinitrc.d ]; then
 fi
 
 system -qs check updates &
-
 displays -qs restore layout
 displays -qs restore colors &
-
 notifications -qs start &
 security -qs init locker &
 power -qs init screensaver &
 cloud -qs mount remotes &
-
 desktop -qs start
 
