@@ -52,9 +52,9 @@ find_outputs () {
 
   # Copy EDID model data to the root level
   local model=''
-  model+='model_name: (.value.props.EdidModel.name|if . then . else "" end),'
-  model+='product_id: (.value.props.EdidModel.product_id|if . then . else "" end),'
-  model+='serial_number: (.value.props.EdidModel.serial_number|if . then . else "" end)'
+  model+='model_name: (.value.props.EdidModel.name|if . and . != "" then . else "Unknown" end),'
+  model+='product_id: (.value.props.EdidModel.product_id|if . and . != "" then . else "Unknown" end),'
+  model+='serial_number: (.value.props.EdidModel.serial_number|if . and . != "" then . else "Unknown" end)'
   model="{${model}}"
 
   local query=''
@@ -262,7 +262,7 @@ pick_output () {
 
   # Convert outputs list into an array of {key, value} options
   local key='\(.device_name)'
-  local value='\(.device_name):[\(if .model_name then .model_name else "NA" end)]'
+  local value='\(.device_name):[\(if .is_connected then .model_name else "detached" end)]'
 
   local query="[.[]|{key: \"${key}\", value: \"${value}\"}]"
 
@@ -300,7 +300,7 @@ pick_outputs () {
 
   # Convert outputs list into an array of {key, value} options
   local key='\(.device_name)'
-  local value='\(.device_name) [\(if .model_name then .model_name else "NA" end)]'
+  local value='\(.device_name) [\(if .is_connected then .model_name else "detached" end)]'
 
   local query="{key: \"${key}\", value: \"${value}\"}"
   query="[.[]|${except}|${query}]"
