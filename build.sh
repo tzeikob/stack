@@ -11,7 +11,7 @@ init () {
   echo -e 'Starting the clean up process...'
 
   rm -rf "${DIST_DIR}"
-  mkdir "${DIST_DIR}"
+  mkdir -p "${DIST_DIR}"
 
   echo -e 'Clean up has been completed'
 }
@@ -283,7 +283,7 @@ setup_keyboard () {
 # Sets up various system power settings.
 setup_power () {
   rm -rf "${ROOT_FS}/etc/systemd/logind.conf.d"
-  mkdir "${ROOT_FS}/etc/systemd/logind.conf.d"
+  mkdir -p "${ROOT_FS}/etc/systemd/logind.conf.d"
   
   local logind_conf="${ROOT_FS}/etc/systemd/logind.conf.d/00-main.conf"
 
@@ -300,7 +300,7 @@ setup_power () {
   echo -e 'Logind action handlers have been set'
 
   rm -rf "${ROOT_FS}/etc/systemd/sleep.conf.d"
-  mkdir "${ROOT_FS}/etc/systemd/sleep.conf.d"
+  mkdir -p "${ROOT_FS}/etc/systemd/sleep.conf.d"
   
   local sleep_conf="${ROOT_FS}/etc/systemd/sleep.conf.d/00-main.conf"
 
@@ -312,7 +312,7 @@ setup_power () {
 
   echo -e 'Sleep action handlers have been set'
 
-  mkdir "${ROOT_FS}/etc/tlp.d"
+  mkdir -p "${ROOT_FS}/etc/tlp.d"
 
   local tlp_conf="${ROOT_FS}/etc/tlp.d/00-main.conf"
 
