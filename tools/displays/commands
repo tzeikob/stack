@@ -41,7 +41,7 @@ show_status () {
   fi
 
   local rate=''
-  rate+='[.modes[].frequencies]|flatten'
+  rate+='[.resolution_modes[].frequencies]|flatten'
   rate+=' |[.[]|select(.is_current==true)]'
   rate+=' |.[0].frequency'
 
@@ -135,7 +135,7 @@ show_output () {
   base+='Primary:    \(.is_primary)'
 
   local rate=''
-  rate+='[.modes[].frequencies]|flatten'
+  rate+='[.resolution_modes[].frequencies]|flatten'
   rate+=' |[.[]|select(.is_current==true)]'
   rate+=' |.[0].frequency'
 
@@ -155,7 +155,7 @@ show_output () {
   color+='end)|if .profile then .profile else "none" end'
 
   local modes=''
-  modes+='.modes[]|'
+  modes+='.resolution_modes[]|'
   modes+='"\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)" as $mode|"'
   modes+='\($mode)'
   modes+='\($mode|if (10-length)>0 then (" "*(10-length)) else "" end)'
@@ -171,7 +171,7 @@ show_output () {
   query+='\(if .is_connected'
   query+=" then \"\nColor:      \(if \$c|length > 0 then (${color}) else \"none\" end)\""
   query+=' else "" end)'
-  query+='\(if .modes|length != 0'
+  query+='\(if .resolution_modes|length != 0'
   query+=" then \"\nModes:      \(${modes})\""
   query+=' else "" end)'
 
@@ -869,7 +869,7 @@ save_layout () {
   device+='end'
 
   local res=''
-  res+='.modes[]'
+  res+='.resolution_modes[]'
   res+=' |"\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)" as $res'
   res+=' |.frequencies[]|select(.is_current)'
   res+=' |"--mode \($res) --rate \(.frequency)"'

@@ -50,10 +50,17 @@ find_outputs () {
     criteria='.is_primary == true'
   fi
 
+  # Copy EDID model data to the root level
+  local model=''
+  model+='model_name: (.value.props.EdidModel.name|if . then . else "" end),'
+  model+='product_id: (.value.props.EdidModel.product_id|if . then . else "" end),'
+  model+='serial_number: (.value.props.EdidModel.serial_number|if . then . else "" end)'
+  model="{${model}}"
+
   local query=''
   query+='.screens[]|select(.screen_number == 0)'
   query+=" |.devices[]|select(${criteria})"
-  query="[[${query}]|to_entries[]|{index: .key} + .value]"
+  query="[[${query}]|to_entries[]|{index: .key} + .value + ${model}]"
 
   xrandr --props | jc --xrandr | jq -cer "${query}" || return 1
 }
@@ -184,7 +191,7 @@ has_resolution () {
   local resolution="${2}"
 
   local query=''
-  query+='.associated_modes[]'
+  query+='.resolution_modes[]'
   query+=' |"\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)" as $res'
   query+=" |select(\$res == \"${resolution}\")"
 
@@ -230,7 +237,7 @@ has_rate () {
   local rate="${3}"
 
   local query=''
-  query+='.associated_modes[]'
+  query+='.resolution_modes[]'
   query+=' |"\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)" as $res'
   query+=" |select(\$res == \"${resolution}\")"
   query+=" |.frequencies[]|select(.frequency == ${rate})"
@@ -323,7 +330,7 @@ pick_resolution () {
 
   # Convert resolutions list into an array of {key, value} options
   local query=''
-  query+='.associated_modes[]'
+  query+='.resolution_modes[]'
   query+=' |"\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)" as $res'
   query+=' |(reduce .frequencies[] as $i (""; if $i.is_preferred then . + "*" else . end)) as $pref'
   query+=' |{key: "\($res)", value: "\($res)\($pref)"}'
@@ -355,7 +362,7 @@ pick_rate () {
 
   # Convert rates list into an array of {key, value} options
   local query=''
-  query+='.associated_modes[]'
+  query+='.resolution_modes[]'
   query+=' |"\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)" as $res'
   query+=" |select(\$res == \"${resolution}\")"
   query+=' |.frequencies[]'
@@ -467,7 +474,7 @@ find_common_resolutions () {
 
   local query=''
   query+="select(.device_name | match(\"(${names})\"))"
-  query+=' |.associated_modes[]'
+  query+=' |.resolution_modes[]'
   query+=' |"\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)"'
   query="[.[]|${query}]|[group_by(.)|map(select(length>1))|.[]|.[0]]"
 
