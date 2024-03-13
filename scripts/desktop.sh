@@ -81,8 +81,8 @@ install_status_bars () {
 }
 
 # Installs the utility tools for managing system settings.
-install_settings_manager () {
-  log 'Installing settings manager tools...'
+install_settings_tools () {
+  log 'Installing settings tools...'
 
   yay -S --needed --noconfirm --removemake smenu 2>&1 ||
     fail 'Failed to install smenu'
@@ -91,7 +91,7 @@ install_settings_manager () {
 
   sudo mkdir -p "${tools_home}" &&
     sudo cp -r /opt/stack/tools/* "${tools_home}" ||
-    fail 'Failed to install setting manager tools'
+    fail 'Failed to install setting tools'
 
   local bin_home='/usr/local/bin'
 
@@ -113,7 +113,7 @@ install_settings_manager () {
     sudo ln -sf "${tools_home}/system/main" "${bin_home}/system" ||
     fail 'Failed to create symlinks to /usr/local/bin'
 
-  log 'Settings manager tools have been installed'
+  log 'Settings tools have been installed'
 }
 
 # Installs the desktop launchers.
@@ -785,7 +785,7 @@ fi
 install_compositor &&
   install_window_manager &&
   install_status_bars &&
-  install_settings_manager &&
+  install_settings_tools &&
   install_launchers &&
   install_keyboard_bindings &&
   install_login_screen &&

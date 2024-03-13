@@ -172,9 +172,9 @@ copy_installer () {
   echo -e 'Installer files have been copied'
 }
 
-# Copies the files of the settings manager tools.
-copy_settings_manager () {
-  echo -e 'Copying the setting manager tools...'
+# Copies the files of the settings tools.
+copy_settings_tools () {
+  echo -e 'Copying the setting tools...'
 
   local tools_home="${ROOT_FS}/opt/tools"
 
@@ -220,7 +220,7 @@ copy_settings_manager () {
   ln -sf /opt/tools/printers/main "${bin_home}/printers"
   ln -sf /opt/tools/trash/main "${bin_home}/trash"
 
-  echo -e 'Settings manager tools have been copied'
+  echo -e 'Settings tools have been copied'
 }
 
 # Sets up the display server configuration and hooks.
@@ -749,7 +749,7 @@ init &&
   add_packages &&
   add_aur_packages &&
   copy_installer &&
-  copy_settings_manager &&
+  copy_settings_tools &&
   setup_display_server &&
   setup_keyboard &&
   setup_power &&
