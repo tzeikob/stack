@@ -260,36 +260,11 @@ install_libre_office () {
   log 'Libre office has been installed'
 }
 
-# Installs the evince pdf reader.
-install_evince () {
-  log 'Installing the evince pdf reader...'
-
-  yay -S --needed --noconfirm --useask --removemake \
-    --diffmenu=false evince-no-gnome poppler 2>&1
-
-  if has_failed; then
-    log WARN 'Failed to install evince pdf reader'
-    return 0
-  fi
-
-  local user_name=''
-  user_name="$(get_setting 'user_name')" || fail 'Unable to read user_name setting'
-
-  local config_home="/home/${user_name}/.config"
-
-  printf '%s\n' \
-    'application/pdf=org.gnome.Evince.desktop' >> "${config_home}/mimeapps.list" &&
-    log 'Pdf mime type has been added' ||
-    log WARN 'Failed to add pdf mime type'
-  
-  log 'Evice pdf reader has been installed'
-}
-
 # Installs the foliate epub reader.
 install_foliate () {
   log 'Installing foliate epub reader...'
 
-  sudo pacman -S --needed --noconfirm foliate 2>&1
+  sudo pacman -S --needed --noconfirm foliate poppler 2>&1
   
   if has_failed; then
     log WARN 'Failed to install foliate epub reader'
@@ -370,7 +345,6 @@ install_chrome &&
   install_virtual_box &&
   install_vmware &&
   install_libre_office &&
-  install_evince &&
   install_foliate &&
   install_transmission
 
