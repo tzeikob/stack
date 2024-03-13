@@ -401,6 +401,14 @@ set_on () {
     echo 'Failed to set desktop wallpaper'
     return 2
   fi
+
+  # Make sure the new monitor gets desktop bars
+  desktop -qs init bars &> /dev/null
+
+  if has_failed; then
+    echo 'Failed to reset desktop bars'
+    return 2
+  fi
   
   echo "Output ${name} has been activated"
 }
@@ -454,6 +462,14 @@ set_off () {
 
   if has_failed; then
     echo 'Failed to fix desktop workspaces'
+    return 2
+  fi
+
+  # Make sure any inconsistencies of desktop bars are fixed
+  desktop -qs init bars &> /dev/null
+
+  if has_failed; then
+    echo 'Failed to reset desktop bars'
     return 2
   fi
   
@@ -736,6 +752,14 @@ mirror_output () {
     return 2
   fi
 
+  # Make sure any inconsistencies of desktop bars are fixed
+  desktop -qs init bars &> /dev/null
+
+  if has_failed; then
+    echo 'Failed to reset desktop bars'
+    return 2
+  fi
+
   # Convert targets into a string of comma separated output names
   targets="$(jq -ncer '$ARGS.positional|join(", ")' --args -- "${targets[@]}")" || return 1
   
@@ -840,6 +864,14 @@ set_layout () {
 
   if has_failed; then
     echo 'Failed to fix desktop workspaces'
+    return 2
+  fi
+
+  # Make sure any inconsistencies of desktop bars are fixed
+  desktop -qs init bars &> /dev/null
+
+  if has_failed; then
+    echo 'Failed to reset desktop bars'
     return 2
   fi
 
@@ -973,6 +1005,14 @@ restore_layout () {
     return 2
   fi
 
+  # Make sure any inconsistencies of desktop bars are fixed
+  desktop -qs init bars &> /dev/null
+
+  if has_failed; then
+    echo 'Failed to reset desktop bars'
+    return 2
+  fi
+
   echo 'Layout has been restored'
 }
 
@@ -1044,6 +1084,14 @@ fix_layout () {
 
   if has_failed; then
     echo 'Failed to fix desktop workspaces'
+    return 2
+  fi
+
+  # Make sure any inconsistencies of desktop bars are fixed
+  desktop -qs init bars &> /dev/null
+
+  if has_failed; then
+    echo 'Failed to reset desktop bars'
     return 2
   fi
 
