@@ -6,25 +6,6 @@ AUR_DIR="${DIST_DIR}/aur"
 PROFILE_DIR="${DIST_DIR}/profile"
 ROOT_FS="${PROFILE_DIR}/airootfs"
 
-# Initializes build and distribution files.
-init () {
-  echo -e 'Starting the clean up process...'
-
-  rm -rf "${DIST_DIR}"
-  mkdir -p "${DIST_DIR}"
-
-  echo -e 'Clean up has been completed'
-}
-
-# Copies the archiso custom profile.
-copy_profile () {
-  echo -e 'Copying the custom archiso profile...'
-
-  cp -r /usr/share/archiso/configs/releng "${PROFILE_DIR}"
-
-  echo -e "The releng profile copied to ${PROFILE_DIR}"
-}
-
 # Adds the package with the given name into the list of packages
 # Arguments:
 #  name: the name of a package
@@ -50,6 +31,25 @@ remove_package () {
   local pkgs_file="${PROFILE_DIR}/packages.x86_64"
 
   sed -Ei "/^${name}$/d" "${pkgs_file}"
+}
+
+# Initializes build and distribution files.
+init () {
+  echo -e 'Starting the clean up process...'
+
+  rm -rf "${DIST_DIR}"
+  mkdir -p "${DIST_DIR}"
+
+  echo -e 'Clean up has been completed'
+}
+
+# Copies the archiso custom profile.
+copy_profile () {
+  echo -e 'Copying the custom archiso profile...'
+
+  cp -r /usr/share/archiso/configs/releng "${PROFILE_DIR}"
+
+  echo -e "The releng profile copied to ${PROFILE_DIR}"
 }
 
 # Adds the pakacge dependencies into the list of packages.
