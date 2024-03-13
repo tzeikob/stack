@@ -121,7 +121,7 @@ install_discord () {
 install_slack () {
   log 'Installing the slack...'
 
-  yay -S --needed --noconfirm --removemake slack-desktop 2>&1
+  yay -S --needed --noconfirm --removemake slack-electron 2>&1
   
   if has_failed; then
     log WARN 'Failed to install slack'
@@ -135,7 +135,7 @@ install_slack () {
 install_skype () {
   log 'Installing the skype...'
 
-  yay -S --needed --noconfirm --removemake skypeforlinux-stable-bin 2>&1
+  yay -S --needed --noconfirm --removemake skypeforlinux-bin 2>&1
 
   if has_failed; then
     log WARN 'Failed to install skype'
