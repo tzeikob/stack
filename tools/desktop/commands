@@ -808,9 +808,6 @@ fix_workspaces () {
   # Adopt any possible orphan windows
   bspc wm --adopt-orphans || return 1
 
-  # Set back the wallpaper for any monitor
-  init_wallpaper &> /dev/null
-
   echo 'Workspaces have been fixed'
 }
 
@@ -1048,7 +1045,7 @@ restart () {
   disown $! && sleep 1
 
   # Restart window manager
-  bspc wm -r &> /dev/null
+  bspc wm --restart &> /dev/null
 
   if has_failed; then
     echo 'Failed to restart desktop'

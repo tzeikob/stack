@@ -340,6 +340,13 @@ set_primary () {
     echo 'Failed to set as primary output'
     return 2
   fi
+
+  # Make sure desktop is reloaded
+  desktop -qs restart &> /dev/null
+
+  if has_failed; then
+    echo 'Failed to reload desktop'
+  fi
   
   echo "Output ${name} set as primary"
 }
@@ -394,20 +401,12 @@ set_on () {
     return 2
   fi
 
-  # Reset desktop wallpaper so the new monitor gets it
-  desktop -qs init wallpaper &> /dev/null
+  # Make sure desktop is reloaded
+  desktop -qs init wallpaper &> /dev/null &&
+    desktop -qs init bars &> /dev/null
 
   if has_failed; then
-    echo 'Failed to set desktop wallpaper'
-    return 2
-  fi
-
-  # Make sure the new monitor gets desktop bars
-  desktop -qs init bars &> /dev/null
-
-  if has_failed; then
-    echo 'Failed to reset desktop bars'
-    return 2
+    echo 'Failed to reload desktop'
   fi
   
   echo "Output ${name} has been activated"
@@ -457,20 +456,11 @@ set_off () {
   # Give time to xrandr to settle
   sleep 1
 
-  # Fix possible inconsistencies among desktop workspaces
+  # Make sure desktop workspaces are fixed
   desktop -qs fix workspaces &> /dev/null
 
   if has_failed; then
     echo 'Failed to fix desktop workspaces'
-    return 2
-  fi
-
-  # Make sure any inconsistencies of desktop bars are fixed
-  desktop -qs init bars &> /dev/null
-
-  if has_failed; then
-    echo 'Failed to reset desktop bars'
-    return 2
   fi
   
   echo "Output ${name} has been deactivated"
@@ -744,20 +734,12 @@ mirror_output () {
     bspc wm --adopt-orphans || return 1
   done
 
-  # Fix any possible inconsistencies among left desktop workspaces
-  desktop -qs fix workspaces &> /dev/null
+  # Make sure ws are fixed and desktop is reloaded
+  desktop -qs fix workspaces &> /dev/null &&
+    desktop -qs init bars &> /dev/null
 
   if has_failed; then
-    echo 'Failed to fix desktop workspaces'
-    return 2
-  fi
-
-  # Make sure any inconsistencies of desktop bars are fixed
-  desktop -qs init bars &> /dev/null
-
-  if has_failed; then
-    echo 'Failed to reset desktop bars'
-    return 2
+    echo 'Failed to reload desktop'
   fi
 
   # Convert targets into a string of comma separated output names
@@ -859,20 +841,13 @@ set_layout () {
   # Give time to xrandr to settle
   sleep 1
 
-  # Fix possible inconsistencies among desktop workspaces
-  desktop -qs fix workspaces &> /dev/null
+  # Make sure desktop workspaces are fixed
+  desktop -qs fix workspaces &> /dev/null &&
+    desktop -qs init wallpaper &> /dev/null &&
+    desktop -qs init bars  &> /dev/null
 
   if has_failed; then
     echo 'Failed to fix desktop workspaces'
-    return 2
-  fi
-
-  # Make sure any inconsistencies of desktop bars are fixed
-  desktop -qs init bars &> /dev/null
-
-  if has_failed; then
-    echo 'Failed to reset desktop bars'
-    return 2
   fi
 
   echo "Layout has been set to ${mode,,}"
@@ -997,20 +972,12 @@ restore_layout () {
   # Give time to xrandr to settle
   sleep 1
 
-  # Fix possible inconsistencies among desktop workspaces
-  desktop -qs fix workspaces &> /dev/null
+  # Make sure desktop workspaces and other modules are fixed
+  desktop -qs fix workspaces &> /dev/null &&
+    desktop -qs restart &> /dev/null
 
   if has_failed; then
-    echo 'Failed to fix desktop workspaces'
-    return 2
-  fi
-
-  # Make sure any inconsistencies of desktop bars are fixed
-  desktop -qs init bars &> /dev/null
-
-  if has_failed; then
-    echo 'Failed to reset desktop bars'
-    return 2
+    echo 'Failed to reload desktop'
   fi
 
   echo 'Layout has been restored'
@@ -1079,20 +1046,11 @@ fix_layout () {
   # Give time to xrandr to settle
   sleep 1
 
-  # Fix possible inconsistencies among desktop workspaces
+  # Make sure desktop workspaces are fixed
   desktop -qs fix workspaces &> /dev/null
 
   if has_failed; then
     echo 'Failed to fix desktop workspaces'
-    return 2
-  fi
-
-  # Make sure any inconsistencies of desktop bars are fixed
-  desktop -qs init bars &> /dev/null
-
-  if has_failed; then
-    echo 'Failed to reset desktop bars'
-    return 2
   fi
 
   echo 'Layout has been fixed'
