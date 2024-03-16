@@ -241,6 +241,11 @@ setup_display_server () {
   cp configs/xorg/xorg.conf "${ROOT_FS}/etc/X11"
 
   echo -e 'The xorg.conf file copied to /etc/X11/xorg.conf'
+
+  echo -e "\necho -e 'Starting desktop environment...'" >> "${ROOT_FS}/root/.zlogin"
+  echo 'sleep 3 && startx' >> "${ROOT_FS}/root/.zlogin"
+
+  echo -e 'Xorg server set to be started after login'
 }
 
 # Sets up the keyboard settings.
