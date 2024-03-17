@@ -230,6 +230,28 @@ setup_auto_login () {
   local exec_start="ExecStart=-/sbin/agetty -o '-p -f -- \\\\\\\u' --noissue --noclear --skip-login --autologin root - \$TERM"
 
   sed -i "s;^ExecStart=-/sbin/agetty.*;${exec_start};" "${auto_login}"
+
+  echo -e 'Login prompt set to skip and autologin'
+
+  # Remove the default welcome message
+  rm -rf "${ROOT_FS}/etc/motd"
+
+  # Create the welcome message to be shown after login
+  local welcome=''
+  welcome+='░░░█▀▀░▀█▀░█▀█░█▀▀░█░█░░░\n'
+  welcome+='░░░▀▀█░░█░░█▀█░█░░░█▀▄░░░\n'
+  welcome+='░░░▀▀▀░░▀░░▀░▀░▀▀▀░▀░▀░░░\n\n'
+  welcome+='Welcome to live media of \u001b[36mStack OS\u001b[0m, more information\n'
+  welcome+='can be found on https://github.com/tzeikob/stack.git.\n\n'
+  welcome+='Connect to a wireless network using the networks tool via\n'
+  welcome+='the command \u001b[36mnetworks add wifi <device> <ssid> <secret>\u001b[0m.\n'
+  welcome+='Ethernet, WALN and WWAN networks should work automatically.\n\n'
+  welcome+='To install a new system run \u001b[36minstall_os\u001b[0m to launch\n'
+  welcome+='the installation process of the Stack OS.\n'
+
+  echo -e "${welcome}" > "${ROOT_FS}/etc/welcome"
+
+  echo -e 'Welcome message has been set to /etc/welcome'
 }
 
 # Sets up the display server configuration and hooks.
@@ -252,7 +274,7 @@ setup_display_server () {
   echo -e 'The xorg.conf file copied to /etc/X11/xorg.conf'
 
   echo -e "\necho -e 'Starting desktop environment...'" >> "${ROOT_FS}/root/.zlogin"
-  echo 'sleep 3 && startx' >> "${ROOT_FS}/root/.zlogin"
+  echo 'startx' >> "${ROOT_FS}/root/.zlogin"
 
   echo -e 'Xorg server set to be started after login'
 }
@@ -353,14 +375,27 @@ setup_shell_environment () {
 
   # Set the defauilt terminal and text editor
   echo -e 'export TERMINAL=cool-retro-term' >> "${zshrc_file}"
+
+  echo -e 'Default terminal set to cool-retro-term'
+
   echo -e 'export EDITOR=helix' >> "${zshrc_file}"
+
+  echo -e 'Default editor set to helix'
 
   # Set up trash-cli aliases
   echo -e "\nalias sudo='sudo '" >> "${zshrc_file}"
   echo "alias tt='trash-put -i'" >> "${zshrc_file}"
   echo "alias rm='rm -i'" >> "${zshrc_file}"
 
-  echo -e 'Shell environment configs saved in /root/.zshrc'
+  echo -e 'Command aliases added to /root/.zshrc'
+
+  printf '%s\n' \
+    '' \
+    'if [[ "${SHOW_WELCOME_MSG}" == "true" ]]; then' \
+    '  cat /etc/welcome' \
+    'fi' >> "${zshrc_file}"
+
+  echo -e 'Welcome message set to be shown after login'
 }
 
 # Sets up the corresponding configurations for
@@ -392,6 +427,12 @@ setup_desktop () {
   # Remove init scratchpad initializer from the bspwmrc
   sed -i '/desktop -qs init scratchpad &/d' "${bspwm_home}/bspwmrc"
   sed -i '/bspc rule -a scratch sticky=off state=floating hidden=on/d' "${bspwm_home}/bspwmrc"
+
+  # Add a hook to open the welcome terminal once at login
+  printf '%s\n' \
+    '[ "$@" -eq 0 ] && {' \
+    '  SHOW_WELCOME_MSG=true cool-retro-term &' \
+    '}' >> "${bspwm_home}/bspwmrc"
 
   echo -e 'Bspwm configuration has been set'
 
@@ -718,6 +759,7 @@ set_file_permissions () {
     '0:0:755,/etc/tlp.d/'
     '0:0:644,/etc/systemd/sleep.conf.d/'
     '0:0:644,/etc/systemd/logind.conf.d/'
+    '0:0:644,/etc/welcome'
     '0:0:755,/opt/stack/configs/bspwm/'
     '0:0:755,/opt/stack/configs/dunst/hook'
     '0:0:755,/opt/stack/configs/nnn/env'
