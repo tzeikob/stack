@@ -223,6 +223,15 @@ copy_settings_tools () {
   echo -e 'Settings tools have been copied'
 }
 
+# Sets to skip login prompt and auto login the root user.
+setup_auto_login () {
+  local auto_login="${ROOT_FS}/etc/systemd/system/getty@tty1.service.d/autologin.conf"
+
+  local exec_start="ExecStart=-/sbin/agetty -o '-p -f -- \\\\\\\u' --noissue --noclear --skip-login --autologin root - \$TERM"
+
+  sed -i "s;^ExecStart=-/sbin/agetty.*;${exec_start};" "${auto_login}"
+}
+
 # Sets up the display server configuration and hooks.
 setup_display_server () {
   local xinitrc_file="${ROOT_FS}/root/.xinitrc"
@@ -755,6 +764,7 @@ init &&
   add_aur_packages &&
   copy_installer &&
   copy_settings_tools &&
+  setup_auto_login &&
   setup_display_server &&
   setup_keyboard &&
   setup_power &&
