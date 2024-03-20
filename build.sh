@@ -1,10 +1,18 @@
 #!/bin/bash
 
+set -Eeo pipefail
+
 DIST_DIR=.dist
 WORK_DIR="${DIST_DIR}/work"
 AUR_DIR="${DIST_DIR}/aur"
 PROFILE_DIR="${DIST_DIR}/profile"
 ROOT_FS="${PROFILE_DIR}/airootfs"
+
+# Prints an error message and exits the process immediately.
+fail () {
+  echo -e 'Exiting the build process...'
+  exit 1
+}
 
 # Adds the package with the given name into the list of packages
 # Arguments:
@@ -13,6 +21,11 @@ add_package () {
   local name="${1}"
 
   local pkgs_file="${PROFILE_DIR}/packages.x86_64"
+
+  if [[ ! -f "${pkgs_file}" ]]; then
+    echo -e 'Unable to locate file packages.x86_64'
+    return 1
+  fi
 
   if grep -Eq "^${name}$" "${pkgs_file}"; then
     echo -e "Skipping ${name}"
@@ -30,15 +43,25 @@ remove_package () {
 
   local pkgs_file="${PROFILE_DIR}/packages.x86_64"
 
-  sed -Ei "/^${name}$/d" "${pkgs_file}"
+  if [[ ! -f "${pkgs_file}" ]]; then
+    echo -e 'Unable to locate file packages.x86_64'
+    return 1
+  fi
+
+  if ! grep -Eq "^${name}$" "${pkgs_file}"; then
+    echo -e "Unable to remove package ${name}"
+    return 1
+  fi
+
+  sed -Ei "/^${name}$/d" "${pkgs_file}" || return 1
 }
 
 # Initializes build and distribution files.
 init () {
   echo -e 'Starting the clean up process...'
 
-  rm -rf "${DIST_DIR}"
-  mkdir -p "${DIST_DIR}"
+  rm -rf "${DIST_DIR}" &&
+    mkdir -p "${DIST_DIR}" || return 1
 
   echo -e 'Clean up has been completed'
 }
@@ -47,7 +70,14 @@ init () {
 copy_profile () {
   echo -e 'Copying the custom archiso profile...'
 
-  cp -r /usr/share/archiso/configs/releng "${PROFILE_DIR}"
+  local releng_path="/usr/share/archiso/configs/releng"
+
+  if [[ ! -d "${releng_path}" ]]; then
+    echo -e 'Unable to locate releng archiso profile'
+    return 1
+  fi
+
+  cp -r "${releng_path}" "${PROFILE_DIR}" || return 1
 
   echo -e "The releng profile copied to ${PROFILE_DIR}"
 }
@@ -91,11 +121,11 @@ add_packages () {
 
   local pkg=''
   for pkg in "${pkgs[@]}"; do
-    add_package "${pkg}"
+    add_package "${pkg}" || return 1
   done
 
   # Remove conflicting no x server virtualbox utils
-  remove_package virtualbox-guest-utils-nox
+  remove_package virtualbox-guest-utils-nox || return 1
 
   echo -e 'All packages added into the package list'
 }
@@ -107,9 +137,14 @@ add_aur_packages () {
 
   local previous_dir=${PWD}
 
+  if [[ ! -d "${PROFILE_DIR}" ]]; then
+    echo -e 'Unable to locate the releng profile folder'
+    return 1
+  fi
+
   local repo_home="${PROFILE_DIR}/local/repo"
 
-  mkdir -p "${repo_home}"
+  mkdir -p "${repo_home}" || return 1
 
   local names=(
     yay smenu xkblayout-state-git
@@ -118,31 +153,37 @@ add_aur_packages () {
   local name=''
   for name in "${names[@]}"; do
     # Build the next AUR package
-    git clone "https://aur.archlinux.org/${name}.git" "${AUR_DIR}/${name}"
+    git clone "https://aur.archlinux.org/${name}.git" "${AUR_DIR}/${name}" || return 1
   
     cd "${AUR_DIR}/${name}"
-    makepkg
+    makepkg || return 1
     cd ${previous_dir}
 
     # Create the custom local repo database
-    cp ${AUR_DIR}/${name}/${name}-*-x86_64.pkg.tar.zst "${repo_home}"
-    repo-add "${repo_home}/custom.db.tar.gz" ${repo_home}/${name}-*-x86_64.pkg.tar.zst
+    cp ${AUR_DIR}/${name}/${name}-*-x86_64.pkg.tar.zst "${repo_home}" || return 1
+    repo-add "${repo_home}/custom.db.tar.gz" ${repo_home}/${name}-*-x86_64.pkg.tar.zst || return 1
 
-    add_package "${name}"
+    add_package "${name}" || return 1
   done
 
-  rm -rf "${AUR_DIR}"
+  rm -rf "${AUR_DIR}" || return 1
 
   echo -e 'The AUR package files have been built'
 
   local pacman_conf="${PROFILE_DIR}/pacman.conf"
 
-  echo -e '\n[custom]' >> "${pacman_conf}"
-  echo -e 'SigLevel = Optional TrustAll' >> "${pacman_conf}"
-  echo -e "Server = file://$(realpath "${repo_home}")" >> "${pacman_conf}"
+  if [[ ! -f "${pacman_conf}" ]]; then
+    echo -e 'Unable to locate file pacman.conf'
+    return 1
+  fi
+
+  printf '%s\n' \
+    '' \
+    '[custom]' \
+    'SigLevel = Optional TrustAll' \
+    "Server = file://$(realpath "${repo_home}")" >> "${pacman_conf}" || return 1
 
   echo -e 'The custom local repo added to pacman'
-  
   echo -e 'All AUR packages added into the package list'
 }
 
@@ -150,24 +191,29 @@ add_aur_packages () {
 copy_installer () {
   echo -e 'Copying the installer files...'
 
+  if [[ ! -d "${ROOT_FS}" ]]; then
+    echo -e 'Unable to locate the airootfs folder'
+    return 1
+  fi
+
   local installer_home="${ROOT_FS}/opt/stack"
 
-  mkdir -p "${installer_home}"
+  mkdir -p "${installer_home}" || return 1
 
-  cp -r configs "${installer_home}"
-  cp -r resources "${installer_home}"
-  cp -r rules "${installer_home}"
-  cp -r scripts "${installer_home}"
-  cp -r services "${installer_home}"
-  cp -r tools "${installer_home}"
-  cp install.sh "${installer_home}"
+  cp -r configs "${installer_home}" &&
+    cp -r resources "${installer_home}" &&
+    cp -r rules "${installer_home}" &&
+    cp -r scripts "${installer_home}" &&
+    cp -r services "${installer_home}" &&
+    cp -r tools "${installer_home}" &&
+    cp install.sh "${installer_home}" || return 1
 
   # Create a global alias to launch the installer
   local bin_home="${ROOT_FS}/usr/local/bin"
 
-  mkdir -p "${bin_home}"
+  mkdir -p "${bin_home}" || return 1
 
-  ln -sf /opt/stack/install.sh "${bin_home}/install_os"
+  ln -sf /opt/stack/install.sh "${bin_home}/install_os" || return 1
 
   echo -e 'Installer files have been copied'
 }
@@ -176,65 +222,74 @@ copy_installer () {
 copy_settings_tools () {
   echo -e 'Copying the setting tools...'
 
+  if [[ ! -d "${ROOT_FS}" ]]; then
+    echo -e 'Unable to locate the airootfs folder'
+    return 1
+  fi
+
   local tools_home="${ROOT_FS}/opt/tools"
 
-  mkdir -p "${tools_home}"
+  mkdir -p "${tools_home}" || return 1
 
   # Copy settings tools needed to the live media only
-  cp -r tools/displays "${tools_home}"
-  cp -r tools/desktop "${tools_home}"
-  cp -r tools/clock "${tools_home}"
-  cp -r tools/networks "${tools_home}"
-  cp -r tools/disks "${tools_home}"
-  cp -r tools/bluetooth "${tools_home}"
-  cp -r tools/langs "${tools_home}"
-  cp -r tools/notifications "${tools_home}"
-  cp -r tools/power "${tools_home}"
-  cp -r tools/printers "${tools_home}"
-  cp -r tools/trash "${tools_home}"
-  cp tools/utils "${tools_home}"
+  cp -r tools/displays "${tools_home}" &&
+    cp -r tools/desktop "${tools_home}" &&
+    cp -r tools/clock "${tools_home}" &&
+    cp -r tools/networks "${tools_home}" &&
+    cp -r tools/disks "${tools_home}" &&
+    cp -r tools/bluetooth "${tools_home}" &&
+    cp -r tools/langs "${tools_home}" &&
+    cp -r tools/notifications "${tools_home}" &&
+    cp -r tools/power "${tools_home}" &&
+    cp -r tools/printers "${tools_home}" &&
+    cp -r tools/trash "${tools_home}" &&
+    cp tools/utils "${tools_home}" || return 1
 
   # Remove LC_CTYPE on smenu calls as live media doesn't need it
-  sed -i 's/\(.*\)LC_CTYPE=.* \(smenu .*\)/\1\2/' "${tools_home}/utils"
+  sed -i 's/\(.*\)LC_CTYPE=.* \(smenu .*\)/\1\2/' "${tools_home}/utils" || return 1
 
   # Disable init scratchpad command for the live media
   local desktop_main="${tools_home}/desktop/main"
 
-  sed -i "/'init scratchpad' 'Initialize the sticky scratchpad terminal.'/d" "${desktop_main}"
-  sed -i "/'init scratchpad') init_scratchpad;;/d" "${desktop_main}"
+  sed -i "/.*scratchpad.*/d" "${desktop_main}" || return 1
 
   # Create global aliases for each setting tool main entry
   local bin_home="${ROOT_FS}/usr/local/bin"
 
-  mkdir -p "${bin_home}"
+  mkdir -p "${bin_home}" || return 1
 
-  ln -sf /opt/tools/displays/main "${bin_home}/displays"
-  ln -sf /opt/tools/desktop/main "${bin_home}/desktop"
-  ln -sf /opt/tools/clock/main "${bin_home}/clock"
-  ln -sf /opt/tools/networks/main "${bin_home}/networks"
-  ln -sf /opt/tools/disks/main "${bin_home}/disks"
-  ln -sf /opt/tools/bluetooth/main "${bin_home}/bluetooth"
-  ln -sf /opt/tools/langs/main "${bin_home}/langs"
-  ln -sf /opt/tools/notifications/main "${bin_home}/notifications"
-  ln -sf /opt/tools/power/main "${bin_home}/power"
-  ln -sf /opt/tools/printers/main "${bin_home}/printers"
-  ln -sf /opt/tools/trash/main "${bin_home}/trash"
+  ln -sf /opt/tools/displays/main "${bin_home}/displays" &&
+    ln -sf /opt/tools/desktop/main "${bin_home}/desktop" &&
+    ln -sf /opt/tools/clock/main "${bin_home}/clock" &&
+    ln -sf /opt/tools/networks/main "${bin_home}/networks" &&
+    ln -sf /opt/tools/disks/main "${bin_home}/disks" &&
+    ln -sf /opt/tools/bluetooth/main "${bin_home}/bluetooth" &&
+    ln -sf /opt/tools/langs/main "${bin_home}/langs" &&
+    ln -sf /opt/tools/notifications/main "${bin_home}/notifications" &&
+    ln -sf /opt/tools/power/main "${bin_home}/power" &&
+    ln -sf /opt/tools/printers/main "${bin_home}/printers" &&
+    ln -sf /opt/tools/trash/main "${bin_home}/trash" || return 1
 
   echo -e 'Settings tools have been copied'
 }
 
 # Sets to skip login prompt and auto login the root user.
 setup_auto_login () {
+  if [[ ! -d "${ROOT_FS}" ]]; then
+    echo -e 'Unable to locate the airootfs folder'
+    return 1
+  fi
+
   local auto_login="${ROOT_FS}/etc/systemd/system/getty@tty1.service.d/autologin.conf"
 
   local exec_start="ExecStart=-/sbin/agetty -o '-p -f -- \\\\\\\u' --noissue --noclear --skip-login --autologin root - \$TERM"
 
-  sed -i "s;^ExecStart=-/sbin/agetty.*;${exec_start};" "${auto_login}"
+  sed -i "s;^ExecStart=-/sbin/agetty.*;${exec_start};" "${auto_login}" || return 1
 
   echo -e 'Login prompt set to skip and autologin'
 
   # Remove the default welcome message
-  rm -rf "${ROOT_FS}/etc/motd"
+  rm -rf "${ROOT_FS}/etc/motd" || return 1
 
   # Create the welcome message to be shown after login
   local welcome=''
@@ -256,25 +311,41 @@ setup_auto_login () {
 
 # Sets up the display server configuration and hooks.
 setup_display_server () {
+  if [[ ! -d "${ROOT_FS}" ]]; then
+    echo -e 'Unable to locate the airootfs folder'
+    return 1
+  fi
+
   local xinitrc_file="${ROOT_FS}/root/.xinitrc"
 
-  cp configs/xorg/xinitrc "${xinitrc_file}"
+  cp configs/xorg/xinitrc "${xinitrc_file}" || return 1
 
   # Keep functionality relatated to live media only
-  sed -i '/system -qs/d' "${xinitrc_file}"
-  sed -i '/displays -qs/d' "${xinitrc_file}"
-  sed -i '/security -qs/d' "${xinitrc_file}"
-  sed -i '/cloud -qs/d' "${xinitrc_file}"
+  sed -i '/system -qs check updates &/d' "${xinitrc_file}" &&
+    sed -i '/displays -qs restore layout/d' "${xinitrc_file}" &&
+    sed -i '/displays -qs restore colors &/d' "${xinitrc_file}" &&
+    sed -i '/security -qs init locker &/d' "${xinitrc_file}" &&
+    sed -i '/cloud -qs mount remotes &/d' "${xinitrc_file}" || return 1
 
   echo -e 'The .xinitrc file copied to /root/.xinitrc'
 
-  mkdir -p "${ROOT_FS}/etc/X11"
-  cp configs/xorg/xorg.conf "${ROOT_FS}/etc/X11"
+  mkdir -p "${ROOT_FS}/etc/X11" || return 1
+
+  cp configs/xorg/xorg.conf "${ROOT_FS}/etc/X11" || return 1
 
   echo -e 'The xorg.conf file copied to /etc/X11/xorg.conf'
 
-  echo -e "\necho -e 'Starting desktop environment...'" >> "${ROOT_FS}/root/.zlogin"
-  echo 'startx' >> "${ROOT_FS}/root/.zlogin"
+  local zlogin_file="${ROOT_FS}/root/.zlogin"
+
+  if [[ ! -f "${zlogin_file}" ]]; then
+    echo -e 'Unable to locate file /root/.zlogin'
+    return 1
+  fi
+
+  printf '%s\n' \
+    '' \
+    "echo -e 'Starting desktop environment...'" \
+    'startx' >> "${zlogin_file}" || return 1
 
   echo -e 'Xorg server set to be started after login'
 }
@@ -283,11 +354,16 @@ setup_display_server () {
 setup_keyboard () {
   echo -e 'Applying keyboard settings...'
 
-  echo 'KEYMAP=us' > "${ROOT_FS}/etc/vconsole.conf"
+  if [[ ! -d "${ROOT_FS}" ]]; then
+    echo -e 'Unable to locate the airootfs folder'
+    return 1
+  fi
+
+  echo 'KEYMAP=us' > "${ROOT_FS}/etc/vconsole.conf" || return 1
 
   echo -e 'Keyboard map keys has been set to us'
 
-  mkdir -p "${ROOT_FS}/etc/X11/xorg.conf.d"
+  mkdir -p "${ROOT_FS}/etc/X11/xorg.conf.d" || return 1
 
   printf '%s\n' \
    'Section "InputClass"' \
@@ -296,14 +372,14 @@ setup_keyboard () {
    '  Option "XkbLayout" "us"' \
    '  Option "XkbModel" "pc105"' \
    '  Option "XkbOptions" "grp:alt_shift_toggle"' \
-   'EndSection' > "${ROOT_FS}/etc/X11/xorg.conf.d/00-keyboard.conf"
+   'EndSection' > "${ROOT_FS}/etc/X11/xorg.conf.d/00-keyboard.conf" || return 1
 
   echo -e 'Xorg keyboard settings have been set'
 
   # Save keyboard settings to the user langs json file
   local config_home="${ROOT_FS}/root/.config/stack"
 
-  mkdir -p "${config_home}"
+  mkdir -p "${config_home}" || return 1
 
   printf '%s\n' \
     '{' \
@@ -311,67 +387,85 @@ setup_keyboard () {
     '  "model": "pc105",' \
     '  "options": "grp:alt_shift_toggle",' \
     '  "layouts": [{"code": "us", "variant": "default"}]' \
-    '}' > "${config_home}/langs.json"
+    '}' > "${config_home}/langs.json" || return 1
   
   echo -e 'Keyboard settings have been applied'
 }
 
 # Sets up various system power settings.
 setup_power () {
-  rm -rf "${ROOT_FS}/etc/systemd/logind.conf.d"
-  mkdir -p "${ROOT_FS}/etc/systemd/logind.conf.d"
+  if [[ ! -d "${ROOT_FS}" ]]; then
+    echo -e 'Unable to locate the airootfs folder'
+    return 1
+  fi
+
+  rm -rf "${ROOT_FS}/etc/systemd/logind.conf.d" &&
+    mkdir -p "${ROOT_FS}/etc/systemd/logind.conf.d" || return 1
   
   local logind_conf="${ROOT_FS}/etc/systemd/logind.conf.d/00-main.conf"
 
-  echo '[Login]' > "${logind_conf}"
-  echo 'HandleHibernateKey=ignore' >> "${logind_conf}"
-  echo 'HandleHibernateKeyLongPress=ignore' >> "${logind_conf}"
-  echo 'HibernateKeyIgnoreInhibited=no' >> "${logind_conf}"
-  echo 'HandlePowerKey=suspend' >> "${logind_conf}"
-  echo 'HandleRebootKey=reboot' >> "${logind_conf}"
-  echo 'HandleSuspendKey=suspend' >> "${logind_conf}"
-  echo 'HandleLidSwitch=suspend' >> "${logind_conf}"
-  echo 'HandleLidSwitchDocked=ignore' >> "${logind_conf}"
+  printf '%s\n' \
+    '[Login]' \
+    'HandleHibernateKey=ignore' \
+    'HandleHibernateKeyLongPress=ignore' \
+    'HibernateKeyIgnoreInhibited=no' \
+    'HandlePowerKey=suspend' \
+    'HandleRebootKey=reboot' \
+    'HandleSuspendKey=suspend' \
+    'HandleLidSwitch=suspend' \
+    'HandleLidSwitchDocked=ignore' > "${logind_conf}" || return 1
 
   echo -e 'Logind action handlers have been set'
 
-  rm -rf "${ROOT_FS}/etc/systemd/sleep.conf.d"
-  mkdir -p "${ROOT_FS}/etc/systemd/sleep.conf.d"
+  rm -rf "${ROOT_FS}/etc/systemd/sleep.conf.d" &&
+    mkdir -p "${ROOT_FS}/etc/systemd/sleep.conf.d" || return 1
   
   local sleep_conf="${ROOT_FS}/etc/systemd/sleep.conf.d/00-main.conf"
 
-  echo '[Sleep]' > "${sleep_conf}"
-  echo 'AllowSuspend=yes' >> "${sleep_conf}"
-  echo 'AllowHibernation=no' >> "${sleep_conf}"
-  echo 'AllowSuspendThenHibernate=no' >> "${sleep_conf}"
-  echo 'AllowHybridSleep=no' >> "${sleep_conf}"
+  printf '%s\n' \
+    '[Sleep]' \
+    'AllowSuspend=yes' \
+    'AllowHibernation=no' \
+    'AllowSuspendThenHibernate=no' \
+    'AllowHybridSleep=no' > "${sleep_conf}" || return 1
 
   echo -e 'Sleep action handlers have been set'
 
-  mkdir -p "${ROOT_FS}/etc/tlp.d"
+  mkdir -p "${ROOT_FS}/etc/tlp.d" || return 1
 
   local tlp_conf="${ROOT_FS}/etc/tlp.d/00-main.conf"
 
-  echo 'SOUND_POWER_SAVE_ON_AC=0' > "${tlp_conf}"
-  echo 'SOUND_POWER_SAVE_ON_BAT=0' >> "${tlp_conf}"
+  printf '%s' \
+    'SOUND_POWER_SAVE_ON_AC=0' \
+    'SOUND_POWER_SAVE_ON_BAT=0' > "${tlp_conf}" || return 1
 
   echo -e 'Battery action handlers have been set'
 
   local config_home="${ROOT_FS}/root/.config/stack"
 
-  mkdir -p "${config_home}"
+  mkdir -p "${config_home}" || return 1
 
   printf '%s\n' \
   '{' \
   '  "screensaver": {"interval": 15}' \
-  '}' > "${config_home}/power.json"
+  '}' > "${config_home}/power.json" || return 1
 
   echo -e 'Screensaver interval setting has been set'
 }
 
 # Sets up the sheel environment files.
 setup_shell_environment () {
+  if [[ ! -d "${ROOT_FS}" ]]; then
+    echo -e 'Unable to locate the airootfs folder'
+    return 1
+  fi
+
   local zshrc_file="${ROOT_FS}/root/.zshrc"
+
+  if [[ ! -f "${zshrc_file}" ]]; then
+    echo -e 'Unable to locate file /root/.zshrc'
+    return 1
+  fi
 
   # Set the defauilt terminal and text editor
   echo -e 'export TERMINAL=cool-retro-term' >> "${zshrc_file}"
@@ -393,7 +487,7 @@ setup_shell_environment () {
     '' \
     'if [[ "${SHOW_WELCOME_MSG}" == "true" ]]; then' \
     '  cat /etc/welcome' \
-    'fi' >> "${zshrc_file}"
+    'fi' >> "${zshrc_file}" || return 1
 
   echo -e 'Welcome message set to be shown after login'
 }
@@ -403,107 +497,112 @@ setup_shell_environment () {
 setup_desktop () {
   echo -e 'Setting up the desktop configurations...'
 
+  if [[ ! -d "${ROOT_FS}" ]]; then
+    echo -e 'Unable to locate the airootfs folder'
+    return 1
+  fi
+
   local config_home="${ROOT_FS}/root/.config"
 
   # Copy the picom configuration files
   local picom_home="${config_home}/picom"
 
-  mkdir -p "${picom_home}"
+  mkdir -p "${picom_home}" || return 1
   
-  cp configs/picom/picom.conf "${picom_home}"
+  cp configs/picom/picom.conf "${picom_home}" || return 1
 
   echo -e 'Picom configuration has been set'
 
   # Copy windows manager configuration files
   local bspwm_home="${config_home}/bspwm"
 
-  mkdir -p "${bspwm_home}"
+  mkdir -p "${bspwm_home}" || return 1
 
-  cp configs/bspwm/bspwmrc "${bspwm_home}"
-  cp configs/bspwm/resize "${bspwm_home}"
-  cp configs/bspwm/rules "${bspwm_home}"
-  cp configs/bspwm/swap "${bspwm_home}"
+  cp configs/bspwm/bspwmrc "${bspwm_home}" &&
+    cp configs/bspwm/resize "${bspwm_home}" &&
+    cp configs/bspwm/rules "${bspwm_home}" &&
+    cp configs/bspwm/swap "${bspwm_home}" || return 1
 
   # Remove init scratchpad initializer from the bspwmrc
-  sed -i '/desktop -qs init scratchpad &/d' "${bspwm_home}/bspwmrc"
-  sed -i '/bspc rule -a scratch sticky=off state=floating hidden=on/d' "${bspwm_home}/bspwmrc"
+  sed -i '/desktop -qs init scratchpad &/d' "${bspwm_home}/bspwmrc" || return 1
+  sed -i '/bspc rule -a scratch sticky=off state=floating hidden=on/d' "${bspwm_home}/bspwmrc" || return 1
 
   # Add a hook to open the welcome terminal once at login
   printf '%s\n' \
     '[ "$@" -eq 0 ] && {' \
     '  SHOW_WELCOME_MSG=true cool-retro-term &' \
-    '}' >> "${bspwm_home}/bspwmrc"
+    '}' >> "${bspwm_home}/bspwmrc" || return 1
 
   echo -e 'Bspwm configuration has been set'
 
   # Copy polybar configuration files
   local polybar_home="${config_home}/polybar"
 
-  mkdir -p "${polybar_home}"
+  mkdir -p "${polybar_home}" || return 1
 
-  cp configs/polybar/config.ini "${polybar_home}"
-  cp configs/polybar/modules.ini "${polybar_home}"
-  cp configs/polybar/theme.ini "${polybar_home}"
+  cp configs/polybar/config.ini "${polybar_home}" &&
+    cp configs/polybar/modules.ini "${polybar_home}" &&
+    cp configs/polybar/theme.ini "${polybar_home}" || return 1
 
   local config_ini="${polybar_home}/config.ini"
 
   # Remove modules not needed by the live media
-  sed -i "s/\(modules-right = \)cpu.*/\1 alsa-audio date time/" "${config_ini}"
-  sed -i "s/\(modules-right = \)notifications.*/\1 flash-drives keyboard/" "${config_ini}"
-  sed -i "s/\(modules-left = \)wlan.*/\1 wlan eth/" "${config_ini}"
+  sed -i "s/\(modules-right = \)cpu.*/\1 alsa-audio date time/" "${config_ini}" || return 1
+  sed -i "s/\(modules-right = \)notifications.*/\1 flash-drives keyboard/" "${config_ini}" || return 1
+  sed -i "s/\(modules-left = \)wlan.*/\1 wlan eth/" "${config_ini}" || return 1
 
-  mkdir -p "${polybar_home}/scripts"
+  mkdir -p "${polybar_home}/scripts" || return 1
 
   # Keep only scripts needed by the live media
-  cp -r configs/polybar/scripts/flash-drives "${polybar_home}/scripts"
-  cp -r configs/polybar/scripts/time "${polybar_home}/scripts"
+  cp -r configs/polybar/scripts/flash-drives "${polybar_home}/scripts" || return 1
+  cp -r configs/polybar/scripts/time "${polybar_home}/scripts" || return 1
 
   echo -e 'Polybar configuration has been set'
 
   # Copy sxhkd configuration files
   local sxhkd_home="${config_home}/sxhkd"
 
-  mkdir -p "${sxhkd_home}"
+  mkdir -p "${sxhkd_home}" || return 1
 
-  cp configs/sxhkd/sxhkdrc "${sxhkd_home}"
+  cp configs/sxhkd/sxhkdrc "${sxhkd_home}" || return 1
 
   local sxhkdrc_file="${sxhkd_home}/sxhkdrc"
 
   # Remove key bindings not needed by the live media
-  sed -i '/# Lock the screen./,+3d' "${sxhkdrc_file}"
-  sed -i '/# Take a screen shot./,+3d' "${sxhkdrc_file}"
-  sed -i '/# Start recording your screen./,+3d' "${sxhkdrc_file}"
-  sed -i '/# Show and hide the scratchpad termimal./,+3d' "${sxhkdrc_file}"
+  sed -i '/# Lock the screen./,+3d' "${sxhkdrc_file}" &&
+    sed -i '/# Take a screen shot./,+3d' "${sxhkdrc_file}" &&
+    sed -i '/# Start recording your screen./,+3d' "${sxhkdrc_file}" &&
+    sed -i '/# Show and hide the scratchpad termimal./,+3d' "${sxhkdrc_file}" || return 1
 
   echo -e 'Sxhkd configuration has been set'
 
   # Copy rofi configuration files
   local rofi_home="${config_home}/rofi"
 
-  mkdir -p "${rofi_home}"
+  mkdir -p "${rofi_home}" || return 1
 
-  cp configs/rofi/config.rasi "${rofi_home}"
-  cp configs/rofi/launch "${rofi_home}"
+  cp configs/rofi/config.rasi "${rofi_home}" || return 1
+  cp configs/rofi/launch "${rofi_home}" || return 1
 
   local launch_file="${rofi_home}/launch"
 
-  sed -i "/options+='Lock\\\n'/d" "${launch_file}"
-  sed -i "/options+='Blank\\\n'/d" "${launch_file}"
-  sed -i "/options+='Logout'/d" "${launch_file}"
-  sed -i "s/\(  local exact_lines='listview {lines:\) 6\(;}'\)/\1 3\2/" "${launch_file}"
-  sed -i "/'Lock') security -qs lock screen;;/d" "${launch_file}"
-  sed -i "/'Blank') power -qs blank;;/d" "${launch_file}"
-  sed -i "/'Logout') security -qs logout user;;/d" "${launch_file}"
+  sed -i "/options+='Lock\\\n'/d" "${launch_file}" &&
+    sed -i "/options+='Blank\\\n'/d" "${launch_file}" &&
+    sed -i "/options+='Logout'/d" "${launch_file}" &&
+    sed -i "s/\(  local exact_lines='listview {lines:\) 6\(;}'\)/\1 3\2/" "${launch_file}" &&
+    sed -i "/'Lock') security -qs lock screen;;/d" "${launch_file}" &&
+    sed -i "/'Blank') power -qs blank;;/d" "${launch_file}" &&
+    sed -i "/'Logout') security -qs logout user;;/d" "${launch_file}" || return 1
 
   echo -e 'Rofi configuration has been set'
 
   # Copy dunst configuration files
   local dunst_home="${config_home}/dunst"
 
-  mkdir -p "${dunst_home}"
+  mkdir -p "${dunst_home}" || return 1
 
-  cp configs/dunst/dunstrc "${dunst_home}"
-  cp configs/dunst/hook "${dunst_home}"
+  cp configs/dunst/dunstrc "${dunst_home}" || return 1
+  cp configs/dunst/hook "${dunst_home}" || return 1
 
   echo -e 'Dunst configuration has been set'
 }
@@ -512,16 +611,21 @@ setup_desktop () {
 setup_theme () {
   echo -e 'Setting up the Dracula theme...'
 
+  if [[ ! -d "${ROOT_FS}" ]]; then
+    echo -e 'Unable to locate the airootfs folder'
+    return 1
+  fi
+
   local themes_home="${ROOT_FS}/usr/share/themes"
 
-  mkdir -p "${themes_home}"
+  mkdir -p "${themes_home}" || return 1
 
   local theme_url='https://github.com/dracula/gtk/archive/master.zip'
 
-  curl "${theme_url}" -sSLo "${themes_home}/Dracula.zip"
-  unzip -q "${themes_home}/Dracula.zip" -d "${themes_home}"
-  mv "${themes_home}/gtk-master" "${themes_home}/Dracula"
-  rm -f "${themes_home}/Dracula.zip"
+  curl "${theme_url}" -sSLo "${themes_home}/Dracula.zip" &&
+    unzip -q "${themes_home}/Dracula.zip" -d "${themes_home}" &&
+    mv "${themes_home}/gtk-master" "${themes_home}/Dracula" &&
+    rm -f "${themes_home}/Dracula.zip" || return 1
 
   echo -e 'Dracula theme has been installed'
 
@@ -529,13 +633,13 @@ setup_theme () {
 
   local icons_home="${ROOT_FS}/usr/share/icons"
 
-  mkdir -p "${icons_home}"
+  mkdir -p "${icons_home}" || return 1
   
   local icons_url='https://github.com/dracula/gtk/files/5214870/Dracula.zip'
 
-  curl "${icons_url}" -sSLo "${icons_home}/Dracula.zip"
-  unzip -q "${icons_home}/Dracula.zip" -d "${icons_home}"
-  rm -f "${icons_home}/Dracula.zip"
+  curl "${icons_url}" -sSLo "${icons_home}/Dracula.zip" &&
+    unzip -q "${icons_home}/Dracula.zip" -d "${icons_home}" &&
+    rm -f "${icons_home}/Dracula.zip" || return 1
 
   echo -e 'Dracula icons have been installed'
 
@@ -543,15 +647,16 @@ setup_theme () {
 
   local cursors_home="${ROOT_FS}/usr/share/icons"
 
-  mkdir -p "${cursors_home}"
+  mkdir -p "${cursors_home}" || return 1
 
   local cursors_url='https://www.dropbox.com/s/mqt8s1pjfgpmy66/Breeze-Snow.tgz?dl=1'
 
-  wget "${cursors_url}" -qO "${cursors_home}/breeze-snow.tgz"
-  tar -xzf "${cursors_home}/breeze-snow.tgz" -C "${cursors_home}"
-  rm -f "${cursors_home}/breeze-snow.tgz"
+  wget "${cursors_url}" -qO "${cursors_home}/breeze-snow.tgz" &&
+    tar -xzf "${cursors_home}/breeze-snow.tgz" -C "${cursors_home}" &&
+    rm -f "${cursors_home}/breeze-snow.tgz" || return 1
 
-  mkdir -p "${cursors_home}/default"
+  mkdir -p "${cursors_home}/default" || return 1
+
   echo '[Icon Theme]' >> "${cursors_home}/default/index.theme"
   echo 'Inherits=Breeze-Snow' >> "${cursors_home}/default/index.theme"
 
@@ -559,8 +664,8 @@ setup_theme () {
 
   local gtk_home="${ROOT_FS}/root/.config/gtk-3.0"
   
-  mkdir -p "${gtk_home}"
-  cp configs/gtk/settings.ini "${gtk_home}"
+  mkdir -p "${gtk_home}" || return 1
+  cp configs/gtk/settings.ini "${gtk_home}" || return 1
 
   echo -e 'Gtk settings file has been set'
 
@@ -568,12 +673,12 @@ setup_theme () {
 
   local wallpapers_home="${ROOT_FS}/root/.local/share/wallpapers"
 
-  mkdir -p "${wallpapers_home}"
-  cp resources/wallpapers/* "${wallpapers_home}"
+  mkdir -p "${wallpapers_home}" || return 1
+  cp resources/wallpapers/* "${wallpapers_home}" || return 1
 
   local settings_home="${ROOT_FS}/root/.config/stack"
 
-  mkdir -p "${settings_home}"
+  mkdir -p "${settings_home}" || return 1
 
   local settings='{"wallpaper": {"name": "default.jpeg", "mode": "fill"}}'
 
@@ -586,9 +691,14 @@ setup_theme () {
 setup_fonts () {
   echo -e 'Setting up extra system fonts...'
 
+  if [[ ! -d "${ROOT_FS}" ]]; then
+    echo -e 'Unable to locate the airootfs folder'
+    return 1
+  fi
+
   local fonts_home="${ROOT_FS}/usr/share/fonts/extra-fonts"
 
-  mkdir -p "${fonts_home}"
+  mkdir -p "${fonts_home}" || return 1
 
   local fonts=(
     "FiraCode https://github.com/tonsky/FiraCode/releases/download/6.2/Fira_Code_v6.2.zip"
@@ -602,15 +712,15 @@ setup_fonts () {
 
   for font in "${fonts[@]}"; do
     local name=''
-    name="$(echo "${font}" | cut -d ' ' -f 1)"
+    name="$(echo "${font}" | cut -d ' ' -f 1)" || return 1
 
     local url=''
-    url="$(echo "${font}" | cut -d ' ' -f 2)"
+    url="$(echo "${font}" | cut -d ' ' -f 2)" || return 1
 
-    curl "${url}" -sSLo "${fonts_home}/${name}.zip"
-    unzip -q "${fonts_home}/${name}.zip" -d "${fonts_home}/${name}"
-    chmod -R 755 "${fonts_home}/${name}"
-    rm -f "${fonts_home}/${name}.zip"
+    curl "${url}" -sSLo "${fonts_home}/${name}.zip" &&
+      unzip -q "${fonts_home}/${name}.zip" -d "${fonts_home}/${name}" &&
+      chmod -R 755 "${fonts_home}/${name}" &&
+      rm -f "${fonts_home}/${name}.zip" || return 1
 
     echo -e "Font ${name} installed"
   done
@@ -622,11 +732,17 @@ setup_fonts () {
 setup_sounds () {
   echo -e 'Setting up extra system sounds...'
 
+  if [[ ! -d "${ROOT_FS}" ]]; then
+    echo -e 'Unable to locate the airootfs folder'
+    return 1
+  fi
+
   local sounds_home="${ROOT_FS}/usr/share/sounds/stack"
   
-  mkdir -p "${sounds_home}"
-  cp resources/sounds/normal.wav "${sounds_home}"
-  cp resources/sounds/critical.wav "${sounds_home}"
+  mkdir -p "${sounds_home}" || return 1
+
+  cp resources/sounds/normal.wav "${sounds_home}" || return 1
+  cp resources/sounds/critical.wav "${sounds_home}" || return 1
 
   echo -e 'System sounds have been set'
 }
@@ -635,81 +751,86 @@ setup_sounds () {
 enable_services () {
   echo -e 'Enabling system services...'
 
-  mkdir -p "${ROOT_FS}/etc/systemd/system"
+  if [[ ! -d "${ROOT_FS}" ]]; then
+    echo -e 'Unable to locate the airootfs folder'
+    return 1
+  fi
+
+  mkdir -p "${ROOT_FS}/etc/systemd/system" || return 1
 
   ln -s /usr/lib/systemd/system/NetworkManager-dispatcher.service \
-    "${ROOT_FS}/etc/systemd/system/dbus-org.freedesktop.nm-dispatcher.service"
+    "${ROOT_FS}/etc/systemd/system/dbus-org.freedesktop.nm-dispatcher.service" || return 1
 
-  mkdir -p "${ROOT_FS}/etc/systemd/system/multi-user.target.wants"
+  mkdir -p "${ROOT_FS}/etc/systemd/system/multi-user.target.wants" || return 1
 
   ln -s /usr/lib/systemd/system/NetworkManager.service \
-    "${ROOT_FS}/etc/systemd/system/multi-user.target.wants/NetworkManager.service"
+    "${ROOT_FS}/etc/systemd/system/multi-user.target.wants/NetworkManager.service" || return 1
 
-  mkdir -p "${ROOT_FS}/etc/systemd/system/network-online.target.wants"
+  mkdir -p "${ROOT_FS}/etc/systemd/system/network-online.target.wants" || return 1
 
   ln -s /usr/lib/systemd/system/NetworkManager-wait-online.service \
-    "${ROOT_FS}/etc/systemd/system/network-online.target.wants/NetworkManager-wait-online.service"
+    "${ROOT_FS}/etc/systemd/system/network-online.target.wants/NetworkManager-wait-online.service" || return 1
 
   echo -e 'Network manager services enabled'
 
   ln -s /usr/lib/systemd/system/bluetooth.service \
-    "${ROOT_FS}/etc/systemd/system/dbus-org.bluez.service"
+    "${ROOT_FS}/etc/systemd/system/dbus-org.bluez.service" || return 1
 
-  mkdir -p "${ROOT_FS}/etc/systemd/system/bluetooth.target.wants"
+  mkdir -p "${ROOT_FS}/etc/systemd/system/bluetooth.target.wants" || return 1
 
   ln -s /usr/lib/systemd/system/bluetooth.service \
-    "${ROOT_FS}/etc/systemd/system/bluetooth.target.wants/bluetooth.service"
+    "${ROOT_FS}/etc/systemd/system/bluetooth.target.wants/bluetooth.service" || return 1
 
   echo -e 'Bluetooth services enabled'
 
   ln -s /usr/lib/systemd/system/acpid.service \
-    "${ROOT_FS}/etc/systemd/system/multi-user.target.wants/acpid.service"
+    "${ROOT_FS}/etc/systemd/system/multi-user.target.wants/acpid.service" || return 1
 
   echo -e 'Acpid service enabled'
 
-  mkdir -p "${ROOT_FS}/etc/systemd/system/printer.target.wants"
+  mkdir -p "${ROOT_FS}/etc/systemd/system/printer.target.wants" || return 1
 
   ln -s /usr/lib/systemd/system/cups.service \
-    "${ROOT_FS}/etc/systemd/system/printer.target.wants/cups.service"
+    "${ROOT_FS}/etc/systemd/system/printer.target.wants/cups.service" || return 1
 
   ln -s /usr/lib/systemd/system/cups.service \
-    "${ROOT_FS}/etc/systemd/system/multi-user.target.wants/cups.service"
+    "${ROOT_FS}/etc/systemd/system/multi-user.target.wants/cups.service" || return 1
 
-  mkdir -p "${ROOT_FS}/etc/systemd/system/sockets.target.wants"
+  mkdir -p "${ROOT_FS}/etc/systemd/system/sockets.target.wants" || return 1
 
   ln -s /usr/lib/systemd/system/cups.socket \
-    "${ROOT_FS}/etc/systemd/system/sockets.target.wants/cups.socket"
+    "${ROOT_FS}/etc/systemd/system/sockets.target.wants/cups.socket" || return 1
 
   ln -s /usr/lib/systemd/system/cups.path \
-    "${ROOT_FS}/etc/systemd/system/multi-user.target.wants/cups.path"
+    "${ROOT_FS}/etc/systemd/system/multi-user.target.wants/cups.path" || return 1
 
   echo -e 'Cups services enabled'
 
   ln -s /usr/lib/systemd/system/nftables.service \
-    "${ROOT_FS}/etc/systemd/system/multi-user.target.wants/nftables.service"
+    "${ROOT_FS}/etc/systemd/system/multi-user.target.wants/nftables.service" || return 1
 
   echo -e 'Nftables service enabled'
 
-  mkdir -p "${ROOT_FS}/root/.config/systemd/user"
+  mkdir -p "${ROOT_FS}/root/.config/systemd/user" || return 1
 
   cp services/init-pointer.service \
-    "${ROOT_FS}/root/.config/systemd/user/init-pointer.service"
+    "${ROOT_FS}/root/.config/systemd/user/init-pointer.service" || return 1
 
   echo -e 'Pointer init service enabled'
 
   cp services/init-tablets.service \
-    "${ROOT_FS}/root/.config/systemd/user/init-tablets.service"
+    "${ROOT_FS}/root/.config/systemd/user/init-tablets.service" || return 1
 
   echo -e 'Tablets init service enabled'
 
   cp services/fix-layout.service \
-    "${ROOT_FS}/root/.config/systemd/user/fix-layout.service"
+    "${ROOT_FS}/root/.config/systemd/user/fix-layout.service" || return 1
   
   sed -i 's;^\(Environment=HOME\).*;\1=/root;' \
-    "${ROOT_FS}/root/.config/systemd/user/fix-layout.service"
+    "${ROOT_FS}/root/.config/systemd/user/fix-layout.service" || return 1
   
   sed -i 's;^\(Environment=XAUTHORITY\).*;\1=/root/.Xauthority;' \
-    "${ROOT_FS}/root/.config/systemd/user/fix-layout.service"
+    "${ROOT_FS}/root/.config/systemd/user/fix-layout.service" || return 1
   
   echo -e 'Fix layout service enabled'
 }
@@ -718,13 +839,18 @@ enable_services () {
 add_device_rules () {
   echo -e 'Adding system udev rules...'
 
+  if [[ ! -d "${ROOT_FS}" ]]; then
+    echo -e 'Unable to locate the airootfs folder'
+    return 1
+  fi
+
   local rules_home="${ROOT_FS}/etc/udev/rules.d"
 
-  mkdir -p "${rules_home}"
+  mkdir -p "${rules_home}" || return 1
 
-  cp rules/90-init-pointer.rules "${rules_home}"
-  cp rules/91-init-tablets.rules "${rules_home}"
-  cp rules/92-fix-layout.rules "${rules_home}"
+  cp rules/90-init-pointer.rules "${rules_home}" &&
+    cp rules/91-init-tablets.rules "${rules_home}" &&
+    cp rules/92-fix-layout.rules "${rules_home}" || return 1
   
   echo -e 'Device rules have been set'
 }
@@ -733,17 +859,22 @@ add_device_rules () {
 add_sudoers_rules () {
   echo -e 'Adding proxy rules to sudoers...'
 
-  local proxy_rule='Defaults env_keep += "'
-  proxy_rule+='http_proxy HTTP_PROXY '
-  proxy_rule+='https_proxy HTTPS_PROXY '
-  proxy_rule+='ftp_proxy FTP_PROXY '
-  proxy_rule+='rsync_proxy RSYNC_PROXY '
-  proxy_rule+='all_proxy ALL_PROXY '
-  proxy_rule+='no_proxy NO_PROXY"'
+  if [[ ! -d "${ROOT_FS}" ]]; then
+    echo -e 'Unable to locate the airootfs folder'
+    return 1
+  fi
 
-  mkdir -p "${ROOT_FS}/etc/sudoers.d"
+  local proxy_rules='Defaults env_keep += "'
+  proxy_rules+='http_proxy HTTP_PROXY '
+  proxy_rules+='https_proxy HTTPS_PROXY '
+  proxy_rules+='ftp_proxy FTP_PROXY '
+  proxy_rules+='rsync_proxy RSYNC_PROXY '
+  proxy_rules+='all_proxy ALL_PROXY '
+  proxy_rules+='no_proxy NO_PROXY"'
 
-  echo "${proxy_rule}" > "${ROOT_FS}/etc/sudoers.d/proxy_rules"
+  mkdir -p "${ROOT_FS}/etc/sudoers.d" || return 1
+
+  echo "${proxy_rules}" > "${ROOT_FS}/etc/sudoers.d/proxy_rules"
 
   echo -e 'Proxy rules have been added to sudoers'
 }
@@ -753,6 +884,11 @@ set_file_permissions () {
   echo -e 'Defining the file permissions...'
 
   local permissions_file="${PROFILE_DIR}/profiledef.sh"
+
+  if [[ ! -f "${permissions_file}" ]]; then
+    echo -e 'Unable to locate file profiledef.sh'
+    return 1
+  fi
 
   local defs=(
     '0:0:750,/etc/sudoers.d/'
@@ -779,10 +915,13 @@ set_file_permissions () {
 
   local def=''
   for def in "${defs[@]}"; do
-    local perms="$(echo "${def}" | cut -d ',' -f 1)"
-    local path="$(echo "${def}" | cut -d ',' -f 2)"
+    local perms=''
+    perms="$(echo "${def}" | cut -d ',' -f 1)" || return 1
 
-    sed -i "/file_permissions=(/a [\"${path}\"]=\"${perms}\"" "${permissions_file}"
+    local path=''
+    path="$(echo "${def}" | cut -d ',' -f 2)" || return 1
+
+    sed -i "/file_permissions=(/a [\"${path}\"]=\"${perms}\"" "${permissions_file}" || return 1
   done
 
   echo -e 'File permissions have been defined'
@@ -792,13 +931,19 @@ set_file_permissions () {
 make_iso_file () {
   echo -e 'Building the archiso file...'
 
-  sudo mkarchiso -v -r -w "${WORK_DIR}" -o "${DIST_DIR}" "${PROFILE_DIR}"
+  if [[ ! -d "${PROFILE_DIR}" ]]; then
+    echo -e 'Unable to locate the releng profile folder'
+    return 1
+  fi
+
+  sudo mkarchiso -v -r -w "${WORK_DIR}" -o "${DIST_DIR}" "${PROFILE_DIR}" || return 1
 
   echo -e "Archiso file has been exported at ${DIST_DIR}"
+  echo -e 'Build process completed successfully'
 }
 
-echo -e 'Build process will start in 5 secs...'
-sleep 5
+echo -e 'Build process will start in 3 secs...'
+sleep 3
 
 init &&
   copy_profile &&
@@ -819,6 +964,5 @@ init &&
   add_device_rules &&
   add_sudoers_rules &&
   set_file_permissions &&
-  make_iso_file &&
-  echo -e 'Build process completed successfully' ||
-  echo -e 'Build process has failed'
+  make_iso_file || fail
+
