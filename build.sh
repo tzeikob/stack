@@ -192,8 +192,6 @@ add_aur_packages () {
 
 # Copies the files of the installer.
 copy_installer () {
-  echo -e 'Copying the installer files...'
-
   if [[ ! -d "${ROOT_FS}" ]]; then
     echo -e 'Unable to locate the airootfs folder'
     return 1
@@ -223,8 +221,6 @@ copy_installer () {
 
 # Copies the files of the settings tools.
 copy_settings_tools () {
-  echo -e 'Copying the setting tools...'
-
   if [[ ! -d "${ROOT_FS}" ]]; then
     echo -e 'Unable to locate the airootfs folder'
     return 1
@@ -462,11 +458,6 @@ setup_shell_environment () {
   fi
 
   local zshrc_file="${ROOT_FS}/root/.zshrc"
-
-  if [[ ! -f "${zshrc_file}" ]]; then
-    echo -e 'Unable to locate file /root/.zshrc'
-    return 1
-  fi
 
   # Set the defauilt terminal and text editor
   echo -e 'export TERMINAL=cool-retro-term' >> "${zshrc_file}"
