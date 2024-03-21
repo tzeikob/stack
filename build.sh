@@ -28,7 +28,7 @@ add_package () {
   fi
 
   if grep -Eq "^${name}$" "${pkgs_file}"; then
-    echo -e "Skipping ${name}"
+    echo -e "Skipping package ${name}"
     return 0
   fi
 
@@ -54,6 +54,8 @@ remove_package () {
   fi
 
   sed -Ei "/^${name}$/d" "${pkgs_file}" || return 1
+
+  echo -e "Removing package ${name}"
 }
 
 # Initializes build and distribution files.
