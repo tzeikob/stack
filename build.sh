@@ -58,12 +58,15 @@ remove_package () {
 
 # Initializes build and distribution files.
 init () {
-  echo -e 'Starting the clean up process...'
+  if [[ -d "${DIST_DIR}" ]]; then
+    rm -rf "${DIST_DIR}" || return 1
 
-  rm -rf "${DIST_DIR}" &&
-    mkdir -p "${DIST_DIR}" || return 1
+    echo -e 'Existing .dist folder has been removed'
+  fi
 
-  echo -e 'Clean up has been completed'
+  mkdir -p "${DIST_DIR}" || return 1
+
+  echo -e 'A clean .dist folder has been created'
 }
 
 # Copies the archiso custom profile.
@@ -352,8 +355,6 @@ setup_display_server () {
 
 # Sets up the keyboard settings.
 setup_keyboard () {
-  echo -e 'Applying keyboard settings...'
-
   if [[ ! -d "${ROOT_FS}" ]]; then
     echo -e 'Unable to locate the airootfs folder'
     return 1
@@ -389,7 +390,7 @@ setup_keyboard () {
     '  "layouts": [{"code": "us", "variant": "default"}]' \
     '}' > "${config_home}/langs.json" || return 1
   
-  echo -e 'Keyboard settings have been applied'
+  echo -e 'Keyboard langs settings have been set'
 }
 
 # Sets up various system power settings.
@@ -609,7 +610,7 @@ setup_desktop () {
 
 # Sets up the theme of the desktop environment.
 setup_theme () {
-  echo -e 'Setting up the Dracula theme...'
+  echo -e 'Setting up the desktop theme...'
 
   if [[ ! -d "${ROOT_FS}" ]]; then
     echo -e 'Unable to locate the airootfs folder'
@@ -627,9 +628,9 @@ setup_theme () {
     mv "${themes_home}/gtk-master" "${themes_home}/Dracula" &&
     rm -f "${themes_home}/Dracula.zip" || return 1
 
-  echo -e 'Dracula theme has been installed'
+  echo -e 'Desktop theme has been installed'
 
-  echo -e 'Setting up the Dracula icons...'
+  echo -e 'Setting up the desktop icons...'
 
   local icons_home="${ROOT_FS}/usr/share/icons"
 
@@ -641,9 +642,9 @@ setup_theme () {
     unzip -q "${icons_home}/Dracula.zip" -d "${icons_home}" &&
     rm -f "${icons_home}/Dracula.zip" || return 1
 
-  echo -e 'Dracula icons have been installed'
+  echo -e 'Desktop icons have been installed'
 
-  echo -e 'Setting up the Breeze cursors...'
+  echo -e 'Setting up the desktop cursors...'
 
   local cursors_home="${ROOT_FS}/usr/share/icons"
 
@@ -660,7 +661,7 @@ setup_theme () {
   echo '[Icon Theme]' >> "${cursors_home}/default/index.theme"
   echo 'Inherits=Breeze-Snow' >> "${cursors_home}/default/index.theme"
 
-  echo -e 'Breeze cursors have been installed'
+  echo -e 'Desktop cursors have been installed'
 
   local gtk_home="${ROOT_FS}/root/.config/gtk-3.0"
   
@@ -730,8 +731,6 @@ setup_fonts () {
 
 # Sets up various system sound resources.
 setup_sounds () {
-  echo -e 'Setting up extra system sounds...'
-
   if [[ ! -d "${ROOT_FS}" ]]; then
     echo -e 'Unable to locate the airootfs folder'
     return 1
@@ -744,7 +743,7 @@ setup_sounds () {
   cp resources/sounds/normal.wav "${sounds_home}" || return 1
   cp resources/sounds/critical.wav "${sounds_home}" || return 1
 
-  echo -e 'System sounds have been set'
+  echo -e 'Extra system sounds have been set'
 }
 
 # Enables various system services.
@@ -837,8 +836,6 @@ enable_services () {
 
 # Adds input and output devices rules.
 add_device_rules () {
-  echo -e 'Adding system udev rules...'
-
   if [[ ! -d "${ROOT_FS}" ]]; then
     echo -e 'Unable to locate the airootfs folder'
     return 1
@@ -857,8 +854,6 @@ add_device_rules () {
 
 # Adds various extra sudoers rules.
 add_sudoers_rules () {
-  echo -e 'Adding proxy rules to sudoers...'
-
   if [[ ! -d "${ROOT_FS}" ]]; then
     echo -e 'Unable to locate the airootfs folder'
     return 1
@@ -881,8 +876,6 @@ add_sudoers_rules () {
 
 # Defines the root files permissions.
 set_file_permissions () {
-  echo -e 'Defining the file permissions...'
-
   local permissions_file="${PROFILE_DIR}/profiledef.sh"
 
   if [[ ! -f "${permissions_file}" ]]; then
@@ -942,8 +935,7 @@ make_iso_file () {
   echo -e 'Build process completed successfully'
 }
 
-echo -e 'Build process will start in 3 secs...'
-sleep 3
+echo -e 'Starting the build process...'
 
 init &&
   copy_profile &&
