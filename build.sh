@@ -23,7 +23,7 @@ add_package () {
   local pkgs_file="${PROFILE_DIR}/packages.x86_64"
 
   if [[ ! -f "${pkgs_file}" ]]; then
-    echo -e 'Unable to locate file packages.x86_64'
+    echo -e "Unable to locate file ${pkgs_file}"
     return 1
   fi
 
@@ -44,7 +44,7 @@ remove_package () {
   local pkgs_file="${PROFILE_DIR}/packages.x86_64"
 
   if [[ ! -f "${pkgs_file}" ]]; then
-    echo -e 'Unable to locate file packages.x86_64'
+    echo -e "Unable to locate file ${pkgs_file}"
     return 1
   fi
 
@@ -63,12 +63,12 @@ init () {
   if [[ -d "${DIST_DIR}" ]]; then
     rm -rf "${DIST_DIR}" || return 1
 
-    echo -e 'Existing .dist folder has been removed'
+    echo -e 'Existing .dist/ folder has been removed'
   fi
 
   mkdir -p "${DIST_DIR}" || return 1
 
-  echo -e 'A clean .dist folder has been created'
+  echo -e 'A clean .dist/ folder has been created'
 }
 
 # Copies the archiso custom profile.
@@ -85,6 +85,86 @@ copy_profile () {
   cp -r "${releng_path}" "${PROFILE_DIR}" || return 1
 
   echo -e "The releng profile copied to ${PROFILE_DIR}"
+}
+
+# Sets the distribution names and os release meta files.
+rename_distro () {
+  if [[ ! -d "${ROOT_FS}" ]]; then
+    echo -e 'Unable to locate the airootfs folder'
+    return 1
+  fi
+
+  printf '%s\n' \
+    'NAME="Stack Linux"' \
+    'PRETTY_NAME="Stack Linux"' \
+    'ID=stack' \
+    'ID_LIKE=arch' \
+    'IMAGE_ID=stack' \
+    "IMAGE_VERSION=$(date +%Y.%m.%d)" \
+    'BUILD_ID=rolling' \
+    'ANSI_COLOR="38;2;23;147;209"' \
+    'HOME_URL="https://github.com/tzeikob/stack.git/"' \
+    'DOCUMENTATION_URL="https://github.com/tzeikob/stack.git/"' \
+    'SUPPORT_URL="https://github.com/tzeikob/stack.git/"' \
+    'BUG_REPORT_URL="https://github.com/tzeikob/stack/issues"' \
+    'PRIVACY_POLICY_URL="https://github.com/tzeikob/stack/blob/master/LICENSE"' \
+    'LOGO=stack-logo' > "${ROOT_FS}/etc/stack-release" || return 1
+
+  echo -e 'Release metadata set to /etc/stack-release'
+
+  mkdir -p "${ROOT_FS}/etc/pacman.d/scripts" || return 1
+
+  local fix_release="${ROOT_FS}/etc/pacman.d/scripts/fix-release"
+
+  printf '%s\n' \
+    '#!/bin/bash' \
+    '' \
+    'rm -f /etc/arch-release' \
+    'cat /etc/stack-release > /usr/lib/os-release' \
+    '[[ -f /etc/lsb-release ]] &&' \
+    '  echo "DISTRIB_ID=\"Stack\"" > /etc/lsb-release &&' \
+    '  echo "DISTRIB_RELEASE=\"rolling\"" >>  /etc/lsb-release &&' \
+    '  echo "DISTRIB_DESCRIPTION=\"Stack Linux\"" >> /etc/lsb-release' >> "${fix_release}" || return 1
+  
+  local fix_release_hook="${ROOT_FS}/etc/pacman.d/hooks/90-fix-release.hook"
+
+  printf '%s\n' \
+    '[Trigger]' \
+    'Type = Package' \
+    'Operation = Install' \
+    'Operation = Upgrade' \
+    'Target = lsb-release' \
+    '' \
+    '[Action]' \
+    'Description = Fix os release data and meta files' \
+    'When = PostTransaction' \
+    'Exec = /bin/bash /etc/pacman.d/scripts/fix-release' >> "${fix_release_hook}" || return 1
+  
+  echo -e 'Release fix pacman hook has been set'
+
+  echo -e 'stackiso' > "${ROOT_FS}/etc/hostname"
+
+  echo -e 'Host name set to stackiso'
+
+  if [[ ! -d "${PROFILE_DIR}" ]]; then
+    echo -e 'Unable to locate the releng profile folder'
+    return 1
+  fi
+
+  local profile_def="${PROFILE_DIR}/profiledef.sh"
+
+  if [[ ! -f "${profile_def}" ]]; then
+    echo -e "Unable to locate file ${profile_def}"
+    return 1
+  fi
+
+  sed -i 's|^\(iso_name=\).*|\1\"stacklinux\"|' "${profile_def}" &&
+    sed -i 's|^\(iso_label="\)ARCH_\(.*\)|\1STACK_\2|' "${profile_def}" &&
+    sed -i 's|^\(iso_publisher=\).*|\1\"Stack Linux <https://github.com/tzeikob/stack.git>\"|' "${profile_def}" &&
+    sed -i 's|^\(iso_application=\).*|\1\"Stack Linux Live/Rescue Media\"|' "${profile_def}" &&
+    sed -i 's|^\(install_dir=\).*|\1\"stack\"|' "${profile_def}" || return 1
+
+  echo -e 'Profile definition file has been updated'
 }
 
 # Adds the pakacge dependencies into the list of packages.
@@ -178,7 +258,7 @@ add_aur_packages () {
   local pacman_conf="${PROFILE_DIR}/pacman.conf"
 
   if [[ ! -f "${pacman_conf}" ]]; then
-    echo -e 'Unable to locate file pacman.conf'
+    echo -e "Unable to locate file ${pacman_conf}"
     return 1
   fi
 
@@ -339,7 +419,7 @@ setup_display_server () {
   local zlogin_file="${ROOT_FS}/root/.zlogin"
 
   if [[ ! -f "${zlogin_file}" ]]; then
-    echo -e 'Unable to locate file /root/.zlogin'
+    echo -e "Unable to locate file ${zlogin_file}"
     return 1
   fi
 
@@ -872,7 +952,7 @@ set_file_permissions () {
   local permissions_file="${PROFILE_DIR}/profiledef.sh"
 
   if [[ ! -f "${permissions_file}" ]]; then
-    echo -e 'Unable to locate file profiledef.sh'
+    echo -e "Unable to locate file ${permissions_file}"
     return 1
   fi
 
@@ -882,6 +962,7 @@ set_file_permissions () {
     '0:0:644,/etc/systemd/sleep.conf.d/'
     '0:0:644,/etc/systemd/logind.conf.d/'
     '0:0:644,/etc/welcome'
+    '0:0:755,/etc/pacman.d/scripts/'
     '0:0:755,/opt/stack/configs/bspwm/'
     '0:0:755,/opt/stack/configs/dunst/hook'
     '0:0:755,/opt/stack/configs/nnn/env'
@@ -922,7 +1003,8 @@ make_iso_file () {
     return 1
   fi
 
-  sudo mkarchiso -v -r -w "${WORK_DIR}" -o "${DIST_DIR}" "${PROFILE_DIR}" || return 1
+  sudo mkarchiso -v -r \
+    -w "${WORK_DIR}" -o "${DIST_DIR}" "${PROFILE_DIR}" || return 1
 
   echo -e "Archiso file has been exported at ${DIST_DIR}"
   echo -e 'Build process completed successfully'
@@ -932,6 +1014,7 @@ echo -e 'Starting the build process...'
 
 init &&
   copy_profile &&
+  rename_distro &&
   add_packages &&
   add_aur_packages &&
   copy_installer &&

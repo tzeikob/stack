@@ -149,8 +149,18 @@ copy_installation_files () {
   log 'Copying installation files...'
 
   cp -r /opt/stack /mnt/opt ||
-    fail 'Unable to copy installation file to /mnt/opt'
+    fail 'Unable to copy installation files to /mnt/opt'
+
+  cp /etc/stack-release /mnt/etc/stack-release &&
+    cat /usr/lib/os-release > /mnt/usr/lib/os-release &&
+    rm -f /mnt/etc/arch-release ||
+    fail 'Unable to copy the os release meta files'
   
+  cp -r /etc/pacman.d/scripts /mnt/etc/pacman.d &&
+    mkdir -p /mnt/etc/pacman.d/hooks &&
+    cp /etc/pacman.d/hooks/90-fix-release.hook /mnt/etc/pacman.d/hooks ||
+    fail 'Unable to copy fix release pacman hook'
+
   mkdir -p /mnt/var/log/stack ||
     fail 'Failed to create logs home under /mnt/var/log/stack'
 
