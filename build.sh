@@ -165,6 +165,46 @@ rename_distro () {
     sed -i 's|^\(install_dir=\).*|\1\"stack\"|' "${profile_def}" || return 1
 
   echo -e 'Profile definition file has been updated'
+
+  rm -rf "${PROFILE_DIR}/syslinux/splash.png" || return 1
+
+  sed -i 's/Arch/Stack/' "${PROFILE_DIR}/syslinux/archiso_pxe-linux.cfg" &&
+    sed -i 's/Arch/Stack/' "${PROFILE_DIR}/syslinux/archiso_sys-linux.cfg" &&
+    sed -i '/TEXT HELP/,/ENDTEXT/d' "${PROFILE_DIR}/syslinux/archiso_pxe-linux.cfg" &&
+    sed -i '/TEXT HELP/,/ENDTEXT/d' "${PROFILE_DIR}/syslinux/archiso_sys-linux.cfg" &&
+    sed -i '/TEXT HELP/,/ENDTEXT/d' "${PROFILE_DIR}/syslinux/archiso_tail.cfg" || return 1
+  
+  printf '%s\n' \
+    'SERIAL 0 115200' \
+    'UI menu.c32' \
+    'MENU TITLE Stack Linux' \
+    'MENU COLOR screen      0 #ffffffff #ff282a36 none' \
+    'MENU COLOR border      0 #00000000 #00000000 none' \
+    'MENU COLOR title       0 #ffff79c6 #ff282a36 none' \
+    'MENU COLOR sel         0 #ffff79c6 #ff09165d none' \
+    'MENU COLOR unsel       0 #ffff79c6 #ff282a36 none' \
+    'MENU COLOR hotkey      0 #fff0c674 #ff282a36 none' \
+    'MENU COLOR hotsel      0 #fff0c674 #ff09165d none' \
+    'MENU COLOR disabled    0 #60cccccc #00000000 none' \
+    'MENU COLOR scrollbar   0 #ffff79c6 #00000000 none' \
+    'MENU COLOR tabmsg      0 #ffff79c6 #00000000 none' \
+    'MENU COLOR cmdmark     0 #ffff79c6 #00000000 none' \
+    'MENU COLOR cmdline     0 #ffffffff #00000000 none' \
+    'MENU COLOR pwdborder   0 #80ffffff #20ffffff none' \
+    'MENU COLOR pwdheader   0 #80ffffff #20ffffff none' \
+    'MENU COLOR pwdentry    0 #80ffffff #20ffffff none' \
+    'MENU COLOR timeout_msg 0 #ffff79c6 #00000000 none' \
+    'MENU COLOR timeout     0 #ffff79c6 #00000000 none' \
+    'MENU COLOR help        0 #ffffffff #00000000 none' \
+    'MENU COLOR msg07       0 #ffffffff #00000000 none' \
+    'MENU MARGIN 10' \
+    'MENU ROWS 8' \
+    'MENU HSHIFT 0' \
+    'MENU VSHIFT 5' \
+    'MENU CLEAR' \
+    'MENU IMMEDIATE' > "${PROFILE_DIR}/syslinux/archiso_head.cfg" || return 1
+
+  echo -e 'Syslinux boot loader menus have been modified'
 }
 
 # Adds the pakacge dependencies into the list of packages.
