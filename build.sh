@@ -153,18 +153,84 @@ rename_distro () {
 
   local profile_def="${PROFILE_DIR}/profiledef.sh"
 
-  if [[ ! -f "${profile_def}" ]]; then
-    echo -e "Unable to locate file ${profile_def}"
-    return 1
-  fi
-
   sed -i 's|^\(iso_name=\).*|\1\"stacklinux\"|' "${profile_def}" &&
     sed -i 's|^\(iso_label="\)ARCH_\(.*\)|\1STACK_\2|' "${profile_def}" &&
     sed -i 's|^\(iso_publisher=\).*|\1\"Stack Linux <https://github.com/tzeikob/stack.git>\"|' "${profile_def}" &&
-    sed -i 's|^\(iso_application=\).*|\1\"Stack Linux Live/Rescue Media\"|' "${profile_def}" &&
+    sed -i 's|^\(iso_application=\).*|\1\"Stack Linux Live Media\"|' "${profile_def}" &&
     sed -i 's|^\(install_dir=\).*|\1\"stack\"|' "${profile_def}" || return 1
 
   echo -e 'Profile definition file has been updated'
+}
+
+# Sets up the bios and uefi boot loaders.
+setup_boot_loaders () {
+  if [[ ! -d "${PROFILE_DIR}" ]]; then
+    echo -e 'Unable to locate the releng profile folder'
+    return 1
+  fi
+
+  rm -rf "${PROFILE_DIR}/efiboot" || return 1
+
+  echo -e 'EFI boot loader has been removed'
+
+  rm -f "${PROFILE_DIR}/syslinux/archiso_pxe.cfg" \
+    "${PROFILE_DIR}/syslinux/archiso_pxe-linux.cfg" || return 1
+
+  local syslinux_cfg="${PROFILE_DIR}/syslinux/syslinux.cfg"
+  
+  sed -i 's/APPEND -pxe- pxe -sys- sys -iso- sys/APPEND -sys- sys -iso- sys/' "${syslinux_cfg}" &&
+    sed -i '/LABEL pxe/,+3d' "${syslinux_cfg}" || return 1
+
+  echo -e 'PXE bios modes have been removed'
+
+  sed -i 's/Arch/Stack/' "${PROFILE_DIR}/syslinux/archiso_sys-linux.cfg" &&
+    sed -i '/# Accessibility boot option/,$d' "${PROFILE_DIR}/syslinux/archiso_sys-linux.cfg" &&
+    sed -i '/TEXT HELP/,/ENDTEXT/d' "${PROFILE_DIR}/syslinux/archiso_sys-linux.cfg" &&
+    sed -i '/LABEL existing/,+9d' "${PROFILE_DIR}/syslinux/archiso_tail.cfg" &&
+    sed -i '/TEXT HELP/,/ENDTEXT/d' "${PROFILE_DIR}/syslinux/archiso_tail.cfg" || return 1
+  
+  rm -rf "${PROFILE_DIR}/syslinux/splash.png" || return 1
+
+  printf '%s\n' \
+    'SERIAL 0 115200' \
+    'UI vesamenu.c32' \
+    'MENU TITLE Stack Linux Live Media' \
+    'MENU BACKGROUND #ff000000' \
+    'MENU WIDTH 78' \
+    'MENU MARGIN 4' \
+    'MENU ROWS 6' \
+    'MENU VSHIFT 6' \
+    'MENU TABMSGROW 14' \
+    'MENU CMDLINEROW 14' \
+    'MENU HELPMSGROW 16' \
+    'MENU HELPMSGENDROW 29' \
+    'MENU COLOR border       0     #ffffffff #00000000 none' \
+    'MENU COLOR title        37;40 #ffffffff #00000000 none' \
+    'MENU COLOR sel          37;40 #ff000000 #ffffffff none' \
+    'MENU COLOR unsel        37;40 #ffffffff #00000000 none' \
+    'MENU COLOR help         37;40 #ffffffff #00000000 none' \
+    'MENU COLOR timeout_msg  37;40 #ffffffff #00000000 none' \
+    'MENU COLOR timeout      37;40 #ffffffff #00000000 none' \
+    'MENU COLOR msg07        37;40 #ffffffff #00000000 none' \
+    'MENU COLOR tabmsg       37;40 #ffffffff #00000000 none' \
+    'MENU CLEAR' \
+    'MENU IMMEDIATE' > "${PROFILE_DIR}/syslinux/archiso_head.cfg" || return 1
+
+  echo -e 'Syslinux boot loader menus have been modified'
+
+  local grub_cfg="${PROFILE_DIR}/grub/grub.cfg"
+
+  sed -i "/--id 'archlinux-accessibility'/,+5d" "${grub_cfg}" &&
+    sed -i 's/archlinux/stacklinux/' "${grub_cfg}" &&
+    sed -i 's/Arch Linux/Stack Linux/' "${grub_cfg}" || return 1
+  
+  local loopback_cfg="${PROFILE_DIR}/grub/loopback.cfg"
+
+  sed -i "/--id 'archlinux-accessibility'/,+5d" "${loopback_cfg}" &&
+    sed -i 's/archlinux/stacklinux/' "${loopback_cfg}" &&
+    sed -i 's/Arch Linux/Stack Linux/' "${loopback_cfg}" || return 1
+
+  echo -e 'Grup boot loader menus have been modified'
 }
 
 # Adds the pakacge dependencies into the list of packages.
@@ -1015,6 +1081,7 @@ echo -e 'Starting the build process...'
 init &&
   copy_profile &&
   rename_distro &&
+  setup_boot_loaders &&
   add_packages &&
   add_aur_packages &&
   copy_installer &&
