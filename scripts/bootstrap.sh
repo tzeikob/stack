@@ -72,7 +72,7 @@ sync_package_databases () {
     fail 'Failed to enable parallel downloads'
 
   pacman -Syy 2>&1 ||
-    fail 'Failed to synchronize pacjage databases'
+    fail 'Failed to synchronize package databases'
 
   log 'Package databases synchronized to the master'
 }
@@ -112,6 +112,24 @@ install_kernel () {
   log 'Linux kernel has been installed'
 }
 
+# Adds various extra sudoers rules.
+add_sudoers_rules () {
+  local proxy_rule='Defaults env_keep += "'
+  proxy_rule+='http_proxy HTTP_PROXY '
+  proxy_rule+='https_proxy HTTPS_PROXY '
+  proxy_rule+='ftp_proxy FTP_PROXY '
+  proxy_rule+='rsync_proxy RSYNC_PROXY '
+  proxy_rule+='all_proxy ALL_PROXY '
+  proxy_rule+='no_proxy NO_PROXY"'
+
+  mkdir -p /mnt/etc/sudoers.d
+
+  echo "${proxy_rule}" > /mnt/etc/sudoers.d/proxy_rules
+  chmod 440 /mnt/etc/sudoers.d/proxy_rules
+
+  log 'Proxy rules have been added to sudoers'
+}
+
 # Grants the nopasswd permission to the wheel user group.
 grant_permissions () {
   local rule='%wheel ALL=(ALL:ALL) NOPASSWD: ALL'
@@ -131,8 +149,18 @@ copy_installation_files () {
   log 'Copying installation files...'
 
   cp -r /opt/stack /mnt/opt ||
-    fail 'Unable to copy installation file to /mnt/opt'
+    fail 'Unable to copy installation files to /mnt/opt'
+
+  cp /etc/stack-release /mnt/etc/stack-release &&
+    cat /usr/lib/os-release > /mnt/usr/lib/os-release &&
+    rm -f /mnt/etc/arch-release ||
+    fail 'Unable to copy the os release meta files'
   
+  cp -r /etc/pacman.d/scripts /mnt/etc/pacman.d &&
+    mkdir -p /mnt/etc/pacman.d/hooks &&
+    cp /etc/pacman.d/hooks/90-fix-release.hook /mnt/etc/pacman.d/hooks ||
+    fail 'Unable to copy fix release pacman hook'
+
   mkdir -p /mnt/var/log/stack ||
     fail 'Failed to create logs home under /mnt/var/log/stack'
 
@@ -172,6 +200,7 @@ sync_clock &&
   sync_package_databases &&
   update_keyring &&
   install_kernel &&
+  add_sudoers_rules &&
   grant_permissions &&
   copy_installation_files
 

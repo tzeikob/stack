@@ -75,7 +75,7 @@ install () {
   case "${file_name}" in
     'system') total=2060;;
     'desktop') total=2750;;
-    'stack') total=1000;;
+    'stack') total=400;;
     'tools') total=6300;;
   esac
 

@@ -126,8 +126,11 @@ configure_pacman () {
 
   log "GPG keyserver has been set to ${keyserver}"
 
-  cp /opt/stack/configs/pacman/orphans.hook /usr/share/libalpm/hooks ||
-    fail 'Failed to add the orphans packages hook'
+  local hooks_home=/etc/pacman.d/hooks
+
+  mkdir -p "${hooks_home}" &&
+    cp /opt/stack/configs/pacman/orphans.hook "${hooks_home}/01-orphans.hook" ||
+    fail 'Failed to add the orphan packages hook'
 
   log 'Orphan packages post hook has been created'
   log 'Pacman manager has been configured'
@@ -856,7 +859,7 @@ add_rules () {
 
   cp /opt/stack/rules/92-fix-layout.rules "${rules_home}" ||
     fail 'Failed to add the fix-layout rules'
-    
+  
   log 'Rules fix-layout have been set'
   log 'System udev rules have been added'
 }
