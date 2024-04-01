@@ -75,8 +75,8 @@ install () {
   case "${file_name}" in
     'system') total=2060;;
     'desktop') total=2750;;
-    'stack') total=400;;
-    'tools') total=6300;;
+    'stack') total=270;;
+    'tools') total=1900;;
   esac
 
   local script_file="/opt/stack/scripts/${file_name}.sh"

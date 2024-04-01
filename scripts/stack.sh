@@ -156,7 +156,7 @@ resolve () {
   lines=$(cat /var/log/stack/stack.log | wc -l) ||
     fail 'Unable to read the current log lines'
 
-  local total=1000
+  local total=270
 
   # Fill the log file with fake lines to trick tqdm bar on completion
   if [[ ${lines} -lt ${total} ]]; then
