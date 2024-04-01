@@ -140,7 +140,7 @@ rename_distro () {
     'When = PostTransaction' \
     'Exec = /bin/bash /etc/pacman.d/scripts/fix-release' >> "${fix_release_hook}" || return 1
   
-  echo -e 'Release fix pacman hook has been set'
+  echo -e 'Fix release hook has been created'
 
   echo -e 'stackiso' > "${ROOT_FS}/etc/hostname"
 
@@ -159,7 +159,7 @@ rename_distro () {
     sed -i 's|^\(iso_application=\).*|\1\"Stack Linux Live Media\"|' "${profile_def}" &&
     sed -i 's|^\(install_dir=\).*|\1\"stack\"|' "${profile_def}" || return 1
 
-  echo -e 'Profile definition file has been updated'
+  echo -e 'Release info updated in profile definition file'
 }
 
 # Sets up the bios and uefi boot loaders.
