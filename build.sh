@@ -231,6 +231,10 @@ setup_boot_loaders () {
     sed -i 's/Arch Linux/Stack Linux/' "${loopback_cfg}" || return 1
 
   echo -e 'Grup boot loader menus have been modified'
+
+  sed -i '/if serial --unit=0 --speed=115200; then/,+4d' "${grub_cfg}" || return 1
+
+  echo -e 'Grub boot loader serial console disabled'
 }
 
 # Adds the pakacge dependencies into the list of packages.
