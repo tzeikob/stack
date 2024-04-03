@@ -164,10 +164,6 @@ select_locales () {
 
 # Asks the user to select the keyboard model.
 select_keyboard_model () {
-  # TODO: localectl needs xorg deps to provide x11 kb models
-  save_setting 'keyboard_model' '"pc105"'
-  return 0
-
   local models=''
   models="$(
     localectl --no-pager list-x11-keymap-models 2> /dev/null | awk '{
@@ -210,12 +206,8 @@ select_keyboard_map () {
   echo -e "Keyboard map is set to ${keyboard_map}"
 }
 
-# Asks the user to select keyboard layouts.
-select_keyboard_layouts () {
-  # TODO: localectl needs xorg deps to provide x11 kb layouts
-  save_setting 'keyboard_layouts' '["us", "gr", "de"]'
-  return 0
-
+# Asks the user to select keyboard layout.
+select_keyboard_layout () {
   local layouts=''
   layouts="$(
     localectl --no-pager list-x11-keymap-layouts 2> /dev/null | awk '{
@@ -226,22 +218,18 @@ select_keyboard_layouts () {
   # Remove the extra comma delimiter from last element
   layouts="[${layouts:+${layouts::-1}}]"
 
-  pick_many 'Select keyboard layouts:' "${layouts}" 'vertical'
+  pick_one 'Select a keyboard layout:' "${layouts}" 'vertical'
   is_not_given "${REPLY}" && fail 'Installation has been canceled'
 
-  keyboard_layouts="${REPLY}"
+  local keyboard_layout="${REPLY}"
 
-  save_setting 'keyboard_layouts' "${keyboard_layouts}"
+  save_setting 'keyboard_layout' "${keyboard_layout}"
 
-  echo -e "Keyboard layouts are set to ${keyboard_layouts}"
+  echo -e "Keyboard layout is set to ${keyboard_layout}"
 }
 
 # Asks the user to select keyboard switch options.
 select_keyboard_options () {
-  # TODO: localectl needs xorg deps to provide x11 kb options
-  save_setting 'keyboard_options' '"grp:alt_shift_toggle"'
-  return 0
-
   local options=''
   options="$(
     localectl --no-pager list-x11-keymap-options 2> /dev/null | awk '{
@@ -255,11 +243,11 @@ select_keyboard_options () {
   pick_one 'Select the keyboard options value:' "${options}" 'vertical'
   is_not_given "${REPLY}" && fail 'Installation has been canceled'
 
-  keyboard_options="${REPLY}"
+  local keyboard_options="${REPLY}"
 
   save_setting 'keyboard_options' "\"${keyboard_options}\""
 
-  echo -e "Keyboard layouts are set to ${keyboard_options}"
+  echo -e "Keyboard options is set to ${keyboard_options}"
 }
 
 # Asks the user to set the name of the host.
@@ -374,7 +362,7 @@ while true; do
     select_locales &&
     select_keyboard_model &&
     select_keyboard_map &&
-    select_keyboard_layouts &&
+    select_keyboard_layout &&
     select_keyboard_options &&
     enter_host_name &&
     enter_user_name &&

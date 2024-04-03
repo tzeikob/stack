@@ -385,9 +385,9 @@ set_keyboard () {
   keyboard_model="$(get_setting 'keyboard_model')" ||
     fail 'Unable to read keyboard_model setting'
 
-  local keyboard_layouts=''
-  keyboard_layouts="$(get_setting 'keyboard_layouts')" ||
-    fail 'Unable to read keyboard_layouts setting'
+  local keyboard_layout=''
+  keyboard_layout="$(get_setting 'keyboard_layout')" ||
+    fail 'Unable to read keyboard_layout setting'
 
   local keyboard_options=''
   keyboard_options="$(get_setting 'keyboard_options')" ||
@@ -397,7 +397,7 @@ set_keyboard () {
    'Section "InputClass"' \
    '  Identifier "system-keyboard"' \
    '  MatchIsKeyboard "on"' \
-   "  Option \"XkbLayout\" \"$(echo ${keyboard_layouts} | jq -cr 'join(",")')\"" \
+   "  Option \"XkbLayout\" \"${keyboard_layout}\"" \
    "  Option \"XkbModel\" \"${keyboard_model}\"" \
    "  Option \"XkbOptions\" \"${keyboard_options}\"" \
    'EndSection' | tee /etc/X11/xorg.conf.d/00-keyboard.conf > /dev/null ||
@@ -413,15 +413,12 @@ set_keyboard () {
 
   mkdir -p "${config_home}" || fail
 
-  local query=''
-  query+="keymap: \"${keyboard_map}\","
-  query+="model: \"${keyboard_model}\","
-  query+="options: \"${keyboard_options}\","
-  query+='layouts: [.[]|{code: ., variant: "default"}]'
-  query="{${query}}"
-
   local settings=''
-  settings="$(echo "${keyboard_layouts}" | jq -e "${query}")" || fail
+  settings+="keymap: \"${keyboard_map}\","
+  settings+="model: \"${keyboard_model}\","
+  settings+="options: \"${keyboard_options}\","
+  settings+="layouts: [{code: \"${keyboard_layout}\", variant: \"default\"}]"
+  settings="{${settings}}"
 
   local settings_file="${config_home}/langs.json"
 
