@@ -17,6 +17,21 @@ init () {
   init_settings
 }
 
+# Report any collected installation settings.
+report () {
+  local query=''
+  query='.user_password = "***" | .root_password = "***"'
+
+  local settings=''
+  settings="$(get_settings | jq "${query}")" ||
+    fail 'Unable to read settings'
+  
+  local log_file="/var/log/stack/report.log"
+
+  echo -e '\nInstallation properties have been set to:' > "${log_file}"
+  echo -e "${settings}\n" >> "${log_file}"
+}
+
 # Executes the script with the given file name as the
 # current user being in the archiso's shell session.
 # Arguments:
@@ -33,7 +48,7 @@ run () {
   local total=0
 
   case "${file_name}" in
-    'detection') total=65;;
+    'detection') total=15;;
     'diskpart') total=90;;
     'bootstrap') total=660;;
     'cleaner') total=12;;
@@ -99,6 +114,7 @@ restart () {
 
   # Append all logs in chronological order
   cat /mnt/var/log/stack/detection.log \
+    /mnt/var/log/stack/report.log \
     /mnt/var/log/stack/diskpart.log \
     /mnt/var/log/stack/bootstrap.log \
     /mnt/var/log/stack/system.log \
@@ -141,6 +157,7 @@ fi
 init &&
   run askme &&
   run detection &&
+  report &&
   run diskpart &&
   run bootstrap &&
   install system &&

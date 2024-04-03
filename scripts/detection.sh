@@ -112,19 +112,6 @@ resolve_synaptics () {
   fi
 }
 
-# Report the collected installation settings.
-report () {
-  local query=''
-  query='.user_password = "***" | .root_password = "***"'
-
-  local settings=''
-  settings="$(get_settings | jq "${query}")" ||
-    fail 'Unable to read settings'
-
-  echo -e '\nInstallation properties have been set to:'
-  echo -e "${settings}\n"
-}
-
 # Resolves the installaction script by addressing
 # some extra post execution tasks.
 resolve () {
@@ -133,7 +120,7 @@ resolve () {
   lines=$(cat /var/log/stack/detection.log | wc -l) ||
     fail 'Unable to read the current log lines'
 
-  local total=65
+  local total=15
 
   # Fill the log file with fake lines to trick tqdm bar on completion
   if [[ ${lines} -lt ${total} ]]; then
@@ -158,8 +145,7 @@ is_uefi &&
   resolve_cpu &&
   resolve_gpu &&
   is_disk_trimmable &&
-  resolve_synaptics &&
-  report
+  resolve_synaptics
 
 log 'Script detection.sh has finished'
 
