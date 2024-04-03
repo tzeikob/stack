@@ -225,7 +225,24 @@ select_keyboard_layout () {
 
   save_setting 'keyboard_layout' "${keyboard_layout}"
 
-  echo -e "Keyboard layout is set to ${keyboard_layout}"
+  local variants='{"key": "default", "value": "default"},'
+  variants+="$(
+    localectl --no-pager list-x11-keymap-variants "${keyboard_layout}" 2> /dev/null  | awk '{
+      print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
+    }'
+  )" || fail 'Unable to list layout variants'
+  
+  # Remove the extra comma delimiter from last element
+  variants="[${variants:+${variants::-1}}]"
+
+  pick_one "Select a ${keyboard_layout} layout variant:" "${variants}" vertical || return $?
+  is_not_given "${REPLY}" && fail 'Installation has been canceled'
+
+  local layout_variant="${REPLY}"
+
+  save_setting 'layout_variant' "${layout_variant}"
+
+  echo -e "Layout variant is set to ${layout_variant}"
 }
 
 # Asks the user to select keyboard switch options.

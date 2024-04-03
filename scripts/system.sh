@@ -388,20 +388,26 @@ set_keyboard () {
   local keyboard_layout=''
   keyboard_layout="$(get_setting 'keyboard_layout')" ||
     fail 'Unable to read keyboard_layout setting'
+  
+  local layout_variant=''
+  layout_variant="$(get_setting 'layout_variant')" ||
+    fail 'Unable to read layout_variant setting'
 
   local keyboard_options=''
   keyboard_options="$(get_setting 'keyboard_options')" ||
     fail 'Unable to read keyboard_options setting'
+  
+  local keyboard_conf="/etc/X11/xorg.conf.d/00-keyboard.conf"
 
-  printf '%s\n' \
-   'Section "InputClass"' \
-   '  Identifier "system-keyboard"' \
-   '  MatchIsKeyboard "on"' \
-   "  Option \"XkbLayout\" \"${keyboard_layout}\"" \
-   "  Option \"XkbModel\" \"${keyboard_model}\"" \
-   "  Option \"XkbOptions\" \"${keyboard_options}\"" \
-   'EndSection' | tee /etc/X11/xorg.conf.d/00-keyboard.conf > /dev/null ||
-     fail 'Failed to add keyboard setting into the xorg config file'
+  echo -e 'Section "InputClass"' > "${keyboard_conf}"
+  echo -e '  Identifier "system-keyboard"' >> "${keyboard_conf}"
+  echo -e '  MatchIsKeyboard "on"' >> "${keyboard_conf}"
+  echo -e "  Option \"XkbLayout\" \"${keyboard_layout}\"" >> "${keyboard_conf}"
+  not_equals "${layout_variant}" 'default' &&
+    echo -e "  Option \"XkbVariant\" \"${layout_variant}\"" >> "${keyboard_conf}"
+  echo -e "  Option \"XkbModel\" \"${keyboard_model}\"" >> "${keyboard_conf}"
+  echo -e "  Option \"XkbOptions\" \"${keyboard_options}\"" >> "${keyboard_conf}"
+  echo -e 'EndSection' >> "${keyboard_conf}"
 
   log 'Xorg keyboard settings have been added'
 
@@ -417,7 +423,7 @@ set_keyboard () {
   settings+="keymap: \"${keyboard_map}\","
   settings+="model: \"${keyboard_model}\","
   settings+="options: \"${keyboard_options}\","
-  settings+="layouts: [{code: \"${keyboard_layout}\", variant: \"default\"}]"
+  settings+="layouts: [{code: \"${keyboard_layout}\", variant: \"${layout_variant}\"}]"
   settings="{${settings}}"
 
   local settings_file="${config_home}/langs.json"
