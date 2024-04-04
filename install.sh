@@ -8,10 +8,9 @@ source /opt/stack/scripts/utils.sh
 
 # Initializes the installer.
 init () {
-  # Reset the log files
-  mkdir -p /var/log/stack &&
-    rm -rf /var/log/stack/* ||
-    fail 'Failed to reset the log files under /var/log/stack'
+  # Reset possibly existing log files
+  rm -rf /var/log/stack
+  mkdir -p /var/log/stack
   
   # Initialize the settings file
   init_settings
@@ -19,17 +18,17 @@ init () {
 
 # Report any collected installation settings.
 report () {
+  local log_file="/var/log/stack/report.log"
+
   local query=''
   query='.user_password = "***" | .root_password = "***"'
 
   local settings=''
   settings="$(get_settings | jq "${query}")" ||
-    fail 'Unable to read settings'
-  
-  local log_file="/var/log/stack/report.log"
+    fail 'Unable to read settings' > "${log_file}"
 
-  echo -e '\nInstallation properties have been set to:' > "${log_file}"
-  echo -e "${settings}\n" >> "${log_file}"
+  log '\nInstallation properties have been set to:' > "${log_file}"
+  log "${settings}\n" >> "${log_file}"
 }
 
 # Executes the script with the given file name as the
@@ -109,8 +108,7 @@ install () {
 # Restarts the system.
 restart () {
   # Copy the installation log files to the new system
-  cp /var/log/stack/* /mnt/var/log/stack ||
-    log WARN 'Failed to copy installation log files'
+  cp /var/log/stack/* /mnt/var/log/stack
 
   # Append all logs in chronological order
   cat /mnt/var/log/stack/detection.log \
@@ -121,18 +119,16 @@ restart () {
     /mnt/var/log/stack/desktop.log \
     /mnt/var/log/stack/stack.log \
     /mnt/var/log/stack/tools.log \
-    /mnt/var/log/stack/cleaner.log >> /mnt/var/log/stack/all.log ||
-    log WARN 'Failed to append log files to /mnt/var/log/stack/all.log'
+    /mnt/var/log/stack/cleaner.log >> /mnt/var/log/stack/all.log
 
   # Clean redundant log files from archiso media
-  rm -rf /var/log/stack ||
-    log WARN 'Failed to remove /var/log/stack folder'
+  rm -rf /var/log/stack
   
   log 'Installation process has been completed'
   log 'Rebooting the system in 15 secs...'
 
   sleep 15
-  umount -R /mnt || log WARN 'Ignoring busy mount points'
+  umount -R /mnt || log 'Ignoring busy mount points'
   reboot
 }
 
@@ -144,13 +140,13 @@ cat << EOF
 ░░░▀▀▀░░▀░░▀░▀░▀▀▀░▀░▀░░░
 EOF
 
-echo -e '\nWelcome to StackOS Installer, v1.0.0.alpha.'
-echo -e 'Base your development stack on archlinux!'
+log '\nWelcome to StackOS Installer, v1.0.0.alpha.'
+log 'Base your development stack on archlinux!'
 
 confirm 'Do you want to proceed?'
 
 if is_not_given "${REPLY}" || is_no "${REPLY}"; then
-  echo -e 'Sure, maybe next time!'
+  log 'Sure, maybe next time!'
   exit 0
 fi
 

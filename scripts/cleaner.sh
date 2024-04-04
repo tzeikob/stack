@@ -13,7 +13,7 @@ remove_installation_files () {
     return 0
   fi
 
-  log 'Installation files have been removed'
+  log INFO 'Installation files have been removed'
 }
 
 # Revokes any granted sudo permissions.
@@ -33,7 +33,7 @@ revoke_permissions () {
     return 0
   fi
 
-  log 'Permission nopasswd revoked from wheel group'
+  log INFO 'Permission nopasswd revoked from wheel group'
 }
 
 # Resolves the installaction script by addressing
@@ -61,12 +61,12 @@ resolve () {
   return 0
 }
 
-log 'Script cleaner.sh started'
-log 'Cleaning up the new system...'
+log INFO 'Script cleaner.sh started'
+log INFO 'Cleaning up the new system...'
 
 remove_installation_files &&
   revoke_permissions
 
-log 'Script cleaner.sh has finished'
+log INFO 'Script cleaner.sh has finished'
 
 resolve && sleep 3

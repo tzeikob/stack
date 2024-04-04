@@ -6,7 +6,7 @@ source /opt/stack/scripts/utils.sh
 
 # Installs the node javascript runtime engine.
 install_node () {
-  log 'Installing the node runtime engine...'
+  log INFO 'Installing the node runtime engine...'
 
   local user_name=''
   user_name="$(get_setting 'user_name')" || fail 'Unable to read user_name setting'
@@ -23,39 +23,39 @@ install_node () {
     return 0
   fi
 
-  log 'Node version manager has been installed'
+  log INFO 'Node version manager has been installed'
 
   local bashrc_file="/home/${user_name}/.bashrc"
 
   echo -e '\nexport NVM_DIR="${HOME}/.nvm"' >> "${bashrc_file}" &&
-    log 'Nvm export hook added to the .bashrc file' ||
+    log INFO 'Nvm export hook added to the .bashrc file' ||
     log WARN 'Failed to add export hook to the .bashrc file'
 
   echo '[ -s "${NVM_DIR}/nvm.sh" ] && \. "${NVM_DIR}/nvm.sh"' >> "${bashrc_file}" &&
-    log 'Nvm source hook added to the .bashrc file' ||
+    log INFO 'Nvm source hook added to the .bashrc file' ||
     log WARN 'Failed to add source hook to the .bashrc file'
   
   echo '[ -s "${NVM_DIR}/bash_completion" ] && \. "${NVM_DIR}/bash_completion"' >> "${bashrc_file}" &&
-    log 'Nvm completion hook added to the .bashrc file' ||
+    log INFO 'Nvm completion hook added to the .bashrc file' ||
     log WARN 'Failed to add completion hook to the .bashrc file'
 
-  log 'Installing the latest node version...'
+  log INFO 'Installing the latest node version...'
 
   \. "${nvm_home}/nvm.sh" 2>&1 &&
     nvm install --no-progress node 2>&1 &&
-    log 'Node latest version has been installed' ||
+    log INFO 'Node latest version has been installed' ||
     log WARN 'Failed to install the latest version of node'
 
   echo 'export PATH="./node_modules/.bin:${PATH}"' >> "${bashrc_file}" &&
-    log 'Node modules path added to the PATH' ||
+    log INFO 'Node modules path added to the PATH' ||
     log WARN 'Failed to add node modules path into the PATH'
 
-  log 'Node runtime engine has been installed'
+  log INFO 'Node runtime engine has been installed'
 }
 
 # Installs the deno javascript runtime engine.
 install_deno () {
-  log 'Installing the deno runtime engine...'
+  log INFO 'Installing the deno runtime engine...'
 
   sudo pacman -S --needed --noconfirm deno 2>&1
 
@@ -64,12 +64,12 @@ install_deno () {
     return 0
   fi
 
-  log 'Deno runtime engine has been installed'
+  log INFO 'Deno runtime engine has been installed'
 }
 
 # Installs the bun javascript runtime engine.
 install_bun () {
-  log 'Installing the bun runtime engine...'
+  log INFO 'Installing the bun runtime engine...'
 
   local url='https://bun.sh/install'
 
@@ -82,12 +82,12 @@ install_bun () {
     return 0
   fi
 
-  log 'Bun runtime engine has been installed'
+  log INFO 'Bun runtime engine has been installed'
 }
 
 # Installs the go programming language.
 install_go () {
-  log 'Installing the go programming language...'
+  log INFO 'Installing the go programming language...'
 
   sudo pacman -S --needed --noconfirm go go-tools 2>&1
 
@@ -96,12 +96,12 @@ install_go () {
     return 0
   fi
 
-  log 'Go programming language has been installed'
+  log INFO 'Go programming language has been installed'
 }
 
 # Installs the rust programming language.
 install_rust () {
-  log 'Installing the rust programming language...'
+  log INFO 'Installing the rust programming language...'
 
   sudo pacman -S --needed --noconfirm rustup 2>&1
   
@@ -110,20 +110,20 @@ install_rust () {
     return 0
   fi
 
-  log 'Rustup has been installed'
+  log INFO 'Rustup has been installed'
 
-  log 'Setting the default tool chain...'
+  log INFO 'Setting the default tool chain...'
 
   rustup default stable 2>&1 &&
-    log 'Rust default tool chain set to stable' ||
+    log INFO 'Rust default tool chain set to stable' ||
     log WARN 'Failed to set default tool chain'
 
-  log 'Rust programming language has been installed'
+  log INFO 'Rust programming language has been installed'
 }
 
 # Installs the docker egine.
 install_docker () {
-  log 'Installing the docker engine...'
+  log INFO 'Installing the docker engine...'
 
   sudo pacman -S --needed --noconfirm docker docker-compose 2>&1
   
@@ -132,20 +132,20 @@ install_docker () {
     return 0
   fi
 
-  log 'Docker packages have been installed'
+  log INFO 'Docker packages have been installed'
 
   sudo systemctl enable docker.service 2>&1 &&
-    log 'Docker service has been enabled' ||
+    log INFO 'Docker service has been enabled' ||
     log WARN 'Failed to enable docker service'
 
   local user_name=''
   user_name="$(get_setting 'user_name')" || fail 'Unable to read user_name setting'
 
   sudo usermod -aG docker "${user_name}" 2>&1 &&
-    log 'User added to the docker user group' ||
+    log INFO 'User added to the docker user group' ||
     log WARN 'Failed to add user to docker group'
 
-  log 'Docker egine has been installed'
+  log INFO 'Docker egine has been installed'
 }
 
 # Resolves the installaction script by addressing
@@ -173,8 +173,8 @@ resolve () {
   return 0
 }
 
-log 'Script stack.sh started'
-log 'Installing the developemnt stack...'
+log INFO 'Script stack.sh started'
+log INFO 'Installing the developemnt stack...'
 
 if equals "$(id -u)" 0; then
   fail 'Script stack.sh must be run as non root user'
@@ -187,6 +187,6 @@ install_node &&
   install_rust &&
   install_docker
 
-log 'Script stack.sh has finished'
+log INFO 'Script stack.sh has finished'
 
 resolve && sleep 3

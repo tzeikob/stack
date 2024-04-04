@@ -6,7 +6,7 @@ source /opt/stack/scripts/utils.sh
 
 # Synchronizes the system clock to the current time.
 sync_clock () {
-  log 'Updating the system clock...'
+  log INFO 'Updating the system clock...'
 
   local timezone=''
   timezone="$(get_setting 'timezone')" || fail 'Unable to read timezone setting'
@@ -14,12 +14,12 @@ sync_clock () {
   timedatectl set-timezone "${timezone}" 2>&1 ||
     fail 'Unable to set timezone'
 
-  log "Timezone has been set to ${timezone}"
+  log INFO "Timezone has been set to ${timezone}"
 
   timedatectl set-ntp true 2>&1 ||
     fail 'Failed to enable NTP mode'
 
-  log 'NTP mode has been enabled'
+  log INFO 'NTP mode has been enabled'
 
   while timedatectl status 2>&1 | grep -q 'System clock synchronized: no'; do
     sleep 1
@@ -28,12 +28,12 @@ sync_clock () {
   timedatectl status 2>&1 ||
     fail 'Failed to show system time status'
 
-  log 'System clock has been updated'
+  log INFO 'System clock has been updated'
 }
 
 # Sets the pacman mirrors list.
 set_mirrors () {
-  log 'Setting up package databases mirrors list...'
+  log INFO 'Setting up package databases mirrors list...'
 
   local mirrors=''
   mirrors="$(get_setting 'mirrors' | jq -cer 'join(",")')" ||
@@ -43,12 +43,12 @@ set_mirrors () {
     --age 48 --sort age --latest 40 --save /etc/pacman.d/mirrorlist 2>&1 ||
     fail 'Failed to fetch package databases mirrors'
 
-  log "Package databases mirrors set to ${mirrors}"
+  log INFO "Package databases mirrors set to ${mirrors}"
 }
 
 # Synchronizes package databases with the master.
 sync_package_databases () {
-  log 'Starting to synchronize package databases...'
+  log INFO 'Starting to synchronize package databases...'
 
   local lock_file='/var/lib/pacman/db.lck'
 
@@ -58,7 +58,7 @@ sync_package_databases () {
     rm -f "${lock_file}" ||
       fail "Unable to remove the lock file ${lock_file}"
 
-    log "Lock file ${lock_file} has been removed"
+    log INFO "Lock file ${lock_file} has been removed"
   fi
 
   local keyserver='hkp://keyserver.ubuntu.com'
@@ -66,7 +66,7 @@ sync_package_databases () {
   echo "keyserver ${keyserver}" >> /etc/pacman.d/gnupg/gpg.conf ||
     fail 'Failed to add the GPG keyserver'
 
-  log "GPG keyserver has been set to ${keyserver}"
+  log INFO "GPG keyserver has been set to ${keyserver}"
 
   sed -i 's/^#ParallelDownloads/ParallelDownloads/' /etc/pacman.conf ||
     fail 'Failed to enable parallel downloads'
@@ -74,22 +74,22 @@ sync_package_databases () {
   pacman -Syy 2>&1 ||
     fail 'Failed to synchronize package databases'
 
-  log 'Package databases synchronized to the master'
+  log INFO 'Package databases synchronized to the master'
 }
 
 # Updates the keyring package.
 update_keyring () {
-  log 'Updating the archlinux keyring...'
+  log INFO 'Updating the archlinux keyring...'
 
   pacman -Sy --needed --noconfirm archlinux-keyring 2>&1 ||
     fail 'Failed to update keyring'
 
-  log 'Keyring has been updated successfully'
+  log INFO 'Keyring has been updated successfully'
 }
 
 # Installs the linux kernel.
 install_kernel () {
-  log 'Installing the linux kernel...'
+  log INFO 'Installing the linux kernel...'
 
   local kernel=''
   kernel="$(get_setting 'kernel')" || fail 'Unable to read kernel setting'
@@ -109,7 +109,7 @@ install_kernel () {
   pacstrap /mnt base ${pckgs} linux-firmware archlinux-keyring reflector rsync sudo jq 2>&1 ||
     fail 'Failed to pacstrap kernel and base packages'
 
-  log 'Linux kernel has been installed'
+  log INFO 'Linux kernel has been installed'
 }
 
 # Adds various extra sudoers rules.
@@ -127,7 +127,7 @@ add_sudoers_rules () {
   echo "${proxy_rule}" > /mnt/etc/sudoers.d/proxy_rules
   chmod 440 /mnt/etc/sudoers.d/proxy_rules
 
-  log 'Proxy rules have been added to sudoers'
+  log INFO 'Proxy rules have been added to sudoers'
 }
 
 # Grants the nopasswd permission to the wheel user group.
@@ -141,12 +141,12 @@ grant_permissions () {
     fail 'Failed to grant nopasswd permission'
   fi
 
-  log 'Sudoer nopasswd permission has been granted'
+  log INFO 'Sudoer nopasswd permission has been granted'
 }
 
 # Copies the installation to the new system.
 copy_installation_files () {
-  log 'Copying installation files...'
+  log INFO 'Copying installation files...'
 
   cp -r /opt/stack /mnt/opt ||
     fail 'Unable to copy installation files to /mnt/opt'
@@ -164,7 +164,7 @@ copy_installation_files () {
   mkdir -p /mnt/var/log/stack ||
     fail 'Failed to create logs home under /mnt/var/log/stack'
 
-  log 'Installation files copied to /mnt/opt'
+  log INFO 'Installation files copied to /mnt/opt'
 }
 
 # Resolves the installaction script by addressing
@@ -192,8 +192,8 @@ resolve () {
   return 0
 }
 
-log 'Script bootstrap.sh started'
-log 'Starting the bootstrap process...'
+log INFO 'Script bootstrap.sh started'
+log INFO 'Starting the bootstrap process...'
 
 sync_clock &&
   set_mirrors &&
@@ -204,6 +204,6 @@ sync_clock &&
   grant_permissions &&
   copy_installation_files
 
-log 'Script bootstrap.sh has finished'
+log INFO 'Script bootstrap.sh has finished'
 
 resolve && sleep 3

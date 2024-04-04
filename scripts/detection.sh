@@ -14,7 +14,7 @@ is_uefi () {
 
   save_setting 'uefi_mode' "\"${uefi_mode}\""
 
-  log "UEFI mode is set to ${uefi_mode}"
+  log INFO "UEFI mode is set to ${uefi_mode}"
 }
 
 # Resolves if the the system is a virtual machine.
@@ -27,8 +27,8 @@ is_virtual_machine () {
     save_setting 'vm' '"yes"'
     save_setting 'vm_vendor' "\"${vm_vendor}\""
 
-    log 'Virtual machine is set to yes'
-    log "Virtual machine vendor is set to ${vm_vendor}"
+    log INFO 'Virtual machine is set to yes'
+    log INFO "Virtual machine vendor is set to ${vm_vendor}"
   else
     save_setting 'vm' '"no"'
   fi
@@ -51,7 +51,7 @@ resolve_cpu () {
 
   save_setting 'cpu_vendor' "\"${cpu_vendor}\""
 
-  log "CPU vendor is set to ${cpu_vendor}"
+  log INFO "CPU vendor is set to ${cpu_vendor}"
 }
 
 # Resolves the vendor of the GPU installed on the system.
@@ -75,7 +75,7 @@ resolve_gpu () {
 
   save_setting 'gpu_vendor' "\"${gpu_vendor}\""
 
-  log "GPU vendor is set to ${gpu_vendor}"
+  log INFO "GPU vendor is set to ${gpu_vendor}"
 }
 
 # Resolves if the installation disk supports TRIM.
@@ -96,7 +96,7 @@ is_disk_trimmable () {
 
   save_setting 'trim_disk' "\"${trim_disk}\""
 
-  log "Disk trim mode is set to ${trim_disk}"
+  log INFO "Disk trim mode is set to ${trim_disk}"
 }
 
 # Resolves the synaptics touch pad.
@@ -106,7 +106,7 @@ resolve_synaptics () {
   if grep -Eq "${query}" /proc/bus/input/devices; then
     save_setting 'synaptics' '"yes"'
     
-    log 'Synaptics touch pad set to yes'
+    log INFO 'Synaptics touch pad set to yes'
   else
     save_setting 'synaptics' '"no"'
   fi
@@ -137,8 +137,8 @@ resolve () {
   return 0
 }
 
-log 'Script detection.sh started'
-log 'Resolving system hardware data...'
+log INFO 'Script detection.sh started'
+log INFO 'Resolving system hardware data...'
 
 is_uefi &&
   is_virtual_machine &&
@@ -147,6 +147,6 @@ is_uefi &&
   is_disk_trimmable &&
   resolve_synaptics
 
-log 'Script detection.sh has finished'
+log INFO 'Script detection.sh has finished'
 
 resolve && sleep 3

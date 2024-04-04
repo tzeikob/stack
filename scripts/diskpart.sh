@@ -6,25 +6,25 @@ source /opt/stack/scripts/utils.sh
 
 # Erases all table data of the installation disk.
 wipe_disk () {
-  log 'Wiping disk data and file system...'
+  log INFO 'Wiping disk data and file system...'
 
   swapoff --all 2>&1 ||
     fail 'Unable to set swap off'
 
-  log 'Swap set to off'
+  log INFO 'Swap set to off'
 
-  log 'Making sure everything is unmounted...'
+  log INFO 'Making sure everything is unmounted...'
 
   if mountpoint -q /mnt; then
     umount --lazy /mnt 2>&1 ||
       fail 'Unable to unmount the /mnt folder'
 
-    log 'Folder /mnt has been unmounted'
+    log INFO 'Folder /mnt has been unmounted'
   else
-    log 'Folder /mnt is not mounted'
+    log INFO 'Folder /mnt is not mounted'
   fi
 
-  log 'Start now erasing disk data...'
+  log INFO 'Start now erasing disk data...'
 
   local disk=''
   disk="$(get_setting 'disk')" || fail 'Unable to read disk setting'
@@ -32,12 +32,12 @@ wipe_disk () {
   wipefs -a "${disk}" 2>&1 ||
     fail 'Failed to wipe the disk file system'
 
-  log 'Disk data have been erased'
+  log INFO 'Disk data have been erased'
 }
 
 # Creates GPT partitions for systems supporting UEFI.
 create_gpt_partitions () {
-  log 'Creating a clean GPT partition table...'
+  log INFO 'Creating a clean GPT partition table...'
 
   local disk=''
   disk="$(get_setting 'disk')" || fail 'Unable to read disk setting'
@@ -45,17 +45,17 @@ create_gpt_partitions () {
   parted --script "${disk}" mklabel gpt 2>&1 ||
     fail 'Failed to create partition table'
 
-  log 'Partition table has been created'
+  log INFO 'Partition table has been created'
 
   local start=1
   local end=501
 
-  log 'Creating the boot partition...'
+  log INFO 'Creating the boot partition...'
 
   parted --script "${disk}" mkpart 'Boot' fat32 "${start}MiB" "${end}MiB" 2>&1 ||
     fail 'Failed to create boot partition'
 
-  log 'Boot partition has been created'
+  log INFO 'Boot partition has been created'
 
   parted --script "${disk}" set 1 boot on 2>&1 ||
     fail 'Failed to set boot partition on'
@@ -68,27 +68,27 @@ create_gpt_partitions () {
 
     end=$((start + (swap_size * 1024)))
 
-    log 'Creating the swap partition...'
+    log INFO 'Creating the swap partition...'
 
     parted --script "${disk}" mkpart 'Swap' linux-swap "${start}Mib" "${end}Mib" 2>&1 ||
       fail 'Failed to create swap partition'
 
-    log 'Swap partition has been created'
+    log INFO 'Swap partition has been created'
 
     start=${end}
   fi
 
-  log 'Creating the root partition...'
+  log INFO 'Creating the root partition...'
 
   parted --script "${disk}" mkpart 'Root' ext4 "${start}Mib" 100% 2>&1 ||
     fail 'Failed to create root partition'
 
-  log 'Root partition has been created'
+  log INFO 'Root partition has been created'
 }
 
 # Creates MBR partitions for systems don't support UEFI.
 create_mbr_partitions () {
-  log 'Creating a clean MBR partition table...'
+  log INFO 'Creating a clean MBR partition table...'
 
   local disk=''
   disk="$(get_setting 'disk')" || fail 'Unable to read disk setting'
@@ -96,7 +96,7 @@ create_mbr_partitions () {
   parted --script "${disk}" mklabel msdos 2>&1 ||
     fail 'Failed to create partition table'
 
-  log 'Partition table has been created'
+  log INFO 'Partition table has been created'
 
   local start=1
   local root_index=1
@@ -107,33 +107,33 @@ create_mbr_partitions () {
 
     local end=$((start + (swap_size * 1024)))
 
-    log 'Creating the swap partition...'
+    log INFO 'Creating the swap partition...'
 
     parted --script "${disk}" mkpart primary linux-swap "${start}Mib" "${end}Mib" 2>&1 ||
       fail 'Failed to create swap partition'
 
-    log 'Swap partition has been created'
+    log INFO 'Swap partition has been created'
 
     start=${end}
     root_index=2
   fi
 
-  log 'Creating the root partition...'
+  log INFO 'Creating the root partition...'
 
   parted --script "${disk}" mkpart primary ext4 "${start}Mib" 100% 2>&1 ||
     fail 'Failed to create root partition'
 
-  log 'Root partition has been created'
+  log INFO 'Root partition has been created'
 
   parted --script "${disk}" set "${root_index}" boot on 2>&1 ||
     fail 'Failed to set root as boot partition'
 
-  log 'Root partition set as boot partition'
+  log INFO 'Root partition set as boot partition'
 }
 
 # Creates the system partitions on the installation disk.
 create_partitions () {
-  log 'Creating disk partitions...'
+  log INFO 'Creating disk partitions...'
 
   if is_setting 'uefi_mode' 'yes'; then
     create_gpt_partitions || fail
@@ -141,12 +141,12 @@ create_partitions () {
     create_mbr_partitions || fail
   fi
 
-  log 'Disk partitions have been created'
+  log INFO 'Disk partitions have been created'
 }
 
 # Formats the partitions of the installation disk.
 format_partitions () {
-  log 'Formatting disk partitions...'
+  log INFO 'Formatting disk partitions...'
 
   local disk=''
   disk="$(get_setting 'disk')" || fail 'Unable to read disk setting'
@@ -157,12 +157,12 @@ format_partitions () {
   fi
 
   if is_setting 'uefi_mode' 'yes'; then
-    log 'Formating the boot partition...'
+    log INFO 'Formating the boot partition...'
 
     mkfs.fat -F 32 "${disk}${postfix}1" 2>&1 ||
       fail 'Failed to format boot partition'
 
-    log 'Boot partition has been formatted'
+    log INFO 'Boot partition has been formatted'
 
     local root_index=2
 
@@ -170,12 +170,12 @@ format_partitions () {
       root_index=3
     fi
 
-    log 'Formating the root partition...'
+    log INFO 'Formating the root partition...'
 
     mkfs.ext4 -F "${disk}${postfix}${root_index}" 2>&1 ||
       fail 'Failed to format root partition'
 
-    log 'Root partition has been formatted'
+    log INFO 'Root partition has been formatted'
   else
     local root_index=1
 
@@ -183,20 +183,20 @@ format_partitions () {
       root_index=2
     fi
 
-    log 'Formating root partition...'
+    log INFO 'Formating root partition...'
 
     mkfs.ext4 -F "${disk}${postfix}${root_index}" 2>&1 ||
       fail 'Failed to format root partition'
 
-    log 'Root partition has been formatted'
+    log INFO 'Root partition has been formatted'
   fi
 
-  log 'Formating has been completed'
+  log INFO 'Formating has been completed'
 }
 
 # Mounts the disk partitions of the isntallation disk.
 mount_file_system () {
-  log 'Mounting disk partitions...'
+  log INFO 'Mounting disk partitions...'
   
   local disk=''
   disk="$(get_setting 'disk')" || fail 'Unable to read disk setting'
@@ -218,12 +218,12 @@ mount_file_system () {
     mount -o "${mount_opts}" "${disk}${postfix}${root_index}" /mnt 2>&1 ||
       fail 'Failed to mount root partition to /mnt'
 
-    log 'Root partition has been mounted to /mnt'
+    log INFO 'Root partition has been mounted to /mnt'
 
     mount --mkdir "${disk}${postfix}1" /mnt/boot 2>&1 ||
       fail 'Failed to mount boot partition to /mnt/boot'
 
-    log 'Boot partition mounted to /mnt/boot'
+    log INFO 'Boot partition mounted to /mnt/boot'
   else
     local root_index=1
 
@@ -234,20 +234,20 @@ mount_file_system () {
     mount -o "${mount_opts}" "${disk}${postfix}${root_index}" /mnt 2>&1 ||
       fail 'Failed to mount root partition to /mnt'
 
-    log 'Root partition mounted to /mnt'
+    log INFO 'Root partition mounted to /mnt'
   fi
 
-  log 'Mounting partitions has been completed'
+  log INFO 'Mounting partitions has been completed'
 }
 
 # Creates the swap space.
 make_swap_space () {
   if is_setting 'swap_on' 'no'; then
-    log 'Swap space has been disabled'
+    log INFO 'Swap space has been disabled'
     return 0
   fi
 
-  log 'Setting up the swap space...'
+  log INFO 'Setting up the swap space...'
 
   local disk=''
   disk="$(get_setting 'disk')" || fail 'Unable to read disk setting'
@@ -264,13 +264,13 @@ make_swap_space () {
       swap_index=2
     fi
 
-    log 'Setting up the swap partition...'
+    log INFO 'Setting up the swap partition...'
 
     mkswap "${disk}${postfix}${swap_index}" 2>&1 &&
       swapon "${disk}${postfix}${swap_index}" 2>&1 ||
       fail 'Failed to enable swap partition'
 
-    log 'Swap partition has been enabled'
+    log INFO 'Swap partition has been enabled'
   elif is_setting 'swap_type' 'file'; then
     local swap_size=0
     swap_size=$(get_setting 'swap_size' | jq -cer '. * 1024') ||
@@ -278,7 +278,7 @@ make_swap_space () {
 
     local swap_file='/mnt/swapfile'
 
-    log 'Setting up the swap file...'
+    log INFO 'Setting up the swap file...'
 
     dd if=/dev/zero of=${swap_file} bs=1M count=${swap_size} status=progress 2>&1 &&
       chmod 0600 ${swap_file} &&
@@ -287,26 +287,26 @@ make_swap_space () {
       free -m 2>&1 ||
       fail "Failed to set swap file to ${swap_file}"
 
-    log "Swap file has been set to ${swap_file}"
+    log INFO "Swap file has been set to ${swap_file}"
   else
-    log 'Skipping swap space, invalid swap type'
+    log INFO 'Skipping swap space, invalid swap type'
   fi
 }
 
 # Creates the file system table.
 create_file_system_table () {
-  log 'Creating the file system table...'
+  log INFO 'Creating the file system table...'
 
   mkdir -p /mnt/etc &&
     genfstab -U /mnt > /mnt/etc/fstab 2>&1 ||
     fail 'Failed to create file system table'
 
-  log 'File system table has been created'
+  log INFO 'File system table has been created'
 }
 
 # Prints an overall report of the installation disk.
 report () {
-  log 'Disk layout is now set to:\n'
+  log INFO 'Disk layout is now set to:\n'
 
   local disk=''
   disk="$(get_setting 'disk')" || fail 'Unable to read disk setting'
@@ -343,8 +343,8 @@ resolve () {
   return 0
 }
 
-log 'Script diskpart.sh started'
-log 'Starting the disk partitioning...'
+log INFO 'Script diskpart.sh started'
+log INFO 'Starting the disk partitioning...'
 
 wipe_disk &&
   create_partitions &&
@@ -354,6 +354,6 @@ wipe_disk &&
   create_file_system_table &&
   report
 
-log 'Script diskpart.sh has finished'
+log INFO 'Script diskpart.sh has finished'
 
 resolve && sleep 3

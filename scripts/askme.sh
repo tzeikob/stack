@@ -15,7 +15,12 @@ select_disk () {
   local disks=''
   disks="$(
     lsblk -J -o "${fields}" | jq -cer "${query}" 2> /dev/null
-  )" || fail 'Unable to list disk block devices'
+  )"
+
+  if has_failed; then
+    log 'Unable to list disk block devices'
+    exit 1
+  fi
 
   local trim='.|gsub("^\\s+|\\s+$";"")'
   local vendor="\(.vendor|if . then .|${trim} else empty end)"
@@ -30,40 +35,46 @@ select_disk () {
 
   disks="$(
     echo "${disks}" | jq -cer "${query}"
-  )" || fail
+  )"
+
+  if has_failed; then
+    log 'Failed to parse disks data'
+    exit 1
+  fi
 
   pick_one 'Select the installation disk:' "${disks}" 'vertical'
-  is_not_given "${REPLY}" && fail 'Installation has been canceled'
+  is_not_given "${REPLY}" && log 'Installation has been canceled' && exit 1
 
   local disk="${REPLY}"
 
-  echo -e "\nCAUTION, all data in \"${disk}\" will be lost!"
+  log "\nCAUTION, all data in \"${disk}\" will be lost!"
   confirm 'Do you want to proceed with this disk?'
 
   if is_not_given "${REPLY}" || is_no "${REPLY}"; then
-    fail 'Installation has been canceled'
+    log 'Installation has been canceled'
+    exit 1
   fi
 
   save_setting 'disk' "\"${disk}\""
 
-  echo -e "Installation disk set to block device ${disk}"
+  log "Installation disk set to block device ${disk}"
 }
 
 # Asks the user to enable or not the swap space.
 opt_in_swap_space () {
   confirm 'Do you want to enable swap space?'
-  is_not_given "${REPLY}" && fail 'Installation has been canceled'
+  is_not_given "${REPLY}" && log 'Installation has been canceled' && exit 1
 
   if is_no "${REPLY}"; then
     save_setting 'swap_on' '"no"'
 
-    echo -e 'Swap is set to off'
+    log 'Swap is set to off'
     return 0
   fi
 
   save_setting 'swap_on' '"yes"'
 
-  echo -e 'Swap is set to yes'
+  log 'Swap is set to yes'
 
   ask 'Enter the size of the swap space in GBs:'
 
@@ -75,7 +86,7 @@ opt_in_swap_space () {
 
   save_setting 'swap_size' "${swap_size}"
 
-  echo -e "Swap size is set to ${swap_size}GB"
+  log "Swap size is set to ${swap_size}GB"
 
   local swap_types=''
   swap_types+='{"key": "file", "value":"File"},'
@@ -83,13 +94,13 @@ opt_in_swap_space () {
   swap_types="[${swap_types}]"
 
   pick_one 'Which type of swap to setup:' "${swap_types}" 'horizontal'
-  is_not_given "${REPLY}" && fail 'Installation has been canceled'
+  is_not_given "${REPLY}" && log 'Installation has been canceled' && exit 1
 
   local swap_type="${REPLY}"
 
   save_setting 'swap_type' "\"${swap_type}\""
 
-  echo -e "Swap type is set to ${swap_type}"
+  log "Swap type is set to ${swap_type}"
 }
 
 # Asks the user to select the mirror countries used for installation and updates.
@@ -103,19 +114,24 @@ select_mirrors () {
       frm="{\"key\": \"%s\", \"value\": \"%s\"},"
       printf frm, a[2], a[1]" ["a[3]"]"
     }'
-  )" || fail 'Unable to fetch package databases mirrors'
+  )"
+  
+  if has_failed; then
+    log 'Unable to fetch package databases mirrors'
+    exit 1
+  fi
 
   # Remove the extra comma from the last element
   mirrors="[${mirrors:+${mirrors::-1}}]"
 
   pick_many 'Select package databases mirrors:' "${mirrors}" 'vertical'
-  is_not_given "${REPLY}" && fail 'Installation has been canceled'
+  is_not_given "${REPLY}" && log 'Installation has been canceled' && exit 1
 
   mirrors="${REPLY}"
 
   save_setting 'mirrors' "${mirrors}"
 
-  echo -e "Package databases mirrors are set to ${mirrors}"
+  log "Package databases mirrors are set to ${mirrors}"
 }
 
 # Asks the user to select the system's timezone.
@@ -125,19 +141,24 @@ select_timezone () {
     timedatectl list-timezones 2> /dev/null | awk '{
       print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
     }'
-  )" || fail 'Unable to list timezones'
+  )"
+  
+  if has_failed; then
+    log 'Unable to list timezones'
+    exit 1
+  fi
 
   # Remove the extra comma after the last array element
   timezones="[${timezones:+${timezones::-1}}]"
 
   pick_one 'Select the system timezone:' "${timezones}" 'vertical'
-  is_not_given "${REPLY}" && fail 'Installation has been canceled'
+  is_not_given "${REPLY}" && log 'Installation has been canceled' && exit 1
 
   local timezone="${REPLY}"
 
   save_setting 'timezone' "\"${timezone}\""
 
-  echo -e "Timezone is set to ${timezone}"
+  log "Timezone is set to ${timezone}"
 }
 
 # Asks the user to select which locales to install.
@@ -147,19 +168,24 @@ select_locales () {
     cat /etc/locale.gen | tail -n +24 | grep -E '^\s*#.*' | tr -d '#' | trim | awk '{
       print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
     }'
-  )" || fail 'Unable to list the locales'
+  )"
+  
+  if has_failed; then
+    log 'Unable to list the locales'
+    exit 1
+  fi
   
   # Removes the last comma delimiter from the last element
   locales="[${locales:+${locales::-1}}]"
 
   pick_many 'Select system locales by order:' "${locales}" 'vertical'
-  is_not_given "${REPLY}" && fail 'Installation has been canceled'
+  is_not_given "${REPLY}" && log 'Installation has been canceled' && exit 1
 
   locales="${REPLY}"
 
   save_setting 'locales' "${locales}"
 
-  echo -e "Locales are set to ${locales}"
+  log "Locales are set to ${locales}"
 }
 
 # Asks the user to select the keyboard model.
@@ -169,19 +195,24 @@ select_keyboard_model () {
     localectl --no-pager list-x11-keymap-models 2> /dev/null | awk '{
       print "{\"key\":\""$1"\",\"value\":\""$1"\"},"
     }'
-  )" || fail 'Unable to list keyboard models'
+  )"
+  
+  if has_failed; then
+    log 'Unable to list keyboard models'
+    exit 1
+  fi
 
   # Remove the extra comma delimiter from the last element
   models="[${models:+${models::-1}}]"
 
   pick_one 'Select a keyboard model:' "${models}" 'vertical'
-  is_not_given "${REPLY}" && fail 'Installation has been canceled'
+  is_not_given "${REPLY}" && log 'Installation has been canceled' && exit 1
 
   local keyboard_model="${REPLY}"
 
   save_setting 'keyboard_model' "\"${keyboard_model}\""
 
-  echo -e "Keyboard model is set to ${keyboard_model}"
+  log "Keyboard model is set to ${keyboard_model}"
 }
 
 # Asks the user to select the keyboard map.
@@ -191,19 +222,24 @@ select_keyboard_map () {
     localectl --no-pager list-keymaps 2> /dev/null | awk '{
       print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
     }'
-  )" || fail 'Unable to list keyboard maps'
+  )"
+  
+  if has_failed; then
+    log 'Unable to list keyboard maps'
+    exit 1
+  fi
   
   # Remove extra comma delimiter from the last element
   maps="[${maps:+${maps::-1}}]"
 
   pick_one 'Select a keyboard map:' "${maps}" 'vertical'
-  is_not_given "${REPLY}" && fail 'Installation has been canceled'
+  is_not_given "${REPLY}" && log 'Installation has been canceled' && exit 1
 
   local keyboard_map="${REPLY}"
 
   save_setting 'keyboard_map' "\"${keyboard_map}\""
 
-  echo -e "Keyboard map is set to ${keyboard_map}"
+  log "Keyboard map is set to ${keyboard_map}"
 }
 
 # Asks the user to select keyboard layout.
@@ -213,13 +249,18 @@ select_keyboard_layout () {
     localectl --no-pager list-x11-keymap-layouts 2> /dev/null | awk '{
       print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
     }'
-  )" || fail 'Unable to list keyboard layouts'
+  )"
+  
+  if has_failed; then
+    log 'Unable to list keyboard layouts'
+    exit 1
+  fi
   
   # Remove the extra comma delimiter from last element
   layouts="[${layouts:+${layouts::-1}}]"
 
   pick_one 'Select a keyboard layout:' "${layouts}" 'vertical'
-  is_not_given "${REPLY}" && fail 'Installation has been canceled'
+  is_not_given "${REPLY}" && log 'Installation has been canceled' && exit 1
 
   local keyboard_layout="${REPLY}"
 
@@ -230,19 +271,24 @@ select_keyboard_layout () {
     localectl --no-pager list-x11-keymap-variants "${keyboard_layout}" 2> /dev/null  | awk '{
       print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
     }'
-  )" || fail 'Unable to list layout variants'
+  )"
+  
+  if has_failed; then
+    log 'Unable to list layout variants'
+    exit 1
+  fi
   
   # Remove the extra comma delimiter from last element
   variants="[${variants:+${variants::-1}}]"
 
   pick_one "Select a ${keyboard_layout} layout variant:" "${variants}" vertical || return $?
-  is_not_given "${REPLY}" && fail 'Installation has been canceled'
+  is_not_given "${REPLY}" && log 'Installation has been canceled' && exit 1
 
   local layout_variant="${REPLY}"
 
   save_setting 'layout_variant' "${layout_variant}"
 
-  echo -e "Layout variant is set to ${layout_variant}"
+  log "Layout variant is set to ${layout_variant}"
 }
 
 # Asks the user to select keyboard switch options.
@@ -252,19 +298,24 @@ select_keyboard_options () {
     localectl --no-pager list-x11-keymap-options 2> /dev/null | awk '{
       print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
     }'
-  )" || fail 'Unable to list keyboard options'
+  )"
+  
+  if has_failed; then
+    log 'Unable to list keyboard options'
+    exit 1
+  fi
 
   # Remove extra comma delimiter from last element
   options="[${options:+${options::-1}}]"
 
   pick_one 'Select the keyboard options value:' "${options}" 'vertical'
-  is_not_given "${REPLY}" && fail 'Installation has been canceled'
+  is_not_given "${REPLY}" && log 'Installation has been canceled' && exit 1
 
   local keyboard_options="${REPLY}"
 
   save_setting 'keyboard_options' "\"${keyboard_options}\""
 
-  echo -e "Keyboard options is set to ${keyboard_options}"
+  log "Keyboard options is set to ${keyboard_options}"
 }
 
 # Asks the user to set the name of the host.
@@ -279,7 +330,7 @@ enter_host_name () {
 
   save_setting 'host_name' "\"${host_name}\""
 
-  echo -e "Hostname is set to ${host_name}"
+  log "Hostname is set to ${host_name}"
 }
 
 # Asks the user to set the name of the sudoer user.
@@ -294,7 +345,7 @@ enter_user_name () {
 
   save_setting 'user_name' "\"${user_name}\""
 
-  echo -e "User name is set to ${user_name}"
+  log "User name is set to ${user_name}"
 }
 
 # Asks the user to set the password of the sudoer user.
@@ -315,7 +366,7 @@ enter_user_password () {
 
   save_setting 'user_password' "\"${password}\""
 
-  echo -e 'User password is set successfully'
+  log 'User password is set successfully'
 }
 
 # Asks the user to set the password of the root user.
@@ -336,7 +387,7 @@ enter_root_password () {
 
   save_setting 'root_password' "\"${password}\""
 
-  echo -e 'Root password is set successfully'
+  log 'Root password is set successfully'
 }
 
 # Asks the user which linux kernel to install.
@@ -347,13 +398,13 @@ select_kernel () {
   kernels="[${kernels}]"
 
   pick_one 'Select which linux kernel to install:' "${kernels}" 'horizontal'
-  is_not_given "${REPLY}" && fail 'Installation has been canceled'
+  is_not_given "${REPLY}" && log 'Installation has been canceled' && exit 1
 
   local kernel="${REPLY}"
 
   save_setting 'kernel' "\"${kernel}\""
 
-  echo -e "Linux kernel is set to ${kernel}"
+  log "Linux kernel is set to ${kernel}"
 }
 
 # Report the collected installation settings.
@@ -362,13 +413,18 @@ report () {
   query='.user_password = "***" | .root_password = "***"'
 
   local settings=''
-  settings="$(get_settings | jq "${query}")" || fail 'Unable to read settings'
+  settings="$(get_settings | jq "${query}")"
+  
+  if has_failed; then
+    log 'Unable to read settings'
+    exit 1
+  fi
 
-  echo -e '\nInstallation properties have been set to:'
-  echo -e "${settings}"
+  log '\nInstallation properties have been set to:'
+  log "${settings}"
 }
 
-echo -e "Let's set some installation properties..."
+log "Let's set some installation properties..."
 
 while true; do
   init_settings &&
@@ -389,24 +445,25 @@ while true; do
     report
 
   confirm '\nDo you want to go with these settings?'
-  is_not_given "${REPLY}" && fail 'Installation has been canceled'
+  is_not_given "${REPLY}" && log 'Installation has been canceled' && exit 1
 
   if is_yes "${REPLY}"; then
     break
   fi
 
-  echo -e "Let's set other installation properties..."
+  log "Let's set other installation properties..."
 done
 
-echo -e '\nCAUTION, THIS IS THE LAST WARNING!'
-echo -e 'ALL data in the disk will be LOST FOREVER!'
+log '\nCAUTION, THIS IS THE LAST WARNING!'
+log 'ALL data in the disk will be LOST FOREVER!'
 
 confirm 'Do you want to proceed?'
 
 if is_not_given "${REPLY}" || is_no "${REPLY}"; then
-  fail 'Installation has been canceled'
+  log 'Installation has been canceled'
+  exit 1
 fi
 
-echo -e '\nInstallation process will start in 5 secs...'
+log '\nInstallation process will start in 5 secs...'
 
 sleep 5

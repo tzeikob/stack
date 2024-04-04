@@ -9,9 +9,10 @@ KVS=$'▒'
 SETTINGS_FILE='/opt/stack/.settings'
 
 # Prints the given log message prefixed with the given log level.
+# No arguments means nothing to log into the console.
 # Arguments:
-#  level:   INFO, WARN, ERROR
-#  message: any text message
+#  level:   optionally on of INFO, WARN, ERROR
+#  message: a optional message to show
 # Outputs:
 #  Prints the message in <level> <message> form.
 log () {
@@ -21,25 +22,27 @@ log () {
     level="${1}"
     message="${2}"
   elif [[ $# -eq 1 ]]; then
-    level='INFO'
     message="${1}"
   else
-    return
+    return 0
   fi
 
-  echo -e "${level} ${message}"
+  if is_given "${level}"; then
+    printf '%-5s %b\n' "${level}" "${message}"
+  else
+    printf '%b\n' "${message}"
+  fi
 }
 
-# Prints the optionally given message and exits
-# the process immediately with status code 1.
+# Prints the optionally given error message and exits
+# the process immediately with status code 1. No arguments
+# means nothing to log into the console.
 # Arguments:
-#  message: an optional error message
+#  message: a optional message to show
 # Outputs:
-#  The given error message or the default message.
+#  The optionally given error message.
 fail () {
-  local message="${1:-"A fatal error has been occurred"}"
-
-  log EROR "${message}"
+  log ERROR "${1}"
 
   exit 1
 }
