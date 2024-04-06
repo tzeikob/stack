@@ -288,7 +288,7 @@ install_foliate () {
 install_transmission () {
   log INFO 'Installing the transmission torrent client...'
 
-  sudo pacman -S --needed --noconfirm transmission-cli 2>&1
+  sudo pacman -S --needed --noconfirm transmission-cli transmission-gtk 2>&1
 
   if has_failed; then
     log WARN 'Failed to install transmission torrent client'
