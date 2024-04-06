@@ -168,10 +168,8 @@ trim () {
 ask () {
   local prompt="${1}"
 
-  echo -ne "${prompt} "
-
   REPLY=''
-  read -re REPLY
+  read -rep "${prompt} " REPLY
 }
 
 # Asks the user to enter a secret value, the answer is
@@ -183,10 +181,8 @@ ask () {
 ask_secret () {
   local prompt="${1}"
 
-  echo -ne "${prompt} "
-
   REPLY=''
-  read -sre REPLY
+  read -srep "${prompt} " REPLY
 }
 
 # Shows a Yes/No menu and asks user to select an option,

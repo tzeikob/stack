@@ -47,7 +47,7 @@ select_disk () {
 
   local disk="${REPLY}"
 
-  log "CAUTION, all data in \"${disk}\" will be lost!"
+  log "\nCAUTION, all data in \"${disk}\" will be lost!"
   confirm 'Do you want to proceed with this disk?'
 
   if is_not_given "${REPLY}" || is_no "${REPLY}"; then
@@ -62,7 +62,7 @@ select_disk () {
 
 # Asks the user to enable or not the swap space.
 opt_in_swap_space () {
-  confirm 'Do you want to enable swap space?'
+  confirm '\nDo you want to enable swap space?'
   is_not_given "${REPLY}" && log 'Installation has been canceled' && exit 1
 
   if is_no "${REPLY}"; then
@@ -124,7 +124,7 @@ select_mirrors () {
   # Remove the extra comma from the last element
   mirrors="[${mirrors:+${mirrors::-1}}]"
 
-  pick_many 'Select package databases mirrors:' "${mirrors}" 'vertical'
+  pick_many '\nSelect package databases mirrors:' "${mirrors}" 'vertical'
   is_not_given "${REPLY}" && log 'Installation has been canceled' && exit 1
 
   mirrors="${REPLY}"
@@ -151,7 +151,7 @@ select_timezone () {
   # Remove the extra comma after the last array element
   timezones="[${timezones:+${timezones::-1}}]"
 
-  pick_one 'Select the system timezone:' "${timezones}" 'vertical'
+  pick_one '\nSelect the system timezone:' "${timezones}" 'vertical'
   is_not_given "${REPLY}" && log 'Installation has been canceled' && exit 1
 
   local timezone="${REPLY}"
@@ -178,7 +178,7 @@ select_locales () {
   # Removes the last comma delimiter from the last element
   locales="[${locales:+${locales::-1}}]"
 
-  pick_many 'Select system locales by order:' "${locales}" 'vertical'
+  pick_many '\nSelect system locales by order:' "${locales}" 'vertical'
   is_not_given "${REPLY}" && log 'Installation has been canceled' && exit 1
 
   locales="${REPLY}"
@@ -205,7 +205,7 @@ select_keyboard_model () {
   # Remove the extra comma delimiter from the last element
   models="[${models:+${models::-1}}]"
 
-  pick_one 'Select a keyboard model:' "${models}" 'vertical'
+  pick_one '\nSelect a keyboard model:' "${models}" 'vertical'
   is_not_given "${REPLY}" && log 'Installation has been canceled' && exit 1
 
   local keyboard_model="${REPLY}"
@@ -232,7 +232,7 @@ select_keyboard_map () {
   # Remove extra comma delimiter from the last element
   maps="[${maps:+${maps::-1}}]"
 
-  pick_one 'Select a keyboard map:' "${maps}" 'vertical'
+  pick_one '\nSelect a keyboard map:' "${maps}" 'vertical'
   is_not_given "${REPLY}" && log 'Installation has been canceled' && exit 1
 
   local keyboard_map="${REPLY}"
@@ -259,7 +259,7 @@ select_keyboard_layout () {
   # Remove the extra comma delimiter from last element
   layouts="[${layouts:+${layouts::-1}}]"
 
-  pick_one 'Select a keyboard layout:' "${layouts}" 'vertical'
+  pick_one '\nSelect a keyboard layout:' "${layouts}" 'vertical'
   is_not_given "${REPLY}" && log 'Installation has been canceled' && exit 1
 
   local keyboard_layout="${REPLY}"
@@ -281,7 +281,7 @@ select_keyboard_layout () {
   # Remove the extra comma delimiter from last element
   variants="[${variants:+${variants::-1}}]"
 
-  pick_one "Select a ${keyboard_layout} layout variant:" "${variants}" vertical || return $?
+  pick_one "\nSelect a ${keyboard_layout} layout variant:" "${variants}" vertical || return $?
   is_not_given "${REPLY}" && log 'Installation has been canceled' && exit 1
 
   local layout_variant="${REPLY}"
@@ -308,7 +308,7 @@ select_keyboard_options () {
   # Remove extra comma delimiter from last element
   options="[${options:+${options::-1}}]"
 
-  pick_one 'Select the keyboard options value:' "${options}" 'vertical'
+  pick_one '\nSelect the keyboard options value:' "${options}" 'vertical'
   is_not_given "${REPLY}" && log 'Installation has been canceled' && exit 1
 
   local keyboard_options="${REPLY}"
@@ -320,6 +320,7 @@ select_keyboard_options () {
 
 # Asks the user to set the name of the host.
 enter_host_name () {
+  echo ''
   ask 'Enter the name of the host:'
 
   while not_match "${REPLY}" '^[a-z][a-z0-9_-]+$'; do
@@ -335,6 +336,7 @@ enter_host_name () {
 
 # Asks the user to set the name of the sudoer user.
 enter_user_name () {
+  echo ''
   ask 'Enter the name of the user:'
 
   while not_match "${REPLY}" '^[a-z][a-z0-9_-]+$'; do
@@ -350,6 +352,7 @@ enter_user_name () {
 
 # Asks the user to set the password of the sudoer user.
 enter_user_password () {
+  echo ''
   ask_secret 'Enter the user password:'
 
   while not_match "${REPLY}" '^[a-zA-Z0-9@&!#%\$_-]{4,}$'; do
@@ -371,6 +374,7 @@ enter_user_password () {
 
 # Asks the user to set the password of the root user.
 enter_root_password () {
+  echo ''
   ask_secret 'Enter the root password:'
 
   while not_match "${REPLY}" '^[a-zA-Z0-9@&!#%\$_-]{4,}$'; do
@@ -397,7 +401,7 @@ select_kernel () {
   kernels+='{"key": "lts", "value": "LTS"}'
   kernels="[${kernels}]"
 
-  pick_one 'Select which linux kernel to install:' "${kernels}" 'horizontal'
+  pick_one '\nSelect which linux kernel to install:' "${kernels}" 'horizontal'
   is_not_given "${REPLY}" && log 'Installation has been canceled' && exit 1
 
   local kernel="${REPLY}"
