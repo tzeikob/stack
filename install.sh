@@ -46,6 +46,8 @@ run () {
   # Do not log while running the askme screens
   if equals "${file_name}" 'askme'; then
     bash /opt/stack/scripts/askme.sh || exit 1
+    
+    echo
     return 0
   fi
 
