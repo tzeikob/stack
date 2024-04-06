@@ -288,7 +288,7 @@ select_keyboard_layout () {
 
   save_setting 'layout_variant' "\"${layout_variant}\""
 
-  log "Layout variant is set to ${layout_variant}"
+  log "Layout is set to ${keyboard_layout} ${layout_variant}"
 }
 
 # Asks the user to select keyboard switch options.
