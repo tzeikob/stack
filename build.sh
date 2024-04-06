@@ -447,13 +447,13 @@ setup_auto_login () {
   welcome+='░░░█▀▀░▀█▀░█▀█░█▀▀░█░█░░░\n'
   welcome+='░░░▀▀█░░█░░█▀█░█░░░█▀▄░░░\n'
   welcome+='░░░▀▀▀░░▀░░▀░▀░▀▀▀░▀░▀░░░\n\n'
-  welcome+='Welcome to live media of \u001b[36mStack OS\u001b[0m, more information\n'
+  welcome+='Welcome to live media of \u001b[36mStack Linux\u001b[0m, more information\n'
   welcome+='can be found on https://github.com/tzeikob/stack.git.\n\n'
   welcome+='Connect to a wireless network using the networks tool via\n'
   welcome+='the command \u001b[36mnetworks add wifi <device> <ssid> <secret>\u001b[0m.\n'
   welcome+='Ethernet, WALN and WWAN networks should work automatically.\n\n'
   welcome+='To install a new system run \u001b[36minstall_os\u001b[0m to launch\n'
-  welcome+='the installation process of the Stack OS.\n'
+  welcome+='the installation process of the Stack Linux.\n'
 
   echo -e "${welcome}" > "${ROOT_FS}/etc/welcome"
 
