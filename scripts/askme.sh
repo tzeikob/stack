@@ -264,7 +264,7 @@ select_keyboard_layout () {
 
   local keyboard_layout="${REPLY}"
 
-  save_setting 'keyboard_layout' "${keyboard_layout}"
+  save_setting 'keyboard_layout' "\"${keyboard_layout}\""
 
   local variants='{"key": "default", "value": "default"},'
   variants+="$(
@@ -286,7 +286,7 @@ select_keyboard_layout () {
 
   local layout_variant="${REPLY}"
 
-  save_setting 'layout_variant' "${layout_variant}"
+  save_setting 'layout_variant' "\"${layout_variant}\""
 
   log "Layout variant is set to ${layout_variant}"
 }
