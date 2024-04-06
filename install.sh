@@ -24,8 +24,13 @@ report () {
   query='.user_password = "***" | .root_password = "***"'
 
   local settings=''
-  settings="$(get_settings | jq "${query}")" ||
-    fail 'Unable to read settings' > "${log_file}"
+  settings="$(get_settings | jq "${query}")"
+
+  if has_failed; then
+    log ERROR 'Unable to read settings' >> "${log_file}"
+    log 'A fatal error occurred, process exited!'
+    exit 1
+  fi
 
   log '\nInstallation properties have been set to:' > "${log_file}"
   log "${settings}\n" >> "${log_file}"
@@ -61,7 +66,9 @@ run () {
       --bar-format "${BAR_FORMAT}" --total ${total} >> "${log_file}.tqdm"
 
   if has_failed; then
-    fail "Script ${file_name}.sh has failed" >> "${log_file}"
+    log ERROR "Script ${file_name}.sh failed, process exited!" >> "${log_file}"
+    log 'A fatal error occurred, process exited!'
+    exit 1
   fi
 }
 
@@ -80,8 +87,13 @@ install () {
 
   # Impersonate the sudoer user on desktop, stack and tools installation
   if match "${file_name}" '^(desktop|stack|tools)$'; then
-    user_name="$(get_setting 'user_name')" ||
-      fail 'Unable to read the user_name setting' >> "${log_file}"
+    user_name="$(get_setting 'user_name')"
+
+    if has_failed; then
+      log ERROR 'Unable to read the user_name setting' >> "${log_file}"
+      log 'A fatal error occurred, process exited!'
+      exit 1
+    fi
   fi
 
   local total=0
@@ -101,7 +113,9 @@ install () {
       --bar-format "${BAR_FORMAT}" --total ${total} >> "${log_file}.tqdm"
   
   if has_failed; then
-    fail "Script ${file_name}.sh has failed" >> "${log_file}"
+    log ERROR "Script ${file_name}.sh failed, process exited!" >> "${log_file}"
+    log 'A fatal error occurred, process exited!'
+    exit 1
   fi
 }
 
@@ -124,7 +138,7 @@ restart () {
   # Clean redundant log files from archiso media
   rm -rf /var/log/stack
   
-  log 'Installation process has been completed'
+  log '\nInstallation process has been completed'
   log 'Rebooting the system in 15 secs...'
 
   sleep 15
@@ -140,8 +154,8 @@ cat << EOF
 ░░░▀▀▀░░▀░░▀░▀░▀▀▀░▀░▀░░░
 EOF
 
-log '\nWelcome to StackOS Installer, v1.0.0.alpha.'
-log 'Base your development stack on archlinux!'
+log '\nWelcome to the Stack Linux installer.'
+log 'Base your development stack on Arch Linux!'
 
 confirm 'Do you want to proceed?'
 

@@ -47,7 +47,7 @@ select_disk () {
 
   local disk="${REPLY}"
 
-  log "\nCAUTION, all data in \"${disk}\" will be lost!"
+  log "CAUTION, all data in \"${disk}\" will be lost!"
   confirm 'Do you want to proceed with this disk?'
 
   if is_not_given "${REPLY}" || is_no "${REPLY}"; then
@@ -424,7 +424,7 @@ report () {
   log "${settings}"
 }
 
-log "Let's set some installation properties..."
+log "\nLet's set some installation properties..."
 
 while true; do
   init_settings &&
@@ -451,6 +451,7 @@ while true; do
     break
   fi
 
+  clear
   log "Let's set other installation properties..."
 done
 
@@ -464,6 +465,4 @@ if is_not_given "${REPLY}" || is_no "${REPLY}"; then
   exit 1
 fi
 
-log '\nInstallation process will start in 5 secs...'
-
-sleep 5
+sleep 2
