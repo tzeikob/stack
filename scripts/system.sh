@@ -423,7 +423,7 @@ set_keyboard () {
   settings+="keymap: \"${keyboard_map}\","
   settings+="model: \"${keyboard_model}\","
   settings+="options: \"${keyboard_options}\","
-  settings+="layouts: [{code: \"${keyboard_layout}\", variant: \"${layout_variant}\"}]"
+  settings+="layouts: [{code: \"${keyboard_layout}\", variant: \"${layout_variant}\"}}]"
   settings="{${settings}}"
 
   local settings_file="${config_home}/langs.json"
