@@ -425,10 +425,10 @@ set_keyboard () {
   mkdir -p "${config_home}" || fail "Failed to create folder ${config_home}"
 
   local settings=''
-  settings+="keymap: \"${keyboard_map}\","
-  settings+="model: \"${keyboard_model}\","
-  settings+="options: \"${keyboard_options}\","
-  settings+="layouts: [{code: \"${keyboard_layout}\", variant: \"${layout_variant}\"}}]"
+  settings+="\"keymap\": \"${keyboard_map}\","
+  settings+="\"model\": \"${keyboard_model}\","
+  settings+="\"options\": \"${keyboard_options}\","
+  settings+="\"layouts\": [{\"code\": \"${keyboard_layout}\", \"variant\": \"${layout_variant}\"}]"
   settings="{${settings}}"
 
   local settings_file="${config_home}/langs.json"
@@ -440,9 +440,9 @@ set_keyboard () {
 
   echo "${settings}" > "${settings_file}" &&
     chown -R ${user_name}:${user_name} "${config_home}" ||
-    fail 'Failed to save keymap to langs settings file'
+    fail 'Failed to save keyboard to langs settings file'
   
-  log INFO 'Keymap saved to langs settings file'
+  log INFO 'Keyboard saved to langs settings file'
   log INFO 'Keyboard settings have been applied'
 }
 
