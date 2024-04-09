@@ -34,15 +34,16 @@ log () {
   fi
 }
 
-# Prints the optionally given error message and exits
-# the process immediately with status code 1. No arguments
-# means nothing to log into the console.
+# Prints the given error message and exits
+# the process immediately with status code 1.
 # Arguments:
-#  message: a optional message to show
+#  message: an optional message to show
 # Outputs:
-#  The optionally given error message.
+#  The given error message.
 fail () {
-  log ERROR "${1}"
+  local message="${1:-"A fatal error has been occurred"}"
+
+  log ERROR "${message}"
 
   exit 1
 }

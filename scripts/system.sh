@@ -304,7 +304,8 @@ set_locales () {
 
   log INFO 'Generating system locales...'
 
-  echo "${locales}" | jq -cer '.[]' >> /etc/locale.gen || fail
+  echo "${locales}" | jq -cer '.[]' >> /etc/locale.gen ||
+    fail 'Failed to flush locales to locales.gen'
 
   locale-gen 2>&1 ||
     fail 'Failed to generate system locales'
@@ -313,7 +314,8 @@ set_locales () {
 
   # Set as system locale the locale selected first
   local locale=''
-  locale="$(echo "${locales}" | jq -cer '.[0]' | cut -d ' ' -f 1)" || fail
+  locale="$(echo "${locales}" | jq -cer '.[0]' | cut -d ' ' -f 1)" ||
+    fail 'Failed to read the default locale'
 
   printf '%s\n' \
     "LANG=${locale}" \
@@ -336,7 +338,8 @@ set_locales () {
   # Unset previous set variables
   unset LANG LANGUAGE LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE \
         LC_MONETARY LC_MESSAGES LC_PAPER LC_NAME LC_ADDRESS \
-        LC_TELEPHONE LC_MEASUREMENT LC_IDENTIFICATION LC_ALL || fail
+        LC_TELEPHONE LC_MEASUREMENT LC_IDENTIFICATION LC_ALL ||
+        fail 'Failed to unset locale variables'
   
   # Save locale settings to the user config
   local user_name=''
@@ -344,15 +347,17 @@ set_locales () {
 
   local config_home="/home/${user_name}/.config/stack"
 
-  mkdir -p "${config_home}" || fail
+  mkdir -p "${config_home}" || fail "Failed to create folder ${config_home}"
 
   local settings=''
-  settings="$(echo "${locales}" | jq -e '{locale: .[0], locales: .}')" || fail
+  settings="$(echo "${locales}" | jq -e '{locale: .[0], locales: .}')" ||
+    fail 'Failed to parse locale settings to JSON object'
 
   local settings_file="${config_home}/langs.json"
 
   if file_exists "${settings_file}"; then
-    settings="$(jq -e --argjson s "${settings}" '. + $s' "${settings_file}")" || fail
+    settings="$(jq -e --argjson s "${settings}" '. + $s' "${settings_file}")" ||
+      fail 'Failed to merge locales to langs settings'
   fi
 
   echo "${settings}" > "${settings_file}" &&
@@ -417,7 +422,7 @@ set_keyboard () {
 
   local config_home="/home/${user_name}/.config/stack"
 
-  mkdir -p "${config_home}" || fail
+  mkdir -p "${config_home}" || fail "Failed to create folder ${config_home}"
 
   local settings=''
   settings+="keymap: \"${keyboard_map}\","
@@ -429,7 +434,8 @@ set_keyboard () {
   local settings_file="${config_home}/langs.json"
 
   if file_exists "${settings_file}"; then
-    settings="$(jq -e --argjson s "${settings}" '. + $s' "${settings_file}")" || fail
+    settings="$(jq -e --argjson s "${settings}" '. + $s' "${settings_file}")" ||
+      fail 'Failed to merge keyboard to langs setttings'
   fi
 
   echo "${settings}" > "${settings_file}" &&
@@ -591,7 +597,7 @@ configure_power () {
     echo 'SOUND_POWER_SAVE_ON_BAT=0' >> "${tlp_conf}" ||
     fail 'Failed to set no sound on power save mode'
 
-  rm -f /etc/tlp.d/00-template.conf || fail
+  rm -f /etc/tlp.d/00-template.conf || fail 'Unable to remove the template TLP file.'
 
   # Save screensaver settings to the user config
   local user_name=''
@@ -599,7 +605,7 @@ configure_power () {
 
   local config_home="/home/${user_name}/.config/stack"
 
-  mkdir -p "${config_home}" || fail
+  mkdir -p "${config_home}" || fail "Failed to create folder ${config_home}"
 
   local settings='{"screensaver": {"interval": 15}}'
 
@@ -695,7 +701,7 @@ configure_security () {
 
   local config_home="/home/${user_name}/.config/stack"
 
-  mkdir -p "${config_home}" || fail
+  mkdir -p "${config_home}" || fail "Failed to create folder ${config_home}"
 
   local settings='{"screen_locker": {"interval": 12}}'
 
@@ -743,7 +749,8 @@ install_boot_loader () {
 
   if is_setting 'uefi_mode' 'yes' && is_setting 'vm_vendor' 'oracle'; then
     mkdir -p /boot/EFI/BOOT &&
-      cp /boot/EFI/GRUB/grubx64.efi /boot/EFI/BOOT/BOOTX64.EFI || fail
+      cp /boot/EFI/GRUB/grubx64.efi /boot/EFI/BOOT/BOOTX64.EFI ||
+      fail 'Failed to copy the grubx64 efi file to BOOTX64'
   fi
 
   log INFO 'Boot loader has been set up successfully'

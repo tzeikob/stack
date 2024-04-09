@@ -136,9 +136,9 @@ create_partitions () {
   log INFO 'Creating disk partitions...'
 
   if is_setting 'uefi_mode' 'yes'; then
-    create_gpt_partitions || fail
+    create_gpt_partitions || fail 'Failed to create GPT partitions'
   else
-    create_mbr_partitions || fail
+    create_mbr_partitions || fail 'Failed to create MBR partitions'
   fi
 
   log INFO 'Disk partitions have been created'

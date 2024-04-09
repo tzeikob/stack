@@ -16,7 +16,7 @@ install_compositor () {
 
   local config_home="/home/${user_name}/.config/picom"
 
-  mkdir -p "${config_home}" || fail
+  mkdir -p "${config_home}" || fail "Failed to create folder ${config_home}"
 
   cp /opt/stack/configs/picom/picom.conf "${config_home}" ||
     fail 'Failed to copy compositor config file'
@@ -36,7 +36,7 @@ install_window_manager () {
 
   local config_home="/home/${user_name}/.config/bspwm"
 
-  mkdir -p "${config_home}" || fail
+  mkdir -p "${config_home}" || fail "Failed to create folder ${config_home}"
 
   cp /opt/stack/configs/bspwm/bspwmrc "${config_home}" &&
     chmod 755 "${config_home}/bspwmrc" &&
@@ -65,7 +65,7 @@ install_status_bars () {
 
   local config_home="/home/${user_name}/.config/polybar"
 
-  mkdir -p "${config_home}" || fail
+  mkdir -p "${config_home}" || fail "Failed to create folder ${config_home}"
 
   cp /opt/stack/configs/polybar/config.ini "${config_home}" &&
     chmod 644 "${config_home}/config.ini" &&
@@ -423,7 +423,7 @@ install_monitoring_tools () {
 
   local desktop_home='/usr/local/share/applications'
 
-  sudo mkdir -p "${desktop_home}" || fail
+  sudo mkdir -p "${desktop_home}" || fail "Failed to create folder ${desktop_home}"
 
   local desktop_file="${desktop_home}/glances.desktop"
 
@@ -462,7 +462,7 @@ install_calculator () {
 
   local desktop_home='/usr/local/share/applications'
 
-  sudo mkdir -p "${desktop_home}" || fail
+  sudo mkdir -p "${desktop_home}" || fail "Failed to create folder ${desktop_home}"
 
   local desktop_file="${desktop_home}/qalculate.desktop"
 
@@ -537,7 +537,7 @@ install_music_player () {
 
   local desktop_home='/usr/local/share/applications'
 
-  sudo mkdir -p "${desktop_home}" || fail
+  sudo mkdir -p "${desktop_home}" || fail "Failed to create folder ${desktop_home}"
 
   local desktop_file="${desktop_home}/ncmpcpp.desktop"
 
@@ -657,7 +657,7 @@ install_theme () {
 
   config_home="/home/${user_name}/.config/stack"
 
-  mkdir -p "${config_home}" || fail
+  mkdir -p "${config_home}" || fail "Failed to create folder ${config_home}"
 
   local settings='{"wallpaper": {"name": "default.jpeg", "mode": "fill"}}'
 
@@ -696,10 +696,10 @@ install_fonts () {
 
   for font in "${fonts[@]}"; do
     local name=''
-    name="$(echo "${font}" | cut -d ' ' -f 1)" || fail
+    name="$(echo "${font}" | cut -d ' ' -f 1)" || fail 'Failed to read font name'
 
     local url=''
-    url="$(echo "${font}" | cut -d ' ' -f 2)" || fail
+    url="$(echo "${font}" | cut -d ' ' -f 2)" || fail 'Failed to read font URL'
 
     sudo curl "${url}" -sSLo "${fonts_home}/${name}.zip" \
       --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 2>&1 &&
