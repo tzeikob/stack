@@ -126,7 +126,7 @@ configure_pacman () {
 
   log INFO "GPG keyserver has been set to ${keyserver}"
 
-  local hooks_home=/etc/pacman.d/hooks
+  local hooks_home='/etc/pacman.d/hooks'
 
   mkdir -p "${hooks_home}" &&
     cp /opt/stack/configs/pacman/orphans.hook "${hooks_home}/01-orphans.hook" ||
