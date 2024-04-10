@@ -28,7 +28,7 @@ report () {
 
   if has_failed; then
     log ERROR 'Unable to read settings' >> "${log_file}"
-    log '\nA fatal error occurred, process exited!'
+    log '\nInstallation process exited'
     exit 1
   fi
 
@@ -45,7 +45,12 @@ run () {
 
   # Do not log while running the askme screens
   if equals "${file_name}" 'askme'; then
-    bash /opt/stack/scripts/askme.sh || exit 1
+    bash /opt/stack/scripts/askme.sh
+
+    if has_failed; then
+      log 'Installation process exited'
+      exit 1
+    fi
     
     echo
     return 0
@@ -68,8 +73,8 @@ run () {
       --bar-format "${BAR_FORMAT}" --total ${total} >> "${log_file}.tqdm"
 
   if has_failed; then
-    log ERROR "Script ${file_name}.sh failed, process exited!" >> "${log_file}"
-    log '\nA fatal error occurred, process exited!'
+    log ERROR "Script ${file_name}.sh failed, process exited" >> "${log_file}"
+    log '\nInstallation process exited'
     exit 1
   fi
 }
@@ -93,7 +98,7 @@ install () {
 
     if has_failed; then
       log ERROR 'Unable to read the user_name setting' >> "${log_file}"
-      log '\nA fatal error occurred, process exited!'
+      log '\nInstallation process exited'
       exit 1
     fi
   fi
@@ -115,8 +120,8 @@ install () {
       --bar-format "${BAR_FORMAT}" --total ${total} >> "${log_file}.tqdm"
   
   if has_failed; then
-    log ERROR "Script ${file_name}.sh failed, process exited!" >> "${log_file}"
-    log '\nA fatal error occurred, process exited!'
+    log ERROR "Script ${file_name}.sh failed, process exited" >> "${log_file}"
+    log '\nInstallation process exited'
     exit 1
   fi
 }
@@ -157,13 +162,20 @@ cat << EOF
 EOF
 
 log '\nWelcome to the Stack Linux installer.'
-log 'Base your development stack on Arch Linux!'
+log 'Base your development stack on Arch Linux'
 
 confirm 'Do you want to proceed?'
 
-if is_not_given "${REPLY}" || is_no "${REPLY}"; then
-  log 'Sure, maybe next time!'
-  exit 0
+if is_not_given "${REPLY}"; then
+  log '\nUser input is required'
+  log 'Installation process exited'
+  exit 1
+fi
+
+if is_no "${REPLY}"; then
+  log '\nSure, maybe next time'
+  log 'Installation process exited'
+  exit 1
 fi
 
 init &&
