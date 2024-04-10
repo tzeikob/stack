@@ -28,7 +28,7 @@ report () {
 
   if has_failed; then
     log ERROR 'Unable to read settings' >> "${log_file}"
-    log 'A fatal error occurred, process exited!'
+    log '\nA fatal error occurred, process exited!'
     exit 1
   fi
 
@@ -69,7 +69,7 @@ run () {
 
   if has_failed; then
     log ERROR "Script ${file_name}.sh failed, process exited!" >> "${log_file}"
-    log 'A fatal error occurred, process exited!'
+    log '\nA fatal error occurred, process exited!'
     exit 1
   fi
 }
@@ -93,7 +93,7 @@ install () {
 
     if has_failed; then
       log ERROR 'Unable to read the user_name setting' >> "${log_file}"
-      log 'A fatal error occurred, process exited!'
+      log '\nA fatal error occurred, process exited!'
       exit 1
     fi
   fi
@@ -116,7 +116,7 @@ install () {
   
   if has_failed; then
     log ERROR "Script ${file_name}.sh failed, process exited!" >> "${log_file}"
-    log 'A fatal error occurred, process exited!'
+    log '\nA fatal error occurred, process exited!'
     exit 1
   fi
 }

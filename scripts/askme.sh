@@ -43,7 +43,7 @@ select_disk () {
   fi
 
   pick_one 'Select the installation disk:' "${disks}" 'vertical'
-  is_not_given "${REPLY}" && log 'Installation has been canceled' && exit 1
+  is_not_given "${REPLY}" && log '\nInstallation has been canceled' && exit 1
 
   local disk="${REPLY}"
 
@@ -51,7 +51,7 @@ select_disk () {
   confirm 'Do you want to proceed with this disk?'
 
   if is_not_given "${REPLY}" || is_no "${REPLY}"; then
-    log 'Installation has been canceled'
+    log '\nInstallation has been canceled'
     exit 1
   fi
 
@@ -63,7 +63,7 @@ select_disk () {
 # Asks the user to enable or not the swap space.
 opt_in_swap_space () {
   confirm '\nDo you want to enable swap space?'
-  is_not_given "${REPLY}" && log 'Installation has been canceled' && exit 1
+  is_not_given "${REPLY}" && log '\nInstallation has been canceled' && exit 1
 
   if is_no "${REPLY}"; then
     save_setting 'swap_on' '"no"'
@@ -94,7 +94,7 @@ opt_in_swap_space () {
   swap_types="[${swap_types}]"
 
   pick_one 'Which type of swap to setup:' "${swap_types}" 'horizontal'
-  is_not_given "${REPLY}" && log 'Installation has been canceled' && exit 1
+  is_not_given "${REPLY}" && log '\nInstallation has been canceled' && exit 1
 
   local swap_type="${REPLY}"
 
@@ -125,7 +125,7 @@ select_mirrors () {
   mirrors="[${mirrors:+${mirrors::-1}}]"
 
   pick_many '\nSelect package databases mirrors:' "${mirrors}" 'vertical'
-  is_not_given "${REPLY}" && log 'Installation has been canceled' && exit 1
+  is_not_given "${REPLY}" && log '\nInstallation has been canceled' && exit 1
 
   mirrors="${REPLY}"
 
@@ -152,7 +152,7 @@ select_timezone () {
   timezones="[${timezones:+${timezones::-1}}]"
 
   pick_one '\nSelect the system timezone:' "${timezones}" 'vertical'
-  is_not_given "${REPLY}" && log 'Installation has been canceled' && exit 1
+  is_not_given "${REPLY}" && log '\nInstallation has been canceled' && exit 1
 
   local timezone="${REPLY}"
 
@@ -179,7 +179,7 @@ select_locales () {
   locales="[${locales:+${locales::-1}}]"
 
   pick_many '\nSelect system locales by order:' "${locales}" 'vertical'
-  is_not_given "${REPLY}" && log 'Installation has been canceled' && exit 1
+  is_not_given "${REPLY}" && log '\nInstallation has been canceled' && exit 1
 
   locales="${REPLY}"
 
@@ -206,7 +206,7 @@ select_keyboard_model () {
   models="[${models:+${models::-1}}]"
 
   pick_one '\nSelect a keyboard model:' "${models}" 'vertical'
-  is_not_given "${REPLY}" && log 'Installation has been canceled' && exit 1
+  is_not_given "${REPLY}" && log '\nInstallation has been canceled' && exit 1
 
   local keyboard_model="${REPLY}"
 
@@ -233,7 +233,7 @@ select_keyboard_map () {
   maps="[${maps:+${maps::-1}}]"
 
   pick_one '\nSelect a keyboard map:' "${maps}" 'vertical'
-  is_not_given "${REPLY}" && log 'Installation has been canceled' && exit 1
+  is_not_given "${REPLY}" && log '\nInstallation has been canceled' && exit 1
 
   local keyboard_map="${REPLY}"
 
@@ -260,7 +260,7 @@ select_keyboard_layout () {
   layouts="[${layouts:+${layouts::-1}}]"
 
   pick_one '\nSelect a keyboard layout:' "${layouts}" 'vertical'
-  is_not_given "${REPLY}" && log 'Installation has been canceled' && exit 1
+  is_not_given "${REPLY}" && log '\nInstallation has been canceled' && exit 1
 
   local keyboard_layout="${REPLY}"
 
@@ -282,7 +282,7 @@ select_keyboard_layout () {
   variants="[${variants:+${variants::-1}}]"
 
   pick_one "\nSelect a ${keyboard_layout} layout variant:" "${variants}" vertical || return $?
-  is_not_given "${REPLY}" && log 'Installation has been canceled' && exit 1
+  is_not_given "${REPLY}" && log '\nInstallation has been canceled' && exit 1
 
   local layout_variant="${REPLY}"
 
@@ -309,7 +309,7 @@ select_keyboard_options () {
   options="[${options:+${options::-1}}]"
 
   pick_one '\nSelect the keyboard options value:' "${options}" 'vertical'
-  is_not_given "${REPLY}" && log 'Installation has been canceled' && exit 1
+  is_not_given "${REPLY}" && log '\nInstallation has been canceled' && exit 1
 
   local keyboard_options="${REPLY}"
 
@@ -402,7 +402,7 @@ select_kernel () {
   kernels="[${kernels}]"
 
   pick_one '\nSelect which linux kernel to install:' "${kernels}" 'horizontal'
-  is_not_given "${REPLY}" && log 'Installation has been canceled' && exit 1
+  is_not_given "${REPLY}" && log '\nInstallation has been canceled' && exit 1
 
   local kernel="${REPLY}"
 
@@ -449,7 +449,7 @@ while true; do
     report
 
   confirm '\nDo you want to go with these settings?'
-  is_not_given "${REPLY}" && log 'Installation has been canceled' && exit 1
+  is_not_given "${REPLY}" && log '\nInstallation has been canceled' && exit 1
 
   if is_yes "${REPLY}"; then
     break
@@ -465,7 +465,7 @@ log 'ALL data in the disk will be LOST FOREVER!'
 confirm 'Do you want to proceed?'
 
 if is_not_given "${REPLY}" || is_no "${REPLY}"; then
-  log 'Installation has been canceled'
+  log '\nInstallation has been canceled'
   exit 1
 fi
 
