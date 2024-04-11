@@ -685,10 +685,10 @@ install_fonts () {
     "JetBrainsMono https://github.com/JetBrains/JetBrainsMono/releases/download/v2.242/JetBrainsMono-2.242.zip"
     "Mononoki https://github.com/madmalik/mononoki/releases/download/1.3/mononoki.zip"
     "VictorMono https://rubjo.github.io/victor-mono/VictorMonoAll.zip"
-    "Cousine https://fonts.google.com/download?family=Cousine"
-    "RobotoMono https://fonts.google.com/download?family=Roboto%20Mono"
-    "ShareTechMono https://fonts.google.com/download?family=Share%20Tech%20Mono"
-    "SpaceMono https://fonts.google.com/download?family=Space%20Mono"
+    "Cousine https://www.1001freefonts.com/d/5856/cousine.zip"
+    "RobotoMono https://www.1001freefonts.com/d/16849/roboto-mono.zip"
+    "ShareTechMono https://www.1001freefonts.com/d/5470/share-tech-mono.zip"
+    "SpaceMono https://www.1001freefonts.com/d/23872/space-mono.zip"
     "PixelMix https://dl.dafont.com/dl/?f=pixelmix"
   )
 
