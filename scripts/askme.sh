@@ -42,13 +42,13 @@ select_disk () {
     exit 1
   fi
 
-  pick_one 'Select the installation disk:' "${disks}" 'vertical'
+  pick_one 'Select the installation disk:' "${disks}" 'vertical' || exit 1
   is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
 
   local disk="${REPLY}"
 
   log "\nCAUTION, all data in \"${disk}\" will be lost!"
-  confirm 'Do you want to proceed with this disk?'
+  confirm 'Do you want to proceed with this disk?' || exit 1
 
   if is_not_given "${REPLY}"; then
     log '\nUser input is required'
@@ -67,7 +67,7 @@ select_disk () {
 
 # Asks the user to enable or not the swap space.
 opt_in_swap_space () {
-  confirm '\nDo you want to enable swap space?'
+  confirm '\nDo you want to enable swap space?' || exit 1
   is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
 
   if is_no "${REPLY}"; then
@@ -100,7 +100,7 @@ opt_in_swap_space () {
   swap_types+='{"key": "partition", "value":"Partition"}'
   swap_types="[${swap_types}]"
 
-  pick_one 'Which type of swap to setup:' "${swap_types}" 'horizontal'
+  pick_one 'Which type of swap to setup:' "${swap_types}" 'horizontal' || exit 1
   is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
 
   local swap_type="${REPLY}"
@@ -131,7 +131,7 @@ select_mirrors () {
   # Remove the extra comma from the last element
   mirrors="[${mirrors:+${mirrors::-1}}]"
 
-  pick_many '\nSelect package databases mirrors:' "${mirrors}" 'vertical'
+  pick_many '\nSelect package databases mirrors:' "${mirrors}" 'vertical' || exit 1
   is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
 
   mirrors="${REPLY}"
@@ -158,7 +158,7 @@ select_timezone () {
   # Remove the extra comma after the last array element
   timezones="[${timezones:+${timezones::-1}}]"
 
-  pick_one '\nSelect the system timezone:' "${timezones}" 'vertical'
+  pick_one '\nSelect the system timezone:' "${timezones}" 'vertical' || exit 1
   is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
 
   local timezone="${REPLY}"
@@ -185,7 +185,7 @@ select_locales () {
   # Removes the last comma delimiter from the last element
   locales="[${locales:+${locales::-1}}]"
 
-  pick_many '\nSelect system locales by order:' "${locales}" 'vertical'
+  pick_many '\nSelect system locales by order:' "${locales}" 'vertical' || exit 1
   is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
 
   locales="${REPLY}"
@@ -212,7 +212,7 @@ select_keyboard_model () {
   # Remove the extra comma delimiter from the last element
   models="[${models:+${models::-1}}]"
 
-  pick_one '\nSelect a keyboard model:' "${models}" 'vertical'
+  pick_one '\nSelect a keyboard model:' "${models}" 'vertical' || exit 1
   is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
 
   local keyboard_model="${REPLY}"
@@ -239,7 +239,7 @@ select_keyboard_map () {
   # Remove extra comma delimiter from the last element
   maps="[${maps:+${maps::-1}}]"
 
-  pick_one '\nSelect a keyboard map:' "${maps}" 'vertical'
+  pick_one '\nSelect a keyboard map:' "${maps}" 'vertical' || exit 1
   is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
 
   local keyboard_map="${REPLY}"
@@ -266,7 +266,7 @@ select_keyboard_layout () {
   # Remove the extra comma delimiter from last element
   layouts="[${layouts:+${layouts::-1}}]"
 
-  pick_one '\nSelect a keyboard layout:' "${layouts}" 'vertical'
+  pick_one '\nSelect a keyboard layout:' "${layouts}" 'vertical' || exit 1
   is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
 
   local keyboard_layout="${REPLY}"
@@ -288,7 +288,7 @@ select_keyboard_layout () {
   # Remove the extra comma delimiter from last element
   variants="[${variants:+${variants::-1}}]"
 
-  pick_one "\nSelect a ${keyboard_layout} layout variant:" "${variants}" vertical || return $?
+  pick_one "\nSelect a ${keyboard_layout} layout variant:" "${variants}" vertical || exit 1
   is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
 
   local layout_variant="${REPLY}"
@@ -315,7 +315,7 @@ select_keyboard_options () {
   # Remove extra comma delimiter from last element
   options="[${options:+${options::-1}}]"
 
-  pick_one '\nSelect the keyboard options value:' "${options}" 'vertical'
+  pick_one '\nSelect the keyboard options value:' "${options}" 'vertical' || exit 1
   is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
 
   local keyboard_options="${REPLY}"
@@ -420,7 +420,7 @@ select_kernel () {
   kernels+='{"key": "lts", "value": "LTS"}'
   kernels="[${kernels}]"
 
-  pick_one '\nSelect which linux kernel to install:' "${kernels}" 'horizontal'
+  pick_one '\nSelect which linux kernel to install:' "${kernels}" 'horizontal' || exit 1
   is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
 
   local kernel="${REPLY}"
@@ -467,7 +467,7 @@ while true; do
     select_kernel &&
     report
 
-  confirm '\nDo you want to go with these settings?'
+  confirm '\nDo you want to go with these settings?' || exit 1
   is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
 
   if is_yes "${REPLY}"; then
@@ -481,7 +481,7 @@ done
 log '\nCAUTION, THIS IS THE LAST WARNING!'
 log 'ALL data in the disk will be LOST FOREVER!'
 
-confirm 'Do you want to proceed?'
+confirm 'Do you want to proceed?' || exit 1
 
 if is_not_given "${REPLY}"; then
   log '\nUser input is required'
