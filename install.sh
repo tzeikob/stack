@@ -27,9 +27,9 @@ report () {
   settings="$(get_settings | jq "${query}")"
 
   if has_failed; then
-    log ERROR 'Unable to read settings' >> "${log_file}"
-    log '\nInstallation process exited'
-    exit 1
+    log ERROR 'Unable to read installation settings' >> "${log_file}"
+    log '\nUnable to read installation settings'
+    return 1
   fi
 
   log '\nInstallation properties have been set to:' > "${log_file}"
@@ -45,12 +45,7 @@ run () {
 
   # Do not log while running the askme screens
   if equals "${file_name}" 'askme'; then
-    bash /opt/stack/scripts/askme.sh
-
-    if has_failed; then
-      log 'Installation process exited'
-      exit 1
-    fi
+    bash /opt/stack/scripts/askme.sh || return 1
     
     echo
     return 0
@@ -74,8 +69,8 @@ run () {
 
   if has_failed; then
     log ERROR "Script ${file_name}.sh failed, process exited" >> "${log_file}"
-    log '\nInstallation process exited'
-    exit 1
+    log '\nA fatal error has been occurred'
+    return 1
   fi
 }
 
@@ -98,8 +93,8 @@ install () {
 
     if has_failed; then
       log ERROR 'Unable to read the user_name setting' >> "${log_file}"
-      log '\nInstallation process exited'
-      exit 1
+      log '\nUnable to read user_name setting'
+      return 1
     fi
   fi
 
@@ -121,8 +116,8 @@ install () {
   
   if has_failed; then
     log ERROR "Script ${file_name}.sh failed, process exited" >> "${log_file}"
-    log '\nInstallation process exited'
-    exit 1
+    log '\nA fatal error has been occurred'
+    return 1
   fi
 }
 
@@ -153,32 +148,32 @@ restart () {
   reboot
 }
 
-clear
+# Launch the welcome screen of the installer.
+welcome () {
+  clear
 
-cat << EOF
-░░░█▀▀░▀█▀░█▀█░█▀▀░█░█░░░
-░░░▀▀█░░█░░█▀█░█░░░█▀▄░░░
-░░░▀▀▀░░▀░░▀░▀░▀▀▀░▀░▀░░░
-EOF
+  log '░░░█▀▀░▀█▀░█▀█░█▀▀░█░█░░░'
+  log '░░░▀▀█░░█░░█▀█░█░░░█▀▄░░░'
+  log '░░░▀▀▀░░▀░░▀░▀░▀▀▀░▀░▀░░░'
 
-log '\nWelcome to the Stack Linux installer.'
-log 'Base your development stack on Arch Linux'
+  log '\nWelcome to the Stack Linux installer.'
+  log 'Base your development stack on Arch Linux'
 
-confirm 'Do you want to proceed?'
+  confirm 'Do you want to proceed?' || return 1
 
-if is_not_given "${REPLY}"; then
-  log '\nUser input is required'
-  log 'Installation process exited'
-  exit 1
-fi
+  if is_not_given "${REPLY}"; then
+    log 'User input is required'
+    return 1
+  fi
 
-if is_no "${REPLY}"; then
-  log '\nSure, maybe next time'
-  log 'Installation process exited'
-  exit 1
-fi
+  if is_no "${REPLY}"; then
+    log 'Sure, maybe next time'
+    return 1
+  fi
+}
 
 init &&
+  welcome &&
   run askme &&
   run detection &&
   report &&
@@ -190,3 +185,8 @@ init &&
   install tools &&
   run cleaner &&
   restart
+
+if has_failed; then
+  log 'Installation process exited!'
+  exit 1
+fi

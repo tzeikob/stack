@@ -18,7 +18,7 @@ select_disk () {
   )"
 
   if has_failed; then
-    log '\nUnable to list disk block devices'
+    log 'Unable to list disk block devices'
     exit 1
   fi
 
@@ -38,12 +38,12 @@ select_disk () {
   )"
 
   if has_failed; then
-    log '\nFailed to parse disks data'
+    log 'Failed to parse disks data'
     exit 1
   fi
 
   pick_one 'Select the installation disk:' "${disks}" 'vertical' || exit 1
-  is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
+  is_not_given "${REPLY}" && log 'User input is required' && exit 1
 
   local disk="${REPLY}"
 
@@ -51,12 +51,11 @@ select_disk () {
   confirm 'Do you want to proceed with this disk?' || exit 1
 
   if is_not_given "${REPLY}"; then
-    log '\nUser input is required'
+    log 'User input is required'
     exit 1
   fi
 
   if is_no "${REPLY}"; then
-    log '\nCanceling installation process...'
     exit 1
   fi
 
@@ -68,7 +67,7 @@ select_disk () {
 # Asks the user to enable or not the swap space.
 opt_in_swap_space () {
   confirm '\nDo you want to enable swap space?' || exit 1
-  is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
+  is_not_given "${REPLY}" && log 'User input is required' && exit 1
 
   if is_no "${REPLY}"; then
     save_setting 'swap_on' '"no"'
@@ -82,11 +81,11 @@ opt_in_swap_space () {
   log 'Swap is set to yes'
 
   ask 'Enter the size of the swap space in GBs:'
-  is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
+  is_not_given "${REPLY}" && log 'User input is required' && exit 1
 
   while is_not_integer "${REPLY}" '[1,]'; do
     ask 'Please enter a valid swap space size in GBs:'
-    is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
+    is_not_given "${REPLY}" && log 'User input is required' && exit 1
   done
 
   local swap_size="${REPLY}"
@@ -101,7 +100,7 @@ opt_in_swap_space () {
   swap_types="[${swap_types}]"
 
   pick_one 'Which type of swap to setup:' "${swap_types}" 'horizontal' || exit 1
-  is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
+  is_not_given "${REPLY}" && log 'User input is required' && exit 1
 
   local swap_type="${REPLY}"
 
@@ -124,7 +123,7 @@ select_mirrors () {
   )"
   
   if has_failed; then
-    log '\nUnable to fetch package databases mirrors'
+    log 'Unable to fetch package databases mirrors'
     exit 1
   fi
 
@@ -132,7 +131,7 @@ select_mirrors () {
   mirrors="[${mirrors:+${mirrors::-1}}]"
 
   pick_many '\nSelect package databases mirrors:' "${mirrors}" 'vertical' || exit 1
-  is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
+  is_not_given "${REPLY}" && log 'User input is required' && exit 1
 
   mirrors="${REPLY}"
 
@@ -151,7 +150,7 @@ select_timezone () {
   )"
   
   if has_failed; then
-    log '\nUnable to list timezones'
+    log 'Unable to list timezones'
     exit 1
   fi
 
@@ -159,7 +158,7 @@ select_timezone () {
   timezones="[${timezones:+${timezones::-1}}]"
 
   pick_one '\nSelect the system timezone:' "${timezones}" 'vertical' || exit 1
-  is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
+  is_not_given "${REPLY}" && log 'User input is required' && exit 1
 
   local timezone="${REPLY}"
 
@@ -178,7 +177,7 @@ select_locales () {
   )"
   
   if has_failed; then
-    log '\nUnable to list the locales'
+    log 'Unable to list the locales'
     exit 1
   fi
   
@@ -186,7 +185,7 @@ select_locales () {
   locales="[${locales:+${locales::-1}}]"
 
   pick_many '\nSelect system locales by order:' "${locales}" 'vertical' || exit 1
-  is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
+  is_not_given "${REPLY}" && log 'User input is required' && exit 1
 
   locales="${REPLY}"
 
@@ -205,7 +204,7 @@ select_keyboard_model () {
   )"
   
   if has_failed; then
-    log '\nUnable to list keyboard models'
+    log 'Unable to list keyboard models'
     exit 1
   fi
 
@@ -213,7 +212,7 @@ select_keyboard_model () {
   models="[${models:+${models::-1}}]"
 
   pick_one '\nSelect a keyboard model:' "${models}" 'vertical' || exit 1
-  is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
+  is_not_given "${REPLY}" && log 'User input is required' && exit 1
 
   local keyboard_model="${REPLY}"
 
@@ -232,7 +231,7 @@ select_keyboard_map () {
   )"
   
   if has_failed; then
-    log '\nUnable to list keyboard maps'
+    log 'Unable to list keyboard maps'
     exit 1
   fi
   
@@ -240,7 +239,7 @@ select_keyboard_map () {
   maps="[${maps:+${maps::-1}}]"
 
   pick_one '\nSelect a keyboard map:' "${maps}" 'vertical' || exit 1
-  is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
+  is_not_given "${REPLY}" && log 'User input is required' && exit 1
 
   local keyboard_map="${REPLY}"
 
@@ -259,7 +258,7 @@ select_keyboard_layout () {
   )"
   
   if has_failed; then
-    log '\nUnable to list keyboard layouts'
+    log 'Unable to list keyboard layouts'
     exit 1
   fi
   
@@ -267,7 +266,7 @@ select_keyboard_layout () {
   layouts="[${layouts:+${layouts::-1}}]"
 
   pick_one '\nSelect a keyboard layout:' "${layouts}" 'vertical' || exit 1
-  is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
+  is_not_given "${REPLY}" && log 'User input is required' && exit 1
 
   local keyboard_layout="${REPLY}"
 
@@ -281,7 +280,7 @@ select_keyboard_layout () {
   )"
   
   if has_failed; then
-    log '\nUnable to list layout variants'
+    log 'Unable to list layout variants'
     exit 1
   fi
   
@@ -289,7 +288,7 @@ select_keyboard_layout () {
   variants="[${variants:+${variants::-1}}]"
 
   pick_one "\nSelect a ${keyboard_layout} layout variant:" "${variants}" vertical || exit 1
-  is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
+  is_not_given "${REPLY}" && log 'User input is required' && exit 1
 
   local layout_variant="${REPLY}"
 
@@ -308,7 +307,7 @@ select_keyboard_options () {
   )"
   
   if has_failed; then
-    log '\nUnable to list keyboard options'
+    log 'Unable to list keyboard options'
     exit 1
   fi
 
@@ -316,7 +315,7 @@ select_keyboard_options () {
   options="[${options:+${options::-1}}]"
 
   pick_one '\nSelect the keyboard options value:' "${options}" 'vertical' || exit 1
-  is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
+  is_not_given "${REPLY}" && log 'User input is required' && exit 1
 
   local keyboard_options="${REPLY}"
 
@@ -329,11 +328,11 @@ select_keyboard_options () {
 enter_host_name () {
   echo ''
   ask 'Enter the name of the host:'
-  is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
+  is_not_given "${REPLY}" && log 'User input is required' && exit 1
 
   while not_match "${REPLY}" '^[a-z][a-z0-9_-]+$'; do
     ask 'Please enter a valid host name:'
-    is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
+    is_not_given "${REPLY}" && log 'User input is required' && exit 1
   done
 
   local host_name="${REPLY}"
@@ -347,11 +346,11 @@ enter_host_name () {
 enter_user_name () {
   echo ''
   ask 'Enter the name of the user:'
-  is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
+  is_not_given "${REPLY}" && log 'User input is required' && exit 1
 
   while not_match "${REPLY}" '^[a-z][a-z0-9_-]+$'; do
     ask 'Please enter a valid user name:'
-    is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
+    is_not_given "${REPLY}" && log 'User input is required' && exit 1
   done
 
   local user_name="${REPLY}"
@@ -365,21 +364,21 @@ enter_user_name () {
 enter_user_password () {
   echo ''
   ask_secret 'Enter the user password:'
-  is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
+  is_not_given "${REPLY}" && log 'User input is required' && exit 1
 
   while not_match "${REPLY}" '^[a-zA-Z0-9@&!#%\$_-]{4,}$'; do
     ask_secret 'Please enter a stronger user password:'
-    is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
+    is_not_given "${REPLY}" && log 'User input is required' && exit 1
   done
 
   local password="${REPLY}"
 
   ask_secret 'Re-type the given password:'
-  is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
+  is_not_given "${REPLY}" && log 'User input is required' && exit 1
 
   while not_equals "${REPLY}" "${password}"; do
     ask_secret 'Not matched, please re-type the given password:'
-    is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
+    is_not_given "${REPLY}" && log 'User input is required' && exit 1
   done
 
   save_setting 'user_password' "\"${password}\""
@@ -391,21 +390,21 @@ enter_user_password () {
 enter_root_password () {
   echo ''
   ask_secret 'Enter the root password:'
-  is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
+  is_not_given "${REPLY}" && log 'User input is required' && exit 1
 
   while not_match "${REPLY}" '^[a-zA-Z0-9@&!#%\$_-]{4,}$'; do
     ask_secret 'Please enter a stronger root password:'
-    is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
+    is_not_given "${REPLY}" && log 'User input is required' && exit 1
   done
 
   local password="${REPLY}"
 
   ask_secret 'Re-type the given password:'
-  is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
+  is_not_given "${REPLY}" && log 'User input is required' && exit 1
 
   while not_equals "${REPLY}" "${password}"; do
     ask_secret 'Not matched, please re-type the given password:'
-    is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
+    is_not_given "${REPLY}" && log 'User input is required' && exit 1
   done
 
   save_setting 'root_password' "\"${password}\""
@@ -421,7 +420,7 @@ select_kernel () {
   kernels="[${kernels}]"
 
   pick_one '\nSelect which linux kernel to install:' "${kernels}" 'horizontal' || exit 1
-  is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
+  is_not_given "${REPLY}" && log 'User input is required' && exit 1
 
   local kernel="${REPLY}"
 
@@ -439,15 +438,13 @@ report () {
   settings="$(get_settings | jq "${query}")"
   
   if has_failed; then
-    log '\nUnable to read settings'
+    log 'Unable to read settings'
     exit 1
   fi
 
   log '\nInstallation properties have been set to:'
   log "${settings}"
 }
-
-log "\nLet's set some installation properties..."
 
 while true; do
   init_settings &&
@@ -468,14 +465,13 @@ while true; do
     report
 
   confirm '\nDo you want to go with these settings?' || exit 1
-  is_not_given "${REPLY}" && log '\nUser input is required' && exit 1
+  is_not_given "${REPLY}" && log 'User input is required' && exit 1
 
   if is_yes "${REPLY}"; then
     break
   fi
 
   clear
-  log "Let's set other installation properties..."
 done
 
 log '\nCAUTION, THIS IS THE LAST WARNING!'
@@ -484,12 +480,11 @@ log 'ALL data in the disk will be LOST FOREVER!'
 confirm 'Do you want to proceed?' || exit 1
 
 if is_not_given "${REPLY}"; then
-  log '\nUser input is required'
+  log 'User input is required'
   exit 1
 fi
 
 if is_no "${REPLY}"; then
-  log '\nCanceling installation process...'
   exit 1
 fi
 
