@@ -28,8 +28,7 @@ report () {
 
   if has_failed; then
     log ERROR 'Unable to read installation settings' >> "${log_file}"
-    log '\nUnable to read installation settings'
-    return 1
+    abort 'Unable to read installation settings'
   fi
 
   log '\nInstallation properties have been set to:' > "${log_file}"
@@ -46,7 +45,7 @@ run () {
   # Do not log while running the askme screens
   if equals "${file_name}" 'askme'; then
     bash /opt/stack/scripts/askme.sh || return 1
-    
+
     echo
     return 0
   fi
@@ -69,8 +68,7 @@ run () {
 
   if has_failed; then
     log ERROR "Script ${file_name}.sh failed, process exited" >> "${log_file}"
-    log '\nA fatal error has been occurred'
-    return 1
+    abort 'A fatal error has been occurred'
   fi
 }
 
@@ -93,8 +91,7 @@ install () {
 
     if has_failed; then
       log ERROR 'Unable to read the user_name setting' >> "${log_file}"
-      log '\nUnable to read user_name setting'
-      return 1
+      abort 'Unable to read user_name setting'
     fi
   fi
 
@@ -116,8 +113,7 @@ install () {
   
   if has_failed; then
     log ERROR "Script ${file_name}.sh failed, process exited" >> "${log_file}"
-    log '\nA fatal error has been occurred'
-    return 1
+    abort 'A fatal error has been occurred'
   fi
 }
 
@@ -159,16 +155,14 @@ welcome () {
   log '\nWelcome to the Stack Linux installer.'
   log 'Base your development stack on Arch Linux'
 
-  confirm 'Do you want to proceed?' || return 1
+  confirm 'Do you want to proceed?' || abort
 
   if is_not_given "${REPLY}"; then
-    log 'User input is required'
-    return 1
+    abort 'User input is required'
   fi
 
   if is_no "${REPLY}"; then
-    log 'Sure, maybe next time'
-    return 1
+    abort 'Sure, maybe next time'
   fi
 }
 
@@ -186,7 +180,3 @@ init &&
   run cleaner &&
   restart
 
-if has_failed; then
-  log 'Installation process exited!'
-  exit 1
-fi

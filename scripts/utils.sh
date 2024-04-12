@@ -8,6 +8,25 @@ KVS=$'▒'
 
 SETTINGS_FILE='/opt/stack/.settings'
 
+# Aborts the current process print the given error message.
+# Arguments:
+#  message: an error message to print
+# Outputs:
+#  An error messsage.
+abort () {
+  local message="${1}"
+
+  local output='Installation process exited!'
+
+  if is_given "${message}"; then
+    output="${message}\n${output}"
+  fi
+
+  log "\n${output}"
+
+  exit 1
+}
+
 # Prints the given log message prefixed with the given log level.
 # No arguments means nothing to log into the console.
 # Arguments:
@@ -167,6 +186,9 @@ trim () {
 # Outputs:
 #  A prompt text line.
 ask () {
+  # Trap ctrl-c abort signals for read cmd
+  trap "echo; return 1" SIGINT INT
+
   local prompt="${1}"
 
   REPLY=''
@@ -180,10 +202,13 @@ ask () {
 # Outputs:
 #  A prompt text line.
 ask_secret () {
+  # Trap ctrl-c abort signals for read cmd
+  trap "echo; return 1" SIGINT INT
+
   local prompt="${1}"
 
   REPLY=''
-  read -srep "${prompt} " REPLY
+  read -sp "${prompt} " REPLY
 }
 
 # Shows a Yes/No menu and asks user to select an option,
