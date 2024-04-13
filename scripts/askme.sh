@@ -355,7 +355,7 @@ enter_user_password () {
   ask_secret 'Enter the user password:' || abort
   is_not_given "${REPLY}" && abort '\nUser input is required'
 
-  while not_match "${REPLY}" '^[a-zA-Z0-9@&!#%\$_-]{4,}$'; do
+  while not_match "${REPLY}" '^[a-zA-Z0-9@&!#%\$\?_-]{4,}$'; do
     echo ''
     ask_secret 'Please enter a stronger user password:' || abort
     is_not_given "${REPLY}" && abort '\nUser input is required'
@@ -375,7 +375,7 @@ enter_user_password () {
 
   save_setting 'user_password' "\"${password}\""
 
-  log 'User password is set successfully'
+  log '\nUser password is set successfully'
 }
 
 # Asks the user to set the password of the root user.
@@ -384,7 +384,7 @@ enter_root_password () {
   ask_secret 'Enter the root password:' || abort
   is_not_given "${REPLY}" && abort '\nUser input is required'
 
-  while not_match "${REPLY}" '^[a-zA-Z0-9@&!#%\$_-]{4,}$'; do
+  while not_match "${REPLY}" '^[a-zA-Z0-9@&!#%\$\?_-]{4,}$'; do
     echo ''
     ask_secret 'Please enter a stronger root password:' || abort
     is_not_given "${REPLY}" && abort '\nUser input is required'
@@ -404,7 +404,7 @@ enter_root_password () {
 
   save_setting 'root_password' "\"${password}\""
 
-  log 'Root password is set successfully'
+  log '\nRoot password is set successfully'
 }
 
 # Asks the user which linux kernel to install.
