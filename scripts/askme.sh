@@ -356,16 +356,19 @@ enter_user_password () {
   is_not_given "${REPLY}" && abort '\nUser input is required'
 
   while not_match "${REPLY}" '^[a-zA-Z0-9@&!#%\$_-]{4,}$'; do
+    echo ''
     ask_secret 'Please enter a stronger user password:' || abort
     is_not_given "${REPLY}" && abort '\nUser input is required'
   done
 
   local password="${REPLY}"
 
+  echo ''
   ask_secret 'Re-type the given password:' || abort
   is_not_given "${REPLY}" && abort '\nUser input is required'
 
   while not_equals "${REPLY}" "${password}"; do
+    echo ''
     ask_secret 'Not matched, please re-type the given password:' || abort
     is_not_given "${REPLY}" && abort '\nUser input is required'
   done
@@ -382,16 +385,19 @@ enter_root_password () {
   is_not_given "${REPLY}" && abort '\nUser input is required'
 
   while not_match "${REPLY}" '^[a-zA-Z0-9@&!#%\$_-]{4,}$'; do
+    echo ''
     ask_secret 'Please enter a stronger root password:' || abort
     is_not_given "${REPLY}" && abort '\nUser input is required'
   done
 
   local password="${REPLY}"
 
+  echo ''
   ask_secret 'Re-type the given password:' || abort
   is_not_given "${REPLY}" && abort '\nUser input is required'
 
   while not_equals "${REPLY}" "${password}"; do
+    echo ''
     ask_secret 'Not matched, please re-type the given password:' || abort
     is_not_given "${REPLY}" && abort '\nUser input is required'
   done
