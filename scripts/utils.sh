@@ -50,13 +50,22 @@ abort () {
     message="${1}"
   fi
 
-  local output='Installation process exited!'
-
+  # If level is given script is logging, otherwise screen is logging
   if is_given "${message}"; then
-    output="${message}\n${output}"
+    if is_given "${level}"; then
+      log "${level}" "${message}"
+      log "${level}" 'Installation process exited!'
+    else
+      log "\n${message}"
+      log 'Installation process exited!'
+    fi
+  else
+    if is_given "${level}"; then
+      log "${level}" 'Installation process exited!'
+    else
+      log '\nInstallation process exited!'
+    fi
   fi
-
-  log "${level}" "\n${output}"
 
   exit 1
 }

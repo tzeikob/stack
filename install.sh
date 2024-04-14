@@ -67,7 +67,7 @@ run () {
       --bar-format "${BAR_FORMAT}" --total ${total} >> "${log_file}.tqdm"
 
   if has_failed; then
-    log ERROR "Script ${file_name}.sh failed, process exited" >> "${log_file}"
+    log ERROR "Script ${file_name}.sh has been failed" >> "${log_file}"
     abort 'A fatal error has been occurred'
   fi
 }
@@ -112,7 +112,7 @@ install () {
       --bar-format "${BAR_FORMAT}" --total ${total} >> "${log_file}.tqdm"
   
   if has_failed; then
-    log ERROR "Script ${file_name}.sh failed, process exited" >> "${log_file}"
+    log ERROR "Script ${file_name}.sh has been failed" >> "${log_file}"
     abort 'A fatal error has been occurred'
   fi
 }
