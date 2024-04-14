@@ -39,7 +39,7 @@ resolve_cpu () {
   local cpu_data=''
   cpu_data="$(
     lscpu 2>&1
-  )" || fail 'Unable to read CPU data'
+  )" || abort ERROR 'Unable to read CPU data'
 
   local cpu_vendor='generic'
 
@@ -59,7 +59,7 @@ resolve_gpu () {
   local gpu_data=''
   gpu_data="$(
     lspci 2>&1
-  )" || fail 'Unable to read GPU data'
+  )" || abort ERROR 'Unable to read GPU data'
 
   local gpu_vendor='generic'
 
@@ -81,12 +81,12 @@ resolve_gpu () {
 # Resolves if the installation disk supports TRIM.
 is_disk_trimmable () {
   local disk=''
-  disk="$(get_setting 'disk')" || fail 'Unable to read disk setting'
+  disk="$(get_setting 'disk')" || abort ERROR 'Unable to read disk setting'
 
   local discards=''
   discards="$(
     lsblk -dn --discard -o DISC-GRAN,DISC-MAX "${disk}" 2>&1
-  )" || fail 'Unable to list disk block devices'
+  )" || abort ERROR 'Unable to list disk block devices'
 
   local trim_disk='no'
 
@@ -118,7 +118,7 @@ resolve () {
   # Read the current progress as the number of log lines
   local lines=0
   lines=$(cat /var/log/stack/detection.log | wc -l) ||
-    fail 'Unable to read the current log lines'
+    abort ERROR 'Unable to read the current log lines'
 
   local total=15
 

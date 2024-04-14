@@ -196,7 +196,7 @@ install_virtual_box () {
   log INFO 'Installing the virtual box...'
 
   local kernel=''
-  kernel="$(get_setting 'kernel')" || fail 'Unable to read kernel setting'
+  kernel="$(get_setting 'kernel')" || abort ERROR 'Unable to read kernel setting'
 
   local pckgs='virtualbox virtualbox-guest-iso'
 
@@ -214,7 +214,7 @@ install_virtual_box () {
   fi
 
   local user_name=''
-  user_name="$(get_setting 'user_name')" || fail 'Unable to read user_name setting'
+  user_name="$(get_setting 'user_name')" || abort ERROR 'Unable to read user_name setting'
 
   sudo usermod -aG vboxusers "${user_name}" 2>&1 &&
     log INFO 'User added to the vboxusers user group' ||
@@ -272,7 +272,7 @@ install_foliate () {
   fi
 
   local user_name=''
-  user_name="$(get_setting 'user_name')" || fail 'Unable to read user_name setting'
+  user_name="$(get_setting 'user_name')" || abort ERROR 'Unable to read user_name setting'
 
   local config_home="/home/${user_name}/.config"
 
@@ -304,7 +304,7 @@ resolve () {
   # Read the current progress as the number of log lines
   local lines=0
   lines=$(cat /var/log/stack/tools.log | wc -l) ||
-    fail 'Unable to read the current log lines'
+    abort ERROR 'Unable to read the current log lines'
 
   local total=1900
 
@@ -327,7 +327,7 @@ log INFO 'Script tools.sh started'
 log INFO 'Installing some extra tools...'
 
 if equals "$(id -u)" 0; then
-  fail 'Script tools.sh must be run as non root user'
+  abort ERROR 'Script tools.sh must be run as non root user'
 fi
 
 install_chrome &&

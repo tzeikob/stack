@@ -8,36 +8,17 @@ KVS=$'▒'
 
 SETTINGS_FILE='/opt/stack/.settings'
 
-# Aborts the current process print the given error message.
-# Arguments:
-#  message: an error message to print
-# Outputs:
-#  An error messsage.
-abort () {
-  local message="${1}"
-
-  local output='Installation process exited!'
-
-  if is_given "${message}"; then
-    output="${message}\n${output}"
-  fi
-
-  log "\n${output}"
-
-  exit 1
-}
-
 # Prints the given log message prefixed with the given log level.
-# No arguments means nothing to log into the console.
+# No arguments means nothing to log on to the console.
 # Arguments:
-#  level:   optionally on of INFO, WARN, ERROR
+#  level:   optionally one of INFO, WARN, ERROR
 #  message: a optional message to show
 # Outputs:
-#  Prints the message in <level> <message> form.
+#  Prints the message in [<level>] <message> form.
 log () {
   local level message
 
-  if [[ $# -eq 2 ]]; then
+  if [[ $# -ge 2 ]]; then
     level="${1}"
     message="${2}"
   elif [[ $# -eq 1 ]]; then
@@ -53,16 +34,29 @@ log () {
   fi
 }
 
-# Prints the given error message and exits
-# the process immediately with status code 1.
+# Aborts the current process logging the given error message.
 # Arguments:
-#  message: an optional message to show
+#  level:   optionally one of INFO, WARN, ERROR
+#  message: an error message to print
 # Outputs:
-#  The given error message.
-fail () {
-  local message="${1:-"A fatal error has been occurred"}"
+#  An error messsage.
+abort () {
+  local level message
 
-  log ERROR "${message}"
+  if [[ $# -ge 2 ]]; then
+    level="${1}"
+    message="${2}"
+  elif [[ $# -eq 1 ]]; then
+    message="${1}"
+  fi
+
+  local output='Installation process exited!'
+
+  if is_given "${message}"; then
+    output="${message}\n${output}"
+  fi
+
+  log "${level}" "\n${output}"
 
   exit 1
 }

@@ -9,7 +9,7 @@ install_node () {
   log INFO 'Installing the node runtime engine...'
 
   local user_name=''
-  user_name="$(get_setting 'user_name')" || fail 'Unable to read user_name setting'
+  user_name="$(get_setting 'user_name')" || abort ERROR 'Unable to read user_name setting'
 
   local nvm_home="/home/${user_name}/.nvm"
 
@@ -139,7 +139,7 @@ install_docker () {
     log WARN 'Failed to enable docker service'
 
   local user_name=''
-  user_name="$(get_setting 'user_name')" || fail 'Unable to read user_name setting'
+  user_name="$(get_setting 'user_name')" || abort ERROR 'Unable to read user_name setting'
 
   sudo usermod -aG docker "${user_name}" 2>&1 &&
     log INFO 'User added to the docker user group' ||
@@ -154,7 +154,7 @@ resolve () {
   # Read the current progress as the number of log lines
   local lines=0
   lines=$(cat /var/log/stack/stack.log | wc -l) ||
-    fail 'Unable to read the current log lines'
+    abort ERROR 'Unable to read the current log lines'
 
   local total=270
 
@@ -177,7 +177,7 @@ log INFO 'Script stack.sh started'
 log INFO 'Installing the developemnt stack...'
 
 if equals "$(id -u)" 0; then
-  fail 'Script stack.sh must be run as non root user'
+  abort ERROR 'Script stack.sh must be run as non root user'
 fi
 
 install_node &&

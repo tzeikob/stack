@@ -42,7 +42,7 @@ resolve () {
   # Read the current progress as the number of log lines
   local lines=0
   lines=$(cat /var/log/stack/cleaner.log | wc -l) ||
-    fail 'Unable to read the current log lines'
+    abort ERROR 'Unable to read the current log lines'
 
   local total=12
 
