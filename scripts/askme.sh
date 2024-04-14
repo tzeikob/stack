@@ -351,8 +351,8 @@ enter_user_name () {
 
 # Asks the user to set the password of the sudoer user.
 enter_user_password () {
-  echo ''
-  ask_secret 'Enter the user password:' || abort
+  log '\nPassword valid chars: a-z A-Z 0-9 `~!@#$%^&*()=+{};:",.<>/?_-'
+  ask_secret 'Enter the user password (at least 4 chars):' || abort
   is_not_given "${REPLY}" && abort '\nUser input is required'
 
   while not_match "${REPLY}" '^[a-zA-Z0-9`~!@#\$%^&*()=+{};:",.<>/\?_-]{4,}$'; do
@@ -380,8 +380,8 @@ enter_user_password () {
 
 # Asks the user to set the password of the root user.
 enter_root_password () {
-  echo ''
-  ask_secret 'Enter the root password:' || abort
+  log '\nPassword valid chars: a-z A-Z 0-9 `~!@#$%^&*()=+{};:",.<>/?_-'
+  ask_secret 'Enter the root password (at least 4 chars):' || abort
   is_not_given "${REPLY}" && abort '\nUser input is required'
 
   while not_match "${REPLY}" '^[a-zA-Z0-9`~!@#\$%^&*()=+{};:",.<>/\?_-]{4,}$'; do

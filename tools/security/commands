@@ -160,7 +160,8 @@ lock_screen () {
 set_user_password () {
   authenticate_user || return $?
 
-  ask_secret 'Enter new password:' || return $?
+  log 'Password valid chars: a-z A-Z 0-9 `~!@#$%^&*()=+{};:",.<>/?_-'
+  ask_secret 'Enter new password (at least 4 chars):' || return $?
   is_empty "${REPLY}" && echo 'New password cannot be blank' && return 2
   
   while not_match "${REPLY}" '^[a-zA-Z0-9`~!@#\$%^&*()=+{};:",.<>/\?_-]{4,}$'; do
