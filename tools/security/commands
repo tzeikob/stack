@@ -163,8 +163,8 @@ set_user_password () {
   ask_secret 'Enter new password:' || return $?
   is_empty "${REPLY}" && echo 'New password cannot be blank' && return 2
   
-  while not_match "${REPLY}" '^[a-zA-Z0-9@&!#%\$\?_-]{4,}$'; do
-    ask_secret 'Please enter a stronger user password:' || return $?
+  while not_match "${REPLY}" '^[a-zA-Z0-9`~!@#\$%^&*()=+{};:",.<>/\?_-]{4,}$'; do
+    ask_secret 'Please enter a valid password:' || return $?
     is_empty "${REPLY}" && echo 'New password cannot be blank' && return 2
   done
 

@@ -355,9 +355,9 @@ enter_user_password () {
   ask_secret 'Enter the user password:' || abort
   is_not_given "${REPLY}" && abort '\nUser input is required'
 
-  while not_match "${REPLY}" '^[a-zA-Z0-9@&!#%\$\?_-]{4,}$'; do
+  while not_match "${REPLY}" '^[a-zA-Z0-9`~!@#\$%^&*()=+{};:",.<>/\?_-]{4,}$'; do
     echo ''
-    ask_secret 'Please enter a stronger user password:' || abort
+    ask_secret 'Please enter a valid password:' || abort
     is_not_given "${REPLY}" && abort '\nUser input is required'
   done
 
@@ -384,9 +384,9 @@ enter_root_password () {
   ask_secret 'Enter the root password:' || abort
   is_not_given "${REPLY}" && abort '\nUser input is required'
 
-  while not_match "${REPLY}" '^[a-zA-Z0-9@&!#%\$\?_-]{4,}$'; do
+  while not_match "${REPLY}" '^[a-zA-Z0-9`~!@#\$%^&*()=+{};:",.<>/\?_-]{4,}$'; do
     echo ''
-    ask_secret 'Please enter a stronger root password:' || abort
+    ask_secret 'Please enter a valid password:' || abort
     is_not_given "${REPLY}" && abort '\nUser input is required'
   done
 
