@@ -670,12 +670,12 @@ install_theme () {
 
 # Installs extras system fonts.
 install_fonts () {
-  log INFO 'Installing extra fonts...'
-
   local fonts_home='/usr/share/fonts/extra-fonts'
 
   sudo mkdir -p "${fonts_home}" ||
     abort ERROR 'Failed to create fonts home directory'
+
+  log INFO 'Installing extra fonts...'
 
   local fonts=(
     "FiraCode https://github.com/tonsky/FiraCode/releases/download/6.2/Fira_Code_v6.2.zip"
@@ -685,10 +685,6 @@ install_fonts () {
     "JetBrainsMono https://github.com/JetBrains/JetBrainsMono/releases/download/v2.242/JetBrainsMono-2.242.zip"
     "Mononoki https://github.com/madmalik/mononoki/releases/download/1.3/mononoki.zip"
     "VictorMono https://rubjo.github.io/victor-mono/VictorMonoAll.zip"
-    "Cousine https://www.1001freefonts.com/d/5856/cousine.zip"
-    "RobotoMono https://www.1001freefonts.com/d/16849/roboto-mono.zip"
-    "ShareTechMono https://www.1001freefonts.com/d/5470/share-tech-mono.zip"
-    "SpaceMono https://www.1001freefonts.com/d/23872/space-mono.zip"
     "PixelMix https://dl.dafont.com/dl/?f=pixelmix"
   )
 
@@ -710,6 +706,15 @@ install_fonts () {
 
     log INFO "Font ${name} has been installed"
   done
+
+  log INFO 'Installing google fonts...'
+
+  git clone https://github.com/google/fonts.git /tmp/google-fonts 2>&1  &&
+    cp -r /tmp/google-fonts/apache/cousine "${fonts_home}" &&
+    cp -r /tmp/google-fonts/apache/robotomono "${fonts_home}" &&
+    cp -r /tmp/google-fonts/ofl/sharetechmono "${fonts_home}" &&
+    cp -r /tmp/google-fonts/ofl/spacemono "${fonts_home}" ||
+    abort ERROR 'Failed to install google fonts'
 
   log INFO 'Updating the fonts cache...'
 
