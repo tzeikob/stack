@@ -709,12 +709,14 @@ install_fonts () {
 
   log INFO 'Installing google fonts...'
 
-  git clone https://github.com/google/fonts.git /tmp/google-fonts 2>&1  &&
-    cp -r /tmp/google-fonts/apache/cousine "${fonts_home}" &&
-    cp -r /tmp/google-fonts/apache/robotomono "${fonts_home}" &&
-    cp -r /tmp/google-fonts/ofl/sharetechmono "${fonts_home}" &&
-    cp -r /tmp/google-fonts/ofl/spacemono "${fonts_home}" ||
+  git clone --filter=blob:none --sparse https://github.com/google/fonts.git google-fonts 2>&1 &&
+    cd google-fonts &&
+    git sparse-checkout add apache/cousine apache/robotomono ofl/sharetechmono ofl/spacemono 2>&1 &&
+    sudo cp -r apache/cousine apache/robotomono ofl/sharetechmono ofl/spacemono "${fonts_home}" &&
+    cd .. && rm -rf google-fonts ||
     abort ERROR 'Failed to install google fonts'
+  
+  log 'Google fonts have been installed'
 
   log INFO 'Updating the fonts cache...'
 
