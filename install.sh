@@ -52,19 +52,32 @@ run () {
   fi
 
   local total=0
+  local desc=''
 
   case "${file_name}" in
-    'detection') total=15;;
-    'diskpart') total=90;;
-    'bootstrap') total=660;;
-    'cleaner') total=12;;
+    'detection')
+      total=15
+      desc='Detection'
+      ;;
+    'diskpart')
+      total=90
+      desc='Partition'
+      ;;
+    'bootstrap')
+      total=660
+      desc='Bootstrap'
+      ;;
+    'cleaner')
+      total=12
+      desc='Cleanup'
+      ;;
   esac
   
   local log_file="/var/log/stack/${file_name}.log"
 
   bash "/opt/stack/scripts/${file_name}.sh" 2>&1 |
     tee -a "${log_file}" 2>&1 |
-    tqdm --desc "${file_name^}:" --ncols 80 \
+    tqdm --desc "${desc^}:" --ncols 50 \
       --bar-format "${BAR_FORMAT}" --total ${total} >> "${log_file}.tqdm"
 
   if has_failed; then
@@ -97,19 +110,32 @@ install () {
   fi
 
   local total=0
+  local desc=''
 
   case "${file_name}" in
-    'system') total=2060;;
-    'desktop') total=2750;;
-    'stack') total=270;;
-    'tools') total=1900;;
+    'system')
+      total=2060
+      desc='System'
+      ;;
+    'desktop')
+      total=2750
+      desc='Desktop'
+      ;;
+    'stack')
+      total=270
+      desc='Stack'
+      ;;
+    'tools')
+      total=1900
+      desc='Tools'
+      ;;
   esac
 
   local script_file="/opt/stack/scripts/${file_name}.sh"
 
   arch-chroot /mnt runuser -u "${user_name}" -- "${script_file}" 2>&1 |
     tee -a "${log_file}" 2>&1 |
-    tqdm --desc "${file_name^}:" --ncols 80 \
+    tqdm --desc "${desc^}:" --ncols 50 \
       --bar-format "${BAR_FORMAT}" --total ${total} >> "${log_file}.tqdm"
   
   if has_failed; then
