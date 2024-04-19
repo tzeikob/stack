@@ -285,6 +285,32 @@ add_packages () {
   echo -e 'All packages added into the package list'
 }
 
+# Patch various packages.
+patch_packages () {
+  if [[ ! -d "${ROOT_FS}" ]]; then
+    echo -e 'Unable to locate the airootfs folder'
+    return 1
+  fi
+
+  # Override tqdm executable in /usr/bin to swallow error output
+  mkdir -p "${ROOT_FS}/usr/local/bin" || return 1
+
+  printf '%s\n' \
+    '#!/usr/bin/python' \
+    '# -*- coding: utf-8 -*-' \
+    'import re' \
+    'import sys' \
+    'from tqdm.cli import main' \
+    'if __name__ == "__main__":' \
+    '    try:' \
+    '        sys.argv[0] = re.sub(r"(-script\.pyw|\.exe)?$", "", sys.argv[0])' \
+    '        sys.exit(main())' \
+    '    except KeyboardInterrupt:' \
+    '        sys.exit(1)' > "${ROOT_FS}/usr/local/bin/tqdm" || return 1
+  
+  echo -e 'Package tqdm has been patched'
+}
+
 # Builds and adds the AUR packages into the packages list
 # via a local custom repo.
 add_aur_packages () {
@@ -1048,6 +1074,7 @@ set_file_permissions () {
     '0:0:755,/root/.config/dunst/hook'
     '0:0:664,/root/.config/stack/'
     '0:0:755,/opt/tools/'
+    '0:0:755,/usr/local/bin/tqdm'
   )
 
   local def=''
@@ -1087,6 +1114,7 @@ init &&
   rename_distro &&
   setup_boot_loaders &&
   add_packages &&
+  patch_packages &&
   add_aur_packages &&
   copy_installer &&
   copy_settings_tools &&
