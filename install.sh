@@ -2,7 +2,7 @@
 
 set -Eeo pipefail
 
-BAR_FORMAT='{desc:10}  {percentage:3.0f}%|{bar}|{elapsed:8}'
+BAR_FORMAT='{desc:10}  {percentage:3.0f}%|{bar}|ET-{elapsed}'
 
 source /opt/stack/scripts/utils.sh
 
