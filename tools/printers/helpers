@@ -230,7 +230,7 @@ pick_printer () {
   len="$(count "${destinations}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No printers have found'
+    echo 'No printers have found.'
     return 2
   fi
 
@@ -252,7 +252,7 @@ pick_uri () {
   destinations="$(discover_destinations | jq -cer "${query}")"
 
   if has_failed; then
-    echo 'Unable to discover print destinations'
+    echo 'Unable to discover print destinations.'
     return 2
   fi
 
@@ -260,7 +260,7 @@ pick_uri () {
   len="$(count "${destinations}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No print uri destinations discovered'
+    echo 'No print uri destinations discovered.'
     return 2
   fi
 
@@ -325,7 +325,7 @@ pick_driver () {
   len="$(count "${drivers}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No drivers have found'
+    echo 'No drivers have found.'
     return 2
   fi
 
@@ -346,7 +346,7 @@ pick_job () {
   len="$(count "${jobs}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No print jobs have found'
+    echo 'No print jobs have found.'
     return 2
   fi
 

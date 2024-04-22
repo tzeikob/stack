@@ -44,21 +44,21 @@ set_ntp () {
   local status="${1}"
 
   if is_not_given "${status}"; then
-    echo 'Missing the status mode'
+    echo 'Missing the status mode.'
     return 2
   elif is_not_toggle "${status}"; then
-    echo 'Invalid or unknown status mode'
+    echo 'Invalid or unknown status mode.'
     return 2
   fi
 
   sudo timedatectl set-ntp "${status}"
 
   if has_failed; then
-    echo "Failed to set NTP to ${status}"
+    echo "Failed to set NTP to ${status}."
     return 2
   fi
 
-  echo "NTP has been set to ${status}"
+  echo "NTP has been set to ${status}."
 }
 
 # Sets the timezone to the given region.
@@ -71,26 +71,26 @@ set_timezone () {
 
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing the timezone' && return 2
+      echo 'Missing the timezone.' && return 2
 
     pick_timezone 'Select timezone:' || return $?
-    is_empty "${REPLY}" && echo 'Timezone is required' && return 2
+    is_empty "${REPLY}" && echo 'Timezone is required.' && return 2
     name="${REPLY}"
   fi
 
   if is_not_timezone "${name}"; then
-    echo 'Invalid or unknown timezone value'
+    echo 'Invalid or unknown timezone value.'
     return 2
   fi
 
   sudo timedatectl set-timezone "${name}"
 
   if has_failed; then
-    echo 'Failed to set the timezone'
+    echo 'Failed to set the timezone.'
     return 2
   fi
   
-  echo "Timezone set to ${name}"
+  echo "Timezone set to ${name}."
 }
 
 # Sets the system time to the given hours and minutes.
@@ -102,21 +102,21 @@ set_time () {
   local time="${1}"
 
   if is_not_given "${time}"; then
-    echo 'Missing the time'
+    echo 'Missing the time.'
     return 2
   elif is_not_time "${time}"; then
-    echo 'Invalid or malformed time'
+    echo 'Invalid or malformed time.'
     return 2
   fi
 
   sudo timedatectl set-time "${time}"
 
   if has_failed; then
-    echo 'Failed to set the time'
+    echo 'Failed to set the time.'
     return 2
   fi
 
-  echo "Time set to ${time}"
+  echo "Time set to ${time}."
 }
 
 # Sets the system date to the given day, month and year.
@@ -128,10 +128,10 @@ set_date () {
   local date="${1}"
 
   if is_not_given "${date}"; then
-    echo 'Missing the date'
+    echo 'Missing the date.'
     return 2
   elif is_not_date "${date}"; then
-    echo 'Invalid or malformed date'
+    echo 'Invalid or malformed date.'
     return 2
   fi
 
@@ -140,11 +140,11 @@ set_date () {
   sudo timedatectl set-time "${date} ${time}"
 
   if has_failed; then
-    echo 'Failed to set the date'
+    echo 'Failed to set the date.'
     return 2
   fi
 
-  echo "Date set to ${date}"
+  echo "Date set to ${date}."
 }
 
 # Sets the hardware clock to local or UTC time.
@@ -156,10 +156,10 @@ set_rtc () {
   local mode="${1}"
 
   if is_not_given "${mode}"; then
-    echo 'Missing the rtc mode'
+    echo 'Missing the rtc mode.'
     return 2
   elif is_not_rtc_mode "${mode}"; then
-    echo 'Invalid or unknwon rtc mode'
+    echo 'Invalid or unknwon rtc mode.'
     return 2
   fi
 
@@ -170,11 +170,11 @@ set_rtc () {
   fi
 
   if has_failed; then
-    echo 'Failed to set hardware clock'
+    echo 'Failed to set hardware clock.'
     return 2
   fi
 
-  echo "Hardware clock set to ${mode} time"
+  echo "Hardware clock set to ${mode} time."
 }
 
 # Synchronizes the hardware clock from the system clock.
@@ -184,11 +184,11 @@ sync_rtc () {
   sudo hwclock --systohc --utc
 
   if has_failed; then
-    echo 'Failed to sync hardware clock'
+    echo 'Failed to sync hardware clock.'
     return 2
   fi
 
-  echo 'Hardware clock synced to system clock'
+  echo 'Hardware clock synced to system clock.'
 }
 
 # Sets the time format of the clock that is displayed
@@ -201,18 +201,18 @@ format_time () {
   local precision="${2}"
   
   if is_not_given "${mode}"; then
-    echo 'Time mode is required'
+    echo 'Time mode is required.'
     return 2
   elif is_not_time_mode "${mode}"; then
-    echo 'Invalid or unknown time mode'
+    echo 'Invalid or unknown time mode.'
     return 2
   fi
 
   if is_not_given "${precision}"; then
-    echo 'Time precision is required'
+    echo 'Time precision is required.'
     return 2
   elif is_not_time_precision "${precision}"; then
-    echo 'Invalid or unknown time precision'
+    echo 'Invalid or unknown time precision.'
     return 2
   fi
 
@@ -221,11 +221,11 @@ format_time () {
    desktop -qs init bars &> /dev/null
 
   if has_failed; then
-    echo 'Failed to set time format'
+    echo 'Failed to set time format.'
     return 2
   fi
 
-  echo "Time format set to ${mode} mode and ${precision} precision"
+  echo "Time format set to ${mode} mode and ${precision} precision."
 }
 
 # Sets the format of the date that is displayed
@@ -236,7 +236,7 @@ format_date () {
   local pattern="${1}"
   
   if is_not_given "${pattern}"; then
-    echo 'Date pattern is required'
+    echo 'Date pattern is required.'
     return 2
   fi
 
@@ -245,10 +245,10 @@ format_date () {
    desktop -qs init bars &> /dev/null
 
   if has_failed; then
-    echo 'Failed to set date format'
+    echo 'Failed to set date format.'
     return 2
   fi
 
-  echo "Date format set to $(date "+${pattern}")"
+  echo "Date format set to $(date "+${pattern}")."
 }
 

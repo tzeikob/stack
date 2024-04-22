@@ -9,26 +9,26 @@ sync_clock () {
   log INFO 'Updating the system clock...'
 
   local timezone=''
-  timezone="$(get_setting 'timezone')" || abort ERROR 'Unable to read timezone setting'
+  timezone="$(get_setting 'timezone')" || abort ERROR 'Unable to read timezone setting.'
 
   timedatectl set-timezone "${timezone}" 2>&1 ||
-    abort ERROR 'Unable to set timezone'
+    abort ERROR 'Unable to set timezone.'
 
-  log INFO "Timezone has been set to ${timezone}"
+  log INFO "Timezone has been set to ${timezone}."
 
   timedatectl set-ntp true 2>&1 ||
-    abort ERROR 'Failed to enable NTP mode'
+    abort ERROR 'Failed to enable NTP mode.'
 
-  log INFO 'NTP mode has been enabled'
+  log INFO 'NTP mode has been enabled.'
 
   while timedatectl status 2>&1 | grep -q 'System clock synchronized: no'; do
     sleep 1
   done
 
   timedatectl status 2>&1 ||
-    abort ERROR 'Failed to show system time status'
+    abort ERROR 'Failed to show system time status.'
 
-  log INFO 'System clock has been updated'
+  log INFO 'System clock has been updated.'
 }
 
 # Sets the pacman mirrors list.
@@ -37,13 +37,13 @@ set_mirrors () {
 
   local mirrors=''
   mirrors="$(get_setting 'mirrors' | jq -cer 'join(",")')" ||
-    abort ERROR 'Unable to read mirrors setting'
+    abort ERROR 'Unable to read mirrors setting.'
 
   reflector --country "${mirrors}" \
     --age 48 --sort age --latest 40 --save /etc/pacman.d/mirrorlist 2>&1 ||
-    abort ERROR 'Failed to fetch package databases mirrors'
+    abort ERROR 'Failed to fetch package databases mirrors.'
 
-  log INFO "Package databases mirrors set to ${mirrors}"
+  log INFO "Package databases mirrors set to ${mirrors}."
 }
 
 # Synchronizes package databases with the master.
@@ -53,28 +53,28 @@ sync_package_databases () {
   local lock_file='/var/lib/pacman/db.lck'
 
   if file_exists "${lock_file}"; then
-    log WARN 'Package databases seem to be locked'
+    log WARN 'Package databases seem to be locked.'
 
     rm -f "${lock_file}" ||
-      abort ERROR "Unable to remove the lock file ${lock_file}"
+      abort ERROR "Unable to remove the lock file ${lock_file}."
 
-    log INFO "Lock file ${lock_file} has been removed"
+    log INFO "Lock file ${lock_file} has been removed."
   fi
 
   local keyserver='hkp://keyserver.ubuntu.com'
 
   echo "keyserver ${keyserver}" >> /etc/pacman.d/gnupg/gpg.conf ||
-    abort ERROR 'Failed to add the GPG keyserver'
+    abort ERROR 'Failed to add the GPG keyserver.'
 
-  log INFO "GPG keyserver has been set to ${keyserver}"
+  log INFO "GPG keyserver has been set to ${keyserver}."
 
   sed -i 's/^#ParallelDownloads/ParallelDownloads/' /etc/pacman.conf ||
-    abort ERROR 'Failed to enable parallel downloads'
+    abort ERROR 'Failed to enable parallel downloads.'
 
   pacman -Syy 2>&1 ||
-    abort ERROR 'Failed to synchronize package databases'
+    abort ERROR 'Failed to synchronize package databases.'
 
-  log INFO 'Package databases synchronized to the master'
+  log INFO 'Package databases synchronized to the master.'
 }
 
 # Updates the keyring package.
@@ -82,9 +82,9 @@ update_keyring () {
   log INFO 'Updating the archlinux keyring...'
 
   pacman -Sy --needed --noconfirm archlinux-keyring 2>&1 ||
-    abort ERROR 'Failed to update keyring'
+    abort ERROR 'Failed to update keyring.'
 
-  log INFO 'Keyring has been updated successfully'
+  log INFO 'Keyring has been updated successfully.'
 }
 
 # Installs the linux kernel.
@@ -92,7 +92,7 @@ install_kernel () {
   log INFO 'Installing the linux kernel...'
 
   local kernel=''
-  kernel="$(get_setting 'kernel')" || abort ERROR 'Unable to read kernel setting'
+  kernel="$(get_setting 'kernel')" || abort ERROR 'Unable to read kernel setting.'
 
   local pckgs=''
 
@@ -103,13 +103,13 @@ install_kernel () {
   fi
 
   if is_empty "${pckgs}"; then
-    abort ERROR 'No linux kernel packages set for installation'
+    abort ERROR 'No linux kernel packages set for installation.'
   fi
 
   pacstrap /mnt base ${pckgs} linux-firmware archlinux-keyring reflector rsync sudo jq 2>&1 ||
-    abort ERROR 'Failed to pacstrap kernel and base packages'
+    abort ERROR 'Failed to pacstrap kernel and base packages.'
 
-  log INFO 'Linux kernel has been installed'
+  log INFO 'Linux kernel has been installed.'
 }
 
 # Adds various extra sudoers rules.
@@ -127,7 +127,7 @@ add_sudoers_rules () {
   echo "${proxy_rule}" > /mnt/etc/sudoers.d/proxy_rules
   chmod 440 /mnt/etc/sudoers.d/proxy_rules
 
-  log INFO 'Proxy rules have been added to sudoers'
+  log INFO 'Proxy rules have been added to sudoers.'
 }
 
 # Grants the nopasswd permission to the wheel user group.
@@ -135,13 +135,13 @@ grant_permissions () {
   local rule='%wheel ALL=(ALL:ALL) NOPASSWD: ALL'
 
   sed -i "s/^# \(${rule}\)/\1/" /mnt/etc/sudoers ||
-    abort ERROR 'Failed to grant nopasswd permission'
+    abort ERROR 'Failed to grant nopasswd permission.'
 
   if ! grep -q "^${rule}" /mnt/etc/sudoers; then
-    abort ERROR 'Failed to grant nopasswd permission'
+    abort ERROR 'Failed to grant nopasswd permission.'
   fi
 
-  log INFO 'Sudoer nopasswd permission has been granted'
+  log INFO 'Sudoer nopasswd permission has been granted.'
 }
 
 # Copies the installation to the new system.
@@ -149,22 +149,22 @@ copy_installation_files () {
   log INFO 'Copying installation files...'
 
   cp -r /opt/stack /mnt/opt ||
-    abort ERROR 'Unable to copy installation files to /mnt/opt'
+    abort ERROR 'Unable to copy installation files to /mnt/opt.'
 
   cp /etc/stack-release /mnt/etc/stack-release &&
     cat /usr/lib/os-release > /mnt/usr/lib/os-release &&
     rm -f /mnt/etc/arch-release ||
-    abort ERROR 'Unable to copy the os release meta files'
+    abort ERROR 'Unable to copy the os release meta files.'
   
   cp -r /etc/pacman.d/scripts /mnt/etc/pacman.d &&
     mkdir -p /mnt/etc/pacman.d/hooks &&
     cp /etc/pacman.d/hooks/90-fix-release.hook /mnt/etc/pacman.d/hooks ||
-    abort ERROR 'Unable to copy fix release pacman hook'
+    abort ERROR 'Unable to copy fix release pacman hook.'
 
   mkdir -p /mnt/var/log/stack ||
-    abort ERROR 'Failed to create logs home under /mnt/var/log/stack'
+    abort ERROR 'Failed to create logs home under /mnt/var/log/stack.'
 
-  log INFO 'Installation files copied to /mnt/opt'
+  log INFO 'Installation files copied to /mnt/opt.'
 }
 
 # Resolves the installaction script by addressing
@@ -173,7 +173,7 @@ resolve () {
   # Read the current progress as the number of log lines
   local lines=0
   lines=$(cat /var/log/stack/bootstrap.log | wc -l) ||
-    abort ERROR 'Unable to read the current log lines'
+    abort ERROR 'Unable to read the current log lines.'
 
   local total=660
 
@@ -192,7 +192,7 @@ resolve () {
   return 0
 }
 
-log INFO 'Script bootstrap.sh started'
+log INFO 'Script bootstrap.sh started.'
 log INFO 'Starting the bootstrap process...'
 
 sync_clock &&
@@ -204,6 +204,6 @@ sync_clock &&
   grant_permissions &&
   copy_installation_files
 
-log INFO 'Script bootstrap.sh has finished'
+log INFO 'Script bootstrap.sh has finished.'
 
 resolve && sleep 3

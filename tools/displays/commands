@@ -30,7 +30,7 @@ show_status () {
   }'
 
   if has_failed; then
-    echo 'Unable to read xdpy info'
+    echo 'Unable to read xdpy info.'
     return 2
   fi
 
@@ -71,7 +71,7 @@ show_status () {
   find_outputs active | jq -cer --argjson c "${colors}" "${query}"
 
   if has_failed; then
-    echo 'Unable to read active outputs'
+    echo 'Unable to read active outputs.'
     return 2
   fi
 }
@@ -85,7 +85,7 @@ show_logs () {
   local lines="${1}"
 
   if is_given "${lines}" && is_not_integer "${lines}" '[0,]'; then
-    echo 'Invalid lines value'
+    echo 'Invalid lines value.'
     return 2
   fi
 
@@ -93,7 +93,7 @@ show_logs () {
   local log_file="${HOME}/.local/share/xorg/Xorg.${id}.log"
 
   if file_not_exists "${log_file}"; then
-    echo 'Unable to locate xorg log file'
+    echo 'Unable to locate xorg log file.'
     return 2
   fi
 
@@ -114,10 +114,10 @@ show_output () {
 
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing the output name' && return 2
+      echo 'Missing the output name.' && return 2
 
     pick_output 'Select an output name:' || return $?
-    is_empty "${REPLY}" && echo 'Output name is required' && return 2
+    is_empty "${REPLY}" && echo 'Output name is required.' && return 2
     name="${REPLY}"
   fi
 
@@ -182,7 +182,7 @@ show_output () {
   find_outputs | jq -cer --argjson c "${colors}" "${query}"
 
   if has_failed; then
-    echo "Output ${name} not found"
+    echo "Output ${name} not found."
     return 2
   fi
 }
@@ -196,7 +196,7 @@ list_outputs () {
   local status="${1}"
 
   if is_given "${status}" && is_not_output_status "${status}"; then
-    echo 'Invalid or unknown status'
+    echo 'Invalid or unknown status.'
     return 2
   fi
 
@@ -213,7 +213,7 @@ list_outputs () {
   outputs="$(find_outputs "${status}" | jq -cr "${query}")" || return 1
 
   if is_empty "${outputs}"; then
-    echo "No ${status:-\b} outputs have found"
+    echo "No ${status:-\b} outputs have found."
     return 0
   fi
 
@@ -233,10 +233,10 @@ set_mode () {
 
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing the output name' && return 2
+      echo 'Missing the output name.' && return 2
 
     pick_output 'Select an output name:' active || return $?
-    is_empty "${REPLY}" && echo 'Output name is required' && return 2
+    is_empty "${REPLY}" && echo 'Output name is required.' && return 2
     name="${REPLY}"
   fi
 
@@ -244,60 +244,60 @@ set_mode () {
   output="$(find_output "${name}")"
 
   if has_failed; then
-    echo "Output ${name} not found"
+    echo "Output ${name} not found."
     return 2
   fi
   
   if is_not_connected "${output}"; then
-    echo "Output ${name} is disconnected"
+    echo "Output ${name} is disconnected."
     return 2
   elif is_not_active "${output}"; then
-    echo "Output ${name} is inactive"
+    echo "Output ${name} is inactive."
     return 2
   fi
 
   if is_not_given "${resolution}"; then
     on_script_mode &&
-      echo 'Missing the resolution' && return 2
+      echo 'Missing the resolution.' && return 2
 
     pick_resolution "${output}" || return $?
-    is_empty "${REPLY}" && echo 'Resolution is required' && return 2
+    is_empty "${REPLY}" && echo 'Resolution is required.' && return 2
     resolution="${REPLY}"
   fi
   
   if is_not_resolution "${resolution}"; then
-    echo 'Invalid resolution'
+    echo 'Invalid resolution.'
     return 2
   elif has_no_resolution "${output}" "${resolution}"; then
-    echo "Resolution ${resolution} is not supported"
+    echo "Resolution ${resolution} is not supported."
     return 2
   fi
 
   if is_not_given "${rate}"; then
     on_script_mode &&
-      echo 'Missing the refresh rate' && return 2
+      echo 'Missing the refresh rate.' && return 2
 
     pick_rate "${output}" "${resolution}" || return $?
-    is_empty "${REPLY}" && echo 'Refresh rate is required' && return 2
+    is_empty "${REPLY}" && echo 'Refresh rate is required.' && return 2
     rate="${REPLY}"
   fi
   
   if is_not_rate "${rate}"; then
-    echo 'Invalid refresh rate'
+    echo 'Invalid refresh rate.'
     return 2
   elif has_no_rate "${output}" "${resolution}" "${rate}"; then
-    echo "Refresh rate ${rate} is not supported"
+    echo "Refresh rate ${rate} is not supported."
     return 2
   fi
 
   xrandr --output "${name}" --mode "${resolution}" --rate "${rate}"
 
   if has_failed; then
-    echo 'Failed to set output mode'
+    echo 'Failed to set output mode.'
     return 2
   fi
 
-  echo "Output ${name} mode set to ${resolution}@${rate}"
+  echo "Output ${name} mode set to ${resolution}@${rate}."
 }
 
 # Sets the output with the given name as primary.
@@ -308,10 +308,10 @@ set_primary () {
 
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing the output name' && return 2
+      echo 'Missing the output name.' && return 2
 
     pick_output 'Select an output name:' active || return $?
-    is_empty "${REPLY}" && echo 'Output name is required' && return 2
+    is_empty "${REPLY}" && echo 'Output name is required.' && return 2
     name="${REPLY}"
   fi
 
@@ -319,25 +319,25 @@ set_primary () {
   output="$(find_output "${name}")"
 
   if has_failed; then
-    echo "Output ${name} not found"
+    echo "Output ${name} not found."
     return 2
   fi
   
   if is_not_connected "${output}"; then
-    echo "Output ${name} is disconnected"
+    echo "Output ${name} is disconnected."
     return 2
   elif is_not_active "${output}"; then
-    echo "Output ${name} is inactive"
+    echo "Output ${name} is inactive."
     return 2
   elif is_primary "${output}"; then
-    echo "Output ${name} is already primary"
+    echo "Output ${name} is already primary."
     return 2
   fi
 
   xrandr --output "${name}" --primary
 
   if has_failed; then
-    echo 'Failed to set as primary output'
+    echo 'Failed to set as primary output.'
     return 2
   fi
 
@@ -345,10 +345,10 @@ set_primary () {
   desktop -qs restart &> /dev/null
 
   if has_failed; then
-    echo 'Failed to reload desktop'
+    echo 'Failed to reload desktop.'
   fi
   
-  echo "Output ${name} set as primary"
+  echo "Output ${name} set as primary."
 }
 
 # Sets the output with the given name on.
@@ -359,10 +359,10 @@ set_on () {
 
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing the output name' && return 2
+      echo 'Missing the output name.' && return 2
 
     pick_output 'Select an output name:' inactive || return $?
-    is_empty "${REPLY}" && echo 'Output name is required' && return 2
+    is_empty "${REPLY}" && echo 'Output name is required.' && return 2
     name="${REPLY}"
   fi
 
@@ -370,15 +370,15 @@ set_on () {
   output="$(find_output "${name}")"
 
   if has_failed; then
-    echo "Output ${name} not found"
+    echo "Output ${name} not found."
     return 2
   fi
   
   if is_not_connected "${output}"; then
-    echo "Output ${name} is disconnected"
+    echo "Output ${name} is disconnected."
     return 2
   elif is_active "${output}"; then
-    echo "Output ${name} is already active"
+    echo "Output ${name} is already active."
     return 2
   fi
 
@@ -397,7 +397,7 @@ set_on () {
   fi
 
   if has_failed; then
-    echo 'Failed to activate output'
+    echo 'Failed to activate output.'
     return 2
   fi
 
@@ -406,10 +406,10 @@ set_on () {
     desktop -qs init bars &> /dev/null
 
   if has_failed; then
-    echo 'Failed to reload desktop'
+    echo 'Failed to reload desktop.'
   fi
   
-  echo "Output ${name} has been activated"
+  echo "Output ${name} has been activated."
 }
 
 # Sets the output with the given name off.
@@ -420,10 +420,10 @@ set_off () {
 
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing the output name' && return 2
+      echo 'Missing the output name.' && return 2
 
     pick_output 'Select an output name:' active || return $?
-    is_empty "${REPLY}" && echo 'Output name is required' && return 2
+    is_empty "${REPLY}" && echo 'Output name is required.' && return 2
     name="${REPLY}"
   fi
 
@@ -431,25 +431,25 @@ set_off () {
   output="$(find_output "${name}")"
 
   if has_failed; then
-    echo "Output ${name} not found"
+    echo "Output ${name} not found."
     return 2
   fi
   
   if is_not_connected "${output}"; then
-    echo "Output ${name} is disconnected"
+    echo "Output ${name} is disconnected."
     return 2
   elif is_not_active "${output}"; then
-    echo "Output ${name} is already inactive"
+    echo "Output ${name} is already inactive."
     return 2
   elif is_primary "${output}"; then
-    echo 'Cannot deactivate the primary output'
+    echo 'Cannot deactivate the primary output.'
     return 2
   fi
 
   xrandr --output "${name}" --off
 
   if has_failed; then
-    echo 'Failed to deactivate output'
+    echo 'Failed to deactivate output.'
     return 2
   fi
 
@@ -460,10 +460,10 @@ set_off () {
   desktop -qs fix workspaces &> /dev/null
 
   if has_failed; then
-    echo 'Failed to fix desktop workspaces'
+    echo 'Failed to fix desktop workspaces.'
   fi
   
-  echo "Output ${name} has been deactivated"
+  echo "Output ${name} has been deactivated."
 }
 
 # Sets the reflection of the output with the given name.
@@ -476,10 +476,10 @@ reflect_output () {
   
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing the output name' && return 2
+      echo 'Missing the output name.' && return 2
 
     pick_output 'Select an output name:' active || return $?
-    is_empty "${REPLY}" && echo 'Output name is required' && return 2
+    is_empty "${REPLY}" && echo 'Output name is required.' && return 2
     name="${REPLY}"
   fi
 
@@ -487,40 +487,40 @@ reflect_output () {
   output="$(find_output "${name}")"
 
   if has_failed; then
-    echo "Output ${name} not found"
+    echo "Output ${name} not found."
     return 2
   fi
   
   if is_not_connected "${output}"; then
-    echo "Output ${name} is disconnected"
+    echo "Output ${name} is disconnected."
     return 2
   elif is_not_active "${output}"; then
-    echo "Output ${name} is inactive"
+    echo "Output ${name} is inactive."
     return 2
   fi
 
   if is_not_given "${mode}"; then
     on_script_mode &&
-      echo 'Missing the reflection mode' && return 2
+      echo 'Missing the reflection mode.' && return 2
 
     pick_reflection_mode || return $?
-    is_empty "${REPLY}" && echo 'Reflection mode is required' && return 2
+    is_empty "${REPLY}" && echo 'Reflection mode is required.' && return 2
     mode="${REPLY}"
   fi
   
   if is_not_reflection_mode "${mode}"; then
-    echo 'Invalid reflection mode'
+    echo 'Invalid reflection mode.'
     return 2
   fi
 
   xrandr --output "${name}" --reflect "${mode}"
     
   if has_failed; then
-    echo 'Failed to reflect output'
+    echo 'Failed to reflect output.'
     return 2
   fi
 
-  echo "Reflection of output ${name} set to ${mode}"
+  echo "Reflection of output ${name} set to ${mode}."
 }
 
 # Sets the rotation of the output with the given name.
@@ -533,10 +533,10 @@ rotate_output () {
 
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing the output name' && return 2
+      echo 'Missing the output name.' && return 2
 
     pick_output 'Select an output name:' active || return $?
-    is_empty "${REPLY}" && echo 'Output name is required' && return 2
+    is_empty "${REPLY}" && echo 'Output name is required.' && return 2
     name="${REPLY}"
   fi
 
@@ -544,40 +544,40 @@ rotate_output () {
   output="$(find_output "${name}")"
 
   if has_failed; then
-    echo "Output ${name} not found"
+    echo "Output ${name} not found."
     return 2
   fi
   
   if is_not_connected "${output}"; then
-    echo "Output ${name} is disconnected"
+    echo "Output ${name} is disconnected."
     return 2
   elif is_not_active "${output}"; then
-    echo "Output ${name} is inactive"
+    echo "Output ${name} is inactive."
     return 2
   fi
 
   if is_not_given "${mode}"; then
     on_script_mode &&
-      echo 'Missing the rotation mode' && return 2
+      echo 'Missing the rotation mode.' && return 2
 
     pick_rotation_mode || return $?
-    is_empty "${REPLY}" && echo 'Rotation mode is required' && return 2
+    is_empty "${REPLY}" && echo 'Rotation mode is required.' && return 2
     mode="${REPLY}"
   fi
   
   if is_not_rotation_mode "${mode}"; then
-    echo 'Invalid rotation mode'
+    echo 'Invalid rotation mode.'
     return 2
   fi
 
   xrandr --output "${name}" --rotate "${mode}"
     
   if has_failed; then
-    echo 'Failed to rotate output'
+    echo 'Failed to rotate output.'
     return 2
   fi
   
-  echo "Rotation of output ${name} set to ${mode}"
+  echo "Rotation of output ${name} set to ${mode}."
 }
 
 # Mirrors the output with the given name to the target outputs,
@@ -598,16 +598,16 @@ mirror_output () {
   len="$(find_outputs active | jq -cer 'length')" || return 1
 
   if is_true "${len} < 2"; then
-    echo 'No other active outputs found'
+    echo 'No other active outputs found.'
     return 2
   fi
   
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing the output name' && return 2
+      echo 'Missing the output name.' && return 2
 
     pick_output 'Select output name:' active || return $?
-    is_empty "${REPLY}" && echo 'Output name is required' && return 2
+    is_empty "${REPLY}" && echo 'Output name is required.' && return 2
     name="${REPLY}"
   fi
 
@@ -615,41 +615,41 @@ mirror_output () {
   source="$(find_output "${name}")"
 
   if has_failed; then
-    echo "Output ${name} not found"
+    echo "Output ${name} not found."
     return 2
   fi
   
   if is_not_connected "${source}"; then
-    echo "Output ${name} is disconnected"
+    echo "Output ${name} is disconnected."
     return 2
   elif is_not_active "${source}"; then
-    echo "Output ${name} is inactive"
+    echo "Output ${name} is inactive."
     return 2
   fi
 
   if is_not_given "${resolution}"; then
     on_script_mode &&
-      echo 'Missing resolution' && return 2
+      echo 'Missing resolution.' && return 2
 
     pick_resolution "${source}" || return $?
-    is_empty "${REPLY}" && echo 'Resolution is required' && return 2
+    is_empty "${REPLY}" && echo 'Resolution is required.' && return 2
     resolution="${REPLY}"
   fi
 
   if is_not_resolution "${resolution}"; then
-    echo 'Invalid resolution'
+    echo 'Invalid resolution.'
     return 2
   elif has_no_resolution "${source}" "${resolution}"; then
-    echo "Resolution ${resolution} is not supported"
+    echo "Resolution ${resolution} is not supported."
     return 2
   fi
 
   if is_true "${#targets[@]} = 0"; then
     on_script_mode &&
-      echo 'Missing target output name(s)' && return 2
+      echo 'Missing target output name(s).' && return 2
 
     pick_outputs 'Select at least one target output:' active "${name}" || return $?
-    is_empty "${REPLY}" && echo 'At least one target output is required' && return 2
+    is_empty "${REPLY}" && echo 'At least one target output is required.' && return 2
     local selected="${REPLY}"
 
     # Convert json to array
@@ -660,7 +660,7 @@ mirror_output () {
   local target_name=''
   for target_name in "${targets[@]}"; do
     if equals "${target_name}" "${name}"; then
-      echo 'Source output cannot be in targets'
+      echo 'Source output cannot be in targets.'
       return 2
     fi
 
@@ -668,15 +668,15 @@ mirror_output () {
     target="$(find_output "${target_name}")"
 
     if has_failed; then
-      echo "Output ${target_name} not found"
+      echo "Output ${target_name} not found."
       return 2
     fi
     
     if is_not_connected "${target}"; then
-      echo "Output ${target_name} is disconnected"
+      echo "Output ${target_name} is disconnected."
       return 2
     elif is_not_active "${target}"; then
-      echo "Output ${target_name} is inactive"
+      echo "Output ${target_name} is inactive."
       return 2
     fi
   done
@@ -689,7 +689,7 @@ mirror_output () {
   resolutions_len="$(count "${resolutions}")"
 
   if is_true "${resolutions_len} = 0"; then
-    echo 'No common resolutions found among outputs'
+    echo 'No common resolutions found among outputs.'
     return 2
   fi
 
@@ -697,8 +697,8 @@ mirror_output () {
   match="$(echo "${resolutions}" | jq -cr ".[]|select(. == \"${resolution}\")")"
 
   if is_empty "${match}"; then
-    echo "Resolution ${resolution} is not supported by all targets"
-    echo "Common resolutions are $(echo ${resolutions} | jq -cr 'join(", ")')"
+    echo "Resolution ${resolution} is not supported by all targets."
+    echo "Common resolutions are $(echo ${resolutions} | jq -cr 'join(", ")')."
     return 2
   fi
 
@@ -719,7 +719,7 @@ mirror_output () {
   xrandr --output "${name}" --mode "${resolution}" ${mirrors}
 
   if has_failed; then
-    echo "Failed to mirror output ${name}"
+    echo "Failed to mirror output ${name}."
     return 2
   fi
 
@@ -739,13 +739,13 @@ mirror_output () {
     desktop -qs init bars &> /dev/null
 
   if has_failed; then
-    echo 'Failed to reload desktop'
+    echo 'Failed to reload desktop.'
   fi
 
   # Convert targets into a string of comma separated output names
   targets="$(jq -ncer '$ARGS.positional|join(", ")' --args -- "${targets[@]}")" || return 1
   
-  echo "Output ${name} mirrored to ${targets}"
+  echo "Output ${name} mirrored to ${targets}."
 }
 
 # Sets the layout of the given active outputs to the given mode.
@@ -762,34 +762,34 @@ set_layout () {
   len="$(find_outputs active | jq -cer 'length')" || return 1
 
   if is_true "${len} < 2"; then
-    echo 'No multiple active outputs found'
+    echo 'No multiple active outputs found.'
     return 2
   elif is_true "${len} > 4"; then
-    echo 'No layout mode exists for more than 4 outputs'
+    echo 'No layout mode exists for more than 4 outputs.'
     return 2
   fi
 
   if is_not_given "${mode}"; then
     on_script_mode &&
-      echo 'Missing layout mode' && return 2
+      echo 'Missing layout mode.' && return 2
 
     pick_layout_mode "${len}" || return $?
-    is_empty "${REPLY}" && echo 'Layout mode is required' && return 2
+    is_empty "${REPLY}" && echo 'Layout mode is required.' && return 2
     mode="${REPLY}"
   fi
 
   if is_not_eligible_layout_mode "${mode}" "${len}"; then
-    echo 'Invalid layout mode for current setup'
+    echo 'Invalid layout mode for current setup.'
     return 2
   fi
 
   if is_true "${#outputs[@]} = 0"; then
     on_script_mode &&
-      echo 'Missing output name(s)' && return 2
+      echo 'Missing output name(s).' && return 2
 
     show_layout_map "${mode}"
     pick_outputs 'Select output names by order:' active || return $?
-    is_empty "${REPLY}" && echo 'Output names are required' && return 2
+    is_empty "${REPLY}" && echo 'Output names are required.' && return 2
     local selected="${REPLY}"
 
     # Convert json to array   
@@ -797,7 +797,7 @@ set_layout () {
   fi
 
   if is_true "${#outputs[@]} != ${len}"; then
-    echo "Exactly ${len} outputs required"
+    echo "Exactly ${len} outputs required."
     return 2
   fi
 
@@ -808,15 +808,15 @@ set_layout () {
     output="$(find_output "${name}")"
 
     if has_failed; then
-      echo "Output ${name} not found"
+      echo "Output ${name} not found."
       return 2
     fi
     
     if is_not_connected "${output}"; then
-      echo "Output ${name} is disconnected"
+      echo "Output ${name} is disconnected."
       return 2
     elif is_not_active "${output}"; then
-      echo "Output ${name} is inactive"
+      echo "Output ${name} is inactive."
       return 2
     fi
   done
@@ -834,7 +834,7 @@ set_layout () {
   xrandr ${layout}
 
   if has_failed; then
-    echo "Failed to set layout ${mode,,}"
+    echo "Failed to set layout ${mode,,}."
     return 2
   fi
 
@@ -847,10 +847,10 @@ set_layout () {
     desktop -qs init bars  &> /dev/null
 
   if has_failed; then
-    echo 'Failed to fix desktop workspaces'
+    echo 'Failed to fix desktop workspaces.'
   fi
 
-  echo "Layout has been set to ${mode,,}"
+  echo "Layout has been set to ${mode,,}."
 }
 
 # Saves the current layout under a unique hashed signature
@@ -864,7 +864,7 @@ save_layout () {
   len="$(count "${outputs}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No outputs have found'
+    echo 'No outputs have found.'
     return 2
   fi
 
@@ -898,7 +898,7 @@ save_layout () {
   map="$(echo "${outputs}" | jq -cer "${query}")"
 
   if has_failed; then
-    echo 'Unable to parse mapping'
+    echo 'Unable to parse mapping.'
     return 2
   fi
 
@@ -909,11 +909,11 @@ save_layout () {
   save_layout_to_settings "${map}" "${sig}"
 
   if has_failed; then
-    echo 'Failed to save layout'
+    echo 'Failed to save layout.'
     return 2
   fi
     
-  echo 'Layout has been saved'
+  echo 'Layout has been saved.'
 }
 
 # Restores the layout setting with the signature matching
@@ -921,7 +921,7 @@ save_layout () {
 # connected devices.
 restore_layout () {
   if file_not_exists "${DISPLAYS_SETTINGS}"; then
-    echo 'No layouts have found'
+    echo 'No layouts have found.'
     return 2
   fi
 
@@ -929,7 +929,7 @@ restore_layout () {
   layouts="$(jq '.layouts|if . then . else empty end' "${DISPLAYS_SETTINGS}")"
 
   if is_empty "${layouts}"; then
-    echo 'No layouts have found'
+    echo 'No layouts have found.'
     return 2
   fi
 
@@ -940,7 +940,7 @@ restore_layout () {
   len="$(count "${outputs}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No outputs have found'
+    echo 'No outputs have found.'
     return 2
   fi
 
@@ -958,14 +958,14 @@ restore_layout () {
   layout="$(echo "${layouts}" | jq -cr "${query}")"
 
   if is_empty "${layout}"; then
-    echo 'No matching layout has found'
+    echo 'No matching layout has found.'
     return 2
   fi
 
   xrandr ${layout}
 
   if has_failed; then
-    echo 'Failed to restore the layout'
+    echo 'Failed to restore the layout.'
     return 2
   fi
 
@@ -977,10 +977,10 @@ restore_layout () {
     desktop -qs restart &> /dev/null
 
   if has_failed; then
-    echo 'Failed to reload desktop'
+    echo 'Failed to reload desktop.'
   fi
 
-  echo 'Layout has been restored'
+  echo 'Layout has been restored.'
 }
 
 # Fixes the positioning of the current layout by
@@ -994,7 +994,7 @@ fix_layout () {
   len="$(count "${outputs}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No outputs have found'
+    echo 'No outputs have found.'
     return 2
   fi
 
@@ -1015,14 +1015,14 @@ fix_layout () {
   inactive="$(echo "${outputs}" | jq -cr "${query}")"
 
   if is_empty "${disconnected// }" && is_empty "${inactive// }"; then
-    echo 'No fix applied to layout'
+    echo 'No fix applied to layout.'
     return 2
   fi
 
   xrandr ${disconnected} ${inactive}
 
   if has_failed; then
-    echo 'Failed to fix the layout'
+    echo 'Failed to fix the layout.'
     return 2
   fi
 
@@ -1050,10 +1050,10 @@ fix_layout () {
   desktop -qs fix workspaces &> /dev/null
 
   if has_failed; then
-    echo 'Failed to fix desktop workspaces'
+    echo 'Failed to fix desktop workspaces.'
   fi
 
-  echo 'Layout has been fixed'
+  echo 'Layout has been fixed.'
 }
 
 # Deletes the layout setting with the given index.
@@ -1063,21 +1063,21 @@ delete_layout () {
   local index="${1}"
 
   if file_not_exists "${DISPLAYS_SETTINGS}"; then
-    echo 'No layouts have found'
+    echo 'No layouts have found.'
     return 2
   fi
 
   if is_not_given "${index}"; then
     on_script_mode &&
-      echo 'Missing the layout index' && return 2
+      echo 'Missing the layout index.' && return 2
 
     pick_layout || return $?
-    is_empty "${REPLY}" && echo 'Layout index is required' && return 2
+    is_empty "${REPLY}" && echo 'Layout index is required.' && return 2
     index="${REPLY}"
   fi
 
   if is_not_integer "${index}" '[0,]'; then
-    echo 'Invalid layout index'
+    echo 'Invalid layout index.'
     return 2
   fi
 
@@ -1085,7 +1085,7 @@ delete_layout () {
   match="$(jq "select(.layouts[${index}])" "${DISPLAYS_SETTINGS}")"
 
   if is_empty "${match}"; then
-    echo "Cannot find layout with index ${index}"
+    echo "Cannot find layout with index ${index}."
     return 2
   fi
 
@@ -1093,13 +1093,13 @@ delete_layout () {
   settings="$(jq -e "del(.layouts|.[${index}])" "${DISPLAYS_SETTINGS}")"
 
   if has_failed; then
-    echo 'Failed to delete layout'
+    echo 'Failed to delete layout.'
     return 2
   fi
 
   echo "${settings}" > "${DISPLAYS_SETTINGS}"
   
-  echo 'Layout has been deleted'
+  echo 'Layout has been deleted.'
 }
 
 # List all the stored layout settings.
@@ -1107,7 +1107,7 @@ delete_layout () {
 #  A list of layout settings.
 list_layouts () {
   if file_not_exists "${DISPLAYS_SETTINGS}"; then
-    echo 'No layouts have found'
+    echo 'No layouts have found.'
     return 0
   fi
 
@@ -1145,10 +1145,10 @@ set_color () {
 
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing output name' && return 2
+      echo 'Missing output name.' && return 2
 
     pick_output 'Select an output name:' active || return $?
-    is_empty "${REPLY}" && echo 'Output name is required' && return 2
+    is_empty "${REPLY}" && echo 'Output name is required.' && return 2
     name="${REPLY}"
   fi
   
@@ -1156,32 +1156,32 @@ set_color () {
   output="$(find_output "${name}")"
 
   if has_failed; then
-    echo "Output ${name} not found"
+    echo "Output ${name} not found."
     return 2
   fi
   
   if is_not_connected "${output}"; then
-    echo "Output ${name} is disconnected"
+    echo "Output ${name} is disconnected."
     return 2
   elif is_not_active "${output}"; then
-    echo "Output ${name} is inactive"
+    echo "Output ${name} is inactive."
     return 2
   fi
 
   if is_not_given "${profile}"; then
     on_script_mode &&
-      echo 'Missing the profile file' && return 2
+      echo 'Missing the profile file.' && return 2
 
     pick_color_profile || return $?
-    is_empty "${REPLY}" && echo 'Profile file is required' && return 2
+    is_empty "${REPLY}" && echo 'Profile file is required.' && return 2
     profile="${REPLY}"
   fi
 
   if is_not_profile_file "${profile}"; then
-    echo 'Invalid profile file'
+    echo 'Invalid profile file.'
     return 2
   elif file_not_exists "${COLORS_HOME}/${profile}"; then
-    echo "Profile file ${profile} not exists"
+    echo "Profile file ${profile} not exists."
     return 2
   fi
 
@@ -1192,14 +1192,14 @@ set_color () {
   result="$(xcalib -d "${DISPLAY}" -s 0 -o "${index}" "${COLORS_HOME}/${profile}" 2>&1)"
 
   if has_failed || is_not_empty "${result}"; then
-    echo 'Failed to set output color'
+    echo 'Failed to set output color.'
     return 2
   fi
 
-  echo "Color of output ${name} set to ${profile}"
+  echo "Color of output ${name} set to ${profile}."
 
   save_color_to_settings "${output}" "${profile}" ||
-    echo 'Failed to save output color to settings'
+    echo 'Failed to save output color to settings.'
 }
 
 # Resets the color profile of the device connected to the
@@ -1212,10 +1212,10 @@ reset_color () {
 
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing the output name' && return 2
+      echo 'Missing the output name.' && return 2
 
     pick_output 'Select output name:' active || return $?
-    is_empty "${REPLY}" && echo 'Output name is required' && return 2
+    is_empty "${REPLY}" && echo 'Output name is required.' && return 2
     name="${REPLY}"
   fi
 
@@ -1223,15 +1223,15 @@ reset_color () {
   output="$(find_output "${name}")"
 
   if has_failed; then
-    echo "Output ${name} not found"
+    echo "Output ${name} not found."
     return 2
   fi
   
   if is_not_connected "${output}"; then
-    echo "Output ${name} is disconnected"
+    echo "Output ${name} is disconnected."
     return 2
   elif is_not_active "${output}"; then
-    echo "Output ${name} is inactive"
+    echo "Output ${name} is inactive."
     return 2
   fi
 
@@ -1242,14 +1242,14 @@ reset_color () {
   result="$(xcalib -d "${DISPLAY}" -s 0 -o "${index}" -c 2>&1)"
 
   if has_failed || is_not_empty "${result}"; then
-    echo 'Failed to reset output color'
+    echo 'Failed to reset output color.'
     return 2
   fi
 
-  echo "Color of output ${name} has been reset"
+  echo "Color of output ${name} has been reset."
 
   remove_color_from_settings "${output}" ||
-    echo 'Failed to delete output color from settings'
+    echo 'Failed to delete output color from settings.'
 }
 
 # Deletes the color setting with the given index.
@@ -1259,21 +1259,21 @@ delete_color () {
   local index="${1}"
 
   if file_not_exists "${DISPLAYS_SETTINGS}"; then
-    echo 'No color settings have found'
+    echo 'No color settings have found.'
     return 2
   fi
 
   if is_not_given "${index}"; then
     on_script_mode &&
-      echo 'Missing the color setting index' && return 2
+      echo 'Missing the color setting index.' && return 2
 
     pick_color_setting || return $?
-    is_empty "${REPLY}" && echo 'Color setting index is required' && return 2
+    is_empty "${REPLY}" && echo 'Color setting index is required.' && return 2
     index="${REPLY}"
   fi
 
   if is_not_integer "${index}" '[0,]'; then
-    echo 'Invalid color setting index'
+    echo 'Invalid color setting index.'
     return 2
   fi
 
@@ -1281,7 +1281,7 @@ delete_color () {
   match="$(jq "select(.colors[${index}])" "${DISPLAYS_SETTINGS}")"
 
   if is_empty "${match}"; then
-    echo "Color setting with index ${index} not found"
+    echo "Color setting with index ${index} not found."
     return 2
   fi
 
@@ -1289,13 +1289,13 @@ delete_color () {
   settings="$(jq -e "del(.colors|.[${index}])" "${DISPLAYS_SETTINGS}")"
 
   if has_failed; then
-    echo 'Failed to delete color setting'
+    echo 'Failed to delete color setting.'
     return 2
   fi
 
   echo "${settings}" > "${DISPLAYS_SETTINGS}"
 
-  echo 'Color setting has been deleted'
+  echo 'Color setting has been deleted.'
 }
 
 # List all the color settings per device being stored
@@ -1304,7 +1304,7 @@ delete_color () {
 #  A list of color settings.
 list_colors () {
   if file_not_exists "${DISPLAYS_SETTINGS}"; then
-    echo 'No color settings have found'
+    echo 'No color settings have found.'
     return 0
   fi
 
@@ -1330,7 +1330,7 @@ list_colors () {
 # connected to an output.
 restore_colors () {
   if file_not_exists "${DISPLAYS_SETTINGS}"; then
-    echo 'No color settings have found'
+    echo 'No color settings have found.'
     return 2
   fi
 
@@ -1341,7 +1341,7 @@ restore_colors () {
   len="$(count "${colors}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No color settings have found'
+    echo 'No color settings have found.'
     return 2
   fi
 
@@ -1373,10 +1373,10 @@ restore_colors () {
   done <<< "${xcalib_cmds}"
 
   if is_true "${failed} > 0"; then
-    echo "${failed} color settings failed to be restored"
+    echo "${failed} color settings failed to be restored."
     return 2
   fi
 
-  echo 'Color settings have been restored'
+  echo 'Color settings have been restored.'
 }
 

@@ -23,7 +23,7 @@ list_remotes () {
   len="$(count "${remotes}")" || return 1
     
   if is_true "${len} = 0"; then
-    echo -e "No ${service:-\b} remotes found"
+    echo -e "No ${service:-\b} remotes found."
     return 0
   fi
 
@@ -51,33 +51,33 @@ sync_drive () {
 
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing the remote name' && return 2
+      echo 'Missing the remote name.' && return 2
 
     ask 'Enter a remote name:' || return $?
-    is_empty "${REPLY}" && echo 'Remote name is required' && return 2
+    is_empty "${REPLY}" && echo 'Remote name is required.' && return 2
     name="${REPLY}"
   fi
   
   if remote_exists "${name}"; then
-    echo "Remote ${name} already exists"
+    echo "Remote ${name} already exists."
     return 2
   fi
   
   if is_not_given "${client}"; then
     on_script_mode &&
-      echo 'Missing the client id' && return 2
+      echo 'Missing the client id.' && return 2
 
     ask 'Enter the client id:' || return $?
-    is_empty "${REPLY}" && echo 'Client id is required' && return 2
+    is_empty "${REPLY}" && echo 'Client id is required.' && return 2
     client="${REPLY}"
   fi
   
   if is_not_given "${secret}"; then
     on_script_mode &&
-      echo 'Missing the client secret' && return 2
+      echo 'Missing the client secret.' && return 2
 
     ask 'Enter the client secret:' || return $?
-    is_empty "${REPLY}" && echo 'Client secret is required' && return 2
+    is_empty "${REPLY}" && echo 'Client secret is required.' && return 2
     secret="${REPLY}"
   fi
   
@@ -92,12 +92,12 @@ sync_drive () {
     client_secret="${secret}" root_folder_id="${folder}" &> /dev/null
 
   if has_failed; then
-    echo 'Failed to sync drive remote'
+    echo 'Failed to sync drive remote.'
     rclone config delete "${name}"
     return 2
   fi
 
-  echo "Drive remote ${name} synced"
+  echo "Drive remote ${name} synced."
 }
 
 # Creates a new dropbox remote with the given name.
@@ -112,33 +112,33 @@ sync_dropbox () {
 
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing the remote name' && return 2
+      echo 'Missing the remote name.' && return 2
 
     ask 'Enter the remote name:' || return $?
-    is_empty "${REPLY}" && echo 'Remote name is required' && return 2
+    is_empty "${REPLY}" && echo 'Remote name is required.' && return 2
     name="${REPLY}"
   fi
   
   if remote_exists "${name}"; then
-    echo "Remote ${name} already exists"
+    echo "Remote ${name} already exists."
     return 2
   fi
 
   if is_not_given "${app}"; then
     on_script_mode &&
-      echo 'Missing the application key' && return 2
+      echo 'Missing the application key.' && return 2
 
     ask 'Enter the application key:' || return $?
-    is_empty "${REPLY}" && echo 'Application key is required' && return 2
+    is_empty "${REPLY}" && echo 'Application key is required.' && return 2
     app="${REPLY}"
   fi
 
   if is_not_given "${secret}"; then
     on_script_mode &&
-      echo 'Missing the application secret' && return 2
+      echo 'Missing the application secret.' && return 2
 
     ask 'Enter the application secret:' || return $?
-    is_empty "${REPLY}" && echo 'Application secret is required' && return 2
+    is_empty "${REPLY}" && echo 'Application secret is required.' && return 2
     secret="${REPLY}"
   fi
 
@@ -148,12 +148,12 @@ sync_dropbox () {
     client_id="${app}" client_secret="${secret}" &> /dev/null
 
   if has_failed; then
-    echo 'Failed to sync dropbox remote'
+    echo 'Failed to sync dropbox remote.'
     rclone config delete "${name}"
     return 2
   fi
 
-  echo "Dropbox remote ${name} synced"
+  echo "Dropbox remote ${name} synced."
 }
 
 # Deletes the remote with the given name.
@@ -164,28 +164,28 @@ delete_remote () {
   
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing the remote name' && return 2
+      echo 'Missing the remote name.' && return 2
 
     pick_remote unmounted || return $?
-    is_empty "${REPLY}" && echo 'Remote name is required' && return 2
+    is_empty "${REPLY}" && echo 'Remote name is required.' && return 2
     name="${REPLY}"
   fi
   
   if remote_not_exists "${name}"; then
-    echo "Remote ${name} not found"
+    echo "Remote ${name} not found."
     return 2
   elif is_remote_mounted "${name}"; then
-    echo 'Cannot delete a mounted remote'
+    echo 'Cannot delete a mounted remote.'
     return 2
   fi
 
   if on_user_mode; then
     echo "Remote ${name} will be deleted!"
     confirm 'Do you realy want to proceed?' || return $?
-    is_empty "${REPLY}" && echo 'Confirmation is required' && return 2
+    is_empty "${REPLY}" && echo 'Confirmation is required.' && return 2
     
     if is_not_yes "${REPLY}"; then
-      echo 'Deletion operation is canceled'
+      echo 'Deletion operation is canceled.'
       return 2
     fi
   fi
@@ -193,11 +193,11 @@ delete_remote () {
   rclone config delete "${name}"
 
   if has_failed; then
-    echo 'Failed to delete remote'
+    echo 'Failed to delete remote.'
     return 2
   fi
   
-  echo "Remote ${name} has been deleted"
+  echo "Remote ${name} has been deleted."
 }
 
 # Mounts the remote with the given name to the disk.
@@ -208,18 +208,18 @@ mount_remote () {
 
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing the remote name' && return 2
+      echo 'Missing the remote name.' && return 2
 
     pick_remote unmounted || return $?
-    is_empty "${REPLY}" && echo 'Remote name is required' && return 2
+    is_empty "${REPLY}" && echo 'Remote name is required.' && return 2
     name="${REPLY}"
   fi
   
   if remote_not_exists "${name}"; then
-    echo "Remote ${name} not found"
+    echo "Remote ${name} not found."
     return 2
   elif is_remote_mounted "${name}"; then
-    echo "Remote ${name} is already mounted"
+    echo "Remote ${name} is already mounted."
     return 2
   fi
 
@@ -238,11 +238,11 @@ mount_remote () {
     # Remove the dangling root mount folder if it is empty
     find "${mount_folder}" -maxdepth 0 -empty -exec rm -rf {} \;
 
-    echo 'Failed to mount remote'
+    echo 'Failed to mount remote.'
     return 2
   fi
 
-  echo "Remote ${name} mounted to ${mount_folder}"
+  echo "Remote ${name} mounted to ${mount_folder}."
 }
 
 # Unmounts the remote with the given name from the disk.
@@ -253,18 +253,18 @@ unmount_remote () {
 
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing the remote name' && return 2
+      echo 'Missing the remote name.' && return 2
     
     pick_remote mounted || return $?
-    is_empty "${REPLY}" && echo 'Remote name is required' && return 2
+    is_empty "${REPLY}" && echo 'Remote name is required.' && return 2
     name="${REPLY}"
   fi
   
   if remote_not_exists "${name}"; then
-    echo "Remote ${name} not found"
+    echo "Remote ${name} not found."
     return 2
   elif is_remote_not_mounted "${name}"; then
-    echo "Remote ${name} is not mounted"
+    echo "Remote ${name} is not mounted."
     return 2
   fi
 
@@ -279,14 +279,14 @@ unmount_remote () {
   fusermount -uz "${mount_point}"
 
   if has_failed; then
-    echo 'Failed to unmount remote'
+    echo 'Failed to unmount remote.'
     return 2
   fi
 
   # Remove root folder of the mount only if it is empty
   find "${mount_point}" -maxdepth 0 -empty -exec rm -rf {} \;
 
-  echo "Remote ${name} has been unmounted"
+  echo "Remote ${name} has been unmounted."
 }
 
 # Mounts all the synced remotes.
@@ -298,7 +298,7 @@ mount_all () {
   len="$(count "${remotes}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No remotes have been found'
+    echo 'No remotes have been found.'
     return 2
   fi
 
@@ -312,19 +312,19 @@ mount_all () {
     mount_remote "${remote}"
 
     if has_failed; then
-      echo "Failed to mount remote ${remote}"
+      echo "Failed to mount remote ${remote}."
       failed="$(calc "${failed} + 1")" || return 1
       continue
     fi
   
-    echo "Remote ${remote} has been mounted"
+    echo "Remote ${remote} has been mounted."
   done <<< "${remotes}"
 
   if is_true "${failed} > 0"; then
-    echo "${failed} remotes failed to be mounted"
+    echo "${failed} remotes failed to be mounted."
     return 2
   fi
 
-  echo 'All remotes have been mounted'
+  echo 'All remotes have been mounted.'
 }
 

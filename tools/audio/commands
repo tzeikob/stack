@@ -81,10 +81,10 @@ show_card () {
 
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing the audio card name' && return 2
+      echo 'Missing the audio card name.' && return 2
 
     pick_card 'Select audio card name:' || return $?
-    is_empty "${REPLY}" && echo 'Audio card name is required' && return 2
+    is_empty "${REPLY}" && echo 'Audio card name is required.' && return 2
     name="${REPLY}"
   fi
 
@@ -92,7 +92,7 @@ show_card () {
   card="$(find_card "${name}")"
 
   if has_failed; then
-    echo "Audio card ${name} not found"
+    echo "Audio card ${name} not found."
     return 2
   fi
 
@@ -131,30 +131,30 @@ restart () {
 
   systemctl --user restart pipewire.socket &&
     sleep 0.5 &&
-    echo 'Pipewire socket restarted' &&
+    echo 'Pipewire socket restarted.' &&
   systemctl --user restart pipewire.service &&
     sleep 0.5 &&
-    echo 'Pipewire service restarted' &&
+    echo 'Pipewire service restarted.' &&
   systemctl --user restart pipewire-session-manager.service &&
     sleep 0.5 &&
   systemctl --user restart pipewire-media-session.service &&
     sleep 0.5 &&
   systemctl --user restart pipewire-pulse.socket &&
     sleep 0.5 &&
-    echo 'Pulse socket restarted' &&
+    echo 'Pulse socket restarted.' &&
   systemctl --user restart pipewire-pulse.service &&
     sleep 0.5 &&
-    echo 'Pulse service restarted'
+    echo 'Pulse service restarted.'
 
   if has_failed; then
-    echo 'Failed to restart audio services'
+    echo 'Failed to restart audio services.'
     return 2
   fi
 
   # Try to restart status bars
   desktop -qs init bars &> /dev/null
 
-  echo 'Audio services has been restarted'
+  echo 'Audio services has been restarted.'
 }
 
 # Shows the list of all audio cards of the system.
@@ -170,7 +170,7 @@ list_cards () {
   len="$(count "${cards}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No audio cards have found'
+    echo 'No audio cards have found.'
     return 0
   fi
 
@@ -193,10 +193,10 @@ list_ports () {
   local type="${1}"
 
   if is_not_given "${type}"; then
-    echo 'Missing the module type'
+    echo 'Missing the module type.'
     return 2
   elif is_not_module_type "${type}"; then
-    echo 'Invalid module type'
+    echo 'Invalid module type.'
     return 2
   fi
 
@@ -214,7 +214,7 @@ list_ports () {
   len="$(count "${modules}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo "No ${type} modules have found"
+    echo "No ${type} modules have found."
     return 0
   fi
 
@@ -258,7 +258,7 @@ list_playbacks () {
   len="$(count "${sink_inputs}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No playbacks have found'
+    echo 'No playbacks have found.'
     return 0
   fi
 
@@ -286,10 +286,10 @@ set_profile () {
 
   if is_not_given "${card_name}"; then
     on_script_mode &&
-      echo 'Missing the audio card name' && return 2
+      echo 'Missing the audio card name.' && return 2
 
     pick_card 'Select audio card name:' || return $?
-    is_empty "${REPLY}" && echo 'Audio card name is required' && return 2
+    is_empty "${REPLY}" && echo 'Audio card name is required.' && return 2
     card_name="${REPLY}"
   fi
 
@@ -297,16 +297,16 @@ set_profile () {
   card="$(find_card "${card_name}")"
 
   if has_failed; then
-    echo "Audio card ${card_name} not found"
+    echo "Audio card ${card_name} not found."
     return 2
   fi
 
   if is_not_given "${profile_name}"; then
     on_script_mode &&
-      echo 'Missing the profile name' && return 2
+      echo 'Missing the profile name.' && return 2
 
     pick_profile 'Select profile name:' "${card}" || return $?
-    is_empty "${REPLY}" && echo 'Profile name is required' && return 2
+    is_empty "${REPLY}" && echo 'Profile name is required.' && return 2
     profile_name="${REPLY}"
   fi
 
@@ -314,18 +314,18 @@ set_profile () {
   exists="$(echo "${card}" | jq -cer ".profiles|has(\"${profile_name}\")")"
 
   if is_false "${exists}"; then
-    echo 'Invalid or unknown profile name'
+    echo 'Invalid or unknown profile name.'
     return 2
   fi
 
   pactl set-card-profile "${card_name}" "${profile_name}"
 
   if has_failed; then
-    echo 'Failed to set profile'
+    echo 'Failed to set profile.'
     return 2
   fi
   
-  echo "Profile set to ${profile_name}"
+  echo "Profile set to ${profile_name}."
 }
 
 # Sets the active output or input audio module.
@@ -337,19 +337,19 @@ set_default () {
   local name="${2}"
 
   if is_not_given "${type}"; then
-    echo 'Missing the module type'
+    echo 'Missing the module type.'
     return 2
   elif is_not_module_type "${type}"; then
-    echo 'Invalid module type'
+    echo 'Invalid module type.'
     return 2
   fi
 
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo "Missing ${type} module name" && return 2
+      echo "Missing ${type} module name." && return 2
 
     pick_module "Select ${type} module name:" "${type}" || return $?
-    is_empty "${REPLY}" && echo "${type^} module name is required" && return 2
+    is_empty "${REPLY}" && echo "${type^} module name is required." && return 2
     name="${REPLY}"
   fi
 
@@ -364,18 +364,18 @@ set_default () {
   match="$(pactl --format=json list "${object}s" | jq -cer "${query}")"
 
   if is_empty "${match}"; then
-    echo "${type^} module ${name} not found"
+    echo "${type^} module ${name} not found."
     return 2
   fi
 
   pactl set-default-${object} "${name}"
 
   if has_failed; then
-    echo "Failed to set active ${type}"
+    echo "Failed to set active ${type}."
     return 2
   fi
 
-  echo "Active ${type} set to module ${name}"
+  echo "Active ${type} set to module ${name}."
 }
 
 # Sets the volume of the active output or input module
@@ -389,21 +389,21 @@ turn_default () {
   local volume="${2}"
 
   if is_not_given "${type}"; then
-    echo 'Missing the module type'
+    echo 'Missing the module type.'
     return 2
   elif is_not_module_type "${type}"; then
-    echo 'Invalid module type'
+    echo 'Invalid module type.'
     return 2
   fi
 
   if is_not_given "${volume}"; then
-    echo 'Missing the volume value'
+    echo 'Missing the volume value.'
     return 2
   elif is_not_valid_volume "${volume}"; then
-    echo 'Invalid volume value'
+    echo 'Invalid volume value.'
     return 2
   elif is_integer "${volume}" '[0,150]'; then
-    echo 'Volume value is out of range'
+    echo 'Volume value is out of range.'
     return 2
   fi
 
@@ -416,21 +416,21 @@ turn_default () {
     pactl set-${object}-mute "@DEFAULT_${object^^}@" 1
 
     if has_failed; then
-      echo "Failed to set active ${type} to mute"
+      echo "Failed to set active ${type} to mute."
       return 2
     fi
 
-    echo "Active ${type} volume set to mute"
+    echo "Active ${type} volume set to mute."
     return 0
   elif equals "${volume}" 'unmute'; then
     pactl set-${object}-mute "@DEFAULT_${object^^}@" 0
 
     if has_failed; then
-      echo "Failed to set active ${type} to unmute"
+      echo "Failed to set active ${type} to unmute."
       return 2
     fi
 
-    echo "Active ${type} volume set to unmute"
+    echo "Active ${type} volume set to unmute."
     return 0
   fi
 
@@ -448,11 +448,11 @@ turn_default () {
   pactl set-${object}-volume  "@DEFAULT_${object^^}@" "${volume}%"
 
   if has_failed; then
-    echo "Failed to set volume of active ${type})"
+    echo "Failed to set volume of active ${type}."
     return 2
   fi
 
-  echo "Active ${type} volume ${action} ${volume}%"
+  echo "Active ${type} volume ${action} ${volume}%."
 }
 
 # Sets all output or input audio modules
@@ -465,18 +465,18 @@ set_mute () {
   local mode="${2}"
 
   if is_not_given "${type}"; then
-    echo 'Missing module type'
+    echo 'Missing module type.'
     return 2
   elif is_not_module_type "${type}"; then
-    echo 'Invalid module type'
+    echo 'Invalid module type.'
     return 2
   fi
 
   if is_not_given "${mode}"; then
-    echo 'Missing the mute mode'
+    echo 'Missing the mute mode.'
     return 2
   elif is_not_mute_mode "${mode}"; then
-    echo 'Invalid mute mode'
+    echo 'Invalid mute mode.'
     return 2
   fi
 
@@ -494,7 +494,7 @@ set_mute () {
   pactl_cmds="$(pactl --format=json list "${object}s" | jq -cer "${query}")" || return 1
 
   if is_empty "${pactl_cmds}"; then
-    echo "No ${type} modules have found"
+    echo "No ${type} modules have found."
     return 2
   fi
 
@@ -516,10 +516,10 @@ set_mute () {
   fi
 
   if is_true "${failed}"; then
-    echo "Some ${type} modules failed to ${status}"
+    echo "Some ${type} modules failed to ${status}."
     return 2
   fi
   
-  echo "All ${type} modules set to ${status}"
+  echo "All ${type} modules set to ${status}."
 }
 

@@ -18,7 +18,7 @@ select_disk () {
   )"
 
   if has_failed; then
-    abort 'Unable to list disk block devices'
+    abort 'Unable to list disk block devices.'
   fi
 
   local trim='.|gsub("^\\s+|\\s+$";"")'
@@ -37,11 +37,11 @@ select_disk () {
   )"
 
   if has_failed; then
-    abort 'Failed to parse disks data'
+    abort 'Failed to parse disks data.'
   fi
 
   pick_one 'Select the installation disk:' "${disks}" 'vertical' || abort
-  is_not_given "${REPLY}" && abort 'User input is required'
+  is_not_given "${REPLY}" && abort 'User input is required.'
 
   local disk="${REPLY}"
 
@@ -49,7 +49,7 @@ select_disk () {
   confirm 'Do you want to proceed with this disk?' || abort
 
   if is_not_given "${REPLY}"; then
-    abort 'User input is required'
+    abort 'User input is required.'
   fi
 
   if is_no "${REPLY}"; then
@@ -58,38 +58,38 @@ select_disk () {
 
   save_setting 'disk' "\"${disk}\""
 
-  log "Installation disk set to block device ${disk}"
+  log "Installation disk set to block device ${disk}."
 }
 
 # Asks the user to enable or not the swap space.
 opt_in_swap_space () {
   confirm '\nDo you want to enable swap space?' || abort
-  is_not_given "${REPLY}" && abort 'User input is required'
+  is_not_given "${REPLY}" && abort 'User input is required.'
 
   if is_no "${REPLY}"; then
     save_setting 'swap_on' '"no"'
 
-    log 'Swap is set to off'
+    log 'Swap is set to off.'
     return 0
   fi
 
   save_setting 'swap_on' '"yes"'
 
-  log 'Swap is set to yes'
+  log 'Swap is set to yes.'
 
   ask 'Enter the size of the swap space in GBs:' || abort
-  is_not_given "${REPLY}" && abort 'User input is required'
+  is_not_given "${REPLY}" && abort 'User input is required.'
 
   while is_not_integer "${REPLY}" '[1,]'; do
     ask 'Please enter a valid swap space size in GBs:' || abort
-    is_not_given "${REPLY}" && abort 'User input is required'
+    is_not_given "${REPLY}" && abort 'User input is required.'
   done
 
   local swap_size="${REPLY}"
 
   save_setting 'swap_size' "${swap_size}"
 
-  log "Swap size is set to ${swap_size}GB"
+  log "Swap size is set to ${swap_size}GB."
 
   local swap_types=''
   swap_types+='{"key": "file", "value":"File"},'
@@ -97,13 +97,13 @@ opt_in_swap_space () {
   swap_types="[${swap_types}]"
 
   pick_one 'Which type of swap to setup:' "${swap_types}" 'horizontal' || abort
-  is_not_given "${REPLY}" && abort 'User input is required'
+  is_not_given "${REPLY}" && abort 'User input is required.'
 
   local swap_type="${REPLY}"
 
   save_setting 'swap_type' "\"${swap_type}\""
 
-  log "Swap type is set to ${swap_type}"
+  log "Swap type is set to ${swap_type}."
 }
 
 # Asks the user to select the mirror countries used for installation and updates.
@@ -120,20 +120,20 @@ select_mirrors () {
   )"
   
   if has_failed; then
-    abort 'Unable to fetch package databases mirrors'
+    abort 'Unable to fetch package databases mirrors.'
   fi
 
   # Remove the extra comma from the last element
   mirrors="[${mirrors:+${mirrors::-1}}]"
 
   pick_many '\nSelect package databases mirrors:' "${mirrors}" 'vertical' || abort
-  is_not_given "${REPLY}" && abort 'User input is required'
+  is_not_given "${REPLY}" && abort 'User input is required.'
 
   mirrors="${REPLY}"
 
   save_setting 'mirrors' "${mirrors}"
 
-  log "Package databases mirrors are set to ${mirrors}"
+  log "Package databases mirrors are set to ${mirrors}."
 }
 
 # Asks the user to select the system's timezone.
@@ -146,20 +146,20 @@ select_timezone () {
   )"
   
   if has_failed; then
-    abort 'Unable to list timezones'
+    abort 'Unable to list timezones.'
   fi
 
   # Remove the extra comma after the last array element
   timezones="[${timezones:+${timezones::-1}}]"
 
   pick_one '\nSelect the system timezone:' "${timezones}" 'vertical' || abort
-  is_not_given "${REPLY}" && abort 'User input is required'
+  is_not_given "${REPLY}" && abort 'User input is required.'
 
   local timezone="${REPLY}"
 
   save_setting 'timezone' "\"${timezone}\""
 
-  log "Timezone is set to ${timezone}"
+  log "Timezone is set to ${timezone}."
 }
 
 # Asks the user to select which locales to install.
@@ -172,20 +172,20 @@ select_locales () {
   )"
   
   if has_failed; then
-    abort 'Unable to list the locales'
+    abort 'Unable to list the locales.'
   fi
   
   # Removes the last comma delimiter from the last element
   locales="[${locales:+${locales::-1}}]"
 
   pick_many '\nSelect system locales by order:' "${locales}" 'vertical' || abort
-  is_not_given "${REPLY}" && abort 'User input is required'
+  is_not_given "${REPLY}" && abort 'User input is required.'
 
   locales="${REPLY}"
 
   save_setting 'locales' "${locales}"
 
-  log "Locales are set to ${locales}"
+  log "Locales are set to ${locales}."
 }
 
 # Asks the user to select the keyboard model.
@@ -198,20 +198,20 @@ select_keyboard_model () {
   )"
   
   if has_failed; then
-    abort 'Unable to list keyboard models'
+    abort 'Unable to list keyboard models.'
   fi
 
   # Remove the extra comma delimiter from the last element
   models="[${models:+${models::-1}}]"
 
   pick_one '\nSelect a keyboard model:' "${models}" 'vertical' || abort
-  is_not_given "${REPLY}" && abort 'User input is required'
+  is_not_given "${REPLY}" && abort 'User input is required.'
 
   local keyboard_model="${REPLY}"
 
   save_setting 'keyboard_model' "\"${keyboard_model}\""
 
-  log "Keyboard model is set to ${keyboard_model}"
+  log "Keyboard model is set to ${keyboard_model}."
 }
 
 # Asks the user to select the keyboard map.
@@ -224,20 +224,20 @@ select_keyboard_map () {
   )"
   
   if has_failed; then
-    abort 'Unable to list keyboard maps'
+    abort 'Unable to list keyboard maps.'
   fi
   
   # Remove extra comma delimiter from the last element
   maps="[${maps:+${maps::-1}}]"
 
   pick_one '\nSelect a keyboard map:' "${maps}" 'vertical' || abort
-  is_not_given "${REPLY}" && abort 'User input is required'
+  is_not_given "${REPLY}" && abort 'User input is required.'
 
   local keyboard_map="${REPLY}"
 
   save_setting 'keyboard_map' "\"${keyboard_map}\""
 
-  log "Keyboard map is set to ${keyboard_map}"
+  log "Keyboard map is set to ${keyboard_map}."
 }
 
 # Asks the user to select keyboard layout.
@@ -250,14 +250,14 @@ select_keyboard_layout () {
   )"
   
   if has_failed; then
-    abort 'Unable to list keyboard layouts'
+    abort 'Unable to list keyboard layouts.'
   fi
   
   # Remove the extra comma delimiter from last element
   layouts="[${layouts:+${layouts::-1}}]"
 
   pick_one '\nSelect a keyboard layout:' "${layouts}" 'vertical' || abort
-  is_not_given "${REPLY}" && abort 'User input is required'
+  is_not_given "${REPLY}" && abort 'User input is required.'
 
   local keyboard_layout="${REPLY}"
 
@@ -271,20 +271,20 @@ select_keyboard_layout () {
   )"
   
   if has_failed; then
-    abort 'Unable to list layout variants'
+    abort 'Unable to list layout variants.'
   fi
   
   # Remove the extra comma delimiter from last element
   variants="[${variants:+${variants::-1}}]"
 
   pick_one "\nSelect a ${keyboard_layout} layout variant:" "${variants}" vertical || abort
-  is_not_given "${REPLY}" && abort 'User input is required'
+  is_not_given "${REPLY}" && abort 'User input is required.'
 
   local layout_variant="${REPLY}"
 
   save_setting 'layout_variant' "\"${layout_variant}\""
 
-  log "Layout is set to ${keyboard_layout} ${layout_variant}"
+  log "Layout is set to ${keyboard_layout} ${layout_variant}."
 }
 
 # Asks the user to select keyboard switch options.
@@ -297,114 +297,114 @@ select_keyboard_options () {
   )"
   
   if has_failed; then
-    abort 'Unable to list keyboard options'
+    abort 'Unable to list keyboard options.'
   fi
 
   # Remove extra comma delimiter from last element
   options="[${options:+${options::-1}}]"
 
   pick_one '\nSelect the keyboard options value:' "${options}" 'vertical' || abort
-  is_not_given "${REPLY}" && abort 'User input is required'
+  is_not_given "${REPLY}" && abort 'User input is required.'
 
   local keyboard_options="${REPLY}"
 
   save_setting 'keyboard_options' "\"${keyboard_options}\""
 
-  log "Keyboard options is set to ${keyboard_options}"
+  log "Keyboard options is set to ${keyboard_options}."
 }
 
 # Asks the user to set the name of the host.
 enter_host_name () {
   echo ''
   ask 'Enter the name of the host:' || abort
-  is_not_given "${REPLY}" && abort 'User input is required'
+  is_not_given "${REPLY}" && abort 'User input is required.'
 
   while not_match "${REPLY}" '^[a-z][a-z0-9_-]+$'; do
     ask 'Please enter a valid host name:' || abort
-    is_not_given "${REPLY}" && abort 'User input is required'
+    is_not_given "${REPLY}" && abort 'User input is required.'
   done
 
   local host_name="${REPLY}"
 
   save_setting 'host_name' "\"${host_name}\""
 
-  log "Hostname is set to ${host_name}"
+  log "Hostname is set to ${host_name}."
 }
 
 # Asks the user to set the name of the sudoer user.
 enter_user_name () {
   echo ''
   ask 'Enter the name of the user:' || abort
-  is_not_given "${REPLY}" && abort 'User input is required'
+  is_not_given "${REPLY}" && abort 'User input is required.'
 
   while not_match "${REPLY}" '^[a-z][a-z0-9_-]+$'; do
     ask 'Please enter a valid user name:' || abort
-    is_not_given "${REPLY}" && abort 'User input is required'
+    is_not_given "${REPLY}" && abort 'User input is required.'
   done
 
   local user_name="${REPLY}"
 
   save_setting 'user_name' "\"${user_name}\""
 
-  log "User name is set to ${user_name}"
+  log "User name is set to ${user_name}."
 }
 
 # Asks the user to set the password of the sudoer user.
 enter_user_password () {
   log '\nPassword valid chars: a-z A-Z 0-9 `~!@#$%^&*()=+{};:",.<>/?_-'
   ask_secret 'Enter the user password (at least 4 chars):' || abort
-  is_not_given "${REPLY}" && abort '\nUser input is required'
+  is_not_given "${REPLY}" && abort '\nUser input is required.'
 
   while not_match "${REPLY}" '^[a-zA-Z0-9`~!@#\$%^&*()=+{};:",.<>/\?_-]{4,}$'; do
     echo ''
     ask_secret 'Please enter a valid password:' || abort
-    is_not_given "${REPLY}" && abort '\nUser input is required'
+    is_not_given "${REPLY}" && abort '\nUser input is required.'
   done
 
   local password="${REPLY}"
 
   echo ''
   ask_secret 'Re-type the given password:' || abort
-  is_not_given "${REPLY}" && abort '\nUser input is required'
+  is_not_given "${REPLY}" && abort '\nUser input is required.'
 
   while not_equals "${REPLY}" "${password}"; do
     echo ''
     ask_secret 'Not matched, please re-type the given password:' || abort
-    is_not_given "${REPLY}" && abort '\nUser input is required'
+    is_not_given "${REPLY}" && abort '\nUser input is required.'
   done
 
   save_setting 'user_password' "\"${password}\""
 
-  log '\nUser password is set successfully'
+  log '\nUser password is set successfully.'
 }
 
 # Asks the user to set the password of the root user.
 enter_root_password () {
   log '\nPassword valid chars: a-z A-Z 0-9 `~!@#$%^&*()=+{};:",.<>/?_-'
   ask_secret 'Enter the root password (at least 4 chars):' || abort
-  is_not_given "${REPLY}" && abort '\nUser input is required'
+  is_not_given "${REPLY}" && abort '\nUser input is required.'
 
   while not_match "${REPLY}" '^[a-zA-Z0-9`~!@#\$%^&*()=+{};:",.<>/\?_-]{4,}$'; do
     echo ''
     ask_secret 'Please enter a valid password:' || abort
-    is_not_given "${REPLY}" && abort '\nUser input is required'
+    is_not_given "${REPLY}" && abort '\nUser input is required.'
   done
 
   local password="${REPLY}"
 
   echo ''
   ask_secret 'Re-type the given password:' || abort
-  is_not_given "${REPLY}" && abort '\nUser input is required'
+  is_not_given "${REPLY}" && abort '\nUser input is required.'
 
   while not_equals "${REPLY}" "${password}"; do
     echo ''
     ask_secret 'Not matched, please re-type the given password:' || abort
-    is_not_given "${REPLY}" && abort '\nUser input is required'
+    is_not_given "${REPLY}" && abort '\nUser input is required.'
   done
 
   save_setting 'root_password' "\"${password}\""
 
-  log '\nRoot password is set successfully'
+  log '\nRoot password is set successfully.'
 }
 
 # Asks the user which linux kernel to install.
@@ -415,13 +415,13 @@ select_kernel () {
   kernels="[${kernels}]"
 
   pick_one '\nSelect which linux kernel to install:' "${kernels}" 'horizontal' || abort
-  is_not_given "${REPLY}" && abort 'User input is required'
+  is_not_given "${REPLY}" && abort 'User input is required.'
 
   local kernel="${REPLY}"
 
   save_setting 'kernel' "\"${kernel}\""
 
-  log "Linux kernel is set to ${kernel}"
+  log "Linux kernel is set to ${kernel}."
 }
 
 # Report the collected installation settings.
@@ -455,7 +455,7 @@ while true; do
     report
 
   confirm '\nDo you want to go with these settings?' || abort
-  is_not_given "${REPLY}" && abort 'User input is required'
+  is_not_given "${REPLY}" && abort 'User input is required.'
 
   if is_yes "${REPLY}"; then
     break
@@ -470,7 +470,7 @@ log 'ALL data in the disk will be LOST FOREVER!'
 confirm 'Do you want to proceed?' || abort
 
 if is_not_given "${REPLY}"; then
-  abort 'User input is required'
+  abort 'User input is required.'
 fi
 
 if is_no "${REPLY}"; then

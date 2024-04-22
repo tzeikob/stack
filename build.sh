@@ -23,12 +23,12 @@ add_package () {
   local pkgs_file="${PROFILE_DIR}/packages.x86_64"
 
   if [[ ! -f "${pkgs_file}" ]]; then
-    echo -e "Unable to locate file ${pkgs_file}"
+    echo -e "Unable to locate file ${pkgs_file}."
     return 1
   fi
 
   if grep -Eq "^${name}$" "${pkgs_file}"; then
-    echo -e "Skipping package ${name}"
+    echo -e "Skipping the package ${name}."
     return 0
   fi
 
@@ -44,18 +44,18 @@ remove_package () {
   local pkgs_file="${PROFILE_DIR}/packages.x86_64"
 
   if [[ ! -f "${pkgs_file}" ]]; then
-    echo -e "Unable to locate file ${pkgs_file}"
+    echo -e "Unable to locate file ${pkgs_file}."
     return 1
   fi
 
   if ! grep -Eq "^${name}$" "${pkgs_file}"; then
-    echo -e "Unable to remove package ${name}"
+    echo -e "Unable to remove the package ${name}."
     return 1
   fi
 
   sed -Ei "/^${name}$/d" "${pkgs_file}" || return 1
 
-  echo -e "Removing package ${name}"
+  echo -e "Removing the package ${name}."
 }
 
 # Initializes build and distribution files.
@@ -63,12 +63,12 @@ init () {
   if [[ -d "${DIST_DIR}" ]]; then
     rm -rf "${DIST_DIR}" || return 1
 
-    echo -e 'Existing .dist/ folder has been removed'
+    echo -e 'Existing .dist/ folder has been removed.'
   fi
 
   mkdir -p "${DIST_DIR}" || return 1
 
-  echo -e 'A clean .dist/ folder has been created'
+  echo -e 'A clean .dist/ folder has been created.'
 }
 
 # Copies the archiso custom profile.
@@ -78,19 +78,19 @@ copy_profile () {
   local releng_path="/usr/share/archiso/configs/releng"
 
   if [[ ! -d "${releng_path}" ]]; then
-    echo -e 'Unable to locate releng archiso profile'
+    echo -e 'Unable to locate releng archiso profile.'
     return 1
   fi
 
   cp -r "${releng_path}" "${PROFILE_DIR}" || return 1
 
-  echo -e "The releng profile copied to ${PROFILE_DIR}"
+  echo -e "The releng profile copied to ${PROFILE_DIR}."
 }
 
 # Sets the distribution names and os release meta files.
 rename_distro () {
   if [[ ! -d "${ROOT_FS}" ]]; then
-    echo -e 'Unable to locate the airootfs folder'
+    echo -e 'Unable to locate the airootfs folder.'
     return 1
   fi
 
@@ -110,7 +110,7 @@ rename_distro () {
     'PRIVACY_POLICY_URL="https://github.com/tzeikob/stack/blob/master/LICENSE"' \
     'LOGO=stack-logo' > "${ROOT_FS}/etc/stack-release" || return 1
 
-  echo -e 'Release metadata set to /etc/stack-release'
+  echo -e 'Release metadata set to /etc/stack-release.'
 
   mkdir -p "${ROOT_FS}/etc/pacman.d/scripts" || return 1
 
@@ -140,14 +140,14 @@ rename_distro () {
     'When = PostTransaction' \
     'Exec = /bin/bash /etc/pacman.d/scripts/fix-release' >> "${fix_release_hook}" || return 1
   
-  echo -e 'Fix release hook has been created'
+  echo -e 'Fix release hook has been created.'
 
   echo -e 'stackiso' > "${ROOT_FS}/etc/hostname"
 
-  echo -e 'Host name set to stackiso'
+  echo -e 'Host name set to stackiso.'
 
   if [[ ! -d "${PROFILE_DIR}" ]]; then
-    echo -e 'Unable to locate the releng profile folder'
+    echo -e 'Unable to locate the releng profile folder.'
     return 1
   fi
 
@@ -159,19 +159,19 @@ rename_distro () {
     sed -i 's|^\(iso_application=\).*|\1\"Stack Linux Live Media\"|' "${profile_def}" &&
     sed -i 's|^\(install_dir=\).*|\1\"stack\"|' "${profile_def}" || return 1
 
-  echo -e 'Release info updated in profile definition file'
+  echo -e 'Release info updated in profile definition file.'
 }
 
 # Sets up the bios and uefi boot loaders.
 setup_boot_loaders () {
   if [[ ! -d "${PROFILE_DIR}" ]]; then
-    echo -e 'Unable to locate the releng profile folder'
+    echo -e 'Unable to locate the releng profile folder.'
     return 1
   fi
 
   rm -rf "${PROFILE_DIR}/efiboot" || return 1
 
-  echo -e 'EFI boot loader has been removed'
+  echo -e 'EFI boot loader has been removed.'
 
   rm -f "${PROFILE_DIR}/syslinux/archiso_pxe.cfg" \
     "${PROFILE_DIR}/syslinux/archiso_pxe-linux.cfg" || return 1
@@ -181,7 +181,7 @@ setup_boot_loaders () {
   sed -i 's/APPEND -pxe- pxe -sys- sys -iso- sys/APPEND -sys- sys -iso- sys/' "${syslinux_cfg}" &&
     sed -i '/LABEL pxe/,+3d' "${syslinux_cfg}" || return 1
 
-  echo -e 'PXE bios modes have been removed'
+  echo -e 'PXE bios modes have been removed.'
 
   sed -i 's/Arch/Stack/' "${PROFILE_DIR}/syslinux/archiso_sys-linux.cfg" &&
     sed -i '/# Accessibility boot option/,$d' "${PROFILE_DIR}/syslinux/archiso_sys-linux.cfg" &&
@@ -216,7 +216,7 @@ setup_boot_loaders () {
     'MENU CLEAR' \
     'MENU IMMEDIATE' > "${PROFILE_DIR}/syslinux/archiso_head.cfg" || return 1
 
-  echo -e 'Syslinux boot loader menus have been modified'
+  echo -e 'Syslinux boot loader menus have been modified.'
 
   local grub_cfg="${PROFILE_DIR}/grub/grub.cfg"
 
@@ -230,11 +230,11 @@ setup_boot_loaders () {
     sed -i 's/archlinux/stacklinux/' "${loopback_cfg}" &&
     sed -i 's/Arch Linux/Stack Linux/' "${loopback_cfg}" || return 1
 
-  echo -e 'Grub boot loader menus have been modified'
+  echo -e 'Grub boot loader menus have been modified.'
 
   sed -i '/if serial --unit=0 --speed=115200; then/,+3d' "${grub_cfg}" || return 1
 
-  echo -e 'Grub boot loader serial console disabled'
+  echo -e 'Grub boot loader serial console disabled.'
 }
 
 # Adds the pakacge dependencies into the list of packages.
@@ -282,13 +282,13 @@ add_packages () {
   # Remove conflicting no x server virtualbox utils
   remove_package virtualbox-guest-utils-nox || return 1
 
-  echo -e 'All packages added into the package list'
+  echo -e 'All packages added into the package list.'
 }
 
 # Patch various packages.
 patch_packages () {
   if [[ ! -d "${ROOT_FS}" ]]; then
-    echo -e 'Unable to locate the airootfs folder'
+    echo -e 'Unable to locate the airootfs folder.'
     return 1
   fi
 
@@ -308,7 +308,7 @@ patch_packages () {
     '    except KeyboardInterrupt:' \
     '        sys.exit(1)' > "${ROOT_FS}/usr/local/bin/tqdm" || return 1
   
-  echo -e 'Package tqdm has been patched'
+  echo -e 'Package tqdm has been patched.'
 }
 
 # Builds and adds the AUR packages into the packages list
@@ -319,7 +319,7 @@ add_aur_packages () {
   local previous_dir=${PWD}
 
   if [[ ! -d "${PROFILE_DIR}" ]]; then
-    echo -e 'Unable to locate the releng profile folder'
+    echo -e 'Unable to locate the releng profile folder.'
     return 1
   fi
 
@@ -349,12 +349,12 @@ add_aur_packages () {
 
   rm -rf "${AUR_DIR}" || return 1
 
-  echo -e 'The AUR package files have been built'
+  echo -e 'The AUR package files have been built.'
 
   local pacman_conf="${PROFILE_DIR}/pacman.conf"
 
   if [[ ! -f "${pacman_conf}" ]]; then
-    echo -e "Unable to locate file ${pacman_conf}"
+    echo -e "Unable to locate file ${pacman_conf}."
     return 1
   fi
 
@@ -364,14 +364,14 @@ add_aur_packages () {
     'SigLevel = Optional TrustAll' \
     "Server = file://$(realpath "${repo_home}")" >> "${pacman_conf}" || return 1
 
-  echo -e 'The custom local repo added to pacman'
-  echo -e 'All AUR packages added into the package list'
+  echo -e 'The custom local repo added to pacman.'
+  echo -e 'All AUR packages added into the package list.'
 }
 
 # Copies the files of the installer.
 copy_installer () {
   if [[ ! -d "${ROOT_FS}" ]]; then
-    echo -e 'Unable to locate the airootfs folder'
+    echo -e 'Unable to locate the airootfs folder.'
     return 1
   fi
 
@@ -394,13 +394,13 @@ copy_installer () {
 
   ln -sf /opt/stack/install.sh "${bin_home}/install_os" || return 1
 
-  echo -e 'Installer files have been copied'
+  echo -e 'Installer files have been copied.'
 }
 
 # Copies the files of the settings tools.
 copy_settings_tools () {
   if [[ ! -d "${ROOT_FS}" ]]; then
-    echo -e 'Unable to locate the airootfs folder'
+    echo -e 'Unable to locate the airootfs folder.'
     return 1
   fi
 
@@ -447,13 +447,13 @@ copy_settings_tools () {
     ln -sf /opt/tools/printers/main "${bin_home}/printers" &&
     ln -sf /opt/tools/trash/main "${bin_home}/trash" || return 1
 
-  echo -e 'Settings tools have been copied'
+  echo -e 'Settings tools have been copied.'
 }
 
 # Sets to skip login prompt and auto login the root user.
 setup_auto_login () {
   if [[ ! -d "${ROOT_FS}" ]]; then
-    echo -e 'Unable to locate the airootfs folder'
+    echo -e 'Unable to locate the airootfs folder.'
     return 1
   fi
 
@@ -463,7 +463,7 @@ setup_auto_login () {
 
   sed -i "s;^ExecStart=-/sbin/agetty.*;${exec_start};" "${auto_login}" || return 1
 
-  echo -e 'Login prompt set to skip and autologin'
+  echo -e 'Login prompt set to skip and autologin.'
 
   # Remove the default welcome message
   rm -rf "${ROOT_FS}/etc/motd" || return 1
@@ -483,13 +483,13 @@ setup_auto_login () {
 
   echo -e "${welcome}" > "${ROOT_FS}/etc/welcome"
 
-  echo -e 'Welcome message has been set to /etc/welcome'
+  echo -e 'Welcome message has been set to /etc/welcome.'
 }
 
 # Sets up the display server configuration and hooks.
 setup_display_server () {
   if [[ ! -d "${ROOT_FS}" ]]; then
-    echo -e 'Unable to locate the airootfs folder'
+    echo -e 'Unable to locate the airootfs folder.'
     return 1
   fi
 
@@ -504,18 +504,18 @@ setup_display_server () {
     sed -i '/security -qs init locker &/d' "${xinitrc_file}" &&
     sed -i '/cloud -qs mount remotes &/d' "${xinitrc_file}" || return 1
 
-  echo -e 'The .xinitrc file copied to /root/.xinitrc'
+  echo -e 'The .xinitrc file copied to /root/.xinitrc.'
 
   mkdir -p "${ROOT_FS}/etc/X11" || return 1
 
   cp configs/xorg/xorg.conf "${ROOT_FS}/etc/X11" || return 1
 
-  echo -e 'The xorg.conf file copied to /etc/X11/xorg.conf'
+  echo -e 'The xorg.conf file copied to /etc/X11/xorg.conf.'
 
   local zlogin_file="${ROOT_FS}/root/.zlogin"
 
   if [[ ! -f "${zlogin_file}" ]]; then
-    echo -e "Unable to locate file ${zlogin_file}"
+    echo -e "Unable to locate file ${zlogin_file}."
     return 1
   fi
 
@@ -524,19 +524,19 @@ setup_display_server () {
     "echo -e 'Starting desktop environment...'" \
     'startx' >> "${zlogin_file}" || return 1
 
-  echo -e 'Xorg server set to be started after login'
+  echo -e 'Xorg server set to be started after login.'
 }
 
 # Sets up the keyboard settings.
 setup_keyboard () {
   if [[ ! -d "${ROOT_FS}" ]]; then
-    echo -e 'Unable to locate the airootfs folder'
+    echo -e 'Unable to locate the airootfs folder.'
     return 1
   fi
 
   echo 'KEYMAP=us' > "${ROOT_FS}/etc/vconsole.conf" || return 1
 
-  echo -e 'Keyboard map keys has been set to us'
+  echo -e 'Keyboard map keys has been set to us.'
 
   mkdir -p "${ROOT_FS}/etc/X11/xorg.conf.d" || return 1
 
@@ -549,7 +549,7 @@ setup_keyboard () {
    '  Option "XkbOptions" "grp:alt_shift_toggle"' \
    'EndSection' > "${ROOT_FS}/etc/X11/xorg.conf.d/00-keyboard.conf" || return 1
 
-  echo -e 'Xorg keyboard settings have been set'
+  echo -e 'Xorg keyboard settings have been set.'
 
   # Save keyboard settings to the user langs json file
   local config_home="${ROOT_FS}/root/.config/stack"
@@ -564,13 +564,13 @@ setup_keyboard () {
     '  "layouts": [{"code": "us", "variant": "default"}]' \
     '}' > "${config_home}/langs.json" || return 1
   
-  echo -e 'Keyboard langs settings have been set'
+  echo -e 'Keyboard langs settings have been set.'
 }
 
 # Sets up various system power settings.
 setup_power () {
   if [[ ! -d "${ROOT_FS}" ]]; then
-    echo -e 'Unable to locate the airootfs folder'
+    echo -e 'Unable to locate the airootfs folder.'
     return 1
   fi
 
@@ -590,7 +590,7 @@ setup_power () {
     'HandleLidSwitch=suspend' \
     'HandleLidSwitchDocked=ignore' > "${logind_conf}" || return 1
 
-  echo -e 'Logind action handlers have been set'
+  echo -e 'Logind action handlers have been set.'
 
   rm -rf "${ROOT_FS}/etc/systemd/sleep.conf.d" &&
     mkdir -p "${ROOT_FS}/etc/systemd/sleep.conf.d" || return 1
@@ -604,7 +604,7 @@ setup_power () {
     'AllowSuspendThenHibernate=no' \
     'AllowHybridSleep=no' > "${sleep_conf}" || return 1
 
-  echo -e 'Sleep action handlers have been set'
+  echo -e 'Sleep action handlers have been set.'
 
   mkdir -p "${ROOT_FS}/etc/tlp.d" || return 1
 
@@ -614,7 +614,7 @@ setup_power () {
     'SOUND_POWER_SAVE_ON_AC=0' \
     'SOUND_POWER_SAVE_ON_BAT=0' > "${tlp_conf}" || return 1
 
-  echo -e 'Battery action handlers have been set'
+  echo -e 'Battery action handlers have been set.'
 
   local config_home="${ROOT_FS}/root/.config/stack"
 
@@ -625,13 +625,13 @@ setup_power () {
   '  "screensaver": {"interval": 15}' \
   '}' > "${config_home}/power.json" || return 1
 
-  echo -e 'Screensaver interval setting has been set'
+  echo -e 'Screensaver interval setting has been set.'
 }
 
 # Sets up the sheel environment files.
 setup_shell_environment () {
   if [[ ! -d "${ROOT_FS}" ]]; then
-    echo -e 'Unable to locate the airootfs folder'
+    echo -e 'Unable to locate the airootfs folder.'
     return 1
   fi
 
@@ -640,18 +640,18 @@ setup_shell_environment () {
   # Set the defauilt terminal and text editor
   echo -e 'export TERMINAL=cool-retro-term' >> "${zshrc_file}"
 
-  echo -e 'Default terminal set to cool-retro-term'
+  echo -e 'Default terminal set to cool-retro-term.'
 
   echo -e 'export EDITOR=helix' >> "${zshrc_file}"
 
-  echo -e 'Default editor set to helix'
+  echo -e 'Default editor set to helix.'
 
   # Set up trash-cli aliases
   echo -e "\nalias sudo='sudo '" >> "${zshrc_file}"
   echo "alias tt='trash-put -i'" >> "${zshrc_file}"
   echo "alias rm='rm -i'" >> "${zshrc_file}"
 
-  echo -e 'Command aliases added to /root/.zshrc'
+  echo -e 'Command aliases added to /root/.zshrc.'
 
   printf '%s\n' \
     '' \
@@ -659,7 +659,7 @@ setup_shell_environment () {
     '  cat /etc/welcome' \
     'fi' >> "${zshrc_file}" || return 1
 
-  echo -e 'Welcome message set to be shown after login'
+  echo -e 'Welcome message set to be shown after login.'
 }
 
 # Sets up the corresponding configurations for
@@ -668,7 +668,7 @@ setup_desktop () {
   echo -e 'Setting up the desktop configurations...'
 
   if [[ ! -d "${ROOT_FS}" ]]; then
-    echo -e 'Unable to locate the airootfs folder'
+    echo -e 'Unable to locate the airootfs folder.'
     return 1
   fi
 
@@ -681,7 +681,7 @@ setup_desktop () {
   
   cp configs/picom/picom.conf "${picom_home}" || return 1
 
-  echo -e 'Picom configuration has been set'
+  echo -e 'Picom configuration has been set.'
 
   # Copy windows manager configuration files
   local bspwm_home="${config_home}/bspwm"
@@ -703,7 +703,7 @@ setup_desktop () {
     '  SHOW_WELCOME_MSG=true cool-retro-term &' \
     '}' >> "${bspwm_home}/bspwmrc" || return 1
 
-  echo -e 'Bspwm configuration has been set'
+  echo -e 'Bspwm configuration has been set.'
 
   # Copy polybar configuration files
   local polybar_home="${config_home}/polybar"
@@ -727,7 +727,7 @@ setup_desktop () {
   cp -r configs/polybar/scripts/flash-drives "${polybar_home}/scripts" || return 1
   cp -r configs/polybar/scripts/time "${polybar_home}/scripts" || return 1
 
-  echo -e 'Polybar configuration has been set'
+  echo -e 'Polybar configuration has been set.'
 
   # Copy sxhkd configuration files
   local sxhkd_home="${config_home}/sxhkd"
@@ -744,7 +744,7 @@ setup_desktop () {
     sed -i '/# Start recording your screen./,+3d' "${sxhkdrc_file}" &&
     sed -i '/# Show and hide the scratchpad termimal./,+3d' "${sxhkdrc_file}" || return 1
 
-  echo -e 'Sxhkd configuration has been set'
+  echo -e 'Sxhkd configuration has been set.'
 
   # Copy rofi configuration files
   local rofi_home="${config_home}/rofi"
@@ -764,7 +764,7 @@ setup_desktop () {
     sed -i "/'Blank') power -qs blank;;/d" "${launch_file}" &&
     sed -i "/'Logout') security -qs logout user;;/d" "${launch_file}" || return 1
 
-  echo -e 'Rofi configuration has been set'
+  echo -e 'Rofi configuration has been set.'
 
   # Copy dunst configuration files
   local dunst_home="${config_home}/dunst"
@@ -774,7 +774,7 @@ setup_desktop () {
   cp configs/dunst/dunstrc "${dunst_home}" || return 1
   cp configs/dunst/hook "${dunst_home}" || return 1
 
-  echo -e 'Dunst configuration has been set'
+  echo -e 'Dunst configuration has been set.'
 }
 
 # Sets up the theme of the desktop environment.
@@ -782,7 +782,7 @@ setup_theme () {
   echo -e 'Setting up the desktop theme...'
 
   if [[ ! -d "${ROOT_FS}" ]]; then
-    echo -e 'Unable to locate the airootfs folder'
+    echo -e 'Unable to locate the airootfs folder.'
     return 1
   fi
 
@@ -797,7 +797,7 @@ setup_theme () {
     mv "${themes_home}/gtk-master" "${themes_home}/Dracula" &&
     rm -f "${themes_home}/Dracula.zip" || return 1
 
-  echo -e 'Desktop theme has been installed'
+  echo -e 'Desktop theme has been installed.'
 
   echo -e 'Setting up the desktop icons...'
 
@@ -811,7 +811,7 @@ setup_theme () {
     unzip -q "${icons_home}/Dracula.zip" -d "${icons_home}" &&
     rm -f "${icons_home}/Dracula.zip" || return 1
 
-  echo -e 'Desktop icons have been installed'
+  echo -e 'Desktop icons have been installed.'
 
   echo -e 'Setting up the desktop cursors...'
 
@@ -830,14 +830,14 @@ setup_theme () {
   echo '[Icon Theme]' >> "${cursors_home}/default/index.theme"
   echo 'Inherits=Breeze-Snow' >> "${cursors_home}/default/index.theme"
 
-  echo -e 'Desktop cursors have been installed'
+  echo -e 'Desktop cursors have been installed.'
 
   local gtk_home="${ROOT_FS}/root/.config/gtk-3.0"
   
   mkdir -p "${gtk_home}" || return 1
   cp configs/gtk/settings.ini "${gtk_home}" || return 1
 
-  echo -e 'Gtk settings file has been set'
+  echo -e 'Gtk settings file has been set.'
 
   echo -e 'Setting the desktop wallpaper...'
 
@@ -854,7 +854,7 @@ setup_theme () {
 
   echo "${settings}" > "${settings_home}/desktop.json"
 
-  echo -e 'Desktop wallpaper has been set'
+  echo -e 'Desktop wallpaper has been set.'
 }
 
 # Sets up some extra system fonts.
@@ -862,7 +862,7 @@ setup_fonts () {
   echo -e 'Setting up extra system fonts...'
 
   if [[ ! -d "${ROOT_FS}" ]]; then
-    echo -e 'Unable to locate the airootfs folder'
+    echo -e 'Unable to locate the airootfs folder.'
     return 1
   fi
 
@@ -892,16 +892,16 @@ setup_fonts () {
       chmod -R 755 "${fonts_home}/${name}" &&
       rm -f "${fonts_home}/${name}.zip" || return 1
 
-    echo -e "Font ${name} installed"
+    echo -e "Font ${name} has been installed."
   done
 
-  echo -e 'Fonts have been setup'
+  echo -e 'Fonts have been setup.'
 }
 
 # Sets up various system sound resources.
 setup_sounds () {
   if [[ ! -d "${ROOT_FS}" ]]; then
-    echo -e 'Unable to locate the airootfs folder'
+    echo -e 'Unable to locate the airootfs folder.'
     return 1
   fi
 
@@ -912,7 +912,7 @@ setup_sounds () {
   cp resources/sounds/normal.wav "${sounds_home}" || return 1
   cp resources/sounds/critical.wav "${sounds_home}" || return 1
 
-  echo -e 'Extra system sounds have been set'
+  echo -e 'Extra system sounds have been set.'
 }
 
 # Enables various system services.
@@ -920,7 +920,7 @@ enable_services () {
   echo -e 'Enabling system services...'
 
   if [[ ! -d "${ROOT_FS}" ]]; then
-    echo -e 'Unable to locate the airootfs folder'
+    echo -e 'Unable to locate the airootfs folder.'
     return 1
   fi
 
@@ -939,7 +939,7 @@ enable_services () {
   ln -s /usr/lib/systemd/system/NetworkManager-wait-online.service \
     "${ROOT_FS}/etc/systemd/system/network-online.target.wants/NetworkManager-wait-online.service" || return 1
 
-  echo -e 'Network manager services enabled'
+  echo -e 'Network manager services enabled.'
 
   ln -s /usr/lib/systemd/system/bluetooth.service \
     "${ROOT_FS}/etc/systemd/system/dbus-org.bluez.service" || return 1
@@ -949,12 +949,12 @@ enable_services () {
   ln -s /usr/lib/systemd/system/bluetooth.service \
     "${ROOT_FS}/etc/systemd/system/bluetooth.target.wants/bluetooth.service" || return 1
 
-  echo -e 'Bluetooth services enabled'
+  echo -e 'Bluetooth services enabled.'
 
   ln -s /usr/lib/systemd/system/acpid.service \
     "${ROOT_FS}/etc/systemd/system/multi-user.target.wants/acpid.service" || return 1
 
-  echo -e 'Acpid service enabled'
+  echo -e 'Acpid service enabled.'
 
   mkdir -p "${ROOT_FS}/etc/systemd/system/printer.target.wants" || return 1
 
@@ -972,24 +972,24 @@ enable_services () {
   ln -s /usr/lib/systemd/system/cups.path \
     "${ROOT_FS}/etc/systemd/system/multi-user.target.wants/cups.path" || return 1
 
-  echo -e 'Cups services enabled'
+  echo -e 'Cups services enabled.'
 
   ln -s /usr/lib/systemd/system/nftables.service \
     "${ROOT_FS}/etc/systemd/system/multi-user.target.wants/nftables.service" || return 1
 
-  echo -e 'Nftables service enabled'
+  echo -e 'Nftables service enabled.'
 
   mkdir -p "${ROOT_FS}/root/.config/systemd/user" || return 1
 
   cp services/init-pointer.service \
     "${ROOT_FS}/root/.config/systemd/user/init-pointer.service" || return 1
 
-  echo -e 'Pointer init service enabled'
+  echo -e 'Pointer init service enabled.'
 
   cp services/init-tablets.service \
     "${ROOT_FS}/root/.config/systemd/user/init-tablets.service" || return 1
 
-  echo -e 'Tablets init service enabled'
+  echo -e 'Tablets init service enabled.'
 
   cp services/fix-layout.service \
     "${ROOT_FS}/root/.config/systemd/user/fix-layout.service" || return 1
@@ -1000,13 +1000,13 @@ enable_services () {
   sed -i 's;^\(Environment=XAUTHORITY\).*;\1=/root/.Xauthority;' \
     "${ROOT_FS}/root/.config/systemd/user/fix-layout.service" || return 1
   
-  echo -e 'Fix layout service enabled'
+  echo -e 'Fix layout service enabled.'
 }
 
 # Adds input and output devices rules.
 add_device_rules () {
   if [[ ! -d "${ROOT_FS}" ]]; then
-    echo -e 'Unable to locate the airootfs folder'
+    echo -e 'Unable to locate the airootfs folder.'
     return 1
   fi
 
@@ -1018,13 +1018,13 @@ add_device_rules () {
     cp rules/91-init-tablets.rules "${rules_home}" &&
     cp rules/92-fix-layout.rules "${rules_home}" || return 1
   
-  echo -e 'Device rules have been set'
+  echo -e 'Device rules have been set.'
 }
 
 # Adds various extra sudoers rules.
 add_sudoers_rules () {
   if [[ ! -d "${ROOT_FS}" ]]; then
-    echo -e 'Unable to locate the airootfs folder'
+    echo -e 'Unable to locate the airootfs folder.'
     return 1
   fi
 
@@ -1040,7 +1040,7 @@ add_sudoers_rules () {
 
   echo "${proxy_rules}" > "${ROOT_FS}/etc/sudoers.d/proxy_rules"
 
-  echo -e 'Proxy rules have been added to sudoers'
+  echo -e 'Proxy rules have been added to sudoers.'
 }
 
 # Defines the root files permissions.
@@ -1048,7 +1048,7 @@ set_file_permissions () {
   local permissions_file="${PROFILE_DIR}/profiledef.sh"
 
   if [[ ! -f "${permissions_file}" ]]; then
-    echo -e "Unable to locate file ${permissions_file}"
+    echo -e "Unable to locate file ${permissions_file}."
     return 1
   fi
 
@@ -1088,7 +1088,7 @@ set_file_permissions () {
     sed -i "/file_permissions=(/a [\"${path}\"]=\"${perms}\"" "${permissions_file}" || return 1
   done
 
-  echo -e 'File permissions have been defined'
+  echo -e 'File permissions have been defined.'
 }
 
 # Creates the iso file of the live media.
@@ -1096,15 +1096,15 @@ make_iso_file () {
   echo -e 'Building the archiso file...'
 
   if [[ ! -d "${PROFILE_DIR}" ]]; then
-    echo -e 'Unable to locate the releng profile folder'
+    echo -e 'Unable to locate the releng profile folder.'
     return 1
   fi
 
   sudo mkarchiso -v -r \
     -w "${WORK_DIR}" -o "${DIST_DIR}" "${PROFILE_DIR}" || return 1
 
-  echo -e "Archiso file has been exported at ${DIST_DIR}"
-  echo -e 'Build process completed successfully'
+  echo -e "Archiso file has been exported at ${DIST_DIR}."
+  echo -e 'Build process completed successfully.'
 }
 
 echo -e 'Starting the build process...'

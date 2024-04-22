@@ -203,7 +203,7 @@ pick_device () {
   len="$(count "${devices}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo "No ${type:-network} devices found"
+    echo "No ${type:-network} devices found."
     return 2
   fi
 
@@ -224,7 +224,7 @@ pick_connection () {
   len="$(count "${connections}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No connections have found'
+    echo 'No connections have found.'
     return 2
   fi
 
@@ -248,7 +248,7 @@ pick_wifi () {
   len="$(count "${networks}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No wifi networks detected'
+    echo 'No wifi networks detected.'
     return 2
   fi
 
@@ -265,7 +265,7 @@ pick_wifi () {
 #  A menu of proxy profiles.
 pick_proxy () {
   if file_not_exists "${NETWORKS_SETTINGS}"; then
-    echo 'No proxy profiles have found'
+    echo 'No proxy profiles have found.'
     return 2
   fi
 
@@ -280,7 +280,7 @@ pick_proxy () {
   len="$(count "${proxies}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo "No proxy profiles have found"
+    echo 'No proxy profiles have found.'
     return 2
   fi
 

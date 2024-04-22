@@ -54,16 +54,16 @@ abort () {
   if is_given "${message}"; then
     if is_given "${level}"; then
       log "${level}" "${message}"
-      log "${level}" 'Installation process exited!'
+      log "${level}" 'Installation process has exited.'
     else
       log "\n${message}"
-      log 'Installation process exited!'
+      log 'Installation process has exited.'
     fi
   else
     if is_given "${level}"; then
-      log "${level}" 'Installation process exited!'
+      log "${level}" 'Installation process has exited.'
     else
-      log '\nInstallation process exited!'
+      log '\nInstallation process has exited.'
     fi
   fi
 

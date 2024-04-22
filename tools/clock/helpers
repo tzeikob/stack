@@ -28,7 +28,7 @@ pick_timezone () {
   len=$(count "${timezones}") || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No timezones have found'
+    echo 'No timezones have found.'
     return 2
   fi
   

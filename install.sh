@@ -27,8 +27,8 @@ report () {
   settings="$(get_settings | jq "${query}")"
 
   if has_failed; then
-    log ERROR 'Unable to read installation settings' >> "${log_file}"
-    abort 'Unable to read installation settings'
+    log ERROR 'Unable to read installation settings.' >> "${log_file}"
+    abort 'Unable to read installation settings.'
   fi
 
   log '\nInstallation properties have been set to:' > "${log_file}"
@@ -81,8 +81,8 @@ run () {
       --bar-format "${BAR_FORMAT}" --total ${total} >> "${log_file}.tqdm"
 
   if has_failed; then
-    log ERROR "Script ${file_name}.sh has been failed" >> "${log_file}"
-    abort 'A fatal error has been occurred'
+    log ERROR "Script ${file_name}.sh has been failed." >> "${log_file}"
+    abort 'A fatal error has been occurred.'
   fi
 }
 
@@ -104,8 +104,8 @@ install () {
     user_name="$(get_setting 'user_name')"
 
     if has_failed; then
-      log ERROR 'Unable to read the user_name setting' >> "${log_file}"
-      abort 'Unable to read user_name setting'
+      log ERROR 'Unable to read the user_name setting.' >> "${log_file}"
+      abort 'Unable to read user_name setting.'
     fi
   fi
 
@@ -139,8 +139,8 @@ install () {
       --bar-format "${BAR_FORMAT}" --total ${total} >> "${log_file}.tqdm"
   
   if has_failed; then
-    log ERROR "Script ${file_name}.sh has been failed" >> "${log_file}"
-    abort 'A fatal error has been occurred'
+    log ERROR "Script ${file_name}.sh has been failed." >> "${log_file}"
+    abort 'A fatal error has been occurred.'
   fi
 }
 
@@ -163,11 +163,11 @@ restart () {
   # Clean redundant log files from archiso media
   rm -rf /var/log/stack
   
-  log '\nInstallation process has been completed'
+  log '\nInstallation process has been completed.'
   log 'Rebooting the system in 15 secs...'
 
   sleep 15
-  umount -R /mnt || log 'Ignoring busy mount points'
+  umount -R /mnt || log 'Ignoring busy mount points.'
   reboot
 }
 
@@ -180,16 +180,16 @@ welcome () {
   log '░░░▀▀▀░░▀░░▀░▀░▀▀▀░▀░▀░░░'
 
   log '\nWelcome to the Stack Linux installer.'
-  log 'Base your development stack on Arch Linux'
+  log 'Base your development stack on Arch Linux.'
 
   confirm 'Do you want to proceed?' || abort
 
   if is_not_given "${REPLY}"; then
-    abort 'User input is required'
+    abort 'User input is required.'
   fi
 
   if is_no "${REPLY}"; then
-    abort 'Sure, maybe next time'
+    abort 'Sure, maybe next time.'
   fi
 }
 

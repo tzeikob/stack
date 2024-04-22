@@ -11,11 +11,11 @@ install_chrome () {
   yay -S --needed --noconfirm --removemake google-chrome 2>&1
   
   if has_failed; then
-    log WARN 'Failed to install the chrome web browser'
+    log WARN 'Failed to install the chrome web browser.'
     return 0
   fi
 
-  log INFO 'Chrome web browser has been installed'
+  log INFO 'Chrome web browser has been installed.'
 }
 
 # Installs the firefox web browser.
@@ -25,11 +25,11 @@ install_firefox () {
   sudo pacman -S --needed --noconfirm firefox 2>&1
   
   if has_failed; then
-    log WARN 'Failed to install the firefox web browser'
+    log WARN 'Failed to install the firefox web browser.'
     return 0
   fi
 
-  log INFO 'Firefox web browser has been installed'
+  log INFO 'Firefox web browser has been installed.'
 }
 
 # Installs the tor web browser.
@@ -39,11 +39,11 @@ install_tor () {
   sudo pacman -S --needed --noconfirm torbrowser-launcher 2>&1
   
   if has_failed; then
-    log WARN 'Failed to install the tor web browser'
+    log WARN 'Failed to install the tor web browser.'
     return 0
   fi
 
-  log INFO 'Tor web browser has been installed'
+  log INFO 'Tor web browser has been installed.'
 }
 
 # Installs the postman client.
@@ -53,11 +53,11 @@ install_postman () {
   yay -S --needed --noconfirm --removemake postman-bin 2>&1
   
   if has_failed; then
-    log WARN 'Failed to install postman client'
+    log WARN 'Failed to install postman client.'
     return 0
   fi
 
-  log INFO 'Postman client has been installed'
+  log INFO 'Postman client has been installed.'
 }
 
 # Installs the mongodb compass client.
@@ -67,11 +67,11 @@ install_compass () {
   yay -S --needed --noconfirm --removemake mongodb-compass 2>&1
   
   if has_failed; then
-    log WARN 'Failed to install mongodb compass client'
+    log WARN 'Failed to install mongodb compass client.'
     return 0
   fi
 
-  log INFO 'Mongodb compass client has been installed'
+  log INFO 'Mongodb compass client has been installed.'
 }
 
 # Installs the free version of the studio3t client.
@@ -81,11 +81,11 @@ install_studio3t () {
   yay -S --needed --noconfirm --removemake studio-3t 2>&1
 
   if has_failed; then
-    log WARN 'Failed to install studio-3t client'
+    log WARN 'Failed to install studio-3t client.'
     return 0
   fi
 
-  log INFO 'Studio3t client has been installed'
+  log INFO 'Studio3t client has been installed.'
 }
 
 # Installs the free version of the dbeaver client.
@@ -96,11 +96,11 @@ install_dbeaver () {
   printf '%s\n' 2 y | sudo pacman -S --needed dbeaver 2>&1
 
   if has_failed; then
-    log WARN 'Failed to install dbeaver client'
+    log WARN 'Failed to install dbeaver client.'
     return 0
   fi
 
-  log INFO 'Dbeaver client has been installed'
+  log INFO 'Dbeaver client has been installed.'
 }
 
 # Installs the discord.
@@ -110,11 +110,11 @@ install_discord () {
   sudo pacman -S --needed --noconfirm discord 2>&1
   
   if has_failed; then
-    log WARN 'Failed to install discord'
+    log WARN 'Failed to install discord.'
     return 0
   fi
 
-  log INFO 'Discord has been installed'
+  log INFO 'Discord has been installed.'
 }
 
 # Installs the slack.
@@ -124,11 +124,11 @@ install_slack () {
   yay -S --needed --noconfirm --removemake slack-electron 2>&1
   
   if has_failed; then
-    log WARN 'Failed to install slack'
+    log WARN 'Failed to install slack.'
     return 0
   fi
 
-  log INFO 'Slack has been installed'
+  log INFO 'Slack has been installed.'
 }
 
 # Installs the skype.
@@ -138,11 +138,11 @@ install_skype () {
   yay -S --needed --noconfirm --removemake skypeforlinux-bin 2>&1
 
   if has_failed; then
-    log WARN 'Failed to install skype'
+    log WARN 'Failed to install skype.'
     return 0
   fi
 
-  log INFO 'Skype has been installed'
+  log INFO 'Skype has been installed.'
 }
 
 # Installs the irssi client.
@@ -152,7 +152,7 @@ install_irssi () {
   sudo pacman -S --needed --noconfirm irssi 2>&1
 
   if has_failed; then
-    log WARN 'Failed to install irssi client'
+    log WARN 'Failed to install irssi client.'
     return 0
   fi
 
@@ -171,10 +171,10 @@ install_irssi () {
     'Icon=irssi' \
     'Catogories=Chat;IRC;Console' \
     'Keywords=Chat;IRC;Console' | sudo tee "${desktop_file}" > /dev/null &&
-    log INFO 'Desktop file irssi.desktop has been created' ||
-    log WARN 'Failed to create desktop file irssi.desktop'
+    log INFO 'Desktop file irssi.desktop has been created.' ||
+    log WARN 'Failed to create desktop file irssi.desktop.'
   
-  log INFO 'Irssi client has been installed'
+  log INFO 'Irssi client has been installed.'
 }
 
 # Installs the filezilla client.
@@ -184,11 +184,11 @@ install_filezilla () {
   sudo pacman -S --needed --noconfirm filezilla 2>&1
 
   if has_failed; then
-    log WARN 'Failed to install filezilla'
+    log WARN 'Failed to install filezilla.'
     return 0
   fi
 
-  log INFO 'Filezilla client has been installed'
+  log INFO 'Filezilla client has been installed.'
 }
 
 # Installs the virtual box.
@@ -196,7 +196,7 @@ install_virtual_box () {
   log INFO 'Installing the virtual box...'
 
   local kernel=''
-  kernel="$(get_setting 'kernel')" || abort ERROR 'Unable to read kernel setting'
+  kernel="$(get_setting 'kernel')" || abort ERROR 'Unable to read kernel setting.'
 
   local pckgs='virtualbox virtualbox-guest-iso'
 
@@ -209,18 +209,18 @@ install_virtual_box () {
   sudo pacman -S --needed --noconfirm ${pckgs} 2>&1
 
   if has_failed; then
-    log WARN 'Failed to install virtual box'
+    log WARN 'Failed to install virtual box.'
     return 0
   fi
 
   local user_name=''
-  user_name="$(get_setting 'user_name')" || abort ERROR 'Unable to read user_name setting'
+  user_name="$(get_setting 'user_name')" || abort ERROR 'Unable to read user_name setting.'
 
   sudo usermod -aG vboxusers "${user_name}" 2>&1 &&
-    log INFO 'User added to the vboxusers user group' ||
-    log WARN 'Failed to add user to vboxusers group'
+    log INFO 'User added to the vboxusers user group.' ||
+    log WARN 'Failed to add user to vboxusers group.'
 
-  log INFO 'Virtual box has been installed'
+  log INFO 'Virtual box has been installed.'
 }
 
 # Installs the vmware.
@@ -231,19 +231,19 @@ install_vmware () {
     yay -S --needed --noconfirm --removemake vmware-workstation 2>&1
   
   if has_failed; then
-    log WARN 'Failed to install vmware'
+    log WARN 'Failed to install vmware.'
     return 0
   fi
 
   sudo systemctl enable vmware-networks.service 2>&1 &&
-    log INFO 'Service vmware-networks has been enabled' ||
-    log WARN 'Failed to enable vmware-networks service'
+    log INFO 'Service vmware-networks has been enabled.' ||
+    log WARN 'Failed to enable vmware-networks service.'
 
   sudo systemctl enable vmware-usbarbitrator.service 2>&1 &&
-    log INFO 'Service vmware-usbarbitrator has been enabled' ||
-    log WARN 'Failed to enabled vmware-usbarbitrator service'
+    log INFO 'Service vmware-usbarbitrator has been enabled.' ||
+    log WARN 'Failed to enabled vmware-usbarbitrator service.'
   
-  log INFO 'Vmware has been installed'
+  log INFO 'Vmware has been installed.'
 }
 
 # Installs the libre office.
@@ -253,11 +253,11 @@ install_libre_office () {
   sudo pacman -S --needed --noconfirm libreoffice-fresh 2>&1
 
   if has_failed; then
-    log WARN 'Failed to install libre office'
+    log WARN 'Failed to install libre office.'
     return 0
   fi
 
-  log INFO 'Libre office has been installed'
+  log INFO 'Libre office has been installed.'
 }
 
 # Installs the foliate epub reader.
@@ -267,21 +267,21 @@ install_foliate () {
   sudo pacman -S --needed --noconfirm foliate poppler 2>&1
   
   if has_failed; then
-    log WARN 'Failed to install foliate epub reader'
+    log WARN 'Failed to install foliate epub reader.'
     return 0
   fi
 
   local user_name=''
-  user_name="$(get_setting 'user_name')" || abort ERROR 'Unable to read user_name setting'
+  user_name="$(get_setting 'user_name')" || abort ERROR 'Unable to read user_name setting.'
 
   local config_home="/home/${user_name}/.config"
 
   printf '%s\n' \
     'application/epub+zip=com.github.johnfactotum.Foliate.desktop' >> "${config_home}/mimeapps.list" &&
-    log INFO 'Epub mime type has been added' ||
-    log WARN 'Failed to add epub mime types'
+    log INFO 'Epub mime type has been added.' ||
+    log WARN 'Failed to add epub mime types.'
   
-  log INFO 'Foliate epub reader has been installed'
+  log INFO 'Foliate epub reader has been installed.'
 }
 
 # Installs the transmission torrent client.
@@ -291,11 +291,11 @@ install_transmission () {
   sudo pacman -S --needed --noconfirm transmission-cli transmission-gtk 2>&1
 
   if has_failed; then
-    log WARN 'Failed to install transmission torrent client'
+    log WARN 'Failed to install transmission torrent client.'
     return 0
   fi
 
-  log INFO 'Transmission torrent client has been installed'
+  log INFO 'Transmission torrent client has been installed.'
 }
 
 # Resolves the installaction script by addressing
@@ -304,7 +304,7 @@ resolve () {
   # Read the current progress as the number of log lines
   local lines=0
   lines=$(cat /var/log/stack/tools.log | wc -l) ||
-    abort ERROR 'Unable to read the current log lines'
+    abort ERROR 'Unable to read the current log lines.'
 
   local total=1900
 
@@ -323,11 +323,11 @@ resolve () {
   return 0
 }
 
-log INFO 'Script tools.sh started'
+log INFO 'Script tools.sh started.'
 log INFO 'Installing some extra tools...'
 
 if equals "$(id -u)" 0; then
-  abort ERROR 'Script tools.sh must be run as non root user'
+  abort ERROR 'Script tools.sh must be run as non root user.'
 fi
 
 install_chrome &&
@@ -348,6 +348,6 @@ install_chrome &&
   install_foliate &&
   install_transmission
 
-log INFO 'Script tools.sh has finished'
+log INFO 'Script tools.sh has finished.'
 
 resolve && sleep 3

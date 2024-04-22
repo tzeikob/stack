@@ -54,7 +54,7 @@ list_printers () {
   len="$(count "${destinations}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No printers have found'
+    echo 'No printers have found.'
     return 0
   fi
 
@@ -77,15 +77,15 @@ show_printer () {
 
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Printer name is not given' && return 2
+      echo 'Printer name is not given.' && return 2
 
     pick_printer || return $?
-    is_empty "${REPLY}" && echo 'Printer name is not selected' && return 2
+    is_empty "${REPLY}" && echo 'Printer name is not selected.' && return 2
     name="${REPLY}"
   fi
 
   if destination_not_exists "${name}"; then
-    echo "Cannot find printer ${name}"
+    echo "Cannot find printer ${name}."
     return 2
   fi
 
@@ -124,49 +124,49 @@ add_printer () {
 
   if is_not_given "${uri}"; then
     on_script_mode &&
-      echo 'Printer uri is not given' && return 2
+      echo 'Printer uri is not given.' && return 2
 
     pick_uri || return $?
-    is_empty "${REPLY}" && echo 'Printer uri is required' && return 2
+    is_empty "${REPLY}" && echo 'Printer uri is required.' && return 2
     uri="${REPLY}"
   fi
 
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing the printer name' && return 2
+      echo 'Missing the printer name.' && return 2
 
     ask 'Enter the printer name:' || return $?
-    is_empty "${REPLY}" && echo 'Printer name is requried' && return 2
+    is_empty "${REPLY}" && echo 'Printer name is requried.' && return 2
     name="${REPLY}"
   fi
 
   if destination_exists "${name}"; then
-    echo "Printer ${name} already exists"
+    echo "Printer ${name} already exists."
     return 2
   fi
 
   if is_not_given "${driver}"; then
     on_script_mode &&
-      echo 'Print driver is not given' && return 2
+      echo 'Print driver is not given.' && return 2
 
     pick_driver || return $?
-    is_empty "${REPLY}" && echo 'Print driver is required' && return 2
+    is_empty "${REPLY}" && echo 'Print driver is required.' && return 2
     driver="${REPLY}"
   fi
 
   if is_driver_not_available "${driver}"; then
-    echo "Driver ${driver} is not available"
+    echo "Driver ${driver} is not available."
     return 2
   fi
 
   lpadmin -p "${name}" -E -o printer-is-shared=false  -v "${uri}" -m "${driver}" &> /dev/null
 
   if has_failed; then
-    echo "Failed to add printer ${uri}"
+    echo "Failed to add printer ${uri}."
     return 2
   fi
 
-  echo "Printer ${uri} added"
+  echo "Printer ${uri} added."
 }
 
 # Removes the printer destination with the
@@ -178,26 +178,26 @@ remove_printer () {
 
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing printer name' && return 2
+      echo 'Missing printer name.' && return 2
 
     pick_printer || return $?
-    is_empty "${REPLY}" && echo 'Printer name is required' && return 2
+    is_empty "${REPLY}" && echo 'Printer name is required.' && return 2
     name="${REPLY}"
   fi
 
   if destination_not_exists "${name}"; then
-    echo "Cannot find printer ${name}"
+    echo "Cannot find printer ${name}."
     return 2
   fi
 
   lpadmin -x "${name}" &> /dev/null
 
   if has_failed; then
-    echo "Failed to remove printer ${name}"
+    echo "Failed to remove printer ${name}."
     return 2
   fi
 
-  echo "Printer ${name} has been removed"
+  echo "Printer ${name} has been removed."
 }
 
 # Shares the printer with the given name
@@ -209,26 +209,26 @@ share_printer () {
 
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing printer name' && return 2
+      echo 'Missing printer name.' && return 2
 
     pick_printer || return $?
-    is_empty "${REPLY}" && echo 'Printer name is required' && return 2
+    is_empty "${REPLY}" && echo 'Printer name is required.' && return 2
     name="${REPLY}"
   fi
 
   if destination_not_exists "${name}"; then
-    echo "Cannot find printer ${name}"
+    echo "Cannot find printer ${name}."
     return 2
   fi
 
   lpadmin -p "${name}" -o printer-is-shared=true &> /dev/null
 
   if has_failed; then
-    echo "Failed to share printer ${name}"
+    echo "Failed to share printer ${name}."
     return 2
   fi
 
-  echo "Printer ${name} has been shared"
+  echo "Printer ${name} has been shared."
 }
 
 # Unshares the printer with the given name
@@ -240,26 +240,26 @@ unshare_printer () {
 
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing printer name' && return 2
+      echo 'Missing printer name.' && return 2
 
     pick_printer || return $?
-    is_empty "${REPLY}" && echo 'Printer name is required' && return 2
+    is_empty "${REPLY}" && echo 'Printer name is required.' && return 2
     name="${REPLY}"
   fi
 
   if destination_not_exists "${name}"; then
-    echo "Cannot find printer ${name}"
+    echo "Cannot find printer ${name}."
     return 2
   fi
 
   lpadmin -p "${name}" -o printer-is-shared=false &> /dev/null
 
   if has_failed; then
-    echo "Failed to unshare printer ${name}"
+    echo "Failed to unshare printer ${name}."
     return 2
   fi
 
-  echo "Printer ${name} has been unshared"
+  echo "Printer ${name} has been unshared."
 }
 
 # Sets an option of the printer with the given name.
@@ -274,35 +274,35 @@ set_option () {
 
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing the printer name' && return 2
+      echo 'Missing the printer name.' && return 2
 
     pick_printer || return $?
-    is_empty "${REPLY}" && echo 'Printer name is required' && return 2
+    is_empty "${REPLY}" && echo 'Printer name is required.' && return 2
     name="${REPLY}"
   fi
 
   if destination_not_exists "${name}"; then
-    echo "Cannot find printer ${name}"
+    echo "Cannot find printer ${name}."
     return 2
   fi
 
   if is_not_given "${key}"; then
     on_script_mode &&
-      echo 'Missing print option key' && return 2
+      echo 'Missing print option key.' && return 2
 
     pick_print_option || return $?
-    is_empty "${REPLY}" && echo 'Print option key is required' && return 2
+    is_empty "${REPLY}" && echo 'Print option key is required.' && return 2
     key="${REPLY}"
   fi
 
   if is_not_print_option "${key}"; then
-    echo 'Invalid print option key'
+    echo 'Invalid print option key.'
     return 2
   fi
 
   if is_not_given "${value}"; then
     on_script_mode &&
-      echo 'Missing the print option value' && return 2
+      echo 'Missing the print option value.' && return 2
 
     case "${key}" in
       Quality) pick_print_quality;;
@@ -311,10 +311,10 @@ set_option () {
       TonerSaveMode) pick_toner_mode;;
       printer-error-policy) pick_error_policy;;
       *)
-        echo 'Unknown or invalid print option key'
+        echo 'Unknown or invalid print option key.'
         return 2;;
     esac || return $?
-    is_empty "${REPLY}" && echo 'Print option value is required' && return 2
+    is_empty "${REPLY}" && echo 'Print option value is required.' && return 2
     value="${REPLY}"
   fi
    
@@ -325,23 +325,23 @@ set_option () {
     TonerSaveMode) is_valid_toner_mode "${value}";;
     printer-error-policy) is_valid_error_policy "${value}";;
     *)
-      echo 'Unknown or invalid print option key'
+      echo 'Unknown or invalid print option key.'
       return 2;;
   esac
 
   if has_failed; then
-    echo 'Invalid print option value'
+    echo 'Invalid print option value.'
     return 2
   fi
 
   lpadmin -p "${name}" -o "${key}"="${value}"
 
   if has_failed; then
-    echo 'Failed to set printer option'
+    echo 'Failed to set printer option.'
     return 2
   fi
 
-  echo "Option ${key} of printer ${name} set to ${value}"
+  echo "Option ${key} of printer ${name} set to ${value}."
 }
 
 # Sets the printer with the given name as default
@@ -353,26 +353,26 @@ set_default () {
 
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing the printer name' && return 2
+      echo 'Missing the printer name.' && return 2
 
     pick_printer || return $?
-    is_empty "${REPLY}" && echo 'Printer name is required' && return 2
+    is_empty "${REPLY}" && echo 'Printer name is required.' && return 2
     name="${REPLY}"
   fi
 
   if destination_not_exists "${name}"; then
-    echo "Cannot find printer ${name}"
+    echo "Cannot find printer ${name}."
     return 2
   fi
 
   lpoptions -d "${name}" &> /dev/null
 
   if has_failed; then
-    echo 'Failed to set default print destination'
+    echo 'Failed to set default print destination.'
     return 2
   fi
 
-  echo "Printer ${name} set as default destination"
+  echo "Printer ${name} set as default destination."
 }
 
 # Shows the list of all queued print jobs.
@@ -386,7 +386,7 @@ list_jobs () {
   len="$(count "${jobs}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No active print jobs have found'
+    echo 'No active print jobs have found.'
     return 0
   fi
 
@@ -408,26 +408,26 @@ cancel_job () {
 
   if is_not_given "${id}"; then
     on_script_mode &&
-      echo 'Missing the print job id' && return 2
+      echo 'Missing the print job id.' && return 2
 
     pick_job || return $?
-    is_empty "${REPLY}" && echo 'Print job id is required' && return 2
+    is_empty "${REPLY}" && echo 'Print job id is required.' && return 2
     id="${REPLY}"
   fi
 
   if job_not_exists "${id}"; then
-    echo "Cannot find print job ${id}"
+    echo "Cannot find print job ${id}."
     return 2
   fi
 
   cancel -x "${id}"
 
   if has_failed; then
-    echo "Failed to cancel print job ${id}"
+    echo "Failed to cancel print job ${id}."
     return 2
   fi
 
-  echo "Print job ${id} has been canceled"
+  echo "Print job ${id} has been canceled."
 }
 
 # Restarts the cup service.
@@ -439,10 +439,10 @@ restart () {
   sudo systemctl restart cups.service
 
   if has_failed; then
-    echo 'Failed to restart cups service'
+    echo 'Failed to restart cups service.'
     return 2
   fi
 
-  echo 'Cups service has been restarted'
+  echo 'Cups service has been restarted.'
 }
 

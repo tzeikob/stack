@@ -9,7 +9,7 @@ install_node () {
   log INFO 'Installing the node runtime engine...'
 
   local user_name=''
-  user_name="$(get_setting 'user_name')" || abort ERROR 'Unable to read user_name setting'
+  user_name="$(get_setting 'user_name')" || abort ERROR 'Unable to read user_name setting.'
 
   local nvm_home="/home/${user_name}/.nvm"
 
@@ -19,38 +19,38 @@ install_node () {
     cd ~
   
   if has_failed; then
-    log WARN 'Failed to install node version manager'
+    log WARN 'Failed to install node version manager.'
     return 0
   fi
 
-  log INFO 'Node version manager has been installed'
+  log INFO 'Node version manager has been installed.'
 
   local bashrc_file="/home/${user_name}/.bashrc"
 
   echo -e '\nexport NVM_DIR="${HOME}/.nvm"' >> "${bashrc_file}" &&
-    log INFO 'Nvm export hook added to the .bashrc file' ||
-    log WARN 'Failed to add export hook to the .bashrc file'
+    log INFO 'Nvm export hook added to the .bashrc file.' ||
+    log WARN 'Failed to add export hook to the .bashrc file.'
 
   echo '[ -s "${NVM_DIR}/nvm.sh" ] && \. "${NVM_DIR}/nvm.sh"' >> "${bashrc_file}" &&
-    log INFO 'Nvm source hook added to the .bashrc file' ||
-    log WARN 'Failed to add source hook to the .bashrc file'
+    log INFO 'Nvm source hook added to the .bashrc file.' ||
+    log WARN 'Failed to add source hook to the .bashrc file.'
   
   echo '[ -s "${NVM_DIR}/bash_completion" ] && \. "${NVM_DIR}/bash_completion"' >> "${bashrc_file}" &&
-    log INFO 'Nvm completion hook added to the .bashrc file' ||
-    log WARN 'Failed to add completion hook to the .bashrc file'
+    log INFO 'Nvm completion hook added to the .bashrc file.' ||
+    log WARN 'Failed to add completion hook to the .bashrc file.'
 
   log INFO 'Installing the latest node version...'
 
   \. "${nvm_home}/nvm.sh" 2>&1 &&
     nvm install --no-progress node 2>&1 &&
-    log INFO 'Node latest version has been installed' ||
-    log WARN 'Failed to install the latest version of node'
+    log INFO 'Node latest version has been installed.' ||
+    log WARN 'Failed to install the latest version of node.'
 
   echo 'export PATH="./node_modules/.bin:${PATH}"' >> "${bashrc_file}" &&
-    log INFO 'Node modules path added to the PATH' ||
-    log WARN 'Failed to add node modules path into the PATH'
+    log INFO 'Node modules path added to the PATH.' ||
+    log WARN 'Failed to add node modules path into the PATH.'
 
-  log INFO 'Node runtime engine has been installed'
+  log INFO 'Node runtime engine has been installed.'
 }
 
 # Installs the deno javascript runtime engine.
@@ -60,11 +60,11 @@ install_deno () {
   sudo pacman -S --needed --noconfirm deno 2>&1
 
   if has_failed; then
-    log WARN 'Failed to install deno'
+    log WARN 'Failed to install deno.'
     return 0
   fi
 
-  log INFO 'Deno runtime engine has been installed'
+  log INFO 'Deno runtime engine has been installed.'
 }
 
 # Installs the bun javascript runtime engine.
@@ -78,11 +78,11 @@ install_bun () {
     bash /tmp/bun-install.sh 2>&1
   
   if has_failed; then
-    log WARN 'Failed to install bun'
+    log WARN 'Failed to install bun.'
     return 0
   fi
 
-  log INFO 'Bun runtime engine has been installed'
+  log INFO 'Bun runtime engine has been installed.'
 }
 
 # Installs the go programming language.
@@ -92,11 +92,11 @@ install_go () {
   sudo pacman -S --needed --noconfirm go go-tools 2>&1
 
   if has_failed; then
-    log WARN 'Failed to install go programming language'
+    log WARN 'Failed to install go programming language.'
     return 0
   fi
 
-  log INFO 'Go programming language has been installed'
+  log INFO 'Go programming language has been installed.'
 }
 
 # Installs the rust programming language.
@@ -106,19 +106,19 @@ install_rust () {
   sudo pacman -S --needed --noconfirm rustup 2>&1
   
   if has_failed; then
-    log WARN 'Failed to install rust programming language'
+    log WARN 'Failed to install rust programming language.'
     return 0
   fi
 
-  log INFO 'Rustup has been installed'
+  log INFO 'Rustup has been installed.'
 
   log INFO 'Setting the default tool chain...'
 
   rustup default stable 2>&1 &&
-    log INFO 'Rust default tool chain set to stable' ||
-    log WARN 'Failed to set default tool chain'
+    log INFO 'Rust default tool chain set to stable.' ||
+    log WARN 'Failed to set default tool chain.'
 
-  log INFO 'Rust programming language has been installed'
+  log INFO 'Rust programming language has been installed.'
 }
 
 # Installs the docker egine.
@@ -128,24 +128,24 @@ install_docker () {
   sudo pacman -S --needed --noconfirm docker docker-compose 2>&1
   
   if has_failed; then
-    log WARN 'Failed to install docker engine'
+    log WARN 'Failed to install docker engine.'
     return 0
   fi
 
-  log INFO 'Docker packages have been installed'
+  log INFO 'Docker packages have been installed.'
 
   sudo systemctl enable docker.service 2>&1 &&
-    log INFO 'Docker service has been enabled' ||
-    log WARN 'Failed to enable docker service'
+    log INFO 'Docker service has been enabled.' ||
+    log WARN 'Failed to enable docker service.'
 
   local user_name=''
-  user_name="$(get_setting 'user_name')" || abort ERROR 'Unable to read user_name setting'
+  user_name="$(get_setting 'user_name')" || abort ERROR 'Unable to read user_name setting.'
 
   sudo usermod -aG docker "${user_name}" 2>&1 &&
-    log INFO 'User added to the docker user group' ||
-    log WARN 'Failed to add user to docker group'
+    log INFO 'User added to the docker user group.' ||
+    log WARN 'Failed to add user to docker group.'
 
-  log INFO 'Docker egine has been installed'
+  log INFO 'Docker egine has been installed.'
 }
 
 # Resolves the installaction script by addressing
@@ -154,7 +154,7 @@ resolve () {
   # Read the current progress as the number of log lines
   local lines=0
   lines=$(cat /var/log/stack/stack.log | wc -l) ||
-    abort ERROR 'Unable to read the current log lines'
+    abort ERROR 'Unable to read the current log lines.'
 
   local total=270
 
@@ -173,11 +173,11 @@ resolve () {
   return 0
 }
 
-log INFO 'Script stack.sh started'
+log INFO 'Script stack.sh started.'
 log INFO 'Installing the developemnt stack...'
 
 if equals "$(id -u)" 0; then
-  abort ERROR 'Script stack.sh must be run as non root user'
+  abort ERROR 'Script stack.sh must be run as non root user.'
 fi
 
 install_node &&
@@ -187,6 +187,6 @@ install_node &&
   install_rust &&
   install_docker
 
-log INFO 'Script stack.sh has finished'
+log INFO 'Script stack.sh has finished.'
 
 resolve && sleep 3

@@ -85,7 +85,7 @@ list_wallpapers () {
   len="$(count "${wallpapers}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No wallpaper files found'
+    echo 'No wallpaper files found.'
     return 0
   fi
 
@@ -109,43 +109,43 @@ set_wallpaper () {
 
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing the wallpaper file name' && return 2
+      echo 'Missing the wallpaper file name.' && return 2
 
     pick_wallpaper || return $?
-    is_empty "${REPLY}" && echo 'Wallpaper file name required' && return 2
+    is_empty "${REPLY}" && echo 'Wallpaper file name required.' && return 2
     name="${REPLY}"
   fi
 
   if is_not_wallpaper_file "${name}"; then
-    echo 'Invalid or unknown wallpaper file'
+    echo 'Invalid or unknown wallpaper file.'
     return 2
   fi
 
   if is_not_given "${mode}"; then
     on_script_mode &&
-      echo 'Missing the alignment mode' && return 2
+      echo 'Missing the alignment mode.' && return 2
 
     pick_alignment_mode || return $?
-    is_empty "${REPLY}" && echo 'Alignment mode is required' && return 2
+    is_empty "${REPLY}" && echo 'Alignment mode is required.' && return 2
     mode="${REPLY}"
   fi
   
   if is_not_wallpaper_mode "${mode}"; then
-    echo 'Invalid alignment mode'
+    echo 'Invalid alignment mode.'
     return 2
   fi
 
   feh --no-fehbg --bg-"${mode}" "${WALLPAPERS_HOME}/${name}"
 
   if has_failed; then
-    echo 'Failed to set wallpaper'
+    echo 'Failed to set wallpaper.'
     return 2
   fi
 
-  echo "Wallpaper set to ${name}"
+  echo "Wallpaper set to ${name}."
 
   save_wallpaper_to_settings "${name}" "${mode}" ||
-    echo 'Failed to save wallpaper into settings'
+    echo 'Failed to save wallpaper into settings.'
 }
 
 # Shows the data of the pointing device with the
@@ -159,10 +159,10 @@ show_pointer () {
 
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing pointer name' && return 2
+      echo 'Missing pointer name.' && return 2
 
     pick_pointer || return $?
-    is_empty "${REPLY}" && echo 'Pointer name is required' && return 2
+    is_empty "${REPLY}" && echo 'Pointer name is required.' && return 2
     name="${REPLY}"
   fi
 
@@ -170,7 +170,7 @@ show_pointer () {
   pointer="$(find_pointer "${name}")"
 
   if has_failed; then
-    echo "Pointer ${name} not found"
+    echo "Pointer ${name} not found."
     return 2
   fi
 
@@ -199,7 +199,7 @@ list_pointers () {
   len="$(count "${pointers}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No pointers have found'
+    echo 'No pointers have found.'
     return 0
   fi
 
@@ -220,10 +220,10 @@ set_pointer_speed () {
   local factor="${1}"
 
   if is_not_given "${factor}"; then
-    echo 'Missing speed factor'
+    echo 'Missing speed factor.'
     return 2
   elif is_not_valid_pointer_speed "${factor}"; then
-    echo 'Invalid speed factor'
+    echo 'Invalid speed factor.'
     return 2
   fi
 
@@ -265,14 +265,14 @@ set_pointer_speed () {
   done <<< "${devices}"
 
   if is_false "${succeed}"; then
-    echo 'Failed to set pointer speed'
+    echo 'Failed to set pointer speed.'
     return 2
   fi
 
-  echo "Pointer speed set to ${factor}"
+  echo "Pointer speed set to ${factor}."
 
   save_pointer_speed_to_settings "${factor}" ||
-    echo 'Failed to save pointer speed factor into settings'
+    echo 'Failed to save pointer speed factor into settings.'
 }
 
 # Shows the data of the tablet device with the
@@ -286,10 +286,10 @@ show_tablet () {
 
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing the table name' && return 2
+      echo 'Missing the table name.' && return 2
 
     pick_tablet || return $?
-    is_empty "${REPLY}" && echo 'Tablet name is required' && return 2
+    is_empty "${REPLY}" && echo 'Tablet name is required.' && return 2
     name="${REPLY}"
   fi
 
@@ -297,7 +297,7 @@ show_tablet () {
   tablet="$(find_tablet "${name}")"
 
   if has_failed; then
-    echo "Tablet ${name} not found"
+    echo "Tablet ${name} not found."
     return 2
   fi
 
@@ -333,7 +333,7 @@ list_tablets () {
   len="$(count "${tablets}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No tablets have found'
+    echo 'No tablets have found.'
     return 0
   fi
 
@@ -358,10 +358,10 @@ scale_tablet () {
 
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing the tablet name' && return 2
+      echo 'Missing the tablet name.' && return 2
 
     pick_tablet || return $?
-    is_empty "${REPLY}" && echo 'Tablet name is required' && return 2
+    is_empty "${REPLY}" && echo 'Tablet name is required.' && return 2
     name="${REPLY}"
   fi
 
@@ -369,24 +369,24 @@ scale_tablet () {
   tablet="$(find_tablet "${name}")"
 
   if has_failed; then
-    echo "Tablet ${name} not found"
+    echo "Tablet ${name} not found."
     return 2
   elif is_not_scalable "${name}"; then
-    echo "Tablet ${name} is not scalable"
+    echo "Tablet ${name} is not scalable."
     return 2
   fi
 
   if is_not_given "${scale}"; then
     on_script_mode &&
-      echo 'Missing the scale factor' && return 2
+      echo 'Missing the scale factor.' && return 2
 
     ask 'Enter the scale factor [0.1-1]:' || return $?
-    is_empty "${REPLY}" && echo 'Scale factor is required' && return 2
+    is_empty "${REPLY}" && echo 'Scale factor is required.' && return 2
     scale="${REPLY}"
   fi
   
   if is_not_valid_tablet_scale "${scale}"; then
-    echo 'Invalid scale factor'
+    echo 'Invalid scale factor.'
     return 2
   fi
 
@@ -419,14 +419,14 @@ scale_tablet () {
   xsetwacom --set "${name}" area "0 0 ${width} ${height}" &> /dev/null
 
   if has_failed; then
-    echo "Failed to scale tablet ${name}"
+    echo "Failed to scale tablet ${name}."
     return 2
   fi
 
-  echo "Tablet ${name} scaled by ${scale}"
+  echo "Tablet ${name} scaled by ${scale}."
 
   save_tablet_scale_to_settings "${name}" "${scale}" ||
-    echo 'Failed to save the tablet scale factor'
+    echo 'Failed to save the tablet scale factor.'
 }
 
 # Maps the area of the tablet with the given name
@@ -442,10 +442,10 @@ map_tablet () {
 
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing the tablet name' && return 2
+      echo 'Missing the tablet name.' && return 2
 
     pick_tablet || return $?
-    is_empty "${REPLY}" && echo 'Tablet name is required' && return 2
+    is_empty "${REPLY}" && echo 'Tablet name is required.' && return 2
     name="${REPLY}"
   fi
 
@@ -453,19 +453,19 @@ map_tablet () {
   tablet="$(find_tablet "${name}")"
 
   if has_failed; then
-    echo "Tablet ${name} not found"
+    echo "Tablet ${name} not found."
     return 2
   elif is_not_scalable "${name}"; then
-    echo "Tablet ${name} is not scalable"
+    echo "Tablet ${name} is not scalable."
     return 2
   fi
 
   if is_not_given "${target}"; then
     on_script_mode &&
-      echo 'Missing the mapping target' && return 2
+      echo 'Missing the mapping target.' && return 2
 
     pick_mapping_target || return $?
-    is_empty "${REPLY}" && echo 'Mapping target is required' && return 2
+    is_empty "${REPLY}" && echo 'Mapping target is required.' && return 2
     target="${REPLY}"
   fi
 
@@ -474,7 +474,7 @@ map_tablet () {
     xsetwacom --set "${name}" MapToOutput desktop &> /dev/null
 
     if has_failed; then
-      echo 'Failed to reset mapping'
+      echo 'Failed to reset mapping.'
       return 2
     fi
 
@@ -501,7 +501,7 @@ map_tablet () {
 
     xsetwacom --set "${name}" area "0 0 ${width} ${height}" &> /dev/null || return 1
 
-    echo 'Tablet mapping has been reset'
+    echo 'Tablet mapping has been reset.'
     return 0
   fi
 
@@ -509,10 +509,10 @@ map_tablet () {
   output="$(find_output "${target}")"
 
   if has_failed; then
-    echo "Display ${target} not found"
+    echo "Display ${target} not found."
     return 2
   elif is_not_active "${output}"; then
-    echo "Display ${target} is not active"
+    echo "Display ${target} is not active."
     return 2
   fi
 
@@ -542,11 +542,11 @@ map_tablet () {
   xsetwacom --set "${name}" area "0 0 ${width} ${height}" &> /dev/null
 
   if has_failed; then
-    echo "Failed to map tablet ${name}"
+    echo "Failed to map tablet ${name}."
     return 2
   fi
 
-  echo "Tablet ${name} mapped to ${target}"
+  echo "Tablet ${name} mapped to ${target}."
 }
 
 # Applies the pointer settings being set in the
@@ -565,7 +565,7 @@ init_pointer () {
 # in the settings file.
 init_tablets () {
   if file_not_exists "${DESKTOP_SETTINGS}"; then
-    echo 'No tablets settings found'
+    echo 'No tablets settings found.'
     return 2
   fi
 
@@ -573,7 +573,7 @@ init_tablets () {
   tablets="$(jq '.tablets|if . then . else empty end' "${DESKTOP_SETTINGS}")"
 
   if is_not_given "${tablets}"; then
-    echo 'No tablets settings found'
+    echo 'No tablets settings found.'
     return 2
   fi
 
@@ -601,7 +601,7 @@ init_tablets () {
 # being set in the settings file.
 init_wallpaper () {
   if file_not_exists "${DESKTOP_SETTINGS}"; then
-    echo 'No wallpaper settings found'
+    echo 'No wallpaper settings found.'
     return 2
   fi
 
@@ -609,7 +609,7 @@ init_wallpaper () {
   wallpaper="$(jq '.wallpaper|if . then . else empty end' "${DESKTOP_SETTINGS}")"
 
   if is_not_given "${wallpaper}"; then
-    echo 'No wallpaper settings found'
+    echo 'No wallpaper settings found.'
     return 2
   fi
 
@@ -617,7 +617,7 @@ init_wallpaper () {
   name="$(get "${wallpaper}" '.name')" || return 1
 
   if file_not_exists "${WALLPAPERS_HOME}/${name}"; then
-    echo "Wallpaper ${name} not found"
+    echo "Wallpaper ${name} not found."
     return 2
   fi
 
@@ -634,10 +634,10 @@ set_backend () {
   local engine="${1}"
 
   if is_not_given "${engine}"; then
-    echo 'Backend engine is required'
+    echo 'Backend engine is required.'
     return 2
   elif is_not_backend_engine "${engine}"; then
-    echo 'Invalid or unknown backend engine'
+    echo 'Invalid or unknown backend engine.'
     return 2
   fi
 
@@ -645,11 +645,11 @@ set_backend () {
   sed -i "s/\(backend =\).*/\1 \"${engine}\";/" "${conf_file}"
 
   if has_failed; then
-    echo "Failed to set backend to ${engine}"
+    echo "Failed to set backend to ${engine}."
     return 2
   fi
 
-  echo "Backend set to ${engine}"
+  echo "Backend set to ${engine}."
 }
 
 # Sets the vsync mode of the compositor to on or off.
@@ -659,10 +659,10 @@ set_vsync () {
   local mode="${1}"
 
   if is_not_given "${mode}"; then
-    echo 'Vsync mode is required'
+    echo 'Vsync mode is required.'
     return 2
   elif is_not_toggle "${mode}"; then
-    echo 'Invalid or unknown vsync mode'
+    echo 'Invalid or unknown vsync mode.'
     return 2
   fi
 
@@ -676,11 +676,11 @@ set_vsync () {
   sed -i "s/\(vsync =\).*/\1 ${mode};/" "${conf_file}"
 
   if has_failed; then
-    echo "Failed to set vsync mode to ${mode}"
+    echo "Failed to set vsync mode to ${mode}."
     return 2
   fi
 
-  echo "Vsync mode set to ${mode}"
+  echo "Vsync mode set to ${mode}."
 }
 
 # Adds a new empty workspace to the monitor with
@@ -697,15 +697,15 @@ add_workspace () {
     output="$(find_output "${monitor}")"
 
     if has_failed; then
-      echo "Monitor ${monitor} not found"
+      echo "Monitor ${monitor} not found."
       return 2
     fi
   
     if is_not_connected "${output}"; then
-      echo "Monitor ${monitor} is disconnected"
+      echo "Monitor ${monitor} is disconnected."
       return 2
     elif is_not_active "${output}"; then
-      echo "Monitor ${monitor} is inactive"
+      echo "Monitor ${monitor} is inactive."
       return 2
     fi
   fi
@@ -719,7 +719,7 @@ add_workspace () {
   bspc monitor ${monitor} -a "${index}"
 
   if has_failed; then
-    echo "Failed to add workspace to the ${monitor:-"current"} monitor"
+    echo "Failed to add workspace to the ${monitor:-"current"} monitor."
     return 2
   fi
 
@@ -727,11 +727,11 @@ add_workspace () {
   fix_workspaces &> /dev/null
 
   if has_failed; then
-    echo "Failed to fix workspaces"
+    echo "Failed to fix workspaces."
     return 2
   fi
   
-  echo "Workspace added to the ${monitor:-"current"} monitor"
+  echo "Workspace added to the ${monitor:-"current"} monitor."
 }
 
 # Removes a workspace with the given index.
@@ -742,15 +742,15 @@ remove_workspace () {
 
   if is_not_given "${index}"; then
     on_script_mode &&
-      echo 'Missing the workspace index' && return 2
+      echo 'Missing the workspace index.' && return 2
 
     pick_workspace || return $?
-    is_empty "${REPLY}" && echo 'Workspace index is required' && return 2
+    is_empty "${REPLY}" && echo 'Workspace index is required.' && return 2
     index="${REPLY}"
   fi
 
   if workspace_not_exists "${index}"; then
-    echo 'Unknown or invalid workspace index'
+    echo 'Unknown or invalid workspace index.'
     return 2
   fi
 
@@ -758,7 +758,7 @@ remove_workspace () {
   bspc desktop "${index}" --remove
 
   if has_failed; then
-    echo "Failed to remove workspace ${index}"
+    echo "Failed to remove workspace ${index}."
     return 2
   fi
 
@@ -766,11 +766,11 @@ remove_workspace () {
   fix_workspaces &> /dev/null
 
   if has_failed; then
-    echo "Failed to fix workspaces"
+    echo 'Failed to fix workspaces.'
     return 2
   fi
 
-  echo "Workspace ${index} has been removed"
+  echo "Workspace ${index} has been removed."
 }
 
 # Repairs any possible inconsistencies among workspaces
@@ -808,7 +808,7 @@ fix_workspaces () {
   # Adopt any possible orphan windows
   bspc wm --adopt-orphans || return 1
 
-  echo 'Workspaces have been fixed'
+  echo 'Workspaces have been fixed.'
 }
 
 # Initiates the desktop workspaces for any active
@@ -823,7 +823,7 @@ init_workspaces () {
   primary="$(find_outputs 'primary' | jq -cer '.[0]|.device_name')"
 
   if has_failed; then
-    echo 'Unable to find primary monitor'
+    echo 'Unable to find primary monitor.'
     return 2
   fi
   
@@ -831,7 +831,7 @@ init_workspaces () {
   monitors="$(bspc query --monitors --names)" || return 1
 
   if is_empty "${monitors}"; then
-    echo 'No active monitors have found'
+    echo 'No active monitors have found.'
     return 2
   fi
 
@@ -891,7 +891,7 @@ init_workspaces () {
     bspc monitor "${monitor}" -d ${indices} && bspc wm --adopt-orphans
 
     if has_failed; then
-      echo "Failed to assign workspaces to monitor ${monitor}"
+      echo "Failed to assign workspaces to monitor ${monitor}."
       return 2
     fi
 
@@ -916,7 +916,7 @@ init_workspaces () {
     bspc monitor "${args[1]}" -d "${a}" "${b}"
   done &
 
-  echo 'Desktop workspaces have set'
+  echo 'Desktop workspaces have set.'
 }
 
 # Initiates the sticky scratchpad terminal window.
@@ -936,11 +936,11 @@ init_scratchpad () {
   disown $! && sleep 1
 
   if is_process_down "${scratchpad}"; then
-    echo 'Failed to launch scratchpad'
+    echo 'Failed to launch scratchpad.'
     return 2
   fi
 
-  echo 'Scratchpad has been launched'
+  echo 'Scratchpad has been launched.'
 }
 
 # Initiates desktop status bars.
@@ -977,11 +977,11 @@ init_bars () {
   sleep 1
 
   if is_process_down '^polybar.*'; then
-    echo 'Failed to launch desktop bars'
+    echo 'Failed to launch desktop bars.'
     return 2
   fi
 
-  echo 'Desktop bars have been launched'
+  echo 'Desktop bars have been launched.'
 }
 
 # Initiates keyboard bindings.
@@ -996,11 +996,11 @@ init_bindings () {
   disown $! && sleep 1
 
   if is_process_down '^sxhkd.*'; then
-    echo 'Failed to launch keyboard bindings'
+    echo 'Failed to launch keyboard bindings.'
     return 2
   fi
 
-  echo 'Keyboard bindings have been launched'
+  echo 'Keyboard bindings have been launched.'
 }
 
 # Starts the desktop user interface by launcing the
@@ -1024,11 +1024,11 @@ start () {
   exec bspwm &> /dev/null
 
   if has_failed; then
-    echo 'Failed to start desktop'
+    echo 'Failed to start desktop.'
     return 2
   fi
 
-  echo 'Desktop has been started'
+  echo 'Desktop has been started.'
 }
 
 # Restarts the desktop user interface along with
@@ -1048,10 +1048,10 @@ restart () {
   bspc wm --restart &> /dev/null
 
   if has_failed; then
-    echo 'Failed to restart desktop'
+    echo 'Failed to restart desktop.'
     return 2
   fi
 
-  echo 'Desktop has been restarted'
+  echo 'Desktop has been restarted.'
 }
 

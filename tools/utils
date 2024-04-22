@@ -149,7 +149,7 @@ authenticate_user () {
     return 0
   fi
 
-  echo 'Permission needed for this operation'
+  echo 'Permission needed for this operation.'
 
   # Invalidate user's cached credentials
   sudo -K

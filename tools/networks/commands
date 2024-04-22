@@ -101,15 +101,15 @@ show_device () {
   
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing network device name' && return 2
+      echo 'Missing network device name.' && return 2
     
     pick_device || return $?
-    is_empty "${REPLY}" && echo 'Network device name required' && return 2
+    is_empty "${REPLY}" && echo 'Network device name required.' && return 2
     name="${REPLY}"
   fi
 
   if is_not_network_device "${name}"; then
-    echo "Network device ${name} not found"
+    echo "Network device ${name} not found."
     return 2
   fi
 
@@ -146,15 +146,15 @@ show_connection () {
 
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing connection name' && return 2
+      echo 'Missing connection name.' && return 2
     
     pick_connection || return $?
-    is_empty "${REPLY}" && echo 'Connection name required' && return 2
+    is_empty "${REPLY}" && echo 'Connection name required.' && return 2
     name="${REPLY}"
   fi
 
   if is_not_connection "${name}"; then
-    echo "Connection ${name} not found"
+    echo "Connection ${name} not found."
     return 2
   fi
 
@@ -196,7 +196,7 @@ list_devices () {
   len="$(count "${devices}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No network devices have found'
+    echo 'No network devices have found.'
     return 0
   fi
 
@@ -221,7 +221,7 @@ list_connections () {
   len="$(count "${connections}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No connections have found'
+    echo 'No connections have found.'
     return 0
   fi
 
@@ -247,23 +247,23 @@ list_wifis () {
 
   if is_not_given "${device}"; then
     on_script_mode &&
-      echo 'Missing wifi device name' && return 2
+      echo 'Missing wifi device name.' && return 2
     
     pick_device wifi || return $?
-    is_empty "${REPLY}" && echo 'Wifi device name required' && return 2
+    is_empty "${REPLY}" && echo 'Wifi device name required.' && return 2
     device="${REPLY}"
   fi
 
   if is_not_network_device "${device}" wifi; then
-    echo "Wifi device ${device} not found"
+    echo "Wifi device ${device} not found."
     return 2
   fi
 
   if is_not_integer "${signal}"; then
-    echo 'Invalid signal limit value'
+    echo 'Invalid signal limit value.'
     return 2
   elif is_not_integer "${signal}" '[0,100]'; then
-    echo 'Signal limit value out of range'
+    echo 'Signal limit value out of range.'
     return 2
   fi
 
@@ -273,7 +273,7 @@ list_wifis () {
   networks="$(find_wifis "${device}" "${signal}")"
 
   if has_failed; then
-    echo 'Unable to detect wifi networks'
+    echo 'Unable to detect wifi networks.'
     return 2
   fi
 
@@ -281,7 +281,7 @@ list_wifis () {
   len="$(count "${networks}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No wifi networks detected'
+    echo 'No wifi networks detected.'
     return 0
   fi
 
@@ -303,15 +303,15 @@ up_device () {
 
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing network device name' && return 2
+      echo 'Missing network device name.' && return 2
     
     pick_device || return $?
-    is_empty "${REPLY}" && echo 'Network device name required' && return 2
+    is_empty "${REPLY}" && echo 'Network device name required.' && return 2
     name="${REPLY}"
   fi
 
   if is_not_network_device "${name}"; then
-    echo "Network device ${name} not found"
+    echo "Network device ${name} not found."
     return 2
   fi
 
@@ -320,11 +320,11 @@ up_device () {
   nmcli device connect "${name}" &> /dev/null
 
   if has_failed; then
-    echo 'Failed to enable network device'
+    echo 'Failed to enable network device.'
     return 2
   fi
 
-  echo "Network device ${name} enabled"
+  echo "Network device ${name} enabled."
 }
 
 # Enables the connection with the given name.
@@ -335,15 +335,15 @@ up_connection () {
 
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing connection name' && return 2
+      echo 'Missing connection name.' && return 2
     
     pick_connection || return $?
-    is_empty "${REPLY}" && echo 'Connection name required' && return 2
+    is_empty "${REPLY}" && echo 'Connection name required.' && return 2
     name="${REPLY}"
   fi
 
   if is_not_connection "${name}"; then
-    echo "Connection ${name} not found"
+    echo "Connection ${name} not found."
     return 2
   fi
 
@@ -352,11 +352,11 @@ up_connection () {
   nmcli connection up "${name}" --ask
 
   if has_failed; then
-    echo 'Failed to enable connection'
+    echo 'Failed to enable connection.'
     return 2
   fi
 
-  echo "Connection ${name} enabled"
+  echo "Connection ${name} enabled."
 }
 
 # Disables the device with the given name.
@@ -367,15 +367,15 @@ down_device () {
 
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing network device name' && return 2
+      echo 'Missing network device name.' && return 2
     
     pick_device || return $?
-    is_empty "${REPLY}" && echo 'Network device name required' && return 2
+    is_empty "${REPLY}" && echo 'Network device name required.' && return 2
     name="${REPLY}"
   fi
 
   if is_not_network_device "${name}"; then
-    echo "Network device ${name} not found"
+    echo "Network device ${name} not found."
     return 2
   fi
 
@@ -384,11 +384,11 @@ down_device () {
   nmcli device disconnect "${name}" &> /dev/null
 
   if has_failed; then
-    echo 'Failed to disable network device'
+    echo 'Failed to disable network device.'
     return 2
   fi
 
-  echo "Network device ${name} disabled"
+  echo "Network device ${name} disabled."
 }
 
 # Disables the connection with the given name.
@@ -399,15 +399,15 @@ down_connection () {
 
   if is_not_given "${name}" ]]; then
     on_script_mode &&
-      echo 'Missing connection name' && return 2
+      echo 'Missing connection name.' && return 2
     
     pick_connection || return $?
-    is_empty "${REPLY}" && echo 'Connection name required' && return 2
+    is_empty "${REPLY}" && echo 'Connection name required.' && return 2
     name="${REPLY}"
   fi
 
   if is_not_connection "${name}"; then
-    echo "Connection ${name} not found"
+    echo "Connection ${name} not found."
     return 2
   fi
 
@@ -416,11 +416,11 @@ down_connection () {
   nmcli connection down "${name}" &> /dev/null
 
   if has_failed; then
-    echo 'Failed to disable connection'
+    echo 'Failed to disable connection.'
     return 2
   fi
 
-  echo "Connection ${name} disabled"
+  echo "Connection ${name} disabled."
 }
 
 # Removes the software network device with
@@ -432,15 +432,15 @@ remove_device () {
 
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing network device name' && return 2
+      echo 'Missing network device name.' && return 2
     
     pick_device || return $?
-    is_empty "${REPLY}" && echo 'Network device name required' && return 2
+    is_empty "${REPLY}" && echo 'Network device name required.' && return 2
     name="${REPLY}"
   fi
 
   if is_not_network_device "${name}"; then
-    echo "Network device ${name} not found"
+    echo "Network device ${name} not found."
     return 2
   fi
 
@@ -449,11 +449,11 @@ remove_device () {
   nmcli device delete "${name}" &> /dev/null
 
   if has_failed; then
-    echo 'Failed to remove network device'
+    echo 'Failed to remove network device.'
     return 2
   fi
 
-  echo "Network device ${name} removed"
+  echo "Network device ${name} removed."
 }
 
 # Removes the connection with the given name.
@@ -464,15 +464,15 @@ remove_connection () {
 
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing connection name' && return 2
+      echo 'Missing connection name.' && return 2
     
     pick_connection || return $?
-    is_empty "${REPLY}" && echo 'Connection name required' && return 2
+    is_empty "${REPLY}" && echo 'Connection name required.' && return 2
     name="${REPLY}"
   fi
 
   if is_not_connection "${name}"; then
-    echo "Connection ${name} not found"
+    echo "Connection ${name} not found."
     return 2
   fi
 
@@ -481,11 +481,11 @@ remove_connection () {
   nmcli connection delete "${name}" &> /dev/null
 
   if has_failed; then
-    echo 'Failed to remove connection'
+    echo 'Failed to remove connection.'
     return 2
   fi
 
-  echo "Connection ${name} removed"
+  echo "Connection ${name} removed."
 }
 
 # Adds a new ethernet connection with static ip address.
@@ -504,56 +504,56 @@ add_ethernet () {
 
   if is_not_given "${device}"; then
     on_script_mode &&
-      echo 'Missing ethernet device name' && return 2
+      echo 'Missing ethernet device name.' && return 2
   
     pick_device ethernet || return $?
-    is_empty "${REPLY}" && echo 'Ethernet device name required' && return 2
+    is_empty "${REPLY}" && echo 'Ethernet device name required.' && return 2
     device="${REPLY}"
   fi
 
   if is_not_network_device "${device}" 'ethernet'; then
-    echo "Ethernet device ${device} not found"
+    echo "Ethernet device ${device} not found."
     return 2
   fi
 
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing connection name' && return 2
+      echo 'Missing connection name.' && return 2
 
     ask 'Enter a connection name:' || return $?
-    is_empty "${REPLY}" && echo 'Connection name required' && return 2
+    is_empty "${REPLY}" && echo 'Connection name required.' && return 2
     name="${REPLY}"
   fi
 
   if find_connection "${name}" &> /dev/null; then
-    echo "Connection ${name} already exists"
+    echo "Connection ${name} already exists."
     return 2
   fi
 
   if is_not_given "${ip}"; then
     on_script_mode &&
-      echo 'Missing static ip address' && return 2
+      echo 'Missing static ip address.' && return 2
 
     ask 'Enter static ip address:' || return $?
-    is_empty "${REPLY}" && echo 'Static ip address required' && return 2
+    is_empty "${REPLY}" && echo 'Static ip address required.' && return 2
     ip="${REPLY}"
   fi
 
   if is_not_given "${gateway}"; then
     on_script_mode &&
-      echo 'Missing gateway address' && return 2
+      echo 'Missing gateway address.' && return 2
 
     ask 'Enter gateway address:' || return $?
-    is_empty "${REPLY}" && echo 'Gateway address required' && return 2
+    is_empty "${REPLY}" && echo 'Gateway address required.' && return 2
     gateway="${REPLY}"
   fi
 
   if is_not_given "${dns}"; then
     on_script_mode &&
-      echo 'Missing dns servers' && return 2
+      echo 'Missing dns servers.' && return 2
 
     ask 'Enter dns servers:' || return $?
-    is_empty "${REPLY}" && echo 'Primary dns server required' && return 2
+    is_empty "${REPLY}" && echo 'Primary dns server required.' && return 2
     dns="${REPLY}"
   fi
 
@@ -564,11 +564,11 @@ add_ethernet () {
     ipv4.addresses "${ip}/24" ipv4.gateway "${gateway}" ipv4.dns "${dns}"
 
   if has_failed; then
-    echo 'Failed to create ethernet connection'
+    echo 'Failed to create ethernet connection.'
     return 2
   fi
 
-  echo "Ethernet connection ${name} created"
+  echo "Ethernet connection ${name} created."
 }
 
 # Adds a new dhcp ethernet connection.
@@ -581,29 +581,29 @@ add_dhcp () {
 
   if is_not_given "${device}"; then
     on_script_mode &&
-      echo 'Missing ethernet device name' && return 2
+      echo 'Missing ethernet device name.' && return 2
   
     pick_device ethernet || return $?
-    is_empty "${REPLY}" && echo 'Ethernet device name required' && return 2
+    is_empty "${REPLY}" && echo 'Ethernet device name required.' && return 2
     device="${REPLY}"
   fi
 
   if is_not_network_device "${device}" 'ethernet'; then
-    echo "Ethernet device ${device} not found"
+    echo "Ethernet device ${device} not found."
     return 2
   fi
 
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing connection name' && return 2
+      echo 'Missing connection name.' && return 2
 
     ask 'Enter a connection name:' || return $?
-    is_empty "${REPLY}" && echo 'Connection name required' && return 2
+    is_empty "${REPLY}" && echo 'Connection name required.' && return 2
     name="${REPLY}"
   fi
 
   if find_connection "${name}" &> /dev/null; then
-    echo "Connection ${name} already exists"
+    echo "Connection ${name} already exists."
     return 2
   fi
 
@@ -613,11 +613,11 @@ add_dhcp () {
     con-name "${name}" ifname "${device}" ipv4.method auto
   
   if has_failed; then
-    echo 'Failed to create ethernet dhcp connection'
+    echo 'Failed to create ethernet dhcp connection.'
     return 2
   fi
 
-  echo "Ethernet dhcp connection ${name} created"
+  echo "Ethernet dhcp connection ${name} created."
 }
 
 # Adds a wifi connection to wireless network.
@@ -632,33 +632,33 @@ add_wifi () {
 
   if is_not_given "${device}"; then
     on_script_mode &&
-      echo 'Missing wifi device name' && return 2
+      echo 'Missing wifi device name.' && return 2
 
     pick_device wifi || return $?
-    is_empty "${REPLY}" && echo 'Wifi device name required' && return 2
+    is_empty "${REPLY}" && echo 'Wifi device name required.' && return 2
     device="${REPLY}"
   fi
   
   if is_not_network_device "${device}" 'wifi'; then
-    echo "Wifi device ${device} not found"
+    echo "Wifi device ${device} not found."
     return 2
   fi
 
   if is_not_given "${ssid}"; then
     on_script_mode &&
-      echo 'Missing network ssid' && return 2
+      echo 'Missing network ssid.' && return 2
 
     pick_wifi "${device}" || return $?
-    is_empty "${REPLY}" && echo 'Network ssid required' && return 2
+    is_empty "${REPLY}" && echo 'Network ssid required.' && return 2
     ssid="${REPLY}"
   fi
 
   if is_not_given "${secret}"; then
     on_script_mode &&
-      echo 'Missing private key' && return 2
+      echo 'Missing private key.' && return 2
 
     ask_secret 'Enter private key:' || return $?
-    is_empty "${REPLY}" && echo 'Private key required' && return 2
+    is_empty "${REPLY}" && echo 'Private key required.' && return 2
     secret="${REPLY}"
   fi
 
@@ -669,11 +669,11 @@ add_wifi () {
     ifname "${device}" hidden yes 2> /dev/null)"
   
   if has_failed || match "${result}" '(E|e)rror'; then
-    echo "Failed to connect to ${ssid}"
+    echo "Failed to connect to ${ssid}."
     return 2
   fi
 
-  echo "Connection to ${ssid} established"
+  echo "Connection to ${ssid} established."
 }
 
 # Adds a new vpn connection from the given ovpn file.
@@ -688,18 +688,18 @@ add_vpn () {
 
   if is_not_given "${file_path}"; then
     on_script_mode &&
-      echo 'Missing ovpn file path' && return 2
+      echo 'Missing ovpn file path.' && return 2
       
     ask 'Enter path to ovpn file:' || return $?
-    is_empty "${REPLY}" && echo 'Ovpn file path required' && return 2
+    is_empty "${REPLY}" && echo 'Ovpn file path required.' && return 2
     file_path="${REPLY}"
   fi
 
   if file_not_exists "${file_path}"; then
-    echo "File ${file_path} not found"
+    echo "File ${file_path} not found."
     return 2
   elif is_not_ovpn_file "${file_path}"; then
-    echo 'Invalid ovpn file type'
+    echo 'Invalid ovpn file type.'
     return 2
   fi
 
@@ -707,25 +707,25 @@ add_vpn () {
   name="${name%.*}"
 
   if find_connection "${name}" &> /dev/null; then
-    echo "Connection ${name} already exists"
+    echo "Connection ${name} already exists."
     return 2
   fi
 
   if is_not_given "${username}"; then
     on_script_mode &&
-      echo 'Missing the username' && return 2
+      echo 'Missing the username.' && return 2
 
     ask 'Enter the username:' || return $?
-    is_empty "${REPLY}" && echo 'Username required' && return 2
+    is_empty "${REPLY}" && echo 'Username required.' && return 2
     username="${REPLY}"
   fi
 
   if is_not_given "${password}"; then
     on_script_mode &&
-      echo 'Missing the password' && return 2
+      echo 'Missing the password.' && return 2
 
     ask_secret 'Enter the password:' || return $?
-    is_empty "${REPLY}" && echo 'Password required' && return 2
+    is_empty "${REPLY}" && echo 'Password required.' && return 2
     password="${REPLY}"
   fi
 
@@ -734,14 +734,14 @@ add_vpn () {
   nmcli connection import type openvpn file "${file_path}"
 
   if has_failed; then
-    echo 'Failed to create VPN connection'
+    echo 'Failed to create VPN connection.'
     return 2
   fi
 
   nmcli connection modify "${name}" +vpn.data username="${username}" || return 1
   nmcli connection modify "${name}" +vpn.secrets password="${password}" || return 1
 
-  echo "VPN connection ${name} created"
+  echo "VPN connection ${name} created."
 }
 
 # Adds a new proxy profile with the given name.
@@ -762,33 +762,33 @@ add_proxy () {
   
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing proxy profile name' && return 2
+      echo 'Missing proxy profile name.' && return 2
     
     ask 'Enter a proxy profile name:' || return $?
-    is_empty "${REPLY}" && echo 'Proxy profile name required' && return 2
+    is_empty "${REPLY}" && echo 'Proxy profile name required.' && return 2
     name="${REPLY}"
   fi
 
   if exists_proxy_profile "${name}"; then
-    echo "Proxy profile ${name} already exists"
+    echo "Proxy profile ${name} already exists."
     return 2
   fi
 
   if is_not_given "${host}"; then
     on_script_mode &&
-      echo 'Missing proxy host server' && return 2
+      echo 'Missing proxy host server.' && return 2
     
     ask 'Enter proxy host server:' || return $?
-    is_empty "${REPLY}" && echo 'Proxy host server required' && return 2
+    is_empty "${REPLY}" && echo 'Proxy host server required.' && return 2
     host="${REPLY}"
   fi
 
   if is_not_given "${port}"; then
     on_script_mode &&
-      echo 'Missing proxy server port' && return 2
+      echo 'Missing proxy server port.' && return 2
     
     ask 'Enter proxy server port:' || return $?
-    is_empty "${REPLY}" && echo 'Proxy server port required' && return 2
+    is_empty "${REPLY}" && echo 'Proxy server port required.' && return 2
     port="${REPLY}"
   fi
 
@@ -811,7 +811,7 @@ add_proxy () {
 
   save_proxy_to_settings "${name}" "${host}" "${port}" "${username}" "${password}" "${no_proxy}"
   
-  echo "Proxy profile ${name} added"
+  echo "Proxy profile ${name} added."
 }
 
 # Removes the proxy profile with the given name.
@@ -822,15 +822,15 @@ remove_proxy () {
 
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing proxy profile name' && return 2
+      echo 'Missing proxy profile name.' && return 2
 
     pick_proxy || return $?
-    is_empty "${REPLY}" && echo 'Proxy profile name required' && return 2
+    is_empty "${REPLY}" && echo 'Proxy profile name required.' && return 2
     name="${REPLY}"
   fi
 
   if file_not_exists "${NETWORKS_SETTINGS}"; then
-    echo 'No proxy profiles found'
+    echo 'No proxy profiles found.'
     return 2
   fi
 
@@ -840,7 +840,7 @@ remove_proxy () {
   match="$(jq "${query}" "${NETWORKS_SETTINGS}")"
 
   if is_empty "${match}"; then
-    echo "Proxy profile ${name} not found"
+    echo "Proxy profile ${name} not found."
     return 2
   fi
 
@@ -848,13 +848,13 @@ remove_proxy () {
   settings="$(jq -e "del(.proxies[]|select(.name == \"${name}\"))" "${NETWORKS_SETTINGS}")"
 
   if has_failed; then
-    echo "Failed to delete proxy profile ${name}"
+    echo "Failed to delete proxy profile ${name}."
     return 2
   fi
 
   echo "${settings}" > "${NETWORKS_SETTINGS}"
   
-  echo "Proxy profile ${name} deleted"
+  echo "Proxy profile ${name} deleted."
 }
 
 # Shows the list of all proxy profiles stored in the
@@ -863,7 +863,7 @@ remove_proxy () {
 #  A list of proxy profiles.
 list_proxies () {
   if file_not_exists "${NETWORKS_SETTINGS}"; then
-    echo 'No proxy profiles have found'
+    echo 'No proxy profiles have found.'
     return 0
   fi
 
@@ -874,7 +874,7 @@ list_proxies () {
   len="$(count "${proxies}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No proxy profiles have found'
+    echo 'No proxy profiles have found.'
     return 0
   fi
 
@@ -900,15 +900,15 @@ set_proxy () {
   
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing proxy profile name' && return 2
+      echo 'Missing proxy profile name.' && return 2
 
     pick_proxy || return $?
-    is_empty "${REPLY}" && echo 'Proxy profile name required' && return 2
+    is_empty "${REPLY}" && echo 'Proxy profile name required.' && return 2
     name="${REPLY}"
   fi
 
   if file_not_exists "${NETWORKS_SETTINGS}"; then
-    echo 'No proxy profiles have found'
+    echo 'No proxy profiles have found.'
     return 2
   fi
 
@@ -918,7 +918,7 @@ set_proxy () {
   proxy="$(jq "${query}" "${NETWORKS_SETTINGS}")"
 
   if is_empty "${proxy}"; then
-    echo "Proxy profile ${name} not found"
+    echo "Proxy profile ${name} not found."
     return 2
   fi
 
@@ -951,7 +951,7 @@ set_proxy () {
   echo "export ALL_PROXY=\"https://${uri}/\"" >> "${proxy_env}" &&
   echo "export no_proxy=\"${no_proxy}\"" >> "${proxy_env}" &&
   echo "export NO_PROXY=\"${no_proxy}\"" >> "${proxy_env}" ||
-    echo 'Failed to set environment proxy variables'
+    echo 'Failed to set environment proxy variables.'
   
   local shell_rc=''
 
@@ -965,7 +965,7 @@ set_proxy () {
     sed -i "\|source \"${proxy_env}\"|d" "${shell_rc}" &&
     echo "source \"${proxy_env}\"" >> "${shell_rc}" &&
     source "${shell_rc}" ||
-      echo 'Failed to set environment proxy variables'
+      echo 'Failed to set environment proxy variables.'
   fi
 
   if which wget &> /dev/null; then
@@ -977,25 +977,25 @@ set_proxy () {
     sed -Ei "s;^#?http_proxy.*;http_proxy = http://${uri}/;" "${HOME}/.wgetrc" &&
     sed -Ei "s;^#?ftp_proxy.*;ftp_proxy = ftp://${uri}/;" "${HOME}/.wgetrc" &&
     sed -Ei "s;^#?use_proxy.*;use_proxy = on;" "${HOME}/.wgetrc" ||
-      echo 'Failed to set wget proxy settings'
+      echo 'Failed to set wget proxy settings.'
   fi
 
   if which git &> /dev/null; then
     git config --global http.proxy "http://${uri}/" &&
     git config --global https.proxy "https://${uri}/" ||
-      echo 'Failed to set git proxy settings'
+      echo 'Failed to set git proxy settings.'
   fi
 
   if which npm &> /dev/null; then
     npm config set proxy "http://${uri}/" &&
     npm config set https-proxy "https://${uri}/" ||
-      echo 'Failed to set npm proxy settings'
+      echo 'Failed to set npm proxy settings.'
   fi
   
   if which yarn &> /dev/null; then
     yarn config set proxy "http://${uri}/" &&
     yarn config set https-proxy "https://${uri}/" ||
-      echo 'Failed to set yarn proxy settings'
+      echo 'Failed to set yarn proxy settings.'
   fi
 
   if which docker &> /dev/null; then
@@ -1010,7 +1010,7 @@ set_proxy () {
       "\"HTTPS_PROXY=https://${uri}/\" " \
       "\"NO_PROXY=${no_proxy}\"" | sudo tee "${docker_proxy}" > /dev/null &&
     sudo systemctl daemon-reload ||
-      echo 'Failed to set docker proxy settings'
+      echo 'Failed to set docker proxy settings.'
   fi
 
   local host=''
@@ -1053,7 +1053,7 @@ set_proxy () {
 
   gsettings set org.gnome.system.proxy ignore-hosts "${no_proxy}"
   
-  echo 'Proxy settings have been applied'
+  echo 'Proxy settings have been applied.'
 }
 
 # Reverts any proxy settings have been applied to
@@ -1070,7 +1070,7 @@ unset_proxy () {
   unset http_proxy HTTP_PROXY https_proxy HTTPS_PROXY \
     ftp_proxy FTP_PROXY rsync_proxy RSYNC_PROXY \
     all_proxy ALL_PROXY no_proxy NO_PROXY ||
-    echo 'Failed to unset environment proxy variables'
+    echo 'Failed to unset environment proxy variables.'
 
   local shell_rc=''
 
@@ -1082,7 +1082,7 @@ unset_proxy () {
 
   if is_not_empty "${shell_rc}"; then
     sed -i "\|source \"${proxy_env}\"|d" "${shell_rc}" ||
-      echo 'Failed to unset environment proxy variables'
+      echo 'Failed to unset environment proxy variables.'
   fi
 
   if which wget &> /dev/null; then
@@ -1094,26 +1094,26 @@ unset_proxy () {
     sed -Ei "s;^http_proxy.*;#http_proxy = ;" "${HOME}/.wgetrc" &&
     sed -Ei "s;^ftp_proxy.*;#ftp_proxy = ;" "${HOME}/.wgetrc" &&
     sed -Ei "s;^use_proxy.*;#use_proxy = ;" "${HOME}/.wgetrc" ||
-      echo 'Failed to set wget proxy settings'
+      echo 'Failed to set wget proxy settings.'
   fi
 
   if which git &> /dev/null &&
     git config --global --get http.proxy &> /dev/null; then
     git config --global --unset http.proxy &&
     git config --global --unset https.proxy ||
-      echo 'Failed to unset git proxy settings'
+      echo 'Failed to unset git proxy settings.'
   fi
 
   if which npm &> /dev/null; then
     npm config delete proxy &&
     npm config delete https-proxy ||
-      echo 'Failed to set npm proxy settings'
+      echo 'Failed to set npm proxy settings.'
   fi
   
   if which yarn &> /dev/null; then
     yarn config delete proxy &&
     yarn config delete https-proxy ||
-      echo 'Failed to unset yarn proxy settings'
+      echo 'Failed to unset yarn proxy settings.'
   fi
 
   if which docker &> /dev/null; then
@@ -1121,7 +1121,7 @@ unset_proxy () {
 
     sudo rm -f "${docker_proxy}" &&
     sudo systemctl daemon-reload ||
-      echo 'Failed to unset docker proxy settings'
+      echo 'Failed to unset docker proxy settings.'
   fi
 
   gsettings set org.gnome.system.proxy mode none
@@ -1138,7 +1138,7 @@ unset_proxy () {
   gsettings set org.gnome.system.proxy.http authentication-password ''
   gsettings set org.gnome.system.proxy ignore-hosts '[]'
 
-  echo 'Proxy settings have been unset'
+  echo 'Proxy settings have been unset.'
 }
 
 # Sets the system networking to on or off.
@@ -1148,10 +1148,10 @@ power_network () {
   local mode="${1}"
 
   if is_not_given "${mode}"; then
-    echo 'Missing network power mode'
+    echo 'Missing network power mode.'
     return 2
   elif is_not_toggle "${mode}"; then
-    echo 'Invalid network power mode'
+    echo 'Invalid network power mode.'
     return 2
   fi
 
@@ -1160,11 +1160,11 @@ power_network () {
   nmcli networking "${mode}"
 
   if has_failed; then
-    echo "Failed to power network ${mode}"
+    echo "Failed to power network ${mode}."
     return 2
   fi
 
-  echo "Network power set to ${mode}"
+  echo "Network power set to ${mode}."
 }
 
 # Sets the wifi to on or off.
@@ -1174,10 +1174,10 @@ power_wifi () {
   local mode="${1}"
 
   if is_not_given "${mode}"; then
-    echo 'Missing wifi power mode'
+    echo 'Missing wifi power mode.'
     return 2
   elif is_not_toggle "${mode}"; then
-    echo 'Invalid wifi power mode'
+    echo 'Invalid wifi power mode.'
     return 2
   fi
 
@@ -1186,10 +1186,10 @@ power_wifi () {
   nmcli radio wifi "${mode}"
 
   if has_failed; then
-    echo "Failed to power wifi ${mode}"
+    echo "Failed to power wifi ${mode}."
     return 2
   fi
 
-  echo "Wifi power set to ${mode}"
+  echo "Wifi power set to ${mode}."
 }
 
