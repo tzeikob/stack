@@ -12,7 +12,7 @@ SETTINGS_FILE='/opt/stack/.settings'
 # No arguments means nothing to log on to the console.
 # Arguments:
 #  level:   optionally one of INFO, WARN, ERROR
-#  message: a optional message to show
+#  message: an optional message to show
 # Outputs:
 #  Prints the message in [<level>] <message> form.
 log () {

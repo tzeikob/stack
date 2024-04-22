@@ -8,9 +8,45 @@ AUR_DIR="${DIST_DIR}/aur"
 PROFILE_DIR="${DIST_DIR}/profile"
 ROOT_FS="${PROFILE_DIR}/airootfs"
 
-# Prints an error message and exits the process immediately.
-fail () {
-  echo -e 'Exiting the build process...'
+# Prints the given log message prefixed with the given log level.
+# No arguments means nothing to log on to the console.
+# Arguments:
+#  level:   optionally one of INFO, WARN, ERROR
+#  message: an optional message to show
+# Outputs:
+#  Prints the message in [<level>] <message> form.
+log () {
+  local level message
+
+  if [[ $# -ge 2 ]]; then
+    level="${1}"
+    message="${2}"
+  elif [[ $# -eq 1 ]]; then
+    message="${1}"
+  else
+    return 0
+  fi
+
+  if [[ -n "${level}" ]] || [[ "${level}" != '' ]]; then
+    printf '%-5s %b\n' "${level}" "${message}"
+  else
+    printf '%b\n' "${message}"
+  fi
+}
+
+# Aborts the current process logging the given error message.
+# Arguments:
+#  level:   optionally one of INFO, WARN, ERROR
+#  message: an error message to print
+# Outputs:
+#  An error messsage.
+abort () {
+  local level="${1}"
+  local message="${2}"
+
+  log "${level}" "${message}"
+  log "${level}" 'Build process has exited.'
+
   exit 1
 }
 
@@ -23,16 +59,14 @@ add_package () {
   local pkgs_file="${PROFILE_DIR}/packages.x86_64"
 
   if [[ ! -f "${pkgs_file}" ]]; then
-    echo -e "Unable to locate file ${pkgs_file}."
-    return 1
+    abort ERROR "Unable to locate file ${pkgs_file}."
   fi
 
-  if grep -Eq "^${name}$" "${pkgs_file}"; then
-    echo -e "Skipping the package ${name}."
-    return 0
+  if ! grep -Eq "^${name}$" "${pkgs_file}"; then
+    echo "${name}" >> "${pkgs_file}"
+  else
+    log WARN "Package ${name} already added."
   fi
-
-  echo "${name}" >> "${pkgs_file}"
 }
 
 # Removes the package with the given name from the list of packages
@@ -44,54 +78,52 @@ remove_package () {
   local pkgs_file="${PROFILE_DIR}/packages.x86_64"
 
   if [[ ! -f "${pkgs_file}" ]]; then
-    echo -e "Unable to locate file ${pkgs_file}."
-    return 1
+    abort ERROR "Unable to locate file ${pkgs_file}."
   fi
 
   if ! grep -Eq "^${name}$" "${pkgs_file}"; then
-    echo -e "Unable to remove the package ${name}."
-    return 1
+    abort ERROR "Unable to remove the package ${name}."
   fi
 
-  sed -Ei "/^${name}$/d" "${pkgs_file}" || return 1
+  sed -Ei "/^${name}$/d" "${pkgs_file}" ||
+    abort ERROR "Unable to remove the package ${name}."
 
-  echo -e "Removing the package ${name}."
+  log INFO "Package ${name} has removed."
 }
 
 # Initializes build and distribution files.
 init () {
   if [[ -d "${DIST_DIR}" ]]; then
-    rm -rf "${DIST_DIR}" || return 1
+    rm -rf "${DIST_DIR}" || abort ERROR 'Unable to remove .dist/ folder.'
 
-    echo -e 'Existing .dist/ folder has been removed.'
+    log WARN 'Existing .dist/ folder has been removed.'
   fi
 
-  mkdir -p "${DIST_DIR}" || return 1
+  mkdir -p "${DIST_DIR}" || abort ERROR 'Unable to create the .dist/ folder.'
 
-  echo -e 'A clean .dist/ folder has been created.'
+  log INFO 'A clean .dist/ folder has been created.'
 }
 
 # Copies the archiso custom profile.
 copy_profile () {
-  echo -e 'Copying the custom archiso profile...'
+  log INFO 'Copying the custom archiso profile...'
 
   local releng_path="/usr/share/archiso/configs/releng"
 
   if [[ ! -d "${releng_path}" ]]; then
-    echo -e 'Unable to locate releng archiso profile.'
-    return 1
+    abort ERROR 'Unable to locate releng archiso profile.'
   fi
 
-  cp -r "${releng_path}" "${PROFILE_DIR}" || return 1
+  cp -r "${releng_path}" "${PROFILE_DIR}" ||
+    abort ERROR 'Unable to copy the releng archsiso profile.'
 
-  echo -e "The releng profile copied to ${PROFILE_DIR}."
+  log INFO "The releng profile copied to ${PROFILE_DIR}."
 }
 
 # Sets the distribution names and os release meta files.
 rename_distro () {
   if [[ ! -d "${ROOT_FS}" ]]; then
-    echo -e 'Unable to locate the airootfs folder.'
-    return 1
+    abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
   printf '%s\n' \
@@ -108,11 +140,13 @@ rename_distro () {
     'SUPPORT_URL="https://github.com/tzeikob/stack.git/"' \
     'BUG_REPORT_URL="https://github.com/tzeikob/stack/issues"' \
     'PRIVACY_POLICY_URL="https://github.com/tzeikob/stack/blob/master/LICENSE"' \
-    'LOGO=stack-logo' > "${ROOT_FS}/etc/stack-release" || return 1
+    'LOGO=stack-logo' > "${ROOT_FS}/etc/stack-release" ||
+    abort ERROR 'Failed to create the release metadata file.'
 
-  echo -e 'Release metadata set to /etc/stack-release.'
+  log INFO 'Release metadata file created to /etc/stack-release.'
 
-  mkdir -p "${ROOT_FS}/etc/pacman.d/scripts" || return 1
+  mkdir -p "${ROOT_FS}/etc/pacman.d/scripts" ||
+    abort ERROR 'Failed to create pacman scripts folder.'
 
   local fix_release="${ROOT_FS}/etc/pacman.d/scripts/fix-release"
 
@@ -124,7 +158,8 @@ rename_distro () {
     '[[ -f /etc/lsb-release ]] &&' \
     '  echo "DISTRIB_ID=\"Stack\"" > /etc/lsb-release &&' \
     '  echo "DISTRIB_RELEASE=\"rolling\"" >>  /etc/lsb-release &&' \
-    '  echo "DISTRIB_DESCRIPTION=\"Stack Linux\"" >> /etc/lsb-release' >> "${fix_release}" || return 1
+    '  echo "DISTRIB_DESCRIPTION=\"Stack Linux\"" >> /etc/lsb-release' >> "${fix_release}" ||
+    abort ERROR 'Failed to create the fix-release script file.'
   
   local fix_release_hook="${ROOT_FS}/etc/pacman.d/hooks/90-fix-release.hook"
 
@@ -138,17 +173,17 @@ rename_distro () {
     '[Action]' \
     'Description = Fix os release data and meta files' \
     'When = PostTransaction' \
-    'Exec = /bin/bash /etc/pacman.d/scripts/fix-release' >> "${fix_release_hook}" || return 1
+    'Exec = /bin/bash /etc/pacman.d/scripts/fix-release' >> "${fix_release_hook}" ||
+    abort ERROR 'Failed to create the fix-release hook file.'
   
-  echo -e 'Fix release hook has been created.'
+  log INFO 'Fix release hook has been created.'
 
   echo -e 'stackiso' > "${ROOT_FS}/etc/hostname"
 
-  echo -e 'Host name set to stackiso.'
+  log INFO 'Host name set to stackiso.'
 
   if [[ ! -d "${PROFILE_DIR}" ]]; then
-    echo -e 'Unable to locate the releng profile folder.'
-    return 1
+    abort ERROR 'Unable to locate the releng profile folder.'
   fi
 
   local profile_def="${PROFILE_DIR}/profiledef.sh"
@@ -157,39 +192,43 @@ rename_distro () {
     sed -i 's|^\(iso_label="\)ARCH_\(.*\)|\1STACK_\2|' "${profile_def}" &&
     sed -i 's|^\(iso_publisher=\).*|\1\"Stack Linux <https://github.com/tzeikob/stack.git>\"|' "${profile_def}" &&
     sed -i 's|^\(iso_application=\).*|\1\"Stack Linux Live Media\"|' "${profile_def}" &&
-    sed -i 's|^\(install_dir=\).*|\1\"stack\"|' "${profile_def}" || return 1
+    sed -i 's|^\(install_dir=\).*|\1\"stack\"|' "${profile_def}" ||
+    abort ERROR 'Failed to update release info in the profile definition file.'
 
-  echo -e 'Release info updated in profile definition file.'
+  log INFO 'Release info updated in profile definition file.'
 }
 
 # Sets up the bios and uefi boot loaders.
 setup_boot_loaders () {
   if [[ ! -d "${PROFILE_DIR}" ]]; then
-    echo -e 'Unable to locate the releng profile folder.'
-    return 1
+    abort ERROR 'Unable to locate the releng profile folder.'
   fi
 
-  rm -rf "${PROFILE_DIR}/efiboot" || return 1
+  rm -rf "${PROFILE_DIR}/efiboot" || abort ERROR 'Failed to remove EFI boot loader.'
 
-  echo -e 'EFI boot loader has been removed.'
+  log INFO 'EFI boot loader has been removed.'
 
   rm -f "${PROFILE_DIR}/syslinux/archiso_pxe.cfg" \
-    "${PROFILE_DIR}/syslinux/archiso_pxe-linux.cfg" || return 1
+    "${PROFILE_DIR}/syslinux/archiso_pxe-linux.cfg" ||
+    abort ERROR 'Failed to remove PXE syslinux config files.'
 
   local syslinux_cfg="${PROFILE_DIR}/syslinux/syslinux.cfg"
   
   sed -i 's/APPEND -pxe- pxe -sys- sys -iso- sys/APPEND -sys- sys -iso- sys/' "${syslinux_cfg}" &&
-    sed -i '/LABEL pxe/,+3d' "${syslinux_cfg}" || return 1
+    sed -i '/LABEL pxe/,+3d' "${syslinux_cfg}" ||
+    abort ERROR 'Failed to remove PXE bios modes from syslinux.'
 
-  echo -e 'PXE bios modes have been removed.'
+  log INFO 'PXE bios modes have been removed from syslinux.'
 
   sed -i 's/Arch/Stack/' "${PROFILE_DIR}/syslinux/archiso_sys-linux.cfg" &&
     sed -i '/# Accessibility boot option/,$d' "${PROFILE_DIR}/syslinux/archiso_sys-linux.cfg" &&
     sed -i '/TEXT HELP/,/ENDTEXT/d' "${PROFILE_DIR}/syslinux/archiso_sys-linux.cfg" &&
     sed -i '/LABEL existing/,+9d' "${PROFILE_DIR}/syslinux/archiso_tail.cfg" &&
-    sed -i '/TEXT HELP/,/ENDTEXT/d' "${PROFILE_DIR}/syslinux/archiso_tail.cfg" || return 1
+    sed -i '/TEXT HELP/,/ENDTEXT/d' "${PROFILE_DIR}/syslinux/archiso_tail.cfg" ||
+    abort ERROR 'Failed to fix texts and titles in syslinux menu.'
   
-  rm -rf "${PROFILE_DIR}/syslinux/splash.png" || return 1
+  rm -rf "${PROFILE_DIR}/syslinux/splash.png" ||
+    abort ERROR 'Failed to remove the splash screen file.'
 
   printf '%s\n' \
     'SERIAL 0 115200' \
@@ -214,32 +253,36 @@ setup_boot_loaders () {
     'MENU COLOR msg07        37;40 #ffffffff #00000000 none' \
     'MENU COLOR tabmsg       37;40 #ffffffff #00000000 none' \
     'MENU CLEAR' \
-    'MENU IMMEDIATE' > "${PROFILE_DIR}/syslinux/archiso_head.cfg" || return 1
+    'MENU IMMEDIATE' > "${PROFILE_DIR}/syslinux/archiso_head.cfg" ||
+    abort ERROR 'Failed to fix styles and color in syslinux menu.'
 
-  echo -e 'Syslinux boot loader menus have been modified.'
+  log INFO 'Syslinux boot loader menus have been modified.'
 
   local grub_cfg="${PROFILE_DIR}/grub/grub.cfg"
 
   sed -i "/--id 'archlinux-accessibility'/,+5d" "${grub_cfg}" &&
     sed -i 's/archlinux/stacklinux/' "${grub_cfg}" &&
-    sed -i 's/Arch Linux/Stack Linux/' "${grub_cfg}" || return 1
+    sed -i 's/Arch Linux/Stack Linux/' "${grub_cfg}" ||
+    abort ERROR 'Failed to fix text and titles in grub menu.'
   
   local loopback_cfg="${PROFILE_DIR}/grub/loopback.cfg"
 
   sed -i "/--id 'archlinux-accessibility'/,+5d" "${loopback_cfg}" &&
     sed -i 's/archlinux/stacklinux/' "${loopback_cfg}" &&
-    sed -i 's/Arch Linux/Stack Linux/' "${loopback_cfg}" || return 1
+    sed -i 's/Arch Linux/Stack Linux/' "${loopback_cfg}" ||
+    abort ERROR 'Failed to fix text and titles in loopback grub menu.'
 
-  echo -e 'Grub boot loader menus have been modified.'
+  log INFO 'Grub boot loader menus have been modified.'
 
-  sed -i '/if serial --unit=0 --speed=115200; then/,+3d' "${grub_cfg}" || return 1
+  sed -i '/if serial --unit=0 --speed=115200; then/,+3d' "${grub_cfg}" ||
+    abort ERROR 'Failed to disable the serial console in grub.'
 
-  echo -e 'Grub boot loader serial console disabled.'
+  log INFO 'Grub boot loader serial console disabled.'
 }
 
 # Adds the pakacge dependencies into the list of packages.
 add_packages () {
-  echo -e 'Adding system and desktop packages...'
+  log INFO 'Adding system and desktop packages...'
 
   local pkgs=()
 
@@ -276,24 +319,24 @@ add_packages () {
 
   local pkg=''
   for pkg in "${pkgs[@]}"; do
-    add_package "${pkg}" || return 1
+    add_package "${pkg}"
   done
 
   # Remove conflicting no x server virtualbox utils
-  remove_package virtualbox-guest-utils-nox || return 1
+  remove_package virtualbox-guest-utils-nox
 
-  echo -e 'All packages added into the package list.'
+  log INFO 'All packages added into the package list.'
 }
 
 # Patch various packages.
 patch_packages () {
   if [[ ! -d "${ROOT_FS}" ]]; then
-    echo -e 'Unable to locate the airootfs folder.'
-    return 1
+    abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
   # Override tqdm executable in /usr/bin to swallow error output
-  mkdir -p "${ROOT_FS}/usr/local/bin" || return 1
+  mkdir -p "${ROOT_FS}/usr/local/bin" ||
+    abort ERROR 'Failed to create the /usr/local/bin folder.'
 
   printf '%s\n' \
     '#!/usr/bin/python' \
@@ -306,26 +349,26 @@ patch_packages () {
     '        sys.argv[0] = re.sub(r"(-script\.pyw|\.exe)?$", "", sys.argv[0])' \
     '        sys.exit(main())' \
     '    except KeyboardInterrupt:' \
-    '        sys.exit(1)' > "${ROOT_FS}/usr/local/bin/tqdm" || return 1
+    '        sys.exit(1)' > "${ROOT_FS}/usr/local/bin/tqdm" ||
+    abort ERROR 'Failed to patch the tqdm package.'
   
-  echo -e 'Package tqdm has been patched.'
+  log INFO 'Package tqdm has been patched.'
 }
 
 # Builds and adds the AUR packages into the packages list
 # via a local custom repo.
 add_aur_packages () {
-  echo -e 'Building the AUR package files...'
+  log INFO 'Building the AUR package files...'
 
   local previous_dir=${PWD}
 
   if [[ ! -d "${PROFILE_DIR}" ]]; then
-    echo -e 'Unable to locate the releng profile folder.'
-    return 1
+    abort ERROR 'Unable to locate the releng profile folder.'
   fi
 
   local repo_home="${PROFILE_DIR}/local/repo"
 
-  mkdir -p "${repo_home}" || return 1
+  mkdir -p "${repo_home}" || abort ERROR 'Failed to create the /local/repo folder.'
 
   local names=(
     yay smenu xkblayout-state-git
@@ -334,50 +377,51 @@ add_aur_packages () {
   local name=''
   for name in "${names[@]}"; do
     # Build the next AUR package
-    git clone "https://aur.archlinux.org/${name}.git" "${AUR_DIR}/${name}" || return 1
+    git clone "https://aur.archlinux.org/${name}.git" "${AUR_DIR}/${name}" ||
+      abort ERROR "Failed to clone the AUR ${name} package repo."
   
     cd "${AUR_DIR}/${name}"
-    makepkg || return 1
+    makepkg || abort ERROR "Failed to build the AUR ${name} package."
     cd ${previous_dir}
 
     # Create the custom local repo database
-    cp ${AUR_DIR}/${name}/${name}-*-x86_64.pkg.tar.zst "${repo_home}" || return 1
-    repo-add "${repo_home}/custom.db.tar.gz" ${repo_home}/${name}-*-x86_64.pkg.tar.zst || return 1
+    cp ${AUR_DIR}/${name}/${name}-*-x86_64.pkg.tar.zst "${repo_home}" &&
+      repo-add "${repo_home}/custom.db.tar.gz" ${repo_home}/${name}-*-x86_64.pkg.tar.zst ||
+      abort ERROR "Failed to add the ${name} package into the custom repository."
 
-    add_package "${name}" || return 1
+    add_package "${name}" || abort ERROR "Failed to add the ${name} AUR package into the package list."
   done
 
-  rm -rf "${AUR_DIR}" || return 1
+  rm -rf "${AUR_DIR}" || abort ERROR 'Failed to remove the AUR temporary folder.'
 
-  echo -e 'The AUR package files have been built.'
+  log INFO 'The AUR package files have been built.'
 
   local pacman_conf="${PROFILE_DIR}/pacman.conf"
 
   if [[ ! -f "${pacman_conf}" ]]; then
-    echo -e "Unable to locate file ${pacman_conf}."
-    return 1
+    abort ERROR "Unable to locate file ${pacman_conf}."
   fi
 
   printf '%s\n' \
     '' \
     '[custom]' \
     'SigLevel = Optional TrustAll' \
-    "Server = file://$(realpath "${repo_home}")" >> "${pacman_conf}" || return 1
+    "Server = file://$(realpath "${repo_home}")" >> "${pacman_conf}" ||
+    abort ERROR 'Failed to define the custom local repo.'
 
-  echo -e 'The custom local repo added to pacman.'
-  echo -e 'All AUR packages added into the package list.'
+  log INFO 'The custom local repo added to pacman.'
+  log INFO 'All AUR packages added into the package list.'
 }
 
 # Copies the files of the installer.
 copy_installer () {
   if [[ ! -d "${ROOT_FS}" ]]; then
-    echo -e 'Unable to locate the airootfs folder.'
-    return 1
+    abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
   local installer_home="${ROOT_FS}/opt/stack"
 
-  mkdir -p "${installer_home}" || return 1
+  mkdir -p "${installer_home}" || abort ERROR 'Failed to create the /opt/stack fodler.'
 
   cp -r configs "${installer_home}" &&
     cp -r resources "${installer_home}" &&
@@ -385,28 +429,29 @@ copy_installer () {
     cp -r scripts "${installer_home}" &&
     cp -r services "${installer_home}" &&
     cp -r tools "${installer_home}" &&
-    cp install.sh "${installer_home}" || return 1
+    cp install.sh "${installer_home}" ||
+    abort ERROR 'Failed to copy the installer files.'
 
   # Create a global alias to launch the installer
   local bin_home="${ROOT_FS}/usr/local/bin"
 
-  mkdir -p "${bin_home}" || return 1
+  mkdir -p "${bin_home}" || abort ERROR 'Failed to create the /usr/local/bin folder.'
 
-  ln -sf /opt/stack/install.sh "${bin_home}/install_os" || return 1
+  ln -sf /opt/stack/install.sh "${bin_home}/install_os" ||
+    abort ERROR 'Failed to create a symlink to the installer launcher.'
 
-  echo -e 'Installer files have been copied.'
+  info INFO 'Installer files have been copied.'
 }
 
 # Copies the files of the settings tools.
 copy_settings_tools () {
   if [[ ! -d "${ROOT_FS}" ]]; then
-    echo -e 'Unable to locate the airootfs folder.'
-    return 1
+    abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
   local tools_home="${ROOT_FS}/opt/tools"
 
-  mkdir -p "${tools_home}" || return 1
+  mkdir -p "${tools_home}" || abort ERROR 'Failed to create the /opt/tools folder.'
 
   # Copy settings tools needed to the live media only
   cp -r tools/displays "${tools_home}" &&
@@ -420,20 +465,23 @@ copy_settings_tools () {
     cp -r tools/power "${tools_home}" &&
     cp -r tools/printers "${tools_home}" &&
     cp -r tools/trash "${tools_home}" &&
-    cp tools/utils "${tools_home}" || return 1
+    cp tools/utils "${tools_home}" ||
+    abort ERROR 'Failed to copy the settings tools files.'
 
   # Remove LC_CTYPE on smenu calls as live media doesn't need it
-  sed -i 's/\(.*\)LC_CTYPE=.* \(smenu .*\)/\1\2/' "${tools_home}/utils" || return 1
+  sed -i 's/\(.*\)LC_CTYPE=.* \(smenu .*\)/\1\2/' "${tools_home}/utils" ||
+    abort ERROR 'Failed to remove the LC_TYPE from the smenu calls.'
 
   # Disable init scratchpad command for the live media
   local desktop_main="${tools_home}/desktop/main"
 
-  sed -i "/.*scratchpad.*/d" "${desktop_main}" || return 1
+  sed -i "/.*scratchpad.*/d" "${desktop_main}" ||
+    abort ERROR 'Failed to remove the scratchpad lines from the desktop main.'
 
   # Create global aliases for each setting tool main entry
   local bin_home="${ROOT_FS}/usr/local/bin"
 
-  mkdir -p "${bin_home}" || return 1
+  mkdir -p "${bin_home}" || abort ERROR 'Failed to create the /usr/local/bin folder.'
 
   ln -sf /opt/tools/displays/main "${bin_home}/displays" &&
     ln -sf /opt/tools/desktop/main "${bin_home}/desktop" &&
@@ -445,28 +493,29 @@ copy_settings_tools () {
     ln -sf /opt/tools/notifications/main "${bin_home}/notifications" &&
     ln -sf /opt/tools/power/main "${bin_home}/power" &&
     ln -sf /opt/tools/printers/main "${bin_home}/printers" &&
-    ln -sf /opt/tools/trash/main "${bin_home}/trash" || return 1
+    ln -sf /opt/tools/trash/main "${bin_home}/trash" ||
+    abort ERROR 'Failed to create symlinks for each settings tool main.'
 
-  echo -e 'Settings tools have been copied.'
+  log INFO 'Settings tools have been copied.'
 }
 
 # Sets to skip login prompt and auto login the root user.
 setup_auto_login () {
   if [[ ! -d "${ROOT_FS}" ]]; then
-    echo -e 'Unable to locate the airootfs folder.'
-    return 1
+    abort 'Unable to locate the airootfs folder.'
   fi
 
   local auto_login="${ROOT_FS}/etc/systemd/system/getty@tty1.service.d/autologin.conf"
 
   local exec_start="ExecStart=-/sbin/agetty -o '-p -f -- \\\\\\\u' --noissue --noclear --skip-login --autologin root - \$TERM"
 
-  sed -i "s;^ExecStart=-/sbin/agetty.*;${exec_start};" "${auto_login}" || return 1
+  sed -i "s;^ExecStart=-/sbin/agetty.*;${exec_start};" "${auto_login}" ||
+    abort ERROR 'Failed to set skip on login prompt.'
 
-  echo -e 'Login prompt set to skip and autologin.'
+  log INFO 'Login prompt set to skip and autologin.'
 
   # Remove the default welcome message
-  rm -rf "${ROOT_FS}/etc/motd" || return 1
+  rm -rf "${ROOT_FS}/etc/motd" || abort ERROR 'Failed to remove the /etc/motd file.'
 
   # Create the welcome message to be shown after login
   local welcome=''
@@ -483,62 +532,63 @@ setup_auto_login () {
 
   echo -e "${welcome}" > "${ROOT_FS}/etc/welcome"
 
-  echo -e 'Welcome message has been set to /etc/welcome.'
+  log INFO 'Welcome message has been set to /etc/welcome.'
 }
 
 # Sets up the display server configuration and hooks.
 setup_display_server () {
   if [[ ! -d "${ROOT_FS}" ]]; then
-    echo -e 'Unable to locate the airootfs folder.'
-    return 1
+    abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
   local xinitrc_file="${ROOT_FS}/root/.xinitrc"
 
-  cp configs/xorg/xinitrc "${xinitrc_file}" || return 1
+  cp configs/xorg/xinitrc "${xinitrc_file}" ||
+    abort ERROR 'Failed to copy the .xinitrc file.'
 
   # Keep functionality relatated to live media only
   sed -i '/system -qs check updates &/d' "${xinitrc_file}" &&
     sed -i '/displays -qs restore layout/d' "${xinitrc_file}" &&
     sed -i '/displays -qs restore colors &/d' "${xinitrc_file}" &&
     sed -i '/security -qs init locker &/d' "${xinitrc_file}" &&
-    sed -i '/cloud -qs mount remotes &/d' "${xinitrc_file}" || return 1
+    sed -i '/cloud -qs mount remotes &/d' "${xinitrc_file}" ||
+    abort ERROR 'Failed to remove unsupported calls from the .xinitrc file.'
 
-  echo -e 'The .xinitrc file copied to /root/.xinitrc.'
+  log INFO 'The .xinitrc file copied to /root/.xinitrc.'
 
-  mkdir -p "${ROOT_FS}/etc/X11" || return 1
+  mkdir -p "${ROOT_FS}/etc/X11" &&
+    cp configs/xorg/xorg.conf "${ROOT_FS}/etc/X11" ||
+    abort ERROR 'Failed to copy the xorg.conf file.'
 
-  cp configs/xorg/xorg.conf "${ROOT_FS}/etc/X11" || return 1
-
-  echo -e 'The xorg.conf file copied to /etc/X11/xorg.conf.'
+  log INFO 'The xorg.conf file copied to /etc/X11/xorg.conf.'
 
   local zlogin_file="${ROOT_FS}/root/.zlogin"
 
   if [[ ! -f "${zlogin_file}" ]]; then
-    echo -e "Unable to locate file ${zlogin_file}."
-    return 1
+    abort ERROR "Unable to locate file ${zlogin_file}."
   fi
 
   printf '%s\n' \
     '' \
     "echo -e 'Starting desktop environment...'" \
-    'startx' >> "${zlogin_file}" || return 1
+    'startx' >> "${zlogin_file}" || abort ERROR 'Failed to add starx hook to .zlogin file.'
 
-  echo -e 'Xorg server set to be started after login.'
+  log INFO 'Xorg server set to be started after login.'
 }
 
 # Sets up the keyboard settings.
 setup_keyboard () {
   if [[ ! -d "${ROOT_FS}" ]]; then
-    echo -e 'Unable to locate the airootfs folder.'
-    return 1
+    abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
-  echo 'KEYMAP=us' > "${ROOT_FS}/etc/vconsole.conf" || return 1
+  echo 'KEYMAP=us' > "${ROOT_FS}/etc/vconsole.conf" ||
+    abort ERROR 'Failed to set keyboard map to us.'
 
-  echo -e 'Keyboard map keys has been set to us.'
+  log INFO 'Keyboard map keys has been set to us.'
 
-  mkdir -p "${ROOT_FS}/etc/X11/xorg.conf.d" || return 1
+  mkdir -p "${ROOT_FS}/etc/X11/xorg.conf.d" ||
+    abort ERROR 'Failed to create the /etx/X11/xorg.conf.d folder.'
 
   printf '%s\n' \
    'Section "InputClass"' \
@@ -547,14 +597,15 @@ setup_keyboard () {
    '  Option "XkbLayout" "us"' \
    '  Option "XkbModel" "pc105"' \
    '  Option "XkbOptions" "grp:alt_shift_toggle"' \
-   'EndSection' > "${ROOT_FS}/etc/X11/xorg.conf.d/00-keyboard.conf" || return 1
+   'EndSection' > "${ROOT_FS}/etc/X11/xorg.conf.d/00-keyboard.conf" ||
+   abort ERROR 'Failed to set xorg keyboard settings.'
 
-  echo -e 'Xorg keyboard settings have been set.'
+  log INFO 'Xorg keyboard settings have been set.'
 
   # Save keyboard settings to the user langs json file
   local config_home="${ROOT_FS}/root/.config/stack"
 
-  mkdir -p "${config_home}" || return 1
+  mkdir -p "${config_home}" || abort ERROR 'Failed to create the /root/.config/stack folder.'
 
   printf '%s\n' \
     '{' \
@@ -562,20 +613,21 @@ setup_keyboard () {
     '  "model": "pc105",' \
     '  "options": "grp:alt_shift_toggle",' \
     '  "layouts": [{"code": "us", "variant": "default"}]' \
-    '}' > "${config_home}/langs.json" || return 1
+    '}' > "${config_home}/langs.json" ||
+    abort ERROR 'Failed to create the langs settings file.'
   
-  echo -e 'Keyboard langs settings have been set.'
+  log INFO 'Keyboard langs settings have been set.'
 }
 
 # Sets up various system power settings.
 setup_power () {
   if [[ ! -d "${ROOT_FS}" ]]; then
-    echo -e 'Unable to locate the airootfs folder.'
-    return 1
+    abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
   rm -rf "${ROOT_FS}/etc/systemd/logind.conf.d" &&
-    mkdir -p "${ROOT_FS}/etc/systemd/logind.conf.d" || return 1
+    mkdir -p "${ROOT_FS}/etc/systemd/logind.conf.d" ||
+    abort ERROR 'Failed to create the /etc/systemd/logind.conf.d folder.'
   
   local logind_conf="${ROOT_FS}/etc/systemd/logind.conf.d/00-main.conf"
 
@@ -588,12 +640,14 @@ setup_power () {
     'HandleRebootKey=reboot' \
     'HandleSuspendKey=suspend' \
     'HandleLidSwitch=suspend' \
-    'HandleLidSwitchDocked=ignore' > "${logind_conf}" || return 1
+    'HandleLidSwitchDocked=ignore' > "${logind_conf}" ||
+    abort ERROR 'Failed to set the logind action handlers.'
 
-  echo -e 'Logind action handlers have been set.'
+  log INFO 'Logind action handlers have been set.'
 
   rm -rf "${ROOT_FS}/etc/systemd/sleep.conf.d" &&
-    mkdir -p "${ROOT_FS}/etc/systemd/sleep.conf.d" || return 1
+    mkdir -p "${ROOT_FS}/etc/systemd/sleep.conf.d" ||
+    abort ERROR 'Failed to create the /etc/systemd/sleep.conf.d folder.'
   
   local sleep_conf="${ROOT_FS}/etc/systemd/sleep.conf.d/00-main.conf"
 
@@ -602,37 +656,39 @@ setup_power () {
     'AllowSuspend=yes' \
     'AllowHibernation=no' \
     'AllowSuspendThenHibernate=no' \
-    'AllowHybridSleep=no' > "${sleep_conf}" || return 1
+    'AllowHybridSleep=no' > "${sleep_conf}" ||
+    abort ERROR 'Failed to set the sleep action handlers.'
 
-  echo -e 'Sleep action handlers have been set.'
+  log INFO 'Sleep action handlers have been set.'
 
-  mkdir -p "${ROOT_FS}/etc/tlp.d" || return 1
+  mkdir -p "${ROOT_FS}/etc/tlp.d" || abort ERROR 'Failed to create the /etc/tlp.d folder.'
 
   local tlp_conf="${ROOT_FS}/etc/tlp.d/00-main.conf"
 
   printf '%s' \
     'SOUND_POWER_SAVE_ON_AC=0' \
-    'SOUND_POWER_SAVE_ON_BAT=0' > "${tlp_conf}" || return 1
+    'SOUND_POWER_SAVE_ON_BAT=0' > "${tlp_conf}" ||
+    abort ERROR 'Failed to set the battery action handlers.'
 
-  echo -e 'Battery action handlers have been set.'
+  log INFO 'Battery action handlers have been set.'
 
   local config_home="${ROOT_FS}/root/.config/stack"
 
-  mkdir -p "${config_home}" || return 1
+  mkdir -p "${config_home}" || abort ERROR 'Failed to create the /root/.config/stack folder.'
 
   printf '%s\n' \
   '{' \
   '  "screensaver": {"interval": 15}' \
-  '}' > "${config_home}/power.json" || return 1
+  '}' > "${config_home}/power.json" ||
+  abort ERROR 'Failed to create the power settings file.'
 
-  echo -e 'Screensaver interval setting has been set.'
+  log INFO 'Screensaver interval setting has been set.'
 }
 
 # Sets up the sheel environment files.
 setup_shell_environment () {
   if [[ ! -d "${ROOT_FS}" ]]; then
-    echo -e 'Unable to locate the airootfs folder.'
-    return 1
+    abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
   local zshrc_file="${ROOT_FS}/root/.zshrc"
@@ -640,36 +696,35 @@ setup_shell_environment () {
   # Set the defauilt terminal and text editor
   echo -e 'export TERMINAL=cool-retro-term' >> "${zshrc_file}"
 
-  echo -e 'Default terminal set to cool-retro-term.'
+  log INFO 'Default terminal set to cool-retro-term.'
 
   echo -e 'export EDITOR=helix' >> "${zshrc_file}"
 
-  echo -e 'Default editor set to helix.'
+  log INFO 'Default editor set to helix.'
 
   # Set up trash-cli aliases
   echo -e "\nalias sudo='sudo '" >> "${zshrc_file}"
   echo "alias tt='trash-put -i'" >> "${zshrc_file}"
   echo "alias rm='rm -i'" >> "${zshrc_file}"
 
-  echo -e 'Command aliases added to /root/.zshrc.'
+  log INFO 'Command aliases added to /root/.zshrc.'
 
   printf '%s\n' \
     '' \
     'if [[ "${SHOW_WELCOME_MSG}" == "true" ]]; then' \
     '  cat /etc/welcome' \
-    'fi' >> "${zshrc_file}" || return 1
+    'fi' >> "${zshrc_file}" || abort ERROR 'Failed to add the welcome message hook call.'
 
-  echo -e 'Welcome message set to be shown after login.'
+  log INFO 'Welcome message set to be shown after login.'
 }
 
 # Sets up the corresponding configurations for
 # each desktop module.
 setup_desktop () {
-  echo -e 'Setting up the desktop configurations...'
+  log INFO 'Setting up the desktop configurations...'
 
   if [[ ! -d "${ROOT_FS}" ]]; then
-    echo -e 'Unable to locate the airootfs folder.'
-    return 1
+    abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
   local config_home="${ROOT_FS}/root/.config"
@@ -677,64 +732,67 @@ setup_desktop () {
   # Copy the picom configuration files
   local picom_home="${config_home}/picom"
 
-  mkdir -p "${picom_home}" || return 1
-  
-  cp configs/picom/picom.conf "${picom_home}" || return 1
+  mkdir -p "${picom_home}" &&
+    cp configs/picom/picom.conf "${picom_home}" ||
+    abort ERROR 'Failed to copy the picom config file.'
 
-  echo -e 'Picom configuration has been set.'
+  log INFO 'Picom configuration has been set.'
 
   # Copy windows manager configuration files
   local bspwm_home="${config_home}/bspwm"
 
-  mkdir -p "${bspwm_home}" || return 1
-
-  cp configs/bspwm/bspwmrc "${bspwm_home}" &&
+  mkdir -p "${bspwm_home}" &&
+    cp configs/bspwm/bspwmrc "${bspwm_home}" &&
     cp configs/bspwm/resize "${bspwm_home}" &&
     cp configs/bspwm/rules "${bspwm_home}" &&
-    cp configs/bspwm/swap "${bspwm_home}" || return 1
+    cp configs/bspwm/swap "${bspwm_home}" ||
+    abort ERROR 'Failed to copy the bspwm files.'
 
   # Remove init scratchpad initializer from the bspwmrc
-  sed -i '/desktop -qs init scratchpad &/d' "${bspwm_home}/bspwmrc" || return 1
-  sed -i '/bspc rule -a scratch sticky=off state=floating hidden=on/d' "${bspwm_home}/bspwmrc" || return 1
+  sed -i '/desktop -qs init scratchpad &/d' "${bspwm_home}/bspwmrc" &&
+    sed -i '/bspc rule -a scratch sticky=off state=floating hidden=on/d' "${bspwm_home}/bspwmrc" ||
+    abort ERROR 'Failed to remove the scratchpad lines from the .bspwmrc file.'
 
   # Add a hook to open the welcome terminal once at login
   printf '%s\n' \
     '[ "$@" -eq 0 ] && {' \
     '  SHOW_WELCOME_MSG=true cool-retro-term &' \
-    '}' >> "${bspwm_home}/bspwmrc" || return 1
+    '}' >> "${bspwm_home}/bspwmrc" ||
+    abort ERROR 'Failed to add the welcome message hook to the .bspwmrc file.'
 
-  echo -e 'Bspwm configuration has been set.'
+  log INFO 'Bspwm configuration has been set.'
 
   # Copy polybar configuration files
   local polybar_home="${config_home}/polybar"
 
-  mkdir -p "${polybar_home}" || return 1
-
-  cp configs/polybar/config.ini "${polybar_home}" &&
+  mkdir -p "${polybar_home}" &&
+    cp configs/polybar/config.ini "${polybar_home}" &&
     cp configs/polybar/modules.ini "${polybar_home}" &&
-    cp configs/polybar/theme.ini "${polybar_home}" || return 1
+    cp configs/polybar/theme.ini "${polybar_home}" ||
+    abort ERROR 'Failed to copy the polybar files.'
 
   local config_ini="${polybar_home}/config.ini"
 
   # Remove modules not needed by the live media
-  sed -i "s/\(modules-right = \)cpu.*/\1 alsa-audio date time/" "${config_ini}" || return 1
-  sed -i "s/\(modules-right = \)notifications.*/\1 flash-drives keyboard/" "${config_ini}" || return 1
-  sed -i "s/\(modules-left = \)wlan.*/\1 wlan eth/" "${config_ini}" || return 1
-
-  mkdir -p "${polybar_home}/scripts" || return 1
+  sed -i "s/\(modules-right = \)cpu.*/\1 alsa-audio date time/" "${config_ini}" &&
+    sed -i "s/\(modules-right = \)notifications.*/\1 flash-drives keyboard/" "${config_ini}" &&
+    sed -i "s/\(modules-left = \)wlan.*/\1 wlan eth/" "${config_ini}" ||
+    abort ERROR 'Failed to remove not supported polybar bars.'
 
   # Keep only scripts needed by the live media
-  cp -r configs/polybar/scripts/flash-drives "${polybar_home}/scripts" || return 1
-  cp -r configs/polybar/scripts/time "${polybar_home}/scripts" || return 1
+  mkdir -p "${polybar_home}/scripts" &&
+    cp -r configs/polybar/scripts/flash-drives "${polybar_home}/scripts" &&
+    cp -r configs/polybar/scripts/time "${polybar_home}/scripts" ||
+    abort ERROR 'Failed to copy the polybar scripts.'
 
-  echo -e 'Polybar configuration has been set.'
+  log INFO 'Polybar configuration has been set.'
 
   # Copy sxhkd configuration files
   local sxhkd_home="${config_home}/sxhkd"
 
-  mkdir -p "${sxhkd_home}" || return 1
-
-  cp configs/sxhkd/sxhkdrc "${sxhkd_home}" || return 1
+  mkdir -p "${sxhkd_home}" &&
+    cp configs/sxhkd/sxhkdrc "${sxhkd_home}" ||
+    abort ERROR 'Failed to copy the sxhkd config file.'
 
   local sxhkdrc_file="${sxhkd_home}/sxhkdrc"
 
@@ -742,17 +800,18 @@ setup_desktop () {
   sed -i '/# Lock the screen./,+3d' "${sxhkdrc_file}" &&
     sed -i '/# Take a screen shot./,+3d' "${sxhkdrc_file}" &&
     sed -i '/# Start recording your screen./,+3d' "${sxhkdrc_file}" &&
-    sed -i '/# Show and hide the scratchpad termimal./,+3d' "${sxhkdrc_file}" || return 1
+    sed -i '/# Show and hide the scratchpad termimal./,+3d' "${sxhkdrc_file}" ||
+    abort ERROR 'Failed to remove not supported key bindings.'
 
-  echo -e 'Sxhkd configuration has been set.'
+  log INFO 'Sxhkd configuration has been set.'
 
   # Copy rofi configuration files
   local rofi_home="${config_home}/rofi"
 
-  mkdir -p "${rofi_home}" || return 1
-
-  cp configs/rofi/config.rasi "${rofi_home}" || return 1
-  cp configs/rofi/launch "${rofi_home}" || return 1
+  mkdir -p "${rofi_home}" &&
+    cp configs/rofi/config.rasi "${rofi_home}" &&
+    cp configs/rofi/launch "${rofi_home}" ||
+    abort ERROR 'Failed to copy the rofi files.'
 
   local launch_file="${rofi_home}/launch"
 
@@ -762,113 +821,117 @@ setup_desktop () {
     sed -i "s/\(  local exact_lines='listview {lines:\) 6\(;}'\)/\1 3\2/" "${launch_file}" &&
     sed -i "/'Lock') security -qs lock screen;;/d" "${launch_file}" &&
     sed -i "/'Blank') power -qs blank;;/d" "${launch_file}" &&
-    sed -i "/'Logout') security -qs logout user;;/d" "${launch_file}" || return 1
+    sed -i "/'Logout') security -qs logout user;;/d" "${launch_file}" ||
+    abort ERROR 'Failed to remove not supported cmds from rofi launch menu.'
 
-  echo -e 'Rofi configuration has been set.'
+  log INFO 'Rofi configuration has been set.'
 
   # Copy dunst configuration files
   local dunst_home="${config_home}/dunst"
 
-  mkdir -p "${dunst_home}" || return 1
+  mkdir -p "${dunst_home}" &&
+    cp configs/dunst/dunstrc "${dunst_home}" &&
+    cp configs/dunst/hook "${dunst_home}" ||
+    abort ERROR 'Failed to copy the dunst files.'
 
-  cp configs/dunst/dunstrc "${dunst_home}" || return 1
-  cp configs/dunst/hook "${dunst_home}" || return 1
-
-  echo -e 'Dunst configuration has been set.'
+  log INFO 'Dunst configuration has been set.'
 }
 
 # Sets up the theme of the desktop environment.
 setup_theme () {
-  echo -e 'Setting up the desktop theme...'
+  log INFO 'Setting up the desktop theme...'
 
   if [[ ! -d "${ROOT_FS}" ]]; then
-    echo -e 'Unable to locate the airootfs folder.'
-    return 1
+    abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
   local themes_home="${ROOT_FS}/usr/share/themes"
 
-  mkdir -p "${themes_home}" || return 1
+  mkdir -p "${themes_home}" || abort ERROR 'Failed to create the themes folder.'
 
   local theme_url='https://github.com/dracula/gtk/archive/master.zip'
 
   curl "${theme_url}" -sSLo "${themes_home}/Dracula.zip" &&
     unzip -q "${themes_home}/Dracula.zip" -d "${themes_home}" &&
     mv "${themes_home}/gtk-master" "${themes_home}/Dracula" &&
-    rm -f "${themes_home}/Dracula.zip" || return 1
+    rm -f "${themes_home}/Dracula.zip" ||
+    abort ERROR 'Failed to install the desktop theme.'
 
-  echo -e 'Desktop theme has been installed.'
+  log INFO 'Desktop theme has been installed.'
 
-  echo -e 'Setting up the desktop icons...'
+  log INFO 'Setting up the desktop icons...'
 
   local icons_home="${ROOT_FS}/usr/share/icons"
 
-  mkdir -p "${icons_home}" || return 1
+  mkdir -p "${icons_home}" || abort ERROR 'Failed to create the icons folder.'
   
   local icons_url='https://github.com/dracula/gtk/files/5214870/Dracula.zip'
 
   curl "${icons_url}" -sSLo "${icons_home}/Dracula.zip" &&
     unzip -q "${icons_home}/Dracula.zip" -d "${icons_home}" &&
-    rm -f "${icons_home}/Dracula.zip" || return 1
+    rm -f "${icons_home}/Dracula.zip" ||
+    abort ERROR 'Failed to install the desktop icons.'
 
-  echo -e 'Desktop icons have been installed.'
+  log INFO 'Desktop icons have been installed.'
 
-  echo -e 'Setting up the desktop cursors...'
+  log INFO 'Setting up the desktop cursors...'
 
   local cursors_home="${ROOT_FS}/usr/share/icons"
 
-  mkdir -p "${cursors_home}" || return 1
+  mkdir -p "${cursors_home}" || abort ERROR 'Failed to create the cursors folder.'
 
   local cursors_url='https://www.dropbox.com/s/mqt8s1pjfgpmy66/Breeze-Snow.tgz?dl=1'
 
   wget "${cursors_url}" -qO "${cursors_home}/breeze-snow.tgz" &&
     tar -xzf "${cursors_home}/breeze-snow.tgz" -C "${cursors_home}" &&
-    rm -f "${cursors_home}/breeze-snow.tgz" || return 1
+    rm -f "${cursors_home}/breeze-snow.tgz" ||
+    abort ERROR 'Failed to instlal the desktop cursors.'
 
-  mkdir -p "${cursors_home}/default" || return 1
+  mkdir -p "${cursors_home}/default" || abort ERROR 'Failed to create the cursors default folder.'
 
   echo '[Icon Theme]' >> "${cursors_home}/default/index.theme"
   echo 'Inherits=Breeze-Snow' >> "${cursors_home}/default/index.theme"
 
-  echo -e 'Desktop cursors have been installed.'
+  log INFO 'Desktop cursors have been installed.'
 
   local gtk_home="${ROOT_FS}/root/.config/gtk-3.0"
   
-  mkdir -p "${gtk_home}" || return 1
-  cp configs/gtk/settings.ini "${gtk_home}" || return 1
+  mkdir -p "${gtk_home}" &&
+    cp configs/gtk/settings.ini "${gtk_home}" ||
+    abort ERROR 'Failed to set the GTK settings.'
 
-  echo -e 'Gtk settings file has been set.'
+  log INFO 'Gtk settings file has been set.'
 
-  echo -e 'Setting the desktop wallpaper...'
+  log INFO 'Setting the desktop wallpaper...'
 
   local wallpapers_home="${ROOT_FS}/root/.local/share/wallpapers"
 
-  mkdir -p "${wallpapers_home}" || return 1
-  cp resources/wallpapers/* "${wallpapers_home}" || return 1
+  mkdir -p "${wallpapers_home}" &&
+    cp resources/wallpapers/* "${wallpapers_home}" ||
+    abort ERROR 'Failed to copy the wallpapers.'
 
   local settings_home="${ROOT_FS}/root/.config/stack"
 
-  mkdir -p "${settings_home}" || return 1
+  mkdir -p "${settings_home}" || abort ERROR 'Failed to create the /root/.config/stack folder.'
 
   local settings='{"wallpaper": {"name": "default.jpeg", "mode": "fill"}}'
 
   echo "${settings}" > "${settings_home}/desktop.json"
 
-  echo -e 'Desktop wallpaper has been set.'
+  log INFO 'Desktop wallpaper has been set.'
 }
 
 # Sets up some extra system fonts.
 setup_fonts () {
-  echo -e 'Setting up extra system fonts...'
+  log INFO 'Setting up extra system fonts...'
 
   if [[ ! -d "${ROOT_FS}" ]]; then
-    echo -e 'Unable to locate the airootfs folder.'
-    return 1
+    abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
   local fonts_home="${ROOT_FS}/usr/share/fonts/extra-fonts"
 
-  mkdir -p "${fonts_home}" || return 1
+  mkdir -p "${fonts_home}" || abort ERROR 'Failed to create the fonts folder.'
 
   local fonts=(
     "FiraCode https://github.com/tonsky/FiraCode/releases/download/6.2/Fira_Code_v6.2.zip"
@@ -882,150 +945,141 @@ setup_fonts () {
 
   for font in "${fonts[@]}"; do
     local name=''
-    name="$(echo "${font}" | cut -d ' ' -f 1)" || return 1
+    name="$(echo "${font}" | cut -d ' ' -f 1)" || abort ERROR 'Failed to extract the font name.'
 
     local url=''
-    url="$(echo "${font}" | cut -d ' ' -f 2)" || return 1
+    url="$(echo "${font}" | cut -d ' ' -f 2)" || abort ERROR 'Failed to extract the font url.'
 
     curl "${url}" -sSLo "${fonts_home}/${name}.zip" &&
       unzip -q "${fonts_home}/${name}.zip" -d "${fonts_home}/${name}" &&
       chmod -R 755 "${fonts_home}/${name}" &&
-      rm -f "${fonts_home}/${name}.zip" || return 1
+      rm -f "${fonts_home}/${name}.zip" ||
+      abort ERROR "Failed to install the font ${name}."
 
-    echo -e "Font ${name} has been installed."
+    log INFO "Font ${name} has been installed."
   done
 
-  echo -e 'Fonts have been setup.'
+  log INFO 'Fonts have been setup.'
 }
 
 # Sets up various system sound resources.
 setup_sounds () {
   if [[ ! -d "${ROOT_FS}" ]]; then
-    echo -e 'Unable to locate the airootfs folder.'
-    return 1
+    abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
   local sounds_home="${ROOT_FS}/usr/share/sounds/stack"
   
-  mkdir -p "${sounds_home}" || return 1
+  mkdir -p "${sounds_home}" &&
+    cp resources/sounds/normal.wav "${sounds_home}" &&
+    cp resources/sounds/critical.wav "${sounds_home}" ||
+    abort ERROR 'Failed to set the extra system sounds.'
 
-  cp resources/sounds/normal.wav "${sounds_home}" || return 1
-  cp resources/sounds/critical.wav "${sounds_home}" || return 1
-
-  echo -e 'Extra system sounds have been set.'
+  log INFO 'Extra system sounds have been set.'
 }
 
 # Enables various system services.
 enable_services () {
-  echo -e 'Enabling system services...'
+  log INFO 'Enabling system services...'
 
   if [[ ! -d "${ROOT_FS}" ]]; then
-    echo -e 'Unable to locate the airootfs folder.'
-    return 1
+    abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
-  mkdir -p "${ROOT_FS}/etc/systemd/system" || return 1
+  mkdir -p "${ROOT_FS}/etc/systemd/system" || abort ERROR 'Failed to create the /etc/systed/system folder.'
 
   ln -s /usr/lib/systemd/system/NetworkManager-dispatcher.service \
-    "${ROOT_FS}/etc/systemd/system/dbus-org.freedesktop.nm-dispatcher.service" || return 1
+      "${ROOT_FS}/etc/systemd/system/dbus-org.freedesktop.nm-dispatcher.service" &&
+    mkdir -p "${ROOT_FS}/etc/systemd/system/multi-user.target.wants" &&
+    ln -s /usr/lib/systemd/system/NetworkManager.service \
+      "${ROOT_FS}/etc/systemd/system/multi-user.target.wants/NetworkManager.service" &&
+    mkdir -p "${ROOT_FS}/etc/systemd/system/network-online.target.wants" &&
+    ln -s /usr/lib/systemd/system/NetworkManager-wait-online.service \
+      "${ROOT_FS}/etc/systemd/system/network-online.target.wants/NetworkManager-wait-online.service" ||
+    abort ERROR 'Failed to enable the network manager services.'
 
-  mkdir -p "${ROOT_FS}/etc/systemd/system/multi-user.target.wants" || return 1
-
-  ln -s /usr/lib/systemd/system/NetworkManager.service \
-    "${ROOT_FS}/etc/systemd/system/multi-user.target.wants/NetworkManager.service" || return 1
-
-  mkdir -p "${ROOT_FS}/etc/systemd/system/network-online.target.wants" || return 1
-
-  ln -s /usr/lib/systemd/system/NetworkManager-wait-online.service \
-    "${ROOT_FS}/etc/systemd/system/network-online.target.wants/NetworkManager-wait-online.service" || return 1
-
-  echo -e 'Network manager services enabled.'
+  log INFO 'Network manager services enabled.'
 
   ln -s /usr/lib/systemd/system/bluetooth.service \
-    "${ROOT_FS}/etc/systemd/system/dbus-org.bluez.service" || return 1
+      "${ROOT_FS}/etc/systemd/system/dbus-org.bluez.service" &&
+    mkdir -p "${ROOT_FS}/etc/systemd/system/bluetooth.target.wants" &&
+    ln -s /usr/lib/systemd/system/bluetooth.service \
+      "${ROOT_FS}/etc/systemd/system/bluetooth.target.wants/bluetooth.service" ||
+    abort ERROR 'Failed to enable the bluetooth services.'
 
-  mkdir -p "${ROOT_FS}/etc/systemd/system/bluetooth.target.wants" || return 1
-
-  ln -s /usr/lib/systemd/system/bluetooth.service \
-    "${ROOT_FS}/etc/systemd/system/bluetooth.target.wants/bluetooth.service" || return 1
-
-  echo -e 'Bluetooth services enabled.'
+  log INFO 'Bluetooth services enabled.'
 
   ln -s /usr/lib/systemd/system/acpid.service \
-    "${ROOT_FS}/etc/systemd/system/multi-user.target.wants/acpid.service" || return 1
+      "${ROOT_FS}/etc/systemd/system/multi-user.target.wants/acpid.service" ||
+    abort ERROR 'Failed to enalbe th acpid servce.'
 
-  echo -e 'Acpid service enabled.'
+  log INFO 'Acpid service enabled.'
 
-  mkdir -p "${ROOT_FS}/etc/systemd/system/printer.target.wants" || return 1
+  mkdir -p "${ROOT_FS}/etc/systemd/system/printer.target.wants" &&
+    ln -s /usr/lib/systemd/system/cups.service \
+      "${ROOT_FS}/etc/systemd/system/printer.target.wants/cups.service" &&
+    ln -s /usr/lib/systemd/system/cups.service \
+      "${ROOT_FS}/etc/systemd/system/multi-user.target.wants/cups.service" &&
+    mkdir -p "${ROOT_FS}/etc/systemd/system/sockets.target.wants" &&
+    ln -s /usr/lib/systemd/system/cups.socket \
+      "${ROOT_FS}/etc/systemd/system/sockets.target.wants/cups.socket" &&
+    ln -s /usr/lib/systemd/system/cups.path \
+      "${ROOT_FS}/etc/systemd/system/multi-user.target.wants/cups.path" ||
+    abort ERROR 'Failed to enable the cups services.'
 
-  ln -s /usr/lib/systemd/system/cups.service \
-    "${ROOT_FS}/etc/systemd/system/printer.target.wants/cups.service" || return 1
-
-  ln -s /usr/lib/systemd/system/cups.service \
-    "${ROOT_FS}/etc/systemd/system/multi-user.target.wants/cups.service" || return 1
-
-  mkdir -p "${ROOT_FS}/etc/systemd/system/sockets.target.wants" || return 1
-
-  ln -s /usr/lib/systemd/system/cups.socket \
-    "${ROOT_FS}/etc/systemd/system/sockets.target.wants/cups.socket" || return 1
-
-  ln -s /usr/lib/systemd/system/cups.path \
-    "${ROOT_FS}/etc/systemd/system/multi-user.target.wants/cups.path" || return 1
-
-  echo -e 'Cups services enabled.'
+  log INFO 'Cups services enabled.'
 
   ln -s /usr/lib/systemd/system/nftables.service \
-    "${ROOT_FS}/etc/systemd/system/multi-user.target.wants/nftables.service" || return 1
+      "${ROOT_FS}/etc/systemd/system/multi-user.target.wants/nftables.service" ||
+    abort ERROR 'Failed to enable the nftables service.'
 
-  echo -e 'Nftables service enabled.'
+  log INFO 'Nftables service enabled.'
 
-  mkdir -p "${ROOT_FS}/root/.config/systemd/user" || return 1
+  mkdir -p "${ROOT_FS}/root/.config/systemd/user" &&
+    cp services/init-pointer.service \
+      "${ROOT_FS}/root/.config/systemd/user/init-pointer.service" ||
+    abort ERROR 'Failed to enable the pointer init service.'
 
-  cp services/init-pointer.service \
-    "${ROOT_FS}/root/.config/systemd/user/init-pointer.service" || return 1
-
-  echo -e 'Pointer init service enabled.'
+  log INFO 'Pointer init service enabled.'
 
   cp services/init-tablets.service \
-    "${ROOT_FS}/root/.config/systemd/user/init-tablets.service" || return 1
+      "${ROOT_FS}/root/.config/systemd/user/init-tablets.service" ||
+    abort ERROR 'Failed to enable the tablets init service.'
 
-  echo -e 'Tablets init service enabled.'
+  log INFO 'Tablets init service enabled.'
 
   cp services/fix-layout.service \
-    "${ROOT_FS}/root/.config/systemd/user/fix-layout.service" || return 1
+      "${ROOT_FS}/root/.config/systemd/user/fix-layout.service" &&
+    sed -i 's;^\(Environment=HOME\).*;\1=/root;' \
+      "${ROOT_FS}/root/.config/systemd/user/fix-layout.service" &&
+    sed -i 's;^\(Environment=XAUTHORITY\).*;\1=/root/.Xauthority;' \
+      "${ROOT_FS}/root/.config/systemd/user/fix-layout.service" ||
+    abort ERROR 'Failed to enable the fix layout service.'
   
-  sed -i 's;^\(Environment=HOME\).*;\1=/root;' \
-    "${ROOT_FS}/root/.config/systemd/user/fix-layout.service" || return 1
-  
-  sed -i 's;^\(Environment=XAUTHORITY\).*;\1=/root/.Xauthority;' \
-    "${ROOT_FS}/root/.config/systemd/user/fix-layout.service" || return 1
-  
-  echo -e 'Fix layout service enabled.'
+  log INFO 'Fix layout service enabled.'
 }
 
 # Adds input and output devices rules.
 add_device_rules () {
   if [[ ! -d "${ROOT_FS}" ]]; then
-    echo -e 'Unable to locate the airootfs folder.'
-    return 1
+    abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
   local rules_home="${ROOT_FS}/etc/udev/rules.d"
 
-  mkdir -p "${rules_home}" || return 1
-
-  cp rules/90-init-pointer.rules "${rules_home}" &&
+  mkdir -p "${rules_home}" &&
+    cp rules/90-init-pointer.rules "${rules_home}" &&
     cp rules/91-init-tablets.rules "${rules_home}" &&
-    cp rules/92-fix-layout.rules "${rules_home}" || return 1
+    cp rules/92-fix-layout.rules "${rules_home}" ||
+    abort ERROR 'Failed to set the device rules.'
   
-  echo -e 'Device rules have been set.'
+  log INFO 'Device rules have been set.'
 }
 
 # Adds various extra sudoers rules.
 add_sudoers_rules () {
   if [[ ! -d "${ROOT_FS}" ]]; then
-    echo -e 'Unable to locate the airootfs folder.'
-    return 1
+    abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
   local proxy_rules='Defaults env_keep += "'
@@ -1036,11 +1090,11 @@ add_sudoers_rules () {
   proxy_rules+='all_proxy ALL_PROXY '
   proxy_rules+='no_proxy NO_PROXY"'
 
-  mkdir -p "${ROOT_FS}/etc/sudoers.d" || return 1
+  mkdir -p "${ROOT_FS}/etc/sudoers.d" || abort ERROR 'Failed to create the /etc/sudoers.d folder.'
 
   echo "${proxy_rules}" > "${ROOT_FS}/etc/sudoers.d/proxy_rules"
 
-  echo -e 'Proxy rules have been added to sudoers.'
+  log INFO 'Proxy rules have been added to sudoers.'
 }
 
 # Defines the root files permissions.
@@ -1048,8 +1102,7 @@ set_file_permissions () {
   local permissions_file="${PROFILE_DIR}/profiledef.sh"
 
   if [[ ! -f "${permissions_file}" ]]; then
-    echo -e "Unable to locate file ${permissions_file}."
-    return 1
+    abort ERROR "Unable to locate file ${permissions_file}."
   fi
 
   local defs=(
@@ -1080,34 +1133,34 @@ set_file_permissions () {
   local def=''
   for def in "${defs[@]}"; do
     local perms=''
-    perms="$(echo "${def}" | cut -d ',' -f 1)" || return 1
+    perms="$(echo "${def}" | cut -d ',' -f 1)" || abort ERROR 'Failed to extract the perms.'
 
     local path=''
-    path="$(echo "${def}" | cut -d ',' -f 2)" || return 1
+    path="$(echo "${def}" | cut -d ',' -f 2)" || abort ERROR 'Failed to extract the path.'
 
-    sed -i "/file_permissions=(/a [\"${path}\"]=\"${perms}\"" "${permissions_file}" || return 1
+    sed -i "/file_permissions=(/a [\"${path}\"]=\"${perms}\"" "${permissions_file}" ||
+      abort ERROR "Failed to define the file permission ${perms}, ${path}."
   done
 
-  echo -e 'File permissions have been defined.'
+  log INFO 'File permissions have been defined.'
 }
 
 # Creates the iso file of the live media.
 make_iso_file () {
-  echo -e 'Building the archiso file...'
+  log INFO 'Building the archiso file...'
 
   if [[ ! -d "${PROFILE_DIR}" ]]; then
-    echo -e 'Unable to locate the releng profile folder.'
-    return 1
+    abort ERROR 'Unable to locate the releng profile folder.'
   fi
 
-  sudo mkarchiso -v -r \
-    -w "${WORK_DIR}" -o "${DIST_DIR}" "${PROFILE_DIR}" || return 1
+  sudo mkarchiso -v -r -w "${WORK_DIR}" -o "${DIST_DIR}" "${PROFILE_DIR}" ||
+    abort ERROR 'Failed to build the arhiso file.'
 
-  echo -e "Archiso file has been exported at ${DIST_DIR}."
-  echo -e 'Build process completed successfully.'
+  log INFO "Archiso file has been exported at ${DIST_DIR}."
+  log INFO 'Build process completed successfully.'
 }
 
-echo -e 'Starting the build process...'
+log INFO 'Starting the build process...'
 
 init &&
   copy_profile &&
@@ -1131,5 +1184,5 @@ init &&
   add_device_rules &&
   add_sudoers_rules &&
   set_file_permissions &&
-  make_iso_file || fail
+  make_iso_file
 
