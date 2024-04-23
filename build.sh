@@ -94,14 +94,14 @@ remove_package () {
 # Initializes build and distribution files.
 init () {
   if [[ -d "${DIST_DIR}" ]]; then
-    rm -rf "${DIST_DIR}" || abort ERROR 'Unable to remove .dist/ folder.'
+    rm -rf "${DIST_DIR}" || abort ERROR 'Unable to remove the .dist folder.'
 
-    log WARN 'Existing .dist/ folder has been removed.'
+    log WARN 'Existing .dist folder has been removed.'
   fi
 
-  mkdir -p "${DIST_DIR}" || abort ERROR 'Unable to create the .dist/ folder.'
+  mkdir -p "${DIST_DIR}" || abort ERROR 'Unable to create the .dist folder.'
 
-  log INFO 'A clean .dist/ folder has been created.'
+  log INFO 'A clean .dist folder has been created.'
 }
 
 # Copies the archiso custom profile.
@@ -115,7 +115,7 @@ copy_profile () {
   fi
 
   cp -r "${releng_path}" "${PROFILE_DIR}" ||
-    abort ERROR 'Unable to copy the releng archsiso profile.'
+    abort ERROR 'Unable to copy the releng archiso profile.'
 
   log INFO "The releng profile copied to ${PROFILE_DIR}."
 }
@@ -254,7 +254,7 @@ setup_boot_loaders () {
     'MENU COLOR tabmsg       37;40 #ffffffff #00000000 none' \
     'MENU CLEAR' \
     'MENU IMMEDIATE' > "${PROFILE_DIR}/syslinux/archiso_head.cfg" ||
-    abort ERROR 'Failed to fix styles and color in syslinux menu.'
+    abort ERROR 'Failed to fix styles and colors in syslinux menus.'
 
   log INFO 'Syslinux boot loader menus have been modified.'
 
@@ -263,14 +263,14 @@ setup_boot_loaders () {
   sed -i "/--id 'archlinux-accessibility'/,+5d" "${grub_cfg}" &&
     sed -i 's/archlinux/stacklinux/' "${grub_cfg}" &&
     sed -i 's/Arch Linux/Stack Linux/' "${grub_cfg}" ||
-    abort ERROR 'Failed to fix text and titles in grub menu.'
+    abort ERROR 'Failed to fix text and titles in grub menus.'
   
   local loopback_cfg="${PROFILE_DIR}/grub/loopback.cfg"
 
   sed -i "/--id 'archlinux-accessibility'/,+5d" "${loopback_cfg}" &&
     sed -i 's/archlinux/stacklinux/' "${loopback_cfg}" &&
     sed -i 's/Arch Linux/Stack Linux/' "${loopback_cfg}" ||
-    abort ERROR 'Failed to fix text and titles in loopback grub menu.'
+    abort ERROR 'Failed to fix text and titles in loopback grub menus.'
 
   log INFO 'Grub boot loader menus have been modified.'
 
@@ -368,7 +368,7 @@ add_aur_packages () {
 
   local repo_home="${PROFILE_DIR}/local/repo"
 
-  mkdir -p "${repo_home}" || abort ERROR 'Failed to create the /local/repo folder.'
+  mkdir -p "${repo_home}" || abort ERROR 'Failed to create the local repo folder.'
 
   local names=(
     yay smenu xkblayout-state-git
@@ -421,7 +421,7 @@ copy_installer () {
 
   local installer_home="${ROOT_FS}/opt/stack"
 
-  mkdir -p "${installer_home}" || abort ERROR 'Failed to create the /opt/stack fodler.'
+  mkdir -p "${installer_home}" || abort ERROR 'Failed to create the /opt/stack folder.'
 
   cp -r configs "${installer_home}" &&
     cp -r resources "${installer_home}" &&
@@ -438,7 +438,7 @@ copy_installer () {
   mkdir -p "${bin_home}" || abort ERROR 'Failed to create the /usr/local/bin folder.'
 
   ln -sf /opt/stack/install.sh "${bin_home}/install_os" ||
-    abort ERROR 'Failed to create a symlink to the installer launcher.'
+    abort ERROR 'Failed to create the symlink to the installer launcher.'
 
   info INFO 'Installer files have been copied.'
 }
@@ -571,7 +571,7 @@ setup_display_server () {
   printf '%s\n' \
     '' \
     "echo -e 'Starting desktop environment...'" \
-    'startx' >> "${zlogin_file}" || abort ERROR 'Failed to add starx hook to .zlogin file.'
+    'startx' >> "${zlogin_file}" || abort ERROR 'Failed to add startx hook to .zlogin file.'
 
   log INFO 'Xorg server set to be started after login.'
 }
@@ -885,7 +885,7 @@ setup_theme () {
   wget "${cursors_url}" -qO "${cursors_home}/breeze-snow.tgz" &&
     tar -xzf "${cursors_home}/breeze-snow.tgz" -C "${cursors_home}" &&
     rm -f "${cursors_home}/breeze-snow.tgz" ||
-    abort ERROR 'Failed to instlal the desktop cursors.'
+    abort ERROR 'Failed to install the desktop cursors.'
 
   mkdir -p "${cursors_home}/default" || abort ERROR 'Failed to create the cursors default folder.'
 
@@ -986,7 +986,7 @@ enable_services () {
     abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
-  mkdir -p "${ROOT_FS}/etc/systemd/system" || abort ERROR 'Failed to create the /etc/systed/system folder.'
+  mkdir -p "${ROOT_FS}/etc/systemd/system" || abort ERROR 'Failed to create the /etc/systemd/system folder.'
 
   ln -s /usr/lib/systemd/system/NetworkManager-dispatcher.service \
       "${ROOT_FS}/etc/systemd/system/dbus-org.freedesktop.nm-dispatcher.service" &&
@@ -1011,7 +1011,7 @@ enable_services () {
 
   ln -s /usr/lib/systemd/system/acpid.service \
       "${ROOT_FS}/etc/systemd/system/multi-user.target.wants/acpid.service" ||
-    abort ERROR 'Failed to enalbe th acpid servce.'
+    abort ERROR 'Failed to enable th acpid servce.'
 
   log INFO 'Acpid service enabled.'
 
@@ -1154,7 +1154,7 @@ make_iso_file () {
   fi
 
   sudo mkarchiso -v -r -w "${WORK_DIR}" -o "${DIST_DIR}" "${PROFILE_DIR}" ||
-    abort ERROR 'Failed to build the arhiso file.'
+    abort ERROR 'Failed to build the archiso file.'
 
   log INFO "Archiso file has been exported at ${DIST_DIR}."
   log INFO 'Build process completed successfully.'
