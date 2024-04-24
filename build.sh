@@ -50,6 +50,26 @@ abort () {
   exit 1
 }
 
+# Checks if the dep with the given name is installed or not.
+# Arguments:
+#  name: the name of a dependency
+# Returns:
+#  0 if dep is installed otherwise 1.
+dep_exists () {
+  local name="${1}"
+
+  if pacman -Qi "${name}" > /dev/null 2>&1; then
+    return 0
+  fi
+
+  return 1
+}
+
+# An inversed alias of dep_exists.
+dep_not_exists () {
+  dep_exists "${1}" && return 1 || return 0
+}
+
 # Adds the package with the given name into the list of packages
 # Arguments:
 #  name: the name of a package
@@ -102,6 +122,18 @@ init () {
   mkdir -p "${DIST_DIR}" || abort ERROR 'Unable to create the .dist folder.'
 
   log INFO 'A clean .dist folder has been created.'
+}
+
+# Checks if any build dependency is missing and abort immediately.
+check_depds () {
+  local deps=(archiso)
+
+  local dep=''
+  for dep in "${deps[@]}"; do
+    if dep_not_exists "${dep}"; then
+      abort ERROR "Missing ${dep} package dependency."
+    fi
+  done
 }
 
 # Copies the archiso custom profile.
@@ -328,33 +360,6 @@ add_packages () {
   log INFO 'All packages added into the package list.'
 }
 
-# Patch various packages.
-patch_packages () {
-  if [[ ! -d "${ROOT_FS}" ]]; then
-    abort ERROR 'Unable to locate the airootfs folder.'
-  fi
-
-  # Override tqdm executable in /usr/bin to swallow error output
-  mkdir -p "${ROOT_FS}/usr/local/bin" ||
-    abort ERROR 'Failed to create the /usr/local/bin folder.'
-
-  printf '%s\n' \
-    '#!/usr/bin/python' \
-    '# -*- coding: utf-8 -*-' \
-    'import re' \
-    'import sys' \
-    'from tqdm.cli import main' \
-    'if __name__ == "__main__":' \
-    '    try:' \
-    '        sys.argv[0] = re.sub(r"(-script\.pyw|\.exe)?$", "", sys.argv[0])' \
-    '        sys.exit(main())' \
-    '    except KeyboardInterrupt:' \
-    '        sys.exit(1)' > "${ROOT_FS}/usr/local/bin/tqdm" ||
-    abort ERROR 'Failed to patch the tqdm package.'
-  
-  log INFO 'Package tqdm has been patched.'
-}
-
 # Builds and adds the AUR packages into the packages list
 # via a local custom repo.
 add_aur_packages () {
@@ -411,6 +416,33 @@ add_aur_packages () {
 
   log INFO 'The custom local repo added to pacman.'
   log INFO 'All AUR packages added into the package list.'
+}
+
+# Patch various packages.
+patch_packages () {
+  if [[ ! -d "${ROOT_FS}" ]]; then
+    abort ERROR 'Unable to locate the airootfs folder.'
+  fi
+
+  # Override tqdm executable in /usr/bin to swallow error output
+  mkdir -p "${ROOT_FS}/usr/local/bin" ||
+    abort ERROR 'Failed to create the /usr/local/bin folder.'
+
+  printf '%s\n' \
+    '#!/usr/bin/python' \
+    '# -*- coding: utf-8 -*-' \
+    'import re' \
+    'import sys' \
+    'from tqdm.cli import main' \
+    'if __name__ == "__main__":' \
+    '    try:' \
+    '        sys.argv[0] = re.sub(r"(-script\.pyw|\.exe)?$", "", sys.argv[0])' \
+    '        sys.exit(main())' \
+    '    except KeyboardInterrupt:' \
+    '        sys.exit(1)' > "${ROOT_FS}/usr/local/bin/tqdm" ||
+    abort ERROR 'Failed to patch the tqdm package.'
+  
+  log INFO 'Package tqdm has been patched.'
 }
 
 # Copies the files of the installer.
@@ -1163,12 +1195,13 @@ make_iso_file () {
 log INFO 'Starting the build process...'
 
 init &&
+  check_depds &&
   copy_profile &&
   rename_distro &&
   setup_boot_loaders &&
   add_packages &&
-  patch_packages &&
   add_aur_packages &&
+  patch_packages &&
   copy_installer &&
   copy_settings_tools &&
   setup_auto_login &&
