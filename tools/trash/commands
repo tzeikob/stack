@@ -31,7 +31,7 @@ list_files () {
   elif is_not_given "${filter}"; then
     query='.'
   else
-    echo 'Invalid filter value.'
+    log 'Invalid filter value.'
     return 2
   fi
 
@@ -42,7 +42,7 @@ list_files () {
   len="$(count "${files}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No trashed files have found.'
+    log 'No trashed files have found.'
     return 0
   fi
 
@@ -65,7 +65,7 @@ restore_files () {
   len="$(count "${files}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No trashed files found.'
+    log 'No trashed files found.'
     return 2
   fi
 
@@ -73,10 +73,10 @@ restore_files () {
 
   if is_true "${#paths[@]} = 0"; then
     on_script_mode &&
-      echo 'No file paths are given.' && return 2
+      log 'No file paths are given.' && return 2
 
     pick_many 'Select files to restore:' "${files}" vertical || return $?
-    is_empty "${REPLY}" && echo 'File paths are required.' && return 2
+    is_empty "${REPLY}" && log 'File paths are required.' && return 2
     local picked="${REPLY}"
 
     # Refuse to overwrite existing files
@@ -91,7 +91,7 @@ restore_files () {
       path="$(echo "${files}" | jq -cr "${query}")"
 
       if file_exists "${path}"; then
-        echo "Refused to overwrite file ${path}."
+        log "Refused to overwrite file ${path}."
         continue
       fi
 
@@ -110,12 +110,12 @@ restore_files () {
       key="$(echo "${files}" | jq -cer "${query}")"
 
       if has_failed; then
-        echo "File ${path} not found in trash."
+        log "File ${path} not found in trash."
         continue
       fi
 
       if file_exists "${path}"; then
-        echo "Refused to overwrite file ${path}."
+        log "Refused to overwrite file ${path}."
         continue
       fi
 
@@ -134,7 +134,7 @@ restore_files () {
   trash-restore / &> /dev/null <<< "${file_keys}"
 
   if has_failed; then
-    echo 'Failed to restore files.'
+    log 'Failed to restore files.'
     return 2
   fi
 
@@ -143,11 +143,11 @@ restore_files () {
   len="$(calc "${len} - ${post_len}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No files restored.'
+    log 'No files restored.'
     return 2
   fi
 
-  echo "${len} file(s) have been restored."
+  log "${len} file(s) have been restored."
 }
 
 # Removes the trashed files, given as a list of paths.
@@ -164,7 +164,7 @@ remove_files () {
   len="$(count "${files}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No trashed files found.'
+    log 'No trashed files found.'
     return 2
   fi
 
@@ -174,10 +174,10 @@ remove_files () {
   
   if is_true "${#paths[@]} = 0"; then
     on_script_mode &&
-      echo 'No file paths are given.' && return 2
+      log 'No file paths are given.' && return 2
 
     pick_many 'Select files to remove:' "${files}" vertical || return $?
-    is_empty "${REPLY}" && echo 'File paths are required.' && return 2
+    is_empty "${REPLY}" && log 'File paths are required.' && return 2
     local selected_paths="${REPLY}"
 
     readarray -t paths < <(echo "${selected_paths}" | jq -cr '.[]')
@@ -185,10 +185,10 @@ remove_files () {
 
   if on_user_mode; then
     confirm 'File(s) will be gone forever, proceed?' || return $?
-    is_empty "${REPLY}" && echo 'Confirmation is required.' && return 2
+    is_empty "${REPLY}" && log 'Confirmation is required.' && return 2
   
     if is_not_yes "${REPLY}"; then
-      echo 'No trashed files removed.'
+      log 'No trashed files removed.'
       return 2
     fi
   fi
@@ -200,7 +200,7 @@ remove_files () {
     echo "${files}" | jq -cer "${query}" &> /dev/null
 
     if has_failed; then
-      echo "File ${path} not found in trash."
+      log "File ${path} not found in trash."
       continue
     fi
 
@@ -212,11 +212,11 @@ remove_files () {
   len="$(calc "${len} - ${post_len}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No trashed files removed.'
+    log 'No trashed files removed.'
     return 2
   fi
   
-  echo "${len} trashed file(s) removed."
+  log "${len} trashed file(s) removed."
 }
 
 # Empties the trash from files trashed more than
@@ -227,7 +227,7 @@ empty_files () {
   local days="${1}"
   
   if is_given "${days}" && is_not_integer "${days}" '[0,]'; then
-    echo 'Invalid days filter.'
+    log 'Invalid days filter.'
     return 2
   fi
 
@@ -235,7 +235,7 @@ empty_files () {
   len="$(find_files | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No trashed files found.'
+    log 'No trashed files found.'
     return 2
   fi
   
@@ -249,10 +249,10 @@ empty_files () {
     fi
   
     confirm "${prompt}" || return $?
-    is_empty "${REPLY}" && echo 'Confirmation is required.' && return 2
+    is_empty "${REPLY}" && log 'Confirmation is required.' && return 2
 
     if is_not_yes "${REPLY}"; then
-      echo 'No trashed files removed.'
+      log 'No trashed files removed.'
       return 2
     fi
   fi
@@ -260,7 +260,7 @@ empty_files () {
   trash-empty -f "${days:-0}"
 
   if has_failed; then
-    echo 'Failed to remove trashed files.'
+    log 'Failed to remove trashed files.'
     return 2
   fi
 
@@ -269,10 +269,10 @@ empty_files () {
   len="$(calc "${len} - ${post_len}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No trashed files removed.'
+    log 'No trashed files removed.'
     return 2
   fi
 
-  echo "${len} trashed file(s) removed."
+  log "${len} trashed file(s) removed."
 }
 

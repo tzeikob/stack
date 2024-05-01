@@ -110,7 +110,7 @@ convert_handler_to_option () {
     'lid') option='HandleLidSwitch';;
     'docked') option='HandleLidSwitchDocked';;
     *)
-      echo 'Invalid or unknown power handler.'
+      log 'Invalid or unknown power handler.'
       return 2;;
   esac
 

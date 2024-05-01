@@ -273,7 +273,7 @@ pick_output () {
   len="$(count "${options}")" || return 1
   
   if is_true "${len} = 0"; then
-    echo "No ${status:-\b} outputs have found."
+    log "No ${status:-\b} outputs have found."
     return 2
   fi
 
@@ -312,7 +312,7 @@ pick_outputs () {
   len="$(count "${options}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo "No ${status:-\b} outputs have found."
+    log "No ${status:-\b} outputs have found."
     return 2
   fi
 
@@ -343,7 +343,7 @@ pick_resolution () {
   len="$(count "${options}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No resolutions have found.'
+    log 'No resolutions have found.'
     return 2
   fi
 
@@ -378,7 +378,7 @@ pick_rate () {
   len="$(count "${options}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No refresh rates have found.'
+    log 'No refresh rates have found.'
     return 2
   fi
 
@@ -509,7 +509,7 @@ pick_layout_mode () {
     modes+='{"key": "taph-right-4", "value": "Taph Right"},'
     modes+='{"key": "taph-left-4", "value": "Taph Left"}'
   else
-    echo "No layout mode found for ${size} outputs."
+    log "No layout mode found for ${size} outputs."
     return 2
   fi
 
@@ -691,7 +691,7 @@ show_layout_map () {
       echo -e "${r}       ${r}   ${c}       ${r}"
       ;;
     *)
-      echo 'Invalid or unknown layout mode.'
+      log 'Invalid or unknown layout mode.'
       return 2;;
   esac
   echo
@@ -767,7 +767,7 @@ layout_to_xrandr_template () {
       query+='--output \(.[3]) --below \(.[2])'
       ;;
     *)
-      echo 'Invalid or unknown layout mode.'
+      log 'Invalid or unknown layout mode.'
       return 2;;
   esac
 
@@ -835,7 +835,7 @@ pick_layout () {
   len="$(count "${layouts}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No layouts have found.'
+    log 'No layouts have found.'
     return 2
   fi
 
@@ -858,7 +858,7 @@ pick_color_profile () {
   len="$(count "${profiles}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No color profiles have found.'
+    log 'No color profiles have found.'
     return 2
   fi
 
@@ -881,7 +881,7 @@ pick_color_setting () {
   len="$(count "${colors}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No color settings have found.'
+    log 'No color settings have found.'
     return 2
   fi
 

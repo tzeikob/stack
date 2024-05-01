@@ -43,7 +43,7 @@ pick_card () {
   len=$(count "${cards}") || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No audio cards have found.'
+    log 'No audio cards have found.'
     return 2
   fi
   
@@ -71,7 +71,7 @@ pick_profile () {
   len="$(count "${profiles}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No audio profiles found.'
+    log 'No audio profiles found.'
     return 2
   fi
   
@@ -105,7 +105,7 @@ pick_module () {
   len="$(count "${modules}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo "No ${type} modules have found."
+    log "No ${type} modules have found."
     return 2
   fi
   

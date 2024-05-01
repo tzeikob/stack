@@ -56,13 +56,13 @@ set_screen_locker () {
   local interval="${1}"
 
   if is_not_given "${interval}"; then
-    echo 'Missing interval time.'
+    log 'Missing interval time.'
     return 2
   elif is_not_integer "${interval}"; then
-    echo 'Invalid interval time.'
+    log 'Invalid interval time.'
     return 2
   elif is_not_integer "${interval}" '[0,60]'; then
-    echo 'Interval time out of range [0,60].'
+    log 'Interval time out of range [0,60].'
     return 2
   fi
 
@@ -77,17 +77,17 @@ set_screen_locker () {
     sleep 1
 
     if is_process_down '^xautolock'; then
-      echo 'Failed to set the screen locker.'
+      log 'Failed to set the screen locker.'
       return 2
     fi
   
-    echo "Screen locker set to ${interval} mins."
+    log "Screen locker set to ${interval} mins."
   else
-    echo "Screen locker has been disabled."
+    log "Screen locker has been disabled."
   fi
   
   save_screen_locker_to_settings "${interval}" ||
-    echo 'Failed to save screen locker into settings.'
+    log 'Failed to save screen locker into settings.'
 }
 
 # Initiates the screen locker from
@@ -110,13 +110,13 @@ init_screen_locker () {
     sleep 1
 
     if is_process_down '^xautolock'; then
-      echo 'Failed to initialize the screen locker.'
+      log 'Failed to initialize the screen locker.'
       return 2
     fi
     
-    echo "Screen locker initialized to ${interval} mins."
+    log "Screen locker initialized to ${interval} mins."
   else
-    echo "Screen locker has been disabled."
+    log "Screen locker has been disabled."
   fi
 }
 
@@ -128,7 +128,7 @@ lock_screen () {
   is_locked="$(is_screen_locked)" || return 1
   
   if is_true "${is_locked}"; then
-    echo 'Screen locker is already running.'
+    log 'Screen locker is already running.'
     return 2
   fi
 
@@ -146,7 +146,7 @@ lock_screen () {
     xsecurelock >/dev/null 2>&1
 
   if has_failed; then
-    echo 'Failed to lock the screen.'
+    log 'Failed to lock the screen.'
     return 2
   fi
 
@@ -160,13 +160,13 @@ lock_screen () {
 set_user_password () {
   authenticate_user || return $?
 
-  echo 'Password valid chars: a-z A-Z 0-9 `~!@#$%^&*()=+{};:",.<>/?_-'
+  log 'Password valid chars: a-z A-Z 0-9 `~!@#$%^&*()=+{};:",.<>/?_-'
   ask_secret 'Enter new password (at least 4 chars):' || return $?
-  is_empty "${REPLY}" && echo 'New password cannot be blank.' && return 2
+  is_empty "${REPLY}" && log 'New password cannot be blank.' && return 2
   
   while not_match "${REPLY}" '^[a-zA-Z0-9`~!@#\$%^&*()=+{};:",.<>/\?_-]{4,}$'; do
     ask_secret 'Please enter a valid password:' || return $?
-    is_empty "${REPLY}" && echo 'New password cannot be blank.' && return 2
+    is_empty "${REPLY}" && log 'New password cannot be blank.' && return 2
   done
 
   local new_password="${REPLY}"
@@ -174,7 +174,7 @@ set_user_password () {
   ask_secret 'Retype new password:' || return $?
   
   if not_equals "${REPLY}" "${new_password}"; then
-    echo 'New password does not match!'
+    log 'New password does not match!'
     return 2
   fi
 
@@ -182,11 +182,11 @@ set_user_password () {
     sudo passwd --quiet "${USER}" &> /dev/null
 
   if has_failed; then
-    echo 'Failed to set user password.'
+    log 'Failed to set user password.'
     return 2
   fi
 
-  echo 'User password has been set.'
+  log 'User password has been set.'
 }
 
 # Logs the user out, terminating the current xorg session.
@@ -194,7 +194,7 @@ logout_user () {
   bspc quit
 
   if has_failed; then
-    echo 'Failed to logout the user.'
+    log 'Failed to logout the user.'
     return 2
   fi
 }
@@ -209,24 +209,24 @@ set_faillock_attempts () {
   local attempts="${1}"
 
   if is_not_given "${attempts}"; then
-    echo 'Missing attempts number.'
+    log 'Missing attempts number.'
     return 2
   elif is_not_integer "${attempts}" '[0,]'; then
-    echo 'Invalid attempts number.'
+    log 'Invalid attempts number.'
     return 2
   elif is_true "${attempts} < 1"; then
-    echo 'Attempts number should be greater than 0.'
+    log 'Attempts number should be greater than 0.'
     return 2
   fi
 
   sudo sed -ri "s;deny =.*;deny = ${attempts};" /etc/security/faillock.conf
 
   if has_failed; then
-    echo 'Failed to set max failed attempts.'
+    log 'Failed to set max failed attempts.'
     return 2
   fi
 
-  echo "Failed attempts set to ${attempts}."
+  log "Failed attempts set to ${attempts}."
 }
 
 # Sets the time a blocked password should be unblocked.
@@ -238,24 +238,24 @@ set_faillock_unblock () {
   local time="${1}"
   
   if is_not_given "${time}"; then
-    echo 'Missing unblock time.'
+    log 'Missing unblock time.'
     return 2
   elif is_not_integer "${time}" '[0,]'; then
-    echo 'Invalid unblock time.'
+    log 'Invalid unblock time.'
     return 2
   elif is_true "${time} < 1"; then
-    echo 'Unblock time should be greater than 0.'
+    log 'Unblock time should be greater than 0.'
     return 2
   fi
 
   sudo sed -ri "s;unlock_time =.*;unlock_time = ${time};" /etc/security/faillock.conf
 
   if has_failed; then
-    echo 'Failed to set unblock time.'
+    log 'Failed to set unblock time.'
     return 2
   fi
 
-  echo "Unblock time set to ${time} secs."
+  log "Unblock time set to ${time} secs."
 }
 
 # Sets the interval in which a failed password attempt
@@ -269,23 +269,23 @@ set_faillock_interval () {
   local time="${1}"
 
   if is_not_given "${time}"; then
-    echo 'Missing interval time.'
+    log 'Missing interval time.'
     return 2
   elif is_not_integer "${time}" '[0,]'; then
-    echo 'Invalid interval time.'
+    log 'Invalid interval time.'
     return 2
   elif is_true "${time} < 1"; then
-    echo 'Interval time should be greater than 0.'
+    log 'Interval time should be greater than 0.'
     return 2
   fi
 
   sudo sed -ri "s;fail_interval =.*;fail_interval = ${time};" /etc/security/faillock.conf
 
   if has_failed; then
-    echo 'Failed to set fail interval.'
+    log 'Failed to set fail interval.'
     return 2
   fi
 
-  echo "Fail interval set to ${time} secs."
+  log "Fail interval set to ${time} secs."
 }
 

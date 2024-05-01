@@ -74,7 +74,7 @@ list_controllers () {
   len="$(count "${controllers}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No controllers have found.'
+    log 'No controllers have found.'
     return 0
   fi
 
@@ -97,7 +97,7 @@ list_devices () {
   local status="${1}"
 
   if is_given "${status}" && is_not_valid_status "${status}"; then
-    echo 'Invalid device status.'
+    log 'Invalid device status.'
     return 2
   fi
 
@@ -108,7 +108,7 @@ list_devices () {
   len="$(count "${devices}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No available devices have found.'
+    log 'No available devices have found.'
     return 0
   fi
 
@@ -131,10 +131,10 @@ show_controller () {
 
   if is_not_given "${address}"; then
     on_script_mode &&
-      echo 'Missing controller address.' && return 2
+      log 'Missing controller address.' && return 2
 
     pick_controller || return $?
-    is_empty "${REPLY}" && echo 'Controller address required.' && return 2
+    is_empty "${REPLY}" && log 'Controller address required.' && return 2
     address="${REPLY}"
   fi
 
@@ -142,7 +142,7 @@ show_controller () {
   controller="$(find_controller "${address}")"
 
   if has_failed; then
-    echo "Controller ${address} not found."
+    log "Controller ${address} not found."
     return 2
   fi
 
@@ -174,10 +174,10 @@ show_device () {
 
   if is_not_given "${address}"; then
     on_script_mode &&
-      echo 'Missing device address.' && return 2
+      log 'Missing device address.' && return 2
   
     pick_device || return $?
-    is_empty "${REPLY}" && echo 'Device address required.' && return 2
+    is_empty "${REPLY}" && log 'Device address required.' && return 2
     address="${REPLY}"
   fi
 
@@ -185,7 +185,7 @@ show_device () {
   device="$(find_device "${address}")"
 
   if has_failed; then
-    echo "Device ${address} not found."
+    log "Device ${address} not found."
     return 2
   fi
 
@@ -219,10 +219,10 @@ set_controller () {
 
   if is_not_given "${address}"; then
     on_script_mode &&
-      echo 'Missing controller address.' && return 2
+      log 'Missing controller address.' && return 2
 
     pick_controller || return $?
-    is_empty "${REPLY}" && echo 'Controller address required.' && return 2
+    is_empty "${REPLY}" && log 'Controller address required.' && return 2
     address="${REPLY}"
   fi
 
@@ -230,18 +230,18 @@ set_controller () {
   controller="$(find_controller "${address}")"
 
   if has_failed; then
-    echo "Controller ${address} not found."
+    log "Controller ${address} not found."
     return 2
   fi
 
   bluetoothctl select "${address}"
 
   if has_failed; then
-    echo 'Failed to set default controller.'
+    log 'Failed to set default controller.'
     return 2
   fi
 
-  echo "Default controller set to ${address}."
+  log "Default controller set to ${address}."
 }
 
 # Sets the default controller power to on/off.
@@ -251,28 +251,28 @@ set_power () {
   local mode="${1}"
 
   if is_not_given "${mode}"; then
-    echo 'Missing power mode.'
+    log 'Missing power mode.'
     return 2
   elif is_not_toggle "${mode}"; then
-    echo 'Invalid power mode.'
+    log 'Invalid power mode.'
     return 2
   fi
 
   find_controller &> /dev/null
   
   if has_failed; then
-    echo 'Unable to find default controller.'
+    log 'Unable to find default controller.'
     return 2
   fi
 
   bluetoothctl power "${mode}" &> /dev/null
 
   if has_failed; then
-    echo "Failed to set power mode to ${mode}."
+    log "Failed to set power mode to ${mode}."
     return 2
   fi
 
-  echo "Power mode set to ${mode}."
+  log "Power mode set to ${mode}."
 }
 
 # Sets scanning mode to on or off.
@@ -282,17 +282,17 @@ set_scan () {
   local mode="${1}"
 
   if is_not_given "${mode}"; then
-    echo 'Missing scanning mode.'
+    log 'Missing scanning mode.'
     return 2
   elif is_not_toggle "${mode}"; then
-    echo 'Invalid scanning mode.'
+    log 'Invalid scanning mode.'
     return 2
   fi
 
   find_controller &> /dev/null
   
   if has_failed; then
-    echo 'Unable to find default controller.'
+    log 'Unable to find default controller.'
     return 2
   fi
 
@@ -303,13 +303,13 @@ set_scan () {
     bluetoothctl scan on &> /dev/null &
 
     is_not_scanning &&
-      echo 'Failed to enable scanning mode.' && return 2
+      log 'Failed to enable scanning mode.' && return 2
   else
     is_scanning &&
-      echo 'Failed to disable scanning mode.' && return 2
+      log 'Failed to disable scanning mode.' && return 2
   fi
 
-  echo "Scanning mode set to ${mode}."
+  log "Scanning mode set to ${mode}."
 }
 
 # Sets the default controller discoverable mode to on/off.
@@ -319,28 +319,28 @@ set_discoverable () {
   local mode="${1}"
 
   if is_not_given "${mode}"; then
-    echo 'No discoverable mode given.'
+    log 'No discoverable mode given.'
     return 2
   elif is_not_toggle "${mode}"; then
-    echo 'Invalid discoverable mode.'
+    log 'Invalid discoverable mode.'
     return 2
   fi
 
   find_controller &> /dev/null
   
   if has_failed; then
-    echo 'Unable to find default controller.'
+    log 'Unable to find default controller.'
     return 2
   fi
 
   bluetoothctl discoverable "${mode}" &> /dev/null
 
   if has_failed; then
-    echo "Failed to set discoverable mode to ${mode}."
+    log "Failed to set discoverable mode to ${mode}."
     return 2
   fi
 
-  echo "Discoverable mode set to ${mode}."
+  log "Discoverable mode set to ${mode}."
 }
 
 # Sets the default controller pairable mode to on/off.
@@ -350,28 +350,28 @@ set_pairable () {
   local mode="${1}"
 
   if is_not_given "${mode}"; then
-    echo 'No pairable mode given.'
+    log 'No pairable mode given.'
     return 2
   elif is_not_toggle "${mode}"; then
-    echo 'Invalid pairable mode.'
+    log 'Invalid pairable mode.'
     return 2
   fi
 
   find_controller &> /dev/null
 
   if has_failed; then
-    echo 'Unable to find default controller.'
+    log 'Unable to find default controller.'
     return 2
   fi
 
   bluetoothctl pairable "${mode}" &> /dev/null
 
   if has_failed; then
-    echo "Failed to set pairable mode to ${mode}."
+    log "Failed to set pairable mode to ${mode}."
     return 2
   fi
 
-  echo "Pairable mode set to ${mode}."
+  log "Pairable mode set to ${mode}."
 }
 
 # Connects to the device with the given address.
@@ -382,10 +382,10 @@ connect_device () {
 
   if is_not_given "${address}"; then
     on_script_mode &&
-      echo 'Missing device address.' && return 2
+      log 'Missing device address.' && return 2
   
     pick_device || return $?
-    is_empty "${REPLY}" && echo 'Device address required.' && return 2
+    is_empty "${REPLY}" && log 'Device address required.' && return 2
     address="${REPLY}"
   fi
 
@@ -393,7 +393,7 @@ connect_device () {
   device="$(find_device "${address}")"
 
   if has_failed; then
-    echo "Device ${address} not found."
+    log "Device ${address} not found."
     return 2
   fi
 
@@ -402,11 +402,11 @@ connect_device () {
   bluetoothctl connect "${address}" &> /dev/null
 
   if has_failed; then
-    echo "Failed to connect device ${address}."
+    log "Failed to connect device ${address}."
     return 2
   fi
 
-  echo "Device ${address} has been connected."
+  log "Device ${address} has been connected."
 }
 
 # Disconnects the device with the given address.
@@ -417,10 +417,10 @@ disconnect_device () {
 
   if is_not_given "${address}"; then
     on_script_mode &&
-      echo 'Missing device address.' && return 2
+      log 'Missing device address.' && return 2
   
     pick_device || return $?
-    is_empty "${REPLY}" && echo 'Device address required.' && return 2
+    is_empty "${REPLY}" && log 'Device address required.' && return 2
     address="${REPLY}"
   fi
 
@@ -428,18 +428,18 @@ disconnect_device () {
   device="$(find_device "${address}")"
 
   if has_failed; then
-    echo "Device ${address} not found."
+    log "Device ${address} not found."
     return 2
   fi
 
   bluetoothctl disconnect "${address}" &> /dev/null
 
   if has_failed; then
-    echo "Failed to disconnect device ${address}."
+    log "Failed to disconnect device ${address}."
     return 2
   fi
 
-  echo "Device ${address} has been disconnected."
+  log "Device ${address} has been disconnected."
 }
 
 # Removes the device with the given address.
@@ -450,10 +450,10 @@ remove_device () {
 
   if is_not_given "${address}"; then
     on_script_mode &&
-      echo 'Missing device address.' && return 2
+      log 'Missing device address.' && return 2
   
     pick_device || return $?
-    is_empty "${REPLY}" && echo 'Device address required.' && return 2
+    is_empty "${REPLY}" && log 'Device address required.' && return 2
     address="${REPLY}"
   fi
 
@@ -461,18 +461,18 @@ remove_device () {
   device="$(find_device "${address}")"
 
   if has_failed; then
-    echo "Device ${address} not found."
+    log "Device ${address} not found."
     return 2
   fi
 
   bluetoothctl remove "${address}" &> /dev/null
 
   if has_failed; then
-    echo "Failed to remove device ${address}."
+    log "Failed to remove device ${address}."
     return 2
   fi
 
-  echo "Device ${address} has been removed."
+  log "Device ${address} has been removed."
 }
 
 # Restarts the bluetooth service.
@@ -488,10 +488,10 @@ restart_bluetooth () {
   sudo systemctl restart bluetooth.service
 
   if has_failed; then
-    echo 'Failed to restart the bluetooth service.'
+    log 'Failed to restart the bluetooth service.'
     return 2
   fi
 
-  echo 'Bluetooth service has been restarted.'
+  log 'Bluetooth service has been restarted.'
 }
 

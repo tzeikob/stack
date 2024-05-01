@@ -14,19 +14,19 @@ show_help () {
   local mode="${1}"
 
   if equals "${mode}" 'once'; then
-    echo 'Usage: langs [OPTIONS] COMMAND [OBJECT] [ARGUMENTS]...'
+    printf 'Usage: langs [OPTIONS] COMMAND [OBJECT] [ARGUMENTS]...\n'
     
-    echo -e '\nOPTIONS'
+    printf '\nOPTIONS\n'
     printf ' %-10s %s\n' \
       '-h' 'Show this help message.' \
       '-q' 'Do not play beep sounds.' \
       '-s' 'Run on script mode.'
   
-    echo -e '\nCOMMANDS'
+    printf '\nCOMMANDS\n'
   else
-    echo 'Usage: COMMAND [OBJECT] [ARGUMENTS]...'
+    printf 'Usage: COMMAND [OBJECT] [ARGUMENTS]...\n'
 
-    echo -e '\nCOMMANDS'
+    printf '\nCOMMANDS\n'
     printf ' %-39s %s\n' \
       'help' 'Show this help message.'
   fi
@@ -72,7 +72,7 @@ execute () {
     'set options') set_options "${3}";;
     'set model') set_model "${3}";;
     *)
-      echo 'Ooops, invalid or unknown command!'
+      log 'Ooops, invalid or unknown command!'
       return 2;;
   esac
 }
@@ -89,7 +89,7 @@ run () {
      'q') set_quiet_mode 'on';;
      's') set_script_mode 'on';;
      *)
-      echo "Ooops, invalid or unknown option -${OPTARG}!"
+      log "Ooops, invalid or unknown option -${OPTARG}!"
       beep 2
       return $?;;
     esac
@@ -100,7 +100,7 @@ run () {
   local args_len=$#
 
   if is_true "${args_len} = 0" && on_script_mode; then
-    echo 'Option -s cannot be used in loop mode.'
+    log 'Option -s cannot be used in loop mode.'
     beep 2
     return $?
   fi
@@ -134,7 +134,7 @@ run () {
     local exit_code=$?
   
     if is_true "${exit_code} = 1"; then
-      echo 'Ooops, an unknwon error occurred!'
+      log 'Ooops, an unknwon error occurred!'
     fi
 
     on_loud_mode && beep "${exit_code}"

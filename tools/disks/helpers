@@ -470,7 +470,7 @@ unmount_partitions () {
   volumes="$(echo "${volumes}" | jc --veracrypt | jq -cr '.[]|.path')" || return 1
   
   if is_empty "${parts}" && is_empty "${volumes}"; then
-    echo 'No mounted partitions found.'
+    log 'No mounted partitions found.'
     return 0
   fi
 
@@ -480,11 +480,11 @@ unmount_partitions () {
       unmount_device "${part}"
 
       if has_failed; then
-        echo "Failed to unmount partition ${part}."
+        log "Failed to unmount partition ${part}."
         return 2
       fi
     
-      echo "Partition ${part} has been unmounted."
+      log "Partition ${part} has been unmounted."
     done <<< "${parts}"
   fi
 
@@ -494,11 +494,11 @@ unmount_partitions () {
       unmount_encrypted_device "${volume}"
 
       if has_failed; then
-        echo "Failed to unmount partition ${volume}."
+        log "Failed to unmount partition ${volume}."
         return 2
       fi
       
-      echo "Partition ${volume} has been unmounted."
+      log "Partition ${volume} has been unmounted."
     done <<< "${volumes}"
   fi
 }
@@ -619,7 +619,7 @@ pick_disk () {
   len="$(count "${disks}")" || return 1
   
   if is_true "${len} = 0"; then
-    echo 'No disks have found.'
+    log 'No disks have found.'
     return 2
   fi
 
@@ -657,7 +657,7 @@ pick_partition () {
   len="$(count "${parts}")" || return 1
   
   if is_true "${len} = 0"; then
-    echo -e "No ${status:-\b} partitions have found."
+    log -e "No ${status:-\b} partitions have found."
     return 2
   fi
 
@@ -692,7 +692,7 @@ pick_rom () {
   len="$(count "${roms}")" || return 1
   
   if is_true "${len} = 0"; then
-    echo -e "No ${status:-\b} roms have found."
+    log "No ${status:-\b} roms have found."
     return 2
   fi
 
@@ -717,13 +717,13 @@ pick_rom () {
 # Outputs:
 #  A menu of host names.
 pick_host () {
-  echo 'Searching hosts in local network...'
+  log 'Searching hosts in local network...'
 
   local hosts=''
   hosts="$(find_hosts)"
 
   if has_failed; then
-    echo 'Unable to find hosts.'
+    log 'Unable to find hosts.'
     return 2
   fi
 
@@ -731,7 +731,7 @@ pick_host () {
   len="$(count "${hosts}")" || return 1
   
   if is_true "${len} = 0"; then
-    echo 'No hosts have found.'
+    log 'No hosts have found.'
     return 2
   fi
 
@@ -803,7 +803,7 @@ pick_image_mount () {
   len="$(count "${mounts}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No image mounts have found.'
+    log 'No image mounts have found.'
     return 2
   fi
 
@@ -832,7 +832,7 @@ pick_shared_folder_mount () {
   len="$(count "${uris}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No mounted shared folders have found.'
+    log 'No mounted shared folders have found.'
     return 2
   fi
 

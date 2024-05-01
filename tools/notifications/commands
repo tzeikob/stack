@@ -11,11 +11,11 @@ start () {
   is_up="$(is_notifications_up)" || return 1
   
   if is_true "${is_up}"; then
-    echo 'Notifications service is already runnning.'
+    log 'Notifications service is already runnning.'
     return 2
   fi
 
-  echo 'Starting notifications service...'
+  log 'Starting notifications service...'
 
   dunst > /dev/null 2>&1 &
 
@@ -24,16 +24,16 @@ start () {
   ps -p "${pid}" > /dev/null
   
   if has_failed; then
-    echo 'Failed to start notifications service.'
+    log 'Failed to start notifications service.'
     return 2
   fi
 
-  echo 'Notifications service started.'
+  log 'Notifications service started.'
 }
 
 # Restarts the notifications service.
 restart () {
-  echo 'Restarting notifications service...'
+  log 'Restarting notifications service...'
 
   killall dunst || return 1
   sleep 1
@@ -45,11 +45,11 @@ restart () {
   ps -p "${pid}" > /dev/null
   
   if has_failed; then
-    echo 'Failed to restart notifications service.'
+    log 'Failed to restart notifications service.'
     return 2
   fi
 
-  echo 'Notifications service restarted.'
+  log 'Notifications service restarted.'
 }
 
 # Shows the current status of the notification stream.
@@ -84,7 +84,7 @@ list_all () {
   local sort_by="${1:-id}"
 
   if is_not_valid_sort_field "${sort_by}"; then
-    echo 'Invalid sorting field.'
+    log 'Invalid sorting field.'
     return 2
   fi
 
@@ -95,7 +95,7 @@ list_all () {
   len="$(count "${notifications}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No notifications have found.'
+    log 'No notifications have found.'
     return 0
   fi
 
@@ -130,11 +130,11 @@ mute_all () {
   dunstctl set-paused true
 
   if has_failed; then
-    echo 'Failed to mute notifications.'
+    log 'Failed to mute notifications.'
     return 2
   fi
 
-  echo 'Notifications have been muted.'
+  log 'Notifications have been muted.'
 }
 
 # Restores the notification stream.
@@ -142,11 +142,11 @@ unmute_all () {
   dunstctl set-paused false
 
   if has_failed; then
-    echo 'Failed to unmute notifications.'
+    log 'Failed to unmute notifications.'
     return 2
   fi
 
-  echo 'Notifications have been unmuted.'
+  log 'Notifications have been unmuted.'
 }
 
 # Removes all the archived notifications.
@@ -154,10 +154,10 @@ clean_all () {
   dunstctl history-clear
 
   if has_failed; then
-    echo 'Failed to remove all notifications.'
+    log 'Failed to remove all notifications.'
     return 2
   fi
 
-  echo 'All notifications have been removed.'
+  log 'All notifications have been removed.'
 }
 

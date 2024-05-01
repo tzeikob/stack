@@ -69,15 +69,15 @@ show_disk () {
 
   if is_not_given "${path}"; then
     on_script_mode &&
-      echo 'Missing the disk path.' && return 2
+      log 'Missing the disk path.' && return 2
 
     pick_disk || return $?
-    is_empty "${REPLY}" && echo 'Disk path is required.' && return 2
+    is_empty "${REPLY}" && log 'Disk path is required.' && return 2
     path="${REPLY}"
   fi
 
   if is_not_disk "${path}"; then
-    echo "Path ${path} is not a disk device."
+    log "Path ${path} is not a disk device."
     return 2
   fi
 
@@ -135,19 +135,19 @@ show_partition () {
 
   if is_not_given "${path}"; then
     on_script_mode &&
-      echo 'Missing the partition path.' && return 2
+      log 'Missing the partition path.' && return 2
 
     pick_disk || return $?
-    is_empty "${REPLY}" && echo 'Disk path is required.' && return 2
+    is_empty "${REPLY}" && log 'Disk path is required.' && return 2
     local disk="${REPLY}"
 
     pick_partition "${disk}" || return $?
-    is_empty "${REPLY}" && echo 'Partition path is required.' && return 2
+    is_empty "${REPLY}" && log 'Partition path is required.' && return 2
     path="${REPLY}"
   fi
   
   if is_not_partition "${path}"; then
-    echo "Path ${path} is not a partition device."
+    log "Path ${path} is not a partition device."
     return 2
   fi
 
@@ -215,15 +215,15 @@ show_rom () {
 
   if is_not_given "${path}"; then
     on_script_mode &&
-      echo 'Missing rom path.' && return 2
+      log 'Missing rom path.' && return 2
 
     pick_rom || return $?
-    is_empty "${REPLY}" && echo 'Rom path is required.' && return 2
+    is_empty "${REPLY}" && log 'Rom path is required.' && return 2
     path="${REPLY}"
   fi
 
   if is_not_rom "${path}"; then
-    echo "Path ${path} is not a rom device."
+    log "Path ${path} is not a rom device."
     return 2
   fi
 
@@ -264,7 +264,7 @@ list_disks () {
   len="$(count "${disks}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No disks have found.'
+    log 'No disks have found.'
     return 0
   fi
 
@@ -290,15 +290,15 @@ list_partitions () {
 
   if is_not_given "${disk}"; then
     on_script_mode &&
-      echo 'Missing the disk path.' && return 2
+      log 'Missing the disk path.' && return 2
 
     pick_disk || return $?
-    is_empty "${REPLY}" && echo 'Disk path is required.' && return 2
+    is_empty "${REPLY}" && log 'Disk path is required.' && return 2
     disk="${REPLY}"
   fi
 
   if is_not_disk "${disk}"; then
-    echo "Path ${disk} is not a disk device."
+    log "Path ${disk} is not a disk device."
     return 2
   fi
 
@@ -309,7 +309,7 @@ list_partitions () {
   len="$(count "${parts}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No partitions have found.'
+    log 'No partitions have found.'
     return 0
   fi
 
@@ -334,7 +334,7 @@ list_roms () {
   len="$(count "${roms}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No roms have found.'
+    log 'No roms have found.'
     return 0
   fi
 
@@ -366,25 +366,25 @@ list_shared_folders () {
 
   if is_not_given "${host}"; then
     on_script_mode &&
-      echo 'Missing the host.' && return 2
+      log 'Missing the host.' && return 2
 
     pick_host || return $?
-    is_empty "${REPLY}" && echo 'Host is required.' && return 2
+    is_empty "${REPLY}" && log 'Host is required.' && return 2
     host="${REPLY}"
   fi
 
   if is_not_given "${user}"; then
     on_script_mode &&
-      echo 'Missing the username.' && return 2
+      log 'Missing the username.' && return 2
 
     ask 'Enter the username:' || return $?
-    is_empty "${REPLY}" && echo 'Username is required.' && return 2
+    is_empty "${REPLY}" && log 'Username is required.' && return 2
     user="${REPLY}"
   fi
 
   if is_not_given "${group}"; then
     on_script_mode &&
-      echo 'Missing the user group.' && return 2
+      log 'Missing the user group.' && return 2
 
     ask 'Enter the user group [WORKGROUP]:' || return $?
     group="${REPLY:-"WORKGROUP"}"
@@ -392,10 +392,10 @@ list_shared_folders () {
 
   if is_not_given "${password}"; then
     on_script_mode &&
-      echo 'Missing the password.' && return 2
+      log 'Missing the password.' && return 2
 
     ask_secret 'Enter the password:' || return $?
-    is_empty "${REPLY}" && echo 'Password is required.' && return 2
+    is_empty "${REPLY}" && log 'Password is required.' && return 2
     password="${REPLY}"
   fi
 
@@ -403,7 +403,7 @@ list_shared_folders () {
   folders="$(find_shared_folders "${host}" "${user}" "${group}" "${password}")"
 
   if has_failed; then
-    echo 'Unable to find shared folders.'
+    log 'Unable to find shared folders.'
     return 2
   fi
 
@@ -411,7 +411,7 @@ list_shared_folders () {
   len="$(count "${folders}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No shared folders have found.'
+    log 'No shared folders have found.'
     return 0
   fi
 
@@ -496,7 +496,7 @@ list_mounts () {
   len="$(count "${mounts}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No mounts have found.'
+    log 'No mounts have found.'
     return 0
   fi
 
@@ -516,33 +516,33 @@ mount_partition () {
 
   if is_not_given "${path}"; then
     on_script_mode &&
-      echo 'Missing the partition path.' && return 2
+      log 'Missing the partition path.' && return 2
 
     pick_disk || return $?
-    is_empty "${REPLY}" && echo 'Disk path is required.' && return 2
+    is_empty "${REPLY}" && log 'Disk path is required.' && return 2
     local disk="${REPLY}"
 
     pick_partition "${disk}" unmounted || return $?
-    is_empty "${REPLY}" && echo 'Partition path is required.' && return 2
+    is_empty "${REPLY}" && log 'Partition path is required.' && return 2
     path="${REPLY}"
   fi
 
   if is_not_partition "${path}"; then
-    echo "Path ${path} is not a partition device."
+    log "Path ${path} is not a partition device."
     return 2
   elif is_mounted "${path}"; then
-    echo "Partition ${path} is already mounted."
+    log "Partition ${path} is already mounted."
     return 2
   fi
 
   mount_device "${path}"
 
   if has_failed; then
-    echo 'Failed to mount the partition.'
+    log 'Failed to mount the partition.'
     return 2
   fi
 
-  echo "Partition ${path} mounted."
+  log "Partition ${path} mounted."
 }
 
 # Mounts the encrypted partition block device with
@@ -558,42 +558,42 @@ mount_encrypted () {
 
   if is_not_given "${path}"; then
     on_script_mode &&
-      echo 'Missing the partition path.' && return 2
+      log 'Missing the partition path.' && return 2
 
     pick_disk || return $?
-    is_empty "${REPLY}" && echo 'Disk path is required.' && return 2
+    is_empty "${REPLY}" && log 'Disk path is required.' && return 2
     local disk="${REPLY}"
 
     pick_partition "${disk}" unmounted || return $?
-    is_empty "${REPLY}" && echo 'Partition path is required.' && return 2
+    is_empty "${REPLY}" && log 'Partition path is required.' && return 2
     path="${REPLY}"
   fi
 
   if is_not_partition "${path}"; then
-    echo "Path ${path} is not a partition device."
+    log "Path ${path} is not a partition device."
     return 2
   elif is_mounted "${path}"; then
-    echo "Partition ${path} is already mounted."
+    log "Partition ${path} is already mounted."
     return 2
   fi
 
   if is_not_given "${key}"; then
     on_script_mode &&
-      echo 'Missing the encryption key.' && return 2
+      log 'Missing the encryption key.' && return 2
 
     ask_secret 'Enter the encryption key:' || return $?
-    is_empty "${REPLY}" && echo 'Encryption key is required.' && return 2
+    is_empty "${REPLY}" && log 'Encryption key is required.' && return 2
     key="${REPLY}"
   fi
 
   mount_encrypted_device "${path}" "${key}"
 
   if has_failed; then
-    echo 'Failed to mount encrypted partition.'
+    log 'Failed to mount encrypted partition.'
     return 2
   fi
 
-  echo "Encrypted partition ${path} mounted."
+  log "Encrypted partition ${path} mounted."
 }
 
 # Unmounts the partition block device with the
@@ -605,36 +605,36 @@ unmount_partition () {
 
   if is_not_given "${path}"; then
     on_script_mode &&
-      echo 'Missing the partition path.' && return 2
+      log 'Missing the partition path.' && return 2
 
     pick_disk || return $?
-    is_empty "${REPLY}" && echo 'Disk path is required.' && return 2
+    is_empty "${REPLY}" && log 'Disk path is required.' && return 2
     local disk="${REPLY}"
 
     pick_partition "${disk}" mounted || return $?
-    is_empty "${REPLY}" && echo 'Partition path is required.' && return 2
+    is_empty "${REPLY}" && log 'Partition path is required.' && return 2
     path="${REPLY}"
   fi
 
   if is_not_partition "${path}"; then
-    echo "Path ${path} is not a partition device."
+    log "Path ${path} is not a partition device."
     return 2
   elif is_not_mounted "${path}"; then
-    echo "Partition ${path} is already unmounted."
+    log "Partition ${path} is already unmounted."
     return 2
   elif is_system_partition "${path}"; then
-    echo 'Cannot unmount system partition.'
+    log 'Cannot unmount system partition.'
     return 2
   fi
 
   unmount_device "${path}"
 
   if has_failed; then
-    echo 'Failed to unmount partition.'
+    log 'Failed to unmount partition.'
     return 2
   fi
 
-  echo "Partition ${path} unmounted."
+  log "Partition ${path} unmounted."
 }
 
 # Unmounts the encrypted partition block device with the
@@ -648,36 +648,36 @@ unmount_encrypted () {
 
   if is_not_given "${path}"; then
     on_script_mode &&
-      echo 'Missing the partition path.' && return 2
+      log 'Missing the partition path.' && return 2
 
     pick_disk || return $?
-    is_empty "${REPLY}" && echo 'Disk path is required.' && return 2
+    is_empty "${REPLY}" && log 'Disk path is required.' && return 2
     local disk="${REPLY}"
 
     pick_partition "${disk}" mounted || return $?
-    is_empty "${REPLY}" && echo 'Partition path is required.' && return 2
+    is_empty "${REPLY}" && log 'Partition path is required.' && return 2
     path="${REPLY}"
   fi
 
   if is_not_partition "${path}"; then
-    echo "Path ${path} is not a partition device."
+    log "Path ${path} is not a partition device."
     return 2
   elif is_not_mounted "${path}"; then
-    echo "Partition ${path} is already unmounted."
+    log "Partition ${path} is already unmounted."
     return 2
   elif is_system_partition "${path}"; then
-    echo 'Cannot unmount system partition.'
+    log 'Cannot unmount system partition.'
     return 2
   fi
 
   unmount_encrypted_device "${path}"
 
   if has_failed; then
-    echo 'Failed to unmount encrypted partition.'
+    log 'Failed to unmount encrypted partition.'
     return 2
   fi
 
-  echo "Encrypted partition ${path} unmounted."
+  log "Encrypted partition ${path} unmounted."
 }
 
 # Mounts the rom block device with the given path.
@@ -688,29 +688,29 @@ mount_rom () {
 
   if is_not_given "${path}"; then
     on_script_mode &&
-      echo 'Missing the rom path.' && return 2
+      log 'Missing the rom path.' && return 2
 
     pick_rom unmounted || return $?
-    is_empty "${REPLY}" && echo 'Rom path is required.' && return 2
+    is_empty "${REPLY}" && log 'Rom path is required.' && return 2
     path="${REPLY}"
   fi
 
   if is_not_rom "${path}"; then
-    echo "Path ${path} is not a rom device."
+    log "Path ${path} is not a rom device."
     return 2
   elif is_mounted "${path}"; then
-    echo "Rom ${path} is already mounted."
+    log "Rom ${path} is already mounted."
     return 2
   fi
 
   mount_device "${path}"
 
   if has_failed; then
-    echo 'Failed to mount rom.'
+    log 'Failed to mount rom.'
     return 2
   fi
 
-  echo "Rom ${path} mounted."
+  log "Rom ${path} mounted."
 }
 
 # Unmounts the rom block device with the given path.
@@ -721,29 +721,29 @@ unmount_rom () {
 
   if is_not_given "${path}"; then
     on_script_mode &&
-      echo 'Missing the rom path.' && return 2
+      log 'Missing the rom path.' && return 2
 
     pick_rom mounted || return $?
-    is_empty "${REPLY}" && echo 'Rom path is required.' && return 2
+    is_empty "${REPLY}" && log 'Rom path is required.' && return 2
     path="${REPLY}"
   fi
 
   if is_not_rom "${path}"; then
-    echo "Path ${path} is not a rom device."
+    log "Path ${path} is not a rom device."
     return 2
   elif is_not_mounted "${path}"; then
-    echo "Rom ${path} is not mounted."
+    log "Rom ${path} is not mounted."
     return 2
   fi
 
   unmount_device "${path}"
 
   if has_failed; then
-    echo 'Failed to unmount rom.'
+    log 'Failed to unmount rom.'
     return 2
   fi
 
-  echo "Rom ${path} unmounted."
+  log "Rom ${path} unmounted."
 }
 
 # Mounts the image file system contained with in
@@ -754,10 +754,10 @@ mount_image () {
   local path="${1}"
 
   if is_not_given "${path}"; then
-    echo 'Image file path is required.'
+    log 'Image file path is required.'
     return 2
   elif file_not_exists "${path}"; then
-    echo "Path ${path} is not an image file."
+    log "Path ${path} is not an image file."
     return 2
   fi
 
@@ -765,7 +765,7 @@ mount_image () {
   local mount_point="${HOME}/mounts/virtual/${folder_name}"
 
   if directory_exists "${mount_point}"; then
-    echo "Image ${path} is already mounted."
+    log "Image ${path} is already mounted."
     return 2
   fi
 
@@ -773,13 +773,13 @@ mount_image () {
   fuseiso -p "${path}" "${mount_point}" &> /dev/null
 
   if has_failed; then
-    echo 'Failed to mount image file.'
+    log 'Failed to mount image file.'
 
     rm -rf "${mount_point}"
     return 2
   fi
 
-  echo "Image file ${path} mounted."
+  log "Image file ${path} mounted."
 }
 
 # Unmounts the image file system mounted to the given
@@ -791,28 +791,28 @@ unmount_image () {
 
   if is_not_given "${path}"; then
     on_script_mode &&
-      echo 'Missing the image mount path.' && return 2
+      log 'Missing the image mount path.' && return 2
 
     pick_image_mount || return $?
-    is_empty "${REPLY}" && echo 'Image mount path is required.' && return 2
+    is_empty "${REPLY}" && log 'Image mount path is required.' && return 2
     path="${REPLY}"
   fi
 
   if directory_not_exists "${path}"; then
-    echo 'No valid image mount path.'
+    log 'No valid image mount path.'
     return 2
   fi
 
   fusermount -u "${path}"
 
   if has_failed; then
-    echo 'Failed to unmount image file system.'
+    log 'Failed to unmount image file system.'
     return 2
   fi
 
   rm -rf "${path}"
 
-  echo "Image file ${path} unmounted."
+  log "Image file ${path} unmounted."
 }
 
 # Mounts a shared folder of the given host.
@@ -831,34 +831,34 @@ mount_shared_folder () {
 
   if is_not_given "${host}"; then
     on_script_mode &&
-      echo 'Missing the host.' && return 2
+      log 'Missing the host.' && return 2
 
     pick_host || return $?
-    is_empty "${REPLY}" && echo 'Host is required.' && return 2
+    is_empty "${REPLY}" && log 'Host is required.' && return 2
     host="${REPLY}"
   fi
 
   if is_not_given "${name}"; then
     on_script_mode &&
-      echo 'Missing the folder name.' && return 2
+      log 'Missing the folder name.' && return 2
 
     ask 'Enter a folder name:' || return $?
-    is_empty "${REPLY}" && echo 'Folder name is required.' && return 2
+    is_empty "${REPLY}" && log 'Folder name is required.' && return 2
     name="${REPLY}"
   fi
 
   if is_not_given "${user}"; then
     on_script_mode &&
-      echo 'Missing the username.' && return 2
+      log 'Missing the username.' && return 2
 
     ask 'Enter the username:' || return $?
-    is_empty "${REPLY}" && echo 'Username is required.' && return 2
+    is_empty "${REPLY}" && log 'Username is required.' && return 2
     user="${REPLY}"
   fi
 
   if is_not_given "${group}"; then
     on_script_mode &&
-      echo 'Missing the user group.' && return 2
+      log 'Missing the user group.' && return 2
     
     ask 'Enter the user group [WORKGROUP]:' || return $?
     group="${REPLY:-"WORKGROUP"}"
@@ -866,28 +866,28 @@ mount_shared_folder () {
   
   if is_not_given "${password}"; then
     on_script_mode &&
-      echo 'Missing the password.' && return 2
+      log 'Missing the password.' && return 2
 
     ask_secret 'Enter the password:' || return $?
-    is_empty "${REPLY}" && echo 'Password is required.' && return 2
+    is_empty "${REPLY}" && log 'Password is required.' && return 2
     password="${REPLY}"
   fi
 
   local uri="smb://${group};${user}@${host}/${name,,}"
 
   if gio mount -l | grep -q "${uri}"; then
-    echo "Shared folder ${name} is already mounted."
+    log "Shared folder ${name} is already mounted."
     return 2
   fi
 
   echo "${password}" | gio mount "${uri}" &> /dev/null
   
   if has_failed; then
-    echo 'Failed to mount shared folder.'
+    log 'Failed to mount shared folder.'
     return 2
   fi
 
-  echo "Shared folder ${name} mounted."
+  log "Shared folder ${name} mounted."
 
   local remote_home="${HOME}/mounts/remote"
 
@@ -905,28 +905,28 @@ unmount_shared_folder () {
 
   if is_not_given "${uri}"; then
     on_script_mode &&
-      echo 'Missing the mount uri.' && return 2
+      log 'Missing the mount uri.' && return 2
 
     pick_shared_folder_mount || return $?
-    is_empty "${REPLY}" && echo 'Mount uri is required.' && return 2
+    is_empty "${REPLY}" && log 'Mount uri is required.' && return 2
     uri="${REPLY}"
   fi
   
   gio mount -l | grep -q "${uri}"
 
   if has_failed; then
-    echo 'Shared folder is not mounted.'
+    log 'Shared folder is not mounted.'
     return 2
   fi
 
   sync && gio mount -u "${uri}" 2> /dev/null
   
   if has_failed; then
-    echo 'Failed to umount shared folder.'
+    log 'Failed to umount shared folder.'
     return 2
   fi
 
-  echo "Shared folder ${uri} unmounted."
+  log "Shared folder ${uri} unmounted."
 }
 
 # Formats the disk block device with the given path,
@@ -945,41 +945,41 @@ format_disk () {
 
   if is_not_given "${path}"; then
     on_script_mode &&
-      echo 'Missing the disk path.' && return 2
+      log 'Missing the disk path.' && return 2
 
     pick_disk || return $?
-    is_empty "${REPLY}" && echo 'Disk path is required.' && return 2
+    is_empty "${REPLY}" && log 'Disk path is required.' && return 2
     path="${REPLY}"
   fi
 
   if is_not_disk "${path}"; then
-    echo "Path ${path} is not a disk device."
+    log "Path ${path} is not a disk device."
     return 2
   elif is_system_disk "${path}"; then
-    echo 'System disk cannot be formatted.'
+    log 'System disk cannot be formatted.'
     return 2
   fi
 
   if is_not_given "${label}"; then
     on_script_mode &&
-      echo 'Missing the disk label.' && return 2
+      log 'Missing the disk label.' && return 2
 
     ask 'Enter the disk label:' || return $?
-    is_empty "${REPLY}" && echo 'Disk label is required.' && return 2
+    is_empty "${REPLY}" && log 'Disk label is required.' && return 2
     label="${REPLY}"
   fi
 
   if is_not_given "${fs_type}"; then
     on_script_mode &&
-      echo 'Missing the file system type.' && return 2
+      log 'Missing the file system type.' && return 2
 
     pick_fs_type || return $?
-    is_empty "${REPLY}" && echo 'File system type is required.' && return 2
+    is_empty "${REPLY}" && log 'File system type is required.' && return 2
     fs_type="${REPLY}"
   fi
 
   if is_not_valid_fs_type "${fs_type}"; then
-    echo 'Invalid or unknown file system type.'
+    log 'Invalid or unknown file system type.'
     return 2
   fi
 
@@ -994,37 +994,37 @@ format_disk () {
     local model=''
     model="$(find_disk "${path}" | jq -cr "${query}")" || return 1
 
-    echo "ALL DATA in ${model} [${path}],"
-    echo 'will be irreversibly gone forever!'
+    log "ALL DATA in ${model} [${path}],"
+    log 'will be irreversibly gone forever!'
     confirm 'Do you really want to proceed?' || return $?
-    is_empty "${REPLY}" && echo 'Confirmation is required.' && return 2
+    is_empty "${REPLY}" && log 'Confirmation is required.' && return 2
     
     if is_not_yes "${REPLY}"; then
-      echo 'Format operation is canceled.'
+      log 'Format operation is canceled.'
       return 2
     fi
   fi
 
-  echo 'Unmounting disk partitions...'
+  log 'Unmounting disk partitions...'
   unmount_partitions "${path}" || return 1
 
-  echo 'Cleaning disk partitions...'
+  log 'Cleaning disk partitions...'
   clean_partitions "${path}" &&
-  echo 'Partition table is ready.' || return 1
+  log 'Partition table is ready.' || return 1
 
-  echo 'Creating disk partition...'
+  log 'Creating disk partition...'
   create_partition "${path}" "${fs_type}" 1Mib 100% &&
-  echo 'Primary partition created.' || return 1
+  log 'Primary partition created.' || return 1
 
-  echo 'Formatting disk partition...'
+  log 'Formatting disk partition...'
   format_partition "${path}" 1 "${fs_type}" "${label}"
 
   if has_failed; then
-    echo "Failed to format disk ${path}."
+    log "Failed to format disk ${path}."
     return 2
   fi
 
-  echo "Disk ${path} has been formated."
+  log "Disk ${path} has been formated."
 }
 
 # Ejects the disk block device with the given path.
@@ -1037,40 +1037,40 @@ eject_disk () {
 
   if is_not_given "${path}"; then
     on_script_mode &&
-      echo 'Missing the disk path.' && return 2
+      log 'Missing the disk path.' && return 2
 
     pick_disk || return $?
-    is_empty "${REPLY}" && echo 'Disk path is required.' && return 2
+    is_empty "${REPLY}" && log 'Disk path is required.' && return 2
     path="${REPLY}"
   fi
 
   if is_not_disk "${path}"; then
-    echo "Path ${path} is not a disk device."
+    log "Path ${path} is not a disk device."
     return 2
   elif is_system_disk "${path}"; then
-    echo 'System disk cannot be ejected.'
+    log 'System disk cannot be ejected.'
     return 2
   fi
 
-  echo 'Unmounting disk partitions...'
+  log 'Unmounting disk partitions...'
 
   unmount_partitions "${path}"
 
   if has_failed; then
-    echo 'Failed to unmount disk partitions.'
+    log 'Failed to unmount disk partitions.'
     return 2
   fi
 
   udisksctl power-off -b "${path}" &> /dev/null
 
   if has_failed; then
-    echo 'Unable to power disk off.'
-    echo 'Unplug the disk device at your own risk.'
+    log 'Unable to power disk off.'
+    log 'Unplug the disk device at your own risk.'
     return 0
   fi
 
-  echo 'Disk power set to off.'
-  echo 'Unplug safely the disk device.'
+  log 'Disk power set to off.'
+  log 'Unplug safely the disk device.'
 }
 
 # Scans the disk block device with the given path
@@ -1086,22 +1086,22 @@ scan_disk () {
 
   if is_not_given "${path}"; then
     on_script_mode &&
-      echo 'Missing the disk path.' && return 2
+      log 'Missing the disk path.' && return 2
 
     pick_disk || return $?
-    is_empty "${REPLY}" && echo 'Disk path is required.' && return 2
+    is_empty "${REPLY}" && log 'Disk path is required.' && return 2
     path="${REPLY}"
   fi
 
   if is_not_disk "${path}"; then
-    echo "Path ${path} is not a disk device."
+    log "Path ${path} is not a disk device."
     return 2
   fi
   
   sudo smartctl -i "${path}" &> /dev/null
   
   if has_failed; then
-    echo 'Unable to retrieve SMART data.'
+    log 'Unable to retrieve SMART data.'
     return 2
   fi
 
@@ -1187,41 +1187,41 @@ create_encrypted () {
 
   if is_not_given "${path}"; then
     on_script_mode &&
-      echo 'Missing the disk path.' && return 2
+      log 'Missing the disk path.' && return 2
 
     pick_disk || return $?
-    is_empty "${REPLY}" && echo 'Disk path is required.' && return 2
+    is_empty "${REPLY}" && log 'Disk path is required.' && return 2
     path="${REPLY}"
   fi
 
   if is_not_disk "${path}"; then
-    echo "Path ${path} is not a disk device."
+    log "Path ${path} is not a disk device."
     return 2
   elif is_system_disk "${path}"; then
-    echo 'System disk cannot be encrypted.'
+    log 'System disk cannot be encrypted.'
     return 2
   fi
 
   if is_not_given "${fs_type}"; then
     on_script_mode &&
-      echo 'Missing the file system type.' && return 2
+      log 'Missing the file system type.' && return 2
 
     pick_fs_type || return $?
-    is_empty "${REPLY}" && echo 'File system type is required.' && return 2
+    is_empty "${REPLY}" && log 'File system type is required.' && return 2
     fs_type="${REPLY}"
   fi
 
   if is_not_valid_fs_type "${fs_type}"; then
-    echo 'Invalid or unknown file system type.'
+    log 'Invalid or unknown file system type.'
     return 2
   fi
 
   if is_not_given "${key}"; then
     on_script_mode &&
-      echo 'Missing the encryption key.' && return 2
+      log 'Missing the encryption key.' && return 2
 
     ask_secret 'Enter the encryption key:' || return $?
-    is_empty "${REPLY}" && echo 'Encryption key is required.' && return 2
+    is_empty "${REPLY}" && log 'Encryption key is required.' && return 2
     key="${REPLY}"
   fi
 
@@ -1229,7 +1229,7 @@ create_encrypted () {
     ask_secret 'Retype the encryption key:' || return $?
 
     if not_equals "${REPLY}" "${key}"; then
-      echo 'Encryption key does not match.'
+      log 'Encryption key does not match.'
       return 2
     fi
 
@@ -1242,31 +1242,31 @@ create_encrypted () {
     local model=''
     model="$(find_disk "${path}" | jq -cr "${query}")" || return 1
 
-    echo "ALL DATA in ${model} [${path}],"
-    echo 'will be irreversibly gone forever!'
+    log "ALL DATA in ${model} [${path}],"
+    log 'will be irreversibly gone forever!'
     confirm 'Do you really want to proceed?' || return $?
-    is_empty "${REPLY}" && echo 'Confirmation is required.' && return 2
+    is_empty "${REPLY}" && log 'Confirmation is required.' && return 2
     
     if is_not_yes "${REPLY}"; then
-      echo 'Encryption operation is canceled.'
+      log 'Encryption operation is canceled.'
       return 2
     fi
   fi
 
-  echo 'Unmounting disk partitions...'
+  log 'Unmounting disk partitions...'
   unmount_partitions "${path}" || return 1
 
-  echo 'Cleaning disk partitions...'
+  log 'Cleaning disk partitions...'
   clean_partitions "${path}" &&
-  echo 'Partition table is ready.' || return 1
+  log 'Partition table is ready.' || return 1
 
-  echo 'Creating disk partition...'
+  log 'Creating disk partition...'
   create_partition "${path}" "${fs_type}" 1Mib 100% &&
-  echo 'Primary partition created.' || return 1
+  log 'Primary partition created.' || return 1
 
-  echo 'Formatting disk partition...'
+  log 'Formatting disk partition...'
   format_partition "${path}" 1 "${fs_type}" &&
-  echo "Partition ${path}1 has been formated." || return 1
+  log "Partition ${path}1 has been formated." || return 1
 
   # Create a seed file with 350 random characters
   local rand_text_file="/tmp/.rand_text_$(date +%s)"
@@ -1279,11 +1279,11 @@ create_encrypted () {
     --pim 0 --keyfiles '' --random-source "${rand_text_file}"
 
   if has_failed; then
-    echo 'Failed to encrypt disk.'
+    log 'Failed to encrypt disk.'
     return 2
   fi
 
-  echo "Disk ${path} has been encrypted."
+  log "Disk ${path} has been encrypted."
 }
 
 # Creates a bootable archlinux installation drive.
@@ -1298,31 +1298,31 @@ create_bootable () {
 
   if is_not_given "${path}"; then
     on_script_mode &&
-      echo 'Missing the disk path.' && return 2
+      log 'Missing the disk path.' && return 2
 
     pick_disk || return $?
-    is_empty "${REPLY}" && echo 'Disk path is required.' && return 2
+    is_empty "${REPLY}" && log 'Disk path is required.' && return 2
     path="${REPLY}"
   fi
 
   if is_not_disk "${path}"; then
-    echo "Path ${path} is not a disk device."
+    log "Path ${path} is not a disk device."
     return 2
   elif is_system_disk "${path}"; then
-    echo 'Cannot create bootable on the system disk.'
+    log 'Cannot create bootable on the system disk.'
     return 2
   fi
 
   if is_not_given "${iso_file}"; then
     on_script_mode &&
-      echo 'Missing the iso file path.' && return 2
+      log 'Missing the iso file path.' && return 2
 
     confirm 'Do you want to download the latest iso?' || return $?
-    is_empty "${REPLY}" && echo 'Confirmation is required.' && return 2
+    is_empty "${REPLY}" && log 'Confirmation is required.' && return 2
 
     if is_yes "${REPLY}"; then
       pick_mirror || return $?
-      is_empty "${REPLY}" && echo 'Mirror is required.' && return 2
+      is_empty "${REPLY}" && log 'Mirror is required.' && return 2
       local mirror="${REPLY}"
 
       local file_name='archlinux-x86_64.iso'
@@ -1331,33 +1331,33 @@ create_bootable () {
       download_iso_file "${mirror}" "${file_name}" "${output_folder}"
 
       if has_failed; then
-        echo 'Failed to download the iso file.'
+        log 'Failed to download the iso file.'
         return 2
       fi
 
-      echo "ISO file saved to ${output_folder}/${file_name}."
+      log "ISO file saved to ${output_folder}/${file_name}."
 
-      echo "Verifying the ${file_name} file..."
+      log "Verifying the ${file_name} file..."
 
       verify_iso_file "${output_folder}" "${file_name}"
 
       if has_failed; then
-        echo 'Failed to verify the iso file.'
+        log 'Failed to verify the iso file.'
         return 2
       fi
 
-      echo 'File has been verified successfully.'
+      log 'File has been verified successfully.'
       
       iso_file="${output_folder}/${file_name}"
     else
       ask 'Enter the path to the iso file:' || return $?
-      is_empty "${REPLY}" && echo 'File path is required.' && return 2
+      is_empty "${REPLY}" && log 'File path is required.' && return 2
       iso_file="${REPLY}"
     fi
   fi
 
   if file_not_exists "${iso_file}"; then
-    echo 'Invalid or unknown iso file.'
+    log 'Invalid or unknown iso file.'
     return 2
   fi
 
@@ -1371,40 +1371,39 @@ create_bootable () {
     local model=''
     model="$(find_disk "${path}" | jq -cr "${query}")" || return 1
 
-    echo ''
-    echo "ALL DATA in ${model} [${path}],"
-    echo 'will be irreversibly gone forever!'
+    log "\nALL DATA in ${model} [${path}],"
+    log 'will be irreversibly gone forever!'
     confirm 'Do you really want to proceed?' || return $?
-    is_empty "${REPLY}" && echo 'Confirmation is required.' && return 2
+    is_empty "${REPLY}" && log 'Confirmation is required.' && return 2
     
     if is_not_yes "${REPLY}"; then
-      echo 'Bootable operation is canceled.'
+      log 'Bootable operation is canceled.'
       return 2
     fi
   fi
 
-  echo 'Unmounting disk partitions...'
+  log 'Unmounting disk partitions...'
   unmount_partitions "${path}" || return 1
 
-  echo 'Cleaning disk partitions...'
+  log 'Cleaning disk partitions...'
   clean_partitions "${path}" &&
-  echo 'Partition table is ready.' || return 1
+  log 'Partition table is ready.' || return 1
 
-  echo 'Creating disk partition...'
+  log 'Creating disk partition...'
   create_partition "${path}" fat32 1Mib 100% &&
-  echo 'Primary partition created.' || return 1
+  log 'Primary partition created.' || return 1
 
-  echo 'Formatting the bootable disk...'
+  log 'Formatting the bootable disk...'
   format_partition "${path}" 1 fat32 || return 1
 
-  echo 'Flashing installation files...'
+  log 'Flashing installation files...'
 
   sudo dd "if=${iso_file}" "of=${path}" bs=4M conv=fsync oflag=direct status=progress
 
   if has_failed; then
-    echo 'Failed to flash installation files.'
+    log 'Failed to flash installation files.'
   fi
 
-  echo "Bootable disk ${path} is ready."
+  log "Bootable disk ${path} is ready."
 }
 

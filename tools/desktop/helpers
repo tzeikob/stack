@@ -57,7 +57,7 @@ pick_wallpaper () {
   len="$(count "${wallpapers}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No wallpaper files found.'
+    log 'No wallpaper files found.'
     return 2
   fi
 
@@ -176,7 +176,7 @@ pick_pointer () {
   len="$(count "${pointers}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No pointers found.'
+    log 'No pointers found.'
     return 2
   fi
 
@@ -310,7 +310,7 @@ pick_tablet () {
   len="$(count "${tablets}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No tablets have found.'
+    log 'No tablets have found.'
     return 2
   fi
 
@@ -547,7 +547,7 @@ pick_workspace () {
   len="$(count "${workspaces}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No workspaces found.'
+    log 'No workspaces found.'
     return 2
   fi
 

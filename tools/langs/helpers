@@ -76,7 +76,7 @@ pick_installed_locale () {
   len="$(count "${locales}")" || return 1
 
   if is_true "${len} = 0"; then
-    echo 'No installed locales found.'
+    log 'No installed locales found.'
     return 2
   fi
   
