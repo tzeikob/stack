@@ -650,7 +650,7 @@ install_theme () {
   local wallpapers_home="/home/${user_name}/.local/share/wallpapers"
 
   mkdir -p "${wallpapers_home}" &&
-    cp /opt/stack/resources/wallpapers/* "${wallpapers_home}" ||
+    cp /opt/stack/assets/wallpapers/* "${wallpapers_home}" ||
     abort ERROR 'Failed to copy wallpapers.'
   
   log INFO 'Wallpapers have been copied.'
@@ -739,8 +739,8 @@ install_sounds () {
   local sounds_home='/usr/share/sounds/stack'
   
   sudo mkdir -p "${sounds_home}" &&
-    sudo cp /opt/stack/resources/sounds/normal.wav "${sounds_home}" &&
-    sudo cp /opt/stack/resources/sounds/critical.wav "${sounds_home}" ||
+    sudo cp /opt/stack/assets/sounds/normal.wav "${sounds_home}" &&
+    sudo cp /opt/stack/assets/sounds/critical.wav "${sounds_home}" ||
     abort ERROR 'Failed to copy system sound files.'
 
   log INFO 'System sounds have been installed.'

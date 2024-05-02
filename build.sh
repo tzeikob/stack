@@ -456,7 +456,7 @@ copy_installer () {
   mkdir -p "${installer_home}" || abort ERROR 'Failed to create the /opt/stack folder.'
 
   cp -r configs "${installer_home}" &&
-    cp -r resources "${installer_home}" &&
+    cp -r assets "${installer_home}" &&
     cp -r rules "${installer_home}" &&
     cp -r scripts "${installer_home}" &&
     cp -r services "${installer_home}" &&
@@ -939,7 +939,7 @@ setup_theme () {
   local wallpapers_home="${ROOT_FS}/root/.local/share/wallpapers"
 
   mkdir -p "${wallpapers_home}" &&
-    cp resources/wallpapers/* "${wallpapers_home}" ||
+    cp assets/wallpapers/* "${wallpapers_home}" ||
     abort ERROR 'Failed to copy the wallpapers.'
 
   local settings_home="${ROOT_FS}/root/.config/stack"
@@ -1003,8 +1003,8 @@ setup_sounds () {
   local sounds_home="${ROOT_FS}/usr/share/sounds/stack"
   
   mkdir -p "${sounds_home}" &&
-    cp resources/sounds/normal.wav "${sounds_home}" &&
-    cp resources/sounds/critical.wav "${sounds_home}" ||
+    cp assets/sounds/normal.wav "${sounds_home}" &&
+    cp assets/sounds/critical.wav "${sounds_home}" ||
     abort ERROR 'Failed to set the extra system sounds.'
 
   log INFO 'Extra system sounds have been set.'
