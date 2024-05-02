@@ -457,7 +457,6 @@ copy_installer () {
 
   cp -r configs "${installer_home}" &&
     cp -r assets "${installer_home}" &&
-    cp -r rules "${installer_home}" &&
     cp -r scripts "${installer_home}" &&
     cp -r services "${installer_home}" &&
     cp -r tools "${installer_home}" &&
@@ -1100,9 +1099,9 @@ add_device_rules () {
   local rules_home="${ROOT_FS}/etc/udev/rules.d"
 
   mkdir -p "${rules_home}" &&
-    cp rules/90-init-pointer.rules "${rules_home}" &&
-    cp rules/91-init-tablets.rules "${rules_home}" &&
-    cp rules/92-fix-layout.rules "${rules_home}" ||
+    cp services/init-pointer.rules "${rules_home}/90-init-pointer.rules" &&
+    cp services/init-tablets.rules "${rules_home}/91-init-tablets.rules" &&
+    cp services/fix-layout.rules "${rules_home}/92-fix-layout.rules" ||
     abort ERROR 'Failed to set the device rules.'
   
   log INFO 'Device rules have been set.'

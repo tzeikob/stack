@@ -857,17 +857,17 @@ add_rules () {
 
   local rules_home='/etc/udev/rules.d'
 
-  cp /opt/stack/rules/90-init-pointer.rules "${rules_home}" ||
+  cp /opt/stack/services/init-pointer.rules "${rules_home}/90-init-pointer.rules" ||
     abort ERROR 'Failed to add the init-pointer rules.'
 
   log INFO 'Rules init-pointer have been added.'
 
-  cp /opt/stack/rules/91-init-tablets.rules "${rules_home}" ||
+  cp /opt/stack/services/init-tablets.rules "${rules_home}/91-init-tablets.rules" ||
     abort ERROR 'Failed to add the init-tablets rules.'
 
   log INFO 'Rules init-tablets have been added.'
 
-  cp /opt/stack/rules/92-fix-layout.rules "${rules_home}" ||
+  cp /opt/stack/services/fix-layout.rules "${rules_home}/92-fix-layout.rules" ||
     abort ERROR 'Failed to add the fix-layout rules.'
   
   log INFO 'Rules fix-layout have been set.'
