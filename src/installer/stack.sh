@@ -2,7 +2,9 @@
 
 set -Eeo pipefail
 
-source /opt/stack/scripts/utils.sh
+source /opt/stack/commons/utils.sh
+source /opt/stack/commons/logger.sh
+source /opt/stack/commons/validators.sh
 
 # Installs the node javascript runtime engine.
 install_node () {
@@ -189,4 +191,4 @@ install_node &&
 
 log INFO 'Script stack.sh has finished.'
 
-resolve && sleep 3
+resolve && sleep 2

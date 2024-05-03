@@ -2,7 +2,9 @@
 
 set -Eeo pipefail
 
-source /opt/stack/scripts/utils.sh
+source /opt/stack/commons/utils.sh
+source /opt/stack/commons/logger.sh
+source /opt/stack/commons/validators.sh
 
 # Installs the desktop compositor.
 install_compositor () {
@@ -18,7 +20,7 @@ install_compositor () {
 
   mkdir -p "${config_home}" || abort ERROR "Failed to create folder ${config_home}."
 
-  cp /opt/stack/configs/picom/picom.conf "${config_home}" ||
+  cp /opt/stack/installer/configs/picom/picom.conf "${config_home}" ||
     abort ERROR 'Failed to copy compositor config file.'
 
   log INFO 'Desktop compositor picom has been installed.'
@@ -38,15 +40,15 @@ install_window_manager () {
 
   mkdir -p "${config_home}" || abort ERROR "Failed to create folder ${config_home}."
 
-  cp /opt/stack/configs/bspwm/bspwmrc "${config_home}" &&
+  cp /opt/stack/installer/configs/bspwm/bspwmrc "${config_home}" &&
     chmod 755 "${config_home}/bspwmrc" &&
-    cp /opt/stack/configs/bspwm/rules "${config_home}" &&
+    cp /opt/stack/installer/configs/bspwm/rules "${config_home}" &&
     chmod 755 "${config_home}/rules" &&
-    cp /opt/stack/configs/bspwm/resize "${config_home}" &&
+    cp /opt/stack/installer/configs/bspwm/resize "${config_home}" &&
     chmod 755 "${config_home}/resize" &&
-    cp /opt/stack/configs/bspwm/swap "${config_home}" &&
+    cp /opt/stack/installer/configs/bspwm/swap "${config_home}" &&
     chmod 755 "${config_home}/swap" &&
-    cp /opt/stack/configs/bspwm/scratchpad "${config_home}" &&
+    cp /opt/stack/installer/configs/bspwm/scratchpad "${config_home}" &&
     chmod 755 "${config_home}/scratchpad" ||
     abort ERROR 'Failed to copy the bspwm config files.'
 
@@ -67,53 +69,17 @@ install_status_bars () {
 
   mkdir -p "${config_home}" || abort ERROR "Failed to create folder ${config_home}."
 
-  cp /opt/stack/configs/polybar/config.ini "${config_home}" &&
+  cp /opt/stack/installer/configs/polybar/config.ini "${config_home}" &&
     chmod 644 "${config_home}/config.ini" &&
-    cp /opt/stack/configs/polybar/modules.ini "${config_home}" &&
+    cp /opt/stack/installer/configs/polybar/modules.ini "${config_home}" &&
     chmod 644 "${config_home}/modules.ini" &&
-    cp /opt/stack/configs/polybar/theme.ini "${config_home}" &&
+    cp /opt/stack/installer/configs/polybar/theme.ini "${config_home}" &&
     chmod 644 "${config_home}/theme.ini" &&
-    cp -r /opt/stack/configs/polybar/scripts "${config_home}" &&
+    cp -r /opt/stack/installer/configs/polybar/scripts "${config_home}" &&
     chmod +x "${config_home}"/scripts/* ||
     abort ERROR 'Failed to copy polybar config files.'
 
   log INFO 'Status bars have been installed.'
-}
-
-# Installs the utility tools for managing system settings.
-install_settings_tools () {
-  log INFO 'Installing settings tools...'
-
-  yay -S --needed --noconfirm --removemake smenu 2>&1 ||
-    abort ERROR 'Failed to install smenu.'
-
-  local tools_home='/opt/tools'
-
-  sudo mkdir -p "${tools_home}" &&
-    sudo cp -r /opt/stack/tools/* "${tools_home}" ||
-    abort ERROR 'Failed to install setting tools.'
-
-  local bin_home='/usr/local/bin'
-
-  # Create symlinks to expose executables
-  sudo ln -sf "${tools_home}/displays/main" "${bin_home}/displays" &&
-    sudo ln -sf "${tools_home}/desktop/main" "${bin_home}/desktop" &&
-    sudo ln -sf "${tools_home}/audio/main" "${bin_home}/audio" &&
-    sudo ln -sf "${tools_home}/clock/main" "${bin_home}/clock" &&
-    sudo ln -sf "${tools_home}/cloud/main" "${bin_home}/cloud" &&
-    sudo ln -sf "${tools_home}/networks/main" "${bin_home}/networks" &&
-    sudo ln -sf "${tools_home}/disks/main" "${bin_home}/disks" &&
-    sudo ln -sf "${tools_home}/bluetooth/main" "${bin_home}/bluetooth" &&
-    sudo ln -sf "${tools_home}/langs/main" "${bin_home}/langs" &&
-    sudo ln -sf "${tools_home}/notifications/main" "${bin_home}/notifications" &&
-    sudo ln -sf "${tools_home}/power/main" "${bin_home}/power" &&
-    sudo ln -sf "${tools_home}/printers/main" "${bin_home}/printers" &&
-    sudo ln -sf "${tools_home}/security/main" "${bin_home}/security" &&
-    sudo ln -sf "${tools_home}/trash/main" "${bin_home}/trash" &&
-    sudo ln -sf "${tools_home}/system/main" "${bin_home}/system" ||
-    abort ERROR 'Failed to create symlinks to /usr/local/bin.'
-
-  log INFO 'Settings tools have been installed.'
 }
 
 # Installs the desktop launchers.
@@ -129,9 +95,9 @@ install_launchers () {
   local config_home="/home/${user_name}/.config/rofi"
 
   mkdir -p "${config_home}" &&
-    cp /opt/stack/configs/rofi/config.rasi "${config_home}" &&
+    cp /opt/stack/installer/configs/rofi/config.rasi "${config_home}" &&
     chmod 644 "${config_home}/config.rasi" &&
-    cp /opt/stack/configs/rofi/launch "${config_home}" &&
+    cp /opt/stack/installer/configs/rofi/launch "${config_home}" &&
     chmod +x "${config_home}/launch" ||
     abort ERROR 'Failed to copy rofi config files.'
 
@@ -151,7 +117,7 @@ install_keyboard_bindings () {
   local config_home="/home/${user_name}/.config/sxhkd"
 
   mkdir -p "${config_home}" &&
-    cp /opt/stack/configs/sxhkd/sxhkdrc "${config_home}" &&
+    cp /opt/stack/installer/configs/sxhkd/sxhkdrc "${config_home}" &&
     chmod 644 "${config_home}/sxhkdrc" ||
     abort ERROR 'Failed to copy sxhkdrc configs files.'
 
@@ -223,7 +189,7 @@ install_screen_locker () {
   
   log INFO 'Xsecurelock has been installed.'
 
-  sudo cp /opt/stack/configs/xsecurelock/hook /usr/lib/systemd/system-sleep/locker ||
+  sudo cp /opt/stack/installer/configs/xsecurelock/hook /usr/lib/systemd/system-sleep/locker ||
     abort ERROR 'Failed to copy the sleep hook.'
   
   log INFO 'Sleep hook has been copied.'
@@ -235,7 +201,7 @@ install_screen_locker () {
 
   local service_file="/etc/systemd/system/lock@.service"
 
-  sudo cp /opt/stack/configs/xsecurelock/service "${service_file}" &&
+  sudo cp /opt/stack/installer/configs/xsecurelock/service "${service_file}" &&
     sudo sed -i "s/#USER_ID/${user_id}/g" "${service_file}" &&
     sudo systemctl enable lock@${user_name}.service 2>&1 ||
     abort ERROR 'Failed to enable locker service.'
@@ -259,8 +225,8 @@ install_notification_server () {
   local config_home="/home/${user_name}/.config/dunst"
 
   mkdir -p "${config_home}" &&
-    cp /opt/stack/configs/dunst/dunstrc "${config_home}" &&
-    cp /opt/stack/configs/dunst/hook "${config_home}" ||
+    cp /opt/stack/installer/configs/dunst/dunstrc "${config_home}" &&
+    cp /opt/stack/installer/configs/dunst/hook "${config_home}" ||
     abort ERROR 'Failed to copy notifications server config files.'
 
   log INFO 'Notifications server has been installed.'
@@ -281,7 +247,7 @@ install_file_manager () {
   local config_home="/home/${user_name}/.config/nnn"
 
   mkdir -p "${config_home}" &&
-    cp /opt/stack/configs/nnn/env "${config_home}" ||
+    cp /opt/stack/installer/configs/nnn/env "${config_home}" ||
     abort ERROR 'Failed to copy the env file.'
   
   log INFO 'Env file has been copied.'
@@ -309,7 +275,7 @@ install_file_manager () {
 
   mkdir -p "/home/${user_name}"/{downloads,documents,data,sources,mounts} &&
     mkdir -p "/home/${user_name}"/{images,audios,videos} &&
-    cp /opt/stack/configs/nnn/user.dirs "/home/${user_name}/.config/user-dirs.dirs" ||
+    cp /opt/stack/installer/configs/nnn/user.dirs "/home/${user_name}/.config/user-dirs.dirs" ||
     abort ERROR 'Failed to create home directories.'
   
   log INFO 'Home directories have been created.'
@@ -371,7 +337,7 @@ install_terminals () {
   local config_home="/home/${user_name}/.config/alacritty"
 
   mkdir -p "${config_home}" &&
-    cp /opt/stack/configs/alacritty/alacritty.toml "${config_home}" ||
+    cp /opt/stack/installer/configs/alacritty/alacritty.toml "${config_home}" ||
     abort ERROR 'Failed to copy the alacritty config file.'
   
   log INFO 'Alacritty config file has been copied.'
@@ -380,13 +346,13 @@ install_terminals () {
 
   echo -e '\nexport TERMINAL=alacritty' >> "${bashrc_file}" &&
     sed -i '/PS1.*/d' "${bashrc_file}" &&
-    cat /opt/stack/configs/alacritty/user.prompt >> "${bashrc_file}" ||
+    cat /opt/stack/installer/configs/alacritty/user.prompt >> "${bashrc_file}" ||
     abort ERROR 'Failed to add hooks in the .bashrc file.'
   
   log INFO 'Hooks have been added in the .bashrc file.'
 
   sudo sed -i '/PS1.*/d' /root/.bashrc &&
-    cat /opt/stack/configs/alacritty/root.prompt | sudo tee -a /root/.bashrc > /dev/null ||
+    cat /opt/stack/installer/configs/alacritty/root.prompt | sudo tee -a /root/.bashrc > /dev/null ||
     abort ERROR 'Failed to add hooks in the root .bashrc file.'
 
   log INFO 'Hooks have been added in the root .bashrc file.'
@@ -521,13 +487,13 @@ install_music_player () {
   mkdir -p "${mpd_home}"/{playlists,database} ||
     abort ERROR 'Failed to create mpd config directories.'
 
-  cp /opt/stack/configs/mpd/conf "${mpd_home}/mpd.conf" ||
+  cp /opt/stack/installer/configs/mpd/conf "${mpd_home}/mpd.conf" ||
     abort ERROR 'Failed to copy the mpd config file.'
 
   local ncmpcpp_home="/${config_home}/ncmpcpp"
 
   mkdir -p "${ncmpcpp_home}" &&
-    cp /opt/stack/configs/ncmpcpp/config "${ncmpcpp_home}/config" ||
+    cp /opt/stack/installer/configs/ncmpcpp/config "${ncmpcpp_home}/config" ||
     abort ERROR 'Failed to copy ncmpcpp config file.'
 
   sudo systemctl --user enable mpd.service 2>&1 ||
@@ -642,7 +608,7 @@ install_theme () {
   local config_home="/home/${user_name}/.config/gtk-3.0"
   
   mkdir -p "${config_home}" &&
-    cp /opt/stack/configs/gtk/settings.ini "${config_home}" ||
+    cp /opt/stack/installer/configs/gtk/settings.ini "${config_home}" ||
     abort ERROR 'Failed to copy gtk settings file.'
 
   log INFO 'Gtk settings file has been copied.'
@@ -650,7 +616,7 @@ install_theme () {
   local wallpapers_home="/home/${user_name}/.local/share/wallpapers"
 
   mkdir -p "${wallpapers_home}" &&
-    cp /opt/stack/assets/wallpapers/* "${wallpapers_home}" ||
+    cp /opt/stack/installer/assets/wallpapers/* "${wallpapers_home}" ||
     abort ERROR 'Failed to copy wallpapers.'
   
   log INFO 'Wallpapers have been copied.'
@@ -739,8 +705,8 @@ install_sounds () {
   local sounds_home='/usr/share/sounds/stack'
   
   sudo mkdir -p "${sounds_home}" &&
-    sudo cp /opt/stack/assets/sounds/normal.wav "${sounds_home}" &&
-    sudo cp /opt/stack/assets/sounds/critical.wav "${sounds_home}" ||
+    sudo cp /opt/stack/installer/assets/sounds/normal.wav "${sounds_home}" &&
+    sudo cp /opt/stack/installer/assets/sounds/critical.wav "${sounds_home}" ||
     abort ERROR 'Failed to copy system sound files.'
 
   log INFO 'System sounds have been installed.'
@@ -749,6 +715,9 @@ install_sounds () {
 # Installs various extra packages.
 install_extra_packages () {
   log INFO 'Installing some extra packages...'
+
+  yay -S --needed --noconfirm --removemake smenu 2>&1 ||
+    abort ERROR 'Failed to install smenu package.'
 
   yay -S --needed --noconfirm --removemake \
     digimend-kernel-drivers-dkms-git xkblayout-state-git 2>&1 ||
@@ -792,7 +761,6 @@ fi
 install_compositor &&
   install_window_manager &&
   install_status_bars &&
-  install_settings_tools &&
   install_launchers &&
   install_keyboard_bindings &&
   install_login_screen &&
@@ -816,4 +784,4 @@ install_compositor &&
 
 log INFO 'Script desktop.sh has finished.'
 
-resolve && sleep 3
+resolve && sleep 2

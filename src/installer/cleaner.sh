@@ -2,11 +2,12 @@
 
 set -Eeo pipefail
 
-source /opt/stack/scripts/utils.sh
+source /opt/stack/commons/utils.sh
+source /opt/stack/commons/logger.sh
 
 # Deletes any remnants installation files from the new system.
 remove_installation_files () {
-  rm -rf /mnt/opt/stack
+  rm -rf /mnt/opt/stack/installer
 
   if has_failed; then
     log WARN 'Unable to remove installation files.'
@@ -69,4 +70,4 @@ remove_installation_files &&
 
 log INFO 'Script cleaner.sh has finished.'
 
-resolve && sleep 3
+resolve && sleep 2

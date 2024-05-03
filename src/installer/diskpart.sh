@@ -2,7 +2,9 @@
 
 set -Eeo pipefail
 
-source /opt/stack/scripts/utils.sh
+source /opt/stack/commons/utils.sh
+source /opt/stack/commons/logger.sh
+source /opt/stack/commons/validators.sh
 
 # Erases all table data of the installation disk.
 wipe_disk () {
@@ -356,4 +358,4 @@ wipe_disk &&
 
 log INFO 'Script diskpart.sh has finished.'
 
-resolve && sleep 3
+resolve && sleep 2

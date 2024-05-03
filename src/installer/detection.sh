@@ -2,7 +2,9 @@
 
 set -Eeo pipefail
 
-source /opt/stack/scripts/utils.sh
+source /opt/stack/commons/utils.sh
+source /opt/stack/commons/logger.sh
+source /opt/stack/commons/validators.sh
 
 # Resolves if UEFI mode is supported by the system.
 is_uefi () {
@@ -149,4 +151,4 @@ is_uefi &&
 
 log INFO 'Script detection.sh has finished.'
 
-resolve && sleep 3
+resolve && sleep 2

@@ -2,7 +2,9 @@
 
 set -Eeo pipefail
 
-source /opt/stack/scripts/utils.sh
+source /opt/stack/commons/utils.sh
+source /opt/stack/commons/logger.sh
+source /opt/stack/commons/validators.sh
 
 # Sets host related settings.
 set_host () {
@@ -129,7 +131,7 @@ configure_pacman () {
   local hooks_home='/etc/pacman.d/hooks'
 
   mkdir -p "${hooks_home}" &&
-    cp /opt/stack/configs/pacman/orphans.hook "${hooks_home}/01-orphans.hook" ||
+    cp /opt/stack/installer/configs/pacman/orphans.hook "${hooks_home}/01-orphans.hook" ||
     abort ERROR 'Failed to add the orphan packages hook.'
 
   log INFO 'Orphan packages post hook has been created.'
@@ -194,7 +196,7 @@ install_display_server () {
 
   log INFO 'Xorg packages have been installed.'
 
-  cp /opt/stack/configs/xorg/xorg.conf /etc/X11 ||
+  cp /opt/stack/installer/configs/xorg/xorg.conf /etc/X11 ||
     abort ERROR 'Failed to copy the xorg config file.'
 
   log INFO 'Xorg confg have been saved under /etc/X11/xorg.conf.'
@@ -202,7 +204,7 @@ install_display_server () {
   local user_name=''
   user_name="$(get_setting 'user_name')" || abort ERROR 'Unable to read user_name setting.'
 
-  cp /opt/stack/configs/xorg/xinitrc "/home/${user_name}/.xinitrc" &&
+  cp /opt/stack/installer/configs/xorg/xinitrc "/home/${user_name}/.xinitrc" &&
     chown ${user_name}:${user_name} "/home/${user_name}/.xinitrc" ||
     abort ERROR 'Failed to set the .xinitrc file.'
 
@@ -275,6 +277,39 @@ install_drivers () {
     abort ERROR 'Failed to install system drivers.'
 
   log INFO 'System drivers have been installed.'
+}
+
+# Installs the system tools for managing system settings.
+install_system_tools () {
+  log INFO 'Installing the system tools...'
+
+  local tools_home='/opt/stack/system'
+
+  sudo mkdir -p "${tools_home}" &&
+    sudo cp -r /opt/stack/installer/system/* "${tools_home}" ||
+    abort ERROR 'Failed to install system tools.'
+
+  local bin_home='/usr/local/bin'
+
+  # Create symlinks to expose executables
+  sudo ln -sf "${tools_home}/displays/main" "${bin_home}/displays" &&
+    sudo ln -sf "${tools_home}/desktop/main" "${bin_home}/desktop" &&
+    sudo ln -sf "${tools_home}/audio/main" "${bin_home}/audio" &&
+    sudo ln -sf "${tools_home}/clock/main" "${bin_home}/clock" &&
+    sudo ln -sf "${tools_home}/cloud/main" "${bin_home}/cloud" &&
+    sudo ln -sf "${tools_home}/networks/main" "${bin_home}/networks" &&
+    sudo ln -sf "${tools_home}/disks/main" "${bin_home}/disks" &&
+    sudo ln -sf "${tools_home}/bluetooth/main" "${bin_home}/bluetooth" &&
+    sudo ln -sf "${tools_home}/langs/main" "${bin_home}/langs" &&
+    sudo ln -sf "${tools_home}/notifications/main" "${bin_home}/notifications" &&
+    sudo ln -sf "${tools_home}/power/main" "${bin_home}/power" &&
+    sudo ln -sf "${tools_home}/printers/main" "${bin_home}/printers" &&
+    sudo ln -sf "${tools_home}/security/main" "${bin_home}/security" &&
+    sudo ln -sf "${tools_home}/trash/main" "${bin_home}/trash" &&
+    sudo ln -sf "${tools_home}/system/main" "${bin_home}/system" ||
+    abort ERROR 'Failed to create symlinks to /usr/local/bin.'
+
+  log INFO 'System tools have been installed.'
 }
 
 # Installs the user repository package manager.
@@ -716,7 +751,7 @@ configure_security () {
 }
 
 # Installs and configures the boot loader.
-install_boot_loader () {
+setup_boot_loader () {
   log INFO 'Setting up the boot loader...'
 
   if is_setting 'uefi_mode' 'yes'; then
@@ -827,17 +862,17 @@ enable_services () {
   mkdir -p "${config_home}/systemd/user" ||
     abort ERROR 'Failed to create the user systemd folder.'
 
-  cp /opt/stack/services/init-pointer.service "${config_home}/systemd/user" ||
+  cp /opt/stack/installer/services/init-pointer.service "${config_home}/systemd/user" ||
     abort ERROR 'Failed to set the init-pointer service.'
 
   log INFO 'Service init-pointer has been set.'
 
-  cp /opt/stack/services/init-tablets.service "${config_home}/systemd/user" ||
+  cp /opt/stack/installer/services/init-tablets.service "${config_home}/systemd/user" ||
     abort ERROR 'Failed to set the init-tablets service.'
 
   log INFO 'Service init-tablets has been set.'
 
-  cp /opt/stack/services/fix-layout.service "${config_home}/systemd/user" ||
+  cp /opt/stack/installer/services/fix-layout.service "${config_home}/systemd/user" ||
     abort ERROR 'Failed to set the fix-layout service.'
   
   log INFO 'Service fix-layout has been set.'
@@ -857,17 +892,17 @@ add_rules () {
 
   local rules_home='/etc/udev/rules.d'
 
-  cp /opt/stack/services/init-pointer.rules "${rules_home}/90-init-pointer.rules" ||
+  cp /opt/stack/installer/services/init-pointer.rules "${rules_home}/90-init-pointer.rules" ||
     abort ERROR 'Failed to add the init-pointer rules.'
 
   log INFO 'Rules init-pointer have been added.'
 
-  cp /opt/stack/services/init-tablets.rules "${rules_home}/91-init-tablets.rules" ||
+  cp /opt/stack/installer/services/init-tablets.rules "${rules_home}/91-init-tablets.rules" ||
     abort ERROR 'Failed to add the init-tablets rules.'
 
   log INFO 'Rules init-tablets have been added.'
 
-  cp /opt/stack/services/fix-layout.rules "${rules_home}/92-fix-layout.rules" ||
+  cp /opt/stack/installer/services/fix-layout.rules "${rules_home}/92-fix-layout.rules" ||
     abort ERROR 'Failed to add the fix-layout rules.'
   
   log INFO 'Rules fix-layout have been set.'
@@ -914,6 +949,7 @@ set_host &&
   install_base_packages &&
   install_display_server &&
   install_drivers &&
+  install_system_tools &&
   install_aur_package_manager &&
   set_locales &&
   set_keyboard &&
@@ -921,10 +957,10 @@ set_host &&
   boost_performance &&
   configure_power &&
   configure_security &&
-  install_boot_loader &&
+  setup_boot_loader &&
   enable_services &&
   add_rules
 
 log INFO 'Script system.sh has finished.'
 
-resolve && sleep 3
+resolve && sleep 2

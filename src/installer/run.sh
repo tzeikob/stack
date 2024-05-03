@@ -2,9 +2,12 @@
 
 set -Eeo pipefail
 
-BAR_FORMAT='{desc:10}  {percentage:3.0f}%|{bar}|  ET{elapsed}'
+source /opt/stack/commoms/utils.sh
+source /opt/stack/commons/logger.sh
+source /opt/stack/commons/validators.sh
+source /opt/stack/commons/input.sh
 
-source /opt/stack/scripts/utils.sh
+BAR_FORMAT='{desc:10}  {percentage:3.0f}%|{bar}|  ET{elapsed}'
 
 # Initializes the installer.
 init () {
@@ -45,7 +48,7 @@ run () {
   # Do not log while running the askme screens
   if equals "${file_name}" 'askme'; then
     echo ''
-    bash /opt/stack/scripts/askme.sh || return 1
+    bash /opt/stack/installer/askme.sh || return 1
 
     echo ''
     return 0
@@ -75,7 +78,7 @@ run () {
   
   local log_file="/var/log/stack/${file_name}.log"
 
-  bash "/opt/stack/scripts/${file_name}.sh" 2>&1 |
+  bash "/opt/stack/installer/${file_name}.sh" 2>&1 |
     tee -a "${log_file}" 2>&1 |
     tqdm --desc "${desc^}:" --ncols 50 \
       --bar-format "${BAR_FORMAT}" --total ${total} >> "${log_file}.tqdm"
@@ -99,8 +102,8 @@ install () {
 
   local user_name='root'
 
-  # Impersonate the sudoer user on desktop, stack and tools installation
-  if match "${file_name}" '^(desktop|stack|tools)$'; then
+  # Impersonate the sudoer user on desktop, stack and apps installation
+  if match "${file_name}" '^(desktop|stack|apps)$'; then
     user_name="$(get_setting 'user_name')"
 
     if has_failed; then
@@ -125,13 +128,13 @@ install () {
       total=270
       desc='Stack'
       ;;
-    'tools')
+    'apps')
       total=1900
-      desc='Tools'
+      desc='Apps'
       ;;
   esac
 
-  local script_file="/opt/stack/scripts/${file_name}.sh"
+  local script_file="/opt/stack/installer/${file_name}.sh"
 
   arch-chroot /mnt runuser -u "${user_name}" -- "${script_file}" 2>&1 |
     tee -a "${log_file}" 2>&1 |
@@ -157,7 +160,7 @@ restart () {
     /mnt/var/log/stack/system.log \
     /mnt/var/log/stack/desktop.log \
     /mnt/var/log/stack/stack.log \
-    /mnt/var/log/stack/tools.log \
+    /mnt/var/log/stack/apps.log \
     /mnt/var/log/stack/cleaner.log >> /mnt/var/log/stack/all.log
 
   # Clean redundant log files from archiso media
@@ -203,7 +206,7 @@ init &&
   install system &&
   install desktop &&
   install stack &&
-  install tools &&
+  install apps &&
   run cleaner &&
   restart
 

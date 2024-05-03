@@ -2,7 +2,9 @@
 
 set -Eeo pipefail
 
-source /opt/stack/scripts/utils.sh
+source /opt/stack/commons/utils.sh
+source /opt/stack/commons/logger.sh
+source /opt/stack/commons/validators.sh
 
 # Installs the google chrome web browser.
 install_chrome () {
@@ -303,7 +305,7 @@ install_transmission () {
 resolve () {
   # Read the current progress as the number of log lines
   local lines=0
-  lines=$(cat /var/log/stack/tools.log | wc -l) ||
+  lines=$(cat /var/log/stack/apps.log | wc -l) ||
     abort ERROR 'Unable to read the current log lines.'
 
   local total=1900
@@ -323,11 +325,11 @@ resolve () {
   return 0
 }
 
-log INFO 'Script tools.sh started.'
-log INFO 'Installing some extra tools...'
+log INFO 'Script apps.sh started.'
+log INFO 'Installing some extra apps...'
 
 if equals "$(id -u)" 0; then
-  abort ERROR 'Script tools.sh must be run as non root user.'
+  abort ERROR 'Script apps.sh must be run as non root user.'
 fi
 
 install_chrome &&
@@ -348,6 +350,6 @@ install_chrome &&
   install_foliate &&
   install_transmission
 
-log INFO 'Script tools.sh has finished.'
+log INFO 'Script apps.sh has finished.'
 
-resolve && sleep 3
+resolve && sleep 2

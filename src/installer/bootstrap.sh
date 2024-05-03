@@ -2,7 +2,9 @@
 
 set -Eeo pipefail
 
-source /opt/stack/scripts/utils.sh
+source /opt/stack/commons/utils.sh
+source /opt/stack/commons/logger.sh
+source /opt/stack/commons/validators.sh
 
 # Synchronizes the system clock to the current time.
 sync_clock () {
@@ -112,6 +114,17 @@ install_kernel () {
   log INFO 'Linux kernel has been installed.'
 }
 
+# Installs the common tools to share common utilities.
+install_commons () {
+  log INFO 'Installing the common tools...'
+
+  mkdir -p /mnt/opt/stack &&
+    cp -r /opt/stack/commons /mnt/opt/stack ||
+    abort ERROR 'Failed to install common tools.'
+  
+  log INFO 'Common tools have been installed.'
+}
+
 # Adds various extra sudoers rules.
 add_sudoers_rules () {
   local proxy_rule='Defaults env_keep += "'
@@ -144,12 +157,13 @@ grant_permissions () {
   log INFO 'Sudoer nopasswd permission has been granted.'
 }
 
-# Copies the installation to the new system.
-copy_installation_files () {
-  log INFO 'Copying installation files...'
+# Copies the installation files to the new system.
+copy_installer () {
+  log INFO 'Copying installer files...'
 
-  cp -r /opt/stack /mnt/opt ||
-    abort ERROR 'Unable to copy installation files to /mnt/opt.'
+  mkdir -p /mnt/opt/stack &&
+    cp -r /opt/stack/installer /mnt/opt/stack ||
+    abort ERROR 'Unable to copy installer files.'
 
   cp /etc/stack-release /mnt/etc/stack-release &&
     cat /usr/lib/os-release > /mnt/usr/lib/os-release &&
@@ -164,7 +178,7 @@ copy_installation_files () {
   mkdir -p /mnt/var/log/stack ||
     abort ERROR 'Failed to create logs home under /mnt/var/log/stack.'
 
-  log INFO 'Installation files copied to /mnt/opt.'
+  log INFO 'Installer files have been copied.'
 }
 
 # Resolves the installaction script by addressing
@@ -200,10 +214,11 @@ sync_clock &&
   sync_package_databases &&
   update_keyring &&
   install_kernel &&
+  install_commons &&
   add_sudoers_rules &&
   grant_permissions &&
-  copy_installation_files
+  copy_installer
 
 log INFO 'Script bootstrap.sh has finished.'
 
-resolve && sleep 3
+resolve && sleep 2

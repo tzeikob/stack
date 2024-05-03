@@ -2,7 +2,10 @@
 
 set -Eeo pipefail
 
-source /opt/stack/scripts/utils.sh
+source /opt/stack/commons/utils.sh
+source /opt/stack/commons/logger.sh
+source /opt/stack/commons/validators.sh
+source /opt/stack/commons/input.sh
 
 # Asks the user to select the installation disk.
 select_disk () {
