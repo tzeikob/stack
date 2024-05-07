@@ -2,7 +2,7 @@
 
 set -o pipefail
 
-source /opt/tools/utils
+source /opt/stack/commons/utils.sh
 
 # Prints the current CPU speed rates and utilization.
 run () {

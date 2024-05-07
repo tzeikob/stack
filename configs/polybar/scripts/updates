@@ -2,7 +2,7 @@
 
 set -o pipefail
 
-source /opt/tools/utils
+source /opt/stack/commons/utils.sh
 
 UPDATES_FILE=/tmp/updates
 

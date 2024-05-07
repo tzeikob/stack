@@ -1,0 +1,1382 @@
+#!/bin/bash
+
+set -o pipefail
+
+source /opt/stack/commons/utils.sh
+source /opt/stack/tools/displays/helpers.sh
+
+# Shows the current status of Xorg and active displays.
+# Outputs:
+#  A verbose list of text data.
+show_status () {
+  xdpyinfo -display "${DISPLAY}" | awk -F': ' '{
+    gsub(/[ \t]+$/, "", $1);
+    gsub(/^[ \t]+/, "", $2);
+
+    switch ($1) {
+      case "name of display": $1 = "Display"; break
+      case "version number": $1 = "Version"; break
+      case "vendor string": $1 = "Vendor"; break
+      case "vendor release number": $1 = "Release"; break
+      case "X.Org version": $1 = "X.Org"; break
+      case "motion buffer size": $1 = "Buffer"; break
+      case "image byte order": $1 = "Order"; break
+      case "default screen number": $1 = "Screen"; break
+      case "number of screens": $1 = "Screens"; break
+      default: $1 = ""; break
+    }
+
+    if ($1) printf "%-8s  %s\n",$1":",$2
+  }'
+
+  if has_failed; then
+    log 'Unable to read xdpy info.'
+    return 2
+  fi
+
+  local colors='[]'
+
+  if file_exists "${DISPLAYS_SETTINGS}"; then
+    colors="$(jq -cr 'if .colors then .colors else [] end' "${DISPLAYS_SETTINGS}")"
+  fi
+
+  local rate=''
+  rate+='[.resolution_modes[].frequencies]|flatten'
+  rate+=' |[.[]|select(.is_current==true)]'
+  rate+=' |.[0].frequency'
+
+  local offset='[\(.offset_width),\(.offset_height)]'
+  local trans='\(.rotation) \(.reflection|ascii_downcase)'
+
+  # Reduce over color settings to match any devices having a profile set
+  local color=''
+  color+='reduce $c[] as $i ({};'
+  color+=' if $i.model_name == $m and $i.product_id == $p and $i.serial_number == $s'
+  color+='  then . + {profile: $i.profile}'
+  color+='  else .'
+  color+=' end'
+  color+=')|if .profile then .profile else "none" end'
+
+  local query=''
+  query+='Output:  \(.device_name)\(if .is_primary then "*" else "" end)\n'
+  query+='Device:  \(.model_name)\n'
+  query+="Mode:    \(.resolution_width)x\(.resolution_height)@\(${rate})Hz\n"
+  query+="Pos:     ${offset} ${trans}\n"
+  query+="Color:   \(if \$c|length > 0 then (${color}) else \"none\" end)"
+
+  local alias='.model_name as $m|.product_id as $p|.serial_number as $s'
+
+  query=".[]|${alias}|(\"\n${query}\")"
+
+  find_outputs active | jq -cer --argjson c "${colors}" "${query}"
+
+  if has_failed; then
+    log 'Unable to read active outputs.'
+    return 2
+  fi
+}
+
+# Shows the Xorg displays log file.
+# Arguments:
+#  lines: the number of last lines to show
+# Outputs:
+#  The log file of the xorg display.
+show_logs () {
+  local lines="${1}"
+
+  if is_given "${lines}" && is_not_integer "${lines}" '[0,]'; then
+    log 'Invalid lines value.'
+    return 2
+  fi
+
+  local id="$(echo "${DISPLAY}" | cut -d ':' -f 2)"
+  local log_file="${HOME}/.local/share/xorg/Xorg.${id}.log"
+
+  if file_not_exists "${log_file}"; then
+    log 'Unable to locate xorg log file.'
+    return 2
+  fi
+
+  if is_given "${lines}"; then
+    cat "${log_file}" | tail -n "${lines}"
+  else
+    cat "${log_file}"
+  fi
+}
+
+# Shows the data of the output with the given name.
+# Arguments:
+#  name: the name of an output
+# Outputs:
+#  A verbose list of text data.
+show_output () {
+  local name="${1}"
+
+  if is_not_given "${name}"; then
+    on_script_mode &&
+      log 'Missing the output name.' && return 2
+
+    pick_output 'Select an output name:' || return $?
+    is_empty "${REPLY}" && log 'Output name is required.' && return 2
+    name="${REPLY}"
+  fi
+
+  local colors='[]'
+
+  if file_exists "${DISPLAYS_SETTINGS}"; then
+    colors="$(jq -cr 'if .colors then .colors else [] end' "${DISPLAYS_SETTINGS}")"
+  fi
+
+  local base=''
+  base+='Name:       \(.device_name)\n'
+  base+='\(if .is_connected then "Device:     \(.model_name)\n" else "" end)'
+  base+='Connected:  \(.is_connected)\n'
+  base+='Active:     \(.is_connected and .resolution_width)\n'
+  base+='Primary:    \(.is_primary)'
+
+  local rate=''
+  rate+='[.resolution_modes[].frequencies]|flatten'
+  rate+=' |[.[]|select(.is_current==true)]'
+  rate+=' |.[0].frequency'
+
+  local extra=''
+  extra+='Mode:       \(.resolution_width)x\(.resolution_height)\n'
+  extra+="Rate:       \(${rate})Hz\n"
+  extra+='Offset:     [\(.offset_width),\(.offset_height)]\n'
+  extra+='Rotate:     \(.rotation)\n'
+  extra+='Reflect:    \(.reflection|ascii_downcase)'
+
+  # Reduce over color settings to match any devices have a profile set
+  local color=''
+  color+='reduce $c[] as $i ({};'
+  color+='if $i.model_name == $m and $i.product_id == $p and $i.serial_number == $s'
+  color+=' then . + {profile: $i.profile}'
+  color+=' else . '
+  color+='end)|if .profile then .profile else "none" end'
+
+  local modes=''
+  modes+='.resolution_modes[]|'
+  modes+='"\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)" as $mode|"'
+  modes+='\($mode)'
+  modes+='\($mode|if (10-length)>0 then (" "*(10-length)) else "" end)'
+  modes+=' [\([.frequencies[]|.frequency]|join(", "))]"'
+
+  modes="[${modes}]|join(\"\n            \")"
+
+  local query=''
+  query+="${base}"
+  query+='\(if .is_connected and .resolution_width != null'
+  query+=" then \"\n${extra}\""
+  query+=' else "" end)'
+  query+='\(if .is_connected'
+  query+=" then \"\nColor:      \(if \$c|length > 0 then (${color}) else \"none\" end)\""
+  query+=' else "" end)'
+  query+='\(if .resolution_modes|length != 0'
+  query+=" then \"\nModes:      \(${modes})\""
+  query+=' else "" end)'
+
+  local alias='.model_name as $m|.product_id as $p|.serial_number as $s'
+
+  query=".[]|${alias}|select(.device_name==\"${name}\")|(\"${query}\")"
+
+  find_outputs | jq -cer --argjson c "${colors}" "${query}"
+
+  if has_failed; then
+    log "Output ${name} not found."
+    return 2
+  fi
+}
+
+# Shows the list of outputs matching the given status.
+# Arguments:
+#  status: connected, disconnected, active, inactive or primary
+# Outputs:
+#  A list of outputs.
+list_outputs () {
+  local status="${1}"
+
+  if is_given "${status}" && is_not_output_status "${status}"; then
+    log 'Invalid or unknown status.'
+    return 2
+  fi
+
+  local query=''
+  query+='Name:       \(.device_name)\n'
+  query+='\(if .is_connected then "Device:     \(.model_name)\n" else "" end)'
+  query+='Connected:  \(.is_connected)\n'
+  query+='Active:     \(.is_connected and .resolution_width)\n'
+  query+='Primary:    \(.is_primary)\n'
+
+  query=".[]|(\"${query}\")"
+
+  local outputs=''
+  outputs="$(find_outputs "${status}" | jq -cr "${query}")" || return 1
+
+  if is_empty "${outputs}"; then
+    log "No ${status:-\b} outputs have found."
+    return 0
+  fi
+
+  echo "${outputs}"
+}
+
+# Sets the resolution and rate of the output with the
+# given name.
+# Arguments:
+#  name:       the name of an output
+#  resolution: a width x height resolution
+#  rate:       a refresh rate number
+set_mode () {
+  local name="${1}"
+  local resolution="${2}"
+  local rate="${3}"
+
+  if is_not_given "${name}"; then
+    on_script_mode &&
+      log 'Missing the output name.' && return 2
+
+    pick_output 'Select an output name:' active || return $?
+    is_empty "${REPLY}" && log 'Output name is required.' && return 2
+    name="${REPLY}"
+  fi
+
+  local output=''
+  output="$(find_output "${name}")"
+
+  if has_failed; then
+    log "Output ${name} not found."
+    return 2
+  fi
+  
+  if is_not_connected "${output}"; then
+    log "Output ${name} is disconnected."
+    return 2
+  elif is_not_active "${output}"; then
+    log "Output ${name} is inactive."
+    return 2
+  fi
+
+  if is_not_given "${resolution}"; then
+    on_script_mode &&
+      log 'Missing the resolution.' && return 2
+
+    pick_resolution "${output}" || return $?
+    is_empty "${REPLY}" && log 'Resolution is required.' && return 2
+    resolution="${REPLY}"
+  fi
+  
+  if is_not_resolution "${resolution}"; then
+    log 'Invalid resolution.'
+    return 2
+  elif has_no_resolution "${output}" "${resolution}"; then
+    log "Resolution ${resolution} is not supported."
+    return 2
+  fi
+
+  if is_not_given "${rate}"; then
+    on_script_mode &&
+      log 'Missing the refresh rate.' && return 2
+
+    pick_rate "${output}" "${resolution}" || return $?
+    is_empty "${REPLY}" && log 'Refresh rate is required.' && return 2
+    rate="${REPLY}"
+  fi
+  
+  if is_not_rate "${rate}"; then
+    log 'Invalid refresh rate.'
+    return 2
+  elif has_no_rate "${output}" "${resolution}" "${rate}"; then
+    log "Refresh rate ${rate} is not supported."
+    return 2
+  fi
+
+  xrandr --output "${name}" --mode "${resolution}" --rate "${rate}"
+
+  if has_failed; then
+    log 'Failed to set output mode.'
+    return 2
+  fi
+
+  log "Output ${name} mode set to ${resolution}@${rate}."
+}
+
+# Sets the output with the given name as primary.
+# Arguments:
+#  name: the name of an output
+set_primary () {
+  local name="${1}"
+
+  if is_not_given "${name}"; then
+    on_script_mode &&
+      log 'Missing the output name.' && return 2
+
+    pick_output 'Select an output name:' active || return $?
+    is_empty "${REPLY}" && log 'Output name is required.' && return 2
+    name="${REPLY}"
+  fi
+
+  local output=''
+  output="$(find_output "${name}")"
+
+  if has_failed; then
+    log "Output ${name} not found."
+    return 2
+  fi
+  
+  if is_not_connected "${output}"; then
+    log "Output ${name} is disconnected."
+    return 2
+  elif is_not_active "${output}"; then
+    log "Output ${name} is inactive."
+    return 2
+  elif is_primary "${output}"; then
+    log "Output ${name} is already primary."
+    return 2
+  fi
+
+  xrandr --output "${name}" --primary
+
+  if has_failed; then
+    log 'Failed to set as primary output.'
+    return 2
+  fi
+
+  # Make sure desktop is reloaded
+  desktop -qs restart &> /dev/null
+
+  if has_failed; then
+    log 'Failed to reload desktop.'
+  fi
+  
+  log "Output ${name} set as primary."
+}
+
+# Sets the output with the given name on.
+# Arguments:
+#  name: the name of an output
+set_on () {
+  local name="${1}"
+
+  if is_not_given "${name}"; then
+    on_script_mode &&
+      log 'Missing the output name.' && return 2
+
+    pick_output 'Select an output name:' inactive || return $?
+    is_empty "${REPLY}" && log 'Output name is required.' && return 2
+    name="${REPLY}"
+  fi
+
+  local output=''
+  output="$(find_output "${name}")"
+
+  if has_failed; then
+    log "Output ${name} not found."
+    return 2
+  fi
+  
+  if is_not_connected "${output}"; then
+    log "Output ${name} is disconnected."
+    return 2
+  elif is_active "${output}"; then
+    log "Output ${name} is already active."
+    return 2
+  fi
+
+  # Find the last in order active monitor
+  local query='[.[]|select(.is_connected and .resolution_width)]'
+  query+='|sort_by(.offset_height, .offset_width)'
+  query+='|if length > 0 then last|.device_name else "" end'
+  
+  local last=''
+  last="$(find_outputs | jq -cr "${query}")" || return 1
+
+  if is_not_empty "${last}"; then
+    xrandr --output "${name}" --auto --right-of "${last}"
+  else
+    xrandr --output "${name}" --auto
+  fi
+
+  if has_failed; then
+    log 'Failed to activate output.'
+    return 2
+  fi
+
+  # Make sure desktop is reloaded
+  desktop -qs init wallpaper &> /dev/null &&
+    desktop -qs init bars &> /dev/null
+
+  if has_failed; then
+    log 'Failed to reload desktop.'
+  fi
+  
+  log "Output ${name} has been activated."
+}
+
+# Sets the output with the given name off.
+# Arguments:
+#  name: the name of an output
+set_off () {
+  local name="${1}"
+
+  if is_not_given "${name}"; then
+    on_script_mode &&
+      log 'Missing the output name.' && return 2
+
+    pick_output 'Select an output name:' active || return $?
+    is_empty "${REPLY}" && log 'Output name is required.' && return 2
+    name="${REPLY}"
+  fi
+
+  local output=''
+  output="$(find_output "${name}")"
+
+  if has_failed; then
+    log "Output ${name} not found."
+    return 2
+  fi
+  
+  if is_not_connected "${output}"; then
+    log "Output ${name} is disconnected."
+    return 2
+  elif is_not_active "${output}"; then
+    log "Output ${name} is already inactive."
+    return 2
+  elif is_primary "${output}"; then
+    log 'Cannot deactivate the primary output.'
+    return 2
+  fi
+
+  xrandr --output "${name}" --off
+
+  if has_failed; then
+    log 'Failed to deactivate output.'
+    return 2
+  fi
+
+  # Give time to xrandr to settle
+  sleep 1
+
+  # Make sure desktop workspaces are fixed
+  desktop -qs fix workspaces &> /dev/null
+
+  if has_failed; then
+    log 'Failed to fix desktop workspaces.'
+  fi
+  
+  log "Output ${name} has been deactivated."
+}
+
+# Sets the reflection of the output with the given name.
+# Arguments:
+#  name: the name of an output
+#  mode: normal, x, y, xy
+reflect_output () {
+  local name="${1}"
+  local mode="${2}"
+  
+  if is_not_given "${name}"; then
+    on_script_mode &&
+      log 'Missing the output name.' && return 2
+
+    pick_output 'Select an output name:' active || return $?
+    is_empty "${REPLY}" && log 'Output name is required.' && return 2
+    name="${REPLY}"
+  fi
+
+  local output=''
+  output="$(find_output "${name}")"
+
+  if has_failed; then
+    log "Output ${name} not found."
+    return 2
+  fi
+  
+  if is_not_connected "${output}"; then
+    log "Output ${name} is disconnected."
+    return 2
+  elif is_not_active "${output}"; then
+    log "Output ${name} is inactive."
+    return 2
+  fi
+
+  if is_not_given "${mode}"; then
+    on_script_mode &&
+      log 'Missing the reflection mode.' && return 2
+
+    pick_reflection_mode || return $?
+    is_empty "${REPLY}" && log 'Reflection mode is required.' && return 2
+    mode="${REPLY}"
+  fi
+  
+  if is_not_reflection_mode "${mode}"; then
+    log 'Invalid reflection mode.'
+    return 2
+  fi
+
+  xrandr --output "${name}" --reflect "${mode}"
+    
+  if has_failed; then
+    log 'Failed to reflect output.'
+    return 2
+  fi
+
+  log "Reflection of output ${name} set to ${mode}."
+}
+
+# Sets the rotation of the output with the given name.
+# Arguments:
+#  name: the name of an output
+#  mode: normal, right, left, inverted
+rotate_output () {
+  local name="${1}"
+  local mode="${2}"
+
+  if is_not_given "${name}"; then
+    on_script_mode &&
+      log 'Missing the output name.' && return 2
+
+    pick_output 'Select an output name:' active || return $?
+    is_empty "${REPLY}" && log 'Output name is required.' && return 2
+    name="${REPLY}"
+  fi
+
+  local output=''
+  output="$(find_output "${name}")"
+
+  if has_failed; then
+    log "Output ${name} not found."
+    return 2
+  fi
+  
+  if is_not_connected "${output}"; then
+    log "Output ${name} is disconnected."
+    return 2
+  elif is_not_active "${output}"; then
+    log "Output ${name} is inactive."
+    return 2
+  fi
+
+  if is_not_given "${mode}"; then
+    on_script_mode &&
+      log 'Missing the rotation mode.' && return 2
+
+    pick_rotation_mode || return $?
+    is_empty "${REPLY}" && log 'Rotation mode is required.' && return 2
+    mode="${REPLY}"
+  fi
+  
+  if is_not_rotation_mode "${mode}"; then
+    log 'Invalid rotation mode.'
+    return 2
+  fi
+
+  xrandr --output "${name}" --rotate "${mode}"
+    
+  if has_failed; then
+    log 'Failed to rotate output.'
+    return 2
+  fi
+  
+  log "Rotation of output ${name} set to ${mode}."
+}
+
+# Mirrors the output with the given name to the target outputs,
+# having all mirrors run at the given resolution, which should
+# be a common resolution among all outputs of the mirroring.
+# All target outputs will move to position equal to the position
+# of the source output inheriting its rotation and reflection mode.
+# Arguments:
+#  name:       the name of the source output
+#  resolution: a common resolution of all outputs
+#  targets:    a list of space separated output names to mirror
+mirror_output () {
+  local name="${1}"
+  local resolution="${2}"
+  local targets=("${@:3}")
+
+  local len=0
+  len="$(find_outputs active | jq -cer 'length')" || return 1
+
+  if is_true "${len} < 2"; then
+    log 'No other active outputs found.'
+    return 2
+  fi
+  
+  if is_not_given "${name}"; then
+    on_script_mode &&
+      log 'Missing the output name.' && return 2
+
+    pick_output 'Select output name:' active || return $?
+    is_empty "${REPLY}" && log 'Output name is required.' && return 2
+    name="${REPLY}"
+  fi
+
+  local source=''
+  source="$(find_output "${name}")"
+
+  if has_failed; then
+    log "Output ${name} not found."
+    return 2
+  fi
+  
+  if is_not_connected "${source}"; then
+    log "Output ${name} is disconnected."
+    return 2
+  elif is_not_active "${source}"; then
+    log "Output ${name} is inactive."
+    return 2
+  fi
+
+  if is_not_given "${resolution}"; then
+    on_script_mode &&
+      log 'Missing resolution.' && return 2
+
+    pick_resolution "${source}" || return $?
+    is_empty "${REPLY}" && log 'Resolution is required.' && return 2
+    resolution="${REPLY}"
+  fi
+
+  if is_not_resolution "${resolution}"; then
+    log 'Invalid resolution.'
+    return 2
+  elif has_no_resolution "${source}" "${resolution}"; then
+    log "Resolution ${resolution} is not supported."
+    return 2
+  fi
+
+  if is_true "${#targets[@]} = 0"; then
+    on_script_mode &&
+      log 'Missing target output name(s).' && return 2
+
+    pick_outputs 'Select at least one target output:' active "${name}" || return $?
+    is_empty "${REPLY}" && log 'At least one target output is required.' && return 2
+    local selected="${REPLY}"
+
+    # Convert json to array
+    readarray -t targets < <(echo "${selected}" | jq -cr '.[]')
+  fi
+
+  # Validate each one of the given targets
+  local target_name=''
+  for target_name in "${targets[@]}"; do
+    if equals "${target_name}" "${name}"; then
+      log 'Source output cannot be in targets.'
+      return 2
+    fi
+
+    local target=''
+    target="$(find_output "${target_name}")"
+
+    if has_failed; then
+      log "Output ${target_name} not found."
+      return 2
+    fi
+    
+    if is_not_connected "${target}"; then
+      log "Output ${target_name} is disconnected."
+      return 2
+    elif is_not_active "${target}"; then
+      log "Output ${target_name} is inactive."
+      return 2
+    fi
+  done
+
+  # Find the common resolution modes among source and targets
+  local resolutions=''
+  resolutions="$(find_common_resolutions "${name}" "${targets}")" || return 1
+
+  local resolutions_len=0
+  resolutions_len="$(count "${resolutions}")"
+
+  if is_true "${resolutions_len} = 0"; then
+    log 'No common resolutions found among outputs.'
+    return 2
+  fi
+
+  local match=''
+  match="$(echo "${resolutions}" | jq -cr ".[]|select(. == \"${resolution}\")")"
+
+  if is_empty "${match}"; then
+    log "Resolution ${resolution} is not supported by all targets."
+    log "Common resolutions are $(echo ${resolutions} | jq -cr 'join(", ")')."
+    return 2
+  fi
+
+  # Have targets inherit the position and rotate/reflect of the source output
+  local pos="$(echo "${source}" | jq -r '"\(.offset_width)x\(.offset_height)"')"
+  local rot="$(echo "${source}" | jq -r '.rotation')"
+  local ref="$(echo "${source}" | jq -r '.reflection|ascii_downcase' |
+    awk '{gsub(/( |and|axis)/,"",$0); print}')"
+
+  local query='$ARGS.positional|.[]'
+  query+="|\"--output \(.) --mode ${resolution} --pos ${pos} --rotate ${rot} --reflect ${ref}\""
+  query="[${query}]|join(\" \")"
+  
+  # Convert targets array to a xrandr command arguments
+  local mirrors=''
+  mirrors="$(jq -ncer "${query}" --args -- "${targets[@]}")" || return 1
+
+  xrandr --output "${name}" --mode "${resolution}" ${mirrors}
+
+  if has_failed; then
+    log "Failed to mirror output ${name}."
+    return 2
+  fi
+
+  # Give time to xrandr to settle
+  sleep 1
+
+  # Remove all targets from window manager and adopt orphan windows
+  local monitor=''
+
+  for monitor in "${targets[@]}"; do
+    bspc monitor "${monitor}" -r || return 1
+    bspc wm --adopt-orphans || return 1
+  done
+
+  # Make sure ws are fixed and desktop is reloaded
+  desktop -qs fix workspaces &> /dev/null &&
+    desktop -qs init bars &> /dev/null
+
+  if has_failed; then
+    log 'Failed to reload desktop.'
+  fi
+
+  # Convert targets into a string of comma separated output names
+  targets="$(jq -ncer '$ARGS.positional|join(", ")' --args -- "${targets[@]}")" || return 1
+  
+  log "Output ${name} mirrored to ${targets}."
+}
+
+# Sets the layout of the given active outputs to the given mode.
+# Arguments:
+#  mode:    row-2, col-2, row-3, col-3, gamma-3, gamma-rev-3,
+#           lambda-3, lambda-rev-3, grid-4, taph-4, taph-rev-4,
+#           taph-right-4, taph-left-4
+#  outputs: a list of comma separated output names
+set_layout () {
+  local mode="${1}"
+  local outputs=("${@:2}")
+
+  local len=0
+  len="$(find_outputs active | jq -cer 'length')" || return 1
+
+  if is_true "${len} < 2"; then
+    log 'No multiple active outputs found.'
+    return 2
+  elif is_true "${len} > 4"; then
+    log 'No layout mode exists for more than 4 outputs.'
+    return 2
+  fi
+
+  if is_not_given "${mode}"; then
+    on_script_mode &&
+      log 'Missing layout mode.' && return 2
+
+    pick_layout_mode "${len}" || return $?
+    is_empty "${REPLY}" && log 'Layout mode is required.' && return 2
+    mode="${REPLY}"
+  fi
+
+  if is_not_eligible_layout_mode "${mode}" "${len}"; then
+    log 'Invalid layout mode for current setup.'
+    return 2
+  fi
+
+  if is_true "${#outputs[@]} = 0"; then
+    on_script_mode &&
+      log 'Missing output name(s).' && return 2
+
+    show_layout_map "${mode}"
+    pick_outputs 'Select output names by order:' active || return $?
+    is_empty "${REPLY}" && log 'Output names are required.' && return 2
+    local selected="${REPLY}"
+
+    # Convert json to array   
+    readarray -t outputs < <(echo "${selected}" | jq -cr '.[]')
+  fi
+
+  if is_true "${#outputs[@]} != ${len}"; then
+    log "Exactly ${len} outputs required."
+    return 2
+  fi
+
+  # Validate each one of the given outputs
+  local name=''
+  for name in "${outputs[@]}"; do
+    local output=''
+    output="$(find_output "${name}")"
+
+    if has_failed; then
+      log "Output ${name} not found."
+      return 2
+    fi
+    
+    if is_not_connected "${output}"; then
+      log "Output ${name} is disconnected."
+      return 2
+    elif is_not_active "${output}"; then
+      log "Output ${name} is inactive."
+      return 2
+    fi
+  done
+
+  # Convert outputs array to json array of names
+  outputs="$(jq -nce '$ARGS.positional' --args -- "${outputs[@]}")" || return 1
+
+  # Build the xrandr command template for the given mode
+  local query=''
+  query="$(layout_to_xrandr_template "${mode}")" || return 1
+
+  local layout=''
+  layout="$(echo "${outputs}" | jq -cr "\"${query}\"")"
+
+  xrandr ${layout}
+
+  if has_failed; then
+    log "Failed to set layout ${mode,,}."
+    return 2
+  fi
+
+  # Give time to xrandr to settle
+  sleep 1
+
+  # Make sure desktop workspaces are fixed
+  desktop -qs fix workspaces &> /dev/null &&
+    desktop -qs init wallpaper &> /dev/null &&
+    desktop -qs init bars  &> /dev/null
+
+  if has_failed; then
+    log 'Failed to fix desktop workspaces.'
+  fi
+
+  log "Layout has been set to ${mode,,}."
+}
+
+# Saves the current layout under a unique hashed signature
+# which is based on the mapping between all outputs and
+# their possibly connected devices.
+save_layout () {
+  local outputs=''
+  outputs="$(find_outputs)" || return 1
+
+  local len=0
+  len="$(count "${outputs}")" || return 1
+
+  if is_true "${len} = 0"; then
+    log 'No outputs have found.'
+    return 2
+  fi
+
+  # Create a hash map of <output,{device, mode}> entries
+  local device=''
+  device+='if .model_name and .is_connected and .resolution_width'
+  device+=' then {model_name: .model_name, product_id: .product_id, serial_number: .serial_number}'
+  device+=' else {} '
+  device+='end'
+
+  local res=''
+  res+='.resolution_modes[]'
+  res+=' |"\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)" as $res'
+  res+=' |.frequencies[]|select(.is_current)'
+  res+=' |"--mode \($res) --rate \(.frequency)"'
+
+  local pos='--pos \(.offset_width)x\(.offset_height)'
+  local rotate='--rotate \(.rotation)'
+  local reflect='--reflect \(.reflection|ascii_downcase|gsub("( |and|axis)";""))'
+  local primary='if .is_primary then "--primary" else "" end'
+
+  local query=''
+  query+='if .resolution_width'
+  query+=" then (${device}) * {mode: \"\(${res}) ${pos} ${rotate} ${reflect} \(${primary})\"}"
+  query+=" else (${device}) * {mode: \"--off\"} "
+  query+='end'
+
+  query="map({(.device_name|tostring): (${query})})|add"
+
+  local map=''
+  map="$(echo "${outputs}" | jq -cer "${query}")"
+
+  if has_failed; then
+    log 'Unable to parse mapping.'
+    return 2
+  fi
+
+  # Assign a signature to the current layout mapping
+  local sig=''
+  sig="$(get_sig "${outputs}")" || return 1
+
+  save_layout_to_settings "${map}" "${sig}"
+
+  if has_failed; then
+    log 'Failed to save layout.'
+    return 2
+  fi
+    
+  log 'Layout has been saved.'
+}
+
+# Restores the layout setting with the signature matching
+# the signature of the mapping between current outputs and 
+# connected devices.
+restore_layout () {
+  if file_not_exists "${DISPLAYS_SETTINGS}"; then
+    log 'No layouts have found.'
+    return 2
+  fi
+
+  local layouts=''
+  layouts="$(jq '.layouts|if . then . else empty end' "${DISPLAYS_SETTINGS}")"
+
+  if is_empty "${layouts}"; then
+    log 'No layouts have found.'
+    return 2
+  fi
+
+  local outputs=''
+  outputs="$(find_outputs)" || return 1
+
+  local len=0
+  len="$(count "${outputs}")" || return 1
+
+  if is_true "${len} = 0"; then
+    log 'No outputs have found.'
+    return 2
+  fi
+
+  # Calculate the hashed signature of the current mapping
+  local sig=''
+  sig="$(get_sig "${outputs}")" || return 1
+
+  # Search for a layout matching the current mapping
+  local query='.[]'
+  query+="|select(.sig == \"${sig}\")|.map|to_entries[]"
+  query+='|"--output \(.key) \(.value.mode)"'
+  query="[${query}]|join(\" \")"
+
+  local layout=''
+  layout="$(echo "${layouts}" | jq -cr "${query}")"
+
+  if is_empty "${layout}"; then
+    log 'No matching layout has found.'
+    return 2
+  fi
+
+  xrandr ${layout}
+
+  if has_failed; then
+    log 'Failed to restore the layout.'
+    return 2
+  fi
+
+  # Give time to xrandr to settle
+  sleep 1
+
+  # Make sure desktop workspaces and other modules are fixed
+  desktop -qs fix workspaces &> /dev/null &&
+    desktop -qs restart &> /dev/null
+
+  if has_failed; then
+    log 'Failed to reload desktop.'
+  fi
+
+  log 'Layout has been restored.'
+}
+
+# Fixes the positioning of the current layout by
+# setting forcefully to off any output being
+# disconnected or inactive.
+fix_layout () {
+  local outputs=''
+  outputs="$(find_outputs)" || return 1
+
+  local len=0
+  len="$(count "${outputs}")" || return 1
+
+  if is_true "${len} = 0"; then
+    log 'No outputs have found.'
+    return 2
+  fi
+
+  # Set any disconnected monitors off
+  local query='.[]|select(.is_connected|not)'
+  query+='|"--output \(.device_name) --off"'
+  query="[${query}]|join(\" \")"
+
+  local disconnected=''
+  disconnected="$(echo "${outputs}" | jq -cr "${query}")"
+
+  # Set any inactive monitors off
+  local query='.[]|select(.is_connected and .resolution_width == null)'
+  query+='|"--output \(.device_name) --off"'
+  query="[${query}]|join(\" \")"
+
+  local inactive=''
+  inactive="$(echo "${outputs}" | jq -cr "${query}")"
+
+  if is_empty "${disconnected// }" && is_empty "${inactive// }"; then
+    log 'No fix applied to layout.'
+    return 2
+  fi
+
+  xrandr ${disconnected} ${inactive}
+
+  if has_failed; then
+    log 'Failed to fix the layout.'
+    return 2
+  fi
+
+  # Set new primary monitor if primary has disconnected
+  local query='.[]|select((.is_connected|not) and .is_primary)|.device_name'
+
+  local disconnected_primary=''
+  disconnected_primary="$(echo "${outputs}" | jq -cr "${query}")"
+
+  # Set as primary the first found active monitor
+  if is_not_empty "${disconnected_primary}"; then
+    local query='[.[]|select(.is_connected and .resolution_width)]'
+    query+='|.[0].device_name'
+
+    local new_primary=''
+    new_primary="$(echo "${outputs}" | jq -cr "${query}")"
+
+    is_not_empty "${new_primary}" && set_primary "${new_primary}"
+  fi
+
+  # Give time to xrandr to settle
+  sleep 1
+
+  # Make sure desktop workspaces are fixed
+  desktop -qs fix workspaces &> /dev/null
+
+  if has_failed; then
+    log 'Failed to fix desktop workspaces.'
+  fi
+
+  log 'Layout has been fixed.'
+}
+
+# Deletes the layout setting with the given index.
+# Arguments;
+#  index: the index of the layout setting
+delete_layout () {
+  local index="${1}"
+
+  if file_not_exists "${DISPLAYS_SETTINGS}"; then
+    log 'No layouts have found.'
+    return 2
+  fi
+
+  if is_not_given "${index}"; then
+    on_script_mode &&
+      log 'Missing the layout index.' && return 2
+
+    pick_layout || return $?
+    is_empty "${REPLY}" && log 'Layout index is required.' && return 2
+    index="${REPLY}"
+  fi
+
+  if is_not_integer "${index}" '[0,]'; then
+    log 'Invalid layout index.'
+    return 2
+  fi
+
+  local match=''
+  match="$(jq "select(.layouts[${index}])" "${DISPLAYS_SETTINGS}")"
+
+  if is_empty "${match}"; then
+    log "Cannot find layout with index ${index}."
+    return 2
+  fi
+
+  local settings=''
+  settings="$(jq -e "del(.layouts|.[${index}])" "${DISPLAYS_SETTINGS}")"
+
+  if has_failed; then
+    log 'Failed to delete layout.'
+    return 2
+  fi
+
+  echo "${settings}" > "${DISPLAYS_SETTINGS}"
+  
+  log 'Layout has been deleted.'
+}
+
+# List all the stored layout settings.
+# Outputs:
+#  A list of layout settings.
+list_layouts () {
+  if file_not_exists "${DISPLAYS_SETTINGS}"; then
+    log 'No layouts have found.'
+    return 0
+  fi
+
+  local map=''
+  map+='\(.key):\(.key|if (9-length)>0 then (" "*(9-length)) else "" end)'
+  map+='\(if .value.model_name then "\(.value.model_name) " else "" end)'
+  map+='\(if .value.mode == "--off" then "[OFF]" else "[ON]" end)'
+  map="\([.value.map|to_entries[]|\"${map}\"]|join(\"\n\"))"
+
+  local layout=''
+  layout+='Index:    \(.key)\n'
+  layout+="${map}"
+
+  local query=''
+  query+='if .layouts|length > 0'
+  query+=" then .layouts|to_entries[]|\"${layout}\""
+  query+=' else "No layouts have found"'
+  query+='end'
+
+  query="[${query}]|join(\"\n\n\")"
+
+  jq -cer "${query}" "${DISPLAYS_SETTINGS}" || return 1
+}
+
+# Sets the color profile of the device connected to the output
+# with the given name and saves it to the color settings. The
+# profile should be the filename of any .icc or .icm color
+# calibration files stored in $COLORS_HOME.
+# Arguments:
+#  name:    the name of an output
+#  profile: the file name of a color profile
+set_color () {
+  local name="${1}"
+  local profile="${2}"
+
+  if is_not_given "${name}"; then
+    on_script_mode &&
+      log 'Missing output name.' && return 2
+
+    pick_output 'Select an output name:' active || return $?
+    is_empty "${REPLY}" && log 'Output name is required.' && return 2
+    name="${REPLY}"
+  fi
+  
+  local output=''
+  output="$(find_output "${name}")"
+
+  if has_failed; then
+    log "Output ${name} not found."
+    return 2
+  fi
+  
+  if is_not_connected "${output}"; then
+    log "Output ${name} is disconnected."
+    return 2
+  elif is_not_active "${output}"; then
+    log "Output ${name} is inactive."
+    return 2
+  fi
+
+  if is_not_given "${profile}"; then
+    on_script_mode &&
+      log 'Missing the profile file.' && return 2
+
+    pick_color_profile || return $?
+    is_empty "${REPLY}" && log 'Profile file is required.' && return 2
+    profile="${REPLY}"
+  fi
+
+  if is_not_profile_file "${profile}"; then
+    log 'Invalid profile file.'
+    return 2
+  elif file_not_exists "${COLORS_HOME}/${profile}"; then
+    log "Profile file ${profile} not exists."
+    return 2
+  fi
+
+  local index=''
+  index="$(get "${output}" ".index")" || return 1
+
+  local result=''
+  result="$(xcalib -d "${DISPLAY}" -s 0 -o "${index}" "${COLORS_HOME}/${profile}" 2>&1)"
+
+  if has_failed || is_not_empty "${result}"; then
+    log 'Failed to set output color.'
+    return 2
+  fi
+
+  log "Color of output ${name} set to ${profile}."
+
+  save_color_to_settings "${output}" "${profile}" ||
+    log 'Failed to save output color to settings.'
+}
+
+# Resets the color profile of the device connected to the
+# output with the given name and removes it from the color
+# settings.
+# Arguments:
+#  name: the name of an output
+reset_color () {
+  local name="${1}"
+
+  if is_not_given "${name}"; then
+    on_script_mode &&
+      log 'Missing the output name.' && return 2
+
+    pick_output 'Select output name:' active || return $?
+    is_empty "${REPLY}" && log 'Output name is required.' && return 2
+    name="${REPLY}"
+  fi
+
+  local output=''
+  output="$(find_output "${name}")"
+
+  if has_failed; then
+    log "Output ${name} not found."
+    return 2
+  fi
+  
+  if is_not_connected "${output}"; then
+    log "Output ${name} is disconnected."
+    return 2
+  elif is_not_active "${output}"; then
+    log "Output ${name} is inactive."
+    return 2
+  fi
+
+  local index=''
+  index="$(get "${output}" ".index")" || return 1
+
+  local result=''
+  result="$(xcalib -d "${DISPLAY}" -s 0 -o "${index}" -c 2>&1)"
+
+  if has_failed || is_not_empty "${result}"; then
+    log 'Failed to reset output color.'
+    return 2
+  fi
+
+  log "Color of output ${name} has been reset."
+
+  remove_color_from_settings "${output}" ||
+    log 'Failed to delete output color from settings.'
+}
+
+# Deletes the color setting with the given index.
+# Arguments:
+#  index: the index of a color setting
+delete_color () {
+  local index="${1}"
+
+  if file_not_exists "${DISPLAYS_SETTINGS}"; then
+    log 'No color settings have found.'
+    return 2
+  fi
+
+  if is_not_given "${index}"; then
+    on_script_mode &&
+      log 'Missing the color setting index.' && return 2
+
+    pick_color_setting || return $?
+    is_empty "${REPLY}" && log 'Color setting index is required.' && return 2
+    index="${REPLY}"
+  fi
+
+  if is_not_integer "${index}" '[0,]'; then
+    log 'Invalid color setting index.'
+    return 2
+  fi
+
+  local match=''
+  match="$(jq "select(.colors[${index}])" "${DISPLAYS_SETTINGS}")"
+
+  if is_empty "${match}"; then
+    log "Color setting with index ${index} not found."
+    return 2
+  fi
+
+  local settings='{}'
+  settings="$(jq -e "del(.colors|.[${index}])" "${DISPLAYS_SETTINGS}")"
+
+  if has_failed; then
+    log 'Failed to delete color setting.'
+    return 2
+  fi
+
+  echo "${settings}" > "${DISPLAYS_SETTINGS}"
+
+  log 'Color setting has been deleted.'
+}
+
+# List all the color settings per device being stored
+# in settings.
+# Outputs:
+#  A list of color settings.
+list_colors () {
+  if file_not_exists "${DISPLAYS_SETTINGS}"; then
+    log 'No color settings have found.'
+    return 0
+  fi
+
+  local color=''
+  color+='Index:    \(.key)\n'
+  color+='Device:   \(.value.model_name)\n'
+  color+='Product:  \(.value.product_id)\n'
+  color+='Serial:   \(.value.serial_number)\n'
+  color+='Profile:  \(.value.profile)'
+
+  local query=''
+  query+='if .colors|length > 0'
+  query+=" then .colors|to_entries[]|\"${color}\""
+  query+=' else "No color settings have found"'
+  query+='end'
+
+  query="[${query}]|join(\"\n\n\")"
+
+  jq -cer "${query}" "${DISPLAYS_SETTINGS}" || return 1
+}
+
+# Restores the color settings of any devices currently
+# connected to an output.
+restore_colors () {
+  if file_not_exists "${DISPLAYS_SETTINGS}"; then
+    log 'No color settings have found.'
+    return 2
+  fi
+
+  local colors=''
+  colors="$(jq -cr 'if .colors then .colors else [] end' "${DISPLAYS_SETTINGS}")" || return 1
+
+  local len=0
+  len="$(count "${colors}")" || return 1
+
+  if is_true "${len} = 0"; then
+    log 'No color settings have found.'
+    return 2
+  fi
+
+  local outputs=''
+  outputs="$(find_outputs active)" || return 1
+
+  local xcalib_cmd=''
+  xcalib_cmd+="\"xcalib -d ${DISPLAY} -s 0 -o \(.index) ${COLORS_HOME}/\(.profile)\""
+
+  local query=''
+  query+='. + $c'
+  query+=' |group_by([.model_name, .product_id, .serial_number])'
+  query+=" |map({index: (.[0].index), profile: (.[].profile|select(.))})[]"
+  query+=" |${xcalib_cmd}"
+
+  local xcalib_cmds=''
+  xcalib_cmds="$(echo "${outputs}" | jq -cr --argjson c "${colors}" "${query}")" || return 1
+
+  # Iterate over xcalib commands and execute one by one
+  local failed=0
+  local xcalib_cmd=''
+
+  while read -r xcalib_cmd; do
+    local result="$(${xcalib_cmd} 2>&1)"
+
+    if has_failed || is_not_empty "${result}"; then
+      failed="$(calc "${failed} + 1")" || return 1
+    fi
+  done <<< "${xcalib_cmds}"
+
+  if is_true "${failed} > 0"; then
+    log "${failed} color settings failed to be restored."
+    return 2
+  fi
+
+  log 'Color settings have been restored.'
+}
+

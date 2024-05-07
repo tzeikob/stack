@@ -283,30 +283,30 @@ install_drivers () {
 install_system_tools () {
   log INFO 'Installing the system tools...'
 
-  local tools_home='/opt/stack/system'
+  local tools_home='/opt/stack/tools'
 
   sudo mkdir -p "${tools_home}" &&
-    sudo cp -r /opt/stack/installer/system/* "${tools_home}" ||
+    sudo cp -r /opt/stack/installer/tools/* "${tools_home}" ||
     abort ERROR 'Failed to install system tools.'
 
   local bin_home='/usr/local/bin'
 
   # Create symlinks to expose executables
-  sudo ln -sf "${tools_home}/displays/main" "${bin_home}/displays" &&
-    sudo ln -sf "${tools_home}/desktop/main" "${bin_home}/desktop" &&
-    sudo ln -sf "${tools_home}/audio/main" "${bin_home}/audio" &&
-    sudo ln -sf "${tools_home}/clock/main" "${bin_home}/clock" &&
-    sudo ln -sf "${tools_home}/cloud/main" "${bin_home}/cloud" &&
-    sudo ln -sf "${tools_home}/networks/main" "${bin_home}/networks" &&
-    sudo ln -sf "${tools_home}/disks/main" "${bin_home}/disks" &&
-    sudo ln -sf "${tools_home}/bluetooth/main" "${bin_home}/bluetooth" &&
-    sudo ln -sf "${tools_home}/langs/main" "${bin_home}/langs" &&
-    sudo ln -sf "${tools_home}/notifications/main" "${bin_home}/notifications" &&
-    sudo ln -sf "${tools_home}/power/main" "${bin_home}/power" &&
-    sudo ln -sf "${tools_home}/printers/main" "${bin_home}/printers" &&
-    sudo ln -sf "${tools_home}/security/main" "${bin_home}/security" &&
-    sudo ln -sf "${tools_home}/trash/main" "${bin_home}/trash" &&
-    sudo ln -sf "${tools_home}/system/main" "${bin_home}/system" ||
+  sudo ln -sf "${tools_home}/displays/main.sh" "${bin_home}/displays" &&
+    sudo ln -sf "${tools_home}/desktop/main.sh" "${bin_home}/desktop" &&
+    sudo ln -sf "${tools_home}/audio/main.sh" "${bin_home}/audio" &&
+    sudo ln -sf "${tools_home}/clock/main.sh" "${bin_home}/clock" &&
+    sudo ln -sf "${tools_home}/cloud/main.sh" "${bin_home}/cloud" &&
+    sudo ln -sf "${tools_home}/networks/main.sh" "${bin_home}/networks" &&
+    sudo ln -sf "${tools_home}/disks/main.sh" "${bin_home}/disks" &&
+    sudo ln -sf "${tools_home}/bluetooth/main.sh" "${bin_home}/bluetooth" &&
+    sudo ln -sf "${tools_home}/langs/main.sh" "${bin_home}/langs" &&
+    sudo ln -sf "${tools_home}/notifications/main.sh" "${bin_home}/notifications" &&
+    sudo ln -sf "${tools_home}/power/main.sh" "${bin_home}/power" &&
+    sudo ln -sf "${tools_home}/printers/main.sh" "${bin_home}/printers" &&
+    sudo ln -sf "${tools_home}/security/main.sh" "${bin_home}/security" &&
+    sudo ln -sf "${tools_home}/trash/main.sh" "${bin_home}/trash" &&
+    sudo ln -sf "${tools_home}/system/main.sh" "${bin_home}/system" ||
     abort ERROR 'Failed to create symlinks to /usr/local/bin.'
 
   log INFO 'System tools have been installed.'

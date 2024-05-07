@@ -410,32 +410,32 @@ copy_system_tools () {
     abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
-  local tools_home="${ROOT_FS}/opt/stack/system"
+  local tools_home="${ROOT_FS}/opt/stack/tools"
 
   mkdir -p "${tools_home}" ||
-    abort ERROR 'Failed to create the /opt/stack/system folder.'
+    abort ERROR 'Failed to create the /opt/stack/tools folder.'
 
   # Copy system tools needed to the live media only
-  cp -r src/system/displays "${tools_home}" &&
-    cp -r src/system/desktop "${tools_home}" &&
-    cp -r src/system/clock "${tools_home}" &&
-    cp -r src/system/networks "${tools_home}" &&
-    cp -r src/system/disks "${tools_home}" &&
-    cp -r src/system/bluetooth "${tools_home}" &&
-    cp -r src/system/langs "${tools_home}" &&
-    cp -r src/system/notifications "${tools_home}" &&
-    cp -r src/system/power "${tools_home}" &&
-    cp -r src/system/printers "${tools_home}" &&
-    cp -r src/system/trash "${tools_home}" &&
-    cp src/system/utils "${tools_home}" ||
+  cp -r src/tools/displays "${tools_home}" &&
+    cp -r src/tools/desktop "${tools_home}" &&
+    cp -r src/tools/clock "${tools_home}" &&
+    cp -r src/tools/networks "${tools_home}" &&
+    cp -r src/tools/disks "${tools_home}" &&
+    cp -r src/tools/bluetooth "${tools_home}" &&
+    cp -r src/tools/langs "${tools_home}" &&
+    cp -r src/tools/notifications "${tools_home}" &&
+    cp -r src/tools/power "${tools_home}" &&
+    cp -r src/tools/printers "${tools_home}" &&
+    cp -r src/tools/trash "${tools_home}" &&
+    cp src/tools/utils.sh "${tools_home}" ||
     abort ERROR 'Failed to copy the system tools files.'
 
   # Remove LC_CTYPE on smenu calls as live media doesn't need it
-  sed -i 's/\(.*\)LC_CTYPE=.* \(smenu .*\)/\1\2/' "${tools_home}/utils" ||
+  sed -i 's/\(.*\)LC_CTYPE=.* \(smenu .*\)/\1\2/' "${tools_home}/utils.sh" ||
     abort ERROR 'Failed to remove the LC_TYPE from the smenu calls.'
 
   # Disable init scratchpad command for the live media
-  local desktop_main="${tools_home}/desktop/main"
+  local desktop_main="${tools_home}/desktop/main.sh"
 
   sed -i "/.*scratchpad.*/d" "${desktop_main}" ||
     abort ERROR 'Failed to remove the scratchpad lines from the desktop main.'
@@ -445,17 +445,17 @@ copy_system_tools () {
 
   mkdir -p "${bin_home}" || abort ERROR 'Failed to create the /usr/local/bin folder.'
 
-  ln -sf /opt/stack/system/displays/main "${bin_home}/displays" &&
-    ln -sf /opt/stack/system/desktop/main "${bin_home}/desktop" &&
-    ln -sf /opt/stack/system/clock/main "${bin_home}/clock" &&
-    ln -sf /opt/stack/system/networks/main "${bin_home}/networks" &&
-    ln -sf /opt/stack/system/disks/main "${bin_home}/disks" &&
-    ln -sf /opt/stack/system/bluetooth/main "${bin_home}/bluetooth" &&
-    ln -sf /opt/stack/system/langs/main "${bin_home}/langs" &&
-    ln -sf /opt/stack/system/notifications/main "${bin_home}/notifications" &&
-    ln -sf /opt/stack/system/power/main "${bin_home}/power" &&
-    ln -sf /opt/stack/system/printers/main "${bin_home}/printers" &&
-    ln -sf /opt/stack/system/trash/main "${bin_home}/trash" ||
+  ln -sf /opt/stack/tools/displays/main.sh "${bin_home}/displays" &&
+    ln -sf /opt/stack/tools/desktop/main.sh "${bin_home}/desktop" &&
+    ln -sf /opt/stack/tools/clock/main.sh "${bin_home}/clock" &&
+    ln -sf /opt/stack/tools/networks/main.sh "${bin_home}/networks" &&
+    ln -sf /opt/stack/tools/disks/main.sh "${bin_home}/disks" &&
+    ln -sf /opt/stack/tools/bluetooth/main.sh "${bin_home}/bluetooth" &&
+    ln -sf /opt/stack/tools/langs/main.sh "${bin_home}/langs" &&
+    ln -sf /opt/stack/tools/notifications/main.sh "${bin_home}/notifications" &&
+    ln -sf /opt/stack/tools/power/main,sh "${bin_home}/power" &&
+    ln -sf /opt/stack/tools/printers/main.sh "${bin_home}/printers" &&
+    ln -sf /opt/stack/tools/trash/main.sh "${bin_home}/trash" ||
     abort ERROR 'Failed to create symlinks for each system tool main.'
 
   log INFO 'System tools have been copied.'
@@ -475,7 +475,7 @@ copy_installer () {
   cp -r assets "${installer_home}" &&
     cp -r configs "${installer_home}" &&
     cp -r services "${installer_home}" &&
-    cp -r src/system "${installer_home}" &&
+    cp -r src/tools "${installer_home}" &&
     cp -r src/installer/* "${installer_home}" ||
     abort ERROR 'Failed to copy the installer files.'
 
@@ -1131,9 +1131,9 @@ set_file_permissions () {
     '0:0:755,/opt/stack/installer/run.sh'
     '0:0:755,/opt/stack/installer/stack.sh'
     '0:0:755,/opt/stack/installer/system.sh'
-    '0:0:755,/opt/stack/system/'
-    '0:0:755,/opt/commons/'
-    '0:0:755,/opt/system/'
+    '0:0:755,/opt/stack/installer/tools/'
+    '0:0:755,/opt/stack/commons/'
+    '0:0:755,/opt/stack/tools/'
     '0:0:755,/root/.config/bspwm/'
     '0:0:755,/root/.config/polybar/scripts/'
     '0:0:755,/root/.config/rofi/launch'
