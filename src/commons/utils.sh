@@ -174,3 +174,34 @@ dep_exists () {
 dep_not_exists () {
   dep_exists "${1}" && return 1 || return 0
 }
+
+# Resolves the given installation task script by addressing
+# some extra fake post execution logs to pretent completion.
+# Arguments:
+#  task_name: the name of the task script
+#  total_ops: the total max number of log lines the task is expected to print
+# Outputs:
+#  Fake log lines.
+resolve () {
+  local task_name="${1}"
+  local total_ops="${2}"
+
+  # Read the current progress as the number of log lines
+  local lines=0
+  lines=$(cat "/var/log/stack/${task_name}.log" | wc -l) ||
+    abort ERROR "Unable to read the current ${task_name} log lines."
+
+  # Fill the log file with fake lines to trick tqdm bar on completion
+  if [[ ${lines} -lt ${total_ops} ]]; then
+    local lines_to_append=0
+    lines_to_append=$((total_ops - lines))
+
+    while [[ ${lines_to_append} -gt 0 ]]; do
+      echo '~'
+      sleep 0.15
+      lines_to_append=$((lines_to_append - 1))
+    done
+  fi
+
+  return 0
+}

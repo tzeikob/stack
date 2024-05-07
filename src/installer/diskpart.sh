@@ -320,31 +320,6 @@ report () {
     awk '{print " "$0}' || abort ERROR 'Unable to list disk info.'
 }
 
-# Resolves the installaction script by addressing
-# some extra post execution tasks.
-resolve () {
-  # Read the current progress as the number of log lines
-  local lines=0
-  lines=$(cat /var/log/stack/diskpart.log | wc -l) ||
-    abort ERROR 'Unable to read the current log lines.'
-
-  local total=90
-
-  # Fill the log file with fake lines to trick tqdm bar on completion
-  if [[ ${lines} -lt ${total} ]]; then
-    local lines_to_append=0
-    lines_to_append=$((total - lines))
-
-    while [[ ${lines_to_append} -gt 0 ]]; do
-      echo '~'
-      sleep 0.15
-      lines_to_append=$((lines_to_append - 1))
-    done
-  fi
-
-  return 0
-}
-
 log INFO 'Script diskpart.sh started.'
 log INFO 'Starting the disk partitioning...'
 
@@ -358,4 +333,4 @@ wipe_disk &&
 
 log INFO 'Script diskpart.sh has finished.'
 
-resolve && sleep 2
+resolve diskpart 90 && sleep 2

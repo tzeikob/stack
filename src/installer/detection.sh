@@ -114,31 +114,6 @@ resolve_synaptics () {
   fi
 }
 
-# Resolves the installaction script by addressing
-# some extra post execution tasks.
-resolve () {
-  # Read the current progress as the number of log lines
-  local lines=0
-  lines=$(cat /var/log/stack/detection.log | wc -l) ||
-    abort ERROR 'Unable to read the current log lines.'
-
-  local total=15
-
-  # Fill the log file with fake lines to trick tqdm bar on completion
-  if [[ ${lines} -lt ${total} ]]; then
-    local lines_to_append=0
-    lines_to_append=$((total - lines))
-
-    while [[ ${lines_to_append} -gt 0 ]]; do
-      echo '~'
-      sleep 0.15
-      lines_to_append=$((lines_to_append - 1))
-    done
-  fi
-
-  return 0
-}
-
 log INFO 'Script detection.sh started.'
 log INFO 'Resolving system hardware data...'
 
@@ -151,4 +126,4 @@ is_uefi &&
 
 log INFO 'Script detection.sh has finished.'
 
-resolve && sleep 2
+resolve detection 15 && sleep 2
