@@ -157,14 +157,8 @@ grant_permissions () {
   log INFO 'Sudoer nopasswd permission has been granted.'
 }
 
-# Copies the installation files to the new system.
-copy_installer () {
-  log INFO 'Copying installer files...'
-
-  mkdir -p /mnt/opt/stack &&
-    cp -r /opt/stack/installer /mnt/opt/stack ||
-    abort ERROR 'Unable to copy installer files.'
-
+# Copies the release hook to the new system.
+copy_release_hook () {
   cp /etc/stack-release /mnt/etc/stack-release &&
     cat /usr/lib/os-release > /mnt/usr/lib/os-release &&
     rm -f /mnt/etc/arch-release ||
@@ -174,11 +168,27 @@ copy_installer () {
     mkdir -p /mnt/etc/pacman.d/hooks &&
     cp /etc/pacman.d/hooks/90-fix-release.hook /mnt/etc/pacman.d/hooks ||
     abort ERROR 'Unable to copy fix release pacman hook.'
+  
+  log INFO 'Release hook has been copied.'
+}
 
-  mkdir -p /mnt/var/log/stack ||
-    abort ERROR 'Failed to create logs home under /mnt/var/log/stack.'
+# Copies the installation files to the new system.
+copy_installer () {
+  log INFO 'Copying installer files...'
+
+  mkdir -p /mnt/opt/stack &&
+    cp -r /opt/stack/installer /mnt/opt/stack ||
+    abort ERROR 'Unable to copy installer files.'
 
   log INFO 'Installer files have been copied.'
+}
+
+# Copies the log files.
+copy_logs_files () {
+  mkdir -p /mnt/var/log/stack ||
+    abort ERROR 'Failed to create logs home under /mnt/var/log/stack.'
+  
+  log INFO 'Log files have been copied.'
 }
 
 # Resolves the installaction script by addressing
@@ -217,7 +227,9 @@ sync_clock &&
   install_commons &&
   add_sudoers_rules &&
   grant_permissions &&
-  copy_installer
+  copy_release_hook &&
+  copy_installer &&
+  copy_logs_files
 
 log INFO 'Script bootstrap.sh has finished.'
 
