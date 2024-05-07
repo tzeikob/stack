@@ -184,7 +184,7 @@ copy_installer () {
 }
 
 # Copies the log files.
-copy_logs_files () {
+copy_log_files () {
   mkdir -p /mnt/var/log/stack ||
     abort ERROR 'Failed to create logs home under /mnt/var/log/stack.'
   
@@ -204,7 +204,7 @@ sync_clock &&
   grant_permissions &&
   copy_release_hook &&
   copy_installer &&
-  copy_logs_files
+  copy_log_files
 
 log INFO 'Script bootstrap.sh has finished.'
 
