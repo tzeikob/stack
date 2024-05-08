@@ -5,6 +5,9 @@ set -Eeo pipefail
 source /opt/stack/commons/utils.sh
 source /opt/stack/commons/logger.sh
 source /opt/stack/commons/validators.sh
+source /opt/stack/commons/json.sh
+
+SETTINGS='/opt/stack/installer/settings.json'
 
 # Resolves if UEFI mode is supported by the system.
 is_uefi () {
@@ -14,7 +17,7 @@ is_uefi () {
     uefi_mode='yes'
   fi
 
-  save_setting 'uefi_mode' "\"${uefi_mode}\""
+  write_property "${SETTINGS}" 'uefi_mode' "\"${uefi_mode}\""
 
   log INFO "UEFI mode is set to ${uefi_mode}."
 }
@@ -26,13 +29,13 @@ is_virtual_machine () {
   )"
 
   if is_not_empty "${vm_vendor}" && not_equals "${vm_vendor}" 'none'; then
-    save_setting 'vm' '"yes"'
-    save_setting 'vm_vendor' "\"${vm_vendor}\""
+    write_property "${SETTINGS}" 'vm' '"yes"'
+    write_property "${SETTINGS}" 'vm_vendor' "\"${vm_vendor}\""
 
     log INFO 'Virtual machine is set to yes.'
     log INFO "Virtual machine vendor is set to ${vm_vendor}."
   else
-    save_setting 'vm' '"no"'
+    write_property "${SETTINGS}" 'vm' '"no"'
   fi
 }
 
@@ -51,7 +54,7 @@ resolve_cpu () {
     cpu_vendor='intel'
   fi
 
-  save_setting 'cpu_vendor' "\"${cpu_vendor}\""
+  write_property "${SETTINGS}" 'cpu_vendor' "\"${cpu_vendor}\""
 
   log INFO "CPU vendor is set to ${cpu_vendor}."
 }
@@ -75,7 +78,7 @@ resolve_gpu () {
     gpu_vendor='intel'
   fi
 
-  save_setting 'gpu_vendor' "\"${gpu_vendor}\""
+  write_property "${SETTINGS}" 'gpu_vendor' "\"${gpu_vendor}\""
 
   log INFO "GPU vendor is set to ${gpu_vendor}."
 }
@@ -83,7 +86,8 @@ resolve_gpu () {
 # Resolves if the installation disk supports TRIM.
 is_disk_trimmable () {
   local disk=''
-  disk="$(get_setting 'disk')" || abort ERROR 'Unable to read disk setting.'
+  disk="$(read_property "${SETTINGS}" 'disk')" ||
+    abort ERROR 'Unable to read disk setting.'
 
   local discards=''
   discards="$(
@@ -96,7 +100,7 @@ is_disk_trimmable () {
     trim_disk='yes'
   fi
 
-  save_setting 'trim_disk' "\"${trim_disk}\""
+  write_property "${SETTINGS}" 'trim_disk' "\"${trim_disk}\""
 
   log INFO "Disk trim mode is set to ${trim_disk}."
 }
@@ -106,11 +110,11 @@ resolve_synaptics () {
   local query='.*SynPS/2.*Synaptics.*TouchPad.*'
 
   if grep -Eq "${query}" /proc/bus/input/devices; then
-    save_setting 'synaptics' '"yes"'
+    write_property "${SETTINGS}" 'synaptics' '"yes"'
     
     log INFO 'Synaptics touch pad set to yes.'
   else
-    save_setting 'synaptics' '"no"'
+    write_property "${SETTINGS}" 'synaptics' '"no"'
   fi
 }
 

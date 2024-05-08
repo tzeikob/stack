@@ -5,6 +5,9 @@ set -Eeo pipefail
 source /opt/stack/commons/utils.sh
 source /opt/stack/commons/logger.sh
 source /opt/stack/commons/validators.sh
+source /opt/stack/commons/json.sh
+
+SETTINGS='/opt/stack/installer/settings.json'
 
 # Installs the desktop compositor.
 install_compositor () {
@@ -14,7 +17,8 @@ install_compositor () {
     abort ERROR 'Failed to install picom.'
 
   local user_name=''
-  user_name="$(get_setting 'user_name')" || abort ERROR 'Unable to read user_name setting.'
+  user_name="$(read_property "${SETTINGS}" 'user_name')" ||
+    abort ERROR 'Unable to read user_name setting.'
 
   local config_home="/home/${user_name}/.config/picom"
 
@@ -34,7 +38,8 @@ install_window_manager () {
     abort ERROR 'Failed to install bspwm.'
 
   local user_name=''
-  user_name="$(get_setting 'user_name')" || abort ERROR 'Unable to read user_name setting.'
+  user_name="$(read_property "${SETTINGS}" 'user_name')" ||
+    abort ERROR 'Unable to read user_name setting.'
 
   local config_home="/home/${user_name}/.config/bspwm"
 
@@ -63,7 +68,8 @@ install_status_bars () {
     abort ERROR 'Failed to install polybar.'
 
   local user_name=''
-  user_name="$(get_setting 'user_name')" || abort ERROR 'Unable to read user_name setting.'
+  user_name="$(read_property "${SETTINGS}" 'user_name')" ||
+    abort ERROR 'Unable to read user_name setting.'
 
   local config_home="/home/${user_name}/.config/polybar"
 
@@ -90,7 +96,8 @@ install_launchers () {
     abort ERROR 'Failed to install rofi.'
 
   local user_name=''
-  user_name="$(get_setting 'user_name')" || abort ERROR 'Unable to read user_name setting.'
+  user_name="$(read_property "${SETTINGS}" 'user_name')" ||
+    abort ERROR 'Unable to read user_name setting.'
 
   local config_home="/home/${user_name}/.config/rofi"
 
@@ -112,7 +119,8 @@ install_keyboard_bindings () {
     abort ERROR 'Failed to install sxhkd.'
 
   local user_name=''
-  user_name="$(get_setting 'user_name')" || abort ERROR 'Unable to read user_name setting.'
+  user_name="$(read_property "${SETTINGS}" 'user_name')" ||
+    abort ERROR 'Unable to read user_name setting.'
 
   local config_home="/home/${user_name}/.config/sxhkd"
 
@@ -140,7 +148,8 @@ install_login_screen () {
   log INFO 'The issue file has been backed up to /etc/issue.bak.'
 
   local host_name=''
-  host_name="$(get_setting 'host_name')" || abort ERROR 'Unable to read host_name setting.'
+  host_name="$(read_property "${SETTINGS}" 'host_name')" ||
+    abort ERROR 'Unable to read host_name setting.'
 
   echo " ${host_name} " | figlet -f pagga 2>&1 |
     sudo tee /etc/issue > /dev/null ||
@@ -173,7 +182,8 @@ install_screen_locker () {
   log INFO 'Locker dependencies have been installed.'
 
   local user_name=''
-  user_name="$(get_setting 'user_name')" || abort ERROR 'Unable to read user_name setting.'
+  user_name="$(read_property "${SETTINGS}" 'user_name')" ||
+    abort ERROR 'Unable to read user_name setting.'
 
   local xsecurelock_home="/home/${user_name}/xsecurelock"
 
@@ -220,7 +230,8 @@ install_notification_server () {
   log INFO 'Dunst has been installed.'
 
   local user_name=''
-  user_name="$(get_setting 'user_name')" || abort ERROR 'Unable to read user_name setting.'
+  user_name="$(read_property "${SETTINGS}" 'user_name')" ||
+    abort ERROR 'Unable to read user_name setting.'
 
   local config_home="/home/${user_name}/.config/dunst"
 
@@ -242,7 +253,8 @@ install_file_manager () {
   log INFO 'Nnn has been installed.'
 
   local user_name=''
-  user_name="$(get_setting 'user_name')" || abort ERROR 'Unable to read user_name setting.'
+  user_name="$(read_property "${SETTINGS}" 'user_name')" ||
+    abort ERROR 'Unable to read user_name setting.'
 
   local config_home="/home/${user_name}/.config/nnn"
 
@@ -300,7 +312,8 @@ install_trash_manager () {
   log INFO 'Trash-cli has been installed.'
 
   local user_name=''
-  user_name="$(get_setting 'user_name')" || abort ERROR 'Unable to read user_name setting.'
+  user_name="$(read_property "${SETTINGS}" 'user_name')" ||
+    abort ERROR 'Unable to read user_name setting.'
 
   local bashrc_file="/home/${user_name}/.bashrc"
 
@@ -332,7 +345,8 @@ install_terminals () {
   log INFO 'Alacritty and cool-retro-term have been installed.'
 
   local user_name=''
-  user_name="$(get_setting 'user_name')" || abort ERROR 'Unable to read user_name setting.'
+  user_name="$(read_property "${SETTINGS}" 'user_name')" ||
+    abort ERROR 'Unable to read user_name setting.'
 
   local config_home="/home/${user_name}/.config/alacritty"
 
@@ -369,7 +383,8 @@ install_text_editor () {
   log INFO 'Helix has been installed.'
 
   local user_name=''
-  user_name="$(get_setting 'user_name')" || abort ERROR 'Unable to read user_name setting.'
+  user_name="$(read_property "${SETTINGS}" 'user_name')" ||
+    abort ERROR 'Unable to read user_name setting.'
 
   local bashrc_file="/home/${user_name}/.bashrc"
 
@@ -455,7 +470,8 @@ install_media_viewer () {
     abort ERROR 'Failed to install sxiv.'
 
   local user_name=''
-  user_name="$(get_setting 'user_name')" || abort ERROR 'Unable to read user_name setting.'
+  user_name="$(read_property "${SETTINGS}" 'user_name')" ||
+    abort ERROR 'Unable to read user_name setting.'
 
   local config_home="/home/${user_name}/.config"
 
@@ -478,7 +494,8 @@ install_music_player () {
     abort ERROR 'Failed to install the music player.'
 
   local user_name=''
-  user_name="$(get_setting 'user_name')" || abort ERROR 'Unable to read user_name setting.'
+  user_name="$(read_property "${SETTINGS}" 'user_name')" ||
+    abort ERROR 'Unable to read user_name setting.'
 
   local config_home="/home/${user_name}/.config"
 
@@ -539,7 +556,8 @@ install_video_player () {
     abort ERROR 'Failed to install mpv.'
 
   local user_name=''
-  user_name="$(get_setting 'user_name')" || abort ERROR 'Unable to read user_name setting.'
+  user_name="$(read_property "${SETTINGS}" 'user_name')" ||
+    abort ERROR 'Unable to read user_name setting.'
 
   local config_home="/home/${user_name}/.config"
 
@@ -603,7 +621,8 @@ install_theme () {
   log INFO 'Cursors have been installed.'
 
   local user_name=''
-  user_name="$(get_setting 'user_name')" || abort ERROR 'Unable to read user_name setting.'
+  user_name="$(read_property "${SETTINGS}" 'user_name')" ||
+    abort ERROR 'Unable to read user_name setting.'
 
   local config_home="/home/${user_name}/.config/gtk-3.0"
   

@@ -7,6 +7,9 @@ source /opt/stack/commons/logger.sh
 source /opt/stack/commons/text.sh
 source /opt/stack/commons/validators.sh
 source /opt/stack/commons/input.sh
+source /opt/stack/commons/json.sh
+
+SETTINGS='/opt/stack/installer/settings.json'
 
 # Asks the user to select the installation disk.
 select_disk () {
@@ -60,7 +63,7 @@ select_disk () {
     abort
   fi
 
-  save_setting 'disk' "\"${disk}\""
+  write_property "${SETTINGS}" 'disk' "\"${disk}\""
 
   log "Installation disk set to block device ${disk}."
 }
@@ -71,13 +74,13 @@ opt_in_swap_space () {
   is_not_given "${REPLY}" && abort 'User input is required.'
 
   if is_no "${REPLY}"; then
-    save_setting 'swap_on' '"no"'
+    write_property "${SETTINGS}" 'swap_on' '"no"'
 
     log 'Swap is set to off.'
     return 0
   fi
 
-  save_setting 'swap_on' '"yes"'
+  write_property "${SETTINGS}" 'swap_on' '"yes"'
 
   log 'Swap is set to yes.'
 
@@ -91,7 +94,7 @@ opt_in_swap_space () {
 
   local swap_size="${REPLY}"
 
-  save_setting 'swap_size' "${swap_size}"
+  write_property "${SETTINGS}" 'swap_size' "${swap_size}"
 
   log "Swap size is set to ${swap_size}GB."
 
@@ -105,7 +108,7 @@ opt_in_swap_space () {
 
   local swap_type="${REPLY}"
 
-  save_setting 'swap_type' "\"${swap_type}\""
+  write_property "${SETTINGS}" 'swap_type' "\"${swap_type}\""
 
   log "Swap type is set to ${swap_type}."
 }
@@ -135,7 +138,7 @@ select_mirrors () {
 
   mirrors="${REPLY}"
 
-  save_setting 'mirrors' "${mirrors}"
+  write_property "${SETTINGS}" 'mirrors' "${mirrors}"
 
   log "Package databases mirrors are set to ${mirrors}."
 }
@@ -161,7 +164,7 @@ select_timezone () {
 
   local timezone="${REPLY}"
 
-  save_setting 'timezone' "\"${timezone}\""
+  write_property "${SETTINGS}" 'timezone' "\"${timezone}\""
 
   log "Timezone is set to ${timezone}."
 }
@@ -187,7 +190,7 @@ select_locales () {
 
   locales="${REPLY}"
 
-  save_setting 'locales' "${locales}"
+  write_property "${SETTINGS}" 'locales' "${locales}"
 
   log "Locales are set to ${locales}."
 }
@@ -213,7 +216,7 @@ select_keyboard_model () {
 
   local keyboard_model="${REPLY}"
 
-  save_setting 'keyboard_model' "\"${keyboard_model}\""
+  write_property "${SETTINGS}" 'keyboard_model' "\"${keyboard_model}\""
 
   log "Keyboard model is set to ${keyboard_model}."
 }
@@ -239,7 +242,7 @@ select_keyboard_map () {
 
   local keyboard_map="${REPLY}"
 
-  save_setting 'keyboard_map' "\"${keyboard_map}\""
+  write_property "${SETTINGS}" 'keyboard_map' "\"${keyboard_map}\""
 
   log "Keyboard map is set to ${keyboard_map}."
 }
@@ -265,7 +268,7 @@ select_keyboard_layout () {
 
   local keyboard_layout="${REPLY}"
 
-  save_setting 'keyboard_layout' "\"${keyboard_layout}\""
+  write_property "${SETTINGS}" 'keyboard_layout' "\"${keyboard_layout}\""
 
   local variants='{"key": "default", "value": "default"},'
   variants+="$(
@@ -286,7 +289,7 @@ select_keyboard_layout () {
 
   local layout_variant="${REPLY}"
 
-  save_setting 'layout_variant' "\"${layout_variant}\""
+  write_property "${SETTINGS}" 'layout_variant' "\"${layout_variant}\""
 
   log "Layout is set to ${keyboard_layout} ${layout_variant}."
 }
@@ -312,7 +315,7 @@ select_keyboard_options () {
 
   local keyboard_options="${REPLY}"
 
-  save_setting 'keyboard_options' "\"${keyboard_options}\""
+  write_property "${SETTINGS}" 'keyboard_options' "\"${keyboard_options}\""
 
   log "Keyboard options is set to ${keyboard_options}."
 }
@@ -330,7 +333,7 @@ enter_host_name () {
 
   local host_name="${REPLY}"
 
-  save_setting 'host_name' "\"${host_name}\""
+  write_property "${SETTINGS}" 'host_name' "\"${host_name}\""
 
   log "Hostname is set to ${host_name}."
 }
@@ -348,7 +351,7 @@ enter_user_name () {
 
   local user_name="${REPLY}"
 
-  save_setting 'user_name' "\"${user_name}\""
+  write_property "${SETTINGS}" 'user_name' "\"${user_name}\""
 
   log "User name is set to ${user_name}."
 }
@@ -377,7 +380,7 @@ enter_user_password () {
     is_not_given "${REPLY}" && abort '\nUser input is required.'
   done
 
-  save_setting 'user_password' "\"${password}\""
+  write_property "${SETTINGS}" 'user_password' "\"${password}\""
 
   log '\nUser password is set successfully.'
 }
@@ -406,7 +409,7 @@ enter_root_password () {
     is_not_given "${REPLY}" && abort '\nUser input is required.'
   done
 
-  save_setting 'root_password' "\"${password}\""
+  write_property "${SETTINGS}" 'root_password' "\"${password}\""
 
   log '\nRoot password is set successfully.'
 }
@@ -423,7 +426,7 @@ select_kernel () {
 
   local kernel="${REPLY}"
 
-  save_setting 'kernel' "\"${kernel}\""
+  write_property "${SETTINGS}" 'kernel' "\"${kernel}\""
 
   log "Linux kernel is set to ${kernel}."
 }
@@ -434,15 +437,17 @@ report () {
   query='.user_password = "***" | .root_password = "***"'
 
   local settings=''
-  settings="$(get_settings | jq "${query}")" || abort
+  settings="$(jq "${query}" "${SETTINGS}")" || abort
 
   log '\nInstallation properties have been set to:'
   log "${settings}"
 }
 
 while true; do
-  init_settings &&
-    select_disk &&
+  # Initialize the settings file
+  echo '{}' > "${SETTINGS}"
+
+  select_disk &&
     opt_in_swap_space &&
     select_mirrors &&
     select_timezone &&

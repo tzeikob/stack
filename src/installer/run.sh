@@ -6,6 +6,9 @@ source /opt/stack/commoms/utils.sh
 source /opt/stack/commons/logger.sh
 source /opt/stack/commons/validators.sh
 source /opt/stack/commons/input.sh
+source /opt/stack/commons/json.sh
+
+SETTINGS='/opt/stack/installer/settings.json'
 
 BAR_FORMAT='{desc:10}  {percentage:3.0f}%|{bar}|  ET{elapsed}'
 
@@ -16,7 +19,7 @@ init () {
   mkdir -p /var/log/stack
   
   # Initialize the settings file
-  init_settings
+  echo '{}' > "${SETTINGS}"
 }
 
 # Report any collected installation settings.
@@ -27,7 +30,7 @@ report () {
   query='.user_password = "***" | .root_password = "***"'
 
   local settings=''
-  settings="$(get_settings | jq "${query}")"
+  settings="$(jq "${query}" "${SETTINGS}")"
 
   if has_failed; then
     log ERROR 'Unable to read installation settings.' >> "${log_file}"
@@ -104,7 +107,7 @@ install () {
 
   # Impersonate the sudoer user on desktop, stack and apps installation
   if match "${file_name}" '^(desktop|stack|apps)$'; then
-    user_name="$(get_setting 'user_name')"
+    user_name="$(read_property "${SETTINGS}" 'user_name')"
 
     if has_failed; then
       log ERROR 'Unable to read the user_name setting.' >> "${log_file}"

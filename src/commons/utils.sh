@@ -5,8 +5,6 @@ set -Eeo pipefail
 source /opt/stack/commons/logger.sh
 source /opt/stack/commons/validators.sh
 
-SETTINGS_FILE='/opt/stack/.settings'
-
 # Aborts the current process logging the given error message.
 # Arguments:
 #  level:   optionally one of INFO, WARN, ERROR
@@ -69,72 +67,6 @@ has_failed () {
 # An inverse version of has_failed.
 has_not_failed () {
   has_failed "${1}" && return 1 || return 0
-}
-
-# Resets the installation settings.
-init_settings () {
-  echo '{}' > "${SETTINGS_FILE}"
-}
-
-# Saves the installation setting with the given key
-# to the given value.
-# Arguments:
-#  key:   the key name of a setting
-#  value: any value
-save_setting () {
-  local key="${1}"
-  local value="${2}"
-
-  if is_empty "${value}" || match "${value}" '^ *$'; then
-    value='""'
-  fi
-
-  local settings=''
-  settings="$(jq -cr ".${key} = ${value}" "${SETTINGS_FILE}")"
-
-  echo "${settings}" > "${SETTINGS_FILE}"
-}
-
-# Returns the content of the installation settings file.
-# Outputs:
-#  The installation settings as a JSON object.
-get_settings () {
-  jq '.' "${SETTINGS_FILE}"
-}
-
-# Gets the value of the installation setting with the given key.
-# Arguments:
-#  key: the key name of a setting
-# Outputs:
-#  The value of the given setting otherwise none.
-get_setting () {
-  local key="${1}"
-
-  jq -cer ".${key}" "${SETTINGS_FILE}"
-}
-
-# Checks if the setting with the given key is equal
-# to the given value.
-# Arguments:
-#  key:   the key of a setting
-#  value: any value
-# Returns:
-#  0 if the setting is equal to the value otherwise 1.
-is_setting () {
-  local key="${1}"
-  local value="${2}"
-
-  # Check if the given value is of invalid type
-  echo "${value}" | jq -cer 'type' &> /dev/null
-
-  # Consider any value of invalid type as string
-  if has_failed; then
-    value="\"${value}\""
-  fi
-
-  local query="select(.${key} == ${value})"
-
-  jq -cer "${query}" "${SETTINGS_FILE}" &> /dev/null
 }
 
 # Checks if the dep with the given name is installed or not.

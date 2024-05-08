@@ -5,13 +5,17 @@ set -Eeo pipefail
 source /opt/stack/commons/utils.sh
 source /opt/stack/commons/logger.sh
 source /opt/stack/commons/validators.sh
+source /opt/stack/commons/json.sh
+
+SETTINGS='/opt/stack/installer/settings.json'
 
 # Sets host related settings.
 set_host () {
   log INFO 'Setting up the host...'
 
   local host_name=''
-  host_name="$(get_setting 'host_name')" || abort ERROR 'Unable to read host_name setting.'
+  host_name="$(read_property "${SETTINGS}" 'host_name')" ||
+    abort ERROR 'Unable to read host_name setting.'
 
   echo "${host_name}" > /etc/hostname ||
     abort ERROR 'Failed to set the host name.'
@@ -34,13 +38,14 @@ set_users () {
 
   local groups='wheel,audio,video,optical,storage'
 
-  if is_setting 'vm' 'yes'; then
+  if is_property "${SETTINGS}" 'vm' 'yes'; then
     groupadd 'libvirt' 2>&1
     groups="${groups},libvirt"
   fi
 
   local user_name=''
-  user_name="$(get_setting 'user_name')" || abort ERROR 'Unable to read user_name setting.'
+  user_name="$(read_property "${SETTINGS}" 'user_name')" ||
+    abort ERROR 'Unable to read user_name setting.'
 
   useradd -m -G "${groups}" -s /bin/bash "${user_name}" 2>&1 ||
     abort ERROR 'Failed to create the sudoer user.'
@@ -67,7 +72,8 @@ set_users () {
   log INFO 'Sudo permissions have been granted to sudoer user.'
 
   local user_password=''
-  user_password="$(get_setting 'user_password')" || abort ERROR 'Unable to read user_password setting.'
+  user_password="$(read_property "${SETTINGS}" 'user_password')" ||
+    abort ERROR 'Unable to read user_password setting.'
 
   echo "${user_name}:${user_password}" | chpasswd 2>&1 ||
     abort ERROR "Failed to set password to user ${user_name}."
@@ -75,7 +81,8 @@ set_users () {
   log INFO "Password has been given to user ${user_name}."
 
   local root_password=''
-  root_password="$(get_setting 'root_password')" || abort ERROR 'Unable to read root_password setting.'
+  root_password="$(read_property "${SETTINGS}" 'root_password')" ||
+    abort ERROR 'Unable to read root_password setting.'
 
   echo "root:${root_password}" | chpasswd 2>&1 ||
     abort ERROR 'Failed to set password to root user.'
@@ -96,7 +103,8 @@ set_mirrors () {
   log INFO 'Setting up the package databases mirrors...'
 
   local mirrors=''
-  mirrors="$(get_setting 'mirrors' | jq -cer 'join(",")')" || abort ERROR 'Unable to read mirrors setting.'
+  mirrors="$(read_property "${SETTINGS}" 'mirrors' | jq -cer 'join(",")')" ||
+    abort ERROR 'Unable to read mirrors setting.'
 
   reflector --country "${mirrors}" \
     --age 48 --sort age --latest 40 --save /etc/pacman.d/mirrorlist 2>&1 ||
@@ -164,7 +172,7 @@ install_base_packages () {
   log INFO 'Installing the base packages...'
 
   local extra_pckgs=''
-  if is_setting 'uefi_mode' 'yes'; then
+  if is_property "${SETTINGS}" 'uefi_mode' 'yes'; then
     extra_pckgs='efibootmgr'
   fi
 
@@ -202,7 +210,8 @@ install_display_server () {
   log INFO 'Xorg confg have been saved under /etc/X11/xorg.conf.'
 
   local user_name=''
-  user_name="$(get_setting 'user_name')" || abort ERROR 'Unable to read user_name setting.'
+  user_name="$(read_property "${SETTINGS}" 'user_name')" ||
+    abort ERROR 'Unable to read user_name setting.'
 
   cp /opt/stack/installer/configs/xorg/xinitrc "/home/${user_name}/.xinitrc" &&
     chown ${user_name}:${user_name} "/home/${user_name}/.xinitrc" ||
@@ -229,17 +238,18 @@ install_drivers () {
 
   local cpu_pckgs=''
 
-  if is_setting 'cpu_vendor' 'amd'; then
+  if is_property "${SETTINGS}" 'cpu_vendor' 'amd'; then
     cpu_pckgs='amd-ucode'
-  elif is_setting 'cpu_vendor' 'intel'; then
+  elif is_property "${SETTINGS}" 'cpu_vendor' 'intel'; then
     cpu_pckgs='intel-ucode'
   fi
 
   local gpu_pckgs=''
 
-  if is_setting 'gpu_vendor' 'nvidia'; then
+  if is_property "${SETTINGS}" 'gpu_vendor' 'nvidia'; then
     local kernel=''
-    kernel="$(get_setting 'kernel')" || abort ERROR 'Unable to read kernel setting.'
+    kernel="$(read_property "${SETTINGS}" 'kernel')" ||
+      abort ERROR 'Unable to read kernel setting.'
 
     if equals "${kernel}" 'stable'; then
       gpu_pckgs='nvidia'
@@ -248,9 +258,9 @@ install_drivers () {
     fi
 
     gpu_pckgs+=' nvidia-utils nvidia-settings'
-  elif is_setting 'gpu_vendor' 'amd'; then
+  elif is_property "${SETTINGS}" 'gpu_vendor' 'amd'; then
     gpu_pckgs='xf86-video-amdgpu'
-  elif is_setting 'gpu_vendor' 'intel'; then
+  elif is_property "${SETTINGS}" 'gpu_vendor' 'intel'; then
     gpu_pckgs='libva-intel-driver libvdpau-va-gl vulkan-intel libva-utils'
   else
     gpu_pckgs='xf86-video-qxl'
@@ -258,13 +268,13 @@ install_drivers () {
 
   local other_pckgs=''
 
-  if is_setting 'synaptics' 'yes'; then
+  if is_property "${SETTINGS}" 'synaptics' 'yes'; then
     other_pckgs='xf86-input-synaptics'
   fi
 
   local vm_pckgs=''
 
-  if is_setting 'vm' 'yes' && is_setting 'vm_vendor' 'oracle'; then
+  if is_property "${SETTINGS}" 'vm' 'yes' && is_property "${SETTINGS}" 'vm_vendor' 'oracle'; then
     vm_pckgs='virtualbox-guest-utils'
   fi
 
@@ -317,7 +327,8 @@ install_aur_package_manager () {
   log INFO 'Installing the AUR package manager...'
 
   local user_name=''
-  user_name="$(get_setting 'user_name')" || abort ERROR 'Unable to read user_name setting.'
+  user_name="$(read_property "${SETTINGS}" 'user_name')" ||
+    abort ERROR 'Unable to read user_name setting.'
 
   local yay_home="/home/${user_name}/yay"
 
@@ -335,7 +346,8 @@ install_aur_package_manager () {
 # Sets the system locale along with the locale environment variables.
 set_locales () {
   local locales=''
-  locales="$(get_setting 'locales')" || abort ERROR 'Unable to read locales setting.'
+  locales="$(read_property "${SETTINGS}" 'locales')" ||
+    abort ERROR 'Unable to read locales setting.'
 
   log INFO 'Generating system locales...'
 
@@ -378,7 +390,8 @@ set_locales () {
   
   # Save locale settings to the user config
   local user_name=''
-  user_name="$(get_setting 'user_name')" || abort ERROR 'Unable to read user_name setting.'
+  user_name="$(read_property "${SETTINGS}" 'user_name')" ||
+    abort ERROR 'Unable to read user_name setting.'
 
   local config_home="/home/${user_name}/.config/stack"
 
@@ -408,7 +421,7 @@ set_keyboard () {
   log INFO 'Applying keyboard settings...'
 
   local keyboard_map=''
-  keyboard_map="$(get_setting 'keyboard_map')" ||
+  keyboard_map="$(read_property "${SETTINGS}" 'keyboard_map')" ||
     abort ERROR 'Unable to read keyboard_map setting.'
 
   echo "KEYMAP=${keyboard_map}" > /etc/vconsole.conf ||
@@ -422,19 +435,19 @@ set_keyboard () {
   log INFO 'Keyboard map keys has been loaded.'
 
   local keyboard_model=''
-  keyboard_model="$(get_setting 'keyboard_model')" ||
+  keyboard_model="$(read_property "${SETTINGS}" 'keyboard_model')" ||
     abort ERROR 'Unable to read keyboard_model setting.'
 
   local keyboard_layout=''
-  keyboard_layout="$(get_setting 'keyboard_layout')" ||
+  keyboard_layout="$(read_property "${SETTINGS}" 'keyboard_layout')" ||
     abort ERROR 'Unable to read keyboard_layout setting.'
   
   local layout_variant=''
-  layout_variant="$(get_setting 'layout_variant')" ||
+  layout_variant="$(read_property "${SETTINGS}" 'layout_variant')" ||
     abort ERROR 'Unable to read layout_variant setting.'
 
   local keyboard_options=''
-  keyboard_options="$(get_setting 'keyboard_options')" ||
+  keyboard_options="$(read_property "${SETTINGS}" 'keyboard_options')" ||
     abort ERROR 'Unable to read keyboard_options setting.'
   
   local keyboard_conf="/etc/X11/xorg.conf.d/00-keyboard.conf"
@@ -453,7 +466,8 @@ set_keyboard () {
 
   # Save keyboard settings to the user config
   local user_name=''
-  user_name="$(get_setting 'user_name')" || abort ERROR 'Unable to read user_name setting.'
+  user_name="$(read_property "${SETTINGS}" 'user_name')" ||
+    abort ERROR 'Unable to read user_name setting.'
 
   local config_home="/home/${user_name}/.config/stack"
 
@@ -486,7 +500,8 @@ set_timezone () {
   log INFO 'Setting the system timezone...'
 
   local timezone=''
-  timezone="$(get_setting 'timezone')" || abort ERROR 'Unable to read timezone setting.'
+  timezone="$(read_property "${SETTINGS}" 'timezone')" ||
+    abort ERROR 'Unable to read timezone setting.'
 
   ln -sf "/usr/share/zoneinfo/${timezone}" /etc/localtime ||
     abort ERROR 'Failed to set the timezone.'
@@ -636,7 +651,8 @@ configure_power () {
 
   # Save screensaver settings to the user config
   local user_name=''
-  user_name="$(get_setting 'user_name')" || abort ERROR 'Unable to read user_name setting.'
+  user_name="$(read_property "${SETTINGS}" 'user_name')" ||
+    abort ERROR 'Unable to read user_name setting.'
 
   local config_home="/home/${user_name}/.config/stack"
 
@@ -732,7 +748,8 @@ configure_security () {
 
   # Save screen locker settings to the user config
   local user_name=''
-  user_name="$(get_setting 'user_name')" || abort ERROR 'Unable to read user_name setting.'
+  user_name="$(read_property "${SETTINGS}" 'user_name')" ||
+    abort ERROR 'Unable to read user_name setting.'
 
   local config_home="/home/${user_name}/.config/stack"
 
@@ -754,14 +771,15 @@ configure_security () {
 setup_boot_loader () {
   log INFO 'Setting up the boot loader...'
 
-  if is_setting 'uefi_mode' 'yes'; then
+  if is_property "${SETTINGS}" 'uefi_mode' 'yes'; then
     grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB 2>&1 ||
       abort ERROR 'Failed to install grub boot loader on x86_64-efi.'
     
     log INFO 'Grub boot loader has been installed on x86_64-efi.'
   else
     local disk=''
-    disk="$(get_setting 'disk')" || abort ERROR 'Unable to read disk setting.'
+    disk="$(read_property "${SETTINGS}" 'disk')" ||
+      abort ERROR 'Unable to read disk setting.'
 
     grub-install --target=i386-pc "${disk}" 2>&1 ||
       abort ERROR 'Failed to install grub boot on i386-pc.'
@@ -782,7 +800,7 @@ setup_boot_loader () {
 
   log INFO 'Boot loader config file created successfully.'
 
-  if is_setting 'uefi_mode' 'yes' && is_setting 'vm_vendor' 'oracle'; then
+  if is_property "${SETTINGS}" 'uefi_mode' 'yes' && is_property "${SETTINGS}" 'vm_vendor' 'oracle'; then
     mkdir -p /boot/EFI/BOOT &&
       cp /boot/EFI/GRUB/grubx64.efi /boot/EFI/BOOT/BOOTX64.EFI ||
       abort ERROR 'Failed to copy the grubx64 efi file to BOOTX64.'
@@ -840,14 +858,14 @@ enable_services () {
 
   log INFO 'Service paccache.timer has been enabled.'
 
-  if is_setting 'trim_disk' 'yes'; then
+  if is_property "${SETTINGS}" 'trim_disk' 'yes'; then
     systemctl enable fstrim.timer 2>&1 ||
       abort ERROR 'Failed to enable fstrim.timer service.'
     
     log INFO 'Service fstrim.timer has been enabled.'
   fi
 
-  if is_setting 'vm' 'yes' && is_setting 'vm_vendor' 'oracle'; then
+  if is_property "${SETTINGS}" 'vm' 'yes' && is_property "${SETTINGS}" 'vm_vendor' 'oracle'; then
     systemctl enable vboxservice.service 2>&1 ||
       abort ERROR 'Failed to enable virtual box service.'
 
@@ -855,7 +873,8 @@ enable_services () {
   fi
   
   local user_name=''
-  user_name="$(get_setting 'user_name')" || abort ERROR 'Unable to read user_name setting.'
+  user_name="$(read_property "${SETTINGS}" 'user_name')" ||
+    abort ERROR 'Unable to read user_name setting.'
   
   local config_home="/home/${user_name}/.config"
 

@@ -5,6 +5,9 @@ set -Eeo pipefail
 source /opt/stack/commons/utils.sh
 source /opt/stack/commons/logger.sh
 source /opt/stack/commons/validators.sh
+source /opt/stack/commons/json.sh
+
+SETTINGS='/opt/stack/installer/settings.json'
 
 # Erases all table data of the installation disk.
 wipe_disk () {
@@ -29,7 +32,8 @@ wipe_disk () {
   log INFO 'Start now erasing disk data...'
 
   local disk=''
-  disk="$(get_setting 'disk')" || abort ERROR 'Unable to read disk setting.'
+  disk="$(read_property "${SETTINGS}" 'disk')" ||
+    abort ERROR 'Unable to read disk setting.'
 
   wipefs -a "${disk}" 2>&1 ||
     abort ERROR 'Failed to wipe the disk file system.'
@@ -42,7 +46,8 @@ create_gpt_partitions () {
   log INFO 'Creating a clean GPT partition table...'
 
   local disk=''
-  disk="$(get_setting 'disk')" || abort ERROR 'Unable to read disk setting.'
+  disk="$(read_property "${SETTINGS}" 'disk')" ||
+    abort ERROR 'Unable to read disk setting.'
 
   parted --script "${disk}" mklabel gpt 2>&1 ||
     abort ERROR 'Failed to create partition table.'
@@ -64,9 +69,10 @@ create_gpt_partitions () {
 
   start=${end}
 
-  if is_setting 'swap_on' 'yes' && is_setting 'swap_type' 'partition'; then
+  if is_property "${SETTINGS}" 'swap_on' 'yes' && is_property "${SETTINGS}" 'swap_type' 'partition'; then
     local swap_size=0
-    swap_size=$(get_setting 'swap_size') || abort ERROR 'Unable to read swap_size setting.'
+    swap_size=$(read_property "${SETTINGS}" 'swap_size') ||
+      abort ERROR 'Unable to read swap_size setting.'
 
     end=$((start + (swap_size * 1024)))
 
@@ -93,7 +99,8 @@ create_mbr_partitions () {
   log INFO 'Creating a clean MBR partition table...'
 
   local disk=''
-  disk="$(get_setting 'disk')" || abort ERROR 'Unable to read disk setting.'
+  disk="$(read_property "${SETTINGS}" 'disk')" ||
+    abort ERROR 'Unable to read disk setting.'
 
   parted --script "${disk}" mklabel msdos 2>&1 ||
     abort ERROR 'Failed to create partition table.'
@@ -103,9 +110,10 @@ create_mbr_partitions () {
   local start=1
   local root_index=1
 
-  if is_setting 'swap_on' 'yes' && is_setting 'swap_type' 'partition'; then
+  if is_property "${SETTINGS}" 'swap_on' 'yes' && is_property "${SETTINGS}" 'swap_type' 'partition'; then
     local swap_size=0
-    swap_size=$(get_setting 'swap_size') || abort ERROR 'Unable to read swap_size setting.'
+    swap_size=$(read_property "${SETTINGS}" 'swap_size') ||
+      abort ERROR 'Unable to read swap_size setting.'
 
     local end=$((start + (swap_size * 1024)))
 
@@ -137,7 +145,7 @@ create_mbr_partitions () {
 create_partitions () {
   log INFO 'Creating disk partitions...'
 
-  if is_setting 'uefi_mode' 'yes'; then
+  if is_property "${SETTINGS}" 'uefi_mode' 'yes'; then
     create_gpt_partitions || abort ERROR 'Failed to create GPT partitions.'
   else
     create_mbr_partitions || abort ERROR 'Failed to create MBR partitions.'
@@ -151,14 +159,15 @@ format_partitions () {
   log INFO 'Formatting disk partitions...'
 
   local disk=''
-  disk="$(get_setting 'disk')" || abort ERROR 'Unable to read disk setting.'
+  disk="$(read_property "${SETTINGS}" 'disk')" ||
+    abort ERROR 'Unable to read disk setting.'
 
   local postfix=''
   if match "${disk}" '^/dev/nvme'; then
     postfix='p'
   fi
 
-  if is_setting 'uefi_mode' 'yes'; then
+  if is_property "${SETTINGS}" 'uefi_mode' 'yes'; then
     log INFO 'Formating the boot partition...'
 
     mkfs.fat -F 32 "${disk}${postfix}1" 2>&1 ||
@@ -168,7 +177,7 @@ format_partitions () {
 
     local root_index=2
 
-    if is_setting 'swap_on' 'yes' && is_setting 'swap_type' 'partition'; then
+    if is_property "${SETTINGS}" 'swap_on' 'yes' && is_property "${SETTINGS}" 'swap_type' 'partition'; then
       root_index=3
     fi
 
@@ -181,7 +190,7 @@ format_partitions () {
   else
     local root_index=1
 
-    if is_setting 'swap_on' 'yes' && is_setting 'swap_type' 'partition'; then
+    if is_property "${SETTINGS}" 'swap_on' 'yes' && is_property "${SETTINGS}" 'swap_type' 'partition'; then
       root_index=2
     fi
 
@@ -201,7 +210,8 @@ mount_file_system () {
   log INFO 'Mounting disk partitions...'
   
   local disk=''
-  disk="$(get_setting 'disk')" || abort ERROR 'Unable to read disk setting.'
+  disk="$(read_property "${SETTINGS}" 'disk')" ||
+    abort ERROR 'Unable to read disk setting.'
 
   local postfix=''
   if match "${disk}" '/dev/^nvme'; then
@@ -210,10 +220,10 @@ mount_file_system () {
 
   local mount_opts='relatime,commit=60'
 
-  if is_setting 'uefi_mode' 'yes'; then
+  if is_property "${SETTINGS}" 'uefi_mode' 'yes'; then
     local root_index=2
 
-    if is_setting 'swap_on' 'yes' && is_setting 'swap_type' 'partition'; then
+    if is_property "${SETTINGS}" 'swap_on' 'yes' && is_property "${SETTINGS}" 'swap_type' 'partition'; then
       root_index=3
     fi
 
@@ -229,7 +239,7 @@ mount_file_system () {
   else
     local root_index=1
 
-    if is_setting 'swap_on' 'yes' && is_setting 'swap_type' 'partition'; then
+    if is_property "${SETTINGS}" 'swap_on' 'yes' && is_property "${SETTINGS}" 'swap_type' 'partition'; then
       root_index=2
     fi
 
@@ -244,7 +254,7 @@ mount_file_system () {
 
 # Creates the swap space.
 make_swap_space () {
-  if is_setting 'swap_on' 'no'; then
+  if is_property "${SETTINGS}" 'swap_on' 'no'; then
     log INFO 'Swap space has been disabled.'
     return 0
   fi
@@ -252,17 +262,18 @@ make_swap_space () {
   log INFO 'Setting up the swap space...'
 
   local disk=''
-  disk="$(get_setting 'disk')" || abort ERROR 'Unable to read disk setting.'
+  disk="$(read_property "${SETTINGS}" 'disk')" ||
+    abort ERROR 'Unable to read disk setting.'
 
   local postfix=''
   if match "${disk}" '/dev/^nvme'; then
     postfix='p'
   fi
 
-  if is_setting 'swap_type' 'partition'; then
+  if is_property "${SETTINGS}" 'swap_type' 'partition'; then
     local swap_index=1
 
-    if is_setting 'uefi_mode' 'yes'; then
+    if is_property "${SETTINGS}" 'uefi_mode' 'yes'; then
       swap_index=2
     fi
 
@@ -273,9 +284,9 @@ make_swap_space () {
       abort ERROR 'Failed to enable swap partition.'
 
     log INFO 'Swap partition has been enabled.'
-  elif is_setting 'swap_type' 'file'; then
+  elif is_property "${SETTINGS}" 'swap_type' 'file'; then
     local swap_size=0
-    swap_size=$(get_setting 'swap_size' | jq -cer '. * 1024') ||
+    swap_size=$(read_property "${SETTINGS}" 'swap_size' | jq -cer '. * 1024') ||
       abort ERROR 'Unable to read swap_size setting.'
 
     local swap_file='/mnt/swapfile'
@@ -311,7 +322,8 @@ report () {
   log INFO 'Disk layout is now set to:\n'
 
   local disk=''
-  disk="$(get_setting 'disk')" || abort ERROR 'Unable to read disk setting.'
+  disk="$(read_property "${SETTINGS}" 'disk')" ||
+    abort ERROR 'Unable to read disk setting.'
 
   parted --script "${disk}" print 2>&1 |
     awk '{print " "$0}' || abort ERROR 'Unable to list disk info.'
