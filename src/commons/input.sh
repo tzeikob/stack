@@ -8,6 +8,20 @@ AES=$'╬'
 AES_LN=$'╬\n'
 KVS=$'▒'
 
+# Shows a prompt asking the user to enter the
+# next command, which is kept in the global var REPLY.
+# Arguments:
+#  label: the label of the prompt
+# Outputs:
+#  A minimal prompt line.
+prompt () {
+  local label="${1:-"prompt"}"
+
+  read -rep "${label}>> " REPLY
+  
+  history -s "${REPLY}"
+}
+
 # Asks the user to enter a value, where the answer is
 # kept in the global var REPLY.
 # Arguments:
