@@ -284,3 +284,23 @@ is_off () {
 is_not_off () {
   is_off "${1}" && return 1 || return 0
 }
+
+# Checks if the dep with the given name is installed or not.
+# Arguments:
+#  name: the name of a dependency
+# Returns:
+#  0 if dep is installed otherwise 1.
+dep_exists () {
+  local name="${1}"
+
+  if pacman -Qi "${name}" > /dev/null 2>&1; then
+    return 0
+  fi
+
+  return 1
+}
+
+# An inversed alias of dep_exists.
+dep_not_exists () {
+  dep_exists "${1}" && return 1 || return 0
+}
