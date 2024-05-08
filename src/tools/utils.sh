@@ -32,25 +32,6 @@ log () {
   fi
 }
 
-# Sets the IFS to the given value.
-# Arguments:
-#  value: space, line, tab or any character
-set_separator () {
-  local value="${1}"
-
-  case "${value}" in
-    space) IFS=$' ';;
-    line) IFS=$'\n';;
-    tab) IFS=$'\t';;
-    *) IFS="${value}";;
-  esac
-}
-
-# Restores the IFS to the default value.
-restore_separator () {
-  IFS=$' \n\t'
-}
-
 # Returns the list of any detected hosts in the
 # local network.
 # Outputs:
