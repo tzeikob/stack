@@ -6,43 +6,6 @@ AES=$'╬'
 AES_LN=$'╬\n'
 KVS=$'▒'
 
-# Returns the list of any detected hosts in the
-# local network.
-# Outputs:
-#  A json array list of host objects.
-find_hosts () {
-  local route=''
-  route="$(ip route get 1.1.1.1)" || return 1
-
-  local cidr=''
-  cidr="$(echo "${route}" | awk '/via/{print $3}' |
-    head -n 1 | sed -r 's/(\.[0-9]{1,3}$)/.0\/24/')" || return 1
-
-  local map=''
-  map="$(nmap -n -sn "${cidr}" -oG -)" || return 1
-
-  local ips=''
-  ips="$(echo "${map}" | awk '/Up$/{print $2}')" || return 1
-
-  local ip=''
-  local hosts=''
-
-  while read -r ip; do
-    local host_map=''
-    host_map="$(nmap --host-timeout 5 "${ip}" -oG -)" || continue
-
-    hosts+="$(echo "${host_map}" | awk '/Host.*Up/{
-      gsub(/(\(|\))/,"",$3);
-      print "{\"ip\":\""$2"\",\"name\":\""$3"\"},"
-    }')"
-  done <<< "${ips}"
-
-  # Remove the extra comma after the last element
-  hosts="${hosts:+${hosts::-1}}"
-
-  echo "[${hosts}]"
-}
-
 # Shows a prompt asking the user to enter the
 # next command, which is kept in the global var REPLY.
 # Arguments:
@@ -297,28 +260,6 @@ get_hash () {
   local length="${2:-32}"
 
   echo "${value}" | md5sum | cut "-c1-${length}"
-}
-
-# Downloads the files with the given URL to the
-# the given directory.
-# Arguments:
-#  output: the output directory
-#  files:  a list of urls
-download () {
-  local output="${1}" && shift
-  local urls="${@}"
-
-  echo "Downloading files to ${output}:"
-  echo ${urls} | awk '{
-    for (i=1; i<=NF; i++) {
-      print " "$i
-    }
-  }'
-
-  local url=''
-  for url in ${urls}; do
-    wget -P "${output}" "${url}" -q --show-progress || return 1
-  done
 }
 
 # Plays a short success or failure beep sound according
