@@ -2,12 +2,6 @@
 
 set -o pipefail
 
-CONFIG_HOME="${HOME}/.config/stack"
-
-RESOURCES_HOME="${HOME}/.local/share"
-COLORS_HOME="${RESOURCES_HOME}/colors"
-WALLPAPERS_HOME="${RESOURCES_HOME}/wallpapers"
-
 AES=$'╬'
 AES_LN=$'╬\n'
 KVS=$'▒'

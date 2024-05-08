@@ -4,6 +4,7 @@ set -o pipefail
 
 source /opt/stack/commons/utils.sh
 
+CONFIG_HOME="${HOME}/.config/stack"
 NETWORKS_SETTINGS="${CONFIG_HOME}/networks.json"
 
 # Returns the general status of the networking.

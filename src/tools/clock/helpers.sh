@@ -4,6 +4,7 @@ set -o pipefail
 
 source /opt/stack/commons/utils.sh
 
+CONFIG_HOME="${HOME}/.config/stack"
 CLOCK_SETTINGS="${CONFIG_HOME}/clock.json"
 
 # Shows a menu asking the user to select a timezone.

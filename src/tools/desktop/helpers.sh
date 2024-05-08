@@ -5,7 +5,9 @@ set -o pipefail
 source /opt/stack/commons/utils.sh
 source /opt/stack/tools/displays/helpers.sh
 
+CONFIG_HOME="${HOME}/.config/stack"
 DESKTOP_SETTINGS="${CONFIG_HOME}/desktop.json"
+WALLPAPERS_HOME="${HOME}/.local/share/wallpapers"
 
 # Returns the list of any wallpapers found under
 # the wallpapers home.

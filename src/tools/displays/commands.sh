@@ -5,6 +5,8 @@ set -o pipefail
 source /opt/stack/commons/utils.sh
 source /opt/stack/tools/displays/helpers.sh
 
+COLORS_HOME="${HOME}/.local/share/colors"
+
 # Shows the current status of Xorg and active displays.
 # Outputs:
 #  A verbose list of text data.

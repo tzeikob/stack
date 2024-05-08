@@ -6,6 +6,8 @@ source /opt/stack/commons/utils.sh
 source /opt/stack/tools/desktop/helpers.sh
 source /opt/stack/tools/displays/helpers.sh
 
+WALLPAPERS_HOME="${HOME}/.local/share/wallpapers"
+
 # Shows the current status of the desktop environment.
 # Outputs:
 #  A verbose list of text data.

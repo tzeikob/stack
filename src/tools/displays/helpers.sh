@@ -4,7 +4,9 @@ set -o pipefail
 
 source /opt/stack/commons/utils.sh
 
+CONFIG_HOME="${HOME}/.config/stack"
 DISPLAYS_SETTINGS="${CONFIG_HOME}/displays.json"
+COLORS_HOME="${HOME}/.local/share/colors"
 
 # Checks if the given status is among the valid
 # xrandr output statuses.

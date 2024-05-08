@@ -4,6 +4,7 @@ set -o pipefail
 
 source /opt/stack/commons/utils.sh
 
+CONFIG_HOME="${HOME}/.config/stack"
 SECURITY_SETTINGS="${CONFIG_HOME}/security.json"
 
 # Kills any proccesses of possibly

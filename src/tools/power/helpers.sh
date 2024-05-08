@@ -4,6 +4,7 @@ set -o pipefail
 
 source /opt/stack/commons/utils.sh
 
+CONFIG_HOME="${HOME}/.config/stack"
 POWER_SETTINGS="${CONFIG_HOME}/power.json"
 
 # Finds the ac power adapter data.

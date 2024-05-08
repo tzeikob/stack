@@ -5,6 +5,7 @@ set -o pipefail
 source /opt/stack/commons/utils.sh
 source /opt/stack/commons/text.sh
 
+CONFIG_HOME="${HOME}/.config/stack"
 LANGS_SETTINGS="${CONFIG_HOME}/langs.json"
 
 # Shows a menu asking the user to select a keyboard map.
