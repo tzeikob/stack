@@ -3,6 +3,7 @@
 set -o pipefail
 
 source /opt/stack/commons/utils.sh
+source /opt/stack/commons/text.sh
 
 LANGS_SETTINGS="${CONFIG_HOME}/langs.json"
 
