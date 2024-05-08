@@ -3,6 +3,7 @@
 set -o pipefail
 
 source /opt/stack/commons/utils.sh
+source /opt/stack/commons/logger.sh
 source /opt/stack/tools/system/helpers.sh
 
 # Shows the current status of system.

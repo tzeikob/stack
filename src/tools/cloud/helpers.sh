@@ -3,6 +3,7 @@
 set -o pipefail
 
 source /opt/stack/commons/utils.sh
+source /opt/stack/commons/logger.sh
 
 # Returns the remote services having the given status.
 # If status is not given all remotes will be returned.

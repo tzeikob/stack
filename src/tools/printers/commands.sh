@@ -3,6 +3,7 @@
 set -o pipefail
 
 source /opt/stack/commons/utils.sh
+source /opt/stack/commons/logger.sh
 source /opt/stack/tools/printers/helpers.sh
 
 # Shows a short status of cups service and printers.

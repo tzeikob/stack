@@ -3,6 +3,7 @@
 set -o pipefail
 
 source /opt/stack/commons/utils.sh
+source /opt/stack/commons/logger.sh
 
 # Returns the list of all printing destinations,
 # which have been installed into the system.
