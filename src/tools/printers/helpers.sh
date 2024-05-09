@@ -7,6 +7,7 @@ source /opt/stack/commons/logger.sh
 source /opt/stack/commons/network.sh
 source /opt/stack/commons/input.sh
 source /opt/stack/commons/json.sh
+source /opt/stack/commons/math.sh
 
 # Returns the list of all printing destinations,
 # which have been installed into the system.

@@ -456,41 +456,6 @@ is_not_toggle () {
   is_toggle "${1}" && return 1 || return 0
 }
 
-# Checks if the given value or expression is true,
-# where expression could be any mathematical comparison
-# like 0 < 5 < 10 or so.
-# Arguments:
-#  value: any boolean value or expression
-# Returns:
-#  0 if value is true otherwise 1.
-is_true () {
-  local value="${1}"
-
-  local result='false'
-  result="$(qalc -t "${value}")" || return 1
-
-  if equals "${result}" 'true' || [[ ${result} -eq 1 ]]; then
-    return 0
-  fi
-
-  return 1
-}
-
-# An inverse version of is_true.
-is_not_true () {
-  is_true "${1}" && return 1 || return 0
-}
-
-# A alias version of is_not_true.
-is_false () {
-  is_not_true "${1}" && return 0 || return 1
-}
-
-# An inverse version of is_false.
-is_not_false () {
-  is_false "${1}" && return 1 || return 0
-}
-
 # Checks if the given value is boolean.
 # Arguments:
 #  value: any value
@@ -585,23 +550,6 @@ equals () {
 # An inverse version of equals.
 not_equals () {
   equals "${1}" "${2}" && return 1 || return 0
-}
-
-# Calculates the given arithmetic expression.
-# Arguments:
-#  expression: any arithmetic expression
-# Outputs:
-#  The result of the arithmetic expression.
-calc () {
-  local expression="${1}"
-
-  local result=0
-  result="$(qalc -t "${expression}")" || return 1
-
-  # Make sure scientific formats like 3e-9 convert to regular form
-  result="$(echo "${result}" | awk '{print $0 + 0}')" || return 1
-
-  echo "${result}"
 }
 
 # Checks if any processes with the given command

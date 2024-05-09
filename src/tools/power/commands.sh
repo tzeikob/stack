@@ -4,6 +4,7 @@ set -o pipefail
 
 source /opt/stack/commons/utils.sh
 source /opt/stack/commons/logger.sh
+source /opt/stack/commons/math.sh
 source /opt/stack/tools/power/helpers.sh
 
 # Shows the current status of the system's power.

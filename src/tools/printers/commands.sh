@@ -6,6 +6,7 @@ source /opt/stack/commons/utils.sh
 source /opt/stack/commons/logger.sh
 source /opt/stack/commons/input.sh
 source /opt/stack/commons/json.sh
+source /opt/stack/commons/math.sh
 source /opt/stack/tools/printers/helpers.sh
 
 # Shows a short status of cups service and printers.

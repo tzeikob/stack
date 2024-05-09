@@ -3,6 +3,7 @@
 set -o pipefail
 
 source /opt/stack/commons/utils.sh
+source /opt/stack/commons/math.sh
 
 # Reads the system's power and battery data and
 # prints the current status of power suplly.

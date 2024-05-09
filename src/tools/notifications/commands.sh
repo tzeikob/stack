@@ -5,6 +5,7 @@ set -o pipefail
 source /opt/stack/commons/utils.sh
 source /opt/stack/commons/logger.sh
 source /opt/stack/commons/json.sh
+source /opt/stack/commons/math.sh
 source /opt/stack/tools/notifications/helpers.sh
 
 # Starts the notifications service.

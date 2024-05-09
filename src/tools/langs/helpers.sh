@@ -7,6 +7,7 @@ source /opt/stack/commons/logger.sh
 source /opt/stack/commons/text.sh
 source /opt/stack/commons/input.sh
 source /opt/stack/commons/json.sh
+source /opt/stack/commons/math.sh
 
 CONFIG_HOME="${HOME}/.config/stack"
 LANGS_SETTINGS="${CONFIG_HOME}/langs.json"

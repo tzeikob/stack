@@ -6,6 +6,7 @@ source /opt/stack/commons/utils.sh
 source /opt/stack/commons/logger.sh
 source /opt/stack/commons/input.sh
 source /opt/stack/commons/json.sh
+source /opt/stack/commons/math.sh
 source /opt/stack/tools/cloud/helpers.sh
 
 # Shows the list of remotes matching the given service.
