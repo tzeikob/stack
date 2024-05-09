@@ -4,6 +4,7 @@ set -o pipefail
 
 source /opt/stack/commons/utils.sh
 source /opt/stack/commons/logger.sh
+source /opt/stack/commons/json.sh
 source /opt/stack/tools/displays/helpers.sh
 
 # Shows the current status of Xorg and active displays.
@@ -687,7 +688,7 @@ mirror_output () {
   resolutions="$(find_common_resolutions "${name}" "${targets}")" || return 1
 
   local resolutions_len=0
-  resolutions_len="$(count "${resolutions}")"
+  resolutions_len="$(get_len "${resolutions}")"
 
   if is_true "${resolutions_len} = 0"; then
     log 'No common resolutions found among outputs.'
@@ -862,7 +863,7 @@ save_layout () {
   outputs="$(find_outputs)" || return 1
 
   local len=0
-  len="$(count "${outputs}")" || return 1
+  len="$(get_len "${outputs}")" || return 1
 
   if is_true "${len} = 0"; then
     log 'No outputs have found.'
@@ -938,7 +939,7 @@ restore_layout () {
   outputs="$(find_outputs)" || return 1
 
   local len=0
-  len="$(count "${outputs}")" || return 1
+  len="$(get_len "${outputs}")" || return 1
 
   if is_true "${len} = 0"; then
     log 'No outputs have found.'
@@ -992,7 +993,7 @@ fix_layout () {
   outputs="$(find_outputs)" || return 1
 
   local len=0
-  len="$(count "${outputs}")" || return 1
+  len="$(get_len "${outputs}")" || return 1
 
   if is_true "${len} = 0"; then
     log 'No outputs have found.'
@@ -1187,7 +1188,7 @@ set_color () {
   fi
 
   local index=''
-  index="$(get "${output}" ".index")" || return 1
+  index="$(get_value "${output}" ".index")" || return 1
 
   local result=''
   result="$(xcalib -d "${DISPLAY}" -s 0 -o "${index}" "${COLORS_HOME}/${profile}" 2>&1)"
@@ -1237,7 +1238,7 @@ reset_color () {
   fi
 
   local index=''
-  index="$(get "${output}" ".index")" || return 1
+  index="$(get_value "${output}" ".index")" || return 1
 
   local result=''
   result="$(xcalib -d "${DISPLAY}" -s 0 -o "${index}" -c 2>&1)"
@@ -1339,7 +1340,7 @@ restore_colors () {
   colors="$(jq -cr 'if .colors then .colors else [] end' "${DISPLAYS_SETTINGS}")" || return 1
 
   local len=0
-  len="$(count "${colors}")" || return 1
+  len="$(get_len "${colors}")" || return 1
 
   if is_true "${len} = 0"; then
     log 'No color settings have found.'

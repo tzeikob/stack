@@ -4,6 +4,8 @@ set -o pipefail
 
 source /opt/stack/commons/utils.sh
 source /opt/stack/commons/logger.sh
+source /opt/stack/commons/input.sh
+source /opt/stack/commons/json.sh
 
 CONFIG_HOME="${HOME}/.config/stack"
 NETWORKS_SETTINGS="${CONFIG_HOME}/networks.json"
@@ -45,7 +47,7 @@ find_device () {
   device="$(nmcli device show "${name}" | jc --nmcli | jq -cer '.[0]')" || return 1
 
   local type=''
-  type="$(get "${device}" ".type")" || return 1
+  type="$(get_value "${device}" ".type")" || return 1
 
   if equals "${type}" 'wifi'; then
     local query=''
@@ -81,11 +83,11 @@ find_connection () {
   connection="$(nmcli connection show "${name}" | jc --nmcli | jq -cer '.[0]')" || return 1
 
   local type=''
-  type="$(get "${connection}" ".connection_type")" || return 1
+  type="$(get_value "${connection}" ".connection_type")" || return 1
 
   if equals "${type}" 'wireless'; then
     local device=''
-    device="$(get "${connection}" ".connection_interface_name")" || return 1
+    device="$(get_value "${connection}" ".connection_interface_name")" || return 1
 
     local query=''
     query+='freq: .frequency,'
@@ -202,7 +204,7 @@ pick_device () {
   devices="$(find_devices "${type}" | jq -cer "${query}")" || return 1
 
   local len=0
-  len="$(count "${devices}")" || return 1
+  len="$(get_len "${devices}")" || return 1
 
   if is_true "${len} = 0"; then
     log "No ${type:-network} devices found."
@@ -223,7 +225,7 @@ pick_connection () {
   connections="$(find_connections | jq -cer "${query}")" || return 1
 
   local len=0
-  len="$(count "${connections}")" || return 1
+  len="$(get_len "${connections}")" || return 1
 
   if is_true "${len} = 0"; then
     log 'No connections have found.'
@@ -247,7 +249,7 @@ pick_wifi () {
   networks="$(find_wifis "${device}")" || return 1
 
   local len=0
-  len="$(count "${networks}")" || return 1
+  len="$(get_len "${networks}")" || return 1
 
   if is_true "${len} = 0"; then
     log 'No wifi networks detected.'
@@ -279,7 +281,7 @@ pick_proxy () {
   proxies="$(jq -cer "${query}" "${NETWORKS_SETTINGS}")" || return 1
   
   local len=0
-  len="$(count "${proxies}")" || return 1
+  len="$(get_len "${proxies}")" || return 1
 
   if is_true "${len} = 0"; then
     log 'No proxy profiles have found.'

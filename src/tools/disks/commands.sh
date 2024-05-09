@@ -4,6 +4,8 @@ set -o pipefail
 
 source /opt/stack/commons/utils.sh
 source /opt/stack/commons/logger.sh
+source /opt/stack/commons/input.sh
+source /opt/stack/commons/json.sh
 source /opt/stack/tools/disks/helpers.sh
 
 # Shows a short status of the disks and filesystem.
@@ -262,7 +264,7 @@ list_disks () {
   disks="$(find_disks)" || return 1
 
   local len=0
-  len="$(count "${disks}")" || return 1
+  len="$(get_len "${disks}")" || return 1
 
   if is_true "${len} = 0"; then
     log 'No disks have found.'
@@ -307,7 +309,7 @@ list_partitions () {
   parts="$(find_partitions "${disk}")" || return 1
 
   local len=0
-  len="$(count "${parts}")" || return 1
+  len="$(get_len "${parts}")" || return 1
 
   if is_true "${len} = 0"; then
     log 'No partitions have found.'
@@ -332,7 +334,7 @@ list_roms () {
   roms="$(find_roms)" || return 1
 
   local len=0
-  len="$(count "${roms}")" || return 1
+  len="$(get_len "${roms}")" || return 1
 
   if is_true "${len} = 0"; then
     log 'No roms have found.'
@@ -409,7 +411,7 @@ list_shared_folders () {
   fi
 
   local len=0
-  len="$(count "${folders}")" || return 1
+  len="$(get_len "${folders}")" || return 1
 
   if is_true "${len} = 0"; then
     log 'No shared folders have found.'
@@ -494,7 +496,7 @@ list_mounts () {
   mounts="$(jq -n --argjson m "${mounts}" --argjson i "${images}" '$m + $i')" || return 1
 
   local len=0
-  len="$(count "${mounts}")" || return 1
+  len="$(get_len "${mounts}")" || return 1
 
   if is_true "${len} = 0"; then
     log 'No mounts have found.'

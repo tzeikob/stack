@@ -5,6 +5,8 @@ set -o pipefail
 source /opt/stack/commons/utils.sh
 source /opt/stack/commons/logger.sh
 source /opt/stack/commons/text.sh
+source /opt/stack/commons/input.sh
+source /opt/stack/commons/json.sh
 
 CONFIG_HOME="${HOME}/.config/stack"
 LANGS_SETTINGS="${CONFIG_HOME}/langs.json"
@@ -76,7 +78,7 @@ pick_installed_locale () {
   locales="$(jq -cr "${query}" "${LANGS_SETTINGS}")" || return 1
 
   local len=0
-  len="$(count "${locales}")" || return 1
+  len="$(get_len "${locales}")" || return 1
 
   if is_true "${len} = 0"; then
     log 'No installed locales found.'

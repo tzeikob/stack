@@ -4,6 +4,8 @@ set -o pipefail
 
 source /opt/stack/commons/utils.sh
 source /opt/stack/commons/logger.sh
+source /opt/stack/commons/input.sh
+source /opt/stack/commons/json.sh
 
 # Returns the list of all audio cards.
 # Outputs:
@@ -41,7 +43,7 @@ pick_card () {
   cards="$(find_cards | jq -cer "${query}")" || return 1
 
   local len=0
-  len=$(count "${cards}") || return 1
+  len=$(get_len "${cards}") || return 1
 
   if is_true "${len} = 0"; then
     log 'No audio cards have found.'
@@ -69,7 +71,7 @@ pick_profile () {
   profiles="$(echo "${card}" | jq -cer "${query}")" || return 1
 
   local len=0
-  len="$(count "${profiles}")" || return 1
+  len="$(get_len "${profiles}")" || return 1
 
   if is_true "${len} = 0"; then
     log 'No audio profiles found.'
@@ -103,7 +105,7 @@ pick_module () {
   modules="$(pactl --format=json list "${object}" | jq -cer "${query}")" || return 1
 
   local len=0
-  len="$(count "${modules}")" || return 1
+  len="$(get_len "${modules}")" || return 1
 
   if is_true "${len} = 0"; then
     log "No ${type} modules have found."

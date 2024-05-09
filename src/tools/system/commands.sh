@@ -4,6 +4,7 @@ set -o pipefail
 
 source /opt/stack/commons/utils.sh
 source /opt/stack/commons/logger.sh
+source /opt/stack/commons/json.sh
 source /opt/stack/tools/system/helpers.sh
 
 # Shows the current status of system.
@@ -135,7 +136,7 @@ check_updates () {
   fi
 
   local len=0
-  len="$(count "${pkgs}")" || return 1
+  len="$(get_len "${pkgs}")" || return 1
 
   if is_true "${len} = 0"; then
     log 'No outdated packages have found.'

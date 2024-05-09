@@ -61,3 +61,34 @@ is_property () {
 
   jq -cer "${query}" "${file}" &> /dev/null
 }
+
+# Gets the value of the property matched by the
+# given query, where query could be any valid jq query.
+# Arguments:
+#  object: any valid JSON object
+#  query:  a jq query
+# Outputs:
+#  The value of the matched property.
+get_value () {
+  local object="${1}"
+  local query="${2:-"."}|if . then . else \"\" end"
+
+  local result=''
+  result="$(echo "${object}" | jq -cr "${query}")" || return 1
+
+  echo "${result}"
+}
+
+# Counts the number of elements in the given JSON array.
+# Arguments:
+#  array: a JSON array object
+# Outputs:
+#  The number of array elements.
+get_len () {
+  local array="${1}"
+
+  local result=0
+  result="$(echo "${array}" | jq -cer 'length')" || return 1
+
+  echo "${result}"
+}

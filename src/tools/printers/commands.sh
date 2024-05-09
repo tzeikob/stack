@@ -4,6 +4,8 @@ set -o pipefail
 
 source /opt/stack/commons/utils.sh
 source /opt/stack/commons/logger.sh
+source /opt/stack/commons/input.sh
+source /opt/stack/commons/json.sh
 source /opt/stack/tools/printers/helpers.sh
 
 # Shows a short status of cups service and printers.
@@ -52,7 +54,7 @@ list_printers () {
   destinations="$(find_destinations)" || return 1
 
   local len=0
-  len="$(count "${destinations}")" || return 1
+  len="$(get_len "${destinations}")" || return 1
 
   if is_true "${len} = 0"; then
     log 'No printers have found.'
@@ -384,7 +386,7 @@ list_jobs () {
   jobs="$(find_jobs)" || return 1
 
   local len=0
-  len="$(count "${jobs}")" || return 1
+  len="$(get_len "${jobs}")" || return 1
 
   if is_true "${len} = 0"; then
     log 'No active print jobs have found.'

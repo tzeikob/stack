@@ -4,6 +4,8 @@ set -o pipefail
 
 source /opt/stack/commons/utils.sh
 source /opt/stack/commons/logger.sh
+source /opt/stack/commons/input.sh
+source /opt/stack/commons/json.sh
 source /opt/stack/tools/displays/helpers.sh
 
 CONFIG_HOME="${HOME}/.config/stack"
@@ -57,7 +59,7 @@ pick_wallpaper () {
   wallpapers="$(find_wallpapers | jq -cer "${query}")" || return 1
 
   local len=0
-  len="$(count "${wallpapers}")" || return 1
+  len="$(get_len "${wallpapers}")" || return 1
 
   if is_true "${len} = 0"; then
     log 'No wallpaper files found.'
@@ -176,7 +178,7 @@ pick_pointer () {
   pointers="$(find_pointers)" || return 1
 
   local len=0
-  len="$(count "${pointers}")" || return 1
+  len="$(get_len "${pointers}")" || return 1
 
   if is_true "${len} = 0"; then
     log 'No pointers found.'
@@ -233,7 +235,7 @@ find_tablet () {
   tablet="$(find_tablets | jq -cer "${query}")" || return 1
 
   local vendor=''
-  vendor="$(get "${tablet}" '.vendor')" || return 1
+  vendor="$(get_value "${tablet}" '.vendor')" || return 1
 
   # Merge properties specific to wacom devices
   if equals "${vendor}" 'wacom'; then
@@ -310,7 +312,7 @@ pick_tablet () {
   tablets="$(find_tablets)" || return 1
 
   local len=0
-  len="$(count "${tablets}")" || return 1
+  len="$(get_len "${tablets}")" || return 1
 
   if is_true "${len} = 0"; then
     log 'No tablets have found.'
@@ -547,7 +549,7 @@ pick_workspace () {
   workspaces="$(bspc query -D --names | jq --slurp . | jq -cr "${query}")" || return 1
 
   local len=0
-  len="$(count "${workspaces}")" || return 1
+  len="$(get_len "${workspaces}")" || return 1
 
   if is_true "${len} = 0"; then
     log 'No workspaces found.'

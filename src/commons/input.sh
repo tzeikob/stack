@@ -2,6 +2,7 @@
 
 set -Eeo pipefail
 
+source /opt/stack/commons/json.sh
 source /opt/stack/commons/validators.sh
 
 AES=$'╬'
@@ -98,9 +99,9 @@ pick_one () {
   REPLY=''
 
   local len=0
-  len="$(echo "${options}" | jq -cer 'length')" || return 1
+  len="$(get_len "${options}")" || return 1
   
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     return 1
   fi
 
@@ -118,7 +119,7 @@ pick_one () {
   echo -e "${prompt}"
 
   REPLY="$(echo "${options}" |
-    smenu -nm -/ prefix -W "${AES_LN}" "${args[@]}" -S /\(.*"${KVS}"\)//v)" || return 1
+    LC_CTYPE=en_US.UTF-8 smenu -nm -/ prefix -W "${AES_LN}" "${args[@]}" -S /\(.*"${KVS}"\)//v)" || return 1
 
   # Remove the value part from the selected option
   if is_given "${REPLY}"; then
@@ -146,9 +147,9 @@ pick_many () {
   REPLY=''
 
   local len=0
-  len="$(echo "${options}" | jq -cer 'length')" || return 1
+  len="$(get_len "${options}")" || return 1
   
-  if [[ ${len} -eq 0 ]]; then
+  if is_true "${len} = 0"; then
     return 1
   fi
 
@@ -166,7 +167,7 @@ pick_many () {
   echo -e "${prompt}"
 
   REPLY="$(echo "${options}" |
-    smenu -nm -/ prefix -W "${AES_LN}" "${args[@]}" -S /\(.*"${KVS}"\)//v -P "${AES}")" || return 1
+    LC_CTYPE=en_US.UTF-8 smenu -nm -/ prefix -W "${AES_LN}" "${args[@]}" -S /\(.*"${KVS}"\)//v -P "${AES}")" || return 1
 
   # Convert selected options to a JSON array of their keys
   if is_given "${REPLY}"; then

@@ -4,6 +4,8 @@ set -o pipefail
 
 source /opt/stack/commons/utils.sh
 source /opt/stack/commons/logger.sh
+source /opt/stack/commons/input.sh
+source /opt/stack/commons/json.sh
 
 # Returns the remote services having the given status.
 # If status is not given all remotes will be returned.
@@ -136,7 +138,7 @@ pick_remote () {
   remotes="$(find_remotes "${status}" | jq -cer "${query}")" || return 1
 
   local len=0
-  len="$(count "${remotes}")" || return 1
+  len="$(get_len "${remotes}")" || return 1
 
   if is_true "${len} = 0"; then
     log "No ${status:-\b} remotes have found."

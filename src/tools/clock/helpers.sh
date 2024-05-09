@@ -4,6 +4,8 @@ set -o pipefail
 
 source /opt/stack/commons/utils.sh
 source /opt/stack/commons/logger.sh
+source /opt/stack/commons/input.sh
+source /opt/stack/commons/json.sh
 
 CONFIG_HOME="${HOME}/.config/stack"
 CLOCK_SETTINGS="${CONFIG_HOME}/clock.json"
@@ -27,7 +29,7 @@ pick_timezone () {
   timezones="[${timezones}]"
 
   local len=0
-  len=$(count "${timezones}") || return 1
+  len=$(get_len "${timezones}") || return 1
 
   if is_true "${len} = 0"; then
     log 'No timezones have found.'

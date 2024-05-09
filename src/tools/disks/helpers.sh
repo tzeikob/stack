@@ -4,6 +4,8 @@ set -o pipefail
 
 source /opt/stack/commons/utils.sh
 source /opt/stack/commons/logger.sh
+source /opt/stack/commons/input.sh
+source /opt/stack/commons/json.sh
 source /opt/stack/commons/network.sh
 
 # Returns the list of disk block devices.
@@ -618,7 +620,7 @@ pick_disk () {
   disks="$(find_disks)" || return 1
 
   local len=0
-  len="$(count "${disks}")" || return 1
+  len="$(get_len "${disks}")" || return 1
   
   if is_true "${len} = 0"; then
     log 'No disks have found.'
@@ -656,7 +658,7 @@ pick_partition () {
   parts="$(find_partitions "${path}" "${status}")" || return 1
 
   local len=0
-  len="$(count "${parts}")" || return 1
+  len="$(get_len "${parts}")" || return 1
   
   if is_true "${len} = 0"; then
     log -e "No ${status:-\b} partitions have found."
@@ -691,7 +693,7 @@ pick_rom () {
   roms="$(find_roms "${status}")" || return 1
 
   local len=0
-  len="$(count "${roms}")" || return 1
+  len="$(get_len "${roms}")" || return 1
   
   if is_true "${len} = 0"; then
     log "No ${status:-\b} roms have found."
@@ -730,7 +732,7 @@ pick_host () {
   fi
 
   local len=0
-  len="$(count "${hosts}")" || return 1
+  len="$(get_len "${hosts}")" || return 1
   
   if is_true "${len} = 0"; then
     log 'No hosts have found.'
@@ -802,7 +804,7 @@ pick_image_mount () {
   mounts="[${mounts}]"
 
   local len=0
-  len="$(count "${mounts}")" || return 1
+  len="$(get_len "${mounts}")" || return 1
 
   if is_true "${len} = 0"; then
     log 'No image mounts have found.'
@@ -831,7 +833,7 @@ pick_shared_folder_mount () {
   uris="[${uris}]"
 
   local len=0
-  len="$(count "${uris}")" || return 1
+  len="$(get_len "${uris}")" || return 1
 
   if is_true "${len} = 0"; then
     log 'No mounted shared folders have found.'

@@ -4,6 +4,7 @@ set -o pipefail
 
 source /opt/stack/commons/utils.sh
 source /opt/stack/commons/logger.sh
+source /opt/stack/commons/json.sh
 source /opt/stack/tools/bluetooth/helpers.sh
 
 # Shows the current status of bluetooth service
@@ -72,7 +73,7 @@ list_controllers () {
   controllers="$(find_controllers)" || return 1
 
   local len=0
-  len="$(count "${controllers}")" || return 1
+  len="$(get_len "${controllers}")" || return 1
 
   if is_true "${len} = 0"; then
     log 'No controllers have found.'
@@ -106,7 +107,7 @@ list_devices () {
   devices="$(find_devices "${status^}")" || return 1
 
   local len=0
-  len="$(count "${devices}")" || return 1
+  len="$(get_len "${devices}")" || return 1
 
   if is_true "${len} = 0"; then
     log 'No available devices have found.'

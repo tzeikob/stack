@@ -4,6 +4,7 @@ set -o pipefail
 
 source /opt/stack/commons/utils.sh
 source /opt/stack/commons/logger.sh
+source /opt/stack/commons/json.sh
 source /opt/stack/tools/audio/helpers.sh
 
 # Shows the current status of system's audio.
@@ -168,7 +169,7 @@ list_cards () {
   cards="$(find_cards)" || return 1
 
   local len=0
-  len="$(count "${cards}")" || return 1
+  len="$(get_len "${cards}")" || return 1
 
   if is_true "${len} = 0"; then
     log 'No audio cards have found.'
@@ -212,7 +213,7 @@ list_ports () {
   modules="$(pactl --format=json list "${object}" | jq -cer "${query}")" || return 1
 
   local len=0
-  len="$(count "${modules}")" || return 1
+  len="$(get_len "${modules}")" || return 1
 
   if is_true "${len} = 0"; then
     log "No ${type} modules have found."
@@ -256,7 +257,7 @@ list_playbacks () {
   sink_inputs="$(pactl --format=json list sink-inputs | jq -cer "${query}")" || return 1
 
   local len=0
-  len="$(count "${sink_inputs}")" || return 1
+  len="$(get_len "${sink_inputs}")" || return 1
 
   if is_true "${len} = 0"; then
     log 'No playbacks have found.'

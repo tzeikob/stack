@@ -4,6 +4,7 @@ set -o pipefail
 
 source /opt/stack/commons/utils.sh
 source /opt/stack/commons/logger.sh
+source /opt/stack/commons/input.sh
 source /opt/stack/tools/langs/helpers.sh
 
 # Shows the current status of languages and locales.

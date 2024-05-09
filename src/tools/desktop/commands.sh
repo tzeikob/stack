@@ -4,6 +4,8 @@ set -o pipefail
 
 source /opt/stack/commons/utils.sh
 source /opt/stack/commons/logger.sh
+source /opt/stack/commons/input.sh
+source /opt/stack/commons/json.sh
 source /opt/stack/tools/desktop/helpers.sh
 source /opt/stack/tools/displays/helpers.sh
 
@@ -83,7 +85,7 @@ list_wallpapers () {
   wallpapers="$(find_wallpapers)" || return 1
 
   local len=0
-  len="$(count "${wallpapers}")" || return 1
+  len="$(get_len "${wallpapers}")" || return 1
 
   if is_true "${len} = 0"; then
     log 'No wallpaper files found.'
@@ -197,7 +199,7 @@ list_pointers () {
   pointers="$(find_pointers)" || return 1
 
   local len=0
-  len="$(count "${pointers}")" || return 1
+  len="$(get_len "${pointers}")" || return 1
 
   if is_true "${len} = 0"; then
     log 'No pointers have found.'
@@ -331,7 +333,7 @@ list_tablets () {
   tablets="$(find_tablets)" || return 1
 
   local len=0
-  len="$(count "${tablets}")" || return 1
+  len="$(get_len "${tablets}")" || return 1
 
   if is_true "${len} = 0"; then
     log 'No tablets have found.'
@@ -393,7 +395,7 @@ scale_tablet () {
 
   # Calculate tablet's ratio
   local area=''
-  area="$(get "${tablet}" '.Area')" || return 1
+  area="$(get_value "${tablet}" '.Area')" || return 1
 
   local width="$(echo "${area}" | cut -d ' ' -f 3)"
   local height="$(echo "${area}" | cut -d ' ' -f 4)"
@@ -410,7 +412,7 @@ scale_tablet () {
   xsetwacom --set "${name}" ResetArea &> /dev/null || return 1
 
   tablet="$(find_tablet "${name}")" || return 1
-  area="$(get "${tablet}" '.Area')" || return 1
+  area="$(get_value "${tablet}" '.Area')" || return 1
   width="$(echo "${area}" | cut -d ' ' -f 3)"
 
   # Apply scaling factor
@@ -481,14 +483,14 @@ map_tablet () {
 
     # Restore area keeping the current scale
     local area=''
-    area="$(get "${tablet}" '.Area')" || return 1
+    area="$(get_value "${tablet}" '.Area')" || return 1
     local previous_width="$(echo "${area}" | cut -d ' ' -f 3)"
 
     # Reset tablets area to default size
     xsetwacom --set "${name}" ResetArea &> /dev/null || return 1
 
     tablet="$(find_tablet "${name}")" || return 1
-    area="$(get "${tablet}" '.Area')" || return 1
+    area="$(get_value "${tablet}" '.Area')" || return 1
 
     local width="$(echo "${area}" | cut -d ' ' -f 3)"
     local height="$(echo "${area}" | cut -d ' ' -f 4)"
@@ -519,10 +521,10 @@ map_tablet () {
 
   # Re-calculate tablet's area to match display's ratio
   local display_width=0
-  display_width="$(get "${output}" '.resolution_width')" || return 1
+  display_width="$(get_value "${output}" '.resolution_width')" || return 1
 
   local display_height=0
-  display_height="$(get "${output}" '.resolution_height')" || return 1
+  display_height="$(get_value "${output}" '.resolution_height')" || return 1
 
   local ratio=0
   ratio="$(calc "${display_width} / ${display_height}")" || return 1
@@ -533,7 +535,7 @@ map_tablet () {
   fi
 
   local area=0
-  area="$(get "${tablet}" '.Area')" || return 1
+  area="$(get_value "${tablet}" '.Area')" || return 1
 
   local width="$(echo "${area}" | cut -d ' ' -f 3)"
   local height=0
@@ -588,10 +590,10 @@ init_tablets () {
 
   while read -r tablet; do
     local name=''
-    name="$(get "${tablet}" '.name')" || return 1
+    name="$(get_value "${tablet}" '.name')" || return 1
 
     local scale=1
-    scale="$(get "${tablet}" '.scale')" || return 1
+    scale="$(get_value "${tablet}" '.scale')" || return 1
 
     scale_tablet "${name}" "${scale}" &&
     map_tablet "${name}" "${output}" || return $?
@@ -615,7 +617,7 @@ init_wallpaper () {
   fi
 
   local name=''
-  name="$(get "${wallpaper}" '.name')" || return 1
+  name="$(get_value "${wallpaper}" '.name')" || return 1
 
   if file_not_exists "${WALLPAPERS_HOME}/${name}"; then
     log "Wallpaper ${name} not found."
@@ -623,7 +625,7 @@ init_wallpaper () {
   fi
 
   local mode=''
-  mode="$(get "${wallpaper}" '.mode')" || return 1
+  mode="$(get_value "${wallpaper}" '.mode')" || return 1
 
   set_wallpaper "${name}" "${mode:-"center"}"
 }

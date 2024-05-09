@@ -4,6 +4,8 @@ set -o pipefail
 
 source /opt/stack/commons/utils.sh
 source /opt/stack/commons/logger.sh
+source /opt/stack/commons/input.sh
+source /opt/stack/commons/json.sh
 source /opt/stack/tools/trash/helpers.sh
 
 # Show the list of trashed files filtered by the given
@@ -40,7 +42,7 @@ list_files () {
   files="$(find_files | jq -cer "${query}")" || return 1
 
   local len=0
-  len="$(count "${files}")" || return 1
+  len="$(get_len "${files}")" || return 1
 
   if is_true "${len} = 0"; then
     log 'No trashed files have found.'
@@ -63,7 +65,7 @@ restore_files () {
   files="$(find_restorable_files)" || return 1
 
   local len=0
-  len="$(count "${files}")" || return 1
+  len="$(get_len "${files}")" || return 1
 
   if is_true "${len} = 0"; then
     log 'No trashed files found.'
@@ -162,7 +164,7 @@ remove_files () {
   files="$(find_files)" || return 1
 
   local len=0
-  len="$(count "${files}")" || return 1
+  len="$(get_len "${files}")" || return 1
 
   if is_true "${len} = 0"; then
     log 'No trashed files found.'
