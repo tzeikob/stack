@@ -5,6 +5,7 @@ set -o pipefail
 source /opt/stack/commons/utils.sh
 source /opt/stack/commons/logger.sh
 source /opt/stack/commons/math.sh
+source /opt/stack/commons/validators.sh
 source /opt/stack/tools/power/helpers.sh
 
 # Shows the current status of the system's power.
@@ -304,7 +305,7 @@ set_tlp () {
     return 2
   fi
 
-  if is_on "${status}" ]]; then
+  if is_on "${status}"; then
     log 'Enabling power saving mode...'
     sudo systemctl stop acpid.service &> /dev/null &&
     sudo systemctl disable acpid.service &> /dev/null &&

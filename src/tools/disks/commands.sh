@@ -7,6 +7,7 @@ source /opt/stack/commons/logger.sh
 source /opt/stack/commons/input.sh
 source /opt/stack/commons/json.sh
 source /opt/stack/commons/math.sh
+source /opt/stack/commons/validators.sh
 source /opt/stack/tools/disks/helpers.sh
 
 # Shows a short status of the disks and filesystem.

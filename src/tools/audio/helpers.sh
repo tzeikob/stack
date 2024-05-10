@@ -7,6 +7,7 @@ source /opt/stack/commons/logger.sh
 source /opt/stack/commons/input.sh
 source /opt/stack/commons/json.sh
 source /opt/stack/commons/math.sh
+source /opt/stack/commons/validators.sh
 
 # Returns the list of all audio cards.
 # Outputs:

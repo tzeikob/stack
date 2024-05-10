@@ -2,7 +2,7 @@
 
 set -o pipefail
 
-source /opt/stack/commons/utils.sh
+source /opt/stack/commons/validators.sh
 
 CLOCK_SETTINGS="${HOME}/.config/stack/clock.json"
 

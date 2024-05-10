@@ -2,7 +2,7 @@
 
 set -o pipefail
 
-source /opt/stack/commons/utils.sh
+source /opt/stack/commons/validators.sh
 
 # Plays the popup sound for the incoming notification
 # based on the notification's parameters.

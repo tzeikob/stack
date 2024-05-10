@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source /opt/stack/commons/utils.sh
+source /opt/stack/commons/validators.sh
 
 # Toggles the scratchpad terminal window on and off,
 # if none running terminal is found, a new instance

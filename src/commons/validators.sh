@@ -285,6 +285,26 @@ is_not_off () {
   is_off "${1}" && return 1 || return 0
 }
 
+# Checks if the given value is a valid on/off toggle.
+# Arguments:
+#  value: any value
+# Returns:
+#  0 if value is either on or off otherwise 1.
+is_toggle () {
+  local value="${1}"
+
+  if is_not_on "${value}" && is_not_off "${value}"; then
+    return 1
+  fi
+
+  return 0
+}
+
+# An inverse version of is_toggle.
+is_not_toggle () {
+  is_toggle "${1}" && return 1 || return 0
+}
+
 # Checks if the dep with the given name is installed or not.
 # Arguments:
 #  name: the name of a dependency
@@ -303,4 +323,44 @@ dep_exists () {
 # An inversed alias of dep_exists.
 dep_not_exists () {
   dep_exists "${1}" && return 1 || return 0
+}
+
+# Checks if the given value is a valid date.
+# Arguments:
+#  value: a date value
+# Returns:
+#  0 if value is date otherwise 1.
+is_date () {
+  local value="${1}"
+
+  if not_match "${value}" '^[0-9]{2}([0-9]{2})?-[0-9]{2}-[0-9]{2}$'; then
+    return 1
+  fi
+  
+  date -d "${value}" &> /dev/null
+}
+
+# An inverse version of is_date.
+is_not_date () {
+  is_date "${1}" && return 1 || return 0
+}
+
+# Checks if the given time is valid.
+# Arguments:
+#  time: a time in hh:mm:ss form
+# Returns:
+#  0 if time is valid otherwise 1.
+is_time () {
+  local time="${1}"
+
+  if not_match "${time}" '^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$'; then
+    return 1
+  fi
+
+  date -d "1970-01-01T${time}" &> /dev/null
+}
+
+# An inverse version of is_time.
+is_not_time () {
+  is_time "${1}" && return 1 || return 0
 }

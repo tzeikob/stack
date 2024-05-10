@@ -7,6 +7,7 @@ source /opt/stack/commons/logger.sh
 source /opt/stack/commons/input.sh
 source /opt/stack/commons/json.sh
 source /opt/stack/commons/math.sh
+source /opt/stack/commons/validators.sh
 source /opt/stack/tools/networks/helpers.sh
 
 # Shows the current status of the system networking.

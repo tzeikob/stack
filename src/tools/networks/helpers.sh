@@ -7,6 +7,7 @@ source /opt/stack/commons/logger.sh
 source /opt/stack/commons/input.sh
 source /opt/stack/commons/json.sh
 source /opt/stack/commons/math.sh
+source /opt/stack/commons/validators.sh
 
 CONFIG_HOME="${HOME}/.config/stack"
 NETWORKS_SETTINGS="${CONFIG_HOME}/networks.json"

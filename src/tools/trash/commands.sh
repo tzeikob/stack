@@ -7,6 +7,7 @@ source /opt/stack/commons/logger.sh
 source /opt/stack/commons/input.sh
 source /opt/stack/commons/json.sh
 source /opt/stack/commons/math.sh
+source /opt/stack/commons/validators.sh
 source /opt/stack/tools/trash/helpers.sh
 
 # Show the list of trashed files filtered by the given
