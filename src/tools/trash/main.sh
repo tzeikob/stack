@@ -77,10 +77,10 @@ run () {
   while getopts ':hqs' opt; do
     case "${opt}" in
      'h')
-        set_quiet_mode 'on'
+        ON_QUIET_MODE='true'
         show_help once
         return 0;;
-     'q') set_quiet_mode 'on';;
+     'q') ON_QUIET_MODE='true';;
      's') ON_SCRIPT_MODE='true';;
      *)
       log "Ooops, invalid or unknown option -${OPTARG}!"

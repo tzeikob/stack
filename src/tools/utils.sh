@@ -68,46 +68,6 @@ beep () {
   return ${exit_code}
 }
 
-# Sets the quiet mode to on or off by setting a
-# global variable with name ON_QUIET_MODE.
-# Arguments:
-#  mode: either on or off
-set_quiet_mode () {
-  local mode="${1}"
-
-  if equals "${mode}" 'on'; then
-    ON_QUIET_MODE='true'
-  else
-    ON_QUIET_MODE='false'
-  fi
-}
-
-# Checks if the script is running on quiet mode by
-# checking if the global quiet variable has set.
-# Returns:
-#  0 if run on quiet mode otherwise 1.
-on_quiet_mode () {
-  if is_empty "${ON_QUIET_MODE}"; then
-    return 1
-  fi
-
-  if is_not_true "${ON_QUIET_MODE}"; then
-    return 1
-  fi
-
-  return 0
-}
-
-# An inverse version of on_quiet_mode.
-not_on_quiet_mode () {
-  on_quiet_mode && return 1 || return 0
-}
-
-# An alias version of not_on_quiet_mode.
-on_loud_mode () {
-  not_on_quiet_mode && return 0 || return 1
-}
-
 # Checks if the given exit status code is non-zero
 # which indicates the last command has failed. If no
 # code is given the function will consider as exit
