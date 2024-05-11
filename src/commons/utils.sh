@@ -99,3 +99,73 @@ resolve () {
 
   return 0
 }
+
+# Plays a short success or failure beep sound according
+# to the given exit status code which then passes it back.
+# Arguments:
+#  exit_code: an integer positive value
+# Returns:
+#  The same given exit code.
+beep () {
+  local exit_code="${1}"
+
+  local sound='normal'
+
+  if has_failed "${exit_code}"; then
+    sound='critical'
+  fi
+
+  local sound_file="/usr/share/sounds/stack/${sound}.wav"
+
+  if command -v pw-play &> /dev/null; then
+    LC_ALL=en_US.UTF-8 pw-play --volume=0.5 "${sound_file}" &> /dev/null &
+  elif command -v aplay &> /dev/null; then
+    aplay "${sound_file}" &> /dev/null &
+  fi
+
+  return ${exit_code}
+}
+
+# Returns the md5 hash of the given string value
+# truncated to the first given number of characters.
+# Arguments:
+#  value:  a string value
+#  length: the number of character to keep
+# Outputs:
+#  A truncated md5 hash value.
+get_hash () {
+  local value="${1}"
+  local length="${2:-32}"
+
+  echo "${value}" | md5sum | cut "-c1-${length}"
+}
+
+# Checks if any processes with the given command
+# are running.
+# Arguments:
+#  re: any regular expression
+is_process_up () {
+  local re="${1}"
+  
+  local query=".command|test(\"${re}\")"
+  query=".[]|select(${query})"
+  
+  ps aux | grep -v 'jq' | jc --ps | jq -cer "${query}" &> /dev/null || return 1
+}
+
+# An inverse version of is_up.
+is_process_down () {
+  is_process_up "${1}" && return 1 || return 0
+}
+
+# Kills all the processes the command of which match
+# the given regular expression.
+# Arguments:
+#  re: any regular expression
+kill_process () {
+  local re="${1}"
+
+  pkill --full "${re}" &> /dev/null
+
+  sleep 1
+}
