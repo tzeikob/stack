@@ -118,7 +118,7 @@ run () {
         show_help once
         return 0;;
      'q') set_quiet_mode 'on';;
-     's') set_script_mode 'on';;
+     's') ON_SCRIPT_MODE='true';;
      *)
       log "Ooops, invalid or unknown option -${OPTARG}!"
       beep 2

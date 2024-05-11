@@ -364,3 +364,30 @@ is_time () {
 is_not_time () {
   is_time "${1}" && return 1 || return 0
 }
+
+# Checks if we run on script mode or not by checking
+# if the flag ON_SCRIPT_MODE has been set indicating
+# the call was made by a not human.
+# Returns:
+#  0 if run on script mode otherwise 1.
+on_script_mode () {
+  if is_empty "${ON_SCRIPT_MODE}"; then
+    return 1
+  fi
+
+  if is_not_true "${ON_SCRIPT_MODE}"; then
+    return 1
+  fi
+
+  return 0
+}
+
+# An inverse version of on_script_mode.
+not_on_script_mode () {
+  on_script_mode && return 1 || return 0
+}
+
+# An alias version of not_on_script_mode.
+on_user_mode () {
+  not_on_script_mode && return 0 || return 1
+}
