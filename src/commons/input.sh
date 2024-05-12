@@ -3,8 +3,8 @@
 set -Eeo pipefail
 
 source /opt/stack/commons/json.sh
-source /opt/stack/commons/validators.sh
 source /opt/stack/commons/math.sh
+source /opt/stack/commons/validators.sh
 
 AES=$'╬'
 AES_LN=$'╬\n'

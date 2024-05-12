@@ -2,7 +2,7 @@
 
 set -Eeo pipefail
 
-source src/commons/utils.sh
+source src/commons/error.sh
 source src/commons/logger.sh
 source src/commons/validators.sh
 
@@ -72,8 +72,8 @@ check_depds () {
 
   local dep=''
   for dep in "${deps[@]}"; do
-    if dep_not_exists "${dep}"; then
-      abort ERROR "Missing ${dep} package dependency."
+    if dep_not_installed "${dep}"; then
+      abort ERROR "Package dependency ${dep} is not installed."
     fi
   done
 }

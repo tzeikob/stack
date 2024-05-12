@@ -2,11 +2,11 @@
 
 set -Eeo pipefail
 
-source /opt/stack/commoms/utils.sh
-source /opt/stack/commons/logger.sh
-source /opt/stack/commons/validators.sh
 source /opt/stack/commons/input.sh
+source /opt/stack/commoms/error.sh
+source /opt/stack/commons/logger.sh
 source /opt/stack/commons/json.sh
+source /opt/stack/commons/validators.sh
 
 SETTINGS='/opt/stack/installer/settings.json'
 

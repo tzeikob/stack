@@ -11,7 +11,6 @@ download () {
   local output="${1}" && shift
   local urls="${@}"
 
-  echo "Downloading files to ${output}:"
   echo ${urls} | awk '{
     for (i=1; i<=NF; i++) {
       print " "$i

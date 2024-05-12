@@ -2,8 +2,6 @@
 
 set -o pipefail
 
-source /opt/stack/commons/utils.sh
-
 # Returns the list of all trashed files.
 # Outputs:
 #  A json array of trashed files.

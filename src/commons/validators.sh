@@ -80,13 +80,13 @@ not_match () {
   match "${1}" "${2}" && return 1 || return 0
 }
 
-# Checks if the given value is integer number within
-# the optionally given range.
+# Checks if the given value is an integer number within
+# the optionally given range of values.
 # Arguments:
 #  value: any number value
 #  range: [min,max] or none
 # Returns:
-#  0 if value is integer otherwise 1.
+#  0 if value is an integer otherwise 1.
 is_integer () {
   local value="${1}"
   local range="${2}"
@@ -310,7 +310,7 @@ is_not_toggle () {
 #  name: the name of a dependency
 # Returns:
 #  0 if dep is installed otherwise 1.
-dep_exists () {
+dep_is_installed () {
   local name="${1}"
 
   if pacman -Qi "${name}" > /dev/null 2>&1; then
@@ -320,9 +320,9 @@ dep_exists () {
   return 1
 }
 
-# An inversed alias of dep_exists.
-dep_not_exists () {
-  dep_exists "${1}" && return 1 || return 0
+# An inversed alias of dep_is_installed.
+dep_not_installed () {
+  dep_is_installed "${1}" && return 1 || return 0
 }
 
 # Checks if the given value is a valid date.
@@ -363,57 +363,4 @@ is_time () {
 # An inverse version of is_time.
 is_not_time () {
   is_time "${1}" && return 1 || return 0
-}
-
-# Checks if we run on script mode or not by checking
-# if the flag ON_SCRIPT_MODE has been set indicating
-# the call was made by a not human.
-# Returns:
-#  0 if run on script mode otherwise 1.
-on_script_mode () {
-  if is_empty "${ON_SCRIPT_MODE}"; then
-    return 1
-  fi
-
-  if is_not_true "${ON_SCRIPT_MODE}"; then
-    return 1
-  fi
-
-  return 0
-}
-
-# An inverse version of on_script_mode.
-not_on_script_mode () {
-  on_script_mode && return 1 || return 0
-}
-
-# An alias version of not_on_script_mode.
-on_user_mode () {
-  not_on_script_mode && return 0 || return 1
-}
-
-# Checks if the script is running on quiet mode by
-# checking if the global quiet variable has set.
-# Returns:
-#  0 if run on quiet mode otherwise 1.
-on_quiet_mode () {
-  if is_empty "${ON_QUIET_MODE}"; then
-    return 1
-  fi
-
-  if is_not_true "${ON_QUIET_MODE}"; then
-    return 1
-  fi
-
-  return 0
-}
-
-# An inverse version of on_quiet_mode.
-not_on_quiet_mode () {
-  on_quiet_mode && return 1 || return 0
-}
-
-# An alias version of not_on_quiet_mode.
-on_loud_mode () {
-  not_on_quiet_mode && return 0 || return 1
 }

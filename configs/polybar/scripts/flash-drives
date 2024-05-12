@@ -2,8 +2,6 @@
 
 set -o pipefail
 
-source /opt/stack/commons/utils.sh
-
 # Reads for hooked in usb removable flash
 # drives and prints them out one by one.
 run () {

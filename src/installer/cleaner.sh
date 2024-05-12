@@ -2,7 +2,8 @@
 
 set -Eeo pipefail
 
-source /opt/stack/commons/utils.sh
+source /opt/stack/commons/process.sh
+source /opt/stack/commons/error.sh
 source /opt/stack/commons/logger.sh
 
 # Deletes any remnants installation files from the new system.

@@ -2,7 +2,7 @@
 
 set -o pipefail
 
-source /opt/stack/commons/utils.sh
+source /opt/stack/commons/error.sh
 source /opt/stack/commons/math.sh
 source /opt/stack/commons/validators.sh
 
