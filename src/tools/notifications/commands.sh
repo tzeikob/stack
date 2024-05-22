@@ -1,0 +1,166 @@
+#!/bin/bash
+
+set -o pipefail
+
+source /opt/stack/commons/error.sh
+source /opt/stack/commons/logger.sh
+source /opt/stack/commons/json.sh
+source /opt/stack/commons/math.sh
+source /opt/stack/tools/notifications/helpers.sh
+
+# Starts the notifications service.
+start () {
+  local is_up='false'
+  is_up="$(is_notifications_up)" || return 1
+  
+  if is_true "${is_up}"; then
+    log 'Notifications service is already runnning.'
+    return 2
+  fi
+
+  log 'Starting notifications service...'
+
+  dunst > /dev/null 2>&1 &
+
+  local pid=$!
+
+  ps -p "${pid}" > /dev/null
+  
+  if has_failed; then
+    log 'Failed to start notifications service.'
+    return 2
+  fi
+
+  log 'Notifications service started.'
+}
+
+# Restarts the notifications service.
+restart () {
+  log 'Restarting notifications service...'
+
+  killall dunst || return 1
+  sleep 1
+
+  dunst > /dev/null 2>&1 &
+
+  local pid=$!
+
+  ps -p "${pid}" > /dev/null
+  
+  if has_failed; then
+    log 'Failed to restart notifications service.'
+    return 2
+  fi
+
+  log 'Notifications service restarted.'
+}
+
+# Shows the current status of the notification stream.
+# Outputs:
+#  A verbose list of text data.
+show_status () {
+  local is_up='false'
+  is_up="$(is_notifications_up)" || return 1
+
+  if is_true "${is_up}"; then
+    echo 'Service:  up'
+  else
+    echo 'Service:  down'
+  fi
+
+  local query=''
+  query+='Mute:     \(.is_paused|if . then "yes" else "no" end)\n'
+  query+='Pending:  \(.pending)\n'
+  query+='Showing:  \(.displayed)\n'
+  query+='Sent:     \(.archived)'
+
+  get_notifications_state | jq -cer "\"${query}\"" || return 1
+}
+
+# Shows the list of archived notifications sorted by the
+# optionally given field and order.
+# Arguments:
+#  sort_by: id or appname, default is id
+# Outputs:
+#  A long list of notificaions data.
+list_all () {
+  local sort_by="${1:-id}"
+
+  if is_not_valid_sort_field "${sort_by}"; then
+    log 'Invalid sorting field.'
+    return 2
+  fi
+
+  local notifications=''
+  notifications="$(find_all "${sort_by}" asc)" || return 1
+
+  local len=0
+  len="$(get_len "${notifications}")" || return 1
+
+  if is_true "${len} = 0"; then
+    log 'No notifications have found.'
+    return 0
+  fi
+
+  local query=''
+  query+='ID:       \(.id.data)\n'
+  query+='App:      \(.appname.data)'
+  query+='\(.summary.data|if . and . != "" then "\nSummary:  \(.)" else "" end)'
+  query+='\(.body.data|if . and . != "" then "\nBody:     \(.)" else "" end)'
+  query+='\(.timestamp.data|if . and . != "" then "\nSent:     \(.)" else "" end)'
+  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+
+  # Read the current uptime secs of the system
+  local uptime=''
+  uptime="$(cut -d '.' -f 1 /proc/uptime)" || return 1
+
+  echo "${notifications}" | jq -cer "${query}" | awk -v uptime="${uptime}" '{
+      # Catch the sent timestamp line of each notification
+      if ($0 ~ /^Sent:/) {
+        # Convert timestamp given as secs ago to datetime
+        timestamp=$2
+        secs_ago=int(uptime - (timestamp / 1000000))
+        ("date \"+%H:%M:%S %d-%m-%Y\" -d \"" secs_ago " seconds ago\"") | getline dt
+        printf "%-9s %s\n", "Sent:", dt
+      } else {
+        print $0
+      } 
+    }'|| return 1
+}
+
+# Pauses the notification stream.
+mute_all () {
+  dunstctl set-paused true
+
+  if has_failed; then
+    log 'Failed to mute notifications.'
+    return 2
+  fi
+
+  log 'Notifications have been muted.'
+}
+
+# Restores the notification stream.
+unmute_all () {
+  dunstctl set-paused false
+
+  if has_failed; then
+    log 'Failed to unmute notifications.'
+    return 2
+  fi
+
+  log 'Notifications have been unmuted.'
+}
+
+# Removes all the archived notifications.
+clean_all () {
+  dunstctl history-clear
+
+  if has_failed; then
+    log 'Failed to remove all notifications.'
+    return 2
+  fi
+
+  log 'All notifications have been removed.'
+}
+

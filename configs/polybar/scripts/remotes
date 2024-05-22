@@ -2,8 +2,8 @@
 
 set -o pipefail
 
-source /opt/tools/utils
-source /opt/tools/cloud/helpers
+source /opt/stack/commons/error.sh
+source /opt/stack/tools/cloud/helpers.sh
 
 # Reads for synced remote cloud services
 # and prints them out one by one.

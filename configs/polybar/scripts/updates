@@ -2,7 +2,8 @@
 
 set -o pipefail
 
-source /opt/tools/utils
+source /opt/stack/commons/math.sh
+source /opt/stack/commons/validators.sh
 
 UPDATES_FILE=/tmp/updates
 

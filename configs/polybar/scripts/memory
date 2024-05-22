@@ -2,7 +2,7 @@
 
 set -o pipefail
 
-source /opt/tools/utils
+source /opt/stack/commons/math.sh
 
 # Prints the current memory usage and utilization.
 run () {

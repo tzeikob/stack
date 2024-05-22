@@ -2,7 +2,7 @@
 
 set -o pipefail
 
-source /opt/tools/utils
+source /opt/stack/commons/validators.sh
 
 CLOCK_SETTINGS="${HOME}/.config/stack/clock.json"
 
@@ -33,7 +33,8 @@ run () {
   case "${precision}" in
     'nanos')
       format="%${hour}:%M:%S.%2N"
-      refresh=0.08;;
+      refresh=0.08
+      ;;
     'secs') format="%${hour}:%M:%S";;
     *) format="%${hour}:%M";;
   esac

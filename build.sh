@@ -2,73 +2,15 @@
 
 set -Eeo pipefail
 
+source src/commons/error.sh
+source src/commons/logger.sh
+source src/commons/validators.sh
+
 DIST_DIR=.dist
 WORK_DIR="${DIST_DIR}/work"
 AUR_DIR="${DIST_DIR}/aur"
 PROFILE_DIR="${DIST_DIR}/profile"
 ROOT_FS="${PROFILE_DIR}/airootfs"
-
-# Prints the given log message prefixed with the given log level.
-# No arguments means nothing to log on to the console.
-# Arguments:
-#  level:   optionally one of INFO, WARN, ERROR
-#  message: an optional message to show
-# Outputs:
-#  Prints the message in [<level>] <message> form.
-log () {
-  local level message
-
-  if [[ $# -ge 2 ]]; then
-    level="${1}"
-    message="${2}"
-  elif [[ $# -eq 1 ]]; then
-    message="${1}"
-  else
-    return 0
-  fi
-
-  if [[ -n "${level}" ]] || [[ "${level}" != '' ]]; then
-    printf '%-5s %b\n' "${level}" "${message}"
-  else
-    printf '%b\n' "${message}"
-  fi
-}
-
-# Aborts the current process logging the given error message.
-# Arguments:
-#  level:   optionally one of INFO, WARN, ERROR
-#  message: an error message to print
-# Outputs:
-#  An error messsage.
-abort () {
-  local level="${1}"
-  local message="${2}"
-
-  log "${level}" "${message}"
-  log "${level}" 'Build process has exited.'
-
-  exit 1
-}
-
-# Checks if the dep with the given name is installed or not.
-# Arguments:
-#  name: the name of a dependency
-# Returns:
-#  0 if dep is installed otherwise 1.
-dep_exists () {
-  local name="${1}"
-
-  if pacman -Qi "${name}" > /dev/null 2>&1; then
-    return 0
-  fi
-
-  return 1
-}
-
-# An inversed alias of dep_exists.
-dep_not_exists () {
-  dep_exists "${1}" && return 1 || return 0
-}
 
 # Adds the package with the given name into the list of packages
 # Arguments:
@@ -78,7 +20,7 @@ add_package () {
 
   local pkgs_file="${PROFILE_DIR}/packages.x86_64"
 
-  if [[ ! -f "${pkgs_file}" ]]; then
+  if file_not_exists "${pkgs_file}"; then
     abort ERROR "Unable to locate file ${pkgs_file}."
   fi
 
@@ -97,7 +39,7 @@ remove_package () {
 
   local pkgs_file="${PROFILE_DIR}/packages.x86_64"
 
-  if [[ ! -f "${pkgs_file}" ]]; then
+  if file_not_exists "${pkgs_file}"; then
     abort ERROR "Unable to locate file ${pkgs_file}."
   fi
 
@@ -113,7 +55,7 @@ remove_package () {
 
 # Initializes build and distribution files.
 init () {
-  if [[ -d "${DIST_DIR}" ]]; then
+  if directory_exists "${DIST_DIR}"; then
     rm -rf "${DIST_DIR}" || abort ERROR 'Unable to remove the .dist folder.'
 
     log WARN 'Existing .dist folder has been removed.'
@@ -130,8 +72,8 @@ check_depds () {
 
   local dep=''
   for dep in "${deps[@]}"; do
-    if dep_not_exists "${dep}"; then
-      abort ERROR "Missing ${dep} package dependency."
+    if dep_not_installed "${dep}"; then
+      abort ERROR "Package dependency ${dep} is not installed."
     fi
   done
 }
@@ -142,7 +84,7 @@ copy_profile () {
 
   local releng_path="/usr/share/archiso/configs/releng"
 
-  if [[ ! -d "${releng_path}" ]]; then
+  if directory_not_exists "${releng_path}"; then
     abort ERROR 'Unable to locate releng archiso profile.'
   fi
 
@@ -154,7 +96,7 @@ copy_profile () {
 
 # Sets the distribution names and os release meta files.
 rename_distro () {
-  if [[ ! -d "${ROOT_FS}" ]]; then
+  if directory_not_exists "${ROOT_FS}"; then
     abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
@@ -214,7 +156,7 @@ rename_distro () {
 
   log INFO 'Host name set to stackiso.'
 
-  if [[ ! -d "${PROFILE_DIR}" ]]; then
+  if directory_not_exists "${PROFILE_DIR}"; then
     abort ERROR 'Unable to locate the releng profile folder.'
   fi
 
@@ -232,7 +174,7 @@ rename_distro () {
 
 # Sets up the bios and uefi boot loaders.
 setup_boot_loaders () {
-  if [[ ! -d "${PROFILE_DIR}" ]]; then
+  if directory_not_exists "${PROFILE_DIR}"; then
     abort ERROR 'Unable to locate the releng profile folder.'
   fi
 
@@ -367,7 +309,7 @@ add_aur_packages () {
 
   local previous_dir=${PWD}
 
-  if [[ ! -d "${PROFILE_DIR}" ]]; then
+  if directory_not_exists "${PROFILE_DIR}"; then
     abort ERROR 'Unable to locate the releng profile folder.'
   fi
 
@@ -403,7 +345,7 @@ add_aur_packages () {
 
   local pacman_conf="${PROFILE_DIR}/pacman.conf"
 
-  if [[ ! -f "${pacman_conf}" ]]; then
+  if file_not_exists "${pacman_conf}"; then
     abort ERROR "Unable to locate file ${pacman_conf}."
   fi
 
@@ -420,7 +362,7 @@ add_aur_packages () {
 
 # Patch various packages.
 patch_packages () {
-  if [[ ! -d "${ROOT_FS}" ]]; then
+  if directory_not_exists "${ROOT_FS}"; then
     abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
@@ -445,23 +387,96 @@ patch_packages () {
   log INFO 'Package tqdm has been patched.'
 }
 
-# Copies the files of the installer.
-copy_installer () {
-  if [[ ! -d "${ROOT_FS}" ]]; then
+# Copies the commons tools.
+copy_commons_tools () {
+  if directory_not_exists "${ROOT_FS}"; then
     abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
-  local installer_home="${ROOT_FS}/opt/stack"
+  local commons_home="${ROOT_FS}/opt/stack/commons"
 
-  mkdir -p "${installer_home}" || abort ERROR 'Failed to create the /opt/stack folder.'
+  mkdir -p "${commons_home}" ||
+    abort ERROR 'Failed to create the /opt/stack/commons folder.'
 
-  cp -r configs "${installer_home}" &&
-    cp -r resources "${installer_home}" &&
-    cp -r rules "${installer_home}" &&
-    cp -r scripts "${installer_home}" &&
+  cp -r src/commons/* "${commons_home}" ||
+    abort ERROR 'Failed to copy the commons tools.'
+
+  info INFO 'Commons tools have been copied.'
+}
+
+# Copies the files of the system tools.
+copy_system_tools () {
+  if directory_not_exists "${ROOT_FS}"; then
+    abort ERROR 'Unable to locate the airootfs folder.'
+  fi
+
+  local tools_home="${ROOT_FS}/opt/stack/tools"
+
+  mkdir -p "${tools_home}" ||
+    abort ERROR 'Failed to create the /opt/stack/tools folder.'
+
+  # Copy system tools needed to the live media only
+  cp -r src/tools/displays "${tools_home}" &&
+    cp -r src/tools/desktop "${tools_home}" &&
+    cp -r src/tools/clock "${tools_home}" &&
+    cp -r src/tools/networks "${tools_home}" &&
+    cp -r src/tools/disks "${tools_home}" &&
+    cp -r src/tools/bluetooth "${tools_home}" &&
+    cp -r src/tools/langs "${tools_home}" &&
+    cp -r src/tools/notifications "${tools_home}" &&
+    cp -r src/tools/power "${tools_home}" &&
+    cp -r src/tools/printers "${tools_home}" &&
+    cp -r src/tools/trash "${tools_home}" &&
+    cp src/tools/utils.sh "${tools_home}" ||
+    abort ERROR 'Failed to copy the system tools files.'
+
+  # Remove LC_CTYPE on smenu calls as live media doesn't need it
+  sed -i 's/\(.*\)LC_CTYPE=.* \(smenu .*\)/\1\2/' "${tools_home}/utils.sh" ||
+    abort ERROR 'Failed to remove the LC_TYPE from the smenu calls.'
+
+  # Disable init scratchpad command for the live media
+  local desktop_main="${tools_home}/desktop/main.sh"
+
+  sed -i "/.*scratchpad.*/d" "${desktop_main}" ||
+    abort ERROR 'Failed to remove the scratchpad lines from the desktop main.'
+
+  # Create global aliases for each system tool main entry
+  local bin_home="${ROOT_FS}/usr/local/bin"
+
+  mkdir -p "${bin_home}" || abort ERROR 'Failed to create the /usr/local/bin folder.'
+
+  ln -sf /opt/stack/tools/displays/main.sh "${bin_home}/displays" &&
+    ln -sf /opt/stack/tools/desktop/main.sh "${bin_home}/desktop" &&
+    ln -sf /opt/stack/tools/clock/main.sh "${bin_home}/clock" &&
+    ln -sf /opt/stack/tools/networks/main.sh "${bin_home}/networks" &&
+    ln -sf /opt/stack/tools/disks/main.sh "${bin_home}/disks" &&
+    ln -sf /opt/stack/tools/bluetooth/main.sh "${bin_home}/bluetooth" &&
+    ln -sf /opt/stack/tools/langs/main.sh "${bin_home}/langs" &&
+    ln -sf /opt/stack/tools/notifications/main.sh "${bin_home}/notifications" &&
+    ln -sf /opt/stack/tools/power/main,sh "${bin_home}/power" &&
+    ln -sf /opt/stack/tools/printers/main.sh "${bin_home}/printers" &&
+    ln -sf /opt/stack/tools/trash/main.sh "${bin_home}/trash" ||
+    abort ERROR 'Failed to create symlinks for each system tool main.'
+
+  log INFO 'System tools have been copied.'
+}
+
+# Copies the files of the installer.
+copy_installer () {
+  if directory_not_exists "${ROOT_FS}"; then
+    abort ERROR 'Unable to locate the airootfs folder.'
+  fi
+
+  local installer_home="${ROOT_FS}/opt/stack/installer"
+
+  mkdir -p "${installer_home}" ||
+    abort ERROR 'Failed to create the /opt/stack/installer folder.'
+
+  cp -r assets "${installer_home}" &&
+    cp -r configs "${installer_home}" &&
     cp -r services "${installer_home}" &&
-    cp -r tools "${installer_home}" &&
-    cp install.sh "${installer_home}" ||
+    cp -r src/tools "${installer_home}" &&
+    cp -r src/installer/* "${installer_home}" ||
     abort ERROR 'Failed to copy the installer files.'
 
   # Create a global alias to launch the installer
@@ -469,71 +484,15 @@ copy_installer () {
 
   mkdir -p "${bin_home}" || abort ERROR 'Failed to create the /usr/local/bin folder.'
 
-  ln -sf /opt/stack/install.sh "${bin_home}/install_os" ||
+  ln -sf /opt/stack/installer/run.sh "${bin_home}/install_os" ||
     abort ERROR 'Failed to create the symlink to the installer launcher.'
 
   info INFO 'Installer files have been copied.'
 }
 
-# Copies the files of the settings tools.
-copy_settings_tools () {
-  if [[ ! -d "${ROOT_FS}" ]]; then
-    abort ERROR 'Unable to locate the airootfs folder.'
-  fi
-
-  local tools_home="${ROOT_FS}/opt/tools"
-
-  mkdir -p "${tools_home}" || abort ERROR 'Failed to create the /opt/tools folder.'
-
-  # Copy settings tools needed to the live media only
-  cp -r tools/displays "${tools_home}" &&
-    cp -r tools/desktop "${tools_home}" &&
-    cp -r tools/clock "${tools_home}" &&
-    cp -r tools/networks "${tools_home}" &&
-    cp -r tools/disks "${tools_home}" &&
-    cp -r tools/bluetooth "${tools_home}" &&
-    cp -r tools/langs "${tools_home}" &&
-    cp -r tools/notifications "${tools_home}" &&
-    cp -r tools/power "${tools_home}" &&
-    cp -r tools/printers "${tools_home}" &&
-    cp -r tools/trash "${tools_home}" &&
-    cp tools/utils "${tools_home}" ||
-    abort ERROR 'Failed to copy the settings tools files.'
-
-  # Remove LC_CTYPE on smenu calls as live media doesn't need it
-  sed -i 's/\(.*\)LC_CTYPE=.* \(smenu .*\)/\1\2/' "${tools_home}/utils" ||
-    abort ERROR 'Failed to remove the LC_TYPE from the smenu calls.'
-
-  # Disable init scratchpad command for the live media
-  local desktop_main="${tools_home}/desktop/main"
-
-  sed -i "/.*scratchpad.*/d" "${desktop_main}" ||
-    abort ERROR 'Failed to remove the scratchpad lines from the desktop main.'
-
-  # Create global aliases for each setting tool main entry
-  local bin_home="${ROOT_FS}/usr/local/bin"
-
-  mkdir -p "${bin_home}" || abort ERROR 'Failed to create the /usr/local/bin folder.'
-
-  ln -sf /opt/tools/displays/main "${bin_home}/displays" &&
-    ln -sf /opt/tools/desktop/main "${bin_home}/desktop" &&
-    ln -sf /opt/tools/clock/main "${bin_home}/clock" &&
-    ln -sf /opt/tools/networks/main "${bin_home}/networks" &&
-    ln -sf /opt/tools/disks/main "${bin_home}/disks" &&
-    ln -sf /opt/tools/bluetooth/main "${bin_home}/bluetooth" &&
-    ln -sf /opt/tools/langs/main "${bin_home}/langs" &&
-    ln -sf /opt/tools/notifications/main "${bin_home}/notifications" &&
-    ln -sf /opt/tools/power/main "${bin_home}/power" &&
-    ln -sf /opt/tools/printers/main "${bin_home}/printers" &&
-    ln -sf /opt/tools/trash/main "${bin_home}/trash" ||
-    abort ERROR 'Failed to create symlinks for each settings tool main.'
-
-  log INFO 'Settings tools have been copied.'
-}
-
 # Sets to skip login prompt and auto login the root user.
 setup_auto_login () {
-  if [[ ! -d "${ROOT_FS}" ]]; then
+  if directory_not_exists "${ROOT_FS}"; then
     abort 'Unable to locate the airootfs folder.'
   fi
 
@@ -569,7 +528,7 @@ setup_auto_login () {
 
 # Sets up the display server configuration and hooks.
 setup_display_server () {
-  if [[ ! -d "${ROOT_FS}" ]]; then
+  if directory_not_exists "${ROOT_FS}"; then
     abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
@@ -596,21 +555,22 @@ setup_display_server () {
 
   local zlogin_file="${ROOT_FS}/root/.zlogin"
 
-  if [[ ! -f "${zlogin_file}" ]]; then
+  if file_not_exists "${zlogin_file}"; then
     abort ERROR "Unable to locate file ${zlogin_file}."
   fi
 
   printf '%s\n' \
     '' \
     "echo -e 'Starting desktop environment...'" \
-    'startx' >> "${zlogin_file}" || abort ERROR 'Failed to add startx hook to .zlogin file.'
+    'startx' >> "${zlogin_file}" ||
+     abort ERROR 'Failed to add startx hook to .zlogin file.'
 
   log INFO 'Xorg server set to be started after login.'
 }
 
 # Sets up the keyboard settings.
 setup_keyboard () {
-  if [[ ! -d "${ROOT_FS}" ]]; then
+  if directory_not_exists "${ROOT_FS}"; then
     abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
@@ -637,7 +597,8 @@ setup_keyboard () {
   # Save keyboard settings to the user langs json file
   local config_home="${ROOT_FS}/root/.config/stack"
 
-  mkdir -p "${config_home}" || abort ERROR 'Failed to create the /root/.config/stack folder.'
+  mkdir -p "${config_home}" ||
+    abort ERROR 'Failed to create the /root/.config/stack folder.'
 
   printf '%s\n' \
     '{' \
@@ -653,7 +614,7 @@ setup_keyboard () {
 
 # Sets up various system power settings.
 setup_power () {
-  if [[ ! -d "${ROOT_FS}" ]]; then
+  if directory_not_exists "${ROOT_FS}"; then
     abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
@@ -693,7 +654,8 @@ setup_power () {
 
   log INFO 'Sleep action handlers have been set.'
 
-  mkdir -p "${ROOT_FS}/etc/tlp.d" || abort ERROR 'Failed to create the /etc/tlp.d folder.'
+  mkdir -p "${ROOT_FS}/etc/tlp.d" ||
+    abort ERROR 'Failed to create the /etc/tlp.d folder.'
 
   local tlp_conf="${ROOT_FS}/etc/tlp.d/00-main.conf"
 
@@ -719,7 +681,7 @@ setup_power () {
 
 # Sets up the sheel environment files.
 setup_shell_environment () {
-  if [[ ! -d "${ROOT_FS}" ]]; then
+  if direcory_not_exists "${ROOT_FS}"; then
     abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
@@ -745,7 +707,8 @@ setup_shell_environment () {
     '' \
     'if [[ "${SHOW_WELCOME_MSG}" == "true" ]]; then' \
     '  cat /etc/welcome' \
-    'fi' >> "${zshrc_file}" || abort ERROR 'Failed to add the welcome message hook call.'
+    'fi' >> "${zshrc_file}" ||
+    abort ERROR 'Failed to add the welcome message hook call.'
 
   log INFO 'Welcome message set to be shown after login.'
 }
@@ -755,7 +718,7 @@ setup_shell_environment () {
 setup_desktop () {
   log INFO 'Setting up the desktop configurations...'
 
-  if [[ ! -d "${ROOT_FS}" ]]; then
+  if directory_not_exists "${ROOT_FS}"; then
     abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
@@ -873,13 +836,14 @@ setup_desktop () {
 setup_theme () {
   log INFO 'Setting up the desktop theme...'
 
-  if [[ ! -d "${ROOT_FS}" ]]; then
+  if directory_not_exists "${ROOT_FS}"; then
     abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
   local themes_home="${ROOT_FS}/usr/share/themes"
 
-  mkdir -p "${themes_home}" || abort ERROR 'Failed to create the themes folder.'
+  mkdir -p "${themes_home}" ||
+    abort ERROR 'Failed to create the themes folder.'
 
   local theme_url='https://github.com/dracula/gtk/archive/master.zip'
 
@@ -895,7 +859,8 @@ setup_theme () {
 
   local icons_home="${ROOT_FS}/usr/share/icons"
 
-  mkdir -p "${icons_home}" || abort ERROR 'Failed to create the icons folder.'
+  mkdir -p "${icons_home}" ||
+    abort ERROR 'Failed to create the icons folder.'
   
   local icons_url='https://github.com/dracula/gtk/files/5214870/Dracula.zip'
 
@@ -910,7 +875,8 @@ setup_theme () {
 
   local cursors_home="${ROOT_FS}/usr/share/icons"
 
-  mkdir -p "${cursors_home}" || abort ERROR 'Failed to create the cursors folder.'
+  mkdir -p "${cursors_home}" ||
+    abort ERROR 'Failed to create the cursors folder.'
 
   local cursors_url='https://www.dropbox.com/s/mqt8s1pjfgpmy66/Breeze-Snow.tgz?dl=1'
 
@@ -919,7 +885,8 @@ setup_theme () {
     rm -f "${cursors_home}/breeze-snow.tgz" ||
     abort ERROR 'Failed to install the desktop cursors.'
 
-  mkdir -p "${cursors_home}/default" || abort ERROR 'Failed to create the cursors default folder.'
+  mkdir -p "${cursors_home}/default" ||
+    abort ERROR 'Failed to create the cursors default folder.'
 
   echo '[Icon Theme]' >> "${cursors_home}/default/index.theme"
   echo 'Inherits=Breeze-Snow' >> "${cursors_home}/default/index.theme"
@@ -939,12 +906,13 @@ setup_theme () {
   local wallpapers_home="${ROOT_FS}/root/.local/share/wallpapers"
 
   mkdir -p "${wallpapers_home}" &&
-    cp resources/wallpapers/* "${wallpapers_home}" ||
+    cp assets/wallpapers/* "${wallpapers_home}" ||
     abort ERROR 'Failed to copy the wallpapers.'
 
   local settings_home="${ROOT_FS}/root/.config/stack"
 
-  mkdir -p "${settings_home}" || abort ERROR 'Failed to create the /root/.config/stack folder.'
+  mkdir -p "${settings_home}" ||
+    abort ERROR 'Failed to create the /root/.config/stack folder.'
 
   local settings='{"wallpaper": {"name": "default.jpeg", "mode": "fill"}}'
 
@@ -957,13 +925,14 @@ setup_theme () {
 setup_fonts () {
   log INFO 'Setting up extra system fonts...'
 
-  if [[ ! -d "${ROOT_FS}" ]]; then
+  if directory_not_exists "${ROOT_FS}"; then
     abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
   local fonts_home="${ROOT_FS}/usr/share/fonts/extra-fonts"
 
-  mkdir -p "${fonts_home}" || abort ERROR 'Failed to create the fonts folder.'
+  mkdir -p "${fonts_home}" ||
+    abort ERROR 'Failed to create the fonts folder.'
 
   local fonts=(
     "FiraCode https://github.com/tonsky/FiraCode/releases/download/6.2/Fira_Code_v6.2.zip"
@@ -996,15 +965,15 @@ setup_fonts () {
 
 # Sets up various system sound resources.
 setup_sounds () {
-  if [[ ! -d "${ROOT_FS}" ]]; then
+  if directory_not_exists "${ROOT_FS}"; then
     abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
   local sounds_home="${ROOT_FS}/usr/share/sounds/stack"
   
   mkdir -p "${sounds_home}" &&
-    cp resources/sounds/normal.wav "${sounds_home}" &&
-    cp resources/sounds/critical.wav "${sounds_home}" ||
+    cp assets/sounds/normal.wav "${sounds_home}" &&
+    cp assets/sounds/critical.wav "${sounds_home}" ||
     abort ERROR 'Failed to set the extra system sounds.'
 
   log INFO 'Extra system sounds have been set.'
@@ -1014,11 +983,12 @@ setup_sounds () {
 enable_services () {
   log INFO 'Enabling system services...'
 
-  if [[ ! -d "${ROOT_FS}" ]]; then
+  if directory_not_exists "${ROOT_FS}"; then
     abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
-  mkdir -p "${ROOT_FS}/etc/systemd/system" || abort ERROR 'Failed to create the /etc/systemd/system folder.'
+  mkdir -p "${ROOT_FS}/etc/systemd/system" ||
+    abort ERROR 'Failed to create the /etc/systemd/system folder.'
 
   ln -s /usr/lib/systemd/system/NetworkManager-dispatcher.service \
       "${ROOT_FS}/etc/systemd/system/dbus-org.freedesktop.nm-dispatcher.service" &&
@@ -1093,16 +1063,16 @@ enable_services () {
 
 # Adds input and output devices rules.
 add_device_rules () {
-  if [[ ! -d "${ROOT_FS}" ]]; then
+  if directory_not_exists "${ROOT_FS}"; then
     abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
   local rules_home="${ROOT_FS}/etc/udev/rules.d"
 
   mkdir -p "${rules_home}" &&
-    cp rules/90-init-pointer.rules "${rules_home}" &&
-    cp rules/91-init-tablets.rules "${rules_home}" &&
-    cp rules/92-fix-layout.rules "${rules_home}" ||
+    cp services/init-pointer.rules "${rules_home}/90-init-pointer.rules" &&
+    cp services/init-tablets.rules "${rules_home}/91-init-tablets.rules" &&
+    cp services/fix-layout.rules "${rules_home}/92-fix-layout.rules" ||
     abort ERROR 'Failed to set the device rules.'
   
   log INFO 'Device rules have been set.'
@@ -1110,7 +1080,7 @@ add_device_rules () {
 
 # Adds various extra sudoers rules.
 add_sudoers_rules () {
-  if [[ ! -d "${ROOT_FS}" ]]; then
+  if directory_not_exists "${ROOT_FS}"; then
     abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
@@ -1122,7 +1092,8 @@ add_sudoers_rules () {
   proxy_rules+='all_proxy ALL_PROXY '
   proxy_rules+='no_proxy NO_PROXY"'
 
-  mkdir -p "${ROOT_FS}/etc/sudoers.d" || abort ERROR 'Failed to create the /etc/sudoers.d folder.'
+  mkdir -p "${ROOT_FS}/etc/sudoers.d" ||
+    abort ERROR 'Failed to create the /etc/sudoers.d folder.'
 
   echo "${proxy_rules}" > "${ROOT_FS}/etc/sudoers.d/proxy_rules"
 
@@ -1133,7 +1104,7 @@ add_sudoers_rules () {
 set_file_permissions () {
   local permissions_file="${PROFILE_DIR}/profiledef.sh"
 
-  if [[ ! -f "${permissions_file}" ]]; then
+  if file_not_exists "${permissions_file}"; then
     abort ERROR "Unable to locate file ${permissions_file}."
   fi
 
@@ -1144,21 +1115,30 @@ set_file_permissions () {
     '0:0:644,/etc/systemd/logind.conf.d/'
     '0:0:644,/etc/welcome'
     '0:0:755,/etc/pacman.d/scripts/'
-    '0:0:755,/opt/stack/configs/bspwm/'
-    '0:0:755,/opt/stack/configs/dunst/hook'
-    '0:0:755,/opt/stack/configs/nnn/env'
-    '0:0:755,/opt/stack/configs/polybar/scripts/'
-    '0:0:755,/opt/stack/configs/rofi/launch'
-    '0:0:755,/opt/stack/configs/xsecurelock/hook'
+    '0:0:755,/opt/stack/installer/configs/bspwm/'
+    '0:0:755,/opt/stack/installer/configs/dunst/hook'
+    '0:0:755,/opt/stack/installer/configs/nnn/env'
+    '0:0:755,/opt/stack/installer/configs/polybar/scripts/'
+    '0:0:755,/opt/stack/installer/configs/rofi/launch'
+    '0:0:755,/opt/stack/installer/configs/xsecurelock/hook'
+    '0:0:755,/opt/stack/installer/apps.sh'
+    '0:0:755,/opt/stack/installer/askme.sh'
+    '0:0:755,/opt/stack/installer/bootstrap.sh'
+    '0:0:755,/opt/stack/installer/cleaner.sh'
+    '0:0:755,/opt/stack/installer/desktop.sh'
+    '0:0:755,/opt/stack/installer/detection.sh'
+    '0:0:755,/opt/stack/installer/diskpart.sh'
+    '0:0:755,/opt/stack/installer/run.sh'
+    '0:0:755,/opt/stack/installer/stack.sh'
+    '0:0:755,/opt/stack/installer/system.sh'
+    '0:0:755,/opt/stack/installer/tools/'
+    '0:0:755,/opt/stack/commons/'
     '0:0:755,/opt/stack/tools/'
-    '0:0:755,/opt/stack/scripts/'
-    '0:0:755,/opt/stack/install.sh'
     '0:0:755,/root/.config/bspwm/'
     '0:0:755,/root/.config/polybar/scripts/'
     '0:0:755,/root/.config/rofi/launch'
     '0:0:755,/root/.config/dunst/hook'
     '0:0:664,/root/.config/stack/'
-    '0:0:755,/opt/tools/'
     '0:0:755,/usr/local/bin/tqdm'
   )
 
@@ -1181,7 +1161,7 @@ set_file_permissions () {
 make_iso_file () {
   log INFO 'Building the archiso file...'
 
-  if [[ ! -d "${PROFILE_DIR}" ]]; then
+  if directory_not_exists "${PROFILE_DIR}"; then
     abort ERROR 'Unable to locate the releng profile folder.'
   fi
 
@@ -1202,8 +1182,9 @@ init &&
   add_packages &&
   add_aur_packages &&
   patch_packages &&
+  copy_commons_tools &&
+  copy_system_tools &&
   copy_installer &&
-  copy_settings_tools &&
   setup_auto_login &&
   setup_display_server &&
   setup_keyboard &&
@@ -1218,4 +1199,3 @@ init &&
   add_sudoers_rules &&
   set_file_permissions &&
   make_iso_file
-

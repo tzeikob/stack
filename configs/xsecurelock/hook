@@ -2,7 +2,7 @@
 
 set -o pipefail
 
-source /opt/tools/utils
+source /opt/stack/commons/validators.sh
 
 # Applies various hook actions to handle user experience
 # during suspend and wake up of the system.
