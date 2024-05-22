@@ -107,7 +107,7 @@ install () {
 
   # Impersonate the sudoer user on desktop, stack and apps installation
   if match "${file_name}" '^(desktop|stack|apps)$'; then
-    user_name="$(read_property "${SETTINGS}" 'user_name')"
+    user_name="$(get_property "${SETTINGS}" '.user_name')"
 
     if has_failed; then
       log ERROR 'Unable to read the user_name setting.' >> "${log_file}"

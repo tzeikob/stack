@@ -140,7 +140,7 @@ pick_remote () {
   remotes="$(find_remotes "${status}" | jq -cer "${query}")" || return 1
 
   local len=0
-  len="$(get_len "${remotes}")" || return 1
+  len="$(get_property "${remotes}" 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log "No ${status:-\b} remotes have found."

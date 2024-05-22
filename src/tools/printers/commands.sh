@@ -58,7 +58,7 @@ list_printers () {
   destinations="$(find_destinations)" || return 1
 
   local len=0
-  len="$(get_len "${destinations}")" || return 1
+  len="$(get_property "${destinations}" 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No printers have found.'
@@ -390,7 +390,7 @@ list_jobs () {
   jobs="$(find_jobs)" || return 1
 
   local len=0
-  len="$(get_len "${jobs}")" || return 1
+  len="$(get_property "${jobs}" 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No active print jobs have found.'

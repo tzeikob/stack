@@ -268,7 +268,7 @@ list_disks () {
   disks="$(find_disks)" || return 1
 
   local len=0
-  len="$(get_len "${disks}")" || return 1
+  len="$(get_property "${disks}" 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No disks have found.'
@@ -313,7 +313,7 @@ list_partitions () {
   parts="$(find_partitions "${disk}")" || return 1
 
   local len=0
-  len="$(get_len "${parts}")" || return 1
+  len="$(get_property "${parts}" 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No partitions have found.'
@@ -338,7 +338,7 @@ list_roms () {
   roms="$(find_roms)" || return 1
 
   local len=0
-  len="$(get_len "${roms}")" || return 1
+  len="$(get_property "${roms}" 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No roms have found.'
@@ -415,7 +415,7 @@ list_shared_folders () {
   fi
 
   local len=0
-  len="$(get_len "${folders}")" || return 1
+  len="$(get_property "${folders}" 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No shared folders have found.'
@@ -500,7 +500,7 @@ list_mounts () {
   mounts="$(jq -n --argjson m "${mounts}" --argjson i "${images}" '$m + $i')" || return 1
 
   local len=0
-  len="$(get_len "${mounts}")" || return 1
+  len="$(get_property "${mounts}" 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No mounts have found.'

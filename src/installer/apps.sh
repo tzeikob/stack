@@ -202,7 +202,7 @@ install_virtual_box () {
   log INFO 'Installing the virtual box...'
 
   local kernel=''
-  kernel="$(read_property "${SETTINGS}" 'kernel')" ||
+  kernel="$(get_property "${SETTINGS}" '.kernel')" ||
     abort ERROR 'Unable to read kernel setting.'
 
   local pckgs='virtualbox virtualbox-guest-iso'
@@ -221,7 +221,7 @@ install_virtual_box () {
   fi
 
   local user_name=''
-  user_name="$(read_property "${SETTINGS}" 'user_name')" ||
+  user_name="$(get_property "${SETTINGS}" '.user_name')" ||
     abort ERROR 'Unable to read user_name setting.'
 
   sudo usermod -aG vboxusers "${user_name}" 2>&1 &&
@@ -280,7 +280,7 @@ install_foliate () {
   fi
 
   local user_name=''
-  user_name="$(read_property "${SETTINGS}" 'user_name')" ||
+  user_name="$(get_property "${SETTINGS}" '.user_name')" ||
     abort ERROR 'Unable to read user_name setting.'
 
   local config_home="/home/${user_name}/.config"

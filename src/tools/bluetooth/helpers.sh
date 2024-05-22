@@ -97,7 +97,7 @@ pick_controller () {
   controllers="$(find_controllers | jq -cer "${query}")" || return 1
 
   local len=0
-  len=$(get_len "${controllers}") || return 1
+  len=$(get_property "${controllers}" 'length') || return 1
 
   if is_true "${len} = 0"; then
     log 'No controllers have found.'
@@ -118,7 +118,7 @@ pick_device () {
   devices="$(find_devices | jq -cer "${query}")" || return 1
 
   local len=0
-  len=$(get_len "${devices}") || return 1
+  len=$(get_property "${devices}" 'length') || return 1
 
   if is_true "${len} = 0"; then
     log 'No devices have found.'

@@ -60,7 +60,7 @@ pick_wallpaper () {
   wallpapers="$(find_wallpapers | jq -cer "${query}")" || return 1
 
   local len=0
-  len="$(get_len "${wallpapers}")" || return 1
+  len="$(get_property "${wallpapers}" 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No wallpaper files found.'
@@ -179,7 +179,7 @@ pick_pointer () {
   pointers="$(find_pointers)" || return 1
 
   local len=0
-  len="$(get_len "${pointers}")" || return 1
+  len="$(get_property "${pointers}" 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No pointers found.'
@@ -236,7 +236,7 @@ find_tablet () {
   tablet="$(find_tablets | jq -cer "${query}")" || return 1
 
   local vendor=''
-  vendor="$(get_value "${tablet}" '.vendor')" || return 1
+  vendor="$(get_property "${tablet}" '.vendor')" || return 1
 
   # Merge properties specific to wacom devices
   if equals "${vendor}" 'wacom'; then
@@ -313,7 +313,7 @@ pick_tablet () {
   tablets="$(find_tablets)" || return 1
 
   local len=0
-  len="$(get_len "${tablets}")" || return 1
+  len="$(get_property "${tablets}" 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No tablets have found.'
@@ -550,7 +550,7 @@ pick_workspace () {
   workspaces="$(bspc query -D --names | jq --slurp . | jq -cr "${query}")" || return 1
 
   local len=0
-  len="$(get_len "${workspaces}")" || return 1
+  len="$(get_property "${workspaces}" 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No workspaces found.'

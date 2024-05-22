@@ -4,49 +4,64 @@ set -Eeo pipefail
 
 source /opt/stack/commons/validators.sh
 
-# Saves the value to the property with the given key to the
-# given json file.
+# Saves or sets the value of the property matching the given jq key
+# path to the given json file or json object. If the property doesn't
+# exist it will be added under the given key path.
 # Arguments:
-#  file:  the path to the json file
-#  key:   the key name of the property
-#  value: any json valid value
-write_property () {
-  local file="${1}"
-  local key="${2}"
+#  subject:  path of a json file or a json object
+#  key_path: the jq key path of the property
+#  value:    any json valid value
+# Ouputs:
+#  If subject is a json object outputs the new object back.
+set_property () {
+  local subject="${1}"
+  local key_path="${2}"
   local value="${3}"
 
   if is_empty "${value}" || match "${value}" '^ *$'; then
     value='""'
   fi
 
-  jq -cr ".${key} = ${value}" "${file}" > "${file}"
+  local query="${key_path} = ${value}"
+
+  if file_exists "${subject}"; then
+    jq -cer "${query}" "${subject}" 2> /dev/null > "${subject}"
+  else
+    echo "${subject}" | jq -cer "${query}" 2> /dev/null
+  fi
 }
 
-# Reads the value of the property with the given key
-# from the given jsoon file.
+# Reads or gets the value of the property selected by the given
+# jq query from the given json file or json object.
 # Arguments:
-#  file: the path to the json file
-#  key:  the key name of a property
+#  subject: path of a json file or a json object
+#  query:   the query path of a property
 # Outputs:
 #  The value of the given property otherwise none.
-read_property () {
-  local file="${1}"
-  local key="${2}"
+get_property () {
+  local subject="${1}"
+  local query="${2:-"."}"
 
-  jq -cer ".${key}" "${file}"
+  query="${query}|if . then . else \"\" end"
+
+  if file_exists "${subject}"; then
+    jq -cer "${query}" "${subject}" 2> /dev/null
+  else
+    echo "${subject}" | jq -cer "${query}" 2> /dev/null
+  fi
 }
 
-# Checks if the property with the given key is equal
-# to the given value in the given json file.
+# Checks if the property matching the given jq key path is equal
+# to the given value in the given json file or json object.
 # Arguments:
-#  file: the path to the json file
-#  key:   the key of a property
-#  value: any json valid value
+#  subject:  path of a json file or a json object
+#  key_path: the jq key path of a property
+#  value:    any json valid value
 # Returns:
 #  0 if the property is equal to the value otherwise 1.
 is_property () {
-  local file="${1}"
-  local key="${2}"
+  local subject="${1}"
+  local key_path="${2}"
   local value="${3}"
 
   # Check if the given value is of invalid type
@@ -57,38 +72,11 @@ is_property () {
     value="\"${value}\""
   fi
 
-  local query="select(.${key} == ${value})"
+  local query="select(${key_path} == ${value})"
 
-  jq -cer "${query}" "${file}" &> /dev/null
-}
-
-# Gets the value of the property matched by the
-# given query, where query could be any valid jq query.
-# Arguments:
-#  object: any valid JSON object
-#  query:  a jq query
-# Outputs:
-#  The value of the matched property.
-get_value () {
-  local object="${1}"
-  local query="${2:-"."}|if . then . else \"\" end"
-
-  local result=''
-  result="$(echo "${object}" | jq -cr "${query}")" || return 1
-
-  echo "${result}"
-}
-
-# Counts the number of elements in the given JSON array.
-# Arguments:
-#  array: a JSON array object
-# Outputs:
-#  The number of array elements.
-get_len () {
-  local array="${1}"
-
-  local result=0
-  result="$(echo "${array}" | jq -cer 'length')" || return 1
-
-  echo "${result}"
+  if file_exists "${subject}"; then
+    jq -cer "${query}" "${subject}" &> /dev/null
+  else
+    echo "${subject}" | jq -cer "${query}" &> /dev/null
+  fi
 }
