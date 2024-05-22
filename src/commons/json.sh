@@ -25,7 +25,10 @@ set_property () {
   local query="${key_path} = ${value}"
 
   if file_exists "${subject}"; then
-    jq -cer "${query}" "${subject}" 2> /dev/null > "${subject}"
+    local tmp_file=$(mktemp)
+    
+    jq -cer "${query}" "${subject}" 2> /dev/null > "${tmp_file}" &&
+      mv "${tmp_file}" "${subject}"
   else
     echo "${subject}" | jq -cer "${query}" 2> /dev/null
   fi
