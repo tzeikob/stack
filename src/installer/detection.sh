@@ -18,7 +18,7 @@ is_uefi () {
     uefi_mode='yes'
   fi
 
-  set_property "${SETTINGS}" '.uefi_mode' "\"${uefi_mode}\"" ||
+  set_property "${SETTINGS}" '.uefi_mode' "${uefi_mode}" ||
     abort 'Failed to set uefi_mode property.'
 
   log INFO "UEFI mode is set to ${uefi_mode}."
@@ -31,16 +31,16 @@ is_virtual_machine () {
   )"
 
   if is_not_empty "${vm_vendor}" && not_equals "${vm_vendor}" 'none'; then
-    set_property "${SETTINGS}" '.vm' '"yes"' ||
+    set_property "${SETTINGS}" '.vm' 'yes' ||
       abort 'Failed to set vm property.'
 
-    set_property "${SETTINGS}" '.vm_vendor' "\"${vm_vendor}\"" ||
+    set_property "${SETTINGS}" '.vm_vendor' "${vm_vendor}" ||
       abort 'Failed to set vm_vendor property.'
 
     log INFO 'Virtual machine is set to yes.'
     log INFO "Virtual machine vendor is set to ${vm_vendor}."
   else
-    set_property "${SETTINGS}" '.vm' '"no"' ||
+    set_property "${SETTINGS}" '.vm' 'no' ||
       abort 'Failed to set vm property.'
   fi
 }
@@ -60,7 +60,7 @@ resolve_cpu () {
     cpu_vendor='intel'
   fi
 
-  set_property "${SETTINGS}" '.cpu_vendor' "\"${cpu_vendor}\"" ||
+  set_property "${SETTINGS}" '.cpu_vendor' "${cpu_vendor}" ||
     abort 'Failed to set cpu_vendor property.'
 
   log INFO "CPU vendor is set to ${cpu_vendor}."
@@ -85,7 +85,7 @@ resolve_gpu () {
     gpu_vendor='intel'
   fi
 
-  set_property "${SETTINGS}" '.gpu_vendor' "\"${gpu_vendor}\"" ||
+  set_property "${SETTINGS}" '.gpu_vendor' "${gpu_vendor}" ||
     abort 'Failed to set gpu_vendor property.'
 
   log INFO "GPU vendor is set to ${gpu_vendor}."
@@ -108,7 +108,7 @@ is_disk_trimmable () {
     trim_disk='yes'
   fi
 
-  set_property "${SETTINGS}" '.trim_disk' "\"${trim_disk}\"" ||
+  set_property "${SETTINGS}" '.trim_disk' "${trim_disk}" ||
     abort 'Failed to set trim_disk property.'
 
   log INFO "Disk trim mode is set to ${trim_disk}."
@@ -119,12 +119,12 @@ resolve_synaptics () {
   local query='.*SynPS/2.*Synaptics.*TouchPad.*'
 
   if grep -Eq "${query}" /proc/bus/input/devices; then
-    set_property "${SETTINGS}" '.synaptics' '"yes"' ||
+    set_property "${SETTINGS}" '.synaptics' 'yes' ||
       abort 'Failed to set synaptics property.'
     
     log INFO 'Synaptics touch pad set to yes.'
   else
-    set_property "${SETTINGS}" '.synaptics' '"no"' ||
+    set_property "${SETTINGS}" '.synaptics' 'no' ||
       abort 'Failed to set synaptics property.'
   fi
 }

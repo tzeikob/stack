@@ -63,7 +63,7 @@ select_disk () {
     abort
   fi
 
-  set_property "${SETTINGS}" '.disk' "\"${disk}\"" ||
+  set_property "${SETTINGS}" '.disk' "${disk}" ||
     abort 'Failed to set disk property.'
 
   log "Installation disk set to block device ${disk}."
@@ -75,14 +75,14 @@ opt_in_swap_space () {
   is_not_given "${REPLY}" && abort 'User input is required.'
 
   if is_no "${REPLY}"; then
-    set_property "${SETTINGS}" '.swap_on' '"no"' ||
+    set_property "${SETTINGS}" '.swap_on' 'no' ||
       abort 'Failed to set swap_on property.'
 
     log 'Swap is set to off.'
     return 0
   fi
 
-  set_property "${SETTINGS}" '.swap_on' '"yes"' ||
+  set_property "${SETTINGS}" '.swap_on' 'yes' ||
     abort 'Failed to set swap_on property.'
 
   log 'Swap is set to yes.'
@@ -112,7 +112,7 @@ opt_in_swap_space () {
 
   local swap_type="${REPLY}"
 
-  set_property "${SETTINGS}" '.swap_type' "\"${swap_type}\"" ||
+  set_property "${SETTINGS}" '.swap_type' "${swap_type}" ||
     abort 'Failed to set swap_type property.'
 
   log "Swap type is set to ${swap_type}."
@@ -170,7 +170,7 @@ select_timezone () {
 
   local timezone="${REPLY}"
 
-  set_property "${SETTINGS}" '.timezone' "\"${timezone}\"" ||
+  set_property "${SETTINGS}" '.timezone' "${timezone}" ||
     abort 'Failed to set timezone property.'
 
   log "Timezone is set to ${timezone}."
@@ -224,7 +224,7 @@ select_keyboard_model () {
 
   local keyboard_model="${REPLY}"
 
-  set_property "${SETTINGS}" '.keyboard_model' "\"${keyboard_model}\"" ||
+  set_property "${SETTINGS}" '.keyboard_model' "${keyboard_model}" ||
     abort 'Failed to set keyboard_model property.'
 
   log "Keyboard model is set to ${keyboard_model}."
@@ -251,7 +251,7 @@ select_keyboard_map () {
 
   local keyboard_map="${REPLY}"
 
-  set_property "${SETTINGS}" '.keyboard_map' "\"${keyboard_map}\"" ||
+  set_property "${SETTINGS}" '.keyboard_map' "${keyboard_map}" ||
     abort 'Failed to set keyboard_map property.'
 
   log "Keyboard map is set to ${keyboard_map}."
@@ -278,7 +278,7 @@ select_keyboard_layout () {
 
   local keyboard_layout="${REPLY}"
 
-  set_property "${SETTINGS}" '.keyboard_layout' "\"${keyboard_layout}\"" ||
+  set_property "${SETTINGS}" '.keyboard_layout' "${keyboard_layout}" ||
     abort 'Failed to set keyboard_layout property.'
 
   local variants='{"key": "default", "value": "default"},'
@@ -300,7 +300,7 @@ select_keyboard_layout () {
 
   local layout_variant="${REPLY}"
 
-  set_property "${SETTINGS}" '.layout_variant' "\"${layout_variant}\"" ||
+  set_property "${SETTINGS}" '.layout_variant' "${layout_variant}" ||
     abort 'Failed to set layout_variant property.'
 
   log "Layout is set to ${keyboard_layout} ${layout_variant}."
@@ -327,7 +327,7 @@ select_keyboard_options () {
 
   local keyboard_options="${REPLY}"
 
-  set_property "${SETTINGS}" '.keyboard_options' "\"${keyboard_options}\"" ||
+  set_property "${SETTINGS}" '.keyboard_options' "${keyboard_options}" ||
     abort 'Failed to set keyboard_options property.'
 
   log "Keyboard options is set to ${keyboard_options}."
@@ -346,7 +346,7 @@ enter_host_name () {
 
   local host_name="${REPLY}"
 
-  set_property "${SETTINGS}" '.host_name' "\"${host_name}\"" ||
+  set_property "${SETTINGS}" '.host_name' "${host_name}" ||
     abort 'Failed to set host_name property.'
 
   log "Hostname is set to ${host_name}."
@@ -365,7 +365,7 @@ enter_user_name () {
 
   local user_name="${REPLY}"
 
-  set_property "${SETTINGS}" '.user_name' "\"${user_name}\"" ||
+  set_property "${SETTINGS}" '.user_name' "${user_name}" ||
     abort 'Failed to set user_name property.'
 
   log "User name is set to ${user_name}."
@@ -395,7 +395,7 @@ enter_user_password () {
     is_not_given "${REPLY}" && abort '\nUser input is required.'
   done
 
-  set_property "${SETTINGS}" '.user_password' "\"${password}\"" ||
+  set_property "${SETTINGS}" '.user_password' "${password}" ||
     abort 'Failed to set user_password property.'
 
   log '\nUser password is set successfully.'
@@ -425,7 +425,7 @@ enter_root_password () {
     is_not_given "${REPLY}" && abort '\nUser input is required.'
   done
 
-  set_property "${SETTINGS}" '.root_password' "\"${password}\"" ||
+  set_property "${SETTINGS}" '.root_password' "${password}" ||
     abort 'Failed to set root_password property.'
 
   log '\nRoot password is set successfully.'
@@ -443,7 +443,7 @@ select_kernel () {
 
   local kernel="${REPLY}"
 
-  set_property "${SETTINGS}" '.kernel' "\"${kernel}\"" ||
+  set_property "${SETTINGS}" '.kernel' "${kernel}" ||
     abort 'Failed to set kernel property.'
 
   log "Linux kernel is set to ${kernel}."

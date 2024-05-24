@@ -4,6 +4,33 @@ set -Eeo pipefail
 
 source /opt/stack/commons/validators.sh
 
+# Outputs back the json type of the given value, which
+# could be any of string, number, boolean, array, object
+# null or none.
+# Arguments:
+#  value: any value
+# Outputs:
+#  The type of the given value.
+get_type () {
+  local value="${1}"
+
+  if is_empty "${value}" || match "${value}" '^ *$' || match "${value}" '^" *"$'; then
+    echo 'none'
+    return 0
+  fi
+
+  local type=''
+  type="$(echo "${value}" | jq -cer 'type' 2> /dev/null)"
+
+  # Consider any value of invalid type as string
+  if [[ $? -ne 0 ]]; then
+    echo 'string'
+    return 0
+  fi
+
+  echo "${type}"
+}
+
 # Saves or sets the value of the property matching the given jq key
 # path to the given json file or json object. If the property doesn't
 # exist it will be added under the given key path.
@@ -18,8 +45,13 @@ set_property () {
   local key_path="${2}"
   local value="${3}"
 
-  if is_empty "${value}" || match "${value}" '^ *$'; then
+  local type=''
+  type="$(get_type "${value}")"
+
+  if equals "${type}" 'none'; then
     value='""'
+  elif equals "${type}" 'string' && not_match "${value}" '^".*"$'; then
+    value="\"${value}\""
   fi
 
   local query="${key_path} = ${value}"
@@ -27,7 +59,7 @@ set_property () {
   if file_exists "${subject}"; then
     local tmp_file=$(mktemp)
     
-    jq -cer "${query}" "${subject}" 2> /dev/null > "${tmp_file}" &&
+    jq -er "${query}" "${subject}" 2> /dev/null > "${tmp_file}" &&
       mv "${tmp_file}" "${subject}"
   else
     echo "${subject}" | jq -cer "${query}" 2> /dev/null
@@ -67,11 +99,12 @@ is_property () {
   local key_path="${2}"
   local value="${3}"
 
-  # Check if the given value is of invalid type
-  echo "${value}" | jq -cer 'type' &> /dev/null
+  local type=''
+  type="$(get_type "${value}")"
 
-  # Consider any value of invalid type as string
-  if [[ $? -ne 0 ]]; then
+  if equals "${type}" 'none'; then
+    value='""'
+  elif equals "${type}" 'string' && not_match "${value}" '^".*"$'; then
     value="\"${value}\""
   fi
 
