@@ -80,7 +80,7 @@ pick_installed_locale () {
   locales="$(jq -cr "${query}" "${LANGS_SETTINGS}")" || return 1
 
   local len=0
-  len="$(get_len "${locales}")" || return 1
+  len="$(get_property "${locales}" 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No installed locales found.'

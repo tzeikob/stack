@@ -44,7 +44,7 @@ pick_card () {
   cards="$(find_cards | jq -cer "${query}")" || return 1
 
   local len=0
-  len=$(get_len "${cards}") || return 1
+  len=$(get_property "${cards}" 'length') || return 1
 
   if is_true "${len} = 0"; then
     log 'No audio cards have found.'
@@ -72,7 +72,7 @@ pick_profile () {
   profiles="$(echo "${card}" | jq -cer "${query}")" || return 1
 
   local len=0
-  len="$(get_len "${profiles}")" || return 1
+  len="$(get_property "${profiles}" 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No audio profiles found.'
@@ -106,7 +106,7 @@ pick_module () {
   modules="$(pactl --format=json list "${object}" | jq -cer "${query}")" || return 1
 
   local len=0
-  len="$(get_len "${modules}")" || return 1
+  len="$(get_property "${modules}" 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log "No ${type} modules have found."

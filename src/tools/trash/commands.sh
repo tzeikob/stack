@@ -45,7 +45,7 @@ list_files () {
   files="$(find_files | jq -cer "${query}")" || return 1
 
   local len=0
-  len="$(get_len "${files}")" || return 1
+  len="$(get_property "${files}" 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No trashed files have found.'
@@ -68,7 +68,7 @@ restore_files () {
   files="$(find_restorable_files)" || return 1
 
   local len=0
-  len="$(get_len "${files}")" || return 1
+  len="$(get_property "${files}" 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No trashed files found.'
@@ -167,7 +167,7 @@ remove_files () {
   files="$(find_files)" || return 1
 
   local len=0
-  len="$(get_len "${files}")" || return 1
+  len="$(get_property "${files}" 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No trashed files found.'

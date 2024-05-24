@@ -15,7 +15,7 @@ sync_clock () {
   log INFO 'Updating the system clock...'
 
   local timezone=''
-  timezone="$(read_property "${SETTINGS}" 'timezone')" ||
+  timezone="$(get_property "${SETTINGS}" '.timezone')" ||
     abort ERROR 'Unable to read timezone setting.'
 
   timedatectl set-timezone "${timezone}" 2>&1 ||
@@ -43,7 +43,7 @@ set_mirrors () {
   log INFO 'Setting up package databases mirrors list...'
 
   local mirrors=''
-  mirrors="$(read_property "${SETTINGS}" 'mirrors' | jq -cer 'join(",")')" ||
+  mirrors="$(get_property "${SETTINGS}" '.mirrors' | jq -cer 'join(",")')" ||
     abort ERROR 'Unable to read mirrors setting.'
 
   reflector --country "${mirrors}" \
@@ -99,7 +99,7 @@ install_kernel () {
   log INFO 'Installing the linux kernel...'
 
   local kernel=''
-  kernel="$(read_property "${SETTINGS}" 'kernel')" ||
+  kernel="$(get_property "${SETTINGS}" '.kernel')" ||
     abort ERROR 'Unable to read kernel setting.'
 
   local pckgs=''

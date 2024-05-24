@@ -138,7 +138,7 @@ check_updates () {
   fi
 
   local len=0
-  len="$(get_len "${pkgs}")" || return 1
+  len="$(get_property "${pkgs}" 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No outdated packages have found.'

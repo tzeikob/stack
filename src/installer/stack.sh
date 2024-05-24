@@ -15,7 +15,7 @@ install_node () {
   log INFO 'Installing the node runtime engine...'
 
   local user_name=''
-  user_name="$(read_property "${SETTINGS}" 'user_name')" ||
+  user_name="$(get_property "${SETTINGS}" '.user_name')" ||
     abort ERROR 'Unable to read user_name setting.'
 
   local nvm_home="/home/${user_name}/.nvm"
@@ -146,7 +146,7 @@ install_docker () {
     log WARN 'Failed to enable docker service.'
 
   local user_name=''
-  user_name="$(read_property "${SETTINGS}" 'user_name')" ||
+  user_name="$(get_property "${SETTINGS}" '.user_name')" ||
     abort ERROR 'Unable to read user_name setting.'
 
   sudo usermod -aG docker "${user_name}" 2>&1 &&
