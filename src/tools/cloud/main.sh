@@ -92,7 +92,7 @@ run () {
   done
 
   # Collect command arguments
-  shift $((OPTIND-1))
+  shift $(calc "${OPTIND} - 1")
   local args_len=$#
 
   if is_true "${args_len} = 0" && on_script_mode; then

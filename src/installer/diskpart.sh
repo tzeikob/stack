@@ -6,6 +6,7 @@ source /opt/stack/commons/process.sh
 source /opt/stack/commons/error.sh
 source /opt/stack/commons/logger.sh
 source /opt/stack/commons/json.sh
+source /opt/stack/commons/math.sh
 source /opt/stack/commons/validators.sh
 
 SETTINGS='/opt/stack/installer/settings.json'
@@ -75,7 +76,7 @@ create_gpt_partitions () {
     swap_size=$(get_property "${SETTINGS}" '.swap_size') ||
       abort ERROR 'Unable to read swap_size setting.'
 
-    end=$((start + (swap_size * 1024)))
+    end=$(calc "${start} + (${swap_size} * 1024)")
 
     log INFO 'Creating the swap partition...'
 
@@ -116,7 +117,7 @@ create_mbr_partitions () {
     swap_size=$(get_property "${SETTINGS}" '.swap_size') ||
       abort ERROR 'Unable to read swap_size setting.'
 
-    local end=$((start + (swap_size * 1024)))
+    local end=$(calc "${start} + (${swap_size} * 1024)")
 
     log INFO 'Creating the swap partition...'
 

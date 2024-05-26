@@ -4,6 +4,7 @@ set -Eeo pipefail
 
 source /opt/stack/commons/error.sh
 source /opt/stack/commons/logger.sh
+source /opt/stack/commons/math.sh
 source /opt/stack/commons/validators.sh
 
 # Checks if any processes matching the given command
@@ -111,12 +112,12 @@ resolve () {
   # Fill the log file with fake lines to trick tqdm bar on completion
   if [[ ${lines} -lt ${total_ops} ]]; then
     local lines_to_append=0
-    lines_to_append=$((total_ops - lines))
+    lines_to_append=$(calc "${total_ops} - ${lines}")
 
     while [[ ${lines_to_append} -gt 0 ]]; do
       log '~'
       sleep 0.15
-      lines_to_append=$((lines_to_append - 1))
+      lines_to_append=$(calc "${lines_to_append} - 1")
     done
   fi
 
