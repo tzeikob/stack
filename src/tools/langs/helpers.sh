@@ -96,7 +96,7 @@ pick_installed_locale () {
 # Returns:
 #  0 if locale is valid otherwise 1.
 is_locale () {
- local name="${1}"
+  local name="${1}"
   
   grep -qE "^\s*#\s*${name}\s*$" /etc/locale.gen
 
