@@ -211,7 +211,7 @@ is_not_block_device () {
 # Returns:
 #  0 if value is yes otherwise 1.
 is_yes () {
-  local value="${1}"
+  local value="${1,,}"
 
   if not_match "${value}" '^(y|yes)$'; then
     return 1
@@ -231,7 +231,7 @@ is_not_yes () {
 # Returns:
 #  0 if value is no otherwise 1.
 is_no () {
-  local value="${1}"
+  local value="${1,,}"
 
   if not_match "${value}" '^(n|no)$'; then
     return 1
@@ -251,7 +251,7 @@ is_not_no () {
 # Returns:
 #  0 if value is on otherwise 1.
 is_on () {
-  local value="${1}"
+  local value="${1,,}"
 
   if not_equals "${value}" 'on'; then
     return 1
@@ -271,7 +271,7 @@ is_not_on () {
 # Returns:
 #  0 if value is off otherwise 1.
 is_off () {
-  local value="${1}"
+  local value="${1,,}"
 
   if not_equals "${value}" 'off'; then
     return 1

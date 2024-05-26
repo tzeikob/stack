@@ -48,7 +48,7 @@ on_script_mode () {
     return 1
   fi
 
-  if not_equals "${ON_SCRIPT_MODE}" 'true'; then
+  if not_equals "${ON_SCRIPT_MODE,,}" 'true'; then
     return 1
   fi
 
@@ -74,7 +74,7 @@ on_quiet_mode () {
     return 1
   fi
 
-  if not_equals "${ON_QUIET_MODE}" 'true'; then
+  if not_equals "${ON_QUIET_MODE,,}" 'true'; then
     return 1
   fi
 
