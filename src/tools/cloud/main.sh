@@ -109,7 +109,7 @@ run () {
 
   while true; do
     if equals "${mode}" 'loop'; then
-      prompt audio
+      prompt cloud
 
       local command=''
       command="$(echo "${REPLY}" | awk '{print (NF == 1) ? $1 : $0}')"
