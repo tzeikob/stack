@@ -17,18 +17,18 @@ LANGS_SETTINGS="${CONFIG_HOME}/langs.json"
 # Outputs:
 #  A menu of keyboard maps.
 pick_keymap () {
-	local maps=''
+  local maps=''
 
-	maps="$(localectl --no-pager list-keymaps | awk '{
-	  print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
-	}')" || return 1
+  maps="$(localectl --no-pager list-keymaps | awk '{
+    print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
+  }')" || return 1
 
-	# Remove extra comma delimiter from the last element
-	maps="${maps:+${maps::-1}}"
+  # Remove extra comma delimiter from the last element
+  maps="${maps:+${maps::-1}}"
 
   maps="[${maps}]"
 
-	pick_one 'Select a key map:' "${maps}" vertical || return $?
+  pick_one 'Select a key map:' "${maps}" vertical || return $?
 }
 
 # Checks if the given keyboard map is valid.
@@ -37,7 +37,7 @@ pick_keymap () {
 # Returns:
 #  0 if map is valid otherwise 1.
 is_keymap () {
-	local map="${1}"
+  local map="${1}"
   
   localectl --no-pager list-keymaps | grep -qE "^${map}$"
   
@@ -45,7 +45,7 @@ is_keymap () {
     return 1
   fi
 
-	return 0
+  return 0
 }
 
 # An inverse version of is_keymap.
@@ -62,7 +62,7 @@ pick_locale () {
     print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
   }')" || return 1
   
-	# Removes the last comma delimiter from the last element
+  # Removes the last comma delimiter from the last element
   locales="${locales:+${locales::-1}}"
 
   locales="[${locales}]"
@@ -96,7 +96,7 @@ pick_installed_locale () {
 # Returns:
 #  0 if locale is valid otherwise 1.
 is_locale () {
-	local name="${1}"
+ local name="${1}"
   
   grep -qE "^\s*#\s*${name}\s*$" /etc/locale.gen
 
@@ -104,7 +104,7 @@ is_locale () {
     return 1
   fi
 
-	return 0
+  return 0
 }
 
 # An inverse version of is_locale.
@@ -118,7 +118,7 @@ is_not_locale () {
 # Returns:
 #  0 if locale is set otherwise 1.
 is_locale_installed () {
-	local name="${1}"
+  local name="${1}"
 
   local query=".locales|if length > 0 then .[]|select(. == \"${name}\" else empty end)"
 

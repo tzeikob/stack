@@ -16,7 +16,7 @@ run () {
     echo ' Err!'
     return 0
   fi
-	
+
   # Check if the system has not a battery device
   local query='if length > 0 then true else false end'
 
@@ -43,7 +43,7 @@ run () {
 
     return 0
   fi
-	
+
   # Otherwise resolve battery status
   local state=''
   state="$(echo "${batteries}" | jq -cr '.[0].state')"
@@ -56,7 +56,7 @@ run () {
   if equals "${state}" 'Charging'; then
     if is_true "${charge} < 99"; then
       output=" ${charge}%"
-		else
+    else
       output=" Full"
     fi
   elif is_true "${charge} >= 99"; then
