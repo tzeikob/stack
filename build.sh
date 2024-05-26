@@ -401,7 +401,7 @@ copy_commons_tools () {
   cp -r src/commons/* "${commons_home}" ||
     abort ERROR 'Failed to copy the commons tools.'
 
-  info INFO 'Commons tools have been copied.'
+  log INFO 'Commons tools have been copied.'
 }
 
 # Copies the files of the system tools.
@@ -487,7 +487,7 @@ copy_installer () {
   ln -sf /opt/stack/installer/run.sh "${bin_home}/install_os" ||
     abort ERROR 'Failed to create the symlink to the installer launcher.'
 
-  info INFO 'Installer files have been copied.'
+  log INFO 'Installer files have been copied.'
 }
 
 # Sets to skip login prompt and auto login the root user.
