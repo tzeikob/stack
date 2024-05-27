@@ -5,7 +5,6 @@ set -o pipefail
 source /opt/stack/commons/process.sh
 source /opt/stack/commons/error.sh
 source /opt/stack/commons/logger.sh
-source /opt/stack/commons/json.sh
 source /opt/stack/commons/math.sh
 source /opt/stack/commons/validators.sh
 source /opt/stack/tools/audio/helpers.sh
@@ -172,7 +171,7 @@ list_cards () {
   cards="$(find_cards)" || return 1
 
   local len=0
-  len="$(get_property "${cards}" 'length')" || return 1
+  len="$(echo "${cards}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No audio cards have found.'
@@ -216,7 +215,7 @@ list_ports () {
   modules="$(pactl --format=json list "${object}" | jq -cer "${query}")" || return 1
 
   local len=0
-  len="$(get_property "${modules}" 'length')" || return 1
+  len="$(echo "${modules}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log "No ${type} modules have found."
@@ -260,7 +259,7 @@ list_playbacks () {
   sink_inputs="$(pactl --format=json list sink-inputs | jq -cer "${query}")" || return 1
 
   local len=0
-  len="$(get_property "${sink_inputs}" 'length')" || return 1
+  len="$(echo "${sink_inputs}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No playbacks have found.'

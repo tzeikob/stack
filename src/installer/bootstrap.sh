@@ -5,7 +5,6 @@ set -Eeo pipefail
 source /opt/stack/commons/process.sh
 source /opt/stack/commons/error.sh
 source /opt/stack/commons/logger.sh
-source /opt/stack/commons/json.sh
 source /opt/stack/commons/validators.sh
 
 SETTINGS='/opt/stack/installer/settings.json'
@@ -15,7 +14,7 @@ sync_clock () {
   log INFO 'Updating the system clock...'
 
   local timezone=''
-  timezone="$(get_property "${SETTINGS}" '.timezone')" ||
+  timezone="$(jq -cer '.timezone' "${SETTINGS}")" ||
     abort ERROR 'Unable to read timezone setting.'
 
   timedatectl set-timezone "${timezone}" 2>&1 ||
@@ -43,7 +42,7 @@ set_mirrors () {
   log INFO 'Setting up package databases mirrors list...'
 
   local mirrors=''
-  mirrors="$(get_property "${SETTINGS}" '.mirrors' | jq -cer 'join(",")')" ||
+  mirrors="$(jq -cer '.mirrors|join(",")' "${SETTINGS}")" ||
     abort ERROR 'Unable to read mirrors setting.'
 
   reflector --country "${mirrors}" \
@@ -99,7 +98,7 @@ install_kernel () {
   log INFO 'Installing the linux kernel...'
 
   local kernel=''
-  kernel="$(get_property "${SETTINGS}" '.kernel')" ||
+  kernel="$(jq -cer '.kernel' "${SETTINGS}")" ||
     abort ERROR 'Unable to read kernel setting.'
 
   local pckgs=''

@@ -4,7 +4,6 @@ set -o pipefail
 
 source /opt/stack/commons/input.sh
 source /opt/stack/commons/logger.sh
-source /opt/stack/commons/json.sh
 source /opt/stack/commons/math.sh
 source /opt/stack/commons/validators.sh
 
@@ -44,7 +43,7 @@ pick_card () {
   cards="$(find_cards | jq -cer "${query}")" || return 1
 
   local len=0
-  len=$(get_property "${cards}" 'length') || return 1
+  len=$(echo "${cards}" | jq -cer 'length') || return 1
 
   if is_true "${len} = 0"; then
     log 'No audio cards have found.'
@@ -72,7 +71,7 @@ pick_profile () {
   profiles="$(echo "${card}" | jq -cer "${query}")" || return 1
 
   local len=0
-  len="$(get_property "${profiles}" 'length')" || return 1
+  len="$(echo "${profiles}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No audio profiles found.'
@@ -106,7 +105,7 @@ pick_module () {
   modules="$(pactl --format=json list "${object}" | jq -cer "${query}")" || return 1
 
   local len=0
-  len="$(get_property "${modules}" 'length')" || return 1
+  len="$(echo "${modules}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log "No ${type} modules have found."

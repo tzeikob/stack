@@ -4,7 +4,6 @@ set -o pipefail
 
 source /opt/stack/commons/input.sh
 source /opt/stack/commons/logger.sh
-source /opt/stack/commons/json.sh
 source /opt/stack/commons/math.sh
 source /opt/stack/commons/validators.sh
 
@@ -97,7 +96,7 @@ pick_controller () {
   controllers="$(find_controllers | jq -cer "${query}")" || return 1
 
   local len=0
-  len=$(get_property "${controllers}" 'length') || return 1
+  len=$(echo "${controllers}" | jq -cer 'length') || return 1
 
   if is_true "${len} = 0"; then
     log 'No controllers have found.'
@@ -118,7 +117,7 @@ pick_device () {
   devices="$(find_devices | jq -cer "${query}")" || return 1
 
   local len=0
-  len=$(get_property "${devices}" 'length') || return 1
+  len=$(echo "${devices}" | jq -cer 'length') || return 1
 
   if is_true "${len} = 0"; then
     log 'No devices have found.'

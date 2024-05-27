@@ -6,7 +6,6 @@ source /opt/stack/commons/process.sh
 source /opt/stack/commons/input.sh
 source /opt/stack/commons/error.sh
 source /opt/stack/commons/logger.sh
-source /opt/stack/commons/json.sh
 source /opt/stack/commons/math.sh
 source /opt/stack/commons/validators.sh
 source /opt/stack/tools/cloud/helpers.sh
@@ -26,8 +25,8 @@ list_remotes () {
   remotes="$(find_remotes | jq -cer "${query}")" || return 1
 
   local len=0
-  len="$(get_property "${remotes}" 'length')" || return 1
-    
+  len="$(echo "${remotes}" | jq -cer 'length')" || return 1
+  
   if is_true "${len} = 0"; then
     log "No ${service:-\b} remotes found."
     return 0
@@ -280,7 +279,7 @@ unmount_remote () {
   remote="$(find_remote "${name}")" || return 1
 
   local mount_point=''
-  mount_point="$(get_property "${remote}" '.mount_point')" || return 1
+  mount_point="$(echo "${remote}" | jq -cer '.mount_point')" || return 1
 
   fusermount -uz "${mount_point}"
 
@@ -301,7 +300,7 @@ mount_all () {
   remotes="$(find_remotes)" || return 1
 
   local len=0
-  len="$(get_property "${remotes}" 'length')" || return 1
+  len="$(echo "${remotes}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No remotes have been found.'

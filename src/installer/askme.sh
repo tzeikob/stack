@@ -5,7 +5,6 @@ set -Eeo pipefail
 source /opt/stack/commons/input.sh
 source /opt/stack/commons/error.sh
 source /opt/stack/commons/logger.sh
-source /opt/stack/commons/json.sh
 source /opt/stack/commons/text.sh
 source /opt/stack/commons/validators.sh
 
@@ -63,8 +62,10 @@ select_disk () {
     abort
   fi
 
-  set_property "${SETTINGS}" '.disk' "${disk}" ||
-    abort 'Failed to set disk property.'
+  local settings=''
+  settings="$(jq -er ".disk = ${disk}" "${SETTINGS}")" &&
+    echo "${settings}" > "${SETTINGS}" ||
+    abort 'Failed to save disk setting.'
 
   log "Installation disk set to block device ${disk}."
 }
@@ -75,15 +76,19 @@ opt_in_swap_space () {
   is_not_given "${REPLY}" && abort 'User input is required.'
 
   if is_no "${REPLY}"; then
-    set_property "${SETTINGS}" '.swap_on' 'no' ||
-      abort 'Failed to set swap_on property.'
+    local settings=''
+    settings="$(jq -er '.swap_on = no' "${SETTINGS}")" &&
+      echo "${settings}" > "${SETTINGS}" ||
+      abort 'Failed to save swap_on setting.'
 
     log 'Swap is set to off.'
     return 0
   fi
 
-  set_property "${SETTINGS}" '.swap_on' 'yes' ||
-    abort 'Failed to set swap_on property.'
+  local settings=''
+  settings="$(jq -er '.swap_on = yes' "${SETTINGS}")" &&
+    echo "${settings}" > "${SETTINGS}" ||
+    abort 'Failed to save swap_on setting.'
 
   log 'Swap is set to yes.'
 
@@ -97,8 +102,10 @@ opt_in_swap_space () {
 
   local swap_size="${REPLY}"
 
-  set_property "${SETTINGS}" '.swap_size' "${swap_size}" ||
-    abort 'Failed to set swap_size property.'
+  local settings=''
+  settings="$(jq -er ".swap_size = ${swap_size}" "${SETTINGS}")" &&
+    echo "${settings}" > "${SETTINGS}" ||
+    abort 'Failed to save swap_size setting.'
 
   log "Swap size is set to ${swap_size}GB."
 
@@ -111,9 +118,11 @@ opt_in_swap_space () {
   is_not_given "${REPLY}" && abort 'User input is required.'
 
   local swap_type="${REPLY}"
-
-  set_property "${SETTINGS}" '.swap_type' "${swap_type}" ||
-    abort 'Failed to set swap_type property.'
+  
+  local settings=''
+  settings="$(jq -er ".swap_type = ${swap_type}" "${SETTINGS}")" &&
+    echo "${settings}" > "${SETTINGS}" ||
+    abort 'Failed to save swap_type setting.'
 
   log "Swap type is set to ${swap_type}."
 }
@@ -143,8 +152,10 @@ select_mirrors () {
 
   mirrors="${REPLY}"
 
-  set_property "${SETTINGS}" '.mirrors' "${mirrors}" ||
-    abort 'Failed to set mirrors property.'
+  local settings=''
+  settings="$(jq -er ".mirrors = ${mirrors}" "${SETTINGS}")" &&
+    echo "${settings}" > "${SETTINGS}" ||
+    abort 'Failed to save mirrors setting.'
 
   log "Package databases mirrors are set to ${mirrors}."
 }
@@ -170,8 +181,10 @@ select_timezone () {
 
   local timezone="${REPLY}"
 
-  set_property "${SETTINGS}" '.timezone' "${timezone}" ||
-    abort 'Failed to set timezone property.'
+  local settings=''
+  settings="$(jq -er ".timezone = ${timezone}" "${SETTINGS}")" &&
+    echo "${settings}" > "${SETTINGS}" ||
+    abort 'Failed to save timezone setting.'
 
   log "Timezone is set to ${timezone}."
 }
@@ -197,8 +210,10 @@ select_locales () {
 
   locales="${REPLY}"
 
-  set_property "${SETTINGS}" '.locales' "${locales}" ||
-    abort 'Failed to set locales property.'
+  local settings=''
+  settings="$(jq -er ".locales = ${locales}" "${SETTINGS}")" &&
+    echo "${settings}" > "${SETTINGS}" ||
+    abort 'Failed to save locales setting.'
 
   log "Locales are set to ${locales}."
 }
@@ -224,8 +239,10 @@ select_keyboard_model () {
 
   local keyboard_model="${REPLY}"
 
-  set_property "${SETTINGS}" '.keyboard_model' "${keyboard_model}" ||
-    abort 'Failed to set keyboard_model property.'
+  local settings=''
+  settings="$(jq -er ".keyboard_model = ${keyboard_model}" "${SETTINGS}")" &&
+    echo "${settings}" > "${SETTINGS}" ||
+    abort 'Failed to save keyboard_model setting.'
 
   log "Keyboard model is set to ${keyboard_model}."
 }
@@ -251,8 +268,10 @@ select_keyboard_map () {
 
   local keyboard_map="${REPLY}"
 
-  set_property "${SETTINGS}" '.keyboard_map' "${keyboard_map}" ||
-    abort 'Failed to set keyboard_map property.'
+  local settings=''
+  settings="$(jq -er ".keyboard_map = ${keyboard_map}" "${SETTINGS}")" &&
+    echo "${settings}" > "${SETTINGS}" ||
+    abort 'Failed to save keyboard_map setting.'
 
   log "Keyboard map is set to ${keyboard_map}."
 }
@@ -278,8 +297,10 @@ select_keyboard_layout () {
 
   local keyboard_layout="${REPLY}"
 
-  set_property "${SETTINGS}" '.keyboard_layout' "${keyboard_layout}" ||
-    abort 'Failed to set keyboard_layout property.'
+  local settings=''
+  settings="$(jq -er ".keyboard_layout = ${keyboard_layout}" "${SETTINGS}")" &&
+    echo "${settings}" > "${SETTINGS}" ||
+    abort 'Failed to save keyboard_layout setting.'
 
   local variants='{"key": "default", "value": "default"},'
   variants+="$(
@@ -300,8 +321,10 @@ select_keyboard_layout () {
 
   local layout_variant="${REPLY}"
 
-  set_property "${SETTINGS}" '.layout_variant' "${layout_variant}" ||
-    abort 'Failed to set layout_variant property.'
+  local settings=''
+  settings="$(jq -er ".layout_variant = ${layout_variant}" "${SETTINGS}")" &&
+    echo "${settings}" > "${SETTINGS}" ||
+    abort 'Failed to save layout_variant setting.'
 
   log "Layout is set to ${keyboard_layout} ${layout_variant}."
 }
@@ -327,8 +350,10 @@ select_keyboard_options () {
 
   local keyboard_options="${REPLY}"
 
-  set_property "${SETTINGS}" '.keyboard_options' "${keyboard_options}" ||
-    abort 'Failed to set keyboard_options property.'
+  local settings=''
+  settings="$(jq -er ".keyboard_options = ${keyboard_options}" "${SETTINGS}")" &&
+    echo "${settings}" > "${SETTINGS}" ||
+    abort 'Failed to save keyboard_options setting.'
 
   log "Keyboard options is set to ${keyboard_options}."
 }
@@ -346,8 +371,10 @@ enter_host_name () {
 
   local host_name="${REPLY}"
 
-  set_property "${SETTINGS}" '.host_name' "${host_name}" ||
-    abort 'Failed to set host_name property.'
+  local settings=''
+  settings="$(jq -er ".host_name = ${host_name}" "${SETTINGS}")" &&
+    echo "${settings}" > "${SETTINGS}" ||
+    abort 'Failed to save host_name setting.'
 
   log "Hostname is set to ${host_name}."
 }
@@ -365,8 +392,10 @@ enter_user_name () {
 
   local user_name="${REPLY}"
 
-  set_property "${SETTINGS}" '.user_name' "${user_name}" ||
-    abort 'Failed to set user_name property.'
+  local settings=''
+  settings="$(jq -er ".user_name = ${user_name}" "${SETTINGS}")" &&
+    echo "${settings}" > "${SETTINGS}" ||
+    abort 'Failed to save user_name setting.'
 
   log "User name is set to ${user_name}."
 }
@@ -395,8 +424,10 @@ enter_user_password () {
     is_not_given "${REPLY}" && abort '\nUser input is required.'
   done
 
-  set_property "${SETTINGS}" '.user_password' "${password}" ||
-    abort 'Failed to set user_password property.'
+  local settings=''
+  settings="$(jq -er ".user_password = ${password}" "${SETTINGS}")" &&
+    echo "${settings}" > "${SETTINGS}" ||
+    abort 'Failed to save user_password setting.'
 
   log '\nUser password is set successfully.'
 }
@@ -425,8 +456,10 @@ enter_root_password () {
     is_not_given "${REPLY}" && abort '\nUser input is required.'
   done
 
-  set_property "${SETTINGS}" '.root_password' "${password}" ||
-    abort 'Failed to set root_password property.'
+  local settings=''
+  settings="$(jq -er ".root_password = ${password}" "${SETTINGS}")" &&
+    echo "${settings}" > "${SETTINGS}" ||
+    abort 'Failed to save root_password setting.'
 
   log '\nRoot password is set successfully.'
 }
@@ -443,8 +476,10 @@ select_kernel () {
 
   local kernel="${REPLY}"
 
-  set_property "${SETTINGS}" '.kernel' "${kernel}" ||
-    abort 'Failed to set kernel property.'
+  local settings=''
+  settings="$(jq -er ".kernel = ${kernel}" "${SETTINGS}")" &&
+    echo "${settings}" > "${SETTINGS}" ||
+    abort 'Failed to save kernel setting.'
 
   log "Linux kernel is set to ${kernel}."
 }

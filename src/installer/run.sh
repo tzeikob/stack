@@ -5,7 +5,6 @@ set -Eeo pipefail
 source /opt/stack/commons/input.sh
 source /opt/stack/commoms/error.sh
 source /opt/stack/commons/logger.sh
-source /opt/stack/commons/json.sh
 source /opt/stack/commons/validators.sh
 
 SETTINGS='/opt/stack/installer/settings.json'
@@ -107,7 +106,7 @@ install () {
 
   # Impersonate the sudoer user on desktop, stack and apps installation
   if match "${file_name}" '^(desktop|stack|apps)$'; then
-    user_name="$(get_property "${SETTINGS}" '.user_name')"
+    user_name="$(jq -cer '.user_name' "${SETTINGS}")"
 
     if has_failed; then
       log ERROR 'Unable to read the user_name setting.' >> "${log_file}"

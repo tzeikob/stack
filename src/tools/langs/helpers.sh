@@ -5,7 +5,6 @@ set -o pipefail
 source /opt/stack/commons/input.sh
 source /opt/stack/commons/error.sh
 source /opt/stack/commons/logger.sh
-source /opt/stack/commons/json.sh
 source /opt/stack/commons/text.sh
 source /opt/stack/commons/math.sh
 source /opt/stack/commons/validators.sh
@@ -80,7 +79,7 @@ pick_installed_locale () {
   locales="$(jq -cr "${query}" "${LANGS_SETTINGS}")" || return 1
 
   local len=0
-  len="$(get_property "${locales}" 'length')" || return 1
+  len="$(echo "${locales}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No installed locales found.'

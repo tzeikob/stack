@@ -6,7 +6,6 @@ source /opt/stack/commons/process.sh
 source /opt/stack/commons/auth.sh
 source /opt/stack/commons/error.sh
 source /opt/stack/commons/logger.sh
-source /opt/stack/commons/json.sh
 source /opt/stack/commons/math.sh
 source /opt/stack/commons/validators.sh
 source /opt/stack/tools/bluetooth/helpers.sh
@@ -77,7 +76,7 @@ list_controllers () {
   controllers="$(find_controllers)" || return 1
 
   local len=0
-  len="$(get_property "${controllers}" 'length')" || return 1
+  len="$(echo "${controllers}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No controllers have found.'
@@ -111,7 +110,7 @@ list_devices () {
   devices="$(find_devices "${status^}")" || return 1
 
   local len=0
-  len="$(get_property "${devices}" 'length')" || return 1
+  len="$(echo "${devices}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No available devices have found.'

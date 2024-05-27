@@ -5,7 +5,6 @@ set -Eeo pipefail
 source /opt/stack/commons/process.sh
 source /opt/stack/commons/error.sh
 source /opt/stack/commons/logger.sh
-source /opt/stack/commons/json.sh
 source /opt/stack/commons/validators.sh
 
 SETTINGS='/opt/stack/installer/settings.json'
@@ -202,7 +201,7 @@ install_virtual_box () {
   log INFO 'Installing the virtual box...'
 
   local kernel=''
-  kernel="$(get_property "${SETTINGS}" '.kernel')" ||
+  kernel="$(jq -cer '.kernel' "${SETTINGS}")" ||
     abort ERROR 'Unable to read kernel setting.'
 
   local pckgs='virtualbox virtualbox-guest-iso'
@@ -221,7 +220,7 @@ install_virtual_box () {
   fi
 
   local user_name=''
-  user_name="$(get_property "${SETTINGS}" '.user_name')" ||
+  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
     abort ERROR 'Unable to read user_name setting.'
 
   sudo usermod -aG vboxusers "${user_name}" 2>&1 &&
@@ -280,7 +279,7 @@ install_foliate () {
   fi
 
   local user_name=''
-  user_name="$(get_property "${SETTINGS}" '.user_name')" ||
+  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
     abort ERROR 'Unable to read user_name setting.'
 
   local config_home="/home/${user_name}/.config"
