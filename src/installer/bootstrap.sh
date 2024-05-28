@@ -119,15 +119,15 @@ install_kernel () {
   log INFO 'Linux kernel has been installed.'
 }
 
-# Installs the common tools to share common utilities.
-install_commons () {
-  log INFO 'Installing the common tools...'
+# Installs the commons tools to share common utilities.
+install_commons_tools () {
+  log INFO 'Installing the commons tools...'
 
   mkdir -p /mnt/opt/stack &&
     cp -r /opt/stack/commons /mnt/opt/stack ||
-    abort ERROR 'Failed to install common tools.'
+    abort ERROR 'Failed to install commons tools.'
   
-  log INFO 'Common tools have been installed.'
+  log INFO 'Commons tools have been installed.'
 }
 
 # Adds various extra sudoers rules.
@@ -204,7 +204,7 @@ sync_clock &&
   sync_package_databases &&
   update_keyring &&
   install_kernel &&
-  install_commons &&
+  install_commons_tools &&
   add_sudoers_rules &&
   grant_permissions &&
   copy_release_hook &&
