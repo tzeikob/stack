@@ -4,7 +4,6 @@ set -o pipefail
 
 source /opt/stack/commons/error.sh
 source /opt/stack/commons/logger.sh
-source /opt/stack/commons/json.sh
 source /opt/stack/commons/math.sh
 source /opt/stack/tools/notifications/helpers.sh
 
@@ -95,7 +94,7 @@ list_all () {
   notifications="$(find_all "${sort_by}" asc)" || return 1
 
   local len=0
-  len="$(get_property "${notifications}" 'length')" || return 1
+  len="$(echo "${notifications}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No notifications have found.'

@@ -4,7 +4,6 @@ set -o pipefail
 
 source /opt/stack/commons/input.sh
 source /opt/stack/commons/logger.sh
-source /opt/stack/commons/json.sh
 source /opt/stack/commons/math.sh
 source /opt/stack/commons/text.sh
 source /opt/stack/commons/validators.sh
@@ -277,7 +276,7 @@ pick_output () {
   options="$(find_outputs "${status}" | jq -cer "${query}")" || return 1
 
   local len=0
-  len="$(get_property "${options}" 'length')" || return 1
+  len="$(echo "${options}" | jq -cer 'length')" || return 1
   
   if is_true "${len} = 0"; then
     log "No ${status:-\b} outputs have found."
@@ -316,7 +315,7 @@ pick_outputs () {
   options="$(find_outputs "${status}" | jq -cer "${query}")" || return 1
 
   local len=0
-  len="$(get_property "${options}" 'length')" || return 1
+  len="$(echo "${options}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log "No ${status:-\b} outputs have found."
@@ -347,7 +346,7 @@ pick_resolution () {
   options="$(echo "${output}" | jq -cer "${query}")" || return 1
 
   local len=0
-  len="$(get_property "${options}" 'length')" || return 1
+  len="$(echo "${options}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No resolutions have found.'
@@ -382,7 +381,7 @@ pick_rate () {
   options="$(echo "${output}" | jq -cer "${query}")" || return 1
 
   local len=0
-  len="$(get_property "${options}" 'length')" || return 1
+  len="$(echo "${options}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No refresh rates have found.'
@@ -469,7 +468,7 @@ find_common_resolutions () {
   outputs="$(find_outputs)" || return 1
 
   local len=0
-  len="$(get_property "${outputs}" 'length')" || return 1
+  len="$(echo "${outputs}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     echo '[]'
@@ -839,7 +838,7 @@ pick_layout () {
   layouts="$(jq -cer "${query}" "${DISPLAYS_SETTINGS}")" || return 1
   
   local len=0
-  len="$(get_property "${layouts}" 'length')" || return 1
+  len="$(echo "${layouts}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No layouts have found.'
@@ -862,7 +861,7 @@ pick_color_profile () {
   profiles="$(ls "${COLORS_HOME}" 2> /dev/null | jc --ls | jq -cr "${query}")"
   
   local len=0
-  len="$(get_property "${profiles}" 'length')" || return 1
+  len="$(echo "${profiles}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No color profiles have found.'
@@ -885,7 +884,7 @@ pick_color_setting () {
   colors="$(jq -cer "${query}" "${DISPLAYS_SETTINGS}")" || return 1
   
   local len=0
-  len="$(get_property "${colors}" 'length')" || return 1
+  len="$(echo "${colors}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No color settings have found.'

@@ -5,7 +5,6 @@ set -o pipefail
 source /opt/stack/commons/input.sh
 source /opt/stack/commons/error.sh
 source /opt/stack/commons/logger.sh
-source /opt/stack/commons/json.sh
 source /opt/stack/commons/math.sh
 source /opt/stack/commons/network.sh
 source /opt/stack/commons/validators.sh
@@ -233,7 +232,7 @@ pick_printer () {
   destinations="$(find_destinations | jq -cer "${query}")" || return 1
 
   local len=0
-  len="$(get_property "${destinations}" 'length')" || return 1
+  len="$(echo "${destinations}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No printers have found.'
@@ -263,7 +262,7 @@ pick_uri () {
   fi
 
   local len=0
-  len="$(get_property "${destinations}" 'length')" || return 1
+  len="$(echo "${destinations}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No print uri destinations discovered.'
@@ -328,7 +327,7 @@ pick_driver () {
   drivers="$(find_drivers)" || return 1
   
   local len=0
-  len="$(get_property "${drivers}" 'length')" || return 1
+  len="$(echo "${drivers}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No drivers have found.'
@@ -349,7 +348,7 @@ pick_job () {
   jobs="$(find_jobs | jq -cer "${query}")" || return 1
 
   local len=0
-  len="$(get_property "${jobs}" 'length')" || return 1
+  len="$(echo "${jobs}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No print jobs have found.'

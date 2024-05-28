@@ -7,7 +7,6 @@ source /opt/stack/commons/auth.sh
 source /opt/stack/commons/input.sh
 source /opt/stack/commons/error.sh
 source /opt/stack/commons/logger.sh
-source /opt/stack/commons/json.sh
 source /opt/stack/commons/math.sh
 source /opt/stack/commons/validators.sh
 source /opt/stack/tools/printers/helpers.sh
@@ -58,7 +57,7 @@ list_printers () {
   destinations="$(find_destinations)" || return 1
 
   local len=0
-  len="$(get_property "${destinations}" 'length')" || return 1
+  len="$(echo "${destinations}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No printers have found.'
@@ -390,7 +389,7 @@ list_jobs () {
   jobs="$(find_jobs)" || return 1
 
   local len=0
-  len="$(get_property "${jobs}" 'length')" || return 1
+  len="$(echo "${jobs}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No active print jobs have found.'

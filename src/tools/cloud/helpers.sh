@@ -4,7 +4,6 @@ set -o pipefail
 
 source /opt/stack/commons/input.sh
 source /opt/stack/commons/logger.sh
-source /opt/stack/commons/json.sh
 source /opt/stack/commons/text.sh
 source /opt/stack/commons/math.sh
 source /opt/stack/commons/validators.sh
@@ -140,7 +139,7 @@ pick_remote () {
   remotes="$(find_remotes "${status}" | jq -cer "${query}")" || return 1
 
   local len=0
-  len="$(get_property "${remotes}" 'length')" || return 1
+  len="$(echo "${remotes}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log "No ${status:-\b} remotes have found."

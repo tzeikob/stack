@@ -5,7 +5,6 @@ set -o pipefail
 source /opt/stack/commons/input.sh
 source /opt/stack/commons/error.sh
 source /opt/stack/commons/logger.sh
-source /opt/stack/commons/json.sh
 source /opt/stack/commons/math.sh
 source /opt/stack/commons/validators.sh
 
@@ -49,7 +48,7 @@ find_device () {
   device="$(nmcli device show "${name}" | jc --nmcli | jq -cer '.[0]')" || return 1
 
   local type=''
-  type="$(get_property "${device}" ".type")" || return 1
+  type="$(echo "${device}" | jq -cer ".type")" || return 1
 
   if equals "${type}" 'wifi'; then
     local query=''
@@ -85,11 +84,11 @@ find_connection () {
   connection="$(nmcli connection show "${name}" | jc --nmcli | jq -cer '.[0]')" || return 1
 
   local type=''
-  type="$(get_property "${connection}" ".connection_type")" || return 1
+  type="$(echo "${connection}" | jq -cer ".connection_type")" || return 1
 
   if equals "${type}" 'wireless'; then
     local device=''
-    device="$(get_property "${connection}" ".connection_interface_name")" || return 1
+    device="$(echo "${connection}" | jq -cer ".connection_interface_name")" || return 1
 
     local query=''
     query+='freq: .frequency,'
@@ -206,7 +205,7 @@ pick_device () {
   devices="$(find_devices "${type}" | jq -cer "${query}")" || return 1
 
   local len=0
-  len="$(get_property "${devices}" 'length')" || return 1
+  len="$(echo "${devices}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log "No ${type:-network} devices found."
@@ -227,7 +226,7 @@ pick_connection () {
   connections="$(find_connections | jq -cer "${query}")" || return 1
 
   local len=0
-  len="$(get_property "${connections}" 'length')" || return 1
+  len="$(echo "${connections}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No connections have found.'
@@ -251,7 +250,7 @@ pick_wifi () {
   networks="$(find_wifis "${device}")" || return 1
 
   local len=0
-  len="$(get_property "${networks}" 'length')" || return 1
+  len="$(echo "${networks}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No wifi networks detected.'
@@ -283,7 +282,7 @@ pick_proxy () {
   proxies="$(jq -cer "${query}" "${NETWORKS_SETTINGS}")" || return 1
   
   local len=0
-  len="$(get_property "${proxies}" 'length')" || return 1
+  len="$(echo "${proxies}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No proxy profiles have found.'

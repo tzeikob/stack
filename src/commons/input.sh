@@ -2,7 +2,6 @@
 
 set -Eeo pipefail
 
-source /opt/stack/commons/json.sh
 source /opt/stack/commons/math.sh
 source /opt/stack/commons/validators.sh
 
@@ -100,7 +99,7 @@ pick_one () {
   REPLY=''
 
   local len=0
-  len="$(get_property "${options}" 'length')" || return 1
+  len="$(echo "${options}" | jq -cer 'length')" || return 1
   
   if is_true "${len} = 0"; then
     return 1
@@ -148,7 +147,7 @@ pick_many () {
   REPLY=''
 
   local len=0
-  len="$(get_property "${options}" 'length')" || return 1
+  len="$(echo "${options}" | jq -cer 'length')" || return 1
   
   if is_true "${len} = 0"; then
     return 1

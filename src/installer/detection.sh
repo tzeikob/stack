@@ -5,7 +5,6 @@ set -Eeo pipefail
 source /opt/stack/commons/process.sh
 source /opt/stack/commons/error.sh
 source /opt/stack/commons/logger.sh
-source /opt/stack/commons/json.sh
 source /opt/stack/commons/validators.sh
 
 SETTINGS='/opt/stack/installer/settings.json'
@@ -18,8 +17,10 @@ is_uefi () {
     uefi_mode='yes'
   fi
 
-  set_property "${SETTINGS}" '.uefi_mode' "${uefi_mode}" ||
-    abort 'Failed to set uefi_mode property.'
+  local settings=''
+  settings="$(jq -er ".uefi_mode = ${uefi_mode}" "${SETTINGS}")" &&
+    echo "${settings}" > "${SETTINGS}" ||
+    abort 'Failed to save uefi_mode setting.'
 
   log INFO "UEFI mode is set to ${uefi_mode}."
 }
@@ -31,17 +32,23 @@ is_virtual_machine () {
   )"
 
   if is_not_empty "${vm_vendor}" && not_equals "${vm_vendor}" 'none'; then
-    set_property "${SETTINGS}" '.vm' 'yes' ||
-      abort 'Failed to set vm property.'
+    local settings=''
+    settings="$(jq -er '.vm = yes' "${SETTINGS}")" &&
+      echo "${settings}" > "${SETTINGS}" ||
+      abort 'Failed to save vm setting.'
 
-    set_property "${SETTINGS}" '.vm_vendor' "${vm_vendor}" ||
-      abort 'Failed to set vm_vendor property.'
+    local settings=''
+    settings="$(jq -er ".vm_vendor = ${vm_vendor}" "${SETTINGS}")" &&
+      echo "${settings}" > "${SETTINGS}" ||
+      abort 'Failed to save vm_vendor setting.'
 
     log INFO 'Virtual machine is set to yes.'
     log INFO "Virtual machine vendor is set to ${vm_vendor}."
   else
-    set_property "${SETTINGS}" '.vm' 'no' ||
-      abort 'Failed to set vm property.'
+    local settings=''
+    settings="$(jq -er '.vm = no' "${SETTINGS}")" &&
+      echo "${settings}" > "${SETTINGS}" ||
+      abort 'Failed to save vm setting.'
   fi
 }
 
@@ -60,8 +67,10 @@ resolve_cpu () {
     cpu_vendor='intel'
   fi
 
-  set_property "${SETTINGS}" '.cpu_vendor' "${cpu_vendor}" ||
-    abort 'Failed to set cpu_vendor property.'
+  local settings=''
+  settings="$(jq -er ".cpu_vendor = ${cpu_vendor}" "${SETTINGS}")" &&
+    echo "${settings}" > "${SETTINGS}" ||
+    abort 'Failed to save cpu_vendor setting.'
 
   log INFO "CPU vendor is set to ${cpu_vendor}."
 }
@@ -85,8 +94,10 @@ resolve_gpu () {
     gpu_vendor='intel'
   fi
 
-  set_property "${SETTINGS}" '.gpu_vendor' "${gpu_vendor}" ||
-    abort 'Failed to set gpu_vendor property.'
+  local settings=''
+  settings="$(jq -er ".gpu_vendor = ${gpu_vendor}" "${SETTINGS}")" &&
+    echo "${settings}" > "${SETTINGS}" ||
+    abort 'Failed to save gpu_vendor setting.'
 
   log INFO "GPU vendor is set to ${gpu_vendor}."
 }
@@ -94,7 +105,7 @@ resolve_gpu () {
 # Resolves if the installation disk supports TRIM.
 is_disk_trimmable () {
   local disk=''
-  disk="$(get_property "${SETTINGS}" '.disk')" ||
+  disk="$(jq -cer '.disk' "${SETTINGS}")" ||
     abort ERROR 'Unable to read disk setting.'
 
   local discards=''
@@ -108,8 +119,10 @@ is_disk_trimmable () {
     trim_disk='yes'
   fi
 
-  set_property "${SETTINGS}" '.trim_disk' "${trim_disk}" ||
-    abort 'Failed to set trim_disk property.'
+  local settings=''
+  settings="$(jq -er ".trim_disk = ${trim_disk}" "${SETTINGS}")" &&
+    echo "${settings}" > "${SETTINGS}" ||
+    abort 'Failed to save trim_disk setting.'
 
   log INFO "Disk trim mode is set to ${trim_disk}."
 }
@@ -118,15 +131,16 @@ is_disk_trimmable () {
 resolve_synaptics () {
   local query='.*SynPS/2.*Synaptics.*TouchPad.*'
 
+  local synaptics='no'
+
   if grep -Eq "${query}" /proc/bus/input/devices; then
-    set_property "${SETTINGS}" '.synaptics' 'yes' ||
-      abort 'Failed to set synaptics property.'
-    
+    synaptics='yes'
     log INFO 'Synaptics touch pad set to yes.'
-  else
-    set_property "${SETTINGS}" '.synaptics' 'no' ||
-      abort 'Failed to set synaptics property.'
   fi
+
+  settings="$(jq -er ".synaptics = ${synaptics}" "${SETTINGS}")" &&
+    echo "${settings}" > "${SETTINGS}" ||
+    abort 'Failed to save synaptics setting.'
 }
 
 log INFO 'Script detection.sh started.'

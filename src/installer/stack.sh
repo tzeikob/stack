@@ -5,7 +5,6 @@ set -Eeo pipefail
 source /opt/stack/commons/process.sh
 source /opt/stack/commons/error.sh
 source /opt/stack/commons/logger.sh
-source /opt/stack/commons/json.sh
 source /opt/stack/commons/validators.sh
 
 SETTINGS='/opt/stack/installer/settings.json'
@@ -15,7 +14,7 @@ install_node () {
   log INFO 'Installing the node runtime engine...'
 
   local user_name=''
-  user_name="$(get_property "${SETTINGS}" '.user_name')" ||
+  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
     abort ERROR 'Unable to read user_name setting.'
 
   local nvm_home="/home/${user_name}/.nvm"
@@ -146,7 +145,7 @@ install_docker () {
     log WARN 'Failed to enable docker service.'
 
   local user_name=''
-  user_name="$(get_property "${SETTINGS}" '.user_name')" ||
+  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
     abort ERROR 'Unable to read user_name setting.'
 
   sudo usermod -aG docker "${user_name}" 2>&1 &&

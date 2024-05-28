@@ -6,7 +6,6 @@ source /opt/stack/commons/process.sh
 source /opt/stack/commons/input.sh
 source /opt/stack/commons/error.sh
 source /opt/stack/commons/logger.sh
-source /opt/stack/commons/json.sh
 source /opt/stack/commons/math.sh
 source /opt/stack/commons/validators.sh
 source /opt/stack/tools/desktop/helpers.sh
@@ -88,7 +87,7 @@ list_wallpapers () {
   wallpapers="$(find_wallpapers)" || return 1
 
   local len=0
-  len="$(get_property "${wallpapers}" 'length')" || return 1
+  len="$(echo "${wallpapers}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No wallpaper files found.'
@@ -202,7 +201,7 @@ list_pointers () {
   pointers="$(find_pointers)" || return 1
 
   local len=0
-  len="$(get_property "${pointers}" 'length')" || return 1
+  len="$(echo "${pointers}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No pointers have found.'
@@ -336,7 +335,7 @@ list_tablets () {
   tablets="$(find_tablets)" || return 1
 
   local len=0
-  len="$(get_property "${tablets}" 'length')" || return 1
+  len="$(echo "${tablets}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No tablets have found.'
@@ -398,7 +397,7 @@ scale_tablet () {
 
   # Calculate tablet's ratio
   local area=''
-  area="$(get_property "${tablet}" '.Area')" || return 1
+  area="$(echo "${tablet}" | jq -cer '.Area')" || return 1
 
   local width="$(echo "${area}" | cut -d ' ' -f 3)"
   local height="$(echo "${area}" | cut -d ' ' -f 4)"
@@ -415,7 +414,7 @@ scale_tablet () {
   xsetwacom --set "${name}" ResetArea &> /dev/null || return 1
 
   tablet="$(find_tablet "${name}")" || return 1
-  area="$(get_property "${tablet}" '.Area')" || return 1
+  area="$(echo "${tablet}" | jq -cer '.Area')" || return 1
   width="$(echo "${area}" | cut -d ' ' -f 3)"
 
   # Apply scaling factor
@@ -486,14 +485,14 @@ map_tablet () {
 
     # Restore area keeping the current scale
     local area=''
-    area="$(get_property "${tablet}" '.Area')" || return 1
+    area="$(echo "${tablet}" | jq -cer '.Area')" || return 1
     local previous_width="$(echo "${area}" | cut -d ' ' -f 3)"
 
     # Reset tablets area to default size
     xsetwacom --set "${name}" ResetArea &> /dev/null || return 1
 
     tablet="$(find_tablet "${name}")" || return 1
-    area="$(get_property "${tablet}" '.Area')" || return 1
+    area="$(echo "${tablet}" | jq -cer '.Area')" || return 1
 
     local width="$(echo "${area}" | cut -d ' ' -f 3)"
     local height="$(echo "${area}" | cut -d ' ' -f 4)"
@@ -524,10 +523,10 @@ map_tablet () {
 
   # Re-calculate tablet's area to match display's ratio
   local display_width=0
-  display_width="$(get_property "${output}" '.resolution_width')" || return 1
+  display_width="$(echo "${output}" | jq -cer '.resolution_width')" || return 1
 
   local display_height=0
-  display_height="$(get_property "${output}" '.resolution_height')" || return 1
+  display_height="$(echo "${output}" | jq -cer '.resolution_height')" || return 1
 
   local ratio=0
   ratio="$(calc "${display_width} / ${display_height}")" || return 1
@@ -538,7 +537,7 @@ map_tablet () {
   fi
 
   local area=0
-  area="$(get_property "${tablet}" '.Area')" || return 1
+  area="$(echo "${tablet}" | jq -cer '.Area')" || return 1
 
   local width="$(echo "${area}" | cut -d ' ' -f 3)"
   local height=0
@@ -593,10 +592,10 @@ init_tablets () {
 
   while read -r tablet; do
     local name=''
-    name="$(get_property "${tablet}" '.name')" || return 1
+    name="$(echo "${tablet}" | jq -cer '.name')" || return 1
 
     local scale=1
-    scale="$(get_property "${tablet}" '.scale')" || return 1
+    scale="$(echo "${tablet}" | jq -cer '.scale')" || return 1
 
     scale_tablet "${name}" "${scale}" &&
     map_tablet "${name}" "${output}" || return $?
@@ -620,7 +619,7 @@ init_wallpaper () {
   fi
 
   local name=''
-  name="$(get_property "${wallpaper}" '.name')" || return 1
+  name="$(echo "${wallpaper}" | jq -cer '.name')" || return 1
 
   if file_not_exists "${WALLPAPERS_HOME}/${name}"; then
     log "Wallpaper ${name} not found."
@@ -628,7 +627,7 @@ init_wallpaper () {
   fi
 
   local mode=''
-  mode="$(get_property "${wallpaper}" '.mode')" || return 1
+  mode="$(echo "${wallpaper}" | jq -cer '.mode')" || return 1
 
   set_wallpaper "${name}" "${mode:-"center"}"
 }

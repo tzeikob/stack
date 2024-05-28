@@ -6,7 +6,6 @@ source /opt/stack/commons/process.sh
 source /opt/stack/commons/input.sh
 source /opt/stack/commons/error.sh
 source /opt/stack/commons/logger.sh
-source /opt/stack/commons/json.sh
 source /opt/stack/commons/math.sh
 source /opt/stack/commons/validators.sh
 source /opt/stack/tools/trash/helpers.sh
@@ -45,7 +44,7 @@ list_files () {
   files="$(find_files | jq -cer "${query}")" || return 1
 
   local len=0
-  len="$(get_property "${files}" 'length')" || return 1
+  len="$(echo "${files}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No trashed files have found.'
@@ -68,7 +67,7 @@ restore_files () {
   files="$(find_restorable_files)" || return 1
 
   local len=0
-  len="$(get_property "${files}" 'length')" || return 1
+  len="$(echo "${files}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No trashed files found.'
@@ -167,7 +166,7 @@ remove_files () {
   files="$(find_files)" || return 1
 
   local len=0
-  len="$(get_property "${files}" 'length')" || return 1
+  len="$(echo "${files}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No trashed files found.'

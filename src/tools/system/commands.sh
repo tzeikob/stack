@@ -4,7 +4,6 @@ set -o pipefail
 
 source /opt/stack/commons/error.sh
 source /opt/stack/commons/logger.sh
-source /opt/stack/commons/json.sh
 source /opt/stack/commons/math.sh
 source /opt/stack/commons/validators.sh
 source /opt/stack/tools/system/helpers.sh
@@ -138,7 +137,7 @@ check_updates () {
   fi
 
   local len=0
-  len="$(get_property "${pkgs}" 'length')" || return 1
+  len="$(echo "${pkgs}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No outdated packages have found.'

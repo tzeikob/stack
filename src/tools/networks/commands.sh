@@ -7,7 +7,6 @@ source /opt/stack/commons/input.sh
 source /opt/stack/commons/auth.sh
 source /opt/stack/commons/error.sh
 source /opt/stack/commons/logger.sh
-source /opt/stack/commons/json.sh
 source /opt/stack/commons/math.sh
 source /opt/stack/commons/validators.sh
 source /opt/stack/tools/networks/helpers.sh
@@ -200,7 +199,7 @@ list_devices () {
   devices="$(find_devices)" || return 1
 
   local len=0
-  len="$(get_property "${devices}" 'length')" || return 1
+  len="$(echo "${devices}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No network devices have found.'
@@ -225,7 +224,7 @@ list_connections () {
   connections="$(find_connections)" || return 1
 
   local len=0
-  len="$(get_property "${connections}" 'length')" || return 1
+  len="$(echo "${connections}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No connections have found.'
@@ -285,7 +284,7 @@ list_wifis () {
   fi
 
   local len=0
-  len="$(get_property "${networks}" 'length')" || return 1
+  len="$(echo "${networks}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No wifi networks detected.'
@@ -878,7 +877,7 @@ list_proxies () {
   proxies="$(jq -cer '.proxies|if length>0 then . else [] end' "${NETWORKS_SETTINGS}")" || return 1
   
   local len=0
-  len="$(get_property "${proxies}" 'length')" || return 1
+  len="$(echo "${proxies}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No proxy profiles have found.'
@@ -1021,10 +1020,10 @@ set_proxy () {
   fi
 
   local host=''
-  host="$(get_property "${proxy}" ".host")" || return 1
+  host="$(echo "${proxy}" | jq -cer ".host")" || return 1
 
   local port=''
-  port="$(get_property "${proxy}" ".port")" || return 1
+  port="$(echo "${proxy}" | jq -cer ".port")" || return 1
 
   gsettings set org.gnome.system.proxy mode manual
   gsettings set org.gnome.system.proxy.http host "${host}"
@@ -1037,10 +1036,10 @@ set_proxy () {
   gsettings set org.gnome.system.proxy.socks port "${port}"
 
   local username=''
-  username="$(get_property "${proxy}" ".username")" || return 1
+  username="$(echo "${proxy}" | jq -cer ".username")" || return 1
 
   local password=''
-  password="$(get_property "${proxy}" ".password")" || return 1
+  password="$(echo "${proxy}" | jq -cer ".password")" || return 1
 
   if is_given "${username}"; then
     gsettings set org.gnome.system.proxy.http use-authentication true
