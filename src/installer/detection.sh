@@ -18,9 +18,9 @@ is_uefi () {
   fi
 
   local settings=''
-  settings="$(jq -er ".uefi_mode = ${uefi_mode}" "${SETTINGS}")" &&
+  settings="$(jq -er ".uefi_mode = \"${uefi_mode}\"" "${SETTINGS}")" &&
     echo "${settings}" > "${SETTINGS}" ||
-    abort 'Failed to save uefi_mode setting.'
+    abort ERROR 'Failed to save uefi_mode setting.'
 
   log INFO "UEFI mode is set to ${uefi_mode}."
 }
@@ -34,22 +34,22 @@ is_virtual_machine () {
 
   if is_not_empty "${vm_vendor}" && not_equals "${vm_vendor}" 'none'; then
     local settings=''
-    settings="$(jq -er '.vm = yes' "${SETTINGS}")" &&
+    settings="$(jq -er '.vm = "yes"' "${SETTINGS}")" &&
       echo "${settings}" > "${SETTINGS}" ||
-      abort 'Failed to save vm setting.'
+      abort ERROR 'Failed to save vm setting.'
 
     local settings=''
-    settings="$(jq -er ".vm_vendor = ${vm_vendor}" "${SETTINGS}")" &&
+    settings="$(jq -er ".vm_vendor = \"${vm_vendor}\"" "${SETTINGS}")" &&
       echo "${settings}" > "${SETTINGS}" ||
-      abort 'Failed to save vm_vendor setting.'
+      abort ERROR 'Failed to save vm_vendor setting.'
 
     log INFO 'Virtual machine is set to yes.'
     log INFO "Virtual machine vendor is set to ${vm_vendor}."
   else
     local settings=''
-    settings="$(jq -er '.vm = no' "${SETTINGS}")" &&
+    settings="$(jq -er '.vm = "no"' "${SETTINGS}")" &&
       echo "${settings}" > "${SETTINGS}" ||
-      abort 'Failed to save vm setting.'
+      abort ERROR 'Failed to save vm setting.'
   fi
 }
 
@@ -69,9 +69,9 @@ resolve_cpu () {
   fi
 
   local settings=''
-  settings="$(jq -er ".cpu_vendor = ${cpu_vendor}" "${SETTINGS}")" &&
+  settings="$(jq -er ".cpu_vendor = \"${cpu_vendor}\"" "${SETTINGS}")" &&
     echo "${settings}" > "${SETTINGS}" ||
-    abort 'Failed to save cpu_vendor setting.'
+    abort ERROR 'Failed to save cpu_vendor setting.'
 
   log INFO "CPU vendor is set to ${cpu_vendor}."
 }
@@ -96,9 +96,9 @@ resolve_gpu () {
   fi
 
   local settings=''
-  settings="$(jq -er ".gpu_vendor = ${gpu_vendor}" "${SETTINGS}")" &&
+  settings="$(jq -er ".gpu_vendor = \"${gpu_vendor}\"" "${SETTINGS}")" &&
     echo "${settings}" > "${SETTINGS}" ||
-    abort 'Failed to save gpu_vendor setting.'
+    abort ERROR 'Failed to save gpu_vendor setting.'
 
   log INFO "GPU vendor is set to ${gpu_vendor}."
 }
@@ -121,9 +121,9 @@ is_disk_trimmable () {
   fi
 
   local settings=''
-  settings="$(jq -er ".trim_disk = ${trim_disk}" "${SETTINGS}")" &&
+  settings="$(jq -er ".trim_disk = \"${trim_disk}\"" "${SETTINGS}")" &&
     echo "${settings}" > "${SETTINGS}" ||
-    abort 'Failed to save trim_disk setting.'
+    abort ERROR 'Failed to save trim_disk setting.'
 
   log INFO "Disk trim mode is set to ${trim_disk}."
 }
@@ -139,9 +139,9 @@ resolve_synaptics () {
     log INFO 'Synaptics touch pad set to yes.'
   fi
 
-  settings="$(jq -er ".synaptics = ${synaptics}" "${SETTINGS}")" &&
+  settings="$(jq -er ".synaptics = \"${synaptics}\"" "${SETTINGS}")" &&
     echo "${settings}" > "${SETTINGS}" ||
-    abort 'Failed to save synaptics setting.'
+    abort ERROR 'Failed to save synaptics setting.'
 }
 
 log INFO 'Script detection.sh started.'

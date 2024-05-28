@@ -63,7 +63,7 @@ select_disk () {
   fi
 
   local settings=''
-  settings="$(jq -er ".disk = ${disk}" "${SETTINGS}")" &&
+  settings="$(jq -er ".disk = \"${disk}\"" "${SETTINGS}")" &&
     echo "${settings}" > "${SETTINGS}" ||
     abort 'Failed to save disk setting.'
 
@@ -77,7 +77,7 @@ opt_in_swap_space () {
 
   if is_no "${REPLY}"; then
     local settings=''
-    settings="$(jq -er '.swap_on = no' "${SETTINGS}")" &&
+    settings="$(jq -er '.swap_on = "no"' "${SETTINGS}")" &&
       echo "${settings}" > "${SETTINGS}" ||
       abort 'Failed to save swap_on setting.'
 
@@ -86,7 +86,7 @@ opt_in_swap_space () {
   fi
 
   local settings=''
-  settings="$(jq -er '.swap_on = yes' "${SETTINGS}")" &&
+  settings="$(jq -er '.swap_on = "yes"' "${SETTINGS}")" &&
     echo "${settings}" > "${SETTINGS}" ||
     abort 'Failed to save swap_on setting.'
 
@@ -120,7 +120,7 @@ opt_in_swap_space () {
   local swap_type="${REPLY}"
   
   local settings=''
-  settings="$(jq -er ".swap_type = ${swap_type}" "${SETTINGS}")" &&
+  settings="$(jq -er ".swap_type = \"${swap_type}\"" "${SETTINGS}")" &&
     echo "${settings}" > "${SETTINGS}" ||
     abort 'Failed to save swap_type setting.'
 
@@ -182,7 +182,7 @@ select_timezone () {
   local timezone="${REPLY}"
 
   local settings=''
-  settings="$(jq -er ".timezone = ${timezone}" "${SETTINGS}")" &&
+  settings="$(jq -er ".timezone = \"${timezone}\"" "${SETTINGS}")" &&
     echo "${settings}" > "${SETTINGS}" ||
     abort 'Failed to save timezone setting.'
 
@@ -240,7 +240,7 @@ select_keyboard_model () {
   local keyboard_model="${REPLY}"
 
   local settings=''
-  settings="$(jq -er ".keyboard_model = ${keyboard_model}" "${SETTINGS}")" &&
+  settings="$(jq -er ".keyboard_model = \"${keyboard_model}\"" "${SETTINGS}")" &&
     echo "${settings}" > "${SETTINGS}" ||
     abort 'Failed to save keyboard_model setting.'
 
@@ -269,7 +269,7 @@ select_keyboard_map () {
   local keyboard_map="${REPLY}"
 
   local settings=''
-  settings="$(jq -er ".keyboard_map = ${keyboard_map}" "${SETTINGS}")" &&
+  settings="$(jq -er ".keyboard_map = \"${keyboard_map}\"" "${SETTINGS}")" &&
     echo "${settings}" > "${SETTINGS}" ||
     abort 'Failed to save keyboard_map setting.'
 
@@ -298,7 +298,7 @@ select_keyboard_layout () {
   local keyboard_layout="${REPLY}"
 
   local settings=''
-  settings="$(jq -er ".keyboard_layout = ${keyboard_layout}" "${SETTINGS}")" &&
+  settings="$(jq -er ".keyboard_layout = \"${keyboard_layout}\"" "${SETTINGS}")" &&
     echo "${settings}" > "${SETTINGS}" ||
     abort 'Failed to save keyboard_layout setting.'
 
@@ -322,7 +322,7 @@ select_keyboard_layout () {
   local layout_variant="${REPLY}"
 
   local settings=''
-  settings="$(jq -er ".layout_variant = ${layout_variant}" "${SETTINGS}")" &&
+  settings="$(jq -er ".layout_variant = \"${layout_variant}\"" "${SETTINGS}")" &&
     echo "${settings}" > "${SETTINGS}" ||
     abort 'Failed to save layout_variant setting.'
 
@@ -351,7 +351,7 @@ select_keyboard_options () {
   local keyboard_options="${REPLY}"
 
   local settings=''
-  settings="$(jq -er ".keyboard_options = ${keyboard_options}" "${SETTINGS}")" &&
+  settings="$(jq -er ".keyboard_options = \"${keyboard_options}\"" "${SETTINGS}")" &&
     echo "${settings}" > "${SETTINGS}" ||
     abort 'Failed to save keyboard_options setting.'
 
@@ -372,7 +372,7 @@ enter_host_name () {
   local host_name="${REPLY}"
 
   local settings=''
-  settings="$(jq -er ".host_name = ${host_name}" "${SETTINGS}")" &&
+  settings="$(jq -er ".host_name = \"${host_name}\"" "${SETTINGS}")" &&
     echo "${settings}" > "${SETTINGS}" ||
     abort 'Failed to save host_name setting.'
 
@@ -393,7 +393,7 @@ enter_user_name () {
   local user_name="${REPLY}"
 
   local settings=''
-  settings="$(jq -er ".user_name = ${user_name}" "${SETTINGS}")" &&
+  settings="$(jq -er ".user_name = \"${user_name}\"" "${SETTINGS}")" &&
     echo "${settings}" > "${SETTINGS}" ||
     abort 'Failed to save user_name setting.'
 
@@ -425,7 +425,7 @@ enter_user_password () {
   done
 
   local settings=''
-  settings="$(jq -er ".user_password = ${password}" "${SETTINGS}")" &&
+  settings="$(jq -er ".user_password = \"${password}\"" "${SETTINGS}")" &&
     echo "${settings}" > "${SETTINGS}" ||
     abort 'Failed to save user_password setting.'
 
@@ -457,7 +457,7 @@ enter_root_password () {
   done
 
   local settings=''
-  settings="$(jq -er ".root_password = ${password}" "${SETTINGS}")" &&
+  settings="$(jq -er ".root_password = \"${password}\"" "${SETTINGS}")" &&
     echo "${settings}" > "${SETTINGS}" ||
     abort 'Failed to save root_password setting.'
 
@@ -477,7 +477,7 @@ select_kernel () {
   local kernel="${REPLY}"
 
   local settings=''
-  settings="$(jq -er ".kernel = ${kernel}" "${SETTINGS}")" &&
+  settings="$(jq -er ".kernel = \"${kernel}\"" "${SETTINGS}")" &&
     echo "${settings}" > "${SETTINGS}" ||
     abort 'Failed to save kernel setting.'
 
