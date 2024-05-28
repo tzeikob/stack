@@ -55,12 +55,12 @@ create_gpt_partitions () {
 
   log INFO 'Partition table has been created.'
 
-  local start=1
-  local end=501
+  local start_from=1
+  local end_at=501
 
   log INFO 'Creating the boot partition...'
 
-  parted --script "${disk}" mkpart 'Boot' fat32 "${start}MiB" "${end}MiB" 2>&1 ||
+  parted --script "${disk}" mkpart 'Boot' fat32 "${start_from}MiB" "${end_at}MiB" 2>&1 ||
     abort ERROR 'Failed to create boot partition.'
 
   log INFO 'Boot partition has been created.'
@@ -68,7 +68,7 @@ create_gpt_partitions () {
   parted --script "${disk}" set 1 boot on 2>&1 ||
     abort ERROR 'Failed to set boot partition on.'
 
-  start=${end}
+  start_from=${end_at}
 
   local swap_on=''
   swap_on="$(jq -cer '.swap_on' "${SETTINGS}")" ||
@@ -83,21 +83,21 @@ create_gpt_partitions () {
     swap_size=$(jq -cer '.swap_size' "${SETTINGS}") ||
       abort ERROR 'Unable to read swap_size setting.'
 
-    end=$(calc "${start} + (${swap_size} * 1024)")
+    end_at=$(calc "${start_from} + (${swap_size} * 1024)")
 
     log INFO 'Creating the swap partition...'
 
-    parted --script "${disk}" mkpart 'Swap' linux-swap "${start}Mib" "${end}Mib" 2>&1 ||
+    parted --script "${disk}" mkpart 'Swap' linux-swap "${start_from}Mib" "${end_at}Mib" 2>&1 ||
       abort ERROR 'Failed to create swap partition.'
 
     log INFO 'Swap partition has been created.'
 
-    start=${end}
+    start_from=${end_at}
   fi
 
   log INFO 'Creating the root partition...'
 
-  parted --script "${disk}" mkpart 'Root' ext4 "${start}Mib" 100% 2>&1 ||
+  parted --script "${disk}" mkpart 'Root' ext4 "${start_from}Mib" 100% 2>&1 ||
     abort ERROR 'Failed to create root partition.'
 
   log INFO 'Root partition has been created.'
