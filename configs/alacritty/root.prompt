@@ -1,11 +1,13 @@
 
 timer_start () {
-  local now=$(date +%s.%3N)
+  local now=''
+  now=$(date +%s.%3N)
   TIMER=${TIMER:-${now}}
 }
 
 timer_stop () {
-  local now=$(date +%s.%3N)
+  local now=''
+  now=$(date +%s.%3N)
 
   ELAPSED=$(echo "${now}" | awk -v timer=${TIMER} '{
     elapsed = ($0 - timer)

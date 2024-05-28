@@ -27,7 +27,8 @@ is_uefi () {
 
 # Resolves if the the system is a virtual machine.
 is_virtual_machine () {
-  local vm_vendor="$(
+  local vm_vendor=''
+  vm_vendor="$(
     systemd-detect-virt 2>&1
   )"
 

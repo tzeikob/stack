@@ -38,7 +38,8 @@ set_users () {
 
   local groups='wheel,audio,video,optical,storage'
 
-  local vm="$(jq -cer '.vm' "${SETTINGS}")" ||
+  local vm=''
+  vm="$(jq -cer '.vm' "${SETTINGS}")" ||
     abort 'Failed to read the vm setting.'
 
   if is_yes "${vm}"; then
@@ -174,7 +175,8 @@ sync_package_databases () {
 install_base_packages () {
   log INFO 'Installing the base packages...'
 
-  local uefi_mode="$(jq -cer '.uefi_mode' "${SETTINGS}")" ||
+  local uefi_mode=''
+  uefi_mode="$(jq -cer '.uefi_mode' "${SETTINGS}")" ||
     abort 'Failed to read the uefi_mode setting.'
 
   local extra_pckgs=''
@@ -244,7 +246,8 @@ install_drivers () {
 
   local cpu_pckgs=''
 
-  local cpu_vendor="$(jq -cer '.cpu_vendor' "${SETTINGS}")" ||
+  local cpu_vendor=''
+  cpu_vendor="$(jq -cer '.cpu_vendor' "${SETTINGS}")" ||
     abort 'Failed to read the cpu_vendor setting.'
 
   if equals "${cpu_vendor}" 'amd'; then
@@ -255,7 +258,8 @@ install_drivers () {
 
   local gpu_pckgs=''
 
-  local gpu_vendor="$(jq -cer '.gpu_vendor' "${SETTINGS}")" ||
+  local gpu_vendor=''
+  gpu_vendor="$(jq -cer '.gpu_vendor' "${SETTINGS}")" ||
     abort 'Failed to read the gpu_vendor setting.'
 
   if equals "${gpu_vendor}" 'nvidia'; then
@@ -280,7 +284,8 @@ install_drivers () {
 
   local other_pckgs=''
 
-  local synaptics="$(jq -cer '.synaptics' "${SETTINGS}")" ||
+  local synaptics=''
+  synaptics="$(jq -cer '.synaptics' "${SETTINGS}")" ||
     abort 'Failed to read the synaptics setting.'
 
   if is_yes "${synaptics}"; then
@@ -289,10 +294,12 @@ install_drivers () {
 
   local vm_pckgs=''
 
-  local vm="$(jq -cer '.vm' "${SETTINGS}")" ||
+  local vm=''
+  vm="$(jq -cer '.vm' "${SETTINGS}")" ||
     abort 'Failed to read the vm setting.'
   
-  local vm_vendor="$(jq -cer '.vm_vendor' "${SETTINGS}")" ||
+  local vm_vendor=''
+  vm_vendor="$(jq -cer '.vm_vendor' "${SETTINGS}")" ||
     abort 'Failed to read the vm_vendor setting.'
 
   if is_yes "${vm}" && equals "${vm_vendor}" 'oracle'; then
@@ -792,7 +799,8 @@ configure_security () {
 setup_boot_loader () {
   log INFO 'Setting up the boot loader...'
 
-  local uefi_mode="$(jq -cer '.uefi_mode' "${SETTINGS}")" ||
+  local uefi_mode=''
+  uefi_mode="$(jq -cer '.uefi_mode' "${SETTINGS}")" ||
     abort 'Failed to read the uefi_mode setting.'
 
   if is_yes "${uefi_mode}"; then
@@ -824,7 +832,8 @@ setup_boot_loader () {
 
   log INFO 'Boot loader config file created successfully.'
 
-  local vm_vendor="$(jq -cer '.vm_vendor' "${SETTINGS}")" ||
+  local vm_vendor=''
+  vm_vendor="$(jq -cer '.vm_vendor' "${SETTINGS}")" ||
     abort 'Failed to read the vm_vendor setting.'
 
   if is_yes "${uefi_mode}" && equals "${vm_vendor}" 'oracle'; then
@@ -885,7 +894,8 @@ enable_services () {
 
   log INFO 'Service paccache.timer has been enabled.'
 
-  local trim_disk="$(jq -cer '.trim_disk' "${SETTINGS}")" ||
+  local trim_disk=''
+  trim_disk="$(jq -cer '.trim_disk' "${SETTINGS}")" ||
     abort 'Failed to read the trim_disk setting.'
 
   if is_yes "${trim_disk}"; then
@@ -895,10 +905,12 @@ enable_services () {
     log INFO 'Service fstrim.timer has been enabled.'
   fi
 
-  local vm="$(jq -cer '.vm' "${SETTINGS}")" ||
+  local vm=''
+  vm="$(jq -cer '.vm' "${SETTINGS}")" ||
     abort 'Failed to read the vm setting.'
   
-  local vm_vendor="$(jq -cer '.vm_vendor' "${SETTINGS}")" ||
+  local vm_vendor=''
+  vm_vendor="$(jq -cer '.vm_vendor' "${SETTINGS}")" ||
     abort 'Failed to read the vm_vendor setting.'
 
   if is_yes "${vm}" && equals "${vm_vendor}" 'oracle'; then

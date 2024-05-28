@@ -15,9 +15,11 @@ UPDATES_FILE=/tmp/updates
 find_installed_packages () {
   local query='[inputs|split(" ")|{name: .[0], version: .[1]}]'
   
-  local pacman_pkgs="$(pacman -Qn | jq -Rn "${query}")" || return 1
+  local pacman_pkgs=''
+  pacman_pkgs="$(pacman -Qn | jq -Rn "${query}")" || return 1
   
-  local aur_pkgs="$(pacman -Qm | jq -Rn "${query}")" || return 1
+  local aur_pkgs=''
+  aur_pkgs="$(pacman -Qm | jq -Rn "${query}")" || return 1
 
   echo "{\"pacman\": ${pacman_pkgs}, \"aur\": ${aur_pkgs}}"
 }

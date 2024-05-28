@@ -767,7 +767,9 @@ mount_image () {
     return 2
   fi
 
-  local folder_name="$(basename "${path}")"
+  local folder_name=''
+  folder_name="$(basename "${path}")"
+  
   local mount_point="${HOME}/mounts/virtual/${folder_name}"
 
   if directory_exists "${mount_point}"; then

@@ -93,7 +93,9 @@ show_logs () {
     return 2
   fi
 
-  local id="$(echo "${DISPLAY}" | cut -d ':' -f 2)"
+  local id=''
+  id="$(echo "${DISPLAY}" | cut -d ':' -f 2)"
+
   local log_file="${HOME}/.local/share/xorg/Xorg.${id}.log"
 
   if file_not_exists "${log_file}"; then
@@ -707,9 +709,14 @@ mirror_output () {
   fi
 
   # Have targets inherit the position and rotate/reflect of the source output
-  local pos="$(echo "${source}" | jq -r '"\(.offset_width)x\(.offset_height)"')"
-  local rot="$(echo "${source}" | jq -r '.rotation')"
-  local ref="$(echo "${source}" | jq -r '.reflection|ascii_downcase' |
+  local pos=''
+  pos="$(echo "${source}" | jq -r '"\(.offset_width)x\(.offset_height)"')"
+
+  local rot=''
+  rot="$(echo "${source}" | jq -r '.rotation')"
+
+  local ref=''
+  ref="$(echo "${source}" | jq -r '.reflection|ascii_downcase' |
     awk '{gsub(/( |and|axis)/,"",$0); print}')"
 
   local query='$ARGS.positional|.[]'
@@ -1369,7 +1376,8 @@ restore_colors () {
   local xcalib_cmd=''
 
   while read -r xcalib_cmd; do
-    local result="$(${xcalib_cmd} 2>&1)"
+    local result=''
+    result="$(${xcalib_cmd} 2>&1)"
 
     if has_failed || is_not_empty "${result}"; then
       failed="$(calc "${failed} + 1")" || return 1

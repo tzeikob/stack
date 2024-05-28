@@ -35,11 +35,15 @@ find_remotes () {
       continue
     fi
 
-    local name="$(echo "${remote}" | cut -d ':' -f 1)"
-    local service="$(echo "${remote}" | cut -d ':' -f 2 | trim)"
+    local name=''
+    name="$(echo "${remote}" | cut -d ':' -f 1)"
+
+    local service=''
+    service="$(echo "${remote}" | cut -d ':' -f 2 | trim)"
 
     # Check if the remote name exists in the mounts
-    local mount="$(grep "^${name}:.* fuse.rclone" <<< "${mounts}")"
+    local mount=''
+    mount="$(grep "^${name}:.* fuse.rclone" <<< "${mounts}")"
 
     local is_mounted='false'
     local mount_point=''

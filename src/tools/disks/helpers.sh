@@ -405,7 +405,9 @@ mount_encrypted_device () {
     return 1
   fi
 
-  local folder_name="$(echo "${path:1}" | tr '/' '_')"
+  local folder_name=''
+  folder_name="$(echo "${path:1}" | tr '/' '_')"
+
   local mount_point="${HOME}/mounts/encrypted/${folder_name}"
 
   mkdir -p "${mount_point}" &&
@@ -445,7 +447,9 @@ unmount_encrypted_device () {
   sync &&
   sudo veracrypt -t --dismount "${path}" &> /dev/null || return 1
 
-  local folder_name="$(echo "${path:1}" | tr '/' '_')"
+  local folder_name=''
+  folder_name="$(echo "${path:1}" | tr '/' '_')"
+
   rm -rf "${HOME}/mounts/encrypted/${folder_name}"
 }
 

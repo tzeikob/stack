@@ -353,7 +353,8 @@ exists_proxy_profile () {
   local query=''
   query+=".proxies|if . then .[]|select(.name == \"${name}\") else empty end"
   
-  local proxy="$(jq -cr "${query}" "${NETWORKS_SETTINGS}")"
+  local proxy=''
+  proxy="$(jq -cr "${query}" "${NETWORKS_SETTINGS}")"
 
   if is_empty "${proxy}"; then
     return 1
@@ -371,7 +372,9 @@ exists_proxy_profile () {
 is_ovpn_file () {
   local file_path="${1}"
   
-  local name=$(basename -- "${file_path}")
+  local name=''
+  name=$(basename -- "${file_path}")
+  
   local extension="${name##*.}"
 
   if not_equals "${extension}" 'ovpn'; then

@@ -129,26 +129,27 @@ set_time () {
 set_date () {
   authenticate_user || return $?
   
-  local date="${1}"
+  local date_value="${1}"
 
-  if is_not_given "${date}"; then
+  if is_not_given "${date_value}"; then
     log 'Missing the date.'
     return 2
-  elif is_not_date "${date}"; then
+  elif is_not_date "${date_value}"; then
     log 'Invalid or malformed date.'
     return 2
   fi
 
-  local time=$(date +"%H:%M:%S")
+  local time_value=''
+  time_value=$(date +"%H:%M:%S")
 
-  sudo timedatectl set-time "${date} ${time}"
+  sudo timedatectl set-time "${date_value} ${time_value}"
 
   if has_failed; then
     log 'Failed to set the date.'
     return 2
   fi
 
-  log "Date set to ${date}."
+  log "Date set to ${date_value}."
 }
 
 # Sets the hardware clock to local or UTC time.

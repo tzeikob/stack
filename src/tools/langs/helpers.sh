@@ -553,7 +553,7 @@ apply_alias_to_layout () {
 
   # Find the corresponding name line in the layout's symbol file
   local index=0
-  local index="$(awk -v v="${variant}" '{
+  index="$(awk -v v="${variant}" '{
     re="^[ \t]*xkb_symbols[ \t]*\""v"\""
 
     if (v == "default") {
@@ -589,7 +589,8 @@ save_locale_to_settings () {
   local settings='{}'
 
   if file_exists "${LANGS_SETTINGS}"; then
-    local locales="$(jq '.locales' "${LANGS_SETTINGS}")"
+    local locales=''
+    locales="$(jq '.locales' "${LANGS_SETTINGS}")"
 
     if is_not_empty "${locales}"; then
       local query=".[]|select(. == \"${name}\")"
@@ -654,7 +655,8 @@ is_locale_set () {
   local var=''
   for var in "${vars[@]}"; do
     # Read the value of the next env variable
-    local value="$(printf '%s\n' "${!var}")"
+    local value=''
+    value="$(printf '%s\n' "${!var}")"
 
     if equals "${name}" "${value}"; then
       return 0

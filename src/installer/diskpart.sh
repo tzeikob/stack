@@ -70,10 +70,12 @@ create_gpt_partitions () {
 
   start=${end}
 
-  local swap_on="$(jq -cer '.swap_on' "${SETTINGS}")" ||
+  local swap_on=''
+  swap_on="$(jq -cer '.swap_on' "${SETTINGS}")" ||
     abort 'Failed to read the swap_on setting.'
   
-  local swap_type="$(jq -cer '.swap_type' "${SETTINGS}")" ||
+  local swap_type=''
+  swap_type="$(jq -cer '.swap_type' "${SETTINGS}")" ||
     abort 'Failed to read the swap_type setting.'
 
   if is_yes "${swap_on}" && equals "${swap_type}" 'partition'; then
@@ -114,13 +116,15 @@ create_mbr_partitions () {
 
   log INFO 'Partition table has been created.'
 
-  local start=1
+  local start_from=1
   local root_index=1
 
-  local swap_on="$(jq -cer '.swap_on' "${SETTINGS}")" ||
+  local swap_on=''
+  swap_on="$(jq -cer '.swap_on' "${SETTINGS}")" ||
     abort 'Failed to read the swap_on setting.'
   
-  local swap_type="$(jq -cer '.swap_type' "${SETTINGS}")" ||
+  local swap_type=''
+  swap_type="$(jq -cer '.swap_type' "${SETTINGS}")" ||
     abort 'Failed to read the swap_type setting.'
 
   if is_yes "${swap_on}" && equals "${swap_type}" 'partition'; then
@@ -128,22 +132,23 @@ create_mbr_partitions () {
     swap_size=$(jq -cer '.swap_size' "${SETTINGS}") ||
       abort ERROR 'Unable to read swap_size setting.'
 
-    local end=$(calc "${start} + (${swap_size} * 1024)")
+    local end_at=0
+    end_at=$(calc "${start_from} + (${swap_size} * 1024)")
 
     log INFO 'Creating the swap partition...'
 
-    parted --script "${disk}" mkpart primary linux-swap "${start}Mib" "${end}Mib" 2>&1 ||
+    parted --script "${disk}" mkpart primary linux-swap "${start_from}Mib" "${end_at}Mib" 2>&1 ||
       abort ERROR 'Failed to create swap partition.'
 
     log INFO 'Swap partition has been created.'
 
-    start=${end}
+    start_from=${end_at}
     root_index=2
   fi
 
   log INFO 'Creating the root partition...'
 
-  parted --script "${disk}" mkpart primary ext4 "${start}Mib" 100% 2>&1 ||
+  parted --script "${disk}" mkpart primary ext4 "${start_from}Mib" 100% 2>&1 ||
     abort ERROR 'Failed to create root partition.'
 
   log INFO 'Root partition has been created.'
@@ -158,7 +163,8 @@ create_mbr_partitions () {
 create_partitions () {
   log INFO 'Creating disk partitions...'
 
-  local uefi_mode="$(jq -cer '.uefi_mode' "${SETTINGS}")" ||
+  local uefi_mode=''
+  uefi_mode="$(jq -cer '.uefi_mode' "${SETTINGS}")" ||
     abort 'Failed to read the uefi_mode setting.'
 
   if is_yes "${uefi_mode}"; then
@@ -183,13 +189,16 @@ format_partitions () {
     postfix='p'
   fi
 
-  local uefi_mode="$(jq -cer '.uefi_mode' "${SETTINGS}")" ||
+  local uefi_mode=''
+  uefi_mode="$(jq -cer '.uefi_mode' "${SETTINGS}")" ||
     abort 'Failed to read the uefi_mode setting.'
 
-  local swap_on="$(jq -cer '.swap_on' "${SETTINGS}")" ||
+  local swap_on=''
+  swap_on="$(jq -cer '.swap_on' "${SETTINGS}")" ||
     abort 'Failed to read the swap_on setting.'
 
-  local swap_type="$(jq -cer '.swap_type' "${SETTINGS}")" ||
+  local swap_type=''
+  swap_type="$(jq -cer '.swap_type' "${SETTINGS}")" ||
     abort 'Failed to read the swap_type setting.'
 
   if is_yes "${uefi_mode}"; then
@@ -245,13 +254,16 @@ mount_file_system () {
 
   local mount_opts='relatime,commit=60'
 
-  local uefi_mode="$(jq -cer '.uefi_mode' "${SETTINGS}")" ||
+  local uefi_mode=''
+  uefi_mode="$(jq -cer '.uefi_mode' "${SETTINGS}")" ||
     abort 'Failed to read the uefi_mode setting.'
 
-  local swap_on="$(jq -cer '.swap_on' "${SETTINGS}")" ||
+  local swap_on=''
+  swap_on="$(jq -cer '.swap_on' "${SETTINGS}")" ||
     abort 'Failed to read the swap_on setting.'
 
-  local swap_type="$(jq -cer '.swap_type' "${SETTINGS}")" ||
+  local swap_type=''
+  swap_type="$(jq -cer '.swap_type' "${SETTINGS}")" ||
     abort 'Failed to read the swap_type setting.'
 
   if is_yes "${uefi_mode}"; then
@@ -288,7 +300,8 @@ mount_file_system () {
 
 # Creates the swap space.
 make_swap_space () {
-  local swap_on="$(jq -cer '.swap_on' "${SETTINGS}")" ||
+  local swap_on=''
+  swap_on="$(jq -cer '.swap_on' "${SETTINGS}")" ||
     abort ERROR 'Failed to read the swap_on setting.'
 
   if is_no "${swap_on}"; then
@@ -307,13 +320,15 @@ make_swap_space () {
     postfix='p'
   fi
 
-  local swap_type="$(jq -cer '.swap_type' "${SETTINGS}")" ||
+  local swap_type=''
+  swap_type="$(jq -cer '.swap_type' "${SETTINGS}")" ||
     abort 'Failed to read the swap_type setting.'
 
   if equals "${swap_type}" 'partition'; then
     local swap_index=1
 
-    local uefi_mode="$(jq -cer '.uefi_mode' "${SETTINGS}")" ||
+    local uefi_mode=''
+    uefi_mode="$(jq -cer '.uefi_mode' "${SETTINGS}")" ||
       abort 'Failed to read the uefi_mode setting.'
 
     if is_yes "${uefi_mode}"; then

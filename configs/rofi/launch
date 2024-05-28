@@ -54,7 +54,8 @@ show_power_menu () {
   local exact_lines='listview {lines: 6;}'
   local theme="${hide_prompt} ${exact_lines}"
 
-  local chosen="$(printf "${options}" | rofi -dmenu -i -theme-str "${theme}")"
+  local chosen=''
+  chosen="$(printf "${options}" | rofi -dmenu -i -theme-str "${theme}")"
 
   case "${chosen}" in
     'Shutdown') power -qs shutdown;;

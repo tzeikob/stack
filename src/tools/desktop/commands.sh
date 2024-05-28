@@ -399,8 +399,11 @@ scale_tablet () {
   local area=''
   area="$(echo "${tablet}" | jq -cer '.Area')" || return 1
 
-  local width="$(echo "${area}" | cut -d ' ' -f 3)"
-  local height="$(echo "${area}" | cut -d ' ' -f 4)"
+  local width=0
+  width="$(echo "${area}" | cut -d ' ' -f 3)"
+
+  local height=0
+  height="$(echo "${area}" | cut -d ' ' -f 4)"
 
   local ratio=0
   ratio="$(calc "${width} / ${height}")" || return 1
@@ -486,7 +489,9 @@ map_tablet () {
     # Restore area keeping the current scale
     local area=''
     area="$(echo "${tablet}" | jq -cer '.Area')" || return 1
-    local previous_width="$(echo "${area}" | cut -d ' ' -f 3)"
+
+    local previous_width=0
+    previous_width="$(echo "${area}" | cut -d ' ' -f 3)"
 
     # Reset tablets area to default size
     xsetwacom --set "${name}" ResetArea &> /dev/null || return 1
@@ -494,8 +499,11 @@ map_tablet () {
     tablet="$(find_tablet "${name}")" || return 1
     area="$(echo "${tablet}" | jq -cer '.Area')" || return 1
 
-    local width="$(echo "${area}" | cut -d ' ' -f 3)"
-    local height="$(echo "${area}" | cut -d ' ' -f 4)"
+    local width=0
+    width="$(echo "${area}" | cut -d ' ' -f 3)"
+
+    local height=0
+    height="$(echo "${area}" | cut -d ' ' -f 4)"
 
     # Calculate the scaling factor
     local scale=0
@@ -539,7 +547,9 @@ map_tablet () {
   local area=0
   area="$(echo "${tablet}" | jq -cer '.Area')" || return 1
 
-  local width="$(echo "${area}" | cut -d ' ' -f 3)"
+  local width=0
+  width="$(echo "${area}" | cut -d ' ' -f 3)"
+
   local height=0
   height="$(calc "floor(${width} * ${ratio})")" || return 1
 
@@ -858,7 +868,8 @@ init_workspaces () {
     local current_slots=0
     current_slots="$(echo "${desktops}" | jq -cer 'length')" || return 1
 
-    local subtract="$(calc "${current_slots} - ${slots}")"
+    local subtract=0
+    subtract="$(calc "${current_slots} - ${slots}")"
 
     # Remove extra desktops one by one
     if is_true "${subtract} > 0"; then
@@ -914,9 +925,15 @@ init_workspaces () {
     bspc config bottom_padding 0
     
     local query='[.[]|select(.|test("^[0-9]+$"))]|max'
-    local max="$(bspc query -D --names | jq --raw-input . | jq -rcs "${query}")"
-    local a="$(calc "${max} + 1")"
-    local b="$(calc "${a} + 1")"
+    
+    local max=0
+    max="$(bspc query -D --names | jq --raw-input . | jq -rcs "${query}")"
+
+    local a=0
+    a="$(calc "${max} + 1")"
+
+    local b=0
+    b="$(calc "${a} + 1")"
 
     bspc monitor "${args[1]}" -d "${a}" "${b}"
   done &

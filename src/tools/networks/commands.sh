@@ -709,7 +709,8 @@ add_vpn () {
     return 2
   fi
 
-  local name=$(basename -- "${file_path}")
+  local name=''
+  name=$(basename -- "${file_path}")
   name="${name%.*}"
 
   if find_connection "${name}" &> /dev/null; then
