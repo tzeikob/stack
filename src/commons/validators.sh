@@ -305,26 +305,6 @@ is_not_toggle () {
   is_toggle "${1}" && return 1 || return 0
 }
 
-# Checks if the dep with the given name is installed or not.
-# Arguments:
-#  name: the name of a dependency
-# Returns:
-#  0 if dep is installed otherwise 1.
-dep_is_installed () {
-  local name="${1}"
-
-  if pacman -Qi "${name}" > /dev/null 2>&1; then
-    return 0
-  fi
-
-  return 1
-}
-
-# An inversed alias of dep_is_installed.
-dep_not_installed () {
-  dep_is_installed "${1}" && return 1 || return 0
-}
-
 # Checks if the given value is a valid date.
 # Arguments:
 #  value: a date value

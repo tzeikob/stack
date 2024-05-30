@@ -2,15 +2,40 @@
 
 set -Eeo pipefail
 
-source src/commons/error.sh
-source src/commons/logger.sh
-source src/commons/validators.sh
-
 DIST_DIR=.dist
 WORK_DIR="${DIST_DIR}/work"
 AUR_DIR="${DIST_DIR}/aur"
 PROFILE_DIR="${DIST_DIR}/profile"
 ROOT_FS="${PROFILE_DIR}/airootfs"
+
+# Prints the given log message prefixed with the given log level.
+# Arguments:
+#  level:   one of INFO, WARN, ERROR
+#  message: a message to show
+# Outputs:
+#  Prints the message in <level> <message> form.
+log () {
+  local level="${1}"
+  local message="${2}"
+
+  printf '%-5s %b\n' "${level}" "${message}"
+}
+
+# Aborts the current process logging the given error message.
+# Arguments:
+#  level:   one of INFO, WARN, ERROR
+#  message: an error message to print
+# Outputs:
+#  An error messsage.
+abort () {
+  local level="${1}"
+  local message="${2}"
+
+  log "${level}" "${message}"
+  log "${level}" 'Process has been exited.'
+
+  exit 1
+}
 
 # Adds the package with the given name into the list of packages
 # Arguments:
@@ -20,7 +45,7 @@ add_package () {
 
   local pkgs_file="${PROFILE_DIR}/packages.x86_64"
 
-  if file_not_exists "${pkgs_file}"; then
+  if [[ ! -f "${pkgs_file}" ]]; then
     abort ERROR "Unable to locate file ${pkgs_file}."
   fi
 
@@ -39,7 +64,7 @@ remove_package () {
 
   local pkgs_file="${PROFILE_DIR}/packages.x86_64"
 
-  if file_not_exists "${pkgs_file}"; then
+  if [[ ! -f "${pkgs_file}" ]]; then
     abort ERROR "Unable to locate file ${pkgs_file}."
   fi
 
@@ -55,7 +80,7 @@ remove_package () {
 
 # Initializes build and distribution files.
 init () {
-  if directory_exists "${DIST_DIR}"; then
+  if [[ -d "${DIST_DIR}" ]]; then
     rm -rf "${DIST_DIR}" || abort ERROR 'Unable to remove the .dist folder.'
 
     log WARN 'Existing .dist folder has been removed.'
@@ -72,7 +97,7 @@ check_depds () {
 
   local dep=''
   for dep in "${deps[@]}"; do
-    if dep_not_installed "${dep}"; then
+    if ! pacman -Qi "${dep}" > /dev/null 2>&1; then
       abort ERROR "Package dependency ${dep} is not installed."
     fi
   done
@@ -84,7 +109,7 @@ copy_profile () {
 
   local releng_path="/usr/share/archiso/configs/releng"
 
-  if directory_not_exists "${releng_path}"; then
+  if [[ ! -d "${releng_path}" ]]; then
     abort ERROR 'Unable to locate releng archiso profile.'
   fi
 
@@ -96,7 +121,7 @@ copy_profile () {
 
 # Sets the distribution names and os release meta files.
 rename_distro () {
-  if directory_not_exists "${ROOT_FS}"; then
+  if [[ ! -d "${ROOT_FS}" ]]; then
     abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
@@ -156,7 +181,7 @@ rename_distro () {
 
   log INFO 'Host name set to stackiso.'
 
-  if directory_not_exists "${PROFILE_DIR}"; then
+  if [[ ! -d "${PROFILE_DIR}" ]]; then
     abort ERROR 'Unable to locate the releng profile folder.'
   fi
 
@@ -174,7 +199,7 @@ rename_distro () {
 
 # Sets up the bios and uefi boot loaders.
 setup_boot_loaders () {
-  if directory_not_exists "${PROFILE_DIR}"; then
+  if [[ ! -d "${PROFILE_DIR}" ]]; then
     abort ERROR 'Unable to locate the releng profile folder.'
   fi
 
@@ -309,7 +334,7 @@ add_aur_packages () {
 
   local previous_dir=${PWD}
 
-  if directory_not_exists "${PROFILE_DIR}"; then
+  if [[ ! -d "${PROFILE_DIR}" ]]; then
     abort ERROR 'Unable to locate the releng profile folder.'
   fi
 
@@ -345,7 +370,7 @@ add_aur_packages () {
 
   local pacman_conf="${PROFILE_DIR}/pacman.conf"
 
-  if file_not_exists "${pacman_conf}"; then
+  if [[ ! -f "${pacman_conf}" ]]; then
     abort ERROR "Unable to locate file ${pacman_conf}."
   fi
 
@@ -362,7 +387,7 @@ add_aur_packages () {
 
 # Patch various packages.
 patch_packages () {
-  if directory_not_exists "${ROOT_FS}"; then
+  if [[ ! -d "${ROOT_FS}" ]]; then
     abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
@@ -389,7 +414,7 @@ patch_packages () {
 
 # Copies the commons tools.
 copy_commons_tools () {
-  if directory_not_exists "${ROOT_FS}"; then
+  if [[ ! -d "${ROOT_FS}" ]]; then
     abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
@@ -406,7 +431,7 @@ copy_commons_tools () {
 
 # Copies the files of the system tools.
 copy_system_tools () {
-  if directory_not_exists "${ROOT_FS}"; then
+  if [[ ! -d "${ROOT_FS}" ]]; then
     abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
@@ -463,7 +488,7 @@ copy_system_tools () {
 
 # Copies the files of the installer.
 copy_installer () {
-  if directory_not_exists "${ROOT_FS}"; then
+  if [[ ! -d "${ROOT_FS}" ]]; then
     abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
@@ -492,7 +517,7 @@ copy_installer () {
 
 # Sets to skip login prompt and auto login the root user.
 setup_auto_login () {
-  if directory_not_exists "${ROOT_FS}"; then
+  if [[ ! -d "${ROOT_FS}" ]]; then
     abort 'Unable to locate the airootfs folder.'
   fi
 
@@ -528,7 +553,7 @@ setup_auto_login () {
 
 # Sets up the display server configuration and hooks.
 setup_display_server () {
-  if directory_not_exists "${ROOT_FS}"; then
+  if [[ ! -d "${ROOT_FS}" ]]; then
     abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
@@ -555,7 +580,7 @@ setup_display_server () {
 
   local zlogin_file="${ROOT_FS}/root/.zlogin"
 
-  if file_not_exists "${zlogin_file}"; then
+  if [[ ! -f "${zlogin_file}" ]]; then
     abort ERROR "Unable to locate file ${zlogin_file}."
   fi
 
@@ -570,7 +595,7 @@ setup_display_server () {
 
 # Sets up the keyboard settings.
 setup_keyboard () {
-  if directory_not_exists "${ROOT_FS}"; then
+  if [[ ! -d "${ROOT_FS}" ]]; then
     abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
@@ -614,7 +639,7 @@ setup_keyboard () {
 
 # Sets up various system power settings.
 setup_power () {
-  if directory_not_exists "${ROOT_FS}"; then
+  if [[ ! -d "${ROOT_FS}" ]]; then
     abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
@@ -681,7 +706,7 @@ setup_power () {
 
 # Sets up the sheel environment files.
 setup_shell_environment () {
-  if direcory_not_exists "${ROOT_FS}"; then
+  if [[ ! -d "${ROOT_FS}" ]]; then
     abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
@@ -718,7 +743,7 @@ setup_shell_environment () {
 setup_desktop () {
   log INFO 'Setting up the desktop configurations...'
 
-  if directory_not_exists "${ROOT_FS}"; then
+  if [[ ! -d "${ROOT_FS}" ]]; then
     abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
@@ -836,7 +861,7 @@ setup_desktop () {
 setup_theme () {
   log INFO 'Setting up the desktop theme...'
 
-  if directory_not_exists "${ROOT_FS}"; then
+  if [[ ! -d "${ROOT_FS}" ]]; then
     abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
@@ -925,7 +950,7 @@ setup_theme () {
 setup_fonts () {
   log INFO 'Setting up extra system fonts...'
 
-  if directory_not_exists "${ROOT_FS}"; then
+  if [[ ! -d "${ROOT_FS}" ]]; then
     abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
@@ -965,7 +990,7 @@ setup_fonts () {
 
 # Sets up various system sound resources.
 setup_sounds () {
-  if directory_not_exists "${ROOT_FS}"; then
+  if [[ ! -d "${ROOT_FS}" ]]; then
     abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
@@ -983,7 +1008,7 @@ setup_sounds () {
 enable_services () {
   log INFO 'Enabling system services...'
 
-  if directory_not_exists "${ROOT_FS}"; then
+  if [[ ! -d "${ROOT_FS}" ]]; then
     abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
@@ -1063,7 +1088,7 @@ enable_services () {
 
 # Adds input and output devices rules.
 add_device_rules () {
-  if directory_not_exists "${ROOT_FS}"; then
+  if [[ ! -d "${ROOT_FS}" ]]; then
     abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
@@ -1080,7 +1105,7 @@ add_device_rules () {
 
 # Adds various extra sudoers rules.
 add_sudoers_rules () {
-  if directory_not_exists "${ROOT_FS}"; then
+  if [[ ! -d "${ROOT_FS}" ]]; then
     abort ERROR 'Unable to locate the airootfs folder.'
   fi
 
@@ -1104,7 +1129,7 @@ add_sudoers_rules () {
 set_file_permissions () {
   local permissions_file="${PROFILE_DIR}/profiledef.sh"
 
-  if file_not_exists "${permissions_file}"; then
+  if [[ ! -f "${permissions_file}" ]]; then
     abort ERROR "Unable to locate file ${permissions_file}."
   fi
 
@@ -1161,7 +1186,7 @@ set_file_permissions () {
 make_iso_file () {
   log INFO 'Building the archiso file...'
 
-  if directory_not_exists "${PROFILE_DIR}"; then
+  if [[ ! -d "${PROFILE_DIR}" ]]; then
     abort ERROR 'Unable to locate the releng profile folder.'
   fi
 
