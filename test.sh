@@ -33,16 +33,16 @@ abort () {
 
 # Asserts no other than shell files exist under the src folder.
 test_no_shell_files () {
-  local files=($(find ./src -type f \! \( -name \*.sh \)))
+  local files=($(find ./src -type f -not -name '*.sh'))
 
   if [[ ${#files[@]} -gt 0 ]]; then
-    log WARN 'FAILED No shell files test failed.'
+    log ERROR '[FAILED] No shell files test'
     return 1
   fi
 
-  log INFO 'PASSED No shell files test succeed.'
+  log INFO '[PASSED] No shell files test'
 }
 
 test_no_shell_files &&
-  log INFO 'All test assertions have passed.' ||
-  abort ERROR 'Failed to pass all test assertions.'
+  log INFO 'All test assertions have been passed.' ||
+  abort ERROR 'Some tests have been failed to pass.'
