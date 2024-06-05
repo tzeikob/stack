@@ -71,10 +71,10 @@ execute () {
   local object="${2}"
   
   case "${command}${object:+ ${object}}" in
-    'show status') show_status;;
-    'show logs') show_logs;;
+    'show status') show_audio_status;;
+    'show logs') show_audio_logs;;
     'show card') show_card "${3}";;
-    'restart') restart;;
+    'restart') restart_audio;;
     'list cards') list_cards;;
     'list outputs') list_ports output;;
     'list inputs') list_ports input;;

@@ -65,7 +65,7 @@ execute () {
   local object="${2}"
   
   case "${command}${object:+ ${object}}" in
-    'show status') show_status;;
+    'show status') show_langs_status;;
     'add locale') add_locale "${3}";;
     'remove locale') remove_locale "${3}";;
     'set locale') set_locale "${3}";;

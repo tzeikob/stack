@@ -214,7 +214,7 @@ is_not_keyboard_model () {
 # Shows a menu asking the user to select a keyboard layout.
 # Outputs:
 #  A menu of keyboard layouts.
-pick_layout () {
+pick_keyboard_layout () {
   local layouts=''
   layouts="$(localectl --no-pager list-x11-keymap-layouts | awk '{
     print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
@@ -391,7 +391,7 @@ save_options_to_settings () {
 # Arguments:
 #  code:    a keyboard layout code
 #  variant: a variant of the given layout code
-save_layout_to_settings () {
+save_keyboard_layout_to_settings () {
   local code="${1}"
   local variant="${2}"
 

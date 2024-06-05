@@ -80,10 +80,10 @@ execute () {
   local object="${2}"
     
   case "${command}${object:+ ${object}}" in
-    'show status') show_status;;
-    'show device') show_device "${3}";;
+    'show status') show_networks_status;;
+    'show device') show_network_device "${3}";;
     'show connection') show_connection "${3}";;
-    'list devices') list_devices;;
+    'list devices') list_network_devices;;
     'list connections') list_connections;;
     'list wifis') list_wifis "${3}" "${4}";;
     'list proxies') list_proxies;;
@@ -98,7 +98,7 @@ execute () {
     'add wifi') add_wifi "${3}" "${4}" "${5}";;
     'add vpn') add_vpn "${3}" "${4}" "${5}";;
     'add proxy') add_proxy "${3}" "${4}" "${5}" "${6}" "${7}" "${8}";;
-    'remove device') remove_device "${3}";;
+    'remove device') remove_network_device "${3}";;
     'remove connection') remove_connection "${3}";;
     'remove proxy') remove_proxy "${3}";;
     'set proxy') set_proxy "${3}";;

@@ -485,7 +485,7 @@ select_kernel () {
 }
 
 # Report the collected installation settings.
-report () {
+report_settings () {
   local query=''
   query='.user_password = "***" | .root_password = "***"'
 
@@ -514,7 +514,7 @@ while true; do
     enter_user_password &&
     enter_root_password &&
     select_kernel &&
-    report
+    report_settings
 
   confirm '\nDo you want to go with these settings?' || abort
   is_not_given "${REPLY}" && abort 'User input is required.'

@@ -72,10 +72,11 @@ test_valid_func_names () {
   log INFO '[PASSED] Valid func names test.'
 }
 
-# Asserts no func gets overriden by any other func under src.
-test_no_func_overriden () {
+# Asserts no func gets overriden by any other func under the
+# src/commons and src/installer.
+test_no_func_overriden_on_installer () {
   local files=''
-  files=($(find ./src -type f -name '*.sh')) ||
+  files=($(find ./src/commons ./src/installer -type f -name '*.sh')) ||
     abort ERROR 'Unable to list source files.'
 
   local total_funcs=''
@@ -100,17 +101,56 @@ test_no_func_overriden () {
       abort ERROR 'Unable to iterate through function declarations.'
 
     if [[ ${occurrences} -gt 1 ]]; then
-      log ERROR '[FAILED] No func overriden test.'
+      log ERROR '[FAILED] No func overriden on installer test.'
       log ERROR "[FAILED] Function: ${func} [${occurrences}]."
       return 1
     fi
   done <<< "${total_funcs}"
 
-  log INFO '[PASSED] No func overriden test.'
+  log INFO '[PASSED] No func overriden on installer test.'
+}
+
+# Asserts no func gets overriden by any other func under the
+# the src/commons and src/tools.
+test_no_func_overriden_on_tools () {
+  local files=''
+  files=($(find ./src/commons ./src/tools -type f -name '*.sh' -not -name 'main.sh')) ||
+    abort ERROR 'Unable to list source files.'
+
+  local total_funcs=''
+
+  local file=''
+  for file in "${files[@]}"; do
+    local funcs=''
+    funcs=$(grep '.*( *) *{.*' ${file} | cut -d ' ' -f 1) ||
+      abort ERROR 'Unable to read function declarations.'
+
+    total_funcs+=$'\n'"${funcs}"
+  done
+
+  local func=''
+  while read -r func; do
+    if [[ -z "${func}" ]] || [[ "${func}" =~ '^ *$' ]]; then
+      continue
+    fi
+
+    local occurrences=0
+    occurrences=$(echo "${total_funcs}" | grep "^${func}$" | wc -l) ||
+      abort ERROR 'Unable to iterate through function declarations.'
+
+    if [[ ${occurrences} -gt 1 ]]; then
+      log ERROR '[FAILED] No func overriden on tools test.'
+      log ERROR "[FAILED] Function: ${func} [${occurrences}]."
+      return 1
+    fi
+  done <<< "${total_funcs}"
+
+  log INFO '[PASSED] No func overriden on tools test.'
 }
 
 test_no_shell_files &&
   test_valid_func_names &&
-  test_no_func_overriden &&
+  test_no_func_overriden_on_installer &&
+  test_no_func_overriden_on_tools &&
   log INFO 'All test assertions have been passed.' ||
   abort ERROR 'Some tests have been failed to pass.'

@@ -14,7 +14,7 @@ source /opt/stack/tools/bluetooth/helpers.sh
 # and connected devices.
 # Outputs:
 #  A long list of bluetooth data.
-show_status () {
+show_bluetooth_status () {
   systemctl status --lines 0 --no-pager bluetooth.service | awk '{
     if ($0 ~ / *Active/) {
       l = "Service"
@@ -42,7 +42,7 @@ show_status () {
   query+='if .|length > 0 then .[]|.address else "" end'
 
   local devices=''
-  devices="$(find_devices connected | jq -cer "${query}")" || return 1
+  devices="$(find_bluetooth_devices connected | jq -cer "${query}")" || return 1
 
   if is_empty "${devices}"; then
     return 0
@@ -57,14 +57,14 @@ show_status () {
   local device=''
   while read -r device; do
     echo
-    find_device "${device}" | jq -cer "${query}" || return 1
+    find_bluetooth_device "${device}" | jq -cer "${query}" || return 1
   done <<< "${devices}"
 }
 
 # Shows the logs of the bluetooth service.
 # Outputs:
 #  A long list of log messages.
-show_logs () {
+show_bluetooth_logs () {
   systemctl status --no-pager bluetooth.service | tail -n +13 || return 1
 }
 
@@ -98,7 +98,7 @@ list_controllers () {
 #  status: paired, connected or trusted
 # Outputs:
 #  A list of bluetooth devices.
-list_devices () {
+list_bluetooth_devices () {
   local status="${1}"
 
   if is_given "${status}" && is_not_valid_status "${status}"; then
@@ -107,7 +107,7 @@ list_devices () {
   fi
 
   local devices=''
-  devices="$(find_devices "${status^}")" || return 1
+  devices="$(find_bluetooth_devices "${status^}")" || return 1
 
   local len=0
   len="$(echo "${devices}" | jq -cer 'length')" || return 1
@@ -174,20 +174,20 @@ show_controller () {
 #  address: the address of a device
 # Outputs:
 #  A list of device data.
-show_device () {
+show_bluetooth_device () {
   local address="${1}"
 
   if is_not_given "${address}"; then
     on_script_mode &&
       log 'Missing device address.' && return 2
   
-    pick_device || return $?
+    pick_bluetooth_device || return $?
     is_empty "${REPLY}" && log 'Device address required.' && return 2
     address="${REPLY}"
   fi
 
   local device=''
-  device="$(find_device "${address}")"
+  device="$(find_bluetooth_device "${address}")"
 
   if has_failed; then
     log "Device ${address} not found."
@@ -389,13 +389,13 @@ connect_device () {
     on_script_mode &&
       log 'Missing device address.' && return 2
   
-    pick_device || return $?
+    pick_bluetooth_device || return $?
     is_empty "${REPLY}" && log 'Device address required.' && return 2
     address="${REPLY}"
   fi
 
   local device=''
-  device="$(find_device "${address}")"
+  device="$(find_bluetooth_device "${address}")"
 
   if has_failed; then
     log "Device ${address} not found."
@@ -424,13 +424,13 @@ disconnect_device () {
     on_script_mode &&
       log 'Missing device address.' && return 2
   
-    pick_device || return $?
+    pick_bluetooth_device || return $?
     is_empty "${REPLY}" && log 'Device address required.' && return 2
     address="${REPLY}"
   fi
 
   local device=''
-  device="$(find_device "${address}")"
+  device="$(find_bluetooth_device "${address}")"
 
   if has_failed; then
     log "Device ${address} not found."
@@ -450,20 +450,20 @@ disconnect_device () {
 # Removes the device with the given address.
 # Arguments:
 #  address: the address of a device
-remove_device () {
+remove_bluetooth_device () {
   local address="${1}"
 
   if is_not_given "${address}"; then
     on_script_mode &&
       log 'Missing device address.' && return 2
   
-    pick_device || return $?
+    pick_bluetooth_device || return $?
     is_empty "${REPLY}" && log 'Device address required.' && return 2
     address="${REPLY}"
   fi
 
   local device=''
-  device="$(find_device "${address}")"
+  device="$(find_bluetooth_device "${address}")"
 
   if has_failed; then
     log "Device ${address} not found."

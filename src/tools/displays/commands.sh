@@ -12,7 +12,7 @@ source /opt/stack/tools/displays/helpers.sh
 # Shows the current status of Xorg and active displays.
 # Outputs:
 #  A verbose list of text data.
-show_status () {
+show_displays_status () {
   xdpyinfo -display "${DISPLAY}" | awk -F': ' '{
     gsub(/[ \t]+$/, "", $1);
     gsub(/^[ \t]+/, "", $2);
@@ -85,7 +85,7 @@ show_status () {
 #  lines: the number of last lines to show
 # Outputs:
 #  The log file of the xorg display.
-show_logs () {
+show_displays_logs () {
   local lines="${1}"
 
   if is_given "${lines}" && is_not_integer "${lines}" '[0,]'; then

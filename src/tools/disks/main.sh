@@ -85,7 +85,7 @@ execute () {
     'list roms') list_roms;;
     'list folders') list_shared_folders "${3}" "${4}" "${5}" "${6}";;
     'list mounts') list_mounts;;
-    'show status') show_status;;
+    'show status') show_disk_status;;
     'show disk') show_disk "${3}";;
     'show partition') show_partition "${3}";;
     'show rom') show_rom "${3}";;

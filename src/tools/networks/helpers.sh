@@ -24,7 +24,7 @@ find_status () {
 #  type: ethernet, wifi or bridge
 # Outputs:
 #  A json array of device objects.
-find_devices () {
+find_network_devices () {
   local type="${1}"
 
   local query='.'
@@ -41,7 +41,7 @@ find_devices () {
 #  name: the name of a device
 # Outputs:
 #  A josn object of a device.
-find_device () {
+find_network_device () {
   local name="${1}"
 
   local device=''
@@ -156,7 +156,7 @@ is_network_device () {
   fi
 
   local result=''
-  result="$(find_devices | jq -cer "${query}")"
+  result="$(find_network_devices | jq -cer "${query}")"
 
   if has_failed || is_empty "${result}"; then
     return 1
@@ -195,14 +195,14 @@ is_not_connection () {
 #  type: ethernet, wifi or bridge
 # Outputs:
 #  A menu of device names.
-pick_device () {
+pick_network_device () {
   local type="${1}"
 
   local query='{key: .device, value: .device}'
   query="[.[]|${query}]"
 
   local devices=''
-  devices="$(find_devices "${type}" | jq -cer "${query}")" || return 1
+  devices="$(find_network_devices "${type}" | jq -cer "${query}")" || return 1
 
   local len=0
   len="$(echo "${devices}" | jq -cer 'length')" || return 1

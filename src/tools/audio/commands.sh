@@ -12,7 +12,7 @@ source /opt/stack/tools/audio/helpers.sh
 # Shows the current status of system's audio.
 # Outputs:
 #  A verbose list of text data.
-show_status () {
+show_audio_status () {
   local query=''
   query+='Server:    \(.server_name)\n'
   query+='Sample:    \(.default_sample_specification)\n'
@@ -70,7 +70,7 @@ show_status () {
 # Shows the logs of the audio service.
 # Outputs:
 #  A long list of log messages.
-show_logs () {
+show_audio_logs () {
   systemctl --user status --no-pager pipewire-pulse.service | tail -n +12 || return 1
 }
 
@@ -130,7 +130,7 @@ show_card () {
 # Restarts the audio services.
 # Arguments:
 #  none
-restart () {
+restart_audio () {
   log 'Restarting audio services...'
 
   systemctl --user restart pipewire.socket &&

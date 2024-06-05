@@ -15,7 +15,7 @@ source /opt/stack/tools/notifications/helpers.sh
 # Shows the current status of the system's security.
 # Outputs:
 #  A verbose list of text data.
-show_status () {
+show_security_status () {
   passwd -S | awk '{
     status="protected"
     if ($2 == "L") {

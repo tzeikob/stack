@@ -13,7 +13,7 @@ source /opt/stack/tools/power/helpers.sh
 # Shows the current status of the system's power.
 # Outputs:
 #  A verbose list of text data.
-show_status () {
+show_power_status () {
   local query=''
   query+='"Adapter:      \(."on-line"|if . then "on" else "off" end)"'
 

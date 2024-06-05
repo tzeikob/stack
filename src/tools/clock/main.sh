@@ -65,7 +65,7 @@ execute () {
   local object="${2}"
   
   case "${command}${object:+ ${object}}" in
-    'show status') show_status;;
+    'show status') show_clock_status;;
     'set ntp') set_ntp "${3}";;
     'set timezone') set_timezone "${3}";;
     'set time') set_time "${3}";;
