@@ -63,6 +63,7 @@ test_valid_func_names () {
     while read -r func; do
       if [[ ! "${func}" =~ ${valid_declaration} ]]; then
         log ERROR '[FAILED] Valid func names test.'
+        log ERROR "[FAILED] Function: ${func}."
         return 1
       fi
     done <<< "${funcs}"
@@ -99,12 +100,13 @@ test_no_func_overriden () {
       abort ERROR 'Unable to iterate through function declarations.'
 
     if [[ ${occurrences} -gt 1 ]]; then
-      log ERROR '[FAILED] No func overriden test'
+      log ERROR '[FAILED] No func overriden test.'
+      log ERROR "[FAILED] Function: ${func} [${occurrences}]."
       return 1
     fi
   done <<< "${total_funcs}"
 
-  log INFO '[PASSED] No func overriden test'
+  log INFO '[PASSED] No func overriden test.'
 }
 
 test_no_shell_files &&
