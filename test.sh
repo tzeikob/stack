@@ -50,7 +50,7 @@ test_valid_func_names () {
   local valid_declaration='^[a-zA-Z_0-9]{1,} \(\) \{$'
 
   local files=''
-  files=($(find ./src ./configs ./build.sh ./test.sh -type f -name '*.sh')) ||
+  files=($(find ./src ./configs ./build.sh ./test.sh -type f)) ||
     abort ERROR 'Unable to list source files.'
 
   local file=''
@@ -64,6 +64,10 @@ test_valid_func_names () {
 
     local func=''
     while read -r func; do
+      if [[ -z "${func}" ]] || [[ "${func}" =~ '^ *$' ]]; then
+        continue
+      fi
+
       if [[ ! "${func}" =~ ${valid_declaration} ]]; then
         log ERROR '[FAILED] Valid func names test.'
         log ERROR "[FAILED] Function: ${func}."
