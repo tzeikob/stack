@@ -50,7 +50,7 @@ test_valid_func_names () {
   local valid_declaration='^[a-zA-Z_0-9]{1,} \(\) \{$'
 
   local files=''
-  files=($(find ./src -type f -name '*.sh')) ||
+  files=($(find ./src ./configs ./build.sh ./test.sh -type f -name '*.sh')) ||
     abort ERROR 'Unable to list source files.'
 
   local file=''
