@@ -56,8 +56,11 @@ test_valid_func_names () {
   local file=''
   for file in "${files[@]}"; do
     local funcs=''
-    funcs=$(grep '.*( *) *{.*' ${file}) ||
+    funcs=$(grep '.*( *) *{.*' ${file})
+
+    if [[ $? -gt 1 ]]; then
       abort ERROR 'Unable to read function declarations.'
+    fi
 
     local func=''
     while read -r func; do
@@ -83,8 +86,11 @@ test_no_func_overriden () {
   local file=''
   for file in "${files[@]}"; do
     local funcs=''
-    funcs=$(grep '.*( *) *{.*' ${file} | cut -d ' ' -f 1) ||
+    funcs=$(grep '.*( *) *{.*' ${file} | cut -d ' ' -f 1)
+    
+    if [[ $? -gt 1 ]]; then
       abort ERROR 'Unable to read function declarations.'
+    fi
 
     total_funcs+=$'\n'"${funcs}"
   done
@@ -96,8 +102,11 @@ test_no_func_overriden () {
     fi
 
     local occurrences=0
-    occurrences=$(echo "${total_funcs}" | grep "^${func}$" | wc -l) ||
+    occurrences=$(echo "${total_funcs}" | grep "^${func}$" | wc -l)
+    
+    if [[ $? -gt 1 ]]; then
       abort ERROR 'Unable to iterate through function declarations.'
+    fi
 
     if [[ ${occurrences} -gt 1 ]]; then
       log ERROR '[FAILED] No func overriden test.'
