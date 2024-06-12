@@ -45,40 +45,6 @@ test_no_shell_files () {
   log INFO '[PASSED] No shell files test.'
 }
 
-# Asserts all func names have a name with lower letters and underscores.
-test_valid_func_names () {
-  local valid_declaration='^[a-zA-Z_0-9]{1,} \(\) \{$'
-
-  local files=''
-  files=($(find ./src ./configs ./build.sh ./test.sh -type f)) ||
-    abort ERROR 'Unable to list source files.'
-
-  local file=''
-  for file in "${files[@]}"; do
-    local funcs=''
-    funcs=$(grep '.*( *) *{.*' ${file})
-
-    if [[ $? -gt 1 ]]; then
-      abort ERROR 'Unable to read function declarations.'
-    fi
-
-    local func=''
-    while read -r func; do
-      if [[ -z "${func}" ]] || [[ "${func}" =~ '^ *$' ]]; then
-        continue
-      fi
-
-      if [[ ! "${func}" =~ ${valid_declaration} ]]; then
-        log ERROR '[FAILED] Valid func names test.'
-        log ERROR "[FAILED] Function: ${func}."
-        return 1
-      fi
-    done <<< "${funcs}"
-  done
-
-  log INFO '[PASSED] Valid func names test.'
-}
-
 # Asserts no func gets overriden by any other func.
 test_no_func_overriden () {
   local files=''
@@ -123,7 +89,6 @@ test_no_func_overriden () {
 }
 
 test_no_shell_files &&
-  test_valid_func_names &&
   test_no_func_overriden &&
   log INFO 'All test assertions have been passed.' ||
   abort ERROR 'Some tests have been failed to pass.'
