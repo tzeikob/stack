@@ -3,7 +3,7 @@
 set -Eeo pipefail
 
 source /opt/stack/commons/input.sh
-source /opt/stack/commoms/error.sh
+source /opt/stack/commons/error.sh
 source /opt/stack/commons/logger.sh
 source /opt/stack/commons/validators.sh
 

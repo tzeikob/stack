@@ -31,6 +31,41 @@ abort () {
   exit 1
 }
 
+# Iterate recursively starting from the given file path
+# all the way down following every source file.
+# Arguments:
+#  root: the root entry file of an execution path
+# Outputs:
+#  All the source file paths loaded in the execution path.
+traverse_files () {
+  local root="${1}"
+
+  if [[ -z "${root}" ]] || [[ "${root}" =~ '^ *$' ]]; then
+    echo ''
+  else
+    # Collect all files sourced in the current root file
+    local files=''
+    files=$(grep -e '^source .*' "${root}" | cut -d ' ' -f 2)
+
+    if [[ $? -gt 1 ]]; then
+      return 1
+    fi
+
+    if [[ -n "${files}" ]] && [[ ! "${files}" =~ '^ *$' ]]; then
+      # Replace after installation paths with the repository locations
+      files=$(echo "${files}" | sed -e 's;/opt/stack;./src;')
+      
+      # Collect recursivelly every sourced file walking the execution path
+      local file=''
+      while read -r file; do
+        echo "${root}"$'\n'"$(traverse_files "${file}")"
+      done <<< "${files}"
+    else
+      echo "${root}"
+    fi
+  fi
+}
+
 # Asserts no other than shell files exist under the src folder.
 test_no_shell_files () {
   local count=0
@@ -45,47 +80,76 @@ test_no_shell_files () {
   log INFO '[PASSED] No shell files test.'
 }
 
-# Asserts no func gets overriden by any other func.
+# Asserts no func gets overriden on execution paths.
 test_no_func_overriden () {
-  local files=''
-  files=($(find ./src -type f -name '*.sh' -not -path './src/tools/*/main.sh')) ||
-    abort ERROR 'Unable to list source files.'
+  local roots=(
+    ./src/installer/run.sh
+    ./src/installer/askme.sh
+    ./src/installer/detection.sh
+    ./src/installer/diskpart.sh
+    ./src/installer/bootstrap.sh
+    ./src/installer/system.sh
+    ./src/installer/desktop.sh
+    ./src/installer/stack.sh
+    ./src/installer/apps.sh
+    ./src/installer/cleaner.sh
+    ./configs/alacritty/root.prompt
+    ./configs/alacritty/user.prompt
+    ./configs/bspwm/resize
+    ./configs/bspwm/rules
+    ./configs/bspwm/scratchpad
+    ./configs/bspwm/swap
+    ./configs/dunst/hook
+    ./configs/polybar/scripts/*
+    ./configs/rofi/launch
+    ./configs/xsecurelock/hook
+  )
 
-  local total_funcs=''
+  roots+=($(find ./src/tools -mindepth 2 -maxdepth 2 -type f -name 'main.sh')) ||
+    abort ERROR 'Unable to list tools directories.'
 
-  local file=''
-  for file in "${files[@]}"; do
-    local funcs=''
-    funcs=$(grep '.*( *) *{.*' ${file} | cut -d ' ' -f 1)
+  local root=''
+  for root in "${roots[@]}"; do
+    local files=''
+    files=$(traverse_files "${root}" | sort -u) ||
+      abort ERROR "Unable to traverse files in execution path of ${tool}."
     
-    if [[ $? -gt 1 ]]; then
-      abort ERROR 'Unable to read function declarations.'
-    fi
+    local all_funcs=''
 
-    total_funcs+=$'\n'"${funcs}"
+    local file=''
+    while read -r file; do
+      local funcs=''
+      funcs=$(grep '.*( *) *{.*' "${file}" | cut -d '(' -f 1)
+
+      if [[ $? -gt 1 ]]; then
+        abort ERROR 'Unable to read function declarations.'
+      fi
+
+      all_funcs+="${funcs}"$'\n'
+    done <<< "${files}"
+
+    local func=''
+    while read -r func; do
+      # Skip empty lines
+      if [[ -z "${func}" ]] || [[ "${func}" =~ '^ *$' ]]; then
+        continue
+      fi
+
+      local occurrences=0
+      occurrences=$(echo "${all_funcs}" | grep -w "${func}" | wc -l)
+      
+      if [[ $? -gt 1 ]]; then
+        abort ERROR 'Unable to iterate through function declarations.'
+      fi
+
+      if [[ ${occurrences} -gt 1 ]]; then
+        log ERROR "[FAILED] No func overriden test: ${root}, ${func} [${occurrences}]."
+        return 1
+      fi
+    done <<< "${all_funcs}"
+
+    log INFO "[PASSED] No func overriden test: ${root}."
   done
-
-  local func=''
-  while read -r func; do
-    if [[ -z "${func}" ]] || [[ "${func}" =~ '^ *$' ]]; then
-      continue
-    fi
-
-    local occurrences=0
-    occurrences=$(echo "${total_funcs}" | grep "^${func}$" | wc -l)
-    
-    if [[ $? -gt 1 ]]; then
-      abort ERROR 'Unable to iterate through function declarations.'
-    fi
-
-    if [[ ${occurrences} -gt 1 ]]; then
-      log ERROR '[FAILED] No func overriden test.'
-      log ERROR "[FAILED] Function: ${func} [${occurrences}]."
-      return 1
-    fi
-  done <<< "${total_funcs}"
-
-  log INFO '[PASSED] No func overriden test.'
 }
 
 test_no_shell_files &&
