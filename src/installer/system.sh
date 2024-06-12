@@ -524,7 +524,7 @@ set_keyboard () {
 }
 
 # Sets the system timezone.
-set_timezone () {
+set_system_timezone () {
   log INFO 'Setting the system timezone...'
 
   local timezone=''
@@ -995,7 +995,7 @@ set_host &&
   install_aur_package_manager &&
   set_locales &&
   set_keyboard &&
-  set_timezone &&
+  set_system_timezone &&
   boost_performance &&
   configure_power &&
   configure_security &&
