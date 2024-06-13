@@ -103,6 +103,8 @@ test_no_func_overriden () {
     ./configs/polybar/scripts/*
     ./configs/rofi/launch
     ./configs/xsecurelock/hook
+    ./build.sh
+    ./test.sh
   )
 
   roots+=($(find ./src/tools -mindepth 2 -maxdepth 2 -type f -name 'main.sh')) ||
