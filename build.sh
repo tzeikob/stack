@@ -1197,7 +1197,11 @@ make_iso_file () {
   log INFO 'Build process completed successfully.'
 }
 
-log INFO 'Starting the build process...'
+log INFO 'Started running test units...'
+
+bash ./test.sh
+
+log INFO '\nStarting the build process...'
 
 init &&
   check_depds &&
