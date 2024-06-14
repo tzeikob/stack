@@ -83,16 +83,9 @@ test_no_shell_files () {
 # Asserts no func gets overriden on execution paths.
 test_no_func_overriden () {
   local roots=(
-    ./src/installer/run.sh
-    ./src/installer/askme.sh
-    ./src/installer/detection.sh
-    ./src/installer/diskpart.sh
-    ./src/installer/bootstrap.sh
-    ./src/installer/system.sh
-    ./src/installer/desktop.sh
-    ./src/installer/stack.sh
-    ./src/installer/apps.sh
-    ./src/installer/cleaner.sh
+    ./src/commons/*
+    ./src/installer/*
+    ./src/tools/**/main.sh
     ./configs/alacritty/root.prompt
     ./configs/alacritty/user.prompt
     ./configs/bspwm/resize
@@ -106,9 +99,6 @@ test_no_func_overriden () {
     ./build.sh
     ./test.sh
   )
-
-  roots+=($(find ./src/tools -mindepth 2 -maxdepth 2 -type f -name 'main.sh')) ||
-    abort ERROR 'Unable to list tools directories.'
 
   local root=''
   for root in "${roots[@]}"; do
