@@ -18,7 +18,8 @@ run () {
   local color=''
   
   if file_exists "${UPDATES_FILE}"; then
-    local packages="$(< "${UPDATES_FILE}")"
+    local packages=''
+    packages="$(< "${UPDATES_FILE}")"
 
     if is_not_integer "${packages}"; then
       output='Err!'

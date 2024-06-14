@@ -25,7 +25,8 @@ find_remotes () {
     return 0
   fi
 
-  local mounts="$(< /proc/mounts)"
+  local mounts=''
+  mounts="$(< /proc/mounts)"
 
   local results=''
   local remote=''
