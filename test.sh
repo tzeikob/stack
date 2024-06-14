@@ -135,7 +135,8 @@ test_no_func_overriden () {
       fi
 
       if [[ ${occurrences} -gt 1 ]]; then
-        log ERROR "[FAILED] No func overriden test: ${root}, ${func} [${occurrences}]."
+        log ERROR "[FAILED] No func overriden test: ${root}."
+        log ERROR "[FAILED] No func overriden test: ${func} [${occurrences}]."
         return 1
       fi
     done <<< "${all_funcs}"
@@ -168,7 +169,8 @@ test_local_var_declarations () {
       fi
 
       if [[ "${declaration}" =~ =\"?\$\(.* ]]; then
-        log ERROR "[FAILED] Local var declarations test: ${file}, ${declaration}."
+        log ERROR "[FAILED] Local var declarations test: ${file}."
+        log ERROR "[FAILED] Local var declarations test: ${declaration}"
         return 1
       fi
     done <<< "${declarations}"
