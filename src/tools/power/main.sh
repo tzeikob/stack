@@ -69,7 +69,7 @@ execute () {
   local object="${2}"
   
   case "${command}${object:+ ${object}}" in
-    'show status') show_power_status;;
+    'show status') show_status;;
     'set action') set_action "${3}" "${4}";;
     'set screensaver') set_screensaver "${3}";;
     'set tlp') set_tlp "${3}";;

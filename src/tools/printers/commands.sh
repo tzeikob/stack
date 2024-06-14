@@ -14,7 +14,7 @@ source /opt/stack/tools/printers/helpers.sh
 # Shows a short status of cups service and printers.
 # Outputs:
 #  A list of cups and printer data.
-show_printers_status () {
+show_status () {
   systemctl status --lines 0 --no-pager cups.service | awk '{
     if ($0 ~ / *Active/) {
       l = "Service"
@@ -354,7 +354,7 @@ set_option () {
 # print destination.
 # Arguments:
 #  name: the name of a print destination
-set_default_printer () {
+set_default () {
   local name="${1}"
 
   if is_not_given "${name}"; then
@@ -437,7 +437,7 @@ cancel_job () {
 }
 
 # Restarts the cup service.
-restart_printers () {
+restart () {
   authenticate_user || return $?
 
   log 'Restarting the cups service...'

@@ -14,7 +14,7 @@ source /opt/stack/tools/networks/helpers.sh
 # Shows the current status of the system networking.
 # Outputs:
 #  A long list of networking data.
-show_networks_status () {
+show_status () {
   systemctl status --lines 0 --no-pager NetworkManager.service |
     awk '{
       if ($0 ~ / *Active/) {
@@ -26,7 +26,7 @@ show_networks_status () {
     }' || return 1
 
   local devices=''
-  devices="$(find_network_devices)" || return 1
+  devices="$(find_devices)" || return 1
 
   local query=''
   query+='\([$d[]|select((.type == "wifi" or .type == "ethernet") and .state == "connected")]'
@@ -102,14 +102,14 @@ show_networks_status () {
 #  name: the name of a device
 # Outputs:
 #  A long list of device data.
-show_network_device () {
+show_device () {
   local name="${1}"
   
   if is_not_given "${name}"; then
     on_script_mode &&
       log 'Missing network device name.' && return 2
     
-    pick_network_device || return $?
+    pick_device || return $?
     is_empty "${REPLY}" && log 'Network device name required.' && return 2
     name="${REPLY}"
   fi
@@ -138,7 +138,7 @@ show_network_device () {
   query+='\(.connection|if . then "\nConnection:  \(.)" else "" end)'
   query="\"${query}\""
 
-  find_network_device "${name}" | jq -cer "${query}" || return 1
+  find_device "${name}" | jq -cer "${query}" || return 1
 }
 
 # Shows the data of the network connection with the
@@ -194,9 +194,9 @@ show_connection () {
 # Shows the list of networking devices.
 # Outputs:
 #  A list of network devices.
-list_network_devices () {
+list_devices () {
   local devices=''
-  devices="$(find_network_devices)" || return 1
+  devices="$(find_devices)" || return 1
 
   local len=0
   len="$(echo "${devices}" | jq -cer 'length')" || return 1
@@ -255,7 +255,7 @@ list_wifis () {
     on_script_mode &&
       log 'Missing wifi device name.' && return 2
     
-    pick_network_device wifi || return $?
+    pick_device wifi || return $?
     is_empty "${REPLY}" && log 'Wifi device name required.' && return 2
     device="${REPLY}"
   fi
@@ -311,7 +311,7 @@ up_device () {
     on_script_mode &&
       log 'Missing network device name.' && return 2
     
-    pick_network_device || return $?
+    pick_device || return $?
     is_empty "${REPLY}" && log 'Network device name required.' && return 2
     name="${REPLY}"
   fi
@@ -375,7 +375,7 @@ down_device () {
     on_script_mode &&
       log 'Missing network device name.' && return 2
     
-    pick_network_device || return $?
+    pick_device || return $?
     is_empty "${REPLY}" && log 'Network device name required.' && return 2
     name="${REPLY}"
   fi
@@ -433,14 +433,14 @@ down_connection () {
 # the given name.
 # Arguments:
 #  name: the name of a network device
-remove_network_device () {
+remove_device () {
   local name="${1}"
 
   if is_not_given "${name}"; then
     on_script_mode &&
       log 'Missing network device name.' && return 2
     
-    pick_network_device || return $?
+    pick_device || return $?
     is_empty "${REPLY}" && log 'Network device name required.' && return 2
     name="${REPLY}"
   fi
@@ -512,7 +512,7 @@ add_ethernet () {
     on_script_mode &&
       log 'Missing ethernet device name.' && return 2
   
-    pick_network_device ethernet || return $?
+    pick_device ethernet || return $?
     is_empty "${REPLY}" && log 'Ethernet device name required.' && return 2
     device="${REPLY}"
   fi
@@ -589,7 +589,7 @@ add_dhcp () {
     on_script_mode &&
       log 'Missing ethernet device name.' && return 2
   
-    pick_network_device ethernet || return $?
+    pick_device ethernet || return $?
     is_empty "${REPLY}" && log 'Ethernet device name required.' && return 2
     device="${REPLY}"
   fi
@@ -640,7 +640,7 @@ add_wifi () {
     on_script_mode &&
       log 'Missing wifi device name.' && return 2
 
-    pick_network_device wifi || return $?
+    pick_device wifi || return $?
     is_empty "${REPLY}" && log 'Wifi device name required.' && return 2
     device="${REPLY}"
   fi

@@ -14,7 +14,7 @@ source /opt/stack/tools/displays/helpers.sh
 # Shows the current status of the desktop environment.
 # Outputs:
 #  A verbose list of text data.
-show_desktop_status () {
+show_status () {
   local status=''
 
   local server=''
@@ -1028,7 +1028,7 @@ init_bindings () {
 # Starts the desktop user interface by launcing the
 # compositor along with the window manager. In case
 # window manager is already running it restarts it.
-start_desktop () {
+start () {
   # Set pointer and background color to defaults
   hsetroot -solid '#000000'
   xsetroot -cursor_name left_ptr
@@ -1040,7 +1040,7 @@ start_desktop () {
   
   # Restart window manager if it is already up
   if is_process_up '^bspwm.*'; then
-    restart_desktop && return 0 || return $?
+    restart && return 0 || return $?
   fi
   
   exec bspwm &> /dev/null
@@ -1056,7 +1056,7 @@ start_desktop () {
 # Restarts the desktop user interface along with
 # various complementary services like key bindings,
 # wallpaper, scratchpad and etc.
-restart_desktop () {
+restart () {
   # Kill any running picom processes
   kill_process '^picom.*'
   

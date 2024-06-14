@@ -71,7 +71,7 @@ execute () {
   local object="${2}"
   
   case "${command}${object:+ ${object}}" in
-    'show status') show_printers_status;;
+    'show status') show_status;;
     'show printer') show_printer "${3}";;
     'list printers') list_printers;;
     'list jobs') list_jobs;;
@@ -79,10 +79,10 @@ execute () {
     'remove printer') remove_printer "${3}";;
     'share printer') share_printer "${3}";;
     'unshare printer') unshare_printer "${3}";;
-    'set default') set_default_printer "${3}";;
+    'set default') set_default "${3}";;
     'set option') set_option "${3}" "${4}" "${5}";;
     'cancel job') cancel_job "${3}";;
-    'restart') restart_printers;;
+    'restart') restart;;
     *)
       log 'Ooops, invalid or unknown command!'
       return 2;;

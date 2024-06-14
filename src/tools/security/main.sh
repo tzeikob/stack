@@ -65,7 +65,7 @@ execute () {
   local object="${2}"
     
   case "${command}${object:+ ${object}}" in
-    'show status') show_security_status;;
+    'show status') show_status;;
     'set locker') set_screen_locker "${3}";;
     'set password') set_user_password;;
     'set attempts') set_faillock_attempts "${3}";;

@@ -14,7 +14,7 @@ source /opt/stack/tools/disks/helpers.sh
 # Shows a short status of the disks and filesystem.
 # Outputs:
 #  A list of disks and filesystem data.
-show_disk_status () {
+show_status () {
   local alt_fstype='.children|'
   alt_fstype+='if . and length>0'
   alt_fstype+=' then (.[0]|.fstype|if . then  " \(.|ascii_upcase)" else "" end)'

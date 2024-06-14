@@ -56,7 +56,7 @@ execute () {
   local object="${2}"
   
   case "${command}${object:+ ${object}}" in
-    'show status') show_system_status;;
+    'show status') show_status;;
     'list packages') list_packages "${3}";;
     'check updates') check_updates "${3}";;
     *)

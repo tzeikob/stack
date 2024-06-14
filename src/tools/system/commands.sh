@@ -11,7 +11,7 @@ source /opt/stack/tools/system/helpers.sh
 # Shows the current status of system.
 # Outputs:
 #  A verbose list of text data.
-show_system_status () {
+show_status () {
   local fields='OS|Kernel|Shell'
 
   local status=''

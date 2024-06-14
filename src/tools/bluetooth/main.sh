@@ -73,12 +73,12 @@ execute () {
   local object="${2}"
   
   case "${command}${object:+ ${object}}" in
-    'show status') show_bluetooth_status;;
-    'show logs') show_bluetooth_logs;;
+    'show status') show_status;;
+    'show logs') show_logs;;
     'show controller') show_controller "${3}";;
-    'show device') show_bluetooth_device "${3}";;
+    'show device') show_device "${3}";;
     'list controllers') list_controllers;;
-    'list devices') list_bluetooth_devices "${3}";;
+    'list devices') list_devices "${3}";;
     'set controller') set_controller "${3}";;
     'set power') set_power "${3}";;
     'set scan') set_scan "${3}";;
@@ -86,7 +86,7 @@ execute () {
     'set pairable') set_pairable "${3}";;
     'connect device') connect_device "${3}";;
     'disconnect device') disconnect_device "${3}";;
-    'remove device') remove_bluetooth_device "${3}";;
+    'remove device') remove_device "${3}";;
     'restart') restart_bluetooth;;
     *)
       log 'Ooops, invalid or unknown command!'

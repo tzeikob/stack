@@ -79,8 +79,8 @@ execute () {
   local object="${2}"
     
   case "${command}${object:+ ${object}}" in
-    'show status') show_displays_status;;
-    'show logs') show_displays_logs "${3}";;
+    'show status') show_status;;
+    'show logs') show_logs "${3}";;
     'show output') show_output "${3}";;
     'list outputs') list_outputs "${3}";;
     'list colors') list_colors;;

@@ -41,7 +41,7 @@ find_controller () {
 #  status: paired, connected or trusted
 # Outputs:
 #  A json array of device objects.
-find_bluetooth_devices () {
+find_devices () {
   local status="${1^}"
 
   local devices=''
@@ -60,7 +60,7 @@ find_bluetooth_devices () {
 #  address: the address of a device
 # Outputs:
 #  A json object of a device.
-find_bluetooth_device () {
+find_device () {
   local address="${1}"
 
   bluetoothctl info "${address}" | jc --bluetoothctl || return 1
@@ -109,12 +109,12 @@ pick_controller () {
 # Shows a menu asking the user to select a device.
 # Outputs:
 #  A menu of devices.
-pick_bluetooth_device () {
+pick_device () {
   local query='{key: .address, value: "\(.address) [\(.name)]"}'
   query="[.[]|${query}]"
 
   local devices=''
-  devices="$(find_bluetooth_devices | jq -cer "${query}")" || return 1
+  devices="$(find_devices | jq -cer "${query}")" || return 1
 
   local len=0
   len=$(echo "${devices}" | jq -cer 'length') || return 1

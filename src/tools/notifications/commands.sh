@@ -8,7 +8,7 @@ source /opt/stack/commons/math.sh
 source /opt/stack/tools/notifications/helpers.sh
 
 # Starts the notifications service.
-start_notifications () {
+start () {
   local is_up='false'
   is_up="$(is_notifications_up)" || return 1
   
@@ -34,7 +34,7 @@ start_notifications () {
 }
 
 # Restarts the notifications service.
-restart_notifications () {
+restart () {
   log 'Restarting notifications service...'
 
   killall dunst || return 1
@@ -57,7 +57,7 @@ restart_notifications () {
 # Shows the current status of the notification stream.
 # Outputs:
 #  A verbose list of text data.
-show_notifications_status () {
+show_status () {
   local is_up='false'
   is_up="$(is_notifications_up)" || return 1
 

@@ -88,7 +88,7 @@ execute () {
   local object="${2}"
     
   case "${command}${object:+ ${object}}" in
-    'show status') show_desktop_status;;
+    'show status') show_status;;
     'show pointer') show_pointer "${3}";;
     'show tablet') show_tablet "${3}";;
     'set wallpaper') set_wallpaper "${3}" "${4}";;
@@ -110,8 +110,8 @@ execute () {
     'init scratchpad') init_scratchpad;;
     'init bars') init_bars;;
     'init bindings') init_bindings;;
-    'start') start_desktop;;
-    'restart') restart_desktop;;
+    'start') start;;
+    'restart') restart;;
     *)
       log 'Ooops, invalid or unknown command!'
       return 2;;

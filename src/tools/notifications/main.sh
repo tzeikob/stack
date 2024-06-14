@@ -62,13 +62,13 @@ execute () {
   local object="${2}"
   
   case "${command}${object:+ ${object}}" in
-    'show status') show_notifications_status;;
+    'show status') show_status;;
     'list all') list_all "${3}" "${4}";;
     'mute all') mute_all;;
     'unmute all') unmute_all;;
     'clean all') clean_all;;
-    'start') start_notifications;;
-    'restart') restart_notifications;;
+    'start') start;;
+    'restart') restart;;
     *)
       log 'Ooops, invalid or unknown command!'
       return 2;;

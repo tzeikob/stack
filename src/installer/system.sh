@@ -103,7 +103,7 @@ set_users () {
 }
 
 # Sets the pacman package database mirrors.
-set_system_mirrors () {
+set_mirrors () {
   log INFO 'Setting up the package databases mirrors...'
 
   local mirrors=''
@@ -151,7 +151,7 @@ configure_pacman () {
 }
 
 # Synchronizes the package databases to the master.
-sync_system_package_databases () {
+sync_package_databases () {
   log INFO 'Starting to synchronize package databases...'
 
   local lock_file='/var/lib/pacman/db.lck'
@@ -985,9 +985,9 @@ fi
 
 set_host &&
   set_users &&
-  set_system_mirrors &&
+  set_mirrors &&
   configure_pacman &&
-  sync_system_package_databases &&
+  sync_package_databases &&
   install_base_packages &&
   install_display_server &&
   install_drivers &&

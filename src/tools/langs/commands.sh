@@ -14,7 +14,7 @@ source /opt/stack/tools/langs/helpers.sh
 # Shows the current status of languages and locales.
 # Outputs:
 #  A verbose list of text data.
-show_langs_status () {
+show_status () {
   local current_layout=''
   current_layout="$(xkblayout-state print "%s:%v [%n]")" || return 1
 
@@ -311,7 +311,7 @@ add_layout () {
     on_script_mode &&
       log 'Missing the layout code.' && return 2
 
-    pick_keyboard_layout || return $?
+    pick_layout || return $?
     is_empty "${REPLY}" && log 'Layout code is required.' && return 2
     code="${REPLY}"
   fi
@@ -358,7 +358,7 @@ add_layout () {
     return 2
   fi
 
-  save_keyboard_layout_to_settings "${code}" "${variant}" &&
+  save_layout_to_settings "${code}" "${variant}" &&
    apply_keyboard_settings
 
   if has_failed; then

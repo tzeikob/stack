@@ -376,7 +376,7 @@ create_file_system_table () {
 }
 
 # Prints an overall report of the installation disk.
-report_disk () {
+report () {
   log INFO 'Disk layout is now set to:\n'
 
   local disk=''
@@ -399,7 +399,7 @@ wipe_disk &&
   mount_file_system &&
   make_swap_space &&
   create_file_system_table &&
-  report_disk
+  report
 
 log INFO 'Script diskpart.sh has finished.'
 

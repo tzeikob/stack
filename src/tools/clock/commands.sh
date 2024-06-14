@@ -12,7 +12,7 @@ source /opt/stack/tools/clock/helpers.sh
 # Shows the current status of system clock.
 # Outputs:
 #  A verbose list of text data.
-show_clock_status () {
+show_status () {
   local query=''
   query+='Local:   \(.local_time)\n'
   query+='UTC:     \(.universal_time)\n'
