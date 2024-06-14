@@ -144,7 +144,41 @@ test_no_func_overriden () {
   done
 }
 
+# Asserts no local variable declaration is followed by an
+# error or abort handler given in the same line.
+test_local_var_declarations () {
+  local files=(./build.sh ./test.sh)
+  files+=($(find ./src ./configs -type f)) ||
+    abort 'Unable to list source files.'
+  
+  local file=''
+  for file in "${files[@]}"; do
+    local declarations=''
+    declarations=$(grep -e '^ *local  *.*=.*' "${file}")
+
+    if [[ $? -gt 1 ]]; then
+      abort 'Unable to rertieve local variable declarations.'
+    fi
+
+    local declaration=''
+    while read -r declaration; do
+      # Skip empty lines
+      if [[ -z "${declaration}" ]] || [[ "${declaration}" =~ '^ *$' ]]; then
+        continue
+      fi
+
+      if [[ "${declaration}" =~ =\"?\$\(.* ]]; then
+        log ERROR "[FAILED] Local var declarations test: ${file}, ${declaration}."
+        return 1
+      fi
+    done <<< "${declarations}"
+  done
+
+  log INFO '[PASSED] Local var declarations test.'
+}
+
 test_no_shell_files &&
   test_no_func_overriden &&
+  test_local_var_declarations &&
   log INFO 'All test assertions have been passed.' ||
   abort ERROR 'Some tests have been failed to pass.'

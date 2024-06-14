@@ -36,12 +36,14 @@ show_status () {
   fi
 
   if file_exists '/sys/class/power_supply/BAT0/current_now'; then
-    local current_now="$(< /sys/class/power_supply/BAT0/current_now)"
+    local current_now=''
+    current_now="$(< /sys/class/power_supply/BAT0/current_now)"
     echo "Current:      ${current_now}mAh"
   fi
 
   if file_exists '/sys/class/power_supply/BAT0/charge_now'; then
-    local charge_now="$(< /sys/class/power_supply/BAT0/charge_now)"
+    local charge_now=''
+    charge_now="$(< /sys/class/power_supply/BAT0/charge_now)"
     echo "Load:         ${charge_now}mAh"
   fi
 
