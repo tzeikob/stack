@@ -37,7 +37,7 @@ abort () {
   exit 1
 }
 
-# Adds the package with the given name into the list of packages
+# Adds the package with the given name into the list of packages.
 # Arguments:
 #  name: the name of a package
 add_package () {
@@ -56,7 +56,7 @@ add_package () {
   fi
 }
 
-# Removes the package with the given name from the list of packages
+# Removes the package with the given name from the list of packages.
 # Arguments:
 #  name: the name of a package
 remove_package () {
@@ -92,7 +92,7 @@ init () {
 }
 
 # Checks if any build dependency is missing and abort immediately.
-check_depds () {
+check_deps () {
   local deps=(archiso)
 
   local dep=''
@@ -107,7 +107,7 @@ check_depds () {
 copy_profile () {
   log INFO 'Copying the custom archiso profile...'
 
-  local releng_path="/usr/share/archiso/configs/releng"
+  local releng_path='/usr/share/archiso/configs/releng'
 
   if [[ ! -d "${releng_path}" ]]; then
     abort ERROR 'Unable to locate releng archiso profile.'
@@ -361,7 +361,7 @@ add_aur_packages () {
       repo-add "${repo_home}/custom.db.tar.gz" ${repo_home}/${name}-*-x86_64.pkg.tar.zst ||
       abort ERROR "Failed to add the ${name} package into the custom repository."
 
-    add_package "${name}" || abort ERROR "Failed to add the ${name} AUR package into the package list."
+    add_package "${name}" || abort ERROR "Failed to add the ${name} AUR package."
   done
 
   rm -rf "${AUR_DIR}" || abort ERROR 'Failed to remove the AUR temporary folder.'
@@ -934,14 +934,16 @@ setup_theme () {
     cp assets/wallpapers/* "${wallpapers_home}" ||
     abort ERROR 'Failed to copy the wallpapers.'
 
-  local settings_home="${ROOT_FS}/root/.config/stack"
+  local config_home="${ROOT_FS}/root/.config/stack"
 
-  mkdir -p "${settings_home}" ||
+  mkdir -p "${config_home}" ||
     abort ERROR 'Failed to create the /root/.config/stack folder.'
 
-  local settings='{"wallpaper": {"name": "default.jpeg", "mode": "fill"}}'
-
-  echo "${settings}" > "${settings_home}/desktop.json"
+  printf '%s\n' \
+  '{' \
+  '  "wallpaper": {"name": "default.jpeg", "mode": "fill"}' \
+  '}' > "${config_home}/desktop.json" ||
+    abort ERROR 'Failed to create the desktop settings file.'
 
   log INFO 'Desktop wallpaper has been set.'
 }
@@ -997,8 +999,7 @@ setup_sounds () {
   local sounds_home="${ROOT_FS}/usr/share/sounds/stack"
   
   mkdir -p "${sounds_home}" &&
-    cp assets/sounds/normal.wav "${sounds_home}" &&
-    cp assets/sounds/critical.wav "${sounds_home}" ||
+    cp -r assets/sounds/* "${sounds_home}" ||
     abort ERROR 'Failed to set the extra system sounds.'
 
   log INFO 'Extra system sounds have been set.'
@@ -1204,7 +1205,7 @@ bash ./test.sh
 log INFO '\nStarting the build process...'
 
 init &&
-  check_depds &&
+  check_deps &&
   copy_profile &&
   rename_distro &&
   setup_boot_loaders &&
