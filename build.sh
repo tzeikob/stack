@@ -78,6 +78,26 @@ remove_package () {
   log INFO "Package ${name} has removed."
 }
 
+# Adds the given file prermissions to the given path.
+# Arguments:
+#  path:  the path to grant the permissions
+#  perms: the file permissions, e.g. 755
+add_file_permissions () {
+  local path="${1}"
+  local perms="${2}"
+
+  local permissions_file="${PROFILE_DIR}/profiledef.sh"
+
+  if [[ ! -f "${permissions_file}" ]]; then
+    abort ERROR "Unable to locate file ${permissions_file}."
+  fi
+
+  sed -i "/file_permissions=(/a [\"${path}\"]=\"${perms}\"" "${permissions_file}" ||
+    abort ERROR "Unable to add file permission ${perms} to ${path}."
+  
+  log INFO "Permission ${perms} added to ${path}."
+}
+
 # Initializes build and distribution files.
 init () {
   if [[ -d "${DIST_DIR}" ]]; then
@@ -144,7 +164,8 @@ rename_distro () {
 
   log INFO 'Release metadata file created to /etc/stack-release.'
 
-  mkdir -p "${ROOT_FS}/etc/pacman.d/scripts" ||
+  mkdir -p "${ROOT_FS}/etc/pacman.d/scripts" && 
+    add_file_permissions '/etc/pacman.d/scripts/' '0:0:755' ||
     abort ERROR 'Failed to create pacman scripts folder.'
 
   local fix_release="${ROOT_FS}/etc/pacman.d/scripts/fix-release"
@@ -406,7 +427,8 @@ patch_packages () {
     '        sys.argv[0] = re.sub(r"(-script\.pyw|\.exe)?$", "", sys.argv[0])' \
     '        sys.exit(main())' \
     '    except KeyboardInterrupt:' \
-    '        sys.exit(1)' > "${ROOT_FS}/usr/local/bin/tqdm" ||
+    '        sys.exit(1)' > "${ROOT_FS}/usr/local/bin/tqdm" &&
+    add_file_permissions '/usr/local/bin/tqdm' '0:0:755' ||
     abort ERROR 'Failed to patch the tqdm package.'
   
   log INFO 'Package tqdm has been patched.'
@@ -420,7 +442,8 @@ copy_commons_tools () {
 
   local commons_home="${ROOT_FS}/opt/stack/commons"
 
-  mkdir -p "${commons_home}" ||
+  mkdir -p "${commons_home}" &&
+    add_file_permissions '/opt/stack/commons/' '0:0:755' ||
     abort ERROR 'Failed to create the /opt/stack/commons folder.'
 
   cp -r src/commons/* "${commons_home}" ||
@@ -437,7 +460,8 @@ copy_system_tools () {
 
   local tools_home="${ROOT_FS}/opt/stack/tools"
 
-  mkdir -p "${tools_home}" ||
+  mkdir -p "${tools_home}" &&
+    add_file_permissions '/opt/stack/tools/' '0:0:755' ||
     abort ERROR 'Failed to create the /opt/stack/tools folder.'
 
   # Copy system tools needed to the live media only
@@ -504,6 +528,25 @@ copy_installer () {
     cp -r src/installer/* "${installer_home}" ||
     abort ERROR 'Failed to copy the installer files.'
 
+    add_file_permissions '/opt/stack/installer/apps.sh' '0:0:755' &&
+      add_file_permissions '/opt/stack/installer/askme.sh' '0:0:755' &&
+      add_file_permissions '/opt/stack/installer/bootstrap.sh' '0:0:755' &&
+      add_file_permissions '/opt/stack/installer/cleaner.sh' '0:0:755' &&
+      add_file_permissions '/opt/stack/installer/desktop.sh' '0:0:755' &&
+      add_file_permissions '/opt/stack/installer/detections.sh' '0:0:755' &&
+      add_file_permissions '/opt/stack/installer/diskpart.sh' '0:0:755' &&
+      add_file_permissions '/opt/stack/installer/run.sh' '0:0:755' &&
+      add_file_permissions '/opt/stack/installer/stack.sh' '0:0:755' &&
+      add_file_permissions '/opt/stack/installer/system.sh' '0:0:755' &&
+      add_file_permissions '/opt/stack/installer/tools/' '0:0:755' &&
+      add_file_permissions '/opt/stack/installer/configs/bspwm/' '0:0:755' &&
+      add_file_permissions '/opt/stack/installer/configs/dunst/hook' '0:0:755' &&
+      add_file_permissions '/opt/stack/installer/configs/nnn/env' '0:0:755' &&
+      add_file_permissions '/opt/stack/installer/configs/polybar/scripts/' '0:0:755' &&
+      add_file_permissions '/opt/stack/installer/configs/rofi/launch' '0:0:755' &&
+      add_file_permissions '/opt/stack/installer/configs/xsecurelock/hook' '0:0:755' ||
+      abort ERROR 'Failed to add file permissions to /opt/stack/installer.'
+
   # Create a global alias to launch the installer
   local bin_home="${ROOT_FS}/usr/local/bin"
 
@@ -547,6 +590,9 @@ setup_auto_login () {
   welcome+='the installation process of the Stack Linux.\n'
 
   echo -e "${welcome}" > "${ROOT_FS}/etc/welcome"
+
+  add_file_permissions '/etc/welcome' '0:0:644' ||
+    abort ERROR 'Failed to add file permission to /etc/welcome.'
 
   log INFO 'Welcome message has been set to /etc/welcome.'
 }
@@ -622,7 +668,8 @@ setup_keyboard () {
   # Save keyboard settings to the user langs json file
   local config_home="${ROOT_FS}/root/.config/stack"
 
-  mkdir -p "${config_home}" ||
+  mkdir -p "${config_home}" &&
+    add_file_permissions '/root/.config/stack/' '0:0:664' ||
     abort ERROR 'Failed to create the /root/.config/stack folder.'
 
   printf '%s\n' \
@@ -644,7 +691,8 @@ setup_power () {
   fi
 
   rm -rf "${ROOT_FS}/etc/systemd/logind.conf.d" &&
-    mkdir -p "${ROOT_FS}/etc/systemd/logind.conf.d" ||
+    mkdir -p "${ROOT_FS}/etc/systemd/logind.conf.d" &&
+    add_file_permissions '/etc/systemd/logind.conf.d/' '0:0:644' ||
     abort ERROR 'Failed to create the /etc/systemd/logind.conf.d folder.'
   
   local logind_conf="${ROOT_FS}/etc/systemd/logind.conf.d/00-main.conf"
@@ -664,7 +712,8 @@ setup_power () {
   log INFO 'Logind action handlers have been set.'
 
   rm -rf "${ROOT_FS}/etc/systemd/sleep.conf.d" &&
-    mkdir -p "${ROOT_FS}/etc/systemd/sleep.conf.d" ||
+    mkdir -p "${ROOT_FS}/etc/systemd/sleep.conf.d" &&
+    add_file_permissions '/etc/systemd/sleep.conf.d/' '0:0:644' ||
     abort ERROR 'Failed to create the /etc/systemd/sleep.conf.d folder.'
   
   local sleep_conf="${ROOT_FS}/etc/systemd/sleep.conf.d/00-main.conf"
@@ -679,7 +728,8 @@ setup_power () {
 
   log INFO 'Sleep action handlers have been set.'
 
-  mkdir -p "${ROOT_FS}/etc/tlp.d" ||
+  mkdir -p "${ROOT_FS}/etc/tlp.d" &&
+    add_file_permissions '/etc/tlp.d/' '0:0:755' ||
     abort ERROR 'Failed to create the /etc/tlp.d folder.'
 
   local tlp_conf="${ROOT_FS}/etc/tlp.d/00-main.conf"
@@ -765,7 +815,8 @@ setup_desktop () {
     cp configs/bspwm/bspwmrc "${bspwm_home}" &&
     cp configs/bspwm/resize "${bspwm_home}" &&
     cp configs/bspwm/rules "${bspwm_home}" &&
-    cp configs/bspwm/swap "${bspwm_home}" ||
+    cp configs/bspwm/swap "${bspwm_home}" &&
+    add_file_permissions '/root/.config/bspwm/' '0:0:755' ||
     abort ERROR 'Failed to copy the bspwm files.'
 
   # Remove init scratchpad initializer from the bspwmrc
@@ -801,6 +852,7 @@ setup_desktop () {
 
   # Keep only scripts needed by the live media
   mkdir -p "${polybar_home}/scripts" &&
+    add_file_permissions '/root/.config/polybar/scripts/' '0:0:755' &&
     cp -r configs/polybar/scripts/flash-drives "${polybar_home}/scripts" &&
     cp -r configs/polybar/scripts/time "${polybar_home}/scripts" ||
     abort ERROR 'Failed to copy the polybar scripts.'
@@ -830,7 +882,8 @@ setup_desktop () {
 
   mkdir -p "${rofi_home}" &&
     cp configs/rofi/config.rasi "${rofi_home}" &&
-    cp configs/rofi/launch "${rofi_home}" ||
+    cp configs/rofi/launch "${rofi_home}" &&
+    add_file_permissions '/root/.config/rofi/launch' '0:0:755' ||
     abort ERROR 'Failed to copy the rofi files.'
 
   local launch_file="${rofi_home}/launch"
@@ -851,7 +904,8 @@ setup_desktop () {
 
   mkdir -p "${dunst_home}" &&
     cp configs/dunst/dunstrc "${dunst_home}" &&
-    cp configs/dunst/hook "${dunst_home}" ||
+    cp configs/dunst/hook "${dunst_home}" &&
+    add_file_permissions '/root/.config/dunst/hook' '0:0:755' ||
     abort ERROR 'Failed to copy the dunst files.'
 
   log INFO 'Dunst configuration has been set.'
@@ -1118,69 +1172,13 @@ add_sudoers_rules () {
   proxy_rules+='all_proxy ALL_PROXY '
   proxy_rules+='no_proxy NO_PROXY"'
 
-  mkdir -p "${ROOT_FS}/etc/sudoers.d" ||
+  mkdir -p "${ROOT_FS}/etc/sudoers.d" &&
+    add_file_permissions '/etc/sudoers.d/' '0:0:750' ||
     abort ERROR 'Failed to create the /etc/sudoers.d folder.'
 
   echo "${proxy_rules}" > "${ROOT_FS}/etc/sudoers.d/proxy_rules"
 
   log INFO 'Proxy rules have been added to sudoers.'
-}
-
-# Defines the root files permissions.
-set_file_permissions () {
-  local permissions_file="${PROFILE_DIR}/profiledef.sh"
-
-  if [[ ! -f "${permissions_file}" ]]; then
-    abort ERROR "Unable to locate file ${permissions_file}."
-  fi
-
-  local defs=(
-    '0:0:750,/etc/sudoers.d/'
-    '0:0:755,/etc/tlp.d/'
-    '0:0:644,/etc/systemd/sleep.conf.d/'
-    '0:0:644,/etc/systemd/logind.conf.d/'
-    '0:0:644,/etc/welcome'
-    '0:0:755,/etc/pacman.d/scripts/'
-    '0:0:755,/opt/stack/installer/configs/bspwm/'
-    '0:0:755,/opt/stack/installer/configs/dunst/hook'
-    '0:0:755,/opt/stack/installer/configs/nnn/env'
-    '0:0:755,/opt/stack/installer/configs/polybar/scripts/'
-    '0:0:755,/opt/stack/installer/configs/rofi/launch'
-    '0:0:755,/opt/stack/installer/configs/xsecurelock/hook'
-    '0:0:755,/opt/stack/installer/apps.sh'
-    '0:0:755,/opt/stack/installer/askme.sh'
-    '0:0:755,/opt/stack/installer/bootstrap.sh'
-    '0:0:755,/opt/stack/installer/cleaner.sh'
-    '0:0:755,/opt/stack/installer/desktop.sh'
-    '0:0:755,/opt/stack/installer/detection.sh'
-    '0:0:755,/opt/stack/installer/diskpart.sh'
-    '0:0:755,/opt/stack/installer/run.sh'
-    '0:0:755,/opt/stack/installer/stack.sh'
-    '0:0:755,/opt/stack/installer/system.sh'
-    '0:0:755,/opt/stack/installer/tools/'
-    '0:0:755,/opt/stack/commons/'
-    '0:0:755,/opt/stack/tools/'
-    '0:0:755,/root/.config/bspwm/'
-    '0:0:755,/root/.config/polybar/scripts/'
-    '0:0:755,/root/.config/rofi/launch'
-    '0:0:755,/root/.config/dunst/hook'
-    '0:0:664,/root/.config/stack/'
-    '0:0:755,/usr/local/bin/tqdm'
-  )
-
-  local def=''
-  for def in "${defs[@]}"; do
-    local perms=''
-    perms="$(echo "${def}" | cut -d ',' -f 1)" || abort ERROR 'Failed to extract the perms.'
-
-    local path=''
-    path="$(echo "${def}" | cut -d ',' -f 2)" || abort ERROR 'Failed to extract the path.'
-
-    sed -i "/file_permissions=(/a [\"${path}\"]=\"${perms}\"" "${permissions_file}" ||
-      abort ERROR "Failed to define the file permission ${perms}, ${path}."
-  done
-
-  log INFO 'File permissions have been defined.'
 }
 
 # Creates the iso file of the live media.
@@ -1227,5 +1225,4 @@ init &&
   enable_services &&
   add_device_rules &&
   add_sudoers_rules &&
-  set_file_permissions &&
   make_iso_file
