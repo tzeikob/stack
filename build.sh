@@ -475,13 +475,8 @@ copy_system_tools () {
     cp -r src/tools/notifications "${tools_home}" &&
     cp -r src/tools/power "${tools_home}" &&
     cp -r src/tools/printers "${tools_home}" &&
-    cp -r src/tools/trash "${tools_home}" &&
-    cp src/tools/utils.sh "${tools_home}" ||
+    cp -r src/tools/trash "${tools_home}" ||
     abort ERROR 'Failed to copy the system tools files.'
-
-  # Remove LC_CTYPE on smenu calls as live media doesn't need it
-  sed -i 's/\(.*\)LC_CTYPE=.* \(smenu .*\)/\1\2/' "${tools_home}/utils.sh" ||
-    abort ERROR 'Failed to remove the LC_TYPE from the smenu calls.'
 
   # Disable init scratchpad command for the live media
   local desktop_main="${tools_home}/desktop/main.sh"
