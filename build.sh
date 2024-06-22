@@ -1195,7 +1195,7 @@ log INFO 'Started running test units...'
 
 bash ./test.sh
 
-log INFO '\nStarting the build process...'
+log INFO 'Starting the build process...'
 
 init &&
   check_deps &&
