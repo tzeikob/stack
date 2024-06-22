@@ -528,7 +528,7 @@ copy_installer () {
       add_file_permissions '/opt/stack/installer/bootstrap.sh' '0:0:755' &&
       add_file_permissions '/opt/stack/installer/cleaner.sh' '0:0:755' &&
       add_file_permissions '/opt/stack/installer/desktop.sh' '0:0:755' &&
-      add_file_permissions '/opt/stack/installer/detections.sh' '0:0:755' &&
+      add_file_permissions '/opt/stack/installer/detection.sh' '0:0:755' &&
       add_file_permissions '/opt/stack/installer/diskpart.sh' '0:0:755' &&
       add_file_permissions '/opt/stack/installer/run.sh' '0:0:755' &&
       add_file_permissions '/opt/stack/installer/stack.sh' '0:0:755' &&
