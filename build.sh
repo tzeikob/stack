@@ -224,10 +224,6 @@ setup_boot_loaders () {
     abort ERROR 'Unable to locate the releng profile folder.'
   fi
 
-  rm -rf "${PROFILE_DIR}/efiboot" || abort ERROR 'Failed to remove EFI boot loader.'
-
-  log INFO 'EFI boot loader has been removed.'
-
   rm -f "${PROFILE_DIR}/syslinux/archiso_pxe.cfg" \
     "${PROFILE_DIR}/syslinux/archiso_pxe-linux.cfg" ||
     abort ERROR 'Failed to remove PXE syslinux config files.'
