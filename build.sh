@@ -599,7 +599,7 @@ setup_display_server () {
   cp configs/xorg/xinitrc "${xinitrc_file}" ||
     abort ERROR 'Failed to copy the .xinitrc file.'
 
-  # Keep functionality relatated to live media only
+  # Keep functionality related only to live media
   sed -i '/system -qs check updates &/d' "${xinitrc_file}" &&
     sed -i '/displays -qs restore layout/d' "${xinitrc_file}" &&
     sed -i '/displays -qs restore colors &/d' "${xinitrc_file}" &&
