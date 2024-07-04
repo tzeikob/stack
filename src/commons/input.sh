@@ -72,7 +72,7 @@ confirm () {
   echo -e "${prompt}"
 
   REPLY="$(echo "${options}" |
-    smenu -nm -/ prefix -W "${AES_LN}" -S /\(.*"${KVS}"\)//v)" || return 1
+    LC_CTYPE=C.UTF-8 smenu -nm -/ prefix -W "${AES_LN}" -S /\(.*"${KVS}"\)//v)" || return 1
 
   # Remove the value part from the selected option
   if is_given "${REPLY}"; then
@@ -119,7 +119,7 @@ pick_one () {
   echo -e "${prompt}"
 
   REPLY="$(echo "${options}" |
-    LC_CTYPE=en_US.UTF-8 smenu -nm -/ prefix -W "${AES_LN}" "${args[@]}" -S /\(.*"${KVS}"\)//v)" || return 1
+    LC_CTYPE=C.UTF-8 smenu -nm -/ prefix -W "${AES_LN}" "${args[@]}" -S /\(.*"${KVS}"\)//v)" || return 1
 
   # Remove the value part from the selected option
   if is_given "${REPLY}"; then
@@ -167,7 +167,7 @@ pick_many () {
   echo -e "${prompt}"
 
   REPLY="$(echo "${options}" |
-    LC_CTYPE=en_US.UTF-8 smenu -nm -/ prefix -W "${AES_LN}" "${args[@]}" -S /\(.*"${KVS}"\)//v -P "${AES}")" || return 1
+    LC_CTYPE=C.UTF-8 smenu -nm -/ prefix -W "${AES_LN}" "${args[@]}" -S /\(.*"${KVS}"\)//v -P "${AES}")" || return 1
 
   # Convert selected options to a JSON array of their keys
   if is_given "${REPLY}"; then
