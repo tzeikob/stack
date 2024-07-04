@@ -493,7 +493,7 @@ copy_system_tools () {
     ln -sf /opt/stack/tools/bluetooth/main.sh "${bin_home}/bluetooth" &&
     ln -sf /opt/stack/tools/langs/main.sh "${bin_home}/langs" &&
     ln -sf /opt/stack/tools/notifications/main.sh "${bin_home}/notifications" &&
-    ln -sf /opt/stack/tools/power/main,sh "${bin_home}/power" &&
+    ln -sf /opt/stack/tools/power/main.sh "${bin_home}/power" &&
     ln -sf /opt/stack/tools/printers/main.sh "${bin_home}/printers" &&
     ln -sf /opt/stack/tools/trash/main.sh "${bin_home}/trash" ||
     abort ERROR 'Failed to create symlinks for each system tool main.'
