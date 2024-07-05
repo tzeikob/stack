@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -o pipefail
-
 source /opt/stack/commons/validators.sh
 
 # Returns the list of all archived notifications 

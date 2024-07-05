@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -o pipefail
+set -Eeo pipefail
 
 # Opens a rofi launcher to search for applications.
 show_apps_menu () {

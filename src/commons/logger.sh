@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -Eeo pipefail
-
 source /opt/stack/commons/validators.sh
 
 # Prints the given log message prefixed with the given log level.

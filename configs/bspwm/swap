@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -Eeo pipefail
+
 # Swaps the windows in the currently focused desktop
 # with those of the given desktop.
 # Arguments:

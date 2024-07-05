@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -Eeo pipefail
-
 # Checks if the given values are equal.
 # Arguments:
 #  a: any value

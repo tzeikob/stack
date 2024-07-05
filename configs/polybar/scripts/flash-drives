@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -o pipefail
+set -Eeo pipefail
 
 # Reads for hooked in usb removable flash
 # drives and prints them out one by one.

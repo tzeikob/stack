@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -Eeo pipefail
+
 source /opt/stack/commons/validators.sh
 
 # Toggles the scratchpad terminal window on and off,

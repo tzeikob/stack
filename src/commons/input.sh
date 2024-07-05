@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -Eeo pipefail
-
 source /opt/stack/commons/math.sh
 source /opt/stack/commons/validators.sh
 

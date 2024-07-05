@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -Eeo pipefail
+set -o pipefail
 
 # Prints the given log message prefixed with the given log level.
 # Arguments:

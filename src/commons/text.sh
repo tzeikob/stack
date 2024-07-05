@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -Eeo pipefail
-
 # Removes leading and trailing white spaces
 # from the given string or input.
 # Arguments:

@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -o pipefail
-
 source /opt/stack/commons/input.sh
 source /opt/stack/commons/logger.sh
 source /opt/stack/commons/validators.sh

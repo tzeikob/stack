@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -Eeo pipefail
-
 # Downloads the files with the given URL to the
 # the given directory.
 # Arguments:

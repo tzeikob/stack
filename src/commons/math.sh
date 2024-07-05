@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -Eeo pipefail
-
 # Calculates the given arithmetic expression.
 # Arguments:
 #  expression: any arithmetic expression

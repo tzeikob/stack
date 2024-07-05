@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -o pipefail
+set -Eeo pipefail
 
 source /opt/stack/commons/error.sh
 source /opt/stack/tools/cloud/helpers.sh

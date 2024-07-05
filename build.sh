@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -Eeo pipefail
+set -o pipefail
 
 DIST_DIR=.dist
 WORK_DIR="${DIST_DIR}/work"

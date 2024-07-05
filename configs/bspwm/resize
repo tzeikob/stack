@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -Eeo pipefail
+
 source /opt/stack/commons/validators.sh
 
 # Resizes the windows according to the given direction

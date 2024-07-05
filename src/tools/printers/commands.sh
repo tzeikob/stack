@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -o pipefail
-
 source /opt/stack/commons/process.sh
 source /opt/stack/commons/auth.sh
 source /opt/stack/commons/input.sh

@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -o pipefail
-
 # Returns the list of all trashed files.
 # Outputs:
 #  A json array of trashed files.

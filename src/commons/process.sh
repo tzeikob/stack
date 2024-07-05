@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -Eeo pipefail
-
 source /opt/stack/commons/error.sh
 source /opt/stack/commons/logger.sh
 source /opt/stack/commons/math.sh
