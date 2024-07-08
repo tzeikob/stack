@@ -725,7 +725,7 @@ setup_power () {
 
   local tlp_conf="${ROOT_FS}/etc/tlp.d/00-main.conf"
 
-  printf '%s' \
+  printf '%s\n' \
     'SOUND_POWER_SAVE_ON_AC=0' \
     'SOUND_POWER_SAVE_ON_BAT=0' > "${tlp_conf}" ||
     abort ERROR 'Failed to set the battery action handlers.'
