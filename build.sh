@@ -224,6 +224,12 @@ setup_boot_loaders () {
     abort ERROR 'Unable to locate the releng profile folder.'
   fi
 
+  sed -i 's/Arch/Stack/' "${PROFILE_DIR}/efiboot/loader/entries/01-archiso-x86_64-linux.conf" ||
+    abort ERROR 'Failed to fix texts and titles in efiboot menus.'
+  
+  rm -rf "${PROFILE_DIR}/efiboot/loader/entries/02-archiso-x86_64-speech-linux.conf" ||
+    abort ERROR 'Failed to remove speech entry in efiboot menus.'
+
   rm -f "${PROFILE_DIR}/syslinux/archiso_pxe.cfg" \
     "${PROFILE_DIR}/syslinux/archiso_pxe-linux.cfg" ||
     abort ERROR 'Failed to remove PXE syslinux config files.'
