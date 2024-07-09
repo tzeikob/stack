@@ -9,12 +9,25 @@ PROFILE_DIR="${DIST_DIR}/profile"
 ROOT_FS="${PROFILE_DIR}/airootfs"
 
 # Prints the given log message prefixed with the given log level.
+# Options:
+#  n:       print an empty line before, -nn lines and so on
 # Arguments:
 #  level:   one of INFO, WARN, ERROR
 #  message: a message to show
 # Outputs:
 #  Prints the message in <level> <message> form.
 log () {
+  local OPTIND opt
+
+  while getopts ':n' opt; do
+    case "${opt}" in
+     'n') printf '\n';;
+    esac
+  done
+
+  # Collect arguments
+  shift $((OPTIND - 1))
+
   local level="${1}"
   local message="${2}"
 

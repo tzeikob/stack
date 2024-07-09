@@ -4,12 +4,25 @@ source /opt/stack/commons/validators.sh
 
 # Prints the given log message prefixed with the given log level.
 # No arguments means nothing to log on to the console.
+# Options:
+#  n:       print an empty line before, -nn lines and so on
 # Arguments:
 #  level:   optionally one of INFO, WARN, ERROR
 #  message: an optional message to show
 # Outputs:
 #  Prints the message in [<level>] <message> form.
 log () {
+  local OPTIND opt
+
+  while getopts ':n' opt; do
+    case "${opt}" in
+     'n') printf '\n';;
+    esac
+  done
+
+  # Collect arguments
+  shift $((OPTIND - 1))
+
   local level message
 
   if [[ $# -ge 2 ]]; then
