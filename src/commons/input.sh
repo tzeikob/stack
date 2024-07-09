@@ -50,7 +50,7 @@ ask_secret () {
   local prompt="${1}"
 
   REPLY=''
-  read -sp "${prompt} " REPLY
+  read -sp "${prompt} " REPLY && echo
 }
 
 # Shows a Yes/No menu and asks user to select an option,
