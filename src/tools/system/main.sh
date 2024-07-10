@@ -41,7 +41,9 @@ show_help () {
     '' '' \
     'list packages pacman|aur' 'Show the list of installed packages.' \
     '' '' \
-    'check updates pacman|aur' 'Shows the list of possible outdated packages.'
+    'check updates pacman|aur' 'Show the list of outdated packages.' \
+    '' '' \
+    'apply updates' 'Apply all the latest updates.'
 }
 
 # Routes to the corresponding operation by matching
@@ -59,6 +61,7 @@ execute () {
     'show status') show_status;;
     'list packages') list_packages "${3}";;
     'check updates') check_updates "${3}";;
+    'apply updates') apply_updates;;
     *)
       log 'Ooops, invalid or unknown command!'
       return 2;;

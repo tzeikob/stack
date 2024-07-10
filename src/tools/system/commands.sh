@@ -151,3 +151,56 @@ check_updates () {
   echo "${pkgs}" | jq -cr "${query}" || return 1
 }
 
+# Applies the latest updates to the system.
+apply_updates () {
+  authenticate_user || return $?
+
+  log 'Processing outdated packages...'
+
+  local pkgs=''
+  pkgs="$(find_outdated_packages | jq -cer '.pacman + .aur')"
+
+  if has_failed; then
+    log 'Failed to find outdated packages.'
+    return 2
+  fi
+
+  local len=0
+  len="$(echo "${pkgs}" | jq -cer 'length')" || return 1
+
+  if is_true "${len} = 0"; then
+    log 'No outdated packages have found.'
+    return 2
+  fi
+
+  local query=''
+  query='[.[]|.name]|join(" ")'
+
+  echo "${pkgs}" | jq -cr "${query}" || return 1
+
+  log "Found ${len} total outdated packages."
+  confirm 'Do you want to proceed and update them?' || return $?
+  is_empty "${REPLY}" && log 'Confirmation is required.' && return 2
+  
+  if is_not_yes "${REPLY}"; then
+    log 'No updates have been applied.'
+    return 2
+  fi
+
+  sudo pacman --noconfirm -Syu
+
+  if has_failed; then
+    log 'Failed to update pacman packages.'
+    return 2
+  fi
+
+  yay --noconfirm -Syu
+
+  if has_failed; then
+    log 'Failed to update aur packages.'
+    return 2
+  fi
+
+  log -n "${len} packages have been updated."
+  log 'System is now up to date.'
+}
