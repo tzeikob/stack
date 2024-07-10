@@ -51,7 +51,7 @@ select_disk () {
 
   local disk="${REPLY}"
 
-  log "\nCAUTION, all data in \"${disk}\" will be lost!"
+  log -n "CAUTION, all data in \"${disk}\" will be lost!"
   confirm 'Do you want to proceed with this disk?' || abort
 
   if is_not_given "${REPLY}"; then
@@ -400,7 +400,7 @@ enter_user_name () {
 
 # Asks the user to set the password of the sudoer user.
 enter_user_password () {
-  log '\nPassword valid chars: a-z A-Z 0-9 `~!@#$%^&*()=+{};:",.<>/?_-'
+  log -n 'Password valid chars: a-z A-Z 0-9 `~!@#$%^&*()=+{};:",.<>/?_-'
   ask_secret 'Enter the user password (at least 4 chars):' || abort
   is_not_given "${REPLY}" && abort '\nUser input is required.'
 
@@ -424,12 +424,12 @@ enter_user_password () {
     echo "${settings}" > "${SETTINGS}" ||
     abort 'Failed to save user_password setting.'
 
-  log '\nUser password is set successfully.'
+  log -n 'User password is set successfully.'
 }
 
 # Asks the user to set the password of the root user.
 enter_root_password () {
-  log '\nPassword valid chars: a-z A-Z 0-9 `~!@#$%^&*()=+{};:",.<>/?_-'
+  log -n 'Password valid chars: a-z A-Z 0-9 `~!@#$%^&*()=+{};:",.<>/?_-'
   ask_secret 'Enter the root password (at least 4 chars):' || abort
   is_not_given "${REPLY}" && abort '\nUser input is required.'
 
@@ -453,7 +453,7 @@ enter_root_password () {
     echo "${settings}" > "${SETTINGS}" ||
     abort 'Failed to save root_password setting.'
 
-  log '\nRoot password is set successfully.'
+  log -n 'Root password is set successfully.'
 }
 
 # Asks the user which linux kernel to install.
@@ -484,7 +484,7 @@ report () {
   local settings=''
   settings="$(jq "${query}" "${SETTINGS}")" || abort
 
-  log '\nInstallation properties have been set to:'
+  log -n 'Installation properties have been set to:'
   log "${settings}"
 }
 
@@ -518,7 +518,7 @@ while true; do
   clear
 done
 
-log '\nCAUTION, THIS IS THE LAST WARNING!'
+log -n 'CAUTION, THIS IS THE LAST WARNING!'
 log 'ALL data in the disk will be LOST FOREVER!'
 
 confirm 'Do you want to proceed?' || abort

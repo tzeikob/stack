@@ -36,7 +36,7 @@ report () {
     abort 'Unable to read installation settings.'
   fi
 
-  log '\nInstallation properties have been set to:' > "${log_file}"
+  log -n 'Installation properties have been set to:' > "${log_file}"
   log "${settings}\n" >> "${log_file}"
 }
 
@@ -168,7 +168,7 @@ restart () {
   # Clean redundant log files from archiso media
   rm -rf /var/log/stack
   
-  log '\nInstallation process has been completed.'
+  log -n 'Installation process has been completed.'
   log 'Rebooting the system in 15 secs...'
 
   sleep 15
@@ -184,7 +184,7 @@ welcome () {
   log '░░░▀▀█░░█░░█▀█░█░░░█▀▄░░░'
   log '░░░▀▀▀░░▀░░▀░▀░▀▀▀░▀░▀░░░'
 
-  log '\nWelcome to the Stack Linux installer.'
+  log -n 'Welcome to the Stack Linux installer.'
   log 'Base your development stack on Arch Linux.'
 
   confirm 'Do you want to proceed?' || abort

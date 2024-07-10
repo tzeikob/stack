@@ -60,7 +60,7 @@ abort () {
     if is_given "${level}"; then
       log "${level}" 'Process has been exited.'
     else
-      log '\nProcess has been exited.'
+      log -n 'Process has been exited.'
     fi
   fi
 

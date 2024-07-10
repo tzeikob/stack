@@ -1377,7 +1377,7 @@ create_bootable () {
     local model=''
     model="$(find_disk "${path}" | jq -cr "${query}")" || return 1
 
-    log "\nALL DATA in ${model} [${path}],"
+    log -n "ALL DATA in ${model} [${path}],"
     log 'will be irreversibly gone forever!'
     confirm 'Do you really want to proceed?' || return $?
     is_empty "${REPLY}" && log 'Confirmation is required.' && return 2
