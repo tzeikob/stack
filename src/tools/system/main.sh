@@ -41,7 +41,7 @@ show_help () {
     '' '' \
     'list packages pacman|aur' 'Show the list of installed packages.' \
     '' '' \
-    'set mirrors <countries>' 'Set the mirrors of package databases.' \
+    'set mirrors <age> <latest> <countries>' 'Set the mirrors of package databases.' \
     '' '' \
     'check updates pacman|aur' 'Show the list of outdated packages.' \
     'apply updates' 'Apply all the latest updates.'
@@ -61,7 +61,7 @@ execute () {
   case "${command}${object:+ ${object}}" in
     'show status') show_status;;
     'list packages') list_packages "${3}";;
-    'set mirrors') set_mirrors "${@:3}";;
+    'set mirrors') set_mirrors "${3}" "${4}" "${@:5}";;
     'check updates') check_updates "${3}";;
     'apply updates') apply_updates;;
     *)

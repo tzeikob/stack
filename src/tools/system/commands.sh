@@ -106,9 +106,23 @@ list_packages () {
 
 # Sets the mirrors of package databases to the given countries.
 # Arguments:
+#  age:       the hours within a mirror should be synced
+#  latest:    the number of most recently synced mirrors 
 #  countries: a space separated list of countries
 set_mirrors () {
-  local countries=("$@")
+  local age="${1}"
+  local latest="${2}"
+  local countries=("${@:3}")
+
+  if is_not_integer "${age}" '[1,]'; then
+    log 'Invalid age value'
+    return 2
+  fi
+
+  if is_not_integer "${latest}" '[1,]'; then
+    log 'Invalid latest value'
+    return 2
+  fi
   
   if is_true "${#countries[@]} = 0"; then
     on_script_mode &&
@@ -141,7 +155,7 @@ set_mirrors () {
   log 'Setting the package databases mirrors...'
 
   reflector --country "${countries}" \
-    --age 48 --sort age --latest 40 --save /etc/pacman.d/mirrorlist 2>&1
+    --age "${age}" --sort age --latest "${latest}" --save /etc/pacman.d/mirrorlist 2>&1
   
   if has_failed; then
     log 'Unable to fetch package databases mirrors.'
@@ -150,9 +164,9 @@ set_mirrors () {
 
   local conf_file='/etc/xdg/reflector/reflector.conf'
 
-  sed -i "s/# --country.*/--country ${countries}/" "${conf_file}" &&
-    sed -i 's/^--latest.*/--latest 40/' "${conf_file}" &&
-    echo '--age 48' >> "${conf_file}"
+  sed -i "s/^--country.*/--country ${countries}/" "${conf_file}" &&
+    sed -i "s/^--latest.*/--latest ${latest}/" "${conf_file}" &&
+    sed -i "s/^--age.*/--age ${age}/" "${conf_file}"
   
   if has_failed; then
     log 'Failed to save mirrors settings to reflector.'
