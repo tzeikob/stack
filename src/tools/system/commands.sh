@@ -104,6 +104,64 @@ list_packages () {
   echo "${pkgs}" | jq -cer "${query}" || return 1
 }
 
+# Sets the mirrors of package databases to the given countries.
+# Arguments:
+#  countries: a space separated list of countries
+set_mirrors () {
+  local countries=("$@")
+  
+  if is_true "${#countries[@]} = 0"; then
+    on_script_mode &&
+      log 'No mirror countries are given.' && return 2
+
+    countries="$(
+      reflector --list-countries 2> /dev/null | tail -n +3 | awk '{
+        match($0, /(.*)([A-Z]{2})\s+([0-9]+)/, a)
+        gsub(/[ \t]+$/, "", a[1])
+
+        frm="{\"key\": \"%s\", \"value\": \"%s\"},"
+        printf frm, a[2], a[1]" ["a[3]"]"
+      }'
+    )"
+    
+    if has_failed; then
+      log 'Unable to fetch mirror countries.'
+      return 2
+    fi
+
+    # Remove the extra comma from the last element
+    countries="[${countries:+${countries::-1}}]"
+
+    pick_many 'Select mirror countries:' "${countries}" 'vertical' || return $?
+    is_not_given "${REPLY}" && log 'Mirror countries are required.' && return 2
+
+    countries=($(echo "${REPLY}" | jq -cr '.[]'))
+  fi
+
+  log 'Setting the package databases mirrors...'
+
+  reflector --country "${countries}" \
+    --age 48 --sort age --latest 40 --save /etc/pacman.d/mirrorlist 2>&1
+  
+  if has_failed; then
+    log 'Unable to fetch package databases mirrors.'
+    return 2
+  fi
+
+  local conf_file='/etc/xdg/reflector/reflector.conf'
+
+  sed -i "s/# --country.*/--country ${countries}/" "${conf_file}" &&
+    sed -i 's/^--latest.*/--latest 40/' "${conf_file}" &&
+    echo '--age 48' >> "${conf_file}"
+  
+  if has_failed; then
+    log 'Failed to save mirrors settings to reflector.'
+    return 2
+  fi
+
+  log "Package databases mirrors set to ${countries[@]}."
+}
+
 # Checks for currently outdated packages filtered
 # by the given repository.
 # Arguments:
