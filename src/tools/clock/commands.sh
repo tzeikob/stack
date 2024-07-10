@@ -32,7 +32,7 @@ show_status () {
     query+='Poll:    \(.poll_interval)\n'
     query+='Leap:    \(.leap)'
 
-    echo ''
+    echo
     echo "${ntp_status}" | jc --timedatectl | jq -cer "\"${query}\""
   fi
 }

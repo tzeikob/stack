@@ -47,7 +47,7 @@ show_status () {
 
   echo "Locales:   ${locales}"
 
-  echo ''
+  echo
   locale | awk -F'=' '{
     if ($2 == "") {
       next

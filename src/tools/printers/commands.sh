@@ -41,7 +41,7 @@ show_status () {
 
     local destination=''
     while read -r destination; do
-      echo ''
+      echo
       find_destination "${destination}" | jq -cer "${query}" || return 1
     done <<< "${destinations}"
   fi

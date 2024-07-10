@@ -107,7 +107,7 @@ show_status () {
     printf  "%-12s  %s\n", a[1]":", a[2]
   }' || return 1
 
-  echo ''
+  echo
 
   loginctl show-session | awk '{
     match($0,/(.*)=(.*)/,a)
