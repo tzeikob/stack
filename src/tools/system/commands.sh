@@ -47,6 +47,25 @@ show_status () {
   yay_version="$(yay -V | awk '{print $2}' | sed 's/v\(.*\)/\1/')"
   
   echo "Yay:       ${yay_version}"
+
+  local reflector_conf='/etc/xdg/reflector/reflector.conf'
+
+  local countries=''
+  countries="$(grep '--country' "${reflector_conf}" | cut -d ' ' -f 2)" || return 1
+  
+  echo
+  echo "Mirrors:   ${countries}"
+
+  local age=''
+  age="$(grep '--age' "${reflector_conf}" | cut -d ' ' -f 2)" || return 1
+  
+  echo "Age:       ${age} hours"
+
+
+  local latest=''
+  latest="$(grep '--latest' "${reflector_conf}" | cut -d ' ' -f 2)" || return 1
+  
+  echo "Latest:    ${latest}"
   
   local pkgs=0
   pkgs="$(find_installed_packages)" || return 1
