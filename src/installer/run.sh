@@ -49,10 +49,10 @@ run () {
 
   # Do not log while running the askme screens
   if equals "${file_name}" 'askme'; then
-    echo ''
+    echo
     bash /opt/stack/installer/askme.sh || return 1
 
-    echo ''
+    echo
     return 0
   fi
 

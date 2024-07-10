@@ -23,6 +23,8 @@ prompt () {
 
 # Asks the user to enter a value, where the answer is
 # kept in the global var REPLY.
+# Options:
+#  n:       print an empty line before, -nn 2 lines and so on
 # Arguments:
 #  prompt: a text line
 # Outputs:
@@ -30,6 +32,17 @@ prompt () {
 ask () {
   # Trap ctrl-c abort signals for read cmd
   trap "echo; return 1" SIGINT INT
+
+  local OPTIND opt
+
+  while getopts ':n' opt; do
+    case "${opt}" in
+     'n') printf '\n';;
+    esac
+  done
+
+  # Collect arguments
+  shift $((OPTIND - 1))
 
   local prompt="${1}"
 
@@ -39,6 +52,8 @@ ask () {
 
 # Asks the user to enter a secret value, the answer is
 # kept in the global var REPLY.
+# Options:
+#  n:       print an empty line before, -nn 2 lines and so on
 # Arguments:
 #  prompt: a text line
 # Outputs:
@@ -46,6 +61,17 @@ ask () {
 ask_secret () {
   # Trap ctrl-c abort signals for read cmd
   trap "echo; return 1" SIGINT INT
+  
+  local OPTIND opt
+
+  while getopts ':n' opt; do
+    case "${opt}" in
+     'n') printf '\n';;
+    esac
+  done
+
+  # Collect arguments
+  shift $((OPTIND - 1))
 
   local prompt="${1}"
 
@@ -56,11 +82,24 @@ ask_secret () {
 # Shows a Yes/No menu and asks user to select an option,
 # where the selection is kept in the global var REPLY
 # either as a yes or no value.
+# Options:
+#  n:       print an empty line before, -nn 2 lines and so on
 # Arguments:
 #  prompt: a text line
 # Outputs:
 #  A menu of yes or no options.
 confirm () {
+  local OPTIND opt
+
+  while getopts ':n' opt; do
+    case "${opt}" in
+     'n') printf '\n';;
+    esac
+  done
+
+  # Collect arguments
+  shift $((OPTIND - 1))
+
   local prompt="${1}"
 
   REPLY=''
@@ -81,6 +120,8 @@ confirm () {
 # Shows a menu and asks user to pick one option, where
 # the selection is kept in the global var REPLY as a
 # value equal to the key property of the selected option.
+# Options:
+#  n:       print an empty line before, -nn 2 lines and so on
 # Arguments:
 #  prompt:  a text line
 #  options: a JSON array of {key, value} pairs
@@ -89,6 +130,17 @@ confirm () {
 # Outputs:
 #  A menu of the given options.
 pick_one () {
+  local OPTIND opt
+
+  while getopts ':n' opt; do
+    case "${opt}" in
+     'n') printf '\n';;
+    esac
+  done
+
+  # Collect arguments
+  shift $((OPTIND - 1))
+
   local prompt="${1}"
   local options="${2}"
   local mode="${3}"
@@ -129,6 +181,8 @@ pick_one () {
 # where the selection is kept in the global var REPLY as a
 # JSON array with elements equal to the key property of every
 # selected option.
+# Options:
+#  n:       print an empty line before, -nn 2 lines and so on
 # Arguments:
 #  prompt:  a text line
 #  options: a JSON array of {key, value} pairs
@@ -137,6 +191,17 @@ pick_one () {
 # Outputs:
 #  A menu of the given options.
 pick_many () {
+  local OPTIND opt
+
+  while getopts ':n' opt; do
+    case "${opt}" in
+     'n') printf '\n';;
+    esac
+  done
+
+  # Collect arguments
+  shift $((OPTIND - 1))
+
   local prompt="${1}"
   local options="${2}"
   local mode="${3}"

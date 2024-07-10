@@ -10,7 +10,7 @@ ROOT_FS="${PROFILE_DIR}/airootfs"
 
 # Prints the given log message prefixed with the given log level.
 # Options:
-#  n:       print an empty line before, -nn lines and so on
+#  n:       print an empty line before, -nn 2 lines and so on
 # Arguments:
 #  level:   one of INFO, WARN, ERROR
 #  message: a message to show

@@ -53,7 +53,7 @@ abort () {
       log "${level}" "${message}"
       log "${level}" 'Process has been exited.'
     else
-      log "\n${message}"
+      log -n "${message}"
       log 'Process has been exited.'
     fi
   else

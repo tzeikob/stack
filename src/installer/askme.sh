@@ -360,8 +360,7 @@ select_keyboard_options () {
 
 # Asks the user to set the name of the host.
 enter_host_name () {
-  echo ''
-  ask 'Enter the name of the host:' || abort
+  ask -n 'Enter the name of the host:' || abort
   is_not_given "${REPLY}" && abort 'User input is required.'
 
   while not_match "${REPLY}" '^[a-z][a-z0-9_-]+$'; do
@@ -381,8 +380,7 @@ enter_host_name () {
 
 # Asks the user to set the name of the sudoer user.
 enter_user_name () {
-  echo ''
-  ask 'Enter the name of the user:' || abort
+  ask -n 'Enter the name of the user:' || abort
   is_not_given "${REPLY}" && abort 'User input is required.'
 
   while not_match "${REPLY}" '^[a-z][a-z0-9_-]+$'; do
@@ -407,20 +405,17 @@ enter_user_password () {
   is_not_given "${REPLY}" && abort '\nUser input is required.'
 
   while not_match "${REPLY}" '^[a-zA-Z0-9`~!@#\$%^&*()=+{};:",.<>/\?_-]{4,}$'; do
-    echo ''
-    ask_secret 'Please enter a valid password:' || abort
+    ask_secret -n 'Please enter a valid password:' || abort
     is_not_given "${REPLY}" && abort '\nUser input is required.'
   done
 
   local password="${REPLY}"
 
-  echo ''
-  ask_secret 'Re-type the given password:' || abort
+  ask_secret -n 'Re-type the given password:' || abort
   is_not_given "${REPLY}" && abort '\nUser input is required.'
 
   while not_equals "${REPLY}" "${password}"; do
-    echo ''
-    ask_secret 'Not matched, please re-type the given password:' || abort
+    ask_secret -n 'Not matched, please re-type the given password:' || abort
     is_not_given "${REPLY}" && abort '\nUser input is required.'
   done
 
@@ -439,20 +434,17 @@ enter_root_password () {
   is_not_given "${REPLY}" && abort '\nUser input is required.'
 
   while not_match "${REPLY}" '^[a-zA-Z0-9`~!@#\$%^&*()=+{};:",.<>/\?_-]{4,}$'; do
-    echo ''
-    ask_secret 'Please enter a valid password:' || abort
+    ask_secret -n 'Please enter a valid password:' || abort
     is_not_given "${REPLY}" && abort '\nUser input is required.'
   done
 
   local password="${REPLY}"
 
-  echo ''
-  ask_secret 'Re-type the given password:' || abort
+  ask_secret -n 'Re-type the given password:' || abort
   is_not_given "${REPLY}" && abort '\nUser input is required.'
 
   while not_equals "${REPLY}" "${password}"; do
-    echo ''
-    ask_secret 'Not matched, please re-type the given password:' || abort
+    ask_secret -n 'Not matched, please re-type the given password:' || abort
     is_not_given "${REPLY}" && abort '\nUser input is required.'
   done
 
