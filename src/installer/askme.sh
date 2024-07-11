@@ -72,7 +72,7 @@ select_disk () {
 
 # Asks the user to enable or not the swap space.
 opt_in_swap_space () {
-  confirm '\nDo you want to enable swap space?' || abort
+  confirm -n 'Do you want to enable swap space?' || abort
   is_not_given "${REPLY}" && abort 'User input is required.'
 
   if is_no "${REPLY}"; then
@@ -147,7 +147,7 @@ select_mirrors () {
   # Remove the extra comma from the last element
   mirrors="[${mirrors:+${mirrors::-1}}]"
 
-  pick_many '\nSelect package databases mirrors:' "${mirrors}" 'vertical' || abort
+  pick_many -n 'Select package databases mirrors:' "${mirrors}" 'vertical' || abort
   is_not_given "${REPLY}" && abort 'User input is required.'
 
   mirrors="${REPLY}"
@@ -176,7 +176,7 @@ select_timezone () {
   # Remove the extra comma after the last array element
   timezones="[${timezones:+${timezones::-1}}]"
 
-  pick_one '\nSelect the system timezone:' "${timezones}" 'vertical' || abort
+  pick_one -n 'Select the system timezone:' "${timezones}" 'vertical' || abort
   is_not_given "${REPLY}" && abort 'User input is required.'
 
   local timezone="${REPLY}"
@@ -205,7 +205,7 @@ select_locales () {
   # Removes the last comma delimiter from the last element
   locales="[${locales:+${locales::-1}}]"
 
-  pick_many '\nSelect system locales by order:' "${locales}" 'vertical' || abort
+  pick_many -n 'Select system locales by order:' "${locales}" 'vertical' || abort
   is_not_given "${REPLY}" && abort 'User input is required.'
 
   locales="${REPLY}"
@@ -234,7 +234,7 @@ select_keyboard_model () {
   # Remove the extra comma delimiter from the last element
   models="[${models:+${models::-1}}]"
 
-  pick_one '\nSelect a keyboard model:' "${models}" 'vertical' || abort
+  pick_one -n 'Select a keyboard model:' "${models}" 'vertical' || abort
   is_not_given "${REPLY}" && abort 'User input is required.'
 
   local keyboard_model="${REPLY}"
@@ -263,7 +263,7 @@ select_keyboard_map () {
   # Remove extra comma delimiter from the last element
   maps="[${maps:+${maps::-1}}]"
 
-  pick_one '\nSelect a keyboard map:' "${maps}" 'vertical' || abort
+  pick_one -n 'Select a keyboard map:' "${maps}" 'vertical' || abort
   is_not_given "${REPLY}" && abort 'User input is required.'
 
   local keyboard_map="${REPLY}"
@@ -292,7 +292,7 @@ select_keyboard_layout () {
   # Remove the extra comma delimiter from last element
   layouts="[${layouts:+${layouts::-1}}]"
 
-  pick_one '\nSelect a keyboard layout:' "${layouts}" 'vertical' || abort
+  pick_one -n 'Select a keyboard layout:' "${layouts}" 'vertical' || abort
   is_not_given "${REPLY}" && abort 'User input is required.'
 
   local keyboard_layout="${REPLY}"
@@ -316,7 +316,7 @@ select_keyboard_layout () {
   # Remove the extra comma delimiter from last element
   variants="[${variants:+${variants::-1}}]"
 
-  pick_one "\nSelect a ${keyboard_layout} layout variant:" "${variants}" vertical || abort
+  pick_one -n "Select a ${keyboard_layout} layout variant:" "${variants}" vertical || abort
   is_not_given "${REPLY}" && abort 'User input is required.'
 
   local layout_variant="${REPLY}"
@@ -345,7 +345,7 @@ select_keyboard_options () {
   # Remove extra comma delimiter from last element
   options="[${options:+${options::-1}}]"
 
-  pick_one '\nSelect the keyboard options value:' "${options}" 'vertical' || abort
+  pick_one -n 'Select the keyboard options value:' "${options}" 'vertical' || abort
   is_not_given "${REPLY}" && abort 'User input is required.'
 
   local keyboard_options="${REPLY}"
@@ -463,7 +463,7 @@ select_kernel () {
   kernels+='{"key": "lts", "value": "LTS"}'
   kernels="[${kernels}]"
 
-  pick_one '\nSelect which linux kernel to install:' "${kernels}" 'horizontal' || abort
+  pick_one -n 'Select which linux kernel to install:' "${kernels}" 'horizontal' || abort
   is_not_given "${REPLY}" && abort 'User input is required.'
 
   local kernel="${REPLY}"
@@ -508,7 +508,7 @@ while true; do
     select_kernel &&
     report
 
-  confirm '\nDo you want to go with these settings?' || abort
+  confirm -n 'Do you want to go with these settings?' || abort
   is_not_given "${REPLY}" && abort 'User input is required.'
 
   if is_yes "${REPLY}"; then
