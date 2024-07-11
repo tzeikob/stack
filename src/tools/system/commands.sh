@@ -78,13 +78,13 @@ show_status () {
 
   echo -ne 'Updates:   Processing...'
   
-  local total_updates=''
-  total_updates="$(find_outdated_packages | jq -cr '.pacman + .aur|length')" || return 1
+  local total=''
+  total="$(find_outdated_packages | jq -cr '.pacman + .aur|length')" || return 1
 
-  if is_true "${total_updates} = 0"; then
+  if is_true "${total} = 0"; then
     echo -ne '\r\033[KUpdates:   Up to date\n'
   else
-    echo -ne "\r\033[KUpdates:   ${total_updates}\n"
+    echo -ne "\r\033[KUpdates:   ${total}\n"
   fi
 }
 
@@ -295,7 +295,7 @@ apply_updates () {
 
   if has_failed; then
     echo 'null' > "${UPDATES_FILE}"
-    
+
     log 'Failed to update aur packages.'
     return 2
   fi
@@ -303,6 +303,6 @@ apply_updates () {
   # Mark ready state in updates registry file
   echo '0' > "${UPDATES_FILE}"
 
-  log -n "${len} packages have been updated."
+  log -n "${total} packages have been updated."
   log 'System is now up to date.'
 }
