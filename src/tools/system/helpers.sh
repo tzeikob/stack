@@ -57,7 +57,16 @@ find_outdated_packages () {
   local pkgs="{\"pacman\": ${pacman_pkgs}, \"aur\": ${aur_pkgs}}"
 
   # Dump the number of outdated pcks in the updates registry file
-  echo "${pkgs}" | jq -cr '(.pacman|length) + (.aur|length)' > "${UPDATES_FILE}"
+  local total=''
+  total="$(echo "${pkgs}" | jq -cr '(.pacman|length) + (.aur|length)')"
+  
+  echo "${total}" > "${UPDATES_FILE}"
+  
+  if on_script_mode && is_true "${total} > 0"; then
+    notify-send -u CRITICAL \
+      -a System 'Action should be taken!' \
+      "Found ${total} outdated package(s), your system is running out of date!"
+  fi
 
   echo "${pkgs}"
 }
