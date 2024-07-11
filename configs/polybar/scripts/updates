@@ -8,14 +8,13 @@ source /opt/stack/commons/validators.sh
 UPDATES_FILE=/tmp/updates
 
 # Reads the special update file which should contain
-# a positive integer value corresponding to the number
-# of packages need to be updated. If the number is 0
-# this means the system is up to date, on the other
-# hand a missing file means wait until the systen
-# processes the next updates file.
+# a integer value, where 0 means the system is up to
+# date, < 0 means the system is now updating, > 0
+# means that many outdated packages and if the file
+# is missing means system is up to date.
 run () {
-  local output=''
-  local color=''
+  local output='Ready'
+  local color='B2E39C'
   
   if file_exists "${UPDATES_FILE}"; then
     local packages=''
@@ -26,15 +25,10 @@ run () {
     elif is_true "${packages} < 0"; then
       output='Updating'
       color='2222FF'
-    elif is_true "${packages} = 0"; then
-      output='Ready'
-      color='B2E39C'
-    else
+    elif is_true "${packages} > 0"; then
       output="$(printf '%03d' ${packages})"
       color='F27D52'
     fi
-  else
-    output='Processing'
   fi
 
   if is_not_empty "${color}"; then

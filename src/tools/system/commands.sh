@@ -6,6 +6,8 @@ source /opt/stack/commons/math.sh
 source /opt/stack/commons/validators.sh
 source /opt/stack/tools/system/helpers.sh
 
+UPDATES_FILE=/tmp/updates
+
 # Shows the current status of system.
 # Outputs:
 #  A verbose list of text data.
@@ -61,7 +63,6 @@ show_status () {
   
   echo "Age:       ${age} hours"
 
-
   local latest=''
   latest="$(grep '--latest' "${reflector_conf}" | cut -d ' ' -f 2)" || return 1
   
@@ -71,14 +72,14 @@ show_status () {
   pkgs="$(find_installed_packages)" || return 1
 
   echo
-  echo "Packages:  $(echo ${pkgs} | jq -cr '(.pacman|length) + (.aur|length)')"
+  echo "Packages:  $(echo ${pkgs} | jq -cr '.pacman + .aur|length')"
   echo "Pacman:    $(echo ${pkgs} | jq -cr '.pacman|length')"
   echo "AUR:       $(echo ${pkgs} | jq -cr '.aur|length')"
 
   echo -ne 'Updates:   Processing...'
   
   local total_updates=''
-  total_updates="$(find_outdated_packages | jq -cr '(.pacman|length) + (.aur|length)')" || return 1
+  total_updates="$(find_outdated_packages | jq -cr '.pacman + .aur|length')" || return 1
 
   if is_true "${total_updates} = 0"; then
     echo -ne '\r\033[KUpdates:   Up to date\n'
@@ -195,40 +196,28 @@ set_mirrors () {
   log "Package databases mirrors set to ${countries[@]}."
 }
 
-# Checks for currently outdated packages filtered
-# by the given repository.
-# Arguments:
-#  repository: pacman, aur or none
+# Checks for currently outdated packages.
 # Outputs:
 #  A long list of packages.
 check_updates () {
-  local repository="${1}"
-
-  if is_given "${repository}" && is_not_package_repository "${repository}"; then
-    log 'Invalid or unknown repository.'
-    return 2
-  fi
-
   log 'Processing outdated packages...'
 
   local pkgs=''
   pkgs="$(find_outdated_packages)"
 
   if has_failed; then
+    echo 'null' > "${UPDATES_FILE}"
+
     log 'Failed to find outdated packages.'
     return 2
   fi
-  
-  if is_given "${repository}"; then
-    pkgs="$(echo "${pkgs}" | jq -cr ".${repository}")"
-  else
-    pkgs="$(echo "${pkgs}" | jq -cr '.pacman + .aur')"
-  fi
 
-  local len=0
-  len="$(echo "${pkgs}" | jq -cer 'length')" || return 1
+  local total=0
+  total="$(echo "${pkgs}" | jq -cer '.pacman + .aur|length')" || return 1
 
-  if is_true "${len} = 0"; then
+  if is_true "${total} = 0"; then
+    echo '0' > "${UPDATES_FILE}"
+
     log 'No outdated packages have found.'
     return 0
   fi
@@ -237,9 +226,17 @@ check_updates () {
   query+='Name:    \(.name)\n'
   query+='Current: \(.current)\n'
   query+='Latest:  \(.latest)'
-  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+  query="[.pacman + .aur|.[]|\"${query}\"]|join(\"\n\n\")"
 
   echo "${pkgs}" | jq -cr "${query}" || return 1
+
+  echo "${total}" > "${UPDATES_FILE}"
+  
+  if on_script_mode && is_true "${total} > 0"; then
+    notify-send -u CRITICAL \
+      -a System 'Action should be taken!' \
+      "Found ${total} outdated package(s), your system is running out of date!"
+  fi
 }
 
 # Applies the latest updates to the system.
@@ -252,14 +249,18 @@ apply_updates () {
   pkgs="$(find_outdated_packages | jq -cer '.pacman + .aur')"
 
   if has_failed; then
+    echo 'null' > "${UPDATES_FILE}"
+
     log 'Failed to find outdated packages.'
     return 2
   fi
 
-  local len=0
-  len="$(echo "${pkgs}" | jq -cer 'length')" || return 1
+  local total=0
+  total="$(echo "${pkgs}" | jq -cer 'length')" || return 1
 
-  if is_true "${len} = 0"; then
+  if is_true "${total} = 0"; then
+    echo '0' > "${UPDATES_FILE}"
+
     log 'No outdated packages have found.'
     return 2
   fi
@@ -269,7 +270,7 @@ apply_updates () {
 
   echo "${pkgs}" | jq -cr "${query}" || return 1
 
-  log "Found ${len} total outdated packages."
+  log "Found ${total} total outdated packages."
   confirm 'Do you want to proceed and update them?' || return $?
   is_empty "${REPLY}" && log 'Confirmation is required.' && return 2
   
@@ -278,9 +279,14 @@ apply_updates () {
     return 2
   fi
 
+  # Mark updating state in updates registry file
+  echo '-1' > "${UPDATES_FILE}"
+
   sudo pacman --noconfirm -Syu
 
   if has_failed; then
+    echo 'null' > "${UPDATES_FILE}"
+
     log 'Failed to update pacman packages.'
     return 2
   fi
@@ -288,9 +294,14 @@ apply_updates () {
   yay --noconfirm -Syu
 
   if has_failed; then
+    echo 'null' > "${UPDATES_FILE}"
+    
     log 'Failed to update aur packages.'
     return 2
   fi
+
+  # Mark ready state in updates registry file
+  echo '0' > "${UPDATES_FILE}"
 
   log -n "${len} packages have been updated."
   log 'System is now up to date.'

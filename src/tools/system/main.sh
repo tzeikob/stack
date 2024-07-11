@@ -43,7 +43,7 @@ show_help () {
     '' '' \
     'set mirrors <age> <latest> <countries>' 'Set the mirrors of package databases.' \
     '' '' \
-    'check updates pacman|aur' 'Show the list of outdated packages.' \
+    'check updates' 'Show the list of outdated packages.' \
     'apply updates' 'Apply all the latest updates.'
 }
 
@@ -62,7 +62,7 @@ execute () {
     'show status') show_status;;
     'list packages') list_packages "${3}";;
     'set mirrors') set_mirrors "${3}" "${4}" "${@:5}";;
-    'check updates') check_updates "${3}";;
+    'check updates') check_updates;;
     'apply updates') apply_updates;;
     *)
       log 'Ooops, invalid or unknown command!'

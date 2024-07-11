@@ -4,8 +4,6 @@ source /opt/stack/commons/error.sh
 source /opt/stack/commons/math.sh
 source /opt/stack/commons/validators.sh
 
-UPDATES_FILE=/tmp/updates
-
 # Find all the packages installed to the system
 # via the package managers pacman and yay (aur).
 # Returns:
@@ -26,9 +24,6 @@ find_installed_packages () {
 # Returns:
 #  A JSON object with pacman and aur list of outdated packages.
 find_outdated_packages () {
-  # Delete temporary updates registry file
-  rm -f "${UPDATES_FILE}"
-  
   local query=''
   query+='name: .[0]|split(" ")|.[0],'
   query+='current: .[0]|split(" ")|.[1],'
@@ -40,7 +35,6 @@ find_outdated_packages () {
   pacman_pkgs="$(checkupdates 2> /dev/null | jq -Rn "${query}")"
 
   if is_true "$? = 1"; then
-    echo 'null' > "${UPDATES_FILE}"
     return 1
   elif is_true "$? = 2"; then
     pacman_pkgs='[]'
@@ -54,21 +48,7 @@ find_outdated_packages () {
     aur_pkgs='[]'
   fi
 
-  local pkgs="{\"pacman\": ${pacman_pkgs}, \"aur\": ${aur_pkgs}}"
-
-  # Dump the number of outdated pcks in the updates registry file
-  local total=''
-  total="$(echo "${pkgs}" | jq -cr '(.pacman|length) + (.aur|length)')"
-  
-  echo "${total}" > "${UPDATES_FILE}"
-  
-  if on_script_mode && is_true "${total} > 0"; then
-    notify-send -u CRITICAL \
-      -a System 'Action should be taken!' \
-      "Found ${total} outdated package(s), your system is running out of date!"
-  fi
-
-  echo "${pkgs}"
+  echo "{\"pacman\": ${pacman_pkgs}, \"aur\": ${aur_pkgs}}"
 }
 
 # Checks if the given value is a valid package repository.
