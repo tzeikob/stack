@@ -54,18 +54,18 @@ show_status () {
   local reflector_conf='/etc/xdg/reflector/reflector.conf'
 
   local countries=''
-  countries="$(grep '--country' "${reflector_conf}" | cut -d ' ' -f 2)" || return 1
+  countries="$(grep -E '^--country' "${reflector_conf}" | cut -d ' ' -f 2)" || return 1
   
   echo
   echo "Mirrors:   ${countries}"
 
   local age=''
-  age="$(grep '--age' "${reflector_conf}" | cut -d ' ' -f 2)" || return 1
+  age="$(grep -E '^--age' "${reflector_conf}" | cut -d ' ' -f 2)" || return 1
   
   echo "Age:       ${age} hours"
 
   local latest=''
-  latest="$(grep '--latest' "${reflector_conf}" | cut -d ' ' -f 2)" || return 1
+  latest="$(grep -E '^--latest' "${reflector_conf}" | cut -d ' ' -f 2)" || return 1
   
   echo "Latest:    ${latest}"
   
