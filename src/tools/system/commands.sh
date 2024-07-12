@@ -294,7 +294,7 @@ apply_updates () {
     return 2
   fi
 
-  yay --noconfirm -Syu
+  sudo yay --noconfirm -Syu
 
   if has_failed; then
     echo 'null' > "${UPDATES_FILE}"
