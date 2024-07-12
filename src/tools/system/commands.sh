@@ -224,7 +224,17 @@ check_updates () {
 
   echo "${pkgs}" | jq -cr "${query}" || return 1
 
-  echo "${total}" > "${UPDATES_FILE}"
+  # Don't modify registry file while system is updating
+  if file_exists "${UPDATES_FILE}"; then
+    local packages=''
+    packages="$(< "${UPDATES_FILE}")"
+
+    if is_false "${packages} < 0"; then
+      echo "${total}" > "${UPDATES_FILE}"
+    fi
+  else
+    echo "${total}" > "${UPDATES_FILE}"
+  fi
   
   if on_script_mode && is_true "${total} > 0"; then
     notify-send -u NORMAL '' \
