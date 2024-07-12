@@ -32,11 +32,11 @@ show_help () {
     printf 'Usage: COMMAND [OBJECT] [ARGUMENTS]...\n'
 
     printf '\nCOMMANDS\n'
-    printf ' %-26s %s\n' \
+    printf ' %-40s %s\n' \
       'help' 'Show this help message.'
   fi
 
-  printf ' %-26s %s\n' \
+  printf ' %-40s %s\n' \
     'show status' 'Show the system overall status.' \
     '' '' \
     'list packages pacman|aur' 'Show the list of installed packages.' \

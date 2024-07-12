@@ -237,8 +237,8 @@ check_updates () {
   fi
   
   if on_script_mode && is_true "${total} > 0"; then
-    notify-send -u NORMAL '' \
-      "System is running out of date, ${total} package(s) are outdated!"
+    notify-send -u NORMAL -a 'System Updates' 'System out of date!' \
+      "Your system is running out of date, found ${total} outdated package(s)!"
   fi
 }
 
@@ -273,7 +273,7 @@ apply_updates () {
 
   echo "${pkgs}" | jq -cr "${query}" || return 1
 
-  log "Found ${total} total outdated packages."
+  log "Found ${total} outdated package(s)."
   confirm 'Do you want to proceed and update them?' || return $?
   is_empty "${REPLY}" && log 'Confirmation is required.' && return 2
   
