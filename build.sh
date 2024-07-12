@@ -490,6 +490,7 @@ copy_system_tools () {
     cp -r src/tools/notifications "${tools_home}" &&
     cp -r src/tools/power "${tools_home}" &&
     cp -r src/tools/printers "${tools_home}" &&
+    cp -r src/tools/system "${tools_home}" &&
     cp -r src/tools/trash "${tools_home}" ||
     abort ERROR 'Failed to copy the system tools files.'
 
@@ -514,6 +515,7 @@ copy_system_tools () {
     ln -sf /opt/stack/tools/notifications/main.sh "${bin_home}/notifications" &&
     ln -sf /opt/stack/tools/power/main.sh "${bin_home}/power" &&
     ln -sf /opt/stack/tools/printers/main.sh "${bin_home}/printers" &&
+    ln -sf /opt/stack/tools/system/main.sh "${bin_home}/system" &&
     ln -sf /opt/stack/tools/trash/main.sh "${bin_home}/trash" ||
     abort ERROR 'Failed to create symlinks for each system tool main.'
 
