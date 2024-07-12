@@ -131,6 +131,8 @@ list_packages () {
 #  latest:    the number of most recently synced mirrors 
 #  countries: a space separated list of countries
 set_mirrors () {
+  authenticate_user || return $?
+
   local age="${1}"
   local latest="${2}"
   local countries=("${@:3}")
@@ -175,7 +177,7 @@ set_mirrors () {
 
   log 'Setting the package databases mirrors...'
 
-  reflector --country "${countries}" \
+  sudo reflector --country "${countries}" \
     --age "${age}" --sort age --latest "${latest}" --save /etc/pacman.d/mirrorlist 2>&1
   
   if has_failed; then
@@ -185,9 +187,9 @@ set_mirrors () {
 
   local conf_file='/etc/xdg/reflector/reflector.conf'
 
-  sed -i "s/^--country.*/--country ${countries}/" "${conf_file}" &&
-    sed -i "s/^--latest.*/--latest ${latest}/" "${conf_file}" &&
-    sed -i "s/^--age.*/--age ${age}/" "${conf_file}"
+  sudo sed -i "s/^--country.*/--country ${countries}/" "${conf_file}" &&
+    sudo sed -i "s/^--latest.*/--latest ${latest}/" "${conf_file}" &&
+    sudo sed -i "s/^--age.*/--age ${age}/" "${conf_file}"
   
   if has_failed; then
     log 'Failed to save mirrors settings to reflector.'
