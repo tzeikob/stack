@@ -175,6 +175,8 @@ set_mirrors () {
     countries=($(echo "${REPLY}" | jq -cr '.[]'))
   fi
 
+  countries="$(jq -cr -n '$ARGS.positional|join(",")' --args "${countries[@]}")" || return 1
+
   log 'Setting the package databases mirrors...'
 
   sudo reflector --country "${countries}" \
@@ -196,7 +198,7 @@ set_mirrors () {
     return 2
   fi
 
-  log "Package databases mirrors set to ${countries[@]}."
+  log "Package databases mirrors set to ${countries}."
 }
 
 # Checks for currently outdated packages.
