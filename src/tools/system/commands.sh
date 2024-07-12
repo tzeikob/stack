@@ -227,9 +227,8 @@ check_updates () {
   echo "${total}" > "${UPDATES_FILE}"
   
   if on_script_mode && is_true "${total} > 0"; then
-    notify-send -u CRITICAL \
-      -a System 'Action should be taken!' \
-      "Found ${total} outdated package(s), your system is running out of date!"
+    notify-send -u NORMAL '' \
+      "System is running out of date, ${total} package(s) are outdated!"
   fi
 }
 
