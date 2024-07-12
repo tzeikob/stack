@@ -76,17 +76,6 @@ show_status () {
   echo "Packages:  $(echo ${pkgs} | jq -cr '.pacman + .aur|length')"
   echo "Pacman:    $(echo ${pkgs} | jq -cr '.pacman|length')"
   echo "AUR:       $(echo ${pkgs} | jq -cr '.aur|length')"
-
-  echo -ne 'Updates:   Processing...'
-  
-  local total=''
-  total="$(find_outdated_packages | jq -cr '.pacman + .aur|length')" || return 1
-
-  if is_true "${total} = 0"; then
-    echo -ne '\r\033[KUpdates:   Up to date\n'
-  else
-    echo -ne "\r\033[KUpdates:   ${total}\n"
-  fi
 }
 
 # List the currently install packages filtered
