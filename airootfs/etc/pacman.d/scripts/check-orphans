@@ -1,0 +1,5 @@
+#!/bin/bash
+
+if pacman -Qtd; then
+  echo 'No orphan packages found'
+fi

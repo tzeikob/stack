@@ -1,0 +1,48 @@
+#!/bin/bash
+
+set -Eeo pipefail
+
+source /opt/stack/commons/math.sh
+source /opt/stack/commons/validators.sh
+
+UPDATES_STATE_FILE=/tmp/updates_state
+
+# Reads the special updates state file which should
+# contain a json object with the status key, where -1
+# means the updates state is unstable, 0 means the system
+# is up to date, 1 means there are updates to be applied and
+# 2 when the system is currently updating. If the file is
+# missing the system should be considered as up to date.
+# The file is expected to contain 3 more keys, each containing
+# the total number of updates per module, pacman, aur and stack.
+run () {
+  local output='Ready'
+  local color='B2E39C'
+  
+  if file_exists "${UPDATES_STATE_FILE}"; then
+    local status=''
+    status="$(jq -cer '.status' "${UPDATES_STATE_FILE}")"
+
+    if is_not_integer "${status}" || is_true "${status} = -1"; then
+      output='Err!'
+    elif is_true "${status} = 2"; then
+      output='Updating'
+      color='2222FF'
+    elif is_true "${status} = 1"; then
+      local total=''
+      total="$(jq -cer '.pacman + .aur + .stack' "${UPDATES_STATE_FILE}")"
+
+      output="$(printf '%03d' ${total})"
+      color='F27D52'
+    fi
+  fi
+
+  if is_not_empty "${color}"; then
+    output="${output}%{F#00000000}:%{F-}%{F#${color}}●%{F-}"
+  fi
+
+  echo "${output}"
+}
+
+run "$@"
+
