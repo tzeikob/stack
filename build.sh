@@ -194,8 +194,8 @@ rename_distro () {
   log INFO 'Release info updated in profile definition file.'
 }
 
-# Sets up the bios and uefi boot loaders.
-setup_boot_loaders () {
+# Fixes bios and uefi boot loaders.
+fix_boot_loaders () {
   local efiboot="${PROFILE_DIR}/efiboot/loader/entries"
 
   sed -i 's/Arch/Stack/' "${efiboot}/01-archiso-x86_64-linux.conf" ||
@@ -284,8 +284,8 @@ setup_boot_loaders () {
   log INFO 'Grub boot loader serial console disabled.'
 }
 
-# Adds the pakacge dependencies into the list of packages.
-add_packages () {
+# Define package dependencies into the list of packages.
+define_packages () {
   log INFO 'Adding system and desktop packages...'
 
   local pkgs=()
@@ -326,15 +326,15 @@ add_packages () {
     add_package "${pkg}"
   done
 
-  # Remove conflicting no x server virtualbox utils
+  # Remove conflicting nox server virtualbox utils
   remove_package virtualbox-guest-utils-nox
 
-  log INFO 'All packages added into the package list.'
+  log INFO 'Packages defined in the package list.'
 }
 
 # Builds and adds the AUR packages into the packages list
 # via a local custom repo.
-add_aur_packages () {
+build_aur_packages () {
   log INFO 'Building the AUR package files...'
 
   local previous_dir=${PWD}
@@ -363,11 +363,11 @@ add_aur_packages () {
       abort ERROR "Failed to add the ${name} package into the custom repository."
 
     add_package "${name}" || abort ERROR "Failed to add the ${name} AUR package."
+
+    log INFO "Package ${name} has been built."
   done
 
   rm -rf "${AUR_DIR}" || abort ERROR 'Failed to remove the AUR temporary folder.'
-
-  log INFO 'The AUR package files have been built.'
 
   local pacman_conf="${PROFILE_DIR}/pacman.conf"
 
@@ -378,8 +378,8 @@ add_aur_packages () {
     "Server = file://$(realpath "${repo_home}")" >> "${pacman_conf}" ||
     abort ERROR 'Failed to define the custom local repo.'
 
-  log INFO 'The custom local repo added to pacman.'
-  log INFO 'All AUR packages added into the package list.'
+  log INFO 'Custom local repo added to pacman.'
+  log INFO 'AUR packages added in the package list.'
 }
 
 # Removes system tools unnecessary to live media.
@@ -508,7 +508,7 @@ setup_display_server () {
   log INFO 'Xorg server set to be started at login.'
 }
 
-# Sets up the sheel environment files.
+# Sets up the shell environment.
 setup_shell_environment () {
   local zshrc_file="${ROOT_FS}/root/.zshrc"
 
@@ -882,9 +882,9 @@ init &&
   copy_profile_files &&
   copy_stack_files &&
   rename_distro &&
-  setup_boot_loaders &&
-  add_packages &&
-  add_aur_packages &&
+  fix_boot_loaders &&
+  define_packages &&
+  build_aur_packages &&
   remove_unnecessary_tools &&
   copy_installer &&
   setup_auto_login &&
