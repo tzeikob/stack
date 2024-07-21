@@ -510,34 +510,31 @@ setup_display_server () {
 
 # Sets up the shell environment.
 setup_shell_environment () {
-  local zshrc_file="${ROOT_FS}/root/.zshrc"
+  local stackrc_file="${ROOT_FS}/root/.stackrc"
 
   # Set the defauilt terminal and text editor
-  echo -e 'export TERMINAL=cool-retro-term' >> "${zshrc_file}"
+  sed -i 's/#TERMINAL#/cool-retro-term/' "${stackrc_file}" ||
+    abort ERROR 'Failed to set the default terminal.'
 
   log INFO 'Default terminal set to cool-retro-term.'
 
-  echo -e 'export EDITOR=helix' >> "${zshrc_file}"
+  sed -i 's/#EDITOR#/helix/' "${stackrc_file}" ||
+    abort ERROR 'Failed to set the default editor.'
 
   log INFO 'Default editor set to helix.'
 
-  # Set up trash-cli aliases
-  echo -e "\nalias sudo='sudo '" >> "${zshrc_file}"
-  echo "alias tt='trash-put -i'" >> "${zshrc_file}"
-  echo "alias rm='rm -i'" >> "${zshrc_file}"
-
-  log INFO 'Command aliases added to /root/.zshrc.'
-
-  echo 'source ~/.prompt' >> "${zshrc_file}"
-
   printf '%s\n' \
-    '' \
     'if [[ "${SHOW_WELCOME_MSG}" == "true" ]]; then' \
     '  cat /etc/welcome' \
-    'fi' >> "${zshrc_file}" ||
+    'fi' \
+    '' >> "${stackrc_file}" ||
     abort ERROR 'Failed to add the welcome message hook call.'
+  
+  log INFO 'Welcome message hook has been set.'
+  
+  local zshrc_file="${ROOT_FS}/root/.zshrc"
 
-  log INFO 'Welcome message set to be shown after login.'
+  echo -e 'source ~/.stackrc\n\n' >> "${zshrc_file}"
 }
 
 # Sets up the corresponding desktop configurations.
