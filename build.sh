@@ -597,7 +597,7 @@ setup_desktop () {
 
   log INFO 'Sxhkd configuration has been set.'
 
-  local launch_file="${config_home}/rofi/launch"
+  local rofi_launch="${config_home}/rofi/launch"
 
   sed -i \
     -e "/options+='Lock\\\n'/d" \
@@ -606,7 +606,7 @@ setup_desktop () {
     -e "s/\(  local exact_lines='listview {lines:\) 6\(;}'\)/\1 3\2/" \
     -e "/'Lock') security -qs lock screen;;/d" \
     -e "/'Blank') power -qs blank;;/d" \
-    -e "/'Logout') security -qs logout user;;/d" "${launch_file}" ||
+    -e "/'Logout') security -qs logout user;;/d" "${rofi_launch}" ||
     abort ERROR 'Failed to remove unnecessary rofi launchers.'
 
   log INFO 'Rofi configuration has been set.'
@@ -816,28 +816,44 @@ enable_services () {
     abort ERROR 'Failed to set the home in fix layout service.'
 }
 
-# Sets file permissions.
+# Sets file system permissions.
 set_file_permissions () {
-  add_file_permissions '/etc/pacman.d/scripts/' '0:0:755'
-  add_file_permissions '/usr/local/bin/tqdm' '0:0:755'
+  local permissions_file="${PROFILE_DIR}/profiledef.sh"
 
-  add_file_permissions '/opt/stack/commons/' '0:0:755'
-  add_file_permissions '/opt/stack/tools/' '0:0:755'
+  if [[ ! -f "${permissions_file}" ]]; then
+    abort ERROR "Unable to locate file ${permissions_file}."
+  fi
 
-  add_file_permissions '/etc/welcome' '0:0:644'
+  local perms=(
+    '/etc/pacman.d/scripts/ 0:0:755'
+    '/usr/local/bin/tqdm 0:0:755'
+    '/opt/stack/commons/ 0:0:755'
+    '/opt/stack/tools/ 0:0:755'
+    '/etc/welcome 0:0:644'
+    '/root/.config/stack/ 0:0:664'
+    '/etc/systemd/logind.conf.d/ 0:0:644'
+    '/etc/systemd/sleep.conf.d/ 0:0:644'
+    '/etc/tlp.d/ 0:0:755'
+    '/root/.config/bspwm/ 0:0:755'
+    '/root/.config/polybar/scripts/ 0:0:755'
+    '/root/.config/rofi/launch 0:0:755'
+    '/root/.config/dunst/hook 0:0:755'
+    '/etc/sudoers.d/ 0:0:750'
+  )
 
-  add_file_permissions '/root/.config/stack/' '0:0:664'
-  add_file_permissions '/etc/systemd/logind.conf.d/' '0:0:644'
-  add_file_permissions '/etc/systemd/sleep.conf.d/' '0:0:644'
-  add_file_permissions '/etc/tlp.d/' '0:0:755'
+  local perm=''
+  for perm in "${perms[@]}"; do
+    local path="$(echo "${perm}" | cut -d ' ' -f 1)" ||
+      abort ERROR 'Failed to extract permission path.'
+    
+    local mode="$(echo "${perm}" | cut -d ' ' -f 2)" ||
+      abort ERROR 'Failed to extract permission mode.'
 
-  add_file_permissions '/root/.config/bspwm/' '0:0:755'
-  add_file_permissions '/root/.config/polybar/scripts/' '0:0:755'
-
-  add_file_permissions '/root/.config/rofi/launch' '0:0:755'
-  add_file_permissions '/root/.config/dunst/hook' '0:0:755'
-
-  add_file_permissions '/etc/sudoers.d/' '0:0:750'
+    sed -i "/file_permissions=(/a [\"${path}\"]=\"${mode}\"" "${permissions_file}" ||
+      abort ERROR "Unable to add file permission ${mode} to ${path}."
+  done
+  
+  log INFO "Permission ${mode} added to ${path}."
 }
 
 # Creates the iso file of the live media.
