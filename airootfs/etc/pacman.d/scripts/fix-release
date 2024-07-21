@@ -2,8 +2,6 @@
 
 rm -f /etc/arch-release
 
-cat /etc/stack-release > /usr/lib/os-release
-
 if [[ -f /etc/lsb-release ]]; then
   printf '%s\n' \
     'DISTRIB_ID="Stack"' \

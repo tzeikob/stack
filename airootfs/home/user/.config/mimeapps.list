@@ -1,0 +1,16 @@
+[Default Applications]
+inode/directory=nnn.desktop
+image/jpeg=sxiv.desktop
+image/jpg=sxiv.desktop
+image/png=sxiv.desktop
+image/tiff=sxiv.desktop
+audio/mpeg=ncmpcpp.desktop
+audio/mp3=ncmpcpp.desktop
+audio/flac=ncmpcpp.desktop
+audio/midi=ncmpcpp.desktop
+video/mp4=mpv.desktop
+video/mkv=mpv.desktop
+video/mov=mpv.desktop
+video/mpeg=mpv.desktop
+video/avi=mpv.desktop
+application/epub+zip=com.github.johnfactotum.Foliate.desktop

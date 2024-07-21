@@ -2,12 +2,12 @@
 
 set -Eeo pipefail
 
-source /opt/stack/commons/process.sh
-source /opt/stack/commons/error.sh
-source /opt/stack/commons/logger.sh
-source /opt/stack/commons/validators.sh
+source ../airootfs/opt/stack/commons/process.sh
+source ../airootfs/opt/stack/commons/error.sh
+source ../airootfs/opt/stack/commons/logger.sh
+source ../airootfs/opt/stack/commons/validators.sh
 
-SETTINGS='/opt/stack/installer/settings.json'
+SETTINGS=./settings.json
 
 # Resolves if UEFI mode is supported by the system.
 is_uefi () {

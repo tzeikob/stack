@@ -2,12 +2,12 @@
 
 set -Eeo pipefail
 
-source /opt/stack/commons/input.sh
-source /opt/stack/commons/error.sh
-source /opt/stack/commons/logger.sh
-source /opt/stack/commons/validators.sh
+source ../airootfs/opt/stack/commons/input.sh
+source ../airootfs/opt/stack/commons/error.sh
+source ../airootfs/opt/stack/commons/logger.sh
+source ../airootfs/opt/stack/commons/validators.sh
 
-SETTINGS='/opt/stack/installer/settings.json'
+SETTINGS=./settings.json
 
 BAR_FORMAT='{desc:10}  {percentage:3.0f}%|{bar}|  ET{elapsed}'
 
@@ -50,7 +50,7 @@ run () {
   # Do not log while running the askme screens
   if equals "${file_name}" 'askme'; then
     echo
-    bash /opt/stack/installer/askme.sh || return 1
+    bash ./askme.sh || return 1
 
     echo
     return 0
@@ -80,7 +80,7 @@ run () {
   
   local log_file="/var/log/stack/${file_name}.log"
 
-  bash "/opt/stack/installer/${file_name}.sh" 2>&1 |
+  bash ./${file_name}.sh 2>&1 |
     tee -a "${log_file}" 2>&1 |
     tqdm --desc "${desc^}:" --ncols 50 \
       --bar-format "${BAR_FORMAT}" --total ${total} >> "${log_file}.tqdm"
@@ -136,7 +136,7 @@ install () {
       ;;
   esac
 
-  local script_file="/opt/stack/installer/${file_name}.sh"
+  local script_file=./${file_name}.sh
 
   arch-chroot /mnt runuser -u "${user_name}" -- "${script_file}" 2>&1 |
     tee -a "${log_file}" 2>&1 |

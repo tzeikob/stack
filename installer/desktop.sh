@@ -7,7 +7,7 @@ source /opt/stack/commons/error.sh
 source /opt/stack/commons/logger.sh
 source /opt/stack/commons/validators.sh
 
-SETTINGS='/opt/stack/installer/settings.json'
+SETTINGS=./settings.json
 
 # Installs the desktop compositor.
 install_compositor () {
@@ -15,17 +15,6 @@ install_compositor () {
 
   sudo pacman -S --needed --noconfirm picom 2>&1 ||
     abort ERROR 'Failed to install picom.'
-
-  local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
-    abort ERROR 'Unable to read user_name setting.'
-
-  local config_home="/home/${user_name}/.config/picom"
-
-  mkdir -p "${config_home}" || abort ERROR "Failed to create folder ${config_home}."
-
-  cp /opt/stack/installer/configs/picom/picom.conf "${config_home}" ||
-    abort ERROR 'Failed to copy compositor config file.'
 
   log INFO 'Desktop compositor picom has been installed.'
 }
@@ -37,26 +26,6 @@ install_window_manager () {
   sudo pacman -S --needed --noconfirm bspwm 2>&1 ||
     abort ERROR 'Failed to install bspwm.'
 
-  local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
-    abort ERROR 'Unable to read user_name setting.'
-
-  local config_home="/home/${user_name}/.config/bspwm"
-
-  mkdir -p "${config_home}" || abort ERROR "Failed to create folder ${config_home}."
-
-  cp /opt/stack/installer/configs/bspwm/bspwmrc "${config_home}" &&
-    chmod 755 "${config_home}/bspwmrc" &&
-    cp /opt/stack/installer/configs/bspwm/rules "${config_home}" &&
-    chmod 755 "${config_home}/rules" &&
-    cp /opt/stack/installer/configs/bspwm/resize "${config_home}" &&
-    chmod 755 "${config_home}/resize" &&
-    cp /opt/stack/installer/configs/bspwm/swap "${config_home}" &&
-    chmod 755 "${config_home}/swap" &&
-    cp /opt/stack/installer/configs/bspwm/scratchpad "${config_home}" &&
-    chmod 755 "${config_home}/scratchpad" ||
-    abort ERROR 'Failed to copy the bspwm config files.'
-
   log INFO 'Window manager bspwm has been installed.'
 }
 
@@ -66,24 +35,6 @@ install_status_bars () {
 
   sudo pacman -S --needed --noconfirm polybar 2>&1 ||
     abort ERROR 'Failed to install polybar.'
-
-  local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
-    abort ERROR 'Unable to read user_name setting.'
-
-  local config_home="/home/${user_name}/.config/polybar"
-
-  mkdir -p "${config_home}" || abort ERROR "Failed to create folder ${config_home}."
-
-  cp /opt/stack/installer/configs/polybar/config.ini "${config_home}" &&
-    chmod 644 "${config_home}/config.ini" &&
-    cp /opt/stack/installer/configs/polybar/modules.ini "${config_home}" &&
-    chmod 644 "${config_home}/modules.ini" &&
-    cp /opt/stack/installer/configs/polybar/theme.ini "${config_home}" &&
-    chmod 644 "${config_home}/theme.ini" &&
-    cp -r /opt/stack/installer/configs/polybar/scripts "${config_home}" &&
-    chmod +x "${config_home}"/scripts/* ||
-    abort ERROR 'Failed to copy polybar config files.'
 
   log INFO 'Status bars have been installed.'
 }
@@ -95,19 +46,6 @@ install_launchers () {
   sudo pacman -S --needed --noconfirm rofi 2>&1 ||
     abort ERROR 'Failed to install rofi.'
 
-  local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
-    abort ERROR 'Unable to read user_name setting.'
-
-  local config_home="/home/${user_name}/.config/rofi"
-
-  mkdir -p "${config_home}" &&
-    cp /opt/stack/installer/configs/rofi/config.rasi "${config_home}" &&
-    chmod 644 "${config_home}/config.rasi" &&
-    cp /opt/stack/installer/configs/rofi/launch "${config_home}" &&
-    chmod +x "${config_home}/launch" ||
-    abort ERROR 'Failed to copy rofi config files.'
-
   log INFO 'Desktop launchers have been installed.'
 }
 
@@ -117,17 +55,6 @@ install_keyboard_bindings () {
 
   sudo pacman -S --needed --noconfirm sxhkd 2>&1 ||
     abort ERROR 'Failed to install sxhkd.'
-
-  local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
-    abort ERROR 'Unable to read user_name setting.'
-
-  local config_home="/home/${user_name}/.config/sxhkd"
-
-  mkdir -p "${config_home}" &&
-    cp /opt/stack/installer/configs/sxhkd/sxhkdrc "${config_home}" &&
-    chmod 644 "${config_home}/sxhkdrc" ||
-    abort ERROR 'Failed to copy sxhkdrc configs files.'
 
   log INFO 'Keyboard key bindings have been set.'
 }
@@ -151,7 +78,8 @@ install_login_screen () {
   host_name="$(jq -cer '.host_name' "${SETTINGS}")" ||
     abort ERROR 'Unable to read host_name setting.'
 
-  echo " ${host_name} " | figlet -f pagga 2>&1 |
+  echo " ${host_name} " |
+    figlet -f pagga 2>&1 |
     sudo tee /etc/issue > /dev/null ||
     abort ERROR 'Failed to create the new issue file.'
   
@@ -199,11 +127,6 @@ install_screen_locker () {
   
   log INFO 'Xsecurelock has been installed.'
 
-  sudo cp /opt/stack/installer/configs/xsecurelock/hook /usr/lib/systemd/system-sleep/locker ||
-    abort ERROR 'Failed to copy the sleep hook.'
-  
-  log INFO 'Sleep hook has been copied.'
-
   local user_id=''
   user_id="$(
     id -u "${user_name}" 2>&1
@@ -211,8 +134,7 @@ install_screen_locker () {
 
   local service_file="/etc/systemd/system/lock@.service"
 
-  sudo cp /opt/stack/installer/configs/xsecurelock/service "${service_file}" &&
-    sudo sed -i "s/#USER_ID#/${user_id}/g" "${service_file}" &&
+  sudo sed -i "s/#USER_ID#/${user_id}/g" "${service_file}" &&
     sudo systemctl enable lock@${user_name}.service 2>&1 ||
     abort ERROR 'Failed to enable locker service.'
 
@@ -228,17 +150,6 @@ install_notification_server () {
     abort ERROR 'Failed to install dunst.'
 
   log INFO 'Dunst has been installed.'
-
-  local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
-    abort ERROR 'Unable to read user_name setting.'
-
-  local config_home="/home/${user_name}/.config/dunst"
-
-  mkdir -p "${config_home}" &&
-    cp /opt/stack/installer/configs/dunst/dunstrc "${config_home}" &&
-    cp /opt/stack/installer/configs/dunst/hook "${config_home}" ||
-    abort ERROR 'Failed to copy notifications server config files.'
 
   log INFO 'Notifications server has been installed.'
 }
@@ -258,12 +169,6 @@ install_file_manager () {
 
   local config_home="/home/${user_name}/.config/nnn"
 
-  mkdir -p "${config_home}" &&
-    cp /opt/stack/installer/configs/nnn/env "${config_home}" ||
-    abort ERROR 'Failed to copy the env file.'
-  
-  log INFO 'Env file has been copied.'
-
   log INFO 'Installing file manager plugins...'
 
   # Todo: get current working directory error
@@ -277,28 +182,11 @@ install_file_manager () {
 
   log INFO 'Extra plugins have been installed.'
 
-  local bashrc_file="/home/${user_name}/.bashrc"
-
-  echo -e '\nsource "${HOME}/.config/nnn/env"' >> "${bashrc_file}" &&
-    echo 'alias N="sudo -E nnn -dH"' >> "${bashrc_file}" ||
-    abort ERROR 'Failed to add hooks in .bashrc file.'
-
-  log INFO 'File manager hooks added in .bashrc file.'
-
   mkdir -p "/home/${user_name}"/{downloads,documents,data,sources,mounts} &&
-    mkdir -p "/home/${user_name}"/{images,audios,videos} &&
-    cp /opt/stack/installer/configs/nnn/user.dirs "/home/${user_name}/.config/user-dirs.dirs" ||
+    mkdir -p "/home/${user_name}"/{images,audios,videos} ||
     abort ERROR 'Failed to create home directories.'
   
   log INFO 'Home directories have been created.'
-
-  printf '%s\n' \
-    '[Default Applications]' \
-    'inode/directory=nnn.desktop' > "/home/${user_name}/.config/mimeapps.list" &&
-    chmod 644 "/home/${user_name}/.config/mimeapps.list" ||
-    abort ERROR 'Failed to create the applications mime type file.'
-
-  log INFO 'Application mime types file has been created.'
   log INFO 'File manager has been installed.'
 }
 
@@ -310,28 +198,6 @@ install_trash_manager () {
     abort ERROR 'Failed to install trash-cli.'
 
   log INFO 'Trash-cli has been installed.'
-
-  local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
-    abort ERROR 'Unable to read user_name setting.'
-
-  local bashrc_file="/home/${user_name}/.bashrc"
-
-  echo -e "\nalias sudo='sudo '" >> "${bashrc_file}" &&
-    echo "alias tt='trash-put -i'" >> "${bashrc_file}" &&
-    echo "alias rm='rm -i'" >> "${bashrc_file}" ||
-    abort ERROR 'Failed to add aliases to .bashrc file.'
-  
-  log INFO 'Aliases have been added to .bashrc file.'
-
-  bashrc_file='/root/.bashrc'
-  
-  echo -e "\nalias sudo='sudo '" | sudo tee -a "${bashrc_file}" > /dev/null &&
-    echo "alias tt='trash-put -i'" | sudo tee -a "${bashrc_file}" > /dev/null &&
-    echo "alias rm='rm -i'" | sudo tee -a "${bashrc_file}" > /dev/null ||
-    abort ERROR 'Failed to add aliases to root .bashrc file.'
-  
-  log INFO 'Aliases have been added to root .bashrc file.'
   log INFO 'Trash manager has been installed.'
 }
 
@@ -343,33 +209,6 @@ install_terminals () {
     abort ERROR 'Failed to install terminal packages.'
 
   log INFO 'Alacritty and cool-retro-term have been installed.'
-
-  local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
-    abort ERROR 'Unable to read user_name setting.'
-
-  local config_home="/home/${user_name}/.config/alacritty"
-
-  mkdir -p "${config_home}" &&
-    cp /opt/stack/installer/configs/alacritty/alacritty.toml "${config_home}" ||
-    abort ERROR 'Failed to copy the alacritty config file.'
-  
-  log INFO 'Alacritty config file has been copied.'
-
-  local bashrc_file="/home/${user_name}/.bashrc"
-
-  echo -e '\nexport TERMINAL=alacritty' >> "${bashrc_file}" &&
-    sed -i '/PS1.*/d' "${bashrc_file}" &&
-    cat /opt/stack/installer/configs/alacritty/user.prompt >> "${bashrc_file}" ||
-    abort ERROR 'Failed to add hooks in the .bashrc file.'
-  
-  log INFO 'Hooks have been added in the .bashrc file.'
-
-  sudo sed -i '/PS1.*/d' /root/.bashrc &&
-    cat /opt/stack/installer/configs/alacritty/root.prompt | sudo tee -a /root/.bashrc > /dev/null ||
-    abort ERROR 'Failed to add hooks in the root .bashrc file.'
-
-  log INFO 'Hooks have been added in the root .bashrc file.'
   log INFO 'Virtual terminals have been installed.'
 }
 
@@ -381,17 +220,6 @@ install_text_editor () {
     abort ERROR 'Failed to install helix.'
 
   log INFO 'Helix has been installed.'
-
-  local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
-    abort ERROR 'Unable to read user_name setting.'
-
-  local bashrc_file="/home/${user_name}/.bashrc"
-
-  echo -e '\nexport EDITOR=helix' >> "${bashrc_file}" ||
-    abort ERROR 'Failed to set helix as default editor.'
-
-  log INFO 'Helix set as default editor.'
   log INFO 'Text editor has been installed.'
 }
 
@@ -401,24 +229,6 @@ install_monitoring_tools () {
 
   sudo pacman -S --needed --noconfirm htop glances 2>&1 ||
     abort ERROR 'Failed to install monitoring tools.'
-
-  local desktop_home='/usr/local/share/applications'
-
-  sudo mkdir -p "${desktop_home}" || abort ERROR "Failed to create folder ${desktop_home}."
-
-  local desktop_file="${desktop_home}/glances.desktop"
-
-  printf '%s\n' \
-   '[Desktop Entry]' \
-   'Type=Application' \
-   'Name=Glances' \
-   'comment=Console Monitor' \
-   'Exec=glances' \
-   'Terminal=true' \
-   'Icon=glances' \
-   'Catogories=Monitor;Resources;System;Console' \
-   'Keywords=Monitor;Resources;System' | sudo tee "${desktop_file}" > /dev/null ||
-   abort ERROR 'Failed to create the desktop file.'
 
   log INFO 'Monitoring tools have been installed.'
 }
@@ -441,24 +251,6 @@ install_calculator () {
   sudo pacman -S --needed --noconfirm libqalculate 2>&1 ||
     abort ERROR 'Failed to install qalculate.'
 
-  local desktop_home='/usr/local/share/applications'
-
-  sudo mkdir -p "${desktop_home}" || abort ERROR "Failed to create folder ${desktop_home}."
-
-  local desktop_file="${desktop_home}/qalculate.desktop"
-
-  printf '%s\n' \
-    '[Desktop Entry]' \
-    'Type=Application' \
-    'Name=qalculate' \
-    'comment=Console Calculator' \
-    'Exec=qalc' \
-    'Terminal=true' \
-    'Icon=qalculate' \
-    'Catogories=Math;Calculator;Console' \
-    'Keywords=Calc;Math' | sudo tee "${desktop_file}" > /dev/null ||
-    abort ERROR 'Failed to create desktop file.'
-
   log INFO 'Calculator has been installed.'
 }
 
@@ -469,20 +261,6 @@ install_media_viewer () {
   sudo pacman -S --needed --noconfirm sxiv 2>&1 ||
     abort ERROR 'Failed to install sxiv.'
 
-  local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
-    abort ERROR 'Unable to read user_name setting.'
-
-  local config_home="/home/${user_name}/.config"
-
-  printf '%s\n' \
-    'image/jpeg=sxiv.desktop' \
-    'image/jpg=sxiv.desktop' \
-    'image/png=sxiv.desktop' \
-    'image/tiff=sxiv.desktop' >> "${config_home}/mimeapps.list" ||
-    abort ERROR 'Failed to add image mime types.'
-  
-  log INFO 'Image mime types have been added.'
   log INFO 'Media viewer has been installed.'
 }
 
@@ -499,52 +277,15 @@ install_music_player () {
 
   local config_home="/home/${user_name}/.config"
 
-  local mpd_home="/${config_home}/mpd"
-
-  mkdir -p "${mpd_home}"/{playlists,database} ||
-    abort ERROR 'Failed to create mpd config directories.'
-
-  cp /opt/stack/installer/configs/mpd/conf "${mpd_home}/mpd.conf" ||
-    abort ERROR 'Failed to copy the mpd config file.'
-
-  local ncmpcpp_home="/${config_home}/ncmpcpp"
-
-  mkdir -p "${ncmpcpp_home}" &&
-    cp /opt/stack/installer/configs/ncmpcpp/config "${ncmpcpp_home}/config" ||
-    abort ERROR 'Failed to copy ncmpcpp config file.'
+  mkdir -p \
+    "${config_home}/mpd/playlists" \
+    "${config_home}/mpd/database" ||
+    abort ERROR 'Failed to create mpd directories.'
 
   sudo systemctl --user enable mpd.service 2>&1 ||
     abort ERROR 'Failed to enable mpd service.'
 
   log INFO 'Mpd service has been enabled.'
-
-  local desktop_home='/usr/local/share/applications'
-
-  sudo mkdir -p "${desktop_home}" || abort ERROR "Failed to create folder ${desktop_home}."
-
-  local desktop_file="${desktop_home}/ncmpcpp.desktop"
-
-  printf '%s\n' \
-    '[Desktop Entry]' \
-    'Type=Application' \
-    'Name=Ncmpcpp' \
-    'comment=Console music player' \
-    'Exec=ncmpcpp' \
-    'Terminal=true' \
-    'Icon=ncmpcpp' \
-    'MimeType=audio/mpeg' \
-    'Catogories=Music;Player;ConsoleOnly' \
-    'Keywords=Music;Player;Audio' | sudo tee "${desktop_file}" > /dev/null ||
-    abort ERROR 'Failed to create the desktop file.'
-  
-  printf '%s\n' \
-    'audio/mpeg=ncmpcpp.desktop' \
-    'audio/mp3=ncmpcpp.desktop' \
-    'audio/flac=ncmpcpp.desktop' \
-    'audio/midi=ncmpcpp.desktop' >> "${config_home}/mimeapps.list" ||
-    abort ERROR 'Failed to add audio mime types.'
-  
-  log INFO 'Audio mime types have been added.'
   log INFO 'Music player has been installed.'
 }
 
@@ -555,21 +296,6 @@ install_video_player () {
   sudo pacman -S --needed --noconfirm mpv 2>&1 ||
     abort ERROR 'Failed to install mpv.'
 
-  local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
-    abort ERROR 'Unable to read user_name setting.'
-
-  local config_home="/home/${user_name}/.config"
-
-  printf '%s\n' \
-    'video/mp4=mpv.desktop' \
-    'video/mkv=mpv.desktop' \
-    'video/mov=mpv.desktop' \
-    'video/mpeg=mpv.desktop' \
-    'video/avi=mpv.desktop' >> "${config_home}/mimeapps.list" ||
-    abort ERROR 'Failed to add video mime types.'
-  
-  log INFO 'Video mime types have been added.'
   log INFO 'Video media player has been installed.'
 }
 
@@ -590,32 +316,36 @@ install_theme () {
 
   local theme_url='https://github.com/dracula/gtk/archive/master.zip'
 
-  sudo curl "${theme_url}" -sSLo /usr/share/themes/Dracula.zip \
+  local themes_home='/usr/share/themes'
+
+  sudo curl "${theme_url}" -sSLo "${themes_home}/Dracula.zip" \
     --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 2>&1 &&
-    sudo unzip -q /usr/share/themes/Dracula.zip -d /usr/share/themes 2>&1 &&
-    sudo mv /usr/share/themes/gtk-master /usr/share/themes/Dracula &&
-    sudo rm -f /usr/share/themes/Dracula.zip ||
+    sudo unzip -q "${themes_home}/Dracula.zip" -d "${themes_home}" 2>&1 &&
+    sudo mv "${themes_home}/gtk-master" "${themes_home}/Dracula" &&
+    sudo rm -f "${themes_home}/Dracula.zip" ||
     abort ERROR 'Failed to install theme files.'
 
   log INFO 'Theme files have been installed.'
 
   local icons_url='https://github.com/dracula/gtk/files/5214870/Dracula.zip'
 
-  sudo curl "${icons_url}" -sSLo /usr/share/icons/Dracula.zip \
+  local icons_home='/usr/share/icons'
+
+  sudo curl "${icons_url}" -sSLo "${icons_home}/Dracula.zip" \
     --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 2>&1 &&
-    sudo unzip -q /usr/share/icons/Dracula.zip -d /usr/share/icons 2>&1 &&
-    sudo rm -f /usr/share/icons/Dracula.zip ||
+    sudo unzip -q "${icons_home}/Dracula.zip" -d "${icons_home}" 2>&1 &&
+    sudo rm -f "${icons_home}/Dracula.zip" ||
     abort ERROR 'Failed to install icon files.'
 
   log INFO 'Icon files have been installed.'
 
   local cursors_url='https://www.dropbox.com/s/mqt8s1pjfgpmy66/Breeze-Snow.tgz?dl=1'
 
-  sudo wget "${cursors_url}" -qO /usr/share/icons/breeze-snow.tgz \
+  sudo wget "${cursors_url}" -qO "${icons_home}/breeze-snow.tgz" \
     --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 3 2>&1 &&
-    sudo tar -xzf /usr/share/icons/breeze-snow.tgz -C /usr/share/icons 2>&1 &&
-    sudo sed -ri 's/Inherits=.*/Inherits=Breeze-Snow/' /usr/share/icons/default/index.theme &&
-    sudo rm -f /usr/share/icons/breeze-snow.tgz ||
+    sudo tar -xzf "${icons_home}/breeze-snow.tgz" -C "${icons_home}" 2>&1 &&
+    sudo sed -ri 's/Inherits=.*/Inherits=Breeze-Snow/' "${icons_home}/default/index.theme" &&
+    sudo rm -f "${icons_home}/breeze-snow.tgz" ||
     abort ERROR 'Failed to install cursors.'
 
   log INFO 'Cursors have been installed.'
@@ -624,34 +354,12 @@ install_theme () {
   user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
     abort ERROR 'Unable to read user_name setting.'
 
-  local config_home="/home/${user_name}/.config/gtk-3.0"
-  
-  mkdir -p "${config_home}" &&
-    cp /opt/stack/installer/configs/gtk/settings.ini "${config_home}" ||
-    abort ERROR 'Failed to copy gtk settings file.'
+  sed -i \
+    -e 's/#THEME#/Dracula/' \
+    -e 's/#ICONS#/Dracula/' \
+    -e 's/#CURSORS#/Breeze-Snow/' "/home/${user_name}/.config/gtk-3.0/settings.ini" ||
+    abort ERROR 'Failed to set theme in GTK settings.'
 
-  log INFO 'Gtk settings file has been copied.'
-
-  local wallpapers_home="/home/${user_name}/.local/share/wallpapers"
-
-  rsync -av /opt/stack/installer
-
-  mkdir -p "${wallpapers_home}" &&
-    cp /opt/stack/installer/assets/wallpapers/* "${wallpapers_home}" ||
-    abort ERROR 'Failed to copy wallpapers.'
-  
-  log INFO 'Wallpapers have been copied.'
-
-  config_home="/home/${user_name}/.config/stack"
-
-  mkdir -p "${config_home}" || abort ERROR "Failed to create folder ${config_home}."
-
-  local settings='{"wallpaper": {"name": "default.jpeg", "mode": "fill"}}'
-
-  echo "${settings}" > "${config_home}/desktop.json" ||
-    abort ERROR 'Failed to add wallpaper into the desktop settings file.'
-
-  log INFO 'Wallpaper has been set into the desktop settings file.'
   log INFO 'Desktop theme has been setup.'
 }
 
@@ -719,20 +427,6 @@ install_fonts () {
   log INFO 'Extra glyphs have been installed.'
 }
 
-# Installs various system sound resources.
-install_sounds () {
-  log INFO 'Installing extra system sounds...'
-
-  local sounds_home='/usr/share/sounds/system'
-  
-  sudo mkdir -p "${sounds_home}" &&
-    sudo cp /opt/stack/installer/assets/sounds/normal.wav "${sounds_home}" &&
-    sudo cp /opt/stack/installer/assets/sounds/critical.wav "${sounds_home}" ||
-    abort ERROR 'Failed to copy system sound files.'
-
-  log INFO 'System sounds have been installed.'
-}
-
 # Installs various extra packages.
 install_extra_packages () {
   log INFO 'Installing some extra packages...'
@@ -745,6 +439,39 @@ install_extra_packages () {
     abort ERROR 'Failed to install extra packages.'
   
   log INFO 'Extra packages have been installed.'
+}
+
+setup_shell_environment () {
+  local user_name=''
+  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
+    abort ERROR 'Unable to read user_name setting.'
+
+  local stackrc_file="/home/${user_name}/.stackrc"
+
+  # Set the defauilt terminal and text editor
+  sed -i \
+    -e 's/#TERMINAL#/alacritty/' \
+    -e 's/#EDITOR#/helix/' "${stackrc_file}" ||
+    abort ERROR 'Failed to set the terminal defaults.'
+
+  log INFO 'Default terminal set to cool-retro-term.'
+  log INFO 'Default editor set to helix.'
+  
+  local bashrc_file="/home/${user_name}/.bashrc"
+
+  sed -i \
+    -e '/PS1.*/d' \
+    -e '$a\'$'\n''source "${HOME}/.stackrc"' "${bashrc_file}" ||
+    abort ERROR 'Failed to add stackrc hook into bashrc.'
+
+  sudo cp "/home/${user_name}/.stackrc" /root/.stackrc 
+
+  bashrc_file='/root/.bashrc'
+
+  sudo sed -i \
+    -e '/PS1.*/d' \
+    -e '$a\'$'\n''source "${HOME}/.stackrc"' "${bashrc_file}" ||
+    abort ERROR 'Failed to add stackrc hook into bashrc.'
 }
 
 log INFO 'Script desktop.sh started.'
@@ -775,8 +502,8 @@ install_compositor &&
   install_media_codecs &&
   install_theme &&
   install_fonts &&
-  install_sounds &&
-  install_extra_packages
+  install_extra_packages &&
+  setup_shell_environment
 
 log INFO 'Script desktop.sh has finished.'
 

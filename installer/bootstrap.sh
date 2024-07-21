@@ -2,12 +2,12 @@
 
 set -Eeo pipefail
 
-source /opt/stack/commons/process.sh
-source /opt/stack/commons/error.sh
-source /opt/stack/commons/logger.sh
-source /opt/stack/commons/validators.sh
+source ../airootfs/opt/stack/commons/process.sh
+source ../airootfs/opt/stack/commons/error.sh
+source ../airootfs/opt/stack/commons/logger.sh
+source ../airootfs/opt/stack/commons/validators.sh
 
-SETTINGS='/opt/stack/installer/settings.json'
+SETTINGS=./settings.json
 
 # Synchronizes the system clock to the current time.
 sync_clock () {
@@ -119,14 +119,15 @@ install_kernel () {
   log INFO 'Linux kernel has been installed.'
 }
 
-# Copy the stack system files.
-copy_stack_files () {
-  log INFO 'Copying the stack system files...'
+# Copies the installation files to the new system.
+copy_installation_files () {
+  log INFO 'Copying installation files to the new system...'
 
-  rsync -av src/ /mnt ||
-    abort ERROR 'Failed to copy stack system files.'
-  
-  log INFO 'Stack system files have been copied.'
+  mkdir -p /mnt/opt/installation &&
+    rsync -av ../airootfs ../installer /mnt/opt/installation ||
+    abort ERROR 'Unable to copy installation files.'
+
+  log INFO 'Installation files have been copied.'
 }
 
 # Grants the nopasswd permission to the wheel user group.
@@ -143,43 +144,6 @@ grant_permissions () {
   log INFO 'Sudoer nopasswd permission has been granted.'
 }
 
-# Copies the release hook to the new system.
-copy_release_hook () {
-  cp /etc/stack-release /mnt/etc/stack-release &&
-    cat /usr/lib/os-release > /mnt/usr/lib/os-release &&
-    rm -f /mnt/etc/arch-release ||
-    abort ERROR 'Unable to copy the os release meta files.'
-  
-  cp -r /etc/pacman.d/scripts /mnt/etc/pacman.d &&
-    mkdir -p /mnt/etc/pacman.d/hooks &&
-    cp /etc/pacman.d/hooks/90-fix-release.hook /mnt/etc/pacman.d/hooks ||
-    abort ERROR 'Unable to copy fix release pacman hook.'
-  
-  log INFO 'Release hook has been copied.'
-}
-
-# Copies the installation files to the new system.
-copy_installer () {
-  log INFO 'Copying installer files...'
-
-  mkdir -p /mnt/opt/stack &&
-    cp -r /opt/stack/installer /mnt/opt/stack ||
-    abort ERROR 'Unable to copy installer files.'
-  
-  cp /opt/stack/installer/.hash /mnt/opt/stack/.hash ||
-    abort ERROR 'Unable to copy stack hash file.'
-
-  log INFO 'Installer files have been copied.'
-}
-
-# Copies the log files.
-copy_log_files () {
-  mkdir -p /mnt/var/log/stack ||
-    abort ERROR 'Failed to create logs home under /mnt/var/log/stack.'
-  
-  log INFO 'Log files have been copied.'
-}
-
 log INFO 'Script bootstrap.sh started.'
 log INFO 'Starting the bootstrap process...'
 
@@ -188,11 +152,8 @@ sync_clock &&
   sync_package_databases &&
   update_keyring &&
   install_kernel &&
-  copy_stack_files &&
-  grant_permissions &&
-  copy_release_hook &&
-  copy_installer &&
-  copy_log_files
+  copy_installation_files &&
+  grant_permissions
 
 log INFO 'Script bootstrap.sh has finished.'
 

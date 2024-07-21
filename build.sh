@@ -91,26 +91,6 @@ remove_package () {
   log INFO "Package ${name} has removed."
 }
 
-# Adds the given file prermissions to the given path.
-# Arguments:
-#  path:  the path to grant the permissions
-#  perms: the file permissions, e.g. 755
-add_file_permissions () {
-  local path="${1}"
-  local perms="${2}"
-
-  local permissions_file="${PROFILE_DIR}/profiledef.sh"
-
-  if [[ ! -f "${permissions_file}" ]]; then
-    abort ERROR "Unable to locate file ${permissions_file}."
-  fi
-
-  sed -i "/file_permissions=(/a [\"${path}\"]=\"${perms}\"" "${permissions_file}" ||
-    abort ERROR "Unable to add file permission ${perms} to ${path}."
-  
-  log INFO "Permission ${perms} added to ${path}."
-}
-
 # Initializes build and distribution files.
 init () {
   if [[ -d "${DIST_DIR}" ]]; then
@@ -170,7 +150,7 @@ copy_stack_files () {
 rename_distro () {
   local name='stackiso'
 
-  sed -i "s/#NAME#/${name}/" "${ROOT_FS}/etc/hostname" ||
+  sed -i "s/#HOST_NAME#/${name}/" "${ROOT_FS}/etc/hostname" ||
     abort ERROR 'Failed to set the host name.'
   
   log INFO "Host name set to ${name}."
@@ -178,8 +158,8 @@ rename_distro () {
   local version=''
   version="$(date +%Y.%m.%d)" || abort ERROR 'Failed to create version number.'
 
-  sed -i "s/#DATE#/${version}/" "${ROOT_FS}/etc/stack-release" ||
-    aboirt ERROR 'Failed to set build version.'
+  sed -i "s/#VERSION#/${version}/" "${ROOT_FS}/usr/lib/os-release" ||
+    abort ERROR 'Failed to set build version.'
 
   local profile_def="${PROFILE_DIR}/profiledef.sh"
 
@@ -318,7 +298,7 @@ define_packages () {
   pkgs+=(
     picom bspwm sxhkd polybar rofi dunst
     trash-cli cool-retro-term helix firefox torbrowser-launcher
-    irssi ttf-font-awesome noto-fonts-emoji
+    irssi ttf-font-awesome noto-fonts-emoji nnn fzf
   )
 
   local pkg=''
@@ -404,65 +384,6 @@ remove_unnecessary_tools () {
     abort ERROR 'Failed to remove scratchpad from desktop tool.'
 
   log INFO 'Scratchpad has been removed from desktop tool.'
-}
-
-# Copies the files of the installer.
-copy_installer () {
-  if [[ ! -d "${ROOT_FS}" ]]; then
-    abort ERROR 'Unable to locate the airootfs folder.'
-  fi
-
-  local installer_home="${ROOT_FS}/opt/stack/installer"
-
-  mkdir -p "${installer_home}" ||
-    abort ERROR 'Failed to create the /opt/stack/installer folder.'
-
-  cp -r assets "${installer_home}" &&
-    cp -r configs "${installer_home}" &&
-    cp -r services "${installer_home}" &&
-    cp -r src/tools "${installer_home}" &&
-    cp -r src/installer/* "${installer_home}" ||
-    abort ERROR 'Failed to copy the installer files.'
-
-    add_file_permissions '/opt/stack/installer/apps.sh' '0:0:755' &&
-      add_file_permissions '/opt/stack/installer/askme.sh' '0:0:755' &&
-      add_file_permissions '/opt/stack/installer/bootstrap.sh' '0:0:755' &&
-      add_file_permissions '/opt/stack/installer/cleaner.sh' '0:0:755' &&
-      add_file_permissions '/opt/stack/installer/desktop.sh' '0:0:755' &&
-      add_file_permissions '/opt/stack/installer/detection.sh' '0:0:755' &&
-      add_file_permissions '/opt/stack/installer/diskpart.sh' '0:0:755' &&
-      add_file_permissions '/opt/stack/installer/run.sh' '0:0:755' &&
-      add_file_permissions '/opt/stack/installer/stack.sh' '0:0:755' &&
-      add_file_permissions '/opt/stack/installer/system.sh' '0:0:755' &&
-      add_file_permissions '/opt/stack/installer/tools/' '0:0:755' &&
-      add_file_permissions '/opt/stack/installer/configs/bspwm/' '0:0:755' &&
-      add_file_permissions '/opt/stack/installer/configs/dunst/hook' '0:0:755' &&
-      add_file_permissions '/opt/stack/installer/configs/nnn/env' '0:0:755' &&
-      add_file_permissions '/opt/stack/installer/configs/polybar/scripts/' '0:0:755' &&
-      add_file_permissions '/opt/stack/installer/configs/rofi/launch' '0:0:755' &&
-      add_file_permissions '/opt/stack/installer/configs/xsecurelock/hook' '0:0:755' ||
-      abort ERROR 'Failed to add file permissions to /opt/stack/installer.'
-
-  # Create a global alias to launch the installer
-  local bin_home="${ROOT_FS}/usr/local/bin"
-
-  mkdir -p "${bin_home}" || abort ERROR 'Failed to create the /usr/local/bin folder.'
-
-  ln -sf /opt/stack/installer/run.sh "${bin_home}/install_os" ||
-    abort ERROR 'Failed to create the symlink to the installer launcher.'
-
-  # Save the current branch and commit id in a hash file
-  local branch=''
-  branch="$(git branch --show-current)" ||
-    abort ERROR 'Unable to retrieve the current branch name.'
-
-  local commit_id=''
-  commit_id="$(git log -1 --pretty=format:"%H")" ||
-    abort ERROR 'Unable to retrieve the last commit id.'
-
-  echo "{\"branch\": \"${branch}\", \"commit_id\": \"${commit_id}\"}" > "${installer_home}/.hash"
-
-  log INFO 'Installer files have been copied.'
 }
 
 # Sets to skip login prompt and auto login the root user.
@@ -608,8 +529,22 @@ setup_desktop () {
 
   log INFO 'Rofi configuration has been set.'
 
+  # Install and configure file manager
+  local nnn_home="${ROOT_FS}/root/.config/nnn"
+
+  # Todo: get current working directory error
+  local pluggins_url='https://raw.githubusercontent.com/jarun/nnn/master/plugins/getplugs'
+
+  curl "${pluggins_url}" -sSLo "${nnn_home}/getplugs" \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 2>&1 &&
+    cd /root &&
+    HOME=/root sh "${nnn_home}/getplugs" 2>&1 ||
+    abort ERROR 'Failed to install file manager plugins.'
+
+  log INFO 'File manager configuration has been set.'
+
   # Remove unnecessary configurations from live media
-  local names=(allacritty mpd ncmpcpp nnn xsecurelock)
+  local names=(allacritty mpd ncmpcpp xsecurelock)
 
   local name=''
   for name in "${names[@]}"; do
@@ -619,10 +554,53 @@ setup_desktop () {
     log INFO "Configuration files of ${name} have been removed."
   done
 
-  rm -f "${ROOT_FS}/etc/systemd/system/lock@.service" ||
-    abort ERROR 'Failed to remove lock service.'
+  rm -f \
+    "${ROOT_FS}/etc/systemd/system/lock@.service" \
+    "${ROOT_FS}/usr/lib/systemd/system-sleep/locker" ||
+    abort ERROR 'Failed to remove locker files.'
   
-  log INFO 'Lock service has been removed.'
+  log INFO 'Locker files have been removed.'
+}
+
+# Sets up the keyboard layout settings.
+setup_keyboard () {
+  log INFO 'Applying keyboard settings...'
+
+  local keyboard_map='us'
+
+  sed -i "s/#KEYMAP#/${keyboard_map}/" "${ROOT_FS}/etc/vconsole.conf" ||
+    abort ERROR 'Failed to add keymap to vconsole.'
+  
+  log INFO "Virtual console keymap set to ${keyboard_map}."
+  
+  local keyboard_conf="${ROOT_FS}/etc/X11/xorg.conf.d/00-keyboard.conf"
+
+  local keyboard_layout='us'
+  local layout_variant='default'
+  local keyboard_model='pc105'
+  local keyboard_options='grp:alt_shift_toggle'
+
+  sed -i \
+    -e "s/#LAYOUT#/${keyboard_layout}/" \
+    -e "s/#MODEL#/${keyboard_model}/" \
+    -e "s/#OPTIONS#/${keyboard_options}/" "${keyboard_conf}" ||
+    abort ERROR 'Failed to set Xorg keyboard settings.'
+  
+  local settings_file="${ROOT_FS}/root/.config/stack/langs.json"
+  
+  local query=''
+  query+=".keymap = \"${keyboard_map}\" | "
+  query+=".model = \"${keyboard_model}\" | "
+  query+=".options = \"${keyboard_options} | "
+  query+=".layouts[0].code =  \"${keyboard_layout}\" | "
+  query+=".layouts[0].variant =  \"${layout_variant}\""
+
+  local settings=''
+  settings="$(echo '{}' | jq -e "${query}")" &&
+    echo "${settings}" > "${settings_file}" ||
+    abort ERROR 'Failed to save keyboard settings to langs file.'
+
+  log INFO 'Keyboard settings have been applied.'
 }
 
 # Sets up the theme of the desktop environment.
@@ -808,7 +786,7 @@ enable_services () {
 
   log INFO 'Nftables service enabled.'
 
-  sed -i 's;#HOME#;/root;' \
+  sed -i 's;#HOME#;/root;g' \
     "${ROOT_FS}/root/.config/systemd/user/fix-layout.service" ||
     abort ERROR 'Failed to set the home in fix layout service.'
 }
@@ -883,11 +861,11 @@ init &&
   define_packages &&
   build_aur_packages &&
   remove_unnecessary_tools &&
-  copy_installer &&
   setup_auto_login &&
   setup_display_server &&
   setup_shell_environment &&
   setup_desktop &&
+  setup_keyboard &&
   setup_theme &&
   setup_fonts &&
   enable_services &&
