@@ -2,10 +2,10 @@
 
 set -Eeo pipefail
 
-source /opt/stack/commons/process.sh
-source /opt/stack/commons/error.sh
-source /opt/stack/commons/logger.sh
-source /opt/stack/commons/validators.sh
+source src/commons/process.sh
+source src/commons/error.sh
+source src/commons/logger.sh
+source src/commons/validators.sh
 
 SETTINGS=./settings.json
 

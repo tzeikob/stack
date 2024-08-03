@@ -2,11 +2,11 @@
 
 set -Eeo pipefail
 
-source ../airootfs/opt/stack/commons/input.sh
-source ../airootfs/opt/stack/commons/error.sh
-source ../airootfs/opt/stack/commons/logger.sh
-source ../airootfs/opt/stack/commons/text.sh
-source ../airootfs/opt/stack/commons/validators.sh
+source src/commons/input.sh
+source src/commons/error.sh
+source src/commons/logger.sh
+source src/commons/text.sh
+source src/commons/validators.sh
 
 SETTINGS=./settings.json
 

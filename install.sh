@@ -2,10 +2,10 @@
 
 set -Eeo pipefail
 
-source ../airootfs/opt/stack/commons/input.sh
-source ../airootfs/opt/stack/commons/error.sh
-source ../airootfs/opt/stack/commons/logger.sh
-source ../airootfs/opt/stack/commons/validators.sh
+source src/commons/input.sh
+source src/commons/error.sh
+source src/commons/logger.sh
+source src/commons/validators.sh
 
 SETTINGS=./settings.json
 
@@ -50,7 +50,7 @@ run () {
   # Do not log while running the askme screens
   if equals "${file_name}" 'askme'; then
     echo
-    bash ./askme.sh || return 1
+    bash src/installer/askme.sh || return 1
 
     echo
     return 0
@@ -80,7 +80,7 @@ run () {
   
   local log_file="/var/log/stack/${file_name}.log"
 
-  bash ./${file_name}.sh 2>&1 |
+  bash src/installer/${file_name}.sh 2>&1 |
     tee -a "${log_file}" 2>&1 |
     tqdm --desc "${desc^}:" --ncols 50 \
       --bar-format "${BAR_FORMAT}" --total ${total} >> "${log_file}.tqdm"
@@ -136,7 +136,7 @@ install () {
       ;;
   esac
 
-  local script_file=./${file_name}.sh
+  local script_file="src/installer/${file_name}.sh"
 
   arch-chroot /mnt runuser -u "${user_name}" -- "${script_file}" 2>&1 |
     tee -a "${log_file}" 2>&1 |
