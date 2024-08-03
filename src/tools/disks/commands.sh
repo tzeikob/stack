@@ -1413,3 +1413,18 @@ create_bootable () {
   log "Bootable disk ${path} is ready."
 }
 
+# Installs a new stack linux system.
+# Arguments:
+#  branch: the branch of the stack to be installed.
+install_stack () {
+  local branch="${1:-"master"}"
+
+  git clone "https://github.com/tzeikob/stack.git" /tmp/stack ||
+    abort "Failed to clone the stack git repository."
+  
+  cd /tmp/stack && git checkout "${branch}" ||
+    abort "Failed to checkout to the ${branch} branch."
+  
+  ./install.sh
+}
+
