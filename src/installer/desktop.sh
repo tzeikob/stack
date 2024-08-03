@@ -78,9 +78,7 @@ install_login_screen () {
   host_name="$(jq -cer '.host_name' "${SETTINGS}")" ||
     abort ERROR 'Unable to read host_name setting.'
 
-  echo " ${host_name} " |
-    figlet -f pagga 2>&1 |
-    sudo tee /etc/issue > /dev/null ||
+  echo " ${host_name} " | figlet -f pagga 2>&1 | sudo tee /etc/issue > /dev/null ||
     abort ERROR 'Failed to create the new issue file.'
   
   echo -e '\n' | sudo tee -a /etc/issue > /dev/null ||
@@ -88,11 +86,13 @@ install_login_screen () {
   
   log INFO 'The new issue file has been created.'
 
-  sudo sed -ri "s;(ExecStart=-/sbin/agetty)(.*);\1 --nohostname\2;" \
+  sudo sed -ri \
+    "s;(ExecStart=-/sbin/agetty)(.*);\1 --nohostname\2;" \
     /lib/systemd/system/getty@.service ||
     abort ERROR 'Failed to set no hostname mode to getty service.'
 
-  sudo sed -ri "s;(ExecStart=-/sbin/agetty)(.*);\1 --nohostname\2;" \
+  sudo sed -ri \
+    "s;(ExecStart=-/sbin/agetty)(.*);\1 --nohostname\2;" \
     /lib/systemd/system/serial-getty@.service ||
     abort ERROR 'Failed to set no hostname mode to serial getty service.'
 
@@ -149,8 +149,6 @@ install_notification_server () {
   sudo pacman -S --needed --noconfirm dunst 2>&1 ||
     abort ERROR 'Failed to install dunst.'
 
-  log INFO 'Dunst has been installed.'
-
   log INFO 'Notifications server has been installed.'
 }
 
@@ -186,6 +184,14 @@ install_file_manager () {
     mkdir -p "/home/${user_name}"/{images,audios,videos} ||
     abort ERROR 'Failed to create home directories.'
   
+  printf '%s\n' \
+    'XDG_DESKTOP_DIR="${HOME}"' \
+    'XDG_DOWNLOAD_DIR="${HOME}/downloads"' \
+    'XDG_DOCUMENTS_DIR="${HOME}/documents"' \
+    'XDG_PICTURES_DIR="${HOME}/images"' \
+    'XDG_MUSIC_DIR="${HOME}/audios"' \
+    'XDG_VIDEOS_DIR="${HOME}/videos"' > "/home/${user_name}/user-dirs.dirs"
+  
   log INFO 'Home directories have been created.'
   log INFO 'File manager has been installed.'
 }
@@ -197,7 +203,6 @@ install_trash_manager () {
   sudo pacman -S --needed --noconfirm trash-cli 2>&1 ||
     abort ERROR 'Failed to install trash-cli.'
 
-  log INFO 'Trash-cli has been installed.'
   log INFO 'Trash manager has been installed.'
 }
 
@@ -208,7 +213,6 @@ install_terminals () {
   sudo pacman -S --needed --noconfirm alacritty cool-retro-term 2>&1 ||
     abort ERROR 'Failed to install terminal packages.'
 
-  log INFO 'Alacritty and cool-retro-term have been installed.'
   log INFO 'Virtual terminals have been installed.'
 }
 
@@ -219,18 +223,17 @@ install_text_editor () {
   sudo pacman -S --needed --noconfirm helix 2>&1 ||
     abort ERROR 'Failed to install helix.'
 
-  log INFO 'Helix has been installed.'
   log INFO 'Text editor has been installed.'
 }
 
-# Installing monitoring tools.
-install_monitoring_tools () {
-  log INFO 'Installing monitoring tools...'
+# Installing monitor tools.
+install_monitor_tools () {
+  log INFO 'Installing monitor tools...'
 
   sudo pacman -S --needed --noconfirm htop glances 2>&1 ||
-    abort ERROR 'Failed to install monitoring tools.'
+    abort ERROR 'Failed to install monitor tools.'
 
-  log INFO 'Monitoring tools have been installed.'
+  log INFO 'Monitor tools have been installed.'
 }
 
 # Installs the print screen and recording casters.
@@ -387,10 +390,12 @@ install_fonts () {
 
   for font in "${fonts[@]}"; do
     local name=''
-    name="$(echo "${font}" | cut -d ' ' -f 1)" || abort ERROR 'Failed to read font name.'
+    name="$(echo "${font}" | cut -d ' ' -f 1)" ||
+      abort ERROR 'Failed to read font name.'
 
     local url=''
-    url="$(echo "${font}" | cut -d ' ' -f 2)" || abort ERROR 'Failed to read font URL.'
+    url="$(echo "${font}" | cut -d ' ' -f 2)" ||
+      abort ERROR 'Failed to read font URL.'
 
     sudo curl "${url}" -sSLo "${fonts_home}/${name}.zip" \
       --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 2>&1 &&
@@ -431,16 +436,14 @@ install_fonts () {
 install_extra_packages () {
   log INFO 'Installing some extra packages...'
 
-  yay -S --needed --noconfirm --removemake smenu 2>&1 ||
-    abort ERROR 'Failed to install smenu package.'
-
   yay -S --needed --noconfirm --removemake \
-    digimend-kernel-drivers-dkms-git xkblayout-state-git 2>&1 ||
+    smenu digimend-kernel-drivers-dkms-git xkblayout-state-git 2>&1 ||
     abort ERROR 'Failed to install extra packages.'
   
   log INFO 'Extra packages have been installed.'
 }
 
+# Sets up the root and user shell environments.
 setup_shell_environment () {
   local user_name=''
   user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
@@ -464,7 +467,7 @@ setup_shell_environment () {
     -e '$a\'$'\n''source "${HOME}/.stackrc"' "${bashrc_file}" ||
     abort ERROR 'Failed to add stackrc hook into bashrc.'
 
-  sudo cp "/home/${user_name}/.stackrc" /root/.stackrc 
+  sudo cp "/home/${user_name}/.stackrc" /root/.stackrc
 
   bashrc_file='/root/.bashrc'
 
@@ -493,7 +496,7 @@ install_compositor &&
   install_trash_manager &&
   install_terminals &&
   install_text_editor &&
-  install_monitoring_tools &&
+  install_monitor_tools &&
   install_screen_casters &&
   install_calculator &&
   install_media_viewer &&

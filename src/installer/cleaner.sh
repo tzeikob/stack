@@ -8,7 +8,7 @@ source src/commons/logger.sh
 
 # Deletes any remnants installation files from the new system.
 remove_installation_files () {
-  rm -rf /mnt/opt/stack/installer
+  rm -rf /mnt/stack
 
   if has_failed; then
     log WARN 'Unable to remove installation files.'

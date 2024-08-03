@@ -9,20 +9,27 @@ source src/commons/validators.sh
 
 SETTINGS=./settings.json
 
-# Copy the stack file system.
-copy_stack_files () {
-  log INFO 'Copying the stack file system...'
+# Syncs airoot files to new system.
+sync_root_files () {
+  log INFO 'Syncing root file system...'
 
-  rsync -av ../airootfs/ / ||
-    abort ERROR 'Failed to copy stack file system.'
+  local user_name=''
+  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
+    abort ERROR 'Unable to read user_name setting.'
+
+  rsync -av /stack/airootfs/ / &&
+    rsync -av /stack/src/commons /stack/src/tools /opt/stack &&
+    mv /home/user "/home/${user_name}" ||
+    abort ERROR 'Failed to sync root file system.'
   
-  log INFO 'Stack file system has been copied.'
+  log INFO 'Root file system has been synced.'
 }
 
-# Fixes the release data.
+# Fixes the os release data.
 fix_release_data () {
   local version=''
-  version="$(date +%Y.%m.%d)" || abort ERROR 'Failed to create version number.'
+  version="$(date +%Y.%m.%d)" ||
+    abort ERROR 'Failed to create version number.'
 
   sed -i "s/#VERSION#/${version}/" /usr/lib/os-release ||
     abort ERROR 'Failed to set os release version.'
@@ -69,17 +76,11 @@ set_users () {
   user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
     abort ERROR 'Unable to read user_name setting.'
 
-  useradd -m -G "${groups}" -s /bin/bash "${user_name}" 2>&1 ||
+  useradd -m -G "${groups}" -s /bin/bash "${user_name}" 2>&1 &&
+    chown -R ${user_name}:${user_name} "/home/${user_name}" ||
     abort ERROR 'Failed to create the sudoer user.'
 
   log INFO "Sudoer user ${user_name} has been created."
-
-  rsync -av /home/user/ "/home/${user_name}" &&
-    chown -R ${user_name}:${user_name} "/home/${user_name}" &&
-    rm -rf /home/user ||
-    abort ERROR 'Failed to sync the home folder.'
-  
-  log INFO 'Home folder has been synced.'
 
   local rule='%wheel ALL=(ALL:ALL) ALL'
 
@@ -121,7 +122,7 @@ set_users () {
 
 # Sets the pacman package database mirrors.
 set_mirrors () {
-  log INFO 'Setting up the package databases mirrors...'
+  log INFO 'Setting up package databases mirrors...'
 
   local mirrors=''
   mirrors="$(jq -cer '.mirrors|join(",")' "${SETTINGS}")" ||
@@ -389,7 +390,8 @@ set_locales () {
 
   local config_home="/home/${user_name}/.config/stack"
 
-  mkdir -p "${config_home}" || abort ERROR "Failed to create folder ${config_home}."
+  mkdir -p "${config_home}" ||
+    abort ERROR "Failed to create folder ${config_home}."
 
   local settings=''
   settings="$(echo "${locales}" | jq -e '{locale: .[0], locales: .}')" ||
@@ -467,7 +469,8 @@ set_keyboard () {
   
   local config_home="/home/${user_name}/.config/stack"
 
-  mkdir -p "${config_home}" || abort ERROR "Failed to create folder ${config_home}."
+  mkdir -p "${config_home}" ||
+    abort ERROR "Failed to create folder ${config_home}."
 
   local settings_file="${config_home}/langs.json"
 
@@ -551,7 +554,6 @@ boost_performance () {
     abort ERROR 'Failed to update the max limit to inotify watches.'
 
   log INFO "Inotify watches limit has been set to ${limit}."
-
   log INFO 'Boosting has been completed.'
 }
 
@@ -631,7 +633,8 @@ configure_security () {
 
   local config_home="/home/${user_name}/.config/stack"
 
-  mkdir -p "${config_home}" || abort ERROR "Failed to create folder ${config_home}."
+  mkdir -p "${config_home}" ||
+    abort ERROR "Failed to create folder ${config_home}."
 
   local settings='{"screen_locker": {"interval": 12}}'
 
@@ -642,7 +645,6 @@ configure_security () {
     abort ERROR 'Failed to set screen locker interval.'
   
   log INFO 'Screen locker inteval set to 12 mins.'
-
   log INFO 'Security configuration has been completed.'
 }
 
@@ -790,7 +792,7 @@ if not_equals "$(id -u)" 0; then
   abort ERROR 'Script system.sh must be run as root user.'
 fi
 
-copy_stack_files &&
+sync_root_files &&
   fix_release_data &&
   set_host &&
   set_users &&

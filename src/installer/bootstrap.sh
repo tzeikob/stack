@@ -119,12 +119,13 @@ install_kernel () {
   log INFO 'Linux kernel has been installed.'
 }
 
-# Copies the installation files to the new system.
+# Copies the installation files to new system.
 copy_installation_files () {
-  log INFO 'Copying installation files to the new system...'
+  log INFO 'Copying installation files to new system...'
 
-  mkdir -p /mnt/opt/installation &&
-    rsync -av ../airootfs ../installer /mnt/opt/installation ||
+  local target="/mnt/stack"
+
+  rm -rf "${target}" && rsync -av . "${target}" ||
     abort ERROR 'Unable to copy installation files.'
 
   log INFO 'Installation files have been copied.'
@@ -153,7 +154,7 @@ sync_clock &&
   update_keyring &&
   install_kernel &&
   copy_installation_files &&
-  grant_permissions
+  grant_permissions 
 
 log INFO 'Script bootstrap.sh has finished.'
 
