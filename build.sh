@@ -8,47 +8,9 @@ AUR_DIR="${DIST_DIR}/aur"
 PROFILE_DIR="${DIST_DIR}/profile"
 ROOT_FS="${PROFILE_DIR}/airootfs"
 
-# Prints the given log message prefixed with the given log level.
-# Options:
-#  n:       print an empty line before, -nn 2 lines and so on
-# Arguments:
-#  level:   one of INFO, WARN, ERROR
-#  message: a message to show
-# Outputs:
-#  Prints the message in <level> <message> form.
-log () {
-  local OPTIND opt
-
-  while getopts ':n' opt; do
-    case "${opt}" in
-     'n') printf '\n';;
-    esac
-  done
-
-  # Collect arguments
-  shift $((OPTIND - 1))
-
-  local level="${1}"
-  local message="${2}"
-
-  printf '%-5s %b\n' "${level}" "${message}"
-}
-
-# Aborts the current process logging the given error message.
-# Arguments:
-#  level:   one of INFO, WARN, ERROR
-#  message: an error message to print
-# Outputs:
-#  An error messsage.
-abort () {
-  local level="${1}"
-  local message="${2}"
-
-  log "${level}" "${message}"
-  log "${level}" 'Process has been exited.'
-
-  exit 1
-}
+source src/commons/logger.sh
+source src/commons/error.sh
+source src/commons/validators.sh
 
 # Adds the package with the given name into the list of packages.
 # Arguments:
@@ -58,7 +20,7 @@ add_package () {
 
   local pkgs_file="${PROFILE_DIR}/packages.x86_64"
 
-  if [[ ! -f "${pkgs_file}" ]]; then
+  if file_not_exists "${pkgs_file}"; then
     abort ERROR "Unable to locate file ${pkgs_file}."
   fi
 
@@ -77,7 +39,7 @@ remove_package () {
 
   local pkgs_file="${PROFILE_DIR}/packages.x86_64"
 
-  if [[ ! -f "${pkgs_file}" ]]; then
+  if file_not_exists "${pkgs_file}"; then
     abort ERROR "Unable to locate file ${pkgs_file}."
   fi
 
@@ -93,7 +55,7 @@ remove_package () {
 
 # Initializes build and distribution files.
 init () {
-  if [[ -d "${DIST_DIR}" ]]; then
+  if directory_exists "${DIST_DIR}"; then
     rm -rf "${DIST_DIR}" || abort ERROR 'Unable to remove the .dist folder.'
 
     log WARN 'Existing .dist folder has been removed.'
@@ -122,7 +84,7 @@ copy_profile_files () {
 
   local releng_path='/usr/share/archiso/configs/releng'
 
-  if [[ ! -d "${releng_path}" ]]; then
+  if directory_not_exists "${releng_path}"; then
     abort ERROR 'Unable to locate releng archiso profile.'
   fi
 
@@ -795,7 +757,7 @@ enable_services () {
 set_file_permissions () {
   local permissions_file="${PROFILE_DIR}/profiledef.sh"
 
-  if [[ ! -f "${permissions_file}" ]]; then
+  if file_not_exists "${permissions_file}"; then
     abort ERROR "Unable to locate file ${permissions_file}."
   fi
 
@@ -835,7 +797,7 @@ set_file_permissions () {
 make_iso_file () {
   log INFO 'Building the archiso file...'
 
-  if [[ ! -d "${PROFILE_DIR}" ]]; then
+  if directory_not_exists "${PROFILE_DIR}"; then
     abort ERROR 'Unable to locate the releng profile folder.'
   fi
 
