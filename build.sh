@@ -38,7 +38,7 @@ check_deps () {
 }
 
 # Copies the archiso custom profile.
-copy_profile_files () {
+copy_profile () {
   log INFO 'Copying the releng archiso profile...'
 
   local releng_path='/usr/share/archiso/configs/releng'
@@ -53,31 +53,32 @@ copy_profile_files () {
   log INFO "The releng profile copied to ${PROFILE_DIR}."
 }
 
-# Copies the stack root file system to the profile.
-copy_stack_files () {
-  log INFO 'Copying the stack file system...'
+# Syncs airoot files to new system.
+sync_root_files () {
+  log INFO 'Syncing root file system...'
 
-  rsync -av airootfs/ "${ROOT_FS}" ||
-    abort ERROR 'Failed to copy the stack root file system.'
-  
-  rsync -av "${ROOT_FS}/home/user/" "${ROOT_FS}/root" &&
+  rsync -av airootfs/ "${ROOT_FS}" &&
+    rsync -av src/commons src/tools "${ROOT_FS}/opt/stack" &&
+    rsync -av "${ROOT_FS}/home/user/" "${ROOT_FS}/root" &&
     rm -rf "${ROOT_FS}/home/user" ||
-    abort ERROR 'Failed to sync stack home to root home.'
+    abort ERROR 'Failed to sync root file system.'
   
-  log INFO 'Stack file system has been copied.'
+  log INFO 'Root file system has been synced.'
 }
 
 # Sets the distribution names and release meta files.
 rename_distro () {
   local name='stackiso'
 
-  sed -i "s/#HOST_NAME#/${name}/" "${ROOT_FS}/etc/hostname" ||
+  sed -i "s/#HOST_NAME#/${name}/" "${ROOT_FS}/etc/hostname" &&
+    sed -i "s/#HOST_NAME#/${name}/" "${ROOT_FS}/etc/hosts" ||
     abort ERROR 'Failed to set the host name.'
   
   log INFO "Host name set to ${name}."
 
   local version=''
-  version="$(date +%Y.%m.%d)" || abort ERROR 'Failed to create version number.'
+  version="$(date +%Y.%m.%d)" ||
+    abort ERROR 'Failed to create version number.'
 
   sed -i "s/#VERSION#/${version}/" "${ROOT_FS}/usr/lib/os-release" ||
     abort ERROR 'Failed to set build version.'
@@ -238,7 +239,6 @@ define_packages () {
     abort ERROR 'Unable to remove virtualbox-guest-utils-nox package.'
 
   log INFO 'Package virtualbox-guest-utils-nox removed.'
-
   log INFO 'Packages defined in the package list.'
 }
 
@@ -251,7 +251,8 @@ build_aur_packages () {
 
   local repo_home="${PROFILE_DIR}/local/repo"
 
-  mkdir -p "${repo_home}" || abort ERROR 'Failed to create the local repo folder.'
+  mkdir -p "${repo_home}" ||
+    abort ERROR 'Failed to create the local repo folder.'
 
   local names=(
     yay smenu xkblayout-state-git
@@ -283,7 +284,8 @@ build_aur_packages () {
     log INFO "Package ${name} has been built."
   done
 
-  rm -rf "${AUR_DIR}" || abort ERROR 'Failed to remove the AUR temporary folder.'
+  rm -rf "${AUR_DIR}" ||
+    abort ERROR 'Failed to remove the AUR temporary folder.'
 
   local pacman_conf="${PROFILE_DIR}/pacman.conf"
 
@@ -334,7 +336,8 @@ setup_auto_login () {
   log INFO 'Login prompt set to skip and autologin.'
 
   # Remove the default welcome message
-  rm -rf "${ROOT_FS}/etc/motd" || abort ERROR 'Failed to remove the /etc/motd file.'
+  rm -rf "${ROOT_FS}/etc/motd" ||
+    abort ERROR 'Failed to remove the /etc/motd file.'
 
   log INFO 'Default /etc/motd file removed.'
 }
@@ -555,9 +558,6 @@ setup_theme () {
     mv "${themes_home}/gtk-master" "${themes_home}/Dracula" &&
     rm -f "${themes_home}/Dracula.zip" ||
     abort ERROR 'Failed to install the desktop theme.'
-  
-  sed -i 's/#THEME#/Dracula/' "${ROOT_FS}/root/.config/gtk-3.0/settings.ini" ||
-    abort ERROR 'Failed to set theme in GTK settings.'
 
   log INFO 'Desktop theme dracula has been installed.'
 
@@ -574,9 +574,6 @@ setup_theme () {
     unzip -q "${icons_home}/Dracula.zip" -d "${icons_home}" &&
     rm -f "${icons_home}/Dracula.zip" ||
     abort ERROR 'Failed to install the desktop icons.'
-  
-  sed -i 's/#ICONS#/Dracula/' "${ROOT_FS}/root/.config/gtk-3.0/settings.ini" ||
-    abort ERROR 'Failed to set icons in GTK settings.'
 
   log INFO 'Desktop icons dracula have been installed.'
 
@@ -602,10 +599,13 @@ setup_theme () {
     'Inherits=Breeze-Snow' >> "${cursors_home}/default/index.theme" ||
     abort ERROR 'Failed to set the default index theme.'
 
-  sed -i 's/#CURSORS#/Breeze-Snow/' "${ROOT_FS}/root/.config/gtk-3.0/settings.ini" ||
-    abort ERROR 'Failed to set cursors in GTK settings.'
-
   log INFO 'Desktop cursors breeze-snow have been installed.'
+
+  sed -i \
+    -e 's/#THEME#/Dracula/' \
+    -e 's/#ICONS#/Dracula/' \
+    -e 's/#CURSORS#/Breeze-Snow/' "${ROOT_FS}/root/.config/gtk-3.0/settings.ini" ||
+    abort ERROR 'Failed to set theme in GTK settings.'
 }
 
 # Sets up some extra system fonts.
@@ -772,7 +772,7 @@ make_iso_file () {
   log INFO 'Building the archiso file...'
 
   if directory_not_exists "${PROFILE_DIR}"; then
-    abort ERROR 'Unable to locate the releng profile folder.'
+    abort ERROR 'Unable to locate the profile folder.'
   fi
 
   sudo mkarchiso -v -r -w "${WORK_DIR}" -o "${DIST_DIR}" "${PROFILE_DIR}" ||
@@ -786,8 +786,8 @@ log INFO 'Starting the build process...'
 
 init &&
   check_deps &&
-  copy_profile_files &&
-  copy_stack_files &&
+  copy_profile &&
+  sync_root_files &&
   rename_distro &&
   fix_boot_loaders &&
   define_packages &&
