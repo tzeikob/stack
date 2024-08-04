@@ -12,47 +12,6 @@ source src/commons/logger.sh
 source src/commons/error.sh
 source src/commons/validators.sh
 
-# Adds the package with the given name into the list of packages.
-# Arguments:
-#  name: the name of a package
-add_package () {
-  local name="${1}"
-
-  local pkgs_file="${PROFILE_DIR}/packages.x86_64"
-
-  if file_not_exists "${pkgs_file}"; then
-    abort ERROR "Unable to locate file ${pkgs_file}."
-  fi
-
-  if ! grep -Eq "^${name}$" "${pkgs_file}"; then
-    echo "${name}" >> "${pkgs_file}"
-  else
-    log WARN "Package ${name} already added."
-  fi
-}
-
-# Removes the package with the given name from the list of packages.
-# Arguments:
-#  name: the name of a package
-remove_package () {
-  local name="${1}"
-
-  local pkgs_file="${PROFILE_DIR}/packages.x86_64"
-
-  if file_not_exists "${pkgs_file}"; then
-    abort ERROR "Unable to locate file ${pkgs_file}."
-  fi
-
-  if ! grep -Eq "^${name}$" "${pkgs_file}"; then
-    abort ERROR "Unable to remove the package ${name}."
-  fi
-
-  sed -Ei "/^${name}$/d" "${pkgs_file}" ||
-    abort ERROR "Unable to remove the package ${name}."
-
-  log INFO "Package ${name} has removed."
-}
-
 # Initializes build and distribution files.
 init () {
   if directory_exists "${DIST_DIR}"; then
@@ -263,13 +222,22 @@ define_packages () {
     irssi ttf-font-awesome noto-fonts-emoji nnn fzf
   )
 
+  local pkgs_file="${PROFILE_DIR}/packages.x86_64"
+
   local pkg=''
   for pkg in "${pkgs[@]}"; do
-    add_package "${pkg}"
+    if ! grep -Eq "^${pkg}$" "${pkgs_file}"; then
+      echo "${pkg}" >> "${pkgs_file}"
+    else
+      log WARN "Package ${pkg} already added."
+    fi
   done
 
   # Remove conflicting nox server virtualbox utils
-  remove_package virtualbox-guest-utils-nox
+  sed -Ei "/^virtualbox-guest-utils-nox$/d" "${pkgs_file}" ||
+    abort ERROR 'Unable to remove virtualbox-guest-utils-nox package.'
+
+  log INFO 'Package virtualbox-guest-utils-nox removed.'
 
   log INFO 'Packages defined in the package list.'
 }
@@ -304,7 +272,13 @@ build_aur_packages () {
       repo-add "${repo_home}/custom.db.tar.gz" ${repo_home}/${name}-*-x86_64.pkg.tar.zst ||
       abort ERROR "Failed to add the ${name} package into the custom repository."
 
-    add_package "${name}" || abort ERROR "Failed to add the ${name} AUR package."
+    local pkgs_file="${PROFILE_DIR}/packages.x86_64"
+
+    if ! grep -Eq "^${name}$" "${pkgs_file}"; then
+      echo "${name}" >> "${pkgs_file}"
+    else
+      log WARN "Package ${name} already added."
+    fi
 
     log INFO "Package ${name} has been built."
   done
