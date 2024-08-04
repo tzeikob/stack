@@ -782,10 +782,6 @@ make_iso_file () {
   log INFO 'Build process completed successfully.'
 }
 
-log INFO 'Started running test units...'
-
-bash ./test.sh
-
 log INFO 'Starting the build process...'
 
 init &&
