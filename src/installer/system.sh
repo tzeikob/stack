@@ -218,7 +218,8 @@ install_base_packages () {
 install_display_server () {
   log INFO 'Installing the display server...'
 
-  pacman -S --needed --noconfirm xorg xorg-xinit xorg-xrandr xorg-xdpyinfo 2>&1 ||
+  pacman -S --needed --noconfirm \
+    xorg xorg-xinit xorg-xrandr xorg-xdpyinfo 2>&1 ||
     abort ERROR 'Failed to install xorg packages.'
 
   log INFO 'Xorg packages have been installed.'

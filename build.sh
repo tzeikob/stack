@@ -335,7 +335,23 @@ setup_auto_login () {
 
   log INFO 'Login prompt set to skip and autologin.'
 
-  # Remove the default welcome message
+  # Create the welcome message
+  printf '%s\n' \
+    '░░░█▀▀░▀█▀░█▀█░█▀▀░█░█░░░' \
+    '░░░▀▀█░░█░░█▀█░█░░░█▀▄░░░' \
+    '░░░▀▀▀░░▀░░▀░▀░▀▀▀░▀░▀░░░' \
+    '' \
+    'Welcome to live media of \u001b[36mStack Linux\u001b[0m, more information' \
+    'can be found on https://github.com/tzeikob/stack.git.' \
+    '' \
+    'Connect to a wireless network using the networks tool via' \
+    'the command \u001b[36mnetworks add wifi <device> <ssid> <secret>\u001b[0m.' \
+    'Ethernet, WALN and WWAN networks should work automatically.' \
+    '' \
+    'To install a new system run \u001b[36mdisks install stack\u001b[0m to launch' \
+    'the installation process of the Stack Linux.' > "${ROOT_FS}/etc/welcome" ||
+    abort ERROR 'Failed to create the welcome message.'
+
   rm -rf "${ROOT_FS}/etc/motd" ||
     abort ERROR 'Failed to remove the /etc/motd file.'
 

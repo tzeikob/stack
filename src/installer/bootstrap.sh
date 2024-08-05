@@ -123,7 +123,7 @@ install_kernel () {
 copy_installation_files () {
   log INFO 'Copying installation files to new system...'
 
-  local target="/mnt/stack"
+  local target='/mnt/stack'
 
   rm -rf "${target}" && rsync -av . "${target}" ||
     abort ERROR 'Unable to copy installation files.'

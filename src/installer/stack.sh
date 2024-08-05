@@ -104,7 +104,7 @@ install_rust () {
   log INFO 'Rust programming language has been installed.'
 }
 
-# Installs the docker egine.
+# Installs the docker engine.
 install_docker () {
   log INFO 'Installing the docker engine...'
 
