@@ -351,8 +351,9 @@ setup_auto_login () {
     'the command \u001b[36mnetworks add wifi <device> <ssid> <secret>\u001b[0m.' \
     'Ethernet, WALN and WWAN networks should work automatically.' \
     '' \
-    'To install a new system run \u001b[36mdisks install stack\u001b[0m to launch' \
-    'the installation process of the Stack Linux.' > "${ROOT_FS}/etc/welcome" ||
+    'To install a new system clone the latest stack repository locally,' \
+    '\u001b[36mgit clone "https://github.com/tzeikob/stack.git"\u001b[0m,' \
+    '\u001b[36mcd stack\u001b[0m and run \u001b[36m./install\u001b[0m.' > "${ROOT_FS}/etc/welcome" ||
     abort ERROR 'Failed to create the welcome message.'
 
   rm -rf "${ROOT_FS}/etc/motd" ||

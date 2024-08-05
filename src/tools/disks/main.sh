@@ -65,8 +65,7 @@ show_help () {
     'scan disk <path>' 'Scan a disk block device for SMART data.' \
     '' '' \
     'create encrypted <path> <fs-type> <key>' 'Create an encrypted drive.' \
-    'create bootable <path> <iso-file>' 'Create a bootable installation drive.' \
-    'install stack <branch>' 'Install a new stack linux system.'
+    'create bootable <path> <iso-file>' 'Create a bootable installation drive.'
 }
 
 # Routes to the corresponding operation by matching
@@ -105,7 +104,6 @@ execute () {
     'scan disk') scan_disk "${3}";;
     'create encrypted') create_encrypted "${3}" "${4}" "${5}";;
     'create bootable') create_bootable "${3}" "${4}";;
-    'install stack') install_stack "${3}";;
     *)
       log 'Ooops, invalid or unknown command!'
       return 2;;
