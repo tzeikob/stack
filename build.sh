@@ -510,6 +510,9 @@ setup_desktop () {
   rm -f "${ROOT_FS}/root/.config/mimeapps.list" ||
     abort ERROR 'Failed to remove mime apps file.'
   
+  rm -f "${ROOT_FS}/root/user-dirs.dirs" ||
+    abort ERROR 'Failed to remove user dirs file.'
+  
   rm -f "${ROOT_FS}/usr/local/share/applications/ncmpcpp.desktop" ||
     abort ERROR 'Failed to remove ncmpcpp desktop file.'
   

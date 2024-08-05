@@ -184,14 +184,6 @@ install_file_manager () {
     mkdir -p "/home/${user_name}"/{images,audios,videos} ||
     abort ERROR 'Failed to create home directories.'
   
-  printf '%s\n' \
-    'XDG_DESKTOP_DIR="${HOME}"' \
-    'XDG_DOWNLOAD_DIR="${HOME}/downloads"' \
-    'XDG_DOCUMENTS_DIR="${HOME}/documents"' \
-    'XDG_PICTURES_DIR="${HOME}/images"' \
-    'XDG_MUSIC_DIR="${HOME}/audios"' \
-    'XDG_VIDEOS_DIR="${HOME}/videos"' > "/home/${user_name}/user-dirs.dirs"
-  
   log INFO 'Home directories have been created.'
   log INFO 'File manager has been installed.'
 }
