@@ -15,12 +15,14 @@ source src/commons/validators.sh
 # Initializes build and distribution files.
 init () {
   if directory_exists "${DIST_DIR}"; then
-    rm -rf "${DIST_DIR}" || abort ERROR 'Unable to remove the .dist folder.'
+    rm -rf "${DIST_DIR}" ||
+      abort ERROR 'Unable to remove the .dist folder.'
 
     log WARN 'Existing .dist folder has been removed.'
   fi
 
-  mkdir -p "${DIST_DIR}" || abort ERROR 'Unable to create the .dist folder.'
+  mkdir -p "${DIST_DIR}" ||
+    abort ERROR 'Unable to create the .dist folder.'
 
   log INFO 'A clean .dist folder has been created.'
 }
@@ -202,6 +204,7 @@ define_packages () {
     bzip2 unrar dialog inetutils dnsutils openssh nfs-utils ipset xsel
     neofetch age imagemagick gpick fuse2 rclone smartmontools glib2 jq jc sequoia-sq xf86-input-wacom
     cairo bc xdotool python-tqdm libqalculate nftables iptables-nft virtualbox-guest-utils
+    htop glances
   )
   
   # Add the display server and graphics packages
@@ -220,7 +223,7 @@ define_packages () {
   pkgs+=(
     picom bspwm sxhkd polybar rofi dunst
     trash-cli cool-retro-term helix firefox torbrowser-launcher
-    irssi ttf-font-awesome noto-fonts-emoji nnn fzf
+    irssi ttf-font-awesome noto-fonts-emoji
   )
 
   local pkgs_file="${PROFILE_DIR}/packages.x86_64"
@@ -399,6 +402,10 @@ setup_shell_environment () {
 
   log INFO 'Default editor set to helix.'
 
+  # Remove nnn file manager shell hooks
+  sed -i "/nnn/d" "${stackrc_file}" ||
+    abort ERROR 'Failed to remove nnn shell hooks.'
+
   printf '%s\n' \
     'if [[ "${SHOW_WELCOME_MSG}" == "true" ]]; then' \
     '  cat /etc/welcome' \
@@ -410,7 +417,7 @@ setup_shell_environment () {
   
   local zshrc_file="${ROOT_FS}/root/.zshrc"
 
-  echo -e 'source ~/.stackrc\n\n' >> "${zshrc_file}"
+  echo -e 'source "${HOME}/.stackrc"\n\n' >> "${zshrc_file}"
 }
 
 # Sets up the corresponding desktop configurations.
@@ -484,22 +491,8 @@ setup_desktop () {
 
   log INFO 'Rofi configuration has been set.'
 
-  # Install and configure file manager
-  local nnn_home="${ROOT_FS}/root/.config/nnn"
-
-  # Todo: get current working directory error
-  local pluggins_url='https://raw.githubusercontent.com/jarun/nnn/master/plugins/getplugs'
-
-  curl "${pluggins_url}" -sSLo "${nnn_home}/getplugs" \
-    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 2>&1 &&
-    cd /root &&
-    HOME=/root sh "${nnn_home}/getplugs" 2>&1 ||
-    abort ERROR 'Failed to install file manager plugins.'
-
-  log INFO 'File manager configuration has been set.'
-
   # Remove unnecessary configurations from live media
-  local names=(allacritty mpd ncmpcpp xsecurelock)
+  local names=(allacritty mpd ncmpcpp xsecurelock nnn)
 
   local name=''
   for name in "${names[@]}"; do
@@ -513,6 +506,12 @@ setup_desktop () {
     "${ROOT_FS}/etc/systemd/system/lock@.service" \
     "${ROOT_FS}/usr/lib/systemd/system-sleep/locker" ||
     abort ERROR 'Failed to remove locker files.'
+
+  rm -f "${ROOT_FS}/root/.config/mimeapps.list" ||
+    abort ERROR 'Failed to remove mime apps file.'
+  
+  rm -f "${ROOT_FS}/usr/local/share/applications/ncmpcpp.desktop" ||
+    abort ERROR 'Failed to remove ncmpcpp desktop file.'
   
   log INFO 'Locker files have been removed.'
 }
@@ -756,7 +755,6 @@ set_file_permissions () {
     '/usr/local/bin/tqdm 0:0:755'
     '/opt/stack/commons/ 0:0:755'
     '/opt/stack/tools/ 0:0:755'
-    '/etc/welcome 0:0:644'
     '/root/.config/stack/ 0:0:664'
     '/etc/systemd/logind.conf.d/ 0:0:644'
     '/etc/systemd/sleep.conf.d/ 0:0:644'
