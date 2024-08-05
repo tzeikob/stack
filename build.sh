@@ -755,18 +755,18 @@ set_file_permissions () {
 
   local perms=(
     '/etc/pacman.d/scripts/ 0:0:755'
-    '/usr/local/bin/tqdm 0:0:755'
-    '/opt/stack/commons/ 0:0:755'
-    '/opt/stack/tools/ 0:0:755'
-    '/root/.config/stack/ 0:0:664'
+    '/etc/sudoers.d/ 0:0:750'
     '/etc/systemd/logind.conf.d/ 0:0:644'
     '/etc/systemd/sleep.conf.d/ 0:0:644'
     '/etc/tlp.d/ 0:0:755'
     '/root/.config/bspwm/ 0:0:755'
+    '/root/.config/dunst/hook 0:0:755'
     '/root/.config/polybar/scripts/ 0:0:755'
     '/root/.config/rofi/launch 0:0:755'
-    '/root/.config/dunst/hook 0:0:755'
-    '/etc/sudoers.d/ 0:0:750'
+    '/root/.config/stack/ 0:0:664'
+    '/opt/stack/commons/ 0:0:755'
+    '/opt/stack/tools/ 0:0:755'
+    '/usr/local/bin/tqdm 0:0:755'
   )
 
   local perm=''
