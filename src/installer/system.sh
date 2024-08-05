@@ -202,7 +202,7 @@ install_base_packages () {
     vim nano git tree arch-audit atool zip xz unace p7zip gzip lzop feh hsetroot \
     bzip2 unrar dialog inetutils dnsutils openssh nfs-utils openbsd-netcat ipset xsel \
     neofetch age imagemagick gpick fuse2 rclone smartmontools glib2 jq jc sequoia-sq xf86-input-wacom \
-    cairo bc xdotool ${extra_pckgs} 2>&1 ||
+    cairo bc xdotool python-tqdm ${extra_pckgs} 2>&1 ||
     abort ERROR 'Failed to install base packages.'
 
   log INFO 'Replacing iptables with nft tables...'
