@@ -169,7 +169,6 @@ install_file_manager () {
 
   log INFO 'Installing file manager plugins...'
 
-  # Todo: get current working directory error
   local pluggins_url='https://raw.githubusercontent.com/jarun/nnn/master/plugins/getplugs'
 
   curl "${pluggins_url}" -sSLo "${config_home}/getplugs" \
