@@ -1,10 +1,16 @@
 #!/bin/bash
 
-rm -f /etc/arch-release
+# Removes the arch-release file and fixes the
+# metadata of the lsb-release file to stack names.
+run () {
+  rm -f /etc/arch-release
 
-if [[ -f /etc/lsb-release ]]; then
-  printf '%s\n' \
-    'DISTRIB_ID="Stack"' \
-    'DISTRIB_RELEASE="rolling"' \
-    'DISTRIB_DESCRIPTION="Stack Linux"' > /etc/lsb-release
-fi
+  if [[ -f /etc/lsb-release ]]; then
+    printf '%s\n' \
+      'DISTRIB_ID="Stack"' \
+      'DISTRIB_RELEASE="rolling"' \
+      'DISTRIB_DESCRIPTION="Stack Linux"' > /etc/lsb-release
+  fi
+}
+
+run "$@"

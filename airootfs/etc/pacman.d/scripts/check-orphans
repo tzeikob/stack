@@ -1,5 +1,11 @@
 #!/bin/bash
 
-if pacman -Qtd; then
-  echo 'No orphan packages found'
-fi
+# Checks if there is no orphan pacman packages
+# and prints a warning message.
+run () {
+  if pacman -Qtd; then
+    echo 'No orphan packages found'
+  fi
+}
+
+run "$@"
