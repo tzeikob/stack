@@ -1,11 +1,13 @@
 #!/bin/bash
 
+source /opt/stack/commons/validators.sh
+
 # Removes the arch-release file and fixes the
 # metadata of the lsb-release file to stack names.
 run () {
   rm -f /etc/arch-release
 
-  if [[ -f /etc/lsb-release ]]; then
+  if file_exists '/etc/lsb-release'; then
     printf '%s\n' \
       'DISTRIB_ID="Stack"' \
       'DISTRIB_RELEASE="rolling"' \
