@@ -7,34 +7,39 @@ source /opt/stack/commons/validators.sh
 
 UPDATES_STATE_FILE=/tmp/updates_state
 
-# Reads the special updates state file which should
-# contain a json object with the status key, where -1
-# means the updates state is unstable, 0 means the system
-# is up to date, 1 means there are updates to be applied and
-# 2 when the system is currently updating. If the file is
-# missing the system should be considered as up to date.
-# The file is expected to contain 3 more keys, each containing
-# the total number of updates per module, pacman, aur and stack.
+# Reads the special updates state file which is expected
+# to contain a json object with a status code and the total
+# number of outdated packages. A status code of -1 means
+# something is wrong or broken, 0 when the system is up to
+# date, 1 when there are updates to be applied and 2 means
+# the system is currently updating. If the file is missing
+# the system should be considered as in an unknown state.
 run () {
-  local output='Ready'
-  local color='B2E39C'
+  local output color
   
   if file_exists "${UPDATES_STATE_FILE}"; then
     local status=''
-    status="$(jq -cer '.status' "${UPDATES_STATE_FILE}")"
+    status="$(jq -cr '.status' "${UPDATES_STATE_FILE}")"
 
     if is_not_integer "${status}" || is_true "${status} = -1"; then
       output='Err!'
-    elif is_true "${status} = 2"; then
-      output='Updating'
-      color='2222FF'
+    elif is_true "${status} = 0"; then
+      output='Ready'
+      color='B2E39C'
     elif is_true "${status} = 1"; then
       local total=''
-      total="$(jq -cer '.pacman + .aur + .stack' "${UPDATES_STATE_FILE}")"
+      total="$(jq -cr '.total' "${UPDATES_STATE_FILE}")"
 
       output="$(printf '%03d' ${total})"
       color='F27D52'
+    elif is_true "${status} = 2"; then
+      output='Updating'
+      color='2222FF'
+    else
+      output='Unkwn!'
     fi
+  else
+    output='Unkwn!'
   fi
 
   if is_not_empty "${color}"; then

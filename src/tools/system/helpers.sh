@@ -4,8 +4,6 @@ source src/commons/error.sh
 source src/commons/math.sh
 source src/commons/validators.sh
 
-STACK_HASH_FILE=/opt/stack/.hash
-
 # Find all the packages installed to the system
 # via the package managers pacman and yay (aur).
 # Returns:
@@ -22,17 +20,16 @@ find_installed_packages () {
   echo "{\"pacman\": ${pacman_pkgs}, \"aur\": ${aur_pkgs}}"
 }
 
-# Find the list of pacman and aur packages need to be updated.
+# Find the list of outdated pacman packages.
 # Returns:
-#  A JSON object of outdated pacman and aur list packages.
-find_outdated_packages () {
+#  A JSON list of pacman packages.
+find_outdated_pacman_packages () {
   local query=''
   query+='name: .[0]|split(" ")|.[0],'
   query+='current: .[0]|split(" ")|.[1],'
   query+='latest: .[1]'
   query="[inputs|split(\" -> \")|{${query}}]"
   
-  # List all outdated packages installed via pacman
   local pacman_pkgs=''
   pacman_pkgs="$(checkupdates 2> /dev/null | jq -Rn "${query}")"
 
@@ -42,7 +39,19 @@ find_outdated_packages () {
     pacman_pkgs='[]'
   fi
 
-  # List all outdated packages installed via the aur repos
+  echo "${pacman_pkgs}"
+}
+
+# Find the list of outdated aur packages.
+# Returns:
+#  A JSON list of aur packages.
+find_outdated_aur_packages () {
+  local query=''
+  query+='name: .[0]|split(" ")|.[0],'
+  query+='current: .[0]|split(" ")|.[1],'
+  query+='latest: .[1]'
+  query="[inputs|split(\" -> \")|{${query}}]"
+
   local aur_pkgs=''
   aur_pkgs="$(yay -Qum 2> /dev/null | jq -Rn "${query}")"
 
@@ -50,53 +59,7 @@ find_outdated_packages () {
     aur_pkgs='[]'
   fi
 
-  echo "{\"pacman\": ${pacman_pkgs}, \"aur\": ${aur_pkgs}}"
-}
-
-# Find the list of stack modules need to be updated.
-# Returns:
-#  A JSON list of stack outdated modules.
-find_outdated_stack_modules () {
-  if file_not_exists "${STACK_HASH_FILE}"; then
-    log 'Unable to locate stack hash file.'
-    return 2
-  fi
-
-  local branch=''
-  branch="$(jq -cer '.branch' "${STACK_HASH_FILE}")"
-
-  if has_failed || is_empty "${branch}"; then
-    log 'Unable to resolve the stack branch name.'
-    return 2
-  fi
-
-  local remote_commit_id=''
-  remote_commit_id="$(git ls-remote https://github.com/tzeikob/stack.git "${branch}" | awk '{print $1}')"
-
-  if has_failed; then
-    log 'Unable to resolve the stack remote commit id.'
-    return 2
-  fi
-
-  local local_commit_id=''
-  local_commit_id="$(jq -cer '.commit_id' "${STACK_HASH_FILE}")"
-
-  if has_failed || is_empty "${local_commit_id}"; then
-    log 'Unable to resolve the stack local commit id.'
-    return 2
-  fi
-
-  local mods=''
-
-  # No equal commit ids means stack is outdated
-  if not_equals "${local_commit_id}" "${remote_commit_id}"; then
-    mods+='"name": "stack",'
-    mods+="\"current\": \"${local_commit_id:0:7}\","
-    mods+="\"latest\": \"${remote_commit_id:0:7}\""
-    mods="{${mods}}"
-  fi
-
-  echo "[${mods}]"
+  echo "${aur_pkgs}"
 }
 
 # Checks if the given value is a valid package repository.

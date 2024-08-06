@@ -190,46 +190,58 @@ set_mirrors () {
   log "Package databases mirrors set to ${countries}."
 }
 
-# Checks for currently available outdated packages
-# and stack modules.
+# Checks for currently available outdated packages.
 # Outputs:
-#  A long list of outdated packages and stack modules.
+#  A long list of outdated packages.
 check_updates () {
   log 'Processing system updates...'
 
-  local pkgs=''
-  pkgs="$(find_outdated_packages)"
+  local pacman_pkgs=''
+  pacman_pkgs="$(find_outdated_pacman_packages)"
 
   if has_failed; then
-    echo '{"state": -1}' > "${UPDATES_STATE_FILE}"
+    echo '{"status": -1}' > "${UPDATES_STATE_FILE}"
 
-    log 'Unable to search for outdated packages.'
+    log 'Unable to search for outdated pacman packages.'
     return 2
   fi
 
-  local mods=''
-  mods="$(find_outdated_stack_modules)"
+  local aur_pkgs=''
+  aur_pkgs="$(find_outdated_aur_packages)"
 
   if has_failed; then
-    echo '{"state": -1}' > "${UPDATES_STATE_FILE}"
+    echo '{"status": -1}' > "${UPDATES_STATE_FILE}"
 
-    log 'Unable to search for outdated stack modules.'
+    log 'Unable to search for outdated aur packages.'
     return 2
   fi
 
   local all_updates=''
-  all_updates="$(jq -ncer --argjson p "${pkgs}" --argjson m "${mods}" '$p.pacman + $p.aur + $m')"
+  all_updates="$(
+    jq -ncer \
+      --argjson p "${pacman_pkgs}" \
+      --argjson a "${aur_pkgs}" \
+      '$p + $a'
+  )"
 
   local total=0
-  total="$(echo "${all_updates}" | jq -cer 'length')" || return 1
+  total="$(echo "${all_updates}" | jq -cer 'length')"
+
+  if has_failed || is_not_integer "${total}" || is_true "${total} < 0"; then
+    echo '{"status": -1}' > "${UPDATES_STATE_FILE}"
+
+    log 'Unable to resolve the total number of updates.'
+    return 2
+  fi
 
   if is_true "${total} = 0"; then
-    echo '{"state": 0}' > "${UPDATES_STATE_FILE}"
+    echo '{"status": 0}' > "${UPDATES_STATE_FILE}"
 
     log 'No available updates have found.'
     return 0
   fi
 
+  # Print all updates in to the console
   local query=''
   query+='Name:    \(.name)\n'
   query+='Current: \(.current)\n'
@@ -238,14 +250,13 @@ check_updates () {
 
   echo "${all_updates}" | jq -cr "${query}" || return 1
 
-  local new_updates_state=''
-  new_updates_state="$(echo "${pkgs}" |
-    jq -cer --argjson m "${mods}" '{pacman: .pacman|length, aur: .aur|length, stack: .m|length}')"
+  # Update the updates state file
+  local new_updates_state="{\"status\": 1, \"total\": ${total}}"
 
   # Don't modify registry file while system is updating
   if file_exists "${UPDATES_STATE_FILE}"; then
     local status=''
-    status="$(jq -cer '.status' "${UPDATES_STATE_FILE}")"
+    status="$(jq -cr '.status' "${UPDATES_STATE_FILE}")"
 
     if is_false "${status} = 2"; then
       echo "${new_updates_state}" > "${UPDATES_STATE_FILE}"
@@ -260,30 +271,13 @@ check_updates () {
   fi
 }
 
-# Applies the latest updates to the system, both
-# outdated packages and stack modules.
+# Applies any available updates to the system.
 apply_updates () {
   authenticate_user || return $?
 
-  log 'Processing system updates...'
-
-  check_updates > /dev/null
-
-  if has_failed; then
-    log 'Unable to process system updates.'
-    return 2
-  fi
-
-  local total=''
-  total="$(< "${UPDATES_STATE_FILE}")"
-
-  if is_true "${total} = 0"; then
-    log 'No updates have been found.'
-    return 2
-  fi
-
-  log "Found ${total} total update(s)."
-  confirm 'Do you want to proceed and update them?' || return $?
+  log 'CAUTION This may break your system!'
+  log 'Please consider taking a backup now.'
+  confirm 'Do you want to proceed?' || return $?
   is_empty "${REPLY}" && log 'Confirmation is required.' && return 2
   
   if is_not_yes "${REPLY}"; then
@@ -292,12 +286,12 @@ apply_updates () {
   fi
 
   # Mark updating state in updates registry file
-  echo '-1' > "${UPDATES_STATE_FILE}"
+  echo '{"status": 2}' > "${UPDATES_STATE_FILE}"
 
   sudo pacman --noconfirm -Syu
 
   if has_failed; then
-    echo 'null' > "${UPDATES_STATE_FILE}"
+    echo '{"status": -1}' > "${UPDATES_STATE_FILE}"
 
     log 'Failed to update pacman packages.'
     return 2
@@ -306,27 +300,14 @@ apply_updates () {
   sudo yay --noconfirm -Syu
 
   if has_failed; then
-    echo 'null' > "${UPDATES_STATE_FILE}"
+    echo '{"status": -1}' > "${UPDATES_STATE_FILE}"
 
     log 'Failed to update aur packages.'
     return 2
   fi
 
-  local branch=''
-  branch="$()"
-
-  git clone https://github.com/tzeikob/stack.git /tmp/stack --branch "${branch}"
-
-  if has_failed; then
-    echo 'null' > "${UPDATES_STATE_FILE}"
-
-    log 'Failed to update stack module.'
-    return 2
-  fi
-
   # Mark ready state in updates registry file
-  echo '0' > "${UPDATES_STATE_FILE}"
+  echo '{"status": 0}' > "${UPDATES_STATE_FILE}"
 
-  log -n "${total} updates have been applied."
   log 'System is now up to date, please reboot!'
 }

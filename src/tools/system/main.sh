@@ -43,7 +43,7 @@ show_help () {
     '' '' \
     'set mirrors <age> <latest> <countries>' 'Set the mirrors of package databases.' \
     '' '' \
-    'check updates' 'Check and show the list of available updates.' \
+    'check updates' 'Check and show available updates.' \
     'apply updates' 'Apply all the available updates.'
 }
 
