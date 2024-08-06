@@ -25,6 +25,23 @@ sync_root_files () {
   log INFO 'Root file system has been synced.'
 }
 
+# Fixes the source paths under /opt/stack
+# files to the actuall paths.
+fix_source_paths () {
+  local files
+  files=($(
+    find /opt/stack -type f -name '*.sh'
+  )) || abort ERROR 'Failed to list source files under /opt/stack.'
+
+  local file
+  for file in "${files[@]}"; do
+    sed -i 's;source src;source /opt/stack;' "${file}" ||
+      abort ERROR "Failed to fix source paths in ${file}."
+  done
+
+  log INFO 'Stack source paths fixed to /opt/stack.'
+}
+
 # Fixes the os release data.
 fix_release_data () {
   local version=''
@@ -794,6 +811,7 @@ if not_equals "$(id -u)" 0; then
 fi
 
 sync_root_files &&
+  fix_source_paths &&
   fix_release_data &&
   set_host &&
   set_users &&
