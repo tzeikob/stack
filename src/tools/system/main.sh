@@ -43,8 +43,9 @@ show_help () {
     '' '' \
     'set mirrors <age> <latest> <countries>' 'Set the mirrors of package databases.' \
     '' '' \
-    'check updates' 'Check and show available updates.' \
-    'apply updates' 'Apply all the available updates.'
+    'check updates' 'Check for available updates.' \
+    'list updates' 'Show the list of available updates.' \
+    'apply updates' 'Apply any available updates.'
 }
 
 # Routes to the corresponding operation by matching
@@ -63,6 +64,7 @@ execute () {
     'list packages') list_packages "${3}";;
     'set mirrors') set_mirrors "${3}" "${4}" "${@:5}";;
     'check updates') check_updates;;
+    'list updates') list_updates;;
     'apply updates') apply_updates;;
     *)
       log 'Ooops, invalid or unknown command!'

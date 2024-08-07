@@ -190,9 +190,8 @@ set_mirrors () {
   log "Package databases mirrors set to ${countries}."
 }
 
-# Checks for currently available outdated packages.
-# Outputs:
-#  A long list of outdated packages.
+# Checks for currently available outdated packages
+# and updates the updates state file accordingly.
 check_updates () {
   log 'Processing system updates...'
 
@@ -241,15 +240,6 @@ check_updates () {
     return 0
   fi
 
-  # Print all updates in to the console
-  local query=''
-  query+='Name:    \(.name)\n'
-  query+='Current: \(.current)\n'
-  query+='Latest:  \(.latest)'
-  query="[.[]|\"${query}\"]|join(\"\n\n\")"
-
-  echo "${all_updates}" | jq -cr "${query}" || return 1
-
   # Update the updates state file
   local new_updates_state="{\"status\": 1, \"total\": ${total}}"
 
@@ -269,6 +259,59 @@ check_updates () {
     notify-send -u NORMAL -a 'System Updates' 'System out of date!' \
       "Heads up, found ${total} update(s)!"
   fi
+}
+
+# Shows the list of available outdated packages.
+# Outputs:
+#  A long list of outdated packages.
+list_updates () {
+  log 'Processing system updates...'
+
+  local pacman_pkgs=''
+  pacman_pkgs="$(find_outdated_pacman_packages)"
+
+  if has_failed; then
+    log 'Unable to search for outdated pacman packages.'
+    return 2
+  fi
+
+  local aur_pkgs=''
+  aur_pkgs="$(find_outdated_aur_packages)"
+
+  if has_failed; then
+    log 'Unable to search for outdated aur packages.'
+    return 2
+  fi
+
+  local all_updates=''
+  all_updates="$(
+    jq -ncer \
+      --argjson p "${pacman_pkgs}" \
+      --argjson a "${aur_pkgs}" \
+      '$p + $a'
+  )"
+
+  local total=0
+  total="$(echo "${all_updates}" | jq -cer 'length')"
+
+  if has_failed || is_not_integer "${total}" || is_true "${total} < 0"; then
+    log 'Unable to resolve the total number of updates.'
+    return 2
+  fi
+
+  if is_true "${total} = 0"; then
+    log 'No available updates have found.'
+    return 0
+  fi
+
+  # Print all updates in to the console
+  local query=''
+  query+='Name:    \(.name)\n'
+  query+='Current: \(.current)\n'
+  query+='Latest:  \(.latest)'
+  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+
+  echo "${all_updates}" | jq -cr "${query}" || return 1
 }
 
 # Applies any available updates to the system.
