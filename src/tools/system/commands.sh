@@ -193,6 +193,20 @@ set_mirrors () {
 # Checks for currently available outdated packages
 # and updates the updates state file accordingly.
 check_updates () {
+  # Don't proceed if an updating operation is in progress
+  if file_exists "${UPDATES_STATE_FILE}"; then
+    local status=''
+    status="$(jq -cr '.status' "${UPDATES_STATE_FILE}")"
+
+    if is_true "${status} = 3"; then
+      log 'Unable to proceed while the system is updating.'
+      return 2
+    fi
+  fi
+
+  # Mark updates state as system is checking for updates
+  echo '{"status": 2}' > "${UPDATES_STATE_FILE}"
+
   log 'Processing system updates...'
 
   local pacman_pkgs=''
@@ -241,20 +255,9 @@ check_updates () {
   fi
 
   # Update the updates state file
-  local new_updates_state="{\"status\": 1, \"total\": ${total}}"
-
-  # Don't modify registry file while system is updating
-  if file_exists "${UPDATES_STATE_FILE}"; then
-    local status=''
-    status="$(jq -cr '.status' "${UPDATES_STATE_FILE}")"
-
-    if is_false "${status} = 2"; then
-      echo "${new_updates_state}" > "${UPDATES_STATE_FILE}"
-    fi
-  else
-    echo "${new_updates_state}" > "${UPDATES_STATE_FILE}"
-  fi
+  echo "{\"status\": 1, \"total\": ${total}}" > "${UPDATES_STATE_FILE}"
   
+  # Send a notification to the user
   if on_script_mode && is_true "${total} > 0"; then
     notify-send -u NORMAL -a 'System Updates' 'System out of date!' \
       "Heads up, found ${total} update(s)!"
@@ -319,7 +322,7 @@ apply_updates () {
   authenticate_user || return $?
 
   log 'CAUTION This may break your system!'
-  log 'Please consider taking a backup now.'
+  log 'Please consider taking a backup first.'
   confirm 'Do you want to proceed?' || return $?
   is_empty "${REPLY}" && log 'Confirmation is required.' && return 2
   
@@ -328,8 +331,19 @@ apply_updates () {
     return 2
   fi
 
+  # Don't proceed if system is checking for updates
+  if file_exists "${UPDATES_STATE_FILE}"; then
+    local status=''
+    status="$(jq -cr '.status' "${UPDATES_STATE_FILE}")"
+
+    if is_true "${status} = 2"; then
+      log 'Unable to proceed while system is checking for updates.'
+      return 2
+    fi
+  fi
+
   # Mark updating state in updates registry file
-  echo '{"status": 2}' > "${UPDATES_STATE_FILE}"
+  echo '{"status": 3}' > "${UPDATES_STATE_FILE}"
 
   sudo pacman --noconfirm -Syu
 

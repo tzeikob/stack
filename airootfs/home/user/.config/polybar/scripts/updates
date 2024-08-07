@@ -10,10 +10,11 @@ UPDATES_STATE_FILE=/tmp/updates_state
 # Reads the special updates state file which is expected
 # to contain a json object with a status code and the total
 # number of outdated packages. A status code of -1 means
-# something is wrong or broken, 0 when the system is up to
+# something is wrong or broken, 0 that the system is up to
 # date, 1 when there are updates to be applied and 2 means
-# the system is currently updating. If the file is missing
-# the system should be considered as in an unknown state.
+# checking for updates and 3 when the system is currently
+# updating. If the file is missing the system should be
+# considered as in an unknown state.
 run () {
   local output color
   
@@ -33,6 +34,9 @@ run () {
       output="$(printf '%03d' ${total})"
       color='F27D52'
     elif is_true "${status} = 2"; then
+      output='Cheking'
+      color='2222FF'
+    elif is_true "${status} = 3"; then
       output='Updating'
       color='2222FF'
     else
