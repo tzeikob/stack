@@ -39,13 +39,14 @@ show_help () {
   printf ' %-40s %s\n' \
     'show status' 'Show the system overall status.' \
     '' '' \
-    'list packages pacman|aur' 'Show the list of installed packages.' \
-    '' '' \
     'set mirrors <age> <latest> <countries>' 'Set the mirrors of package databases.' \
+    'list packages pacman|aur' 'Show the list of installed packages.' \
     '' '' \
     'check updates' 'Check for available updates.' \
     'list updates' 'Show the list of available updates.' \
-    'apply updates' 'Apply any available updates.'
+    'apply updates' 'Apply any available updates.' \
+    '' '' \
+    'upgrade stack' 'Upgrade the stack tools and modules.'
 }
 
 # Routes to the corresponding operation by matching
@@ -61,11 +62,12 @@ execute () {
   
   case "${command}${object:+ ${object}}" in
     'show status') show_status;;
-    'list packages') list_packages "${3}";;
     'set mirrors') set_mirrors "${3}" "${4}" "${@:5}";;
+    'list packages') list_packages "${3}";;
     'check updates') check_updates;;
     'list updates') list_updates;;
     'apply updates') apply_updates;;
+    'upgrade stack') upgrade_stack;;
     *)
       log 'Ooops, invalid or unknown command!'
       return 2;;

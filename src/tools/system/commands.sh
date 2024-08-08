@@ -368,3 +368,70 @@ apply_updates () {
 
   log 'System is now up to date, please reboot!'
 }
+
+# Clones and checkouts the latest version of the stack repository
+# and exectutes the upgrade script in order to update the tools
+# and modules of the stack os system.
+upgrade_stack () {
+  authenticate_user || return $?
+
+  log 'CAUTION This may break your system!'
+  log 'Please consider taking a backup first.'
+  confirm 'Do you want to proceed?' || return $?
+  is_empty "${REPLY}" && log 'Confirmation is required.' && return 2
+  
+  if is_not_yes "${REPLY}"; then
+    log 'No upgrade has been applied.'
+    return 2
+  fi
+
+  local hash_file='/opt/stack/.hash'
+
+  if file_not_exists "${hash_file}"; then
+    log 'Unable to locate the stack hash file.'
+    return 2
+  fi
+
+  local branch=''
+  branch="$(jq -cer '.branch' "${hash_file}")"
+
+  if has_failed || is_empty "${branch}"; then
+    log 'Unable to resolve the stack local branch.'
+    return 2
+  fi
+
+  local local_commit=''
+  local_commit="$(jq -cer '.commit' "${hash_file}")"
+
+  if has_failed || is_empty "${local_commit}"; then
+    log 'Unable to resolve the stack local commit.'
+    return 2
+  fi
+
+  local repo_url='https://github.com/tzeikob/stack.git'
+
+  local remote_commit=''
+  remote_commit="$(
+    git ls-remote "${repo_url}" "${branch}" | awk '{print $1}'
+  )"
+
+  if has_failed; then
+    log 'Unable to resolve the stack remote commit.'
+    return 2
+  fi
+
+  if equals "${local_commit}" "${remote_commit}"; then
+    echo 'No upgrades have found.'
+    return 2
+  fi
+
+  git clone "${repo_url}" /tmp/stack --branch "${branch}"
+
+  if has_failed; then
+    log "Failed to clone the ${branch} branch of stack repository."
+    return 2
+  fi
+
+  cd /tmp/stack
+  ./upgrade.sh
+}
