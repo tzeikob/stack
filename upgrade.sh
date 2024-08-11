@@ -10,14 +10,13 @@ source src/commons/validators.sh
 update_commons () {
   log INFO 'Updating the commons files...'
 
-  sudo rsync -av src/commons/ /opt/stack/commons ||
+  sudo rsync -av --delete src/commons/ /opt/stack/commons ||
     abort ERROR 'Failed to update the commons files.'
   
   sudo sed -i 's;source src;source /opt/stack;' /opt/stack/commons/* ||
     abort ERROR 'Failed to fix source paths to /opt/stack.'
   
   log INFO 'Source paths fixed to /opt/stack.'
-  
   log INFO 'Commons files have been updated.'
 }
 
@@ -25,7 +24,7 @@ update_commons () {
 update_tools () {
   log INFO 'Updating the tools files...'
 
-  sudo rsync -av src/tools/ /opt/stack/tools &&
+  sudo rsync -av --delete src/tools/ /opt/stack/tools &&
     sudo rsync -av --exclude tqdm airootfs/usr/local/bin/ /usr/local/bin ||
     abort ERROR 'Failed to update the tools files.'
   
@@ -33,7 +32,6 @@ update_tools () {
     abort ERROR 'Failed to fix source paths to /opt/stack.'
   
   log INFO 'Source paths fixed to /opt/stack.'
-
   log INFO 'Tools files have been updated.'
 }
 
@@ -160,7 +158,6 @@ update_locker () {
     log WARN 'Unable to enable lock service.'
   
   log INFO 'Lock service has been enabled.'
-  
   log INFO 'Locker has been updated.'
 }
 
@@ -209,7 +206,6 @@ update_desktop () {
     abort ERROR 'Failed to update the system sounds.'
   
   log INFO 'System sounds have been updated.'
-
   log INFO 'Desktop files have been updated.'
 }
 
