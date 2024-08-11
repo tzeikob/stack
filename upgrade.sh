@@ -234,6 +234,23 @@ restore_user_permissions () {
   log INFO 'User permissions have been restored.'
 }
 
+# Updates the stack hash file.
+update_hash_file () {
+  local branch=''
+  branch="$(git branch --show-current)" ||
+    abort ERROR 'Failed to read the current branch.'
+  
+  local commit=''
+  commit="$(git log --pretty=format:'%H' -n 1)" ||
+    abort ERROR 'Failed to read the last commit id.'
+  
+  echo "{\"branch\": \"${branch}\", \"commit\": \"${commit}\"}" | jq . |
+    sudo tee /opt/stack/.hash &> /dev/null ||
+    abort ERROR 'Failed to update the stack hash file.'
+  
+  log INFO "Stack hash file updated to ${branch}:${commit}."
+}
+
 if is_not_equal "${PWD}" '/tmp/stack'; then
   abort ERROR "Unable to run this script out of /tmp/stack."
 fi
@@ -251,7 +268,8 @@ update_commons &&
   update_tqdm_patch &&
   update_desktop &&
   update_services &&
-  restore_user_permissions
+  restore_user_permissions &&
+  update_hash_file
 
 log INFO 'Upgrade process has been completed.'
 log INFO 'Please reboot your system!'

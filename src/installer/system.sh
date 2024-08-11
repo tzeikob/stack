@@ -803,6 +803,30 @@ enable_services () {
   log INFO 'System services have been enabled.'
 }
 
+# Creates the stack hash file.
+create_hash_file () {
+  cd /stack
+
+  local branch=''
+  branch="$(git branch --show-current)" ||
+    abort ERROR 'Failed to read the current branch.'
+  
+  local commit=''
+  commit="$(git log --pretty=format:'%H' -n 1)" ||
+    abort ERROR 'Failed to read the last commit id.'
+  
+  mkdir -p /opt/stack ||
+    abort ERROR 'Failed to create the /opt/stack folder.'
+  
+  echo "{\"branch\": \"${branch}\", \"commit\": \"${commit}\"}" |
+    jq . > /opt/stack/.hash ||
+    abort ERROR 'Failed to create the stack hash file.'
+  
+  cd ~
+  
+  log INFO "Stack hash file set to ${branch}:${commit}."
+}
+
 log INFO 'Script system.sh started.'
 log INFO 'Installing the system...'
 
@@ -828,7 +852,8 @@ sync_root_files &&
   boost_performance &&
   configure_security &&
   setup_boot_loader &&
-  enable_services
+  enable_services &&
+  create_hash_file
 
 log INFO 'Script system.sh has finished.'
 
