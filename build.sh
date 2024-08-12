@@ -57,15 +57,63 @@ copy_profile () {
 
 # Syncs airoot files to new system.
 sync_root_files () {
-  log INFO 'Syncing root file system...'
+  log INFO 'Syncing the root file system...'
 
   rsync -av airootfs/ "${ROOT_FS}" &&
-    rsync -av src/commons src/tools "${ROOT_FS}/opt/stack" &&
+    rsync -av src/commons "${ROOT_FS}/opt/stack" &&
     rsync -av "${ROOT_FS}/home/user/" "${ROOT_FS}/root" &&
     rm -rf "${ROOT_FS}/home/user" ||
-    abort ERROR 'Failed to sync root file system.'
+    abort ERROR 'Failed to sync the root file system.'
   
   log INFO 'Root file system has been synced.'
+}
+
+# Syncs the tools script files.
+sync_tools () {
+  log INFO 'Syncing the tools files...'
+
+  rsync -av src/tools/ "${ROOT_FS}/opt/stack/tools" \
+    --exclude audio \
+    --exclude cloud \
+    --exclude security \
+    --exclude system ||
+    abort ERROR 'Failed to sync the tools files.'
+  
+  sed -i 's;source src;source /opt/stack;' ${ROOT_FS}/opt/stack/tools/**/* ||
+    abort ERROR 'Failed to fix source paths to /opt/stack.'
+  
+  log INFO 'Source paths fixed to /opt/stack.'
+
+  # Create and restore all symlinks for every tool
+  mkdir -p "${ROOT_FS}/usr/local/stack" ||
+    abort ERROR 'Failed to create the /usr/local/stack folder.'
+  
+  local main_files
+  main_files=($(find "${ROOT_FS}/opt/stack/tools" -type f -name 'main.sh' | sed "s;${ROOT_FS};;")) ||
+    abort ERROR 'Failed to get the list of main script file paths.'
+  
+  local main_file
+  for main_file in "${main_files[@]}"; do
+    # Extrack the tool handle name
+    local tool_name
+    tool_name="$(
+      echo "${main_file}" | sed 's;/opt/stack/tools/\(.*\)/main.sh;\1;'
+    )"
+
+    sudo ln -sf "${main_file}" "${ROOT_FS}/usr/local/stack/${tool_name}" ||
+      abort ERROR "Failed to create symlink for ${main_file} file."
+  done
+
+  log INFO 'Tools symlinks have been created.'
+
+  # Disable init scratchpad command for the live media
+  local desktop_main="${ROOT_FS}/opt/stack/tools/desktop/main.sh"
+
+  sed -i "/.*scratchpad.*/d" "${desktop_main}" ||
+    abort ERROR 'Failed to remove scratchpad from desktop tool.'
+
+  log INFO 'Scratchpad has been removed from desktop tool.'
+  log INFO 'Tools files have been synced.'
 }
 
 # Sets the distribution names and release meta files.
@@ -301,30 +349,6 @@ build_aur_packages () {
 
   log INFO 'Custom local repo added to pacman.'
   log INFO 'AUR packages added in the package list.'
-}
-
-# Removes system tools unnecessary to live media.
-remove_unnecessary_tools () {
-  local tools=(audio cloud security system)
-  
-  local tool=''
-  for tool in "${tools[@]}"; do
-    rm -rf "${ROOT_FS}/opt/stack/tools/${tool}" ||
-      abort ERROR "Failed to remove the ${tool} system tool."
-    
-    rm -f "${ROOT_FS}/usr/local/bin/${tool}" ||
-      abort ERROR "Failed to remove the ${tool} system tool symlink."
-    
-    log INFO "System tool ${tool} has been removed."
-  done
-
-  # Disable init scratchpad command for the live media
-  local desktop_main="${ROOT_FS}/opt/stack/tools/desktop/main.sh"
-
-  sed -i "/.*scratchpad.*/d" "${desktop_main}" ||
-    abort ERROR 'Failed to remove scratchpad from desktop tool.'
-
-  log INFO 'Scratchpad has been removed from desktop tool.'
 }
 
 # Sets to skip login prompt and auto login the root user.
@@ -823,11 +847,11 @@ init &&
   check_deps &&
   copy_profile &&
   sync_root_files &&
+  sync_tools &&
   rename_distro &&
   fix_boot_loaders &&
   define_packages &&
   build_aur_packages &&
-  remove_unnecessary_tools &&
   setup_auto_login &&
   setup_display_server &&
   setup_shell_environment &&

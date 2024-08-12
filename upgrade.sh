@@ -50,6 +50,28 @@ update_tools () {
     abort ERROR 'Failed to fix source paths to /opt/stack.'
   
   log INFO 'Source paths fixed to /opt/stack.'
+
+  # Create and restore all symlinks for every tool
+  sudo mkdir -p /usr/local/stack ||
+    abort ERROR 'Failed to create the /usr/local/stack folder.'
+  
+  local main_files
+  main_files=($(find /opt/stack/tools -type f -name 'main.sh')) ||
+    abort ERROR 'Failed to get the list of main script file paths.'
+  
+  local main_file
+  for main_file in "${main_files[@]}"; do
+    # Extrack the tool handle name
+    local tool_name
+    tool_name="$(
+      echo "${main_file}" | sed 's;/opt/stack/tools/\(.*\)/main.sh;\1;'
+    )"
+
+    sudo ln -sf "${main_file}" "/usr/local/stack/${tool_name}" ||
+      abort ERROR "Failed to create symlink for ${main_file} file."
+  done
+
+  log INFO 'Tools symlinks have been restored.'
   log INFO 'Tools files have been updated.'
 }
 

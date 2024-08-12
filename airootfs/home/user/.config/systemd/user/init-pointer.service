@@ -3,7 +3,7 @@ Description=service to initialize the desktop's pointer settings
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/desktop -qs init pointer
+ExecStart=/usr/local/stack/desktop -qs init pointer
 
 [Install]
 WantedBy=default.target

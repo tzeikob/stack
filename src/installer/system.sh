@@ -11,16 +11,16 @@ SETTINGS=./settings.json
 
 # Syncs airoot files to new system.
 sync_root_files () {
-  log INFO 'Syncing root file system...'
+  log INFO 'Syncing the root file system...'
 
   local user_name=''
   user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
     abort ERROR 'Unable to read user_name setting.'
 
   rsync -av /stack/airootfs/ / &&
-    rsync -av /stack/src/commons /stack/src/tools /opt/stack &&
+    rsync -av /stack/src/commons /opt/stack &&
     mv /home/user "/home/${user_name}" ||
-    abort ERROR 'Failed to sync root file system.'
+    abort ERROR 'Failed to sync the root file system.'
   
   log INFO 'Root file system has been synced.'
 }
@@ -40,6 +40,42 @@ fix_source_paths () {
   done
 
   log INFO 'Stack source paths fixed to /opt/stack.'
+}
+
+# Syncs the tools script files.
+sync_tools () {
+  log INFO 'Syncing the tools files...'
+
+  rsync -av /stack/src/tools/ /opt/stack/tools ||
+    abort ERROR 'Failed to sync the tools files.'
+  
+  sed -i 's;source src;source /opt/stack;' /opt/stack/tools/**/* ||
+    abort ERROR 'Failed to fix source paths to /opt/stack.'
+  
+  log INFO 'Source paths fixed to /opt/stack.'
+
+  # Create and restore all symlinks for every tool
+  mkdir -p /usr/local/stack ||
+    abort ERROR 'Failed to create the /usr/local/stack folder.'
+  
+  local main_files
+  main_files=($(find /opt/stack/tools -type f -name 'main.sh')) ||
+    abort ERROR 'Failed to get the list of main script file paths.'
+  
+  local main_file
+  for main_file in "${main_files[@]}"; do
+    # Extrack the tool handle name
+    local tool_name
+    tool_name="$(
+      echo "${main_file}" | sed 's;/opt/stack/tools/\(.*\)/main.sh;\1;'
+    )"
+
+    sudo ln -sf "${main_file}" "/usr/local/stack/${tool_name}" ||
+      abort ERROR "Failed to create symlink for ${main_file} file."
+  done
+
+  log INFO 'Tools symlinks have been created.'
+  log INFO 'Tools files have been synced.'
 }
 
 # Fixes the os release data.
@@ -836,6 +872,7 @@ fi
 
 sync_root_files &&
   fix_source_paths &&
+  sync_tools &&
   fix_release_data &&
   set_host &&
   set_users &&
