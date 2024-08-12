@@ -444,7 +444,7 @@ upgrade_stack () {
 
   local repo_home='/tmp/stack'
 
-  git clone --single-branch --branch "${branch}" "${repo_url}" "${repo_home}"
+  git clone --single-branch --branch "${branch}" --depth 1 "${repo_url}" "${repo_home}"
 
   if has_failed; then
     log "Failed to clone the ${branch} branch of stack repository."
