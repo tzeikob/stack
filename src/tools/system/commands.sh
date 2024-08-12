@@ -425,13 +425,14 @@ upgrade_stack () {
     return 2
   fi
 
-  git clone "${repo_url}" /tmp/stack --branch "${branch}"
+  local repo_home='/tmp/stack'
+
+  git clone --single-branch --branch "${branch}" "${repo_url}" "${repo_home}"
 
   if has_failed; then
     log "Failed to clone the ${branch} branch of stack repository."
     return 2
   fi
 
-  cd /tmp/stack
-  ./upgrade.sh
+  cd "${repo_home}" && ./upgrade.sh
 }
