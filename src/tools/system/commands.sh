@@ -386,20 +386,17 @@ upgrade_stack () {
   fi
 
   # Block the operation if system is checking or updating packages
-  local updates_state=''
-  updates_state="$(jq -cer '.status' "${UPDATES_STATE_FILE}")"
-  
-  if has_failed; then
-    log 'Failed to read the updates state file.'
-    return 2
-  fi
+  if file_exists "${UPDATES_STATE_FILE}"; then
+    local status=''
+    status="$(jq -cr '.status' "${UPDATES_STATE_FILE}")"
 
-  if is_equal "${updates_state}" '2'; then
-    log 'Cannot upgrade while system is checking packages.'
-    return 2
-  elif is_equal "${updates_state}" '3'; then
-    log 'Cannot upgrade while system is updating packages.'
-    return 2
+    if is_true "${status} = 2"; then
+      log 'Unable to proceed while system is checking for updates.'
+      return 2
+    elif is_true "${status} = 3"; then
+      log 'Unable to proceed while system is updating.'
+      return 2
+    fi
   fi
 
   local hash_file='/opt/stack/.hash'
