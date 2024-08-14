@@ -132,6 +132,9 @@ rename_distro () {
 
   sed -i "s/#VERSION#/${version}/" "${ROOT_FS}/usr/lib/os-release" ||
     abort ERROR 'Failed to set build version.'
+  
+  ln -sf /usr/lib/os-release "${ROOT_FS}/etc/stack-release" ||
+    abort ERROR 'Failed to create the stack-release symlink.'
 
   local profile_def="${PROFILE_DIR}/profiledef.sh"
 

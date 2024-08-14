@@ -86,6 +86,9 @@ fix_release_data () {
 
   sed -i "s/#VERSION#/${version}/" /usr/lib/os-release ||
     abort ERROR 'Failed to set os release version.'
+  
+  ln -sf /usr/lib/os-release /etc/stack-release ||
+    abort ERROR 'Failed to create the stack-release symlink.'
 
   rm -f /etc/arch-release ||
     abort ERROR 'Unable to remove the arch-release file.'
