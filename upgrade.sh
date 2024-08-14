@@ -10,8 +10,11 @@ source src/commons/validators.sh
 update_root_files () {
   log INFO 'Updating the root file system...'
 
-  mv airootfs/home/user "airootfs/home/${USER}" ||
-    abort ERROR "Failed to prepare home folder for ${USER}."
+  # Rename airootfs user home to align with the current system
+  if not_equals "${USER}" 'user'; then
+    mv airootfs/home/user "airootfs/home/${USER}" ||
+      abort ERROR "Failed to rename user home for ${USER}."
+  fi
 
   sudo rsync -av airootfs/ / \
     --exclude etc/X11/xorg.conf.d/00-keyboard.conf \

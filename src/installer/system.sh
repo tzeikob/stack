@@ -13,13 +13,18 @@ SETTINGS=./settings.json
 sync_root_files () {
   log INFO 'Syncing the root file system...'
 
+  rsync -av /stack/airootfs/ / ||
+    abort ERROR 'Failed to sync the root file system.'
+  
   local user_name=''
   user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
     abort ERROR 'Unable to read user_name setting.'
-
-  rsync -av /stack/airootfs/ / &&
+  
+  # Rename user home to align with the new system
+  if not_equals "${user_name}" 'user'; then
     mv /home/user "/home/${user_name}" ||
-    abort ERROR 'Failed to sync the root file system.'
+      abort ERROR "Failed to rename home folder for ${user_name}."
+  fi
   
   log INFO 'Root file system has been synced.'
 }

@@ -59,10 +59,12 @@ copy_profile () {
 sync_root_files () {
   log INFO 'Syncing the root file system...'
 
-  rsync -av airootfs/ "${ROOT_FS}" &&
-    rsync -av "${ROOT_FS}/home/user/" "${ROOT_FS}/root" &&
-    rm -rf "${ROOT_FS}/home/user" ||
+  rsync -av airootfs/ "${ROOT_FS}" ||
     abort ERROR 'Failed to sync the root file system.'
+  
+  rsync -av "${ROOT_FS}/home/user/" "${ROOT_FS}/root" &&
+    rm -rf "${ROOT_FS}/home/user" ||
+    abort ERROR 'Failed to sync files under root home.'
   
   log INFO 'Root file system has been synced.'
 }
