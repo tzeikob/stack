@@ -125,7 +125,7 @@ test_no_func_overriden () {
 test_local_var_declarations () {
   local files=(./install.sh ./build.sh ./test.sh)
   files+=($(find ./src ./airootfs -type f)) ||
-    abort 'Unable to list source files.'
+    abort ERROR 'Unable to list source files.'
   
   local file=''
   for file in "${files[@]}"; do
@@ -133,7 +133,7 @@ test_local_var_declarations () {
     declarations=$(grep -e '^ *local  *.*=.*' "${file}")
 
     if [[ $? -gt 1 ]]; then
-      abort 'Unable to rertieve local variable declarations.'
+      abort ERROR 'Unable to rertieve local variable declarations.'
     fi
 
     local declaration=''

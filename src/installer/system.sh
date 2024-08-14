@@ -117,7 +117,7 @@ set_users () {
 
   local vm=''
   vm="$(jq -cer '.vm' "${SETTINGS}")" ||
-    abort 'Failed to read the vm setting.'
+    abort ERROR 'Failed to read the vm setting.'
 
   if is_yes "${vm}"; then
     groupadd 'libvirt' 2>&1
@@ -240,7 +240,7 @@ install_base_packages () {
 
   local uefi_mode=''
   uefi_mode="$(jq -cer '.uefi_mode' "${SETTINGS}")" ||
-    abort 'Failed to read the uefi_mode setting.'
+    abort ERROR 'Failed to read the uefi_mode setting.'
 
   local extra_pckgs=''
   if is_yes "${uefi_mode}"; then
@@ -301,7 +301,7 @@ install_drivers () {
 
   local cpu_vendor=''
   cpu_vendor="$(jq -cer '.cpu_vendor' "${SETTINGS}")" ||
-    abort 'Failed to read the cpu_vendor setting.'
+    abort ERROR 'Failed to read the cpu_vendor setting.'
 
   if equals "${cpu_vendor}" 'amd'; then
     cpu_pckgs='amd-ucode'
@@ -313,7 +313,7 @@ install_drivers () {
 
   local gpu_vendor=''
   gpu_vendor="$(jq -cer '.gpu_vendor' "${SETTINGS}")" ||
-    abort 'Failed to read the gpu_vendor setting.'
+    abort ERROR 'Failed to read the gpu_vendor setting.'
 
   if equals "${gpu_vendor}" 'nvidia'; then
     local kernel=''
@@ -339,7 +339,7 @@ install_drivers () {
 
   local synaptics=''
   synaptics="$(jq -cer '.synaptics' "${SETTINGS}")" ||
-    abort 'Failed to read the synaptics setting.'
+    abort ERROR 'Failed to read the synaptics setting.'
 
   if is_yes "${synaptics}"; then
     other_pckgs='xf86-input-synaptics'
@@ -349,11 +349,11 @@ install_drivers () {
 
   local vm=''
   vm="$(jq -cer '.vm' "${SETTINGS}")" ||
-    abort 'Failed to read the vm setting.'
+    abort ERROR 'Failed to read the vm setting.'
   
   local vm_vendor=''
   vm_vendor="$(jq -cer '.vm_vendor' "${SETTINGS}")" ||
-    abort 'Failed to read the vm_vendor setting.'
+    abort ERROR 'Failed to read the vm_vendor setting.'
 
   if is_yes "${vm}" && equals "${vm_vendor}" 'oracle'; then
     vm_pckgs='virtualbox-guest-utils'
@@ -707,7 +707,7 @@ setup_boot_loader () {
 
   local uefi_mode=''
   uefi_mode="$(jq -cer '.uefi_mode' "${SETTINGS}")" ||
-    abort 'Failed to read the uefi_mode setting.'
+    abort ERROR 'Failed to read the uefi_mode setting.'
 
   if is_yes "${uefi_mode}"; then
     grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB 2>&1 ||
@@ -741,7 +741,7 @@ setup_boot_loader () {
 
   local vm_vendor=''
   vm_vendor="$(jq -cer '.vm_vendor' "${SETTINGS}")" ||
-    abort 'Failed to read the vm_vendor setting.'
+    abort ERROR 'Failed to read the vm_vendor setting.'
 
   if is_yes "${uefi_mode}" && equals "${vm_vendor}" 'oracle'; then
     mkdir -p /boot/EFI/BOOT &&
@@ -803,7 +803,7 @@ enable_services () {
 
   local trim_disk=''
   trim_disk="$(jq -cer '.trim_disk' "${SETTINGS}")" ||
-    abort 'Failed to read the trim_disk setting.'
+    abort ERROR 'Failed to read the trim_disk setting.'
 
   if is_yes "${trim_disk}"; then
     systemctl enable fstrim.timer 2>&1 ||
@@ -814,11 +814,11 @@ enable_services () {
 
   local vm=''
   vm="$(jq -cer '.vm' "${SETTINGS}")" ||
-    abort 'Failed to read the vm setting.'
+    abort ERROR 'Failed to read the vm setting.'
   
   local vm_vendor=''
   vm_vendor="$(jq -cer '.vm_vendor' "${SETTINGS}")" ||
-    abort 'Failed to read the vm_vendor setting.'
+    abort ERROR 'Failed to read the vm_vendor setting.'
 
   if is_yes "${vm}" && equals "${vm_vendor}" 'oracle'; then
     systemctl enable vboxservice.service 2>&1 ||
