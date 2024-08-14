@@ -441,6 +441,8 @@ upgrade_stack () {
 
   local repo_home='/tmp/stack'
 
+  rm -rf "${repo_home}"
+
   git clone --single-branch --branch "${branch}" --depth 1 "${repo_url}" "${repo_home}"
 
   if has_failed; then
@@ -448,5 +450,9 @@ upgrade_stack () {
     return 2
   fi
 
-  cd "${repo_home}" && ./upgrade.sh
+  cd "${repo_home}"
+
+  ./upgrade.sh
+
+  cd ~ && rm -rf "${repo_home}"
 }
