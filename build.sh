@@ -60,12 +60,25 @@ sync_root_files () {
   log INFO 'Syncing the root file system...'
 
   rsync -av airootfs/ "${ROOT_FS}" &&
-    rsync -av src/commons "${ROOT_FS}/opt/stack" &&
     rsync -av "${ROOT_FS}/home/user/" "${ROOT_FS}/root" &&
     rm -rf "${ROOT_FS}/home/user" ||
     abort ERROR 'Failed to sync the root file system.'
   
   log INFO 'Root file system has been synced.'
+}
+
+# Syncs the commons script files.
+sync_commons () {
+  log INFO 'Syncing the commons files...'
+
+  rsync -av src/commons/ "${ROOT_FS}/opt/stack/commons" ||
+    abort ERROR 'Failed to sync the commons files.'
+  
+  sudo sed -i 's;source src;source /opt/stack;' ${ROOT_FS}/opt/stack/commons/* ||
+    abort ERROR 'Failed to fix source paths to /opt/stack.'
+  
+  log INFO 'Source paths fixed to /opt/stack.'
+  log INFO 'Commons files have been synced.'
 }
 
 # Syncs the tools script files.
@@ -850,6 +863,7 @@ init &&
   check_deps &&
   copy_profile &&
   sync_root_files &&
+  sync_commons &&
   sync_tools &&
   rename_distro &&
   fix_boot_loaders &&

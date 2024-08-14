@@ -18,28 +18,24 @@ sync_root_files () {
     abort ERROR 'Unable to read user_name setting.'
 
   rsync -av /stack/airootfs/ / &&
-    rsync -av /stack/src/commons /opt/stack &&
     mv /home/user "/home/${user_name}" ||
     abort ERROR 'Failed to sync the root file system.'
   
   log INFO 'Root file system has been synced.'
 }
 
-# Fixes the source paths under /opt/stack
-# files to the actuall paths.
-fix_source_paths () {
-  local files
-  files=($(
-    find /opt/stack -type f -name '*.sh'
-  )) || abort ERROR 'Failed to list source files under /opt/stack.'
+# Syncs the commons script files.
+sync_commons () {
+  log INFO 'Syncing the commons files...'
 
-  local file
-  for file in "${files[@]}"; do
-    sed -i 's;source src;source /opt/stack;' "${file}" ||
-      abort ERROR "Failed to fix source paths in ${file}."
-  done
-
-  log INFO 'Stack source paths fixed to /opt/stack.'
+  rsync -av /stack/src/commons/ /opt/stack/commons ||
+    abort ERROR 'Failed to sync the commons files.'
+  
+  sudo sed -i 's;source src;source /opt/stack;' /opt/stack/commons/* ||
+    abort ERROR 'Failed to fix source paths to /opt/stack.'
+  
+  log INFO 'Source paths fixed to /opt/stack.'
+  log INFO 'Commons files have been synced.'
 }
 
 # Syncs the tools script files.
@@ -874,7 +870,7 @@ if not_equals "$(id -u)" 0; then
 fi
 
 sync_root_files &&
-  fix_source_paths &&
+  sync_commons &&
   sync_tools &&
   fix_release_data &&
   set_host &&
