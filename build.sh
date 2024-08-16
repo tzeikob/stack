@@ -73,6 +73,9 @@ sync_root_files () {
 sync_commons () {
   log INFO 'Syncing the commons files...'
 
+  mkdir -p "${ROOT_FS}/opt/stack" ||
+    abort ERROR 'Failed to create the /opt/stack folder.'
+
   rsync -av src/commons/ "${ROOT_FS}/opt/stack/commons" ||
     abort ERROR 'Failed to sync the commons files.'
   
@@ -86,6 +89,9 @@ sync_commons () {
 # Syncs the tools script files.
 sync_tools () {
   log INFO 'Syncing the tools files...'
+
+  mkdir -p "${ROOT_FS}/opt/stack" ||
+    abort ERROR 'Failed to create the /opt/stack folder.'
 
   rsync -av src/tools/ "${ROOT_FS}/opt/stack/tools" \
     --exclude audio \

@@ -32,6 +32,9 @@ update_root_files () {
 update_commons () {
   log INFO 'Updating the commons files...'
 
+  sudo mkdir -p /opt/stack ||
+    abort ERROR 'Failed to create the /opt/stack folder.'
+
   sudo rsync -av --delete src/commons/ /opt/stack/commons ||
     abort ERROR 'Failed to update the commons files.'
   
@@ -45,6 +48,9 @@ update_commons () {
 # Updates the tools script files.
 update_tools () {
   log INFO 'Updating the tools files...'
+
+  sudo mkdir -p /opt/stack ||
+    abort ERROR 'Failed to create the /opt/stack folder.'
 
   sudo rsync -av --delete src/tools/ /opt/stack/tools ||
     abort ERROR 'Failed to update the tools files.'
