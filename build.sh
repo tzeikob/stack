@@ -788,23 +788,6 @@ enable_services () {
     abort ERROR 'Failed to set the home in fix layout service.'
 }
 
-# Fixes the source paths under /opt/stack
-# files to the actuall paths.
-fix_source_paths () {
-  local files
-  files=($(
-    find "${ROOT_FS}/opt/stack" -type f -name '*.sh'
-  )) || abort ERROR 'Failed to list source files under /opt/stack.'
-
-  local file
-  for file in "${files[@]}"; do
-    sed -i 's;source src;source /opt/stack;' "${file}" ||
-      abort ERROR "Failed to fix source paths in ${file}."
-  done
-
-  log INFO 'Stack source paths fixed to /opt/stack.'
-}
-
 # Sets file system permissions.
 set_file_permissions () {
   local permissions_file="${PROFILE_DIR}/profiledef.sh"
@@ -879,6 +862,5 @@ init &&
   setup_theme &&
   setup_fonts &&
   enable_services &&
-  fix_source_paths &&
   set_file_permissions &&
   make_iso_file
