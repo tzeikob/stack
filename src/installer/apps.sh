@@ -108,15 +108,15 @@ install_virtual_box () {
   kernel="$(jq -cer '.kernel' "${SETTINGS}")" ||
     abort ERROR 'Unable to read kernel setting.'
 
-  local pckgs='virtualbox virtualbox-guest-iso'
+  local pkgs='virtualbox virtualbox-guest-iso'
 
   if equals "${kernel}" 'stable'; then
-    pckgs+=' virtualbox-host-modules-arch'
+    pkgs+=' virtualbox-host-modules-arch'
   elif equals "${kernel}" 'lts'; then
-    pckgs+=' virtualbox-host-dkms'
+    pkgs+=' virtualbox-host-dkms'
   fi
 
-  sudo pacman -S --needed --noconfirm ${pckgs} 2>&1
+  sudo pacman -S --needed --noconfirm ${pkgs} 2>&1
 
   if has_failed; then
     log WARN 'Failed to install virtual box.'
