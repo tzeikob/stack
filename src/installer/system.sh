@@ -249,17 +249,7 @@ sync_package_databases () {
 install_base_packages () {
   log INFO 'Installing the base packages...'
 
-  local uefi_mode=''
-  uefi_mode="$(jq -cer '.uefi_mode' "${SETTINGS}")" ||
-    abort ERROR 'Failed to read the uefi_mode setting.'
-
-  local pkgs=()
-
-  if is_yes "${uefi_mode}"; then
-    pkgs+=(efibootmgr)
-  fi
-
-  pkgs+=($(grep -E '(stp|all):pac' /stack/packages.x86_64 | cut -d ':' -f 3)) ||
+  local pkgs=($(grep -E '(stp|all):pac' /stack/packages.x86_64 | cut -d ':' -f 3)) ||
     abort ERROR 'Failed to read packages from packages.x86_64 file.'
 
   pacman -S --needed --noconfirm ${pkgs[@]} 2>&1 ||
