@@ -72,9 +72,8 @@ update_tools () {
   for main_file in "${main_files[@]}"; do
     # Extrack the tool handle name
     local tool_name
-    tool_name="$(
-      echo "${main_file}" | sed 's;/opt/stack/tools/\(.*\)/main.sh;\1;'
-    )"
+    tool_name="$(echo "${main_file}" | sed 's;/opt/stack/tools/\(.*\)/main.sh;\1;')" ||
+      abort ERROR 'Failed to extract tool handle name.'
 
     sudo ln -sf "${main_file}" "/usr/local/stack/${tool_name}" ||
       abort ERROR "Failed to create symlink for ${main_file} file."
