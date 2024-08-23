@@ -18,24 +18,6 @@ install_chrome () {
     log WARN 'Failed to install the chrome web browser.'
 }
 
-# Installs the firefox web browser.
-install_firefox () {
-  log INFO 'Installing the firefox web browser...'
-
-  sudo pacman -S --needed --noconfirm firefox 2>&1 &&
-    log INFO 'Firefox web browser has been installed.' ||
-    log WARN 'Failed to install the firefox web browser.'
-}
-
-# Installs the tor web browser.
-install_tor () {
-  log INFO 'Installing the tor web browser...'
-
-  sudo pacman -S --needed --noconfirm torbrowser-launcher 2>&1 &&
-    log INFO 'Tor web browser has been installed.' ||
-    log WARN 'Failed to install the tor web browser.'
-}
-
 # Installs the postman client.
 install_postman () {
   log INFO 'Installing the postman client...'
@@ -210,8 +192,6 @@ if equals "$(id -u)" 0; then
 fi
 
 install_chrome &&
-  install_firefox &&
-  install_tor &&
   install_postman &&
   install_compass &&
   install_studio3t &&

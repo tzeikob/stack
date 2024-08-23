@@ -101,19 +101,23 @@ install_kernel () {
   kernel="$(jq -cer '.kernel' "${SETTINGS}")" ||
     abort ERROR 'Unable to read kernel setting.'
 
-  local pkgs=''
+  local linux_pkgs=''
 
   if equals "${kernel}" 'stable'; then
-    pkgs='linux linux-headers'
+    linux_pkgs='linux linux-headers'
   elif equals "${kernel}" 'lts'; then
-    pkgs='linux-lts linux-lts-headers'
+    linux_pkgs='linux-lts linux-lts-headers'
   fi
 
-  if is_empty "${pkgs}"; then
+  if is_empty "${linux_pkgs}"; then
     abort ERROR 'No linux kernel packages set for installation.'
   fi
 
-  pacstrap /mnt base ${pkgs} linux-firmware archlinux-keyring reflector rsync sudo jq 2>&1 ||
+  linux_pkgs+=' linux-firmware'
+
+  local util_pkgs='reflector rsync sudo jq'
+
+  pacstrap /mnt base ${linux_pkgs} ${util_pkgs} 2>&1 ||
     abort ERROR 'Failed to pacstrap kernel and base packages.'
 
   log INFO 'Linux kernel has been installed.'

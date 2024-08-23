@@ -264,39 +264,9 @@ fix_boot_loaders () {
 define_packages () {
   log INFO 'Adding system and desktop packages...'
 
-  local pkgs=()
-
-  # Add the base and system packages
-  pkgs+=(
-    reflector rsync sudo
-    base-devel pacman-contrib pkgstats grub mtools dosfstools ntfs-3g exfatprogs gdisk fuseiso veracrypt
-    python-pip parted curl wget udisks2 udiskie gvfs gvfs-smb bash-completion
-    man-db man-pages texinfo cups cups-pdf cups-filters usbutils bluez bluez-utils unzip terminus-font
-    vim nano git tree arch-audit atool zip xz unace p7zip gzip lzop feh hsetroot
-    bzip2 unrar dialog inetutils dnsutils openssh nfs-utils ipset xsel
-    neofetch age imagemagick gpick fuse2 rclone smartmontools glib2 jq jc sequoia-sq xf86-input-wacom
-    cairo bc xdotool python-tqdm libqalculate nftables iptables-nft virtualbox-guest-utils
-    htop glances
-  )
-  
-  # Add the display server and graphics packages
-  pkgs+=(
-    xorg xorg-xinit xorg-xrandr xorg-xdpyinfo xf86-video-qxl
-  )
-
-  # Add various hardware and driver packages
-  pkgs+=(
-    acpi acpi_call acpid tlp xcalib
-    networkmanager networkmanager-openvpn wireless_tools netctl wpa_supplicant
-    nmap dhclient smbclient libnma alsa-utils xf86-input-synaptics
-  )
-
-  # Add the desktop prerequisite packages
-  pkgs+=(
-    picom bspwm sxhkd polybar rofi dunst
-    trash-cli cool-retro-term helix firefox torbrowser-launcher
-    irssi ttf-font-awesome noto-fonts-emoji
-  )
+  # Collect all the official packages the live media needs
+  local pkgs=($(grep -E '(bld|all):pac' packages.x86_64 | cut -d ':' -f 3)) ||
+    abort ERROR 'Failed to read packages from packages.x86_64 file.'
 
   local pkgs_file="${PROFILE_DIR}/packages.x86_64"
 
@@ -329,9 +299,10 @@ build_aur_packages () {
   mkdir -p "${repo_home}" ||
     abort ERROR 'Failed to create the local repo folder.'
 
-  local names=(
-    yay smenu xkblayout-state-git
-  )
+  # Collect all the aur packages the live media needs
+  local names=(yay)
+  names+=($(grep -E '(bld|all):aur' packages.x86_64 | cut -d ':' -f 3)) ||
+    abort ERROR 'Failed to read packages from packages.x86_64 file.'
 
   local name=''
   for name in "${names[@]}"; do

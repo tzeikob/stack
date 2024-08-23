@@ -253,19 +253,16 @@ install_base_packages () {
   uefi_mode="$(jq -cer '.uefi_mode' "${SETTINGS}")" ||
     abort ERROR 'Failed to read the uefi_mode setting.'
 
-  local extra_pckgs=''
+  local pkgs=()
+
   if is_yes "${uefi_mode}"; then
-    extra_pckgs='efibootmgr'
+    pkgs+=(efibootmgr)
   fi
 
-  pacman -S --needed --noconfirm \
-    base-devel pacman-contrib pkgstats grub mtools dosfstools ntfs-3g exfatprogs gdisk fuseiso veracrypt \
-    python-pip parted curl wget udisks2 udiskie gvfs gvfs-smb bash-completion \
-    man-db man-pages texinfo cups cups-pdf cups-filters usbutils bluez bluez-utils unzip terminus-font \
-    vim nano git tree arch-audit atool zip xz unace p7zip gzip lzop feh hsetroot \
-    bzip2 unrar dialog inetutils dnsutils openssh nfs-utils openbsd-netcat ipset xsel \
-    neofetch age imagemagick gpick fuse2 rclone smartmontools glib2 jq jc sequoia-sq xf86-input-wacom \
-    cairo bc xdotool python-tqdm ${extra_pckgs} 2>&1 ||
+  pkgs+=($(grep -E '(stp|all):pac' /stack/packages.x86_64 | cut -d ':' -f 3)) ||
+    abort ERROR 'Failed to read packages from packages.x86_64 file.'
+
+  pacman -S --needed --noconfirm ${pkgs[@]} 2>&1 ||
     abort ERROR 'Failed to install base packages.'
 
   log INFO 'Replacing iptables with nft tables...'
@@ -280,12 +277,6 @@ install_base_packages () {
 # Installs the Xorg display server packages.
 install_display_server () {
   log INFO 'Installing the display server...'
-
-  pacman -S --needed --noconfirm \
-    xorg xorg-xinit xorg-xrandr xorg-xdpyinfo 2>&1 ||
-    abort ERROR 'Failed to install xorg packages.'
-
-  log INFO 'Xorg packages have been installed.'
 
   local user_name=''
   user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
@@ -308,19 +299,19 @@ install_display_server () {
 install_drivers () {
   log INFO 'Installing system drivers...'
 
-  local cpu_pckgs=''
+  local cpu_pkgs=''
 
   local cpu_vendor=''
   cpu_vendor="$(jq -cer '.cpu_vendor' "${SETTINGS}")" ||
     abort ERROR 'Failed to read the cpu_vendor setting.'
 
   if equals "${cpu_vendor}" 'amd'; then
-    cpu_pckgs='amd-ucode'
+    cpu_pkgs='amd-ucode'
   elif equals "${cpu_vendor}" 'intel'; then
-    cpu_pckgs='intel-ucode'
+    cpu_pkgs='intel-ucode'
   fi
 
-  local gpu_pckgs=''
+  local gpu_pkgs=''
 
   local gpu_vendor=''
   gpu_vendor="$(jq -cer '.gpu_vendor' "${SETTINGS}")" ||
@@ -332,31 +323,31 @@ install_drivers () {
       abort ERROR 'Unable to read kernel setting.'
 
     if equals "${kernel}" 'stable'; then
-      gpu_pckgs='nvidia'
+      gpu_pkgs='nvidia'
     elif equals "${kernel}" 'lts'; then
-      gpu_pckgs='nvidia-lts'
+      gpu_pkgs='nvidia-lts'
     fi
 
-    gpu_pckgs+=' nvidia-utils nvidia-settings'
+    gpu_pkgs+=' nvidia-utils nvidia-settings'
   elif equals "${gpu_vendor}" 'amd'; then
-    gpu_pckgs='xf86-video-amdgpu'
+    gpu_pkgs='xf86-video-amdgpu'
   elif equals "${gpu_vendor}" 'intel'; then
-    gpu_pckgs='libva-intel-driver libvdpau-va-gl vulkan-intel libva-utils'
+    gpu_pkgs='libva-intel-driver libvdpau-va-gl vulkan-intel libva-utils'
   else
-    gpu_pckgs='xf86-video-qxl'
+    gpu_pkgs='xf86-video-qxl'
   fi
 
-  local other_pckgs=''
+  local other_pkgs=''
 
   local synaptics=''
   synaptics="$(jq -cer '.synaptics' "${SETTINGS}")" ||
     abort ERROR 'Failed to read the synaptics setting.'
 
   if is_yes "${synaptics}"; then
-    other_pckgs='xf86-input-synaptics'
+    other_pkgs='xf86-input-synaptics'
   fi
 
-  local vm_pckgs=''
+  local vm_pkgs=''
 
   local vm=''
   vm="$(jq -cer '.vm' "${SETTINGS}")" ||
@@ -367,15 +358,11 @@ install_drivers () {
     abort ERROR 'Failed to read the vm_vendor setting.'
 
   if is_yes "${vm}" && equals "${vm_vendor}" 'oracle'; then
-    vm_pckgs='virtualbox-guest-utils'
+    vm_pkgs='virtualbox-guest-utils'
   fi
 
   pacman -S --needed --noconfirm \
-    acpi acpi_call acpid tlp xcalib \
-    networkmanager networkmanager-openvpn wireless_tools netctl wpa_supplicant \
-    nmap dhclient smbclient libnma \
-    alsa-utils pipewire pipewire-alsa pipewire-pulse pipewire-jack \
-    ${cpu_pckgs} ${gpu_pckgs} ${other_pckgs} ${vm_pckgs} 2>&1 ||
+    ${cpu_pkgs} ${gpu_pkgs} ${other_pkgs} ${vm_pkgs} 2>&1 ||
     abort ERROR 'Failed to install system drivers.'
 
   log INFO 'System drivers have been installed.'
