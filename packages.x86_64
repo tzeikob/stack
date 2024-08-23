@@ -73,8 +73,7 @@ all:pac:bc
 all:pac:xdotool
 all:pac:python-tqdm
 all:pac:libqalculate
-bld:pac:nftables
-bld:pac:iptables-nft
+all:pac:iptables-nft
 bld:pac:virtualbox-guest-utils
 all:pac:htop
 all:pac:glances

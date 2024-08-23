@@ -265,12 +265,6 @@ install_base_packages () {
   pacman -S --needed --noconfirm ${pkgs[@]} 2>&1 ||
     abort ERROR 'Failed to install base packages.'
 
-  log INFO 'Replacing iptables with nft tables...'
-
-  printf '%s\n' y y | pacman -S --needed nftables iptables-nft 2>&1 ||
-    abort ERROR 'Failed to install the nft tables.'
-
-  log INFO 'Iptables have been replaced by nft tables.'
   log INFO 'Base packages have been installed.'
 }
 
