@@ -29,7 +29,7 @@ init () {
 
 # Checks if any build dependency is missing and abort immediately.
 check_deps () {
-  local deps=(archiso)
+  local deps=(archiso rsync)
 
   local dep=''
   for dep in "${deps[@]}"; do
