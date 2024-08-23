@@ -101,7 +101,7 @@ stp:pac:pipewire
 stp:pac:pipewire-alsa
 stp:pac:pipewire-pulse
 stp:pac:pipewire-jack
-bld:pac:xf86-input-synaptics
+all:pac:xf86-input-synaptics
 all:pac:picom
 all:pac:bspwm
 all:pac:sxhkd

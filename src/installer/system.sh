@@ -321,16 +321,6 @@ install_drivers () {
     gpu_pkgs='xf86-video-qxl'
   fi
 
-  local other_pkgs=''
-
-  local synaptics=''
-  synaptics="$(jq -cer '.synaptics' "${SETTINGS}")" ||
-    abort ERROR 'Failed to read the synaptics setting.'
-
-  if is_yes "${synaptics}"; then
-    other_pkgs='xf86-input-synaptics'
-  fi
-
   local vm_pkgs=''
 
   local vm=''
@@ -346,7 +336,7 @@ install_drivers () {
   fi
 
   pacman -S --needed --noconfirm \
-    ${cpu_pkgs} ${gpu_pkgs} ${other_pkgs} ${vm_pkgs} 2>&1 ||
+    ${cpu_pkgs} ${gpu_pkgs} ${vm_pkgs} 2>&1 ||
     abort ERROR 'Failed to install system drivers.'
 
   log INFO 'System drivers have been installed.'

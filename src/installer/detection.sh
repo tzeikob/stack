@@ -128,22 +128,6 @@ is_disk_trimmable () {
   log INFO "Disk trim mode is set to ${trim_disk}."
 }
 
-# Resolves the synaptics touch pad.
-resolve_synaptics () {
-  local query='.*SynPS/2.*Synaptics.*TouchPad.*'
-
-  local synaptics='no'
-
-  if grep -Eq "${query}" /proc/bus/input/devices; then
-    synaptics='yes'
-    log INFO 'Synaptics touch pad set to yes.'
-  fi
-
-  settings="$(jq -er ".synaptics = \"${synaptics}\"" "${SETTINGS}")" &&
-    echo "${settings}" > "${SETTINGS}" ||
-    abort ERROR 'Failed to save synaptics setting.'
-}
-
 log INFO 'Script detection.sh started.'
 log INFO 'Resolving system hardware data...'
 
@@ -151,8 +135,7 @@ is_uefi &&
   is_virtual_machine &&
   resolve_cpu &&
   resolve_gpu &&
-  is_disk_trimmable &&
-  resolve_synaptics
+  is_disk_trimmable
 
 log INFO 'Script detection.sh has finished.'
 
