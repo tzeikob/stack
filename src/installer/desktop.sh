@@ -7,7 +7,7 @@ source src/commons/error.sh
 source src/commons/logger.sh
 source src/commons/validators.sh
 
-SETTINGS=./settings.json
+SETTINGS=/stack/settings.json
 
 # Installs all the aur packages the desktop needs.
 install_aur_packages () {

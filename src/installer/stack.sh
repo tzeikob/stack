@@ -7,7 +7,7 @@ source src/commons/error.sh
 source src/commons/logger.sh
 source src/commons/validators.sh
 
-SETTINGS=./settings.json
+SETTINGS=/stack/settings.json
 
 # Installs the node javascript runtime engine.
 install_node () {

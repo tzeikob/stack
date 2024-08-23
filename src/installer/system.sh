@@ -7,7 +7,7 @@ source src/commons/error.sh
 source src/commons/logger.sh
 source src/commons/validators.sh
 
-SETTINGS=./settings.json
+SETTINGS=/stack/settings.json
 
 # Syncs airoot files to new system.
 sync_root_files () {
