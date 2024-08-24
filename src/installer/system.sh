@@ -320,22 +320,7 @@ install_drivers () {
     gpu_pkgs='xf86-video-qxl'
   fi
 
-  local vm_pkgs=''
-
-  local vm=''
-  vm="$(jq -cer '.vm' "${SETTINGS}")" ||
-    abort ERROR 'Failed to read the vm setting.'
-  
-  local vm_vendor=''
-  vm_vendor="$(jq -cer '.vm_vendor' "${SETTINGS}")" ||
-    abort ERROR 'Failed to read the vm_vendor setting.'
-
-  if is_yes "${vm}" && equals "${vm_vendor}" 'oracle'; then
-    vm_pkgs='virtualbox-guest-utils'
-  fi
-
-  pacman -S --needed --noconfirm \
-    ${cpu_pkgs} ${gpu_pkgs} ${vm_pkgs} 2>&1 ||
+  pacman -S --needed --noconfirm ${cpu_pkgs} ${gpu_pkgs} 2>&1 ||
     abort ERROR 'Failed to install system drivers.'
 
   log INFO 'System drivers have been installed.'
