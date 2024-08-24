@@ -144,3 +144,4 @@ stp:pac:taglib
 stp:pac:wavpack
 stp:aur:digimend-kernel-drivers-dkms-git
 all:pac:efibootmgr
+all:pac:irssi

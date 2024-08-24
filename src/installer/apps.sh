@@ -82,15 +82,6 @@ install_skype () {
     log WARN 'Failed to install skype.'
 }
 
-# Installs the irssi client.
-install_irssi () {
-  log INFO 'Installing the irssi client...'
-
-  sudo pacman -S --needed --noconfirm irssi 2>&1 &&
-    log INFO 'Irssi client has been installed.' ||
-    log WARN 'Failed to install irssi client.'
-}
-
 # Installs the filezilla client.
 install_filezilla () {
   log INFO 'Installing the filezilla client...'
@@ -199,7 +190,6 @@ install_chrome &&
   install_discord &&
   install_slack &&
   install_skype &&
-  install_irssi &&
   install_filezilla &&
   install_virtual_box &&
   install_vmware &&
