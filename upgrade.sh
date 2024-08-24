@@ -6,6 +6,26 @@ source src/commons/error.sh
 source src/commons/logger.sh
 source src/commons/validators.sh
 
+# Updates existing packages and installs new dependencies.
+fix_packages () {
+  log INFO 'Fixing and installing packages...'
+
+  local pkgs=($(grep -E '(stp|all):pac' packages.x86_64 | cut -d ':' -f 3)) ||
+    abort ERROR 'Failed to read packages from packages.x86_64 file.'
+
+  sudo pacman -S --needed --noconfirm ${pkgs[@]} 2>&1 ||
+    abort ERROR 'Failed to install the packages.'
+
+  local pkgs=()
+  pkgs+=($(grep -E '(stp|all):aur' packages.x86_64 | cut -d ':' -f 3)) ||
+    abort ERROR 'Failed to read packages from packages.x86_64 file.'
+
+  yay -S --needed --noconfirm --removemake ${pkgs[@]} 2>&1 ||
+    abort ERROR 'Failed to install AUR packages.'
+
+  log INFO 'All packages have been fixed.'
+}
+
 # Updates the root file system.
 update_root_files () {
   log INFO 'Updating the root file system...'
@@ -174,7 +194,8 @@ fi
 
 log INFO 'Starting the upgrade process...'
 
-update_root_files &&
+fix_packages &&
+  update_root_files &&
   update_commons &&
   update_tools &&
   update_release_data &&
