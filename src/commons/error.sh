@@ -1,7 +1,7 @@
 #!/bin/bash
 
-source /opt/stack/commons/logger.sh
-source /opt/stack/commons/validators.sh
+source src/commons/logger.sh
+source src/commons/validators.sh
 
 # Checks if the given exit status code is non-zero
 # which indicates the last command has failed. If no
@@ -82,7 +82,7 @@ beep () {
     sound='critical'
   fi
 
-  local sound_file="/usr/share/sounds/stack/${sound}.wav"
+  local sound_file="/usr/share/sounds/system/${sound}.wav"
 
   if command -v pw-play &> /dev/null; then
     LC_ALL=en_US.UTF-8 pw-play --volume=0.5 "${sound_file}" &> /dev/null &

@@ -2,13 +2,13 @@
 
 set -Eeo pipefail
 
-source /opt/stack/commons/process.sh
-source /opt/stack/commons/error.sh
-source /opt/stack/commons/logger.sh
-source /opt/stack/commons/math.sh
-source /opt/stack/commons/validators.sh
+source src/commons/process.sh
+source src/commons/error.sh
+source src/commons/logger.sh
+source src/commons/math.sh
+source src/commons/validators.sh
 
-SETTINGS='/opt/stack/installer/settings.json'
+SETTINGS=./settings.json
 
 # Erases all table data of the installation disk.
 wipe_disk () {
@@ -72,11 +72,11 @@ create_gpt_partitions () {
 
   local swap_on=''
   swap_on="$(jq -cer '.swap_on' "${SETTINGS}")" ||
-    abort 'Failed to read the swap_on setting.'
+    abort ERROR 'Failed to read the swap_on setting.'
   
   local swap_type=''
   swap_type="$(jq -cer '.swap_type' "${SETTINGS}")" ||
-    abort 'Failed to read the swap_type setting.'
+    abort ERROR 'Failed to read the swap_type setting.'
 
   if is_yes "${swap_on}" && equals "${swap_type}" 'partition'; then
     local swap_size=0
@@ -121,11 +121,11 @@ create_mbr_partitions () {
 
   local swap_on=''
   swap_on="$(jq -cer '.swap_on' "${SETTINGS}")" ||
-    abort 'Failed to read the swap_on setting.'
+    abort ERROR 'Failed to read the swap_on setting.'
   
   local swap_type=''
   swap_type="$(jq -cer '.swap_type' "${SETTINGS}")" ||
-    abort 'Failed to read the swap_type setting.'
+    abort ERROR 'Failed to read the swap_type setting.'
 
   if is_yes "${swap_on}" && equals "${swap_type}" 'partition'; then
     local swap_size=0
@@ -165,7 +165,7 @@ create_partitions () {
 
   local uefi_mode=''
   uefi_mode="$(jq -cer '.uefi_mode' "${SETTINGS}")" ||
-    abort 'Failed to read the uefi_mode setting.'
+    abort ERROR 'Failed to read the uefi_mode setting.'
 
   if is_yes "${uefi_mode}"; then
     create_gpt_partitions || abort ERROR 'Failed to create GPT partitions.'
@@ -191,15 +191,15 @@ format_partitions () {
 
   local uefi_mode=''
   uefi_mode="$(jq -cer '.uefi_mode' "${SETTINGS}")" ||
-    abort 'Failed to read the uefi_mode setting.'
+    abort ERROR 'Failed to read the uefi_mode setting.'
 
   local swap_on=''
   swap_on="$(jq -cer '.swap_on' "${SETTINGS}")" ||
-    abort 'Failed to read the swap_on setting.'
+    abort ERROR 'Failed to read the swap_on setting.'
 
   local swap_type=''
   swap_type="$(jq -cer '.swap_type' "${SETTINGS}")" ||
-    abort 'Failed to read the swap_type setting.'
+    abort ERROR 'Failed to read the swap_type setting.'
 
   if is_yes "${uefi_mode}"; then
     log INFO 'Formating the boot partition...'
@@ -256,15 +256,15 @@ mount_file_system () {
 
   local uefi_mode=''
   uefi_mode="$(jq -cer '.uefi_mode' "${SETTINGS}")" ||
-    abort 'Failed to read the uefi_mode setting.'
+    abort ERROR 'Failed to read the uefi_mode setting.'
 
   local swap_on=''
   swap_on="$(jq -cer '.swap_on' "${SETTINGS}")" ||
-    abort 'Failed to read the swap_on setting.'
+    abort ERROR 'Failed to read the swap_on setting.'
 
   local swap_type=''
   swap_type="$(jq -cer '.swap_type' "${SETTINGS}")" ||
-    abort 'Failed to read the swap_type setting.'
+    abort ERROR 'Failed to read the swap_type setting.'
 
   if is_yes "${uefi_mode}"; then
     local root_index=2
@@ -322,14 +322,14 @@ make_swap_space () {
 
   local swap_type=''
   swap_type="$(jq -cer '.swap_type' "${SETTINGS}")" ||
-    abort 'Failed to read the swap_type setting.'
+    abort ERROR 'Failed to read the swap_type setting.'
 
   if equals "${swap_type}" 'partition'; then
     local swap_index=1
 
     local uefi_mode=''
     uefi_mode="$(jq -cer '.uefi_mode' "${SETTINGS}")" ||
-      abort 'Failed to read the uefi_mode setting.'
+      abort ERROR 'Failed to read the uefi_mode setting.'
 
     if is_yes "${uefi_mode}"; then
       swap_index=2

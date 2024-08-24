@@ -1,13 +1,13 @@
 #!/bin/bash
 
-source /opt/stack/commons/error.sh
-source /opt/stack/commons/logger.sh
-source /opt/stack/commons/auth.sh
-source /opt/stack/commons/math.sh
-source /opt/stack/commons/validators.sh
-source /opt/stack/tools/system/helpers.sh
+source src/commons/error.sh
+source src/commons/logger.sh
+source src/commons/auth.sh
+source src/commons/math.sh
+source src/commons/validators.sh
+source src/tools/system/helpers.sh
 
-UPDATES_FILE=/tmp/updates
+UPDATES_STATE_FILE=/tmp/updates_state
 
 # Shows the current status of system.
 # Outputs:
@@ -190,91 +190,140 @@ set_mirrors () {
   log "Package databases mirrors set to ${countries}."
 }
 
-# Checks for currently outdated packages.
-# Outputs:
-#  A long list of packages.
+# Checks for currently available outdated packages
+# and updates the updates state file accordingly.
 check_updates () {
-  log 'Processing outdated packages...'
+  # Don't proceed if an updating operation is in progress
+  if file_exists "${UPDATES_STATE_FILE}"; then
+    local status=''
+    status="$(jq -cr '.status' "${UPDATES_STATE_FILE}")"
 
-  local pkgs=''
-  pkgs="$(find_outdated_packages)"
+    if is_true "${status} = 3"; then
+      log 'Unable to proceed while the system is updating.'
+      return 2
+    fi
+  fi
+
+  # Mark updates state as system is checking for updates
+  echo '{"status": 2}' > "${UPDATES_STATE_FILE}"
+
+  log 'Processing system updates...'
+
+  local pacman_pkgs=''
+  pacman_pkgs="$(find_outdated_pacman_packages)"
 
   if has_failed; then
-    echo 'null' > "${UPDATES_FILE}"
+    echo '{"status": -1}' > "${UPDATES_STATE_FILE}"
 
-    log 'Failed to find outdated packages.'
+    log 'Unable to search for outdated pacman packages.'
     return 2
   fi
 
+  local aur_pkgs=''
+  aur_pkgs="$(find_outdated_aur_packages)"
+
+  if has_failed; then
+    echo '{"status": -1}' > "${UPDATES_STATE_FILE}"
+
+    log 'Unable to search for outdated aur packages.'
+    return 2
+  fi
+
+  local all_updates=''
+  all_updates="$(
+    jq -ncer \
+      --argjson p "${pacman_pkgs}" \
+      --argjson a "${aur_pkgs}" \
+      '$p + $a'
+  )"
+
   local total=0
-  total="$(echo "${pkgs}" | jq -cer '.pacman + .aur|length')" || return 1
+  total="$(echo "${all_updates}" | jq -cer 'length')"
+
+  if has_failed || is_not_integer "${total}" || is_true "${total} < 0"; then
+    echo '{"status": -1}' > "${UPDATES_STATE_FILE}"
+
+    log 'Unable to resolve the total number of updates.'
+    return 2
+  fi
 
   if is_true "${total} = 0"; then
-    echo '0' > "${UPDATES_FILE}"
+    echo '{"status": 0}' > "${UPDATES_STATE_FILE}"
 
-    log 'No outdated packages have found.'
+    log 'No available updates have found.'
     return 0
   fi
 
+  # Update the updates state file
+  echo "{\"status\": 1, \"total\": ${total}}" > "${UPDATES_STATE_FILE}"
+  
+  # Send a notification to the user
+  if on_script_mode && is_true "${total} > 0"; then
+    notify-send -u NORMAL -a 'System Updates' 'System out of date!' \
+      "Heads up, found ${total} update(s)!"
+  fi
+}
+
+# Shows the list of available outdated packages.
+# Outputs:
+#  A long list of outdated packages.
+list_updates () {
+  log 'Processing system updates...'
+
+  local pacman_pkgs=''
+  pacman_pkgs="$(find_outdated_pacman_packages)"
+
+  if has_failed; then
+    log 'Unable to search for outdated pacman packages.'
+    return 2
+  fi
+
+  local aur_pkgs=''
+  aur_pkgs="$(find_outdated_aur_packages)"
+
+  if has_failed; then
+    log 'Unable to search for outdated aur packages.'
+    return 2
+  fi
+
+  local all_updates=''
+  all_updates="$(
+    jq -ncer \
+      --argjson p "${pacman_pkgs}" \
+      --argjson a "${aur_pkgs}" \
+      '$p + $a'
+  )"
+
+  local total=0
+  total="$(echo "${all_updates}" | jq -cer 'length')"
+
+  if has_failed || is_not_integer "${total}" || is_true "${total} < 0"; then
+    log 'Unable to resolve the total number of updates.'
+    return 2
+  fi
+
+  if is_true "${total} = 0"; then
+    log 'No available updates have found.'
+    return 0
+  fi
+
+  # Print all updates in to the console
   local query=''
   query+='Name:    \(.name)\n'
   query+='Current: \(.current)\n'
   query+='Latest:  \(.latest)'
-  query="[.pacman + .aur|.[]|\"${query}\"]|join(\"\n\n\")"
+  query="[.[]|\"${query}\"]|join(\"\n\n\")"
 
-  echo "${pkgs}" | jq -cr "${query}" || return 1
-
-  # Don't modify registry file while system is updating
-  if file_exists "${UPDATES_FILE}"; then
-    local packages=''
-    packages="$(< "${UPDATES_FILE}")"
-
-    if is_false "${packages} < 0"; then
-      echo "${total}" > "${UPDATES_FILE}"
-    fi
-  else
-    echo "${total}" > "${UPDATES_FILE}"
-  fi
-  
-  if on_script_mode && is_true "${total} > 0"; then
-    notify-send -u NORMAL -a 'System Updates' 'System out of date!' \
-      "Your system is running out of date, found ${total} outdated package(s)!"
-  fi
+  echo "${all_updates}" | jq -cr "${query}" || return 1
 }
 
-# Applies the latest updates to the system.
+# Applies any available updates to the system.
 apply_updates () {
   authenticate_user || return $?
 
-  log 'Processing outdated packages...'
-
-  local pkgs=''
-  pkgs="$(find_outdated_packages | jq -cer '.pacman + .aur')"
-
-  if has_failed; then
-    echo 'null' > "${UPDATES_FILE}"
-
-    log 'Failed to find outdated packages.'
-    return 2
-  fi
-
-  local total=0
-  total="$(echo "${pkgs}" | jq -cer 'length')" || return 1
-
-  if is_true "${total} = 0"; then
-    echo '0' > "${UPDATES_FILE}"
-
-    log 'No outdated packages have found.'
-    return 2
-  fi
-
-  local query=''
-  query='[.[]|.name]|join(" ")'
-
-  echo "${pkgs}" | jq -cr "${query}" || return 1
-
-  log "Found ${total} outdated package(s)."
-  confirm 'Do you want to proceed and update them?' || return $?
+  log 'CAUTION This may break your system!'
+  log 'Please consider taking a backup first.'
+  confirm 'Do you want to proceed?' || return $?
   is_empty "${REPLY}" && log 'Confirmation is required.' && return 2
   
   if is_not_yes "${REPLY}"; then
@@ -282,13 +331,24 @@ apply_updates () {
     return 2
   fi
 
+  # Don't proceed if system is checking for updates
+  if file_exists "${UPDATES_STATE_FILE}"; then
+    local status=''
+    status="$(jq -cr '.status' "${UPDATES_STATE_FILE}")"
+
+    if is_true "${status} = 2"; then
+      log 'Unable to proceed while system is checking for updates.'
+      return 2
+    fi
+  fi
+
   # Mark updating state in updates registry file
-  echo '-1' > "${UPDATES_FILE}"
+  echo '{"status": 3}' > "${UPDATES_STATE_FILE}"
 
   sudo pacman --noconfirm -Syu
 
   if has_failed; then
-    echo 'null' > "${UPDATES_FILE}"
+    echo '{"status": -1}' > "${UPDATES_STATE_FILE}"
 
     log 'Failed to update pacman packages.'
     return 2
@@ -297,15 +357,102 @@ apply_updates () {
   sudo yay --noconfirm -Syu
 
   if has_failed; then
-    echo 'null' > "${UPDATES_FILE}"
+    echo '{"status": -1}' > "${UPDATES_STATE_FILE}"
 
     log 'Failed to update aur packages.'
     return 2
   fi
 
   # Mark ready state in updates registry file
-  echo '0' > "${UPDATES_FILE}"
+  echo '{"status": 0}' > "${UPDATES_STATE_FILE}"
 
-  log -n "${total} packages have been updated."
-  log 'System is now up to date.'
+  log 'System is now up to date, please reboot!'
+}
+
+# Clones and checkouts the latest version of the stack repository
+# and exectutes the upgrade script in order to update the tools
+# and modules of the stack os system.
+upgrade_stack () {
+  authenticate_user || return $?
+
+  log 'CAUTION This may break your system!'
+  log 'Please consider taking a backup first.'
+  confirm 'Do you want to proceed?' || return $?
+  is_empty "${REPLY}" && log 'Confirmation is required.' && return 2
+  
+  if is_not_yes "${REPLY}"; then
+    log 'No upgrade has been applied.'
+    return 2
+  fi
+
+  # Block the operation if system is checking or updating packages
+  if file_exists "${UPDATES_STATE_FILE}"; then
+    local status=''
+    status="$(jq -cr '.status' "${UPDATES_STATE_FILE}")"
+
+    if is_true "${status} = 2"; then
+      log 'Unable to proceed while system is checking for updates.'
+      return 2
+    elif is_true "${status} = 3"; then
+      log 'Unable to proceed while system is updating.'
+      return 2
+    fi
+  fi
+
+  local hash_file='/opt/stack/.hash'
+
+  if file_not_exists "${hash_file}"; then
+    log 'Unable to locate the stack hash file.'
+    return 2
+  fi
+
+  local branch=''
+  branch="$(jq -cer '.branch' "${hash_file}")"
+
+  if has_failed || is_empty "${branch}"; then
+    log 'Unable to resolve the stack local branch.'
+    return 2
+  fi
+
+  local local_commit=''
+  local_commit="$(jq -cer '.commit' "${hash_file}")"
+
+  if has_failed || is_empty "${local_commit}"; then
+    log 'Unable to resolve the stack local commit.'
+    return 2
+  fi
+
+  local repo_url='https://github.com/tzeikob/stack.git'
+
+  local remote_commit=''
+  remote_commit="$(
+    git ls-remote "${repo_url}" "${branch}" | awk '{print $1}'
+  )"
+
+  if has_failed; then
+    log 'Unable to resolve the stack remote commit.'
+    return 2
+  fi
+
+  if equals "${local_commit}" "${remote_commit}"; then
+    echo 'No upgrades have found.'
+    return 2
+  fi
+
+  local repo_home='/tmp/stack'
+
+  rm -rf "${repo_home}"
+
+  git clone --single-branch --branch "${branch}" --depth 1 "${repo_url}" "${repo_home}"
+
+  if has_failed; then
+    log "Failed to clone the ${branch} branch of stack repository."
+    return 2
+  fi
+
+  cd "${repo_home}"
+
+  ./upgrade.sh
+
+  cd ~ && rm -rf "${repo_home}"
 }

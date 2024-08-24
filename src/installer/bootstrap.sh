@@ -2,12 +2,12 @@
 
 set -Eeo pipefail
 
-source /opt/stack/commons/process.sh
-source /opt/stack/commons/error.sh
-source /opt/stack/commons/logger.sh
-source /opt/stack/commons/validators.sh
+source src/commons/process.sh
+source src/commons/error.sh
+source src/commons/logger.sh
+source src/commons/validators.sh
 
-SETTINGS='/opt/stack/installer/settings.json'
+SETTINGS=./settings.json
 
 # Synchronizes the system clock to the current time.
 sync_clock () {
@@ -101,51 +101,38 @@ install_kernel () {
   kernel="$(jq -cer '.kernel' "${SETTINGS}")" ||
     abort ERROR 'Unable to read kernel setting.'
 
-  local pckgs=''
+  local linux_pkgs=''
 
   if equals "${kernel}" 'stable'; then
-    pckgs='linux linux-headers'
+    linux_pkgs='linux linux-headers'
   elif equals "${kernel}" 'lts'; then
-    pckgs='linux-lts linux-lts-headers'
+    linux_pkgs='linux-lts linux-lts-headers'
   fi
 
-  if is_empty "${pckgs}"; then
+  if is_empty "${linux_pkgs}"; then
     abort ERROR 'No linux kernel packages set for installation.'
   fi
 
-  pacstrap /mnt base ${pckgs} linux-firmware archlinux-keyring reflector rsync sudo jq 2>&1 ||
+  linux_pkgs+=' linux-firmware'
+
+  local util_pkgs='reflector rsync sudo jq'
+
+  pacstrap /mnt base ${linux_pkgs} ${util_pkgs} 2>&1 ||
     abort ERROR 'Failed to pacstrap kernel and base packages.'
 
   log INFO 'Linux kernel has been installed.'
 }
 
-# Installs the commons tools to share common utilities.
-install_commons_tools () {
-  log INFO 'Installing the commons tools...'
+# Copies the installation files to new system.
+copy_installation_files () {
+  log INFO 'Copying installation files to new system...'
 
-  mkdir -p /mnt/opt/stack &&
-    cp -r /opt/stack/commons /mnt/opt/stack ||
-    abort ERROR 'Failed to install commons tools.'
-  
-  log INFO 'Commons tools have been installed.'
-}
+  local target='/mnt/stack'
 
-# Adds various extra sudoers rules.
-add_sudoers_rules () {
-  local proxy_rule='Defaults env_keep += "'
-  proxy_rule+='http_proxy HTTP_PROXY '
-  proxy_rule+='https_proxy HTTPS_PROXY '
-  proxy_rule+='ftp_proxy FTP_PROXY '
-  proxy_rule+='rsync_proxy RSYNC_PROXY '
-  proxy_rule+='all_proxy ALL_PROXY '
-  proxy_rule+='no_proxy NO_PROXY"'
+  rm -rf "${target}" && rsync -av . "${target}" ||
+    abort ERROR 'Unable to copy installation files.'
 
-  mkdir -p /mnt/etc/sudoers.d
-
-  echo "${proxy_rule}" > /mnt/etc/sudoers.d/proxy_rules
-  chmod 440 /mnt/etc/sudoers.d/proxy_rules
-
-  log INFO 'Proxy rules have been added to sudoers.'
+  log INFO 'Installation files have been copied.'
 }
 
 # Grants the nopasswd permission to the wheel user group.
@@ -162,40 +149,6 @@ grant_permissions () {
   log INFO 'Sudoer nopasswd permission has been granted.'
 }
 
-# Copies the release hook to the new system.
-copy_release_hook () {
-  cp /etc/stack-release /mnt/etc/stack-release &&
-    cat /usr/lib/os-release > /mnt/usr/lib/os-release &&
-    rm -f /mnt/etc/arch-release ||
-    abort ERROR 'Unable to copy the os release meta files.'
-  
-  cp -r /etc/pacman.d/scripts /mnt/etc/pacman.d &&
-    mkdir -p /mnt/etc/pacman.d/hooks &&
-    cp /etc/pacman.d/hooks/90-fix-release.hook /mnt/etc/pacman.d/hooks ||
-    abort ERROR 'Unable to copy fix release pacman hook.'
-  
-  log INFO 'Release hook has been copied.'
-}
-
-# Copies the installation files to the new system.
-copy_installer () {
-  log INFO 'Copying installer files...'
-
-  mkdir -p /mnt/opt/stack &&
-    cp -r /opt/stack/installer /mnt/opt/stack ||
-    abort ERROR 'Unable to copy installer files.'
-
-  log INFO 'Installer files have been copied.'
-}
-
-# Copies the log files.
-copy_log_files () {
-  mkdir -p /mnt/var/log/stack ||
-    abort ERROR 'Failed to create logs home under /mnt/var/log/stack.'
-  
-  log INFO 'Log files have been copied.'
-}
-
 log INFO 'Script bootstrap.sh started.'
 log INFO 'Starting the bootstrap process...'
 
@@ -204,12 +157,8 @@ sync_clock &&
   sync_package_databases &&
   update_keyring &&
   install_kernel &&
-  install_commons_tools &&
-  add_sudoers_rules &&
-  grant_permissions &&
-  copy_release_hook &&
-  copy_installer &&
-  copy_log_files
+  copy_installation_files &&
+  grant_permissions 
 
 log INFO 'Script bootstrap.sh has finished.'
 

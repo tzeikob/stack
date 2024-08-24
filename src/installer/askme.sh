@@ -2,13 +2,13 @@
 
 set -Eeo pipefail
 
-source /opt/stack/commons/input.sh
-source /opt/stack/commons/error.sh
-source /opt/stack/commons/logger.sh
-source /opt/stack/commons/text.sh
-source /opt/stack/commons/validators.sh
+source src/commons/input.sh
+source src/commons/error.sh
+source src/commons/logger.sh
+source src/commons/text.sh
+source src/commons/validators.sh
 
-SETTINGS='/opt/stack/installer/settings.json'
+SETTINGS=./settings.json
 
 # Asks the user to select the installation disk.
 select_disk () {

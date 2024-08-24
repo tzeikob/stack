@@ -1,11 +1,11 @@
 #!/bin/bash
 
-source /opt/stack/commons/input.sh
-source /opt/stack/commons/error.sh
-source /opt/stack/commons/logger.sh
-source /opt/stack/commons/network.sh
-source /opt/stack/commons/math.sh
-source /opt/stack/commons/validators.sh
+source src/commons/input.sh
+source src/commons/error.sh
+source src/commons/logger.sh
+source src/commons/network.sh
+source src/commons/math.sh
+source src/commons/validators.sh
 
 # Returns the list of disk block devices.
 # Outputs:

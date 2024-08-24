@@ -1,12 +1,12 @@
 #!/bin/bash
 
-source /opt/stack/commons/process.sh
-source /opt/stack/commons/input.sh
-source /opt/stack/commons/error.sh
-source /opt/stack/commons/logger.sh
-source /opt/stack/commons/math.sh
-source /opt/stack/commons/validators.sh
-source /opt/stack/tools/cloud/helpers.sh
+source src/commons/process.sh
+source src/commons/input.sh
+source src/commons/error.sh
+source src/commons/logger.sh
+source src/commons/math.sh
+source src/commons/validators.sh
+source src/tools/cloud/helpers.sh
 
 # Shows the list of remotes matching the given service.
 # Arguments:

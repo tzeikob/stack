@@ -2,13 +2,13 @@
 
 set -o pipefail
 
-source /opt/stack/commons/process.sh
-source /opt/stack/commons/input.sh
-source /opt/stack/commons/error.sh
-source /opt/stack/commons/logger.sh
-source /opt/stack/commons/math.sh
-source /opt/stack/commons/validators.sh
-source /opt/stack/tools/clock/commands.sh
+source src/commons/process.sh
+source src/commons/input.sh
+source src/commons/error.sh
+source src/commons/logger.sh
+source src/commons/math.sh
+source src/commons/validators.sh
+source src/tools/clock/commands.sh
 
 # Shows the help message.
 # Arguments:

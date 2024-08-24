@@ -1,9 +1,9 @@
 #!/bin/bash
 
-source /opt/stack/commons/error.sh
-source /opt/stack/commons/logger.sh
-source /opt/stack/commons/math.sh
-source /opt/stack/commons/validators.sh
+source src/commons/error.sh
+source src/commons/logger.sh
+source src/commons/math.sh
+source src/commons/validators.sh
 
 # Checks if any processes matching the given command
 # pattern are running.

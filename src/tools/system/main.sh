@@ -2,13 +2,13 @@
 
 set -o pipefail
 
-source /opt/stack/commons/process.sh
-source /opt/stack/commons/input.sh
-source /opt/stack/commons/error.sh
-source /opt/stack/commons/logger.sh
-source /opt/stack/commons/math.sh
-source /opt/stack/commons/validators.sh
-source /opt/stack/tools/system/commands.sh
+source src/commons/process.sh
+source src/commons/input.sh
+source src/commons/error.sh
+source src/commons/logger.sh
+source src/commons/math.sh
+source src/commons/validators.sh
+source src/tools/system/commands.sh
 
 # Shows the help message.
 # Arguments:
@@ -39,12 +39,14 @@ show_help () {
   printf ' %-40s %s\n' \
     'show status' 'Show the system overall status.' \
     '' '' \
+    'set mirrors <age> <latest> <countries>' 'Set the mirrors of package databases.' \
     'list packages pacman|aur' 'Show the list of installed packages.' \
     '' '' \
-    'set mirrors <age> <latest> <countries>' 'Set the mirrors of package databases.' \
+    'check updates' 'Check for available updates.' \
+    'list updates' 'Show the list of available updates.' \
+    'apply updates' 'Apply any available updates.' \
     '' '' \
-    'check updates' 'Show the list of outdated packages.' \
-    'apply updates' 'Apply all the latest updates.'
+    'upgrade stack' 'Upgrade the stack tools and modules.'
 }
 
 # Routes to the corresponding operation by matching
@@ -60,10 +62,12 @@ execute () {
   
   case "${command}${object:+ ${object}}" in
     'show status') show_status;;
-    'list packages') list_packages "${3}";;
     'set mirrors') set_mirrors "${3}" "${4}" "${@:5}";;
+    'list packages') list_packages "${3}";;
     'check updates') check_updates;;
+    'list updates') list_updates;;
     'apply updates') apply_updates;;
+    'upgrade stack') upgrade_stack;;
     *)
       log 'Ooops, invalid or unknown command!'
       return 2;;

@@ -1,9 +1,0 @@
-[Unit]
-Description=service to initialize plugged-in tablets settings
-
-[Service]
-Type=simple
-ExecStart=/usr/local/bin/desktop -qs init tablets
-
-[Install]
-WantedBy=default.target

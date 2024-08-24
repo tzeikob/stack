@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source /opt/stack/commons/validators.sh
+source src/commons/validators.sh
 
 # Prints the given log message prefixed with the given log level.
 # No arguments means nothing to log on to the console.

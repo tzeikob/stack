@@ -2,12 +2,12 @@
 
 set -Eeo pipefail
 
-source /opt/stack/commons/process.sh
-source /opt/stack/commons/error.sh
-source /opt/stack/commons/logger.sh
-source /opt/stack/commons/validators.sh
+source src/commons/process.sh
+source src/commons/error.sh
+source src/commons/logger.sh
+source src/commons/validators.sh
 
-SETTINGS='/opt/stack/installer/settings.json'
+SETTINGS=/stack/settings.json
 
 # Installs the node javascript runtime engine.
 install_node () {
@@ -33,28 +33,20 @@ install_node () {
 
   local bashrc_file="/home/${user_name}/.bashrc"
 
-  echo -e '\nexport NVM_DIR="${HOME}/.nvm"' >> "${bashrc_file}" &&
-    log INFO 'Nvm export hook added to the .bashrc file.' ||
-    log WARN 'Failed to add export hook to the .bashrc file.'
+  local hooks=''
+  hooks+=$'\nexport NVM_DIR="${HOME}/.nvm"'
+  hooks+=$'\n[ -s "${NVM_DIR}/nvm.sh" ] && \. "${NVM_DIR}/nvm.sh"'
+  hooks+=$'\n[ -s "${NVM_DIR}/bash_completion" ] && \. "${NVM_DIR}/bash_completion"'
+  hooks+=$'\nexport PATH="./node_modules/.bin:${PATH}"'
 
-  echo '[ -s "${NVM_DIR}/nvm.sh" ] && \. "${NVM_DIR}/nvm.sh"' >> "${bashrc_file}" &&
-    log INFO 'Nvm source hook added to the .bashrc file.' ||
-    log WARN 'Failed to add source hook to the .bashrc file.'
-  
-  echo '[ -s "${NVM_DIR}/bash_completion" ] && \. "${NVM_DIR}/bash_completion"' >> "${bashrc_file}" &&
-    log INFO 'Nvm completion hook added to the .bashrc file.' ||
-    log WARN 'Failed to add completion hook to the .bashrc file.'
+  echo "${hooks}" >> "${bashrc_file}" ||
+    log WARN 'Failed to add node hooks to bashrc.'
 
   log INFO 'Installing the latest node version...'
 
   \. "${nvm_home}/nvm.sh" 2>&1 &&
-    nvm install --no-progress node 2>&1 &&
-    log INFO 'Node latest version has been installed.' ||
+    nvm install --no-progress node 2>&1 ||
     log WARN 'Failed to install the latest version of node.'
-
-  echo 'export PATH="./node_modules/.bin:${PATH}"' >> "${bashrc_file}" &&
-    log INFO 'Node modules path added to the PATH.' ||
-    log WARN 'Failed to add node modules path into the PATH.'
 
   log INFO 'Node runtime engine has been installed.'
 }
@@ -63,14 +55,9 @@ install_node () {
 install_deno () {
   log INFO 'Installing the deno runtime engine...'
 
-  sudo pacman -S --needed --noconfirm deno 2>&1
-
-  if has_failed; then
-    log WARN 'Failed to install deno.'
-    return 0
-  fi
-
-  log INFO 'Deno runtime engine has been installed.'
+  sudo pacman -S --needed --noconfirm deno 2>&1 &&
+    log INFO 'Deno runtime engine has been installed.' ||
+    log WARN 'Failed to install deno.'  
 }
 
 # Installs the bun javascript runtime engine.
@@ -81,28 +68,18 @@ install_bun () {
 
   curl "${url}" -sSLo /tmp/bun-install.sh \
     --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 2>&1 &&
-    bash /tmp/bun-install.sh 2>&1
-  
-  if has_failed; then
+    bash /tmp/bun-install.sh 2>&1 &&
+    log INFO 'Bun runtime engine has been installed.' ||
     log WARN 'Failed to install bun.'
-    return 0
-  fi
-
-  log INFO 'Bun runtime engine has been installed.'
 }
 
 # Installs the go programming language.
 install_go () {
   log INFO 'Installing the go programming language...'
 
-  sudo pacman -S --needed --noconfirm go go-tools 2>&1
-
-  if has_failed; then
+  sudo pacman -S --needed --noconfirm go go-tools 2>&1 &&
+    log INFO 'Go programming language has been installed.' ||
     log WARN 'Failed to install go programming language.'
-    return 0
-  fi
-
-  log INFO 'Go programming language has been installed.'
 }
 
 # Installs the rust programming language.
@@ -127,7 +104,7 @@ install_rust () {
   log INFO 'Rust programming language has been installed.'
 }
 
-# Installs the docker egine.
+# Installs the docker engine.
 install_docker () {
   log INFO 'Installing the docker engine...'
 

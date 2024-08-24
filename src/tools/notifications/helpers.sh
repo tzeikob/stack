@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source /opt/stack/commons/validators.sh
+source src/commons/validators.sh
 
 # Returns the list of all archived notifications 
 # sorted by the given field in the given order.

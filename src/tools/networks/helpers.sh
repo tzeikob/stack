@@ -1,10 +1,10 @@
 #!/bin/bash
 
-source /opt/stack/commons/input.sh
-source /opt/stack/commons/error.sh
-source /opt/stack/commons/logger.sh
-source /opt/stack/commons/math.sh
-source /opt/stack/commons/validators.sh
+source src/commons/input.sh
+source src/commons/error.sh
+source src/commons/logger.sh
+source src/commons/math.sh
+source src/commons/validators.sh
 
 CONFIG_HOME="${HOME}/.config/stack"
 NETWORKS_SETTINGS="${CONFIG_HOME}/networks.json"

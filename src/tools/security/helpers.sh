@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source /opt/stack/commons/validators.sh
+source src/commons/validators.sh
 
 CONFIG_HOME="${HOME}/.config/stack"
 SECURITY_SETTINGS="${CONFIG_HOME}/security.json"

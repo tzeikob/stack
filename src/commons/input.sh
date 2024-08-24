@@ -1,7 +1,7 @@
 #!/bin/bash
 
-source /opt/stack/commons/math.sh
-source /opt/stack/commons/validators.sh
+source src/commons/math.sh
+source src/commons/validators.sh
 
 AES=$'╬'
 AES_LN=$'╬\n'

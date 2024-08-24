@@ -1,8 +1,8 @@
 #!/bin/bash
 
-source /opt/stack/commons/error.sh
-source /opt/stack/commons/math.sh
-source /opt/stack/commons/validators.sh
+source src/commons/error.sh
+source src/commons/math.sh
+source src/commons/validators.sh
 
 # Find all the packages installed to the system
 # via the package managers pacman and yay (aur).
@@ -20,17 +20,16 @@ find_installed_packages () {
   echo "{\"pacman\": ${pacman_pkgs}, \"aur\": ${aur_pkgs}}"
 }
 
-# Find the list of packages need to be updated.
+# Find the list of outdated pacman packages.
 # Returns:
-#  A JSON object with pacman and aur list of outdated packages.
-find_outdated_packages () {
+#  A JSON list of pacman packages.
+find_outdated_pacman_packages () {
   local query=''
   query+='name: .[0]|split(" ")|.[0],'
   query+='current: .[0]|split(" ")|.[1],'
   query+='latest: .[1]'
   query="[inputs|split(\" -> \")|{${query}}]"
   
-  # List all outdated packages installed via pacman
   local pacman_pkgs=''
   pacman_pkgs="$(checkupdates 2> /dev/null | jq -Rn "${query}")"
 
@@ -40,7 +39,19 @@ find_outdated_packages () {
     pacman_pkgs='[]'
   fi
 
-  # List all outdated packages installed via the aur repos
+  echo "${pacman_pkgs}"
+}
+
+# Find the list of outdated aur packages.
+# Returns:
+#  A JSON list of aur packages.
+find_outdated_aur_packages () {
+  local query=''
+  query+='name: .[0]|split(" ")|.[0],'
+  query+='current: .[0]|split(" ")|.[1],'
+  query+='latest: .[1]'
+  query="[inputs|split(\" -> \")|{${query}}]"
+
   local aur_pkgs=''
   aur_pkgs="$(yay -Qum 2> /dev/null | jq -Rn "${query}")"
 
@@ -48,7 +59,7 @@ find_outdated_packages () {
     aur_pkgs='[]'
   fi
 
-  echo "{\"pacman\": ${pacman_pkgs}, \"aur\": ${aur_pkgs}}"
+  echo "${aur_pkgs}"
 }
 
 # Checks if the given value is a valid package repository.

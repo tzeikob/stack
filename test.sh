@@ -2,47 +2,8 @@
 
 set -o pipefail
 
-# Prints the given log message prefixed with the given log level.
-# Options:
-#  n:       print an empty line before, -nn 2 lines and so on
-# Arguments:
-#  level:   one of INFO, WARN, ERROR
-#  message: a message to show
-# Outputs:
-#  Prints the message in <level> <message> form.
-log () {
-  local OPTIND opt
-
-  while getopts ':n' opt; do
-    case "${opt}" in
-     'n') printf '\n';;
-    esac
-  done
-
-  # Collect arguments
-  shift $((OPTIND - 1))
-
-  local level="${1}"
-  local message="${2}"
-
-  printf '%-5s %b\n' "${level}" "${message}"
-}
-
-# Aborts the current process logging the given error message.
-# Arguments:
-#  level:   one of INFO, WARN, ERROR
-#  message: an error message to print
-# Outputs:
-#  An error messsage.
-abort () {
-  local level="${1}"
-  local message="${2}"
-
-  log "${level}" "${message}"
-  log "${level}" 'Process has been exited.'
-
-  exit 1
-}
+source src/commons/logger.sh
+source src/commons/error.sh
 
 # Iterate recursively starting from the given file path
 # all the way down following every source file.
@@ -66,7 +27,7 @@ traverse_files () {
 
     if [[ -n "${files}" ]] && [[ ! "${files}" =~ '^ *$' ]]; then
       # Replace after installation paths with the repository locations
-      files=$(echo "${files}" | sed -e 's;/opt/stack;./src;')
+      files=$(echo "${files}" | sed -e 's;/opt/stack;src;')
       
       # Collect recursivelly every sourced file walking the execution path
       local file=''
@@ -82,7 +43,7 @@ traverse_files () {
 # Asserts no other than shell files exist under the src folder.
 test_no_shell_files () {
   local count=0
-  count=$(find ./src -type f -not -name '*.sh' | wc -l) ||
+  count=$(find src -type f -not -name '*.sh' | wc -l) ||
     abort ERROR 'Unable to list source files.'
 
   if [[ ${count} -gt 0 ]]; then
@@ -96,21 +57,23 @@ test_no_shell_files () {
 # Asserts no func gets overriden on execution paths.
 test_no_func_overriden () {
   local roots=(
-    ./src/commons/*
-    ./src/installer/*
-    ./src/tools/**/main.sh
-    ./configs/alacritty/root.prompt
-    ./configs/alacritty/user.prompt
-    ./configs/bspwm/resize
-    ./configs/bspwm/rules
-    ./configs/bspwm/scratchpad
-    ./configs/bspwm/swap
-    ./configs/dunst/hook
-    ./configs/polybar/scripts/*
-    ./configs/rofi/launch
-    ./configs/xsecurelock/hook
-    ./build.sh
-    ./test.sh
+    src/commons/*
+    src/installer/*
+    src/tools/**/main.sh
+    airootfs/etc/pacman.d/scripts/*
+    airootfs/home/user/.config/bspwm/resize
+    airootfs/home/user/.config/bspwm/rules
+    airootfs/home/user/.config/scratchpad
+    airootfs/home/user/.config/swap
+    airootfs/home/user/.config/dunst/hook
+    airootfs/home/user/.config/polybar/scripts/*
+    airootfs/home/user/.config/rofi/launch
+    airootfs/home/user/.stackrc
+    airootfs/usr/lib/systemd/system-sleep/locker
+    install.sh
+    build.sh
+    upgrade.sh
+    test.sh
   )
 
   local root=''
@@ -161,9 +124,9 @@ test_no_func_overriden () {
 # Asserts no local variable declaration is followed by an
 # error or abort handler given in the same line.
 test_local_var_declarations () {
-  local files=(./build.sh ./test.sh)
-  files+=($(find ./src ./configs -type f)) ||
-    abort 'Unable to list source files.'
+  local files=(install.sh build.sh upgrade.sh test.sh)
+  files+=($(find src airootfs -type f)) ||
+    abort ERROR 'Unable to list source files.'
   
   local file=''
   for file in "${files[@]}"; do
@@ -171,7 +134,7 @@ test_local_var_declarations () {
     declarations=$(grep -e '^ *local  *.*=.*' "${file}")
 
     if [[ $? -gt 1 ]]; then
-      abort 'Unable to rertieve local variable declarations.'
+      abort ERROR 'Unable to rertieve local variable declarations.'
     fi
 
     local declaration=''

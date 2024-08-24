@@ -1,8 +1,8 @@
 #!/bin/bash
 
-source /opt/stack/commons/input.sh
-source /opt/stack/commons/logger.sh
-source /opt/stack/commons/validators.sh
+source src/commons/input.sh
+source src/commons/logger.sh
+source src/commons/validators.sh
 
 CONFIG_HOME="${HOME}/.config/stack"
 POWER_SETTINGS="${CONFIG_HOME}/power.json"

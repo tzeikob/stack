@@ -1,0 +1,14 @@
+[Unit]
+Description=service to lock the screen before suspend
+Before=suspend.target
+
+[Service]
+User=%i
+Type=forking
+Environment=DISPLAY=:0
+Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/#USER_ID#/bus
+ExecStart=/usr/local/stack/security -qs lock screen
+TimeoutSec=infinity
+
+[Install]
+WantedBy=suspend.target

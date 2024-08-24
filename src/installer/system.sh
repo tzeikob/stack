@@ -2,12 +2,103 @@
 
 set -Eeo pipefail
 
-source /opt/stack/commons/process.sh
-source /opt/stack/commons/error.sh
-source /opt/stack/commons/logger.sh
-source /opt/stack/commons/validators.sh
+source src/commons/process.sh
+source src/commons/error.sh
+source src/commons/logger.sh
+source src/commons/validators.sh
 
-SETTINGS='/opt/stack/installer/settings.json'
+SETTINGS=/stack/settings.json
+
+# Syncs airoot files to new system.
+sync_root_files () {
+  log INFO 'Syncing the root file system...'
+
+  rsync -av /stack/airootfs/ / ||
+    abort ERROR 'Failed to sync the root file system.'
+  
+  local user_name=''
+  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
+    abort ERROR 'Unable to read user_name setting.'
+  
+  # Rename user home to align with the new system
+  if not_equals "${user_name}" 'user'; then
+    mv /home/user "/home/${user_name}" ||
+      abort ERROR "Failed to rename home folder for ${user_name}."
+  fi
+  
+  log INFO 'Root file system has been synced.'
+}
+
+# Syncs the commons script files.
+sync_commons () {
+  log INFO 'Syncing the commons files...'
+
+  mkdir -p /opt/stack ||
+    abort ERROR 'Failed to create the /opt/stack folder.'
+
+  rsync -av /stack/src/commons/ /opt/stack/commons ||
+    abort ERROR 'Failed to sync the commons files.'
+  
+  sudo sed -i 's;source src;source /opt/stack;' /opt/stack/commons/* ||
+    abort ERROR 'Failed to fix source paths to /opt/stack.'
+  
+  log INFO 'Source paths fixed to /opt/stack.'
+  log INFO 'Commons files have been synced.'
+}
+
+# Syncs the tools script files.
+sync_tools () {
+  log INFO 'Syncing the tools files...'
+
+  mkdir -p /opt/stack ||
+    abort ERROR 'Failed to create the /opt/stack folder.'
+
+  rsync -av /stack/src/tools/ /opt/stack/tools ||
+    abort ERROR 'Failed to sync the tools files.'
+  
+  sed -i 's;source src;source /opt/stack;' /opt/stack/tools/**/* ||
+    abort ERROR 'Failed to fix source paths to /opt/stack.'
+  
+  log INFO 'Source paths fixed to /opt/stack.'
+
+  # Create and restore all symlinks for every tool
+  mkdir -p /usr/local/stack ||
+    abort ERROR 'Failed to create the /usr/local/stack folder.'
+  
+  local main_files
+  main_files=($(find /opt/stack/tools -type f -name 'main.sh')) ||
+    abort ERROR 'Failed to get the list of main script file paths.'
+  
+  local main_file
+  for main_file in "${main_files[@]}"; do
+    # Extrack the tool handle name
+    local tool_name
+    tool_name="$(echo "${main_file}" | sed 's;/opt/stack/tools/\(.*\)/main.sh;\1;')" ||
+      abort ERROR 'Failed to extract tool handle name.'
+
+    sudo ln -sf "${main_file}" "/usr/local/stack/${tool_name}" ||
+      abort ERROR "Failed to create symlink for ${main_file} file."
+  done
+
+  log INFO 'Tools symlinks have been created.'
+  log INFO 'Tools files have been synced.'
+}
+
+# Fixes the os release data.
+fix_release_data () {
+  local version=''
+  version="$(date +%Y.%m.%d)" ||
+    abort ERROR 'Failed to create version number.'
+
+  sed -i "s/#VERSION#/${version}/" /usr/lib/os-release ||
+    abort ERROR 'Failed to set os release version.'
+  
+  ln -sf /usr/lib/os-release /etc/stack-release ||
+    abort ERROR 'Failed to create the stack-release symlink.'
+
+  rm -f /etc/arch-release ||
+    abort ERROR 'Unable to remove the arch-release file.'
+}
 
 # Sets host related settings.
 set_host () {
@@ -17,19 +108,15 @@ set_host () {
   host_name="$(jq -cer '.host_name' "${SETTINGS}")" ||
     abort ERROR 'Unable to read host_name setting.'
 
-  echo "${host_name}" > /etc/hostname ||
+  sed -i "s/#HOST_NAME#/${host_name}/" /etc/hostname ||
     abort ERROR 'Failed to set the host name.'
 
   log INFO "Host name has been set to ${host_name}."
 
-  printf '%s\n' \
-    '127.0.0.1    localhost' \
-    '::1          localhost' \
-    "127.0.1.1    ${host_name}" > /etc/hosts ||
+  sed -i "s/#HOST_NAME#/${host_name}/" /etc/hosts ||
     abort ERROR 'Failed to add host name to hosts.'
 
   log INFO 'Host name has been added to the hosts.'
-  log INFO 'Host has been set successfully.'
 }
 
 # Sets up the root and sudoer users of the system.
@@ -40,7 +127,7 @@ set_users () {
 
   local vm=''
   vm="$(jq -cer '.vm' "${SETTINGS}")" ||
-    abort 'Failed to read the vm setting.'
+    abort ERROR 'Failed to read the vm setting.'
 
   if is_yes "${vm}"; then
     groupadd 'libvirt' 2>&1
@@ -51,18 +138,11 @@ set_users () {
   user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
     abort ERROR 'Unable to read user_name setting.'
 
-  useradd -m -G "${groups}" -s /bin/bash "${user_name}" 2>&1 ||
+  useradd -m -G "${groups}" -s /bin/bash "${user_name}" 2>&1 &&
+    chown -R ${user_name}:${user_name} "/home/${user_name}" ||
     abort ERROR 'Failed to create the sudoer user.'
 
   log INFO "Sudoer user ${user_name} has been created."
-
-  local config_home="/home/${user_name}/.config"
-
-  mkdir -p "${config_home}" &&
-    chown -R ${user_name}:${user_name} "${config_home}" ||
-    abort ERROR 'Failed to create the user config folder.'
-
-  log INFO 'User config folder created under ~/.config.'
 
   local rule='%wheel ALL=(ALL:ALL) ALL'
 
@@ -104,7 +184,7 @@ set_users () {
 
 # Sets the pacman package database mirrors.
 set_mirrors () {
-  log INFO 'Setting up the package databases mirrors...'
+  log INFO 'Setting up package databases mirrors...'
 
   local mirrors=''
   mirrors="$(jq -cer '.mirrors|join(",")' "${SETTINGS}")" ||
@@ -116,9 +196,10 @@ set_mirrors () {
 
   local conf_file='/etc/xdg/reflector/reflector.conf'
 
-  sed -i "s/# --country.*/--country ${mirrors}/" "${conf_file}" &&
-    sed -i 's/^--latest.*/--latest 40/' "${conf_file}" &&
-    echo '--age 48' >> "${conf_file}" ||
+  sed -i \
+    -e "s/# --country.*/--country ${mirrors}/" \
+    -e 's/^--latest.*/--latest 40/' \
+    -e '$a--age 48' "${conf_file}" ||
     abort ERROR 'Failed to save mirrors settings to reflector.'
 
   log INFO "Package databases mirrors set to ${mirrors}."
@@ -139,14 +220,6 @@ configure_pacman () {
     abort ERROR 'Failed to add the GPG keyserver.'
 
   log INFO "GPG keyserver has been set to ${keyserver}."
-
-  local hooks_home='/etc/pacman.d/hooks'
-
-  mkdir -p "${hooks_home}" &&
-    cp /opt/stack/installer/configs/pacman/orphans.hook "${hooks_home}/01-orphans.hook" ||
-    abort ERROR 'Failed to add the orphan packages hook.'
-
-  log INFO 'Orphan packages post hook has been created.'
   log INFO 'Pacman manager has been configured.'
 }
 
@@ -175,31 +248,12 @@ sync_package_databases () {
 install_base_packages () {
   log INFO 'Installing the base packages...'
 
-  local uefi_mode=''
-  uefi_mode="$(jq -cer '.uefi_mode' "${SETTINGS}")" ||
-    abort 'Failed to read the uefi_mode setting.'
+  local pkgs=($(grep -E '(stp|all):pac' /stack/packages.x86_64 | cut -d ':' -f 3)) ||
+    abort ERROR 'Failed to read packages from packages.x86_64 file.'
 
-  local extra_pckgs=''
-  if is_yes "${uefi_mode}"; then
-    extra_pckgs='efibootmgr'
-  fi
-
-  pacman -S --needed --noconfirm \
-    base-devel pacman-contrib pkgstats grub mtools dosfstools ntfs-3g exfatprogs gdisk fuseiso veracrypt \
-    python-pip parted curl wget udisks2 udiskie gvfs gvfs-smb bash-completion \
-    man-db man-pages texinfo cups cups-pdf cups-filters usbutils bluez bluez-utils unzip terminus-font \
-    vim nano git tree arch-audit atool zip xz unace p7zip gzip lzop feh hsetroot \
-    bzip2 unrar dialog inetutils dnsutils openssh nfs-utils openbsd-netcat ipset xsel \
-    neofetch age imagemagick gpick fuse2 rclone smartmontools glib2 jq jc sequoia-sq xf86-input-wacom \
-    cairo bc xdotool ${extra_pckgs} 2>&1 ||
+  pacman -S --needed --noconfirm ${pkgs[@]} 2>&1 ||
     abort ERROR 'Failed to install base packages.'
 
-  log INFO 'Replacing iptables with nft tables...'
-
-  printf '%s\n' y y | pacman -S --needed nftables iptables-nft 2>&1 ||
-    abort ERROR 'Failed to install the nft tables.'
-
-  log INFO 'Iptables have been replaced by nft tables.'
   log INFO 'Base packages have been installed.'
 }
 
@@ -207,25 +261,9 @@ install_base_packages () {
 install_display_server () {
   log INFO 'Installing the display server...'
 
-  pacman -S --needed --noconfirm xorg xorg-xinit xorg-xrandr xorg-xdpyinfo 2>&1 ||
-    abort ERROR 'Failed to install xorg packages.'
-
-  log INFO 'Xorg packages have been installed.'
-
-  cp /opt/stack/installer/configs/xorg/xorg.conf /etc/X11 ||
-    abort ERROR 'Failed to copy the xorg config file.'
-
-  log INFO 'Xorg confg have been saved under /etc/X11/xorg.conf.'
-
   local user_name=''
   user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
     abort ERROR 'Unable to read user_name setting.'
-
-  cp /opt/stack/installer/configs/xorg/xinitrc "/home/${user_name}/.xinitrc" &&
-    chown ${user_name}:${user_name} "/home/${user_name}/.xinitrc" ||
-    abort ERROR 'Failed to set the .xinitrc file.'
-
-  log INFO "Xinitrc has been saved to /home/${user_name}/.xinitrc."
 
   local bash_profile_file="/home/${user_name}/.bash_profile"
 
@@ -244,23 +282,23 @@ install_display_server () {
 install_drivers () {
   log INFO 'Installing system drivers...'
 
-  local cpu_pckgs=''
+  local cpu_pkgs=''
 
   local cpu_vendor=''
   cpu_vendor="$(jq -cer '.cpu_vendor' "${SETTINGS}")" ||
-    abort 'Failed to read the cpu_vendor setting.'
+    abort ERROR 'Failed to read the cpu_vendor setting.'
 
   if equals "${cpu_vendor}" 'amd'; then
-    cpu_pckgs='amd-ucode'
+    cpu_pkgs='amd-ucode'
   elif equals "${cpu_vendor}" 'intel'; then
-    cpu_pckgs='intel-ucode'
+    cpu_pkgs='intel-ucode'
   fi
 
-  local gpu_pckgs=''
+  local gpu_pkgs=''
 
   local gpu_vendor=''
   gpu_vendor="$(jq -cer '.gpu_vendor' "${SETTINGS}")" ||
-    abort 'Failed to read the gpu_vendor setting.'
+    abort ERROR 'Failed to read the gpu_vendor setting.'
 
   if equals "${gpu_vendor}" 'nvidia'; then
     local kernel=''
@@ -268,86 +306,24 @@ install_drivers () {
       abort ERROR 'Unable to read kernel setting.'
 
     if equals "${kernel}" 'stable'; then
-      gpu_pckgs='nvidia'
+      gpu_pkgs='nvidia'
     elif equals "${kernel}" 'lts'; then
-      gpu_pckgs='nvidia-lts'
+      gpu_pkgs='nvidia-lts'
     fi
 
-    gpu_pckgs+=' nvidia-utils nvidia-settings'
+    gpu_pkgs+=' nvidia-utils nvidia-settings'
   elif equals "${gpu_vendor}" 'amd'; then
-    gpu_pckgs='xf86-video-amdgpu'
+    gpu_pkgs='xf86-video-amdgpu'
   elif equals "${gpu_vendor}" 'intel'; then
-    gpu_pckgs='libva-intel-driver libvdpau-va-gl vulkan-intel libva-utils'
+    gpu_pkgs='libva-intel-driver libvdpau-va-gl vulkan-intel libva-utils'
   else
-    gpu_pckgs='xf86-video-qxl'
+    gpu_pkgs='xf86-video-qxl'
   fi
 
-  local other_pckgs=''
-
-  local synaptics=''
-  synaptics="$(jq -cer '.synaptics' "${SETTINGS}")" ||
-    abort 'Failed to read the synaptics setting.'
-
-  if is_yes "${synaptics}"; then
-    other_pckgs='xf86-input-synaptics'
-  fi
-
-  local vm_pckgs=''
-
-  local vm=''
-  vm="$(jq -cer '.vm' "${SETTINGS}")" ||
-    abort 'Failed to read the vm setting.'
-  
-  local vm_vendor=''
-  vm_vendor="$(jq -cer '.vm_vendor' "${SETTINGS}")" ||
-    abort 'Failed to read the vm_vendor setting.'
-
-  if is_yes "${vm}" && equals "${vm_vendor}" 'oracle'; then
-    vm_pckgs='virtualbox-guest-utils'
-  fi
-
-  pacman -S --needed --noconfirm \
-    acpi acpi_call acpid tlp xcalib \
-    networkmanager networkmanager-openvpn wireless_tools netctl wpa_supplicant \
-    nmap dhclient smbclient libnma \
-    alsa-utils pipewire pipewire-alsa pipewire-pulse pipewire-jack \
-    ${cpu_pckgs} ${gpu_pckgs} ${other_pckgs} ${vm_pckgs} 2>&1 ||
+  pacman -S --needed --noconfirm ${cpu_pkgs} ${gpu_pkgs} 2>&1 ||
     abort ERROR 'Failed to install system drivers.'
 
   log INFO 'System drivers have been installed.'
-}
-
-# Installs the system tools for managing system settings.
-install_system_tools () {
-  log INFO 'Installing the system tools...'
-
-  local tools_home='/opt/stack/tools'
-
-  sudo mkdir -p "${tools_home}" &&
-    sudo cp -r /opt/stack/installer/tools/* "${tools_home}" ||
-    abort ERROR 'Failed to install system tools.'
-
-  local bin_home='/usr/local/bin'
-
-  # Create symlinks to expose executables
-  sudo ln -sf "${tools_home}/displays/main.sh" "${bin_home}/displays" &&
-    sudo ln -sf "${tools_home}/desktop/main.sh" "${bin_home}/desktop" &&
-    sudo ln -sf "${tools_home}/audio/main.sh" "${bin_home}/audio" &&
-    sudo ln -sf "${tools_home}/clock/main.sh" "${bin_home}/clock" &&
-    sudo ln -sf "${tools_home}/cloud/main.sh" "${bin_home}/cloud" &&
-    sudo ln -sf "${tools_home}/networks/main.sh" "${bin_home}/networks" &&
-    sudo ln -sf "${tools_home}/disks/main.sh" "${bin_home}/disks" &&
-    sudo ln -sf "${tools_home}/bluetooth/main.sh" "${bin_home}/bluetooth" &&
-    sudo ln -sf "${tools_home}/langs/main.sh" "${bin_home}/langs" &&
-    sudo ln -sf "${tools_home}/notifications/main.sh" "${bin_home}/notifications" &&
-    sudo ln -sf "${tools_home}/power/main.sh" "${bin_home}/power" &&
-    sudo ln -sf "${tools_home}/printers/main.sh" "${bin_home}/printers" &&
-    sudo ln -sf "${tools_home}/security/main.sh" "${bin_home}/security" &&
-    sudo ln -sf "${tools_home}/trash/main.sh" "${bin_home}/trash" &&
-    sudo ln -sf "${tools_home}/system/main.sh" "${bin_home}/system" ||
-    abort ERROR 'Failed to create symlinks to /usr/local/bin.'
-
-  log INFO 'System tools have been installed.'
 }
 
 # Installs the user repository package manager.
@@ -423,7 +399,8 @@ set_locales () {
 
   local config_home="/home/${user_name}/.config/stack"
 
-  mkdir -p "${config_home}" || abort ERROR "Failed to create folder ${config_home}."
+  mkdir -p "${config_home}" ||
+    abort ERROR "Failed to create folder ${config_home}."
 
   local settings=''
   settings="$(echo "${locales}" | jq -e '{locale: .[0], locales: .}')" ||
@@ -452,7 +429,7 @@ set_keyboard () {
   keyboard_map="$(jq -cer '.keyboard_map' "${SETTINGS}")" ||
     abort ERROR 'Unable to read keyboard_map setting.'
 
-  echo "KEYMAP=${keyboard_map}" > /etc/vconsole.conf ||
+  sed -i "s/#KEYMAP#/${keyboard_map}/" /etc/vconsole.conf ||
     abort ERROR 'Failed to add keymap to vconsole.'
 
   log INFO "Virtual console keymap set to ${keyboard_map}."
@@ -462,64 +439,67 @@ set_keyboard () {
 
   log INFO 'Keyboard map keys has been loaded.'
 
-  local keyboard_model=''
-  keyboard_model="$(jq -cer '.keyboard_model' "${SETTINGS}")" ||
-    abort ERROR 'Unable to read keyboard_model setting.'
-
   local keyboard_layout=''
   keyboard_layout="$(jq -cer '.keyboard_layout' "${SETTINGS}")" ||
     abort ERROR 'Unable to read keyboard_layout setting.'
   
-  local layout_variant=''
-  layout_variant="$(jq -cer '.layout_variant' "${SETTINGS}")" ||
-    abort ERROR 'Unable to read layout_variant setting.'
+  local keyboard_model=''
+  keyboard_model="$(jq -cer '.keyboard_model' "${SETTINGS}")" ||
+    abort ERROR 'Unable to read keyboard_model setting.'
 
   local keyboard_options=''
   keyboard_options="$(jq -cer '.keyboard_options' "${SETTINGS}")" ||
     abort ERROR 'Unable to read keyboard_options setting.'
   
-  local keyboard_conf="/etc/X11/xorg.conf.d/00-keyboard.conf"
+  local keyboard_conf='/etc/X11/xorg.conf.d/00-keyboard.conf'
 
-  echo -e 'Section "InputClass"' > "${keyboard_conf}"
-  echo -e '  Identifier "system-keyboard"' >> "${keyboard_conf}"
-  echo -e '  MatchIsKeyboard "on"' >> "${keyboard_conf}"
-  echo -e "  Option \"XkbLayout\" \"${keyboard_layout}\"" >> "${keyboard_conf}"
-  not_equals "${layout_variant}" 'default' &&
-    echo -e "  Option \"XkbVariant\" \"${layout_variant}\"" >> "${keyboard_conf}"
-  echo -e "  Option \"XkbModel\" \"${keyboard_model}\"" >> "${keyboard_conf}"
-  echo -e "  Option \"XkbOptions\" \"${keyboard_options}\"" >> "${keyboard_conf}"
-  echo -e 'EndSection' >> "${keyboard_conf}"
+  sed -i \
+    -e "s/#LAYOUT#/${keyboard_layout}/" \
+    -e "s/#MODEL#/${keyboard_model}/" \
+    -e "s/#OPTIONS#/${keyboard_options}/" "${keyboard_conf}" ||
+    abort ERROR 'Failed to set Xorg keyboard settings.'
+  
+  local layout_variant=''
+  layout_variant="$(jq -cer '.layout_variant' "${SETTINGS}")" ||
+    abort ERROR 'Unable to read layout_variant setting.'
 
-  log INFO 'Xorg keyboard settings have been added.'
+  if not_equals "${layout_variant}" 'default'; then
+    sed -i \
+      "/Option \"XkbLayout\"/a \ \ Option \"XkbVariant\" \"${layout_variant}\"" "${keyboard_conf}" ||
+      abort ERROR 'Failed to set keyboard layout variant.'
+  fi
+
+  log INFO 'Xorg keyboard has been set.'
 
   # Save keyboard settings to the user config
   local user_name=''
   user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
     abort ERROR 'Unable to read user_name setting.'
-
+  
   local config_home="/home/${user_name}/.config/stack"
 
-  mkdir -p "${config_home}" || abort ERROR "Failed to create folder ${config_home}."
-
-  local settings=''
-  settings+="\"keymap\": \"${keyboard_map}\","
-  settings+="\"model\": \"${keyboard_model}\","
-  settings+="\"options\": \"${keyboard_options}\","
-  settings+="\"layouts\": [{\"code\": \"${keyboard_layout}\", \"variant\": \"${layout_variant}\"}]"
-  settings="{${settings}}"
+  mkdir -p "${config_home}" ||
+    abort ERROR "Failed to create folder ${config_home}."
 
   local settings_file="${config_home}/langs.json"
 
-  if file_exists "${settings_file}"; then
-    settings="$(jq -e --argjson s "${settings}" '. + $s' "${settings_file}")" ||
-      abort ERROR 'Failed to merge keyboard to langs setttings.'
-  fi
-
-  echo "${settings}" > "${settings_file}" &&
-    chown -R ${user_name}:${user_name} "${config_home}" ||
-    abort ERROR 'Failed to save keyboard to langs settings file.'
+  local settings=''
+  settings="$(jq -cer . "${settings_file}")" ||
+    abort ERROR 'Failed to read langs settings.'
   
-  log INFO 'Keyboard saved to langs settings file.'
+  local query=''
+  query+=".keymap = \"${keyboard_map}\" | "
+  query+=".model = \"${keyboard_model}\" | "
+  query+=".options = \"${keyboard_options} | "
+  query+=".layouts[0].code =  \"${keyboard_layout}\" | "
+  query+=".layouts[0].variant =  \"${layout_variant}\""
+
+  settings="$(echo "${settings}" | jq -e "${query}")" &&
+    echo "${settings}" > "${settings_file}" &&
+    chown -R ${user_name}:${user_name} "${config_home}" ||
+    abort ERROR 'Failed to save keyboard to langs settings.'
+  
+  log INFO 'Keyboard saved to langs settings.'
   log INFO 'Keyboard settings have been applied.'
 }
 
@@ -562,21 +542,15 @@ boost_performance () {
     abort ERROR 'Unable to resolve CPU cores.'
   fi
 
-  log INFO "Detected a CPU with a total of ${cores} logical cores."
-
   local conf_file='/etc/makepkg.conf'
 
-  sed -i "s/#MAKEFLAGS=\"-j2\"/MAKEFLAGS=\"-j${cores}\"/g" "${conf_file}" ||
-    abort ERROR 'Failed to set the make flags setting.'
+  sed -i \
+  -e "s/#MAKEFLAGS=\"-j2\"/MAKEFLAGS=\"-j${cores}\"/g" \
+  -e "s/COMPRESSXZ=(xz -c -z -)/COMPRESSXZ=(xz -c -z --threads=${cores} -)/g" \
+  -e "s/COMPRESSZST=(zstd -c -z -q -)/COMPRESSZST=(zstd -c -z -q --threads=${cores} -)/g" "${conf_file}" ||
+    abort ERROR 'Failed to set make options.'
 
-  log INFO "Make flags have been set to ${cores} CPU cores."
-
-  sed -i "s/COMPRESSXZ=(xz -c -z -)/COMPRESSXZ=(xz -c -z --threads=${cores} -)/g" "${conf_file}" ||
-    abort ERROR 'Failed to set the compressXZ threads.'
-  
-  sed -i "s/COMPRESSZST=(zstd -c -z -q -)/COMPRESSZST=(zstd -c -z -q --threads=${cores} -)/g" "${conf_file}" ||
-    abort ERROR 'Failed to set the compressZST threads.'
-
+  log INFO "Make flags set to ${cores} CPU cores."
   log INFO 'Compression threads have been set.'
 
   log INFO 'Increasing the limit of inotify watches...'
@@ -589,161 +563,48 @@ boost_performance () {
     abort ERROR 'Failed to update the max limit to inotify watches.'
 
   log INFO "Inotify watches limit has been set to ${limit}."
-
   log INFO 'Boosting has been completed.'
-}
-
-# Applies varius system power settings.
-configure_power () {
-  log INFO 'Configuring power settings...'
-  
-  local logind_conf='/etc/systemd/logind.conf.d/00-main.conf'
-  
-  mkdir -p /etc/systemd/logind.conf.d &&
-    cp /etc/systemd/logind.conf "${logind_conf}" ||
-    abort ERROR 'Failed to create the logind config file.'
-
-  echo 'HandleHibernateKey=ignore' >> "${logind_conf}" ||
-    abort ERROR 'Failed set hibernate key to ignore.'
-
-  log INFO 'Hiberante key set to ignore.'
-
-  echo 'HandleHibernateKeyLongPress=ignore' >> "${logind_conf}" ||
-    abort ERROR 'Failed to set hibernate key long press to ignore.'
-
-  log INFO 'Hiberante key long press set to ignore.'
-
-  echo 'HibernateKeyIgnoreInhibited=no' >> "${logind_conf}" ||
-    abort ERROR 'Failed to set hibernate key to ignore inhibited.'
-
-  log INFO 'Hibernate key set to ignore inhibited.'
-
-  echo 'HandlePowerKey=suspend' >> "${logind_conf}" ||
-    abort ERROR 'Failed to set power key to suspend.'
-
-  log INFO 'Power key set to suspend.'
-
-  echo 'HandleRebootKey=reboot' >> "${logind_conf}" ||
-    abort ERROR 'Failed to set reboot key to reboot.'
-  
-  log INFO 'Reboot key set to reboot.'
-
-  echo 'HandleSuspendKey=suspend' >> "${logind_conf}" ||
-    abort ERROR 'Failed to set suspend key to suspend.'
-  
-  log INFO 'Suspend key set to suspend.'
-
-  echo 'HandleLidSwitch=suspend' >> "${logind_conf}" ||
-    abort ERROR 'Failed to set lid switch to suspend.'
-  
-  log INFO 'Lid switch set to suspend.'
-
-  echo 'HandleLidSwitchDocked=ignore' >> "${logind_conf}" ||
-    abort ERROR 'Failed to set lid switch docked to ignore.'
-  
-  log INFO 'Lid switch docked set to ignore.'
-
-  local sleep_conf='/etc/systemd/sleep.conf.d/00-main.conf'
-
-  mkdir -p /etc/systemd/sleep.conf.d &&
-    cp /etc/systemd/sleep.conf "${sleep_conf}" ||
-    abort ERROR 'Failed to create the sleep config file.'
-
-  echo 'AllowSuspend=yes' >> "${sleep_conf}" ||
-    abort ERROR 'Failed to set allow suspend to yes.'
-  
-  log INFO 'Allow suspend set to yes.'
-
-  echo 'AllowHibernation=no' >> "${sleep_conf}" ||
-    abort ERROR 'Failed to set allow hibernation to no.'
-  
-  log INFO 'Allow hibernation set to no.'
-
-  echo 'AllowSuspendThenHibernate=no' >> "${sleep_conf}" ||
-    abort ERROR 'Failed to set allow suspend then hibernate to no.'
-
-  log INFO 'Allow suspend then to hibernate set to no.'
-
-  echo 'AllowHybridSleep=no' >> "${sleep_conf}" ||
-    abort ERROR 'Failed to set allow hybrid sleep to no.'
-
-  log INFO 'Allow hybrid sleep set to no.'
-
-  local tlp_conf='/etc/tlp.d/00-main.conf'
-
-  echo 'SOUND_POWER_SAVE_ON_AC=0' >> "${tlp_conf}" &&
-    echo 'SOUND_POWER_SAVE_ON_BAT=0' >> "${tlp_conf}" ||
-    abort ERROR 'Failed to set no sound on power save mode.'
-
-  rm -f /etc/tlp.d/00-template.conf || abort ERROR 'Unable to remove the template TLP file.'
-
-  # Save screensaver settings to the user config
-  local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
-    abort ERROR 'Unable to read user_name setting.'
-
-  local config_home="/home/${user_name}/.config/stack"
-
-  mkdir -p "${config_home}" || abort ERROR "Failed to create folder ${config_home}."
-
-  local settings='{"screensaver": {"interval": 15}}'
-
-  local settings_file="${config_home}/power.json"
-
-  echo "${settings}" > "${settings_file}" &&
-    chown -R ${user_name}:${user_name} "${config_home}" ||
-    abort ERROR 'Failed to save screen saver interval to power settings file.'
-  
-  log INFO 'Screen saver interval saved to power settings file.'
-  log INFO 'Power configurations have been set.'
 }
 
 # Applies various system security settings.
 configure_security () {
   log INFO 'Hardening system security...'
 
-  sed -i '/# Defaults maxseq = 1000/a Defaults badpass_message="Sorry incorrect password!"' /etc/sudoers ||
-    abort ERROR 'Failed to set badpass message.'
-  
-  log INFO 'Default bad pass message has been set.'
+  local badpass_msg='Sorry incorrect password!'
+  local timeout=0
+  local tries=2
+  local prompt='Enter current password: '
 
-  sed -i '/# Defaults maxseq = 1000/a Defaults passwd_timeout=0' /etc/sudoers ||
-    abort ERROR 'Failed to set password timeout interval.'
+  sed -i \
+    -e "/maxseq/a Defaults badpass_message=\"${badpass_msg}\"" \
+    -e "/maxseq/a Defaults passwd_timeout=${timeout}" \
+    -e "/maxseq/a Defaults passwd_tries=${tries}" \
+    -e "/maxseq/a Defaults passprompt=\"${prompt}\"" /etc/sudoers ||
+    abort ERROR 'Failed to set sudo password settings.'
   
-  log INFO 'Password timeout interval set to 0.'
-
-  sed -i '/# Defaults maxseq = 1000/a Defaults passwd_tries=2' /etc/sudoers ||
-    abort ERROR 'Failed to set password failed tries.'
-  
-  log INFO 'Password failed tries set to 2.'
-
-  sed -i '/# Defaults maxseq = 1000/a Defaults passprompt="Enter current password: "' /etc/sudoers ||
-    abort ERROR 'Failed to set password prompt.'
-  
+  log INFO 'Bad password message has been set.'
+  log INFO "Password timeout interval set to ${timeout}."  
+  log INFO "Password failed tries set to ${tries}."
   log INFO 'Password prompt has been set.'
 
-  sed -ri 's;# dir =.*;dir = /var/lib/faillock;' /etc/security/faillock.conf ||
-    abort ERROR 'Failed to set faillock file path.'
-  
-  log INFO 'Faillock file path has been set to /var/lib/faillock.'
+  local deny=3
+  local fail_interval=180
+  local unlock_time=120
 
-  sed -ri 's;# deny =.*;deny = 3;' /etc/security/faillock.conf ||
-    abort ERROR 'Failed to set deny.'
+  sed -ri \
+    -e 's;# dir =.*;dir = /var/lib/faillock;' \
+    -e "s;# deny =.*;deny = ${deny};" \
+    -e "s;# fail_interval =.*;fail_interval = ${fail_interval};" \
+    -e "s;# unlock_time =.*;unlock_time = ${unlock_time};" /etc/security/faillock.conf ||
+    abort ERROR 'Failed to apply faillock settings.'
   
-  log INFO 'Deny has been set to 3.'
-
-  sed -ri 's;# fail_interval =.*;fail_interval = 180;' /etc/security/faillock.conf ||
-    abort ERROR 'Failed to set fail interval time.'
-  
-  log INFO 'Fail interval time set to 180 secs.'
-
-  sed -ri 's;# unlock_time =.*;unlock_time = 120;' /etc/security/faillock.conf ||
-    abort ERROR 'Failed to set unlock time.'
-  
-  log INFO 'Unlock time set to 120 secs.'
+  log INFO 'Faillock file path set to /var/lib/faillock.'
+  log INFO "Deny has been set to ${deny}."
+  log INFO "Fail interval time set to ${fail_interval} secs."
+  log INFO "Unlock time set to ${unlock_time} secs."
 
   sed -i 's/#PermitRootLogin .*/PermitRootLogin no/' /etc/ssh/sshd_config ||
-    abort ERROR 'Failed to set permit root login to no.'
+    abort ERROR 'Failed to disable permit root login.'
 
   log INFO 'SSH login permission disabled for the root user.'
   log INFO 'Setting up a simple stateful firewall...'
@@ -781,7 +642,8 @@ configure_security () {
 
   local config_home="/home/${user_name}/.config/stack"
 
-  mkdir -p "${config_home}" || abort ERROR "Failed to create folder ${config_home}."
+  mkdir -p "${config_home}" ||
+    abort ERROR "Failed to create folder ${config_home}."
 
   local settings='{"screen_locker": {"interval": 12}}'
 
@@ -789,9 +651,9 @@ configure_security () {
 
   echo "${settings}" > "${settings_file}" &&
     chown -R ${user_name}:${user_name} "${config_home}" ||
-    abort ERROR 'Failed to save screen locker interval to security settings.'
+    abort ERROR 'Failed to set screen locker interval.'
   
-  log INFO 'Screen locker interval saved to the security settings.'
+  log INFO 'Screen locker inteval set to 12 mins.'
   log INFO 'Security configuration has been completed.'
 }
 
@@ -801,7 +663,7 @@ setup_boot_loader () {
 
   local uefi_mode=''
   uefi_mode="$(jq -cer '.uefi_mode' "${SETTINGS}")" ||
-    abort 'Failed to read the uefi_mode setting.'
+    abort ERROR 'Failed to read the uefi_mode setting.'
 
   if is_yes "${uefi_mode}"; then
     grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB 2>&1 ||
@@ -821,10 +683,11 @@ setup_boot_loader () {
 
   log INFO 'Configuring the boot loader...'
 
-  sed -ri 's/(GRUB_CMDLINE_LINUX_DEFAULT=".*)"/\1 consoleblank=300"/' /etc/default/grub &&
-    sed -i '/#GRUB_SAVEDEFAULT=true/i GRUB_DEFAULT=saved' /etc/default/grub &&
-    sed -i 's/#GRUB_SAVEDEFAULT=true/GRUB_SAVEDEFAULT=true/' /etc/default/grub &&
-    sed -i 's/#GRUB_DISABLE_SUBMENU=y/GRUB_DISABLE_SUBMENU=y/' /etc/default/grub ||
+  sed -ri \
+    -e 's/(GRUB_CMDLINE_LINUX_DEFAULT=".*)"/\1 consoleblank=300"/' \
+    -e 's/# *(GRUB_SAVEDEFAULT.*)/\1/' \
+    -e '/GRUB_SAVEDEFAULT/i GRUB_DEFAULT=saved' \
+    -e 's/# *(GRUB_DISABLE_SUBMENU.*)/\1/' /etc/default/grub ||
     abort ERROR 'Failed to set boot loader properties.'
 
   grub-mkconfig -o /boot/grub/grub.cfg 2>&1 ||
@@ -834,7 +697,7 @@ setup_boot_loader () {
 
   local vm_vendor=''
   vm_vendor="$(jq -cer '.vm_vendor' "${SETTINGS}")" ||
-    abort 'Failed to read the vm_vendor setting.'
+    abort ERROR 'Failed to read the vm_vendor setting.'
 
   if is_yes "${uefi_mode}" && equals "${vm_vendor}" 'oracle'; then
     mkdir -p /boot/EFI/BOOT &&
@@ -896,7 +759,7 @@ enable_services () {
 
   local trim_disk=''
   trim_disk="$(jq -cer '.trim_disk' "${SETTINGS}")" ||
-    abort 'Failed to read the trim_disk setting.'
+    abort ERROR 'Failed to read the trim_disk setting.'
 
   if is_yes "${trim_disk}"; then
     systemctl enable fstrim.timer 2>&1 ||
@@ -907,11 +770,11 @@ enable_services () {
 
   local vm=''
   vm="$(jq -cer '.vm' "${SETTINGS}")" ||
-    abort 'Failed to read the vm setting.'
+    abort ERROR 'Failed to read the vm setting.'
   
   local vm_vendor=''
   vm_vendor="$(jq -cer '.vm_vendor' "${SETTINGS}")" ||
-    abort 'Failed to read the vm_vendor setting.'
+    abort ERROR 'Failed to read the vm_vendor setting.'
 
   if is_yes "${vm}" && equals "${vm_vendor}" 'oracle'; then
     systemctl enable vboxservice.service 2>&1 ||
@@ -924,56 +787,35 @@ enable_services () {
   user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
     abort ERROR 'Unable to read user_name setting.'
   
-  local config_home="/home/${user_name}/.config"
-
-  mkdir -p "${config_home}/systemd/user" ||
-    abort ERROR 'Failed to create the user systemd folder.'
-
-  cp /opt/stack/installer/services/init-pointer.service "${config_home}/systemd/user" ||
-    abort ERROR 'Failed to set the init-pointer service.'
-
-  log INFO 'Service init-pointer has been set.'
-
-  cp /opt/stack/installer/services/init-tablets.service "${config_home}/systemd/user" ||
-    abort ERROR 'Failed to set the init-tablets service.'
-
-  log INFO 'Service init-tablets has been set.'
-
-  cp /opt/stack/installer/services/fix-layout.service "${config_home}/systemd/user" ||
-    abort ERROR 'Failed to set the fix-layout service.'
-  
-  log INFO 'Service fix-layout has been set.'
-
-  chown -R ${user_name}:${user_name} "${config_home}/systemd" ||
-    abort ERROR 'Failed to change user ownership to user systemd services.'
-  
-  sed -i "s/#USER/${user_name}/g" "${config_home}/systemd/user/fix-layout.service" ||
-    abort ERROR 'Failed to set the user name in the fix-layout service file.'
+  sed -i "s;#HOME#;/home/${user_name};g" \
+    "/home/${user_name}/.config/systemd/user/fix-layout.service" ||
+    abort ERROR 'Failed to set the home in fix layout service.'
 
   log INFO 'System services have been enabled.'
 }
 
-# Adds system rules for udev.
-add_rules () {
-  log INFO 'Adding system udev rules...'
+# Creates the stack hash file.
+create_hash_file () {
+  cd /stack
 
-  local rules_home='/etc/udev/rules.d'
-
-  cp /opt/stack/installer/services/init-pointer.rules "${rules_home}/90-init-pointer.rules" ||
-    abort ERROR 'Failed to add the init-pointer rules.'
-
-  log INFO 'Rules init-pointer have been added.'
-
-  cp /opt/stack/installer/services/init-tablets.rules "${rules_home}/91-init-tablets.rules" ||
-    abort ERROR 'Failed to add the init-tablets rules.'
-
-  log INFO 'Rules init-tablets have been added.'
-
-  cp /opt/stack/installer/services/fix-layout.rules "${rules_home}/92-fix-layout.rules" ||
-    abort ERROR 'Failed to add the fix-layout rules.'
+  local branch=''
+  branch="$(git branch --show-current)" ||
+    abort ERROR 'Failed to read the current branch.'
   
-  log INFO 'Rules fix-layout have been set.'
-  log INFO 'System udev rules have been added.'
+  local commit=''
+  commit="$(git log --pretty=format:'%H' -n 1)" ||
+    abort ERROR 'Failed to read the last commit id.'
+  
+  mkdir -p /opt/stack ||
+    abort ERROR 'Failed to create the /opt/stack folder.'
+  
+  echo "{\"branch\": \"${branch}\", \"commit\": \"${commit}\"}" |
+    jq . > /opt/stack/.hash ||
+    abort ERROR 'Failed to create the stack hash file.'
+  
+  cd ~
+  
+  log INFO "Stack hash file set to ${branch}:${commit}."
 }
 
 log INFO 'Script system.sh started.'
@@ -983,7 +825,11 @@ if not_equals "$(id -u)" 0; then
   abort ERROR 'Script system.sh must be run as root user.'
 fi
 
-set_host &&
+sync_root_files &&
+  sync_commons &&
+  sync_tools &&
+  fix_release_data &&
+  set_host &&
   set_users &&
   set_mirrors &&
   configure_pacman &&
@@ -991,17 +837,15 @@ set_host &&
   install_base_packages &&
   install_display_server &&
   install_drivers &&
-  install_system_tools &&
   install_aur_package_manager &&
   set_locales &&
   set_keyboard &&
   set_system_timezone &&
   boost_performance &&
-  configure_power &&
   configure_security &&
   setup_boot_loader &&
   enable_services &&
-  add_rules
+  create_hash_file
 
 log INFO 'Script system.sh has finished.'
 
