@@ -10,6 +10,9 @@ source src/commons/validators.sh
 fix_packages () {
   log INFO 'Fixing and installing packages...'
 
+  sudo pacman -Syy 2>&1 ||
+    abort ERROR 'Failed to synchronize package databases.'
+
   local pkgs=($(grep -E '(stp|all):pac' packages.x86_64 | cut -d ':' -f 3)) ||
     abort ERROR 'Failed to read packages from packages.x86_64 file.'
 
