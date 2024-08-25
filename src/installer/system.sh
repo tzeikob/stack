@@ -172,13 +172,6 @@ set_users () {
     abort ERROR 'Failed to set password to root user.'
 
   log INFO 'Password has been given to the root user.'
-
-  cp /etc/skel/.bash_profile /root ||
-    abort ERROR 'Failed to create root .bash_profile file.'
-
-  cp /etc/skel/.bashrc /root ||
-    abort ERROR 'Failed to create root .bashrc file.'
-
   log INFO 'System users have been set up.'
 }
 
@@ -942,13 +935,15 @@ setup_fonts () {
 
 # Sets up the root and user shell environments.
 setup_shell_environment () {
+  log INFO 'Setting up the shell environment.'
+
   local user_name=''
   user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
     abort ERROR 'Unable to read user_name setting.'
 
   local stackrc_file="/home/${user_name}/.stackrc"
 
-  # Set the defauilt terminal and text editor
+  # Set the default terminal and text editor
   sed -i \
     -e 's/#TERMINAL#/alacritty/' \
     -e 's/#EDITOR#/helix/' "${stackrc_file}" ||
@@ -962,16 +957,23 @@ setup_shell_environment () {
   sed -i \
     -e '/PS1.*/d' \
     -e '$a\'$'\n''source "${HOME}/.stackrc"' "${bashrc_file}" ||
-    abort ERROR 'Failed to add stackrc hook into bashrc.'
+    abort ERROR 'Failed to source .stackrc into .bashrc.'
 
-  cp "/home/${user_name}/.stackrc" /root/.stackrc
+  cp "/home/${user_name}/.stackrc" /root/.stackrc ||
+    abort ERROR 'Failed to copy .stackrc for the root user.'
 
-  bashrc_file='/root/.bashrc'
+  cp /etc/skel/.bash_profile /root ||
+    abort ERROR 'Failed to create root .bash_profile file.'
+
+  cp /etc/skel/.bashrc /root ||
+    abort ERROR 'Failed to create root .bashrc file.'
 
   sed -i \
     -e '/PS1.*/d' \
-    -e '$a\'$'\n''source "${HOME}/.stackrc"' "${bashrc_file}" ||
-    abort ERROR 'Failed to add stackrc hook into bashrc.'
+    -e '$a\'$'\n''source "${HOME}/.stackrc"' /root/.bashrc ||
+    abort ERROR 'Failed to source .stackrc into the root .bashrc.'
+  
+  log INFO 'Shell environment has been setup.'
 }
 
 # Restores the user home permissions.
