@@ -225,7 +225,7 @@ check_updates () {
   if has_failed; then
     echo '{"status": -1}' > "${UPDATES_STATE_FILE}"
 
-    log 'Unable to search for outdated aur packages.'
+    log 'Unable to search for outdated AUR packages.'
     return 2
   fi
 
@@ -282,7 +282,7 @@ list_updates () {
   aur_pkgs="$(find_outdated_aur_packages)"
 
   if has_failed; then
-    log 'Unable to search for outdated aur packages.'
+    log 'Unable to search for outdated AUR packages.'
     return 2
   fi
 
@@ -359,7 +359,7 @@ apply_updates () {
   if has_failed; then
     echo '{"status": -1}' > "${UPDATES_STATE_FILE}"
 
-    log 'Failed to update aur packages.'
+    log 'Failed to update AUR packages.'
     return 2
   fi
 

@@ -5,9 +5,9 @@ source src/commons/math.sh
 source src/commons/validators.sh
 
 # Find all the packages installed to the system
-# via the package managers pacman and yay (aur).
+# via the package managers pacman and yay (AUR).
 # Returns:
-#  A JSON object with the pacman and aur list packages.
+#  A JSON object with the pacman and AUR list packages.
 find_installed_packages () {
   local query='[inputs|split(" ")|{name: .[0], version: .[1]}]'
   
@@ -42,9 +42,9 @@ find_outdated_pacman_packages () {
   echo "${pacman_pkgs}"
 }
 
-# Find the list of outdated aur packages.
+# Find the list of outdated AUR packages.
 # Returns:
-#  A JSON list of aur packages.
+#  A JSON list of AUR packages.
 find_outdated_aur_packages () {
   local query=''
   query+='name: .[0]|split(" ")|.[0],'

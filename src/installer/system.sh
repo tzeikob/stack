@@ -347,6 +347,60 @@ install_aur_package_manager () {
   log INFO 'AUR package manager has been installed.'
 }
 
+# Installs all the AUR packages the system depends on.
+install_aur_packages () {
+  log INFO 'Installing AUR packages...'
+
+  local pkgs=()
+  pkgs+=($(grep -E '(stp|all):aur' /stack/packages.x86_64 | cut -d ':' -f 3)) ||
+    abort ERROR 'Failed to read packages from packages.x86_64 file.'
+  
+  local user_name=''
+  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
+    abort ERROR 'Unable to read user_name setting.'
+
+  sudo -u "${user_name}" yay -S --needed --noconfirm --removemake ${pkgs[@]} 2>&1 ||
+    abort ERROR 'Failed to install AUR packages.'
+
+  locg INFO 'AUR packages have been installed.'
+}
+
+# Installs the screen locker.
+install_screen_locker () {
+  log INFO 'Installing the screen locker...'
+
+  local user_name=''
+  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
+    abort ERROR 'Unable to read user_name setting.'
+
+  local xsecurelock_home="/home/${user_name}/xsecurelock"
+
+  git clone https://github.com/tzeikob/xsecurelock.git "${xsecurelock_home}" 2>&1 &&
+    cd "${xsecurelock_home}" &&
+    sh autogen.sh 2>&1 &&
+    ./configure --with-pam-service-name=system-auth 2>&1 &&
+    make 2>&1 &&
+    make install 2>&1 &&
+    cd ~ &&
+    rm -rf "${xsecurelock_home}" ||
+    abort ERROR 'Failed to install xsecurelock.'
+  
+  log INFO 'Xsecurelock has been installed.'
+
+  local user_id=''
+  user_id="$(id -u "${user_name}" 2>&1)" ||
+    abort ERROR 'Failed to get the user id.'
+
+  local service_file="/etc/systemd/system/lock@.service"
+
+  sed -i "s/#USER_ID#/${user_id}/g" "${service_file}" &&
+    systemctl enable lock@${user_name}.service 2>&1 ||
+    abort ERROR 'Failed to enable locker service.'
+
+  log INFO 'Locker service has been enabled.'
+  log INFO 'Screen locker has been installed.'
+}
+
 # Sets the system locale along with the locale environment variables.
 set_locales () {
   local locales=''
@@ -708,6 +762,218 @@ setup_boot_loader () {
   log INFO 'Boot loader has been set up successfully.'
 }
 
+# Sets up the login screen.
+setup_login_screen () {
+  log INFO 'Setting up the login screen...'
+
+  mv /etc/issue /etc/issue.bak ||
+    abort ERROR 'Failed to backup the issue file.'
+
+  log INFO 'The issue file has been backed up to /etc/issue.bak.'
+
+  local host_name=''
+  host_name="$(jq -cer '.host_name' "${SETTINGS}")" ||
+    abort ERROR 'Unable to read host_name setting.'
+
+  echo " ${host_name} " | figlet -f pagga 2>&1 > /etc/issue ||
+    abort ERROR 'Failed to create the new issue file.'
+  
+  echo -e '\n' >> /etc/issue ||
+    abort ERROR 'Failed to create the new issue file.'
+  
+  log INFO 'The new issue file has been created.'
+
+  sed -ri \
+    "s;(ExecStart=-/sbin/agetty)(.*);\1 --nohostname\2;" \
+    /lib/systemd/system/getty@.service ||
+    abort ERROR 'Failed to set no hostname mode to getty service.'
+
+  sed -ri \
+    "s;(ExecStart=-/sbin/agetty)(.*);\1 --nohostname\2;" \
+    /lib/systemd/system/serial-getty@.service ||
+    abort ERROR 'Failed to set no hostname mode to serial getty service.'
+
+  log INFO 'Login screen has been setup.'
+}
+
+# Sets up the file manager.
+setup_file_manager () {
+  log INFO 'Setting up the file manager...'
+
+  local user_name=''
+  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
+    abort ERROR 'Unable to read user_name setting.'
+
+  local config_home="/home/${user_name}/.config/nnn"
+
+  log INFO 'Installing file manager plugins...'
+
+  local pluggins_url='https://raw.githubusercontent.com/jarun/nnn/master/plugins/getplugs'
+
+  curl "${pluggins_url}" -sSLo "${config_home}/getplugs" \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 2>&1 &&
+    cd "/home/${user_name}" &&
+    HOME="/home/${user_name}" sh "${config_home}/getplugs" 2>&1 ||
+    abort ERROR 'Failed to install extra plugins.'
+
+  log INFO 'Extra plugins have been installed.'
+
+  mkdir -p "/home/${user_name}"/{downloads,documents,data,sources,mounts} &&
+    mkdir -p "/home/${user_name}"/{images,audios,videos} ||
+    abort ERROR 'Failed to create home directories.'
+  
+  log INFO 'Home directories have been created.'
+  log INFO 'File manager has been setup.'
+}
+
+# Sets up the desktop theme.
+setup_theme () {
+  log INFO 'Setting the desktop theme...'
+
+  local theme_url='https://github.com/dracula/gtk/archive/master.zip'
+
+  local themes_home='/usr/share/themes'
+
+  curl "${theme_url}" -sSLo "${themes_home}/Dracula.zip" \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 2>&1 &&
+    unzip -q "${themes_home}/Dracula.zip" -d "${themes_home}" 2>&1 &&
+    mv "${themes_home}/gtk-master" "${themes_home}/Dracula" &&
+    rm -f "${themes_home}/Dracula.zip" ||
+    abort ERROR 'Failed to install theme files.'
+
+  log INFO 'Theme files have been set.'
+
+  local icons_url='https://github.com/dracula/gtk/files/5214870/Dracula.zip'
+
+  local icons_home='/usr/share/icons'
+
+  curl "${icons_url}" -sSLo "${icons_home}/Dracula.zip" \
+    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 2>&1 &&
+    unzip -q "${icons_home}/Dracula.zip" -d "${icons_home}" 2>&1 &&
+    rm -f "${icons_home}/Dracula.zip" ||
+    abort ERROR 'Failed to install icon files.'
+
+  log INFO 'Icon files have been set.'
+
+  local cursors_url='https://www.dropbox.com/s/mqt8s1pjfgpmy66/Breeze-Snow.tgz?dl=1'
+
+  wget "${cursors_url}" -qO "${icons_home}/breeze-snow.tgz" \
+    --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 3 2>&1 &&
+    tar -xzf "${icons_home}/breeze-snow.tgz" -C "${icons_home}" 2>&1 &&
+    sed -ri 's/Inherits=.*/Inherits=Breeze-Snow/' "${icons_home}/default/index.theme" &&
+    rm -f "${icons_home}/breeze-snow.tgz" ||
+    abort ERROR 'Failed to install cursors.'
+
+  log INFO 'Cursors have been set.'
+
+  local user_name=''
+  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
+    abort ERROR 'Unable to read user_name setting.'
+
+  sed -i \
+    -e 's/#THEME#/Dracula/' \
+    -e 's/#ICONS#/Dracula/' \
+    -e 's/#CURSORS#/Breeze-Snow/' "/home/${user_name}/.config/gtk-3.0/settings.ini" ||
+    abort ERROR 'Failed to set theme in GTK settings.'
+
+  log INFO 'Desktop theme has been setup.'
+}
+
+# Sets up the system fonts.
+setup_fonts () {
+  local fonts_home='/usr/share/fonts/extra-fonts'
+
+  mkdir -p "${fonts_home}" ||
+    abort ERROR 'Failed to create fonts home directory.'
+
+  log INFO 'Setting up extra fonts...'
+
+  local fonts=(
+    "FiraCode https://github.com/tonsky/FiraCode/releases/download/6.2/Fira_Code_v6.2.zip"
+    "FantasqueSansMono https://github.com/belluzj/fantasque-sans/releases/download/v1.8.0/FantasqueSansMono-Normal.zip"
+    "Hack https://github.com/source-foundry/Hack/releases/download/v3.003/Hack-v3.003-ttf.zip"
+    "Hasklig https://github.com/i-tu/Hasklig/releases/download/v1.2/Hasklig-1.2.zip"
+    "JetBrainsMono https://github.com/JetBrains/JetBrainsMono/releases/download/v2.242/JetBrainsMono-2.242.zip"
+    "Mononoki https://github.com/madmalik/mononoki/releases/download/1.3/mononoki.zip"
+    "VictorMono https://rubjo.github.io/victor-mono/VictorMonoAll.zip"
+    "PixelMix https://dl.dafont.com/dl/?f=pixelmix"
+  )
+
+  local font=''
+
+  for font in "${fonts[@]}"; do
+    local name=''
+    name="$(echo "${font}" | cut -d ' ' -f 1)" ||
+      abort ERROR 'Failed to read font name.'
+
+    local url=''
+    url="$(echo "${font}" | cut -d ' ' -f 2)" ||
+      abort ERROR 'Failed to read font URL.'
+
+    curl "${url}" -sSLo "${fonts_home}/${name}.zip" \
+      --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 2>&1 &&
+      unzip -q "${fonts_home}/${name}.zip" -d "${fonts_home}/${name}" 2>&1 &&
+      chmod -R 755 "${fonts_home}/${name}" &&
+      rm -f "${fonts_home}/${name}.zip" ||
+      abort ERROR "Failed to install font ${name}."
+
+    log INFO "Font ${name} has been installed."
+  done
+
+  log INFO 'Installing google fonts...'
+
+  git clone --filter=blob:none --sparse https://github.com/google/fonts.git google-fonts 2>&1 &&
+    cd google-fonts &&
+    git sparse-checkout add apache/cousine apache/robotomono ofl/sharetechmono ofl/spacemono 2>&1 &&
+    cp -r apache/cousine apache/robotomono ofl/sharetechmono ofl/spacemono "${fonts_home}" &&
+    cd .. && rm -rf google-fonts ||
+    abort ERROR 'Failed to install google fonts.'
+  
+  log 'Google fonts have been installed.'
+
+  log INFO 'Updating the fonts cache...'
+
+  fc-cache -f 2>&1 ||
+    abort ERROR 'Failed to update the fonts cache.'
+
+  log INFO 'Fonts cache has been updated.'
+  log INFO 'Extra glyphs have been installed.'
+}
+
+# Sets up the root and user shell environments.
+setup_shell_environment () {
+  local user_name=''
+  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
+    abort ERROR 'Unable to read user_name setting.'
+
+  local stackrc_file="/home/${user_name}/.stackrc"
+
+  # Set the defauilt terminal and text editor
+  sed -i \
+    -e 's/#TERMINAL#/alacritty/' \
+    -e 's/#EDITOR#/helix/' "${stackrc_file}" ||
+    abort ERROR 'Failed to set the terminal defaults.'
+
+  log INFO 'Default terminal set to cool-retro-term.'
+  log INFO 'Default editor set to helix.'
+  
+  local bashrc_file="/home/${user_name}/.bashrc"
+
+  sed -i \
+    -e '/PS1.*/d' \
+    -e '$a\'$'\n''source "${HOME}/.stackrc"' "${bashrc_file}" ||
+    abort ERROR 'Failed to add stackrc hook into bashrc.'
+
+  cp "/home/${user_name}/.stackrc" /root/.stackrc
+
+  bashrc_file='/root/.bashrc'
+
+  sed -i \
+    -e '/PS1.*/d' \
+    -e '$a\'$'\n''source "${HOME}/.stackrc"' "${bashrc_file}" ||
+    abort ERROR 'Failed to add stackrc hook into bashrc.'
+}
+
 # Enables system services.
 enable_services () {
   log INFO 'Enabling system services...'
@@ -790,7 +1056,11 @@ enable_services () {
   sed -i "s;#HOME#;/home/${user_name};g" \
     "/home/${user_name}/.config/systemd/user/fix-layout.service" ||
     abort ERROR 'Failed to set the home in fix layout service.'
+  
+  sudo -u "${user_name}" systemctl --user enable mpd.service 2>&1 ||
+    abort ERROR 'Failed to enable mpd service.'
 
+  log INFO 'MPD service has been enabled.'
   log INFO 'System services have been enabled.'
 }
 
@@ -838,12 +1108,19 @@ sync_root_files &&
   install_display_server &&
   install_drivers &&
   install_aur_package_manager &&
+  install_aur_packages &&
+  install_screen_locker &&
   set_locales &&
   set_keyboard &&
   set_system_timezone &&
   boost_performance &&
   configure_security &&
   setup_boot_loader &&
+  setup_login_screen &&
+  setup_file_manager &&
+  setup_theme &&
+  setup_fonts &&
+  setup_shell_environment
   enable_services &&
   create_hash_file
 
