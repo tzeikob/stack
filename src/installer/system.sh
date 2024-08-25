@@ -974,6 +974,18 @@ setup_shell_environment () {
     abort ERROR 'Failed to add stackrc hook into bashrc.'
 }
 
+# Restores the user home permissions.
+restore_user_permissions () {
+  local user_name=''
+  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
+    abort ERROR 'Unable to read user_name setting.'
+  
+  chown -R ${user_name}:${user_name} "/home/${user_name}" ||
+    abort ERROR 'Failed to restore user permissions.'
+  
+  lof INFO 'User home permissions have been restored.'
+}
+
 # Enables system services.
 enable_services () {
   log INFO 'Enabling system services...'
@@ -1120,7 +1132,8 @@ sync_root_files &&
   setup_file_manager &&
   setup_theme &&
   setup_fonts &&
-  setup_shell_environment
+  setup_shell_environment &&
+  restore_user_permissions &&
   enable_services &&
   create_hash_file
 
