@@ -79,7 +79,7 @@ sync_commons () {
   rsync -av src/commons/ "${ROOT_FS}/opt/stack/commons" ||
     abort ERROR 'Failed to sync the commons files.'
   
-  sudo sed -i 's;source src;source /opt/stack;' ${ROOT_FS}/opt/stack/commons/* ||
+  sed -i 's;source src;source /opt/stack;' ${ROOT_FS}/opt/stack/commons/* ||
     abort ERROR 'Failed to fix source paths to /opt/stack.'
   
   log INFO 'Source paths fixed to /opt/stack.'
@@ -120,7 +120,7 @@ sync_tools () {
     tool_name="$(echo "${main_file}" | sed 's;/opt/stack/tools/\(.*\)/main.sh;\1;')" ||
       abort ERROR 'Failed to extract tool handle name.'
 
-    sudo ln -sf "${main_file}" "${ROOT_FS}/usr/local/stack/${tool_name}" ||
+    ln -sf "${main_file}" "${ROOT_FS}/usr/local/stack/${tool_name}" ||
       abort ERROR "Failed to create symlink for ${main_file} file."
   done
 
