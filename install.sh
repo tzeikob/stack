@@ -21,7 +21,7 @@ init () {
   echo '{}' > "${SETTINGS}"
 }
 
-# Report any collected installation settings.
+# Reports all the installation settings set by the user.
 report () {
   local log_file="/var/log/stack/report.log"
 
@@ -36,18 +36,17 @@ report () {
     abort 'Unable to read installation settings.'
   fi
 
-  log -n 'Installation properties have been set to:' > "${log_file}"
+  log -n 'Installation settings set to:' > "${log_file}"
   log "${settings}\n" >> "${log_file}"
 }
 
-# Executes the script with the given file name as the
-# current user being in the archiso's shell session.
+# Executes a preparation task script with the given file name.
 # Arguments:
-#  file_name: the name of the script file
+#  file_name: the name of a task script
 run () {
   local file_name="${1}"
 
-  # Do not log while running the askme screens
+  # Do not log while running the askme task
   if equals "${file_name}" 'askme'; then
     echo
     bash src/installer/askme.sh || return 1
@@ -86,17 +85,15 @@ run () {
       --bar-format "${BAR_FORMAT}" --total ${total} >> "${log_file}.tqdm"
 
   if has_failed; then
-    log ERROR "Script ${file_name}.sh has been failed." >> "${log_file}"
+    log ERROR "Script ${file_name}.sh has failed." >> "${log_file}"
     abort 'A fatal error has been occurred.'
   fi
 }
 
-# Changes to the shell session of the mounted installation disk
-# as the root or sudoer user and executes the script with the given
-# file name which corresponds to the part of the system that is
-# about to be installed.
+# Executes an installation script with the given file name via
+# chroot into the installation disk as root or sudoer user.
 # Arguments:
-#  file_name: the name of the script file
+#  file_name: the name of an installation script
 install () {
   local file_name="${1}"
 
@@ -104,7 +101,7 @@ install () {
 
   local user_name='root'
 
-  # Impersonate the sudoer user on desktop, stack and apps installation
+  # Impersonate the sudoer user on stack and apps installation
   if match "${file_name}" '^(stack|apps)$'; then
     user_name="$(jq -cer '.user_name' "${SETTINGS}")"
 
@@ -140,7 +137,7 @@ install () {
       --bar-format "${BAR_FORMAT}" --total ${total} >> "${log_file}.tqdm"
   
   if has_failed; then
-    log ERROR "Script ${file_name}.sh has been failed." >> "${log_file}"
+    log ERROR "Script ${file_name}.sh has failed." >> "${log_file}"
     abort 'A fatal error has been occurred.'
   fi
 }
@@ -160,7 +157,7 @@ restart () {
     /mnt/var/log/stack/apps.log \
     /mnt/var/log/stack/cleaner.log >> /mnt/var/log/stack/all.log
 
-  # Clean redundant log files from archiso media
+  # Clean redundant log files from live media
   rm -rf /var/log/stack
   
   log -n 'Installation process has been completed.'
@@ -171,7 +168,7 @@ restart () {
   reboot
 }
 
-# Launch the welcome screen of the installer.
+# Shows the welcome screen of the installer.
 welcome () {
   clear
 

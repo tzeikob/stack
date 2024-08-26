@@ -476,7 +476,7 @@ select_kernel () {
   log "Linux kernel is set to ${kernel}."
 }
 
-# Report the collected installation settings.
+# Reports all the installation settings set by the user.
 report () {
   local query=''
   query='.user_password = "***" | .root_password = "***"'
@@ -484,7 +484,7 @@ report () {
   local settings=''
   settings="$(jq "${query}" "${SETTINGS}")" || abort
 
-  log -n 'Installation properties have been set to:'
+  log -n 'Installation settings set to:'
   log "${settings}"
 }
 

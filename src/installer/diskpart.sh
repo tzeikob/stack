@@ -168,9 +168,11 @@ create_partitions () {
     abort ERROR 'Failed to read the uefi_mode setting.'
 
   if is_yes "${uefi_mode}"; then
-    create_gpt_partitions || abort ERROR 'Failed to create GPT partitions.'
+    create_gpt_partitions ||
+      abort ERROR 'Failed to create GPT partitions.'
   else
-    create_mbr_partitions || abort ERROR 'Failed to create MBR partitions.'
+    create_mbr_partitions ||
+      abort ERROR 'Failed to create MBR partitions.'
   fi
 
   log INFO 'Disk partitions have been created.'
@@ -239,7 +241,7 @@ format_partitions () {
   log INFO 'Formating has been completed.'
 }
 
-# Mounts the disk partitions of the isntallation disk.
+# Mounts the disk partitions of the installation disk.
 mount_file_system () {
   log INFO 'Mounting disk partitions...'
   
