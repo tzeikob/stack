@@ -6,8 +6,45 @@ source src/commons/error.sh
 source src/commons/logger.sh
 source src/commons/validators.sh
 
+# Fixes global configuration variables.
+fix_config_values () {
+  local version=''
+  version="$(date +%Y.%m.%d)" ||
+    abort ERROR 'Failed to create release version.'
+  
+  sed -i "s/#VERSION#/${version}/" airootfs/usr/lib/os-release ||
+    abort ERROR 'Failed to set release version.'
+  
+  log INFO "New release version set to ${version}."
+  
+  sed -i 's/#TERMINAL#/alacritty/' airootfs/home/user/.stackrc ||
+    abort ERROR 'Failed to set default terminal.'
+  
+  log INFO 'Default terminal set to alacritty.'
+
+  sed -i 's/#EDITOR#/helix/' airootfs/home/user/.stackrc ||
+    abort ERROR 'Failed to set default editor.'
+  
+  log INFO 'Default editor set to helix.'
+  
+  local user_id=''
+  user_id="$(id -u "${USER}" 2>&1)" ||
+    abort ERROR 'Failed to get the user id.'
+
+  sed -i "s/#USER_ID#/${user_id}/g" airootfs/etc/systemd/system/lock@.service &&
+    abort ERROR 'Failed to set the user id in lock service.'
+
+  log INFO "Lock user id set to ${user_id} for user ${USER}."
+
+  sed -i "s;#HOME#;/home/${USER};g" \
+    airootfs/home/user/.config/systemd/user/fix-layout.service ||
+    abort ERROR 'Failed to set the home in fix layout service.'
+  
+  log INFO "Fix layout service home set to /home/${USER}."
+}
+
 # Updates existing packages and installs new dependencies.
-fix_packages () {
+update_packages () {
   log INFO 'Fixing and installing packages...'
 
   sudo pacman -Syy 2>&1 ||
@@ -26,7 +63,7 @@ fix_packages () {
   yay -S --needed --noconfirm --removemake ${pkgs[@]} 2>&1 ||
     abort ERROR 'Failed to install AUR packages.'
 
-  log INFO 'All packages have been fixed.'
+  log INFO 'All packages have been updated.'
 }
 
 # Updates the root file system.
@@ -109,64 +146,18 @@ update_tools () {
   log INFO 'Tools files have been updated.'
 }
 
-# Updates the os release data.
-update_release_data () {
-  log INFO 'Updating the release data...'
-
-  local version=''
-  version="$(date +%Y.%m.%d)" ||
-    abort ERROR 'Failed to create release version.'
-  
-  sudo sed -i "s/#VERSION#/${version}/" /usr/lib/os-release ||
-    abort ERROR 'Failed to set release version.'
-  
-  log INFO "New release version set to ${version}."
-  log INFO 'Release data have been updated.'
-}
-
-# Updates the locker.
-update_locker () {
-  log INFO 'Updating the locker...'
+# Fixes user and system services.
+fix_services () {
+  log INFO 'Fixing user and system services...'
 
   sudo systemctl disable lock@${USER}.service 2>&1 ||
     log WARN 'Unable to disable lock service.'
-  
-  local user_id=''
-  user_id="$(
-    id -u "${USER}" 2>&1
-  )" || abort ERROR 'Failed to get the user id.'
-
-  sudo sed -i "s/#USER_ID#/${user_id}/g" /etc/systemd/system/lock@.service &&
-    abort ERROR 'Failed to set the user id in lock service.'
-
+    
   sudo systemctl enable lock@${USER}.service 2>&1 ||
     log WARN 'Unable to enable lock service.'
   
-  log INFO 'Lock service has been enabled.'
-  log INFO 'Locker has been updated.'
-}
-
-# Updates the default terminal and editor.
-update_default_terminal_and_editor () {
-  log INFO 'Updating the default terminal and editor...'
-  
-  sed -i \
-    -e 's/#TERMINAL#/alacritty/' \
-    -e 's/#EDITOR#/helix/' "/home/${USER}/.stackrc" ||
-    abort ERROR 'Failed to set the terminal defaults.'
-  
-  log INFO 'Stackrc file has been updated.'
-}
-
-# Updates user and system services.
-update_services () {
-  log INFO 'Updating user and system services...'
-  
-  sed -i "s;#HOME#;/home/${USER};g" \
-    "/home/${USER}/.config/systemd/user/fix-layout.service" ||
-    abort ERROR 'Failed to set the home in fix layout service.'
-
-  log INFO 'Services have been updated.'
+  log INFO 'Lock service has been fixed.'
+  log INFO 'Services have been fixed.'
 }
 
 # Restores the user permissions under the home directory.
@@ -200,14 +191,12 @@ fi
 
 log INFO 'Starting the upgrade process...'
 
-fix_packages &&
+fix_config_values &&
+  update_packages &&
   update_root_files &&
   update_commons &&
   update_tools &&
-  update_release_data &&
-  update_locker &&
-  update_default_terminal_and_editor &&
-  update_services &&
+  fix_services &&
   restore_user_permissions &&
   update_hash_file
 
