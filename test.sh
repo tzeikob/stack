@@ -4,6 +4,8 @@ set -o pipefail
 
 source src/commons/logger.sh
 source src/commons/error.sh
+source src/commons/math.sh
+source src/commons/validators.sh
 
 # Iterate recursively starting from the given file path
 # all the way down following every source file.
@@ -14,7 +16,7 @@ source src/commons/error.sh
 traverse_files () {
   local root="${1}"
 
-  if [[ -z "${root}" ]] || [[ "${root}" =~ '^ *$' ]]; then
+  if is_empty "${root}" || match "${root}" '^ *$'; then
     echo ''
   else
     # Collect all files sourced in the current root file
@@ -25,7 +27,7 @@ traverse_files () {
       return 1
     fi
 
-    if [[ -n "${files}" ]] && [[ ! "${files}" =~ '^ *$' ]]; then
+    if is_not_empty "${files}" && not_match "${files}" '^ *$'; then
       # Collect recursivelly every sourced file walking the execution path
       local file=''
       while read -r file; do
@@ -43,7 +45,7 @@ test_no_shell_files () {
   count=$(find src -type f -not -name '*.sh' | wc -l) ||
     abort ERROR 'Unable to list source files.'
 
-  if [[ ${count} -gt 0 ]]; then
+  if is_true "${count} > 0"; then
     log ERROR '[FAILED] No shell files test.'
     return 1
   fi
@@ -96,7 +98,7 @@ test_no_func_overriden () {
     local func=''
     while read -r func; do
       # Skip empty lines
-      if [[ -z "${func}" ]] || [[ "${func}" =~ '^ *$' ]]; then
+      if is_empty "${func}" || match "${func}" '^ *$'; then
         continue
       fi
 
@@ -107,7 +109,7 @@ test_no_func_overriden () {
         abort ERROR 'Unable to iterate through function declarations.'
       fi
 
-      if [[ ${occurrences} -gt 1 ]]; then
+      if is_true "${occurrences} > 1"; then
         log ERROR "[FAILED] No func overriden test: ${root}."
         log ERROR "[FAILED] No func overriden test: ${func} [${occurrences}]."
         return 1
@@ -137,11 +139,11 @@ test_local_var_declarations () {
     local declaration=''
     while read -r declaration; do
       # Skip empty lines
-      if [[ -z "${declaration}" ]] || [[ "${declaration}" =~ '^ *$' ]]; then
+      if is_empty "${declaration}" || match "${declaration}" '^ *$'; then
         continue
       fi
 
-      if [[ "${declaration}" =~ =\"?\$\(.* ]]; then
+      if match "${declaration}" '=\"?\$\(.*'; then
         log ERROR "[FAILED] Local var declarations test: ${file}."
         log ERROR "[FAILED] Local var declarations test: ${declaration}"
         return 1
