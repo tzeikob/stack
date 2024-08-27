@@ -26,9 +26,6 @@ traverse_files () {
     fi
 
     if [[ -n "${files}" ]] && [[ ! "${files}" =~ '^ *$' ]]; then
-      # Replace after installation paths with the repository locations
-      files=$(echo "${files}" | sed -e 's;/opt/stack;src;')
-      
       # Collect recursivelly every sourced file walking the execution path
       local file=''
       while read -r file; do
