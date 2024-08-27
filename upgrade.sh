@@ -84,8 +84,11 @@ update_tools () {
   log INFO 'Source paths fixed to /opt/stack.'
 
   # Create and restore all symlinks for every tool
-  sudo mkdir -p /usr/local/stack ||
-    abort ERROR 'Failed to create the /usr/local/stack folder.'
+  local symlink_home='/usr/local/stack'
+
+  sudo rm -rf "${symlink_home}" &&
+    sudo mkdir "${symlink_home}" ||
+    abort ERROR "Failed to create the ${symlink_home} folder."
   
   local main_files
   main_files=($(find /opt/stack/tools -type f -name 'main.sh')) ||
@@ -98,7 +101,7 @@ update_tools () {
     tool_name="$(echo "${main_file}" | sed 's;/opt/stack/tools/\(.*\)/main.sh;\1;')" ||
       abort ERROR 'Failed to extract tool handle name.'
 
-    sudo ln -sf "${main_file}" "/usr/local/stack/${tool_name}" ||
+    sudo ln -sf "${main_file}" "${symlink_home}/${tool_name}" ||
       abort ERROR "Failed to create symlink for ${main_file} file."
   done
 
