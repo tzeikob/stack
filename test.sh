@@ -154,6 +154,10 @@ test_local_var_declarations () {
   log INFO '[PASSED] Local var declarations test.'
 }
 
+if file_not_in_directory "${0}" "${PWD}"; then
+  abort ERROR 'Unable to run script out of its parent directory.'
+fi
+
 test_no_shell_files &&
   test_no_func_overriden &&
   test_local_var_declarations &&

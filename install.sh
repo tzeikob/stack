@@ -190,6 +190,10 @@ welcome () {
   fi
 }
 
+if file_not_in_directory "${0}" "${PWD}"; then
+  abort ERROR 'Unable to run script out of its parent directory.'
+fi
+
 init &&
   welcome &&
   run askme &&

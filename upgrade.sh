@@ -185,8 +185,8 @@ update_hash_file () {
   log INFO "Stack hash file updated to ${branch}:${commit}."
 }
 
-if is_not_equal "${PWD}" '/tmp/stack'; then
-  abort ERROR "Unable to run this script out of /tmp/stack."
+if file_not_in_directory "${0}" "${PWD}"; then
+  abort ERROR 'Unable to run script out of its parent directory.'
 fi
 
 log INFO 'Starting the upgrade process...'

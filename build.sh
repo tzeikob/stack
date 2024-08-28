@@ -818,6 +818,10 @@ make_iso_file () {
   log INFO 'Build process completed successfully.'
 }
 
+if file_not_in_directory "${0}" "${PWD}"; then
+  abort ERROR 'Unable to run script out of its parent directory.'
+fi
+
 log INFO 'Starting the build process...'
 
 init &&

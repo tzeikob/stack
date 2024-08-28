@@ -342,3 +342,32 @@ is_time () {
 is_not_time () {
   is_time "${1}" && return 1 || return 0
 }
+
+# Checks if the file with the given path locates in the
+# given directory.
+# Arguments:
+#  file_path: the absolute or relative path of a file
+#  directory: the path to a directory
+# Returns:
+#  0 if file is in the given directory otherwise 1.
+file_in_directory () {
+  local file_path="${1}"
+  local directory="${2}"
+
+  local real_path=''
+  real_path="$(realpath -s "${file_path}")"
+
+  local real_directory=''
+  real_directory="$(dirname "${real_path}")"
+
+  if not_equals "${real_directory}" "${directory}"; then
+    return 1
+  fi
+
+  return 0
+}
+
+# An inverse version of file_in_directory.
+file_not_in_directory () {
+  file_in_directory "${1}" "${2}" && return 1 || return 0
+}
