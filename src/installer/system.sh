@@ -9,7 +9,250 @@ source src/commons/validators.sh
 
 SETTINGS=/stack/settings.json
 
-# Syncs airoot files to new system.
+# Sets the host name of the system.
+set_host_name () {
+  log INFO 'Setting the host name...'
+
+  local host_name=''
+  host_name="$(jq -cer '.host_name' "${SETTINGS}")" ||
+    abort ERROR 'Unable to read host_name setting.'
+
+  sed -i "s/#HOST_NAME#/${host_name}/" /etc/hostname ||
+    abort ERROR 'Failed to set the host name.'
+
+  log INFO "Host name has been set to ${host_name}."
+
+  sed -i "s/#HOST_NAME#/${host_name}/" /etc/hosts ||
+    abort ERROR 'Failed to add host name to hosts.'
+
+  log INFO 'Host name has been added to hosts file.'
+}
+
+# Sets up the root user of the system.
+set_root_user () {
+  log INFO 'Setting up the root user...'
+
+  local root_password=''
+  root_password="$(jq -cer '.root_password' "${SETTINGS}")" ||
+    abort ERROR 'Unable to read root_password setting.'
+
+  echo "root:${root_password}" | chpasswd 2>&1 ||
+    abort ERROR 'Failed to set password to root user.'
+
+  log INFO 'Password has been given to root user.'
+  log INFO 'Root user has been setup.'
+}
+
+# Sets up the sudoer user of the system.
+set_sudoer_user () {
+  log INFO 'Setting up the sudoer user...'
+
+  local groups='wheel,audio,video,optical,storage'
+
+  local vm=''
+  vm="$(jq -cer '.vm' "${SETTINGS}")" ||
+    abort ERROR 'Failed to read the vm setting.'
+
+  if is_yes "${vm}"; then
+    groupadd 'libvirt' 2>&1
+    groups="${groups},libvirt"
+  fi
+
+  local user_name=''
+  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
+    abort ERROR 'Unable to read user_name setting.'
+
+  useradd -m -G "${groups}" -s /bin/bash "${user_name}" 2>&1 &&
+    chown -R ${user_name}:${user_name} "/home/${user_name}" ||
+    abort ERROR 'Failed to create the sudoer user.'
+
+  log INFO "Sudoer user ${user_name} has been created."
+
+  local rule='%wheel ALL=(ALL:ALL) ALL'
+
+  sed -i "s/^# \(${rule}\)/\1/" /etc/sudoers ||
+    abort ERROR 'Failed to grant sudo permissions to wheel group.'
+
+  if ! grep -q "^${rule}" /etc/sudoers; then
+    abort ERROR 'Failed to grant sudo permissions to wheel group.'
+  fi
+
+  log INFO 'Sudo permissions have been granted to sudoer user.'
+
+  local user_password=''
+  user_password="$(jq -cer '.user_password' "${SETTINGS}")" ||
+    abort ERROR 'Unable to read user_password setting.'
+
+  echo "${user_name}:${user_password}" | chpasswd 2>&1 ||
+    abort ERROR "Failed to set password to user ${user_name}."
+
+  log INFO "Password has been given to user ${user_name}."
+  log INFO "Sudoer user ${user_name} has been setup."
+}
+
+# Sets the pacman package databases mirrors.
+set_mirrors () {
+  log INFO 'Setting up package databases mirrors...'
+
+  local mirrors=''
+  mirrors="$(jq -cer '.mirrors|join(",")' "${SETTINGS}")" ||
+    abort ERROR 'Unable to read mirrors setting.'
+
+  reflector --country "${mirrors}" \
+    --age 48 --sort age --latest 40 --save /etc/pacman.d/mirrorlist 2>&1 ||
+    abort ERROR 'Unable to fetch package databases mirrors.'
+
+  local conf_file='/etc/xdg/reflector/reflector.conf'
+
+  sed -i \
+    -e "s/# --country.*/--country ${mirrors}/" \
+    -e 's/^--latest.*/--latest 40/' \
+    -e '$a--age 48' "${conf_file}" ||
+    abort ERROR 'Failed to save mirrors settings to reflector.'
+
+  log INFO "Package databases mirrors set to ${mirrors}."
+}
+
+# Configures pacman package manager.
+configure_pacman () {
+  log INFO 'Configuring the pacman manager...'
+
+  sed -i 's/^#ParallelDownloads/ParallelDownloads/' /etc/pacman.conf ||
+    abort ERROR 'Failed to set parallel download.'
+
+  log INFO 'Parallel download has been enabled.'
+
+  local keyserver='hkp://keyserver.ubuntu.com'
+
+  echo "keyserver ${keyserver}" >> /etc/pacman.d/gnupg/gpg.conf ||
+    abort ERROR 'Failed to add the GPG keyserver.'
+
+  log INFO "GPG keyserver has been set to ${keyserver}."
+  log INFO 'Pacman manager has been configured.'
+}
+
+# Synchronizes the package databases to the master.
+sync_package_databases () {
+  log INFO 'Starting to synchronize package databases...'
+
+  local lock_file='/var/lib/pacman/db.lck'
+
+  if file_exists "${lock_file}"; then
+    log WARN 'Package databases seem to be locked.'
+
+    rm -f "${lock_file}" ||
+      abort ERROR "Failed to remove the lock file ${lock_file}."
+
+    log INFO "Lock file ${lock_file} has been removed."
+  fi
+
+  pacman -Syy 2>&1 ||
+    abort ERROR 'Failed to synchronize package databases.'
+
+  log INFO 'Package databases synchronized to the master.'
+}
+
+# Installs hardware and system drivers.
+install_drivers () {
+  log INFO 'Installing system drivers...'
+
+  local cpu_pkgs=''
+
+  local cpu_vendor=''
+  cpu_vendor="$(jq -cer '.cpu_vendor' "${SETTINGS}")" ||
+    abort ERROR 'Failed to read the cpu_vendor setting.'
+
+  if equals "${cpu_vendor}" 'amd'; then
+    cpu_pkgs='amd-ucode'
+  elif equals "${cpu_vendor}" 'intel'; then
+    cpu_pkgs='intel-ucode'
+  fi
+
+  local gpu_pkgs=''
+
+  local gpu_vendor=''
+  gpu_vendor="$(jq -cer '.gpu_vendor' "${SETTINGS}")" ||
+    abort ERROR 'Failed to read the gpu_vendor setting.'
+
+  if equals "${gpu_vendor}" 'nvidia'; then
+    local kernel=''
+    kernel="$(jq -cer '.kernel' "${SETTINGS}")" ||
+      abort ERROR 'Unable to read kernel setting.'
+
+    if equals "${kernel}" 'stable'; then
+      gpu_pkgs='nvidia'
+    elif equals "${kernel}" 'lts'; then
+      gpu_pkgs='nvidia-lts'
+    fi
+
+    gpu_pkgs+=' nvidia-utils nvidia-settings'
+  elif equals "${gpu_vendor}" 'amd'; then
+    gpu_pkgs='xf86-video-amdgpu'
+  elif equals "${gpu_vendor}" 'intel'; then
+    gpu_pkgs='libva-intel-driver libvdpau-va-gl vulkan-intel libva-utils'
+  else
+    gpu_pkgs='xf86-video-qxl'
+  fi
+
+  pacman -S --needed --noconfirm ${cpu_pkgs} ${gpu_pkgs} 2>&1 ||
+    abort ERROR 'Failed to install system drivers.'
+
+  log INFO 'System drivers have been installed.'
+}
+
+# Installs the base packages of the system.
+install_base_packages () {
+  log INFO 'Installing the base packages...'
+
+  local pkgs=($(grep -E '(stp|all):pac' /stack/packages.x86_64 | cut -d ':' -f 3)) ||
+    abort ERROR 'Failed to read packages from packages.x86_64 file.'
+
+  pacman -S --needed --noconfirm ${pkgs[@]} 2>&1 ||
+    abort ERROR 'Failed to install base packages.'
+
+  log INFO 'Base packages have been installed.'
+}
+
+# Installs the user repository package manager.
+install_aur_package_manager () {
+  log INFO 'Installing the AUR package manager...'
+
+  local user_name=''
+  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
+    abort ERROR 'Unable to read user_name setting.'
+
+  local yay_home="/home/${user_name}/yay"
+
+  git clone https://aur.archlinux.org/yay.git "${yay_home}" 2>&1 &&
+    chown -R ${user_name}:${user_name} "${yay_home}" &&
+    cd "${yay_home}" &&
+    sudo -u "${user_name}" makepkg -si --noconfirm 2>&1 &&
+    cd ~ &&
+    rm -rf "${yay_home}" ||
+    abort ERROR 'Failed to install the AUR package manager.'
+
+  log INFO 'AUR package manager has been installed.'
+}
+
+# Installs all the AUR packages the system depends on.
+install_aur_packages () {
+  log INFO 'Installing AUR packages...'
+
+  local pkgs=()
+  pkgs+=($(grep -E '(stp|all):aur' /stack/packages.x86_64 | cut -d ':' -f 3)) ||
+    abort ERROR 'Failed to read packages from packages.x86_64 file.'
+  
+  local user_name=''
+  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
+    abort ERROR 'Unable to read user_name setting.'
+
+  sudo -u "${user_name}" yay -S --needed --noconfirm --removemake ${pkgs[@]} 2>&1 ||
+    abort ERROR 'Failed to install AUR packages.'
+
+  locg INFO 'AUR packages have been installed.'
+}
+
+# Syncs root files to new system.
 sync_root_files () {
   log INFO 'Syncing the root file system...'
 
@@ -100,159 +343,9 @@ fix_release_data () {
     abort ERROR 'Unable to remove the arch-release file.'
 }
 
-# Sets host related settings.
-set_host () {
-  log INFO 'Setting up the host...'
-
-  local host_name=''
-  host_name="$(jq -cer '.host_name' "${SETTINGS}")" ||
-    abort ERROR 'Unable to read host_name setting.'
-
-  sed -i "s/#HOST_NAME#/${host_name}/" /etc/hostname ||
-    abort ERROR 'Failed to set the host name.'
-
-  log INFO "Host name has been set to ${host_name}."
-
-  sed -i "s/#HOST_NAME#/${host_name}/" /etc/hosts ||
-    abort ERROR 'Failed to add host name to hosts.'
-
-  log INFO 'Host name has been added to the hosts.'
-}
-
-# Sets up the root and sudoer users of the system.
-set_users () {
-  log INFO 'Setting up the system users...'
-
-  local groups='wheel,audio,video,optical,storage'
-
-  local vm=''
-  vm="$(jq -cer '.vm' "${SETTINGS}")" ||
-    abort ERROR 'Failed to read the vm setting.'
-
-  if is_yes "${vm}"; then
-    groupadd 'libvirt' 2>&1
-    groups="${groups},libvirt"
-  fi
-
-  local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
-    abort ERROR 'Unable to read user_name setting.'
-
-  useradd -m -G "${groups}" -s /bin/bash "${user_name}" 2>&1 &&
-    chown -R ${user_name}:${user_name} "/home/${user_name}" ||
-    abort ERROR 'Failed to create the sudoer user.'
-
-  log INFO "Sudoer user ${user_name} has been created."
-
-  local rule='%wheel ALL=(ALL:ALL) ALL'
-
-  sed -i "s/^# \(${rule}\)/\1/" /etc/sudoers ||
-    abort ERROR 'Failed to grant sudo permissions to wheel group.'
-
-  if ! grep -q "^${rule}" /etc/sudoers; then
-    abort ERROR 'Failed to grant sudo permissions to wheel group.'
-  fi
-
-  log INFO 'Sudo permissions have been granted to sudoer user.'
-
-  local user_password=''
-  user_password="$(jq -cer '.user_password' "${SETTINGS}")" ||
-    abort ERROR 'Unable to read user_password setting.'
-
-  echo "${user_name}:${user_password}" | chpasswd 2>&1 ||
-    abort ERROR "Failed to set password to user ${user_name}."
-
-  log INFO "Password has been given to user ${user_name}."
-
-  local root_password=''
-  root_password="$(jq -cer '.root_password' "${SETTINGS}")" ||
-    abort ERROR 'Unable to read root_password setting.'
-
-  echo "root:${root_password}" | chpasswd 2>&1 ||
-    abort ERROR 'Failed to set password to root user.'
-
-  log INFO 'Password has been given to the root user.'
-  log INFO 'System users have been set up.'
-}
-
-# Sets the pacman package database mirrors.
-set_mirrors () {
-  log INFO 'Setting up package databases mirrors...'
-
-  local mirrors=''
-  mirrors="$(jq -cer '.mirrors|join(",")' "${SETTINGS}")" ||
-    abort ERROR 'Unable to read mirrors setting.'
-
-  reflector --country "${mirrors}" \
-    --age 48 --sort age --latest 40 --save /etc/pacman.d/mirrorlist 2>&1 ||
-    abort ERROR 'Unable to fetch package databases mirrors.'
-
-  local conf_file='/etc/xdg/reflector/reflector.conf'
-
-  sed -i \
-    -e "s/# --country.*/--country ${mirrors}/" \
-    -e 's/^--latest.*/--latest 40/' \
-    -e '$a--age 48' "${conf_file}" ||
-    abort ERROR 'Failed to save mirrors settings to reflector.'
-
-  log INFO "Package databases mirrors set to ${mirrors}."
-}
-
-# Configures pacman package manager.
-configure_pacman () {
-  log INFO 'Configuring the pacman manager...'
-
-  sed -i 's/^#ParallelDownloads/ParallelDownloads/' /etc/pacman.conf ||
-    abort ERROR 'Failed to set parallel download.'
-
-  log INFO 'Parallel download has been enabled.'
-
-  local keyserver='hkp://keyserver.ubuntu.com'
-
-  echo "keyserver ${keyserver}" >> /etc/pacman.d/gnupg/gpg.conf ||
-    abort ERROR 'Failed to add the GPG keyserver.'
-
-  log INFO "GPG keyserver has been set to ${keyserver}."
-  log INFO 'Pacman manager has been configured.'
-}
-
-# Synchronizes the package databases to the master.
-sync_package_databases () {
-  log INFO 'Starting to synchronize package databases...'
-
-  local lock_file='/var/lib/pacman/db.lck'
-
-  if file_exists "${lock_file}"; then
-    log WARN 'Package databases seem to be locked.'
-
-    rm -f "${lock_file}" ||
-      abort ERROR "Failed to remove the lock file ${lock_file}."
-
-    log INFO "Lock file ${lock_file} has been removed."
-  fi
-
-  pacman -Syy 2>&1 ||
-    abort ERROR 'Failed to synchronize package databases.'
-
-  log INFO 'Package databases synchronized to the master.'
-}
-
-# Installs the base packages of the system.
-install_base_packages () {
-  log INFO 'Installing the base packages...'
-
-  local pkgs=($(grep -E '(stp|all):pac' /stack/packages.x86_64 | cut -d ':' -f 3)) ||
-    abort ERROR 'Failed to read packages from packages.x86_64 file.'
-
-  pacman -S --needed --noconfirm ${pkgs[@]} 2>&1 ||
-    abort ERROR 'Failed to install base packages.'
-
-  log INFO 'Base packages have been installed.'
-}
-
-# Installs the Xorg display server packages.
-install_display_server () {
-  log INFO 'Installing the display server...'
+# Sets up the Xorg display server packages.
+setup_display_server () {
+  log INFO 'Setting up the display server...'
 
   local user_name=''
   user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
@@ -268,99 +361,12 @@ install_display_server () {
     abort ERROR 'Failed to set getty to start X11 session after login.'
 
   log INFO 'Getty has been set to start X11 session after login.'
-  log INFO 'Display server has been installed.'
+  log INFO 'Display server has been setup.'
 }
 
-# Installs hardware and system drivers.
-install_drivers () {
-  log INFO 'Installing system drivers...'
-
-  local cpu_pkgs=''
-
-  local cpu_vendor=''
-  cpu_vendor="$(jq -cer '.cpu_vendor' "${SETTINGS}")" ||
-    abort ERROR 'Failed to read the cpu_vendor setting.'
-
-  if equals "${cpu_vendor}" 'amd'; then
-    cpu_pkgs='amd-ucode'
-  elif equals "${cpu_vendor}" 'intel'; then
-    cpu_pkgs='intel-ucode'
-  fi
-
-  local gpu_pkgs=''
-
-  local gpu_vendor=''
-  gpu_vendor="$(jq -cer '.gpu_vendor' "${SETTINGS}")" ||
-    abort ERROR 'Failed to read the gpu_vendor setting.'
-
-  if equals "${gpu_vendor}" 'nvidia'; then
-    local kernel=''
-    kernel="$(jq -cer '.kernel' "${SETTINGS}")" ||
-      abort ERROR 'Unable to read kernel setting.'
-
-    if equals "${kernel}" 'stable'; then
-      gpu_pkgs='nvidia'
-    elif equals "${kernel}" 'lts'; then
-      gpu_pkgs='nvidia-lts'
-    fi
-
-    gpu_pkgs+=' nvidia-utils nvidia-settings'
-  elif equals "${gpu_vendor}" 'amd'; then
-    gpu_pkgs='xf86-video-amdgpu'
-  elif equals "${gpu_vendor}" 'intel'; then
-    gpu_pkgs='libva-intel-driver libvdpau-va-gl vulkan-intel libva-utils'
-  else
-    gpu_pkgs='xf86-video-qxl'
-  fi
-
-  pacman -S --needed --noconfirm ${cpu_pkgs} ${gpu_pkgs} 2>&1 ||
-    abort ERROR 'Failed to install system drivers.'
-
-  log INFO 'System drivers have been installed.'
-}
-
-# Installs the user repository package manager.
-install_aur_package_manager () {
-  log INFO 'Installing the AUR package manager...'
-
-  local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
-    abort ERROR 'Unable to read user_name setting.'
-
-  local yay_home="/home/${user_name}/yay"
-
-  git clone https://aur.archlinux.org/yay.git "${yay_home}" 2>&1 &&
-    chown -R ${user_name}:${user_name} "${yay_home}" &&
-    cd "${yay_home}" &&
-    sudo -u "${user_name}" makepkg -si --noconfirm 2>&1 &&
-    cd ~ &&
-    rm -rf "${yay_home}" ||
-    abort ERROR 'Failed to install the AUR package manager.'
-
-  log INFO 'AUR package manager has been installed.'
-}
-
-# Installs all the AUR packages the system depends on.
-install_aur_packages () {
-  log INFO 'Installing AUR packages...'
-
-  local pkgs=()
-  pkgs+=($(grep -E '(stp|all):aur' /stack/packages.x86_64 | cut -d ':' -f 3)) ||
-    abort ERROR 'Failed to read packages from packages.x86_64 file.'
-  
-  local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
-    abort ERROR 'Unable to read user_name setting.'
-
-  sudo -u "${user_name}" yay -S --needed --noconfirm --removemake ${pkgs[@]} 2>&1 ||
-    abort ERROR 'Failed to install AUR packages.'
-
-  locg INFO 'AUR packages have been installed.'
-}
-
-# Installs the screen locker.
-install_screen_locker () {
-  log INFO 'Installing the screen locker...'
+# Setup the screen locker.
+setup_screen_locker () {
+  log INFO 'Setting up the screen locker...'
 
   local user_name=''
   user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
@@ -391,11 +397,11 @@ install_screen_locker () {
     abort ERROR 'Failed to enable locker service.'
 
   log INFO 'Locker service has been enabled.'
-  log INFO 'Screen locker has been installed.'
+  log INFO 'Screen locker has been setup.'
 }
 
 # Sets the system locale along with the locale environment variables.
-set_locales () {
+setup_locales () {
   local locales=''
   locales="$(jq -cer '.locales' "${SETTINGS}")" ||
     abort ERROR 'Unable to read locales setting.'
@@ -469,7 +475,7 @@ set_locales () {
 }
 
 # Sets keyboard related settings.
-set_keyboard () {
+setup_keyboard () {
   log INFO 'Applying keyboard settings...'
 
   local keyboard_map=''
@@ -551,7 +557,7 @@ set_keyboard () {
 }
 
 # Sets the system timezone.
-set_system_timezone () {
+setup_system_timezone () {
   log INFO 'Setting the system timezone...'
 
   local timezone=''
@@ -574,134 +580,6 @@ set_system_timezone () {
     abort ERROR 'Failed to sync hardware to system clock.'
 
   log INFO 'Hardware clock has been synchronized to system clock.'
-}
-
-# Boost system performance on various tasks.
-boost_performance () {
-  log INFO 'Boosting system performance...'
-
-  local cores=''
-  cores="$(
-    grep -c '^processor' /proc/cpuinfo 2>&1
-  )" || abort ERROR 'Failed to read cpu data.'
-
-  if is_not_integer "${cores}" '[1,]'; then
-    abort ERROR 'Unable to resolve CPU cores.'
-  fi
-
-  local conf_file='/etc/makepkg.conf'
-
-  sed -i \
-  -e "s/#MAKEFLAGS=\"-j2\"/MAKEFLAGS=\"-j${cores}\"/g" \
-  -e "s/COMPRESSXZ=(xz -c -z -)/COMPRESSXZ=(xz -c -z --threads=${cores} -)/g" \
-  -e "s/COMPRESSZST=(zstd -c -z -q -)/COMPRESSZST=(zstd -c -z -q --threads=${cores} -)/g" "${conf_file}" ||
-    abort ERROR 'Failed to set make options.'
-
-  log INFO "Make flags set to ${cores} CPU cores."
-  log INFO 'Compression threads have been set.'
-
-  log INFO 'Increasing the limit of inotify watches...'
-
-  local limit=524288
-  echo "fs.inotify.max_user_watches=${limit}" >> /etc/sysctl.conf ||
-    abort ERROR 'Failed to set the max limit of inotify watches.'
-
-  sysctl --system 2>&1 ||
-    abort ERROR 'Failed to update the max limit to inotify watches.'
-
-  log INFO "Inotify watches limit has been set to ${limit}."
-  log INFO 'Boosting has been completed.'
-}
-
-# Applies various system security settings.
-configure_security () {
-  log INFO 'Hardening system security...'
-
-  local badpass_msg='Sorry incorrect password!'
-  local timeout=0
-  local tries=2
-  local prompt='Enter current password: '
-
-  sed -i \
-    -e "/maxseq/a Defaults badpass_message=\"${badpass_msg}\"" \
-    -e "/maxseq/a Defaults passwd_timeout=${timeout}" \
-    -e "/maxseq/a Defaults passwd_tries=${tries}" \
-    -e "/maxseq/a Defaults passprompt=\"${prompt}\"" /etc/sudoers ||
-    abort ERROR 'Failed to set sudo password settings.'
-  
-  log INFO 'Bad password message has been set.'
-  log INFO "Password timeout interval set to ${timeout}."  
-  log INFO "Password failed tries set to ${tries}."
-  log INFO 'Password prompt has been set.'
-
-  local deny=3
-  local fail_interval=180
-  local unlock_time=120
-
-  sed -ri \
-    -e 's;# dir =.*;dir = /var/lib/faillock;' \
-    -e "s;# deny =.*;deny = ${deny};" \
-    -e "s;# fail_interval =.*;fail_interval = ${fail_interval};" \
-    -e "s;# unlock_time =.*;unlock_time = ${unlock_time};" /etc/security/faillock.conf ||
-    abort ERROR 'Failed to apply faillock settings.'
-  
-  log INFO 'Faillock file path set to /var/lib/faillock.'
-  log INFO "Deny has been set to ${deny}."
-  log INFO "Fail interval time set to ${fail_interval} secs."
-  log INFO "Unlock time set to ${unlock_time} secs."
-
-  sed -i 's/#PermitRootLogin .*/PermitRootLogin no/' /etc/ssh/sshd_config ||
-    abort ERROR 'Failed to disable permit root login.'
-
-  log INFO 'SSH login permission disabled for the root user.'
-  log INFO 'Setting up a simple stateful firewall...'
-
-  nft flush ruleset 2>&1 &&
-    nft add table inet my_table 2>&1 &&
-    nft add chain inet my_table my_input '{ type filter hook input priority 0 ; policy drop ; }' 2>&1 &&
-    nft add chain inet my_table my_forward '{ type filter hook forward priority 0 ; policy drop ; }' 2>&1 &&
-    nft add chain inet my_table my_output '{ type filter hook output priority 0 ; policy accept ; }' 2>&1 &&
-    nft add chain inet my_table my_tcp_chain 2>&1 &&
-    nft add chain inet my_table my_udp_chain 2>&1 &&
-    nft add rule inet my_table my_input ct state related,established accept 2>&1 &&
-    nft add rule inet my_table my_input iif lo accept 2>&1 &&
-    nft add rule inet my_table my_input ct state invalid drop 2>&1 &&
-    nft add rule inet my_table my_input meta l4proto ipv6-icmp accept 2>&1 &&
-    nft add rule inet my_table my_input meta l4proto icmp accept 2>&1 &&
-    nft add rule inet my_table my_input ip protocol igmp accept 2>&1 &&
-    nft add rule inet my_table my_input meta l4proto udp ct state new jump my_udp_chain 2>&1 &&
-    nft add rule inet my_table my_input 'meta l4proto tcp tcp flags & (fin|syn|rst|ack) == syn ct state new jump my_tcp_chain' 2>&1 &&
-    nft add rule inet my_table my_input meta l4proto udp reject 2>&1 &&
-    nft add rule inet my_table my_input meta l4proto tcp reject with tcp reset 2>&1 &&
-    nft add rule inet my_table my_input counter reject with icmpx port-unreachable 2>&1 ||
-    abort ERROR 'Failed to add NFT table rules.'
-
-  mv /etc/nftables.conf /etc/nftables.conf.bak &&
-    nft -s list ruleset > /etc/nftables.conf 2>&1 ||
-    abort ERROR 'Failed to flush NFT tables rules.'
-
-  log INFO 'Firewall ruleset has been flushed to /etc/nftables.conf.'
-
-  # Save screen locker settings to the user config
-  local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
-    abort ERROR 'Unable to read user_name setting.'
-
-  local config_home="/home/${user_name}/.config/stack"
-
-  mkdir -p "${config_home}" ||
-    abort ERROR "Failed to create folder ${config_home}."
-
-  local settings='{"screen_locker": {"interval": 12}}'
-
-  local settings_file="${config_home}/security.json"
-
-  echo "${settings}" > "${settings_file}" &&
-    chown -R ${user_name}:${user_name} "${config_home}" ||
-    abort ERROR 'Failed to set screen locker interval.'
-  
-  log INFO 'Screen locker inteval set to 12 mins.'
-  log INFO 'Security configuration has been completed.'
 }
 
 # Installs and configures the boot loader.
@@ -976,6 +854,134 @@ setup_shell_environment () {
   log INFO 'Shell environment has been setup.'
 }
 
+# Boost system performance on various tasks.
+boost_performance () {
+  log INFO 'Boosting system performance...'
+
+  local cores=''
+  cores="$(
+    grep -c '^processor' /proc/cpuinfo 2>&1
+  )" || abort ERROR 'Failed to read cpu data.'
+
+  if is_not_integer "${cores}" '[1,]'; then
+    abort ERROR 'Unable to resolve CPU cores.'
+  fi
+
+  local conf_file='/etc/makepkg.conf'
+
+  sed -i \
+  -e "s/#MAKEFLAGS=\"-j2\"/MAKEFLAGS=\"-j${cores}\"/g" \
+  -e "s/COMPRESSXZ=(xz -c -z -)/COMPRESSXZ=(xz -c -z --threads=${cores} -)/g" \
+  -e "s/COMPRESSZST=(zstd -c -z -q -)/COMPRESSZST=(zstd -c -z -q --threads=${cores} -)/g" "${conf_file}" ||
+    abort ERROR 'Failed to set make options.'
+
+  log INFO "Make flags set to ${cores} CPU cores."
+  log INFO 'Compression threads have been set.'
+
+  log INFO 'Increasing the limit of inotify watches...'
+
+  local limit=524288
+  echo "fs.inotify.max_user_watches=${limit}" >> /etc/sysctl.conf ||
+    abort ERROR 'Failed to set the max limit of inotify watches.'
+
+  sysctl --system 2>&1 ||
+    abort ERROR 'Failed to update the max limit to inotify watches.'
+
+  log INFO "Inotify watches limit has been set to ${limit}."
+  log INFO 'Boosting has been completed.'
+}
+
+# Applies various system security settings.
+configure_security () {
+  log INFO 'Hardening system security...'
+
+  local badpass_msg='Sorry incorrect password!'
+  local timeout=0
+  local tries=2
+  local prompt='Enter current password: '
+
+  sed -i \
+    -e "/maxseq/a Defaults badpass_message=\"${badpass_msg}\"" \
+    -e "/maxseq/a Defaults passwd_timeout=${timeout}" \
+    -e "/maxseq/a Defaults passwd_tries=${tries}" \
+    -e "/maxseq/a Defaults passprompt=\"${prompt}\"" /etc/sudoers ||
+    abort ERROR 'Failed to set sudo password settings.'
+  
+  log INFO 'Bad password message has been set.'
+  log INFO "Password timeout interval set to ${timeout}."  
+  log INFO "Password failed tries set to ${tries}."
+  log INFO 'Password prompt has been set.'
+
+  local deny=3
+  local fail_interval=180
+  local unlock_time=120
+
+  sed -ri \
+    -e 's;# dir =.*;dir = /var/lib/faillock;' \
+    -e "s;# deny =.*;deny = ${deny};" \
+    -e "s;# fail_interval =.*;fail_interval = ${fail_interval};" \
+    -e "s;# unlock_time =.*;unlock_time = ${unlock_time};" /etc/security/faillock.conf ||
+    abort ERROR 'Failed to apply faillock settings.'
+  
+  log INFO 'Faillock file path set to /var/lib/faillock.'
+  log INFO "Deny has been set to ${deny}."
+  log INFO "Fail interval time set to ${fail_interval} secs."
+  log INFO "Unlock time set to ${unlock_time} secs."
+
+  sed -i 's/#PermitRootLogin .*/PermitRootLogin no/' /etc/ssh/sshd_config ||
+    abort ERROR 'Failed to disable permit root login.'
+
+  log INFO 'SSH login permission disabled for the root user.'
+  log INFO 'Setting up a simple stateful firewall...'
+
+  nft flush ruleset 2>&1 &&
+    nft add table inet my_table 2>&1 &&
+    nft add chain inet my_table my_input '{ type filter hook input priority 0 ; policy drop ; }' 2>&1 &&
+    nft add chain inet my_table my_forward '{ type filter hook forward priority 0 ; policy drop ; }' 2>&1 &&
+    nft add chain inet my_table my_output '{ type filter hook output priority 0 ; policy accept ; }' 2>&1 &&
+    nft add chain inet my_table my_tcp_chain 2>&1 &&
+    nft add chain inet my_table my_udp_chain 2>&1 &&
+    nft add rule inet my_table my_input ct state related,established accept 2>&1 &&
+    nft add rule inet my_table my_input iif lo accept 2>&1 &&
+    nft add rule inet my_table my_input ct state invalid drop 2>&1 &&
+    nft add rule inet my_table my_input meta l4proto ipv6-icmp accept 2>&1 &&
+    nft add rule inet my_table my_input meta l4proto icmp accept 2>&1 &&
+    nft add rule inet my_table my_input ip protocol igmp accept 2>&1 &&
+    nft add rule inet my_table my_input meta l4proto udp ct state new jump my_udp_chain 2>&1 &&
+    nft add rule inet my_table my_input 'meta l4proto tcp tcp flags & (fin|syn|rst|ack) == syn ct state new jump my_tcp_chain' 2>&1 &&
+    nft add rule inet my_table my_input meta l4proto udp reject 2>&1 &&
+    nft add rule inet my_table my_input meta l4proto tcp reject with tcp reset 2>&1 &&
+    nft add rule inet my_table my_input counter reject with icmpx port-unreachable 2>&1 ||
+    abort ERROR 'Failed to add NFT table rules.'
+
+  mv /etc/nftables.conf /etc/nftables.conf.bak &&
+    nft -s list ruleset > /etc/nftables.conf 2>&1 ||
+    abort ERROR 'Failed to flush NFT tables rules.'
+
+  log INFO 'Firewall ruleset has been flushed to /etc/nftables.conf.'
+
+  # Save screen locker settings to the user config
+  local user_name=''
+  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
+    abort ERROR 'Unable to read user_name setting.'
+
+  local config_home="/home/${user_name}/.config/stack"
+
+  mkdir -p "${config_home}" ||
+    abort ERROR "Failed to create folder ${config_home}."
+
+  local settings='{"screen_locker": {"interval": 12}}'
+
+  local settings_file="${config_home}/security.json"
+
+  echo "${settings}" > "${settings_file}" &&
+    chown -R ${user_name}:${user_name} "${config_home}" ||
+    abort ERROR 'Failed to set screen locker interval.'
+  
+  log INFO 'Screen locker inteval set to 12 mins.'
+  log INFO 'Security configuration has been completed.'
+}
+
 # Restores the user home permissions.
 restore_user_permissions () {
   local user_name=''
@@ -1109,32 +1115,33 @@ if not_equals "$(id -u)" 0; then
   abort ERROR 'Script system.sh must be run as root user.'
 fi
 
-sync_root_files &&
-  sync_commons &&
-  sync_tools &&
-  fix_release_data &&
-  set_host &&
-  set_users &&
+set_host_name &&
+  set_root_user &&
+  set_sudoer_user &&
   set_mirrors &&
   configure_pacman &&
   sync_package_databases &&
-  install_base_packages &&
-  install_display_server &&
   install_drivers &&
+  install_base_packages &&
   install_aur_package_manager &&
   install_aur_packages &&
-  install_screen_locker &&
-  set_locales &&
-  set_keyboard &&
-  set_system_timezone &&
-  boost_performance &&
-  configure_security &&
+  sync_root_files &&
+  sync_commons &&
+  sync_tools &&
+  fix_release_data &&
+  setup_display_server &&
+  setup_screen_locker &&
+  setup_locales &&
+  setup_keyboard &&
+  setup_system_timezone &&
   setup_boot_loader &&
   setup_login_screen &&
   setup_file_manager &&
   setup_theme &&
   setup_fonts &&
   setup_shell_environment &&
+  boost_performance &&
+  configure_security &&
   restore_user_permissions &&
   enable_services &&
   create_hash_file
