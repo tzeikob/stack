@@ -6,6 +6,43 @@ source src/commons/error.sh
 source src/commons/logger.sh
 source src/commons/validators.sh
 
+# Syncs the package databases.
+sync_package_databases () {
+  log INFO 'Syncing the package databases...'
+
+  sudo pacman -Syy 2>&1 ||
+    abort ERROR 'Failed to synchronize package databases.'
+  
+  log INFO 'Package databases have been synced.'
+}
+
+# Installs new official package dependencies.
+install_official_packages () {
+  log INFO 'Installing new official packages...'
+
+  local pkgs=($(grep -E '(stp|all):pac' packages.x86_64 | cut -d ':' -f 3)) ||
+    abort ERROR 'Failed to read packages from packages.x86_64 file.'
+
+  sudo pacman -S --needed --noconfirm ${pkgs[@]} 2>&1 ||
+    abort ERROR 'Failed to install new official packages.'
+
+  log INFO 'New official packages have been installed.'
+}
+
+# Installs new AUR package dependencies.
+install_aur_packages () {
+  log INFO 'Installing new AUR packages...'
+
+  local pkgs=()
+  pkgs+=($(grep -E '(stp|all):aur' packages.x86_64 | cut -d ':' -f 3)) ||
+    abort ERROR 'Failed to read packages from packages.x86_64 file.'
+
+  yay -S --needed --noconfirm --removemake ${pkgs[@]} 2>&1 ||
+    abort ERROR 'Failed to install new AUR packages.'
+  
+  log INFO 'New AUR packages have been installed.'
+}
+
 # Fixes global configuration variables.
 fix_config_values () {
   local version=''
@@ -41,29 +78,6 @@ fix_config_values () {
     abort ERROR 'Failed to set the home in fix layout service.'
   
   log INFO "Fix layout service home set to /home/${USER}."
-}
-
-# Updates existing packages and installs new dependencies.
-update_packages () {
-  log INFO 'Fixing and installing packages...'
-
-  sudo pacman -Syy 2>&1 ||
-    abort ERROR 'Failed to synchronize package databases.'
-
-  local pkgs=($(grep -E '(stp|all):pac' packages.x86_64 | cut -d ':' -f 3)) ||
-    abort ERROR 'Failed to read packages from packages.x86_64 file.'
-
-  sudo pacman -S --needed --noconfirm ${pkgs[@]} 2>&1 ||
-    abort ERROR 'Failed to install the packages.'
-
-  local pkgs=()
-  pkgs+=($(grep -E '(stp|all):aur' packages.x86_64 | cut -d ':' -f 3)) ||
-    abort ERROR 'Failed to read packages from packages.x86_64 file.'
-
-  yay -S --needed --noconfirm --removemake ${pkgs[@]} 2>&1 ||
-    abort ERROR 'Failed to install AUR packages.'
-
-  log INFO 'All packages have been updated.'
 }
 
 # Updates the root file system.
@@ -191,8 +205,10 @@ fi
 
 log INFO 'Starting the upgrade process...'
 
-fix_config_values &&
-  update_packages &&
+sync_package_databases &&
+  install_official_packages &&
+  install_aur_packages &&
+  fix_config_values &&
   update_root_files &&
   update_commons &&
   update_tools &&
