@@ -27,8 +27,9 @@ init () {
   log INFO 'A clean .dist folder has been created.'
 }
 
-# Checks if any build dependency is missing and abort immediately.
-check_deps () {
+# Checks if any build dependencies are missing and
+# abort immediately.
+check_build_deps () {
   local deps=(archiso rsync)
 
   local dep=''
@@ -40,7 +41,7 @@ check_deps () {
 }
 
 # Copies the archiso custom profile.
-copy_profile () {
+copy_iso_profile () {
   log INFO 'Copying the releng archiso profile...'
 
   local releng_path='/usr/share/archiso/configs/releng'
@@ -55,7 +56,94 @@ copy_profile () {
   log INFO "The releng profile copied to ${PROFILE_DIR}."
 }
 
-# Syncs airoot files to new system.
+# Adds and removes all the official packages the live media
+# depends on, by declaring them into the packages.x86_64 file.
+declare_official_packages () {
+  log INFO 'Adding official packages in packages.x86_64 file...'
+
+  # Collect all the official packages the live media needs
+  local pkgs=($(grep -E '(bld|all):pac' packages.x86_64 | cut -d ':' -f 3)) ||
+    abort ERROR 'Failed to read packages from packages.x86_64 file.'
+
+  local pkgs_file="${PROFILE_DIR}/packages.x86_64"
+
+  local pkg=''
+  for pkg in "${pkgs[@]}"; do
+    if ! grep -Eq "^${pkg}$" "${pkgs_file}"; then
+      echo "${pkg}" >> "${pkgs_file}"
+    else
+      log WARN "Package ${pkg} already added."
+    fi
+  done
+
+  # Remove conflicting nox server virtualbox utils
+  sed -Ei "/^virtualbox-guest-utils-nox$/d" "${pkgs_file}" &&
+    log INFO 'Package virtualbox-guest-utils-nox removed.' ||
+    abort ERROR 'Unable to remove virtualbox-guest-utils-nox package.'
+
+  log INFO 'Official packages set in packages.x86_64 file.'
+}
+
+# Builds and adds all the AUR packages the live media depends
+# on, into the packages file via local custom repositories.
+build_aur_packages () {
+  log INFO 'Building the AUR packages...'
+
+  local previous_dir=${PWD}
+
+  local repo_home="${PROFILE_DIR}/local/repo"
+
+  mkdir -p "${repo_home}" ||
+    abort ERROR 'Failed to create the local repo folder.'
+
+  # Collect all the AUR packages the live media needs
+  local names=(yay)
+  names+=($(grep -E '(bld|all):aur' packages.x86_64 | cut -d ':' -f 3)) ||
+    abort ERROR 'Failed to read packages from packages.x86_64 file.'
+
+  local name=''
+  for name in "${names[@]}"; do
+    # Build the next AUR package
+    git clone "https://aur.archlinux.org/${name}.git" "${AUR_DIR}/${name}" ||
+      abort ERROR "Failed to clone the AUR ${name} package repo."
+  
+    cd "${AUR_DIR}/${name}"
+    makepkg || abort ERROR "Failed to build the AUR ${name} package."
+    cd ${previous_dir}
+
+    # Create the custom local repo database
+    cp ${AUR_DIR}/${name}/${name}-*-x86_64.pkg.tar.zst "${repo_home}" &&
+      repo-add "${repo_home}/custom.db.tar.gz" ${repo_home}/${name}-*-x86_64.pkg.tar.zst ||
+      abort ERROR "Failed to add the ${name} package into the custom repository."
+
+    local pkgs_file="${PROFILE_DIR}/packages.x86_64"
+
+    if ! grep -Eq "^${name}$" "${pkgs_file}"; then
+      echo "${name}" >> "${pkgs_file}"
+    else
+      log WARN "Package ${name} already added."
+    fi
+
+    log INFO "Package ${name} has been built."
+  done
+
+  rm -rf "${AUR_DIR}" ||
+    abort ERROR 'Failed to remove the AUR temporary folder.'
+
+  local pacman_conf="${PROFILE_DIR}/pacman.conf"
+
+  printf '%s\n' \
+    '' \
+    '[custom]' \
+    'SigLevel = Optional TrustAll' \
+    "Server = file://$(realpath "${repo_home}")" >> "${pacman_conf}" &&
+    log INFO 'Custom local repo added to pacman.' ||
+    abort ERROR 'Failed to define the custom local repo.'
+
+  log INFO 'AUR packages set in packages.x86_64 file.'
+}
+
+# Syncs the root files to new system.
 sync_root_files () {
   log INFO 'Syncing the root file system...'
 
@@ -79,10 +167,10 @@ sync_commons () {
   rsync -av src/commons/ "${ROOT_FS}/opt/stack/commons" ||
     abort ERROR 'Failed to sync the commons files.'
   
-  sed -i 's;source src;source /opt/stack;' ${ROOT_FS}/opt/stack/commons/* ||
+  sed -i 's;source src;source /opt/stack;' ${ROOT_FS}/opt/stack/commons/* &&
+    log INFO 'Source paths fixed to /opt/stack.' ||
     abort ERROR 'Failed to fix source paths to /opt/stack.'
   
-  log INFO 'Source paths fixed to /opt/stack.'
   log INFO 'Commons files have been synced.'
 }
 
@@ -129,10 +217,10 @@ sync_tools () {
   # Disable init scratchpad command for the live media
   local desktop_main="${ROOT_FS}/opt/stack/tools/desktop/main.sh"
 
-  sed -i "/.*scratchpad.*/d" "${desktop_main}" ||
+  sed -i "/.*scratchpad.*/d" "${desktop_main}" &&
+    log INFO 'Scratchpad has been removed from desktop tool.' ||
     abort ERROR 'Failed to remove scratchpad from desktop tool.'
 
-  log INFO 'Scratchpad has been removed from desktop tool.'
   log INFO 'Tools files have been synced.'
 }
 
@@ -257,92 +345,6 @@ fix_boot_loaders () {
     abort ERROR 'Failed to disable the serial console in grub.'
 
   log INFO 'Grub boot loader serial console disabled.'
-}
-
-# Define package dependencies into the list of packages.
-define_packages () {
-  log INFO 'Adding system and desktop packages...'
-
-  # Collect all the official packages the live media needs
-  local pkgs=($(grep -E '(bld|all):pac' packages.x86_64 | cut -d ':' -f 3)) ||
-    abort ERROR 'Failed to read packages from packages.x86_64 file.'
-
-  local pkgs_file="${PROFILE_DIR}/packages.x86_64"
-
-  local pkg=''
-  for pkg in "${pkgs[@]}"; do
-    if ! grep -Eq "^${pkg}$" "${pkgs_file}"; then
-      echo "${pkg}" >> "${pkgs_file}"
-    else
-      log WARN "Package ${pkg} already added."
-    fi
-  done
-
-  # Remove conflicting nox server virtualbox utils
-  sed -Ei "/^virtualbox-guest-utils-nox$/d" "${pkgs_file}" ||
-    abort ERROR 'Unable to remove virtualbox-guest-utils-nox package.'
-
-  log INFO 'Package virtualbox-guest-utils-nox removed.'
-  log INFO 'Packages defined in the package list.'
-}
-
-# Builds and adds the AUR packages into the packages list
-# via a local custom repo.
-build_aur_packages () {
-  log INFO 'Building the AUR package files...'
-
-  local previous_dir=${PWD}
-
-  local repo_home="${PROFILE_DIR}/local/repo"
-
-  mkdir -p "${repo_home}" ||
-    abort ERROR 'Failed to create the local repo folder.'
-
-  # Collect all the AUR packages the live media needs
-  local names=(yay)
-  names+=($(grep -E '(bld|all):aur' packages.x86_64 | cut -d ':' -f 3)) ||
-    abort ERROR 'Failed to read packages from packages.x86_64 file.'
-
-  local name=''
-  for name in "${names[@]}"; do
-    # Build the next AUR package
-    git clone "https://aur.archlinux.org/${name}.git" "${AUR_DIR}/${name}" ||
-      abort ERROR "Failed to clone the AUR ${name} package repo."
-  
-    cd "${AUR_DIR}/${name}"
-    makepkg || abort ERROR "Failed to build the AUR ${name} package."
-    cd ${previous_dir}
-
-    # Create the custom local repo database
-    cp ${AUR_DIR}/${name}/${name}-*-x86_64.pkg.tar.zst "${repo_home}" &&
-      repo-add "${repo_home}/custom.db.tar.gz" ${repo_home}/${name}-*-x86_64.pkg.tar.zst ||
-      abort ERROR "Failed to add the ${name} package into the custom repository."
-
-    local pkgs_file="${PROFILE_DIR}/packages.x86_64"
-
-    if ! grep -Eq "^${name}$" "${pkgs_file}"; then
-      echo "${name}" >> "${pkgs_file}"
-    else
-      log WARN "Package ${name} already added."
-    fi
-
-    log INFO "Package ${name} has been built."
-  done
-
-  rm -rf "${AUR_DIR}" ||
-    abort ERROR 'Failed to remove the AUR temporary folder.'
-
-  local pacman_conf="${PROFILE_DIR}/pacman.conf"
-
-  printf '%s\n' \
-    '' \
-    '[custom]' \
-    'SigLevel = Optional TrustAll' \
-    "Server = file://$(realpath "${repo_home}")" >> "${pacman_conf}" ||
-    abort ERROR 'Failed to define the custom local repo.'
-
-  log INFO 'Custom local repo added to pacman.'
-  log INFO 'AUR packages added in the package list.'
 }
 
 # Sets to skip login prompt and auto login the root user.
@@ -825,15 +827,15 @@ fi
 log INFO 'Starting the build process...'
 
 init &&
-  check_deps &&
-  copy_profile &&
+  check_build_deps &&
+  copy_iso_profile &&
+  declare_official_packages &&
+  build_aur_packages &&
   sync_root_files &&
   sync_commons &&
   sync_tools &&
   rename_distro &&
   fix_boot_loaders &&
-  define_packages &&
-  build_aur_packages &&
   setup_auto_login &&
   setup_display_server &&
   setup_shell_environment &&
