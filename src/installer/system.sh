@@ -256,18 +256,18 @@ install_aur_packages () {
 sync_root_files () {
   log INFO 'Syncing the root file system...'
 
-  rsync -av /stack/airootfs/ / ||
-    abort ERROR 'Failed to sync the root file system.'
-  
   local user_name=''
   user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
     abort ERROR 'Unable to read user_name setting.'
   
   # Rename user home to align with the new system
   if not_equals "${user_name}" 'user'; then
-    mv /home/user "/home/${user_name}" ||
+    mv /stack/airootfs/home/user "/stack/airootfs/home/${user_name}" ||
       abort ERROR "Failed to rename home folder for ${user_name}."
   fi
+
+  rsync -av /stack/airootfs/ / ||
+    abort ERROR 'Failed to sync the root file system.'
   
   log INFO 'Root file system has been synced.'
 }
