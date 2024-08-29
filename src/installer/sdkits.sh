@@ -132,11 +132,11 @@ install_docker () {
   log INFO 'Docker egine has been installed.'
 }
 
-log INFO 'Script stack.sh started.'
-log INFO 'Installing the developemnt stack...'
+log INFO 'Script sdkits.sh started.'
+log INFO 'Installing the software development kits...'
 
 if equals "$(id -u)" 0; then
-  abort ERROR 'Script stack.sh must be run as non root user.'
+  abort ERROR 'Script sdkits.sh must be run as non root user.'
 fi
 
 install_node &&
@@ -146,6 +146,6 @@ install_node &&
   install_rust &&
   install_docker
 
-log INFO 'Script stack.sh has finished.'
+log INFO 'Script sdkits.sh has finished.'
 
-resolve stack 270 && sleep 2
+resolve sdkits 270 && sleep 2

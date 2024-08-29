@@ -101,8 +101,8 @@ install () {
 
   local user_name='root'
 
-  # Impersonate the sudoer user on stack and apps installation
-  if match "${file_name}" '^(stack|apps)$'; then
+  # Impersonate the sudoer user on sdkits and apps installation
+  if match "${file_name}" '^(sdkits|apps)$'; then
     user_name="$(jq -cer '.user_name' "${SETTINGS}")"
 
     if has_failed; then
@@ -119,9 +119,9 @@ install () {
       total=2060
       desc='System'
       ;;
-    'stack')
+    'sdkits')
       total=270
-      desc='Stack'
+      desc='SDKs'
       ;;
     'apps')
       total=1900
@@ -153,7 +153,7 @@ restart () {
     /mnt/var/log/stack/diskpart.log \
     /mnt/var/log/stack/bootstrap.log \
     /mnt/var/log/stack/system.log \
-    /mnt/var/log/stack/stack.log \
+    /mnt/var/log/stack/sdkits.log \
     /mnt/var/log/stack/apps.log \
     /mnt/var/log/stack/cleaner.log >> /mnt/var/log/stack/all.log
 
@@ -202,7 +202,7 @@ init &&
   run diskpart &&
   run bootstrap &&
   install system &&
-  install stack &&
+  install sdkits &&
   install apps &&
   run cleaner &&
   restart
