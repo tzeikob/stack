@@ -1,8 +1,5 @@
 #!/bin/bash
 
-source src/commons/error.sh
-source src/commons/logger.sh
-source src/commons/math.sh
 source src/commons/validators.sh
 
 # Checks if any processes matching the given command
@@ -88,36 +85,4 @@ not_on_quiet_mode () {
 # An alias version of not_on_quiet_mode.
 on_loud_mode () {
   not_on_quiet_mode && return 0 || return 1
-}
-
-# Prints dummy log lines to fake tqdm progress bars to report long running
-# tasks, where a task is expected to print a certain amount of log lines and
-# if the task print less than the expected amount it resolves with fake lines.
-# Arguments:
-#  task_name: the name of the task
-#  total_ops: the total max number of log lines the task is expected to print
-# Outputs:
-#  Fake dummy log lines.
-resolve () {
-  local task_name="${1}"
-  local total_ops="${2}"
-
-  # Read the current progress as the number of log lines
-  local lines=0
-  lines=$(cat "/var/log/stack/${task_name}.log" | wc -l) ||
-    abort ERROR "Unable to read the current ${task_name} log lines."
-
-  # Fill the log file with fake lines to trick tqdm bar on completion
-  if [[ ${lines} -lt ${total_ops} ]]; then
-    local lines_to_append=0
-    lines_to_append=$(calc "${total_ops} - ${lines}")
-
-    while [[ ${lines_to_append} -gt 0 ]]; do
-      log '~'
-      sleep 0.15
-      lines_to_append=$(calc "${lines_to_append} - 1")
-    done
-  fi
-
-  return 0
 }

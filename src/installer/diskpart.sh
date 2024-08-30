@@ -2,11 +2,11 @@
 
 set -Eeo pipefail
 
-source src/commons/process.sh
 source src/commons/error.sh
 source src/commons/logger.sh
 source src/commons/math.sh
 source src/commons/validators.sh
+source src/commons/math.sh
 
 SETTINGS=./settings.json
 
@@ -392,6 +392,25 @@ report () {
     awk '{print " "$0}' || abort ERROR 'Unable to list disk info.'
 }
 
+# Prints dummy log lines to fake tqdm progress bar, when a
+# task gives less lines than it is expected to print and so
+# it resolves with fake lines to emulate completion.
+# Arguments:
+#  total: the log lines the task is expected to print
+# Outputs:
+#  Fake dummy log lines.
+resolve () {
+  local total="${1}"
+
+  local lines=0
+  lines=$(cat /var/log/stack/diskpart.log | wc -l)
+
+  local fake_lines=0
+  fake_lines=$(calc "${total} - ${lines}")
+
+  seq ${fake_lines} | xargs -I -- log '~'
+}
+
 log INFO 'Script diskpart.sh started.'
 log INFO 'Starting the disk partitioning...'
 
@@ -405,4 +424,4 @@ wipe_disk &&
 
 log INFO 'Script diskpart.sh has finished.'
 
-resolve diskpart 90 && sleep 2
+resolve 90 && sleep 2

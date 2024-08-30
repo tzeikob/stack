@@ -2,9 +2,9 @@
 
 set -Eeo pipefail
 
-source src/commons/process.sh
 source src/commons/error.sh
 source src/commons/logger.sh
+source src/commons/math.sh
 
 # Deletes any remnants installation files from the new system.
 remove_installation_files () {
@@ -38,6 +38,25 @@ revoke_permissions () {
   log INFO 'Permission nopasswd revoked from wheel group.'
 }
 
+# Prints dummy log lines to fake tqdm progress bar, when a
+# task gives less lines than it is expected to print and so
+# it resolves with fake lines to emulate completion.
+# Arguments:
+#  total: the log lines the task is expected to print
+# Outputs:
+#  Fake dummy log lines.
+resolve () {
+  local total="${1}"
+
+  local lines=0
+  lines=$(cat /var/log/stack/cleaner.log | wc -l)
+
+  local fake_lines=0
+  fake_lines=$(calc "${total} - ${lines}")
+
+  seq ${fake_lines} | xargs -I -- log '~'
+}
+
 log INFO 'Script cleaner.sh started.'
 log INFO 'Cleaning up the new system...'
 
@@ -46,4 +65,4 @@ remove_installation_files &&
 
 log INFO 'Script cleaner.sh has finished.'
 
-resolve cleaner 12 && sleep 2
+resolve 12 && sleep 2

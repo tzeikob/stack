@@ -2,10 +2,10 @@
 
 set -Eeo pipefail
 
-source src/commons/process.sh
 source src/commons/error.sh
 source src/commons/logger.sh
 source src/commons/validators.sh
+source src/commons/math.sh
 
 SETTINGS=/stack/settings.json
 
@@ -132,6 +132,25 @@ install_docker () {
   log INFO 'Docker egine has been installed.'
 }
 
+# Prints dummy log lines to fake tqdm progress bar, when a
+# task gives less lines than it is expected to print and so
+# it resolves with fake lines to emulate completion.
+# Arguments:
+#  total: the log lines the task is expected to print
+# Outputs:
+#  Fake dummy log lines.
+resolve () {
+  local total="${1}"
+
+  local lines=0
+  lines=$(cat /var/log/stack/sdkits.log | wc -l)
+
+  local fake_lines=0
+  fake_lines=$(calc "${total} - ${lines}")
+
+  seq ${fake_lines} | xargs -I -- log '~'
+}
+
 log INFO 'Script sdkits.sh started.'
 log INFO 'Installing the software development kits...'
 
@@ -148,4 +167,4 @@ install_node &&
 
 log INFO 'Script sdkits.sh has finished.'
 
-resolve sdkits 270 && sleep 2
+resolve 270 && sleep 2

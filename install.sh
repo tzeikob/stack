@@ -55,33 +55,21 @@ run () {
     return 0
   fi
 
-  local total=0
-  local desc=''
-
-  case "${file_name}" in
-    'detection')
-      total=15
-      desc='Detection'
-      ;;
-    'diskpart')
-      total=90
-      desc='Partition'
-      ;;
-    'bootstrap')
-      total=660
-      desc='Bootstrap'
-      ;;
-    'cleaner')
-      total=12
-      desc='Cleanup'
-      ;;
-  esac
-  
   local log_file="/var/log/stack/${file_name}.log"
 
-  bash src/installer/${file_name}.sh 2>&1 |
+  local script_file="src/installer/${file_name}.sh"
+
+  local total=0
+  total=$(grep 'resolve [0-9].*' "${script_file}" | cut -d ' ' -f 2)
+
+  if has_failed; then
+    log ERROR "Unable to read the expected output of ${file_name}.sh." >> "${log_file}"
+    abort 'A fatal error has been occurred.'
+  fi
+
+  bash "${script_file}" 2>&1 |
     tee -a "${log_file}" 2>&1 |
-    tqdm --desc "${desc^}:" --ncols 50 \
+    tqdm --desc "${file_name^}:" --ncols 50 \
       --bar-format "${BAR_FORMAT}" --total ${total} >> "${log_file}.tqdm"
 
   if has_failed; then
@@ -101,7 +89,7 @@ install () {
 
   local user_name='root'
 
-  # Impersonate the sudoer user on sdkits and apps installation
+  # Execute user related tasks as sudoer user
   if match "${file_name}" '^(sdkits|apps)$'; then
     user_name="$(jq -cer '.user_name' "${SETTINGS}")"
 
@@ -111,29 +99,19 @@ install () {
     fi
   fi
 
-  local total=0
-  local desc=''
-
-  case "${file_name}" in
-    'system')
-      total=2060
-      desc='System'
-      ;;
-    'sdkits')
-      total=270
-      desc='SDKs'
-      ;;
-    'apps')
-      total=1900
-      desc='Apps'
-      ;;
-  esac
-
   local script_file="src/installer/${file_name}.sh"
+
+  local total=0
+  total=$(grep 'resolve [0-9].*' "${script_file}" | cut -d ' ' -f 2)
+
+  if has_failed; then
+    log ERROR "Unable to read the expected output of ${file_name}.sh." >> "${log_file}"
+    abort 'A fatal error has been occurred.'
+  fi
 
   arch-chroot /mnt runuser -u "${user_name}" -- "${script_file}" 2>&1 |
     tee -a "${log_file}" 2>&1 |
-    tqdm --desc "${desc^}:" --ncols 50 \
+    tqdm --desc "${file_name^}:" --ncols 50 \
       --bar-format "${BAR_FORMAT}" --total ${total} >> "${log_file}.tqdm"
   
   if has_failed; then

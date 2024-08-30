@@ -2,10 +2,10 @@
 
 set -Eeo pipefail
 
-source src/commons/process.sh
 source src/commons/error.sh
 source src/commons/logger.sh
 source src/commons/validators.sh
+source src/commons/math.sh
 
 SETTINGS=./settings.json
 
@@ -149,6 +149,25 @@ grant_permissions () {
   log INFO 'Sudoer nopasswd permission has been granted.'
 }
 
+# Prints dummy log lines to fake tqdm progress bar, when a
+# task gives less lines than it is expected to print and so
+# it resolves with fake lines to emulate completion.
+# Arguments:
+#  total: the log lines the task is expected to print
+# Outputs:
+#  Fake dummy log lines.
+resolve () {
+  local total="${1}"
+
+  local lines=0
+  lines=$(cat /var/log/stack/bootstrap.log | wc -l)
+
+  local fake_lines=0
+  fake_lines=$(calc "${total} - ${lines}")
+
+  seq ${fake_lines} | xargs -I -- log '~'
+}
+
 log INFO 'Script bootstrap.sh started.'
 log INFO 'Starting the bootstrap process...'
 
@@ -162,4 +181,4 @@ sync_clock &&
 
 log INFO 'Script bootstrap.sh has finished.'
 
-resolve bootstrap 660 && sleep 2
+resolve 660 && sleep 2

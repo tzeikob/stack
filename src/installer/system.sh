@@ -2,10 +2,10 @@
 
 set -Eeo pipefail
 
-source src/commons/process.sh
 source src/commons/error.sh
 source src/commons/logger.sh
 source src/commons/validators.sh
+source src/commons/math.sh
 
 SETTINGS=/stack/settings.json
 
@@ -1108,6 +1108,25 @@ create_hash_file () {
   log INFO "Stack hash file set to ${branch}:${commit}."
 }
 
+# Prints dummy log lines to fake tqdm progress bar, when a
+# task gives less lines than it is expected to print and so
+# it resolves with fake lines to emulate completion.
+# Arguments:
+#  total: the log lines the task is expected to print
+# Outputs:
+#  Fake dummy log lines.
+resolve () {
+  local total="${1}"
+
+  local lines=0
+  lines=$(cat /var/log/stack/system.log | wc -l)
+
+  local fake_lines=0
+  fake_lines=$(calc "${total} - ${lines}")
+
+  seq ${fake_lines} | xargs -I -- log '~'
+}
+
 log INFO 'Script system.sh started.'
 log INFO 'Installing the system...'
 
@@ -1148,4 +1167,4 @@ set_host_name &&
 
 log INFO 'Script system.sh has finished.'
 
-resolve system 2060 && sleep 2
+resolve 2060 && sleep 2
