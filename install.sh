@@ -20,26 +20,29 @@ init () {
   mkdir -p /var/log/stack
 }
 
-# Reports all the installation settings set by the user.
-report () {
-  local log_file="/var/log/stack/report.log"
+# Shows the welcome screen to the user.
+welcome () {
+  clear
 
-  local query=''
-  query='.user_password = "***" | .root_password = "***"'
+  log '░░░█▀▀░▀█▀░█▀█░█▀▀░█░█░░░'
+  log '░░░▀▀█░░█░░█▀█░█░░░█▀▄░░░'
+  log '░░░▀▀▀░░▀░░▀░▀░▀▀▀░▀░▀░░░'
 
-  local settings=''
-  settings="$(jq "${query}" "${SETTINGS}")"
+  log -n 'Welcome to the Stack Linux installer.'
+  log 'Base your development stack on Arch Linux.'
 
-  if has_failed; then
-    log ERROR 'Unable to read installation settings.' >> "${log_file}"
-    abort 'Unable to read installation settings.'
+  confirm 'Do you want to proceed?' || abort
+
+  if is_not_given "${REPLY}"; then
+    abort 'User input is required.'
   fi
 
-  log -n 'Installation settings set to:' > "${log_file}"
-  log "${settings}\n" >> "${log_file}"
+  if is_no "${REPLY}"; then
+    abort 'Sure, maybe next time.'
+  fi
 }
 
-# Asks the user various installation settings and detects
+# Asks the user the installation settings and detects
 # some hardware informations to collect all the required
 # props to install the new system.
 ask_and_detect () {
@@ -676,6 +679,25 @@ ask_and_detect () {
   sleep 2
 }
 
+# Reports all the installation settings set by the user.
+report () {
+  local log_file="/var/log/stack/report.log"
+
+  local query=''
+  query='.user_password = "***" | .root_password = "***"'
+
+  local settings=''
+  settings="$(jq "${query}" "${SETTINGS}")"
+
+  if has_failed; then
+    log ERROR 'Unable to read installation settings.' >> "${log_file}"
+    abort 'Unable to read installation settings.'
+  fi
+
+  log -n 'Installation settings set to:' > "${log_file}"
+  log "${settings}\n" >> "${log_file}"
+}
+
 # Executes a preparation task script with the given file name.
 # Arguments:
 #  file_name: the name of a task script
@@ -769,28 +791,6 @@ restart () {
   sleep 15
   umount -R /mnt || log 'Ignoring busy mount points.'
   reboot
-}
-
-# Shows the welcome screen of the installer.
-welcome () {
-  clear
-
-  log '░░░█▀▀░▀█▀░█▀█░█▀▀░█░█░░░'
-  log '░░░▀▀█░░█░░█▀█░█░░░█▀▄░░░'
-  log '░░░▀▀▀░░▀░░▀░▀░▀▀▀░▀░▀░░░'
-
-  log -n 'Welcome to the Stack Linux installer.'
-  log 'Base your development stack on Arch Linux.'
-
-  confirm 'Do you want to proceed?' || abort
-
-  if is_not_given "${REPLY}"; then
-    abort 'User input is required.'
-  fi
-
-  if is_no "${REPLY}"; then
-    abort 'Sure, maybe next time.'
-  fi
 }
 
 if file_not_in_directory "${0}" "${PWD}"; then
