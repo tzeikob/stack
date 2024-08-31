@@ -2,6 +2,7 @@
 
 source src/commons/logger.sh
 source src/commons/validators.sh
+source src/commons/math.sh
 
 # Checks if the given exit status code is non-zero
 # which indicates the last command has failed. If no
@@ -19,7 +20,7 @@ has_failed () {
     code="${1}"
   fi
 
-  if [[ ${code} -ne 0 ]]; then
+  if is_true "${code} != 0"; then
     return 0
   fi
 
@@ -40,10 +41,10 @@ has_not_failed () {
 abort () {
   local level message
 
-  if [[ $# -ge 2 ]]; then
+  if is_true "$# >= 2"; then
     level="${1}"
     message="${2}"
-  elif [[ $# -eq 1 ]]; then
+  elif is_true "$# = 1"; then
     message="${1}"
   fi
 

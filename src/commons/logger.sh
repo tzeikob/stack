@@ -1,5 +1,6 @@
 #!/bin/bash
 
+source src/commons/math.sh
 source src/commons/validators.sh
 
 # Prints the given log message prefixed with the given log level.
@@ -25,10 +26,10 @@ log () {
 
   local level message
 
-  if [[ $# -ge 2 ]]; then
+  if is_true "$# >= 2"; then
     level="${1}"
     message="${2}"
-  elif [[ $# -eq 1 ]]; then
+  elif is_true "$# = 1"; then
     message="${1}"
   else
     return 0
