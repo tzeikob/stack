@@ -42,10 +42,10 @@ welcome () {
   fi
 }
 
-# Asks the user the installation settings and detects
-# some hardware informations to collect all the required
-# props to install the new system.
-ask_and_detect () {
+# Asks the user the installation settings in order
+# to collect all the required props to install the
+# new system.
+ask () {
   local select_disk
   select_disk () {
     local fields='name,path,type,size,rm,ro,tran,hotplug,state,'
@@ -510,6 +510,54 @@ ask_and_detect () {
     log "Linux kernel is set to ${kernel}."
   }
 
+  while true; do
+    # Initialize the settings file
+    echo '{}' > "${SETTINGS}"
+
+    select_disk &&
+      opt_in_swap_space &&
+      select_mirrors &&
+      select_timezone &&
+      select_locales &&
+      select_keyboard_model &&
+      select_keyboard_map &&
+      select_keyboard_layout &&
+      select_keyboard_options &&
+      enter_host_name &&
+      enter_user_name &&
+      enter_user_password &&
+      enter_root_password &&
+      select_kernel
+
+    confirm -n 'Do you want to ask for settings again?' || abort
+    is_not_given "${REPLY}" && abort 'User input is required.'
+
+    if is_no "${REPLY}"; then
+      break
+    fi
+
+    clear
+  done
+
+  log -n 'CAUTION, THIS IS THE LAST WARNING!'
+  log 'ALL data in the disk will be LOST FOREVER!'
+
+  confirm 'Do you want to proceed?' || abort
+
+  if is_not_given "${REPLY}"; then
+    abort 'User input is required.'
+  fi
+
+  if is_no "${REPLY}"; then
+    abort
+  fi
+
+  sleep 2
+}
+
+# Detects some hardware informations to collect extra
+# required props to install the new system.
+detect () {
   local is_uefi
   is_uefi () {
     local uefi_mode='no'
@@ -629,54 +677,11 @@ ask_and_detect () {
     log INFO "Disk trim mode is set to ${trim_disk}."
   }
 
-  while true; do
-    # Initialize the settings file
-    echo '{}' > "${SETTINGS}"
-
-    select_disk &&
-      opt_in_swap_space &&
-      select_mirrors &&
-      select_timezone &&
-      select_locales &&
-      select_keyboard_model &&
-      select_keyboard_map &&
-      select_keyboard_layout &&
-      select_keyboard_options &&
-      enter_host_name &&
-      enter_user_name &&
-      enter_user_password &&
-      enter_root_password &&
-      select_kernel &&
-      is_uefi &&
-      is_virtual_machine &&
-      resolve_cpu &&
-      resolve_gpu &&
-      is_disk_trimmable
-
-    confirm -n 'Do you want to ask for settings again?' || abort
-    is_not_given "${REPLY}" && abort 'User input is required.'
-
-    if is_no "${REPLY}"; then
-      break
-    fi
-
-    clear
-  done
-
-  log -n 'CAUTION, THIS IS THE LAST WARNING!'
-  log 'ALL data in the disk will be LOST FOREVER!'
-
-  confirm 'Do you want to proceed?' || abort
-
-  if is_not_given "${REPLY}"; then
-    abort 'User input is required.'
-  fi
-
-  if is_no "${REPLY}"; then
-    abort
-  fi
-
-  sleep 2
+  is_uefi &&
+    is_virtual_machine &&
+    resolve_cpu &&
+    resolve_gpu &&
+    is_disk_trimmable
 }
 
 # Reports all the installation settings set by the user.
@@ -799,7 +804,8 @@ fi
 
 init &&
   welcome &&
-  ask_and_detect &&
+  ask &&
+  detect &&
   report &&
   run diskpart &&
   run bootstrap &&
