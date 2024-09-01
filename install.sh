@@ -772,10 +772,69 @@ install () {
   fi
 }
 
-# Restarts the system.
-restart () {
+# Grants temporary sudo permissions.
+# Arguments:
+#  perm: a permission key
+grant () {
+  local key="${1}"
+
+  local rule=''
+
+  case "${key}" in
+    'nopasswd')
+      rule='%wheel ALL=(ALL:ALL) NOPASSWD: ALL'
+      ;;
+    *)
+      abort 'Invalid permission key value.'
+      ;;
+  esac
+
+  # Grant permission
+  sed -i "s/^# \(${rule}\)/\1/" /mnt/etc/sudoers
+
+  if has_failed || ! grep -q "^${rule}" /mnt/etc/sudoers; then
+    abort "Failed to grant ${key} permission."
+  fi
+
+  return 0
+}
+
+# Revokes temporarily granted sudo permissions.
+# Arguments:
+#  perm: a permission key
+revoke () {
+  local key="${1}"
+
+  local rule=''
+
+  case "${key}" in
+    'nopasswd')
+      rule='%wheel ALL=(ALL:ALL) NOPASSWD: ALL'
+      ;;
+    *)
+      abort 'Invalid permission key value.'
+      ;;
+  esac
+
+  # Revoke permission
+  sed -i "s/^\(${rule}\)/# \1/" /mnt/etc/sudoers
+
+  if has_failed || ! grep -q "^# ${rule}" /mnt/etc/sudoers; then
+    log "Failed to revoke ${key} permission."
+  fi
+
+  return 0
+}
+
+# Clean installation files and collect logs.
+clean () {
+  # Remove installation files
+  rm -rf /mnt/stack ||
+    log 'Unable to remove installation files.'
+
   # Copy the installation log files to the new system
-  cp /var/log/stack/* /mnt/var/log/stack
+  cp /var/log/stack/* /mnt/var/log/stack ||
+    log 'Unable to copy log files to the new system.'
 
   # Append all logs in chronological order
   cat /mnt/var/log/stack/detection.log \
@@ -784,12 +843,16 @@ restart () {
     /mnt/var/log/stack/bootstrap.log \
     /mnt/var/log/stack/system.log \
     /mnt/var/log/stack/sdkits.log \
-    /mnt/var/log/stack/apps.log \
-    /mnt/var/log/stack/cleaner.log >> /mnt/var/log/stack/all.log
+    /mnt/var/log/stack/apps.log >> /mnt/var/log/stack/all.log ||
+    log 'Unable to collect log files.'
 
   # Clean redundant log files from live media
-  rm -rf /var/log/stack
-  
+  rm -rf /var/log/stack ||
+    log 'Unable to remove log files.'
+}
+
+# Restarts the system.
+restart () {
   log -n 'Installation process has been completed.'
   log 'Rebooting the system in 15 secs...'
 
@@ -809,8 +872,10 @@ init &&
   report &&
   run diskpart &&
   run bootstrap &&
+  grant nopasswd &&
   install system &&
   install sdkits &&
   install apps &&
-  run cleaner &&
+  revoke nopasswd &&
+  clean &&
   restart

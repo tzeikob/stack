@@ -135,20 +135,6 @@ copy_installation_files () {
   log INFO 'Installation files have been copied.'
 }
 
-# Grants the nopasswd permission to the wheel user group.
-grant_permissions () {
-  local rule='%wheel ALL=(ALL:ALL) NOPASSWD: ALL'
-
-  sed -i "s/^# \(${rule}\)/\1/" /mnt/etc/sudoers ||
-    abort ERROR 'Failed to grant nopasswd permission.'
-
-  if ! grep -q "^${rule}" /mnt/etc/sudoers; then
-    abort ERROR 'Failed to grant nopasswd permission.'
-  fi
-
-  log INFO 'Sudoer nopasswd permission has been granted.'
-}
-
 # Prints dummy log lines to fake tqdm progress bar, when a
 # task gives less lines than it is expected to print and so
 # it resolves with fake lines to emulate completion.
@@ -176,8 +162,7 @@ sync_clock &&
   sync_package_databases &&
   update_keyring &&
   install_kernel &&
-  copy_installation_files &&
-  grant_permissions 
+  copy_installation_files
 
 log INFO 'Script bootstrap.sh has finished.'
 
