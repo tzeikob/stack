@@ -143,7 +143,7 @@ resolve () {
   local total="${1}"
 
   local lines=0
-  lines=$(cat /var/log/stack/sdkits.log | wc -l)
+  lines=$(cat /var/log/stack/installer/sdkits.log | wc -l)
 
   local fake_lines=0
   fake_lines=$(calc "${total} - ${lines}")

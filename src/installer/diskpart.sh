@@ -403,7 +403,7 @@ resolve () {
   local total="${1}"
 
   local lines=0
-  lines=$(cat /var/log/stack/diskpart.log | wc -l)
+  lines=$(cat /var/log/stack/installer/diskpart.log | wc -l)
 
   local fake_lines=0
   fake_lines=$(calc "${total} - ${lines}")

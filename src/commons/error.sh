@@ -46,23 +46,16 @@ abort () {
     message="${2}"
   elif is_true "$# = 1"; then
     message="${1}"
+  else
+    message='An unknown error has occurred!'
   fi
 
-  # If level is given script is logging, otherwise screen is logging
-  if is_given "${message}"; then
-    if is_given "${level}"; then
-      log "${level}" "${message}"
-      log "${level}" 'Process has been exited.'
-    else
-      log -n "${message}"
-      log 'Process has been exited.'
-    fi
+  if is_given "${level}"; then
+    log -n "${level}" "${message}"
+    log "${level}" 'Process has been exited.'
   else
-    if is_given "${level}"; then
-      log "${level}" 'Process has been exited.'
-    else
-      log -n 'Process has been exited.'
-    fi
+    log -n "${message}"
+    log 'Process has been exited.'
   fi
 
   exit 1

@@ -249,7 +249,7 @@ install_aur_packages () {
   sudo -u "${user_name}" yay -S --needed --noconfirm --removemake ${pkgs[@]} 2>&1 ||
     abort ERROR 'Failed to install AUR packages.'
 
-  locg INFO 'AUR packages have been installed.'
+  log INFO 'AUR packages have been installed.'
 }
 
 # Syncs root files to new system.
@@ -341,6 +341,8 @@ fix_release_data () {
 
   rm -f /etc/arch-release ||
     abort ERROR 'Unable to remove the arch-release file.'
+  
+  log INFO 'Release data have been set to stack linux.'
 }
 
 # Sets up the Xorg display server packages.
@@ -800,7 +802,7 @@ setup_fonts () {
     cd .. && rm -rf google-fonts ||
     abort ERROR 'Failed to install google fonts.'
   
-  log 'Google fonts have been installed.'
+  log INFO 'Google fonts have been installed.'
 
   log INFO 'Updating the fonts cache...'
 
@@ -1119,7 +1121,7 @@ resolve () {
   local total="${1}"
 
   local lines=0
-  lines=$(cat /var/log/stack/system.log | wc -l)
+  lines=$(cat /var/log/stack/installer/system.log | wc -l)
 
   local fake_lines=0
   fake_lines=$(calc "${total} - ${lines}")

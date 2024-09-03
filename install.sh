@@ -10,14 +10,15 @@ source src/commons/text.sh
 source src/commons/math.sh
 
 SETTINGS=./settings.json
+LOGS=/var/log/stack/installer
 
 BAR_FORMAT='{desc:10}  {percentage:3.0f}%|{bar}|  ET{elapsed}'
 
 # Initializes the installer.
 init () {
   # Reset possibly existing log files
-  rm -rf /var/log/stack
-  mkdir -p /var/log/stack
+  rm -rf "${LOGS}"
+  mkdir -p "${LOGS}"
 }
 
 # Shows the welcome screen to the user.
@@ -32,13 +33,10 @@ welcome () {
   log 'Base your development stack on Arch Linux.'
 
   confirm 'Do you want to proceed?' || abort
-
-  if is_not_given "${REPLY}"; then
-    abort 'User input is required.'
-  fi
+  is_not_given "${REPLY}" && abort 'User input is required.'
 
   if is_no "${REPLY}"; then
-    abort 'Sure, maybe next time.'
+    abort 'Sure, maybe next time!'
   fi
 }
 
@@ -85,15 +83,12 @@ ask () {
 
     local disk="${REPLY}"
 
-    log -n "CAUTION, all data in \"${disk}\" will be lost!"
+    log -n "CAUTION, ALL DATA IN \"${disk}\" WILL BE LOST!"
     confirm 'Do you want to proceed with this disk?' || abort
-
-    if is_not_given "${REPLY}"; then
-      abort 'User input is required.'
-    fi
+    is_not_given "${REPLY}" && abort 'User input is required.'
 
     if is_no "${REPLY}"; then
-      abort
+      abort 'Sure, better be safe than sorry!'
     fi
 
     local settings=''
@@ -436,21 +431,21 @@ ask () {
   enter_user_password () {
     log -n 'Password valid chars: a-z A-Z 0-9 `~!@#$%^&*()=+{};:",.<>/?_-'
     ask_secret 'Enter the user password (at least 4 chars):' || abort
-    is_not_given "${REPLY}" && abort '\nUser input is required.'
+    is_not_given "${REPLY}" && abort 'User input is required.'
 
     while not_match "${REPLY}" '^[a-zA-Z0-9`~!@#\$%^&*()=+{};:",.<>/\?_-]{4,}$'; do
       ask_secret -n 'Please enter a valid password:' || abort
-      is_not_given "${REPLY}" && abort '\nUser input is required.'
+      is_not_given "${REPLY}" && abort 'User input is required.'
     done
 
     local password="${REPLY}"
 
     ask_secret -n 'Re-type the given password:' || abort
-    is_not_given "${REPLY}" && abort '\nUser input is required.'
+    is_not_given "${REPLY}" && abort 'User input is required.'
 
     while not_equals "${REPLY}" "${password}"; do
       ask_secret -n 'Not matched, please re-type the given password:' || abort
-      is_not_given "${REPLY}" && abort '\nUser input is required.'
+      is_not_given "${REPLY}" && abort 'User input is required.'
     done
 
     local settings=''
@@ -458,28 +453,28 @@ ask () {
       echo "${settings}" > "${SETTINGS}" ||
       abort 'Failed to save user_password setting.'
 
-    log -n 'User password is set successfully.'
+    log 'User password is set successfully.'
   }
 
   local enter_root_password
   enter_root_password () {
     log -n 'Password valid chars: a-z A-Z 0-9 `~!@#$%^&*()=+{};:",.<>/?_-'
     ask_secret 'Enter the root password (at least 4 chars):' || abort
-    is_not_given "${REPLY}" && abort '\nUser input is required.'
+    is_not_given "${REPLY}" && abort 'User input is required.'
 
     while not_match "${REPLY}" '^[a-zA-Z0-9`~!@#\$%^&*()=+{};:",.<>/\?_-]{4,}$'; do
       ask_secret -n 'Please enter a valid password:' || abort
-      is_not_given "${REPLY}" && abort '\nUser input is required.'
+      is_not_given "${REPLY}" && abort 'User input is required.'
     done
 
     local password="${REPLY}"
 
     ask_secret -n 'Re-type the given password:' || abort
-    is_not_given "${REPLY}" && abort '\nUser input is required.'
+    is_not_given "${REPLY}" && abort 'User input is required.'
 
     while not_equals "${REPLY}" "${password}"; do
       ask_secret -n 'Not matched, please re-type the given password:' || abort
-      is_not_given "${REPLY}" && abort '\nUser input is required.'
+      is_not_given "${REPLY}" && abort 'User input is required.'
     done
 
     local settings=''
@@ -487,7 +482,7 @@ ask () {
       echo "${settings}" > "${SETTINGS}" ||
       abort 'Failed to save root_password setting.'
 
-    log -n 'Root password is set successfully.'
+    log 'Root password is set successfully.'
   }
 
   local select_kernel
@@ -528,8 +523,11 @@ ask () {
       enter_user_password &&
       enter_root_password &&
       select_kernel
+    
+    log -n 'Review your installation settings:'
+    jq . "${SETTINGS}" || abort 'Unable to read installation settings.'
 
-    confirm -n 'Do you want to ask for settings again?' || abort
+    confirm 'Do you want to ask for settings again?' || abort
     is_not_given "${REPLY}" && abort 'User input is required.'
 
     if is_no "${REPLY}"; then
@@ -540,22 +538,18 @@ ask () {
   done
 
   log -n 'CAUTION, THIS IS THE LAST WARNING!'
-  log 'ALL data in the disk will be LOST FOREVER!'
-
+  log 'ALL DATA IN THE DISK WILL BE LOST FOREVER!'
   confirm 'Do you want to proceed?' || abort
-
-  if is_not_given "${REPLY}"; then
-    abort 'User input is required.'
-  fi
+  is_not_given "${REPLY}" && abort 'User input is required.'
 
   if is_no "${REPLY}"; then
-    abort
+    abort 'Sure, maybe next time!'
   fi
 
   sleep 2
 }
 
-# Detects some hardware informations to collect extra
+# Detects any hardware data to collect extra
 # required props to install the new system.
 detect () {
   local is_uefi
@@ -569,9 +563,9 @@ detect () {
     local settings=''
     settings="$(jq -er ".uefi_mode = \"${uefi_mode}\"" "${SETTINGS}")" &&
       echo "${settings}" > "${SETTINGS}" ||
-      abort ERROR 'Failed to save uefi_mode setting.'
+      abort 'Failed to save uefi_mode setting.'
 
-    log INFO "UEFI mode is set to ${uefi_mode}."
+    log "UEFI mode is set to ${uefi_mode}."
   }
 
   local is_virtual_machine
@@ -585,20 +579,21 @@ detect () {
       local settings=''
       settings="$(jq -er '.vm = "yes"' "${SETTINGS}")" &&
         echo "${settings}" > "${SETTINGS}" ||
-        abort ERROR 'Failed to save vm setting.'
+        abort 'Failed to save vm setting.'
+      
+      log 'Virtual machine is set to yes.'
 
       local settings=''
       settings="$(jq -er ".vm_vendor = \"${vm_vendor}\"" "${SETTINGS}")" &&
         echo "${settings}" > "${SETTINGS}" ||
-        abort ERROR 'Failed to save vm_vendor setting.'
+        abort 'Failed to save vm_vendor setting.'
 
-      log INFO 'Virtual machine is set to yes.'
-      log INFO "Virtual machine vendor is set to ${vm_vendor}."
+      log "Virtual machine vendor is set to ${vm_vendor}."
     else
       local settings=''
       settings="$(jq -er '.vm = "no"' "${SETTINGS}")" &&
         echo "${settings}" > "${SETTINGS}" ||
-        abort ERROR 'Failed to save vm setting.'
+        abort 'Failed to save vm setting.'
     fi
   }
 
@@ -607,7 +602,7 @@ detect () {
     local cpu_data=''
     cpu_data="$(
       lscpu 2>&1
-    )" || abort ERROR 'Unable to read CPU data.'
+    )" || abort 'Unable to detect CPU data.'
 
     local cpu_vendor='generic'
 
@@ -620,9 +615,9 @@ detect () {
     local settings=''
     settings="$(jq -er ".cpu_vendor = \"${cpu_vendor}\"" "${SETTINGS}")" &&
       echo "${settings}" > "${SETTINGS}" ||
-      abort ERROR 'Failed to save cpu_vendor setting.'
+      abort 'Failed to save cpu_vendor setting.'
 
-    log INFO "CPU vendor is set to ${cpu_vendor}."
+    log "CPU vendor is set to ${cpu_vendor}."
   }
 
   local resolve_gpu
@@ -630,7 +625,7 @@ detect () {
     local gpu_data=''
     gpu_data="$(
       lspci 2>&1
-    )" || abort ERROR 'Unable to read GPU data.'
+    )" || abort 'Unable to detect GPU data.'
 
     local gpu_vendor='generic'
 
@@ -647,21 +642,21 @@ detect () {
     local settings=''
     settings="$(jq -er ".gpu_vendor = \"${gpu_vendor}\"" "${SETTINGS}")" &&
       echo "${settings}" > "${SETTINGS}" ||
-      abort ERROR 'Failed to save gpu_vendor setting.'
+      abort 'Failed to save gpu_vendor setting.'
 
-    log INFO "GPU vendor is set to ${gpu_vendor}."
+    log "GPU vendor is set to ${gpu_vendor}."
   }
 
   local is_disk_trimmable
   is_disk_trimmable () {
     local disk=''
     disk="$(jq -cer '.disk' "${SETTINGS}")" ||
-      abort ERROR 'Unable to read disk setting.'
+      abort 'Unable to read disk setting.'
 
     local discards=''
     discards="$(
       lsblk -dn --discard -o DISC-GRAN,DISC-MAX "${disk}" 2>&1
-    )" || abort ERROR 'Unable to list disk block devices.'
+    )" || abort 'Unable to list disk block devices.'
 
     local trim_disk='no'
 
@@ -672,35 +667,18 @@ detect () {
     local settings=''
     settings="$(jq -er ".trim_disk = \"${trim_disk}\"" "${SETTINGS}")" &&
       echo "${settings}" > "${SETTINGS}" ||
-      abort ERROR 'Failed to save trim_disk setting.'
+      abort 'Failed to save trim_disk setting.'
 
-    log INFO "Disk trim mode is set to ${trim_disk}."
+    log "Disk trim mode is set to ${trim_disk}."
   }
+
+  log -n 'Detecting hardware and system data...'
 
   is_uefi &&
     is_virtual_machine &&
     resolve_cpu &&
     resolve_gpu &&
     is_disk_trimmable
-}
-
-# Reports all the installation settings set by the user.
-report () {
-  local log_file="/var/log/stack/report.log"
-
-  local query=''
-  query='.user_password = "***" | .root_password = "***"'
-
-  local settings=''
-  settings="$(jq "${query}" "${SETTINGS}")"
-
-  if has_failed; then
-    log ERROR 'Unable to read installation settings.' >> "${log_file}"
-    abort 'Unable to read installation settings.'
-  fi
-
-  log -n 'Installation settings set to:' > "${log_file}"
-  log "${settings}\n" >> "${log_file}"
 }
 
 # Executes a preparation task script with the given file name.
@@ -710,14 +688,14 @@ run () {
   local file_name="${1}"
 
   local script_file="src/installer/${file_name}.sh"
-  local log_file="/var/log/stack/${file_name}.log"
+  local log_file="${LOGS}/${file_name}.log"
 
   local total=0
   total=$(grep 'resolve [0-9].*' "${script_file}" | cut -d ' ' -f 2)
 
   if has_failed; then
-    log ERROR "Unable to read the expected output of ${file_name}.sh." >> "${log_file}"
-    abort 'A fatal error has been occurred.'
+    log ERROR "Unable to read the total of ${file_name}.sh." >> "${log_file}"
+    abort "Unable to read the total of ${file_name}.sh."
   fi
 
   bash "${script_file}" 2>&1 |
@@ -739,7 +717,7 @@ install () {
   local file_name="${1}"
 
   local script_file="src/installer/${file_name}.sh"
-  local log_file="/mnt/var/log/stack/${file_name}.log"
+  local log_file="/mnt/${LOGS}/${file_name}.log"
 
   local user_name='root'
 
@@ -757,8 +735,8 @@ install () {
   total=$(grep 'resolve [0-9].*' "${script_file}" | cut -d ' ' -f 2)
 
   if has_failed; then
-    log ERROR "Unable to read the expected output of ${file_name}.sh." >> "${log_file}"
-    abort 'A fatal error has been occurred.'
+    log ERROR "Unable to read the total of ${file_name}.sh." >> "${log_file}"
+    abort "Unable to read the total of ${file_name}.sh."
   fi
 
   arch-chroot /mnt runuser -u "${user_name}" -- "${script_file}" 2>&1 |
@@ -812,7 +790,8 @@ revoke () {
       rule='%wheel ALL=(ALL:ALL) NOPASSWD: ALL'
       ;;
     *)
-      abort 'Invalid permission key value.'
+      log 'Invalid permission key value.'
+      return 0
       ;;
   esac
 
@@ -832,23 +811,30 @@ clean () {
   rm -rf /mnt/stack ||
     log 'Unable to remove installation files.'
 
+  # Add into logs the selected installation settings
+  local settings=''
+  settings="$(jq 'del(.user_password, .root_password)' "${SETTINGS}")" &&
+    echo 'Installation settings set to:' > "${LOGS}/settings.log" &&
+    echo "${settings}\n" >> "${LOGS}/settings.log" ||
+    log 'Unable to read installation settings.'
+
   # Copy the installation log files to the new system
-  cp /var/log/stack/* /mnt/var/log/stack ||
+  mkdir -p "/mnt/${LOGS}" &&
+    cp ${LOGS}/* "/mnt/${LOGS}" ||
     log 'Unable to copy log files to the new system.'
 
   # Append all logs in chronological order
-  cat /mnt/var/log/stack/detection.log \
-    /mnt/var/log/stack/report.log \
-    /mnt/var/log/stack/diskpart.log \
-    /mnt/var/log/stack/bootstrap.log \
-    /mnt/var/log/stack/system.log \
-    /mnt/var/log/stack/sdkits.log \
-    /mnt/var/log/stack/apps.log >> /mnt/var/log/stack/all.log ||
-    log 'Unable to collect log files.'
+  cat "/mnt/${LOGS}/settings.log" \
+    "/mnt/${LOGS}/diskpart.log" \
+    "/mnt/${LOGS}/bootstrap.log" \
+    "/mnt/${LOGS}/system.log" \
+    "/mnt/${LOGS}/sdkits.log" \
+    "/mnt/${LOGS}/apps.log" >> "/mnt/${LOGS}/all.log" ||
+    log 'Unable to reduce all logs into one file.'
 
   # Clean redundant log files from live media
-  rm -rf /var/log/stack ||
-    log 'Unable to remove log files.'
+  rm -rf "${LOGS}" ||
+    log 'Unable to remove log files from live media.'
 }
 
 # Restarts the system.
@@ -862,14 +848,13 @@ restart () {
 }
 
 if file_not_in_directory "${0}" "${PWD}"; then
-  abort ERROR 'Unable to run script out of its parent directory.'
+  abort 'Unable to run script out of its parent directory.'
 fi
 
 init &&
   welcome &&
   ask &&
   detect &&
-  report &&
   run diskpart &&
   run bootstrap &&
   grant nopasswd &&
