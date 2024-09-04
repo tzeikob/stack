@@ -7,7 +7,7 @@ source src/commons/logger.sh
 source src/commons/validators.sh
 source src/commons/math.sh
 
-SETTINGS='/stack/settings.json'
+SETTINGS_FILE='/stack/settings.json'
 
 # Installs the google chrome web browser.
 install_chrome () {
@@ -96,7 +96,7 @@ install_virtual_box () {
   log INFO 'Installing the virtual box...'
 
   local kernel=''
-  kernel="$(jq -cer '.kernel' "${SETTINGS}")" ||
+  kernel="$(jq -cer '.kernel' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read kernel setting.'
 
   local pkgs='virtualbox virtualbox-guest-iso'
@@ -115,7 +115,7 @@ install_virtual_box () {
   fi
 
   local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
+  user_name="$(jq -cer '.user_name' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read user_name setting.'
 
   sudo usermod -aG vboxusers "${user_name}" 2>&1 &&

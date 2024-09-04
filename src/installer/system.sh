@@ -7,14 +7,14 @@ source src/commons/logger.sh
 source src/commons/validators.sh
 source src/commons/math.sh
 
-SETTINGS=/stack/settings.json
+SETTINGS_FILE=/stack/settings.json
 
 # Sets the host name of the system.
 set_host_name () {
   log INFO 'Setting the host name...'
 
   local host_name=''
-  host_name="$(jq -cer '.host_name' "${SETTINGS}")" ||
+  host_name="$(jq -cer '.host_name' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read host_name setting.'
 
   sed -i "s/#HOST_NAME#/${host_name}/" /etc/hostname ||
@@ -33,7 +33,7 @@ set_root_user () {
   log INFO 'Setting up the root user...'
 
   local root_password=''
-  root_password="$(jq -cer '.root_password' "${SETTINGS}")" ||
+  root_password="$(jq -cer '.root_password' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read root_password setting.'
 
   echo "root:${root_password}" | chpasswd 2>&1 ||
@@ -50,7 +50,7 @@ set_sudoer_user () {
   local groups='wheel,audio,video,optical,storage'
 
   local vm=''
-  vm="$(jq -cer '.vm' "${SETTINGS}")" ||
+  vm="$(jq -cer '.vm' "${SETTINGS_FILE}")" ||
     abort ERROR 'Failed to read the vm setting.'
 
   if is_yes "${vm}"; then
@@ -59,7 +59,7 @@ set_sudoer_user () {
   fi
 
   local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
+  user_name="$(jq -cer '.user_name' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read user_name setting.'
 
   useradd -m -G "${groups}" -s /bin/bash "${user_name}" 2>&1 &&
@@ -80,7 +80,7 @@ set_sudoer_user () {
   log INFO 'Sudo permissions have been granted to sudoer user.'
 
   local user_password=''
-  user_password="$(jq -cer '.user_password' "${SETTINGS}")" ||
+  user_password="$(jq -cer '.user_password' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read user_password setting.'
 
   echo "${user_name}:${user_password}" | chpasswd 2>&1 ||
@@ -95,7 +95,7 @@ set_mirrors () {
   log INFO 'Setting up package databases mirrors...'
 
   local mirrors=''
-  mirrors="$(jq -cer '.mirrors|join(",")' "${SETTINGS}")" ||
+  mirrors="$(jq -cer '.mirrors|join(",")' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read mirrors setting.'
 
   reflector --country "${mirrors}" \
@@ -159,7 +159,7 @@ install_drivers () {
   local cpu_pkgs=''
 
   local cpu_vendor=''
-  cpu_vendor="$(jq -cer '.cpu_vendor' "${SETTINGS}")" ||
+  cpu_vendor="$(jq -cer '.cpu_vendor' "${SETTINGS_FILE}")" ||
     abort ERROR 'Failed to read the cpu_vendor setting.'
 
   if equals "${cpu_vendor}" 'amd'; then
@@ -171,12 +171,12 @@ install_drivers () {
   local gpu_pkgs=''
 
   local gpu_vendor=''
-  gpu_vendor="$(jq -cer '.gpu_vendor' "${SETTINGS}")" ||
+  gpu_vendor="$(jq -cer '.gpu_vendor' "${SETTINGS_FILE}")" ||
     abort ERROR 'Failed to read the gpu_vendor setting.'
 
   if equals "${gpu_vendor}" 'nvidia'; then
     local kernel=''
-    kernel="$(jq -cer '.kernel' "${SETTINGS}")" ||
+    kernel="$(jq -cer '.kernel' "${SETTINGS_FILE}")" ||
       abort ERROR 'Unable to read kernel setting.'
 
     if equals "${kernel}" 'stable'; then
@@ -218,7 +218,7 @@ install_aur_package_manager () {
   log INFO 'Installing the AUR package manager...'
 
   local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
+  user_name="$(jq -cer '.user_name' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read user_name setting.'
 
   local yay_home="/home/${user_name}/yay"
@@ -243,7 +243,7 @@ install_aur_packages () {
     abort ERROR 'Failed to read packages from packages.x86_64 file.'
   
   local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
+  user_name="$(jq -cer '.user_name' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read user_name setting.'
 
   sudo -u "${user_name}" yay -S --needed --noconfirm --removemake ${pkgs[@]} 2>&1 ||
@@ -257,7 +257,7 @@ sync_root_files () {
   log INFO 'Syncing the root file system...'
 
   local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
+  user_name="$(jq -cer '.user_name' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read user_name setting.'
   
   # Rename user home to align with the new system
@@ -350,7 +350,7 @@ setup_display_server () {
   log INFO 'Setting up the display server...'
 
   local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
+  user_name="$(jq -cer '.user_name' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read user_name setting.'
 
   local bash_profile_file="/home/${user_name}/.bash_profile"
@@ -371,7 +371,7 @@ setup_screen_locker () {
   log INFO 'Setting up the screen locker...'
 
   local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
+  user_name="$(jq -cer '.user_name' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read user_name setting.'
 
   local xsecurelock_home="/home/${user_name}/xsecurelock"
@@ -405,7 +405,7 @@ setup_screen_locker () {
 # Sets the system locale along with the locale environment variables.
 setup_locales () {
   local locales=''
-  locales="$(jq -cer '.locales' "${SETTINGS}")" ||
+  locales="$(jq -cer '.locales' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read locales setting.'
 
   log INFO 'Generating system locales...'
@@ -449,7 +449,7 @@ setup_locales () {
   
   # Save locale settings to the user config
   local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
+  user_name="$(jq -cer '.user_name' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read user_name setting.'
 
   local config_home="/home/${user_name}/.config/stack"
@@ -481,7 +481,7 @@ setup_keyboard () {
   log INFO 'Applying keyboard settings...'
 
   local keyboard_map=''
-  keyboard_map="$(jq -cer '.keyboard_map' "${SETTINGS}")" ||
+  keyboard_map="$(jq -cer '.keyboard_map' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read keyboard_map setting.'
 
   sed -i "s/#KEYMAP#/${keyboard_map}/" /etc/vconsole.conf ||
@@ -495,15 +495,15 @@ setup_keyboard () {
   log INFO 'Keyboard map keys has been loaded.'
 
   local keyboard_layout=''
-  keyboard_layout="$(jq -cer '.keyboard_layout' "${SETTINGS}")" ||
+  keyboard_layout="$(jq -cer '.keyboard_layout' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read keyboard_layout setting.'
   
   local keyboard_model=''
-  keyboard_model="$(jq -cer '.keyboard_model' "${SETTINGS}")" ||
+  keyboard_model="$(jq -cer '.keyboard_model' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read keyboard_model setting.'
 
   local keyboard_options=''
-  keyboard_options="$(jq -cer '.keyboard_options' "${SETTINGS}")" ||
+  keyboard_options="$(jq -cer '.keyboard_options' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read keyboard_options setting.'
   
   local keyboard_conf='/etc/X11/xorg.conf.d/00-keyboard.conf'
@@ -515,7 +515,7 @@ setup_keyboard () {
     abort ERROR 'Failed to set Xorg keyboard settings.'
   
   local layout_variant=''
-  layout_variant="$(jq -cer '.layout_variant' "${SETTINGS}")" ||
+  layout_variant="$(jq -cer '.layout_variant' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read layout_variant setting.'
 
   if not_equals "${layout_variant}" 'default'; then
@@ -528,7 +528,7 @@ setup_keyboard () {
 
   # Save keyboard settings to the user config
   local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
+  user_name="$(jq -cer '.user_name' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read user_name setting.'
   
   local config_home="/home/${user_name}/.config/stack"
@@ -563,7 +563,7 @@ setup_system_timezone () {
   log INFO 'Setting the system timezone...'
 
   local timezone=''
-  timezone="$(jq -cer '.timezone' "${SETTINGS}")" ||
+  timezone="$(jq -cer '.timezone' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read timezone setting.'
 
   ln -sf "/usr/share/zoneinfo/${timezone}" /etc/localtime ||
@@ -589,7 +589,7 @@ setup_boot_loader () {
   log INFO 'Setting up the boot loader...'
 
   local uefi_mode=''
-  uefi_mode="$(jq -cer '.uefi_mode' "${SETTINGS}")" ||
+  uefi_mode="$(jq -cer '.uefi_mode' "${SETTINGS_FILE}")" ||
     abort ERROR 'Failed to read the uefi_mode setting.'
 
   if is_yes "${uefi_mode}"; then
@@ -599,7 +599,7 @@ setup_boot_loader () {
     log INFO 'Grub boot loader has been installed on x86_64-efi.'
   else
     local disk=''
-    disk="$(jq -cer '.disk' "${SETTINGS}")" ||
+    disk="$(jq -cer '.disk' "${SETTINGS_FILE}")" ||
       abort ERROR 'Unable to read disk setting.'
 
     grub-install --target=i386-pc "${disk}" 2>&1 ||
@@ -623,7 +623,7 @@ setup_boot_loader () {
   log INFO 'Boot loader config file created successfully.'
 
   local vm_vendor=''
-  vm_vendor="$(jq -cer '.vm_vendor' "${SETTINGS}")" ||
+  vm_vendor="$(jq -cer '.vm_vendor' "${SETTINGS_FILE}")" ||
     abort ERROR 'Failed to read the vm_vendor setting.'
 
   if is_yes "${uefi_mode}" && equals "${vm_vendor}" 'oracle'; then
@@ -645,7 +645,7 @@ setup_login_screen () {
   log INFO 'The issue file has been backed up to /etc/issue.bak.'
 
   local host_name=''
-  host_name="$(jq -cer '.host_name' "${SETTINGS}")" ||
+  host_name="$(jq -cer '.host_name' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read host_name setting.'
 
   echo " ${host_name} " | figlet -f pagga 2>&1 > /etc/issue ||
@@ -674,7 +674,7 @@ setup_file_manager () {
   log INFO 'Setting up the file manager...'
 
   local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
+  user_name="$(jq -cer '.user_name' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read user_name setting.'
 
   local config_home="/home/${user_name}/.config/nnn"
@@ -740,7 +740,7 @@ setup_theme () {
   log INFO 'Cursors have been set.'
 
   local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
+  user_name="$(jq -cer '.user_name' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read user_name setting.'
 
   sed -i \
@@ -818,7 +818,7 @@ setup_shell_environment () {
   log INFO 'Setting up the shell environment.'
 
   local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
+  user_name="$(jq -cer '.user_name' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read user_name setting.'
 
   local stackrc_file="/home/${user_name}/.stackrc"
@@ -964,7 +964,7 @@ configure_security () {
 
   # Save screen locker settings to the user config
   local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
+  user_name="$(jq -cer '.user_name' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read user_name setting.'
 
   local config_home="/home/${user_name}/.config/stack"
@@ -987,7 +987,7 @@ configure_security () {
 # Restores the user home permissions.
 restore_user_permissions () {
   local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
+  user_name="$(jq -cer '.user_name' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read user_name setting.'
   
   chown -R ${user_name}:${user_name} "/home/${user_name}" ||
@@ -1046,7 +1046,7 @@ enable_services () {
   log INFO 'Service paccache.timer has been enabled.'
 
   local trim_disk=''
-  trim_disk="$(jq -cer '.trim_disk' "${SETTINGS}")" ||
+  trim_disk="$(jq -cer '.trim_disk' "${SETTINGS_FILE}")" ||
     abort ERROR 'Failed to read the trim_disk setting.'
 
   if is_yes "${trim_disk}"; then
@@ -1057,11 +1057,11 @@ enable_services () {
   fi
 
   local vm=''
-  vm="$(jq -cer '.vm' "${SETTINGS}")" ||
+  vm="$(jq -cer '.vm' "${SETTINGS_FILE}")" ||
     abort ERROR 'Failed to read the vm setting.'
   
   local vm_vendor=''
-  vm_vendor="$(jq -cer '.vm_vendor' "${SETTINGS}")" ||
+  vm_vendor="$(jq -cer '.vm_vendor' "${SETTINGS_FILE}")" ||
     abort ERROR 'Failed to read the vm_vendor setting.'
 
   if is_yes "${vm}" && equals "${vm_vendor}" 'oracle'; then
@@ -1072,7 +1072,7 @@ enable_services () {
   fi
   
   local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
+  user_name="$(jq -cer '.user_name' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read user_name setting.'
   
   sed -i "s;#HOME#;/home/${user_name};g" \

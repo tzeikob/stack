@@ -7,14 +7,14 @@ source src/commons/logger.sh
 source src/commons/validators.sh
 source src/commons/math.sh
 
-SETTINGS=./settings.json
+SETTINGS_FILE=./settings.json
 
 # Synchronizes the system clock to the current time.
 sync_clock () {
   log INFO 'Updating the system clock...'
 
   local timezone=''
-  timezone="$(jq -cer '.timezone' "${SETTINGS}")" ||
+  timezone="$(jq -cer '.timezone' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read timezone setting.'
 
   timedatectl set-timezone "${timezone}" 2>&1 ||
@@ -42,7 +42,7 @@ set_mirrors () {
   log INFO 'Setting up package databases mirrors list...'
 
   local mirrors=''
-  mirrors="$(jq -cer '.mirrors|join(",")' "${SETTINGS}")" ||
+  mirrors="$(jq -cer '.mirrors|join(",")' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read mirrors setting.'
 
   reflector --country "${mirrors}" \
@@ -98,7 +98,7 @@ install_kernel () {
   log INFO 'Installing the linux kernel...'
 
   local kernel=''
-  kernel="$(jq -cer '.kernel' "${SETTINGS}")" ||
+  kernel="$(jq -cer '.kernel' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read kernel setting.'
 
   local linux_pkgs=''

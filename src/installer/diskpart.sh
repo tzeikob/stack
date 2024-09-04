@@ -8,7 +8,7 @@ source src/commons/math.sh
 source src/commons/validators.sh
 source src/commons/math.sh
 
-SETTINGS=./settings.json
+SETTINGS_FILE=./settings.json
 
 # Erases all table data of the installation disk.
 wipe_disk () {
@@ -33,7 +33,7 @@ wipe_disk () {
   log INFO 'Start now erasing disk data...'
 
   local disk=''
-  disk="$(jq -cer '.disk' "${SETTINGS}")" ||
+  disk="$(jq -cer '.disk' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read disk setting.'
 
   wipefs -a "${disk}" 2>&1 ||
@@ -47,7 +47,7 @@ create_gpt_partitions () {
   log INFO 'Creating a clean GPT partition table...'
 
   local disk=''
-  disk="$(jq -cer '.disk' "${SETTINGS}")" ||
+  disk="$(jq -cer '.disk' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read disk setting.'
 
   parted --script "${disk}" mklabel gpt 2>&1 ||
@@ -71,16 +71,16 @@ create_gpt_partitions () {
   start_from=${end_at}
 
   local swap_on=''
-  swap_on="$(jq -cer '.swap_on' "${SETTINGS}")" ||
+  swap_on="$(jq -cer '.swap_on' "${SETTINGS_FILE}")" ||
     abort ERROR 'Failed to read the swap_on setting.'
   
   local swap_type=''
-  swap_type="$(jq -cer '.swap_type' "${SETTINGS}")" ||
+  swap_type="$(jq -cer '.swap_type' "${SETTINGS_FILE}")" ||
     abort ERROR 'Failed to read the swap_type setting.'
 
   if is_yes "${swap_on}" && equals "${swap_type}" 'partition'; then
     local swap_size=0
-    swap_size=$(jq -cer '.swap_size' "${SETTINGS}") ||
+    swap_size=$(jq -cer '.swap_size' "${SETTINGS_FILE}") ||
       abort ERROR 'Unable to read swap_size setting.'
 
     end_at=$(calc "${start_from} + (${swap_size} * 1024)")
@@ -108,7 +108,7 @@ create_mbr_partitions () {
   log INFO 'Creating a clean MBR partition table...'
 
   local disk=''
-  disk="$(jq -cer '.disk' "${SETTINGS}")" ||
+  disk="$(jq -cer '.disk' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read disk setting.'
 
   parted --script "${disk}" mklabel msdos 2>&1 ||
@@ -120,16 +120,16 @@ create_mbr_partitions () {
   local root_index=1
 
   local swap_on=''
-  swap_on="$(jq -cer '.swap_on' "${SETTINGS}")" ||
+  swap_on="$(jq -cer '.swap_on' "${SETTINGS_FILE}")" ||
     abort ERROR 'Failed to read the swap_on setting.'
   
   local swap_type=''
-  swap_type="$(jq -cer '.swap_type' "${SETTINGS}")" ||
+  swap_type="$(jq -cer '.swap_type' "${SETTINGS_FILE}")" ||
     abort ERROR 'Failed to read the swap_type setting.'
 
   if is_yes "${swap_on}" && equals "${swap_type}" 'partition'; then
     local swap_size=0
-    swap_size=$(jq -cer '.swap_size' "${SETTINGS}") ||
+    swap_size=$(jq -cer '.swap_size' "${SETTINGS_FILE}") ||
       abort ERROR 'Unable to read swap_size setting.'
 
     local end_at=0
@@ -164,7 +164,7 @@ create_partitions () {
   log INFO 'Creating disk partitions...'
 
   local uefi_mode=''
-  uefi_mode="$(jq -cer '.uefi_mode' "${SETTINGS}")" ||
+  uefi_mode="$(jq -cer '.uefi_mode' "${SETTINGS_FILE}")" ||
     abort ERROR 'Failed to read the uefi_mode setting.'
 
   if is_yes "${uefi_mode}"; then
@@ -183,7 +183,7 @@ format_partitions () {
   log INFO 'Formatting disk partitions...'
 
   local disk=''
-  disk="$(jq -cer '.disk' "${SETTINGS}")" ||
+  disk="$(jq -cer '.disk' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read disk setting.'
 
   local postfix=''
@@ -192,15 +192,15 @@ format_partitions () {
   fi
 
   local uefi_mode=''
-  uefi_mode="$(jq -cer '.uefi_mode' "${SETTINGS}")" ||
+  uefi_mode="$(jq -cer '.uefi_mode' "${SETTINGS_FILE}")" ||
     abort ERROR 'Failed to read the uefi_mode setting.'
 
   local swap_on=''
-  swap_on="$(jq -cer '.swap_on' "${SETTINGS}")" ||
+  swap_on="$(jq -cer '.swap_on' "${SETTINGS_FILE}")" ||
     abort ERROR 'Failed to read the swap_on setting.'
 
   local swap_type=''
-  swap_type="$(jq -cer '.swap_type' "${SETTINGS}")" ||
+  swap_type="$(jq -cer '.swap_type' "${SETTINGS_FILE}")" ||
     abort ERROR 'Failed to read the swap_type setting.'
 
   if is_yes "${uefi_mode}"; then
@@ -246,7 +246,7 @@ mount_file_system () {
   log INFO 'Mounting disk partitions...'
   
   local disk=''
-  disk="$(jq -cer '.disk' "${SETTINGS}")" ||
+  disk="$(jq -cer '.disk' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read disk setting.'
 
   local postfix=''
@@ -257,15 +257,15 @@ mount_file_system () {
   local mount_opts='relatime,commit=60'
 
   local uefi_mode=''
-  uefi_mode="$(jq -cer '.uefi_mode' "${SETTINGS}")" ||
+  uefi_mode="$(jq -cer '.uefi_mode' "${SETTINGS_FILE}")" ||
     abort ERROR 'Failed to read the uefi_mode setting.'
 
   local swap_on=''
-  swap_on="$(jq -cer '.swap_on' "${SETTINGS}")" ||
+  swap_on="$(jq -cer '.swap_on' "${SETTINGS_FILE}")" ||
     abort ERROR 'Failed to read the swap_on setting.'
 
   local swap_type=''
-  swap_type="$(jq -cer '.swap_type' "${SETTINGS}")" ||
+  swap_type="$(jq -cer '.swap_type' "${SETTINGS_FILE}")" ||
     abort ERROR 'Failed to read the swap_type setting.'
 
   if is_yes "${uefi_mode}"; then
@@ -303,7 +303,7 @@ mount_file_system () {
 # Creates the swap space.
 make_swap_space () {
   local swap_on=''
-  swap_on="$(jq -cer '.swap_on' "${SETTINGS}")" ||
+  swap_on="$(jq -cer '.swap_on' "${SETTINGS_FILE}")" ||
     abort ERROR 'Failed to read the swap_on setting.'
 
   if is_no "${swap_on}"; then
@@ -314,7 +314,7 @@ make_swap_space () {
   log INFO 'Setting up the swap space...'
 
   local disk=''
-  disk="$(jq -cer '.disk' "${SETTINGS}")" ||
+  disk="$(jq -cer '.disk' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read disk setting.'
 
   local postfix=''
@@ -323,14 +323,14 @@ make_swap_space () {
   fi
 
   local swap_type=''
-  swap_type="$(jq -cer '.swap_type' "${SETTINGS}")" ||
+  swap_type="$(jq -cer '.swap_type' "${SETTINGS_FILE}")" ||
     abort ERROR 'Failed to read the swap_type setting.'
 
   if equals "${swap_type}" 'partition'; then
     local swap_index=1
 
     local uefi_mode=''
-    uefi_mode="$(jq -cer '.uefi_mode' "${SETTINGS}")" ||
+    uefi_mode="$(jq -cer '.uefi_mode' "${SETTINGS_FILE}")" ||
       abort ERROR 'Failed to read the uefi_mode setting.'
 
     if is_yes "${uefi_mode}"; then
@@ -346,7 +346,7 @@ make_swap_space () {
     log INFO 'Swap partition has been enabled.'
   elif equals "${swap_type}" 'file'; then
     local swap_size=0
-    swap_size=$(jq -cer '.swap_size * 1024' "${SETTINGS}") ||
+    swap_size=$(jq -cer '.swap_size * 1024' "${SETTINGS_FILE}") ||
       abort ERROR 'Unable to read swap_size setting.'
 
     local swap_file='/mnt/swapfile'
@@ -382,7 +382,7 @@ report () {
   log INFO 'Disk layout is now set to:\n'
 
   local disk=''
-  disk="$(jq -cer '.disk' "${SETTINGS}")" ||
+  disk="$(jq -cer '.disk' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read disk setting.'
 
   parted --script "${disk}" print 2>&1 |

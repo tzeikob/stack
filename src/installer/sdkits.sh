@@ -7,14 +7,14 @@ source src/commons/logger.sh
 source src/commons/validators.sh
 source src/commons/math.sh
 
-SETTINGS=/stack/settings.json
+SETTINGS_FILE=/stack/settings.json
 
 # Installs the node javascript runtime engine.
 install_node () {
   log INFO 'Installing the node runtime engine...'
 
   local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
+  user_name="$(jq -cer '.user_name' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read user_name setting.'
 
   local nvm_home="/home/${user_name}/.nvm"
@@ -122,7 +122,7 @@ install_docker () {
     log WARN 'Failed to enable docker service.'
 
   local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS}")" ||
+  user_name="$(jq -cer '.user_name' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read user_name setting.'
 
   sudo usermod -aG docker "${user_name}" 2>&1 &&

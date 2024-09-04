@@ -9,7 +9,7 @@ source src/commons/validators.sh
 source src/commons/text.sh
 source src/commons/math.sh
 
-SETTINGS=./settings.json
+SETTINGS_FILE=./settings.json
 LOGS=/var/log/stack/installer
 
 BAR_FORMAT='{desc:10}  {percentage:3.0f}%|{bar}|  ET{elapsed}'
@@ -92,8 +92,8 @@ ask () {
     fi
 
     local settings=''
-    settings="$(jq -er ".disk = \"${disk}\"" "${SETTINGS}")" &&
-      echo "${settings}" > "${SETTINGS}" ||
+    settings="$(jq -er ".disk = \"${disk}\"" "${SETTINGS_FILE}")" &&
+      echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save disk setting.'
 
     log "Installation disk set to block device ${disk}."
@@ -106,8 +106,8 @@ ask () {
 
     if is_no "${REPLY}"; then
       local settings=''
-      settings="$(jq -er '.swap_on = "no"' "${SETTINGS}")" &&
-        echo "${settings}" > "${SETTINGS}" ||
+      settings="$(jq -er '.swap_on = "no"' "${SETTINGS_FILE}")" &&
+        echo "${settings}" > "${SETTINGS_FILE}" ||
         abort 'Failed to save swap_on setting.'
 
       log 'Swap is set to off.'
@@ -115,8 +115,8 @@ ask () {
     fi
 
     local settings=''
-    settings="$(jq -er '.swap_on = "yes"' "${SETTINGS}")" &&
-      echo "${settings}" > "${SETTINGS}" ||
+    settings="$(jq -er '.swap_on = "yes"' "${SETTINGS_FILE}")" &&
+      echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save swap_on setting.'
 
     log 'Swap is set to yes.'
@@ -132,8 +132,8 @@ ask () {
     local swap_size="${REPLY}"
 
     local settings=''
-    settings="$(jq -er ".swap_size = ${swap_size}" "${SETTINGS}")" &&
-      echo "${settings}" > "${SETTINGS}" ||
+    settings="$(jq -er ".swap_size = ${swap_size}" "${SETTINGS_FILE}")" &&
+      echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save swap_size setting.'
 
     log "Swap size is set to ${swap_size}GB."
@@ -149,8 +149,8 @@ ask () {
     local swap_type="${REPLY}"
     
     local settings=''
-    settings="$(jq -er ".swap_type = \"${swap_type}\"" "${SETTINGS}")" &&
-      echo "${settings}" > "${SETTINGS}" ||
+    settings="$(jq -er ".swap_type = \"${swap_type}\"" "${SETTINGS_FILE}")" &&
+      echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save swap_type setting.'
 
     log "Swap type is set to ${swap_type}."
@@ -182,8 +182,8 @@ ask () {
     mirrors="${REPLY}"
 
     local settings=''
-    settings="$(jq -er ".mirrors = ${mirrors}" "${SETTINGS}")" &&
-      echo "${settings}" > "${SETTINGS}" ||
+    settings="$(jq -er ".mirrors = ${mirrors}" "${SETTINGS_FILE}")" &&
+      echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save mirrors setting.'
 
     log "Package databases mirrors are set to ${mirrors}."
@@ -211,8 +211,8 @@ ask () {
     local timezone="${REPLY}"
 
     local settings=''
-    settings="$(jq -er ".timezone = \"${timezone}\"" "${SETTINGS}")" &&
-      echo "${settings}" > "${SETTINGS}" ||
+    settings="$(jq -er ".timezone = \"${timezone}\"" "${SETTINGS_FILE}")" &&
+      echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save timezone setting.'
 
     log "Timezone is set to ${timezone}."
@@ -240,8 +240,8 @@ ask () {
     locales="${REPLY}"
 
     local settings=''
-    settings="$(jq -er ".locales = ${locales}" "${SETTINGS}")" &&
-      echo "${settings}" > "${SETTINGS}" ||
+    settings="$(jq -er ".locales = ${locales}" "${SETTINGS_FILE}")" &&
+      echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save locales setting.'
 
     log "Locales are set to ${locales}."
@@ -269,8 +269,8 @@ ask () {
     local keyboard_model="${REPLY}"
 
     local settings=''
-    settings="$(jq -er ".keyboard_model = \"${keyboard_model}\"" "${SETTINGS}")" &&
-      echo "${settings}" > "${SETTINGS}" ||
+    settings="$(jq -er ".keyboard_model = \"${keyboard_model}\"" "${SETTINGS_FILE}")" &&
+      echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save keyboard_model setting.'
 
     log "Keyboard model is set to ${keyboard_model}."
@@ -298,8 +298,8 @@ ask () {
     local keyboard_map="${REPLY}"
 
     local settings=''
-    settings="$(jq -er ".keyboard_map = \"${keyboard_map}\"" "${SETTINGS}")" &&
-      echo "${settings}" > "${SETTINGS}" ||
+    settings="$(jq -er ".keyboard_map = \"${keyboard_map}\"" "${SETTINGS_FILE}")" &&
+      echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save keyboard_map setting.'
 
     log "Keyboard map is set to ${keyboard_map}."
@@ -327,8 +327,8 @@ ask () {
     local keyboard_layout="${REPLY}"
 
     local settings=''
-    settings="$(jq -er ".keyboard_layout = \"${keyboard_layout}\"" "${SETTINGS}")" &&
-      echo "${settings}" > "${SETTINGS}" ||
+    settings="$(jq -er ".keyboard_layout = \"${keyboard_layout}\"" "${SETTINGS_FILE}")" &&
+      echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save keyboard_layout setting.'
 
     local variants='{"key": "default", "value": "default"},'
@@ -351,8 +351,8 @@ ask () {
     local layout_variant="${REPLY}"
 
     local settings=''
-    settings="$(jq -er ".layout_variant = \"${layout_variant}\"" "${SETTINGS}")" &&
-      echo "${settings}" > "${SETTINGS}" ||
+    settings="$(jq -er ".layout_variant = \"${layout_variant}\"" "${SETTINGS_FILE}")" &&
+      echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save layout_variant setting.'
 
     log "Layout is set to ${keyboard_layout} ${layout_variant}."
@@ -380,8 +380,8 @@ ask () {
     local keyboard_options="${REPLY}"
 
     local settings=''
-    settings="$(jq -er ".keyboard_options = \"${keyboard_options}\"" "${SETTINGS}")" &&
-      echo "${settings}" > "${SETTINGS}" ||
+    settings="$(jq -er ".keyboard_options = \"${keyboard_options}\"" "${SETTINGS_FILE}")" &&
+      echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save keyboard_options setting.'
 
     log "Keyboard options is set to ${keyboard_options}."
@@ -400,8 +400,8 @@ ask () {
     local host_name="${REPLY}"
 
     local settings=''
-    settings="$(jq -er ".host_name = \"${host_name}\"" "${SETTINGS}")" &&
-      echo "${settings}" > "${SETTINGS}" ||
+    settings="$(jq -er ".host_name = \"${host_name}\"" "${SETTINGS_FILE}")" &&
+      echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save host_name setting.'
 
     log "Hostname is set to ${host_name}."
@@ -420,8 +420,8 @@ ask () {
     local user_name="${REPLY}"
 
     local settings=''
-    settings="$(jq -er ".user_name = \"${user_name}\"" "${SETTINGS}")" &&
-      echo "${settings}" > "${SETTINGS}" ||
+    settings="$(jq -er ".user_name = \"${user_name}\"" "${SETTINGS_FILE}")" &&
+      echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save user_name setting.'
 
     log "User name is set to ${user_name}."
@@ -449,8 +449,8 @@ ask () {
     done
 
     local settings=''
-    settings="$(jq -er ".user_password = \"${password}\"" "${SETTINGS}")" &&
-      echo "${settings}" > "${SETTINGS}" ||
+    settings="$(jq -er ".user_password = \"${password}\"" "${SETTINGS_FILE}")" &&
+      echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save user_password setting.'
 
     log 'User password is set successfully.'
@@ -478,8 +478,8 @@ ask () {
     done
 
     local settings=''
-    settings="$(jq -er ".root_password = \"${password}\"" "${SETTINGS}")" &&
-      echo "${settings}" > "${SETTINGS}" ||
+    settings="$(jq -er ".root_password = \"${password}\"" "${SETTINGS_FILE}")" &&
+      echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save root_password setting.'
 
     log 'Root password is set successfully.'
@@ -498,8 +498,8 @@ ask () {
     local kernel="${REPLY}"
 
     local settings=''
-    settings="$(jq -er ".kernel = \"${kernel}\"" "${SETTINGS}")" &&
-      echo "${settings}" > "${SETTINGS}" ||
+    settings="$(jq -er ".kernel = \"${kernel}\"" "${SETTINGS_FILE}")" &&
+      echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save kernel setting.'
 
     log "Linux kernel is set to ${kernel}."
@@ -507,7 +507,7 @@ ask () {
 
   while true; do
     # Initialize the settings file
-    echo '{}' > "${SETTINGS}"
+    echo '{}' > "${SETTINGS_FILE}"
 
     select_disk &&
       opt_in_swap_space &&
@@ -525,7 +525,7 @@ ask () {
       select_kernel
     
     log -n 'Review your installation settings:'
-    jq . "${SETTINGS}" || abort 'Unable to read installation settings.'
+    jq . "${SETTINGS_FILE}" || abort 'Unable to read installation settings.'
 
     confirm 'Do you want to ask for settings again?' || abort
     is_not_given "${REPLY}" && abort 'User input is required.'
@@ -561,8 +561,8 @@ detect () {
     fi
 
     local settings=''
-    settings="$(jq -er ".uefi_mode = \"${uefi_mode}\"" "${SETTINGS}")" &&
-      echo "${settings}" > "${SETTINGS}" ||
+    settings="$(jq -er ".uefi_mode = \"${uefi_mode}\"" "${SETTINGS_FILE}")" &&
+      echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save uefi_mode setting.'
 
     log "UEFI mode is set to ${uefi_mode}."
@@ -577,22 +577,22 @@ detect () {
 
     if is_not_empty "${vm_vendor}" && not_equals "${vm_vendor}" 'none'; then
       local settings=''
-      settings="$(jq -er '.vm = "yes"' "${SETTINGS}")" &&
-        echo "${settings}" > "${SETTINGS}" ||
+      settings="$(jq -er '.vm = "yes"' "${SETTINGS_FILE}")" &&
+        echo "${settings}" > "${SETTINGS_FILE}" ||
         abort 'Failed to save vm setting.'
       
       log 'Virtual machine is set to yes.'
 
       local settings=''
-      settings="$(jq -er ".vm_vendor = \"${vm_vendor}\"" "${SETTINGS}")" &&
-        echo "${settings}" > "${SETTINGS}" ||
+      settings="$(jq -er ".vm_vendor = \"${vm_vendor}\"" "${SETTINGS_FILE}")" &&
+        echo "${settings}" > "${SETTINGS_FILE}" ||
         abort 'Failed to save vm_vendor setting.'
 
       log "Virtual machine vendor is set to ${vm_vendor}."
     else
       local settings=''
-      settings="$(jq -er '.vm = "no"' "${SETTINGS}")" &&
-        echo "${settings}" > "${SETTINGS}" ||
+      settings="$(jq -er '.vm = "no"' "${SETTINGS_FILE}")" &&
+        echo "${settings}" > "${SETTINGS_FILE}" ||
         abort 'Failed to save vm setting.'
     fi
   }
@@ -613,8 +613,8 @@ detect () {
     fi
 
     local settings=''
-    settings="$(jq -er ".cpu_vendor = \"${cpu_vendor}\"" "${SETTINGS}")" &&
-      echo "${settings}" > "${SETTINGS}" ||
+    settings="$(jq -er ".cpu_vendor = \"${cpu_vendor}\"" "${SETTINGS_FILE}")" &&
+      echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save cpu_vendor setting.'
 
     log "CPU vendor is set to ${cpu_vendor}."
@@ -640,8 +640,8 @@ detect () {
     fi
 
     local settings=''
-    settings="$(jq -er ".gpu_vendor = \"${gpu_vendor}\"" "${SETTINGS}")" &&
-      echo "${settings}" > "${SETTINGS}" ||
+    settings="$(jq -er ".gpu_vendor = \"${gpu_vendor}\"" "${SETTINGS_FILE}")" &&
+      echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save gpu_vendor setting.'
 
     log "GPU vendor is set to ${gpu_vendor}."
@@ -650,7 +650,7 @@ detect () {
   local is_disk_trimmable
   is_disk_trimmable () {
     local disk=''
-    disk="$(jq -cer '.disk' "${SETTINGS}")" ||
+    disk="$(jq -cer '.disk' "${SETTINGS_FILE}")" ||
       abort 'Unable to read disk setting.'
 
     local discards=''
@@ -665,8 +665,8 @@ detect () {
     fi
 
     local settings=''
-    settings="$(jq -er ".trim_disk = \"${trim_disk}\"" "${SETTINGS}")" &&
-      echo "${settings}" > "${SETTINGS}" ||
+    settings="$(jq -er ".trim_disk = \"${trim_disk}\"" "${SETTINGS_FILE}")" &&
+      echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save trim_disk setting.'
 
     log "Disk trim mode is set to ${trim_disk}."
@@ -723,7 +723,7 @@ install () {
 
   # Execute user related tasks as sudoer user
   if match "${file_name}" '^(sdkits|apps)$'; then
-    user_name="$(jq -cer '.user_name' "${SETTINGS}")"
+    user_name="$(jq -cer '.user_name' "${SETTINGS_FILE}")"
 
     if has_failed; then
       log ERROR 'Unable to read the user_name setting.' >> "${log_file}"
@@ -813,7 +813,7 @@ clean () {
 
   # Add into logs the selected installation settings
   local settings=''
-  settings="$(jq 'del(.user_password, .root_password)' "${SETTINGS}")" &&
+  settings="$(jq 'del(.user_password, .root_password)' "${SETTINGS_FILE}")" &&
     echo 'Installation settings set to:' > "${LOGS}/settings.log" &&
     echo "${settings}\n" >> "${LOGS}/settings.log" ||
     log 'Unable to read installation settings.'
