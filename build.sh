@@ -564,7 +564,7 @@ setup_keyboard () {
     -e "s/#OPTIONS#/${keyboard_options}/" "${keyboard_conf}" ||
     abort ERROR 'Failed to set Xorg keyboard settings.'
   
-  local settings_file="${ROOT_FS}/root/.config/stack/langs.json"
+  local langs_file="${ROOT_FS}/root/.config/stack/langs.json"
   
   local query=''
   query+=".keymap = \"${keyboard_map}\" | "
@@ -573,9 +573,9 @@ setup_keyboard () {
   query+=".layouts[0].code =  \"${keyboard_layout}\" | "
   query+=".layouts[0].variant =  \"${layout_variant}\""
 
-  local settings=''
-  settings="$(echo '{}' | jq -e "${query}")" &&
-    echo "${settings}" > "${settings_file}" ||
+  local langs_settings=''
+  langs_settings="$(echo '{}' | jq -e "${query}")" &&
+    echo "${langs_settings}" > "${langs_file}" ||
     abort ERROR 'Failed to save keyboard settings to langs file.'
 
   log INFO 'Keyboard settings have been applied.'

@@ -461,18 +461,18 @@ setup_locales () {
   mkdir -p "${config_home}" ||
     abort ERROR "Failed to create folder ${config_home}."
 
-  local settings=''
-  settings="$(echo "${locales}" | jq -e '{locale: .[0], locales: .}')" ||
+  local langs_settings=''
+  langs_settings="$(echo "${locales}" | jq -e '{locale: .[0], locales: .}')" ||
     abort ERROR 'Failed to parse locale settings to JSON object.'
 
-  local settings_file="${config_home}/langs.json"
+  local langs_file="${config_home}/langs.json"
 
-  if file_exists "${settings_file}"; then
-    settings="$(jq -e --argjson s "${settings}" '. + $s' "${settings_file}")" ||
+  if file_exists "${langs_file}"; then
+    langs_settings="$(jq -e --argjson s "${langs_settings}" '. + $s' "${langs_file}")" ||
       abort ERROR 'Failed to merge locales to langs settings.'
   fi
 
-  echo "${settings}" > "${settings_file}" &&
+  echo "${langs_settings}" > "${langs_file}" &&
     chown -R ${user_name}:${user_name} "${config_home}" ||
     abort ERROR 'Failed to save locales into the langs setting file.'
   
@@ -540,10 +540,10 @@ setup_keyboard () {
   mkdir -p "${config_home}" ||
     abort ERROR "Failed to create folder ${config_home}."
 
-  local settings_file="${config_home}/langs.json"
+  local langs_file="${config_home}/langs.json"
 
-  local settings=''
-  settings="$(jq -cer . "${settings_file}")" ||
+  local langs_settings=''
+  langs_settings="$(jq -cer . "${langs_file}")" ||
     abort ERROR 'Failed to read langs settings.'
   
   local query=''
@@ -553,8 +553,8 @@ setup_keyboard () {
   query+=".layouts[0].code =  \"${keyboard_layout}\" | "
   query+=".layouts[0].variant =  \"${layout_variant}\""
 
-  settings="$(echo "${settings}" | jq -e "${query}")" &&
-    echo "${settings}" > "${settings_file}" &&
+  langs_settings="$(echo "${langs_settings}" | jq -e "${query}")" &&
+    echo "${langs_settings}" > "${langs_file}" &&
     chown -R ${user_name}:${user_name} "${config_home}" ||
     abort ERROR 'Failed to save keyboard to langs settings.'
   
@@ -982,11 +982,11 @@ configure_security () {
   mkdir -p "${config_home}" ||
     abort ERROR "Failed to create folder ${config_home}."
 
-  local settings='{"screen_locker": {"interval": 12}}'
+  local security_settings='{"screen_locker": {"interval": 12}}'
 
-  local settings_file="${config_home}/security.json"
+  local security_file="${config_home}/security.json"
 
-  echo "${settings}" > "${settings_file}" &&
+  echo "${security_settings}" > "${security_file}" &&
     chown -R ${user_name}:${user_name} "${config_home}" ||
     abort ERROR 'Failed to set screen locker interval.'
   
