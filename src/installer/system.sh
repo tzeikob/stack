@@ -7,7 +7,7 @@ source src/commons/logger.sh
 source src/commons/validators.sh
 source src/commons/math.sh
 
-SETTINGS_FILE=/stack/settings.json
+SETTINGS_FILE=./settings.json
 
 # Sets the host name of the system.
 set_host_name () {
@@ -204,7 +204,7 @@ install_drivers () {
 install_base_packages () {
   log INFO 'Installing the base packages...'
 
-  local pkgs=($(grep -E '(stp|all):pac' /stack/packages.x86_64 | cut -d ':' -f 3)) ||
+  local pkgs=($(grep -E '(stp|all):pac' packages.x86_64 | cut -d ':' -f 3)) ||
     abort ERROR 'Failed to read packages from packages.x86_64 file.'
 
   pacman -S --needed --noconfirm ${pkgs[@]} 2>&1 ||
@@ -223,11 +223,13 @@ install_aur_package_manager () {
 
   local yay_home="/home/${user_name}/yay"
 
+  local previous_dir=${PWD}
+
   git clone https://aur.archlinux.org/yay.git "${yay_home}" 2>&1 &&
     chown -R ${user_name}:${user_name} "${yay_home}" &&
     cd "${yay_home}" &&
     sudo -u "${user_name}" makepkg -si --noconfirm 2>&1 &&
-    cd ~ &&
+    cd "${previous_dir}" &&
     rm -rf "${yay_home}" ||
     abort ERROR 'Failed to install the AUR package manager.'
 
@@ -239,7 +241,7 @@ install_aur_packages () {
   log INFO 'Installing AUR packages...'
 
   local pkgs=()
-  pkgs+=($(grep -E '(stp|all):aur' /stack/packages.x86_64 | cut -d ':' -f 3)) ||
+  pkgs+=($(grep -E '(stp|all):aur' packages.x86_64 | cut -d ':' -f 3)) ||
     abort ERROR 'Failed to read packages from packages.x86_64 file.'
   
   local user_name=''
@@ -262,11 +264,11 @@ sync_root_files () {
   
   # Rename user home to align with the new system
   if not_equals "${user_name}" 'user'; then
-    mv /stack/airootfs/home/user "/stack/airootfs/home/${user_name}" ||
+    mv airootfs/home/user "airootfs/home/${user_name}" ||
       abort ERROR "Failed to rename home folder for ${user_name}."
   fi
 
-  rsync -av /stack/airootfs/ / ||
+  rsync -av airootfs/ / ||
     abort ERROR 'Failed to sync the root file system.'
   
   log INFO 'Root file system has been synced.'
@@ -279,7 +281,7 @@ sync_commons () {
   mkdir -p /opt/stack ||
     abort ERROR 'Failed to create the /opt/stack folder.'
 
-  rsync -av /stack/src/commons/ /opt/stack/commons ||
+  rsync -av src/commons/ /opt/stack/commons ||
     abort ERROR 'Failed to sync the commons files.'
   
   sed -i 's;source src;source /opt/stack;' /opt/stack/commons/* ||
@@ -296,7 +298,7 @@ sync_tools () {
   mkdir -p /opt/stack ||
     abort ERROR 'Failed to create the /opt/stack folder.'
 
-  rsync -av /stack/src/tools/ /opt/stack/tools ||
+  rsync -av src/tools/ /opt/stack/tools ||
     abort ERROR 'Failed to sync the tools files.'
   
   sed -i 's;source src;source /opt/stack;' /opt/stack/tools/**/* ||
@@ -376,13 +378,15 @@ setup_screen_locker () {
 
   local xsecurelock_home="/home/${user_name}/xsecurelock"
 
+  local previous_dir=${PWD}
+
   git clone https://github.com/tzeikob/xsecurelock.git "${xsecurelock_home}" 2>&1 &&
     cd "${xsecurelock_home}" &&
     sh autogen.sh 2>&1 &&
     ./configure --with-pam-service-name=system-auth 2>&1 &&
     make 2>&1 &&
     make install 2>&1 &&
-    cd ~ &&
+    cd "${previous_dir}" &&
     rm -rf "${xsecurelock_home}" ||
     abort ERROR 'Failed to install xsecurelock.'
   
@@ -392,7 +396,7 @@ setup_screen_locker () {
   user_id="$(id -u "${user_name}" 2>&1)" ||
     abort ERROR 'Failed to get the user id.'
 
-  local service_file="/etc/systemd/system/lock@.service"
+  local service_file='/etc/systemd/system/lock@.service'
 
   sed -i "s/#USER_ID#/${user_id}/g" "${service_file}" &&
     systemctl enable lock@${user_name}.service 2>&1 ||
@@ -679,6 +683,8 @@ setup_file_manager () {
 
   local config_home="/home/${user_name}/.config/nnn"
 
+  local previous_dir=${PWD}
+
   log INFO 'Installing file manager plugins...'
 
   local pluggins_url='https://raw.githubusercontent.com/jarun/nnn/master/plugins/getplugs'
@@ -686,7 +692,8 @@ setup_file_manager () {
   curl "${pluggins_url}" -sSLo "${config_home}/getplugs" \
     --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 2>&1 &&
     cd "/home/${user_name}" &&
-    HOME="/home/${user_name}" sh "${config_home}/getplugs" 2>&1 ||
+    HOME="/home/${user_name}" sh "${config_home}/getplugs" 2>&1 &&
+    cd "${previous_dir}" ||
     abort ERROR 'Failed to install extra plugins.'
 
   log INFO 'Extra plugins have been installed.'
@@ -795,11 +802,14 @@ setup_fonts () {
 
   log INFO 'Installing google fonts...'
 
-  git clone --filter=blob:none --sparse https://github.com/google/fonts.git google-fonts 2>&1 &&
-    cd google-fonts &&
+  local previous_dir=${PWD}
+
+  git clone --filter=blob:none --sparse https://github.com/google/fonts.git /tmp/google-fonts 2>&1 &&
+    cd /tmp/google-fonts &&
     git sparse-checkout add apache/cousine apache/robotomono ofl/sharetechmono ofl/spacemono 2>&1 &&
     cp -r apache/cousine apache/robotomono ofl/sharetechmono ofl/spacemono "${fonts_home}" &&
-    cd .. && rm -rf google-fonts ||
+    cd "${previous_dir}" &&
+    rm -rf /tmp/google-fonts ||
     abort ERROR 'Failed to install google fonts.'
   
   log INFO 'Google fonts have been installed.'
@@ -1088,8 +1098,6 @@ enable_services () {
 
 # Creates the stack hash file.
 create_hash_file () {
-  cd /stack
-
   local branch=''
   branch="$(git branch --show-current)" ||
     abort ERROR 'Failed to read the current branch.'
@@ -1104,8 +1112,6 @@ create_hash_file () {
   echo "{\"branch\": \"${branch}\", \"commit\": \"${commit}\"}" |
     jq . > /opt/stack/.hash ||
     abort ERROR 'Failed to create the stack hash file.'
-  
-  cd ~
   
   log INFO "Stack hash file set to ${branch}:${commit}."
 }

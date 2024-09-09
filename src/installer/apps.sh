@@ -7,7 +7,7 @@ source src/commons/logger.sh
 source src/commons/validators.sh
 source src/commons/math.sh
 
-SETTINGS_FILE='/stack/settings.json'
+SETTINGS_FILE=./settings.json
 
 # Installs the google chrome web browser.
 install_chrome () {

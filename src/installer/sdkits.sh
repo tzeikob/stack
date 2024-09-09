@@ -7,7 +7,7 @@ source src/commons/logger.sh
 source src/commons/validators.sh
 source src/commons/math.sh
 
-SETTINGS_FILE=/stack/settings.json
+SETTINGS_FILE=./settings.json
 
 # Installs the node javascript runtime engine.
 install_node () {
@@ -19,10 +19,12 @@ install_node () {
 
   local nvm_home="/home/${user_name}/.nvm"
 
+  local previous_dir=${PWD}
+
   git clone https://github.com/nvm-sh/nvm.git "${nvm_home}" 2>&1 &&
     cd "${nvm_home}" &&
     git checkout `git describe --abbrev=0 --tags --match "v[0-9]*" $(git rev-list --tags --max-count=1)` 2>&1 &&
-    cd ~
+    cd "${previous_dir}"
   
   if has_failed; then
     log WARN 'Failed to install node version manager.'
