@@ -62,7 +62,8 @@ declare_official_packages () {
   log INFO 'Adding official packages in packages.x86_64 file...'
 
   # Collect all the official packages the live media needs
-  local pkgs=($(grep -E '(bld|all):pac' packages.x86_64 | cut -d ':' -f 3)) ||
+  local pkgs=()
+  pkgs+=($(grep -E '(bld|all):pac' packages.x86_64 | cut -d ':' -f 3)) ||
     abort ERROR 'Failed to read packages from packages.x86_64 file.'
 
   local pkgs_file="${PROFILE_DIR}/packages.x86_64"

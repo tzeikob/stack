@@ -20,7 +20,8 @@ sync_package_databases () {
 install_official_packages () {
   log INFO 'Installing new official packages...'
 
-  local pkgs=($(grep -E '(stp|all):pac' packages.x86_64 | cut -d ':' -f 3)) ||
+  local pkgs=()
+  pkgs+=($(grep -E '(stp|all):pac' packages.x86_64 | cut -d ':' -f 3)) ||
     abort ERROR 'Failed to read packages from packages.x86_64 file.'
 
   sudo pacman -S --needed --noconfirm ${pkgs[@]} 2>&1 ||
