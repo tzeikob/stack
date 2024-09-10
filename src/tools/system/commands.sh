@@ -69,7 +69,7 @@ show_status () {
   
   echo "Latest:    ${latest}"
   
-  local pkgs=0
+  local pkgs=''
   pkgs="$(find_installed_packages)" || return 1
 
   echo
