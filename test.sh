@@ -56,14 +56,14 @@ test_no_shell_files () {
 # Asserts no func gets overriden on execution paths.
 test_no_func_overriden () {
   local roots=(
-    src/commons/*
     src/installer/*
+    src/commons/*
     src/tools/**/main.sh
     airootfs/etc/pacman.d/scripts/*
     airootfs/home/user/.config/bspwm/resize
     airootfs/home/user/.config/bspwm/rules
-    airootfs/home/user/.config/scratchpad
-    airootfs/home/user/.config/swap
+    airootfs/home/user/.config/bspwm/scratchpad
+    airootfs/home/user/.config/bspwm/swap
     airootfs/home/user/.config/dunst/hook
     airootfs/home/user/.config/polybar/scripts/*
     airootfs/home/user/.config/rofi/launch
@@ -160,6 +160,7 @@ fi
 
 test_no_shell_files &&
   test_no_func_overriden &&
-  test_local_var_declarations &&
-  log INFO 'All test assertions have been passed.' ||
+  test_local_var_declarations ||
   abort ERROR 'Some tests have been failed to pass.'
+
+log INFO 'All test assertions have been passed.'
