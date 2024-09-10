@@ -317,7 +317,7 @@ sync_tools () {
   local main_file
   for main_file in "${main_files[@]}"; do
     # Extrack the tool handle name
-    local tool_name
+    local tool_name=''
     tool_name="$(echo "${main_file}" | sed 's;/opt/stack/tools/\(.*\)/main.sh;\1;')" ||
       abort ERROR 'Failed to extract tool handle name.'
 

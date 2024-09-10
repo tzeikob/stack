@@ -792,10 +792,12 @@ set_file_permissions () {
 
   local perm=''
   for perm in "${perms[@]}"; do
-    local path="$(echo "${perm}" | cut -d ' ' -f 1)" ||
+    local path=''
+    path="$(echo "${perm}" | cut -d ' ' -f 1)" ||
       abort ERROR 'Failed to extract permission path.'
     
-    local mode="$(echo "${perm}" | cut -d ' ' -f 2)" ||
+    local mode=''
+    mode="$(echo "${perm}" | cut -d ' ' -f 2)" ||
       abort ERROR 'Failed to extract permission mode.'
 
     sed -i "/file_permissions=(/a [\"${path}\"]=\"${mode}\"" "${permissions_file}" ||
