@@ -142,7 +142,7 @@ test_local_var_declarations () {
         continue
       fi
 
-      if match "${declaration}" '=\"?\$\(.*'; then
+      if match "${declaration}" '=\(?\"?\$\(.*'; then
         log ERROR "[FAILED] Local var declarations test: ${file}."
         log ERROR "[FAILED] Local var declarations test: ${declaration}"
         return 1
