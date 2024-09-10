@@ -43,7 +43,7 @@ welcome () {
 # Asks the user the installation settings in order
 # to collect all the required props to install the
 # new system.
-ask () {
+ask_user () {
   local select_disk
   select_disk () {
     local fields='name,path,type,size,rm,ro,tran,hotplug,state,'
@@ -853,7 +853,7 @@ fi
 
 init &&
   welcome &&
-  ask &&
+  ask_user &&
   detect &&
   run diskpart &&
   run bootstrap &&
