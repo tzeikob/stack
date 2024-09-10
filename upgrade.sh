@@ -2,6 +2,11 @@
 
 set -Eeo pipefail
 
+if [[ "$(dirname "$(realpath -s "${0}")")" -ne "${PWD}" ]]; then
+  echo 'Unable to run script out of its parent directory.'
+  exit 1
+fi
+
 source src/commons/error.sh
 source src/commons/logger.sh
 source src/commons/validators.sh
@@ -199,10 +204,6 @@ update_hash_file () {
   
   log INFO "Stack hash file updated to ${branch}:${commit}."
 }
-
-if file_not_in_directory "${0}" "${PWD}"; then
-  abort ERROR 'Unable to run script out of its parent directory.'
-fi
 
 log INFO 'Starting the upgrade process...'
 

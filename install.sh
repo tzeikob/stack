@@ -2,6 +2,11 @@
 
 set -Eeo pipefail
 
+if [[ "$(dirname "$(realpath -s "${0}")")" -ne "${PWD}" ]]; then
+  echo 'Unable to run script out of its parent directory.'
+  exit 1
+fi
+
 source src/commons/input.sh
 source src/commons/error.sh
 source src/commons/logger.sh
@@ -846,10 +851,6 @@ restart () {
   umount -R /mnt || log 'Ignoring busy mount points.'
   reboot
 }
-
-if file_not_in_directory "${0}" "${PWD}"; then
-  abort 'Unable to run script out of its parent directory.'
-fi
 
 init &&
   welcome &&

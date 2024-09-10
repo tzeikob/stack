@@ -2,6 +2,11 @@
 
 set -o pipefail
 
+if [[ "$(dirname "$(realpath -s "${0}")")" -ne "${PWD}" ]]; then
+  echo 'Unable to run script out of its parent directory.'
+  exit 1
+fi
+
 DIST_DIR=.dist
 WORK_DIR="${DIST_DIR}/work"
 AUR_DIR="${DIST_DIR}/aur"
@@ -822,10 +827,6 @@ make_iso_file () {
   log INFO "Archiso file has been exported at ${DIST_DIR}."
   log INFO 'Build process completed successfully.'
 }
-
-if file_not_in_directory "${0}" "${PWD}"; then
-  abort ERROR 'Unable to run script out of its parent directory.'
-fi
 
 log INFO 'Starting the build process...'
 

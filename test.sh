@@ -2,6 +2,11 @@
 
 set -o pipefail
 
+if [[ "$(dirname "$(realpath -s "${0}")")" -ne "${PWD}" ]]; then
+  echo 'Unable to run script out of its parent directory.'
+  exit 1
+fi
+
 source src/commons/logger.sh
 source src/commons/error.sh
 source src/commons/math.sh
@@ -152,10 +157,6 @@ test_local_var_declarations () {
 
   log INFO '[PASSED] Local var declarations test.'
 }
-
-if file_not_in_directory "${0}" "${PWD}"; then
-  abort ERROR 'Unable to run script out of its parent directory.'
-fi
 
 test_no_shell_files &&
   test_no_func_overriden &&
