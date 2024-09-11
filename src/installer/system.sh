@@ -550,7 +550,7 @@ setup_keyboard () {
   local query=''
   query+=".keymap = \"${keyboard_map}\" | "
   query+=".model = \"${keyboard_model}\" | "
-  query+=".options = \"${keyboard_options} | "
+  query+=".options = \"${keyboard_options}\" | "
   query+=".layouts[0].code =  \"${keyboard_layout}\" | "
   query+=".layouts[0].variant =  \"${layout_variant}\""
 
