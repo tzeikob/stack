@@ -2,7 +2,7 @@
 
 set -Eeo pipefail
 
-if [[ "$(dirname "$(realpath -s "${0}")")" -ne "${PWD}" ]]; then
+if [[ "$(dirname "$(realpath -s "${0}")")" != "${PWD}" ]]; then
   echo 'Unable to run script out of its parent directory.'
   exit 1
 fi
