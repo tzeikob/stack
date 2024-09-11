@@ -120,9 +120,9 @@ all:pac:ttf-font-awesome
 all:pac:noto-fonts-emoji
 all:aur:smenu
 all:aur:xkblayout-state-git
-all:pac:figlet
-all:aur:figlet-fonts
-all:aur:figlet-fonts-extra
+stp:pac:figlet
+stp:aur:figlet-fonts
+stp:aur:figlet-fonts-extra
 stp:pac:xautolock
 stp:pac:python-cairo
 stp:pac:python-pam
