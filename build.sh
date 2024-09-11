@@ -639,7 +639,7 @@ setup_theme () {
   mkdir -p "${cursors_home}/default" ||
     abort ERROR 'Failed to create the cursors default folder.'
 
-  print '%s\n' \
+  printf '%s\n' \
     '[Icon Theme]' \
     'Inherits=Breeze-Snow' >> "${cursors_home}/default/index.theme" ||
     abort ERROR 'Failed to set the default index theme.'
