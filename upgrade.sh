@@ -55,7 +55,7 @@ fix_config_values () {
   version="$(date +%Y.%m.%d)" ||
     abort ERROR 'Failed to create release version.'
   
-  sed -i "s/#VERSION#/${version}/" airootfs/usr/lib/os-release ||
+  sed -i "s/#VERSION#/${version}/" airootfs/etc/os-release ||
     abort ERROR 'Failed to set release version.'
   
   log INFO "New release version set to ${version}."

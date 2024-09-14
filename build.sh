@@ -244,10 +244,10 @@ rename_distro () {
   version="$(date +%Y.%m.%d)" ||
     abort ERROR 'Failed to create version number.'
 
-  sed -i "s/#VERSION#/${version}/" "${ROOT_FS}/usr/lib/os-release" ||
+  sed -i "s/#VERSION#/${version}/" "${ROOT_FS}/etc/os-release" ||
     abort ERROR 'Failed to set build version.'
   
-  ln -sf /usr/lib/os-release "${ROOT_FS}/etc/stack-release" ||
+  ln -sf /etc/os-release "${ROOT_FS}/etc/stack-release" ||
     abort ERROR 'Failed to create the stack-release symlink.'
 
   local profile_def="${PROFILE_DIR}/profiledef.sh"

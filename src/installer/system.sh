@@ -331,10 +331,10 @@ fix_release_data () {
   version="$(date +%Y.%m.%d)" ||
     abort ERROR 'Failed to create version number.'
 
-  sed -i "s/#VERSION#/${version}/" /usr/lib/os-release ||
+  sed -i "s/#VERSION#/${version}/" /etc/os-release ||
     abort ERROR 'Failed to set os release version.'
   
-  ln -sf /usr/lib/os-release /etc/stack-release ||
+  ln -sf /etc/os-release /etc/stack-release ||
     abort ERROR 'Failed to create the stack-release symlink.'
 
   rm -f /etc/arch-release ||
