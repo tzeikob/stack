@@ -808,9 +808,9 @@ set_file_permissions () {
 
     sed -i "/file_permissions=(/a [\"${path}\"]=\"${mode}\"" "${permissions_file}" ||
       abort ERROR "Unable to add file permission ${mode} to ${path}."
+    
+    log INFO "Permission ${mode} added to ${path}."
   done
-  
-  log INFO "Permission ${mode} added to ${path}."
 }
 
 # Creates the iso file of the live media.
