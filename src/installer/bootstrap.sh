@@ -74,9 +74,6 @@ sync_package_databases () {
 
   log INFO "GPG keyserver has been set to ${keyserver}."
 
-  sed -i 's/^#ParallelDownloads/ParallelDownloads/' /etc/pacman.conf ||
-    abort ERROR 'Failed to enable parallel downloads.'
-
   pacman -Syy 2>&1 ||
     abort ERROR 'Failed to synchronize package databases.'
 

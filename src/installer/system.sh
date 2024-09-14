@@ -117,11 +117,6 @@ set_mirrors () {
 configure_pacman () {
   log INFO 'Configuring the pacman manager...'
 
-  sed -i 's/^#ParallelDownloads/ParallelDownloads/' /etc/pacman.conf ||
-    abort ERROR 'Failed to set parallel download.'
-
-  log INFO 'Parallel download has been enabled.'
-
   local keyserver='hkp://keyserver.ubuntu.com'
 
   echo "keyserver ${keyserver}" >> /etc/pacman.d/gnupg/gpg.conf ||
