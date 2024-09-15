@@ -77,12 +77,14 @@ sync_package_databases () {
     log INFO "Lock file ${lock_file} has been removed."
   fi
 
-  local keyserver='hkp://keyserver.ubuntu.com'
+  if ! grep -qe '^keyserver ' /etc/pacman.d/gnupg/gpg.conf; then
+    local keyserver='hkp://keyserver.ubuntu.com'
 
-  echo "keyserver ${keyserver}" >> /etc/pacman.d/gnupg/gpg.conf ||
-    abort ERROR 'Failed to add the GPG keyserver.'
+    echo "keyserver ${keyserver}" >> /etc/pacman.d/gnupg/gpg.conf ||
+      abort ERROR 'Failed to add the GPG keyserver.'
 
-  log INFO "GPG keyserver has been set to ${keyserver}."
+    log INFO "GPG keyserver ${keyserver} has been added."
+  fi
 
   pacman -Syy 2>&1 ||
     abort ERROR 'Failed to synchronize package databases.'

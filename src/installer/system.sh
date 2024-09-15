@@ -113,19 +113,6 @@ set_mirrors () {
   log INFO "Package databases mirrors set to ${mirrors}."
 }
 
-# Configures pacman package manager.
-configure_pacman () {
-  log INFO 'Configuring the pacman manager...'
-
-  local keyserver='hkp://keyserver.ubuntu.com'
-
-  echo "keyserver ${keyserver}" >> /etc/pacman.d/gnupg/gpg.conf ||
-    abort ERROR 'Failed to add the GPG keyserver.'
-
-  log INFO "GPG keyserver has been set to ${keyserver}."
-  log INFO 'Pacman manager has been configured.'
-}
-
 # Synchronizes the package databases to the master.
 sync_package_databases () {
   log INFO 'Starting to synchronize package databases...'
@@ -139,6 +126,15 @@ sync_package_databases () {
       abort ERROR "Failed to remove the lock file ${lock_file}."
 
     log INFO "Lock file ${lock_file} has been removed."
+  fi
+
+  if ! grep -qe '^keyserver ' /etc/pacman.d/gnupg/gpg.conf; then
+    local keyserver='hkp://keyserver.ubuntu.com'
+
+    echo "keyserver ${keyserver}" >> /etc/pacman.d/gnupg/gpg.conf ||
+      abort ERROR 'Failed to add the GPG keyserver.'
+
+    log INFO "GPG keyserver ${keyserver} has been added."
   fi
 
   pacman -Syy 2>&1 ||
@@ -1142,7 +1138,6 @@ set_host_name &&
   set_root_user &&
   set_sudoer_user &&
   set_mirrors &&
-  configure_pacman &&
   sync_package_databases &&
   install_drivers &&
   install_base_packages &&
