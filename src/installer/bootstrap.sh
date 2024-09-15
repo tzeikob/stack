@@ -13,6 +13,11 @@ SETTINGS_FILE=./settings.json
 sync_clock () {
   log INFO 'Updating the system clock...'
 
+  timedatectl status | jc --parser timedatectl > /tmp/clock.bk ||
+    abort ERROR 'Failed to backup the clock settings.'
+  
+  log INFO 'Clock settings backed up to /tmp/clock.bk.'
+
   local timezone=''
   timezone="$(jq -cer '.timezone' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read timezone setting.'
@@ -40,6 +45,11 @@ sync_clock () {
 # Sets the pacman mirrors list.
 set_mirrors () {
   log INFO 'Setting up package databases mirrors list...'
+
+  cp /etc/pacman.d/mirrorlist /tmp/mirrorlist.bk ||
+    abort ERROR 'Failed to backup the pacman mirror list.'
+  
+  log INFO 'Pacman mirror list backed up to /tmp/mirrorlist.bk.'
 
   local mirrors=''
   mirrors="$(jq -cer '.mirrors|join(",")' "${SETTINGS_FILE}")" ||
@@ -132,6 +142,42 @@ copy_installation_files () {
   log INFO 'Installation files have been copied.'
 }
 
+# Restores the clock timezone and NTP service.
+restore_clock () {
+  log INFO 'Restoring clock settings...'
+
+  local timezone=''
+  timezone="$(jq -cer '.time_zone|split(" ")[0]' /tmp/clock.bk)"
+
+  if has_not_failed; then
+    timedatectl set-timezone "${timezone}" 2>&1 &&
+      log INFO "Timezone restored back to ${timezone}." ||
+      log WARN "Unable to restore clock timezone to ${timezone}."
+  else
+    log WARN 'Unable to read timezone from clock backup file.'
+  fi
+  
+  local ntp_service=''
+  ntp_service="$(jq -cer '.ntp_service|if . == "active" then true else false end')"
+
+  if has_not_failed; then
+    timedatectl set-ntp "${ntp_service}" 2>&1 &&
+      log INFO "NTP service restored back to ${ntp_service}." ||
+      log WARN "Unable to restore NTP service to ${ntp_service}."
+  else
+    log WARN 'Unable to read NTP service from clock backup file.'
+  fi
+}
+
+# Restores the pacman mirror list.
+restore_mirrors () {
+  log INFO 'Restoring pacman mirror list...'
+
+  mv /tmp/mirrorlist.bk /etc/pacman.d/mirrorlist &&
+    log INFO 'Pacman mirror list has been restored.' ||
+    log WARN 'Unable to restore the pacman mirror list.'
+}
+
 # Prints dummy log lines to fake tqdm progress bar, when a
 # task gives less lines than it is expected to print and so
 # it resolves with fake lines to emulate completion.
@@ -159,7 +205,9 @@ sync_clock &&
   sync_package_databases &&
   update_keyring &&
   install_kernel &&
-  copy_installation_files
+  copy_installation_files &&
+  restore_clock &&
+  restore_mirrors
 
 log INFO 'Script bootstrap.sh has finished.'
 
