@@ -434,6 +434,7 @@ setup_shell_environment () {
     abort ERROR 'Failed to remove nnn shell hooks.'
 
   printf '%s\n' \
+    '' \
     'if [[ "${SHOW_WELCOME_MSG}" == "true" ]]; then' \
     '  cat /etc/welcome' \
     'fi' \
