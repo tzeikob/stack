@@ -520,7 +520,7 @@ setup_desktop () {
   log INFO 'Rofi configuration has been set.'
 
   # Remove unnecessary configurations from live media
-  local names=(allacritty mpd ncmpcpp nnn)
+  local names=(alacritty mpd ncmpcpp nnn)
 
   local name=''
   for name in "${names[@]}"; do
