@@ -354,7 +354,7 @@ apply_updates () {
     return 2
   fi
 
-  sudo yay --noconfirm -Syu
+  yay --noconfirm -Syu
 
   if has_failed; then
     echo '{"status": -1}' > "${UPDATES_STATE_FILE}"
