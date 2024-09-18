@@ -814,16 +814,6 @@ set_file_permissions () {
   done
 }
 
-# Syncs the package databases.
-sync_package_databases () {
-  log INFO 'Syncing the package databases...'
-
-  sudo pacman -Syy 2>&1 ||
-    abort ERROR 'Failed to synchronize package databases.'
-  
-  log INFO 'Package databases have been synced.'
-}
-
 # Creates the iso file of the live media.
 make_iso_file () {
   log INFO 'Building the archiso file...'
@@ -860,5 +850,4 @@ init &&
   setup_fonts &&
   enable_services &&
   set_file_permissions &&
-  sync_package_databases &&
   make_iso_file
