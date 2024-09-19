@@ -10,4 +10,4 @@ alias rm='rm -i'
 source "${HOME}/.config/nnn/env"
 alias N='sudo -E nnn -dH'
 
-export PATH="${PATH}:/usr/local/stack"
+export PATH="/usr/local/stack:${PATH}"
