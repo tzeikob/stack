@@ -117,7 +117,7 @@ is_not_locale () {
 is_locale_installed () {
   local name="${1}"
 
-  local query=".locales|if length > 0 then .[]|select(. == \"${name}\" else empty end)"
+  local query=".locales|if length > 0 then .[]|select(. == \"${name}\") else empty end"
 
   jq -cer "${query}" "${LANGS_SETTINGS}" &> /dev/null || return 1
 }
