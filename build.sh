@@ -556,39 +556,41 @@ setup_desktop () {
 setup_keyboard () {
   log INFO 'Applying keyboard settings...'
 
-  local keyboard_map='us'
+  local langs_file="${ROOT_FS}/root/.config/stack/langs.json"
+
+  local keyboard_map=''
+  keyboard_map="$(jq -cer '.keymap' "${langs_file}")" ||
+    abort ERROR 'Failed to read .keymap setting.'
 
   sed -i "s/#KEYMAP#/${keyboard_map}/" "${ROOT_FS}/etc/vconsole.conf" ||
     abort ERROR 'Failed to add keymap to vconsole.'
   
   log INFO "Virtual console keymap set to ${keyboard_map}."
+
+  local keyboard_model=''
+  keyboard_model="$(jq -cer '.model' "${langs_file}")" ||
+    abort ERROR 'Failed to read .model setting.'
+
+  local keyboard_options=''
+  keyboard_options="$(jq -cer '.options' "${langs_file}")" ||
+    abort ERROR 'Failed to read .options setting.'
   
+  local keyboard_layouts=''
+  keyboard_layouts="$(jq -cer '[.layouts[]|.code]|join(",")' "${langs_file}")" ||
+    abort ERROR 'Failed to read .layout settings.'
+
+  local layout_variants=''
+  layout_variants="$(jq -cer '[.layouts[]|.variant|if . == "default" then "" else . end]|join(",")' "${langs_file}")" ||
+    abort ERROR 'Failed to read .variant settings.'
+
   local keyboard_conf="${ROOT_FS}/etc/X11/xorg.conf.d/00-keyboard.conf"
 
-  local keyboard_layout='us'
-  local layout_variant='default'
-  local keyboard_model='pc105'
-  local keyboard_options='grp:alt_shift_toggle'
-
   sed -i \
-    -e "s/#LAYOUT#/${keyboard_layout}/" \
     -e "s/#MODEL#/${keyboard_model}/" \
-    -e "s/#OPTIONS#/${keyboard_options}/" "${keyboard_conf}" ||
+    -e "s/#OPTIONS#/${keyboard_options}/" \
+    -e "s/#LAYOUTS#/${keyboard_layouts}/" \
+    -e "s/#VARIANTS#/${layout_variants}/" "${keyboard_conf}" ||
     abort ERROR 'Failed to set Xorg keyboard settings.'
-  
-  local langs_file="${ROOT_FS}/root/.config/stack/langs.json"
-  
-  local query=''
-  query+=".keymap = \"${keyboard_map}\" | "
-  query+=".model = \"${keyboard_model}\" | "
-  query+=".options = \"${keyboard_options}\" | "
-  query+=".layouts[0].code =  \"${keyboard_layout}\" | "
-  query+=".layouts[0].variant =  \"${layout_variant}\""
-
-  local langs_settings=''
-  langs_settings="$(echo '{}' | jq -e "${query}")" &&
-    echo "${langs_settings}" > "${langs_file}" ||
-    abort ERROR 'Failed to save keyboard settings to langs file.'
 
   log INFO 'Keyboard settings have been applied.'
 }

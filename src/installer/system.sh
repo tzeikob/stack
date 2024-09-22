@@ -448,24 +448,16 @@ setup_locales () {
   user_name="$(jq -cer '.user_name' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read user_name setting.'
 
-  local config_home="/home/${user_name}/.config/stack"
+  local langs_file="/home/${user_name}/.config/stack/langs.json"
 
-  mkdir -p "${config_home}" ||
-    abort ERROR "Failed to create folder ${config_home}."
+  local query=".locale = \"${locale}\" | .locales += $lcs"
 
   local langs_settings=''
-  langs_settings="$(echo "${locales}" | jq -e '{locale: .[0], locales: .}')" ||
+  langs_settings="$(jq -e --argjson lcs "${locales}" "${query}" "${langs_file}")" ||
     abort ERROR 'Failed to parse locale settings to JSON object.'
 
-  local langs_file="${config_home}/langs.json"
-
-  if file_exists "${langs_file}"; then
-    langs_settings="$(jq -e --argjson s "${langs_settings}" '. + $s' "${langs_file}")" ||
-      abort ERROR 'Failed to merge locales to langs settings.'
-  fi
-
   echo "${langs_settings}" > "${langs_file}" &&
-    chown -R ${user_name}:${user_name} "${config_home}" ||
+    chown -R ${user_name}:${user_name} "${langs_file}" ||
     abort ERROR 'Failed to save locales into the langs setting file.'
   
   log INFO 'Locales has been save into the langs settings.'
@@ -490,10 +482,6 @@ setup_keyboard () {
 
   log INFO 'Keyboard map keys has been loaded.'
 
-  local keyboard_layout=''
-  keyboard_layout="$(jq -cer '.keyboard_layout' "${SETTINGS_FILE}")" ||
-    abort ERROR 'Unable to read keyboard_layout setting.'
-  
   local keyboard_model=''
   keyboard_model="$(jq -cer '.keyboard_model' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read keyboard_model setting.'
@@ -501,24 +489,23 @@ setup_keyboard () {
   local keyboard_options=''
   keyboard_options="$(jq -cer '.keyboard_options' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read keyboard_options setting.'
+
+  local keyboard_layout=''
+  keyboard_layout="$(jq -cer '.keyboard_layout' "${SETTINGS_FILE}")" ||
+    abort ERROR 'Unable to read keyboard_layout setting.'
+  
+  local layout_variant=''
+  layout_variant="$(jq -cer '.layout_variant|if . == "default" then "" else . end' "${SETTINGS_FILE}")" ||
+    abort ERROR 'Unable to read layout_variant setting.'
   
   local keyboard_conf='/etc/X11/xorg.conf.d/00-keyboard.conf'
 
   sed -i \
-    -e "s/#LAYOUT#/${keyboard_layout}/" \
     -e "s/#MODEL#/${keyboard_model}/" \
-    -e "s/#OPTIONS#/${keyboard_options}/" "${keyboard_conf}" ||
+    -e "s/#OPTIONS#/${keyboard_options}/" \
+    -e "s/#LAYOUTS#/${keyboard_layout}/" \
+    -e "s/#VARIANTS#/${layout_variant}/" "${keyboard_conf}" ||
     abort ERROR 'Failed to set Xorg keyboard settings.'
-  
-  local layout_variant=''
-  layout_variant="$(jq -cer '.layout_variant' "${SETTINGS_FILE}")" ||
-    abort ERROR 'Unable to read layout_variant setting.'
-
-  if not_equals "${layout_variant}" 'default'; then
-    sed -i \
-      "/Option \"XkbLayout\"/a \ \ Option \"XkbVariant\" \"${layout_variant}\"" "${keyboard_conf}" ||
-      abort ERROR 'Failed to set keyboard layout variant.'
-  fi
 
   log INFO 'Xorg keyboard has been set.'
 
@@ -527,27 +514,18 @@ setup_keyboard () {
   user_name="$(jq -cer '.user_name' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read user_name setting.'
   
-  local config_home="/home/${user_name}/.config/stack"
-
-  mkdir -p "${config_home}" ||
-    abort ERROR "Failed to create folder ${config_home}."
-
-  local langs_file="${config_home}/langs.json"
-
-  local langs_settings=''
-  langs_settings="$(jq -cer . "${langs_file}")" ||
-    abort ERROR 'Failed to read langs settings.'
+  local langs_file="/home/${user_name}/.config/stack/langs.json"
   
   local query=''
   query+=".keymap = \"${keyboard_map}\" | "
   query+=".model = \"${keyboard_model}\" | "
   query+=".options = \"${keyboard_options}\" | "
-  query+=".layouts[0].code =  \"${keyboard_layout}\" | "
-  query+=".layouts[0].variant =  \"${layout_variant}\""
+  query+=".layouts = [{.code: \"${keyboard_layout}\" .variant = \"${layout_variant}\"}]"
 
-  langs_settings="$(echo "${langs_settings}" | jq -e "${query}")" &&
+  local langs_settings=''
+  langs_settings="$(jq -e "${query}" "${langs_file}")" &&
     echo "${langs_settings}" > "${langs_file}" &&
-    chown -R ${user_name}:${user_name} "${config_home}" ||
+    chown -R ${user_name}:${user_name} "${langs_file}" ||
     abort ERROR 'Failed to save keyboard to langs settings.'
   
   log INFO 'Keyboard saved to langs settings.'

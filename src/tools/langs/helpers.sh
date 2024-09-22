@@ -94,6 +94,10 @@ pick_installed_locale () {
 #  0 if locale is valid otherwise 1.
 is_locale () {
   local name="${1}"
+
+  if equals "${name}" "C.UTF-8 UTF-8"; then
+    return 0
+  fi
   
   grep -qE "^\s*#\s*${name}\s*$" /etc/locale.gen
 
@@ -596,7 +600,7 @@ save_locale_to_settings () {
       local match=''
       match="$(echo "${locales}" | jq -cr "${query}")"
 
-      # Skip and return if the layout is already saved
+      # Skip and return if the locale is already saved
       if is_not_empty "${match}"; then
         return 0
       fi
@@ -674,7 +678,7 @@ is_locale_not_set () {
   is_locale_set "${1}" && return 1 || return 0
 }
 
-# Save the given system locale into settings.
+# Saves the given system locale into settings.
 # Arguments:
 #  name: a locale name
 save_system_locale_to_settings () {
@@ -733,7 +737,7 @@ apply_locale_settings () {
 
   # Apply the locales set in the settings file
   local locales=''
-  locales="$(jq -cr '.locales[]' "${LANGS_SETTINGS}")"
+  locales="$(jq -cr '.locales[]|select(. != "C.UTF-8 UTF-8")' "${LANGS_SETTINGS}")"
 
   local locale=''
   while read -r locale; do

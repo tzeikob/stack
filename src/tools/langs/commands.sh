@@ -276,6 +276,9 @@ remove_locale () {
   elif is_locale_not_installed "${name}"; then
     log "Locale ${name} is not installed."
     return 2
+  elif equals "${name}" "C.UTF-8 UTF-8"; then
+    log 'Cannot remove the fallback C.UTF-8 locale.'
+    return 2
   elif is_locale_set "${name}"; then
     log 'Cannot remove a locale which is currently set.'
     return 2
