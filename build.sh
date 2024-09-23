@@ -189,6 +189,7 @@ sync_tools () {
 
   rsync -av src/tools/ "${ROOT_FS}/opt/stack/tools" \
     --exclude audio \
+    --exclude bluetooth \
     --exclude cloud \
     --exclude security \
     --exclude system ||
@@ -729,17 +730,6 @@ enable_services () {
     abort ERROR 'Failed to enable the network manager wait services.'
 
   log INFO 'Network manager services enabled.'
-
-  ln -sv "${lib_systemd}/bluetooth.service" "${etc_systemd}/dbus-org.bluez.service" ||
-    abort ERROR 'Failed to enable the bluez service.'
-  
-  mkdir -p "${etc_systemd}/bluetooth.target.wants"
-
-  ln -sv "${lib_systemd}/bluetooth.service" \
-    "${etc_systemd}/bluetooth.target.wants/bluetooth.service" ||
-    abort ERROR 'Failed to enable the bluetooth services.'
-
-  log INFO 'Bluetooth services enabled.'
 
   ln -sv "${lib_systemd}/acpid.service" \
       "${etc_systemd}/multi-user.target.wants/acpid.service" ||

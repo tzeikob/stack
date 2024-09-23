@@ -28,8 +28,8 @@ all:pac:cups
 all:pac:cups-pdf
 all:pac:cups-filters
 all:pac:usbutils
-all:pac:bluez
-all:pac:bluez-utils
+stp:pac:bluez
+stp:pac:bluez-utils
 all:pac:unzip
 all:pac:terminus-font
 all:pac:vim
