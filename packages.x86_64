@@ -115,7 +115,6 @@ all:pac:cool-retro-term
 all:pac:helix
 all:pac:firefox
 all:pac:torbrowser-launcher
-bld:pac:irssi
 all:pac:ttf-font-awesome
 all:pac:noto-fonts-emoji
 all:aur:smenu
