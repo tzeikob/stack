@@ -11,7 +11,9 @@ source src/tools/displays/helpers.sh
 # Outputs:
 #  A verbose list of text data.
 show_status () {
-  xdpyinfo -display "${DISPLAY}" | awk -F': ' '{
+  local space=10
+
+  xdpyinfo -display "${DISPLAY}" | awk -F': ' -v SPC=${space} '{
     gsub(/[ \t]+$/, "", $1);
     gsub(/^[ \t]+/, "", $2);
 
@@ -28,7 +30,9 @@ show_status () {
       default: $1 = ""; break
     }
 
-    if ($1) printf "%-8s  %s\n",$1":",$2
+    frm="%-"SPC"s%s\n"
+
+    if ($1) printf frm,$1":",$2
   }'
 
   if has_failed; then
@@ -39,16 +43,16 @@ show_status () {
   local colors='[]'
 
   if file_exists "${DISPLAYS_SETTINGS}"; then
-    colors="$(jq -cr 'if .colors then .colors else [] end' "${DISPLAYS_SETTINGS}")"
+    colors="$(jq -cr '.colors//[]' "${DISPLAYS_SETTINGS}")"
   fi
 
-  local rate=''
-  rate+='[.resolution_modes[].frequencies]|flatten'
-  rate+=' |[.[]|select(.is_current==true)]'
-  rate+=' |.[0].frequency'
+  local resolution='[.resolution_width, .resolution_height]'
 
-  local offset='[\(.offset_width),\(.offset_height)]'
-  local trans='\(.rotation) \(.reflection|ascii_downcase)'
+  local rate=''
+  rate+='[.resolution_modes[].frequencies] | flatten |'
+  rate+='[.[] | select(.is_current == true)] | .[0].frequency'
+
+  local offset='[.offset_width, .offset_height]'
 
   # Reduce over color settings to match any devices having a profile set
   local color=''
@@ -57,20 +61,24 @@ show_status () {
   color+='  then . + {profile: $i.profile}'
   color+='  else .'
   color+=' end'
-  color+=')|if .profile then .profile else "none" end'
+  color+=') | .profile'
 
   local query=''
-  query+='Output:  \(.device_name)\(if .is_primary then "*" else "" end)\n'
-  query+='Device:  \(.model_name)\n'
-  query+="Mode:    \(.resolution_width)x\(.resolution_height)@\(${rate})Hz\n"
-  query+="Pos:     ${offset} ${trans}\n"
-  query+="Color:   \(if \$c|length > 0 then (${color}) else \"none\" end)"
+  query+='\(.device_name           | lbln("Output"))'
+  query+='\(.is_primary            | lbln("Primary"))'
+  query+='\(.model_name            | lbln("Device"))'
+  query+="\(${resolution}          | lbln("Resolution"))"
+  query+="\(${rate} | unit("Hz")   | lbln("Rate"))"
+  query+="\(${offset}              | lbln("Offset"))"
+  query+="\(.rotation              | lbln("Rotation"))"
+  query+="\(.reflection | downcase | lbln("Reflection"))"
+  query+="\(${color}               | lbl("Color"; "None"))"
 
-  local alias='.model_name as $m|.product_id as $p|.serial_number as $s'
+  local aliases='.model_name as $m | .product_id as $p | .serial_number as $s'
 
-  query=".[]|${alias}|(\"\n${query}\")"
+  query=".[] | ${aliases} | \"\n${query}\""
 
-  find_outputs active | jq -cer --argjson c "${colors}" "${query}"
+  find_outputs active | jq -cer --arg SPC ${space} --argjson c "${colors}" "${query}"
 
   if has_failed; then
     log 'Unable to read active outputs.'
@@ -128,27 +136,31 @@ show_output () {
   local colors='[]'
 
   if file_exists "${DISPLAYS_SETTINGS}"; then
-    colors="$(jq -cr 'if .colors then .colors else [] end' "${DISPLAYS_SETTINGS}")"
+    colors="$(jq -cr '.colors//[]' "${DISPLAYS_SETTINGS}")"
   fi
 
   local base=''
-  base+='Name:       \(.device_name)\n'
-  base+='\(if .is_connected then "Device:     \(.model_name)\n" else "" end)'
-  base+='Connected:  \(.is_connected)\n'
-  base+='Active:     \(.is_connected and .resolution_width)\n'
-  base+='Primary:    \(.is_primary)'
+  base+='\(.device_name                        | lbln("Name"))'
+  base+='\(.model_name                         | olbln("Device"))'
+  base+='\(.is_connected                       | lbln("Connected"))'
+  base+='\(.is_connected and .resolution_width | lbln("Active"))'
+  base+='\(.is_primary                         | lbl("Primary"))'
+
+  local resolution='[.resolution_width, .resolution_height]'
 
   local rate=''
-  rate+='[.resolution_modes[].frequencies]|flatten'
-  rate+=' |[.[]|select(.is_current==true)]'
-  rate+=' |.[0].frequency'
+  rate+='[.resolution_modes[].frequencies] | flatten |'
+  rate+='[.[] | select(.is_current == true)] | .[0].frequency'
+
+  local offset=''
+  offset='[.offset_width, .offset_height]'
 
   local extra=''
-  extra+='Mode:       \(.resolution_width)x\(.resolution_height)\n'
-  extra+="Rate:       \(${rate})Hz\n"
-  extra+='Offset:     [\(.offset_width),\(.offset_height)]\n'
-  extra+='Rotate:     \(.rotation)\n'
-  extra+='Reflect:    \(.reflection|ascii_downcase)'
+  extra+="\(${resolution}          | lbln("Resolution"))"
+  extra+="\(${rate} | unit("Hz")   | lbln("Rate"))"
+  extra+="\(${offset}              | lbln("Offset"))"
+  extra+='\(.rotation              | lbln("Rotation))'
+  extra+='\(.reflection | downcase | lbl("Reflection"))'
 
   # Reduce over color settings to match any devices have a profile set
   local color=''
@@ -156,34 +168,23 @@ show_output () {
   color+='if $i.model_name == $m and $i.product_id == $p and $i.serial_number == $s'
   color+=' then . + {profile: $i.profile}'
   color+=' else . '
-  color+='end)|if .profile then .profile else "none" end'
+  color+='end) | .profile | lbl("Color"; "None")'
 
   local modes=''
-  modes+='.resolution_modes[]|'
-  modes+='"\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)" as $mode|"'
-  modes+='\($mode)'
-  modes+='\($mode|if (10-length)>0 then (" "*(10-length)) else "" end)'
-  modes+=' [\([.frequencies[]|.frequency]|join(", "))]"'
-
-  modes="[${modes}]|join(\"\n            \")"
+  modes+='"\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)" '
+  modes+='[\([.frequencies[] | .frequency] | join(", "))]"'
 
   local query=''
   query+="${base}"
-  query+='\(if .is_connected and .resolution_width != null'
-  query+=" then \"\n${extra}\""
-  query+=' else "" end)'
-  query+='\(if .is_connected'
-  query+=" then \"\nColor:      \(if \$c|length > 0 then (${color}) else \"none\" end)\""
-  query+=' else "" end)'
-  query+='\(if .resolution_modes|length != 0'
-  query+=" then \"\nModes:      \(${modes})\""
-  query+=' else "" end)'
+  query+="\(if .is_connected and .resolution_width then \"\n${extra}\" else "" end)"
+  query+="\(if .is_connected' then \"\n\(${color})\" else "" end)"
+  query+="\(.resolution_modes//[] | [${modes}] | "\n" + tree("Modes"))"
 
-  local alias='.model_name as $m|.product_id as $p|.serial_number as $s'
+  local aliases='.model_name as $m | .product_id as $p | .serial_number as $s'
 
-  query=".[]|${alias}|select(.device_name==\"${name}\")|(\"${query}\")"
+  query=".[] | ${aliases} | select(.device_name == \"${name}\") | \"${query}\""
 
-  find_outputs | jq -cer --argjson c "${colors}" "${query}"
+  find_outputs | jq -cer --arg SPC 13 --argjson c "${colors}" "${query}"
 
   if has_failed; then
     log "Output ${name} not found."
@@ -205,16 +206,15 @@ list_outputs () {
   fi
 
   local query=''
-  query+='Name:       \(.device_name)\n'
-  query+='\(if .is_connected then "Device:     \(.model_name)\n" else "" end)'
-  query+='Connected:  \(.is_connected)\n'
-  query+='Active:     \(.is_connected and .resolution_width)\n'
-  query+='Primary:    \(.is_primary)\n'
-
-  query=".[]|(\"${query}\")"
+  query+='\(.device_name                        | lbln("Name"))'
+  query+='\(.model_name                         | olbln("Device"))'
+  query+='\(.is_connected                       | lbln("Connected"))'
+  query+='\(.is_connected and .resolution_width | lbln("Active"))'
+  query+='\(.is_primary                         | lbl("Primary"))'
+  query=".[] |  \"${query}\""
 
   local outputs=''
-  outputs="$(find_outputs "${status}" | jq -cr "${query}")" || return 1
+  outputs="$(find_outputs "${status}" | jq -cr --arg SPC 12 "${query}")" || return 1
 
   if is_empty "${outputs}"; then
     log "No ${status:-\b} outputs have found."
@@ -387,9 +387,9 @@ set_on () {
   fi
 
   # Find the last in order active monitor
-  local query='[.[]|select(.is_connected and .resolution_width)]'
-  query+='|sort_by(.offset_height, .offset_width)'
-  query+='|if length > 0 then last|.device_name else "" end'
+  local query='[.[] | select(.is_connected and .resolution_width)] |'
+  query+='sort_by(.offset_height, .offset_width) |'
+  query+='if length > 0 then last | .device_name else "" end'
   
   local last=''
   last="$(find_outputs | jq -cr "${query}")" || return 1
@@ -698,7 +698,7 @@ mirror_output () {
   fi
 
   local match=''
-  match="$(echo "${resolutions}" | jq -cr ".[]|select(. == \"${resolution}\")")"
+  match="$(echo "${resolutions}" | jq -cr ".[] | select(. == \"${resolution}\")")"
 
   if is_empty "${match}"; then
     log "Resolution ${resolution} is not supported by all targets."
@@ -714,12 +714,12 @@ mirror_output () {
   rot="$(echo "${source}" | jq -r '.rotation')"
 
   local ref=''
-  ref="$(echo "${source}" | jq -r '.reflection|ascii_downcase' |
+  ref="$(echo "${source}" | jq -r '.reflection | downcase' |
     awk '{gsub(/( |and|axis)/,"",$0); print}')"
 
-  local query='$ARGS.positional|.[]'
-  query+="|\"--output \(.) --mode ${resolution} --pos ${pos} --rotate ${rot} --reflect ${ref}\""
-  query="[${query}]|join(\" \")"
+  local query='$ARGS.positional | .[] |'
+  query+="\"--output \(.) --mode ${resolution} --pos ${pos} --rotate ${rot} --reflect ${ref}\""
+  query="[${query}] | join(\" \")"
   
   # Convert targets array to a xrandr command arguments
   local mirrors=''
@@ -752,7 +752,7 @@ mirror_output () {
   fi
 
   # Convert targets into a string of comma separated output names
-  targets="$(jq -ncer '$ARGS.positional|join(", ")' --args -- "${targets[@]}")" || return 1
+  targets="$(jq -ncer '$ARGS.positional | join(", ")' --args -- "${targets[@]}")" || return 1
   
   log "Output ${name} mirrored to ${targets}."
 }
@@ -885,14 +885,13 @@ save_layout () {
   device+='end'
 
   local res=''
-  res+='.resolution_modes[]'
-  res+=' |"\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)" as $res'
-  res+=' |.frequencies[]|select(.is_current)'
-  res+=' |"--mode \($res) --rate \(.frequency)"'
+  res+='.resolution_modes[] |'
+  res+='"\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)" as $res |'
+  res+='.frequencies[] | select(.is_current) | "--mode \($res) --rate \(.frequency)"'
 
   local pos='--pos \(.offset_width)x\(.offset_height)'
   local rotate='--rotate \(.rotation)'
-  local reflect='--reflect \(.reflection|ascii_downcase|gsub("( |and|axis)";""))'
+  local reflect='--reflect \(.reflection | downcase | gsub("( |and|axis)";""))'
   local primary='if .is_primary then "--primary" else "" end'
 
   local query=''
@@ -901,7 +900,7 @@ save_layout () {
   query+=" else (${device}) * {mode: \"--off\"} "
   query+='end'
 
-  query="map({(.device_name|tostring): (${query})})|add"
+  query="map({(.device_name | tostring): (${query})}) | add"
 
   local map=''
   map="$(echo "${outputs}" | jq -cer "${query}")"
@@ -935,7 +934,7 @@ restore_layout () {
   fi
 
   local layouts=''
-  layouts="$(jq '.layouts|if . then . else empty end' "${DISPLAYS_SETTINGS}")"
+  layouts="$(jq '.layouts//empty' "${DISPLAYS_SETTINGS}")"
 
   if is_empty "${layouts}"; then
     log 'No layouts have found.'
@@ -958,10 +957,8 @@ restore_layout () {
   sig="$(get_sig "${outputs}")" || return 1
 
   # Search for a layout matching the current mapping
-  local query='.[]'
-  query+="|select(.sig == \"${sig}\")|.map|to_entries[]"
-  query+='|"--output \(.key) \(.value.mode)"'
-  query="[${query}]|join(\" \")"
+  local query=".[] | select(.sig == \"${sig}\") | .map | to_entries[] | \"--output \(.key) \(.value.mode)\""
+  query="[${query}] | join(\" \")"
 
   local layout=''
   layout="$(echo "${layouts}" | jq -cr "${query}")"
@@ -1008,17 +1005,15 @@ fix_layout () {
   fi
 
   # Set any disconnected monitors off
-  local query='.[]|select(.is_connected|not)'
-  query+='|"--output \(.device_name) --off"'
-  query="[${query}]|join(\" \")"
+  local query='.[] | select(.is_connected | not) | "--output \(.device_name) --off"'
+  query="[${query}] | join(\" \")"
 
   local disconnected=''
   disconnected="$(echo "${outputs}" | jq -cr "${query}")"
 
   # Set any inactive monitors off
-  local query='.[]|select(.is_connected and .resolution_width == null)'
-  query+='|"--output \(.device_name) --off"'
-  query="[${query}]|join(\" \")"
+  local query='.[] | select(.is_connected and .resolution_width == null) | "--output \(.device_name) --off"'
+  query="[${query}] | join(\" \")"
 
   local inactive=''
   inactive="$(echo "${outputs}" | jq -cr "${query}")"
@@ -1036,15 +1031,14 @@ fix_layout () {
   fi
 
   # Set new primary monitor if primary has disconnected
-  local query='.[]|select((.is_connected|not) and .is_primary)|.device_name'
+  local query='.[] | select((.is_connected | not) and .is_primary) | .device_name'
 
   local disconnected_primary=''
   disconnected_primary="$(echo "${outputs}" | jq -cr "${query}")"
 
   # Set as primary the first found active monitor
   if is_not_empty "${disconnected_primary}"; then
-    local query='[.[]|select(.is_connected and .resolution_width)]'
-    query+='|.[0].device_name'
+    local query='[.[] | select(.is_connected and .resolution_width)] | .[0].device_name'
 
     local new_primary=''
     new_primary="$(echo "${outputs}" | jq -cr "${query}")"
@@ -1099,7 +1093,7 @@ delete_layout () {
   fi
 
   local settings=''
-  settings="$(jq -e "del(.layouts|.[${index}])" "${DISPLAYS_SETTINGS}")"
+  settings="$(jq -e "del(.layouts | .[${index}])" "${DISPLAYS_SETTINGS}")"
 
   if has_failed; then
     log 'Failed to delete layout.'
@@ -1121,24 +1115,27 @@ list_layouts () {
   fi
 
   local map=''
-  map+='\(.key):\(.key|if (9-length)>0 then (" "*(9-length)) else "" end)'
-  map+='\(if .value.model_name then "\(.value.model_name) " else "" end)'
-  map+='\(if .value.mode == "--off" then "[OFF]" else "[ON]" end)'
-  map="\([.value.map|to_entries[]|\"${map}\"]|join(\"\n\"))"
+  map+='if .value.mode != "--off"'
+  map+=' then .key as $k | .value.model_name | lbl($k; "Unknown")'
+  map+=' else ""'
+  map+='end'
+
+  map="[.value.map | to_entries[] | \"\(${map})\"] | join(\"\n\")"
 
   local layout=''
-  layout+='Index:    \(.key)\n'
-  layout+="${map}"
+  layout+='\(.key                   | lbln("Index"))'
+  layout+='\(.value.sig | uppercase | lbln("SIG"))'
+  layout+="\(${map})"
 
   local query=''
-  query+='if .layouts|length > 0'
-  query+=" then .layouts|to_entries[]|\"${layout}\""
+  query+='if length > 0 '
+  query+=" then to_entries[] | \"${layout}\""
   query+=' else "No layouts have found"'
   query+='end'
 
-  query="[${query}]|join(\"\n\n\")"
+  query=".layouts//[] | [${query}] | join(\"\n\n\")"
 
-  jq -cer "${query}" "${DISPLAYS_SETTINGS}" || return 1
+  jq -cer --arg SPC 10 "${query}" "${DISPLAYS_SETTINGS}" || return 1
 }
 
 # Sets the color profile of the device connected to the output
@@ -1195,7 +1192,7 @@ set_color () {
   fi
 
   local index=''
-  index="$(echo "${output}" | jq -cer ".index")" || return 1
+  index="$(echo "${output}" | jq -cer '.index')" || return 1
 
   local result=''
   result="$(xcalib -d "${DISPLAY}" -s 0 -o "${index}" "${COLORS_HOME}/${profile}" 2>&1)"
@@ -1245,7 +1242,7 @@ reset_color () {
   fi
 
   local index=''
-  index="$(echo "${output}" | jq -cer ".index")" || return 1
+  index="$(echo "${output}" | jq -cer '.index')" || return 1
 
   local result=''
   result="$(xcalib -d "${DISPLAY}" -s 0 -o "${index}" -c 2>&1)"
@@ -1295,7 +1292,7 @@ delete_color () {
   fi
 
   local settings='{}'
-  settings="$(jq -e "del(.colors|.[${index}])" "${DISPLAYS_SETTINGS}")"
+  settings="$(jq -e "del(.colors | .[${index}])" "${DISPLAYS_SETTINGS}")"
 
   if has_failed; then
     log 'Failed to delete color setting.'
@@ -1318,21 +1315,21 @@ list_colors () {
   fi
 
   local color=''
-  color+='Index:    \(.key)\n'
-  color+='Device:   \(.value.model_name)\n'
-  color+='Product:  \(.value.product_id)\n'
-  color+='Serial:   \(.value.serial_number)\n'
-  color+='Profile:  \(.value.profile)'
+  color+='\(.key                 | lbln("Index"))'
+  color+='\(.value.model_name    | lbln("Device"))'
+  color+='\(.value.product_id    | lbln("Product"))'
+  color+='\(.value.serial_number | lbln("Serial"))'
+  color+='\(.value.profile       | lbl("Profile"))'
 
   local query=''
-  query+='if .colors|length > 0'
-  query+=" then .colors|to_entries[]|\"${color}\""
+  query+='if length > 0'
+  query+=" then to_entries[] | \"${color}\""
   query+=' else "No color settings have found"'
   query+='end'
 
-  query="[${query}]|join(\"\n\n\")"
+  query="[.colors//[] | ${query}] | join(\"\n\n\")"
 
-  jq -cer "${query}" "${DISPLAYS_SETTINGS}" || return 1
+  jq -cer --arg SPC 10 "${query}" "${DISPLAYS_SETTINGS}" || return 1
 }
 
 # Restores the color settings of any devices currently
@@ -1344,7 +1341,7 @@ restore_colors () {
   fi
 
   local colors=''
-  colors="$(jq -cr 'if .colors then .colors else [] end' "${DISPLAYS_SETTINGS}")" || return 1
+  colors="$(jq -cr '.colors//[]' "${DISPLAYS_SETTINGS}")" || return 1
 
   local len=0
   len="$(echo "${colors}" | jq -cer 'length')" || return 1
@@ -1361,10 +1358,9 @@ restore_colors () {
   xcalib_cmd+="\"xcalib -d ${DISPLAY} -s 0 -o \(.index) ${COLORS_HOME}/\(.profile)\""
 
   local query=''
-  query+='. + $c'
-  query+=' |group_by([.model_name, .product_id, .serial_number])'
-  query+=" |map({index: (.[0].index), profile: (.[].profile|select(.))})[]"
-  query+=" |${xcalib_cmd}"
+  query+='. + $c | group_by([.model_name, .product_id, .serial_number]) |'
+  query+="map({index: (.[0].index), profile: (.[].profile | select(.))})[] |"
+  query+="${xcalib_cmd}"
 
   local xcalib_cmds=''
   xcalib_cmds="$(echo "${outputs}" | jq -cr --argjson c "${colors}" "${query}")" || return 1

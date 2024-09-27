@@ -11,29 +11,31 @@ source src/tools/clock/helpers.sh
 # Outputs:
 #  A verbose list of text data.
 show_status () {
-  local query=''
-  query+='Local:   \(.local_time)\n'
-  query+='UTC:     \(.universal_time)\n'
-  query+='RTC:     \(.rtc_time)\n'
-  query+='Epoch:   \(.epoch_utc)\n'
-  query+='Zone:    \(.time_zone)\n'
-  query+='Clock:   \(if .rtc_in_local_tz then "Local" else "UTC" end)\n'
-  query+='Synced:  \(.system_clock_synchronized)\n'
-  query+='NTP:     \(.ntp_service)'
+  local space=9
 
-  timedatectl | jc --timedatectl | jq -cer "\"${query}\"" || return 1
+  local query=''
+  query+='\(.local_time                                     | lbln("Local"))'
+  query+='\(.universal_time                                 | lbln("UTC"))'
+  query+='\(.rtc_time                                       | lbln("RTC"))'
+  query+='\(.epoch_utc                                      | lbln("Epoch"))'
+  query+='\(.time_zone                                      | lbln("Zone"))'
+  query+='\(if .rtc_in_local_tz then "Local" else "UTC" end | lbln("Clock"))'
+  query+='\(.system_clock_synchronized                      | lbln("Synced"))'
+  query+='\(.ntp_service                                    | lbl("NTP"))'
+
+  timedatectl | jc --timedatectl | jq -cer --arg SPC ${space} "\"${query}\"" || return 1
 
   local ntp_status=''
   ntp_status="$(timedatectl timesync-status 2> /dev/null)"
 
   if has_not_failed; then
     local query=''
-    query+='Server:  \(.server)\n'
-    query+='Poll:    \(.poll_interval)\n'
-    query+='Leap:    \(.leap)'
+    query+='\(.server        | lbln("Server"))'
+    query+='\(.poll_interval | lbln("Poll"))'
+    query+='\(.leap          | lbl("Leap"))'
 
     echo
-    echo "${ntp_status}" | jc --timedatectl | jq -cer "\"${query}\""
+    echo "${ntp_status}" | jc --timedatectl | jq -cer --arg SPC ${space} "\"${query}\""
   fi
 }
 

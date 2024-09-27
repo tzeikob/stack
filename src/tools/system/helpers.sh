@@ -9,7 +9,7 @@ source src/commons/validators.sh
 # Returns:
 #  A JSON object with the pacman and AUR list packages.
 find_installed_packages () {
-  local query='[inputs|split(" ")|{name: .[0], version: .[1]}]'
+  local query='[inputs | split(" ") | {name: .[0], version: .[1]}]'
   
   local pacman_pkgs=''
   pacman_pkgs="$(pacman -Qn | jq -Rn "${query}")" || return 1
@@ -25,10 +25,11 @@ find_installed_packages () {
 #  A JSON list of pacman packages.
 find_outdated_pacman_packages () {
   local query=''
-  query+='name: .[0]|split(" ")|.[0],'
-  query+='current: .[0]|split(" ")|.[1],'
+  query+='name: .[0] | split(" ") | .[0],'
+  query+='current: .[0] | split(" ") | .[1],'
   query+='latest: .[1]'
-  query="[inputs|split(\" -> \")|{${query}}]"
+
+  query="[inputs | split(\" -> \") | {${query}}]"
   
   local pacman_pkgs=''
   pacman_pkgs="$(checkupdates 2> /dev/null | jq -Rn "${query}")"
@@ -47,10 +48,10 @@ find_outdated_pacman_packages () {
 #  A JSON list of AUR packages.
 find_outdated_aur_packages () {
   local query=''
-  query+='name: .[0]|split(" ")|.[0],'
-  query+='current: .[0]|split(" ")|.[1],'
+  query+='name: .[0] | split(" ") | .[0],'
+  query+='current: .[0] | split(" ") | .[1],'
   query+='latest: .[1]'
-  query="[inputs|split(\" -> \")|{${query}}]"
+  query="[inputs | split(\" -> \") | {${query}}]"
 
   local aur_pkgs=''
   aur_pkgs="$(yay -Qum 2> /dev/null | jq -Rn "${query}")"

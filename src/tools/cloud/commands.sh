@@ -17,7 +17,7 @@ list_remotes () {
   local service="${1}"
 
   local query=''
-  query="[.[]|select(.service|test(\"${service}\"; \"i\"))]"
+  query="[.[] | select(.service | test(\"${service}\"; \"i\"))]"
 
   local remotes=''
   remotes="$(find_remotes | jq -cer "${query}")" || return 1
@@ -31,13 +31,12 @@ list_remotes () {
   fi
 
   local query=''
-  query+='Name:     \(.name)\n'
-  query+='Service:  \(.service)\n'
-  query+='Mounted:  \(.is_mounted)'
-  query+='\(if .is_mounted then "\nMount:    \(.mount_point)" else "" end)'
-  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+  query+='\(.name        | lbln("Name"))'
+  query+='\(.mount_point | olbln("Mount"))'
+  query+='\(.service     | lbl("Service"))'
+  query="[.[] | \"${query}\"] | join(\"\n\n\")"
 
-  echo "${remotes}" | jq -cer "${query}" || return 1
+  echo "${remotes}" | jq -cer --arg SPC 10 "${query}" || return 1
 }
 
 # Creates a new google drive remote with the given name.
@@ -306,7 +305,7 @@ mount_all () {
   fi
 
   # Iterate over remote names and mount remotes one by one
-  remotes="$(echo "${remotes}" | jq -cr '.[]|.name')" || return 1
+  remotes="$(echo "${remotes}" | jq -cr '.[] | .name')" || return 1
 
   local failed=0
   local remote=''

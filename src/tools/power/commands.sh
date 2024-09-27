@@ -12,56 +12,48 @@ source src/tools/power/helpers.sh
 # Outputs:
 #  A verbose list of text data.
 show_status () {
-  local query=''
-  query+='"Adapter:      \(."on-line"|if . then "on" else "off" end)"'
+  local space=15
 
-  find_adapter | jq -cer "${query}" || return 1
+  local query='if ."on-line" then "on" else "off" end | lbln("Adapter")'
+
+  find_adapter | jq -cer --arg SPC ${space} "${query}" || return 1
 
   local battery=''
   battery="$(find_battery)" || return 1
 
   if is_not_empty "${battery}"; then
     local query=''
-    query+='Battery:      yes\n'
-    query+='State:        \(.state|ascii_downcase)\n'
-    query+='Charge:       \(.charge_percent)%'
-    query+="\(.design_capacity_mah|if . then \"\nCapacity:     \(.)mAh\" else \"\" end)"
-    query="\"${query}\""
+    query+='\("yes"                              | lbln("Battery"))'
+    query+='\(.state | downcase)                 | lbln("State"))'
+    query+='\(.charge_percent | unit("%")        | lbln("Charge"))'
+    query+="\(.design_capacity_mah | unit("mAh") | lbln("Capacity"))"
 
-    echo "${battery}" | jq -cer "${query}" || return 1
+    echo "${battery}" | jq -cer --arg SPC ${space} "\"${query}\"" || return 1
   else
-    echo 'Battery:      no'
+    echo '"no"' | jq -cer --arg SPC ${space} 'lbln("Battery")' || return 1
   fi
 
   if file_exists '/sys/class/power_supply/BAT0/current_now'; then
     local current_now=''
     current_now="$(< /sys/class/power_supply/BAT0/current_now)"
-    echo "Current:      ${current_now}mAh"
+
+    echo "\"${current_now}\"" | jq -cer --arg SPC ${space} 'unit("mAh") | lbln("Current")'
   fi
 
   if file_exists '/sys/class/power_supply/BAT0/charge_now'; then
     local charge_now=''
     charge_now="$(< /sys/class/power_supply/BAT0/charge_now)"
-    echo "Load:         ${charge_now}mAh"
+
+    echo "\"${charge_now}\"" | jq -cer --arg SPC ${space} 'unit("mAh") | lbln("Load")'
   fi
 
-  local query='.[]|select(.unit == "acpid.service")|"ACPID:        \(.active)"'
+  local query='.[] | select(.unit == "acpid.service") | .active | olbln("ACPID")'
 
-  local acpid_status=''
-  acpid_status="$(systemctl -a | jc --systemctl | jq -cr "${query}")" || return 1
+  systemctl -a | jc --systemctl | jq -cr --arg SPC ${space} "${query}" || return 1
 
-  if is_not_empty "${acpid_status}"; then
-    echo "${acpid_status}"
-  fi
+  local query='.[] | select(.unit == "tlp.service") | .active | olbln("TLP")'
 
-  local query='.[]|select(.unit == "tlp.service")|"TLP:          \(.active)"'
-
-  local tlp_status=''
-  tlp_status="$(systemctl -a | jc --systemctl | jq -cr "${query}")" || return 1
-
-  if is_not_empty "${tlp_status}"; then
-    echo "${tlp_status}"
-  fi
+  systemctl -a | jc --systemctl | jq -cr "${query}" || return 1
 
   local config_file='/etc/tlp.d/00-main.conf'
 
@@ -74,26 +66,19 @@ show_status () {
     stop="$(grep -E "^STOP_CHARGE_THRESH_BAT${index}=" "${config_file}" | cut -d '=' -f 2)"
     
     if is_not_empty "${start}" || is_not_empty "${stop}"; then
-      echo "Charge[${index}]:    [${start:-0}%, ${stop:-100}%]"
+      printf "%-${space}s[%s, %s]\n" "Charge[${index}]:" "${start:-0}%" "${stop:-100}%"
     fi
   done
 
   if file_exists "${POWER_SETTINGS}"; then
-    local query='.screensaver.interval|if . then . else "" end'
+    local query='.screensaver.interval | unit("mins") | lbln("Screensaver"; "Off")'
 
-    local screensaver=''
-    screensaver="$(jq -cr "${query}" "${POWER_SETTINGS}")" || return 1
-    
-    if is_given "${screensaver}" && is_true "${screensaver} > 0"; then
-      echo "Screensaver:  ${screensaver} mins"
-    else
-      echo 'Screensaver:  off'
-    fi
+    jq -cr --arg SPC ${space} "${query}" "${POWER_SETTINGS}" || return 1
   else
-    echo 'Screensaver:  off'
+    echo '"off"' | jq -cer --arg SPC ${space} 'lbln("Screensaver")'
   fi
 
-  loginctl show-session | awk '{
+  loginctl show-session | awk -v SPC=${space} '{
     match($0,/(.*)=(.*)/,a)
 
     if (a[1] == "Docked") {
@@ -104,12 +89,14 @@ show_status () {
       next
     }
 
-    printf  "%-12s  %s\n", a[1]":", a[2]
+    frm="%-"SPC"s%s\n"
+
+    printf frm, a[1]":", a[2]
   }' || return 1
 
   echo
 
-  loginctl show-session | awk '{
+  loginctl show-session | awk awk -v SPC=${space} '{
     match($0,/(.*)=(.*)/,a)
 
     if (a[1] == "HandlePowerKey") {
@@ -130,7 +117,9 @@ show_status () {
       next
     }
 
-    printf  "%-13s  %s\n", a[1]":", a[2]
+    frm="%-"SPC"s%s\n"
+
+    printf frm, a[1]":", a[2]
   }' || return 1
 }
 
@@ -271,7 +260,7 @@ init_screensaver () {
   local interval=5
 
   if file_exists "${POWER_SETTINGS}"; then
-    interval="$(jq '.screensaver.interval|if . then . else 5 end' "${POWER_SETTINGS}")"
+    interval="$(jq '.screensaver.interval//5' "${POWER_SETTINGS}")"
   fi
  
   if is_true "${interval} > 0"; then
@@ -392,7 +381,7 @@ set_charging () {
   done
 
   # Restart TLP only if it is enabled
-  local query='.[]|select(.unit == "tlp.service")'
+  local query='.[] | select(.unit == "tlp.service")'
 
   local tlp_process=''
   tlp_process="$(systemctl -a | jc --systemctl | jq -cr "${query}")" || return 1

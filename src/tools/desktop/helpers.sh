@@ -50,8 +50,9 @@ find_wallpapers () {
 # Outputs:
 #  A menu of wallpaper filenames.
 pick_wallpaper () {
-  local query='{key: .name, value: "\(.name) [\(.resolution)]"}'
-  query="[.[]|${query}]"
+  local option='{key: .name, value: "\(.name) [\(.resolution | dft("..."))]"}'
+
+  local query="[.[] | ${option}]"
 
   local wallpapers=''
   wallpapers="$(find_wallpapers | jq -cer "${query}")" || return 1
@@ -126,7 +127,7 @@ find_pointer () {
 
   local id=''
   id="$(find_pointers |
-    jq -cer ".[]|select(.name == \"${name}\")|.id")" || return 1
+    jq -cer ".[] | select(.name == \"${name}\") | .id")" || return 1
 
   local pointer=''
   pointer+="\"id\":\"${id}\","
@@ -183,7 +184,8 @@ pick_pointer () {
     return 2
   fi
 
-  local query='[.[]|{key: .name, value: "\(.name)"}]'
+  local query='[.[] | {key: .name, value: "\(.name)"}]'
+
   pointers="$(echo "${pointers}" | jq -cer "${query}")" || return 1
 
   pick_one 'Select pointer name:' "${pointers}" vertical || return $?
@@ -227,7 +229,7 @@ find_tablets () {
 find_tablet () {
   local name="${1}"
 
-  local query=".[]|select(.name == \"${name}\")"
+  local query=".[] | select(.name == \"${name}\")"
 
   local tablet=''
   tablet="$(find_tablets | jq -cer "${query}")" || return 1
@@ -261,7 +263,7 @@ find_tablet () {
 is_tablet () {
   local name="${1}"
 
-  local query=".[]|select(.name == \"${name}\")"
+  local query=".[] | select(.name == \"${name}\")"
 
   local tablet=''
   tablet="$(find_tablets | jq -cer "${query}")" || return 1
@@ -317,7 +319,8 @@ pick_tablet () {
     return 2
   fi
 
-  local query='[.[]|{key: .name, value: .name}]'
+  local query='[.[] | {key: .name, value: .name}]'
+
   tablets="$(echo "${tablets}" | jq -cer "${query}")" || return 1
 
   pick_one 'Select tablet name:' "${tablets}" vertical || return $?
@@ -378,11 +381,11 @@ save_tablet_scale_to_settings () {
 
   if file_exists "${DESKTOP_SETTINGS}"; then
     local tablets=''
-    tablets="$(jq '.tablets|if . then . else empty end' "${DESKTOP_SETTINGS}")"
+    tablets="$(jq '.tablets//empty' "${DESKTOP_SETTINGS}")"
 
     if is_given "${tablets}"; then
       local query=''
-      query=".tablets[]|select(.name == \"${name}\")"
+      query=".tablets[] | select(.name == \"${name}\")"
 
       local match=''
       match="$(jq "${query}" "${DESKTOP_SETTINGS}")"
@@ -390,7 +393,7 @@ save_tablet_scale_to_settings () {
       if is_empty "${match}"; then
         query=".tablets += [${tablet}]"
       else
-        query="(${query}|.scale)|= ${scale}"
+        query="(${query} | .scale)|= ${scale}"
       fi
 
       settings="$(jq -e "${query}" "${DESKTOP_SETTINGS}")" || return 1
@@ -412,10 +415,9 @@ save_tablet_scale_to_settings () {
 #  A menu of display namesi and desktop.
 pick_mapping_target () {
   # Convert outputs list into an array of {key, value} options
-  local key='\(.device_name)'
-  local value='\(.device_name):[\(if .model_name then .model_name else "NA" end)]'
+  local option='{key: .device_name, value: "\(.device_name):[\(.model_name | dft("..."))]"}'
 
-  local query="[.[]|{key: \"${key}\", value: \"${value}\"}]"
+  local query="[.[] | ${option}]"
 
   local options=''
   options="$(find_outputs active | jq -cer "${query}")" || return 1
@@ -541,7 +543,7 @@ is_not_backend_engine () {
 # Outputs:
 #  A menu of workspace indexes.
 pick_workspace () {  
-  local query='[.[]|{key: ., value: .}]'
+  local query='[.[] | {key: ., value: .}]'
   
   local workspaces=''
   workspaces="$(bspc query -D --names | jq --slurp . | jq -cr "${query}")" || return 1
@@ -565,7 +567,7 @@ pick_workspace () {
 workspace_exists () {
   local index="${1}"
 
-  local query=".[]|select(. == ${index})"
+  local query=".[] | select(. == ${index})"
 
   bspc query -D --names | jq --slurp . | jq -cer "${query}" &> /dev/null || return 1  
 }
@@ -578,7 +580,7 @@ workspace_not_exists () {
 # Removes any dangling monitor left after a display
 # monitor shut down via xrandr commands.
 remove_dangling_monitors () {
-  local query='[.[]|.device_name]|join(" ")'
+  local query='[.[] | .device_name] | join(" ")'
 
   local active=''
   active="$(find_outputs active | jq -cer "${query}" )" || return 1

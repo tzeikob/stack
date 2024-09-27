@@ -14,7 +14,9 @@ source src/tools/notifications/helpers.sh
 # Outputs:
 #  A verbose list of text data.
 show_status () {
-  passwd -S | awk '{
+  local space=18
+
+  passwd -S | awk -v SPC=${space} '{
     status="protected"
     if ($2 == "L") {
       status="locked"
@@ -22,31 +24,37 @@ show_status () {
       status="no password"
     }
 
-    print "Password:         "status
-    print "Last Changed:     "$3
+    frm="%-"SPC"s%s\n"
+
+    printf frm, "Password:", "status"
+    printf frm, "Last Changed:", $3
   }' || return 1
 
-  cat /etc/security/faillock.conf | awk '{
+  cat /etc/security/faillock.conf | awk -v SPC=${space} '{
+    frm="%-"SPC"s%s\n"
+
     if ($0 ~ /^deny =.*/) {
-      print "Failed Attempts:  "$3
+      printf frm, "Failed Attempts:", $3
     } else if ($0 ~ /^unlock_time =.*/) {
-      print "Unblock Time:     "$3" secs"
+      printf frm, "Unblock Time:", $3"secs"
     } else if ($0 ~ /^fail_interval =.*/) {
-      print "Fail Interval:    "$3" secs"
+      printf frm, "Fail Interval:", $3"secs"
     }
   }' || return 1
 
   local locker_process=''
 
   locker_process="$(ps ax -o 'command' | jc --ps |
-    jq '.[]|select(.command|test("^xautolock"))|.command')" || return 1
+    jq '.[] | select(.command | test("^xautolock")) | .command')" || return 1
   
   if is_empty "${locker_process}"; then
-    echo 'Screen Locker:    off'
+    printf "%-${space}s%s\n" 'Screen Locker:' 'off'
   else
-    echo "${locker_process}" | awk '{
+    echo "${locker_process}" | awk -v SPC=${space} '{
       match($0,/.* -time (.*) -corners.*/,a)
-        print "Screen Locker:    "a[1]" mins"
+
+      frm="%-"SPC"s%s\n"
+      printf frm, "Screen Locker:", a[1]"mins"
     }'
   fi
 }
@@ -100,7 +108,7 @@ init_screen_locker () {
   local interval=8
 
   if file_exists "${SECURITY_SETTINGS}"; then
-    interval="$(jq '.screen_locker.interval|if . then . else 8 end' "${SECURITY_SETTINGS}")"
+    interval="$(jq '.screen_locker.interval//8' "${SECURITY_SETTINGS}")"
   fi
 
   # Kill possibly running locker instances

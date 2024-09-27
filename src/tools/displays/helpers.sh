@@ -56,15 +56,15 @@ find_outputs () {
 
   # Copy EDID model data to the root level
   local model=''
-  model+='model_name: (.value.props.EdidModel.name|if . and . != "" then . else "Unknown" end),'
-  model+='product_id: (.value.props.EdidModel.product_id|if . and . != "" then . else "Unknown" end),'
-  model+='serial_number: (.value.props.EdidModel.serial_number|if . and . != "" then . else "Unknown" end)'
+  model+='model_name: .value.props.EdidModel.name | dft("Unknown"),'
+  model+='product_id: .value.props.EdidModel.product_id | dft("Unknown"),'
+  model+='serial_number: .value.props.EdidModel.serial_number | dft("Unknown")'
   model="{${model}}"
 
   local query=''
-  query+='.screens[]|select(.screen_number == 0)'
-  query+=" |.devices[]|select(${criteria})"
-  query="[[${query}]|to_entries[]|{index: .key} + .value + ${model}]"
+  query+=".screens[] | select(.screen_number == 0) | .devices[] | select(${criteria})"
+
+  query="[[${query}] | to_entries[] | {index: .key} + .value + ${model}]"
 
   xrandr --props | jc --xrandr | jq -cer "${query}" || return 1
 }
@@ -77,7 +77,7 @@ find_outputs () {
 find_output () {
   local name="${1}"
 
-  local query=".[]|select(.device_name == \"${name}\")"
+  local query=".[] | select(.device_name == \"${name}\")"
 
   find_outputs | jq -cer "${query}" || return 1
 }
@@ -102,7 +102,8 @@ get_sig () {
 
   local query=''
   query+="\"\(.device_name)\(${model})\""
-  query="[.[]|${query}]|join(\",\")"
+
+  query="[.[] | ${query}]| join(\",\")"
 
   local sig=''
   sig="$(echo "${outputs}" | jq -cer "${query}")" || return 1
@@ -196,8 +197,8 @@ has_resolution () {
 
   local query=''
   query+='.resolution_modes[]'
-  query+=' |"\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)" as $res'
-  query+=" |select(\$res == \"${resolution}\")"
+  query+=' | "\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)" as $res'
+  query+=" | select(\$res == \"${resolution}\")"
 
   echo "${output}" | jq -cer "${query}" &> /dev/null || return 1
 }
@@ -242,9 +243,9 @@ has_rate () {
 
   local query=''
   query+='.resolution_modes[]'
-  query+=' |"\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)" as $res'
-  query+=" |select(\$res == \"${resolution}\")"
-  query+=" |.frequencies[]|select(.frequency == ${rate})"
+  query+=' | "\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)" as $res'
+  query+=" | select(\$res == \"${resolution}\")"
+  query+=" | .frequencies[] | select(.frequency == ${rate})"
 
   echo "${output}" | jq -cer "${query}" &> /dev/null || return 1
 }
@@ -268,7 +269,7 @@ pick_output () {
   local key='\(.device_name)'
   local value='\(.device_name):[\(if .is_connected then .model_name else "detached" end)]'
 
-  local query="[.[]|{key: \"${key}\", value: \"${value}\"}]"
+  local query="[.[] | {key: \"${key}\", value: \"${value}\"}]"
 
   local options=''
   options="$(find_outputs "${status}" | jq -cer "${query}")" || return 1
@@ -307,7 +308,8 @@ pick_outputs () {
   local value='\(.device_name) [\(if .is_connected then .model_name else "detached" end)]'
 
   local query="{key: \"${key}\", value: \"${value}\"}"
-  query="[.[]|${except}|${query}]"
+
+  query="[.[] | ${except}|${query}]"
 
   local options=''
   options="$(find_outputs "${status}" | jq -cer "${query}")" || return 1
@@ -335,9 +337,10 @@ pick_resolution () {
   # Convert resolutions list into an array of {key, value} options
   local query=''
   query+='.resolution_modes[]'
-  query+=' |"\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)" as $res'
-  query+=' |(reduce .frequencies[] as $i (""; if $i.is_preferred then . + "*" else . end)) as $pref'
-  query+=' |{key: "\($res)", value: "\($res)\($pref)"}'
+  query+=' | "\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)" as $res'
+  query+=' | (reduce .frequencies[] as $i (""; if $i.is_preferred then . + "*" else . end)) as $pref'
+  query+=' | {key: "\($res)", value: "\($res)\($pref)"}'
+
   query="[${query}]"
 
   local options=''
@@ -367,12 +370,13 @@ pick_rate () {
   # Convert rates list into an array of {key, value} options
   local query=''
   query+='.resolution_modes[]'
-  query+=' |"\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)" as $res'
-  query+=" |select(\$res == \"${resolution}\")"
-  query+=' |.frequencies[]'
-  query+=' |"\(.frequency)" as $freq'
-  query+=' |"\(if .is_preferred then "*" else "" end)" as $pref'
-  query+=' |{key: "\($freq)", value: "\($freq)\($pref)"}'
+  query+=' | "\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)" as $res'
+  query+=" | select(\$res == \"${resolution}\")"
+  query+=' | .frequencies[]'
+  query+=' | "\(.frequency)" as $freq'
+  query+=' | "\(if .is_preferred then "*" else "" end)" as $pref'
+  query+=' | {key: "\($freq)", value: "\($freq)\($pref)"}'
+
   query="[${query}]"
 
   local options=''
@@ -478,9 +482,10 @@ find_common_resolutions () {
 
   local query=''
   query+="select(.device_name | match(\"(${names})\"))"
-  query+=' |.resolution_modes[]'
-  query+=' |"\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)"'
-  query="[.[]|${query}]|[group_by(.)|map(select(length>1))|.[]|.[0]]"
+  query+=' | .resolution_modes[]'
+  query+=' | "\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)"'
+
+  query="[.[] | ${query}] | [group_by(.) | map(select(length > 1)) | .[] | .[0]]"
 
   echo "${outputs}" | jq -cer "${query}" || return 1
 }
@@ -793,11 +798,11 @@ save_layout_to_settings () {
 
   if file_exists "${DISPLAYS_SETTINGS}"; then
     local layouts=''
-    layouts="$(jq 'if .layouts then .layouts else empty end' "${DISPLAYS_SETTINGS}")"
+    layouts="$(jq '.layouts//empty' "${DISPLAYS_SETTINGS}")"
 
     if is_not_empty "${layouts}"; then
       local query=''
-      query=".layouts[]|select(.sig == \"${sig}\")"
+      query=".layouts[] | select(.sig == \"${sig}\")"
 
       local match=''
       match="$(jq "${query}" "${DISPLAYS_SETTINGS}")"
@@ -826,11 +831,12 @@ save_layout_to_settings () {
 pick_layout () {
   local devices=''
   devices+='\(if .value.model_name then "\(.key):\(.value.model_name)" else empty end)'
-  devices="[.value.map|to_entries[]|\"${devices}\"]|join(\", \")"
+  devices="[.value.map | to_entries[] | \"${devices}\"] | join(\", \")"
 
   local query=''
   query+="{key: .key, value: \"\(.key):[\(${devices})]\"}"
-  query="if .layouts|length > 0 then [.layouts|to_entries[]|${query}] else [] end"
+
+  query="if .layouts | length > 0 then [.layouts | to_entries[] | ${query}] else [] end"
 
   local layouts=''
   layouts="$(jq -cer "${query}" "${DISPLAYS_SETTINGS}")" || return 1
@@ -853,7 +859,7 @@ pick_layout () {
 pick_color_profile () {
   # List all color calibration files under $COLORS_HOME
   local query='{key: .filename, value: .filename}'
-  query="[.[]|select(.filename|test(\".ic(c|m)$\"))|${query}]"
+  query="[.[] | select(.filename | test(\".ic(c|m)$\")) | ${query}]"
 
   local profiles=''
   profiles="$(ls "${COLORS_HOME}" 2> /dev/null | jc --ls | jq -cr "${query}")"
@@ -876,7 +882,7 @@ pick_color_profile () {
 pick_color_setting () {
   local query=''
   query+='{key: .key, value: "\(.key):\(.value.model_name) [\(.value.profile)]"}'
-  query="if .colors|length > 0 then [.colors|to_entries[]|${query}] else [] end"
+  query="if .colors | length > 0 then [.colors | to_entries[] | ${query}] else [] end"
 
   local colors=''
   colors="$(jq -cer "${query}" "${DISPLAYS_SETTINGS}")" || return 1
@@ -914,20 +920,21 @@ save_color_to_settings () {
 
   if file_exists "${DISPLAYS_SETTINGS}"; then
     local colors=''
-    colors="$(jq 'if .colors then .colors else empty end' "${DISPLAYS_SETTINGS}")"
+    colors="$(jq '.colors//empty' "${DISPLAYS_SETTINGS}")"
 
     if is_not_empty "${colors}"; then
       local query=''
       query+='.model_name == $c.model_name and '
       query+='.product_id == $c.product_id and '
       query+='.serial_number == $c.serial_number'
-      query=".colors[]|select(${query})"
+
+      query=".colors[] | select(${query})"
 
       local match=''
       match="$(jq --argjson c "${color}" "${query}" "${DISPLAYS_SETTINGS}")"
 
       if is_not_empty "${match}"; then
-        query="(${query}|.profile)|=\"${profile}\""
+        query="(${query} | .profile) |= \"${profile}\""
       else
         query=".colors += [${color}]"
       fi
@@ -958,7 +965,8 @@ remove_color_from_settings () {
   query+='.model_name == $o.model_name and '
   query+='.product_id == $o.product_id and '
   query+='.serial_number == $o.serial_number'
-  query="if .colors then .colors[]|select(${query}) else empty end"
+  
+  query="if .colors then .colors[] | select(${query}) else empty end"
 
   local settings=''
   settings="$(jq -e --argjson o "${output}" "del(${query})" "${DISPLAYS_SETTINGS}")" || return 1

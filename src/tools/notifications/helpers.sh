@@ -16,10 +16,10 @@ find_all () {
   local query='.data[0]'
 
   if match "${sort_by}" '^(id|appname)$'; then
-    query+="|sort_by(.${sort_by})"
+    query+="| sort_by(.${sort_by})"
 
     if equals "${order}" 'desc'; then
-      query+='|reverse'
+      query+='| reverse'
     fi
   fi
 
@@ -30,8 +30,8 @@ find_all () {
 # is up and running.
 is_notifications_up () {
   local query=''
-  query+='[.[]|select(.command|test("/usr/bin/dunst|dunst.*"))]'
-  query+='|if length > 0 then "true" else "false" end'
+  query+='[.[] | select(.command | test("/usr/bin/dunst|dunst.*"))]'
+  query+='| if length > 0 then "true" else "false" end'
 
   local is_up=''
   is_up="$(ps aux | grep -v 'jq' | jc --ps | jq -cr "${query}")" || return 1

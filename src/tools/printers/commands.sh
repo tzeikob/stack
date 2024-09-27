@@ -13,36 +13,40 @@ source src/tools/printers/helpers.sh
 # Outputs:
 #  A list of cups and printer data.
 show_status () {
-  systemctl status --lines 0 --no-pager cups.service | awk '{
-    if ($0 ~ / *Active/) {
-      l = "Service"
-      v = $2" "$3
-    } else l = ""
+  local space=10
 
-    if (l) printf "%-10s %s\n",l":",v
-  }' || return 1
+  systemctl status --lines 0 --no-pager cups.service |
+    awk -v SPC=${space} '{
+      if ($0 ~ / *Active/) {
+        l = "Service"
+        v = $2" "$3
+      } else l = ""
 
-  echo "Cups:      $(cups-config --version)"
-  echo "API:       $(cups-config --api-version)"
-  echo "Dir:       $(cups-config --datadir)"
+      frm="%-"SPC"s%s\n"
 
-  find_jobs | jq -cer '"Jobs:      \(length)"' || return 1
+      if (l) frm,l":",v
+    }' || return 1
+
+  printf "%-${space}s%s\n" "Cups:" "$(cups-config --version)"
+  printf "%-${space}s%s\n" "API:" "$(cups-config --api-version)"
+  printf "%-${space}s%s\n" "Dir:" "$(cups-config --datadir)"
+
+  find_jobs | jq -cer --arg SPC ${space} 'length | lbln("Jobs")' || return 1
 
   local destinations=''
-  destinations="$(find_destinations |
-    jq -cer 'if .|length>0 then .[]|.name else "" end')" || return 1
+  destinations="$(find_destinations | jq -cer './/[] | .[] | .name')" || return 1
 
   if is_not_empty "${destinations}"; then
     local query=''
-    query+='Printer:  \(.name) \(if .is_shared == "true" then "[shared]" else "" end)\n'
-    query+='URI:      \(.uri)'
-    query+='\(.model|if . and . != "" then "\nModel:    \(.model)" else "" end)'
-    query="\"${query}\""
+    query+='\(.name      | lbln("Printer"))'
+    query+='\(.is_shared | olbln("Shared"))'
+    query+='\(.model     | olbln("Model"))'
+    query+='\(.uri       | lbl("URI"))'
 
     local destination=''
     while read -r destination; do
       echo
-      find_destination "${destination}" | jq -cer "${query}" || return 1
+      find_destination "${destination}" | jq -cer --arg SPC ${space} "\"${query}\"" || return 1
     done <<< "${destinations}"
   fi
 }
@@ -63,11 +67,12 @@ list_printers () {
   fi
 
   local query=''
-  query+='Name:  \(.name)\n'
-  query+='URI:   \(.uri)'
-  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+  query+='\(.name | lbln("Name"))'
+  query+='\(.uri  | lbl("URI"))'
 
-  echo "${destinations}" | jq -cer "${query}" || return 1
+  query="[.[] | \"${query}\"] | join(\"\n\n\")"
+
+  echo "${destinations}" | jq -cer --arg SPC 7 "${query}" || return 1
 }
 
 # Shows the data of the printer with the given
@@ -94,25 +99,24 @@ show_printer () {
   fi
 
   local query=''
-  query+='Name:       \(.name)\n'
-  query+='URI:        \(.uri)\n'
-  query+='Protocol:   \(.protocol)'
-  query+='\(.model|if . and . != "" then "\nModel:      \(.)" else "" end)'
-  query+='\(.description|if . and . != "" then "\nDesc:       \(.)" else "" end)'
-  query+='\(.location|if . and . != "" then "\nLocation:   \(.)" else "" end)'
-  query+='\(.state|if . and . != "" then "\nState:      \(.)" else "" end)'
-  query+='\(.accepting_jobs|if . and . != "" then "\nAccepts:    \(.)" else "" end)'
-  query+='\(.shared|if . and . != "" then "\nShared:     \(.)" else "" end)'
-  query+='\(.is_temp|if . and . != "" then "\nTemporary:  \(.)" else "" end)'
-  query+='\(.ColorModel|if . and . != "" then "\nColor:      \(.)" else "" end)'
-  query+='\(.color|if . and . != "" then " [\(.)]" else "" end)'
-  query+='\(.Quality|if . and . != "" then "\nQuality:    \(.)" else "" end)'
-  query+='\(.TonerSaveMode|if . and . != "" then "\nToner:      \(.)" else "" end)'
-  query+='\(.PageSize|if . and . != "" then "\nPage:       \(.)" else "" end)'
-  query+='\(.MediaType|if . and . != "" then "\nPaper:      \(.)" else "" end)'
-  query="\"${query}\""
+  query+='\(.name           | lbln("Name"))'
+  query+='\(.protocol       | lbln("Protocol"))'
+  query+='\(.model          | olbln("Model"))'
+  query+='\(.description    | olbln("Desc"))'
+  query+='\(.location       | olbln("Location"))'
+  query+='\(.state          | olbln("State"))'
+  query+='\(.accepting_jobs | olbln("Accepts"))'
+  query+='\(.shared         | olbln(("Shared"))'
+  query+='\(.is_temp        | olbln("Temporary"))'
+  query+='\(.ColorModel     | olbln("Color Model"))'
+  query+='\(.color          | olbln("Color"))'
+  query+='\(.Quality        | olbln("Quality"))'
+  query+='\(.TonerSaveMode  | olbln("Toner"))'
+  query+='\(.PageSize       | olbln("Page"))'
+  query+='\(.MediaType      | olbln("Paper"))'
+  query+='\(.uri            | lbl("URI"))'
 
-  find_destination "${name}" | jq -cer "${query}" || return 1
+  find_destination "${name}" | jq -cer --arg SPC 14 "\"${query}\"" || return 1
 }
 
 # Adds the printer with the given uri, name
@@ -395,13 +399,14 @@ list_jobs () {
   fi
 
   local query=''
-  query+='ID:    \(.id)\n'
-  query+='Rank:  \(.rank)\n'
-  query+='File:  \(.file)\n'
-  query+='Size:  \(.size)'
-  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+  query+='\(.id   | lbln("ID"))'
+  query+='\(.rank | lbln("Rank"))'
+  query+='\(.file | lbln("File"))'
+  query+='\(.size | lbl("Size"))'
 
-  echo "${jobs}" | jq -cer "${query}" || return 1
+  query="[.[] | \"${query}\"] | join(\"\n\n\")"
+
+  echo "${jobs}" | jq -cer --arg SPC 7 "${query}" || return 1
 }
 
 # Cancels the queued job with the given id.

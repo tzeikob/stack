@@ -20,7 +20,7 @@ find_cards () {
 find_card () {
   local name="${1}"
 
-  local query=".[]|select(.name == \"${name}\")"
+  local query=".[] | select(.name == \"${name}\")"
 
   find_cards | jq -cer "${query}" || return 1
 }
@@ -33,9 +33,9 @@ find_card () {
 pick_card () {
   local prompt="${1}"
 
-  local query='{key: .name, value: "\(.properties|'
-  query+='if ."device.nick" then ."device.nick" else ."device.alias" end)"}'
-  query="[.[]|${query}]"
+  local option='{key: $name, value: .properties | ."device.nick"//."device.alias" | dft($name)}'
+
+  local query="[.[] | .name as $name | ${option}]"
 
   local cards=''
   cards="$(find_cards | jq -cer "${query}")" || return 1
@@ -62,8 +62,9 @@ pick_profile () {
   local prompt="${1}"
   local card="${2}"
 
-  local query='{key: .key, value: .key}'
-  query="[.profiles|to_entries[]|${query}]"
+  local option='{key: .key, value: .key}'
+
+  local query="[.profiles | to_entries[] | ${option}]"
 
   local profiles=''
   profiles="$(echo "${card}" | jq -cer "${query}")" || return 1
@@ -90,9 +91,9 @@ pick_module () {
   local prompt="${1}"
   local type="${2}"
 
-  local query='{key: .parent.name, value: "\(.name)'
-  query+=' [\(.parent.properties|if ."device.nick" then ."device.nick" else ."device.alias" end)]"}'
-  query="[.[]|=.|map((.ports[] + {parent: {name, properties}}))|.[]|${query}]"
+  local option='{key: .parent.name, value: "\(.name) [\(.parent.properties | ."device.nick"//."device.alias" | dft("..."))]"}'
+
+  local query="[.[] |= . | map((.ports[] + {parent: {name, properties}})) | .[] | ${option}]"
   
   local object='sinks'
   if equals "${type}" 'input'; then

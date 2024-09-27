@@ -25,12 +25,12 @@ list_files () {
   local query=''
 
   if is_integer "${filter}" '[0,]'; then
-    query="[.[]|select((now - .epoch) / 86400 < ${filter})]"
+    query="[.[] | select((now - .epoch) / 86400 < ${filter})]"
   elif match "${filter}" '^\+' && is_integer "${filter:1}" '[0,]'; then
-    query="[.[]|select((now - .epoch) / 86400 > ${filter:1})]"
+    query="[.[] | select((now - .epoch) / 86400 > ${filter:1})]"
   elif is_date "${filter}"; then
     filter="$(date -d ${filter} +%s)"
-    query="[.[]|select(${filter} - .epoch_date == 0)]"
+    query="[.[] | select(${filter} - .epoch_date == 0)]"
   elif is_not_given "${filter}"; then
     query='.'
   else
@@ -49,7 +49,7 @@ list_files () {
     return 0
   fi
 
-  query='.[]|"\(.date) \(.time) \(.path)"'
+  query='.[] | "\(.date) \(.time) \(.path)"'
 
   echo "${files}" | jq -cer "${query}" || return 1
 }
@@ -88,7 +88,7 @@ restore_files () {
     local key=''
     for key in ${picked}; do
       # Match file by trash-restore index key
-      local query=".[]|select(.key == \"${key}\")|.value"
+      local query=".[] | select(.key == \"${key}\") | .value"
 
       local path=''
       path="$(echo "${files}" | jq -cr "${query}")"
@@ -107,7 +107,7 @@ restore_files () {
     local path=''
     for path in "${paths[@]}"; do
       # Match file by file path
-      local query=".[]|select(.value == \"${path}\")|.key"
+      local query=".[] | select(.value == \"${path}\") | .key"
 
       local key=''
       key="$(echo "${files}" | jq -cer "${query}")"
@@ -131,7 +131,7 @@ restore_files () {
     file_keys="[${file_keys}]"
 
     # Discard possible duplicated files
-    file_keys="$(echo "${file_keys}" | jq -cr 'unique|join(",")')"
+    file_keys="$(echo "${file_keys}" | jq -cr 'unique | join(",")')"
   fi
 
   trash-restore / &> /dev/null <<< "${file_keys}"
@@ -172,7 +172,8 @@ remove_files () {
   fi
 
   # Convert file list into key-value pairs
-  local query='[.[]|{key: .path, value: "\(.date) \(.path)"}]'
+  local query='[.[] | {key: .path, value: "\(.date) \(.path)"}]'
+
   files="$(echo "${files}" | jq -cer "${query}")" || return 1
   
   if is_true "${#paths[@]} = 0"; then
@@ -198,7 +199,7 @@ remove_files () {
 
   local path=''
   for path in "${paths[@]}"; do
-    local query=".[]|select(.key == \"${path}\")"
+    local query=".[] | select(.key == \"${path}\")"
 
     echo "${files}" | jq -cer "${query}" &> /dev/null
 

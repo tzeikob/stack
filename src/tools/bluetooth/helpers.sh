@@ -69,7 +69,7 @@ find_device () {
 #  0 if scanning is on otherwise 1.
 is_scanning () {
   local mode=''
-  mode="$(find_controller | jq -cer '.[0]|.discovering')" || return 1
+  mode="$(find_controller | jq -cer '.[0] | .discovering')" || return 1
 
   if is_yes "${mode}"; then
     return 0
@@ -87,8 +87,9 @@ is_not_scanning () {
 # Outputs:
 #  A menu of controllers.
 pick_controller () {
-  local query='{key: .address, value: "\(.address) [\(.name)]"}'
-  query="[.[]|${query}]"
+  local option='{key: .address, value: "\(.address) [\(.name | dft("..."))]"}'
+
+  local query="[.[] | ${option}]"
 
   local controllers=''
   controllers="$(find_controllers | jq -cer "${query}")" || return 1
@@ -108,8 +109,9 @@ pick_controller () {
 # Outputs:
 #  A menu of devices.
 pick_device () {
-  local query='{key: .address, value: "\(.address) [\(.name)]"}'
-  query="[.[]|${query}]"
+  local option='{key: .address, value: "\(.address) [\(.name | dft("..."))]"}'
+
+  local query="[.[] | ${option}]"
 
   local devices=''
   devices="$(find_devices | jq -cer "${query}")" || return 1
@@ -127,8 +129,8 @@ pick_device () {
 
 # Kills any running bluetooth scanning proccesses.
 kill_scanning_proccesses () {
-  local query='.command|test("^bluetoothctl scan on")'
-  query=".[]|select(${query})|.pid"
+  local query='.command | test("^bluetoothctl scan on")'
+  query=".[] | select(${query}) |.pid"
 
   local pids=''
   pids="$(ps aux | jc --ps | jq -cr "${query}")" || return 1

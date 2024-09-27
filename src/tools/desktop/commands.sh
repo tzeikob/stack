@@ -26,28 +26,35 @@ show_status () {
       default: break
     }
   }')" || return 1
+
   status+="\"server\": \"Xorg ${server::-1}\","
 
   local compositor=''
   compositor="$(pacman -Qi picom | grep -Po '^Version\s*: \K.+')" || return 1
+
   status+="\"compositor\": \"Picom ${compositor}\","
 
   local wm=''
   wm="$(bspwm -v)" || return 1
+
   status+="\"wm\": \"BSPWM ${wm}\","
 
   local bars=''
   bars="$(polybar -v | head -n +1 | cut -d ' ' -f 2)" || return 1
+
   status+="\"bars\": \"Polybar ${bars}\","
 
   if file_exists "${DESKTOP_SETTINGS}"; then
-    local query='.wallpaper|if . then "\(.name) [\(.mode|ascii_upcase)]" else "none" end'
+    local query='.wallpaper | if . then "\(.name) [\(.mode | uppercase)]" else "none" end'
+
     local wallpaper=''
     wallpaper="$(jq -cr "${query}" "${DESKTOP_SETTINGS}")" || return 1
+
     status+="\"wallpaper\": \"${wallpaper}\","
   fi
 
   local fields='OS|Kernel|Shell|Theme|Icons'
+
   status+="$(neofetch --off --stdout |
     awk -F':' '/^('"${fields}"')/{
       gsub(/^[ \t]+/,"",$2)
@@ -58,22 +65,21 @@ show_status () {
 
   # Remove the last extra comma after the last field
   status="${status:+${status::-1}}"
-
   status="{${status}}"
 
   local query=''
-  query+='System:      \(.os)\n'
-  query+='Kernel:      \(.kernel)\n'
-  query+='Shell:       \(.shell)\n'
-  query+='Graphics:    \(.server)\n'
-  query+='Compositor:  \(.compositor)\n'
-  query+='Windows:     \(.wm)\n'
-  query+='Bars:        \(.bars)\n\n'
-  query+='Theme:       \(.theme)\n'
-  query+='Icons:       \(.icons)\n'
-  query+='Wallpaper:   \(if .wallpaper then .wallpaper else "none" end)'
+  query+='\(.os         | lbln("System"))'
+  query+='\(.kernel     | lbln("Kernel"))'
+  query+='\(.shell      | lbln("Shell"))'
+  query+='\(.server     | lbln("Graphics"))'
+  query+='\(.compositor | lbln("Compositor"))'
+  query+='\(.wm         | lbln("Windows"))'
+  query+='\(.bars       | lbln("Bars"))'
+  query+='\(.theme      | lbln("Theme"))'
+  query+='\(.icons      | lbln("Icons"))'
+  query+='\(.wallpaper  | lbl("Wallpaper"; "None"))'
 
-  echo "${status}" | jq -cer "\"${query}\"" || return 1
+  echo "${status}" | jq -cer --arg SPC 13 "\"${query}\"" || return 1
 }
 
 # Shows the list of all the wallpapers found under
@@ -93,12 +99,12 @@ list_wallpapers () {
   fi
 
   local query=''
-  query+='Name:        \(.name)\n'
-  query+='Resolution:  \(.resolution)\n'
-  query+='Size:        \(.size)'
-  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+  query+='\(.name       | lbln("Name"))'
+  query+='\(.resolution | lbln("Resolution"))'
+  query+='\(.size       | lbl("Size"))'
+  query="[.[] | \"${query}\"] | join(\"\n\n\")"
 
-  echo "${wallpapers}" | jq -cer "${query}" || return 1
+  echo "${wallpapers}" | jq -cer --arg SPC 13 "${query}" || return 1
 }
 
 # Sets the desktop wallpaper to the wallpaper with the given
@@ -178,16 +184,17 @@ show_pointer () {
   fi
 
   local query=''
-  query+='ID:        \(.id)\n'
-  query+='Name:      \(.name)'
-  query+='\(.node|if . then "\nNode:      \(.)" else "" end)'
-  query+='\(.enabled|if . then "\nEnabled:   \(.)" else "" end)'
-  query+='\(.accel_speed|if . then "\nSpeed:     \(.)" else "" end)'
-  query+='\(.accel|if . then "\nAccel:     \(.)" else "" end)'
-  query+='\(.velocity|if . then "\nVelocity:  \(.)" else "" end)'
-  query+='\(if .const_decel then "\nDecel:     \(.const_decel) \(.adapt_decel)" else "" end)'
+  query+='\(.id           | lbln("ID"))'
+  query+='\(.name         | lbln("Name"))'
+  query+='\(.node         | olbln("Node"))'
+  query+='\(.accel_speed  | olbln("Speed"))'
+  query+='\(.velocity     | olbln("Velocity"))'
+  query+='\(.accel        | olbln("Accel"))'
+  query+='\(.const_decel  | olbln("Decel"))'
+  query+='\(.adapt_decel) | olbln("Adapt"))'
+  query+='\(.enabled      | lbl("Enabled"))'
 
-  echo "${pointer}" | jq -cer "\"${query}\"" || return 1
+  echo "${pointer}" | jq -cer --arg SPC 11 "\"${query}\"" || return 1
 }
 
 # Shows the list of pointing devices currently
@@ -207,11 +214,11 @@ list_pointers () {
   fi
 
   local query=''
-  query+='ID:    \(.id)\n'
-  query+='Name:  \(.name)'
-  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+  query+='\(.id   | lbln("ID"))'
+  query+='\(.name | lbl("Name"))'
+  query="[.[] | \"${query}\"] | join(\"\n\n\")"
 
-  echo "${pointers}" | jq -cer "${query}" || return 1
+  echo "${pointers}" | jq -cer --arg SPC 7 "${query}" || return 1
 }
 
 # Sets the acceleration speed of every pointing device
@@ -305,23 +312,23 @@ show_tablet () {
   fi
 
   local query=''
-  query+='ID:           \(.id)\n'
-  query+='Name:         \(.name)\n'
-  query+='Type:         \(.type)\n'
-  query+='Vendor:       \(.vendor)'
-  query+='\(.Area|if . then "\nArea:         \(.)" else "" end)'
-  query+='\(.Rotate|if . then "\nRotate:       \(.)" else "" end)'
-  query+='\(.PressureRecalibration|if . then "\nPressure:     \(.)" else "" end)'
-  query+='\(.PressCurve|if . then "\nPress Curve:  \(.)" else "" end)'
-  query+='\(.RawSample|if . then "\nSample:       \(.)" else "" end)'
-  query+='\(.Mode|if . then "\nMode:         \(.)" else "" end)'
-  query+='\(.Touch|if . then "\nTouch:        \(.)" else "" end)'
-  query+='\(.Gesture|if . then "\nGesture:      \(.)" else "" end)'
-  query+='\(.TapTime|if . then "\nTap Time:     \(.)" else "" end)'
-  query+='\(.CursorProx|if . then "\nCursor:       \(.)" else "" end)'
-  query+='\(.Threshold|if . then "\nThreshold:    \(.)" else "" end)'
+  query+='\(.id                    | lbln("ID"))'
+  query+='\(.name                  | lbln("Name"))'
+  query+='\(.type                  | lbln("Type"))'
+  query+='\(.Area                  | olbln("Area"))'
+  query+='\(.Rotate                | olbln("Rotate"))'
+  query+='\(.PressureRecalibration | olbln("Pressure"))'
+  query+='\(.PressCurve            | olbln("Press Curve"))'
+  query+='\(.RawSample             | olbln("Sample"))'
+  query+='\(.Mode                  | olbln("Mode"))'
+  query+='\(.Touch                 | olbln("Touch"))'
+  query+='\(.Gesture               | olbln("Gesture"))'
+  query+='\(.TapTime               | olbln("Tap Time"))'
+  query+='\(.CursorProx            | olbln("Cursor"))'
+  query+='\(.Threshold             | olbln("Threshold"))'
+  query+='\(.vendor                | lbl("Vendor"))'
 
-  echo "${tablet}" | jq -cer "\"${query}\"" || return 1
+  echo "${tablet}" | jq -cer --arg SPC 14 "\"${query}\"" || return 1
 }
 
 # Shows the list of stylus-pen devices currently
@@ -341,13 +348,13 @@ list_tablets () {
   fi
 
   local query=''
-  query+='ID:      \(.id)\n'
-  query+='Name:    \(.name)\n'
-  query+='Type:    \(.type)\n'
-  query+='Vendor:  \(.vendor)'
-  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+  query+='\(.id     | lbln("ID"))'
+  query+='\(.name   | lbln("Name"))'
+  query+='\(.type   | lbln("Type"))'
+  query+='\(.vendor | lbl("Vendor"))'
+  query="[.[] | \"${query}\"] | join(\"\n\n\")"
 
-  echo "${tablets}" | jq -cer "${query}" || return 1
+  echo "${tablets}" | jq -cer --arg SPC 9 "${query}" || return 1
 }
 
 # Scales the area of the tablet with the given name,
@@ -568,7 +575,7 @@ init_pointer () {
   local speed='0.35'
 
   if file_exists "${DESKTOP_SETTINGS}"; then
-    speed="$(jq '.pointer.speed|if . then . else 0.35 end' "${DESKTOP_SETTINGS}")"
+    speed="$(jq '.pointer.speed//0.35' "${DESKTOP_SETTINGS}")"
   fi
 
   set_pointer_speed "${speed}"
@@ -583,7 +590,7 @@ init_tablets () {
   fi
 
   local tablets=''
-  tablets="$(jq '.tablets|if . then . else empty end' "${DESKTOP_SETTINGS}")"
+  tablets="$(jq '.tablets//empty' "${DESKTOP_SETTINGS}")"
 
   if is_not_given "${tablets}"; then
     log 'No tablets settings found.'
@@ -591,9 +598,9 @@ init_tablets () {
   fi
 
   local output=''
-  output="$(find_outputs primary | jq -cer '.[0]|.device_name')" || return 1
+  output="$(find_outputs primary | jq -cer '.[0] | .device_name')" || return 1
 
-  tablets="$(echo "${tablets}" | jq -cr '.[]|{name, scale}')" || return 1
+  tablets="$(echo "${tablets}" | jq -cr '.[] | {name, scale}')" || return 1
 
   # Iterate over tablet commands and execute one by one
   local tablet=''
@@ -619,7 +626,7 @@ init_wallpaper () {
   fi
 
   local wallpaper=''
-  wallpaper="$(jq '.wallpaper|if . then . else empty end' "${DESKTOP_SETTINGS}")"
+  wallpaper="$(jq '.wallpaper//empty' "${DESKTOP_SETTINGS}")"
 
   if is_not_given "${wallpaper}"; then
     log 'No wallpaper settings found.'
@@ -802,7 +809,7 @@ fix_workspaces () {
 
   while read -r monitor; do
     local slots=0
-    slots="$(bspc query -T -m "${monitor}" | jq -cer '.desktops|length')" || return 1
+    slots="$(bspc query -T -m "${monitor}" | jq -cer '.desktops | length')" || return 1
 
     # Compute the index of the last slot
     local last=0
@@ -833,7 +840,7 @@ init_workspaces () {
 
   # Find the primary monitor output
   local primary=''
-  primary="$(find_outputs 'primary' | jq -cer '.[0]|.device_name')"
+  primary="$(find_outputs 'primary' | jq -cer '.[0] | .device_name')"
 
   if has_failed; then
     log 'Unable to find primary monitor.'
@@ -872,7 +879,7 @@ init_workspaces () {
     # Remove extra desktops one by one
     if is_true "${subtract} > 0"; then
       local extras=''
-      extras="$(echo "${desktops}" | jq -cer "[.[]|.name]|.[length - ${subtract}:]|.[]")" || return 1
+      extras="$(echo "${desktops}" | jq -cer "[.[] | .name] | .[length - ${subtract}:] | .[]")" || return 1
 
       local extra=''
       while read -r extra; do
@@ -922,7 +929,7 @@ init_workspaces () {
     bspc config right_padding 0
     bspc config bottom_padding 0
     
-    local query='[.[]|select(.|test("^[0-9]+$"))]|max'
+    local query='[.[] | select(. | test("^[0-9]+$"))] | max'
     
     local max=0
     max="$(bspc query -D --names | jq --raw-input . | jq -rcs "${query}")"

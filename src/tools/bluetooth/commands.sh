@@ -13,31 +13,36 @@ source src/tools/bluetooth/helpers.sh
 # Outputs:
 #  A long list of bluetooth data.
 show_status () {
-  systemctl status --lines 0 --no-pager bluetooth.service | awk '{
+  local space=15
+
+  systemctl status --lines 0 --no-pager bluetooth.service | awk -v SPC=${space} '{
     if ($0 ~ / *Active/) {
       l = "Service"
       v = $2" "$3
     } else l = ""
 
-    if (l) printf "%-14s %s\n",l":",v
+    frm="%-"SPC"s%s\n"
+
+    if (l) printf frm,l":",v
   }' || return 1
 
   local query=''
-  query+='Controller:    \(.name) [\(.alias)]\n'
-  query+='Address:       \(.address)\n'
-  query+='Powered:       \(.powered)\n'
-  query+='Scanning:      \(.discovering)\n'
-  query+='Pairable:      \(.pairable)\n'
-  query+='Discoverable:  \(.discoverable)'
+  query+='\(.name         | lbln("Controller"))'
+  query+='\(.alias        | lbln("Alias"))'
+  query+='\(.address      | lbln("Address"))'
+  query+='\(.powered      | lbln("Powered"))'
+  query+='\(.discovering  | lbln("Scanning"))'
+  query+='\(.pairable     | lbln("Pairable"))'
+  query+='\(.discoverable | lbl("Discoverable"))'
   
-  find_controller | jq -cer ".[0]|\"${query}\""
+  find_controller | jq -cer --arg SPC ${space} ".[0] | \"${query}\""
   
   if has_failed; then
-    echo 'Controller:    none'
+    echo '""' | jq -cer --arg SPC ${space} 'lbl("Controller")'
   fi
 
   local query=''
-  query+='if .|length > 0 then .[]|.address else "" end'
+  query+='if . | length > 0 then .[] | .address else "" end'
 
   local devices=''
   devices="$(find_devices connected | jq -cer "${query}")" || return 1
@@ -47,15 +52,15 @@ show_status () {
   fi
 
   local query=''
-  query+='Device:        \(.name)\n'
-  query+='Address:       \(.address)\n'
-  query+='Type:          \(.icon)'
-  query="[.[]|\"${query}\"]|join(\"\n\")"
+  query+='\(.name    | lbln("Device"))'
+  query+='\(.address | lbln("Address"))'
+  query+='\(.icon    | lbl("Type"))'
+  query="[.[] | \"${query}\"] | join(\"\n\")"
 
   local device=''
   while read -r device; do
     echo
-    find_device "${device}" | jq -cer "${query}" || return 1
+    find_device "${device}" | jq -cer --arg SPC ${space} "${query}" || return 1
   done <<< "${devices}"
 }
 
@@ -82,12 +87,12 @@ list_controllers () {
   fi
 
   local query=''
-  query+='Name:     \(.name)\n'
-  query+='Address:  \(.address)'
-  query+='\(if .is_default then "\nDefault:  \(.is_default)" else "" end)'
-  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+  query+='\(.name       | lbln("Name"))'
+  query+='\(.is_default | olbln("Default"))'
+  query+='\(.address    | lbl("Address"))'
+  query="[.[] | \"${query}\"] | join(\"\n\n\")"
 
-  echo "${controllers}" | jq -cer "${query}" || return 1
+  echo "${controllers}" | jq -cer --arg SPC 10 "${query}" || return 1
 }
 
 # Shows the list of available devices filtered by
@@ -116,11 +121,11 @@ list_devices () {
   fi
 
   local query=''
-  query+='Name:     \(.name)\n'
-  query+='Address:  \(.address)'
-  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+  query+='\(.name    | lbln("Name"))'
+  query+='\(.address | lbl("Address"))'
+  query="[.[] | \"${query}\"] | join(\"\n\n\")"
 
-  echo "${devices}" | jq -cer "${query}" || return 1
+  echo "${devices}" | jq -cer --arg SPC 10 "${query}" || return 1
 }
 
 # Shows the data of the controller with the given
@@ -150,20 +155,20 @@ show_controller () {
   fi
 
   local query=''
-  query+='Name:          \(.name)\n'
-  query+='Address:       \(.address)\n'
-  query+='\(.is_public|if . then "Public:        \(.)\n" else "" end)'
-  query+='Alias:         \(.alias)\n'
-  query+='Powered:       \(.powered)\n'
-  query+='Discovering:   \(.discovering)\n'
-  query+='Pairable:      \(.pairable)\n'
-  query+='Discoverable:  \(.discoverable)\n'
-  query+='Timeout:       \(.discoverable_timeout)\n'
-  query+='Modalias:      \(.modalias)\n'
-  query+='Class:         \(.class)'
-  query+='\(.uuids|if . then "\nUUID:          \(.|join("\n               "))" else "" end)'
+  query+='\(.name                 | lbln("Name"))'
+  query+='\(.manufacturer         | olbln("Manufacturer"))'
+  query+='\(.address              | lbln("Address"))'
+  query+='\(.is_public            | olbln("Public"))'
+  query+='\(.alias                | lbln("Alias"))'
+  query+='\(.powered              | lbln("Powered"))'
+  query+='\(.discovering          | lbln("Discovering"))'
+  query+='\(.pairable             | lbln("Pairable"))'
+  query+='\(.discoverable         | lbln("Discoverable"))'
+  query+='\(.discoverable_timeout | lbln("Timeout"))'
+  query+='\(.modalias             | olbln("Modalias"))'
+  query+='\(.class                | lbl("Class"))'
   
-  echo "${controller}" | jq -cer ".[0]|\"${query}\"" || return 1
+  echo "${controller}" | jq -cer --arg SPC 15 ".[0] | \"${query}\"" || return 1
 }
 
 # Shows the data of the device with the given
@@ -193,24 +198,23 @@ show_device () {
   fi
 
   local query=''
-  query+='Name:       \(.name)\n'
-  query+='Address:    \(.address)\n'
-  query+='Alias:      \(.alias)\n'
-  query+='Icon:       \(.icon)\n'
-  query+='\(.is_public|if . then "Public:     \(.)\n" else "" end)'
-  query+='\(.rssi|if . then "RSSI:       \(.)\n" else "" end)'
-  query+='\(.txpower|if . then "Power:      \(.)\n" else "" end)'
-  query+='Connected:  \(.connected)\n'
-  query+='Paired:     \(.paired)\n'
-  query+='Bonded:     \(.bonded)\n'
-  query+='Trusted:    \(.trusted)\n'
-  query+='Blocked:    \(.blocked)\n'
-  query+='Legacy:     \(.legacy_pairing)\n'
-  query+='\(.modalias|if . then "Modalias:   \(.)\n" else "" end)'
-  query+='Class:      \(.class)'
-  query+='\(.uuids|if . then "\nUUID:       \(.|join("\n            "))" else "" end)'
+  query+='\(.name           | lbln("Name"))'
+  query+='\(.address        | lbln("Address"))'
+  query+='\(.alias          | lbln("Alias"))'
+  query+='\(.icon           | lbln("Icon"))'
+  query+='\(.is_public      | olbln("Public"))'
+  query+='\(.rssi           | olbln("RSSI"))'
+  query+='\(.txpower        | olbln("Power"))'
+  query+='\(.connected      | lbln("Connected"))'
+  query+='\(.paired         | lbln("Paired"))'
+  query+='\(.bonded         | lbln("Bonded"))'
+  query+='\(.trusted        | lbln("Trusted"))'
+  query+='\(.blocked        | lbln("Blocked"))'
+  query+='\(.legacy_pairing | lbln("Legacy"))'
+  query+='\(.modalias       | olbln("Modalias"))'
+  query+='\(.class          | lbl("Class"))'
   
-  echo "${device}" | jq -cer ".[0]|\"${query}\"" || return 1
+  echo "${device}" | jq -cer --arg SPC 12 ".[0] | \"${query}\"" || return 1
 }
 
 # Sets the default controller to the controller

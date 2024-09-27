@@ -15,7 +15,7 @@ find_disks () {
   fields+='vendor,model,rev,serial,mountpoint,mountpoints,'
   fields+='label,uuid,fstype,fsver,fsavail,fsused,fsuse%'
 
-  local query='[.blockdevices[]|select(.type == "disk")]'
+  local query='[.blockdevices[] | select(.type == "disk")]'
 
   lsblk -J -o "${fields}" | jq -cer "${query}" || return 1
 }
@@ -32,7 +32,7 @@ find_disk () {
     return 1
   fi
 
-  local query=".[]|select(.path == \"${path}\")"
+  local query=".[] | select(.path == \"${path}\")"
 
   find_disks | jq -cer "${query}" || return 1
 }
@@ -54,7 +54,7 @@ find_partitions () {
 
   # Collect any disk partitions reported by lsblk
   local query=''
-  query+='.children|if . then .[]|select(.type == "part") else empty end'
+  query+='.children | if . then .[] | select(.type == "part") else empty end'
   query="[${query}]"
 
   local parts=''
@@ -68,10 +68,7 @@ find_partitions () {
     return 1
   fi
 
-  local query=''
-  query+=".[]|select(.path|test(\"^${path}\"))"
-  query+=' |{path: .path, veracrypt: .}'
-  query="[${query}]"
+  local query="[.[] | select(.path | test(\"^${path}\")) | {path: .path, veracrypt: .}]"
 
   volumes="$(echo "${volumes}" | jc --veracrypt | jq -cer "${query}")" || return 1
 
@@ -79,12 +76,12 @@ find_partitions () {
   local query='$p + $v | group_by(.path) | map(add)'
 
   if equals "${status}" 'mounted'; then
-    query+='|.[]|select(.mountpoint != null or .veracrypt.mountpoint != null)'
+    query+='| .[] | select(.mountpoint != null or .veracrypt.mountpoint != null)'
   elif equals "${status}" 'unmounted'; then
-    query+='|.[]|select(.mountpoint == null and .veracrypt.mountpoint == null)'
+    query+='| .[] | select(.mountpoint == null and .veracrypt.mountpoint == null)'
   fi
 
-  query="[${query}]|flatten"
+  query="[${query}] | flatten"
 
   jq -ncer --argjson p "${parts}" --argjson v "${volumes}" "${query}" || return 1
 }
@@ -106,7 +103,7 @@ find_partition () {
   fields+='vendor,model,rev,serial,mountpoint,mountpoints,'
   fields+='label,uuid,fstype,fsver,fsavail,fsused,fsuse%'
 
-  local query='.blockdevices[0]|select(.type == "part")'
+  local query='.blockdevices[0] | select(.type == "part")'
 
   local part=''
   part="$(lsblk -J -o "${fields}" "${path}" | jq -cer "${query}")" || return 1
@@ -119,7 +116,7 @@ find_partition () {
     return 1
   fi
 
-  local query='if .|length>0 then .[0]|{path: .path, veracrypt: .} else {} end'
+  local query='if . | length > 0 then .[0] | {path: .path, veracrypt: .} else {} end'
 
   volume="$(echo "${volume}" | jc --veracrypt | jq -cer "${query}")" || return 1
 
@@ -139,12 +136,12 @@ find_roms () {
   fields+='vendor,model,rev,serial,mountpoint,mountpoints,'
   fields+='label,uuid,fstype,fsver,fsavail,fsused,fsuse%'
 
-  local query='.blockdevices[]|select(.type == "rom")'
+  local query='.blockdevices[] | select(.type == "rom")'
 
   if equals "${status}" 'mounted'; then
-    query+='|select(.mountpoint != null)'
+    query+='| select(.mountpoint != null)'
   elif equals "${status}" 'unmounted'; then
-    query+='|select(.mountpoint == null)'
+    query+='| select(.mountpoint == null)'
   fi
 
   query="[${query}]"
@@ -164,7 +161,7 @@ find_rom () {
     return 1
   fi
 
-  local query=".[]|select(.path == \"${path}\")"
+  local query=".[] | select(.path == \"${path}\")"
 
   find_roms | jq -cer "${query}" || return 1
 }
@@ -213,13 +210,13 @@ is_system_disk () {
   local disk=''
   disk="$(find_disk "${path}")" || return 1
 
-  local system_paths='/|/home|/boot|/var|/log|/swap'
+  local system_paths='/ | /home | /boot | /var | /log | /swap'
 
   # Check if any partition's mountpoint is a system path
-  local is_system_path="if . then .|test(\"^(${system_paths})$\") else false end"
+  local is_system_path="if . then . | test(\"^(${system_paths})$\") else false end"
 
   local query=''
-  query+=".children|if . then [.[]|.mountpoint|${is_system_path}]|any else false end"
+  query+=".children | if . then [.[] | .mountpoint | ${is_system_path}] | any else false end"
 
   local result=''
   result="$(echo "${disk}" | jq -cr "${query}")" || return 1
@@ -230,8 +227,8 @@ is_system_disk () {
 
   # Check also deep into the partitions children, if any
   local query=''
-  query+=".children|if . then [.[]|.mountpoint|${is_system_path}]|any else false end"
-  query=".children|if . then ([.[]|${query}]|any) else false end"
+  query+=".children | if . then [.[] | .mountpoint | ${is_system_path}] | any else false end"
+  query=".children | if . then ([.[] | ${query}] | any) else false end"
 
   result="$(echo "${disk}" | jq -cr "${query}")" || return 1
 
@@ -288,13 +285,13 @@ is_system_partition () {
     return 1
   fi
 
-  local system_paths='/|/home|/boot|/var|/log|/swap'
+  local system_paths='/ | /home | /boot | /var | /log | /swap'
 
   # Check if partition mountpoint is a system path
-  local is_system_path="if . then .|test(\"^(${system_paths})$\") else false end"
+  local is_system_path="if . then . | test(\"^(${system_paths})$\") else false end"
 
   local query=''
-  query+="if (.mountpoint|${is_system_path}) or (.veracrypt.mountpoint|${is_system_path})"
+  query+="if (.mountpoint | ${is_system_path}) or (.veracrypt.mountpoint | ${is_system_path})"
   query+=' then true else false '
   query+='end'
 
@@ -474,7 +471,7 @@ unmount_partitions () {
     return 1
   fi
   
-  volumes="$(echo "${volumes}" | jc --veracrypt | jq -cr '.[]|.path')" || return 1
+  volumes="$(echo "${volumes}" | jc --veracrypt | jq -cr '.[] | .path')" || return 1
   
   if is_empty "${parts}" && is_empty "${volumes}"; then
     log 'No mounted partitions found.'
@@ -630,16 +627,9 @@ pick_disk () {
     return 2
   fi
 
-  local trim='.|gsub("^\\s+|\\s+$";"")'
-  local vendor="\(.vendor|if . then .|${trim} else empty end)"
+  local option='{key: .path, value: "\(.path) \(.vendor | trim | dft("...")) \(.size | dft("..."))"}'
 
-  local value=''
-  value+="[\"${vendor}\", .size]|join(\" \")"
-  value="\(${value}|if . != \"\" then \" [\(.|${trim})]\" else empty end)"
-  value="\(.path)${value}"
-
-  local query=''
-  query="[.[]|{key: .path, value: \"${value}\"}]"
+  local query="[.[] | ${option}]"
 
   disks="$(echo "${disks}" | jq -cer "${query}")" || return 1
 
@@ -668,15 +658,9 @@ pick_partition () {
     return 2
   fi
 
-  local trim='.|gsub("^\\s+|\\s+$";"")'
-  local label="\(.label|if . then .|${trim} else empty end)"
+  local option='{key: .path, value: "\(.path) \(.label | trim | dft("...")) \(.size | dft("..."))"}'
 
-  local value=''
-  value+="[\"${label}\", .size]|join(\" \")"
-  value="\(${value}|if . != \"\" then \" [\(.|${trim})]\" else empty end)"
-  value="\(.path)${value}"
-
-  local query="[.[]|{key: .path, value: \"${value}\"}]"
+  local query="[.[] | ${option}]"
 
   parts="$(echo "${parts}" | jq -cer "${query}")" || return 1
 
@@ -703,17 +687,9 @@ pick_rom () {
     return 2
   fi
 
-  local trim='.|gsub("^\\s+|\\s+$";"")'
-  local vendor="\(.vendor|if . then .|${trim} else empty end)"
-  local label="\(.label|if . then .|${trim} else empty end)"
+  local option='{key: .path, value: "\(.path) \(.vendor | trim | dft("...")) \(.label | trim | dft("...")) \(.size | dft("..."))"}'
 
-  local value=''
-  value+="[\"${vendor}\", \"${label}\", .size]|join(\" \")"
-  value="\(${value}|if . != \"\" then \" [\(.|${trim})]\" else empty end)"
-  value="\(.path)${value}"
-
-  local query=''
-  query="[.[]|{key: .path, value: \"${value}\"}]"
+  local query="[.[] | ${option}]"
 
   roms="$(echo "${roms}" | jq -cer "${query}")" || return 1
 
@@ -742,10 +718,9 @@ pick_host () {
     return 2
   fi
 
-  local query=''
-  query+='key: .ip,'
-  query+='value: "\(.ip)\(.name|if . and . != "" then " [\(.)]" else "" end)"'
-  query="[.[]|{${query}}]"
+  local option='{key: .ip, value: "\(.ip) [\(.name | dft("..."))]"}'
+
+  local query="[.[] | ${option}]"
 
   hosts="$(echo "${hosts}" | jq -cer "${query}")" || return 1
 

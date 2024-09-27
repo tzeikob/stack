@@ -13,6 +13,8 @@ UPDATES_STATE_FILE=/tmp/updates_state
 # Outputs:
 #  A verbose list of text data.
 show_status () {
+  local space=11
+
   local fields='OS|Kernel|Shell'
 
   local status=''
@@ -26,30 +28,29 @@ show_status () {
 
   # Remove the last extra comma after the last field
   status="${status:+${status::-1}}"
-
   status="{${status}}"
 
   local query=''
-  query+='System:    \(.os)\n'
-  query+='Kernel:    \(.kernel)\n'
-  query+='Shell:     \(.shell)'
+  query+='\(.os     | lbln("System"))'
+  query+='\(.kernel | lbln("Kernel"))'
+  query+='\(.shell  | lbln("Shell"))'
 
-  echo "${status}" | jq -cer "\"${query}\"" || return 1
+  echo "${status}" | jq -cer --arg SPC ${space} "\"${query}\"" || return 1
   
   local libalpm_version=''
   libalpm_version="$(pacman -V | grep "Pacman v" | awk '{print $6}' | sed 's/v\(.*\)/\1/')"
   
-  echo "Libalpm:   ${libalpm_version}"
+  printf "%-${space}s%s\n" "Libalpm:" "${libalpm_version}"
 
   local pacman_version=''
   pacman_version="$(pacman -V | grep "Pacman v" | awk '{print $3}' | sed 's/v\(.*\)/\1/')"
   
-  echo "Pacman:    ${pacman_version}"
+  printf "%-${space}s%s\n" "Pacman:" "${pacman_version}"
   
   local yay_version=''
   yay_version="$(yay -V | awk '{print $2}' | sed 's/v\(.*\)/\1/')"
   
-  echo "Yay:       ${yay_version}"
+  printf "%-${space}s%s" "Yay:" "${yay_version}"
 
   local reflector_conf='/etc/xdg/reflector/reflector.conf'
 
@@ -57,25 +58,28 @@ show_status () {
   countries="$(grep -E '^--country' "${reflector_conf}" | cut -d ' ' -f 2)" || return 1
   
   echo
-  echo "Mirrors:   ${countries}"
+  echo "\"${countries}\"" | jq -cer --arg SPC ${space} 'lbln("Mirrors")'
 
   local age=''
   age="$(grep -E '^--age' "${reflector_conf}" | cut -d ' ' -f 2)" || return 1
   
-  echo "Age:       ${age} hours"
+  echo "\"${age}\"" | jq -cer --arg SPC ${space} 'unit(" hours") | lbln("Age")'
 
   local latest=''
   latest="$(grep -E '^--latest' "${reflector_conf}" | cut -d ' ' -f 2)" || return 1
   
-  echo "Latest:    ${latest}"
+  echo "\"${latest}\"" | jq -cer --arg SPC ${space} 'lbl(Latest)'
   
   local pkgs=''
   pkgs="$(find_installed_packages)" || return 1
 
+  local query=''
+  query+='\(.pacman + .aur | length | lbln("Packages"))'
+  query+='\(.pacman | length        | lbln("Pacman"))'
+  query+='\(.aur | length           | lbl("AUR"))'
+
   echo
-  echo "Packages:  $(echo ${pkgs} | jq -cr '.pacman + .aur|length')"
-  echo "Pacman:    $(echo ${pkgs} | jq -cr '.pacman|length')"
-  echo "AUR:       $(echo ${pkgs} | jq -cr '.aur|length')"
+  echo ${pkgs} | jq -cr --arg SPC ${space} "\"${query}\""
 }
 
 # List the currently install packages filtered
@@ -101,17 +105,18 @@ list_packages () {
   fi
 
   local query=''
-  query+='Name:    \(.name)\n'
-  query+='Version: \(.version)'
-  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+  query+='\(.name    | lbln("Name"))'
+  query+='\(.version | lbl("Version"))'
+
+  query="[.[] | \"${query}\"] | join(\"\n\n\")"
 
   if is_given "${repository}"; then
-    query=".${repository}|${query}"
+    query=".${repository} | ${query}"
   else
-    query=".pacman + .aur|${query}"
+    query=".pacman + .aur | ${query}"
   fi
 
-  echo "${pkgs}" | jq -cer "${query}" || return 1
+  echo "${pkgs}" | jq -cer --arg SPC 10 "${query}" || return 1
 }
 
 # Sets the mirrors of package databases to the given countries.
@@ -164,7 +169,7 @@ set_mirrors () {
     countries=($(echo "${REPLY}" | jq -cr '.[]'))
   fi
 
-  countries="$(jq -cr -n '$ARGS.positional|join(",")' --args "${countries[@]}")" || return 1
+  countries="$(jq -cr -n '$ARGS.positional | join(",")' --args "${countries[@]}")" || return 1
 
   log 'Setting the package databases mirrors...'
 
@@ -230,12 +235,7 @@ check_updates () {
   fi
 
   local all_updates=''
-  all_updates="$(
-    jq -ncer \
-      --argjson p "${pacman_pkgs}" \
-      --argjson a "${aur_pkgs}" \
-      '$p + $a'
-  )"
+  all_updates="$(jq -ncer --argjson p "${pacman_pkgs}" --argjson a "${aur_pkgs}" '$p + $a')"
 
   local total=0
   total="$(echo "${all_updates}" | jq -cer 'length')"
@@ -287,12 +287,7 @@ list_updates () {
   fi
 
   local all_updates=''
-  all_updates="$(
-    jq -ncer \
-      --argjson p "${pacman_pkgs}" \
-      --argjson a "${aur_pkgs}" \
-      '$p + $a'
-  )"
+  all_updates="$(jq -ncer --argjson p "${pacman_pkgs}" --argjson a "${aur_pkgs}" '$p + $a')"
 
   local total=0
   total="$(echo "${all_updates}" | jq -cer 'length')"
@@ -309,12 +304,13 @@ list_updates () {
 
   # Print all updates in to the console
   local query=''
-  query+='Name:    \(.name)\n'
-  query+='Current: \(.current)\n'
-  query+='Latest:  \(.latest)'
-  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+  query+='\(.name    | lbln("Name"))'
+  query+='\(.current | lbln("Current"))'
+  query+='\(.latest  | lbl("Latest"))'
 
-  echo "${all_updates}" | jq -cr "${query}" || return 1
+  query="[.[] | \"${query}\"] | join(\"\n\n\")"
+
+  echo "${all_updates}" | jq -cr --arg SPC 10 "${query}" || return 1
 }
 
 # Applies any available updates to the system.

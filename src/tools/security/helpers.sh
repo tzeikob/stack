@@ -8,8 +8,9 @@ SECURITY_SETTINGS="${CONFIG_HOME}/security.json"
 # Kills any proccesses of possibly
 # running screen locker instances.
 kill_screen_locker () {
-  local query='.command|test("^xautolock")'
-  query=".[]|select(${query})|.pid"
+  local query='.command | test("^xautolock")'
+
+  query=".[] | select(${query}) | .pid"
   
   local pids=''
   pids="$(ps aux | jc --ps | jq -cr "${query}")" || return 1
@@ -47,9 +48,7 @@ save_screen_locker_to_settings () {
 # Outputs:
 #  true if screen is locked otherwise false.
 is_screen_locked () {
-  local query=''
-  query+='[.[]|select(.command|test("xsecurelock.*"))]'
-  query+='|if length > 0 then "true" else "false" end'
+  local query='[.[] | select(.command | test("xsecurelock.*"))] | length > 0'
 
   local is_locked=''
   is_locked="$(ps aux | grep -v 'jq' | jc --ps | jq -cr "${query}")" || return 1

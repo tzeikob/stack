@@ -71,7 +71,7 @@ pick_locale () {
 # Outputs:
 #  A menu of locales.
 pick_installed_locale () {
-  local query='[.locales|if length > 0 then .[]|{key: ., value: .} else empty end]'
+  local query='[.locales | if length > 0 then .[] | {key: ., value: .} else empty end]'
 
   local locales=''
   locales="$(jq -cr "${query}" "${LANGS_SETTINGS}")" || return 1
@@ -121,7 +121,7 @@ is_not_locale () {
 is_locale_installed () {
   local name="${1}"
 
-  local query=".locales|if length > 0 then .[]|select(. == \"${name}\") else empty end"
+  local query=".locales | if length > 0 then .[] | select(. == \"${name}\") else empty end"
 
   jq -cer "${query}" "${LANGS_SETTINGS}" &> /dev/null || return 1
 }
@@ -236,7 +236,7 @@ pick_layout () {
 #  A menu of keyboard layouts.
 pick_installed_layout () {
   local query=''
-  query='[.layouts[]|{"key": "\(.code):\(.variant)", "value": "\(.code):\(.variant)"}]'
+  query='[.layouts[] | {key: "\(.code):\(.variant)", value: "\(.code):\(.variant)"}]'
   
   local layouts=''
   layouts="$(jq -c "${query}" "${LANGS_SETTINGS}")"
@@ -250,7 +250,7 @@ pick_installed_layout () {
 #  A menu of keyboard layouts.
 pick_installed_layouts () {
   local query=''
-  query='[.layouts[]|{"key": "\(.code):\(.variant)", "value": "\(.code):\(.variant)"}]'
+  query='[.layouts[] | {key: "\(.code):\(.variant)", value: "\(.code):\(.variant)"}]'
   
   local layouts=''
   layouts="$(jq -c "${query}" "${LANGS_SETTINGS}")"
@@ -403,10 +403,10 @@ save_layout_to_settings () {
 
   if file_exists "${LANGS_SETTINGS}"; then
     local layouts=''
-    layouts="$(jq 'if .layouts then .layouts else empty end' "${LANGS_SETTINGS}")"
+    layouts="$(jq '.layouts//empty' "${LANGS_SETTINGS}")"
 
     if is_not_empty "${layouts}"; then
-      local query=".[]|select(.code == \"${code}\" and .variant == \"${variant}\")"
+      local query=".[] | select(.code == \"${code}\" and .variant == \"${variant}\")"
 
       local match=''
       match="$(echo "${layouts}" | jq -cr "${query}")"
@@ -467,7 +467,7 @@ delete_layout_from_settings () {
   fi
 
   local query='.code == $c and .variant == $v'
-  query="if .layouts then .layouts[]|select(${query}) else empty end"
+  query="if .layouts then .layouts[] | select(${query}) else empty end"
 
   local settings=''
   settings="$(jq -e --arg c "${code}" --arg v "${variant}" "del(${query})" "${LANGS_SETTINGS}")" || return 1
@@ -628,7 +628,7 @@ delete_locale_from_settings () {
   fi
 
   local query=". == \"${name}\""
-  query=".locales | if . and length > 0 then .[]|select(${query}) else empty end"
+  query=".locales | if . and length > 0 then .[] | select(${query}) else empty end"
 
   local settings=''
   settings="$(jq -e "del(${query})" "${LANGS_SETTINGS}")" || return 1
@@ -737,7 +737,7 @@ apply_locale_settings () {
 
   # Apply the locales set in the settings file
   local locales=''
-  locales="$(jq -cr '.locales[]|select(. != "C.UTF-8 UTF-8")' "${LANGS_SETTINGS}")"
+  locales="$(jq -cr '.locales[] | select(. != "C.UTF-8 UTF-8")' "${LANGS_SETTINGS}")"
 
   local locale=''
   while read -r locale; do

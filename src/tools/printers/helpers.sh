@@ -47,7 +47,7 @@ find_destinations () {
 find_destination () {
   local name="${1}"
 
-  local query=".[]|select(.name == \"${name}\")"
+  local query=".[] | select(.name == \"${name}\")"
 
   local destination=''
   destination="$(find_destinations | jq -cer "${query}")" || return 1
@@ -106,7 +106,7 @@ find_destination () {
 destination_exists () {
   local name="${1}"
 
-  local query=".[]|select(.name == \"${name}\")"
+  local query=".[] | select(.name == \"${name}\")"
 
   local destination=''
   destination="$(find_destinations | jq -cer "${query}")" || return 1
@@ -131,7 +131,7 @@ discover_destinations () {
 
   # Search in local network for snmp destinations
   local hosts=''
-  hosts="$(find_hosts | jq -cer '.[]|.ip')" || return 1
+  hosts="$(find_hosts | jq -cer '.[] | .ip')" || return 1
 
   if is_not_empty "${hosts}"; then
     local host=''
@@ -202,7 +202,7 @@ find_jobs () {
 job_exists () {
   local id="${1}"
 
-  local query=".[]|select(.id == \"${id}\")"
+  local query=".[] | select(.id == \"${id}\")"
 
   local job=''
   job="$(find_jobs | jq -cer "${query}")" || return 1
@@ -223,8 +223,9 @@ job_not_exists () {
 # Outputs:
 #  A menu of printers.
 pick_printer () {
-  local query='{key: .name, value: "\(.name) [\(.uri)]"}'
-  query="[.[]|${query}]"
+  local option='{key: .name, value: "\(.name) [\(.uri | dft("..."))]"}'
+
+  local query="[.[] | ${option}]"
 
   local destinations=''
   destinations="$(find_destinations | jq -cer "${query}")" || return 1
@@ -247,9 +248,9 @@ pick_printer () {
 pick_uri () {
   log 'Discovering print uri destinations...'
 
-  local query=''
-  query+='{key: .uri, value: "\(.uri)\(.name|if (. and . != "") then " [\(.)]" else "" end)"}'
-  query="[.[]|${query}]"
+  local option='{key: .uri, value: "\(.uri) [\(.name | dft("..."))]"}'
+  
+  local query="[.[] | ${option}]"
 
   local destinations=''
   destinations="$(discover_destinations | jq -cer "${query}")"
@@ -307,7 +308,7 @@ is_driver_available () {
   local drivers=''
   drivers="$(find_drivers)" || return 1
 
-  local query=".[]|select(.key == \"${name}\")"
+  local query=".[] | select(.key == \"${name}\")"
 
   echo "${drivers}" | jq -cer "${query}" &> /dev/null || return 1
 }
@@ -339,8 +340,9 @@ pick_driver () {
 # Outputs:
 #  A menu of print jobs.
 pick_job () {
-  local query='{key: .id, value: "\(.id) [\(.file)]"}'
-  query="[.[]|${query}]"
+  local option='{key: .id, value: "\(.id) [\(.file) | dft("...")]"}'
+
+  local query="[.[] | ${option}]"
 
   local jobs=''
   jobs="$(find_jobs | jq -cer "${query}")" || return 1

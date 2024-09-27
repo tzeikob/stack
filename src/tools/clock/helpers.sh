@@ -132,15 +132,11 @@ save_time_format_to_settings () {
 
   if file_exists "${CLOCK_SETTINGS}"; then
     local query=''
-    query+=".time_mode = \"${mode}\"|"
-    query+=".time_precision = \"${precision}\""
+    query+=".time_mode = \"${mode}\" | .time_precision = \"${precision}\""
     
     settings="$(jq -e "${query}" "${CLOCK_SETTINGS}")" || return 1
   else
-    local object=''
-    object+="\"time_mode\": \"${mode}\","
-    object+="\"time_precision\": \"${precision}\""
-    object="{${object}}"
+    local object="{\"time_mode\": \"${mode}\", \"time_precision\": \"${precision}\"}"
     
     settings="$(echo "${object}" | jq -e '.')" || return 1
   fi

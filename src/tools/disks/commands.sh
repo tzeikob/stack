@@ -13,43 +13,34 @@ source src/tools/disks/helpers.sh
 # Outputs:
 #  A list of disks and filesystem data.
 show_status () {
-  local alt_fstype='.children|'
-  alt_fstype+='if . and length>0'
-  alt_fstype+=' then (.[0]|.fstype|if . then  " \(.|ascii_upcase)" else "" end)'
-  alt_fstype+=' else "" end'
+  local space=9
 
-  local alt_fsuse='.children|'
-  alt_fsuse+='if . and length>0'
-  alt_fsuse+=' then (.[0]|."fsuse%"|if . then  " \(.)" else "" end)'
-  alt_fsuse+=' else "" end'
-
-  local parts=''
-  parts+='\(.path)'
-  parts+="\(if .fstype then \" \(.fstype|ascii_upcase)\" else ${alt_fstype} end)"
-  parts+="\(if .\"fsuse%\" then \" \(.\"fsuse%\")\" else ${alt_fsuse} end)"
-  parts=".children|if . and length>0 then .[]|\"${parts}\" else \"\" end"
-  parts="[${parts}]|join(\"\n         \")"
+  local alt_fstype='.children//[] | .[0].fstype | uppercase | dft("...")'
+  local alt_fsuse='.children//[] | .[0]."fsuse%" | dft("...")'
+  local parts=".[] | \"\(.path) \(.fstype//${alt_fstype}) \(.\"fsuse%\"//${alt_fsuse})\""
 
   local query=''
-  query+='Disk:    \(.path)\n'
-  query+='Vendor:  \(.vendor|if . and . != "" then gsub("^\\s+|\\s+$";"") else "n/a" end)\n'
-  query+='Model:   \(.model|if . and . != "" then . else "n/a" end)\n'
-  query+='Size:    \(.size)\n'
-  query+="Parts:   \(if .children then ${parts} else \"none\" end)"
+  query+='\(.path                      | lbln("Disk"))'
+  query+='\(.vendor | trim             | lbln("Vendor"))'
+  query+='\(.model                     | lbln("Model"))'
+  query+='\(.size                      | lbln("Size"))'
+  query+="\(.children//[] | [${parts}] | tree("Parts"; "None"))"
 
-  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+  query="[.[] | \"${query}\"] | join(\"\n\n\")"
 
-  find_disks | jq -cer "${query}" || return 1
+  find_disks | jq -cer --arg SPC ${space} "${query}" || return 1
 
   echo
 
-  swapon --noheadings --show | awk -F' ' '{
-    printf "%-8s %s\n", "Swap:", $1
-    printf "%-8s %s\n", "Type:", $2
-    printf "%-8s %s\n", "Used:", $4"/"$3
+  swapon --noheadings --show | awk -F' ' -v SPC=${space} '{
+    frm="%-"SPC"s%s\n"
+
+    printf frm, "Swap:", $1
+    printf frm, "Type:", $2
+    printf frm, "Used:", $4"/"$3
   }' || return 1
 
-  cat /proc/meminfo | grep -E 'Swap.*' | awk -F':' '{
+  cat /proc/meminfo | grep -E 'Swap.*' | awk -F':' -v SPC=${space} '{
     gsub(/^[ \t]+/,"",$1)
     gsub(/[ \t]+$/,"",$1)
     gsub(/^[ \t]+/,"",$2)
@@ -58,7 +49,10 @@ show_status () {
     if ($1 == "SwapCached") $1="Cached"
     if ($1 == "SwapTotal") $1="Total"
     if ($1 == "SwapFree") $1="Free"
-    printf "%-8s %s\n", $1":", $2
+
+    frm="%-"SPC"s%s\n"
+
+    printf frm, $1":", $2
   }' || return 1
 }
 
@@ -88,45 +82,27 @@ show_disk () {
   local disk=''
   disk="$(find_disk "${path}")" || return 1
 
-  local alt_fstype='.children|'
-  alt_fstype+='if . and length>0'
-  alt_fstype+=' then (.[0]|.fstype|if . then  " \(.|ascii_upcase)" else "" end)'
-  alt_fstype+=' else "" end'
-
-  local alt_fsuse='.children|'
-  alt_fsuse+='if . and length>0'
-  alt_fsuse+=' then (.[0]|."fsuse%"|if . then  " \(.)" else "" end)'
-  alt_fsuse+=' else "" end'
-
-  local alt_label='.children|'
-  alt_label+='if . and length>0'
-  alt_label+=' then (.[0]|.label|if . then  " [\(.)]" else "" end)'
-  alt_label+=' else "" end'
-
-  local parts=''
-  parts+='\(.path)'
-  parts+="\(if .fstype then \" \(.fstype|ascii_upcase)\" else ${alt_fstype} end)"
-  parts+="\(if .\"fsuse%\" then \" \(.\"fsuse%\")\" else ${alt_fsuse} end)"
-  parts+="\(if .label then \" [\(.label)]\" else ${alt_label} end)"
-  parts=".children|if . and length>0 then .[]|\"${parts}\" else \"\" end"
-  parts="[${parts}]|join(\"\n            \")"
+  local alt_fstype='.children//[] | .[0].fstype | uppercase | dft("...")'
+  local alt_fsuse='.children//[] | .[0]."fsuse%" | dft("...")'
+  local alt_label='.children//[] | .[0].label | dft("...")'
+  local parts=".[] | \"\(.path) \(.fstype//${alt_fstype}) \(.\"fsuse%\"//${alt_fsuse} \(.label//${alt_label}))\""
 
   local query=''
-  query+='Name:       \(.name)\n'
-  query+='Path:       \(.path)\n'
-  query+='Removable:  \(.rm)\n'
-  query+='ReadOnly:   \(.ro)\n'
-  query+='Transfer:   \(.tran)\n'
-  query+='HotPlug:    \(.hotplug)\n'
-  query+='Size:       \(.size)\n'
-  query+='Vendor:     \(.vendor|if . and . != "" then . else "n/a" end)\n'
-  query+='Model:      \(.model|if . and . != "" then . else "n/a" end)\n'
-  query+='Revision:   \(.rev|if . and . != "" then . else "n/a" end)\n'
-  query+='Serial:     \(.serial|if . and . != "" then . else "n/a" end)\n'
-  query+='State:      \(.state|if . and . != "" then . else "n/a" end)\n'
-  query+="Parts:      \(if .children then ${parts} else \"none\" end)"
+  query+='\(.name                       | lbln("Name"))'
+  query+='\(.path                       | lbln("Path"))'
+  query+='\(.rm                         | lbln("Removable"))'
+  query+='\(.ro                         | lbln("ReadOnly"))'
+  query+='\(.tran                       | lbln("Transfer"))'
+  query+='\(.hotplug                    | lbln("HotPlug"))'
+  query+='\(.size                       | lbln("Size"))'
+  query+='\(.vendor | trim              | lbln("Vendor"))'
+  query+='\(.model                      | lbln("Model"))'
+  query+='\(.rev                        | lbln("Revision"))'
+  query+='\(.serial                     | lbln("Serial"))'
+  query+='\(.state                      | lbln("State"))'
+  query+="\(.children//[] | [${parts}]  | tree("Parts"; "None")"
 
-  echo "${disk}" | jq -cer "\"${query}\"" || return 1
+  echo "${disk}" | jq -cer --arg SPC 12 "\"${query}\"" || return 1
 }
 
 # Shows the data of the partition block device.
@@ -158,54 +134,37 @@ show_partition () {
   local part=''
   part="$(find_partition "${path}")" || return 1
 
-  local alt_fstype='.children|'
-  alt_fstype+='if . and length>0'
-  alt_fstype+=' then (.[0]|.fstype|if . then  "File System:  \(.|ascii_upcase)\n" else "" end)'
-  alt_fstype+=' else "" end'
-
-  local alt_fsavail='.children|'
-  alt_fsavail+='if . and length>0'
-  alt_fsavail+=' then (.[0]|.fsavail|if . then  "\nFree Space:   \(.)" else "" end)'
-  alt_fsavail+=' else "" end'
-
-  local alt_fsused='.children|'
-  alt_fsused+='if . and length>0'
-  alt_fsused+=' then (.[0]|if .fsused then  "\nUsed Space:   \(.fsused) [\(."fsuse%")]" else "" end)'
-  alt_fsused+=' else "" end'
-
-  local alt_label='.children|'
-  alt_label+='if . and length>0'
-  alt_label+=' then (.[0]|.label|if . then  "\nLabel:        \(.)" else "" end)'
-  alt_label+=' else "" end'
-
-  local alt_uuid='.children|'
-  alt_uuid+='if . and length>0'
-  alt_uuid+=' then (.[0]|.uuid|if . then  "\nUUID:         \(.)" else "" end)'
-  alt_uuid+=' else "" end'
-
-  local alt_mountpoint=''
-  alt_mountpoint+='.veracrypt|if . then "\nMount:        \(.mountpoint)" else "" end'
+  local alt_fstype='.children//[] | .[0].fstype | opt'
+  local alt_fsavail='.children//[] | .[0].fsavail | opt'
+  local alt_fsused='.children//[] | .[0].fsused | opt'
+  local alt_util='.children//[] | .[0]."fsuse%" | opt'
+  local alt_label='.children//[] | .[0].label | opt'
+  local alt_uuid='.children//[] | .[0].uuid | opt'
 
   local query=''
-  query+='Name:         \(.name) \(if .veracrypt then "[encrypted]" else "" end)\n'
-  query+='Path:         \(.path)\n'
-  query+="\(if .fstype then \"File System:  \(.fstype|ascii_upcase)\n\" else ${alt_fstype} end)"
-  query+='Removable:    \(.rm)\n'
-  query+='ReadOnly:     \(.ro)\n'
-  query+='HotPlug:      \(.hotplug)\n'
-  query+='Size:         \(.size)'
-  query+="\(if .fsavail then \"\nFree Space:   \(.fsavail)\" else ${alt_fsavail} end)"
-  query+="\(if .fsused then \"\nUsed Space:   \(.fsused) [\(.\"fsuse%\")]\" else ${alt_fsused} end)"
-  query+="\(if .label then \"\nLabel:        \(.label)\" else ${alt_label} end)"
-  query+="\(if .uuid then \"\nUUID:         \(.uuid)\" else ${alt_uuid} end)"
-  query+='\(.veracrypt|if . then "\nSlot:         \(.slot)" else "" end)'
-  query+='\(.veracrypt|if . then "\nHidden:       \(.hidden_protected)" else "" end)'
-  query+='\(.veracrypt|if . then "\nEncryption:   \(.encryption_algo):\(.prf) [\(.mode)]" else "" end)'
-  query+='\(.veracrypt|if . then "\nBlock:        \(.block_size)" else "" end)'
-  query+='\(.veracrypt|if . then "\nMapped:       \(.device)" else "" end)'
-  query+="\(if .mountpoint then \"\nMount:        \(.mountpoint)\" else ${alt_mountpoint} end)"
+  query+='\(.name                                  | lbln("Name"))'
+  query+='\(.path                                  | lbln("Path"))'
+  query+="\(.mountpoint//.veracrypt.mountpoint     | olbln("Mount"))"
+  query+="\(.fstype//${alt_fstype} | uppercase     | lbln(\"File System\"))"
+  query+='\(.rm                                    | lbln("Removable"))'
+  query+='\(.ro                                    | lbln("ReadOnly"))'
+  query+='\(.hotplug                               | lbln("HotPlug"))'
+  query+="\(.label//${alt_label}                   | lbln("Label"))"
+  query+="\(.uuid//${alt_uuid}                     | lbln("UUID"))"
+  query+='\(if .veracrypt then "yes" else "no" end | olbln("Encrypted"))'
+  query+='\(.veracrypt.encryption_algo             | olbln("Encryption"))'
+  query+='\(.veracrypt.slot                        | olbln("Slot"))'
+  query+='\(.veracrypt.hidden_protected            | olbln("Hidden"))'
+  query+='\(.veracrypt.prf                         | olbln("PRF"))'
+  query+='\(.veracrypt.mode                        | olbln("Mode"))'
+  query+='\(.veracrypt.block_size                  | olbln("Block"))'
+  query+='\(.veracrypt.device                      | olbln("Mapped"))'
+  query+='\(.size                                  | lbln("Size"))'
+  query+="\(.fsavail//${alt_fsavail}               | lbln(\"Free Space\"))"
+  query+="\(.fsused//${alt_fsused}                 | lbln(\"Used Space\"))"
+  query+="\(.\"fsuse%\"//${alt_util}               | lbl("Utilization"))"
 
-  echo "${part}" | jq -cer "\"${query}\"" || return 1
+  echo "${part}" | jq -cer -arg SPC 14 "\"${query}\"" || return 1
 }
 
 # Shows the data of the rom block device with
@@ -235,26 +194,27 @@ show_rom () {
   rom="$(find_rom "${path}")" || return 1
 
   local query=''
-  query+='Name:          \(.name)\n'
-  query+='Path:          \(.path)\n'
-  query+='\(if .fstype then "File System:   \(.fstype|ascii_upcase)\n" else "" end)'
-  query+='Removable:     \(.rm)\n'
-  query+='ReadOnly:      \(.ro)\n'
-  query+='Transfer:      \(.tran)\n'
-  query+='HotPlug:       \(.hotplug)\n'
-  query+='Size:          \(.size)\n'
-  query+='\(if .fsavail then "Free Space:    \(.fsavail)\n" else "" end)'
-  query+='\(if .fsused then "Used Space:    \(.fsused) [\(."fsuse%")]\n" else "" end)'
-  query+='\(if .label then "Label:         \(.label)\n" else "" end)'
-  query+='\(if .uuid then "UUID:          \(.uuid)\n" else "" end)'
-  query+='Vendor:        \(.vendor|if . and . != "" then . else "n/a" end)\n'
-  query+='Model:         \(.model|if . and . != "" then . else "n/a" end)\n'
-  query+='Revision:      \(.rev|if . and . != "" then . else "n/a" end)\n'
-  query+='Serial:        \(.serial|if . and . != "" then . else "n/a" end)\n'
-  query+='State:         \(.state|if . and . != "" then . else "n/a" end)'
-  query+='\(if .mountpoint then "\nMount:         \(.mountpoint)" else "" end)'
+  query+='\(.name               | lbln("Name"))'
+  query+='\(.path               | lbln("Path"))'
+  query+='\(.mountpoint         | olbl("Mount"))'
+  query+='\(.fstype | uppercase | lbln("File System"; "Unknown"))'
+  query+='\(.rm                 | lbln("Removable"))'
+  query+='\(.ro                 | lbln("ReadOnly"))'
+  query+='\(.tran               | lbln("Transfer"))'
+  query+='\(.hotplug            | lbln("HotPlug"))'
+  query+='\(.label              | olbln("Label"))'
+  query+='\(.uuid               | olbln("UUID"))'
+  query+='\(.vendor | trim      | lbln("Vendor"))'
+  query+='\(.model              | lbln("Model"))'
+  query+='\(.rev                | lbln("Revision"))'
+  query+='\(.serial             | lbln("Serial"))'
+  query+='\(.size               | olbln("Size"))'
+  query+='\(.fsavail            | olbln("Free Space"))'
+  query+='\(.fsused             | olbln("Used Space"))'
+  query+='\(."fsuse%"           | olbln("Utilization"))'
+  query+='\(.state              | lbl("State"))'
 
-  echo "${rom}" | jq -cer "\"${query}\"" || return 1
+  echo "${rom}" | jq -cer --arg SPC 14 "\"${query}\"" || return 1
 }
 
 # Shows the list of disk block devices.
@@ -273,14 +233,15 @@ list_disks () {
   fi
 
   local query=''
-  query+='Name:    \(.name)\n'
-  query+='Path:    \(.path)\n'
-  query+='Size:    \(.size)\n'
-  query+='Vendor:  \(.vendor|if . and . != "" then . else "n/a" end)\n'
-  query+='Model:   \(.model|if . and . != "" then . else "n/a" end)'
-  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+  query+='\(.name          | lbln("Name"))'
+  query+='\(.path          | lbln("Path"))'
+  query+='\(.vendor | trim | olbln("Vendor"))'
+  query+='\(.model         | olbln("Model"))'
+  query+='\(.size          | lbl("Size"))'
 
-  echo "${disks}" | jq -cer "${query}" || return 1
+  query="[.[] | \"${query}\"] | join(\"\n\n\")"
+
+  echo "${disks}" | jq -cer --arg SPC 9 "${query}" || return 1
 }
 
 # Shows the list of partitions of the disk block device
@@ -318,13 +279,15 @@ list_partitions () {
   fi
 
   local query=''
-  query+='Name:   \(.name)\(if .veracrypt then " [encrypted]" else "" end)\n'
-  query+='Path:   \(.path)\n'
-  query+='Size:   \(.size)'
-  query+='\(if .label then "\nLabel:  \(.label)" else "" end)'
-  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+  query+='\(.name                                  | lbln("Name"))'
+  query+='\(if .veracrypt then "yes" else "no" end | olbln("Encrypted"))'
+  query+='\(.path                                  | lbln("Path"))'
+  query+='\(.label                                 | olbln("Label))'
+  query+='\(.size                                  | lbl("Size"))'
 
-  echo "${parts}" | jq -cer "${query}" || return 1
+  query="[.[] | \"${query}\"] | join(\"\n\n\")"
+
+  echo "${parts}" | jq -cer --arg 12 "${query}" || return 1
 }
 
 # Shows the list of rom block devices.
@@ -343,15 +306,16 @@ list_roms () {
   fi
 
   local query=''
-  query+='Name:    \(.name)\n'
-  query+='Path:    \(.path)\n'
-  query+='Size:    \(.size)'
-  query+='\(if .vendor then "\nVendor:  \(.vendor)" else "" end)'
-  query+='\(if .model then "\nModel:   \(.model)" else "" end)'
-  query+='\(if .label then "\nLabel:   \(.label)" else "" end)'
-  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+  query+='\(.name          | lbln("Name"))'
+  query+='\(.path          | lbln("Path"))'
+  query+='\(.vendor | trim | olbln("Vendor"))'
+  query+='\(.model         | olbln("Model"))'
+  query+='\(.label         | olbln("Label"))'
+  query+='\(.size          | lbl("Size"))'
+  
+  query="[.[] | \"${query}\"] | join(\"\n\n\")"
 
-  echo "${roms}" | jq -cer "${query}" || return 1
+  echo "${roms}" | jq -cer --arg SPC 9 "${query}" || return 1
 }
 
 # Shows the list of shared folders of the given host.
@@ -420,12 +384,12 @@ list_shared_folders () {
   fi
 
   local query=''
-  query+='Name:  \(.name)\n'
-  query+='Type:  \(.type)'
+  query+='\(.name | lbln("Name"))'
+  query+='\(.type | lbl("Type"))'
 
-  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+  query="[.[] | \"${query}\"] | join(\"\n\n\")"
 
-  echo "${folders}" | jq -cer "${query}" || return 1
+  echo "${folders}" | jq -cer --arg SPC 7 "${query}" || return 1
 }
 
 # Shows the list of any mounted devices, images and/or
@@ -436,13 +400,13 @@ list_mounts () {
   local mounts='[]'
 
   local disks=''
-  disks="$(find_disks | jq -cer '.[]|.path')" || return 1
+  disks="$(find_disks | jq -cer '.[] | .path')" || return 1
 
   local disk=''
   while read -r disk; do
     local parts=''
     parts="$(find_partitions "${disk}" mounted |
-      jq -cer '[.[]|{name: .path, point: (if .mountpoint then .mountpoint else .veracrypt.mountpoint end)}]')" || return 1
+      jq -cer '[.[] | {name: .path, point: .mountpoint//.veracrypt.mountpoint}]')" || return 1
 
     # Merge disk partitions to mounts array
     mounts="$(jq -n --argjson m "${mounts}" --argjson p "${parts}" '$m + $p')" || return 1
@@ -450,7 +414,7 @@ list_mounts () {
 
   local roms=''
   roms="$(find_roms mounted | 
-    jq -cer '[.[]|{name: .path, point: .mountpoint}]')" || return 1
+    jq -cer '[.[] | {name: .path, point: .mountpoint}]')" || return 1
   
   # Merge roms to mounts array
   mounts="$(jq -n --argjson m "${mounts}" --argjson r "${roms}" '$m + $r')" || return 1
@@ -505,11 +469,12 @@ list_mounts () {
   fi
 
   local query=''
-  query+='Name:   \(.name)\n'
-  query+='Point:  \(.point)'
-  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+  query+='\(.name  | lbln("Name"))'
+  query+='\(.point | lbl("Point"))'
 
-  echo "${mounts}" | jq -cer "${query}" || return 1
+  query="[.[] | \"${query}\"] | join(\"\n\n\")"
+
+  echo "${mounts}" | jq -cer --arg SPC 7 "${query}" || return 1
 }
 
 # Mounts the partition block device with the given path.
@@ -992,13 +957,12 @@ format_disk () {
   # Do not ask confirmation on script mode
   if on_user_mode; then
     local query=''
-    query+='\(.vendor|if . and . != "" then "\(gsub("^\\s+|\\s+$";"")) " else "disk " end)'
-    query+='\(.model|if . and . != "" then "\(.) " else "" end)'
-    query+='\(.size)'
-    query="\"${query}\""
+    query+='\(.vendor | trim | dft("disk")) '
+    query+='\(.model         | dft("...")) '
+    query+='\(.size          | dft("..."))'
 
     local model=''
-    model="$(find_disk "${path}" | jq -cr "${query}")" || return 1
+    model="$(find_disk "${path}" | jq -cr "\"${query}"\")" || return 1
 
     log "ALL DATA in ${model} [${path}],"
     log 'will be irreversibly gone forever!'
@@ -1111,71 +1075,38 @@ scan_disk () {
     return 2
   fi
 
-  local model=''
-  model+='if .model_name'
-  model+=' then "\nModel:     \(.model_name) FW.\(.firmware_version)"'
-  model+=' else ""'
-  model+='end'
-
-  local physicals=''
-  physicals+='if .physical_block_size'
-  physicals+=' then " P:\(.physical_block_size)"'
-  physicals+=' else ""'
-  physicals+='end'
-
-  local factor=''
-  factor+='if .form_factor.name'
-  factor+=' then "\nFactor:    \(.form_factor.name) \(.rotation_rate) rpm"'
-  factor+=' else ""'
-  factor+='end'
-
-  local sata=''
-  sata+='if .sata_version.string'
-  sata+=' then "\nSATA:      \(.sata_version.string) at \(.interface_speed.max.string)"'
-  sata+=' else ""'
-  sata+='end'
-
-  local trim=''
-  trim+='if .trim.supported'
-  trim+=' then "\nTrim:      \(.trim.supported)"'
-  trim+=' else ""'
-  trim+='end'
-
-  local passed=''
-  passed+='if .smart_status.passed then "passed" else "failed" end'
-
-  local temp=''
-  temp+='if .temperature.current'
-  temp+=' then "\nTemp:      \(.temperature.current)C"'
-  temp+=' else ""'
-  temp+='end'
-
   local attr=''
-  attr+='Attr:      \(.id)\n'
-  attr+='Name:      \(.name)\n'
-  attr+='Raw:       \(.raw.value)\n'
-  attr+='Values:    [V\(.value), W\(.worst), T\(.thresh)]\n'
-  attr+='Failing:   \(.when_failed)'
+  attr+='\(.id          | lbln("ID"))'
+  attr+='\(.name        | lbln("Name"))'
+  attr+='\(.raw.value   | lbln("Raw"))'
+  attr+='\(.value       | lbln("Value"))'
+  attr+='\(.worst       | lbln("Worst"))'
+  attr+='\(.thresh      | lbln("Threshold))'
+  attr+='\(.when_failed | lbl("Failing"))'
 
   local attrs=''
-  attrs+='.ata_smart_attributes.table as $a |'
-  attrs+="if \$a then \"\n\n\([\$a[]|\"${attr}\"]|join(\"\n\n\"))\" else \"\" end"
+  attrs+=".ata_smart_attributes.table//[] | [.[] | \"\n\n\(\"${attr}\")\"] | join(\"\n\n\")"
 
   local query=''
-  query+='Name:      \(.device.name)'
-  query+="\(${model})"
-  query+='\nProtocol:  \(.device.type|ascii_upcase) \(.device.protocol)'
-  query+='\nCapacity:  \(.user_capacity.bytes) bytes'
-  query+="\nBlocks:    L:\(.logical_block_size)\(${physicals})"
-  query+="\(${factor})"
-  query+="\(${trim})"
-  query+="\(${sata})"
-  query+='\nSMART:     \(.smart_support.enabled)'
-  query+="\(${temp})"
-  query+="\nHealth:    \(${passed})"
+  query+='\(.device.name                | lbln("Name"))'
+  query+='\(.model_name                 | olbln("Model"))'
+  query+='\(.firmware_version           | olbln("Firmware"))'
+  query+='\(.device.type | uppercase    | lbln("Type"))'
+  query+='\(.device.protocol            | lbln("Protocol"))'
+  query+='\(.user_capacity.bytes        | lbln("Capacity"))'
+  query+='\(.logical_block_size         | olbln("LBS"))'
+  query+='\(.physical_block_size        | olbln("PBS"))'
+  query+='\(.form_factor.name           | olbln("Factor"))'
+  query+='\(.rotation_rate              | olbln("RPM"))'
+  query+='\(.trim.supported             | olbln("Trim"))'
+  query+='\(.sata_version.string        | olbln("SATA"))'
+  query+='\(.interface_speed.max.string | olbln("Speed"))'
+  query+='\(.smart_support.enabled      | olbln("SMART"))'
+  query+='\(.temperature.current        | olbln("Celsius"))'
+  query+='\(.smart_status.passed        | lbl("Passed"))'
   query+="\(${attrs})"
 
-  sudo smartctl -iHj "${path}" | jq -cer "\"${query}\""
+  sudo smartctl -iHj "${path}" | jq -cer --arg SPC 12 "\"${query}\""
 }
 
 # Creates an encrypted disk block device with the
@@ -1240,13 +1171,12 @@ create_encrypted () {
     fi
 
     local query=''
-    query+='\(.vendor|if . and . != "" then "\(gsub("^\\s+|\\s+$";"")) " else "disk " end)'
-    query+='\(.model|if . and . != "" then "\(.) " else "" end)'
-    query+='\(.size)'
-    query="\"${query}\""
+    query+='\(.vendor | trim | dft("disk")) '
+    query+='\(.model         | dft("...")) '
+    query+='\(.size          | dft("..."))'
 
     local model=''
-    model="$(find_disk "${path}" | jq -cr "${query}")" || return 1
+    model="$(find_disk "${path}" | jq -cr "\"${query}\"")" || return 1
 
     log "ALL DATA in ${model} [${path}],"
     log 'will be irreversibly gone forever!'
@@ -1369,13 +1299,12 @@ create_bootable () {
 
   if on_user_mode; then
     local query=''
-    query+='\(.vendor|if . and . != "" then "\(gsub("^\\s+|\\s+$";"")) " else "disk " end)'
-    query+='\(.model|if . and . != "" then "\(.) " else "" end)'
-    query+='\(.size)'
-    query="\"${query}\""
+    query+='\(.vendor | trim | dft("disk")) '
+    query+='\(.model         | dft("...")) '
+    query+='\(.size          | dft("..."))'
 
     local model=''
-    model="$(find_disk "${path}" | jq -cr "${query}")" || return 1
+    model="$(find_disk "${path}" | jq -cr "\"${query}\"")" || return 1
 
     log -n "ALL DATA in ${model} [${path}],"
     log 'will be irreversibly gone forever!'

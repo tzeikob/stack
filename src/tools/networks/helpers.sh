@@ -28,7 +28,7 @@ find_devices () {
   local query='.'
 
   if is_given "${type}"; then
-    query="[.[]|select(.type == \"${type}\")]"
+    query="[.[] | select(.type == \"${type}\")]"
   fi
 
   nmcli device | jc --nmcli | jq -cer "${query}" || return 1
@@ -54,7 +54,7 @@ find_device () {
     query+='rate: .bit_rate,'
     query+='quality: .link_quality,'
     query+='signal: .signal_level'
-    query="if (.|length>0 and .[0].frequency) then .[0]|{${query}} else {} end"
+    query="if (. | length > 0 and .[0].frequency) then .[0] | {${query}} else {} end"
 
     device="$(iwconfig "${name}" 2> /dev/null | jc --iwconfig |
       jq -cer --argjson d "${device}" "${query} + \$d")" || return 1
@@ -93,7 +93,7 @@ find_connection () {
     query+='rate: .bit_rate,'
     query+='quality: .link_quality,'
     query+='signal: .signal_level'
-    query="if (.|length>0 and .[0].frequency) then .[0]|{${query}} else {} end"
+    query="if (. | length > 0 and .[0].frequency) then .[0] | {${query}} else {} end"
 
     if is_network_device "${device}"; then
       connection="$(iwconfig "${device}" 2> /dev/null | jc --iwconfig |
@@ -147,10 +147,10 @@ is_network_device () {
   local name="${1}"
   local type="${2}"
 
-  local query=".[]|select(.device == \"${name}\")"
+  local query=".[] | select(.device == \"${name}\")"
 
   if is_given "${type}"; then
-    query+="|select(.type == \"${type}\")"
+    query+="| select(.type == \"${type}\")"
   fi
 
   local result=''
@@ -176,7 +176,7 @@ is_connection () {
   local name="${1}"
 
   local result=''
-  result="$(find_connections | jq -cer ".[]|select(.name == \"${name}\")")"
+  result="$(find_connections | jq -cer ".[] | select(.name == \"${name}\")")"
 
   if has_failed || is_empty "${result}"; then
     return 1
@@ -196,8 +196,9 @@ is_not_connection () {
 pick_device () {
   local type="${1}"
 
-  local query='{key: .device, value: .device}'
-  query="[.[]|${query}]"
+  local option='{key: .device, value: .device}'
+
+  local query="[.[] | ${option}]"
 
   local devices=''
   devices="$(find_devices "${type}" | jq -cer "${query}")" || return 1
@@ -217,8 +218,9 @@ pick_device () {
 # Outputs:
 #  A menu of connection names.
 pick_connection () {
-  local query='{key: .name, value: .name}'
-  query="[.[]|${query}]"
+  local option='{key: .name, value: .name}'
+
+  local query="[.[] | ${option}]"
 
   local connections=''
   connections="$(find_connections | jq -cer "${query}")" || return 1
@@ -255,8 +257,9 @@ pick_wifi () {
     return 2
   fi
 
-  local query='{key: .ssid, value: "[\(.signal)] \(.ssid)"}'
-  query="[.[]|${query}]"
+  local option='{key: .ssid, value: "[\(.signal)] \(.ssid)"}'
+
+  local query="[.[] | ${option}]"
 
   networks="$(echo "${networks}" | jq -cer "${query}")" || return 1
 
@@ -272,9 +275,9 @@ pick_proxy () {
     return 2
   fi
 
-  local query=''
-  query+='{key: .name, value: "\(.name) [\(.host)]"}'
-  query=".proxies|if .|length>0 then [.[]|${query}] else [] end"
+  local option='{key: .name, value: "\(.name) [\(.host)]"}'
+
+  local query=".proxies | if . | length > 0 then [.[] | ${option}] else [] end"
 
   local proxies=''
   proxies="$(jq -cer "${query}" "${NETWORKS_SETTINGS}")" || return 1
@@ -307,7 +310,7 @@ save_proxy_to_settings () {
   local no_proxy="${6}"
 
   if is_given "${no_proxy}"; then
-    local query='[split(",")|.[]|if . and .!="" then . else empty end]'
+    local query='[split(",") | .[] | if . and . != "" then . else empty end]'
     no_proxy="$(echo "\"${no_proxy}\"" | jq -cer "${query}")" || return 1
   else
     no_proxy='[]'
@@ -349,7 +352,7 @@ exists_proxy_profile () {
   fi
 
   local query=''
-  query+=".proxies|if . then .[]|select(.name == \"${name}\") else empty end"
+  query+=".proxies | if . then .[] | select(.name == \"${name}\") else empty end"
   
   local proxy=''
   proxy="$(jq -cr "${query}" "${NETWORKS_SETTINGS}")"

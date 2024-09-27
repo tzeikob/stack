@@ -56,22 +56,19 @@ restart () {
 # Outputs:
 #  A verbose list of text data.
 show_status () {
-  local is_up='false'
-  is_up="$(is_notifications_up)" || return 1
+  local space=10
 
-  if is_true "${is_up}"; then
-    echo 'Service:  up'
-  else
-    echo 'Service:  down'
-  fi
+  local query='if . the "Up" else "Down" end | lbln("Service")'
+
+  is_notifications_up | jq -cer --arg SPC ${space} "${query}" || return 1
 
   local query=''
-  query+='Mute:     \(.is_paused|if . then "yes" else "no" end)\n'
-  query+='Pending:  \(.pending)\n'
-  query+='Showing:  \(.displayed)\n'
-  query+='Sent:     \(.archived)'
+  query+='\(if .is_paused then "yes" else "no" end | lbln("Mute"))'
+  query+='\(.pending                               | lbln("Pending"))'
+  query+='\(.displayed                             | lbln("Showing"))'
+  query+='\(.archived                              | lbl("Sent"))'
 
-  get_notifications_state | jq -cer "\"${query}\"" || return 1
+  get_notifications_state | jq -cer --arg SPC ${space} "\"${query}\"" || return 1
 }
 
 # Shows the list of archived notifications sorted by the
@@ -100,25 +97,30 @@ list_all () {
   fi
 
   local query=''
-  query+='ID:       \(.id.data)\n'
-  query+='App:      \(.appname.data)'
-  query+='\(.summary.data|if . and . != "" then "\nSummary:  \(.)" else "" end)'
-  query+='\(.body.data|if . and . != "" then "\nBody:     \(.)" else "" end)'
-  query+='\(.timestamp.data|if . and . != "" then "\nSent:     \(.)" else "" end)'
-  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+  query+='\(.id.data        | lbln("ID"))'
+  query+='\(.appname.data   | lbln("App"))'
+  query+='\(.summary.data   | olbln("Summary"))'
+  query+='\(.body.data      | olbln("Body"))'
+  query+='\(.timestamp.data | lbl("Sent"))'
+
+  query="[.[] | \"${query}\"] | join(\"\n\n\")"
 
   # Read the current uptime secs of the system
   local uptime=''
   uptime="$(cut -d '.' -f 1 /proc/uptime)" || return 1
 
-  echo "${notifications}" | jq -cer "${query}" | awk -v uptime="${uptime}" '{
+  echo "${notifications}" | jq -cer "${query}" |
+    awk -v uptime="${uptime}" -v SPC=${space} '{
       # Catch the sent timestamp line of each notification
       if ($0 ~ /^Sent:/) {
         # Convert timestamp given as secs ago to datetime
         timestamp=$2
         secs_ago=int(uptime - (timestamp / 1000000))
         ("date \"+%H:%M:%S %d-%m-%Y\" -d \"" secs_ago " seconds ago\"") | getline dt
-        printf "%-9s %s\n", "Sent:", dt
+
+        frm="%-"SPC"s%s\n"
+
+        printf frm, "Sent:", dt
       } else {
         print $0
       } 

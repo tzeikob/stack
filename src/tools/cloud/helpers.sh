@@ -86,7 +86,7 @@ find_remotes () {
 find_remote () {
   local name="${1}"
 
-  local query=".[]|select(.name == \"${name}\")"
+  local query=".[] | select(.name == \"${name}\")"
 
   find_remotes | jq -cer "${query}" || return 1
 }
@@ -99,7 +99,7 @@ find_remote () {
 remote_exists () {
   local name="${1}"
 
-  local query=".[]|select(.name == \"${name}\")"
+  local query=".[] | select(.name == \"${name}\")"
 
   find_remotes | jq -cer "${query}" &> /dev/null || return 1
 }
@@ -134,9 +134,9 @@ is_remote_not_mounted () {
 pick_remote () {
   local status="${1}"
 
-  local query=''
-  query='{"key": .name, "value": "\(.name) [\(.service)]"}'
-  query="[.[]|${query}]"
+  local option='{key: .name, value: "\(.name) [\(.service | dft("..."))]"}'
+
+  local query="[.[] | ${option}]"
 
   local remotes=''
   remotes="$(find_remotes "${status}" | jq -cer "${query}")" || return 1

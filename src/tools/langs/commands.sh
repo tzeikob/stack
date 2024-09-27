@@ -13,10 +13,12 @@ source src/tools/langs/helpers.sh
 # Outputs:
 #  A verbose list of text data.
 show_status () {
+  local space=11
+
   local current_layout=''
   current_layout="$(xkblayout-state print "%s:%v [%n]")" || return 1
 
-  localectl status | awk -v layout="${current_layout}" '{
+  localectl status | awk -v layout="${current_layout}" -v SPC=${space} '{
     label=""
     
     if ($0 ~ /^.* VC Keymap/) {
@@ -34,7 +36,9 @@ show_status () {
       next
     }
 
-    printf "%-10s %s\n", label":", $3
+    frm="%-"SPC"s%s\n"
+
+    printf frm, label":", $3
   }' || return 1
 
   local locales=''
@@ -48,7 +52,7 @@ show_status () {
   echo "Locales:   ${locales}"
 
   echo
-  locale | awk -F'=' '{
+  locale | awk -F'=' -v SPC=${space} '{
     if ($2 == "") {
       next
     }
@@ -71,8 +75,10 @@ show_status () {
       case "LC_IDENTIFICATION": $1="Ids"; break;
       default: next;
     }
+
+    frm="%-"SPC"s%s\n"
     
-    printf "%-10s %s\n", $1":", $2
+    printf frm, $1":", $2
   }' || return 1
 }
 
@@ -347,7 +353,7 @@ add_layout () {
   fi
 
   local count=''
-  count="$(jq -cer ".layouts|length" "${LANGS_SETTINGS}")"
+  count="$(jq -cer ".layouts | length" "${LANGS_SETTINGS}")"
 
   if has_failed; then
     log 'Failed to read the number of installed layouts.'
@@ -412,7 +418,7 @@ remove_layout () {
   fi
   
   local count=''
-  count="$(jq -cer ".layouts|length" "${LANGS_SETTINGS}")"
+  count="$(jq -cer ".layouts | length" "${LANGS_SETTINGS}")"
 
   if has_failed; then
     log 'Failed to read the number of installed layouts.'
@@ -457,8 +463,8 @@ order_layouts () {
   fi
   
   # Check for duplicated values in given layouts
-  local query='(.|unique|length) as $len'
-  query+=' | if $len != (.|length) then true else false end'
+  local query='(. | unique | length) as $len'
+  query+=' | if $len != (. | length) then true else false end'
 
   local has_dups='false'
   has_dups="$(echo "${layouts}" | jq -cr "${query}")"
@@ -469,10 +475,10 @@ order_layouts () {
   fi
   
   # Check if given layouts match the currently installed ones
-  local query='[.layouts[]|"\(.code):\(.variant)"] as $cl'
+  local query='[.layouts[] | "\(.code):\(.variant)"] as $cl'
   query+=' | ($cl - $l | length) as $len1'
   query+=' | ($l - $cl | length) as $len2'
-  query+=' | if $len1 == 0 and $len2 == 0 then $l|join(" ") else empty end'
+  query+=' | if $len1 == 0 and $len2 == 0 then $l | join(" ") else empty end'
 
   layouts="$(jq -cr --argjson l "${layouts}" "${query}" "${LANGS_SETTINGS}")" || return 1
 

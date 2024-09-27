@@ -13,39 +13,35 @@ source src/tools/networks/helpers.sh
 # Outputs:
 #  A long list of networking data.
 show_status () {
+  local space=13
+
   systemctl status --lines 0 --no-pager NetworkManager.service |
-    awk '{
+    awk -v SPC=${space} '{
       if ($0 ~ / *Active/) {
         l = "Service"
         v = $2" "$3
       } else l = ""
 
-      if (l) printf "%-12s %s\n",l":",v
+      frm="%-"SPC"s%s\n"
+
+      if (l) printf frm,l":",v
     }' || return 1
 
   local devices=''
   devices="$(find_devices)" || return 1
 
-  local query=''
-  query+='\([$d[]|select((.type == "wifi" or .type == "ethernet") and .state == "connected")]'
-  query+=' |if .|length == 0 then "local" else .[0]|.device end|'
-  query+='"Network:     \(.)\n")'
-  query+='State:       \(.state) [\(.connectivity)]\n'
-  query+='WiFi:        \(.wifi)\(if .wifi_hw then " [HW]" else "" end)'
-  query="\"${query}\""
-
-  find_status | jq -cer --argjson d "${devices}" "${query}" || return 1
+  local network=''
+  network+='[$d[] | select((.type == "wifi" or .type == "ethernet") and .state == "connected")]'
+  network+='| if . | length == 0 then "local" else .[0] | .device end'
 
   local query=''
-  query+='ISP:         \(.as|split(" ")|"\(.[1]) \(.[2])") [\(.isp)]\n'
-  query+='Public IP:   \(.query)\n'
-  query+='Country:     \(.city|if . then "\(.), " else "" end)\(.country)'
+  query+="\(${network}    | lbln("Network"))"
+  query+='\(.state        | lbln("State"))'
+  query+='\(.connectivity | lbln("Connect"))'
+  query+='\(.wifi         | lbln("WiFi"))'
+  query+='\(.wifi_hw      | lbln("Antenna"))'
 
-  curl -s 'http://ip-api.com/json' | jq -cer "\"${query}\"" 2> /dev/null
-
-  if has_failed; then
-    echo 'ISP:         Unavailable'
-  fi
+  find_status | jq -cer --arg SPC ${space} --argjson d "${devices}" "\"${query}\"" || return 1
 
   local proxy_env="${HOME}/.config/environment.d/proxy.conf"
 
@@ -53,6 +49,7 @@ show_status () {
   if file_exists "${proxy_env}"; then
     proxy="$(cat "${proxy_env}" | awk -F'=' '/export http_proxy=/ {
       split($2,a,"http://")
+
       if (a[2] ~ /@/) {
         split(a[2],b,"@")
         print b[2]
@@ -60,12 +57,21 @@ show_status () {
     }' | tr -d '"/')" || return 1
   fi
 
-  if is_not_empty "${proxy}"; then
-    echo "Proxy:       ${proxy}"
+  echo "\"${proxy}\"" | jq -cer --arg SPC ${space} 'lbln("Proxy"; "None")'
+
+  local query=''
+  query+='\(.as | split(" ") | "\(.[1]) \(.[2])") [\(.isp)] | lbln("ISP"))'
+  query+='\(.query                                          | lbln("IP"))'
+  query+='\(.country                                        | lbl("Location"))'
+
+  curl -s 'http://ip-api.com/json' | jq -cer --arg SPC ${space} "\"${query}\"" 2> /dev/null
+
+  if has_failed; then
+    echo '""' | jq -cer --arg SPC ${space} 'lbl("ISP"; "Unavailable")'
   fi
 
-  query=''
-  query+='.[]|select(.type|test("(^ethernet|wifi|vpn)$"))|.name'
+  local query=''
+  query+='.[] | select(.type | test("(^ethernet|wifi|vpn)$")) | .name'
 
   local connections=''
   connections="$(nmcli connection show --active | jc --nmcli | jq -cr "${query}")" || return 1
@@ -74,23 +80,32 @@ show_status () {
     return 0
   fi
 
-  query=''
-  query+='Connection:  \(.connection_id)\(if .default == "yes" then " [default]" else "" end)'
-  query+='\(."802_11_wireless_ssid"|if . then "\nSSID:        \(.)" else "" end)'
-  query+='\nDevice:      \(if .connection_type == "vpn" then .ip_iface else .connection_interface_name end)'
-  query+='\(if .freq then "\nFreq:        \(.freq)GHz [\(.rate)Mb/s]" else "" end)'
-  query+='\(if .quality then "\nSignal:      \(.quality) [\(.signal)dBm]" else "" end)'
-  query+='\nType:        \(.connection_type)\(.vpn_type|if . then " [\(.)]" else "" end)'
-  query+='\(if .connection_type == "vpn" then "\nHost:        \(.vpn_gateway)" else "" end)'
-  query+='\(if .vpn_username then "\nUser:        \(.vpn_username)" else "" end)'
-  query+='\(."802_11_wireless_security_key_mgmt"|if . then "\nSecurity:    \(.|ascii_upcase)" else "" end)'
-  query+='\(if .ip4_address_1 then "\nIPv4:        \(.ip4_address_1)" else "" end)'
-  query="\"${query}\""
+  local device=''
+  device+='if .connection_type == "vpn" then .ip_iface else .connection_interface_name end'
+
+  local vpn_host=''
+  vpn_host='if .connection_type == "vpn" then .vpn_gateway else "" end'
+
+  local query=''
+  query+='\(.connection_id                                   | lbln("Connection"))'
+  query+='\(.default                                         | lbln("Default"))'
+  query+='\(."802_11_wireless_ssid"                          | olbln("SSID"))'
+  query+="\(${device}                                        | lbln("Device"))"
+  query+='\(.freq | unit("GHz")                              | olbln("Freq"))'
+  query+='\(.rate | unit("Mb/s")                             | olbln("Rate"))'
+  query+='\(.quality                                         | olbln("Quality"))'
+  query+='\(.signal | unit("dBm")                            | olbln("Signal"))'
+  query+='\(.vpn_type                                        | olbln("VPN"))'
+  query+="\(${vpn_host}                                      | olbln("Host"))"
+  query+='\(.vpn_username                                    | olbln("User"))'
+  query+='\(."802_11_wireless_security_key_mgmt" | uppercase | olbln("Security"))'
+  query+='\(.ip4_address_1                                   | olbln("IPv4"))'
+  query+='\(.connection_type                                 | lbl("Type"))'
 
   local connection=''
   while read -r connection; do
     echo
-    find_connection "${connection}" | jq -cer "${query}" || return 1
+    find_connection "${connection}" | jq -cer --arg SPC ${space} "\"${query}\"" || return 1
   done <<< "${connections}"
 }
 
@@ -118,25 +133,26 @@ show_device () {
   fi
 
   local query=''
-  query+='Name:        \(.device)\n'
-  query+='Type:        \(.type)\n'
-  query+='MAC:         \(.hwaddr)\n'
-  query+='\(if .freq then "Freq:        \(.freq)GHz [\(.rate)Mb/s]\n" else "" end)'
-  query+='\(if .quality then "Signal:      \(.quality) [\(.signal)dBm]\n" else "" end)'
-  query+='\(.state_text|if . then "State:       \(.)\n" else "" end)'
-  query+='MTU:         \(.mtu)'
-  query+='\(.ip4_address_1|if . then "\nIPv4:        \(.)" else "" end)'
-  query+='\(.ip4_gateway|if . then "\nGateway:     \(.)" else "" end)'
-  query+='\(.ip4_route_1|if . then "\nRoute:       \(.dst)" else "" end)'
-  query+='\(.ip4_dns_1|if . then "\nDNS:         \(.)" else "" end)'
-  query+='\(.ip4_dns_2|if . then ", \(.)" else "" end)'
-  query+='\(.ip6_address_1|if . then "\nIPv6:        \(.)" else "" end)'
-  query+='\(.ip6_gateway|if . then "\nGateway:     \(.)" else "" end)'
-  query+='\(.ip6_route_1|if . then "\nRoute:       \(.dst)" else "" end)'
-  query+='\(.connection|if . then "\nConnection:  \(.)" else "" end)'
-  query="\"${query}\""
+  query+='\(.device               | lbln("Name"))'
+  query+='\(.type                 | lbln("Type"))'
+  query+='\(.hwaddr               | lbln("MAC"))'
+  query+='\(.freq | unit("GHz")   | olbln("Freq"))'
+  query+='\(.rate | unit("Mb/s"   | olbln("Rate"))'
+  query+='\(.quality              | olbln("Quality"))'
+  query+='\(.signal | unit("dBm") | olbln("Signal"))'
+  query+='\(.state_text           | olbln("State"))'
+  query+='\(.mtu                  | lbln("MTU"))'
+  query+='\(.ip4_address_1        | olbln("IPv4"))'
+  query+='\(.ip4_gateway          | olbln("Gateway"))'
+  query+='\(.ip4_route_1.dst      | olbln("Route"))'
+  query+='\(.ip4_dns_1            | olbln("DNS1"))'
+  query+='\(.ip4_dns_2            | olbln("DNS2"))'
+  query+='\(.ip6_address_1        | olbln("IPv6"))'
+  query+='\(.ip6_gateway          | olbln("Gateway"))'
+  query+='\(.ip6_route_1.dist     | olbln("Route"))'
+  query+='\(.connection           | lbl("Connection"; "None"))'
 
-  find_device "${name}" | jq -cer "${query}" || return 1
+  find_device "${name}" | jq -cer --arg SPC 13 "\"${query}\"" || return 1
 }
 
 # Shows the data of the network connection with the
@@ -162,31 +178,39 @@ show_connection () {
     return 2
   fi
 
-  local query=''
-  query+='Connection:  \(.connection_id)\(if .default == "yes" then " [default]" else "" end)'
-  query+='\(."802_11_wireless_ssid"|if . then "\nSSID:        \(.)" else "" end)'
-  query+='\(.connection_uuid|if . then "\nUUID:        \(.)" else "" end)'
-  query+='\nDevice:      \(if .connection_type == "vpn"'
-  query+=' then "\(.ip_iface|if . then . else "none" end)" else .connection_interface_name end)'
-  query+='\(if .freq then "\nFreq:        \(.freq)GHz [\(.rate)Mb/s]" else "" end)'
-  query+='\(if .quality then "\nSignal:      \(.quality) [\(.signal)dBm]" else "" end)'
-  query+='\(.state|if . then "\nState:       \(.)" else "" end)'
-  query+='\nAuto:        \(.connection_autoconnect)'
-  query+='\nType:        \(.connection_type)\(.vpn_type|if . then " [\(.)]" else "" end)'
-  query+='\(if .connection_type == "vpn" and .vpn_gateway then "\nHost:        \(.vpn_gateway)" else "" end)'
-  query+='\(if .vpn_username then "\nUser:        \(.vpn_username)" else "" end)'
-  query+='\(."802_11_wireless_security_key_mgmt"|if . then "\nSecurity:    \(.|ascii_upcase)" else "" end)'
-  query+='\(.ip4_address_1|if . then "\nIPv4:        \(.)" else "" end)'
-  query+='\(.ip4_gateway|if . then "\nGateway:     \(.)" else "" end)'
-  query+='\(.ip4_route_1|if . then "\nRoute:       \(.dst)" else "" end)'
-  query+='\(.ip4_dns_1|if . then "\nDNS:         \(.)" else "" end)'
-  query+='\(.ip4_dns_2|if . then ", \(.)" else "" end)'
-  query+='\(.ip6_address_1|if . then "\nIPv6:        \(.)" else "" end)'
-  query+='\(.ip6_gateway|if . then "\nGateway:     \(.)" else "" end)'
-  query+='\(.ip6_route_1|if . then "\nRoute:       \(.dst)" else "" end)'
-  query="\"${query}\""
+  local device=''
+  device+='if .connection_type == "vpn" then .ip_iface else .connection_interface_name end'
 
-  find_connection "${name}" | jq -cer "${query}" || return 1
+  local host=''
+  host+='if .connection_type == "vpn" then .vpn_gateway else "" end'
+
+  local query=''
+  query+='\(.connection_id                                   | lbln("Connection"))'
+  query+='\(.default                                         | lbln("Default"))'
+  query+='\(."802_11_wireless_ssid"                          | olbln("SSID"))'
+  query+='\(.connection_uuid                                 | olbln("UUID"))'
+  query+="\(${device}                                        | lbln("Device"; "None"))"
+  query+='\(.freq | unit("GHz")                              | olbln("Freq"))'
+  query+='\(.rate | unit("Mb/s")                             | olbln("Rate"))'
+  query+='\(.quality                                         | olbln("Quality"))'
+  query+='\(.signal | unit("dBm")                            | olbln("Signal"))'
+  query+='\(.state                                           | olbln("State"))'
+  query+='\(.connection_autoconnect                          | lbln("Auto"))'
+  query+='\(.vpn_type                                        | olbln("VPN"))'
+  query+="\(${host}                                          | olbln("Host"))"
+  query+='\(.vpn_username                                    | olbln("User"))'
+  query+='\(."802_11_wireless_security_key_mgmt" | uppercase | lbln("Security"))'
+  query+='\(.ip4_address_1                                   | olbln("IPv4"))'
+  query+='\(.ip4_gateway                                     | olbln("Gateway"))'
+  query+='\(.ip4_route_1.dst                                 | olbln("Route"))'
+  query+='\(.ip4_dns_1                                       | olbln("DNS1"))'
+  query+='\(.ip4_dns_2                                       | olbln("DNS2"))'
+  query+='\(.ip6_address_1                                   | olbln("IPv6"))'
+  query+='\(.ip6_gateway                                     | olbln("Gateway"))'
+  query+='\(.ip6_route_1.dst                                 | olbln("Route"))'
+  query+='\(.connection_type                                 | lbl("Type))'
+
+  find_connection "${name}" | jq -cer --arg SPC 13 "\"${query}\"" || return 1
 }
 
 # Shows the list of networking devices.
@@ -205,13 +229,14 @@ list_devices () {
   fi
 
   local query=''
-  query+='Name:        \(.device)\n'
-  query+='Type:        \(.type)\n'
-  query+='State:       \(.state|if . then . else "none" end)\n'
-  query+='Connection:  \(.connection|if . then . else "none" end)'
-  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+  query+='\(.device     | lbln("Name"))'
+  query+='\(.type       | lbln("Type"))'
+  query+='\(.state      | lbln("State"; "None"))'
+  query+='\(.connection | lbl("Connection"; "None"))'
 
-  echo "${devices}" | jq -cer "${query}" || return 1
+  query="[.[] | \"${query}\"] | join(\"\n\n\")"
+
+  echo "${devices}" | jq -cer --arg SPC 13 "${query}" || return 1
 }
 
 # Shows the list of networking connections.
@@ -230,12 +255,13 @@ list_connections () {
   fi
 
   local query=''
-  query+='Name:    \(.name)\n'
-  query+='Type:    \(.type)\n'
-  query+='Device:  \(.device|if . then . else "none" end)'
-  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+  query+='\(.name   | lbln("Name"))'
+  query+='\(.type   | lbln("Type"))'
+  query+='\(.device | lbl("Device"; "None"))'
 
-  echo "${connections}" | jq -cer "${query}" || return 1
+  query="[.[] | \"${query}\"] | join(\"\n\n\")"
+
+  echo "${connections}" | jq -cer --arg SPC 9 "${query}" || return 1
 }
 
 # Detects the available wifi networks in the local area
@@ -290,13 +316,14 @@ list_wifis () {
   fi
 
   local query=''
-  query+='Name:      \(.ssid)\n'
-  query+='Signal:    \(.signal) [\(.channel)]\n'
-  query+='Security:  \(.security|'
-  query+='if . and . != "" then .|ascii_upcase else "none" end)'
-  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+  query+='\(.ssid                 | lbln("Name"))'
+  query+='\(.signal               | lbln("Signal"))'
+  query+='\(.channel              | lbln("Channel"))'
+  query+='\(.security | uppercase | lbl("Security"; "None"))'
 
-  echo "${networks}" | jq -cer "${query}" || return 1
+  query="[.[] | \"${query}\"] | join(\"\n\n\")"
+
+  echo "${networks}" | jq -cer --arg SPC 11 "${query}" || return 1
 }
 
 # Enables the device with the given name.
@@ -839,7 +866,7 @@ remove_proxy () {
     return 2
   fi
 
-  local query=".proxies|if . then .[]|select(.name == \"${name}\") else empty end"
+  local query=".proxies | if . then .[] | select(.name == \"${name}\") else empty end"
 
   local match=''
   match="$(jq "${query}" "${NETWORKS_SETTINGS}")"
@@ -850,7 +877,7 @@ remove_proxy () {
   fi
 
   local settings=''
-  settings="$(jq -e "del(.proxies[]|select(.name == \"${name}\"))" "${NETWORKS_SETTINGS}")"
+  settings="$(jq -e "del(.proxies[] | select(.name == \"${name}\"))" "${NETWORKS_SETTINGS}")"
 
   if has_failed; then
     log "Failed to delete proxy profile ${name}."
@@ -873,7 +900,7 @@ list_proxies () {
   fi
 
   local proxies=''
-  proxies="$(jq -cer '.proxies|if length>0 then . else [] end' "${NETWORKS_SETTINGS}")" || return 1
+  proxies="$(jq -cer '.proxies//[]' "${NETWORKS_SETTINGS}")" || return 1
   
   local len=0
   len="$(echo "${proxies}" | jq -cer 'length')" || return 1
@@ -884,14 +911,15 @@ list_proxies () {
   fi
 
   local query=''
-  query+='Name:    \(.name)\n'
-  query+='Host:    \(.host)\n'
-  query+='Port:    \(.port)'
-  query+='\(.username|if . and .!= "" then "\nAuth:    \(.)" else "" end)'
-  query+='\(.no_proxy|if .|length>0 then "\nIgnore:  \([.[]]|join(", "))" else "" end)'
-  query="[.[]|\"${query}\"]|join(\"\n\n\")"
+  query+='\(.name                      | lbln("Name"))'
+  query+='\(.host                      | lbln("Host"))'
+  query+='\(.port                      | lbln("Port"))'
+  query+='\(.username                  | olbln("Auth"))'
+  query+='\(.no_proxy//[] | join(", ") | lbl("Ignore"; "None"))'
 
-  echo "${proxies}" | jq -cer "${query}" || return 1
+  query="[.[] | \"${query}\"] | join(\"\n\n\")"
+
+  echo "${proxies}" | jq -cer --arg SPC 9 "${query}" || return 1
 }
 
 # Sets system-wise proxy server to settings with the
@@ -917,7 +945,7 @@ set_proxy () {
     return 2
   fi
 
-  local query=".proxies|if . then .[]|select(.name == \"${name}\") else empty end"
+  local query=".proxies | if . then .[] | select(.name == \"${name}\") else empty end"
 
   local proxy=''
   proxy="$(jq "${query}" "${NETWORKS_SETTINGS}")"
@@ -928,15 +956,14 @@ set_proxy () {
   fi
 
   local query=''
-  query+='\(if .username and .username != "" then "\(.username):\(.password)@" else "" end)'
+  query+='\(if is_nullish(.username) | not then "\(.username):\(.password)@" else "" end)'
   query+='\(.host):\(.port)'
-  query="\"${query}\""
 
   local uri=''
-  uri="$(echo "${proxy}" | jq -cer "${query}")" || return 1
+  uri="$(echo "${proxy}" | jq -cer "\"${query}\"")" || return 1
 
   local no_proxy=''
-  no_proxy="$(echo "${proxy}" | jq -cer '[.no_proxy][]|join(",")')" || return 1
+  no_proxy="$(echo "${proxy}" | jq -cer '[.no_proxy][] | join(",")')" || return 1
 
   log "Setting proxy server ${uri}..."
 
@@ -1050,8 +1077,8 @@ set_proxy () {
     gsettings set org.gnome.system.proxy.http authentication-password ''
   fi
 
-  local query='.no_proxy|if .|length > 0'
-  query+=" then \"[\([.[]|\"'\(.)'\"]|join(\",\"))]\" else [] end"
+  local query='.no_proxy | if . | length > 0'
+  query+=" then \"[\([.[] | \"'\(.)'\"] | join(\",\"))]\" else [] end"
 
   local no_proxy=''
   no_proxy="$(echo "${proxy}" | jq -cer "${query}")" || return 1
