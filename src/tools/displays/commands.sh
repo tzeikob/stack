@@ -30,9 +30,10 @@ show_status () {
       default: $1 = ""; break
     }
 
-    frm="%-"SPC"s%s\n"
+    if (!$2 || $2 ~ /^[[:blank:]]*$/) $2 = "N/A"
 
-    if ($1) printf frm,$1":",$2
+    frm = "%-"SPC"s%s\n"
+    if ($1) printf frm, $1":", $2
   }'
 
   if has_failed; then

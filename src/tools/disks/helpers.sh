@@ -811,7 +811,7 @@ pick_shared_folder_mount () {
   uris="[${uris}]"
 
   local len=0
-  len="$(echo "${uris}" | jq-cer 'length')" || return 1
+  len="$(echo "${uris}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No mounted shared folders have found.'

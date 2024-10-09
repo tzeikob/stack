@@ -30,9 +30,10 @@ show_status () {
         v = $3" "$4
       } else l = ""
 
-      frm="%-"SPC"s%s\n"
+    if (!v || v ~ /^[[:blank:]]*$/) v = "N/A"
 
-      if (l) printf frm,l":",v
+    frm = "%-"SPC"s%s\n"
+    if (l) printf frm, l":", v
     }' || return 1
 
   local query=''

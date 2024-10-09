@@ -33,11 +33,19 @@ show_status () {
   echo
 
   swapon --noheadings --show | awk -F' ' -v SPC=${space} '{
-    frm="%-"SPC"s%s\n"
+    frm = "%-"SPC"s%s\n"
 
+    if (!$1 || $1 ~ /^[[:blank:]]*$/) $1 = "N/A"
     printf frm, "Swap:", $1
+
+    if (!$2 || $2 ~ /^[[:blank:]]*$/) $2 = "N/A"
     printf frm, "Type:", $2
-    printf frm, "Used:", $4"/"$3
+
+    if (!$3 || $3 ~ /^[[:blank:]]*$/) $3 = "N/A"
+    printf frm, "Size:", $3
+
+    if (!$4 || $4 ~ /^[[:blank:]]*$/) $4 = "N/A"
+    printf frm, "Used:", $4
   }' || return 1
 
   cat /proc/meminfo | grep -E 'Swap.*' | awk -F':' -v SPC=${space} '{
@@ -50,8 +58,9 @@ show_status () {
     if ($1 == "SwapTotal") $1="Total"
     if ($1 == "SwapFree") $1="Free"
 
-    frm="%-"SPC"s%s\n"
+    if (!$2 || $2 ~ /^[[:blank:]]*$/) $2 = "N/A"
 
+    frm = "%-"SPC"s%s\n"
     printf frm, $1":", $2
   }' || return 1
 }

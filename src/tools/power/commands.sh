@@ -66,7 +66,7 @@ show_status () {
     stop="$(grep -E "^STOP_CHARGE_THRESH_BAT${index}=" "${config_file}" | cut -d '=' -f 2)"
     
     if is_not_empty "${start}" || is_not_empty "${stop}"; then
-      printf "%-${space}s[%s, %s]\n" "Charge[${index}]:" "${start:-0}%" "${stop:-100}%"
+      echo "[${start:-0}%", "${stop:-100}%]" | jq -cer --arg SPC ${space} "lbln("Charge[${index}]")"
     fi
   done
 
@@ -89,8 +89,9 @@ show_status () {
       next
     }
 
-    frm="%-"SPC"s%s\n"
+    if (!a[2] || a[2] ~ /^[[:blank:]]*$/) a[2] = "N/A"
 
+    frm = "%-"SPC"s%s\n"
     printf frm, a[1]":", a[2]
   }' || return 1
 
@@ -117,8 +118,9 @@ show_status () {
       next
     }
 
-    frm="%-"SPC"s%s\n"
+    if (!a[2] || a[2] ~ /^[[:blank:]]*$/) a[2] = "N/A"
 
+    frm = "%-"SPC"s%s\n"
     printf frm, a[1]":", a[2]
   }' || return 1
 }

@@ -118,8 +118,9 @@ list_all () {
         secs_ago=int(uptime - (timestamp / 1000000))
         ("date \"+%H:%M:%S %d-%m-%Y\" -d \"" secs_ago " seconds ago\"") | getline dt
 
-        frm="%-"SPC"s%s\n"
+        if (!dt || dt ~ /^[[:blank:]]*$/) dt = "N/A"
 
+        frm = "%-"SPC"s%s\n"
         printf frm, "Sent:", dt
       } else {
         print $0

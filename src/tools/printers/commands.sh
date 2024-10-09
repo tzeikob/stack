@@ -22,9 +22,10 @@ show_status () {
         v = $2" "$3
       } else l = ""
 
-      frm="%-"SPC"s%s\n"
+      if (!v || v ~ /^[[:blank:]]*$/) v = "N/A"
 
-      if (l) frm,l":",v
+      frm = "%-"SPC"s%s\n"
+      if (l) frm, l":", v
     }' || return 1
 
   printf "%-${space}s%s\n" "Cups:" "$(cups-config --version)"

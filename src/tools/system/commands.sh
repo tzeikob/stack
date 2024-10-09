@@ -150,7 +150,7 @@ set_mirrors () {
         match($0, /(.*)([A-Z]{2})\s+([0-9]+)/, a)
         gsub(/[ \t]+$/, "", a[1])
 
-        frm="{\"key\": \"%s\", \"value\": \"%s\"},"
+        frm = "{\"key\": \"%s\", \"value\": \"%s\"},"
         printf frm, a[2], a[1]" ["a[3]"]"
       }'
     )"

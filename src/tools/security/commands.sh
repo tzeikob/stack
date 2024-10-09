@@ -24,21 +24,30 @@ show_status () {
       status="no password"
     }
 
-    frm="%-"SPC"s%s\n"
+    frm = "%-"SPC"s%s\n"
 
     printf frm, "Password:", "status"
+
+    if (!$3 || $3 ~ /^[[:blank:]]*$/) $3 = "N/A"
+
     printf frm, "Last Changed:", $3
   }' || return 1
 
   cat /etc/security/faillock.conf | awk -v SPC=${space} '{
-    frm="%-"SPC"s%s\n"
+    frm = "%-"SPC"s%s\n"
 
     if ($0 ~ /^deny =.*/) {
+      if (!$3 || $3 ~ /^[[:blank:]]*$/) $3 = "N/A"
+
       printf frm, "Failed Attempts:", $3
     } else if ($0 ~ /^unlock_time =.*/) {
-      printf frm, "Unblock Time:", $3"secs"
+      if (!$3 || $3 ~ /^[[:blank:]]*$/) {$3 = "N/A"} else {$3 = $3" secs"}
+
+      printf frm, "Unblock Time:", $3
     } else if ($0 ~ /^fail_interval =.*/) {
-      printf frm, "Fail Interval:", $3"secs"
+      if (!$3 || $3 ~ /^[[:blank:]]*$/) {$3 = "N/A"} else {$3 = $3" secs"}
+
+      printf frm, "Fail Interval:", $3
     }
   }' || return 1
 
@@ -53,7 +62,9 @@ show_status () {
     echo "${locker_process}" | awk -v SPC=${space} '{
       match($0,/.* -time (.*) -corners.*/,a)
 
-      frm="%-"SPC"s%s\n"
+      if (!a[1] || a[1] ~ /^[[:blank:]]*$/) {a[1] = "N/A"} else {a[1] = a[1]" secs"}
+
+      frm = "%-"SPC"s%s\n"
       printf frm, "Screen Locker:", a[1]"mins"
     }'
   fi

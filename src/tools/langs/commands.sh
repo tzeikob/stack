@@ -36,8 +36,9 @@ show_status () {
       next
     }
 
-    frm="%-"SPC"s%s\n"
+    if (!$3 || $3 ~ /^[[:blank:]]*$/) $3 = "N/A"
 
+    frm = "%-"SPC"s%s\n"
     printf frm, label":", $3
   }' || return 1
 
@@ -76,8 +77,9 @@ show_status () {
       default: next;
     }
 
-    frm="%-"SPC"s%s\n"
-    
+    if (!$2 || $2 ~ /^[[:blank:]]*$/) $2 = "N/A"
+
+    frm = "%-"SPC"s%s\n"
     printf frm, $1":", $2
   }' || return 1
 }
