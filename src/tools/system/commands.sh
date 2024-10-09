@@ -40,17 +40,17 @@ show_status () {
   local libalpm_version=''
   libalpm_version="$(pacman -V | grep "Pacman v" | awk '{print $6}' | sed 's/v\(.*\)/\1/')"
   
-  printf "%-${space}s%s\n" "Libalpm:" "${libalpm_version}"
+  echo "\"${libalpm_version}\"" | jq -cer --arg SPC ${space} 'lbln("Libalpm")'
 
   local pacman_version=''
   pacman_version="$(pacman -V | grep "Pacman v" | awk '{print $3}' | sed 's/v\(.*\)/\1/')"
   
-  printf "%-${space}s%s\n" "Pacman:" "${pacman_version}"
+  echo "\"${pacman_version}\"" | jq -cer --arg SPC ${space} 'lbln("Pacman")'
   
   local yay_version=''
   yay_version="$(yay -V | awk '{print $2}' | sed 's/v\(.*\)/\1/')"
   
-  printf "%-${space}s%s" "Yay:" "${yay_version}"
+  echo "\"${yay_version}\"" | jq -cer --arg SPC ${space} 'lbln("Yay")'
 
   local reflector_conf='/etc/xdg/reflector/reflector.conf'
 

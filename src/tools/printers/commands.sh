@@ -28,9 +28,9 @@ show_status () {
       if (l) frm, l":", v
     }' || return 1
 
-  printf "%-${space}s%s\n" "Cups:" "$(cups-config --version)"
-  printf "%-${space}s%s\n" "API:" "$(cups-config --api-version)"
-  printf "%-${space}s%s\n" "Dir:" "$(cups-config --datadir)"
+  echo "\"$(cups-config --version)\"" | jq -cer --arg SPC ${space} 'lbln("Cups")'
+  echo "\"$(cups-config --api-version)\"" | jq -cer --arg SPC ${space} 'lbln("API")'
+  echo "\"$(cups-config --datadir)\"" | jq -cer --arg SPC ${space} 'lbln("Dir")'
 
   find_jobs | jq -cer --arg SPC ${space} 'length | lbln("Jobs")' || return 1
 

@@ -57,7 +57,7 @@ show_status () {
     jq '.[] | select(.command | test("^xautolock")) | .command')" || return 1
   
   if is_empty "${locker_process}"; then
-    printf "%-${space}s%s\n" 'Screen Locker:' 'off'
+    echo '"off"' | jq -cer --arg SPC ${space} 'lbln("Screen Locker")'
   else
     echo "${locker_process}" | awk -v SPC=${space} '{
       match($0,/.* -time (.*) -corners.*/,a)
