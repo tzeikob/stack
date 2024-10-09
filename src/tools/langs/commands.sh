@@ -50,7 +50,7 @@ show_status () {
     locales="${locales::-2}"
   fi
 
-  echo "Locales:   ${locales}"
+  echo "\"${locales}\"" | jq -cer --arg SPC ${space} 'lbln("Locales")'
 
   echo
   locale | awk -F'=' -v SPC=${space} '{
