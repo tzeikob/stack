@@ -182,8 +182,9 @@ delete_remote () {
   fi
 
   if on_user_mode; then
-    log "Remote ${name} will be deleted!"
-    confirm 'Do you realy want to proceed?' || return $?
+    log "CAUTION, REMOTE ${name} WILL BE DELETED FOREVER!"
+    log 'THINK TWICE BEFORE DO ANYTHING IRREVERSIBLE.'
+    confirm 'Do you really want to proceed?' || return $?
     is_empty "${REPLY}" && log 'Confirmation is required.' && return 2
     
     if is_not_yes "${REPLY}"; then

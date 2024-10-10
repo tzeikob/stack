@@ -89,6 +89,7 @@ ask_user () {
     local disk="${REPLY}"
 
     log -n "CAUTION, ALL DATA IN \"${disk}\" WILL BE LOST!"
+    log 'THINK TWICE BEFORE DO ANYTHING IRREVERSIBLE.'
     confirm 'Do you want to proceed with this disk?' || abort
     is_not_given "${REPLY}" && abort 'User input is required.'
 
@@ -542,8 +543,8 @@ ask_user () {
     clear
   done
 
-  log -n 'CAUTION, THIS IS THE LAST WARNING!'
-  log 'ALL DATA IN THE DISK WILL BE LOST FOREVER!'
+  log -n 'CAUTION, ALL DATA IN DISK WILL BE GONE!'
+  log 'THINK TWICE, THIS IS THE LAST WARNING.'
   confirm 'Do you want to proceed?' || abort
   is_not_given "${REPLY}" && abort 'User input is required.'
 
