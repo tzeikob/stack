@@ -260,7 +260,8 @@ sync_root_files () {
       abort ERROR "Failed to rename home folder for ${user_name}."
   fi
 
-  rsync -av airootfs/ / ||
+  rsync -av airootfs/ / \
+    --exclude usr/local/bin/stack ||
     abort ERROR 'Failed to sync the root file system.'
   
   log INFO 'Root file system has been synced.'

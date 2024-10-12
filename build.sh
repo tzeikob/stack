@@ -371,16 +371,13 @@ setup_auto_login () {
     '░░░▀▀█░░█░░█▀█░█░░░█▀▄░░░' \
     '░░░▀▀▀░░▀░░▀░▀░▀▀▀░▀░▀░░░' \
     '' \
-    'Welcome to live media of \u001b[36mStack Linux\u001b[0m, more information' \
-    'can be found on https://github.com/tzeikob/stack.git.' \
+    'Welcome to live media of \u001b[36mStack Linux\u001b[0m, more info can' \
+    'be found on https://github.com/tzeikob/stack.git.' \
     '' \
-    'Connect to a wireless network using the networks tool via' \
-    'the command \u001b[36mnetworks add wifi <device> <ssid> <secret>\u001b[0m.' \
-    'Ethernet, WALN and WWAN networks should work automatically.' \
+    'Connect to a wireless network via \u001b[36mnetworks add wifi\u001b[0m.' \
+    'Ethernet LAN/WAN networks should work automatically.' \
     '' \
-    'To install a new system clone the latest stack repository locally,' \
-    '\u001b[36mgit clone "https://github.com/tzeikob/stack.git"\u001b[0m,' \
-    '\u001b[36mcd stack\u001b[0m and run \u001b[36m./install\u001b[0m.' > "${ROOT_FS}/etc/welcome" ||
+    'To install \u001b[36mStack Linux\u001b[0m run \u001b[36mstack install\u001b[0m.' > "${ROOT_FS}/etc/welcome" ||
     abort ERROR 'Failed to create the welcome message.'
 
   rm -rf "${ROOT_FS}/etc/motd" ||
@@ -791,6 +788,7 @@ set_file_permissions () {
     '/root/.config/stack/ 0:0:664'
     '/opt/stack/commons/ 0:0:755'
     '/opt/stack/tools/ 0:0:755'
+    '/usr/local/bin/stack 0:0:755'
     '/usr/local/bin/tqdm 0:0:755'
   )
 

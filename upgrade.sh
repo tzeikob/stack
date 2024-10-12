@@ -97,6 +97,7 @@ update_root_files () {
   fi
 
   sudo rsync -av airootfs/ / \
+    --exclude usr/local/bin/stack \
     --exclude etc/X11/xorg.conf.d/00-keyboard.conf \
     --exclude etc/hostname \
     --exclude etc/hosts \
