@@ -442,7 +442,7 @@ setup_shell_environment () {
   printf '%s\n' \
     '' \
     'if [[ "${SHOW_WELCOME_MSG}" == "true" ]]; then' \
-    '  printf '%b\n' "$(cat /etc/welcome)"' \
+    '  echo -e "$(cat /etc/welcome)"' \
     'fi' \
     '' >> "${stackrc_file}" ||
     abort ERROR 'Failed to add the welcome message hook call.'
