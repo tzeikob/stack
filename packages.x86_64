@@ -28,8 +28,6 @@ all:pac:cups
 all:pac:cups-pdf
 all:pac:cups-filters
 all:pac:usbutils
-stp:pac:bluez
-stp:pac:bluez-utils
 all:pac:unzip
 all:pac:terminus-font
 all:pac:vim
@@ -53,7 +51,6 @@ all:pac:inetutils
 all:pac:dnsutils
 all:pac:openssh
 all:pac:nfs-utils
-stp:pac:openbsd-netcat
 all:pac:ipset
 all:pac:xsel
 all:pac:neofetch
@@ -81,7 +78,6 @@ all:pac:xorg
 all:pac:xorg-xinit
 all:pac:xorg-xrandr
 all:pac:xorg-xdpyinfo
-bld:pac:xf86-video-qxl
 all:pac:acpi
 all:pac:acpi_call
 all:pac:acpid
@@ -97,10 +93,6 @@ all:pac:dhclient
 all:pac:smbclient
 all:pac:libnma
 all:pac:alsa-utils
-stp:pac:pipewire
-stp:pac:pipewire-alsa
-stp:pac:pipewire-pulse
-stp:pac:pipewire-jack
 all:pac:xf86-input-synaptics
 all:pac:picom
 all:pac:bspwm
@@ -108,8 +100,6 @@ all:pac:sxhkd
 all:pac:polybar
 all:pac:rofi
 all:pac:dunst
-stp:pac:nnn
-stp:pac:fzf
 all:pac:trash-cli
 all:pac:cool-retro-term
 all:pac:helix
@@ -119,6 +109,18 @@ all:pac:ttf-font-awesome
 all:pac:noto-fonts-emoji
 all:aur:smenu
 all:aur:xkblayout-state-git
+all:pac:efibootmgr
+all:pac:irssi
+
+stp:pac:bluez
+stp:pac:bluez-utils
+stp:pac:openbsd-netcat
+stp:pac:pipewire
+stp:pac:pipewire-alsa
+stp:pac:pipewire-pulse
+stp:pac:pipewire-jack
+stp:pac:nnn
+stp:pac:fzf
 stp:pac:figlet
 stp:aur:figlet-fonts
 stp:aur:figlet-fonts-extra
@@ -142,5 +144,5 @@ stp:pac:speex
 stp:pac:taglib
 stp:pac:wavpack
 stp:aur:digimend-kernel-drivers-dkms-git
-all:pac:efibootmgr
-all:pac:irssi
+
+bld:pac:xf86-video-qxl
