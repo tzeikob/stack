@@ -1350,4 +1350,3 @@ create_bootable () {
 
   log "Bootable disk ${path} is ready."
 }
-

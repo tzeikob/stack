@@ -256,4 +256,3 @@ format_date () {
 
   log "Date format set to $(date "+${pattern}")."
 }
-

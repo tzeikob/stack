@@ -58,4 +58,3 @@ find_restorable_files () {
   
   echo "[${files}]"
 }
-

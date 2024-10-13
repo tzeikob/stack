@@ -389,4 +389,3 @@ is_ovpn_file () {
 is_not_ovpn_file () {
   is_ovpn_file "${1}" && return 1 || return 0
 }
-

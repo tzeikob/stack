@@ -284,4 +284,3 @@ empty_files () {
 
   log "${len} trashed file(s) removed."
 }
-

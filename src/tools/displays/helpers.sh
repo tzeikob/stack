@@ -994,4 +994,3 @@ is_profile_file () {
 is_not_profile_file () {
  is_profile_file "${1}" && return 1 || return 0
 }
-

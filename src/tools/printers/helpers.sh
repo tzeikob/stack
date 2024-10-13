@@ -588,4 +588,3 @@ is_valid_error_policy () {
 is_not_valid_error_policy () {
   is_valid_error_policy "${1}" && return 1 || return 0
 }
-

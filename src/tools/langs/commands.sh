@@ -557,4 +557,3 @@ name_layout () {
   log "Layout ${code}${variant:+ ${variant}} name to ${alias}."
   log 'Please restart so changes take effect!'
 }
-

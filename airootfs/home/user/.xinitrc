@@ -37,4 +37,3 @@ power -qs init screensaver &
 system -qs check updates &
 cloud -qs mount remotes &
 desktop -qs start
-

@@ -879,4 +879,3 @@ verify_iso_file () {
    sq verify --signer-file release-key.pgp \
     --detached "${file_name}.sig" "${file_name}" 2>&1 | awk NF || return 1
 }
-

@@ -311,4 +311,3 @@ set_faillock_interval () {
 
   log "Fail interval set to ${time} secs."
 }
-

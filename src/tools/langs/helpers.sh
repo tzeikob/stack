@@ -746,4 +746,3 @@ apply_locale_settings () {
 
   sudo locale-gen
 }
-

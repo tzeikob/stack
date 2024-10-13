@@ -136,4 +136,3 @@ save_screen_saver_to_settings () {
   mkdir -p "${CONFIG_HOME}"
   echo "${settings}" > "${POWER_SETTINGS}"
 }
-

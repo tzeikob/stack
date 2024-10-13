@@ -151,4 +151,3 @@ pick_remote () {
 
   pick_one "Select remote name:" "${remotes}" "vertical" || return $?
 }
-

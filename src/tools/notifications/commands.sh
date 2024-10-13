@@ -163,4 +163,3 @@ clean_all () {
 
   log 'All notifications have been removed.'
 }
-

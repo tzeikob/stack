@@ -502,4 +502,3 @@ restart_bluetooth () {
 
   log 'Bluetooth service has been restarted.'
 }
-

@@ -135,4 +135,3 @@ super + alt + Print
 # Restart the desktop environment.
 super + ctrl + alt + r
   desktop -qs restart
-

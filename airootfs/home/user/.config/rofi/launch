@@ -77,4 +77,3 @@ case "${1}" in
   echo 'Ooops, invalid launch menu!'
   exit 1;;
 esac
-

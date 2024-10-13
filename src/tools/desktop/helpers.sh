@@ -601,4 +601,3 @@ remove_dangling_monitors () {
     fi
   done <<< "${monitors}"
 }
-

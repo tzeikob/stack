@@ -330,4 +330,3 @@ mount_all () {
 
   log 'All remotes have been mounted.'
 }
-

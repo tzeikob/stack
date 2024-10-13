@@ -170,4 +170,3 @@ save_date_format_to_settings () {
   # Update the format in the corresponding polybar date module
   sed -i "s;^date =.*;date = ${pattern};" "${HOME}/.config/polybar/modules.ini" &> /dev/null
 }
-

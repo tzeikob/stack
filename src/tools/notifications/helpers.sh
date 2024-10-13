@@ -85,4 +85,3 @@ get_notifications_state () {
 
   echo "{${state}}"
 }
-

@@ -173,4 +173,3 @@ is_mute_mode () {
 is_not_mute_mode () {
   is_mute_mode "${1}" && return 1 || return 0
 }
-

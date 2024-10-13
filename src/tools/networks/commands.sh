@@ -1225,4 +1225,3 @@ power_wifi () {
 
   log "Wifi power set to ${mode}."
 }
-

@@ -455,4 +455,3 @@ restart () {
 
   log 'Cups service has been restarted.'
 }
-

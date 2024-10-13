@@ -434,4 +434,3 @@ blank_screen () {
     return 2
   fi
 }
-

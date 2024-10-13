@@ -1386,4 +1386,3 @@ restore_colors () {
 
   log 'Color settings have been restored.'
 }
-

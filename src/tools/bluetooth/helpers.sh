@@ -163,4 +163,3 @@ is_valid_status () {
 is_not_valid_status () {
   is_valid_status "${1}" && return 1 || return 0
 }
-

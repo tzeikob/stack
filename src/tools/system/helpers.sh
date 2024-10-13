@@ -80,4 +80,3 @@ is_package_repository () {
 is_not_package_repository () {
   is_package_repository "${1}" && return 1 || return 0
 }
-

@@ -521,4 +521,3 @@ set_mute () {
   
   log "All ${type} modules set to ${status}."
 }
-

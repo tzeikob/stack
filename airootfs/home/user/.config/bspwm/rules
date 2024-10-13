@@ -19,4 +19,3 @@ rule_file_chooser () {
 }
 
 rule_file_chooser "$@"
-

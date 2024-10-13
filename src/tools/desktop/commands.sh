@@ -1081,4 +1081,3 @@ restart () {
 
   log 'Desktop has been restarted.'
 }
-
