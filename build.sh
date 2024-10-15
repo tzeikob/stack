@@ -407,7 +407,7 @@ setup_display_server () {
     '' \
     "echo -e 'Starting desktop environment...'" \
     'startx' >> "${zlogin_file}" ||
-     abort ERROR 'Failed to add startx hook to .zlogin.'
+    abort ERROR 'Failed to add startx hook to .zlogin.'
 
   log INFO 'Xorg server set to be started at login.'
 }
@@ -448,7 +448,7 @@ setup_shell_environment () {
   
   local zshrc_file="${ROOT_FS}/root/.zshrc"
 
-  echo -e 'source "${HOME}/.stackrc"\n\n' >> "${zshrc_file}"
+  echo -e 'source "${HOME}/.stackrc"\n' >> "${zshrc_file}"
 }
 
 # Sets up the corresponding desktop configurations.
