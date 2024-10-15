@@ -184,15 +184,15 @@ show_pointer () {
   fi
 
   local query=''
-  query+='\(.id           | lbln("ID"))'
-  query+='\(.name         | lbln("Name"))'
-  query+='\(.node         | olbln("Node"))'
-  query+='\(.accel_speed  | olbln("Speed"))'
-  query+='\(.velocity     | olbln("Velocity"))'
-  query+='\(.accel        | olbln("Accel"))'
-  query+='\(.const_decel  | olbln("Decel"))'
-  query+='\(.adapt_decel) | olbln("Adapt"))'
-  query+='\(.enabled      | lbl("Enabled"))'
+  query+='\(.id          | lbln("ID"))'
+  query+='\(.name        | lbln("Name"))'
+  query+='\(.node        | olbln("Node"))'
+  query+='\(.accel_speed | olbln("Speed"))'
+  query+='\(.velocity    | olbln("Velocity"))'
+  query+='\(.accel       | olbln("Accel"))'
+  query+='\(.const_decel | olbln("Decel"))'
+  query+='\(.adapt_decel | olbln("Adapt"))'
+  query+='\(.enabled     | lbl("Enabled"))'
 
   echo "${pointer}" | jq -cer --arg SPC 11 "\"${query}\"" || return 1
 }
