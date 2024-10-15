@@ -572,13 +572,17 @@ setup_keyboard () {
   local keyboard_options=''
   keyboard_options="$(jq -cer '.options' "${langs_file}")" ||
     abort ERROR 'Failed to read .options setting.'
+
+  local query='[.layouts[] | .code] | join(",")'
   
   local keyboard_layouts=''
-  keyboard_layouts="$(jq -cer '[.layouts[]|.code]|join(",")' "${langs_file}")" ||
+  keyboard_layouts="$(jq -cer "${query}" "${langs_file}")" ||
     abort ERROR 'Failed to read .layout settings.'
+  
+  local query='[.layouts[] | .variant | if . == "default" then "" else . end] | join(",")'
 
   local layout_variants=''
-  layout_variants="$(jq -cer '[.layouts[]|.variant|if . == "default" then "" else . end]|join(",")' "${langs_file}")" ||
+  layout_variants="$(jq -cer "${query}" "${langs_file}")" ||
     abort ERROR 'Failed to read .variant settings.'
 
   local keyboard_conf="${ROOT_FS}/etc/X11/xorg.conf.d/00-keyboard.conf"
