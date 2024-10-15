@@ -113,8 +113,12 @@ find_pointers () {
 
   # Remove the extra comma after the last element
   pointers="${pointers:+${pointers::-1}}"
+  pointers="[${pointers}]"
 
-  echo "[${pointers}]"
+  # Keep only the first of pointer devices having the same name
+  pointers="$(echo "${pointers}" | jq -cer 'unique_by(.name)')" || return 1
+
+  echo "${pointers}"
 }
 
 # Returns the pointing device with the given name.
