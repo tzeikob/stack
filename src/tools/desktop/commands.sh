@@ -30,7 +30,7 @@ show_status () {
   status+="\"server\": \"Xorg ${server::-1}\","
 
   local compositor=''
-  compositor="$(pacman -Qi picom | grep -Po '^Version\s*: \K.+')" || return 1
+  compositor="$(pacman -Qi picom 2> /dev/null | grep -Po '^Version\s*: \K.+')" || return 1
 
   status+="\"compositor\": \"Picom ${compositor}\","
 
