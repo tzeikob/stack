@@ -45,7 +45,7 @@ show_status () {
   status+="\"bars\": \"Polybar ${bars}\","
 
   if file_exists "${DESKTOP_SETTINGS}"; then
-    local query='.wallpaper | if . then "\(.name) [\(.mode | uppercase)]" else "none" end'
+    local query='.wallpaper | if . then "\(.name) [\(.mode | downcase)]" else "none" end'
 
     local wallpaper=''
     wallpaper="$(jq -cr "${query}" "${DESKTOP_SETTINGS}")" || return 1
@@ -72,6 +72,7 @@ show_status () {
   query+='\(.kernel     | lbln("Kernel"))'
   query+='\(.shell      | lbln("Shell"))'
   query+='\(.server     | lbln("Graphics"))'
+  query+='\n'
   query+='\(.compositor | lbln("Compositor"))'
   query+='\(.wm         | lbln("Windows"))'
   query+='\(.bars       | lbln("Bars"))'
@@ -318,17 +319,17 @@ show_tablet () {
   query+='\(.Area                  | olbln("Area"))'
   query+='\(.Rotate                | olbln("Rotate"))'
   query+='\(.PressureRecalibration | olbln("Pressure"))'
-  query+='\(.PressCurve            | olbln("Press Curve"))'
+  query+='\(.PressCurve            | olbln("Curve"))'
   query+='\(.RawSample             | olbln("Sample"))'
   query+='\(.Mode                  | olbln("Mode"))'
   query+='\(.Touch                 | olbln("Touch"))'
   query+='\(.Gesture               | olbln("Gesture"))'
-  query+='\(.TapTime               | olbln("Tap Time"))'
+  query+='\(.TapTime               | olbln("Tap"))'
   query+='\(.CursorProx            | olbln("Cursor"))'
   query+='\(.Threshold             | olbln("Threshold"))'
   query+='\(.vendor                | lbl("Vendor"))'
 
-  echo "${tablet}" | jq -cer --arg SPC 14 "\"${query}\"" || return 1
+  echo "${tablet}" | jq -cer --arg SPC 12 "\"${query}\"" || return 1
 }
 
 # Shows the list of stylus-pen devices currently
