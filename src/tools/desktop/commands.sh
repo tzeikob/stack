@@ -643,7 +643,7 @@ init_wallpaper () {
   fi
 
   local mode=''
-  mode="$(echo "${wallpaper}" | jq -cer '.mode')" || return 1
+  mode="$(echo "${wallpaper}" | jq -cer '.mode//""')" || return 1
 
   set_wallpaper "${name}" "${mode:-"center"}"
 }
