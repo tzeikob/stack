@@ -8,11 +8,8 @@ def is_nullish(value):
   end;
 
 def fill_spaces(text; width):
-  if (text | length) < (width | tonumber) then
-    (width | tonumber - (text | length)) * " "
-  else
-    ""
-  end;
+  (text | length) as $l | (width | tonumber) as $w |
+    if $l < $w then ($w - $l) * " " else "" end;
 
 def no_spaces:
   if is_nullish(.) | not then gsub("\\s+";"") else . end;
