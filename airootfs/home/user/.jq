@@ -53,7 +53,7 @@ def olbln(display):
 
 def tree(display; default_value):
   if (is_nullish(.) | not) and (. | length > 0) then
-    display + ":\n ├ " + "\(. | join("\n ├ "))"
+    display + ":" + fill_spaces(display + ":"; $SPC) + "\(. | join("\n" + ($SPC|tonumber * " ")))"
   else
     display + ":" + fill_spaces(display + ":"; $SPC) + default_value
   end;
