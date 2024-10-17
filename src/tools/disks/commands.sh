@@ -15,16 +15,19 @@ source src/tools/disks/helpers.sh
 show_status () {
   local space=9
 
-  local alt_fstype='.children//[] | .[0].fstype | uppercase | dft("...")'
-  local alt_fsuse='.children//[] | .[0]."fsuse%" | dft("...")'
-  local parts=".[] | \"\(.path) \(.fstype//${alt_fstype}) \(.\"fsuse%\"//${alt_fsuse})\""
+  local parts=''
+  parts+='\(.path)'
+  parts+='\(.fstype | uppercase | dft("UNKW") | append)'
+  parts+='\(.size | opt | append)'
+  parts+='\(."fsuse%" | opt | append)'
+  parts=".[] | \"${parts}\""
 
   local query=''
   query+='\(.path                      | lbln("Disk"))'
   query+='\(.vendor | trim             | lbln("Vendor"))'
   query+='\(.model                     | lbln("Model"))'
   query+='\(.size                      | lbln("Size"))'
-  query+="\(.children//[] | [${parts}] | tree("Parts"; "None"))"
+  query+="\(.children//[] | [${parts}] | tree(\"Parts\"; \"None\"))"
 
   query="[.[] | \"${query}\"] | join(\"\n\n\")"
 
@@ -91,10 +94,13 @@ show_disk () {
   local disk=''
   disk="$(find_disk "${path}")" || return 1
 
-  local alt_fstype='.children//[] | .[0].fstype | uppercase | dft("...")'
-  local alt_fsuse='.children//[] | .[0]."fsuse%" | dft("...")'
-  local alt_label='.children//[] | .[0].label | dft("...")'
-  local parts=".[] | \"\(.path) \(.fstype//${alt_fstype}) \(.\"fsuse%\"//${alt_fsuse} \(.label//${alt_label}))\""
+  local parts=''
+  parts+='\(.path)'
+  parts+='\(.fstype   | uppercase | dft("UNKW") | append)'
+  parts+='\(.size     | opt | append)'
+  parts+='\(."fsuse%" | opt | append)'
+  parts+='\(.label    | opt | enclose | append)'
+  parts=".[] | \"${parts}\""
 
   local query=''
   query+='\(.name                       | lbln("Name"))'
@@ -109,7 +115,7 @@ show_disk () {
   query+='\(.rev                        | lbln("Revision"))'
   query+='\(.serial                     | lbln("Serial"))'
   query+='\(.state                      | lbln("State"))'
-  query+="\(.children//[] | [${parts}]  | tree("Parts"; "None")"
+  query+="\(.children//[] | [${parts}]  | tree(\"Parts\"; \"None\"))"
 
   echo "${disk}" | jq -cer --arg SPC 12 "\"${query}\"" || return 1
 }
@@ -143,37 +149,30 @@ show_partition () {
   local part=''
   part="$(find_partition "${path}")" || return 1
 
-  local alt_fstype='.children//[] | .[0].fstype | opt'
-  local alt_fsavail='.children//[] | .[0].fsavail | opt'
-  local alt_fsused='.children//[] | .[0].fsused | opt'
-  local alt_util='.children//[] | .[0]."fsuse%" | opt'
-  local alt_label='.children//[] | .[0].label | opt'
-  local alt_uuid='.children//[] | .[0].uuid | opt'
-
   local query=''
-  query+='\(.name                                  | lbln("Name"))'
-  query+='\(.path                                  | lbln("Path"))'
-  query+="\(.mountpoint//.veracrypt.mountpoint     | olbln("Mount"))"
-  query+="\(.fstype//${alt_fstype} | uppercase     | lbln(\"File System\"))"
-  query+='\(.rm                                    | lbln("Removable"))'
-  query+='\(.ro                                    | lbln("ReadOnly"))'
-  query+='\(.hotplug                               | lbln("HotPlug"))'
-  query+="\(.label//${alt_label}                   | lbln("Label"))"
-  query+="\(.uuid//${alt_uuid}                     | lbln("UUID"))"
-  query+='\(if .veracrypt then "yes" else "no" end | olbln("Encrypted"))'
-  query+='\(.veracrypt.encryption_algo             | olbln("Encryption"))'
-  query+='\(.veracrypt.slot                        | olbln("Slot"))'
-  query+='\(.veracrypt.hidden_protected            | olbln("Hidden"))'
-  query+='\(.veracrypt.prf                         | olbln("PRF"))'
-  query+='\(.veracrypt.mode                        | olbln("Mode"))'
-  query+='\(.veracrypt.block_size                  | olbln("Block"))'
-  query+='\(.veracrypt.device                      | olbln("Mapped"))'
-  query+='\(.size                                  | lbln("Size"))'
-  query+="\(.fsavail//${alt_fsavail}               | lbln(\"Free Space\"))"
-  query+="\(.fsused//${alt_fsused}                 | lbln(\"Used Space\"))"
-  query+="\(.\"fsuse%\"//${alt_util}               | lbl("Utilization"))"
+  query+='\(.name                              | lbln("Name"))'
+  query+='\(.path                              | lbln("Path"))'
+  query+='\(.mountpoint//.veracrypt.mountpoint | olbln("Mount"))'
+  query+='\(.fstype | uppercase                | lbln("File System"; "UNKW"))'
+  query+='\(.rm                                | lbln("Removable"))'
+  query+='\(.ro                                | lbln("ReadOnly"))'
+  query+='\(.hotplug                           | lbln("HotPlug"))'
+  query+='\(.label                             | olbln("Label"))'
+  query+='\(.uuid                              | lbln("UUID"))'
+  query+='\(.veracrypt | if . then "yes" end   | olbln("Encrypted"))'
+  query+='\(.veracrypt.encryption_algo         | olbln("Encryption"))'
+  query+='\(.veracrypt.slot                    | olbln("Slot"))'
+  query+='\(.veracrypt.hidden_protected        | olbln("Hidden"))'
+  query+='\(.veracrypt.prf                     | olbln("PRF"))'
+  query+='\(.veracrypt.mode                    | olbln("Mode"))'
+  query+='\(.veracrypt.block_size              | olbln("Block"))'
+  query+='\(.veracrypt.device                  | olbln("Mapped"))'
+  query+='\(.size                              | lbln("Size"))'
+  query+='\(.fsavail                           | lbln("Free Space"))'
+  query+='\(.fsused                            | lbln("Used Space"))'
+  query+='\(."fsuse%"                          | lbl("Utilization"))'
 
-  echo "${part}" | jq -cer -arg SPC 14 "\"${query}\"" || return 1
+  echo "${part}" | jq -cer --arg SPC 14 "\"${query}\"" || return 1
 }
 
 # Shows the data of the rom block device with
@@ -206,7 +205,7 @@ show_rom () {
   query+='\(.name               | lbln("Name"))'
   query+='\(.path               | lbln("Path"))'
   query+='\(.mountpoint         | olbl("Mount"))'
-  query+='\(.fstype | uppercase | lbln("File System"; "Unknown"))'
+  query+='\(.fstype | uppercase | lbln("File System"; "UNKW"))'
   query+='\(.rm                 | lbln("Removable"))'
   query+='\(.ro                 | lbln("ReadOnly"))'
   query+='\(.tran               | lbln("Transfer"))'
@@ -288,11 +287,11 @@ list_partitions () {
   fi
 
   local query=''
-  query+='\(.name                                  | lbln("Name"))'
-  query+='\(if .veracrypt then "yes" else "no" end | olbln("Encrypted"))'
-  query+='\(.path                                  | lbln("Path"))'
-  query+='\(.label                                 | olbln("Label))'
-  query+='\(.size                                  | lbl("Size"))'
+  query+='\(.name                            | lbln("Name"))'
+  query+='\(.veracrypt | if . then "yes" end | olbln("Encrypted"))'
+  query+='\(.path                            | lbln("Path"))'
+  query+='\(.label                           | olbln("Label"))'
+  query+='\(.size                            | lbl("Size"))'
 
   query="[.[] | \"${query}\"] | join(\"\n\n\")"
 
@@ -415,7 +414,7 @@ list_mounts () {
   while read -r disk; do
     local parts=''
     parts="$(find_partitions "${disk}" mounted |
-      jq -cer '[.[] | {name: .path, point: .mountpoint//.veracrypt.mountpoint}]')" || return 1
+      jq -cer '[.[] | {name: .path, point: "\(.mountpoint//.veracrypt.mountpoint)"}]')" || return 1
 
     # Merge disk partitions to mounts array
     mounts="$(jq -n --argjson m "${mounts}" --argjson p "${parts}" '$m + $p')" || return 1
@@ -1090,7 +1089,7 @@ scan_disk () {
   attr+='\(.raw.value   | lbln("Raw"))'
   attr+='\(.value       | lbln("Value"))'
   attr+='\(.worst       | lbln("Worst"))'
-  attr+='\(.thresh      | lbln("Threshold))'
+  attr+='\(.thresh      | lbln("Threshold"))'
   attr+='\(.when_failed | lbl("Failing"))'
 
   local attrs=''

@@ -627,7 +627,9 @@ pick_disk () {
     return 2
   fi
 
-  local option='{key: .path, value: "\(.path) \(.vendor | trim | dft("...")) \(.size | dft("..."))"}'
+  local key='key: .path'
+  local value='value: "\(.path)\(.vendor | trim | opt | append)\(.size | opt | append)"'
+  local option="{${key}, ${value}}"
 
   local query="[.[] | ${option}]"
 
@@ -658,7 +660,9 @@ pick_partition () {
     return 2
   fi
 
-  local option='{key: .path, value: "\(.path) \(.label | trim | dft("...")) \(.size | dft("..."))"}'
+  local key='key: .path'
+  local value='value: "\(.path)\(.label | trim | opt | append)\(.size | opt | append)"'
+  local option="{${key}, ${value}}"
 
   local query="[.[] | ${option}]"
 
@@ -687,7 +691,9 @@ pick_rom () {
     return 2
   fi
 
-  local option='{key: .path, value: "\(.path) \(.vendor | trim | dft("...")) \(.label | trim | dft("...")) \(.size | dft("..."))"}'
+  local key='key: .path'
+  local value='value: "\(.path)\(.vendor | trim | opt | append)\(.label | trim | opt | append)\(.size | opt | append)"'
+  local option="{${key}, ${value}}"
 
   local query="[.[] | ${option}]"
 
@@ -718,7 +724,7 @@ pick_host () {
     return 2
   fi
 
-  local option='{key: .ip, value: "\(.ip) [\(.name | dft("..."))]"}'
+  local option='{key: .ip, value: "\(.ip)\(.name | opt | enclose | append)"}'
 
   local query="[.[] | ${option}]"
 
