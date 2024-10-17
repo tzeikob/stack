@@ -602,7 +602,7 @@ find_shared_folders () {
   local password="${4}"
 
   local folders=''
-  folders="$(smbclient -L "${host}" -U "${user}" -W "${group}" --password="${password}" |
+  folders="$(smbclient -L "${host}" -U "${user}" -W "${group}" --password="${password}" 2> /dev/null |
     awk '/Disk/{print "{\"name\":\""$1"\",\"type\":\""$2"\"},"}')" || return 1
 
   # Remove the extra comma after the last element
