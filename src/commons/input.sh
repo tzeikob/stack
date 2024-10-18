@@ -24,7 +24,7 @@ prompt () {
 # Asks the user to enter a value, where the answer is
 # kept in the global var REPLY.
 # Options:
-#  n:       print an empty line before, -nn 2 lines and so on
+#  n: print an empty line before, -nn 2 lines and so on
 # Arguments:
 #  prompt: a text line
 # Outputs:
@@ -53,7 +53,7 @@ ask () {
 # Asks the user to enter a secret value, the answer is
 # kept in the global var REPLY.
 # Options:
-#  n:       print an empty line before, -nn 2 lines and so on
+#  n: print an empty line before, -nn 2 lines and so on
 # Arguments:
 #  prompt: a text line
 # Outputs:
@@ -83,7 +83,7 @@ ask_secret () {
 # where the selection is kept in the global var REPLY
 # either as a yes or no value.
 # Options:
-#  n:       print an empty line before, -nn 2 lines and so on
+#  n: print an empty line before, -nn 2 lines and so on
 # Arguments:
 #  prompt: a text line
 # Outputs:
@@ -121,7 +121,7 @@ confirm () {
 # the selection is kept in the global var REPLY as a
 # value equal to the key property of the selected option.
 # Options:
-#  n:       print an empty line before, -nn 2 lines and so on
+#  n: print an empty line before, -nn 2 lines and so on
 # Arguments:
 #  prompt:  a text line
 #  options: a JSON array of {key, value} pairs
@@ -182,7 +182,7 @@ pick_one () {
 # JSON array with elements equal to the key property of every
 # selected option.
 # Options:
-#  n:       print an empty line before, -nn 2 lines and so on
+#  n: print an empty line before, -nn 2 lines and so on
 # Arguments:
 #  prompt:  a text line
 #  options: a JSON array of {key, value} pairs
