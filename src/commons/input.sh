@@ -92,7 +92,7 @@ ask_secret () {
   REPLY=''
 
   echo -n "${prompt} "
-  read -s REPLY && echo
+  read -rs REPLY && echo
   
   if has_failed; then
     echo && return 1
