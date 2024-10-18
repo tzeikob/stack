@@ -123,7 +123,7 @@ is_locale_installed () {
 
   local query=".locales | if length > 0 then .[] | select(. == \"${name}\") else empty end"
 
-  jq -cer "${query}" "${LANGS_SETTINGS}" 1> /dev/null || return 1
+  jq -cer "${query}" "${LANGS_SETTINGS}" &> /dev/null || return 1
 }
 
 # An inverse version of is_locale_installed.

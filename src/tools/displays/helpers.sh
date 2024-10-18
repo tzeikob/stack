@@ -121,7 +121,7 @@ is_connected () {
 
   local query='select(.is_connected)'
 
-  echo "${output}" | jq -cer "${query}" 1> /dev/null || return 1
+  echo "${output}" | jq -cer "${query}" &> /dev/null || return 1
 }
 
 # An inverse version of is_connected.
@@ -139,7 +139,7 @@ is_active () {
 
   local query='select(.is_connected and .resolution_width)'
 
-  echo "${output}" | jq -cer "${query}" 1> /dev/null || return 1
+  echo "${output}" | jq -cer "${query}" &> /dev/null || return 1
 }
 
 # An inverse version of is_active.
@@ -157,7 +157,7 @@ is_primary () {
 
   local query='select(.is_primary)'
 
-  echo "${output}" | jq -cer "${query}" 1> /dev/null || return 1
+  echo "${output}" | jq -cer "${query}" &> /dev/null || return 1
 }
 
 # An inverse version of is_primary.
@@ -200,7 +200,7 @@ has_resolution () {
   query+=' | "\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)" as $res'
   query+=" | select(\$res == \"${resolution}\")"
 
-  echo "${output}" | jq -cer "${query}" 1> /dev/null || return 1
+  echo "${output}" | jq -cer "${query}" &> /dev/null || return 1
 }
 
 # An inverse version of has_resolution.
@@ -247,7 +247,7 @@ has_rate () {
   query+=" | select(\$res == \"${resolution}\")"
   query+=" | .frequencies[] | select(.frequency == ${rate})"
 
-  echo "${output}" | jq -cer "${query}" 1> /dev/null || return 1
+  echo "${output}" | jq -cer "${query}" &> /dev/null || return 1
 }
 
 # An inverse version of has_rate.

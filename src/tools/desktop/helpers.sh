@@ -573,7 +573,7 @@ workspace_exists () {
 
   local query=".[] | select(. == ${index})"
 
-  bspc query -D --names | jq --slurp . | jq -cer "${query}" 1> /dev/null || return 1  
+  bspc query -D --names | jq --slurp . | jq -cer "${query}" &> /dev/null || return 1
 }
 
 # An inverse version of workspace_exists.

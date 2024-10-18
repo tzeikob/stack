@@ -557,7 +557,7 @@ add_ethernet () {
     name="${REPLY}"
   fi
 
-  if find_connection "${name}" 1> /dev/null; then
+  if find_connection "${name}" &> /dev/null; then
     log "Connection ${name} already exists."
     return 2
   fi
@@ -634,7 +634,7 @@ add_dhcp () {
     name="${REPLY}"
   fi
 
-  if find_connection "${name}" 1> /dev/null; then
+  if find_connection "${name}" &> /dev/null; then
     log "Connection ${name} already exists."
     return 2
   fi
@@ -739,7 +739,7 @@ add_vpn () {
   name=$(basename -- "${file_path}")
   name="${name%.*}"
 
-  if find_connection "${name}" 1> /dev/null; then
+  if find_connection "${name}" &> /dev/null; then
     log "Connection ${name} already exists."
     return 2
   fi
@@ -1001,7 +1001,7 @@ set_proxy () {
       log 'Failed to set environment proxy variables.'
   fi
 
-  if which wget 1> /dev/null; then
+  if which wget &> /dev/null; then
     if file_not_exists "${HOME}/.wgetrc"; then
       cp /etc/wgetrc "${HOME}/.wgetrc"
     fi
@@ -1013,25 +1013,25 @@ set_proxy () {
       log 'Failed to set wget proxy settings.'
   fi
 
-  if which git 1> /dev/null; then
+  if which git &> /dev/null; then
     git config --global http.proxy "http://${uri}/" &&
     git config --global https.proxy "https://${uri}/" ||
       log 'Failed to set git proxy settings.'
   fi
 
-  if which npm 1> /dev/null; then
+  if which npm &> /dev/null; then
     npm config set proxy "http://${uri}/" &&
     npm config set https-proxy "https://${uri}/" ||
       log 'Failed to set npm proxy settings.'
   fi
   
-  if which yarn 1> /dev/null; then
+  if which yarn &> /dev/null; then
     yarn config set proxy "http://${uri}/" &&
     yarn config set https-proxy "https://${uri}/" ||
       log 'Failed to set yarn proxy settings.'
   fi
 
-  if which docker 1> /dev/null; then
+  if which docker &> /dev/null; then
     sudo mkdir -p /etc/systemd/system/docker.service.d
 
     local docker_proxy='/etc/systemd/system/docker.service.d/http-proxy.conf'
@@ -1118,7 +1118,7 @@ unset_proxy () {
       log 'Failed to unset environment proxy variables.'
   fi
 
-  if which wget 1> /dev/null; then
+  if which wget &> /dev/null; then
     if file_not_exists "${HOME}/.wgetrc"; then
       cp /etc/wgetrc "${HOME}/.wgetrc"
     fi
@@ -1130,26 +1130,26 @@ unset_proxy () {
       log 'Failed to set wget proxy settings.'
   fi
 
-  if which git 1> /dev/null &&
+  if which git &> /dev/null &&
     git config --global --get http.proxy 1> /dev/null; then
     git config --global --unset http.proxy &&
     git config --global --unset https.proxy ||
       log 'Failed to unset git proxy settings.'
   fi
 
-  if which npm 1> /dev/null; then
+  if which npm &> /dev/null; then
     npm config delete proxy &&
     npm config delete https-proxy ||
       log 'Failed to set npm proxy settings.'
   fi
   
-  if which yarn 1> /dev/null; then
+  if which yarn &> /dev/null; then
     yarn config delete proxy &&
     yarn config delete https-proxy ||
       log 'Failed to unset yarn proxy settings.'
   fi
 
-  if which docker 1> /dev/null; then
+  if which docker &> /dev/null; then
     local docker_proxy='/etc/systemd/system/docker.service.d/http-proxy.conf'
 
     sudo rm -f "${docker_proxy}" &&

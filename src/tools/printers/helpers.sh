@@ -310,7 +310,7 @@ is_driver_available () {
 
   local query=".[] | select(.key == \"${name}\")"
 
-  echo "${drivers}" | jq -cer "${query}" 1> /dev/null || return 1
+  echo "${drivers}" | jq -cer "${query}" &> /dev/null || return 1
 }
 
 # An inverse version of is_driver_available.
