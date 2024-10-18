@@ -133,7 +133,7 @@ confirm () {
 
   # Remove the value part from the selected option
   if is_given "${REPLY}"; then
-    REPLY="$(echo "${REPLY}" | sed -r "s/(.*)${KVS}.*/\1/")"
+    REPLY="$(echo "${REPLY}" | sed -r "s/(.*)${KVS}.*/\1/")" || return 1
   fi
 }
 
@@ -193,7 +193,7 @@ pick_one () {
 
   # Remove the value part from the selected option
   if is_given "${REPLY}"; then
-    REPLY="$(echo "${REPLY}" | sed -r "s/(.*)${KVS}.*/\1/")"
+    REPLY="$(echo "${REPLY}" | sed -r "s/(.*)${KVS}.*/\1/")" || return 1
   fi
 }
 
@@ -261,7 +261,7 @@ pick_many () {
         out=out "\""$i"\","
       }
       print out
-    }')"
+    }')" || return 1
 
     # Remove last post fixed comma
     if match "${REPLY}" ',$'; then
