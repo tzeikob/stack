@@ -17,6 +17,8 @@ KVS=$'▒'
 prompt () {
   local label="${1:-"prompt"}"
 
+  REPLY=''
+
   echo -n "${label}>> "
   read -r REPLY
   
