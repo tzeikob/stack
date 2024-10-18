@@ -347,7 +347,7 @@ set_primary () {
   fi
 
   # Make sure desktop is reloaded
-  desktop -qs restart &> /dev/null
+  desktop -qs restart 1> /dev/null
 
   if has_failed; then
     log 'Failed to reload desktop.'
@@ -407,8 +407,8 @@ set_on () {
   fi
 
   # Make sure desktop is reloaded
-  desktop -qs init wallpaper &> /dev/null &&
-    desktop -qs init bars &> /dev/null
+  desktop -qs init wallpaper 1> /dev/null &&
+    desktop -qs init bars 1> /dev/null
 
   if has_failed; then
     log 'Failed to reload desktop.'
@@ -462,7 +462,7 @@ set_off () {
   sleep 1
 
   # Make sure desktop workspaces are fixed
-  desktop -qs fix workspaces &> /dev/null
+  desktop -qs fix workspaces 1> /dev/null
 
   if has_failed; then
     log 'Failed to fix desktop workspaces.'
@@ -745,8 +745,8 @@ mirror_output () {
   done
 
   # Make sure ws are fixed and desktop is reloaded
-  desktop -qs fix workspaces &> /dev/null &&
-    desktop -qs init bars &> /dev/null
+  desktop -qs fix workspaces 1> /dev/null &&
+    desktop -qs init bars 1> /dev/null
 
   if has_failed; then
     log 'Failed to reload desktop.'
@@ -852,9 +852,9 @@ set_layout () {
   sleep 1
 
   # Make sure desktop workspaces are fixed
-  desktop -qs fix workspaces &> /dev/null &&
-    desktop -qs init wallpaper &> /dev/null &&
-    desktop -qs init bars  &> /dev/null
+  desktop -qs fix workspaces 1> /dev/null &&
+    desktop -qs init wallpaper 1> /dev/null &&
+    desktop -qs init bars  1> /dev/null
 
   if has_failed; then
     log 'Failed to fix desktop workspaces.'
@@ -980,8 +980,8 @@ restore_layout () {
   sleep 1
 
   # Make sure desktop workspaces and other modules are fixed
-  desktop -qs fix workspaces &> /dev/null &&
-    desktop -qs restart &> /dev/null
+  desktop -qs fix workspaces 1> /dev/null &&
+    desktop -qs restart 1> /dev/null
 
   if has_failed; then
     log 'Failed to reload desktop.'
@@ -1051,7 +1051,7 @@ fix_layout () {
   sleep 1
 
   # Make sure desktop workspaces are fixed
-  desktop -qs fix workspaces &> /dev/null
+  desktop -qs fix workspaces 1> /dev/null
 
   if has_failed; then
     log 'Failed to fix desktop workspaces.'
@@ -1196,7 +1196,7 @@ set_color () {
   index="$(echo "${output}" | jq -cer '.index')" || return 1
 
   local result=''
-  result="$(xcalib -d "${DISPLAY}" -s 0 -o "${index}" "${COLORS_HOME}/${profile}" 2>&1)"
+  result="$(xcalib -d "${DISPLAY}" -s 0 -o "${index}" "${COLORS_HOME}/${profile}")"
 
   if has_failed || is_not_empty "${result}"; then
     log 'Failed to set output color.'
@@ -1246,7 +1246,7 @@ reset_color () {
   index="$(echo "${output}" | jq -cer '.index')" || return 1
 
   local result=''
-  result="$(xcalib -d "${DISPLAY}" -s 0 -o "${index}" -c 2>&1)"
+  result="$(xcalib -d "${DISPLAY}" -s 0 -o "${index}" -c)"
 
   if has_failed || is_not_empty "${result}"; then
     log 'Failed to reset output color.'
@@ -1372,7 +1372,7 @@ restore_colors () {
 
   while read -r xcalib_cmd; do
     local result=''
-    result="$(${xcalib_cmd} 2>&1)"
+    result="$(${xcalib_cmd})"
 
     if has_failed || is_not_empty "${result}"; then
       failed="$(calc "${failed} + 1")" || return 1

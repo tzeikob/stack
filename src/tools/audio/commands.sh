@@ -149,7 +149,7 @@ restart () {
   fi
 
   # Try to restart status bars
-  desktop -qs init bars &> /dev/null
+  desktop -qs init bars 1> /dev/null
 
   log 'Audio services has been restarted.'
 }

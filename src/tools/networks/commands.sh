@@ -65,7 +65,7 @@ show_status () {
   query+='\(.query                                          | lbln("IP"))'
   query+='\(.country                                        | lbl("Location"))'
 
-  curl -s 'http://ip-api.com/json' | jq -cer --arg SPC ${space} "\"${query}\"" 2> /dev/null
+  curl -s 'http://ip-api.com/json' | jq -cer --arg SPC ${space} "\"${query}\""
 
   if has_failed; then
     echo '""' | jq -cer --arg SPC ${space} 'lbl("ISP"; "Unavailable")'
@@ -349,7 +349,7 @@ up_device () {
 
   log "Enabling network device ${name}..."
 
-  nmcli device connect "${name}" &> /dev/null
+  nmcli device connect "${name}" 1> /dev/null
 
   if has_failed; then
     log 'Failed to enable network device.'
@@ -413,7 +413,7 @@ down_device () {
 
   log "Disabling network device ${name}..."
 
-  nmcli device disconnect "${name}" &> /dev/null
+  nmcli device disconnect "${name}" 1> /dev/null
 
   if has_failed; then
     log 'Failed to disable network device.'
@@ -445,7 +445,7 @@ down_connection () {
 
   log "Disabling connection ${name}..."
 
-  nmcli connection down "${name}" &> /dev/null
+  nmcli connection down "${name}" 1> /dev/null
 
   if has_failed; then
     log 'Failed to disable connection.'
@@ -478,7 +478,7 @@ remove_device () {
 
   log "Removing network device ${name}..."
 
-  nmcli device delete "${name}" &> /dev/null
+  nmcli device delete "${name}" 1> /dev/null
 
   if has_failed; then
     log 'Failed to remove network device.'
@@ -510,7 +510,7 @@ remove_connection () {
 
   log "Removing connection ${name}..."
 
-  nmcli connection delete "${name}" &> /dev/null
+  nmcli connection delete "${name}" 1> /dev/null
 
   if has_failed; then
     log 'Failed to remove connection.'
@@ -557,7 +557,7 @@ add_ethernet () {
     name="${REPLY}"
   fi
 
-  if find_connection "${name}" &> /dev/null; then
+  if find_connection "${name}" 1> /dev/null; then
     log "Connection ${name} already exists."
     return 2
   fi
@@ -634,7 +634,7 @@ add_dhcp () {
     name="${REPLY}"
   fi
 
-  if find_connection "${name}" &> /dev/null; then
+  if find_connection "${name}" 1> /dev/null; then
     log "Connection ${name} already exists."
     return 2
   fi
@@ -698,7 +698,7 @@ add_wifi () {
 
   local result=''
   result="$(nmcli device wifi connect "${ssid}" password "${secret}" \
-    ifname "${device}" hidden yes 2> /dev/null)"
+    ifname "${device}" hidden yes)"
   
   if has_failed || match "${result}" '(E|e)rror'; then
     log "Failed to connect to ${ssid}."
@@ -739,7 +739,7 @@ add_vpn () {
   name=$(basename -- "${file_path}")
   name="${name%.*}"
 
-  if find_connection "${name}" &> /dev/null; then
+  if find_connection "${name}" 1> /dev/null; then
     log "Connection ${name} already exists."
     return 2
   fi
@@ -1001,7 +1001,7 @@ set_proxy () {
       log 'Failed to set environment proxy variables.'
   fi
 
-  if which wget &> /dev/null; then
+  if which wget 1> /dev/null; then
     if file_not_exists "${HOME}/.wgetrc"; then
       cp /etc/wgetrc "${HOME}/.wgetrc"
     fi
@@ -1013,25 +1013,25 @@ set_proxy () {
       log 'Failed to set wget proxy settings.'
   fi
 
-  if which git &> /dev/null; then
+  if which git 1> /dev/null; then
     git config --global http.proxy "http://${uri}/" &&
     git config --global https.proxy "https://${uri}/" ||
       log 'Failed to set git proxy settings.'
   fi
 
-  if which npm &> /dev/null; then
+  if which npm 1> /dev/null; then
     npm config set proxy "http://${uri}/" &&
     npm config set https-proxy "https://${uri}/" ||
       log 'Failed to set npm proxy settings.'
   fi
   
-  if which yarn &> /dev/null; then
+  if which yarn 1> /dev/null; then
     yarn config set proxy "http://${uri}/" &&
     yarn config set https-proxy "https://${uri}/" ||
       log 'Failed to set yarn proxy settings.'
   fi
 
-  if which docker &> /dev/null; then
+  if which docker 1> /dev/null; then
     sudo mkdir -p /etc/systemd/system/docker.service.d
 
     local docker_proxy='/etc/systemd/system/docker.service.d/http-proxy.conf'
@@ -1041,7 +1041,7 @@ set_proxy () {
       'Environment=' \
       "\"HTTP_PROXY=http://${uri}/\" " \
       "\"HTTPS_PROXY=https://${uri}/\" " \
-      "\"NO_PROXY=${no_proxy}\"" | sudo tee "${docker_proxy}" > /dev/null &&
+      "\"NO_PROXY=${no_proxy}\"" | sudo tee "${docker_proxy}" 1> /dev/null &&
     sudo systemctl daemon-reload ||
       log 'Failed to set docker proxy settings.'
   fi
@@ -1118,7 +1118,7 @@ unset_proxy () {
       log 'Failed to unset environment proxy variables.'
   fi
 
-  if which wget &> /dev/null; then
+  if which wget 1> /dev/null; then
     if file_not_exists "${HOME}/.wgetrc"; then
       cp /etc/wgetrc "${HOME}/.wgetrc"
     fi
@@ -1130,26 +1130,26 @@ unset_proxy () {
       log 'Failed to set wget proxy settings.'
   fi
 
-  if which git &> /dev/null &&
-    git config --global --get http.proxy &> /dev/null; then
+  if which git 1> /dev/null &&
+    git config --global --get http.proxy 1> /dev/null; then
     git config --global --unset http.proxy &&
     git config --global --unset https.proxy ||
       log 'Failed to unset git proxy settings.'
   fi
 
-  if which npm &> /dev/null; then
+  if which npm 1> /dev/null; then
     npm config delete proxy &&
     npm config delete https-proxy ||
       log 'Failed to set npm proxy settings.'
   fi
   
-  if which yarn &> /dev/null; then
+  if which yarn 1> /dev/null; then
     yarn config delete proxy &&
     yarn config delete https-proxy ||
       log 'Failed to unset yarn proxy settings.'
   fi
 
-  if which docker &> /dev/null; then
+  if which docker 1> /dev/null; then
     local docker_proxy='/etc/systemd/system/docker.service.d/http-proxy.conf'
 
     sudo rm -f "${docker_proxy}" &&

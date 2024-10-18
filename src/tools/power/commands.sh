@@ -178,7 +178,7 @@ set_action () {
   if grep -qE "^${option}=" "${config_file}"; then
     sudo sed -i "s/^\(${option}=\).*/\1${action}/" "${config_file}"
   else
-    echo "${option}=${action}" | sudo tee -a "${config_file}" > /dev/null
+    echo "${option}=${action}" | sudo tee -a "${config_file}" 1> /dev/null
   fi
 
   sudo systemctl kill -s HUP systemd-logind
@@ -240,9 +240,9 @@ set_screensaver () {
     local secs=0
     secs="$(calc "${interval} * 60")" || return 1
 
-    xset s "${secs}" "${secs}" &> /dev/null
+    xset s "${secs}" "${secs}" 1> /dev/null
   else
-    xset s off &> /dev/null
+    xset s off 1> /dev/null
   fi
   
   if has_failed; then
@@ -269,9 +269,9 @@ init_screensaver () {
     local secs=0
     secs="$(calc "${interval} * 60")" || return 1
 
-    xset s "${secs}" "${secs}" &> /dev/null
+    xset s "${secs}" "${secs}" 1> /dev/null
   else
-    xset s off &> /dev/null
+    xset s off 1> /dev/null
   fi
   
   if has_failed; then
@@ -300,17 +300,17 @@ set_tlp () {
 
   if is_on "${status}"; then
     log 'Enabling power saving mode...'
-    sudo systemctl stop acpid.service &> /dev/null &&
-    sudo systemctl disable acpid.service &> /dev/null &&
-    sudo systemctl enable tlp.service &> /dev/null &&
-    sudo systemctl start tlp.service &> /dev/null &&
+    sudo systemctl stop acpid.service 1> /dev/null &&
+    sudo systemctl disable acpid.service 1> /dev/null &&
+    sudo systemctl enable tlp.service 1> /dev/null &&
+    sudo systemctl start tlp.service 1> /dev/null &&
     sudo systemctl daemon-reload
   else
     log 'Disabling power saving mode...'
-    sudo systemctl stop tlp.service &> /dev/null &&
-    sudo systemctl disable tlp.service &> /dev/null &&
-    sudo systemctl enable acpid.service &> /dev/null &&
-    sudo systemctl start acpid.service &> /dev/null &&
+    sudo systemctl stop tlp.service 1> /dev/null &&
+    sudo systemctl disable tlp.service 1> /dev/null &&
+    sudo systemctl enable acpid.service 1> /dev/null &&
+    sudo systemctl start acpid.service 1> /dev/null &&
     sudo systemctl daemon-reload
   fi
 
@@ -372,13 +372,13 @@ set_charging () {
     if grep -qE "^START_CHARGE_THRESH_BAT${index}=" "${config_file}"; then
       sudo sed -i "s/^\(START_CHARGE_THRESH_BAT${index}=\).*/\1${start}/" "${config_file}"
     else
-      echo "START_CHARGE_THRESH_BAT${index}=${start}" | sudo tee -a "${config_file}" > /dev/null
+      echo "START_CHARGE_THRESH_BAT${index}=${start}" | sudo tee -a "${config_file}" 1> /dev/null
     fi
     
     if grep -qE "^STOP_CHARGE_THRESH_BAT${index}=" "${config_file}"; then
       sudo sed -i "s/^\(STOP_CHARGE_THRESH_BAT${index}=\).*/\1${stop}/" "${config_file}"
     else
-      echo "STOP_CHARGE_THRESH_BAT${index}=${stop}" | sudo tee -a "${config_file}" > /dev/null
+      echo "STOP_CHARGE_THRESH_BAT${index}=${stop}" | sudo tee -a "${config_file}" 1> /dev/null
     fi
   done
 
@@ -389,7 +389,7 @@ set_charging () {
   tlp_process="$(systemctl -a | jc --systemctl | jq -cr "${query}")" || return 1
 
   if is_not_empty "${tlp_process}"; then
-    sudo systemctl restart tlp.service &> /dev/null || return 1
+    sudo systemctl restart tlp.service 1> /dev/null || return 1
   fi
 
   log "Charging set to start at ${start}% and stop at ${stop}%."

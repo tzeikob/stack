@@ -95,7 +95,7 @@ set_screen_locker () {
   if is_true "${interval} > 0"; then
     xautolock -locker "security -qs lock screen" \
       -nowlocker "security -qs lock screen" -time "${interval}" \
-      -corners 0-00 -detectsleep &> /dev/null &
+      -corners 0-00 -detectsleep 1> /dev/null &
     
     sleep 1
 
@@ -128,7 +128,7 @@ init_screen_locker () {
   if is_true "${interval} > 0"; then
     xautolock -locker "security -qs lock screen" \
       -nowlocker "security -qs lock screen" -time "${interval}" \
-      -corners 0-00 -detectsleep &> /dev/null &
+      -corners 0-00 -detectsleep 1> /dev/null &
     
     sleep 1
 
@@ -166,7 +166,7 @@ lock_screen () {
     XSECURELOCK_SAVER='saver_clock' \
     XSECURELOCK_NO_COMPOSITE=1 \
     XSECURELOCK_BLANK_TIMEOUT=-1 \
-    xsecurelock >/dev/null 2>&1
+    xsecurelock 1> /dev/null
 
   if has_failed; then
     log 'Failed to lock the screen.'
@@ -202,7 +202,7 @@ set_user_password () {
   fi
 
   echo -e "${new_password}\n${new_password}" |
-    sudo passwd --quiet "${USER}" &> /dev/null
+    sudo passwd --quiet "${USER}" 1> /dev/null
 
   if has_failed; then
     log 'Failed to set user password.'

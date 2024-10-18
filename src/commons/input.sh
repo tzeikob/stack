@@ -1,5 +1,6 @@
 #!/bin/bash
 
+source src/commons/error.sh
 source src/commons/math.sh
 source src/commons/validators.sh
 
@@ -16,8 +17,13 @@ KVS=$'▒'
 prompt () {
   local label="${1:-"prompt"}"
 
-  read -rep "${label}>> " REPLY
+  echo -n "${label}>> "
+  read -r REPLY
   
+  if has_failed; then
+    echo && return 1
+  fi
+
   history -s "${REPLY}"
 }
 
@@ -47,7 +53,13 @@ ask () {
   local prompt="${1}"
 
   REPLY=''
-  read -rep "${prompt} " REPLY
+
+  echo -n "${prompt} "
+  read -r REPLY
+  
+  if has_failed; then
+    echo && return 1
+  fi
 }
 
 # Asks the user to enter a secret value, the answer is
@@ -76,7 +88,13 @@ ask_secret () {
   local prompt="${1}"
 
   REPLY=''
-  read -sp "${prompt} " REPLY && echo
+
+  echo -n "${prompt} "
+  read -s REPLY && echo
+  
+  if has_failed; then
+    echo && return 1
+  fi
 }
 
 # Shows a Yes/No menu and asks user to select an option,

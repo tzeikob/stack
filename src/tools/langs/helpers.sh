@@ -123,7 +123,7 @@ is_locale_installed () {
 
   local query=".locales | if length > 0 then .[] | select(. == \"${name}\") else empty end"
 
-  jq -cer "${query}" "${LANGS_SETTINGS}" &> /dev/null || return 1
+  jq -cer "${query}" "${LANGS_SETTINGS}" 1> /dev/null || return 1
 }
 
 # An inverse version of is_locale_installed.
@@ -579,7 +579,7 @@ apply_alias_to_layout () {
   fi
 
   # Replace the layout name line
-  sudo sed -i "${index} s;.*;   name[Group1]= \"${alias}\"\;;" "${symbol_file}" &> /dev/null
+  sudo sed -i "${index} s;.*;   name[Group1]= \"${alias}\"\;;" "${symbol_file}"
 }
 
 # Save the given locale into settings.
@@ -718,7 +718,7 @@ apply_system_locale_settings () {
     "LC_TELEPHONE=${locale}" \
     "LC_MEASUREMENT=${locale}" \
     "LC_IDENTIFICATION=${locale}" \
-    "LC_ALL=" | sudo tee /etc/locale.conf &> /dev/null
+    "LC_ALL=" | sudo tee /etc/locale.conf 1> /dev/null
 
   # Unset previous set variables
   unset LANG LANGUAGE LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE \
@@ -741,7 +741,7 @@ apply_locale_settings () {
 
   local locale=''
   while read -r locale; do
-    echo "${locale}" | sudo tee -a /etc/locale.gen &> /dev/null
+    echo "${locale}" | sudo tee -a /etc/locale.gen 1> /dev/null
   done <<< "${locales}"
 
   sudo locale-gen

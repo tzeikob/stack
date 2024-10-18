@@ -20,7 +20,7 @@ authenticate_user () {
   sudo -K
 
   # Mimic authentication with a dry run
-  sudo /usr/bin/true &> /dev/null
+  sudo /usr/bin/true 1> /dev/null
 
   if has_failed; then
     log 'Sorry incorrect password!'

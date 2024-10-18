@@ -62,7 +62,7 @@ find_partitions () {
 
   # Collect any disk encrypted volumes reported by veracrypt
   local volumes=''
-  volumes="$(veracrypt -t --list 2>&1)"
+  volumes="$(veracrypt -t --list)"
 
   if has_failed && not_match "${volumes}" 'No volumes mounted'; then
     return 1
@@ -110,7 +110,7 @@ find_partition () {
 
   # Colect the encrypted volume data reported by veracrypt, if any
   local volume=''
-  volume="$(veracrypt -t --volume-properties "${path}" 2>&1)"
+  volume="$(veracrypt -t --volume-properties "${path}")"
 
   if has_failed && not_match "${volume}" 'No such volume is mounted'; then
     return 1
@@ -355,7 +355,7 @@ is_mounted () {
     return 0
   fi
 
-  if veracrypt -t --list 2>&1 | grep -qsE "^[0-9]+: ${path} "; then
+  if veracrypt -t --list | grep -qsE "^[0-9]+: ${path} "; then
     return 0
   fi
 
@@ -377,7 +377,7 @@ mount_device () {
     return 1
   fi
 
-  udisksctl mount -b "${path}" &> /dev/null || return 1
+  udisksctl mount -b "${path}" 1> /dev/null || return 1
 
   # Create symlink to the local mount folder
   local local_home="${HOME}/mounts/local"
@@ -407,7 +407,7 @@ mount_encrypted_device () {
 
   mkdir -p "${mount_point}" &&
   sudo veracrypt -t --mount "${path}" "${mount_point}" --password "${key}" \
-    --pim 0 --keyfiles '' --protect-hidden no --non-interactive &> /dev/null
+    --pim 0 --keyfiles '' --protect-hidden no --non-interactive 1> /dev/null
 
   if has_failed; then
     rm -rf "${mount_point}"
@@ -426,7 +426,7 @@ unmount_device () {
   fi
 
   sync &&
-  udisksctl unmount -b "${path}" &> /dev/null || return 1
+  udisksctl unmount -b "${path}" 1> /dev/null || return 1
 }
 
 # Unmounts the encrypted block device with the given path.
@@ -440,7 +440,7 @@ unmount_encrypted_device () {
   fi
 
   sync &&
-  sudo veracrypt -t --dismount "${path}" &> /dev/null || return 1
+  sudo veracrypt -t --dismount "${path}" 1> /dev/null || return 1
 
   local folder_name=''
   folder_name="$(echo "${path:1}" | tr '/' '_')"
@@ -465,7 +465,7 @@ unmount_partitions () {
 
   # Collect any disk's mounted encrypted volumes, if any
   local volumes=''
-  volumes="$(veracrypt -t --list 2>&1)"
+  volumes="$(veracrypt -t --list)"
   
   if has_failed && not_match "${volumes}" 'No volumes mounted'; then
     return 1
@@ -602,7 +602,7 @@ find_shared_folders () {
   local password="${4}"
 
   local folders=''
-  folders="$(smbclient -L "${host}" -U "${user}" -W "${group}" --password="${password}" 2> /dev/null |
+  folders="$(smbclient -L "${host}" -U "${user}" -W "${group}" --password="${password}" |
     awk '/Disk/{print "{\"name\":\""$1"\",\"type\":\""$2"\"},"}')" || return 1
 
   # Remove the extra comma after the last element
@@ -883,5 +883,5 @@ verify_iso_file () {
   cd ${folder} &&
    b2sum --ignore-missing -c b2sums.txt &&
    sq verify --signer-file release-key.pgp \
-    --detached "${file_name}.sig" "${file_name}" 2>&1 | awk NF || return 1
+    --detached "${file_name}.sig" "${file_name}" | awk NF || return 1
 }

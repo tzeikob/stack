@@ -749,7 +749,7 @@ mount_image () {
   fi
 
   mkdir -p "${mount_point}" &&
-  fuseiso -p "${path}" "${mount_point}" &> /dev/null
+  fuseiso -p "${path}" "${mount_point}" 1> /dev/null
 
   if has_failed; then
     log 'Failed to mount image file.'
@@ -859,7 +859,7 @@ mount_shared_folder () {
     return 2
   fi
 
-  echo "${password}" | gio mount "${uri}" &> /dev/null
+  echo "${password}" | gio mount "${uri}" 1> /dev/null
   
   if has_failed; then
     log 'Failed to mount shared folder.'
@@ -898,7 +898,7 @@ unmount_shared_folder () {
     return 2
   fi
 
-  sync && gio mount -u "${uri}" 2> /dev/null
+  sync && gio mount -u "${uri}"
   
   if has_failed; then
     log 'Failed to umount shared folder.'
@@ -1039,7 +1039,7 @@ eject_disk () {
     return 2
   fi
 
-  udisksctl power-off -b "${path}" &> /dev/null
+  udisksctl power-off -b "${path}" 1> /dev/null
 
   if has_failed; then
     log 'Unable to power disk off.'
@@ -1076,7 +1076,7 @@ scan_disk () {
     return 2
   fi
   
-  sudo smartctl -i "${path}" &> /dev/null
+  sudo smartctl -i "${path}" 1> /dev/null
   
   if has_failed; then
     log 'Unable to retrieve SMART data.'

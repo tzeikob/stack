@@ -91,7 +91,7 @@ sync_drive () {
   log 'Go to browser and accept access permssions...'
 
   rclone config create "${name}" drive scope=drive client_id="${client}" \
-    client_secret="${secret}" root_folder_id="${folder}" &> /dev/null
+    client_secret="${secret}" root_folder_id="${folder}" 1> /dev/null
 
   if has_failed; then
     log 'Failed to sync drive remote.'
@@ -147,7 +147,7 @@ sync_dropbox () {
   log 'Go to browser and accept access permssions...'
 
   rclone config create "${name}" dropbox \
-    client_id="${app}" client_secret="${secret}" &> /dev/null
+    client_id="${app}" client_secret="${secret}" 1> /dev/null
 
   if has_failed; then
     log 'Failed to sync dropbox remote.'

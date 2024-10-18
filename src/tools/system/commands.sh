@@ -146,7 +146,7 @@ set_mirrors () {
       log 'No mirror countries are given.' && return 2
 
     countries="$(
-      reflector --list-countries 2> /dev/null | tail -n +3 | awk '{
+      reflector --list-countries | tail -n +3 | awk '{
         match($0, /(.*)([A-Z]{2})\s+([0-9]+)/, a)
         gsub(/[ \t]+$/, "", a[1])
 
@@ -174,7 +174,7 @@ set_mirrors () {
   log 'Setting the package databases mirrors...'
 
   sudo reflector --country "${countries}" \
-    --age "${age}" --sort age --latest "${latest}" --save /etc/pacman.d/mirrorlist 2>&1
+    --age "${age}" --sort age --latest "${latest}" --save /etc/pacman.d/mirrorlist
   
   if has_failed; then
     log 'Unable to fetch package databases mirrors.'

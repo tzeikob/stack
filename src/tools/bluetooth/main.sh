@@ -10,6 +10,8 @@ source src/commons/math.sh
 source src/commons/validators.sh
 source src/tools/bluetooth/commands.sh
 
+LOGS='/var/log/stack/bluetooth.log'
+
 # Shows the help message.
 # Arguments:
 #  mode: loop or once
@@ -164,4 +166,4 @@ run () {
   clear
 }
 
-run "$@"
+run "$@" 2>> "${LOGS}"

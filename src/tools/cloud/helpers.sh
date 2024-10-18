@@ -16,7 +16,7 @@ find_remotes () {
   local status="${1}"
 
   local remotes=''
-  remotes="$(rclone listremotes --long 2> /dev/null)" || return 1
+  remotes="$(rclone listremotes --long)" || return 1
 
   if is_empty "${remotes}"; then
     echo '[]'
@@ -101,7 +101,7 @@ remote_exists () {
 
   local query=".[] | select(.name == \"${name}\")"
 
-  find_remotes | jq -cer "${query}" &> /dev/null || return 1
+  find_remotes | jq -cer "${query}" 1> /dev/null || return 1
 }
 
 # An inverse version of remote_exists.

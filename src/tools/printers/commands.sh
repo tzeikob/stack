@@ -168,7 +168,7 @@ add_printer () {
     return 2
   fi
 
-  lpadmin -p "${name}" -E -o printer-is-shared=false  -v "${uri}" -m "${driver}" &> /dev/null
+  lpadmin -p "${name}" -E -o printer-is-shared=false  -v "${uri}" -m "${driver}" 1> /dev/null
 
   if has_failed; then
     log "Failed to add printer ${uri}."
@@ -199,7 +199,7 @@ remove_printer () {
     return 2
   fi
 
-  lpadmin -x "${name}" &> /dev/null
+  lpadmin -x "${name}" 1> /dev/null
 
   if has_failed; then
     log "Failed to remove printer ${name}."
@@ -230,7 +230,7 @@ share_printer () {
     return 2
   fi
 
-  lpadmin -p "${name}" -o printer-is-shared=true &> /dev/null
+  lpadmin -p "${name}" -o printer-is-shared=true 1> /dev/null
 
   if has_failed; then
     log "Failed to share printer ${name}."
@@ -261,7 +261,7 @@ unshare_printer () {
     return 2
   fi
 
-  lpadmin -p "${name}" -o printer-is-shared=false &> /dev/null
+  lpadmin -p "${name}" -o printer-is-shared=false 1> /dev/null
 
   if has_failed; then
     log "Failed to unshare printer ${name}."
@@ -374,7 +374,7 @@ set_default () {
     return 2
   fi
 
-  lpoptions -d "${name}" &> /dev/null
+  lpoptions -d "${name}" 1> /dev/null
 
   if has_failed; then
     log 'Failed to set default print destination.'

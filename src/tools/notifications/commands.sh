@@ -17,11 +17,11 @@ start () {
 
   log 'Starting notifications service...'
 
-  dunst > /dev/null 2>&1 &
+  dunst 1> /dev/null &
 
   local pid=$!
 
-  ps -p "${pid}" > /dev/null
+  ps -p "${pid}" 1> /dev/null
   
   if has_failed; then
     log 'Failed to start notifications service.'
@@ -38,11 +38,11 @@ restart () {
   killall dunst || return 1
   sleep 1
 
-  dunst > /dev/null 2>&1 &
+  dunst 1> /dev/null &
 
   local pid=$!
 
-  ps -p "${pid}" > /dev/null
+  ps -p "${pid}" 1> /dev/null
   
   if has_failed; then
     log 'Failed to restart notifications service.'

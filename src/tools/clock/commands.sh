@@ -26,7 +26,7 @@ show_status () {
   timedatectl | jc --timedatectl | jq -cer --arg SPC ${space} "\"${query}\"" || return 1
 
   local ntp_status=''
-  ntp_status="$(timedatectl timesync-status 2> /dev/null)"
+  ntp_status="$(timedatectl timesync-status)"
 
   if has_not_failed; then
     local query=''
@@ -223,7 +223,7 @@ format_time () {
 
   # Save time format and restart status bars
   save_time_format_to_settings "${mode}" "${precision}" &&
-   desktop -qs init bars &> /dev/null
+   desktop -qs init bars 1> /dev/null
 
   if has_failed; then
     log 'Failed to set time format.'
@@ -247,7 +247,7 @@ format_date () {
 
   # Save date format and restart status bars
   save_date_format_to_settings "${pattern}" &&
-   desktop -qs init bars &> /dev/null
+   desktop -qs init bars 1> /dev/null
 
   if has_failed; then
     log 'Failed to set date format.'

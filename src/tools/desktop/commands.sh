@@ -30,7 +30,7 @@ show_status () {
   status+="\"server\": \"Xorg ${server::-1}\","
 
   local compositor=''
-  compositor="$(pacman -Qi picom 2> /dev/null | grep -Po '^Version\s*: \K.+')" || return 1
+  compositor="$(pacman -Qi picom | grep -Po '^Version\s*: \K.+')" || return 1
 
   status+="\"compositor\": \"Picom ${compositor}\","
 
@@ -265,13 +265,13 @@ set_pointer_speed () {
 
   while read -r device; do
     # Assume this is a mouse device and set its acceleration speed
-    xinput --set-prop "${device}" 'libinput Accel Speed' "${speed}" &> /dev/null &&
+    xinput --set-prop "${device}" 'libinput Accel Speed' "${speed}" 1> /dev/null &&
     succeed='true' && continue
 
     # Otherwise assume this is a touch device and set its velocity
-    xinput --set-prop "${device}" 'Device Accel Constant Deceleration' 1 &> /dev/null &&
-    xinput --set-prop "${device}" 'Device Accel Adaptive Deceleration' 1 &> /dev/null &&
-    xinput --set-prop "${device}" 'Device Accel Velocity Scaling' "${velocity}" &> /dev/null &&
+    xinput --set-prop "${device}" 'Device Accel Constant Deceleration' 1 1> /dev/null &&
+    xinput --set-prop "${device}" 'Device Accel Adaptive Deceleration' 1 1> /dev/null &&
+    xinput --set-prop "${device}" 'Device Accel Velocity Scaling' "${velocity}" 1> /dev/null &&
     succeed='true'
   done <<< "${devices}"
 
@@ -420,7 +420,7 @@ scale_tablet () {
   fi
 
   # Reset tablet area before applying the new scaling
-  xsetwacom --set "${name}" ResetArea &> /dev/null || return 1
+  xsetwacom --set "${name}" ResetArea 1> /dev/null || return 1
 
   tablet="$(find_tablet "${name}")" || return 1
   area="$(echo "${tablet}" | jq -cer '.Area')" || return 1
@@ -430,7 +430,7 @@ scale_tablet () {
   width="$(calc "floor(${width} * ${scale})")" || return 1
   height="$(calc "floor(${width} * ${ratio})")"|| return 1
 
-  xsetwacom --set "${name}" area "0 0 ${width} ${height}" &> /dev/null
+  xsetwacom --set "${name}" area "0 0 ${width} ${height}" 1> /dev/null
 
   if has_failed; then
     log "Failed to scale tablet ${name}."
@@ -485,7 +485,7 @@ map_tablet () {
 
   # Reset mapping and area if desktop is given as target
   if equals "${target}" 'desktop'; then
-    xsetwacom --set "${name}" MapToOutput desktop &> /dev/null
+    xsetwacom --set "${name}" MapToOutput desktop 1> /dev/null
 
     if has_failed; then
       log 'Failed to reset mapping.'
@@ -500,7 +500,7 @@ map_tablet () {
     previous_width="$(echo "${area}" | cut -d ' ' -f 3)"
 
     # Reset tablets area to default size
-    xsetwacom --set "${name}" ResetArea &> /dev/null || return 1
+    xsetwacom --set "${name}" ResetArea 1> /dev/null || return 1
 
     tablet="$(find_tablet "${name}")" || return 1
     area="$(echo "${tablet}" | jq -cer '.Area')" || return 1
@@ -518,7 +518,7 @@ map_tablet () {
     width="$(calc "floor(${width} * ${scale})")" || return 1
     height="$(calc "floor(${height} * ${scale})")" || return 1
 
-    xsetwacom --set "${name}" area "0 0 ${width} ${height}" &> /dev/null || return 1
+    xsetwacom --set "${name}" area "0 0 ${width} ${height}" 1> /dev/null || return 1
 
     log 'Tablet mapping has been reset.'
     return 0
@@ -559,8 +559,8 @@ map_tablet () {
   local height=0
   height="$(calc "floor(${width} * ${ratio})")" || return 1
 
-  xsetwacom --set "${name}" MapToOutput "${target}" &> /dev/null &&
-  xsetwacom --set "${name}" area "0 0 ${width} ${height}" &> /dev/null
+  xsetwacom --set "${name}" MapToOutput "${target}" 1> /dev/null &&
+  xsetwacom --set "${name}" area "0 0 ${width} ${height}" 1> /dev/null
 
   if has_failed; then
     log "Failed to map tablet ${name}."
@@ -745,7 +745,7 @@ add_workspace () {
   fi
 
   # Fix workspaces order and possible inconsistencies
-  fix_workspaces &> /dev/null
+  fix_workspaces 1> /dev/null
 
   if has_failed; then
     log "Failed to fix workspaces."
@@ -784,7 +784,7 @@ remove_workspace () {
   fi
 
   # Fix workspaces order and possible inconsistencies
-  fix_workspaces &> /dev/null
+  fix_workspaces 1> /dev/null
 
   if has_failed; then
     log 'Failed to fix workspaces.'
@@ -974,20 +974,20 @@ init_scratchpad () {
 # Initiates desktop status bars.
 init_bars () {  
   # Terminate already running bar instances
-  polybar-msg cmd quit &> /dev/null
+  polybar-msg cmd quit 1> /dev/null
 
   # Start new loggin section
-  echo "---" | tee -a /tmp/polybar.log > /dev/null
+  echo "---" | tee -a /tmp/polybar.log 1> /dev/null
 
   # Launch top/bottom bars for the primary monitor
   local primary=''
   primary="$(polybar -m | awk -F':' '/primary/{print $1}')"
 
-  MONITOR="${primary}" polybar -r primary 2>&1 |
-    tee -a /tmp/polybar.log > /dev/null & disown
+  MONITOR="${primary}" polybar -r primary |
+    tee -a /tmp/polybar.log 1> /dev/null & disown
   
-  MONITOR="${primary}" polybar -r secondary 2>&1 |
-    tee -a /tmp/polybar.log > /dev/null & disown
+  MONITOR="${primary}" polybar -r secondary |
+    tee -a /tmp/polybar.log 1> /dev/null & disown
 
   # Launch tertiary bars for each other monitor
   local others=''
@@ -997,8 +997,8 @@ init_bars () {
     local monitor=''
 
     while read -r monitor; do
-      MONITOR="${monitor}" polybar -r tertiary 2>&1 |
-        tee -a /tmp/polybar.log > /dev/null & disown
+      MONITOR="${monitor}" polybar -r tertiary |
+        tee -a /tmp/polybar.log 1> /dev/null & disown
     done <<< "${others}"
   fi
 
@@ -1018,7 +1018,7 @@ init_bindings () {
   kill_process '^sxhkd.*'
   
   # Launch a new instance of sxhkd process
-  sxhkd &> /dev/null &
+  sxhkd 1> /dev/null &
   
   # Dettach it from the current shell to suppress kill outputs
   disown $! && sleep 1
@@ -1049,7 +1049,7 @@ start () {
     restart && return 0 || return $?
   fi
   
-  exec bspwm &> /dev/null
+  exec bspwm 1> /dev/null
 
   if has_failed; then
     log 'Failed to start desktop.'
@@ -1067,13 +1067,13 @@ restart () {
   kill_process '^picom.*'
   
   # Launch a new instance of picom process
-  picom &> /dev/null &
+  picom 1> /dev/null &
   
   # Dettach it from the current shell to suppress kill outputs
   disown $! && sleep 1
 
   # Restart window manager
-  bspc wm --restart &> /dev/null
+  bspc wm --restart 1> /dev/null
 
   if has_failed; then
     log 'Failed to restart desktop.'

@@ -14,7 +14,7 @@ is_process_up () {
   local query=".command|test(\"${re}\")"
   query=".[]|select(${query})"
   
-  ps aux | grep -v 'jq' | jc --ps | jq -cer "${query}" &> /dev/null || return 1
+  ps aux | grep -v 'jq' | jc --ps | jq -cer "${query}" 1> /dev/null || return 1
 }
 
 # An inverse version of is_process_up.
@@ -29,7 +29,7 @@ is_process_down () {
 kill_process () {
   local re="${1}"
 
-  pkill --full "${re}" &> /dev/null
+  pkill --full "${re}" 1> /dev/null
 
   sleep 1
 }

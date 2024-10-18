@@ -160,6 +160,8 @@ sync_root_files () {
     rm -rf "${ROOT_FS}/home" ||
     abort ERROR 'Failed to sync files under root home.'
   
+  mkdir -p "${ROOT_FS}/var/log/stack"
+  
   log INFO 'Root file system has been synced.'
 }
 

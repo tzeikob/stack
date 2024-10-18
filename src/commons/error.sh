@@ -78,10 +78,10 @@ beep () {
 
   local sound_file="/usr/share/sounds/system/${sound}.wav"
 
-  if command -v pw-play &> /dev/null; then
-    LC_ALL=en_US.UTF-8 pw-play --volume=0.5 "${sound_file}" &> /dev/null &
-  elif command -v aplay &> /dev/null; then
-    aplay "${sound_file}" &> /dev/null &
+  if command -v pw-play 1> /dev/null; then
+    LC_ALL=en_US.UTF-8 pw-play --volume=0.5 "${sound_file}" 1> /dev/null &
+  elif command -v aplay 1> /dev/null; then
+    aplay "${sound_file}" 1> /dev/null &
   fi
 
   return ${exit_code}

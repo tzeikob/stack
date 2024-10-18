@@ -168,5 +168,5 @@ save_date_format_to_settings () {
   echo "${settings}" > "${CLOCK_SETTINGS}"
 
   # Update the format in the corresponding polybar date module
-  sed -i "s;^date =.*;date = ${pattern};" "${HOME}/.config/polybar/modules.ini" &> /dev/null
+  sed -i "s;^date =.*;date = ${pattern};" "${HOME}/.config/polybar/modules.ini"
 }

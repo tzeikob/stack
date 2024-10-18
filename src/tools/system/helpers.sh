@@ -32,7 +32,7 @@ find_outdated_pacman_packages () {
   query="[inputs | split(\" -> \") | {${query}}]"
   
   local pacman_pkgs=''
-  pacman_pkgs="$(checkupdates 2> /dev/null | jq -Rn "${query}")"
+  pacman_pkgs="$(checkupdates | jq -Rn "${query}")"
 
   if is_true "$? = 1"; then
     return 1
@@ -54,7 +54,7 @@ find_outdated_aur_packages () {
   query="[inputs | split(\" -> \") | {${query}}]"
 
   local aur_pkgs=''
-  aur_pkgs="$(yay -Qum 2> /dev/null | jq -Rn "${query}")"
+  aur_pkgs="$(yay -Qum | jq -Rn "${query}")"
 
   if has_failed; then
     aur_pkgs='[]'

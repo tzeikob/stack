@@ -56,7 +56,7 @@ find_device () {
     query+='signal: .signal_level'
     query="if (. | length > 0 and .[0].frequency) then .[0] | {${query}} else {} end"
 
-    device="$(iwconfig "${name}" 2> /dev/null | jc --iwconfig |
+    device="$(iwconfig "${name}" | jc --iwconfig |
       jq -cer --argjson d "${device}" "${query} + \$d")" || return 1
   fi
 
@@ -96,7 +96,7 @@ find_connection () {
     query="if (. | length > 0 and .[0].frequency) then .[0] | {${query}} else {} end"
 
     if is_network_device "${device}"; then
-      connection="$(iwconfig "${device}" 2> /dev/null | jc --iwconfig |
+      connection="$(iwconfig "${device}" | jc --iwconfig |
         jq -cer --argjson c "${connection}" "${query} + \$c")" || return 1
     fi
   fi

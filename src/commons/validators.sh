@@ -315,7 +315,7 @@ is_date () {
     return 1
   fi
   
-  date -d "${value}" &> /dev/null
+  date -d "${value}" 1> /dev/null
 }
 
 # An inverse version of is_date.
@@ -335,7 +335,7 @@ is_time () {
     return 1
   fi
 
-  date -d "1970-01-01T${time}" &> /dev/null
+  date -d "1970-01-01T${time}" 1> /dev/null
 }
 
 # An inverse version of is_time.

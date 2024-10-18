@@ -134,7 +134,7 @@ restore_files () {
     file_keys="$(echo "${file_keys}" | jq -cr 'unique | join(",")')"
   fi
 
-  trash-restore / &> /dev/null <<< "${file_keys}"
+  trash-restore / 1> /dev/null <<< "${file_keys}"
 
   if has_failed; then
     log 'Failed to restore files.'
@@ -203,7 +203,7 @@ remove_files () {
   for path in "${paths[@]}"; do
     local query=".[] | select(.key == \"${path}\")"
 
-    echo "${files}" | jq -cer "${query}" &> /dev/null
+    echo "${files}" | jq -cer "${query}" 1> /dev/null
 
     if has_failed; then
       log "File ${path} not found in trash."

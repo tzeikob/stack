@@ -264,6 +264,8 @@ sync_root_files () {
     --exclude usr/local/bin/stack ||
     abort ERROR 'Failed to sync the root file system.'
   
+  mkdir -p /var/log/stack
+  
   log INFO 'Root file system has been synced.'
 }
 

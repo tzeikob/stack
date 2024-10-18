@@ -266,14 +266,14 @@ set_power () {
     return 2
   fi
 
-  find_controller &> /dev/null
+  find_controller 1> /dev/null
   
   if has_failed; then
     log 'Unable to find default controller.'
     return 2
   fi
 
-  bluetoothctl power "${mode}" &> /dev/null
+  bluetoothctl power "${mode}" 1> /dev/null
 
   if has_failed; then
     log "Failed to set power mode to ${mode}."
@@ -297,7 +297,7 @@ set_scan () {
     return 2
   fi
 
-  find_controller &> /dev/null
+  find_controller 1> /dev/null
   
   if has_failed; then
     log 'Unable to find default controller.'
@@ -308,7 +308,7 @@ set_scan () {
   kill_scanning_proccesses || return 1
   
   if is_on "${mode}"; then
-    bluetoothctl scan on &> /dev/null &
+    bluetoothctl scan on 1> /dev/null &
 
     is_not_scanning &&
       log 'Failed to enable scanning mode.' && return 2
@@ -334,14 +334,14 @@ set_discoverable () {
     return 2
   fi
 
-  find_controller &> /dev/null
+  find_controller 1> /dev/null
   
   if has_failed; then
     log 'Unable to find default controller.'
     return 2
   fi
 
-  bluetoothctl discoverable "${mode}" &> /dev/null
+  bluetoothctl discoverable "${mode}" 1> /dev/null
 
   if has_failed; then
     log "Failed to set discoverable mode to ${mode}."
@@ -365,14 +365,14 @@ set_pairable () {
     return 2
   fi
 
-  find_controller &> /dev/null
+  find_controller 1> /dev/null
 
   if has_failed; then
     log 'Unable to find default controller.'
     return 2
   fi
 
-  bluetoothctl pairable "${mode}" &> /dev/null
+  bluetoothctl pairable "${mode}" 1> /dev/null
 
   if has_failed; then
     log "Failed to set pairable mode to ${mode}."
@@ -405,9 +405,9 @@ connect_device () {
     return 2
   fi
 
-  bluetoothctl pair "${address}" &> /dev/null &&
-  bluetoothctl trust "${address}" &> /dev/null &&
-  bluetoothctl connect "${address}" &> /dev/null
+  bluetoothctl pair "${address}" 1> /dev/null &&
+  bluetoothctl trust "${address}" 1> /dev/null &&
+  bluetoothctl connect "${address}" 1> /dev/null
 
   if has_failed; then
     log "Failed to connect device ${address}."
@@ -440,7 +440,7 @@ disconnect_device () {
     return 2
   fi
 
-  bluetoothctl disconnect "${address}" &> /dev/null
+  bluetoothctl disconnect "${address}" 1> /dev/null
 
   if has_failed; then
     log "Failed to disconnect device ${address}."
@@ -473,7 +473,7 @@ remove_device () {
     return 2
   fi
 
-  bluetoothctl remove "${address}" &> /dev/null
+  bluetoothctl remove "${address}" 1> /dev/null
 
   if has_failed; then
     log "Failed to remove device ${address}."

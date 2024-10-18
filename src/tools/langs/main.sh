@@ -10,6 +10,8 @@ source src/commons/math.sh
 source src/commons/validators.sh
 source src/tools/langs/commands.sh
 
+LOGS='/var/log/stack/langs.log'
+
 # Shows the help message.
 # Arguments:
 #  mode: loop or once
@@ -152,4 +154,4 @@ run () {
   clear
 }
 
-run "$@"
+run "$@" 2>> "${LOGS}"

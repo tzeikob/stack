@@ -30,7 +30,7 @@ find_wallpapers () {
   wallpaper="\"{\"${wallpaper}\"},\""
 
   local wallpapers=''
-  wallpapers="$(identify -quiet "${WALLPAPERS_HOME}/*" 2> /dev/null |
+  wallpapers="$(identify -quiet "${WALLPAPERS_HOME}/*" |
     awk '{
       if ($1 ~ /.(jpg|jpeg|png)$/) {
         n=split($1,a,"/")
@@ -244,7 +244,7 @@ find_tablet () {
   # Merge properties specific to wacom devices
   if equals "${vendor}" 'wacom'; then
     local props=''
-    props="$(xsetwacom --get "${name}" all 2>&1 | awk '/^Option/{
+    props="$(xsetwacom --get "${name}" all | awk '/^Option/{
       match($0, "Option \"(.*)\" \"(.*)\"", a)
       print "\""a[1]"\": \""a[2]"\","
     }')" || return 1
@@ -573,7 +573,7 @@ workspace_exists () {
 
   local query=".[] | select(. == ${index})"
 
-  bspc query -D --names | jq --slurp . | jq -cer "${query}" &> /dev/null || return 1  
+  bspc query -D --names | jq --slurp . | jq -cer "${query}" 1> /dev/null || return 1  
 }
 
 # An inverse version of workspace_exists.
