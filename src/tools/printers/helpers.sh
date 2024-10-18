@@ -13,7 +13,7 @@ source src/commons/validators.sh
 #  A json array of print destination objects.
 find_destinations () {
   local destinations=''
-  destinations="$(lpstat -v)"
+  destinations="$(lpstat -v 2>&1)"
 
   local exit_code=$?
 
@@ -136,7 +136,7 @@ discover_destinations () {
   if is_not_empty "${hosts}"; then
     local host=''
     while read -r host; do
-      destinations+="$(/usr/lib/cups/backend/snmp "${host}" |
+      destinations+="$(/usr/lib/cups/backend/snmp "${host}" 2>&1 |
         awk '/^network\s.*:\/\//{
           match($0, /^network\s.*:\/\/.*\s"(.*)"\s".*"\s".*".*/, a)
 
@@ -151,7 +151,7 @@ discover_destinations () {
   fi
 
   # Search for extra direct and network destinations
-  destinations+="$(lpinfo -v | awk '/^(direct|network)\s.*:\/\//{
+  destinations+="$(lpinfo -v 2>&1 | awk '/^(direct|network)\s.*:\/\//{
     match($0, /^(direct|network)\s.*:\/\/.*\s"(.*)"\s".*"\s".*".*/, a)
 
     schema="\"type\": \"%s\","
@@ -277,7 +277,7 @@ pick_uri () {
 find_drivers () {
   local drivers=''
 
-  drivers="$(lpinfo -m | awk '{
+  drivers="$(lpinfo -m 2>&1 | awk '{
     desc=""
     for (i=2; i<=NF; i++) {
       if (i>2) desc=desc" " 

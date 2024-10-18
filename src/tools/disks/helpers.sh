@@ -62,7 +62,7 @@ find_partitions () {
 
   # Collect any disk encrypted volumes reported by veracrypt
   local volumes=''
-  volumes="$(veracrypt -t --list)"
+  volumes="$(veracrypt -t --list 2>&1)"
 
   if has_failed && not_match "${volumes}" 'No volumes mounted'; then
     return 1
@@ -110,7 +110,7 @@ find_partition () {
 
   # Colect the encrypted volume data reported by veracrypt, if any
   local volume=''
-  volume="$(veracrypt -t --volume-properties "${path}")"
+  volume="$(veracrypt -t --volume-properties "${path}" 2>&1)"
 
   if has_failed && not_match "${volume}" 'No such volume is mounted'; then
     return 1
@@ -355,7 +355,7 @@ is_mounted () {
     return 0
   fi
 
-  if veracrypt -t --list | grep -qsE "^[0-9]+: ${path} "; then
+  if veracrypt -t --list 2>&1 | grep -qsE "^[0-9]+: ${path} "; then
     return 0
   fi
 
@@ -465,7 +465,7 @@ unmount_partitions () {
 
   # Collect any disk's mounted encrypted volumes, if any
   local volumes=''
-  volumes="$(veracrypt -t --list)"
+  volumes="$(veracrypt -t --list 2>&1)"
   
   if has_failed && not_match "${volumes}" 'No volumes mounted'; then
     return 1
@@ -883,5 +883,5 @@ verify_iso_file () {
   cd ${folder} &&
    b2sum --ignore-missing -c b2sums.txt &&
    sq verify --signer-file release-key.pgp \
-    --detached "${file_name}.sig" "${file_name}" | awk NF || return 1
+    --detached "${file_name}.sig" "${file_name}" 2>&1 | awk NF || return 1
 }

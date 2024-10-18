@@ -1196,7 +1196,7 @@ set_color () {
   index="$(echo "${output}" | jq -cer '.index')" || return 1
 
   local result=''
-  result="$(xcalib -d "${DISPLAY}" -s 0 -o "${index}" "${COLORS_HOME}/${profile}")"
+  result="$(xcalib -d "${DISPLAY}" -s 0 -o "${index}" "${COLORS_HOME}/${profile}" 2>&1)"
 
   if has_failed || is_not_empty "${result}"; then
     log 'Failed to set output color.'
@@ -1246,7 +1246,7 @@ reset_color () {
   index="$(echo "${output}" | jq -cer '.index')" || return 1
 
   local result=''
-  result="$(xcalib -d "${DISPLAY}" -s 0 -o "${index}" -c)"
+  result="$(xcalib -d "${DISPLAY}" -s 0 -o "${index}" -c 2>&1)"
 
   if has_failed || is_not_empty "${result}"; then
     log 'Failed to reset output color.'
@@ -1372,7 +1372,7 @@ restore_colors () {
 
   while read -r xcalib_cmd; do
     local result=''
-    result="$(${xcalib_cmd})"
+    result="$(${xcalib_cmd} 2>&1)"
 
     if has_failed || is_not_empty "${result}"; then
       failed="$(calc "${failed} + 1")" || return 1
