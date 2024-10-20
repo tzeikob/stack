@@ -295,7 +295,7 @@ list_partitions () {
 
   query="[.[] | \"${query}\"] | join(\"\n\n\")"
 
-  echo "${parts}" | jq -cer --arg 12 "${query}" || return 1
+  echo "${parts}" | jq -cer --arg SPC 12 "${query}" || return 1
 }
 
 # Shows the list of rom block devices.
