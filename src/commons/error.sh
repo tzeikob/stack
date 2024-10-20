@@ -81,7 +81,7 @@ beep () {
   if command -v pw-play &> /dev/null; then
     LC_ALL=en_US.UTF-8 pw-play --volume=0.5 "${sound_file}" 1> /dev/null &
   elif command -v aplay &> /dev/null; then
-    aplay "${sound_file}" 1> /dev/null &
+    aplay -q "${sound_file}" 1> /dev/null &
   fi
 
   return ${exit_code}
