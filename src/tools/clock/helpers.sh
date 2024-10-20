@@ -120,6 +120,23 @@ is_not_time_mode () {
   is_time_mode "${1}" && return 1 || return 0
 }
 
+# Checks if the NTP service is active or not.
+is_ntp_active () {
+  local ntp_status=''
+  ntp_status="$(timedatectl | jc --timedatectl | jq -cer '.ntp_service')" || return 1
+
+  if not_equals "${ntp_status}" 'active'; then
+    return 1
+  fi
+
+  return 0
+}
+
+# An inverse alias of is_ntp_active.
+is_ntp_inactive () {
+  is_ntp_active && return 1 || return 0
+}
+
 # Saves the time format into settings.
 # Arguments:
 #  mode:      12h or 24h

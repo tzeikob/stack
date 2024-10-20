@@ -111,6 +111,9 @@ set_time () {
   elif is_not_time "${time}"; then
     log 'Invalid or malformed time.'
     return 2
+  elif is_ntp_active; then
+    log 'Cannot set time while NTP is on.'
+    return 2
   fi
 
   sudo timedatectl set-time "${time}"
@@ -136,6 +139,9 @@ set_date () {
     return 2
   elif is_not_date "${date_value}"; then
     log 'Invalid or malformed date.'
+    return 2
+  elif is_ntp_active; then
+    log 'Cannot set date while NTP is on.'
     return 2
   fi
 
