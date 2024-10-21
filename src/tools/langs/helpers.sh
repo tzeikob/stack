@@ -744,5 +744,7 @@ apply_locale_settings () {
     echo "${locale}" | sudo tee -a /etc/locale.gen 1> /dev/null
   done <<< "${locales}"
 
-  sudo locale-gen
+  log 'Applying locale settings...'
+
+  sudo locale-gen 1> /dev/null
 }

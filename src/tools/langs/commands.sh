@@ -16,7 +16,7 @@ show_status () {
   local space=11
 
   local current_layout=''
-  current_layout="$(xkblayout-state print "%s:%v [%n]")" || return 1
+  current_layout="$(xkblayout-state print "%s [%n, %e]")" || return 1
 
   localectl status | awk -v layout="${current_layout}" -v SPC=${space} '{
     label=""
@@ -24,7 +24,7 @@ show_status () {
     if ($0 ~ /^.* VC Keymap/) {
       label="Keymap"
     } else if ($0 ~ /^.* X11 Layout/) {
-      printf "%-10s %s\n", "Layout", layout
+      printf "%-10s %s\n", "Layout:", layout
       label="Layouts"
     } else if ($0 ~ /^.* X11 Variant/) {
       label="Variants"
@@ -52,7 +52,6 @@ show_status () {
 
   echo "\"${locales}\"" | jq -cer --arg SPC ${space} 'lbln("Locales")'
 
-  echo
   locale | awk -F'=' -v SPC=${space} '{
     if ($2 == "") {
       next
