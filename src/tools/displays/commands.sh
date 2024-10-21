@@ -11,7 +11,7 @@ source src/tools/displays/helpers.sh
 # Outputs:
 #  A verbose list of text data.
 show_status () {
-  local space=10
+  local space=13
 
   xdpyinfo -display "${DISPLAY}" | awk -F': ' -v SPC=${space} '{
     gsub(/[ \t]+$/, "", $1);
@@ -47,13 +47,13 @@ show_status () {
     colors="$(jq -cr '.colors//[]' "${DISPLAYS_SETTINGS}")"
   fi
 
-  local resolution='[.resolution_width, .resolution_height]'
+  local resolution='"\(.resolution_width)x\(.resolution_height)"'
 
   local rate=''
   rate+='[.resolution_modes[].frequencies] | flatten |'
-  rate+='[.[] | select(.is_current == true)] | .[0].frequency'
+  rate+='[.[] | select(.is_current == true)] | .[0].frequency | unit("Hz")'
 
-  local offset='[.offset_width, .offset_height]'
+  local offset='"[\(.offset_width), \(.offset_height)]"'
 
   # Reduce over color settings to match any devices having a profile set
   local color=''
@@ -66,18 +66,16 @@ show_status () {
 
   local query=''
   query+='\(.device_name           | lbln("Output"))'
-  query+='\(.is_primary            | lbln("Primary"))'
   query+='\(.model_name            | lbln("Device"))'
-  query+="\(${resolution}          | lbln("Resolution"))"
-  query+="\(${rate} | unit("Hz")   | lbln("Rate"))"
-  query+="\(${offset}              | lbln("Offset"))"
+  query+="\(${resolution}          | lbl(\"Resolution\"))\(${rate} | opt | append | ln)"
+  query+="\(${offset}              | lbln(\"Offset\"))"
   query+="\(.rotation              | lbln("Rotation"))"
   query+="\(.reflection | downcase | lbln("Reflection"))"
-  query+="\(${color}               | lbl("Color"; "None"))"
+  query+="\(${color}               | lbl(\"Color\"; \"None\"))"
 
   local aliases='.model_name as $m | .product_id as $p | .serial_number as $s'
 
-  query=".[] | ${aliases} | \"\n${query}\""
+  query="sort_by(.is_primary) | reverse | .[] | ${aliases} | \"\n${query}\""
 
   find_outputs active | jq -cer --arg SPC ${space} --argjson c "${colors}" "${query}"
 
@@ -147,20 +145,19 @@ show_output () {
   base+='\(.is_connected and .resolution_width | lbln("Active"))'
   base+='\(.is_primary                         | lbl("Primary"))'
 
-  local resolution='[.resolution_width, .resolution_height]'
+  local resolution='"\(.resolution_width)x\(.resolution_height)"'
 
   local rate=''
   rate+='[.resolution_modes[].frequencies] | flatten |'
-  rate+='[.[] | select(.is_current == true)] | .[0].frequency'
+  rate+='[.[] | select(.is_current == true)] | .[0].frequency | unit("Hz")'
 
   local offset=''
-  offset='[.offset_width, .offset_height]'
+  offset='"[\(.offset_width), \(.offset_height)]"'
 
   local extra=''
-  extra+="\(${resolution}          | lbln("Resolution"))"
-  extra+="\(${rate} | unit("Hz")   | lbln("Rate"))"
-  extra+="\(${offset}              | lbln("Offset"))"
-  extra+='\(.rotation              | lbln("Rotation))'
+  extra+="\(${resolution}          | lbl(\"Resolution\"))\(${rate} | opt | append | ln)"
+  extra+="\(${offset}              | lbln(\"Offset\"))"
+  extra+='\(.rotation              | lbln("Rotation"))'
   extra+='\(.reflection | downcase | lbl("Reflection"))'
 
   # Reduce over color settings to match any devices have a profile set
@@ -172,14 +169,15 @@ show_output () {
   color+='end) | .profile | lbl("Color"; "None")'
 
   local modes=''
-  modes+='"\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)" '
-  modes+='[\([.frequencies[] | .frequency] | join(", "))]"'
+  modes+='\("\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)" | . + fill_spaces(.; 10))'
+  modes+='[\([.frequencies[] | .frequency] | join(", "))]'
+  modes="\"${modes}\""
 
   local query=''
   query+="${base}"
-  query+="\(if .is_connected and .resolution_width then \"\n${extra}\" else "" end)"
-  query+="\(if .is_connected' then \"\n\(${color})\" else "" end)"
-  query+="\(.resolution_modes//[] | [${modes}] | "\n" + tree("Modes"))"
+  query+="\(if .is_connected and .resolution_width then \"\n${extra}\" else \"\" end)"
+  query+="\(if .is_connected then \"\n\(${color})\" else \"\" end)"
+  query+="\(.resolution_modes | if length > 0 then [.[] | ${modes}] | \"\n\" + tree(\"Modes\") else \"\" end)"
 
   local aliases='.model_name as $m | .product_id as $p | .serial_number as $s'
 
@@ -302,7 +300,7 @@ set_mode () {
     return 2
   fi
 
-  log "Output ${name} mode set to ${resolution}@${rate}."
+  log "Output ${name} mode set to ${resolution} at ${rate}Hz."
 }
 
 # Sets the output with the given name as primary.
@@ -1121,7 +1119,7 @@ list_layouts () {
   map+=' else ""'
   map+='end'
 
-  map="[.value.map | to_entries[] | \"\(${map})\"] | join(\"\n\")"
+  map="[.value.map | to_entries[] | \"\(${map})\" | select(is_nullish(.) | not)] | join(\"\n\")"
 
   local layout=''
   layout+='\(.key                   | lbln("Index"))'

@@ -56,9 +56,9 @@ find_outputs () {
 
   # Copy EDID model data to the root level
   local model=''
-  model+='model_name: .value.props.EdidModel.name | dft("Unknown"),'
-  model+='product_id: .value.props.EdidModel.product_id | dft("Unknown"),'
-  model+='serial_number: .value.props.EdidModel.serial_number | dft("Unknown")'
+  model+='model_name: .value.props.EdidModel.name,'
+  model+='product_id: .value.props.EdidModel.product_id,'
+  model+='serial_number: .value.props.EdidModel.serial_number'
   model="{${model}}"
 
   local query=''

@@ -85,3 +85,6 @@ def enclose:
 
 def append:
   if is_nullish(.) | not then " " + . else . end;
+
+def ln:
+  . + "\n";
