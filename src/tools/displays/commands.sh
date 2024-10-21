@@ -104,6 +104,10 @@ show_logs () {
   local log_file="${HOME}/.local/share/xorg/Xorg.${id}.log"
 
   if file_not_exists "${log_file}"; then
+    log_file="/var/log/Xorg.${id}.log"
+  fi
+
+  if file_not_exists "${log_file}"; then
     log 'Unable to locate xorg log file.'
     return 2
   fi
