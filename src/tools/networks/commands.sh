@@ -36,13 +36,24 @@ show_status () {
   network+='| if . | length == 0 then "local" else .[0] | .device end'
 
   local query=''
-  query+="\(${network}    | lbln("Network"))"
+  query+="\(${network}    | lbln(\"Network\"))"
   query+='\(.state        | lbln("State"))'
   query+='\(.connectivity | lbln("Connect"))'
   query+='\(.wifi         | lbln("WiFi"))'
-  query+='\(.wifi_hw      | lbln("Antenna"))'
+  query+='\(.wifi_hw      | lbl("Antenna"))'
 
   find_status | jq -cer --arg SPC ${space} --argjson d "${devices}" "\"${query}\"" || return 1
+
+  local query=''
+  query+='\("\(.as | split(" ") | "\(.[1]) \(.[2])") [\(.isp)]" | lbln("ISP"))'
+  query+='\(.query                                              | lbln("IP"))'
+  query+='\(.country                                            | lbl("Location"))'
+
+  curl -s 'http://ip-api.com/json' | jq -cer --arg SPC ${space} "\"${query}\""
+
+  if has_failed; then
+    echo '""' | jq -cer --arg SPC ${space} 'lbl("ISP"; "Unavailable")'
+  fi
 
   local proxy_env="${HOME}/.config/environment.d/proxy.conf"
 
@@ -58,18 +69,7 @@ show_status () {
     }' | tr -d '"/')" || return 1
   fi
 
-  echo "\"${proxy}\"" | jq -cer --arg SPC ${space} 'lbln("Proxy"; "None")'
-
-  local query=''
-  query+='\(.as | split(" ") | "\(.[1]) \(.[2])") [\(.isp)] | lbln("ISP"))'
-  query+='\(.query                                          | lbln("IP"))'
-  query+='\(.country                                        | lbl("Location"))'
-
-  curl -s 'http://ip-api.com/json' | jq -cer --arg SPC ${space} "\"${query}\""
-
-  if has_failed; then
-    echo '""' | jq -cer --arg SPC ${space} 'lbl("ISP"; "Unavailable")'
-  fi
+  echo "\"${proxy}\"" | jq -cer --arg SPC ${space} 'lbl("Proxy"; "None")'
 
   local query=''
   query+='.[] | select(.type | test("(^ethernet|wifi|vpn)$")) | .name'
@@ -89,15 +89,15 @@ show_status () {
 
   local query=''
   query+='\(.connection_id                                   | lbln("Connection"))'
-  query+='\(.default                                         | lbln("Default"))'
+  query+='\(.default                                         | olbln("Default"))'
   query+='\(."802_11_wireless_ssid"                          | olbln("SSID"))'
-  query+="\(${device}                                        | lbln("Device"))"
+  query+="\(${device}                                        | lbln(\"Device\"))"
   query+='\(.freq | unit("GHz")                              | olbln("Freq"))'
   query+='\(.rate | unit("Mb/s")                             | olbln("Rate"))'
   query+='\(.quality                                         | olbln("Quality"))'
   query+='\(.signal | unit("dBm")                            | olbln("Signal"))'
   query+='\(.vpn_type                                        | olbln("VPN"))'
-  query+="\(${vpn_host}                                      | olbln("Host"))"
+  query+="\(${vpn_host}                                      | olbln(\"Host\"))"
   query+='\(.vpn_username                                    | olbln("User"))'
   query+='\(."802_11_wireless_security_key_mgmt" | uppercase | olbln("Security"))'
   query+='\(.ip4_address_1                                   | olbln("IPv4"))'
@@ -135,14 +135,14 @@ show_device () {
 
   local query=''
   query+='\(.device               | lbln("Name"))'
+  query+='\(.connection           | lbln("Connection"; "None"))'
   query+='\(.type                 | lbln("Type"))'
   query+='\(.hwaddr               | lbln("MAC"))'
   query+='\(.freq | unit("GHz")   | olbln("Freq"))'
-  query+='\(.rate | unit("Mb/s"   | olbln("Rate"))'
+  query+='\(.rate | unit("Mb/s")  | olbln("Rate"))'
   query+='\(.quality              | olbln("Quality"))'
   query+='\(.signal | unit("dBm") | olbln("Signal"))'
   query+='\(.state_text           | olbln("State"))'
-  query+='\(.mtu                  | lbln("MTU"))'
   query+='\(.ip4_address_1        | olbln("IPv4"))'
   query+='\(.ip4_gateway          | olbln("Gateway"))'
   query+='\(.ip4_route_1.dst      | olbln("Route"))'
@@ -151,7 +151,7 @@ show_device () {
   query+='\(.ip6_address_1        | olbln("IPv6"))'
   query+='\(.ip6_gateway          | olbln("Gateway"))'
   query+='\(.ip6_route_1.dist     | olbln("Route"))'
-  query+='\(.connection           | lbl("Connection"; "None"))'
+  query+='\(.mtu                  | lbl("MTU"))'
 
   find_device "${name}" | jq -cer --arg SPC 13 "\"${query}\"" || return 1
 }
@@ -187,10 +187,10 @@ show_connection () {
 
   local query=''
   query+='\(.connection_id                                   | lbln("Connection"))'
-  query+='\(.default                                         | lbln("Default"))'
+  query+='\(.default                                         | olbln("Default"))'
   query+='\(."802_11_wireless_ssid"                          | olbln("SSID"))'
   query+='\(.connection_uuid                                 | olbln("UUID"))'
-  query+="\(${device}                                        | lbln("Device"; "None"))"
+  query+="\(${device}                                        | lbln(\"Device\"; \"None\"))"
   query+='\(.freq | unit("GHz")                              | olbln("Freq"))'
   query+='\(.rate | unit("Mb/s")                             | olbln("Rate"))'
   query+='\(.quality                                         | olbln("Quality"))'
@@ -198,7 +198,7 @@ show_connection () {
   query+='\(.state                                           | olbln("State"))'
   query+='\(.connection_autoconnect                          | lbln("Auto"))'
   query+='\(.vpn_type                                        | olbln("VPN"))'
-  query+="\(${host}                                          | olbln("Host"))"
+  query+="\(${host}                                          | olbln(\"Host\"))"
   query+='\(.vpn_username                                    | olbln("User"))'
   query+='\(."802_11_wireless_security_key_mgmt" | uppercase | lbln("Security"))'
   query+='\(.ip4_address_1                                   | olbln("IPv4"))'
@@ -209,7 +209,7 @@ show_connection () {
   query+='\(.ip6_address_1                                   | olbln("IPv6"))'
   query+='\(.ip6_gateway                                     | olbln("Gateway"))'
   query+='\(.ip6_route_1.dst                                 | olbln("Route"))'
-  query+='\(.connection_type                                 | lbl("Type))'
+  query+='\(.connection_type                                 | lbl("Type"))'
 
   find_connection "${name}" | jq -cer --arg SPC 13 "\"${query}\"" || return 1
 }
@@ -381,7 +381,7 @@ up_connection () {
 
   log "Enabling connection ${name}..."
 
-  nmcli connection up "${name}" --ask
+  nmcli connection up "${name}" --ask 1> /dev/null
 
   if has_failed; then
     log 'Failed to enable connection.'
@@ -593,7 +593,7 @@ add_ethernet () {
 
   nmcli connection add type ethernet \
     con-name "${name}" ifname "${device}" ipv4.method "manual" \
-    ipv4.addresses "${ip}/24" ipv4.gateway "${gateway}" ipv4.dns "${dns}"
+    ipv4.addresses "${ip}/24" ipv4.gateway "${gateway}" ipv4.dns "${dns}" 1> /dev/null
 
   if has_failed; then
     log 'Failed to create ethernet connection.'
@@ -642,7 +642,7 @@ add_dhcp () {
   log "Creating ethernet dhcp connection ${name}..."
 
   nmcli connection add type ethernet \
-    con-name "${name}" ifname "${device}" ipv4.method auto
+    con-name "${name}" ifname "${device}" ipv4.method auto 1> /dev/null
   
   if has_failed; then
     log 'Failed to create ethernet dhcp connection.'
@@ -764,15 +764,15 @@ add_vpn () {
 
   log "Creating VPN connection ${name}..."
 
-  nmcli connection import type openvpn file "${file_path}"
+  nmcli connection import type openvpn file "${file_path}" 1> /dev/null
 
   if has_failed; then
     log 'Failed to create VPN connection.'
     return 2
   fi
 
-  nmcli connection modify "${name}" +vpn.data username="${username}" || return 1
-  nmcli connection modify "${name}" +vpn.secrets password="${password}" || return 1
+  nmcli connection modify "${name}" +vpn.data username="${username}" 1> /dev/null || return 1
+  nmcli connection modify "${name}" +vpn.secrets password="${password}" 1> /dev/null || return 1
 
   log "VPN connection ${name} created."
 }
@@ -1190,7 +1190,7 @@ power_network () {
 
   log "Powering network ${mode}..."
 
-  nmcli networking "${mode}"
+  nmcli networking "${mode}" 1> /dev/null
 
   if has_failed; then
     log "Failed to power network ${mode}."
@@ -1216,7 +1216,7 @@ power_wifi () {
 
   log "Powering wifi ${mode}..."
 
-  nmcli radio wifi "${mode}"
+  nmcli radio wifi "${mode}" 1> /dev/null
 
   if has_failed; then
     log "Failed to power wifi ${mode}."
