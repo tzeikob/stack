@@ -1143,11 +1143,10 @@ list_layouts () {
 
 # Sets the color profile of the device connected to the output
 # with the given name and saves it to the color settings. The
-# profile should be the filename of any .icc or .icm color
-# calibration files stored in $COLORS_HOME.
+# profile should be a file path to any .icc or .icm color file.
 # Arguments:
 #  name:    the name of an output
-#  profile: the file name of a color profile
+#  profile: the file path to a color profile
 set_color () {
   local name="${1}"
   local profile="${2}"
@@ -1179,35 +1178,41 @@ set_color () {
 
   if is_not_given "${profile}"; then
     on_script_mode &&
-      log 'Missing the profile file.' && return 2
+      log 'Missing the profile file path.' && return 2
 
-    pick_color_profile || return $?
-    is_empty "${REPLY}" && log 'Profile file is required.' && return 2
+    ask 'Enter the path to a profile file:' || return $?
+    is_empty "${REPLY}" && log 'Profile file path is required.' && return 2
     profile="${REPLY}"
   fi
 
   if is_not_profile_file "${profile}"; then
-    log 'Invalid profile file.'
+    log 'Invalid color profile file.'
     return 2
-  elif file_not_exists "${COLORS_HOME}/${profile}"; then
+  elif file_not_exists "${profile}"; then
     log "Profile file ${profile} not exists."
     return 2
   fi
+
+  local file_name=''
+  file_name="$(basename ${profile})" || return 1
+
+  mkdir -p "${COLORS_HOME}" &&
+    cp "${profile}" "${COLORS_HOME}/${file_name}" || return 1
 
   local index=''
   index="$(echo "${output}" | jq -cer '.index')" || return 1
 
   local result=''
-  result="$(xcalib -d "${DISPLAY}" -s 0 -o "${index}" "${COLORS_HOME}/${profile}" 2>&1)"
+  result="$(xcalib -d "${DISPLAY}" -s 0 -o "${index}" "${COLORS_HOME}/${file_name}" 2>&1)"
 
   if has_failed || is_not_empty "${result}"; then
     log 'Failed to set output color.'
     return 2
   fi
 
-  log "Color of output ${name} set to ${profile}."
+  log "Color of output ${name} set to ${file_name}."
 
-  save_color_to_settings "${output}" "${profile}" ||
+  save_color_to_settings "${output}" "${file_name}" ||
     log 'Failed to save output color to settings.'
 }
 

@@ -852,29 +852,6 @@ pick_layout () {
   pick_one 'Select layout:' "${layouts}" vertical || return $?
 }
 
-# Show a menu asking the user to select a color profile
-# from those saved under the local user directory.
-# Outputs:
-#  A menu of profile files.
-pick_color_profile () {
-  # List all color calibration files under $COLORS_HOME
-  local query='{key: .filename, value: .filename}'
-  query="[.[] | select(.filename | test(\".ic(c|m)$\")) | ${query}]"
-
-  local profiles=''
-  profiles="$(ls "${COLORS_HOME}" | jc --ls | jq -cr "${query}")"
-  
-  local len=0
-  len="$(echo "${profiles}" | jq -cer 'length')" || return 1
-
-  if is_true "${len} = 0"; then
-    log 'No color profiles have found.'
-    return 2
-  fi
-
-  pick_one 'Select color profile:' "${profiles}" vertical || return $?
-}
-
 # Show a menu asking the user to select a stored color
 # setting from the settings file.
 # Outputs:
