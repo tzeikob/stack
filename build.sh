@@ -160,7 +160,15 @@ sync_root_files () {
     rm -rf "${ROOT_FS}/home" ||
     abort ERROR 'Failed to sync files under root home.'
   
+  mkdir -p "${ROOT_FS}/root"/{downloads,documents,data,sources,mounts} &&
+    mkdir -p "${ROOT_FS}/root"/{images,audios,videos} ||
+    abort ERROR 'Failed to create home directories.'
+  
+  log INFO 'Home directories have been created.'
+
   mkdir -p "${ROOT_FS}/var/log/stack"
+
+  log INFO 'Logs directory has been created.'
   
   log INFO 'Root file system has been synced.'
 }
