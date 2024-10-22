@@ -65,7 +65,6 @@ show_help () {
     'set color <output> <profile>' 'Set the color of a display connected to an output.' \
     'reset color <output>' 'Reset the color of a display connected to an output.' \
     'list colors' 'List all saved color settings per display.' \
-    'delete color <index>' 'Delete a saved color setting.' \
     'restore colors' 'Restore color settings of any active displays.'
 }
 
@@ -96,7 +95,6 @@ execute () {
     'reset color') reset_color "${3}";;
     'save layout') save_layout;;
     'delete layout') delete_layout "${3}";;
-    'delete color') delete_color "${3}";;
     'restore layout') restore_layout;;
     'restore colors') restore_colors;;
     'rotate output') rotate_output "${3}" "${4}";;

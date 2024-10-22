@@ -852,29 +852,6 @@ pick_layout () {
   pick_one 'Select layout:' "${layouts}" vertical || return $?
 }
 
-# Show a menu asking the user to select a stored color
-# setting from the settings file.
-# Outputs:
-#  A menu of color settings.
-pick_color_setting () {
-  local query=''
-  query+='{key: .key, value: "\(.key):\(.value.model_name) [\(.value.profile)]"}'
-  query="if .colors | length > 0 then [.colors | to_entries[] | ${query}] else [] end"
-
-  local colors=''
-  colors="$(jq -cer "${query}" "${DISPLAYS_SETTINGS}")" || return 1
-  
-  local len=0
-  len="$(echo "${colors}" | jq -cer 'length')" || return 1
-
-  if is_true "${len} = 0"; then
-    log 'No color settings have found.'
-    return 2
-  fi
-
-  pick_one 'Select a color setting:' "${colors}" vertical || return $?
-}
-
 # Saves the color profile for the given output into settings.
 # Arguments:
 #  output:  a json object of output

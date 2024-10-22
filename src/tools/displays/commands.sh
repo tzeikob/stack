@@ -1266,52 +1266,6 @@ reset_color () {
     log 'Failed to delete output color from settings.'
 }
 
-# Deletes the color setting with the given index.
-# Arguments:
-#  index: the index of a color setting
-delete_color () {
-  local index="${1}"
-
-  if file_not_exists "${DISPLAYS_SETTINGS}"; then
-    log 'No color settings have found.'
-    return 2
-  fi
-
-  if is_not_given "${index}"; then
-    on_script_mode &&
-      log 'Missing the color setting index.' && return 2
-
-    pick_color_setting || return $?
-    is_empty "${REPLY}" && log 'Color setting index is required.' && return 2
-    index="${REPLY}"
-  fi
-
-  if is_not_integer "${index}" '[0,]'; then
-    log 'Invalid color setting index.'
-    return 2
-  fi
-
-  local match=''
-  match="$(jq "select(.colors[${index}])" "${DISPLAYS_SETTINGS}")"
-
-  if is_empty "${match}"; then
-    log "Color setting with index ${index} not found."
-    return 2
-  fi
-
-  local settings='{}'
-  settings="$(jq -e "del(.colors | .[${index}])" "${DISPLAYS_SETTINGS}")"
-
-  if has_failed; then
-    log 'Failed to delete color setting.'
-    return 2
-  fi
-
-  echo "${settings}" > "${DISPLAYS_SETTINGS}"
-
-  log 'Color setting has been deleted.'
-}
-
 # List all the color settings per device being stored
 # in settings.
 # Outputs:
