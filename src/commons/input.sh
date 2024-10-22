@@ -19,11 +19,10 @@ prompt () {
 
   REPLY=''
 
-  echo -n "${label}>> "
-  read -r REPLY
+  read -rep "${label}>> " REPLY 2>&1
   
   if has_failed; then
-    echo && return 1
+    return 1
   fi
 
   history -s "${REPLY}"
@@ -56,12 +55,7 @@ ask () {
 
   REPLY=''
 
-  echo -n "${prompt} "
-  read -r REPLY
-  
-  if has_failed; then
-    echo && return 1
-  fi
+  read -rep "${prompt} " REPLY 2>&1
 }
 
 # Asks the user to enter a secret value, the answer is
@@ -92,11 +86,7 @@ ask_secret () {
   REPLY=''
 
   echo -n "${prompt} "
-  read -rs REPLY && echo
-  
-  if has_failed; then
-    echo && return 1
-  fi
+  read -res REPLY 2>&1
 }
 
 # Shows a Yes/No menu and asks user to select an option,
