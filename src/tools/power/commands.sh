@@ -14,7 +14,7 @@ source src/tools/power/helpers.sh
 show_status () {
   local space=15
 
-  local query='if ."on-line" then "on" else "off" end | lbln("Adapter")'
+  local query='."on-line" | on_off | lbl("Adapter")'
 
   find_adapter | jq -cer --arg SPC ${space} "${query}" || return 1
 
@@ -24,58 +24,55 @@ show_status () {
   if is_not_empty "${battery}"; then
     local query=''
     query+='\("yes"                              | lbln("Battery"))'
-    query+='\(.state | downcase)                 | lbln("State"))'
+    query+='\(.state | downcase                  | lbln("State"))'
     query+='\(.charge_percent | unit("%")        | lbln("Charge"))'
-    query+="\(.design_capacity_mah | unit("mAh") | lbln("Capacity"))"
+    query+='\(.design_capacity_mah | unit("mAh") | lbl("Capacity"))'
 
     echo "${battery}" | jq -cer --arg SPC ${space} "\"${query}\"" || return 1
   else
-    echo '"no"' | jq -cer --arg SPC ${space} 'lbln("Battery")' || return 1
+    echo '"no"' | jq -cer --arg SPC ${space} 'lbl("Battery")' || return 1
   fi
 
   if file_exists '/sys/class/power_supply/BAT0/current_now'; then
     local current_now=''
     current_now="$(< /sys/class/power_supply/BAT0/current_now)"
 
-    echo "\"${current_now}\"" | jq -cer --arg SPC ${space} 'unit("mAh") | lbln("Current")'
+    echo "\"${current_now}\"" | jq -cer --arg SPC ${space} 'unit("mAh") | lbl("Current")'
   fi
 
   if file_exists '/sys/class/power_supply/BAT0/charge_now'; then
     local charge_now=''
     charge_now="$(< /sys/class/power_supply/BAT0/charge_now)"
 
-    echo "\"${charge_now}\"" | jq -cer --arg SPC ${space} 'unit("mAh") | lbln("Load")'
+    echo "\"${charge_now}\"" | jq -cer --arg SPC ${space} 'unit("mAh") | lbl("Load")'
   fi
 
-  local query='.[] | select(.unit == "acpid.service") | .active | olbln("ACPID")'
+  local query='.[] | select(.unit == "acpid.service") | .active | olbl("ACPID")'
 
   systemctl -a | jc --systemctl | jq -cr --arg SPC ${space} "${query}" || return 1
 
-  local query='.[] | select(.unit == "tlp.service") | .active | olbln("TLP")'
+  local query='.[] | select(.unit == "tlp.service") | .active | olbl("TLP")'
 
-  systemctl -a | jc --systemctl | jq -cr "${query}" || return 1
+  systemctl -a | jc --systemctl | jq -cr --arg SPC ${space} "${query}" || return 1
 
   local config_file='/etc/tlp.d/00-main.conf'
 
-  local index=0
-  for index in 0 1; do
-    local start=''
-    start="$(grep -E "^START_CHARGE_THRESH_BAT${index}=" "${config_file}" | cut -d '=' -f 2)"
+  local start=''
+  start="$(grep -E "^START_CHARGE_THRESH_BAT0=" "${config_file}" | cut -d '=' -f 2)"
     
-    local stop=''
-    stop="$(grep -E "^STOP_CHARGE_THRESH_BAT${index}=" "${config_file}" | cut -d '=' -f 2)"
+  local stop=''
+  stop="$(grep -E "^STOP_CHARGE_THRESH_BAT0=" "${config_file}" | cut -d '=' -f 2)"
     
-    if is_not_empty "${start}" || is_not_empty "${stop}"; then
-      echo "[${start:-0}%", "${stop:-100}%]" | jq -cer --arg SPC ${space} "lbln("Charge[${index}]")"
-    fi
-  done
+  if is_not_empty "${start}" || is_not_empty "${stop}"; then
+    echo "\"[${start:-0}%, ${stop:-100}%]\"" | jq -cer --arg SPC ${space} 'lbl("Thresholds")' || return 1
+  fi
 
   if file_exists "${POWER_SETTINGS}"; then
-    local query='.screensaver.interval | unit("mins") | lbln("Screensaver"; "Off")'
+    local query='.screensaver.interval | unit(" mins") | lbl("Screensaver"; "off")'
 
     jq -cr --arg SPC ${space} "${query}" "${POWER_SETTINGS}" || return 1
   else
-    echo '"off"' | jq -cer --arg SPC ${space} 'lbln("Screensaver")'
+    echo '"off"' | jq -cer --arg SPC ${space} 'lbl("Screensaver")'
   fi
 
   loginctl show-session | awk -v SPC=${space} '{
@@ -97,7 +94,7 @@ show_status () {
 
   echo
 
-  loginctl show-session | awk awk -v SPC=${space} '{
+  loginctl show-session | awk -v SPC=${space} '{
     match($0,/(.*)=(.*)/,a)
 
     if (a[1] == "HandlePowerKey") {
@@ -181,7 +178,7 @@ set_action () {
     echo "${option}=${action}" | sudo tee -a "${config_file}" 1> /dev/null
   fi
 
-  sudo systemctl kill -s HUP systemd-logind
+  sudo systemctl kill -s HUP systemd-logind 1> /dev/null
 
   if has_failed; then
     log "Failed to set ${handler} action."
@@ -208,7 +205,7 @@ reset_actions () {
   sudo sed -i '/^HandleLidSwitch=.*/d' "${config_file}"
   sudo sed -i '/^HandleLidSwitchDocked=.*/d' "${config_file}"
 
-  sudo systemctl kill -s HUP systemd-logind
+  sudo systemctl kill -s HUP systemd-logind 1> /dev/null
 
   if has_failed; then
     log 'Failed to reset power actions.'
@@ -397,7 +394,7 @@ set_charging () {
 
 # Shuts the system power down.
 shutdown_system () {
-  systemctl poweroff
+  systemctl poweroff 1> /dev/null
 
   if has_failed; then
     log 'Failed to shutdown the system.'
@@ -407,7 +404,7 @@ shutdown_system () {
 
 # Reboots the system.
 reboot_system () {
-  systemctl reboot
+  systemctl reboot 1> /dev/null
 
   if has_failed; then
     log 'Failed to reboot the system.'
@@ -417,7 +414,7 @@ reboot_system () {
 
 # Sets system in suspend mode.
 suspend_system () {
-  systemctl suspend
+  systemctl suspend 1> /dev/null
 
   if has_failed; then
     log 'Failed to suspend the system.'
@@ -427,7 +424,7 @@ suspend_system () {
 
 # Blanks the screen immediately.
 blank_screen () {
-  xset dpms force off
+  xset dpms force off 1> /dev/null
 
   if has_failed; then
     log 'Failed to blank the screen.'

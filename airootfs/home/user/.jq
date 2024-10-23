@@ -101,3 +101,6 @@ def yes_no:
 
 def up_down:
   bool_to("up"; "down");
+
+def on_off:
+  bool_to("on"; "off");
