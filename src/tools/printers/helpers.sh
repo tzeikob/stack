@@ -340,7 +340,7 @@ pick_driver () {
 # Outputs:
 #  A menu of print jobs.
 pick_job () {
-  local option='{key: .id, value: "\(.id) [\(.file) | dft("...")]"}'
+  local option='{key: .id, value: "\(.id) [\(.file | dft("..."))]"}'
 
   local query="[.[] | ${option}]"
 

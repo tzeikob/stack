@@ -25,17 +25,17 @@ show_status () {
       if (!v || v ~ /^[[:blank:]]*$/) v = "N/A"
 
       frm = "%-"SPC"s%s\n"
-      if (l) frm, l":", v
+      if (l) printf frm, l":", v
     }' || return 1
 
-  echo "\"$(cups-config --version)\"" | jq -cer --arg SPC ${space} 'lbln("Cups")'
-  echo "\"$(cups-config --api-version)\"" | jq -cer --arg SPC ${space} 'lbln("API")'
-  echo "\"$(cups-config --datadir)\"" | jq -cer --arg SPC ${space} 'lbln("Dir")'
+  echo "\"$(cups-config --version)\"" | jq -cer --arg SPC ${space} 'lbl("Cups")'
+  echo "\"$(cups-config --api-version)\"" | jq -cer --arg SPC ${space} 'lbl("API")'
+  echo "\"$(cups-config --datadir)\"" | jq -cer --arg SPC ${space} 'lbl("Dir")'
 
-  find_jobs | jq -cer --arg SPC ${space} 'length | lbln("Jobs")' || return 1
+  find_jobs | jq -cer --arg SPC ${space} 'length | lbl("Jobs")' || return 1
 
   local destinations=''
-  destinations="$(find_destinations | jq -cer './/[] | .[] | .name')" || return 1
+  destinations="$(find_destinations | jq -cer './/[] | .[] | .name')"
 
   if is_not_empty "${destinations}"; then
     local query=''
@@ -107,7 +107,7 @@ show_printer () {
   query+='\(.location       | olbln("Location"))'
   query+='\(.state          | olbln("State"))'
   query+='\(.accepting_jobs | olbln("Accepts"))'
-  query+='\(.shared         | olbln(("Shared"))'
+  query+='\(.shared         | olbln("Shared"))'
   query+='\(.is_temp        | olbln("Temporary"))'
   query+='\(.ColorModel     | olbln("Color Model"))'
   query+='\(.color          | olbln("Color"))'
@@ -343,7 +343,7 @@ set_option () {
     return 2
   fi
 
-  lpadmin -p "${name}" -o "${key}"="${value}"
+  lpadmin -p "${name}" -o "${key}"="${value}" 1> /dev/null
 
   if has_failed; then
     log 'Failed to set printer option.'
@@ -430,7 +430,7 @@ cancel_job () {
     return 2
   fi
 
-  cancel -x "${id}"
+  cancel -x "${id}" 1> /dev/null
 
   if has_failed; then
     log "Failed to cancel print job ${id}."
@@ -446,7 +446,7 @@ restart () {
 
   log 'Restarting the cups service...'
 
-  sudo systemctl restart cups.service
+  sudo systemctl restart cups.service 1> /dev/null
 
   if has_failed; then
     log 'Failed to restart cups service.'
