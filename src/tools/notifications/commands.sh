@@ -96,12 +96,16 @@ list_all () {
     return 0
   fi
 
+  local sent_time=''
+  sent_time+='.timestamp.data | ($u|tonumber) - (. / 1000000 | round) |'
+  sent_time+='($e|tonumber) - . | strftime("%H:%M:%S")'
+
   local query=''
-  query+='\(.id.data        | lbln("ID"))'
-  query+='\(.appname.data   | lbln("App"))'
-  query+='\(.summary.data   | olbln("Summary"))'
-  query+='\(.body.data      | olbln("Body"))'
-  query+='\(.timestamp.data | lbl("Sent"))'
+  query+='\(.id.data      | lbln("ID"))'
+  query+='\(.appname.data | lbln("App"))'
+  query+='\(.summary.data | olbln("Summary"))'
+  query+='\(.body.data    | olbln("Body"))'
+  query+="\(${sent_time}  | lbl(\"Sent\"))"
 
   query="[.[] | \"${query}\"] | join(\"\n\n\")"
 
@@ -109,25 +113,14 @@ list_all () {
   local uptime=''
   uptime="$(cut -d '.' -f 1 /proc/uptime)" || return 1
 
+  # Read the current secs from epoch time
+  local epoch=''
+  epoch="$(date +%s)" || return 1
+
   local space=10
 
-  echo "${notifications}" | jq -cer --arg SPC ${space} "${query}" |
-    awk -v uptime="${uptime}" -v SPC=${space} '{
-      # Catch the sent timestamp line of each notification
-      if ($0 ~ /^Sent:/) {
-        # Convert timestamp given as secs ago to datetime
-        timestamp=$2
-        secs_ago=int(uptime - (timestamp / 1000000))
-        ("date \"+%H:%M:%S %d-%m-%Y\" -d \"" secs_ago " seconds ago\"") | getline dt
-
-        if (!dt || dt ~ /^[[:blank:]]*$/) dt = "N/A"
-
-        frm = "%-"SPC"s%s\n"
-        printf frm, "Sent:", dt
-      } else {
-        print $0
-      } 
-    }'|| return 1
+  echo "${notifications}" |
+    jq -cer --arg SPC ${space} --arg u ${uptime} --arg e ${epoch} "${query}" || return 1
 }
 
 # Pauses the notification stream.
