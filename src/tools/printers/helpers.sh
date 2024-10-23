@@ -131,9 +131,9 @@ discover_destinations () {
 
   # Search in local network for snmp destinations
   local hosts=''
-  hosts="$(find_hosts | jq -cer '.[] | .ip')" || return 1
+  hosts="$(find_hosts | jq -cer '.[] | .ip')"
 
-  if is_not_empty "${hosts}"; then
+  if has_not_failed && is_not_empty "${hosts}"; then
     local host=''
     while read -r host; do
       destinations+="$(/usr/lib/cups/backend/snmp "${host}" 2>&1 |
