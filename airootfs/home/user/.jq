@@ -88,3 +88,16 @@ def append:
 
 def ln:
   "\(.)\n";
+
+def bool_to(truthy; falsy):
+  if is_nullish(.) | not then
+    if . then truthy else falsy end
+  else
+    .
+  end;
+
+def yes_no:
+  bool_to("yes"; "no");
+
+def up_down:
+  bool_to("up"; "down");

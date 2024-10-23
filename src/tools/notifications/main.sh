@@ -42,7 +42,7 @@ show_help () {
   printf ' %-28s %s\n' \
     'show status' 'Show the status of notifications.' \
     '' '' \
-    'list all id|appname' 'List all notifications by id (default) or appname.' \
+    'list all id|app' 'List all notifications by id or app.' \
     '' '' \
     'mute all' 'Pause the notifications stream.' \
     'unmute all' 'Restore the notifications stream.' \

@@ -58,15 +58,15 @@ restart () {
 show_status () {
   local space=10
 
-  local query='if . the "Up" else "Down" end | lbln("Service")'
+  local query='. | up_down | lbl("Service")'
 
   is_notifications_up | jq -cer --arg SPC ${space} "${query}" || return 1
 
   local query=''
-  query+='\(if .is_paused then "yes" else "no" end | lbln("Mute"))'
-  query+='\(.pending                               | lbln("Pending"))'
-  query+='\(.displayed                             | lbln("Showing"))'
-  query+='\(.archived                              | lbl("Sent"))'
+  query+='\(.is_paused | yes_no | lbln("Mute") | ln)'
+  query+='\(.pending            | lbln("Pending"))'
+  query+='\(.displayed          | lbln("Showing"))'
+  query+='\(.archived           | lbl("Sent"))'
 
   get_notifications_state | jq -cer --arg SPC ${space} "\"${query}\"" || return 1
 }
@@ -74,7 +74,7 @@ show_status () {
 # Shows the list of archived notifications sorted by the
 # optionally given field and order.
 # Arguments:
-#  sort_by: id or appname, default is id
+#  sort_by: id or app, default is id
 # Outputs:
 #  A long list of notificaions data.
 list_all () {
@@ -109,7 +109,9 @@ list_all () {
   local uptime=''
   uptime="$(cut -d '.' -f 1 /proc/uptime)" || return 1
 
-  echo "${notifications}" | jq -cer "${query}" |
+  local space=10
+
+  echo "${notifications}" | jq -cer --arg SPC ${space} "${query}" |
     awk -v uptime="${uptime}" -v SPC=${space} '{
       # Catch the sent timestamp line of each notification
       if ($0 ~ /^Sent:/) {
@@ -130,7 +132,7 @@ list_all () {
 
 # Pauses the notification stream.
 mute_all () {
-  dunstctl set-paused true
+  dunstctl set-paused true 1> /dev/null
 
   if has_failed; then
     log 'Failed to mute notifications.'
@@ -142,7 +144,7 @@ mute_all () {
 
 # Restores the notification stream.
 unmute_all () {
-  dunstctl set-paused false
+  dunstctl set-paused false 1> /dev/null
 
   if has_failed; then
     log 'Failed to unmute notifications.'
@@ -154,7 +156,7 @@ unmute_all () {
 
 # Removes all the archived notifications.
 clean_all () {
-  dunstctl history-clear
+  dunstctl history-clear 1> /dev/null
 
   if has_failed; then
     log 'Failed to remove all notifications.'

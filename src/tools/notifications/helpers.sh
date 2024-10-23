@@ -5,7 +5,7 @@ source src/commons/validators.sh
 # Returns the list of all archived notifications 
 # sorted by the given field in the given order.
 # Arguments:
-#  sort_by:  id or appname
+#  sort_by:  id or app
 #  order:    asc or desc, default is asc
 # Outputs:
 #  A json array of notification objects.
@@ -15,7 +15,7 @@ find_all () {
 
   local query='.data[0]'
 
-  if match "${sort_by}" '^(id|appname)$'; then
+  if match "${sort_by}" '^(id|app)$'; then
     query+="| sort_by(.${sort_by})"
 
     if equals "${order}" 'desc'; then
@@ -47,7 +47,7 @@ is_notifications_up () {
 is_valid_sort_field () {
   local field="${1}"
 
-  if not_match "${field}" '^(id|appname)$'; then
+  if not_match "${field}" '^(id|app)$'; then
     return 1
   fi
 
