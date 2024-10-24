@@ -972,9 +972,11 @@ format_disk () {
     local model=''
     model="$(find_disk "${path}" | jq -cr "\"${query}"\")" || return 1
 
-    log "CAUTION, ALL DATA IN ${model} [${path}] WILL BE GONE!"
-    log 'THINK TWICE BEFORE DO ANYTHING IRREVERSIBLE.'
-    confirm 'Do you really want to proceed?' || return $?
+    local prompt=''
+    prompt+="All data in ${path} disk will be lost!"
+    prompt+='\nDo you really want to proceed?'
+
+    confirm "${prompt}" || return $?
     is_empty "${REPLY}" && log 'Confirmation is required.' && return 2
     
     if is_not_yes "${REPLY}"; then
@@ -1186,9 +1188,11 @@ create_encrypted () {
     local model=''
     model="$(find_disk "${path}" | jq -cr "\"${query}\"")" || return 1
 
-    log "CAUTION, ALL DATA IN ${model} [${path}] WILL BE GONE!"
-    log 'THINK TWICE BEFORE DO ANYTHING IRREVERSIBLE.'
-    confirm 'Do you really want to proceed?' || return $?
+    local prompt=''
+    prompt+="All data in ${path} disk will be lost!"
+    prompt+='\nDo you really want to proceed?'
+
+    confirm "${prompt}" || return $?
     is_empty "${REPLY}" && log 'Confirmation is required.' && return 2
     
     if is_not_yes "${REPLY}"; then
@@ -1314,9 +1318,11 @@ create_bootable () {
     local model=''
     model="$(find_disk "${path}" | jq -cr "\"${query}\"")" || return 1
 
-    log -n "CAUTION, ALL DATA IN ${model} [${path}] WILL BE GONE!"
-    log 'THINK TWICE BEFORE DO ANYTHING IRREVERSIBLE.'
-    confirm 'Do you really want to proceed?' || return $?
+    local prompt=''
+    prompt+="All data in ${path} disk will be lost!"
+    prompt+='\nDo you really want to proceed?'
+
+    confirm "${prompt}" || return $?
     is_empty "${REPLY}" && log 'Confirmation is required.' && return 2
     
     if is_not_yes "${REPLY}"; then

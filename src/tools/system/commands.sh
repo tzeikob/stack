@@ -317,9 +317,12 @@ list_updates () {
 apply_updates () {
   authenticate_user || return $?
 
-  log 'CAUTION, THIS MAY BREAK YOUR SYSTEM!'
-  log 'PLEASE CONSIDER TAKING A BACKUP FIRST.'
-  confirm 'Do you really want to proceed?' || return $?
+  local prompt=''
+  prompt+='This operation may break your system!'
+  prompt+='\nPlease consider taking a backup first.'
+  prompt+='\nDo you really want to proceed?'
+
+  confirm "${prompt}" || return $?
   is_empty "${REPLY}" && log 'Confirmation is required.' && return 2
   
   if is_not_yes "${REPLY}"; then
@@ -371,9 +374,12 @@ apply_updates () {
 upgrade_stack () {
   authenticate_user || return $?
 
-  log 'CAUTION, THIS MAY BREAK YOUR SYSTEM!'
-  log 'PLEASE CONSIDER TAKING A BACKUP FIRST.'
-  confirm 'Do you really want to proceed?' || return $?
+  local prompt=''
+  prompt+='This operation may break your system!'
+  prompt+='\nPlease consider taking a backup first.'
+  promtp+='\nDo you really want to proceed?'
+
+  confirm "${prompt}" || return $?
   is_empty "${REPLY}" && log 'Confirmation is required.' && return 2
   
   if is_not_yes "${REPLY}"; then

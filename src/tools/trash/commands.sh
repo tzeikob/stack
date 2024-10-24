@@ -188,9 +188,11 @@ remove_files () {
   fi
 
   if on_user_mode; then
-    log 'CAUTION, FILE(S) WILL BE GONE FOREVER!'
-    log 'THINK TWICE BEFORE DO ANYTHING IRREVERSIBLE.'
-    confirm 'Do you really want to proceed?' || return $?
+    local prompt=''
+    prompt+='Selected trashed files will be lost!'
+    prompt+='\nDo you really want to proceed?'
+
+    confirm "${prompt}" || return $?
     is_empty "${REPLY}" && log 'Confirmation is required.' && return 2
   
     if is_not_yes "${REPLY}"; then
@@ -246,18 +248,17 @@ empty_files () {
   fi
   
   if on_user_mode; then
-    local caution=''
+    local prompt=''
 
     if is_not_given "${days}"; then
-      caution+='CAUTION, ALL TRASHED FILES WILL BE GONE!'
-      caution+='\NTHINK TWICE BEFORE DO ANYTHING IRREVERSIBLE.'
+      prompt+='All trashed files will be lost!'
     else
-      caution+="CAUTION, FILES TRASHED ${days}+ DAYS AGO WILL BE GONE!"
-      caution+='\NTHINK TWICE BEFORE DO ANYTHING IRREVERSIBLE.'
+      prompt+="Files trashed ${days}+ days ago will be lost!"
     fi
+
+    prompt+='\nDo you really want to proceed?'
   
-    log "${caution}"
-    confirm 'Do you really want to proceed?' || return $?
+    confirm "${prompt}" || return $?
     is_empty "${REPLY}" && log 'Confirmation is required.' && return 2
 
     if is_not_yes "${REPLY}"; then
