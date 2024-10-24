@@ -22,7 +22,7 @@ show_status () {
         v = $2" "$3
       } else l = ""
 
-      if (!v || v ~ /^[[:blank:]]*$/) v = "N/A"
+      if (!v || v ~ /^[[:blank:]]*$/) v = "Unavailable"
 
       frm = "%-"SPC"s%s\n"
       if (l) printf frm, l":", v

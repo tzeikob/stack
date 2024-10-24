@@ -30,7 +30,7 @@ show_status () {
       default: $1 = ""; break
     }
 
-    if (!$2 || $2 ~ /^[[:blank:]]*$/) $2 = "N/A"
+    if (!$2 || $2 ~ /^[[:blank:]]*$/) $2 = "Unavailable"
 
     frm = "%-"SPC"s%s\n"
     if ($1) printf frm, $1":", $2
@@ -71,7 +71,7 @@ show_status () {
   query+="\(${offset}              | lbln(\"Offset\"))"
   query+="\(.rotation              | lbln("Rotation"))"
   query+="\(.reflection | downcase | lbln("Reflection"))"
-  query+="\(${color}               | lbl(\"Color\"; \"None\"))"
+  query+="\(${color}               | lbl(\"Color\"; \"none\"))"
 
   local aliases='.model_name as $m | .product_id as $p | .serial_number as $s'
 
@@ -170,7 +170,7 @@ show_output () {
   color+='if $i.model_name == $m and $i.product_id == $p and $i.serial_number == $s'
   color+=' then . + {profile: $i.profile}'
   color+=' else . '
-  color+='end) | .profile | lbl("Color"; "None")'
+  color+='end) | .profile | lbl("Color"; "none")'
 
   local modes=''
   modes+='\("\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)" | . + fill_spaces(.; 10))'
@@ -1119,7 +1119,7 @@ list_layouts () {
 
   local map=''
   map+='if .value.mode != "--off"'
-  map+=' then .key as $k | .value.model_name | lbl($k; "Unknown")'
+  map+=' then .key as $k | .value.model_name | lbl($k; "unknown")'
   map+=' else ""'
   map+='end'
 

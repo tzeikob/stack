@@ -86,7 +86,7 @@ show_status () {
       next
     }
 
-    if (!a[2] || a[2] ~ /^[[:blank:]]*$/) a[2] = "N/A"
+    if (!a[2] || a[2] ~ /^[[:blank:]]*$/) a[2] = "Unavailable"
 
     frm = "%-"SPC"s%s\n"
     printf frm, a[1]":", a[2]
@@ -115,7 +115,7 @@ show_status () {
       next
     }
 
-    if (!a[2] || a[2] ~ /^[[:blank:]]*$/) a[2] = "N/A"
+    if (!a[2] || a[2] ~ /^[[:blank:]]*$/) a[2] = "Unavailable"
 
     frm = "%-"SPC"s%s\n"
     printf frm, a[1]":", a[2]

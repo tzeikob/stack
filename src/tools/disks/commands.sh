@@ -27,7 +27,7 @@ show_status () {
   query+='\(.vendor | trim             | lbln("Vendor"))'
   query+='\(.model                     | lbln("Model"))'
   query+='\(.size                      | lbln("Size"))'
-  query+="\(.children//[] | [${parts}] | tree(\"Parts\"; \"None\"))"
+  query+="\(.children//[] | [${parts}] | tree(\"Parts\"; \"none\"))"
 
   query="[.[] | \"${query}\"] | join(\"\n\n\")"
 
@@ -38,16 +38,16 @@ show_status () {
   swapon --noheadings --show | awk -F' ' -v SPC=${space} '{
     frm = "%-"SPC"s%s\n"
 
-    if (!$1 || $1 ~ /^[[:blank:]]*$/) $1 = "N/A"
+    if (!$1 || $1 ~ /^[[:blank:]]*$/) $1 = "Unavailable"
     printf frm, "Swap:", $1
 
-    if (!$2 || $2 ~ /^[[:blank:]]*$/) $2 = "N/A"
+    if (!$2 || $2 ~ /^[[:blank:]]*$/) $2 = "Unavailable"
     printf frm, "Type:", $2
 
-    if (!$3 || $3 ~ /^[[:blank:]]*$/) $3 = "N/A"
+    if (!$3 || $3 ~ /^[[:blank:]]*$/) $3 = "Unavailable"
     printf frm, "Size:", $3
 
-    if (!$4 || $4 ~ /^[[:blank:]]*$/) $4 = "N/A"
+    if (!$4 || $4 ~ /^[[:blank:]]*$/) $4 = "Unavailable"
     printf frm, "Used:", $4
   }' || return 1
 
@@ -61,7 +61,7 @@ show_status () {
     if ($1 == "SwapTotal") $1="Total"
     if ($1 == "SwapFree") $1="Free"
 
-    if (!$2 || $2 ~ /^[[:blank:]]*$/) $2 = "N/A"
+    if (!$2 || $2 ~ /^[[:blank:]]*$/) $2 = "Unavailable"
 
     frm = "%-"SPC"s%s\n"
     printf frm, $1":", $2
@@ -115,7 +115,7 @@ show_disk () {
   query+='\(.rev                        | lbln("Revision"))'
   query+='\(.serial                     | lbln("Serial"))'
   query+='\(.state                      | lbln("State"))'
-  query+="\(.children//[] | [${parts}]  | tree(\"Parts\"; \"None\"))"
+  query+="\(.children//[] | [${parts}]  | tree(\"Parts\"; \"none\"))"
 
   echo "${disk}" | jq -cer --arg SPC 12 "\"${query}\"" || return 1
 }
@@ -159,7 +159,7 @@ show_partition () {
   query+='\(.hotplug                           | lbln("HotPlug"))'
   query+='\(.label                             | olbln("Label"))'
   query+='\(.uuid                              | lbln("UUID"))'
-  query+='\(.veracrypt | if . then "yes" end   | olbln("Encrypted"))'
+  query+='\(.veracrypt | yes_no                | olbln("Encrypted"))'
   query+='\(.veracrypt.encryption_algo         | olbln("Encryption"))'
   query+='\(.veracrypt.slot                    | olbln("Slot"))'
   query+='\(.veracrypt.hidden_protected        | olbln("Hidden"))'
@@ -287,11 +287,11 @@ list_partitions () {
   fi
 
   local query=''
-  query+='\(.name                            | lbln("Name"))'
-  query+='\(.veracrypt | if . then "yes" end | olbln("Encrypted"))'
-  query+='\(.path                            | lbln("Path"))'
-  query+='\(.label                           | olbln("Label"))'
-  query+='\(.size                            | lbl("Size"))'
+  query+='\(.name               | lbln("Name"))'
+  query+='\(.veracrypt | yes_no | olbln("Encrypted"))'
+  query+='\(.path               | lbln("Path"))'
+  query+='\(.label              | olbln("Label"))'
+  query+='\(.size               | lbl("Size"))'
 
   query="[.[] | \"${query}\"] | join(\"\n\n\")"
 

@@ -78,7 +78,7 @@ show_status () {
   query+='\(.bars       | lbln("Bars"))'
   query+='\(.theme      | lbln("Theme"))'
   query+='\(.icons      | lbln("Icons"))'
-  query+='\(.wallpaper  | lbl("Wallpaper"; "None"))'
+  query+='\(.wallpaper  | lbl("Wallpaper"; "none"))'
 
   echo "${status}" | jq -cer --arg SPC 13 "\"${query}\"" || return 1
 }

@@ -28,7 +28,7 @@ show_status () {
 
     printf frm, "Password:", "status"
 
-    if (!$3 || $3 ~ /^[[:blank:]]*$/) $3 = "N/A"
+    if (!$3 || $3 ~ /^[[:blank:]]*$/) $3 = "Unavailable"
 
     printf frm, "Last Changed:", $3
   }' || return 1
@@ -37,15 +37,15 @@ show_status () {
     frm = "%-"SPC"s%s\n"
 
     if ($0 ~ /^deny =.*/) {
-      if (!$3 || $3 ~ /^[[:blank:]]*$/) $3 = "N/A"
+      if (!$3 || $3 ~ /^[[:blank:]]*$/) $3 = "Unavailable"
 
       printf frm, "Failed Attempts:", $3
     } else if ($0 ~ /^unlock_time =.*/) {
-      if (!$3 || $3 ~ /^[[:blank:]]*$/) {$3 = "N/A"} else {$3 = $3" secs"}
+      if (!$3 || $3 ~ /^[[:blank:]]*$/) {$3 = "Unavailable"} else {$3 = $3" secs"}
 
       printf frm, "Unblock Time:", $3
     } else if ($0 ~ /^fail_interval =.*/) {
-      if (!$3 || $3 ~ /^[[:blank:]]*$/) {$3 = "N/A"} else {$3 = $3" secs"}
+      if (!$3 || $3 ~ /^[[:blank:]]*$/) {$3 = "Unavailable"} else {$3 = $3" secs"}
 
       printf frm, "Fail Interval:", $3
     }
@@ -62,7 +62,7 @@ show_status () {
     echo "${locker_process}" | awk -v SPC=${space} '{
       match($0,/.* -time (.*) -corners.*/,a)
 
-      if (!a[1] || a[1] ~ /^[[:blank:]]*$/) {a[1] = "N/A"} else {a[1] = a[1]" secs"}
+      if (!a[1] || a[1] ~ /^[[:blank:]]*$/) {a[1] = "Unavailable"} else {a[1] = a[1]" secs"}
 
       frm = "%-"SPC"s%s\n"
       printf frm, "Screen Locker:", a[1]"mins"

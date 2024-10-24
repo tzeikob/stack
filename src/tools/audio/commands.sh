@@ -30,7 +30,7 @@ show_status () {
         v = $3" "$4
       } else l = ""
 
-    if (!v || v ~ /^[[:blank:]]*$/) v = "N/A"
+    if (!v || v ~ /^[[:blank:]]*$/) v = "Unavailable"
 
     frm = "%-"SPC"s%s\n"
     if (l) printf frm, l":", v
@@ -38,7 +38,7 @@ show_status () {
 
   local query=''
   query+='to_entries[] | (.key + 1) as $k | .value.properties |'
-  query+='."device.nick"//."device.alias" | lbln("Card[\($k)]"; "Unknown")'
+  query+='."device.nick"//."device.alias" | lbln("Card[\($k)]"; "unknown")'
 
   find_cards | jq -cer --arg SPC ${space} "${query}" || return 1
 
@@ -49,7 +49,7 @@ show_status () {
   query+='\(.properties | ."device.nick"//."device.alias"  | lbln("Output"))'
   query+='\(.active_port                                   | lbln("Port"))'
   query+='\(.volume | keys[0] as $k | .[$k].db | no_spaces | lbln("Volume"))'
-  query+='\(if .mute then "yes" else "no" end              | lbln("Mute"))'
+  query+='\(.mute | yes_no                                 | lbln("Mute"))'
 
   query=".[] | select(.name == \"${sink}\") | select(.active_port) | \"${query}\""
 
@@ -62,7 +62,7 @@ show_status () {
   query+='\(.properties | ."device.nick"//."device.alias"  | lbln("Input"))'
   query+='\(.active_port                                   | lbln("Port"))'
   query+='\(.volume | keys[0] as $k | .[$k].db | no_spaces | lbln("Volume"))'
-  query+='\(if .mute then "yes" else "no" end              | lbl("Mute"))'
+  query+='\(.mute | yes_no                                 | lbl("Mute"))'
 
   query=".[] | select(.name == \"${source}\") | select(.active_port) | \"${query}\""
 
@@ -102,8 +102,8 @@ show_card () {
     return 2
   fi
 
-  local profiles='keys[] | dft("Unknown")'
-  local ports='to_entries[] | "\(.key | dft("Unknown")) [\(.value.type | dft("..."))]"'
+  local profiles='keys[] | dft("unknown")'
+  local ports='to_entries[] | "\(.key | dft("unknown")) [\(.value.type | dft("..."))]"'
 
   local query=''
   query+='\(.properties | ."device.nick"//."device.alias" | lbln("Model"))'
@@ -114,8 +114,8 @@ show_card () {
   query+='\(.properties."device.bus" | uppercase          | lbln("Bus"))'
   query+='\(.properties."api.alsa.use-acp"                | olbln("ACP"))'
   query+='\(.active_profile                               | lbln("Profile"))'
-  query+="\(.profiles//[] | [${profiles}]                 | treeln("Profiles"; "None"))"
-  query+="\(.ports//[] | [${ports}]                       | tree("Ports"; "None"))"
+  query+="\(.profiles//[] | [${profiles}]                 | treeln("Profiles"; "none"))"
+  query+="\(.ports//[] | [${ports}]                       | tree("Ports"; "none"))"
 
   echo "${card}" | jq -cer --arg SPC 10 "\"${query}\"" || return 1
 }
@@ -228,7 +228,7 @@ list_ports () {
   query+='\(.name                                         | lbln("Name"))'
   query+='\(.properties | ."device.nick"//."device.alias" | lbln("Card"))'
   query+='\(.volume                                       | lbln("Volume"))'
-  query+='\(if .mute then "yes" else "no" end             | lbln("Mute"))'
+  query+='\(.mute | yes_no                                | lbln("Mute"))'
   query+='\(.state | downcase                             | lbl("State"))'
   query+='"'
 
@@ -266,7 +266,7 @@ list_playbacks () {
   query+='\(.properties | ."media.name"                    | lbln("Media"))'
   query+='\(.properties | ."application.process.id"        | olbln("Process"))'
   query+='\(.volume | keys[0] as $k | .[$k].db | no_spaces | lbln("Volume"))'
-  query+='\(if .mute then "yes" else "no" end              | lbl("Mute"))'
+  query+='\(.mute | yes_no                                 | lbl("Mute"))'
   query+='"'
 
   query="[${query}] | join(\"\n\n\")"

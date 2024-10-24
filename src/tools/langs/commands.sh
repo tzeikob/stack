@@ -36,7 +36,7 @@ show_status () {
       next
     }
 
-    if (!$3 || $3 ~ /^[[:blank:]]*$/) $3 = "N/A"
+    if (!$3 || $3 ~ /^[[:blank:]]*$/) $3 = "Unavailable"
 
     frm = "%-"SPC"s%s\n"
     printf frm, label":", $3
@@ -76,7 +76,7 @@ show_status () {
       default: next;
     }
 
-    if (!$2 || $2 ~ /^[[:blank:]]*$/) $2 = "N/A"
+    if (!$2 || $2 ~ /^[[:blank:]]*$/) $2 = "Unavailable"
 
     frm = "%-"SPC"s%s\n"
     printf frm, $1":", $2

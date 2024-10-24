@@ -22,7 +22,7 @@ show_status () {
         v = $2" "$3
       } else l = ""
 
-      if (!v || v ~ /^[[:blank:]]*$/) v = "N/A"
+      if (!v || v ~ /^[[:blank:]]*$/) v = "Unavailable"
 
       frm = "%-"SPC"s%s\n"
       if (l) printf frm, l":", v
@@ -69,7 +69,7 @@ show_status () {
     }' | tr -d '"/')" || return 1
   fi
 
-  echo "\"${proxy}\"" | jq -cer --arg SPC ${space} 'lbl("Proxy"; "None")'
+  echo "\"${proxy}\"" | jq -cer --arg SPC ${space} 'lbl("Proxy"; "none")'
 
   local query=''
   query+='.[] | select(.type | test("(^ethernet|wifi|vpn)$")) | .name'
@@ -135,7 +135,7 @@ show_device () {
 
   local query=''
   query+='\(.device               | lbln("Name"))'
-  query+='\(.connection           | lbln("Connection"; "None"))'
+  query+='\(.connection           | lbln("Connection"; "none"))'
   query+='\(.type                 | lbln("Type"))'
   query+='\(.hwaddr               | lbln("MAC"))'
   query+='\(.freq | unit("GHz")   | olbln("Freq"))'
@@ -190,7 +190,7 @@ show_connection () {
   query+='\(.default                                         | olbln("Default"))'
   query+='\(."802_11_wireless_ssid"                          | olbln("SSID"))'
   query+='\(.connection_uuid                                 | olbln("UUID"))'
-  query+="\(${device}                                        | lbln(\"Device\"; \"None\"))"
+  query+="\(${device}                                        | lbln(\"Device\"; \"none\"))"
   query+='\(.freq | unit("GHz")                              | olbln("Freq"))'
   query+='\(.rate | unit("Mb/s")                             | olbln("Rate"))'
   query+='\(.quality                                         | olbln("Quality"))'
@@ -232,8 +232,8 @@ list_devices () {
   local query=''
   query+='\(.device     | lbln("Name"))'
   query+='\(.type       | lbln("Type"))'
-  query+='\(.state      | lbln("State"; "None"))'
-  query+='\(.connection | lbl("Connection"; "None"))'
+  query+='\(.state      | lbln("State"; "none"))'
+  query+='\(.connection | lbl("Connection"; "none"))'
 
   query="[.[] | \"${query}\"] | join(\"\n\n\")"
 
@@ -258,7 +258,7 @@ list_connections () {
   local query=''
   query+='\(.name   | lbln("Name"))'
   query+='\(.type   | lbln("Type"))'
-  query+='\(.device | lbl("Device"; "None"))'
+  query+='\(.device | lbl("Device"; "none"))'
 
   query="[.[] | \"${query}\"] | join(\"\n\n\")"
 
@@ -320,7 +320,7 @@ list_wifis () {
   query+='\(.ssid                 | lbln("Name"))'
   query+='\(.signal               | lbln("Signal"))'
   query+='\(.channel              | lbln("Channel"))'
-  query+='\(.security | uppercase | lbl("Security"; "None"))'
+  query+='\(.security | uppercase | lbl("Security"; "none"))'
 
   query="[.[] | \"${query}\"] | join(\"\n\n\")"
 
@@ -916,7 +916,7 @@ list_proxies () {
   query+='\(.host                      | lbln("Host"))'
   query+='\(.port                      | lbln("Port"))'
   query+='\(.username                  | olbln("Auth"))'
-  query+='\(.no_proxy//[] | join(", ") | lbl("Ignore"; "None"))'
+  query+='\(.no_proxy//[] | join(", ") | lbl("Ignore"; "none"))'
 
   query="[.[] | \"${query}\"] | join(\"\n\n\")"
 
