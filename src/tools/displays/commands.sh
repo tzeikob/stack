@@ -173,7 +173,7 @@ show_output () {
   color+='end) | .profile | lbl("Color"; "none")'
 
   local modes=''
-  modes+='\("\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)" | . + fill_spaces(.; 10))'
+  modes+='\("\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)" | spaces(10))'
   modes+='[\([.frequencies[] | .frequency] | join(", "))]'
   modes="\"${modes}\""
 

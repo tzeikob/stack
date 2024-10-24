@@ -7,9 +7,9 @@ def is_nullish(value):
     false
   end;
 
-def fill_spaces(text; width):
-  (text | length) as $l | (width | tonumber) as $w |
-    if $l < $w then ($w - $l) * " " else "" end;
+def spaces(width):
+  (. | length) as $l | (width | tonumber) as $w |
+    if $l < $w then "\(.)" + ($w - $l) * " " else . end;
 
 def no_spaces:
   if is_nullish(.) | not then gsub("\\s+";"") else . end;
@@ -30,7 +30,7 @@ def opt:
   if is_nullish(.) | not then . else "" end;
 
 def lbl(display; default_value):
-  dft(default_value) | display + ":" + fill_spaces(display + ":"; $SPC) + "\(.)";
+  dft(default_value) | (display + ":" | spaces($SPC)) + "\(.)";
 
 def lbln(display; default_value):
   lbl(display; default_value) | "\(.)\n";
@@ -53,9 +53,9 @@ def olbln(display):
 
 def tree(display; default_value):
   if (is_nullish(.) | not) and (. | length > 0) then
-    display + ":" + fill_spaces(display + ":"; $SPC) + "\(. | join("\n" + ($SPC|tonumber * " ")))"
+    (display + ":" | spaces($SPC)) + "\(. | join("\n" + ($SPC|tonumber * " ")))"
   else
-    display + ":" + fill_spaces(display + ":"; $SPC) + default_value
+    (display + ":" | spaces($SPC)) + default_value
   end;
 
 def treeln(display; default_value):
