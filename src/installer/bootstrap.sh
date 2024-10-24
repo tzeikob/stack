@@ -160,7 +160,7 @@ restore_clock () {
   fi
   
   local ntp_service=''
-  ntp_service="$(jq -cer '.ntp_service|if . == "active" then true else false end')"
+  ntp_service="$(jq -cer '.ntp_service | . == "active"')"
 
   if has_not_failed; then
     timedatectl set-ntp "${ntp_service}" 2>&1 &&

@@ -18,7 +18,7 @@ run () {
   fi
 
   # Check if the system has not a battery device
-  local query='if length > 0 then true else false end'
+  local query='length > 0'
 
   local has_battery='false'
   has_battery="$(echo "${batteries}" | jq -cr "${query}")"

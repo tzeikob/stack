@@ -2,7 +2,7 @@ def is_nullish(value):
   if value == null then
     true
   elif value | type == "string" then
-    if value | test("^ *$") then true else false end
+    value | test("^ *$")
   else
     false
   end;

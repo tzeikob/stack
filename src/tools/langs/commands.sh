@@ -464,8 +464,7 @@ order_layouts () {
   fi
   
   # Check for duplicated values in given layouts
-  local query='(. | unique | length) as $len'
-  query+=' | if $len != (. | length) then true else false end'
+  local query='(. | unique | length) as $len | $len != (. | length)'
 
   local has_dups='false'
   has_dups="$(echo "${layouts}" | jq -cr "${query}")"
