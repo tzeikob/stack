@@ -457,7 +457,7 @@ setup_locales () {
 
   local langs_settings=''
   langs_settings="$(jq -e --argjson lcs "${locales}" "${query}" "${langs_file}")" ||
-    abort ERROR 'Failed to parse locale settings to JSON object.'
+    abort ERROR 'Failed to parse locale settings to json object.'
 
   echo "${langs_settings}" > "${langs_file}" &&
     chown -R ${user_name}:${user_name} "${langs_file}" ||

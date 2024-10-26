@@ -18,10 +18,92 @@ find_adapter () {
 # Outputs:
 #  A json object of battery power data.
 find_battery () {
-  local query=''
-  query+='if length > 0 then .[0] else "" end'
+  local query='if length > 0 then .[0] else "" end'
 
-  acpi -b -i | jc --acpi | jq -cer "${query}" || return 1
+  local acpi_b=''
+  acpi_b="$(acpi -b -i | jc --acpi | jq -cer "${query}")" || return 1
+
+  if is_not_empty "${acpi_b}"; then
+    acpi_b="$(echo "${acpi_b}" | jq -cer '.battery = true')" || return 1
+  else
+    echo ''
+    return 0
+  fi
+
+  local battery_file='/sys/class/power_supply/BAT0'
+
+  if file_exists "${battery_file}/current_now"; then
+    local current_now=''
+    current_now="$(< ${battery_file}/current_now)"
+
+    acpi_b="$(echo "${acpi_b}" | jq -cer ".current_now = ${current_now}")" || return 1
+  fi
+
+  if file_exists "${battery_file}/charge_now"; then
+    local charge_now=''
+    charge_now="$(< ${battery_file}/charge_now)"
+    
+    acpi_b="$(echo "${acpi_b}" | jq -cer ".charge_now = ${charge_now}")" || return 1
+  fi
+
+  local config_file='/etc/tlp.d/00-main.conf'
+
+  local start=''
+  start="$(grep -E "^START_CHARGE_THRESH_BAT0=" "${config_file}" | cut -d '=' -f 2)"
+
+  if is_not_empty "${start}"; then
+    acpi_b="$(echo "${acpi_b}" | jq -cer ".start_charge_at = ${start}")" || return 1
+  fi
+    
+  local stop=''
+  stop="$(grep -E "^STOP_CHARGE_THRESH_BAT0=" "${config_file}" | cut -d '=' -f 2)"
+    
+  if is_not_empty "${stop}"; then
+    acpi_b="$(echo "${acpi_b}" | jq -cer ".stop_charge_at = ${stop}")" || return 1
+  fi
+
+  echo "${acpi_b}"
+}
+
+# Returns various login power settings of the system.
+# Outputs:
+#  A json object of login power settings.
+find_login_power_settings () {
+  local settings=''
+
+  settings="$(loginctl show-session | awk '{
+    match($0,/(.*)=(.*)/,a)
+
+    if (a[1] == "HandlePowerKey") {
+      a[1]="on_power"
+    } else if (a[1] == "HandleRebootKey") {
+      a[1]="on_reboot"
+    } else if (a[1] == "HandleSuspendKey") {
+      a[1]="on_suspend"
+    } else if (a[1] == "HandleHibernateKey") {
+      a[1]="on_hibernate"
+    } else if (a[1] == "HandleLidSwitch") {
+      a[1]="on_lid_down"
+    } else if (a[1] == "HandleLidSwitchDocked") {
+      a[1]="on_docked"
+    } else if (a[1] == "IdleAction") {
+      a[1]="on_idle"
+    } else if (a[1] == "Docked") {
+      a[1]="docked"
+    } else if (a[1] == "LidClosed") {
+      a[1]="lid_down"
+    } else {
+      next
+    }
+
+    frm = "\"%s\": \"%s\","
+    printf frm, a[1], a[2]
+  }')" || return 1
+
+  # Remove last comma
+  settings="${settings:+${settings::-1}}"
+
+  echo "{${settings}}"
 }
 
 # Shows a menu asking the user to select a power handler.

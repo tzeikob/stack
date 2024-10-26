@@ -389,3 +389,25 @@ is_ovpn_file () {
 is_not_ovpn_file () {
   is_ovpn_file "${1}" && return 1 || return 0
 }
+
+# Returns the proxy ip server if such is set.
+# Outputs:
+#  A json string of the proxy server ip address.
+find_proxy () {
+  local proxy_env="${HOME}/.config/environment.d/proxy.conf"
+
+  local proxy=''
+
+  if file_exists "${proxy_env}"; then
+    proxy="$(cat "${proxy_env}" | awk -F'=' '/export http_proxy=/ {
+      split($2,a,"http://")
+
+      if (a[2] ~ /@/) {
+        split(a[2],b,"@")
+        print b[2]
+      } else print a[2]
+    }' | tr -d '"/')" || return 1
+  fi
+
+  echo "\"${proxy}\""
+}

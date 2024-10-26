@@ -134,7 +134,7 @@ confirm () {
 #  n: print an empty line before, -nn 2 lines and so on
 # Arguments:
 #  prompt:  a text line
-#  options: a JSON array of {key, value} pairs
+#  options: a json array of {key, value} pairs
 #  mode:    horizontal, vertical, tabular
 #  slots:   number of vertical or tabular slots
 # Outputs:
@@ -189,13 +189,13 @@ pick_one () {
 
 # Shows a menu and asks user to pick many options in order,
 # where the selection is kept in the global var REPLY as a
-# JSON array with elements equal to the key property of every
+# json array with elements equal to the key property of every
 # selected option.
 # Options:
 #  n: print an empty line before, -nn 2 lines and so on
 # Arguments:
 #  prompt:  a text line
-#  options: a JSON array of {key, value} pairs
+#  options: a json array of {key, value} pairs
 #  mode:    horizontal, vertical, tabular
 #  slots:   number of vertical or tabular slots
 # Outputs:
@@ -242,7 +242,7 @@ pick_many () {
   REPLY="$(echo "${options}" |
     LC_CTYPE=C.UTF-8 smenu -nm -/ prefix -W "${AES_LN}" "${args[@]}" -S /\(.*"${KVS}"\)//v -P "${AES}")" || return 1
 
-  # Convert selected options to a JSON array of their keys
+  # Convert selected options to a json array of their keys
   if is_given "${REPLY}"; then
     REPLY="$(echo "${REPLY}" | awk -F"${AES}" '{
       out=""

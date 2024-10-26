@@ -18,35 +18,6 @@ show_status () {
 
   find_adapter | jq -cer --arg SPC ${space} "${query}" || return 1
 
-  local battery=''
-  battery="$(find_battery)" || return 1
-
-  if is_not_empty "${battery}"; then
-    local query=''
-    query+='\("yes"                              | lbln("Battery"))'
-    query+='\(.state | downcase                  | lbln("State"))'
-    query+='\(.charge_percent | unit("%")        | lbln("Charge"))'
-    query+='\(.design_capacity_mah | unit("mAh") | lbl("Capacity"))'
-
-    echo "${battery}" | jq -cer --arg SPC ${space} "\"${query}\"" || return 1
-  else
-    echo '"no"' | jq -cer --arg SPC ${space} 'lbl("Battery")' || return 1
-  fi
-
-  if file_exists '/sys/class/power_supply/BAT0/current_now'; then
-    local current_now=''
-    current_now="$(< /sys/class/power_supply/BAT0/current_now)"
-
-    echo "\"${current_now}\"" | jq -cer --arg SPC ${space} 'unit("mAh") | lbl("Current")'
-  fi
-
-  if file_exists '/sys/class/power_supply/BAT0/charge_now'; then
-    local charge_now=''
-    charge_now="$(< /sys/class/power_supply/BAT0/charge_now)"
-
-    echo "\"${charge_now}\"" | jq -cer --arg SPC ${space} 'unit("mAh") | lbl("Load")'
-  fi
-
   local query='.[] | select(.unit == "acpid.service") | .active | olbl("ACPID")'
 
   systemctl -a | jc --systemctl | jq -cr --arg SPC ${space} "${query}" || return 1
@@ -54,18 +25,6 @@ show_status () {
   local query='.[] | select(.unit == "tlp.service") | .active | olbl("TLP")'
 
   systemctl -a | jc --systemctl | jq -cr --arg SPC ${space} "${query}" || return 1
-
-  local config_file='/etc/tlp.d/00-main.conf'
-
-  local start=''
-  start="$(grep -E "^START_CHARGE_THRESH_BAT0=" "${config_file}" | cut -d '=' -f 2)"
-    
-  local stop=''
-  stop="$(grep -E "^STOP_CHARGE_THRESH_BAT0=" "${config_file}" | cut -d '=' -f 2)"
-    
-  if is_not_empty "${start}" || is_not_empty "${stop}"; then
-    echo "\"[${start:-0}%, ${stop:-100}%]\"" | jq -cer --arg SPC ${space} 'lbl("Thresholds")' || return 1
-  fi
 
   if file_exists "${POWER_SETTINGS}"; then
     local query='.screensaver.interval | unit(" mins") | lbl("Screensaver"; "off")'
@@ -75,51 +34,38 @@ show_status () {
     echo '"off"' | jq -cer --arg SPC ${space} 'lbl("Screensaver")'
   fi
 
-  loginctl show-session | awk -v SPC=${space} '{
-    match($0,/(.*)=(.*)/,a)
+  local power_settings=''
+  power_settings="$(find_login_power_settings)" || return 1
 
-    if (a[1] == "Docked") {
-      a[1]="Docked"
-    } else if (a[1] == "LidClosed") {
-      a[1]="Lid Down"
-    } else {
-      next
-    }
+  local query=''
+  query+='\(.docked   | lbln("Docked"))'
+  query+='\(.lid_down | lbln("Lid Down"))'
 
-    if (!a[2] || a[2] ~ /^[[:blank:]]*$/) a[2] = "Unavailable"
+  echo "${power_settings}" | jq -cer --arg SPC ${space} "\"${query}\"" || return 1
 
-    frm = "%-"SPC"s%s\n"
-    printf frm, a[1]":", a[2]
-  }' || return 1
+  local query=''
+  query+='\(.battery | yes_no                                                 | lbln("Battery"))'
+  query+='\(.state | downcase                                                 | lbln("State"))'
+  query+='\(.charge_percent | unit("%")                                       | lbln("Charge"))'
+  query+='\(.design_capacity_mah | unit("mAh")                                | lbln("Capacity"))'
+  query+='\(.current_now | unit("mAh")                                        | lbln("Current"))'
+  query+='\(.charge_now | unit("mAh")                                         | lbln("Load"))'
+  query+='\("[\(.start_charge_at | dft(0))%, \(.stop_charge_at | dft(100))%]" | lbln("Thresholds"))'
 
-  echo
+  query="if . then \"${query}\" end"
 
-  loginctl show-session | awk -v SPC=${space} '{
-    match($0,/(.*)=(.*)/,a)
+  find_battery | jq -cer --arg SPC ${space} "${query}" || return 1
 
-    if (a[1] == "HandlePowerKey") {
-      a[1]="On Power"
-    } else if (a[1] == "HandleRebootKey") {
-      a[1]="On Reboot"
-    } else if (a[1] == "HandleSuspendKey") {
-      a[1]="On Suspend"
-    } else if (a[1] == "HandleHibernateKey") {
-      a[1]="On Hibernate"
-    } else if (a[1] == "HandleLidSwitch") {
-      a[1]="On Lid Down"
-    } else if (a[1] == "HandleLidSwitchDocked") {
-      a[1]="On Docked"
-    } else if (a[1] == "IdleAction") {
-      a[1]="On Idle"
-    } else {
-      next
-    }
+  local query=''
+  query+='\(.on_power     | lbln("On Power"))'
+  query+='\(.on_reboot    | lbln("On Reboot"))'
+  query+='\(.on_suspend   | lbln("On Suspend"))'
+  query+='\(.on_hibernate | lbln("On Hibernate"))'
+  query+='\(.on_lid_down  | lbln("On Lid Down"))'
+  query+='\(.on_docked    | lbln("On Docked"))'
+  query+='\(.on_idle      | lbl("On Idle"))'
 
-    if (!a[2] || a[2] ~ /^[[:blank:]]*$/) a[2] = "Unavailable"
-
-    frm = "%-"SPC"s%s\n"
-    printf frm, a[1]":", a[2]
-  }' || return 1
+  echo "${power_settings}" | jq -cer --arg SPC ${space} "\"${query}\"" || return 1
 }
 
 # Sets the action of the handler with the given name.

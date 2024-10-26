@@ -15,22 +15,21 @@ source src/tools/printers/helpers.sh
 show_status () {
   local space=10
 
-  systemctl status --lines 0 --no-pager cups.service |
-    awk -v SPC=${space} '{
-      if ($0 ~ / *Active/) {
-        l = "Service"
-        v = $2" "$3
-      } else l = ""
+  local query='.[] | select(.unit == "cups.service") | .active | lbl("Service")'
 
-      if (!v || v ~ /^[[:blank:]]*$/) v = "Unavailable"
+  systemctl -a | jc --systemctl | jq -cr --arg SPC ${space} "${query}" | || return 1
 
-      frm = "%-"SPC"s%s\n"
-      if (l) printf frm, l":", v
-    }' || return 1
+  local query=''
+  query+='\(.[0] | lbln("Cups"))'
+  query+='\(.[1] | lbln("API"))'
+  query+='\(.[2] | lbl("Dir"))'
 
-  echo "\"$(cups-config --version)\"" | jq -cer --arg SPC ${space} 'lbl("Cups")'
-  echo "\"$(cups-config --api-version)\"" | jq -cer --arg SPC ${space} 'lbl("API")'
-  echo "\"$(cups-config --datadir)\"" | jq -cer --arg SPC ${space} 'lbl("Dir")'
+  query="[inputs] | \"${query}\""
+
+  cups-config \
+    --version \
+    --api-version \
+    --datadir | jq -cernR --arg SPC ${space} "${query}" || return 1
 
   find_jobs | jq -cer --arg SPC ${space} 'length | lbl("Jobs")' || return 1
 

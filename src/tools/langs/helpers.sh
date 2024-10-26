@@ -10,6 +10,95 @@ source src/commons/validators.sh
 CONFIG_HOME="${HOME}/.config/stack"
 LANGS_SETTINGS="${CONFIG_HOME}/langs.json"
 
+# Returns the current keyboard and layout state.
+# Outputs:
+#  A json object with layout data.
+find_layout_state () {
+  local status=''
+
+  local current_layout=''
+  current_layout="$(xkblayout-state print "%s [%n, %e]")" || return 1
+
+  status+="\"layout\": \"${current_layout}\","
+
+  status+="$(localectl status | awk '{
+    key=""
+    
+    if ($0 ~ /^.* VC Keymap/) {
+      key="keymap"
+    } else if ($0 ~ /^.* X11 Layout/) {
+      key="layouts"
+    } else if ($0 ~ /^.* X11 Variant/) {
+      key="variants"
+    } else if ($0 ~ /^.* X11 Options/) {
+      key="options"
+    } else if ($0 ~ /^.* X11 Model/) {
+      key="model"
+    } else {
+      next
+    }
+
+    frm = "\"%s\": \"%s\","
+    printf frm, key, $3
+  }')" || return 1
+
+  # Remove last comma
+  status="${status:+${status::-1}}"
+
+  echo "{${status}}"
+}
+
+# Returns all the installed locales.
+# Outputs:
+#  A json array of locales.
+find_installed_locales () {
+  local locales=''
+  locales+="$(locale -a | jq -cernR '[inputs | select(length > 0)]')" || return 1
+
+  echo "${locales}"
+}
+
+# Returns all the locale enviromental variables
+# set for the system.
+# Outputs:
+#  A json object with locale env vars.
+find_locale_envs () {
+  local envs=''
+
+  envs+="$(locale | awk -F'=' '{
+    if ($2 == "") {
+      next
+    }
+
+    gsub(/"/, "", $2)
+
+    switch ($1) {
+      case "LANG": $1="lang"; break;
+      case "LC_CTYPE": $1="lc_ctype"; break;
+      case "LC_NUMERIC": $1="lc_numeric"; break;
+      case "LC_TIME": $1="lc_time"; break;
+      case "LC_COLLATE": $1="lc_collate"; break;
+      case "LC_MONETARY": $1="lc_monetary"; break;
+      case "LC_MESSAGES": $1="lc_messages"; break;
+      case "LC_PAPER": $1="lc_paper"; break;
+      case "LC_NAME": $1="lc_name"; break;
+      case "LC_ADDRESS": $1="lc_address"; break;
+      case "LC_TELEPHONE": $1="lc_telephone"; break;
+      case "LC_MEASUREMENT": $1="lc_measurement"; break;
+      case "LC_IDENTIFICATION": $1="lc_identification"; break;
+      default: next;
+    }
+
+    frm = "\"%s\": \"%s\","
+    printf frm, $1, $2
+  }')" || return 1
+
+  # Remove last comma
+  envs="${envs:+${envs::-1}}"
+
+  echo "{${envs}}"
+}
+
 # Shows a menu asking the user to select a keyboard map.
 # Outputs:
 #  A menu of keyboard maps.
