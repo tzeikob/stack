@@ -13,74 +13,38 @@ source src/tools/langs/helpers.sh
 # Outputs:
 #  A verbose list of text data.
 show_status () {
-  local space=11
+  local space=12
 
-  local current_layout=''
-  current_layout="$(xkblayout-state print "%s [%n, %e]")" || return 1
+  local query=''
+  query+='\(.layout   | lbln("Layout"))'
+  query+='\(.layouts  | lbln("Layouts"))'
+  query+='\(.variants | obln("Variants"))'
+  query+='\(.keymap   | lbln("Keymap"))'
+  query+='\(.options  | lbln("Options"))'
+  query+='\(.model    | lbl("Model"))'
 
-  localectl status | awk -v layout="${current_layout}" -v SPC=${space} '{
-    label=""
-    
-    if ($0 ~ /^.* VC Keymap/) {
-      label="Keymap"
-    } else if ($0 ~ /^.* X11 Layout/) {
-      printf "%-10s %s\n", "Layout:", layout
-      label="Layouts"
-    } else if ($0 ~ /^.* X11 Variant/) {
-      label="Variants"
-    } else if ($0 ~ /^.* X11 Options/) {
-      label="Options"
-    } else if ($0 ~ /^.* X11 Model/) {
-      label="Model"
-    } else {
-      next
-    }
+  find_layout_state | jq -cer --arg SPC ${space} "\"${query}\"" || return 1
 
-    if (!$3 || $3 ~ /^[[:blank:]]*$/) $3 = "Unavailable"
+  local query='tree("Locales")'
 
-    frm = "%-"SPC"s%s\n"
-    printf frm, label":", $3
-  }' || return 1
+  find_installed_locales | jq -cer --arg SPC ${space} "${query}" || return 1
 
-  local locales=''
-  locales="$(locale -a | awk '{ORS=", ";} {print $0}')" || return 1
+  local query=''
+  query+='\(.lang              | lbln("Language"))'
+  query+='\(.lc_type           | lbln("Type"))'
+  query+='\(.lc_numeric        | lbln("Numeric"))'
+  query+='\(.lc_time           | lbln("Time"))'
+  query+='\(.lc_collate        | lbln("Collate"))'
+  query+='\(.lc_monetary       | lbln("Monetary"))'
+  query+='\(.lc_messages       | lbln("Messages"))'
+  query+='\(.lc_paper          | lbln("Paper"))'
+  query+='\(.lc_name           | lbln("Name"))'
+  query+='\(.lc_address        | lbln("Address"))'
+  query+='\(.lc_telephone      | lbln("Telephone"))'
+  query+='\(.lc_measurement    | lbln("Measures"))'
+  query+='\(.lc_identification | lbl("Ids"))'
 
-  # Remove extra comma after the last locale element
-  if is_not_empty "${locales}"; then
-    locales="${locales::-2}"
-  fi
-
-  echo "\"${locales}\"" | jq -cer --arg SPC ${space} 'lbln("Locales")'
-
-  locale | awk -F'=' -v SPC=${space} '{
-    if ($2 == "") {
-      next
-    }
-
-    gsub(/"/, "", $2)
-
-    switch ($1) {
-      case "LANG": $1="Lang"; break;
-      case "LC_CTYPE": $1="Type"; break;
-      case "LC_NUMERIC": $1="Numeric"; break;
-      case "LC_TIME": $1="Time"; break;
-      case "LC_COLLATE": $1="Collate"; break;
-      case "LC_MONETARY": $1="Money"; break;
-      case "LC_MESSAGES": $1="Message"; break;
-      case "LC_PAPER": $1="Paper"; break;
-      case "LC_NAME": $1="Name"; break;
-      case "LC_ADDRESS": $1="Address"; break;
-      case "LC_TELEPHONE": $1="Telephone"; break;
-      case "LC_MEASUREMENT": $1="Measures"; break;
-      case "LC_IDENTIFICATION": $1="Ids"; break;
-      default: next;
-    }
-
-    if (!$2 || $2 ~ /^[[:blank:]]*$/) $2 = "Unavailable"
-
-    frm = "%-"SPC"s%s\n"
-    printf frm, $1":", $2
-  }' || return 1
+  find_locale_envs | jq  -cer --arg SPC ${space} "\"${query}\"" || return 1
 }
 
 # Sets the keymap of the console keyboard to the

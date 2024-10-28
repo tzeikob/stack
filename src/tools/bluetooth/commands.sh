@@ -15,17 +15,9 @@ source src/tools/bluetooth/helpers.sh
 show_status () {
   local space=15
 
-  systemctl status --lines 0 --no-pager bluetooth.service | awk -v SPC=${space} '{
-    if ($0 ~ / *Active/) {
-      l = "Service"
-      v = $2" "$3
-    } else l = ""
+  local query='.[] | select(.unit == ."bluetooth.service") | .active | lbl("Active")'
 
-    if (!v || v ~ /^[[:blank:]]*$/) v = "Unavailable"
-
-    frm = "%-"SPC"s%s\n"
-    if (l) printf frm, l":", v
-  }' || return 1
+  systemctl  -a | jc --systemctl | jq -cer --arg SPC ${space} "${query}" || return 1
 
   local query=''
   query+='\(.name         | lbln("Controller"))'

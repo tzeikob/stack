@@ -15,18 +15,9 @@ source src/tools/networks/helpers.sh
 show_status () {
   local space=13
 
-  systemctl status --lines 0 --no-pager NetworkManager.service |
-    awk -v SPC=${space} '{
-      if ($0 ~ / *Active/) {
-        l = "Service"
-        v = $2" "$3
-      } else l = ""
+  local query='.[] | select(.unit == "NetworkManager.service") | .active | lbl("Service")'
 
-      if (!v || v ~ /^[[:blank:]]*$/) v = "Unavailable"
-
-      frm = "%-"SPC"s%s\n"
-      if (l) printf frm, l":", v
-    }' || return 1
+  systemctl -a | jc --systemctl | jq -cer --arg SPC ${space} "${query}" || return 1
 
   local devices=''
   devices="$(find_devices)" || return 1
@@ -55,21 +46,7 @@ show_status () {
     echo '""' | jq -cer --arg SPC ${space} 'lbl("ISP"; "Unavailable")'
   fi
 
-  local proxy_env="${HOME}/.config/environment.d/proxy.conf"
-
-  local proxy=''
-  if file_exists "${proxy_env}"; then
-    proxy="$(cat "${proxy_env}" | awk -F'=' '/export http_proxy=/ {
-      split($2,a,"http://")
-
-      if (a[2] ~ /@/) {
-        split(a[2],b,"@")
-        print b[2]
-      } else print a[2]
-    }' | tr -d '"/')" || return 1
-  fi
-
-  echo "\"${proxy}\"" | jq -cer --arg SPC ${space} 'lbl("Proxy"; "none")'
+  find_proxy | jq -cer --arg SPC ${space} 'lbl("Proxy"; "none")'
 
   local query=''
   query+='.[] | select(.type | test("(^ethernet|wifi|vpn)$")) | .name'

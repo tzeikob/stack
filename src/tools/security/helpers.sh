@@ -55,3 +55,76 @@ is_screen_locked () {
 
   echo "${is_locked}"
 }
+
+# Returns the password status of the system.
+# Outputs:
+#  A json object of password data.
+find_password_status () {
+  local status=''
+
+  status="$(passwd -S | awk '{
+    status="protected"
+    if ($2 == "L") {
+      status="locked"
+    } else if ($2 == "NP") {
+      status="no password"
+    }
+
+    frm = "\"%s\": \"%s\","
+    printf frm, "password", status
+    printf frm, "last_changed", $3
+  }')" || return 1
+
+  # Remove last comma
+  status="${status:+${status::-1}}"
+
+  echo "{${status}}"
+}
+
+# Returns the faillock status.
+# Outputs:
+#  A json object of failock status.
+find_faillock_status () {
+  local status=''
+
+  status="$(cat /etc/security/faillock.conf | awk '{
+    key=''
+
+    if ($0 ~ /^deny =.*/) {
+      key = "failed_attempts"
+    } else if ($0 ~ /^unlock_time =.*/) {
+      key = "unblock_time"
+    } else if ($0 ~ /^fail_interval =.*/) {
+      key = "fail_interval"
+    }
+
+     frm = "\"%s\": \"%s\","
+     printf frm, key, $3
+    }
+  }')" || return 1
+
+  # Remove last comma
+  status="${status:+${status::-1}}"
+
+  echo "{${status}}"
+}
+
+# Returns the status of the locker.
+# Outputs:
+#  A json string of the locker status.
+find_locker_status () {
+  local locker_process=''
+
+  locker_process="$(ps ax -o 'command' | jc --ps |
+    jq '.[] | select(.command | test("^xautolock")) | .command')" || return 1
+  
+  if is_empty "${locker_process}"; then
+    echo '"off"'
+    return 0
+  fi
+  
+  echo "${locker_process}" | awk '{
+    match($0,/.* -time (.*) -corners.*/,a)
+    print a[1]
+  }' || return 1
+}

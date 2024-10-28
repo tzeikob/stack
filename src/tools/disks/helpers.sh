@@ -7,6 +7,45 @@ source src/commons/network.sh
 source src/commons/math.sh
 source src/commons/validators.sh
 
+# Resolves the swap information and returns it
+# back as json object.
+# Ouputs:
+#  A json object of swap data.
+find_swap () {
+  local swap=''
+
+  swap+="$(swapon --noheadings --show | awk -F' ' '{
+    frm = "\"%s\": \"%s\","
+
+    printf frm, "swap", $1
+    printf frm, "type", $2
+    printf frm, "size", $3
+    printf frm, "used", $4
+  }')" || return 1
+
+  # Remove last comma
+  swap="${swap:+${swap::-1}}"
+
+  swap+="$(cat /proc/meminfo | grep -E 'Swap.*' | awk -F':' '{
+    gsub(/^[ \t]+/,"",$1)
+    gsub(/[ \t]+$/,"",$1)
+    gsub(/^[ \t]+/,"",$2)
+    gsub(/[ \t]+$/,"",$2)
+
+    if ($1 == "SwapCached") $1="cached"
+    if ($1 == "SwapTotal") $1="total"
+    if ($1 == "SwapFree") $1="free"
+
+    frm = "\"%s\": \"%s\","
+    printf frm, $1, $2
+  }')" || return 1
+
+  # Remove last comma
+  swap="${swap:+${swap::-1}}"
+
+  echo "{${swap}}"
+}
+
 # Returns the list of disk block devices.
 # Outputs:
 #  A json array of disk block device objects.
@@ -164,6 +203,28 @@ find_rom () {
   local query=".[] | select(.path == \"${path}\")"
 
   find_roms | jq -cer "${query}" || return 1
+}
+
+# Finds and returns all the mounted images.
+# Outputs:
+#  A json array of mounted images.
+find_mounted_images () {
+  local images=''
+
+  images="$(cat /proc/mounts | awk '/^fuseiso/{
+    n=split($2, a, "/")
+
+    schema="\"name\": \"%s\","
+    schema=schema"\"point\": \"%s\""
+    schema="{"schema"},"
+
+    printf schema, a[n], $2
+  }')" || return 1
+
+  # Remove the extra comma after the last element
+  images="${images:+${images::-1}}"
+
+  echo "[${images}]"
 }
 
 # Checks if the block device with the given path
@@ -611,6 +672,30 @@ find_shared_folders () {
   echo "[${folders}]"
 }
 
+# Finds and returns all the shared folders.
+# Outputs:
+#  A json array of shared folders.
+find_mounted_shared_folders () {
+  local folders=''
+
+  if directory_exists "/run/user/${UID}/gvfs"; then
+    folders="$(ls "/run/user/${UID}/gvfs" | awk -v id="${UID}" '{
+      match($0, /server=(.*),share=(.*),/, a);
+
+      schema="\"name\": \"%s\","
+      schema=schema"\"point\": \"%s\""
+      schema="{"schema"},"
+
+      printf schema, a[1]"/"a[2], "/run/user/"id"/gvfs/"$0
+    }')" || return 1
+
+    # Remove the extra comma after the last element
+    folders="${folders:+${folders::-1}}"
+  fi
+
+  echo "[${folders}]"
+}
+
 # Shows a menu asking the user to select one
 # disk block device.
 # Outputs:
@@ -776,16 +861,12 @@ is_not_valid_fs_type () {
 # Outputs:
 #  A menu of moutned image paths.
 pick_image_mount () {
+  local option='{key: .point, value: .point}'
+
+  local query="[.[] | ${option}]"
+
   local mounts=''
-
-  mounts="$(cat /proc/mounts | awk '/^fuseiso/{
-    print "{\"key\":\"" $2 "\",\"value\":\"" $2 "\"},"
-  }')" || return 1
-
-  # Remove the extra comma after the last element
-  mounts="${mounts:+${mounts::-1}}"
-
-  mounts="[${mounts}]"
+  mounts="$(find_mounted_images | jq -cer "${query}")" || return 1
 
   local len=0
   len="$(echo "${mounts}" | jq -cer 'length')" || return 1

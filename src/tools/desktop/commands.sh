@@ -13,60 +13,6 @@ source src/tools/displays/helpers.sh
 # Outputs:
 #  A verbose list of text data.
 show_status () {
-  local status=''
-
-  local server=''
-  server="$(xdpyinfo -display "${DISPLAY}" | awk -F': ' '{
-    ORS=""
-    gsub(/^[ \t]+/,"",$2)
-    gsub(/[ \t]+$/,"",$2)
-    switch ($1) {
-      case "version number": print $2; break
-      case "X.Org version": print "/"$2")"; break
-      default: break
-    }
-  }')" || return 1
-
-  status+="\"server\": \"Xorg ${server::-1}\","
-
-  local compositor=''
-  compositor="$(pacman -Qi picom | grep -Po '^Version\s*: \K.+')" || return 1
-
-  status+="\"compositor\": \"Picom ${compositor}\","
-
-  local wm=''
-  wm="$(bspwm -v)" || return 1
-
-  status+="\"wm\": \"BSPWM ${wm}\","
-
-  local bars=''
-  bars="$(polybar -v | head -n +1 | cut -d ' ' -f 2)" || return 1
-
-  status+="\"bars\": \"Polybar ${bars}\","
-
-  if file_exists "${DESKTOP_SETTINGS}"; then
-    local query='.wallpaper | if . then "\(.name) [\(.mode | downcase)]" else "none" end'
-
-    local wallpaper=''
-    wallpaper="$(jq -cr "${query}" "${DESKTOP_SETTINGS}")" || return 1
-
-    status+="\"wallpaper\": \"${wallpaper}\","
-  fi
-
-  local fields='OS|Kernel|Shell|Theme|Icons'
-
-  status+="$(neofetch --off --stdout |
-    awk -F':' '/^('"${fields}"')/{
-      gsub(/^[ \t]+/,"",$2)
-      gsub(/[ \t]+$/,"",$2)
-      printf "\"%s\":\"%s\",",tolower($1),$2
-    }'
-  )" || return 1
-
-  # Remove the last extra comma after the last field
-  status="${status:+${status::-1}}"
-  status="{${status}}"
-
   local query=''
   query+='\(.os         | lbln("System"))'
   query+='\(.kernel     | lbln("Kernel"))'
@@ -80,7 +26,7 @@ show_status () {
   query+='\(.icons      | lbln("Icons"))'
   query+='\(.wallpaper  | lbl("Wallpaper"; "none"))'
 
-  echo "${status}" | jq -cer --arg SPC 13 "\"${query}\"" || return 1
+  resolve_status | jq -cer --arg SPC 13 "\"${query}\"" || return 1
 }
 
 # Shows the list of all the wallpapers found under

@@ -35,37 +35,16 @@ show_status () {
 
   echo
 
-  swapon --noheadings --show | awk -F' ' -v SPC=${space} '{
-    frm = "%-"SPC"s%s\n"
+  local query=''
+  query+='\(.swap   | lbln("Swap"))'
+  query+='\(.type   | lbln("Type"))'
+  query+='\(.size   | lbln("Size"))'
+  query+='\(.used   | lbln("Used"))'
+  query+='\(.cached | lbln("Cached"))'
+  query+='\(.total  | lbln("Total"))'
+  query+='\(.free   | lbl("Free"))'
 
-    if (!$1 || $1 ~ /^[[:blank:]]*$/) $1 = "Unavailable"
-    printf frm, "Swap:", $1
-
-    if (!$2 || $2 ~ /^[[:blank:]]*$/) $2 = "Unavailable"
-    printf frm, "Type:", $2
-
-    if (!$3 || $3 ~ /^[[:blank:]]*$/) $3 = "Unavailable"
-    printf frm, "Size:", $3
-
-    if (!$4 || $4 ~ /^[[:blank:]]*$/) $4 = "Unavailable"
-    printf frm, "Used:", $4
-  }' || return 1
-
-  cat /proc/meminfo | grep -E 'Swap.*' | awk -F':' -v SPC=${space} '{
-    gsub(/^[ \t]+/,"",$1)
-    gsub(/[ \t]+$/,"",$1)
-    gsub(/^[ \t]+/,"",$2)
-    gsub(/[ \t]+$/,"",$2)
-
-    if ($1 == "SwapCached") $1="Cached"
-    if ($1 == "SwapTotal") $1="Total"
-    if ($1 == "SwapFree") $1="Free"
-
-    if (!$2 || $2 ~ /^[[:blank:]]*$/) $2 = "Unavailable"
-
-    frm = "%-"SPC"s%s\n"
-    printf frm, $1":", $2
-  }' || return 1
+  find_swap | jq -cer --arg SPC ${space} "\"${query}\"" || return 1
 }
 
 # Shows the data of the disk block device with
@@ -428,42 +407,13 @@ list_mounts () {
   mounts="$(jq -n --argjson m "${mounts}" --argjson r "${roms}" '$m + $r')" || return 1
 
   local folders=''
-
-  if directory_exists "/run/user/${UID}/gvfs"; then
-    folders="$(ls "/run/user/${UID}/gvfs" | awk -v id="${UID}" '{
-      match($0, /server=(.*),share=(.*),/, a);
-
-      schema="\"name\": \"%s\","
-      schema=schema"\"point\": \"%s\""
-      schema="{"schema"},"
-
-      printf schema, a[1]"/"a[2], "/run/user/"id"/gvfs/"$0
-    }')" || return 1
-
-    # Remove the extra comma after the last element
-    folders="${folders:+${folders::-1}}"
-  fi
-
-  folders="[${folders}]"
+  folders="$(find_mounted_shared_folders)" || return 1
 
   # Merge shared folders to mounts array
   mounts="$(jq -n --argjson m "${mounts}" --argjson f "${folders}" '$m + $f')" || return 1
 
   local images=''
-  images="$(cat /proc/mounts | awk '/^fuseiso/{
-    n=split($2, a, "/")
-
-    schema="\"name\": \"%s\","
-    schema=schema"\"point\": \"%s\""
-    schema="{"schema"},"
-
-    printf schema, a[n], $2
-  }')" || return 1
-
-  # Remove the extra comma after the last element
-  images="${images:+${images::-1}}"
-
-  images="[${images}]"
+  images="$(find_mounted_images)" || return 1
 
   # Merge images to mounts array
   mounts="$(jq -n --argjson m "${mounts}" --argjson i "${images}" '$m + $i')" || return 1

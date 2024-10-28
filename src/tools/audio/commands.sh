@@ -16,25 +16,13 @@ show_status () {
   local query=''
   query+='\(.server_name                  | lbln("Server"))'
   query+='\(.default_sample_specification | lbln("Sample"))'
-  query+='\(.default_channel_map          | lbln("Channels"))'
+  query+='\(.default_channel_map          | lbl("Channels"))'
 
   pactl --format=json info | jq -cer --arg SPC ${space} "\"${query}\"" || return 1
 
-  systemctl --user status --lines 0 --no-pager pipewire-pulse.service |
-    awk -v SPC=${space} '{
-      if ($0 ~ / *Active/) {
-        l = "Active"
-        v = $2" "$3
-      } else if ($0 ~ / *Main PID/) {
-        l = "Process"
-        v = $3" "$4
-      } else l = ""
+  local query='.[] | select(.unit == "pipewire-pulse.service") | .active | lbln("Active")'
 
-    if (!v || v ~ /^[[:blank:]]*$/) v = "Unavailable"
-
-    frm = "%-"SPC"s%s\n"
-    if (l) printf frm, l":", v
-    }' || return 1
+  systemctl --user -a | jc --systemctl | jq -cer --arg SPC ${space} "${query}" || return 1
 
   local query=''
   query+='to_entries[] | (.key + 1) as $k | .value.properties |'

@@ -33,6 +33,39 @@ is_not_output_status () {
   is_output_status "${1}" && return 1 || return 0
 }
 
+# Returns the xorg screen data and display server information.
+# Outputs:
+#  A json object with xorg data.
+find_screen_info () {
+  local info=''
+
+  info+="$(xdpyinfo -display "${DISPLAY}" | awk -F': ' '{
+    gsub(/[ \t]+$/, "", $1);
+    gsub(/^[ \t]+/, "", $2);
+
+    switch ($1) {
+      case "name of display": $1 = "display"; break
+      case "version number": $1 = "version"; break
+      case "vendor string": $1 = "vendor"; break
+      case "vendor release number": $1 = "release"; break
+      case "X.Org version": $1 = "xorg"; break
+      case "motion buffer size": $1 = "buffer"; break
+      case "image byte order": $1 = "order"; break
+      case "default screen number": $1 = "screen"; break
+      case "number of screens": $1 = "screens"; break
+      default: $1 = ""; break
+    }
+
+    frm = "\"%s\": \"%s\","
+    if ($1) printf frm, $1, $2
+  }')" || return 1
+
+  # Remove last comma
+  info="${info:+${info::-1}}"
+
+  echo "{${info}}"
+}
+
 # Returns a list of outputs having the given status.
 # Arguments:
 #  status: connected, disconnected, active, inactive or primary

@@ -12,34 +12,19 @@ source src/tools/displays/helpers.sh
 #  A verbose list of text data.
 show_status () {
   local space=13
+  
+  local query=''
+  query+='\(.display | lbln("Display"))'
+  query+='\(.version | lbln("Version"))'
+  query+='\(.vendor  | lbln("Vendor"))'
+  query+='\(.release | lbln("Release"))'
+  query+='\(.xorg    | lbln("Xorg"))'
+  query+='\(.buffer  | lbln("Buffer"))'
+  query+='\(.order   | lbln("Order"))'
+  query+='\(.screen  | lbln("Screen"))'
+  query+='\(.screens | lbl("Screens"))'
 
-  xdpyinfo -display "${DISPLAY}" | awk -F': ' -v SPC=${space} '{
-    gsub(/[ \t]+$/, "", $1);
-    gsub(/^[ \t]+/, "", $2);
-
-    switch ($1) {
-      case "name of display": $1 = "Display"; break
-      case "version number": $1 = "Version"; break
-      case "vendor string": $1 = "Vendor"; break
-      case "vendor release number": $1 = "Release"; break
-      case "X.Org version": $1 = "X.Org"; break
-      case "motion buffer size": $1 = "Buffer"; break
-      case "image byte order": $1 = "Order"; break
-      case "default screen number": $1 = "Screen"; break
-      case "number of screens": $1 = "Screens"; break
-      default: $1 = ""; break
-    }
-
-    if (!$2 || $2 ~ /^[[:blank:]]*$/) $2 = "Unavailable"
-
-    frm = "%-"SPC"s%s\n"
-    if ($1) printf frm, $1":", $2
-  }'
-
-  if has_failed; then
-    log 'Unable to read xdpy info.'
-    return 2
-  fi
+  find_screen_info | jq -cer --arg SPC ${space} "\"${query}\"" || return 1
 
   local colors='[]'
 

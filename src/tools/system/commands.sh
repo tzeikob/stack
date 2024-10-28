@@ -15,71 +15,30 @@ UPDATES_STATE_FILE=/tmp/updates_state
 show_status () {
   local space=11
 
-  local fields='OS|Kernel|Shell'
+  local query=''
+  query+='\(.os      | lbln("System"))'
+  query+='\(.kernel  | lbln("Kernel"))'
+  query+='\(.shell   | lbln("Shell"))'
+  query+='\(.libalpm | lbln("Libalpm"))'
+  query+='\(.pacman  | lbln("Pacman"))'
+  query+='\(.yay     | lbln("Yay"))'
 
-  local status=''
-  status+="$(neofetch --off --stdout |
-    awk -F':' '/^('"${fields}"')/{
-      gsub(/^[ \t]+/,"",$2)
-      gsub(/[ \t]+$/,"",$2)
-      printf "\"%s\":\"%s\",",tolower($1),$2
-    }'
-  )" || return 1
-
-  # Remove the last extra comma after the last field
-  status="${status:+${status::-1}}"
-  status="{${status}}"
+  find_system_status | jq -cer --arg SPC ${space} "\"${query}\"" || return 1
 
   local query=''
-  query+='\(.os     | lbln("System"))'
-  query+='\(.kernel | lbln("Kernel"))'
-  query+='\(.shell  | lbln("Shell"))'
+  query+='\(.mirrors              | lbln("Mirrors"))'
+  query+='\(.age | unit(" hours") | lbln("Age"))'
+  query+='\(.latest               | lbl("Latest"))'
 
-  echo "${status}" | jq -cer --arg SPC ${space} "\"${query}\"" || return 1
+  find_reflector_settings | jq -cer --arg SPC ${space} "${query}" || return 1
   
-  local libalpm_version=''
-  libalpm_version="$(pacman -V | grep "Pacman v" | awk '{print $6}' | sed 's/v\(.*\)/\1/')"
-  
-  echo "\"${libalpm_version}\"" | jq -cer --arg SPC ${space} 'lbln("Libalpm")'
-
-  local pacman_version=''
-  pacman_version="$(pacman -V | grep "Pacman v" | awk '{print $3}' | sed 's/v\(.*\)/\1/')"
-  
-  echo "\"${pacman_version}\"" | jq -cer --arg SPC ${space} 'lbln("Pacman")'
-  
-  local yay_version=''
-  yay_version="$(yay -V | awk '{print $2}' | sed 's/v\(.*\)/\1/')"
-  
-  echo "\"${yay_version}\"" | jq -cer --arg SPC ${space} 'lbln("Yay")'
-
-  local reflector_conf='/etc/xdg/reflector/reflector.conf'
-
-  local countries=''
-  countries="$(grep -E '^--country' "${reflector_conf}" | cut -d ' ' -f 2)" || return 1
-  
-  echo
-  echo "\"${countries}\"" | jq -cer --arg SPC ${space} 'lbln("Mirrors")'
-
-  local age=''
-  age="$(grep -E '^--age' "${reflector_conf}" | cut -d ' ' -f 2)" || return 1
-  
-  echo "\"${age}\"" | jq -cer --arg SPC ${space} 'unit(" hours") | lbln("Age")'
-
-  local latest=''
-  latest="$(grep -E '^--latest' "${reflector_conf}" | cut -d ' ' -f 2)" || return 1
-  
-  echo "\"${latest}\"" | jq -cer --arg SPC ${space} 'lbl(Latest)'
-  
-  local pkgs=''
-  pkgs="$(find_installed_packages)" || return 1
-
   local query=''
   query+='\(.pacman + .aur | length | lbln("Packages"))'
   query+='\(.pacman | length        | lbln("Pacman"))'
   query+='\(.aur | length           | lbl("AUR"))'
 
   echo
-  echo ${pkgs} | jq -cr --arg SPC ${space} "\"${query}\""
+  find_installed_packages | jq -cr --arg SPC ${space} "\"${query}\"" || return 1
 }
 
 # List the currently install packages filtered
@@ -145,25 +104,7 @@ set_mirrors () {
     on_script_mode &&
       log 'No mirror countries are given.' && return 2
 
-    countries="$(
-      reflector --list-countries | tail -n +3 | awk '{
-        match($0, /(.*)([A-Z]{2})\s+([0-9]+)/, a)
-        gsub(/[ \t]+$/, "", a[1])
-
-        frm = "{\"key\": \"%s\", \"value\": \"%s\"},"
-        printf frm, a[2], a[1]" ["a[3]"]"
-      }'
-    )"
-    
-    if has_failed; then
-      log 'Unable to fetch mirror countries.'
-      return 2
-    fi
-
-    # Remove the extra comma from the last element
-    countries="[${countries:+${countries::-1}}]"
-
-    pick_many 'Select mirror countries:' "${countries}" 'vertical' || return $?
+    pick_mirror_countries || return $?
     is_not_given "${REPLY}" && log 'Mirror countries are required.' && return 2
 
     countries=($(echo "${REPLY}" | jq -cr '.[]'))
