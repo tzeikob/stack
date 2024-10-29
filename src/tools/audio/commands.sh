@@ -20,7 +20,7 @@ show_status () {
 
   pactl --format=json info | jq -cer --arg SPC ${space} "\"${query}\"" || return 1
 
-  local query='.[] | select(.unit == "pipewire-pulse.service") | .active | lbln("Active")'
+  local query='.[] | select(.unit == "pipewire-pulse.service") | .active | lbln("Service")'
 
   systemctl --user -a | jc --systemctl | jq -cer --arg SPC ${space} "${query}" || return 1
 
