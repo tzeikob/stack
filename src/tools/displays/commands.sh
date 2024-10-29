@@ -70,40 +70,6 @@ show_status () {
   fi
 }
 
-# Shows the Xorg displays log file.
-# Arguments:
-#  lines: the number of last lines to show
-# Outputs:
-#  The log file of the xorg display.
-show_logs () {
-  local lines="${1}"
-
-  if is_given "${lines}" && is_not_integer "${lines}" '[0,]'; then
-    log 'Invalid lines value.'
-    return 2
-  fi
-
-  local id=''
-  id="$(echo "${DISPLAY}" | cut -d ':' -f 2)"
-
-  local log_file="${HOME}/.local/share/xorg/Xorg.${id}.log"
-
-  if file_not_exists "${log_file}"; then
-    log_file="/var/log/Xorg.${id}.log"
-  fi
-
-  if file_not_exists "${log_file}"; then
-    log 'Unable to locate xorg log file.'
-    return 2
-  fi
-
-  if is_given "${lines}"; then
-    cat "${log_file}" | tail -n "${lines}"
-  else
-    cat "${log_file}"
-  fi
-}
-
 # Shows the data of the output with the given name.
 # Arguments:
 #  name: the name of an output

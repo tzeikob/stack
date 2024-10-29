@@ -57,13 +57,6 @@ show_status () {
   pactl --format=json list sources | jq -cr --arg SPC ${space} "${query}" || return 1
 }
 
-# Shows the logs of the audio service.
-# Outputs:
-#  A long list of log messages.
-show_logs () {
-  systemctl --user status --no-pager pipewire-pulse.service | tail -n +12 || return 1
-}
-
 # Shows the data of the card with identified by the
 # given name.
 # Arguments:

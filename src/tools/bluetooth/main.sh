@@ -41,7 +41,6 @@ show_help () {
 
   printf ' %-30s %s\n' \
     'show status' 'Show a report of the bluetooth service.' \
-    'show logs' 'Show the last logs of the bluetooth service.' \
     '' '' \
     'show controller <address>' 'Show the data of a controller.' \
     'show device <address>' 'Show the data of a device.' \
@@ -76,7 +75,6 @@ execute () {
   
   case "${command}${object:+ ${object}}" in
     'show status') show_status;;
-    'show logs') show_logs;;
     'show controller') show_controller "${3}";;
     'show device') show_device "${3}";;
     'list controllers') list_controllers;;

@@ -40,10 +40,10 @@ show_help () {
 
   printf ' %-32s %s\n' \
     'show status' 'Show a report of the system audio.' \
-    'show logs' 'Show the last logs of the audio service.' \
-    'show card <name>' 'Show the data of a card.' \
     '' '' \
     'list cards' 'List all cards of the system.' \
+    'show card <name>' 'Show the data of a card.' \
+    '' '' \
     'list outputs' 'List all outputs.' \
     'list inputs' 'List all inputs.' \
     'list playbacks <app>' 'List all active playbacks or those with the' \
@@ -74,7 +74,6 @@ execute () {
   
   case "${command}${object:+ ${object}}" in
     'show status') show_status;;
-    'show logs') show_logs;;
     'show card') show_card "${3}";;
     'restart') restart;;
     'list cards') list_cards;;

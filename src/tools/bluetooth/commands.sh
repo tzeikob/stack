@@ -57,13 +57,6 @@ show_status () {
   done <<< "${devices}"
 }
 
-# Shows the logs of the bluetooth service.
-# Outputs:
-#  A long list of log messages.
-show_logs () {
-  systemctl status --no-pager bluetooth.service | tail -n +13 || return 1
-}
-
 # Shows the list of available controllers.
 # Outputs:
 #  A list of bluetooth controllers.
