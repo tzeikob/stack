@@ -33,9 +33,9 @@ find_card () {
 pick_card () {
   local prompt="${1}"
 
-  local option='{key: $name, value: .properties | ."device.nick"//."device.alias" | dft($name)}'
+  local option='{key: $name, value: (.properties | ."device.nick"//."device.alias" | dft($name))}'
 
-  local query="[.[] | .name as $name | ${option}]"
+  local query="[.[] | .name as \$name | ${option}]"
 
   local cards=''
   cards="$(find_cards | jq -cer "${query}")" || return 1

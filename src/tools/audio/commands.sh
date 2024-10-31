@@ -95,8 +95,8 @@ show_card () {
   query+='\(.properties."device.bus" | uppercase          | lbln("Bus"))'
   query+='\(.properties."api.alsa.use-acp"                | olbln("ACP"))'
   query+='\(.active_profile                               | lbln("Profile"))'
-  query+="\(.profiles//[] | [${profiles}]                 | treeln("Profiles"; "none"))"
-  query+="\(.ports//[] | [${ports}]                       | tree("Ports"; "none"))"
+  query+="\(.profiles//[] | [${profiles}]                 | treeln(\"Profiles\"; \"none\"))"
+  query+="\(.ports//[] | [${ports}]                       | tree(\"Ports\"; \"none\"))"
 
   echo "${card}" | jq -cer --arg SPC 10 "\"${query}\"" || return 1
 }
