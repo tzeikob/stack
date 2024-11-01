@@ -728,6 +728,12 @@ setup_theme () {
     -e 's/#ICONS#/Dracula/' \
     -e 's/#CURSORS#/Breeze-Snow/' "/home/${user_name}/.config/gtk-3.0/settings.ini" ||
     abort ERROR 'Failed to set theme in GTK settings.'
+  
+  # Reset the cool-retro-term settings and profile
+  ./${HOME}/.config/cool-retro-term/reset "${HOME}" ||
+    abort ERROR 'Failed to reset the cool retro term theme.'
+  
+  log INFO 'Cool retro term theme has been reset.'
 
   log INFO 'Desktop theme has been setup.'
 }
