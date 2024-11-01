@@ -678,7 +678,7 @@ setup_theme () {
   
   log INFO 'Cool retro term theme has been reset.'
 
-  log 'Desktop theme has been setup.'
+  log INFO 'Desktop theme has been setup.'
 }
 
 # Sets up some extra system fonts.
