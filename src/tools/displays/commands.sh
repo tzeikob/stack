@@ -54,8 +54,8 @@ show_status () {
   query+='\(.model_name            | lbln("Device"))'
   query+="\(${resolution}          | lbl(\"Resolution\"))\(${rate} | opt | append | ln)"
   query+="\(${offset}              | lbln(\"Offset\"))"
-  query+="\(.rotation              | lbln("Rotation"))"
-  query+="\(.reflection | downcase | lbln("Reflection"))"
+  query+='\(.rotation              | lbln("Rotation"))'
+  query+='\(.reflection | downcase | lbln("Reflection"))'
   query+="\(${color}               | lbl(\"Color\"; \"none\"))"
 
   local aliases='.model_name as $m | .product_id as $p | .serial_number as $s'
