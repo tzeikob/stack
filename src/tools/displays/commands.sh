@@ -170,7 +170,7 @@ list_outputs () {
   query+='\(.model_name                         | olbln("Device"))'
   query+='\(.is_connected                       | lbln("Connected"))'
   query+='\(.is_connected and .resolution_width | lbln("Active"))'
-  query+='\(.is_primary                         | lbl("Primary"))'
+  query+='\(.is_primary                         | lbln("Primary"))'
   query=".[] |  \"${query}\""
 
   local outputs=''
