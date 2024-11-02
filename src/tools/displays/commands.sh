@@ -38,6 +38,9 @@ show_status () {
   rate+='[.resolution_modes[].frequencies] | flatten |'
   rate+='[.[] | select(.is_current == true)] | .[0].frequency | unit("Hz")'
 
+  local resolution_rate=''
+  resolution_rate="(${resolution} | dft(\"...\")) + (${rate} | opt | append)"
+
   local offset='"[\(.offset_width), \(.offset_height)]"'
 
   # Reduce over color settings to match any devices having a profile set
@@ -52,7 +55,7 @@ show_status () {
   local query=''
   query+='\(.device_name           | lbln("Output"))'
   query+='\(.model_name            | lbln("Device"))'
-  query+="\(${resolution}          | lbl(\"Resolution\"))\(${rate} | opt | append | ln)"
+  query+="\(${resolution_rate}     | lbln(\"Resolution\"))"
   query+="\(${offset}              | lbln(\"Offset\"))"
   query+='\(.rotation              | lbln("Rotation"))'
   query+='\(.reflection | downcase | lbln("Reflection"))'
@@ -106,11 +109,14 @@ show_output () {
   rate+='[.resolution_modes[].frequencies] | flatten |'
   rate+='[.[] | select(.is_current == true)] | .[0].frequency | unit("Hz")'
 
+  local resolution_rate=''
+  resolution_rate="(${resolution} | dft(\"...\")) + (${rate} | opt | append)"
+
   local offset=''
   offset='"[\(.offset_width), \(.offset_height)]"'
 
   local extra=''
-  extra+="\(${resolution}          | lbl(\"Resolution\"))\(${rate} | opt | append | ln)"
+  extra+="\(${resolution_rate}     | lbln(\"Resolution\"))"
   extra+="\(${offset}              | lbln(\"Offset\"))"
   extra+='\(.rotation              | lbln("Rotation"))'
   extra+='\(.reflection | downcase | lbl("Reflection"))'
