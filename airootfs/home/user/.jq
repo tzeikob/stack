@@ -30,7 +30,7 @@ def opt:
   if is_nullish(.) | not then . else "" end;
 
 def lbl(display; default_value):
-  dft(default_value) | (display + ":" | spaces($SPC)) + "\(.)";
+  dft(default_value) | (display + ":" | spaces($SPC)) + "\u001b[2m\u001b[37m" + "\(.)" + "\u001b[0m\u001b[22m";
 
 def lbln(display; default_value):
   lbl(display; default_value) | "\(.)\n";
@@ -53,9 +53,9 @@ def olbln(display):
 
 def tree(display; default_value):
   if (is_nullish(.) | not) and (. | length > 0) then
-    (display + ":" | spaces($SPC)) + "\(. | join("\n" + ($SPC|tonumber * " ")))"
+    (display + ":" | spaces($SPC)) + "\u001b[2m\u001b[37m" + "\(. | join("\n" + ($SPC|tonumber * " ")))" + "\u001b[0m\u001b[22m"
   else
-    (display + ":" | spaces($SPC)) + default_value
+    (display + ":" | spaces($SPC)) + "\u001b[2m\u001b[37m" + default_value + "\u001b[0m\u001b[22m"
   end;
 
 def treeln(display; default_value):
