@@ -886,23 +886,6 @@ boost_performance () {
 configure_security () {
   log INFO 'Hardening system security...'
 
-  local badpass_msg='Sorry incorrect password!'
-  local timeout=0
-  local tries=2
-  local prompt='Enter current password: '
-
-  sed -i \
-    -e "/maxseq/a Defaults badpass_message=\"${badpass_msg}\"" \
-    -e "/maxseq/a Defaults passwd_timeout=${timeout}" \
-    -e "/maxseq/a Defaults passwd_tries=${tries}" \
-    -e "/maxseq/a Defaults passprompt=\"${prompt}\"" /etc/sudoers ||
-    abort ERROR 'Failed to set sudo password settings.'
-  
-  log INFO 'Bad password message has been set.'
-  log INFO "Password timeout interval set to ${timeout}."  
-  log INFO "Password failed tries set to ${tries}."
-  log INFO 'Password prompt has been set.'
-
   local deny=3
   local fail_interval=180
   local unlock_time=120
