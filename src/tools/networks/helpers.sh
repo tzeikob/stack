@@ -257,7 +257,7 @@ pick_wifi () {
     return 2
   fi
 
-  local option='{key: .ssid, value: "[\(.signal)] \(.ssid)"}'
+  local option='{key: .ssid, value: "\(.ssid | dft("Unknown"))\(.signal | opt | enclose | append)"}'
 
   local query="[.[] | ${option}]"
 
