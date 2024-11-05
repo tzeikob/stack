@@ -36,7 +36,7 @@ def lbln(display; default_value):
   lbl(display; default_value) | "\(.)\n";
 
 def lbl(display):
-  lbl(display; "Unavailable");
+  lbl(display; "unavailable");
 
 def lbln(display):
   lbl(display) | "\(.)\n";
@@ -62,7 +62,7 @@ def treeln(display; default_value):
   tree(display; default_value) | "\(.)\n";
 
 def tree(display):
-  tree(display; "Unavailable");
+  tree(display; "unavailable");
 
 def treeln(display):
   tree(display) | "\(.)\n";
