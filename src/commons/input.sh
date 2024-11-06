@@ -94,24 +94,21 @@ ask_secret () {
   echo "${prompt}"
 
   local char=''
-  while IFS= read -rs -n1 char 2>&1; do
-    local code=''
-    code="$(printf '%02x' "'${char}'")"
-
+  while IFS= read -rs -n1 char; do
     if [[ ${char} == $'\0' ]]; then
       break
-    elif [[ ${char} == $'\177' || ${code} == $'7f' || ${code} == $'08' ]]; then
+    elif [[ ${char} == $'\177' || ${char} == $'\b' ]]; then
       if [ ${#REPLY} -gt 0 ]; then
         REPLY="${REPLY%?}"
-        printf "\b \b"
+        printf '\b \b'
       fi
     else
       REPLY+="${char}"
-      printf "*"
+      printf '*'
     fi
   done
 
-  printf "\n"
+  printf '\n'
 }
 
 # Shows a Yes/No menu and asks user to select an option,
