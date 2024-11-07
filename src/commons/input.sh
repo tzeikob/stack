@@ -62,6 +62,8 @@ ask () {
 
   echo "${prompt}"
   read -re REPLY 2>&1
+
+  echo
 }
 
 # Asks the user to enter a secret value, the answer is
@@ -108,7 +110,7 @@ ask_secret () {
     fi
   done
 
-  printf '\n'
+  printf '\n\n'
 }
 
 # Shows a Yes/No menu and asks user to select an option,
@@ -142,6 +144,8 @@ confirm () {
 
   REPLY="$(echo "${options}" |
     LC_CTYPE=C.UTF-8 smenu -nm -/ prefix -W "${AES_LN}" -S /\(.*"${KVS}"\)//v)" || return 1
+  
+  echo
 
   # Remove the value part from the selected option
   if is_given "${REPLY}"; then
@@ -202,6 +206,8 @@ pick_one () {
 
   REPLY="$(echo "${options}" |
     LC_CTYPE=C.UTF-8 smenu -nm -/ prefix -W "${AES_LN}" "${args[@]}" -S /\(.*"${KVS}"\)//v)" || return 1
+  
+  echo
 
   # Remove the value part from the selected option
   if is_given "${REPLY}"; then
@@ -263,6 +269,8 @@ pick_many () {
 
   REPLY="$(echo "${options}" |
     LC_CTYPE=C.UTF-8 smenu -nm -/ prefix -W "${AES_LN}" "${args[@]}" -S /\(.*"${KVS}"\)//v -P "${AES}")" || return 1
+  
+  echo
 
   # Convert selected options to a json array of their keys
   if is_given "${REPLY}"; then
