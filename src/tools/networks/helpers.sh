@@ -243,8 +243,6 @@ pick_connection () {
 #  A menu of wifi ssids.
 pick_wifi () {
   local device="${1}"
-
-  log 'Detecting available wifi networks...'
   
   local networks=''
   networks="$(find_wifis "${device}")" || return 1

@@ -246,8 +246,6 @@ pick_printer () {
 # Outputs:
 #  A menu of uri print destinations.
 pick_uri () {
-  log 'Discovering print uri destinations...'
-
   local option='{key: .uri, value: "\(.uri) [\(.name | dft("..."))]"}'
   
   local query="[.[] | ${option}]"

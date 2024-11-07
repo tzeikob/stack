@@ -791,8 +791,6 @@ pick_rom () {
 # Outputs:
 #  A menu of host names.
 pick_host () {
-  log 'Searching hosts in local network...'
-
   local hosts=''
   hosts="$(find_hosts)"
 
