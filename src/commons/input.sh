@@ -8,6 +8,9 @@ AES=$'╬'
 AES_LN=$'╬\n'
 KVS=$'▒'
 
+CLR=$'\u001b[33m'
+RST=$'\u001b[0m'
+
 # Shows a prompt asking the user to enter the
 # next command, which is kept in the global var REPLY.
 # Arguments:
@@ -17,9 +20,11 @@ KVS=$'▒'
 prompt () {
   local label="${1:-"prompt"}"
 
+  label="${CLR}${label}>> ${RST}"
+
   REPLY=''
 
-  read -rep "${label}>> " REPLY 2>&1
+  read -rep "${label}" REPLY 2>&1
   
   if has_failed; then
     return 1
@@ -51,11 +56,19 @@ ask () {
   # Collect arguments
   shift $((OPTIND - 1))
 
-  local prompt="${1}"
+  local prompt="${CLR}${1}${RST}"
 
   REPLY=''
 
-  read -rep "${prompt} " REPLY 2>&1
+  echo "${prompt}"
+  read -re REPLY 2>&1
+
+  # Print a blank line after user input
+  if is_given "${REPLY}"; then
+    echo
+  fi
+
+  return 0
 }
 
 # Asks the user to enter a secret value, the answer is
@@ -81,12 +94,33 @@ ask_secret () {
   # Collect arguments
   shift $((OPTIND - 1))
 
-  local prompt="${1}"
+  local prompt="${CLR}${1}${RST}"
 
   REPLY=''
 
-  echo -n "${prompt} "
-  read -res REPLY 2>&1
+  echo "${prompt}"
+
+  local char=''
+  while IFS= read -rs -n1 char; do
+    if [[ ${char} == $'\0' ]]; then
+      break
+    elif [[ ${char} == $'\177' || ${char} == $'\b' ]]; then
+      if [ ${#REPLY} -gt 0 ]; then
+        REPLY="${REPLY%?}"
+        printf '\b \b'
+      fi
+    else
+      REPLY+="${char}"
+      printf '*'
+    fi
+  done
+
+  # Print a blank line after user input
+  if is_given "${REPLY}"; then
+    printf '\n\n'
+  else
+    printf '\n'
+  fi
 }
 
 # Shows a Yes/No menu and asks user to select an option,
@@ -116,10 +150,13 @@ confirm () {
   
   local options="no${KVS}No${AES}yes${KVS}Yes"
 
-  echo -e "${prompt}"
+  echo -e "${CLR}${prompt}${RST}"
 
   REPLY="$(echo "${options}" |
     LC_CTYPE=C.UTF-8 smenu -nm -/ prefix -W "${AES_LN}" -S /\(.*"${KVS}"\)//v)" || return 1
+  
+  # Print a blank line after user input
+  echo
 
   # Remove the value part from the selected option
   if is_given "${REPLY}"; then
@@ -176,10 +213,13 @@ pick_one () {
   options="$(echo "${options}" |
     jq -cer '[.[]|("\(.key)'"${KVS}"'\(.value)")]|join("'"${AES}"'")')" || return 1
 
-  echo -e "${prompt}"
+  echo -e "${CLR}${prompt}${RST}"
 
   REPLY="$(echo "${options}" |
     LC_CTYPE=C.UTF-8 smenu -nm -/ prefix -W "${AES_LN}" "${args[@]}" -S /\(.*"${KVS}"\)//v)" || return 1
+  
+  # Print a blank line after user input
+  echo
 
   # Remove the value part from the selected option
   if is_given "${REPLY}"; then
@@ -237,10 +277,13 @@ pick_many () {
   options="$(echo "${options}" |
     jq -cer '[.[]|("\(.key)'"${KVS}"'\(.value)")]|join("'"${AES}"'")')" || return 1
 
-  echo -e "${prompt}"
+  echo -e "${CLR}${prompt}${RST}"
 
   REPLY="$(echo "${options}" |
     LC_CTYPE=C.UTF-8 smenu -nm -/ prefix -W "${AES_LN}" "${args[@]}" -S /\(.*"${KVS}"\)//v -P "${AES}")" || return 1
+  
+  # Print a blank line after user input
+  echo
 
   # Convert selected options to a json array of their keys
   if is_given "${REPLY}"; then

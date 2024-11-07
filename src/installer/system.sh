@@ -728,6 +728,12 @@ setup_theme () {
     -e 's/#ICONS#/Dracula/' \
     -e 's/#CURSORS#/Breeze-Snow/' "/home/${user_name}/.config/gtk-3.0/settings.ini" ||
     abort ERROR 'Failed to set theme in GTK settings.'
+  
+  # Reset the cool-retro-term settings and profile
+  ./${HOME}/.config/cool-retro-term/reset "${HOME}" ||
+    abort ERROR 'Failed to reset the cool retro term theme.'
+  
+  log INFO 'Cool retro term theme has been reset.'
 
   log INFO 'Desktop theme has been setup.'
 }
@@ -879,23 +885,6 @@ boost_performance () {
 # Applies various system security settings.
 configure_security () {
   log INFO 'Hardening system security...'
-
-  local badpass_msg='Sorry incorrect password!'
-  local timeout=0
-  local tries=2
-  local prompt='Enter current password: '
-
-  sed -i \
-    -e "/maxseq/a Defaults badpass_message=\"${badpass_msg}\"" \
-    -e "/maxseq/a Defaults passwd_timeout=${timeout}" \
-    -e "/maxseq/a Defaults passwd_tries=${tries}" \
-    -e "/maxseq/a Defaults passprompt=\"${prompt}\"" /etc/sudoers ||
-    abort ERROR 'Failed to set sudo password settings.'
-  
-  log INFO 'Bad password message has been set.'
-  log INFO "Password timeout interval set to ${timeout}."  
-  log INFO "Password failed tries set to ${tries}."
-  log INFO 'Password prompt has been set.'
 
   local deny=3
   local fail_interval=180

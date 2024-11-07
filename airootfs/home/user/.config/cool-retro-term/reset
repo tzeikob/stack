@@ -1,0 +1,48 @@
+#!/bin/bash
+
+set -Eeo pipefail
+
+# Resets the cool retro terminal settings and profile
+# database.
+# Arguments:
+#  home: the home path of the user.
+run () {
+  local home="${1:-${HOME}}"
+
+  local settings=''
+  settings="$(cat ${home}/.config/cool-retro-term/settings.json | jq -cer .)" || return 1
+  
+  local profile=''
+  profile="$(cat ${home}/.config/cool-retro-term/profiles.json |
+    jq -cer '.[] | select(.text == "Stack") | .obj_string | del(.name, .version)')" || return 1
+  
+  local profiles=''
+  profiles="$(cat ${home}/.config/cool-retro-term/profiles.json |
+    jq -cer '[.[] | {text, obj_string: (.obj_string | tostring), builtin}]')" || return 1
+
+  local db_home="${home}/.local/share/cool-retro-term/cool-retro-term/QML/OfflineStorage/Databases"
+  local db_file_name='27e743fe85b8912a46804fed99e8a9ab'
+
+  rm -rf "${db_home}" && mkdir -p "${db_home}" || return 1
+
+  printf '%s\n' \
+    '[General]' \
+    'Description=StorageDatabase' \
+    'Driver=QSQLITE' \
+    'EstimatedSize=100000' \
+    'Name=coolretroterm1' \
+    'Version=1.0' > "${db_home}/${db_file_name}.ini" || return 1
+  
+  sqlite3 "${db_home}/${db_file_name}.sqlite" \
+    'CREATE TABLE settings (setting TEXT UNIQUE, value TEXT);' || return 1
+  
+  local insert_query=''
+  insert_query+='INSERT INTO settings (setting, value) VALUES'
+  insert_query+=" ('_CURRENT_SETTINGS', '${settings}'),"
+  insert_query+=" ('_CURRENT_PROFILE', '${profile}'),"
+  insert_query+=" ('_CUSTOM_PROFILES', '${profiles}');"
+  
+  sqlite3 "${db_home}/${db_file_name}.sqlite" "${insert_query}" || return 1
+}
+
+run "$@"

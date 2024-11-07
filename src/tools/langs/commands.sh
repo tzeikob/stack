@@ -18,7 +18,7 @@ show_status () {
   local query=''
   query+='\(.layout   | lbln("Layout"))'
   query+='\(.layouts  | lbln("Layouts"))'
-  query+='\(.variants | obln("Variants"))'
+  query+='\(.variants | olbln("Variants"))'
   query+='\(.keymap   | lbln("Keymap"))'
   query+='\(.options  | lbln("Options"))'
   query+='\(.model    | lbl("Model"))'

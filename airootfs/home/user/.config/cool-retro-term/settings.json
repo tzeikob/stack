@@ -1,0 +1,21 @@
+{
+  "fps": 20,
+  "x": 0,
+  "y": 0,
+  "width": 1024,
+  "height": 768,
+  "windowScaling": 1,
+  "showTerminalSize": true,
+  "fontScaling": 1,
+  "fontNames": [
+    "TERMINUS_SCALED",
+    "COMMODORE_PET",
+    "COMMODORE_PET"
+  ],
+  "showMenubar": false,
+  "bloomQuality": 0.5,
+  "burnInQuality": 0.5,
+  "useCustomCommand": false,
+  "customCommand": ""
+  }
+  

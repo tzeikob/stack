@@ -72,7 +72,9 @@ test_no_func_overriden () {
     airootfs/home/user/.config/dunst/hook
     airootfs/home/user/.config/polybar/scripts/*
     airootfs/home/user/.config/rofi/launch
+    airootfs/home/user/.config/cool-retro-term/reset
     airootfs/usr/lib/systemd/system-sleep/locker
+    airootfs/usr/local/bin/stack
     install.sh
     build.sh
     upgrade.sh

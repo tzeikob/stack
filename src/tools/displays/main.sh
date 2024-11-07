@@ -40,7 +40,6 @@ show_help () {
 
   printf ' %-48s %s\n' \
     'show status' 'Show a report of the Xorg server and active outputs.' \
-    'show logs <lines>' 'Show the last logs of the Xorg server.' \
     '' '' \
     'list outputs <status>' 'List all outputs or those with status,' \
     '' 'connected, disconnected, active, inactive, primary.' \
@@ -81,7 +80,6 @@ execute () {
     
   case "${command}${object:+ ${object}}" in
     'show status') show_status;;
-    'show logs') show_logs "${3}";;
     'show output') show_output "${3}";;
     'list outputs') list_outputs "${3}";;
     'list colors') list_colors;;

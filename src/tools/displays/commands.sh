@@ -38,6 +38,9 @@ show_status () {
   rate+='[.resolution_modes[].frequencies] | flatten |'
   rate+='[.[] | select(.is_current == true)] | .[0].frequency | unit("Hz")'
 
+  local resolution_rate=''
+  resolution_rate="(${resolution} | dft(\"...\")) + (${rate} | opt | append)"
+
   local offset='"[\(.offset_width), \(.offset_height)]"'
 
   # Reduce over color settings to match any devices having a profile set
@@ -52,10 +55,10 @@ show_status () {
   local query=''
   query+='\(.device_name           | lbln("Output"))'
   query+='\(.model_name            | lbln("Device"))'
-  query+="\(${resolution}          | lbl(\"Resolution\"))\(${rate} | opt | append | ln)"
+  query+="\(${resolution_rate}     | lbln(\"Resolution\"))"
   query+="\(${offset}              | lbln(\"Offset\"))"
-  query+="\(.rotation              | lbln("Rotation"))"
-  query+="\(.reflection | downcase | lbln("Reflection"))"
+  query+='\(.rotation              | lbln("Rotation"))'
+  query+='\(.reflection | downcase | lbln("Reflection"))'
   query+="\(${color}               | lbl(\"Color\"; \"none\"))"
 
   local aliases='.model_name as $m | .product_id as $p | .serial_number as $s'
@@ -67,40 +70,6 @@ show_status () {
   if has_failed; then
     log 'Unable to read active outputs.'
     return 2
-  fi
-}
-
-# Shows the Xorg displays log file.
-# Arguments:
-#  lines: the number of last lines to show
-# Outputs:
-#  The log file of the xorg display.
-show_logs () {
-  local lines="${1}"
-
-  if is_given "${lines}" && is_not_integer "${lines}" '[0,]'; then
-    log 'Invalid lines value.'
-    return 2
-  fi
-
-  local id=''
-  id="$(echo "${DISPLAY}" | cut -d ':' -f 2)"
-
-  local log_file="${HOME}/.local/share/xorg/Xorg.${id}.log"
-
-  if file_not_exists "${log_file}"; then
-    log_file="/var/log/Xorg.${id}.log"
-  fi
-
-  if file_not_exists "${log_file}"; then
-    log 'Unable to locate xorg log file.'
-    return 2
-  fi
-
-  if is_given "${lines}"; then
-    cat "${log_file}" | tail -n "${lines}"
-  else
-    cat "${log_file}"
   fi
 }
 
@@ -140,11 +109,14 @@ show_output () {
   rate+='[.resolution_modes[].frequencies] | flatten |'
   rate+='[.[] | select(.is_current == true)] | .[0].frequency | unit("Hz")'
 
+  local resolution_rate=''
+  resolution_rate="(${resolution} | dft(\"...\")) + (${rate} | opt | append)"
+
   local offset=''
   offset='"[\(.offset_width), \(.offset_height)]"'
 
   local extra=''
-  extra+="\(${resolution}          | lbl(\"Resolution\"))\(${rate} | opt | append | ln)"
+  extra+="\(${resolution_rate}     | lbln(\"Resolution\"))"
   extra+="\(${offset}              | lbln(\"Offset\"))"
   extra+='\(.rotation              | lbln("Rotation"))'
   extra+='\(.reflection | downcase | lbl("Reflection"))'
@@ -198,7 +170,7 @@ list_outputs () {
   query+='\(.model_name                         | olbln("Device"))'
   query+='\(.is_connected                       | lbln("Connected"))'
   query+='\(.is_connected and .resolution_width | lbln("Active"))'
-  query+='\(.is_primary                         | lbl("Primary"))'
+  query+='\(.is_primary                         | lbln("Primary"))'
   query=".[] |  \"${query}\""
 
   local outputs=''

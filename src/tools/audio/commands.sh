@@ -20,7 +20,7 @@ show_status () {
 
   pactl --format=json info | jq -cer --arg SPC ${space} "\"${query}\"" || return 1
 
-  local query='.[] | select(.unit == "pipewire-pulse.service") | .active | lbln("Active")'
+  local query='.[] | select(.unit == "pipewire-pulse.service") | .active | lbln("Service")'
 
   systemctl --user -a | jc --systemctl | jq -cer --arg SPC ${space} "${query}" || return 1
 
@@ -55,13 +55,6 @@ show_status () {
   query=".[] | select(.name == \"${source}\") | select(.active_port) | \"${query}\""
 
   pactl --format=json list sources | jq -cr --arg SPC ${space} "${query}" || return 1
-}
-
-# Shows the logs of the audio service.
-# Outputs:
-#  A long list of log messages.
-show_logs () {
-  systemctl --user status --no-pager pipewire-pulse.service | tail -n +12 || return 1
 }
 
 # Shows the data of the card with identified by the
@@ -102,8 +95,8 @@ show_card () {
   query+='\(.properties."device.bus" | uppercase          | lbln("Bus"))'
   query+='\(.properties."api.alsa.use-acp"                | olbln("ACP"))'
   query+='\(.active_profile                               | lbln("Profile"))'
-  query+="\(.profiles//[] | [${profiles}]                 | treeln("Profiles"; "none"))"
-  query+="\(.ports//[] | [${ports}]                       | tree("Ports"; "none"))"
+  query+="\(.profiles//[] | [${profiles}]                 | treeln(\"Profiles\"; \"none\"))"
+  query+="\(.ports//[] | [${ports}]                       | tree(\"Ports\"; \"none\"))"
 
   echo "${card}" | jq -cer --arg SPC 10 "\"${query}\"" || return 1
 }

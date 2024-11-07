@@ -43,7 +43,7 @@ show_status () {
   curl -s 'http://ip-api.com/json' | jq -cer --arg SPC ${space} "\"${query}\""
 
   if has_failed; then
-    echo '""' | jq -cer --arg SPC ${space} 'lbl("ISP"; "Unavailable")'
+    echo '""' | jq -cer --arg SPC ${space} 'lbl("ISP"; "unavailable")'
   fi
 
   find_proxy | jq -cer --arg SPC ${space} 'lbl("Proxy"; "none")'

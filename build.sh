@@ -35,7 +35,7 @@ init () {
 # Checks if any build dependencies are missing and
 # abort immediately.
 check_build_deps () {
-  local deps=(archiso rsync)
+  local deps=(archiso rsync sqlite3)
 
   local dep=''
   for dep in "${deps[@]}"; do
@@ -671,6 +671,14 @@ setup_theme () {
     -e 's/#ICONS#/Dracula/' \
     -e 's/#CURSORS#/Breeze-Snow/' "${ROOT_FS}/root/.config/gtk-3.0/settings.ini" ||
     abort ERROR 'Failed to set theme in GTK settings.'
+  
+  # Reset the cool-retro-term settings and profile
+  ./${ROOT_FS}/root/.config/cool-retro-term/reset "${ROOT_FS}/root" ||
+    abort ERROR 'Failed to reset the cool retro term theme.'
+  
+  log INFO 'Cool retro term theme has been reset.'
+
+  log INFO 'Desktop theme has been setup.'
 }
 
 # Sets up some extra system fonts.
@@ -800,6 +808,7 @@ set_file_permissions () {
     '/root/.config/polybar/scripts/ 0:0:755'
     '/root/.config/rofi/launch 0:0:755'
     '/root/.config/stack/ 0:0:664'
+    '/root/.config/cool-retro-term/reset 0:0:755'
     '/opt/stack/commons/ 0:0:755'
     '/opt/stack/tools/ 0:0:755'
     '/usr/local/bin/stack 0:0:755'

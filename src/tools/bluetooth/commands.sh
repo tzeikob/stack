@@ -15,7 +15,7 @@ source src/tools/bluetooth/helpers.sh
 show_status () {
   local space=15
 
-  local query='.[] | select(.unit == ."bluetooth.service") | .active | lbl("Active")'
+  local query='.[] | select(.unit == ."bluetooth.service") | .active | lbl("Service")'
 
   systemctl  -a | jc --systemctl | jq -cer --arg SPC ${space} "${query}" || return 1
 
@@ -55,13 +55,6 @@ show_status () {
     echo
     find_device "${device}" | jq -cer --arg SPC ${space} "${query}" || return 1
   done <<< "${devices}"
-}
-
-# Shows the logs of the bluetooth service.
-# Outputs:
-#  A long list of log messages.
-show_logs () {
-  systemctl status --no-pager bluetooth.service | tail -n +13 || return 1
 }
 
 # Shows the list of available controllers.

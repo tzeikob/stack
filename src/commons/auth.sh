@@ -1,5 +1,6 @@
 #!/bin/bash
 
+source src/commons/input.sh
 source src/commons/error.sh
 source src/commons/logger.sh
 source src/commons/validators.sh
@@ -19,8 +20,13 @@ authenticate_user () {
   # Invalidate user's cached credentials
   sudo -K
 
+  ask_secret 'Enter current password:' || return $?
+  is_empty "${REPLY}" && log 'Password is required.' && return 2
+
+  local password="${REPLY}"
+
   # Mimic authentication with a dry run
-  sudo /usr/bin/true 1> /dev/null
+  echo "${password}" | sudo -S /usr/bin/true 2> /dev/null
 
   if has_failed; then
     log 'Sorry incorrect password!'
