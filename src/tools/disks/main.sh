@@ -119,12 +119,12 @@ run () {
     case "${opt}" in
      'h')
         ON_QUIET_MODE='true'
-        show_help once && echo
+        show_help once
         return 0;;
      'q') ON_QUIET_MODE='true';;
      's') ON_SCRIPT_MODE='true';;
      *)
-      log "Ooops, invalid or unknown option -${OPTARG}!" && echo
+      log "Ooops, invalid or unknown option -${OPTARG}!"
       beep 2
       return $?;;
     esac
@@ -135,7 +135,7 @@ run () {
   local args_len=$#
 
   if is_true "${args_len} = 0" && on_script_mode; then
-    log 'Option -s cannot be used in loop mode.' && echo
+    log 'Option -s cannot be used in loop mode.'
     beep 2
     return $?
   fi
@@ -154,7 +154,7 @@ run () {
       command="$(echo "${REPLY}" | awk '{print (NF == 1) ? $1 : $0}')"
 
       case "${command}" in
-        'help') clear && show_help && echo && continue;;
+        'help') clear && show_help && continue;;
         'clear') clear && continue;;
         'quit') break;;
         '') continue;;
@@ -171,8 +171,6 @@ run () {
     if is_true "${exit_code} = 1"; then
       log 'Ooops, an unknwon error occurred!'
     fi
-
-    echo
 
     on_loud_mode && beep "${exit_code}"
 
