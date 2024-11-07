@@ -63,7 +63,12 @@ ask () {
   echo "${prompt}"
   read -re REPLY 2>&1
 
-  echo
+  # Print a blank line after user input
+  if is_given "${REPLY}"; then
+    echo
+  fi
+
+  return 0
 }
 
 # Asks the user to enter a secret value, the answer is
@@ -110,7 +115,12 @@ ask_secret () {
     fi
   done
 
-  printf '\n\n'
+  # Print a blank line after user input
+  if is_given "${REPLY}"; then
+    printf '\n\n'
+  else
+    printf '\n'
+  fi
 }
 
 # Shows a Yes/No menu and asks user to select an option,
@@ -145,6 +155,7 @@ confirm () {
   REPLY="$(echo "${options}" |
     LC_CTYPE=C.UTF-8 smenu -nm -/ prefix -W "${AES_LN}" -S /\(.*"${KVS}"\)//v)" || return 1
   
+  # Print a blank line after user input
   echo
 
   # Remove the value part from the selected option
@@ -207,6 +218,7 @@ pick_one () {
   REPLY="$(echo "${options}" |
     LC_CTYPE=C.UTF-8 smenu -nm -/ prefix -W "${AES_LN}" "${args[@]}" -S /\(.*"${KVS}"\)//v)" || return 1
   
+  # Print a blank line after user input
   echo
 
   # Remove the value part from the selected option
@@ -270,6 +282,7 @@ pick_many () {
   REPLY="$(echo "${options}" |
     LC_CTYPE=C.UTF-8 smenu -nm -/ prefix -W "${AES_LN}" "${args[@]}" -S /\(.*"${KVS}"\)//v -P "${AES}")" || return 1
   
+  # Print a blank line after user input
   echo
 
   # Convert selected options to a json array of their keys
