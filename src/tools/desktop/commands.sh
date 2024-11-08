@@ -920,20 +920,14 @@ init_scratchpad () {
 # Initiates desktop status bars.
 init_bars () {  
   # Terminate already running bar instances
-  polybar-msg cmd quit 1> /dev/null
-
-  # Start new loggin section
-  echo "---" | tee -a /tmp/polybar.log 1> /dev/null
+  polybar-msg cmd quit 1>&2
 
   # Launch top/bottom bars for the primary monitor
   local primary=''
   primary="$(polybar -m | awk -F':' '/primary/{print $1}')"
 
-  MONITOR="${primary}" polybar -r primary |
-    tee -a /tmp/polybar.log 1> /dev/null & disown
-  
-  MONITOR="${primary}" polybar -r secondary |
-    tee -a /tmp/polybar.log 1> /dev/null & disown
+  MONITOR="${primary}" polybar -r primary 1>&2 & disown
+  MONITOR="${primary}" polybar -r secondary 1>&2 & disown
 
   # Launch tertiary bars for each other monitor
   local others=''
@@ -943,8 +937,7 @@ init_bars () {
     local monitor=''
 
     while read -r monitor; do
-      MONITOR="${monitor}" polybar -r tertiary |
-        tee -a /tmp/polybar.log 1> /dev/null & disown
+      MONITOR="${monitor}" polybar -r tertiary 1>&2 & disown
     done <<< "${others}"
   fi
 
@@ -964,7 +957,7 @@ init_bindings () {
   kill_process '^sxhkd.*'
   
   # Launch a new instance of sxhkd process
-  sxhkd 1> /dev/null &
+  sxhkd 1>&2 &
   
   # Dettach it from the current shell to suppress kill outputs
   disown $! && sleep 1
@@ -987,7 +980,7 @@ start () {
 
   # Start compositor if it is down
   if is_process_down '^picom.*'; then
-    picom &
+    picom 1>&2 &
   fi
   
   # Restart window manager if it is already up
@@ -995,7 +988,7 @@ start () {
     restart && return 0 || return $?
   fi
   
-  exec bspwm 1> /dev/null
+  exec bspwm 1>&2
 
   if has_failed; then
     log 'Failed to start desktop.'
@@ -1013,13 +1006,13 @@ restart () {
   kill_process '^picom.*'
   
   # Launch a new instance of picom process
-  picom 1> /dev/null &
+  picom 1>&2 &
   
   # Dettach it from the current shell to suppress kill outputs
   disown $! && sleep 1
 
   # Restart window manager
-  bspc wm --restart 1> /dev/null
+  bspc wm --restart 1>&2
 
   if has_failed; then
     log 'Failed to restart desktop.'
