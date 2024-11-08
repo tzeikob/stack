@@ -13,22 +13,20 @@ run () {
   local target="${1}"
 
   # Set any sticky window of the source and target to not sticky
-  local nodes=''
-  nodes="$(
-    bspc query -N -n .sticky -d focused;
-    bspc query -N -n .sticky -d "${target}"
-  )"
+  local nodes=()
+  nodes+=($(bspc query -N -n .sticky -d focused))
+  nodes+=($(bspc query -N -n .sticky -d "${target}"))
 
   local node=''
   
-  while read -r node; do
+  for node in ${nodes[@]}; do
     bspc node "${node}" -g sticky
 
     if has_failed; then
       log "Failed to set window ${node} to not sticky."
       return 1
     fi
-  done <<< "${nodes}"
+  done
   
   bspc desktop -s "${target}" --follow
 
@@ -38,14 +36,14 @@ run () {
   fi
 
   # Set windows back to sticky mode
-  while read -r node; do
+  for node in ${nodes[@]}; do
     bspc node "${node}" -g sticky
 
     if has_failed; then
       log "Failed to set window ${node} back to sticky."
       return 1
     fi
-  done <<< "${nodes}"
+  done
 
   # Fix any desktop inconsistencies caused by the swap
   desktop -qs fix workspaces
