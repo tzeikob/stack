@@ -10,6 +10,8 @@ run () {
     echo 'Some orphan packages were found:'
     echo "${pkgs[@]}"
   fi
+
+  return 0
 }
 
 run "$@"
