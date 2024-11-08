@@ -800,6 +800,7 @@ set_file_permissions () {
   local perms=(
     '/etc/pacman.d/scripts/ 0:0:755'
     '/etc/sudoers.d/ 0:0:750'
+    '/etc/profile.d/stack.sh 0:0:644'
     '/etc/systemd/logind.conf.d/ 0:0:644'
     '/etc/systemd/sleep.conf.d/ 0:0:644'
     '/etc/tlp.d/ 0:0:755'
