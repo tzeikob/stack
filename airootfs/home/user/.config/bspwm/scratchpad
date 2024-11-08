@@ -1,8 +1,10 @@
 #!/bin/bash
 
-set -Eeo pipefail
+set -o pipefail
 
 source /opt/stack/commons/validators.sh
+source /opt/stack/commons/logger.sh
+source /opt/stack/commons/error.sh
 
 # Toggles the scratchpad terminal window on and off,
 # if none running terminal is found, a new instance
@@ -12,13 +14,28 @@ run () {
   local current_desktop=''
   current_desktop="$(bspc query -D -d focused)"
 
+  if has_failed; then
+    log 'Failed to find the current focused desktop.'
+    return 1
+  fi
+
   local pids=''
   pids="$(xdotool search --class 'scratch')"
+
+  if has_failed; then
+    log 'Failed to find any scratchpad windows.'
+    return 1
+  fi
 
   for pid in "${pids}"; do
     # Find to which desktop the scratchpad window is now
     local scratchpad_desktop=''
     scratchpad_desktop="$(bspc query -D -n "${pid}")"
+
+    if has_failed; then
+      log 'Failed to find the desktop the scratchpad is shown.'
+      return 1
+    fi
 
     # Toggle scratchpad on/off or bring it to the currently focused desktop
     if equals "${current_desktop}" "${scratchpad_desktop}"; then
@@ -26,7 +43,14 @@ run () {
     else
       bspc node "${pid}" --flag hidden=off -d "${current_desktop}" -f
     fi
+
+    if has_failed; then
+      log 'Failed to handle the scratchpad window in current desktop.'
+      return 1
+    fi
   done
+
+  return 0
 }
 
 run "$@"

@@ -1,7 +1,8 @@
 #!/bin/bash
 
-set -Eeo pipefail
+set -o pipefail
 
+source /opt/stack/commons/error.sh
 source /opt/stack/commons/math.sh
 
 # Prints the current memory usage and utilization.
@@ -9,6 +10,11 @@ run () {
   # Read current memory usage and utilization
   local stats=0
   stats="$(top -bn1 | awk '/MiB Mem/{printf "%05d,%f", int($8), $8/$4}')"
+
+  if has_failed; then
+    echo 'Err!'
+    return 0
+  fi
 
   local usage=0
   usage="$(echo "${stats}" | cut -d ',' -f 1)"

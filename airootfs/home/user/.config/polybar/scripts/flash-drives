@@ -1,6 +1,8 @@
 #!/bin/bash
 
-set -Eeo pipefail
+set -o pipefail
+
+source /opt/stack/commons/error.sh
 
 # Reads for hooked in usb removable flash
 # drives and prints them out one by one.
@@ -20,6 +22,12 @@ run () {
   query+='|join("%{F#444444} | %{F-}")'
 
   lsblk -J -o "${fields}" | jq -cr "${query}"
+
+  if has_failed; then
+    echo 'Err!'
+  fi
+
+  return 0
 }
 
 run "$@"

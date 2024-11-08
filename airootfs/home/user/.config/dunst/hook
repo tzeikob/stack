@@ -1,8 +1,10 @@
 #!/bin/bash
 
-set -Eeo pipefail
+set -o pipefail
 
 source /opt/stack/commons/validators.sh
+source /opt/stack/commons/logger.sh
+source /opt/stack/commons/error.sh
 
 # Plays the popup sound for the incoming notification
 # based on the notification's parameters.
@@ -30,9 +32,14 @@ run () {
     LC_ALL=en_US.UTF-8 pw-play --volume=0.5 "${sound_file}" &> /dev/null
   elif command -v aplay &> /dev/null; then
     aplay "${sound_file}" &> /dev/null
-  else
-    return 0
   fi
+
+  if has_failed; then
+    log 'Failed to play the notification sound.'
+    return 1
+  fi
+
+  return 0
 }
 
 run "$@"

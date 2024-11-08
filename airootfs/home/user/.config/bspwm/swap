@@ -1,6 +1,9 @@
 #!/bin/bash
 
-set -Eeo pipefail
+set -o pipefail
+
+source /opt/stack/commons/logger.sh
+source /opt/stack/commons/error.sh
 
 # Swaps the windows in the currently focused desktop
 # with those of the given desktop.
@@ -20,17 +23,39 @@ run () {
   
   while read -r node; do
     bspc node "${node}" -g sticky
+
+    if has_failed; then
+      log "Failed to set window ${node} to not sticky."
+      return 1
+    fi
   done <<< "${nodes}"
   
   bspc desktop -s "${target}" --follow
 
+  if has_failed; then
+    log "Failed to set focused desktop to ${target}."
+    return 1
+  fi
+
   # Set windows back to sticky mode
   while read -r node; do
     bspc node "${node}" -g sticky
+
+    if has_failed; then
+      log "Failed to set window ${node} back to sticky."
+      return 1
+    fi
   done <<< "${nodes}"
 
   # Fix any desktop inconsistencies caused by the swap
   desktop -qs fix workspaces
+
+  if has_failed; then
+    log 'Failed to fix desktop workspaces.'
+    return 1
+  fi
+
+  return 0
 }
 
 run "$@"

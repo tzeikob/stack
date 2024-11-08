@@ -1,8 +1,10 @@
 #!/bin/bash
 
-set -Eeo pipefail
+set -o pipefail
 
 source /opt/stack/commons/validators.sh
+source /opt/stack/commons/logger.sh
+source /opt/stack/commons/error.sh
 
 # Sets the size of any file chooser dialog.
 # Arguments:
@@ -12,10 +14,17 @@ rule_file_chooser () {
 
   local class=''
   class="$(xprop -id "${wid}" | awk '/WM_WINDOW_ROLE/ {print $3}')"
+
+  if has_failed; then
+    log 'Failed to set the size of file chooser.'
+    return 1
+  fi
   
   if equals "${class}" '"GtkFileChooserDialog"'; then
     echo 'rectangle=900x500+0+0'
   fi
+
+  return 0
 }
 
 rule_file_chooser "$@"

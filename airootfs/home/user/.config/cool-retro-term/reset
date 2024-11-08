@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -Eeo pipefail
+set -o pipefail
 
 # Resets the cool retro terminal settings and profile
 # database.

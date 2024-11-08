@@ -1,8 +1,10 @@
 #!/bin/bash
 
-set -Eeo pipefail
+set -o pipefail
 
 source /opt/stack/commons/validators.sh
+source /opt/stack/commons/logger.sh
+source /opt/stack/commons/error.sh
 
 # Resizes the windows according to the given direction
 # and delta factors.
@@ -44,6 +46,13 @@ run () {
 
   bspc node -z "${direction}" "${x}" "${y}" ||
     bspc node -z "${opposite}" "${x}" "${y}"
+  
+  if has_failed; then
+    log 'Failed to resize the focused window.'
+    return 1
+  fi
+
+  return 0
 }
 
 run "$@"
