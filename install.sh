@@ -783,8 +783,6 @@ grant () {
   if has_failed || ! grep -q "^${rule}" /mnt/etc/sudoers; then
     abort "Failed to grant ${key} permission."
   fi
-
-  return 0
 }
 
 # Revokes temporarily granted sudo permissions.
@@ -811,8 +809,6 @@ revoke () {
   if has_failed || ! grep -q "^# ${rule}" /mnt/etc/sudoers; then
     log "Failed to revoke ${key} permission."
   fi
-
-  return 0
 }
 
 # Clean installation files and collect logs.

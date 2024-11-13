@@ -71,16 +71,12 @@ is_scanning () {
   local mode=''
   mode="$(find_controller | jq -cer '.[0] | .discovering')" || return 1
 
-  if is_yes "${mode}"; then
-    return 0
-  else
-    return 1
-  fi
+  is_yes "${mode}"
 }
 
 # An inverse version of is_scanning.
 is_not_scanning () {
-  is_scanning && return 1 || return 0
+  ! is_scanning
 }
 
 # Shows a menu asking the user to select a controller.
@@ -152,14 +148,10 @@ kill_scanning_proccesses () {
 is_valid_status () {
   local status="${1}"
 
-  if not_match "${status}" '^(paired|connected|trusted|bonded)$'; then
-    return 1
-  fi
-
-  return 0
+  match "${status}" '^(paired|connected|trusted|bonded)$'
 }
 
 # An inverse version of is_valid_status.
 is_not_valid_status () {
-  is_valid_status "${1}" && return 1 || return 0
+  ! is_valid_status "${1}"
 }

@@ -101,12 +101,12 @@ remote_exists () {
 
   local query=".[] | select(.name == \"${name}\")"
 
-  find_remotes | jq -cer "${query}" 1> /dev/null || return 1
+  find_remotes | jq -cer "${query}" 1> /dev/null
 }
 
 # An inverse version of remote_exists.
 remote_not_exists () {
-  remote_exists "${1}" && return 1 || return 0
+  ! remote_exists "${1}"
 }
 
 # Checks if the remote with the given name is mounted
@@ -123,7 +123,7 @@ is_remote_mounted () {
 
 # An inverse version of is_remote_mounted.
 is_remote_not_mounted () {
-  is_remote_mounted "${1}" && return 1 || return 0
+  ! is_remote_mounted "${1}"
 }
 
 # Shows a menu asking the user to select one remote.

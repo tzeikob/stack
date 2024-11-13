@@ -108,19 +108,12 @@ destination_exists () {
 
   local query=".[] | select(.name == \"${name}\")"
 
-  local destination=''
-  destination="$(find_destinations | jq -cer "${query}")" || return 1
-
-  if is_empty "${destination}"; then
-    return 1
-  fi
-
-  return 0
+  find_destinations | jq -cer "${query}" &> /dev/null
 }
 
 # An inverse version of destination_exists.
 destination_not_exists () {
-  destination_exists "${1}" && return 1 || return 0
+  ! destination_exists "${1}"
 }
 
 # Discovers any direct or network print destinations.
@@ -204,19 +197,12 @@ job_exists () {
 
   local query=".[] | select(.id == \"${id}\")"
 
-  local job=''
-  job="$(find_jobs | jq -cer "${query}")" || return 1
-
-  if is_empty "${id}"; then
-    return 1
-  fi
-  
-  return 0
+  find_jobs | jq -cer "${query}" &> /dev/null
 }
 
 # An inverse version of job_exists.
 job_not_exists () {
-  job_exists "${1}" && return 1 || return 0
+  ! job_exists "${1}"
 }
 
 # Shows a menu asking the user to select one printer.
@@ -303,17 +289,14 @@ find_drivers () {
 is_driver_available () {
   local name="${1}"
 
-  local drivers=''
-  drivers="$(find_drivers)" || return 1
-
   local query=".[] | select(.key == \"${name}\")"
 
-  echo "${drivers}" | jq -cer "${query}" &> /dev/null || return 1
+  find_drivers | jq -cer "${query}" &> /dev/null
 }
 
 # An inverse version of is_driver_available.
 is_driver_not_available () {
-  is_driver_available "${1}" && return 1 || return 0
+  ! is_driver_available "${1}"
 }
 
 # Shows a menu asking the user to select one driver.
@@ -381,16 +364,12 @@ is_print_option () {
 
   local options='Quality|PageSize|MediaType|TonerSaveMode|printer-error-policy'
 
-  if not_match "${key}" "^(${options})$"; then
-    return 1
-  fi
-
-  return 0
+  match "${key}" "^(${options})$"
 }
 
 # An inverse version of is_print_option.
 is_not_print_option () {
-  is_print_option "${1}" && return 1 || return 0
+  ! is_print_option "${1}"
 }
 
 # Shows a menu asking the user to select a print quality
@@ -414,16 +393,12 @@ pick_print_quality () {
 is_valid_quality () {
   local value="${1}"
 
-  if not_match "${value}" '^(600dpi|1200dpi)$'; then
-    return 1
-  fi
-
-  return 0
+  match "${value}" '^(600dpi|1200dpi)$'
 }
 
 # An inverse version of is_valid_quality.
 is_not_valid_quality () {
-  is_valid_quality "${1}" && return 1 || return 0
+  ! is_valid_quality "${1}"
 }
 
 # Shows a menu asking the user to select a page size option.
@@ -461,16 +436,12 @@ is_valid_page_size () {
   local sizes='Letter|Legal|A4|A5|Executive|Folio|JB5'
   sizes+='|B5-ISO|COM10|Monarch|DL|C5|Oficio_S|PCard4x6'
 
-  if not_match "${value}" "^(${sizes})$"; then
-    return 1
-  fi
-
-  return 0
+  match "${value}" "^(${sizes})$"
 }
 
 # An inverse version of is_valid_page_size.
 is_not_valid_page_size () {
-  is_valid_page_size "${1}" && return 1 || return 0
+  ! is_valid_page_size "${1}"
 }
 
 # Shows a menu asking the user to select a media type option.
@@ -507,16 +478,12 @@ is_valid_media_type () {
   local types='None|Plain|Thick|Thin|Bond|Color|Card|Labels'
   types+='|Preprinted|Cotton|Archive|Recycled|Envelope'
 
-  if not_match "${value}" "^(${types})$"; then
-    return 1
-  fi
-
-  return 0
+  match "${value}" "^(${types})$"
 }
 
 # An inverse version of is_valid_media_type.
 is_not_valid_media_type () {
-  is_valid_media_type "${1}" && return 1 || return 0
+  ! is_valid_media_type "${1}"
 }
 
 # Shows a menu asking the user to select a toner mode option.
@@ -539,16 +506,12 @@ pick_toner_mode () {
 is_valid_toner_mode () {
   local value="${1}"
 
-  if not_match "${value}" '^(Save|Standard)$'; then
-    return 1
-  fi
-
-  return 0
+  match "${value}" '^(Save|Standard)$'
 }
 
 # An inverse version of is_valid_toner_mode.
 is_not_valid_toner_mode () {
-  is_valid_toner_mode "${1}" && return 1 || return 0
+  ! is_valid_toner_mode "${1}"
 }
 
 # Shows a menu asking the user to select a error policy option.
@@ -575,14 +538,10 @@ is_valid_error_policy () {
 
   local policies='abort-job|retry-current-job|retry-job|stop-printer'
 
-  if not_match "${value}" "^(${policies})$"; then
-    return 1
-  fi
-
-  return 0
+  match "${value}" "^(${policies})$"
 }
 
 # An inverse version of is_valid_error_policy.
 is_not_valid_error_policy () {
-  is_valid_error_policy "${1}" && return 1 || return 0
+  ! is_valid_error_policy "${1}"
 }

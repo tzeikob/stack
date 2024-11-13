@@ -23,8 +23,6 @@ rule_file_chooser () {
   if equals "${class}" '"GtkFileChooserDialog"'; then
     echo 'rectangle=900x500+0+0'
   fi
-
-  return 0
 }
 
 rule_file_chooser "$@"

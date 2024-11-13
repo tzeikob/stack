@@ -122,16 +122,12 @@ pick_module () {
 is_module_type () {
   local type"${1}"
   
-  if not_match "${type}" '^(output|input)$'; then
-    return 1
-  fi
-
-  return 0
+  match "${type}" '^(output|input)$'
 }
 
 # An inverse version of is_module_type.
 is_not_module_type () {
-  is_module_type "${1}" && return 1 || return 0
+  ! is_module_type "${1}"
 }
 
 # Checks if the given value is a valid volume value.
@@ -142,16 +138,12 @@ is_not_module_type () {
 is_valid_volume () {
   local volume="${1}"
   
-  if not_match "${volume}" '^(up|down|mute|unmute|[0-9]+)$'; then
-    return 1
-  fi
-
-  return 0
+  match "${volume}" '^(up|down|mute|unmute|[0-9]+)$'
 }
 
 # An inverse version of is_valid_volume.
 is_not_valid_volume () {
-  is_valid_volume "${1}" && return 1 || return 0
+  ! is_valid_volume "${1}"
 }
 
 # Checks if the given mode is a valid pactl mute mode.
@@ -162,14 +154,10 @@ is_not_valid_volume () {
 is_mute_mode () {
   local mode="${1}"
 
-  if not_match "${mode}" '^(1|0)$'; then
-    return 1
-  fi
-
-  return 0
+  match "${mode}" '^(1|0)$'
 }
 
 # An inverse version of is_mute_mode.
 is_not_mute_mode () {
-  is_mute_mode "${1}" && return 1 || return 0
+  ! is_mute_mode "${1}"
 }

@@ -28,14 +28,13 @@ find_all () {
 
 # Checks if the notifications stream service
 # is up and running.
+# Returns:
+#  0 if notification service is up otherwise 1.
 is_notifications_up () {
   local query=''
-  query+='[.[] | select(.command | test("/usr/bin/dunst|dunst.*"))] | length > 0'
+  query='[.[] | select(.command | test("/usr/bin/dunst|dunst.*"))] | length > 0'
 
-  local is_up=''
-  is_up="$(ps aux | grep -v 'jq' | jc --ps | jq -cr "${query}")" || return 1
-
-  echo "${is_up}"
+  ps aux | grep -v 'jq' | jc --ps | jq -cer "${query}" &> /dev/null
 }
 
 # Checks if the given value is a valid sort field.
@@ -46,16 +45,12 @@ is_notifications_up () {
 is_valid_sort_field () {
   local field="${1}"
 
-  if not_match "${field}" '^(id|app)$'; then
-    return 1
-  fi
-
-  return 0
+  match "${field}" '^(id|app)$'
 }
 
 # An inverse version of is_valid_sort_field.
 is_not_valid_sort_field () {
-  is_valid_sort_field "${1}" && return 1 || return 0
+  ! is_valid_sort_field "${1}"
 }
 
 # Returns the notifications state.

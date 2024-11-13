@@ -26,8 +26,6 @@ run () {
   if has_failed; then
     echo 'Err!'
   fi
-
-  return 0
 }
 
 run "$@"

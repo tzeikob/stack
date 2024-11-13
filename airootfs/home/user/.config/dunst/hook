@@ -38,8 +38,6 @@ run () {
     log 'Failed to play the notification sound.'
     return 1
   fi
-
-  return 0
 }
 
 run "$@"

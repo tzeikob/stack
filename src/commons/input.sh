@@ -26,10 +26,6 @@ prompt () {
 
   read -rep "${label}" REPLY 2>&1
   
-  if has_failed; then
-    return 1
-  fi
-
   history -s "${REPLY}"
 }
 
@@ -67,8 +63,6 @@ ask () {
   if is_given "${REPLY}"; then
     echo
   fi
-
-  return 0
 }
 
 # Asks the user to enter a secret value, the answer is

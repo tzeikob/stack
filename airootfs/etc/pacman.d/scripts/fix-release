@@ -13,8 +13,6 @@ run () {
       'DISTRIB_RELEASE="rolling"' \
       'DISTRIB_DESCRIPTION="Stack Linux"' > /etc/lsb-release
   fi
-
-  return 0
 }
 
 run "$@"

@@ -7,10 +7,7 @@ source src/tools/notifications/helpers.sh
 
 # Starts the notifications service.
 start () {
-  local is_up='false'
-  is_up="$(is_notifications_up)" || return 1
-  
-  if is_true "${is_up}"; then
+  if is_notifications_up; then
     log 'Notifications service is already runnning.'
     return 2
   fi
@@ -58,9 +55,15 @@ restart () {
 show_status () {
   local space=10
 
+  local is_service_up='false'
+
+  if is_notifications_up; then
+    is_service_up='true'
+  fi
+
   local query='. | up_down | lbl("Service")'
 
-  is_notifications_up | jq -cer --arg SPC ${space} "${query}" || return 1
+  echo "${is_service_up}" | jq -cer --arg SPC ${space} "${query}" || return 1
 
   local query=''
   query+='\(.is_paused | yes_no | lbln("Mute") | ln)'

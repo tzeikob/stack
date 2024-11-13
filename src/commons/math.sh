@@ -29,24 +29,20 @@ is_true () {
   local result='false'
   result="$(qalc -t "${expression}")" || return 1
 
-  if [[ "${result}" == 'true' ]] || [[ ${result} -eq 1 ]]; then
-    return 0
-  fi
-
-  return 1
+  [[ "${result}" == 'true' || ${result} -eq 1 ]]
 }
 
 # An inverse version of is_true.
 is_not_true () {
-  is_true "${1}" && return 1 || return 0
+  ! is_true "${1}"
 }
 
 # A alias version of is_not_true.
 is_false () {
-  is_not_true "${1}" && return 0 || return 1
+  is_not_true "${1}"
 }
 
 # An inverse version of is_false.
 is_not_false () {
-  is_false "${1}" && return 1 || return 0
+  ! is_false "${1}"
 }

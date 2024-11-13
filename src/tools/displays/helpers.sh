@@ -21,16 +21,12 @@ is_output_status () {
 
   local statuses='connected|disconnected|active|inactive|primary'
 
-  if not_match "${status}" "^(${statuses})$"; then
-    return 1
-  fi
-
-  return 0
+  match "${status}" "^(${statuses})$"
 }
 
 # An inverse version of is_output_status.
 is_not_output_status () {
-  is_output_status "${1}" && return 1 || return 0
+  ! is_output_status "${1}"
 }
 
 # Returns the xorg screen data and display server information.
@@ -154,12 +150,12 @@ is_connected () {
 
   local query='select(.is_connected)'
 
-  echo "${output}" | jq -cer "${query}" &> /dev/null || return 1
+  echo "${output}" | jq -cer "${query}" &> /dev/null
 }
 
 # An inverse version of is_connected.
 is_not_connected () {
-  is_connected "${1}" && return 1 || return 0
+  ! is_connected "${1}"
 }
 
 # Asserts if the given output is active.
@@ -172,12 +168,12 @@ is_active () {
 
   local query='select(.is_connected and .resolution_width)'
 
-  echo "${output}" | jq -cer "${query}" &> /dev/null || return 1
+  echo "${output}" | jq -cer "${query}" &> /dev/null
 }
 
 # An inverse version of is_active.
 is_not_active () {
-  is_active "${1}" && return 1 || return 0
+  ! is_active "${1}"
 }
 
 # Asserts if the given output is primary.
@@ -190,12 +186,12 @@ is_primary () {
 
   local query='select(.is_primary)'
 
-  echo "${output}" | jq -cer "${query}" &> /dev/null || return 1
+  echo "${output}" | jq -cer "${query}" &> /dev/null
 }
 
 # An inverse version of is_primary.
 is_not_primary () {
-  is_primary "${1}" && return 1 || return 0
+  ! is_primary "${1}"
 }
 
 # Checks if the given value is a valid output resolution.
@@ -206,16 +202,12 @@ is_not_primary () {
 is_resolution () {
   local resolution="${1}"
 
-  if not_match "${resolution}" '^[0-9]+x[0-9]+i?$'; then
-    return 1
-  fi
-
-  return 0
+  match "${resolution}" '^[0-9]+x[0-9]+i?$'
 }
 
 # An inverse version of is_resolution.
 is_not_resolution () {
-  is_resolution "${1}" && return 1 || return 0
+  ! is_resolution "${1}"
 }
 
 # Asserts if an output supports the given resolution.
@@ -233,12 +225,12 @@ has_resolution () {
   query+=' | "\(.resolution_width)x\(.resolution_height)\(if .is_high_resolution then "i" else "" end)" as $res'
   query+=" | select(\$res == \"${resolution}\")"
 
-  echo "${output}" | jq -cer "${query}" &> /dev/null || return 1
+  echo "${output}" | jq -cer "${query}" &> /dev/null
 }
 
 # An inverse version of has_resolution.
 has_no_resolution () {
-  has_resolution "${1}" "${2}" && return 1 || return 0
+  ! has_resolution "${1}" "${2}"
 }
 
 # Checks if the given resolution rate is valid.
@@ -249,16 +241,12 @@ has_no_resolution () {
 is_rate () {
   local rate="${1}"
   
-  if not_match "${rate}" '^[0-9][0-9]+(.[0-9][0-9]*)?$'; then
-    return 1
-  fi
-
-  return 0
+  match "${rate}" '^[0-9][0-9]+(.[0-9][0-9]*)?$'
 }
 
 # An inverse version of is_rate.
 is_not_rate () {
-  is_rate "${1}" && return 1 || return 0
+  ! is_rate "${1}"
 }
 
 # Asserts if an output at a resolution supports
@@ -280,12 +268,12 @@ has_rate () {
   query+=" | select(\$res == \"${resolution}\")"
   query+=" | .frequencies[] | select(.frequency == ${rate})"
 
-  echo "${output}" | jq -cer "${query}" &> /dev/null || return 1
+  echo "${output}" | jq -cer "${query}" &> /dev/null
 }
 
 # An inverse version of has_rate.
 has_no_rate () {
-  has_rate "${1}" "${2}" "${3}" && return 1 || return 0
+  ! has_rate "${1}" "${2}" "${3}"
 }
 
 # Shows a menu asking the user to select one output.
@@ -448,14 +436,12 @@ pick_reflection_mode () {
 is_reflection_mode () {
   local mode="${1}"
   
-  if not_match "${mode}" '^(normal|x|y|xy)$'; then
-    return 1
-  fi
+  match "${mode}" '^(normal|x|y|xy)$'
 }
 
 # An inverse version of is_reflection_mode.
 is_not_reflection_mode () {
-  is_reflection_mode "${1}" && return 1 || return 0 
+  ! is_reflection_mode "${1}"
 }
 
 # Shows a menu asking the user to select a rotation mode.
@@ -480,14 +466,12 @@ pick_rotation_mode () {
 is_rotation_mode () {
   local mode="${1}"
   
-  if not_match "${mode}" '^(normal|right|left|inverted)$'; then
-    return 1
-  fi
+  match "${mode}" '^(normal|right|left|inverted)$'
 }
 
 # An inverse version of is_rotation_mode.
 is_not_rotation_mode () {
-  is_rotation_mode "${1}" && return 1 || return 0 
+  ! is_rotation_mode "${1}"
 }
 
 # Returns the common resolution if any among the
@@ -583,16 +567,12 @@ is_eligible_layout_mode () {
     return 1
   fi
   
-  if not_match "${mode}" "^(${modes})$"; then
-    return 1
-  fi
-
-  return 0
+  match "${mode}" "^(${modes})$"
 }
 
 # An inverse version of is_eligible_layout_mode.
 is_not_eligible_layout_mode () {
-  is_eligible_layout_mode "${1}" "${2}" && return 1 || return 0
+  ! is_eligible_layout_mode "${1}" "${2}"
 }
 
 # Shows the layout topology map that corresponds to the
@@ -970,14 +950,10 @@ remove_color_from_settings () {
 is_profile_file () {
   local file_name="${1}"
   
-  if not_match "${file_name}" '.ic(c|m)$'; then
-    return 1
-  fi
-
-  return 0
+  match "${file_name}" '.ic(c|m)$'
 }
 
 # An inverse version of is_profile_file.
 is_not_profile_file () {
- is_profile_file "${1}" && return 1 || return 0
+ ! is_profile_file "${1}"
 }

@@ -45,15 +45,12 @@ save_screen_locker_to_settings () {
 }
 
 # Checks if the screen is locked.
-# Outputs:
-#  true if screen is locked otherwise false.
+# Returns:
+#  0 if screen locker is up otherwise 1.
 is_screen_locked () {
   local query='[.[] | select(.command | test("xsecurelock.*"))] | length > 0'
 
-  local is_locked=''
-  is_locked="$(ps aux | grep -v 'jq' | jc --ps | jq -cr "${query}")" || return 1
-
-  echo "${is_locked}"
+  ps aux | grep -v 'jq' | jc --ps | jq -cer "${query}" &> /dev/null
 }
 
 # Returns the password status of the system.

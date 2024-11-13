@@ -243,16 +243,12 @@ is_disk () {
   local type=''
   type="$(find_disk "${path}" | jq -cer '.type')" || return 1
 
-  if equals "${type}" 'disk'; then
-    return 0
-  else
-    return 1
-  fi
+  equals "${type}" 'disk'
 }
 
 # An inverse version of is_disk.
 is_not_disk () {
-  is_disk "${1}" && return 1 || return 0
+  ! is_disk "${1}"
 }
 
 # Checks if the block device with the given path
@@ -293,16 +289,12 @@ is_system_disk () {
 
   result="$(echo "${disk}" | jq -cr "${query}")" || return 1
 
-  if is_true "${result}"; then
-    return 0
-  else
-    return 1
-  fi
+  is_true "${result}"
 }
 
 # An inverse version of is_system_disk.
 is_not_system_disk () {
-  is_system_disk "${1}" && return 1 || return 0
+  ! is_system_disk "${1}"
 }
 
 # Checks if the block device with the given path
@@ -321,16 +313,12 @@ is_partition () {
   local type=''
   type="$(find_partition "${path}" | jq -cer '.type')" || return 1
 
-  if equals "${type}" 'part'; then
-    return 0
-  else
-    return 1
-  fi
+  equals "${type}" 'part'
 }
 
 # An inverse version of is_partition.
 is_not_partition () {
-  is_partition "${1}" && return 1 || return 0
+  ! is_partition "${1}"
 }
 
 # Checks if the block device with the given path
@@ -359,16 +347,12 @@ is_system_partition () {
   local result=''
   result="$(find_partition "${path}" | jq -cer "${query}")" || return 1
 
-  if is_true "${result}"; then
-    return 0
-  else
-    return 1
-  fi
+  is_true "${result}"
 }
 
 # An inverse version of is_system_partition.
 is_not_system_partition () {
-  is_system_partition "${1}" && return 1 || return 0
+  ! is_system_partition "${1}"
 }
 
 # Checks if the block device with the given path
@@ -387,16 +371,12 @@ is_rom () {
   local type=''
   type="$(find_rom "${path}" | jq -cer '.type')" || return 1
 
-  if equals "${type}" 'rom'; then
-    return 0
-  else
-    return 1
-  fi
+  equals "${type}" 'rom'
 }
 
 # An inverse version of is_rom.
 is_not_rom () {
-  is_rom "${1}" && return 1 || return 0
+  ! is_rom "${1}"
 }
 
 # Checks if the block device with the given path
@@ -416,16 +396,12 @@ is_mounted () {
     return 0
   fi
 
-  if veracrypt -t --list 2>&1 | grep -qsE "^[0-9]+: ${path} "; then
-    return 0
-  fi
-
-  return 1
+  veracrypt -t --list 2>&1 | grep -qsE "^[0-9]+: ${path} "
 }
 
 # An inverse version of is_mounted.
 is_not_mounted () {
-  is_mounted "${1}" && return 1 || return 0
+  ! is_mounted "${1}"
 }
 
 # Mounts the block device with the given path.
@@ -842,16 +818,12 @@ is_valid_fs_type () {
 
   local types='ext4|ext3|ext2|ntfs|exfat|fat32'
 
-  if not_match "${type}" "^(${types})$"; then
-    return 1
-  fi
-
-  return 0
+  match "${type}" "^(${types})$"
 }
 
 # An inverse version of is_valid_fs_type.
 is_not_valid_fs_type () {
-  is_valid_fs_type "${1}" && return 1 || return 0
+  ! is_valid_fs_type "${1}"
 }
 
 # Shows a menu asking the user to select a

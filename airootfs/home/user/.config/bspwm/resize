@@ -51,8 +51,6 @@ run () {
     log 'Failed to resize the focused window.'
     return 1
   fi
-
-  return 0
 }
 
 run "$@"

@@ -47,17 +47,11 @@ is_timezone () {
   local name="${1}"
   
   timedatectl list-timezones | grep -qw "${name}"
-  
-  if has_failed; then
-    return 1
-  fi
-
-  return 0
 }
 
 # An inverse version of is_timezone.
 is_not_timezone () {
-  is_timezone "${1}" && return 1 || return 0
+  ! is_timezone "${1}"
 }
 
 # Checks if the given mode is a valid RTC mode.
@@ -68,16 +62,12 @@ is_not_timezone () {
 is_rtc_mode () {
   local mode="${1}"
 
-  if not_match "${mode}" '^(local|utc)$'; then
-    return 1
-  fi
-
-  return 0
+  match "${mode}" '^(local|utc)$'
 }
 
 # An inverse version of is_rtc_mode.
 is_not_rtc_mode () {
-  is_rtc_mode "${1}" && return 1 || return 0
+  ! is_rtc_mode "${1}"
 }
 
 # Checks if the given value is a valid time precision.
@@ -88,16 +78,12 @@ is_not_rtc_mode () {
 is_time_precision () {
   local value="${1}"
 
-  if not_match "${value}" '^(mins|secs|nanos)$'; then
-    return 1
-  fi
-
-  return 0
+  match "${value}" '^(mins|secs|nanos)$'
 }
 
 # An inversed alias of is_time_precision.
 is_not_time_precision () {
-  is_time_precision "${1}" && return 1 || return 0
+  ! is_time_precision "${1}"
 }
 
 # Checks if the given value is a valid time mode.
@@ -108,16 +94,12 @@ is_not_time_precision () {
 is_time_mode () {
   local value="${1}"
 
-  if not_match "${value}" '^(12h|24h)$'; then
-    return 1
-  fi
-
-  return 0
+  match "${value}" '^(12h|24h)$'
 }
 
 # An inversed alias of is_time_mode.
 is_not_time_mode () {
-  is_time_mode "${1}" && return 1 || return 0
+  ! is_time_mode "${1}"
 }
 
 # Checks if the NTP service is active or not.
@@ -125,16 +107,12 @@ is_ntp_active () {
   local ntp_status=''
   ntp_status="$(timedatectl | jc --timedatectl | jq -cer '.ntp_service')" || return 1
 
-  if not_equals "${ntp_status}" 'active'; then
-    return 1
-  fi
-
-  return 0
+  equals "${ntp_status}" 'active'
 }
 
 # An inverse alias of is_ntp_active.
 is_ntp_inactive () {
-  is_ntp_active && return 1 || return 0
+  ! is_ntp_active
 }
 
 # Saves the time format into settings.

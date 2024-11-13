@@ -332,19 +332,12 @@ is_tablet () {
 
   local query=".[] | select(.name == \"${name}\")"
 
-  local tablet=''
-  tablet="$(find_tablets | jq -cer "${query}")" || return 1
-
-  if is_empty "${tablet}"; then
-    return 1
-  fi
-
-  return 0
+  find_tablets | jq -cer "${query}" &> /dev/null
 }
 
 # An inverse version of is_tablet.
 is_not_tablet () {
-  is_tablet "${1}" && return 1 || return 0
+  ! is_tablet "${1}"
 }
 
 # Checks if the tablet device with the given name
@@ -356,19 +349,12 @@ is_not_tablet () {
 is_scalable () {
   local name="${1}"
 
-  local area=''
-  area="$(find_tablet "${name}" | jq -cer '.Area')" || return 1
-
-  if is_empty "${area}"; then
-    return 1
-  fi
-
-  return 0
+  find_tablet "${name}" | jq -cer '.Area' &> /dev/null
 }
 
 # An inverse version of is_scalable.
 is_not_scalable () {
-  is_scalable "${1}" && return 1 || return 0
+  ! is_scalable "${1}"
 }
 
 # Shows a menu asking the user to select one tablet device.
@@ -509,16 +495,14 @@ is_wallpaper_file () {
 
   if file_not_exists "${file_path}"; then
     return 1
-  elif not_match "${file_path}" '.+\.(jpg|jpeg|png)$'; then
-    return 1
   fi
-
-  return 0
+  
+  match "${file_path}" '.+\.(jpg|jpeg|png)$'
 }
 
 # An inverse version of is_wallpaper_file.
 is_not_wallpaper_file () {
-  is_wallpaper_file "${1}" && return 1 || return 0
+  ! is_wallpaper_file "${1}"
 }
 
 # Checks if the given mode is a valid wallpaper mode.
@@ -529,16 +513,12 @@ is_not_wallpaper_file () {
 is_wallpaper_mode () {
   local mode="${1}"
 
-  if not_match "${mode}" '^(center|fill|max|scale|tile)$'; then
-    return 1
-  fi
-
-  return 0
+  match "${mode}" '^(center|fill|max|scale|tile)$'
 }
 
 # An inverse version of is_wallpaper_mode.
 is_not_wallpaper_mode () {
-  is_wallpaper_mode "${1}" && return 1 || return 0
+  ! is_wallpaper_mode "${1}"
 }
 
 # Checks if the given factor is a valid pointer speed.
@@ -551,16 +531,14 @@ is_valid_pointer_speed () {
 
   if not_match "${factor}" '^[0-9]+\.?[0-9]*$'; then
     return 1
-  elif is_not_true "0 <= ${factor} <= 1"; then
-    return 1
   fi
-
-  return 0
+  
+  is_true "0 <= ${factor} <= 1"
 }
 
 # An inverse version of is_valid_pointer_speed.
 is_not_valid_pointer_speed () {
-  is_valid_pointer_speed "${1}" && return 1 || return 0
+  ! is_valid_pointer_speed "${1}"
 }
 
 # Checks if the given scale factor is valid tablet scale.
@@ -573,16 +551,14 @@ is_valid_tablet_scale () {
 
   if not_match "${scale}" '^[0-9]+\.?[0-9]*$'; then
     return 1
-  elif is_not_true "0 < ${scale} <= 1"; then
-    return 1
   fi
-
-  return 0
+  
+  is_true "0 < ${scale} <= 1"
 }
 
 # An inverse version of is_valid_tablet_scale.
 is_not_valid_tablet_scale () {
-  is_valid_tablet_scale "${1}" && return 1 || return 0
+  ! is_valid_tablet_scale "${1}"
 }
 
 # Checks if the given engine is a valid picom
@@ -594,16 +570,12 @@ is_not_valid_tablet_scale () {
 is_backend_engine () {
   local engine="${1}"
 
-  if not_match "${engine}" '^(xrender|glx)$'; then
-    return 1
-  fi
-
-  return 0
+  match "${engine}" '^(xrender|glx)$'
 }
 
 # An inverse version of is_backend_engine.
 is_not_backend_engine () {
-  is_backend_engine "${1}" && return 1 || return 0
+  ! is_backend_engine "${1}"
 }
 
 # Shows a menu of all desktop workspaces.
@@ -636,12 +608,12 @@ workspace_exists () {
 
   local query=".[] | select(. == ${index})"
 
-  bspc query -D --names | jq --slurp . | jq -cer "${query}" &> /dev/null || return 1
+  bspc query -D --names | jq --slurp . | jq -cer "${query}" &> /dev/null
 }
 
 # An inverse version of workspace_exists.
 workspace_not_exists () {
-  workspace_exists "${1}" && return 1 || return 0
+  ! workspace_exists "${1}"
 }
 
 # Removes any dangling monitor left after a display

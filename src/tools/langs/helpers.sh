@@ -126,17 +126,11 @@ is_keymap () {
   local map="${1}"
   
   localectl --no-pager list-keymaps | grep -qE "^${map}$"
-  
-  if has_failed; then
-    return 1
-  fi
-
-  return 0
 }
 
 # An inverse version of is_keymap.
 is_not_keymap () {
-  is_keymap "${1}" && return 1 || return 0
+  ! is_keymap "${1}"
 }
 
 # Shows a menu asking the user to select a locale.
@@ -189,17 +183,11 @@ is_locale () {
   fi
   
   grep -qE "^\s*#\s*${name}\s*$" /etc/locale.gen
-
-  if has_failed; then
-    return 1
-  fi
-
-  return 0
 }
 
 # An inverse version of is_locale.
 is_not_locale () {
-  is_locale "${1}" && return 1 || return 0
+  ! is_locale "${1}"
 }
 
 # Checks if the given locale is already installed.
@@ -212,12 +200,12 @@ is_locale_installed () {
 
   local query=".locales | if length > 0 then .[] | select(. == \"${name}\") else empty end"
 
-  jq -cer "${query}" "${LANGS_SETTINGS}" &> /dev/null || return 1
+  jq -cer "${query}" "${LANGS_SETTINGS}" &> /dev/null
 }
 
 # An inverse version of is_locale_installed.
 is_locale_not_installed () {
-  is_locale_installed "${1}" && return 1 || return 0
+  ! is_locale_installed "${1}"
 }
 
 # Shows a menu asking the user to select a layout
@@ -249,17 +237,11 @@ is_layout_options () {
   local value="${1}"
   
   localectl --no-pager list-x11-keymap-options | grep -qw "${value}"
-  
-  if has_failed; then
-    return 1
-  fi
-
-  return 0
 }
 
 # An inverse version of is_layout_options.
 is_not_layout_options () {
-  is_layout_options "${1}" && return 1 || return 0
+  ! is_layout_options "${1}"
 }
 
 # Shows a menu asking the user to select a keyboard model.
@@ -289,17 +271,11 @@ is_keyboard_model () {
   local name="${1}"
   
   localectl --no-pager list-x11-keymap-models | grep -qw "${name}"
-
-  if has_failed; then
-    return 1
-  fi
-
-  return 0
 }
 
 # An inverse version of is_keyboard_model.
 is_not_keyboard_model () {
-  is_keyboard_model "${1}" && return 1 || return 0
+  ! is_keyboard_model "${1}"
 }
 
 # Shows a menu asking the user to select a keyboard layout.
@@ -382,17 +358,11 @@ is_layout () {
   fi
 
   localectl --no-pager list-x11-keymap-layouts | grep -qw "${code}"
-  
-  if has_failed; then
-    return 1
-  fi
-
-  return 0
 }
 
 # An inverse version of is_layout.
 is_not_layout () {
-  is_layout "${1}" && return 1 || return 0
+  ! is_layout "${1}"
 }
 
 # Checks if the keyboard layout with the given code
@@ -411,17 +381,11 @@ is_layout_variant () {
   fi
 
   localectl --no-pager list-x11-keymap-variants "${code}" | grep -qw "${variant}"
-  
-  if has_failed; then
-    return 1
-  fi
-
-  return 0
 }
 
 # An inverse version of is_layout_variant.
 is_not_layout_variant () {
-  is_layout_variant "${1}" "${2}" && return 1 || return 0
+  ! is_layout_variant "${1}" "${2}"
 }
 
 # Saves the keymap into settings.
@@ -606,22 +570,14 @@ is_layout_installed () {
   local code="${1}"
   local variant="${2}"
   
-  local query=''
-  query+=".layouts[] | select(.code == \"${code}\" and .variant == \"${variant}\")"
+  local query=".layouts[] | select(.code == \"${code}\" and .variant == \"${variant}\")"
 
-  local match=''
-  match="$(jq -cr "${query}" "${LANGS_SETTINGS}")"
-
-  if is_empty "${match}"; then
-    return 1
-  fi
-
-  return 0
+  jq -cer "${query}" "${LANGS_SETTINGS}" &> /dev/null
 }
 
 # An inversed alias of is_layout_installed.
 is_layout_not_installed () {
-  is_layout_installed "${1}" "${2}" && return 1 || return 0
+  ! is_layout_installed "${1}" "${2}"
 }
 
 # Replaces the current layout's group name to the
@@ -755,16 +711,12 @@ is_locale_set () {
   done
 
   # Check also the locale.conf file
-  if grep -wq "${name}" /etc/locale.conf; then
-    return 0
-  fi
-
-  return 1
+  grep -wq "${name}" /etc/locale.conf
 }
 
 # An inversed alias of the is_locale_set.
 is_locale_not_set () {
-  is_locale_set "${1}" && return 1 || return 0
+  ! is_locale_set "${1}"
 }
 
 # Saves the given system locale into settings.

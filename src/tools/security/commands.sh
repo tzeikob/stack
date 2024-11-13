@@ -111,10 +111,7 @@ init_screen_locker () {
 # before lock and resets it back to it's previous state
 # after user unlocks the screen.
 lock_screen () {
-  local is_locked='false'
-  is_locked="$(is_screen_locked)" || return 1
-  
-  if is_true "${is_locked}"; then
+  if is_screen_locked; then
     log 'Screen locker is already running.'
     return 2
   fi

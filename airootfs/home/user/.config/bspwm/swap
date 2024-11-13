@@ -52,8 +52,6 @@ run () {
     log 'Failed to fix desktop workspaces.'
     return 1
   fi
-
-  return 0
 }
 
 run "$@"

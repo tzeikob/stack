@@ -153,17 +153,12 @@ is_network_device () {
     query+="| select(.type == \"${type}\")"
   fi
 
-  local result=''
-  result="$(find_devices | jq -cer "${query}")"
-
-  if has_failed || is_empty "${result}"; then
-    return 1
-  fi
+  find_devices | jq -cer "${query}" &> /dev/null
 }
 
 # An inverse version of is_network_device.
 is_not_network_device () {
-  is_network_device "${1}" "${2}" && return 1 || return 0
+  ! is_network_device "${1}" "${2}"
 }
 
 # Validates if the connection with the given name
@@ -175,17 +170,14 @@ is_not_network_device () {
 is_connection () {
   local name="${1}"
 
-  local result=''
-  result="$(find_connections | jq -cer ".[] | select(.name == \"${name}\")")"
+  local query=".[] | select(.name == \"${name}\")"
 
-  if has_failed || is_empty "${result}"; then
-    return 1
-  fi
+  find_connections | jq -cer "${query}" &> /dev/null
 }
 
 # An inverse version of is_connection.
 is_not_connection () {
-  is_connection "${1}" && return 1 || return 0
+  ! is_connection "${1}"
 }
 
 # Shows a menu asking the user to select one device.
@@ -352,14 +344,7 @@ exists_proxy_profile () {
   local query=''
   query+=".proxies | if . then .[] | select(.name == \"${name}\") else empty end"
   
-  local proxy=''
-  proxy="$(jq -cr "${query}" "${NETWORKS_SETTINGS}")"
-
-  if is_empty "${proxy}"; then
-    return 1
-  fi
-
-  return 0
+  jq -cer "${query}" "${NETWORKS_SETTINGS}" &> /dev/null
 }
 
 # Checks if the file with the given file path
@@ -376,16 +361,12 @@ is_ovpn_file () {
   
   local extension="${name##*.}"
 
-  if not_equals "${extension}" 'ovpn'; then
-    return 1
-  fi
-
-  return 0
+  equals "${extension}" 'ovpn'
 }
 
 # An inverse version of is_ovpn_file.
 is_not_ovpn_file () {
-  is_ovpn_file "${1}" && return 1 || return 0
+  ! is_ovpn_file "${1}"
 }
 
 # Returns the proxy ip server if such is set.

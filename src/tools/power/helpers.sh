@@ -129,16 +129,12 @@ pick_power_handler () {
 is_power_handler () {
   local handler="${1}"
   
-  if not_match "${handler}" '^(power|reboot|suspend|lid|docked)$'; then
-    return 1
-  fi
-
-  return 0
+  match "${handler}" '^(power|reboot|suspend|lid|docked)$'
 }
 
 # An inverse version of is_power_handler.
 is_not_power_handler () {
-  is_power_handler "${1}" && return 1 || return 0
+  ! is_power_handler "${1}"
 }
 
 # Shows a menu asking the user to select a power action.
@@ -163,16 +159,12 @@ pick_power_action () {
 is_power_action () {
   local action="${1}"
   
-  if not_match "${action}" '^(poweroff|reboot|suspend|ignore)$'; then
-    return 1
-  fi
-
-  return 0
+  match "${action}" '^(poweroff|reboot|suspend|ignore)$'
 }
 
 # An inverse version of is_power_action.
 is_not_power_action () {
-  is_power_action "${1}" && return 1 || return 0
+  ! is_power_action "${1}"
 }
 
 # Resolves the corresponding logind config option

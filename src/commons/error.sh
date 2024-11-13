@@ -20,16 +20,12 @@ has_failed () {
     code="${1}"
   fi
 
-  if is_true "${code} != 0"; then
-    return 0
-  fi
-
-  return 1
+  is_true "${code} != 0"
 }
 
 # An inverse version of has_failed.
 has_not_failed () {
-  has_failed "${1}" && return 1 || return 0
+  ! has_failed "${1}"
 }
 
 # Aborts the current process logging the given error message.

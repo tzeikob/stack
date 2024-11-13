@@ -136,16 +136,12 @@ find_outdated_aur_packages () {
 is_package_repository () {
   local value="${1}"
 
-  if not_match "${value}" '^(pacman|aur)$'; then
-    return 1
-  fi
-
-  return 0
+  match "${value}" '^(pacman|aur)$'
 }
 
 # An inverese alias of the is_package_repository.
 is_not_package_repository () {
-  is_package_repository "${1}" && return 1 || return 0
+  ! is_package_repository "${1}"
 }
 
 # Shows a menu asking the user to select many mirror countries.

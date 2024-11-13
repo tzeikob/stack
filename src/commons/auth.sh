@@ -32,6 +32,4 @@ authenticate_user () {
     log 'Sorry incorrect password!'
     return 2
   fi
-
-  return 0
 }
