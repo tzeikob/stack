@@ -458,18 +458,20 @@ mount_partition () {
     log "Path ${path} is not a partition device."
     return 2
   elif is_mounted "${path}"; then
-    log "Partition ${path} is already mounted."
+    log "Partition device ${path} is already mounted."
     return 2
   fi
+
+  log 'Mounting partition device...'
 
   mount_device "${path}"
 
   if has_failed; then
-    log 'Failed to mount the partition.'
+    log 'Failed to mount partition device.'
     return 2
   fi
 
-  log "Partition ${path} mounted."
+  log "Partition device ${path} mounted."
 }
 
 # Mounts the encrypted partition block device with
@@ -500,7 +502,7 @@ mount_encrypted () {
     log "Path ${path} is not a partition device."
     return 2
   elif is_mounted "${path}"; then
-    log "Partition ${path} is already mounted."
+    log "Partition device ${path} is already mounted."
     return 2
   fi
 
@@ -513,14 +515,16 @@ mount_encrypted () {
     key="${REPLY}"
   fi
 
+  log 'Mounting encrypted partition device...'
+
   mount_encrypted_device "${path}" "${key}"
 
   if has_failed; then
-    log 'Failed to mount encrypted partition.'
+    log 'Failed to mount encrypted partition device.'
     return 2
   fi
 
-  log "Encrypted partition ${path} mounted."
+  log "Encrypted partition device ${path} mounted."
 }
 
 # Unmounts the partition block device with the
@@ -547,21 +551,23 @@ unmount_partition () {
     log "Path ${path} is not a partition device."
     return 2
   elif is_not_mounted "${path}"; then
-    log "Partition ${path} is already unmounted."
+    log "Partition device ${path} is already unmounted."
     return 2
   elif is_system_partition "${path}"; then
     log 'Cannot unmount system partition.'
     return 2
   fi
 
+  log 'Unmounting partition device...'
+
   unmount_device "${path}"
 
   if has_failed; then
-    log 'Failed to unmount partition.'
+    log 'Failed to unmount partition device.'
     return 2
   fi
 
-  log "Partition ${path} unmounted."
+  log "Partition device ${path} unmounted."
 }
 
 # Unmounts the encrypted partition block device with the
@@ -590,21 +596,23 @@ unmount_encrypted () {
     log "Path ${path} is not a partition device."
     return 2
   elif is_not_mounted "${path}"; then
-    log "Partition ${path} is already unmounted."
+    log "Partition device ${path} is already unmounted."
     return 2
   elif is_system_partition "${path}"; then
     log 'Cannot unmount system partition.'
     return 2
   fi
 
+  log 'Unmounting encrypted partition device...'
+
   unmount_encrypted_device "${path}"
 
   if has_failed; then
-    log 'Failed to unmount encrypted partition.'
+    log 'Failed to unmount encrypted partition device.'
     return 2
   fi
 
-  log "Encrypted partition ${path} unmounted."
+  log "Encrypted partition device ${path} unmounted."
 }
 
 # Mounts the rom block device with the given path.
@@ -626,18 +634,20 @@ mount_rom () {
     log "Path ${path} is not a rom device."
     return 2
   elif is_mounted "${path}"; then
-    log "Rom ${path} is already mounted."
+    log "Rom device ${path} is already mounted."
     return 2
   fi
+
+  log 'Mounting rom device...'
 
   mount_device "${path}"
 
   if has_failed; then
-    log 'Failed to mount rom.'
+    log 'Failed to mount rom device.'
     return 2
   fi
 
-  log "Rom ${path} mounted."
+  log "Rom device ${path} mounted."
 }
 
 # Unmounts the rom block device with the given path.
@@ -659,9 +669,11 @@ unmount_rom () {
     log "Path ${path} is not a rom device."
     return 2
   elif is_not_mounted "${path}"; then
-    log "Rom ${path} is not mounted."
+    log "Rom device ${path} is not mounted."
     return 2
   fi
+
+  log 'Unmounting rom device...'
 
   unmount_device "${path}"
 
@@ -670,7 +682,7 @@ unmount_rom () {
     return 2
   fi
 
-  log "Rom ${path} unmounted."
+  log "Rom device ${path} unmounted."
 }
 
 # Mounts the image file system contained with in
@@ -694,9 +706,11 @@ mount_image () {
   local mount_point="${HOME}/mounts/virtual/${folder_name}"
 
   if directory_exists "${mount_point}"; then
-    log "Image ${path} is already mounted."
+    log "Image file ${path} is already mounted."
     return 2
   fi
+
+  log 'Mounting image file...'
 
   mkdir -p "${mount_point}" &&
   fuseiso -p "${path}" "${mount_point}" 1> /dev/null
@@ -732,10 +746,12 @@ unmount_image () {
     return 2
   fi
 
+  log 'Unmounting image file...'
+
   fusermount -u "${path}"
 
   if has_failed; then
-    log 'Failed to unmount image file system.'
+    log 'Failed to unmount image file.'
     return 2
   fi
 
@@ -809,6 +825,8 @@ mount_shared_folder () {
     return 2
   fi
 
+  log 'Mounting shared folder...'
+
   echo "${password}" | gio mount "${uri}" 1> /dev/null
   
   if has_failed; then
@@ -847,6 +865,8 @@ unmount_shared_folder () {
     log 'Shared folder is not mounted.'
     return 2
   fi
+
+  log 'Unmounting shared folder...'
 
   sync && gio mount -u "${uri}"
   
