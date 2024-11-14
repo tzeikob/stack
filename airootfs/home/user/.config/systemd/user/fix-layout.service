@@ -6,6 +6,7 @@ Type=simple
 Environment=HOME=#HOME#
 Environment=XAUTHORITY=#HOME#/.Xauthority
 Environment=DISPLAY=:0
+Environment=PATH=/usr/local/stack:/usr/local/sbin:/usr/local/bin:/usr/bin
 ExecStart=/usr/local/stack/displays -qs fix layout
 
 [Install]

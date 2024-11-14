@@ -7,6 +7,7 @@ User=%i
 Type=forking
 Environment=DISPLAY=:0
 Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/#USER_ID#/bus
+Environment=PATH=/usr/local/stack:/usr/local/sbin:/usr/local/bin:/usr/bin
 ExecStart=/usr/local/stack/security -qs lock screen
 TimeoutSec=infinity
 
