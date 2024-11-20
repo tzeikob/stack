@@ -442,7 +442,7 @@ setup_shell_environment () {
     abort ERROR 'Failed to remove nnn shell hooks.'
   
   # Remove shell prompt formatter
-  sed -ie '/source .*\.prompt/d' "${stackrc_file}" &&
+  sed -i '/source .*\.prompt/d' "${stackrc_file}" &&
     rm -f "${ROOT_FS}/root/.prompt" ||
     abort ERROR 'Failed to remove shell prompt formatter.'
 
