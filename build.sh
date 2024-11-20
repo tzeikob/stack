@@ -479,6 +479,7 @@ setup_desktop () {
 
   # Add a hook to open the welcome terminal once at login
   printf '%s\n' \
+    '' \
     '[ "$@" -eq 0 ] && {' \
     '  SHOW_WELCOME_MSG=true cool-retro-term &' \
     '}' >> "${bspwm_home}/bspwmrc" ||
