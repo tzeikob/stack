@@ -833,6 +833,25 @@ set_file_permissions () {
   done
 }
 
+# Saves the current branch and commit hash as the
+# live media build version.
+save_build_version () {
+  local branch=''
+  branch="$(git branch --show-current)" ||
+    abort ERROR 'Failed to read the current branch.'
+  
+  local commit=''
+  commit="$(git log --pretty=format:'%H' -n 1)" ||
+    abort ERROR 'Failed to read the last commit id.'
+
+  local version="{\"branch\": \"${branch}\", \"commit\": \"${commit}\"}"
+  
+  echo "${version}" | jq . > "${ROOT_FS}/root/.version" ||
+    abort ERROR 'Failed to save the version file.'
+  
+  log INFO "Build version set to ${branch}:${commit}."
+}
+
 # Creates the iso file of the live media.
 make_iso_file () {
   log INFO 'Building the archiso file...'
@@ -869,4 +888,5 @@ init &&
   setup_fonts &&
   enable_services &&
   set_file_permissions &&
+  save_build_version &&
   make_iso_file
