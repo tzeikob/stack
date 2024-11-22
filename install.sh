@@ -58,9 +58,7 @@ ask_user () {
     local query='[.blockdevices[]|select(.type == "disk")]'
 
     local disks=''
-    disks="$(
-      lsblk -J -o "${fields}" | jq -cer "${query}" 2> /dev/null
-    )"
+    disks="$(lsblk -J -o "${fields}" | jq -cer "${query}" 2> /dev/null)"
 
     if has_failed; then
       abort 'Unable to list disk block devices.'
@@ -103,13 +101,11 @@ ask_user () {
     settings="$(jq -er ".disk = \"${disk}\"" "${SETTINGS_FILE}")" &&
       echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save disk setting.'
-
-    log "Installation disk set to block device ${disk}."
   }
 
   local opt_in_swap_space
   opt_in_swap_space () {
-    confirm -n 'Do you want to enable swap space?' || abort
+    confirm 'Do you want to enable swap space?' || abort
     is_not_given "${REPLY}" && abort 'User input is required.'
 
     if is_no "${REPLY}"; then
@@ -117,8 +113,7 @@ ask_user () {
       settings="$(jq -er '.swap_on = "no"' "${SETTINGS_FILE}")" &&
         echo "${settings}" > "${SETTINGS_FILE}" ||
         abort 'Failed to save swap_on setting.'
-
-      log 'Swap is set to off.'
+      
       return 0
     fi
 
@@ -126,8 +121,6 @@ ask_user () {
     settings="$(jq -er '.swap_on = "yes"' "${SETTINGS_FILE}")" &&
       echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save swap_on setting.'
-
-    log 'Swap is set to yes.'
 
     ask 'Enter the size of the swap space in GBs:' || abort
     is_not_given "${REPLY}" && abort 'User input is required.'
@@ -144,8 +137,6 @@ ask_user () {
       echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save swap_size setting.'
 
-    log "Swap size is set to ${swap_size}GB."
-
     local swap_types=''
     swap_types+='{"key": "file", "value":"File"},'
     swap_types+='{"key": "partition", "value":"Partition"}'
@@ -160,8 +151,6 @@ ask_user () {
     settings="$(jq -er ".swap_type = \"${swap_type}\"" "${SETTINGS_FILE}")" &&
       echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save swap_type setting.'
-
-    log "Swap type is set to ${swap_type}."
   }
 
   local select_mirrors
@@ -184,7 +173,7 @@ ask_user () {
     # Remove the extra comma from the last element
     mirrors="[${mirrors:+${mirrors::-1}}]"
 
-    pick_many -n 'Select package databases mirrors:' "${mirrors}" 'vertical' || abort
+    pick_many 'Select package databases mirrors:' "${mirrors}" 'vertical' || abort
     is_not_given "${REPLY}" && abort 'User input is required.'
 
     mirrors="${REPLY}"
@@ -193,8 +182,6 @@ ask_user () {
     settings="$(jq -er ".mirrors = ${mirrors}" "${SETTINGS_FILE}")" &&
       echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save mirrors setting.'
-
-    log "Package databases mirrors are set to ${mirrors}."
   }
 
   local select_timezone
@@ -213,7 +200,7 @@ ask_user () {
     # Remove the extra comma after the last array element
     timezones="[${timezones:+${timezones::-1}}]"
 
-    pick_one -n 'Select the system timezone:' "${timezones}" 'vertical' || abort
+    pick_one 'Select the system timezone:' "${timezones}" 'vertical' || abort
     is_not_given "${REPLY}" && abort 'User input is required.'
 
     local timezone="${REPLY}"
@@ -222,8 +209,6 @@ ask_user () {
     settings="$(jq -er ".timezone = \"${timezone}\"" "${SETTINGS_FILE}")" &&
       echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save timezone setting.'
-
-    log "Timezone is set to ${timezone}."
   }
 
   local select_locales
@@ -242,7 +227,7 @@ ask_user () {
     # Removes the last comma delimiter from the last element
     locales="[${locales:+${locales::-1}}]"
 
-    pick_many -n 'Select system locales by order:' "${locales}" 'vertical' || abort
+    pick_many 'Select system locales by order:' "${locales}" 'vertical' || abort
     is_not_given "${REPLY}" && abort 'User input is required.'
 
     locales="${REPLY}"
@@ -251,8 +236,6 @@ ask_user () {
     settings="$(jq -er ".locales = ${locales}" "${SETTINGS_FILE}")" &&
       echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save locales setting.'
-
-    log "Locales are set to ${locales}."
   }
 
   local select_keyboard_model
@@ -271,7 +254,7 @@ ask_user () {
     # Remove the extra comma delimiter from the last element
     models="[${models:+${models::-1}}]"
 
-    pick_one -n 'Select a keyboard model:' "${models}" 'vertical' || abort
+    pick_one 'Select a keyboard model:' "${models}" 'vertical' || abort
     is_not_given "${REPLY}" && abort 'User input is required.'
 
     local keyboard_model="${REPLY}"
@@ -280,8 +263,6 @@ ask_user () {
     settings="$(jq -er ".keyboard_model = \"${keyboard_model}\"" "${SETTINGS_FILE}")" &&
       echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save keyboard_model setting.'
-
-    log "Keyboard model is set to ${keyboard_model}."
   }
 
   local select_keyboard_map
@@ -300,7 +281,7 @@ ask_user () {
     # Remove extra comma delimiter from the last element
     maps="[${maps:+${maps::-1}}]"
 
-    pick_one -n 'Select a keyboard map:' "${maps}" 'vertical' || abort
+    pick_one 'Select a keyboard map:' "${maps}" 'vertical' || abort
     is_not_given "${REPLY}" && abort 'User input is required.'
 
     local keyboard_map="${REPLY}"
@@ -309,8 +290,6 @@ ask_user () {
     settings="$(jq -er ".keyboard_map = \"${keyboard_map}\"" "${SETTINGS_FILE}")" &&
       echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save keyboard_map setting.'
-
-    log "Keyboard map is set to ${keyboard_map}."
   }
 
   local select_keyboard_layout
@@ -329,7 +308,7 @@ ask_user () {
     # Remove the extra comma delimiter from last element
     layouts="[${layouts:+${layouts::-1}}]"
 
-    pick_one -n 'Select a keyboard layout:' "${layouts}" 'vertical' || abort
+    pick_one 'Select a keyboard layout:' "${layouts}" 'vertical' || abort
     is_not_given "${REPLY}" && abort 'User input is required.'
 
     local keyboard_layout="${REPLY}"
@@ -353,7 +332,7 @@ ask_user () {
     # Remove the extra comma delimiter from last element
     variants="[${variants:+${variants::-1}}]"
 
-    pick_one -n "Select a ${keyboard_layout} layout variant:" "${variants}" vertical || abort
+    pick_one "Select a ${keyboard_layout} layout variant:" "${variants}" vertical || abort
     is_not_given "${REPLY}" && abort 'User input is required.'
 
     local layout_variant="${REPLY}"
@@ -362,8 +341,6 @@ ask_user () {
     settings="$(jq -er ".layout_variant = \"${layout_variant}\"" "${SETTINGS_FILE}")" &&
       echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save layout_variant setting.'
-
-    log "Layout is set to ${keyboard_layout} ${layout_variant}."
   }
 
   local select_keyboard_options
@@ -382,7 +359,7 @@ ask_user () {
     # Remove extra comma delimiter from last element
     options="[${options:+${options::-1}}]"
 
-    pick_one -n 'Select the keyboard options value:' "${options}" 'vertical' || abort
+    pick_one 'Select the keyboard options value:' "${options}" 'vertical' || abort
     is_not_given "${REPLY}" && abort 'User input is required.'
 
     local keyboard_options="${REPLY}"
@@ -391,13 +368,11 @@ ask_user () {
     settings="$(jq -er ".keyboard_options = \"${keyboard_options}\"" "${SETTINGS_FILE}")" &&
       echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save keyboard_options setting.'
-
-    log "Keyboard options is set to ${keyboard_options}."
   }
 
   local enter_host_name
   enter_host_name () {
-    ask -n 'Enter the name of the host:' || abort
+    ask 'Enter the name of the host:' || abort
     is_not_given "${REPLY}" && abort 'User input is required.'
 
     while not_match "${REPLY}" '^[a-z][a-z0-9_-]+$'; do
@@ -411,13 +386,11 @@ ask_user () {
     settings="$(jq -er ".host_name = \"${host_name}\"" "${SETTINGS_FILE}")" &&
       echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save host_name setting.'
-
-    log "Hostname is set to ${host_name}."
   }
 
   local enter_user_name
   enter_user_name () {
-    ask -n 'Enter the name of the user:' || abort
+    ask 'Enter the name of the user:' || abort
     is_not_given "${REPLY}" && abort 'User input is required.'
 
     while not_match "${REPLY}" '^[a-z][a-z0-9_-]+$'; do
@@ -431,28 +404,26 @@ ask_user () {
     settings="$(jq -er ".user_name = \"${user_name}\"" "${SETTINGS_FILE}")" &&
       echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save user_name setting.'
-
-    log "User name is set to ${user_name}."
   }
 
   local enter_user_password
   enter_user_password () {
-    log -n 'Password valid chars: a-z A-Z 0-9 `~!@#$%^&*()=+{};:",.<>/?_-'
+    log 'Password valid chars: a-z A-Z 0-9 `~!@#$%^&*()=+{};:",.<>/?_-'
     ask_secret 'Enter the user password (at least 4 chars):' || abort
     is_not_given "${REPLY}" && abort 'User input is required.'
 
     while not_match "${REPLY}" '^[a-zA-Z0-9`~!@#\$%^&*()=+{};:",.<>/\?_-]{4,}$'; do
-      ask_secret -n 'Please enter a valid password:' || abort
+      ask_secret 'Please enter a valid password:' || abort
       is_not_given "${REPLY}" && abort 'User input is required.'
     done
 
     local password="${REPLY}"
 
-    ask_secret -n 'Re-type the given password:' || abort
+    ask_secret 'Re-type the given password:' || abort
     is_not_given "${REPLY}" && abort 'User input is required.'
 
     while not_equals "${REPLY}" "${password}"; do
-      ask_secret -n 'Not matched, please re-type the given password:' || abort
+      ask_secret 'Not matched, please re-type the given password:' || abort
       is_not_given "${REPLY}" && abort 'User input is required.'
     done
 
@@ -460,28 +431,26 @@ ask_user () {
     settings="$(jq -er ".user_password = \"${password}\"" "${SETTINGS_FILE}")" &&
       echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save user_password setting.'
-
-    log 'User password is set successfully.'
   }
 
   local enter_root_password
   enter_root_password () {
-    log -n 'Password valid chars: a-z A-Z 0-9 `~!@#$%^&*()=+{};:",.<>/?_-'
+    log 'Password valid chars: a-z A-Z 0-9 `~!@#$%^&*()=+{};:",.<>/?_-'
     ask_secret 'Enter the root password (at least 4 chars):' || abort
     is_not_given "${REPLY}" && abort 'User input is required.'
 
     while not_match "${REPLY}" '^[a-zA-Z0-9`~!@#\$%^&*()=+{};:",.<>/\?_-]{4,}$'; do
-      ask_secret -n 'Please enter a valid password:' || abort
+      ask_secret 'Please enter a valid password:' || abort
       is_not_given "${REPLY}" && abort 'User input is required.'
     done
 
     local password="${REPLY}"
 
-    ask_secret -n 'Re-type the given password:' || abort
+    ask_secret 'Re-type the given password:' || abort
     is_not_given "${REPLY}" && abort 'User input is required.'
 
     while not_equals "${REPLY}" "${password}"; do
-      ask_secret -n 'Not matched, please re-type the given password:' || abort
+      ask_secret 'Not matched, please re-type the given password:' || abort
       is_not_given "${REPLY}" && abort 'User input is required.'
     done
 
@@ -489,8 +458,6 @@ ask_user () {
     settings="$(jq -er ".root_password = \"${password}\"" "${SETTINGS_FILE}")" &&
       echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save root_password setting.'
-
-    log 'Root password is set successfully.'
   }
 
   local select_kernel
@@ -500,7 +467,7 @@ ask_user () {
     kernels+='{"key": "lts", "value": "LTS"}'
     kernels="[${kernels}]"
 
-    pick_one -n 'Select which linux kernel to install:' "${kernels}" 'horizontal' || abort
+    pick_one 'Select which linux kernel to install:' "${kernels}" 'horizontal' || abort
     is_not_given "${REPLY}" && abort 'User input is required.'
 
     local kernel="${REPLY}"
@@ -509,8 +476,6 @@ ask_user () {
     settings="$(jq -er ".kernel = \"${kernel}\"" "${SETTINGS_FILE}")" &&
       echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save kernel setting.'
-
-    log "Linux kernel is set to ${kernel}."
   }
 
   while true; do
@@ -532,7 +497,7 @@ ask_user () {
       enter_root_password &&
       select_kernel
     
-    log -n 'Review your installation settings:'
+    log 'Review your installation settings:'
     jq . "${SETTINGS_FILE}" || abort 'Unable to read installation settings.'
 
     confirm 'Do you want to ask for settings again?' || abort
@@ -574,8 +539,6 @@ detect () {
     settings="$(jq -er ".uefi_mode = \"${uefi_mode}\"" "${SETTINGS_FILE}")" &&
       echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save uefi_mode setting.'
-
-    log "UEFI mode is set to ${uefi_mode}."
   }
 
   local is_virtual_machine
@@ -590,15 +553,11 @@ detect () {
       settings="$(jq -er '.vm = "yes"' "${SETTINGS_FILE}")" &&
         echo "${settings}" > "${SETTINGS_FILE}" ||
         abort 'Failed to save vm setting.'
-      
-      log 'Virtual machine is set to yes.'
 
       local settings=''
       settings="$(jq -er ".vm_vendor = \"${vm_vendor}\"" "${SETTINGS_FILE}")" &&
         echo "${settings}" > "${SETTINGS_FILE}" ||
         abort 'Failed to save vm_vendor setting.'
-
-      log "Virtual machine vendor is set to ${vm_vendor}."
     else
       local settings=''
       settings="$(jq -er '.vm = "no"' "${SETTINGS_FILE}")" &&
@@ -626,8 +585,6 @@ detect () {
     settings="$(jq -er ".cpu_vendor = \"${cpu_vendor}\"" "${SETTINGS_FILE}")" &&
       echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save cpu_vendor setting.'
-
-    log "CPU vendor is set to ${cpu_vendor}."
   }
 
   local resolve_gpu
@@ -653,8 +610,6 @@ detect () {
     settings="$(jq -er ".gpu_vendor = \"${gpu_vendor}\"" "${SETTINGS_FILE}")" &&
       echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save gpu_vendor setting.'
-
-    log "GPU vendor is set to ${gpu_vendor}."
   }
 
   local is_disk_trimmable
@@ -678,11 +633,7 @@ detect () {
     settings="$(jq -er ".trim_disk = \"${trim_disk}\"" "${SETTINGS_FILE}")" &&
       echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save trim_disk setting.'
-
-    log "Disk trim mode is set to ${trim_disk}."
   }
-
-  log -n 'Detecting hardware and system data...'
 
   is_uefi &&
     is_virtual_machine &&

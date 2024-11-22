@@ -47,10 +47,10 @@ abort () {
   fi
 
   if is_given "${level}"; then
-    log -n "${level}" "${message}"
+    log "${level}" "${message}"
     log "${level}" 'Process has been exited.'
   else
-    log -n "${message}"
+    log "${message}"
     log 'Process has been exited.'
   fi
 
