@@ -24,6 +24,9 @@ init () {
   # Reset possibly existing log files
   rm -rf "${LOGS}"
   mkdir -p "${LOGS}"
+
+  # Initialize settings file
+  echo '{}' > "${SETTINGS_FILE}"
 }
 
 # Shows the welcome screen to the user.
