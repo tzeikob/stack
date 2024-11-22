@@ -45,6 +45,124 @@ welcome () {
   fi
 }
 
+# Detects any hardware data to collect extra
+# required props to install the new system.
+detect () {
+  local is_uefi
+  is_uefi () {
+    local uefi_mode='no'
+
+    if directory_exists '/sys/firmware/efi/efivars'; then
+      uefi_mode='yes'
+    fi
+
+    local settings=''
+    settings="$(jq -er ".uefi_mode = \"${uefi_mode}\"" "${SETTINGS_FILE}")" &&
+      echo "${settings}" > "${SETTINGS_FILE}" ||
+      abort 'Failed to save uefi_mode setting.'
+  }
+
+  local is_virtual_machine
+  is_virtual_machine () {
+    local vm_vendor=''
+    vm_vendor="$(
+      systemd-detect-virt 2>&1
+    )"
+
+    if is_not_empty "${vm_vendor}" && not_equals "${vm_vendor}" 'none'; then
+      local settings=''
+      settings="$(jq -er '.vm = "yes"' "${SETTINGS_FILE}")" &&
+        echo "${settings}" > "${SETTINGS_FILE}" ||
+        abort 'Failed to save vm setting.'
+
+      local settings=''
+      settings="$(jq -er ".vm_vendor = \"${vm_vendor}\"" "${SETTINGS_FILE}")" &&
+        echo "${settings}" > "${SETTINGS_FILE}" ||
+        abort 'Failed to save vm_vendor setting.'
+    else
+      local settings=''
+      settings="$(jq -er '.vm = "no"' "${SETTINGS_FILE}")" &&
+        echo "${settings}" > "${SETTINGS_FILE}" ||
+        abort 'Failed to save vm setting.'
+    fi
+  }
+
+  local resolve_cpu
+  resolve_cpu () {
+    local cpu_data=''
+    cpu_data="$(
+      lscpu 2>&1
+    )" || abort 'Unable to detect CPU data.'
+
+    local cpu_vendor='generic'
+
+    if grep -Eq 'AuthenticAMD' <<< "${cpu_data}"; then
+      cpu_vendor='amd'
+    elif grep -Eq 'GenuineIntel' <<< "${cpu_data}"; then
+      cpu_vendor='intel'
+    fi
+
+    local settings=''
+    settings="$(jq -er ".cpu_vendor = \"${cpu_vendor}\"" "${SETTINGS_FILE}")" &&
+      echo "${settings}" > "${SETTINGS_FILE}" ||
+      abort 'Failed to save cpu_vendor setting.'
+  }
+
+  local resolve_gpu
+  resolve_gpu () {
+    local gpu_data=''
+    gpu_data="$(
+      lspci 2>&1
+    )" || abort 'Unable to detect GPU data.'
+
+    local gpu_vendor='generic'
+
+    if grep -Eq 'NVIDIA|GeForce' <<< ${gpu_data}; then
+      gpu_vendor='nvidia'
+    elif grep -Eq 'Radeon|AMD' <<< ${gpu_data}; then
+      gpu_vendor='amd'
+    elif grep -Eq 'Integrated Graphics Controller' <<< ${gpu_data}; then
+      gpu_vendor='intel'
+    elif grep -Eq 'Intel Corporation UHD' <<< ${gpu_data}; then
+      gpu_vendor='intel'
+    fi
+
+    local settings=''
+    settings="$(jq -er ".gpu_vendor = \"${gpu_vendor}\"" "${SETTINGS_FILE}")" &&
+      echo "${settings}" > "${SETTINGS_FILE}" ||
+      abort 'Failed to save gpu_vendor setting.'
+  }
+
+  local is_disk_trimmable
+  is_disk_trimmable () {
+    local disk=''
+    disk="$(jq -cer '.disk' "${SETTINGS_FILE}")" ||
+      abort 'Unable to read disk setting.'
+
+    local discards=''
+    discards="$(
+      lsblk -dn --discard -o DISC-GRAN,DISC-MAX "${disk}" 2>&1
+    )" || abort 'Unable to list disk block devices.'
+
+    local trim_disk='no'
+
+    if match "${discards}" ' *[1-9]+[TGMB] *[1-9]+[TGMB] *'; then
+      trim_disk='yes'
+    fi
+
+    local settings=''
+    settings="$(jq -er ".trim_disk = \"${trim_disk}\"" "${SETTINGS_FILE}")" &&
+      echo "${settings}" > "${SETTINGS_FILE}" ||
+      abort 'Failed to save trim_disk setting.'
+  }
+
+  is_uefi &&
+    is_virtual_machine &&
+    resolve_cpu &&
+    resolve_gpu &&
+    is_disk_trimmable
+}
+
 # Asks the user the installation settings in order
 # to collect all the required props to install the
 # new system.
@@ -524,124 +642,6 @@ ask_user () {
   sleep 2
 }
 
-# Detects any hardware data to collect extra
-# required props to install the new system.
-detect () {
-  local is_uefi
-  is_uefi () {
-    local uefi_mode='no'
-
-    if directory_exists '/sys/firmware/efi/efivars'; then
-      uefi_mode='yes'
-    fi
-
-    local settings=''
-    settings="$(jq -er ".uefi_mode = \"${uefi_mode}\"" "${SETTINGS_FILE}")" &&
-      echo "${settings}" > "${SETTINGS_FILE}" ||
-      abort 'Failed to save uefi_mode setting.'
-  }
-
-  local is_virtual_machine
-  is_virtual_machine () {
-    local vm_vendor=''
-    vm_vendor="$(
-      systemd-detect-virt 2>&1
-    )"
-
-    if is_not_empty "${vm_vendor}" && not_equals "${vm_vendor}" 'none'; then
-      local settings=''
-      settings="$(jq -er '.vm = "yes"' "${SETTINGS_FILE}")" &&
-        echo "${settings}" > "${SETTINGS_FILE}" ||
-        abort 'Failed to save vm setting.'
-
-      local settings=''
-      settings="$(jq -er ".vm_vendor = \"${vm_vendor}\"" "${SETTINGS_FILE}")" &&
-        echo "${settings}" > "${SETTINGS_FILE}" ||
-        abort 'Failed to save vm_vendor setting.'
-    else
-      local settings=''
-      settings="$(jq -er '.vm = "no"' "${SETTINGS_FILE}")" &&
-        echo "${settings}" > "${SETTINGS_FILE}" ||
-        abort 'Failed to save vm setting.'
-    fi
-  }
-
-  local resolve_cpu
-  resolve_cpu () {
-    local cpu_data=''
-    cpu_data="$(
-      lscpu 2>&1
-    )" || abort 'Unable to detect CPU data.'
-
-    local cpu_vendor='generic'
-
-    if grep -Eq 'AuthenticAMD' <<< "${cpu_data}"; then
-      cpu_vendor='amd'
-    elif grep -Eq 'GenuineIntel' <<< "${cpu_data}"; then
-      cpu_vendor='intel'
-    fi
-
-    local settings=''
-    settings="$(jq -er ".cpu_vendor = \"${cpu_vendor}\"" "${SETTINGS_FILE}")" &&
-      echo "${settings}" > "${SETTINGS_FILE}" ||
-      abort 'Failed to save cpu_vendor setting.'
-  }
-
-  local resolve_gpu
-  resolve_gpu () {
-    local gpu_data=''
-    gpu_data="$(
-      lspci 2>&1
-    )" || abort 'Unable to detect GPU data.'
-
-    local gpu_vendor='generic'
-
-    if grep -Eq 'NVIDIA|GeForce' <<< ${gpu_data}; then
-      gpu_vendor='nvidia'
-    elif grep -Eq 'Radeon|AMD' <<< ${gpu_data}; then
-      gpu_vendor='amd'
-    elif grep -Eq 'Integrated Graphics Controller' <<< ${gpu_data}; then
-      gpu_vendor='intel'
-    elif grep -Eq 'Intel Corporation UHD' <<< ${gpu_data}; then
-      gpu_vendor='intel'
-    fi
-
-    local settings=''
-    settings="$(jq -er ".gpu_vendor = \"${gpu_vendor}\"" "${SETTINGS_FILE}")" &&
-      echo "${settings}" > "${SETTINGS_FILE}" ||
-      abort 'Failed to save gpu_vendor setting.'
-  }
-
-  local is_disk_trimmable
-  is_disk_trimmable () {
-    local disk=''
-    disk="$(jq -cer '.disk' "${SETTINGS_FILE}")" ||
-      abort 'Unable to read disk setting.'
-
-    local discards=''
-    discards="$(
-      lsblk -dn --discard -o DISC-GRAN,DISC-MAX "${disk}" 2>&1
-    )" || abort 'Unable to list disk block devices.'
-
-    local trim_disk='no'
-
-    if match "${discards}" ' *[1-9]+[TGMB] *[1-9]+[TGMB] *'; then
-      trim_disk='yes'
-    fi
-
-    local settings=''
-    settings="$(jq -er ".trim_disk = \"${trim_disk}\"" "${SETTINGS_FILE}")" &&
-      echo "${settings}" > "${SETTINGS_FILE}" ||
-      abort 'Failed to save trim_disk setting.'
-  }
-
-  is_uefi &&
-    is_virtual_machine &&
-    resolve_cpu &&
-    resolve_gpu &&
-    is_disk_trimmable
-}
-
 # Executes a preparation task script with the given file name.
 # Arguments:
 #  file_name: the name of a task script
@@ -806,8 +806,8 @@ restart () {
 
 init &&
   welcome &&
-  ask_user &&
   detect &&
+  ask_user &&
   run diskpart &&
   run bootstrap &&
   grant nopasswd &&
