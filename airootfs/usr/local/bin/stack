@@ -5,27 +5,22 @@ set -o pipefail
 # Clones the Stack Linux repository and launches
 # the installation script.
 # Arguments:
-#  branch: the branch to checkout
+#  branch: the branch to checkout, default to master
 install () {
-  local branch="${1}"
+  local branch="${1:-"master"}"
 
   local repo_url='https://github.com/tzeikob/stack.git'
+  local repo_home='/tmp/stack'
 
-  local blank='^ *$'
-
-  if [[ "${branch}" =~ ${blank} ]]; then
-    git clone "${repo_url}"
-  else
-    git clone "${repo_url}" --branch "${branch}"
-  fi
+  rm -rf "${repo_home}"
+  git clone "${repo_url}" --branch "${branch}" "${repo_home}" > /dev/null 2>&1
 
   if [[ $? != 0 ]]; then
-    echo 'Ooops, failed to clone the repository!'
+    echo 'Failed to download installation files!'
     return 1
   fi
 
-  cd stack
-  ./install.sh
+  cd "${repo_home}" && ./install.sh
 }
 
 # Shows the help message.
@@ -39,8 +34,8 @@ show_help () {
     '-h' 'Show this help message.'
 
   printf '\nCOMMANDS\n'
-  printf ' %-10s %s\n' \
-    'install <branch>' 'Clones the Stack Linux repository and installs it.'
+  printf ' %-18s %s\n' \
+    'install <branch>' 'Starts a new installation of Stack Linux.'
 }
 
 # Routes to the corresponding operation by matching
