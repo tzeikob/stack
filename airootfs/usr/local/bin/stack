@@ -2,6 +2,8 @@
 
 set -o pipefail
 
+source /opt/stack/commons/error.sh
+
 # Clones the Stack Linux repository and launches
 # the installation script.
 # Arguments:
@@ -13,12 +15,9 @@ install () {
   local repo_home='/tmp/stack'
 
   rm -rf "${repo_home}"
-  git clone "${repo_url}" --branch "${branch}" "${repo_home}" > /dev/null 2>&1
 
-  if [[ $? != 0 ]]; then
-    echo 'Failed to download installation files!'
-    return 1
-  fi
+  git clone "${repo_url}" --branch "${branch}" "${repo_home}" > /dev/null 2>&1 ||
+    abort 'Failed to download installation files!'
 
   cd "${repo_home}" && ./install.sh
 }
