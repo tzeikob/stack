@@ -617,9 +617,6 @@ ask_user () {
       break
     fi
 
-    # Reset the settings file
-    echo '{}' > "${SETTINGS_FILE}"
-
     clear
   done
 
