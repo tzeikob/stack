@@ -9,6 +9,7 @@ source src/commons/validators.sh
 source src/commons/math.sh
 
 SETTINGS_FILE=./settings.json
+LOG_FILE=/var/log/stack/installer/diskpart.log
 
 # Erases all table data of the installation disk.
 wipe_disk () {
@@ -403,12 +404,12 @@ resolve () {
   local total="${1}"
 
   local lines=0
-  lines=$(cat /var/log/stack/installer/diskpart.log | wc -l)
+  lines=$(cat "${LOG_FILE}" | wc -l)
 
   local fake_lines=0
   fake_lines=$(calc "${total} - ${lines}")
 
-  seq ${fake_lines} | xargs -I -- log '~'
+  seq ${fake_lines} | xargs -I -- echo '~' >> "${LOG_FILE}"
 }
 
 log INFO 'Script diskpart.sh started.'
