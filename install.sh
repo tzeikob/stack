@@ -136,34 +136,10 @@ detect () {
       abort 'Failed to save gpu_vendor setting.'
   }
 
-  local is_disk_trimmable
-  is_disk_trimmable () {
-    local disk=''
-    disk="$(jq -cer '.disk' "${SETTINGS_FILE}")" ||
-      abort 'Unable to read disk setting.'
-
-    local discards=''
-    discards="$(
-      lsblk -dn --discard -o DISC-GRAN,DISC-MAX "${disk}" 2>&1
-    )" || abort 'Unable to list disk block devices.'
-
-    local trim_disk='no'
-
-    if match "${discards}" ' *[1-9]+[TGMB] *[1-9]+[TGMB] *'; then
-      trim_disk='yes'
-    fi
-
-    local settings=''
-    settings="$(jq -er ".trim_disk = \"${trim_disk}\"" "${SETTINGS_FILE}")" &&
-      echo "${settings}" > "${SETTINGS_FILE}" ||
-      abort 'Failed to save trim_disk setting.'
-  }
-
   is_uefi &&
     is_virtual_machine &&
     resolve_cpu &&
-    resolve_gpu &&
-    is_disk_trimmable
+    resolve_gpu
 }
 
 # Asks the user the installation settings in order
@@ -222,6 +198,22 @@ ask_user () {
     settings="$(jq -er ".disk = \"${disk}\"" "${SETTINGS_FILE}")" &&
       echo "${settings}" > "${SETTINGS_FILE}" ||
       abort 'Failed to save disk setting.'
+
+    local discards=''
+    discards="$(
+      lsblk -dn --discard -o DISC-GRAN,DISC-MAX "${disk}" 2>&1
+    )" || abort 'Unable to list disk block devices.'
+
+    local trim_disk='no'
+
+    if match "${discards}" ' *[1-9]+[TGMB] *[1-9]+[TGMB] *'; then
+      trim_disk='yes'
+    fi
+
+    local settings=''
+    settings="$(jq -er ".trim_disk = \"${trim_disk}\"" "${SETTINGS_FILE}")" &&
+      echo "${settings}" > "${SETTINGS_FILE}" ||
+      abort 'Failed to save trim_disk setting.'
   }
 
   local opt_in_swap_space
@@ -600,9 +592,6 @@ ask_user () {
   }
 
   while true; do
-    # Initialize the settings file
-    echo '{}' > "${SETTINGS_FILE}"
-
     select_disk &&
       opt_in_swap_space &&
       select_mirrors &&
@@ -627,6 +616,9 @@ ask_user () {
     if is_no "${REPLY}"; then
       break
     fi
+
+    # Reset the settings file
+    echo '{}' > "${SETTINGS_FILE}"
 
     clear
   done
