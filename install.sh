@@ -608,9 +608,10 @@ ask_user () {
       select_kernel
     
     log 'Review your installation settings:'
-    jq . "${SETTINGS_FILE}" || abort 'Unable to read installation settings.'
+    jq 'del(.user_password, .root_password)' "${SETTINGS_FILE}" ||
+      abort 'Unable to read installation settings.'
 
-    confirm 'Do you want to ask for settings again?' || abort
+    confirm -n 'Do you want to ask for settings again?' || abort
     is_not_given "${REPLY}" && abort 'User input is required.'
 
     if is_no "${REPLY}"; then
