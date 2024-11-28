@@ -144,7 +144,6 @@ lock_screen () {
 set_user_password () {
   authenticate_user || return $?
 
-  log 'Password valid chars: a-z A-Z 0-9 `~!@#$%^&*()=+{};:",.<>/?_-'
   ask_secret 'Enter new password (at least 4 chars):' || return $?
   is_empty "${REPLY}" && log 'New password cannot be blank.' && return 2
   

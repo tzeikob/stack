@@ -521,7 +521,6 @@ ask_user () {
 
   local enter_user_password
   enter_user_password () {
-    log 'Password valid chars: a-z A-Z 0-9 `~!@#$%^&*()=+{};:",.<>/?_-'
     ask_secret 'Enter the user password (at least 4 chars):' || abort
     is_not_given "${REPLY}" && abort 'User input is required.'
 
@@ -548,7 +547,6 @@ ask_user () {
 
   local enter_root_password
   enter_root_password () {
-    log 'Password valid chars: a-z A-Z 0-9 `~!@#$%^&*()=+{};:",.<>/?_-'
     ask_secret 'Enter the root password (at least 4 chars):' || abort
     is_not_given "${REPLY}" && abort 'User input is required.'
 
