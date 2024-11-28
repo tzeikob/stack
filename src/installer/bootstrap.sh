@@ -141,6 +141,8 @@ copy_installation_files () {
   rm -rf "${target}" && rsync -av . "${target}" ||
     abort ERROR 'Unable to copy installation files.'
 
+  mkdir -p /mnt/var/log/stack/installer
+
   log INFO 'Installation files have been copied.'
 }
 
