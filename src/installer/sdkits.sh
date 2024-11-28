@@ -8,7 +8,6 @@ source src/commons/validators.sh
 source src/commons/math.sh
 
 SETTINGS_FILE=./settings.json
-LOG_FILE=/var/log/stack/installer/sdkits.log
 
 # Installs the node javascript runtime engine.
 install_node () {
@@ -145,13 +144,15 @@ install_docker () {
 resolve () {
   local total="${1}"
 
+  local log_file='/var/log/stack/installer/sdkits.log'
+
   local lines=0
-  lines=$(cat "${LOG_FILE}" | wc -l)
+  lines=$(cat "${log_file}" | wc -l)
 
   local fake_lines=0
   fake_lines=$(calc "${total} - ${lines}")
 
-  seq ${fake_lines} | xargs -I -- echo '~' >> "${LOG_FILE}"
+  seq ${fake_lines} | xargs -I -- echo '~'
 }
 
 log INFO 'Script sdkits.sh started.'

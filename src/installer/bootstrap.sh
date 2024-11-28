@@ -8,7 +8,6 @@ source src/commons/validators.sh
 source src/commons/math.sh
 
 SETTINGS_FILE=./settings.json
-LOG_FILE=/var/log/stack/installer/bootstrap.log
 
 # Synchronizes the system clock to the current time.
 sync_clock () {
@@ -191,13 +190,15 @@ restore_mirrors () {
 resolve () {
   local total="${1}"
 
+  local log_file='/var/log/stack/installer/bootstrap.log'
+
   local lines=0
-  lines=$(cat "${LOG_FILE}" | wc -l)
+  lines=$(cat "${log_file}" | wc -l)
 
   local fake_lines=0
   fake_lines=$(calc "${total} - ${lines}")
 
-  seq ${fake_lines} | xargs -I -- echo '~' >> "${LOG_FILE}"
+  seq ${fake_lines} | xargs -I -- echo '~'
 }
 
 log INFO 'Script bootstrap.sh started.'
