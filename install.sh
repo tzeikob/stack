@@ -40,7 +40,7 @@ welcome () {
   log -n 'Welcome to the Stack Linux installer.'
   log 'Base your development stack on Arch Linux.'
 
-  confirm 'Do you want to proceed?' || abort
+  confirm -n 'Do you want to proceed?' || abort
   is_not_given "${REPLY}" && abort 'User input is required.'
 
   if is_no "${REPLY}"; then
@@ -68,9 +68,7 @@ detect () {
   local is_virtual_machine
   is_virtual_machine () {
     local vm_vendor=''
-    vm_vendor="$(
-      systemd-detect-virt 2>&1
-    )"
+    vm_vendor="$(systemd-detect-virt 2>&1)"
 
     if is_not_empty "${vm_vendor}" && not_equals "${vm_vendor}" 'none'; then
       local settings=''
@@ -93,9 +91,8 @@ detect () {
   local resolve_cpu
   resolve_cpu () {
     local cpu_data=''
-    cpu_data="$(
-      lscpu 2>&1
-    )" || abort 'Unable to detect CPU data.'
+    cpu_data="$(lscpu 2>&1)" ||
+      abort 'Unable to detect CPU data.'
 
     local cpu_vendor='generic'
 
@@ -114,9 +111,8 @@ detect () {
   local resolve_gpu
   resolve_gpu () {
     local gpu_data=''
-    gpu_data="$(
-      lspci 2>&1
-    )" || abort 'Unable to detect GPU data.'
+    gpu_data="$(lspci 2>&1)" ||
+      abort 'Unable to detect GPU data.'
 
     local gpu_vendor='generic'
 
@@ -184,7 +180,7 @@ ask_user () {
     local disk="${REPLY}"
 
     local prompt=''
-    prompt+="All data in ${disk} will be lost!"
+    prompt+="All data in ${disk} disk will be lost!"
     prompt+='\nDo you want to proceed with this disk?'
 
     confirm "${prompt}" || abort
@@ -200,9 +196,8 @@ ask_user () {
       abort 'Failed to save disk setting.'
 
     local discards=''
-    discards="$(
-      lsblk -dn --discard -o DISC-GRAN,DISC-MAX "${disk}" 2>&1
-    )" || abort 'Unable to list disk block devices.'
+    discards="$(lsblk -dn --discard -o DISC-GRAN,DISC-MAX "${disk}" 2>&1)" ||
+      abort 'Unable to list disk block devices.'
 
     local trim_disk='no'
 
@@ -269,15 +264,13 @@ ask_user () {
   local select_mirrors
   select_mirrors () {
     local mirrors=''
-    mirrors="$(
-      reflector --list-countries 2> /dev/null | tail -n +3 | awk '{
-        match($0, /(.*)([A-Z]{2})\s+([0-9]+)/, a)
-        gsub(/[ \t]+$/, "", a[1])
+    mirrors="$(reflector --list-countries 2> /dev/null | tail -n +3 | awk '{
+      match($0, /(.*)([A-Z]{2})\s+([0-9]+)/, a)
+      gsub(/[ \t]+$/, "", a[1])
 
-        frm="{\"key\": \"%s\", \"value\": \"%s\"},"
-        printf frm, a[2], a[1]" ["a[3]"]"
-      }'
-    )"
+      frm="{\"key\": \"%s\", \"value\": \"%s\"},"
+      printf frm, a[2], a[1]" ["a[3]"]"
+    }')"
     
     if has_failed; then
       abort 'Unable to fetch package databases mirrors.'
@@ -300,11 +293,9 @@ ask_user () {
   local select_timezone
   select_timezone () {
     local timezones=''
-    timezones="$(
-      timedatectl list-timezones 2> /dev/null | awk '{
-        print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
-      }'
-    )"
+    timezones="$(timedatectl list-timezones 2> /dev/null | awk '{
+      print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
+    }')"
     
     if has_failed; then
       abort 'Unable to list timezones.'
@@ -327,11 +318,9 @@ ask_user () {
   local select_locales
   select_locales () {
     local locales=''
-    locales="$(
-      cat /etc/locale.gen | tail -n +24 | grep -E '^\s*#.*' | tr -d '#' | trim | awk '{
-        print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
-      }'
-    )"
+    locales="$(cat /etc/locale.gen | tail -n +24 | grep -E '^\s*#.*' | tr -d '#' | trim | awk '{
+      print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
+    }')"
     
     if has_failed; then
       abort 'Unable to list the locales.'
@@ -354,11 +343,9 @@ ask_user () {
   local select_keyboard_model
   select_keyboard_model () {
     local models=''
-    models="$(
-      localectl --no-pager list-x11-keymap-models 2> /dev/null | awk '{
-        print "{\"key\":\""$1"\",\"value\":\""$1"\"},"
-      }'
-    )"
+    models="$(localectl --no-pager list-x11-keymap-models 2> /dev/null | awk '{
+      print "{\"key\":\""$1"\",\"value\":\""$1"\"},"
+    }')"
     
     if has_failed; then
       abort 'Unable to list keyboard models.'
@@ -381,11 +368,9 @@ ask_user () {
   local select_keyboard_map
   select_keyboard_map () {
     local maps=''
-    maps="$(
-      localectl --no-pager list-keymaps 2> /dev/null | awk '{
-        print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
-      }'
-    )"
+    maps="$(localectl --no-pager list-keymaps 2> /dev/null | awk '{
+      print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
+    }')"
     
     if has_failed; then
       abort 'Unable to list keyboard maps.'
@@ -408,11 +393,9 @@ ask_user () {
   local select_keyboard_layout
   select_keyboard_layout () {
     local layouts=''
-    layouts="$(
-      localectl --no-pager list-x11-keymap-layouts 2> /dev/null | awk '{
-        print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
-      }'
-    )"
+    layouts="$(localectl --no-pager list-x11-keymap-layouts 2> /dev/null | awk '{
+      print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
+    }')"
     
     if has_failed; then
       abort 'Unable to list keyboard layouts.'
@@ -432,11 +415,9 @@ ask_user () {
       abort 'Failed to save keyboard_layout setting.'
 
     local variants='{"key": "default", "value": "default"},'
-    variants+="$(
-      localectl --no-pager list-x11-keymap-variants "${keyboard_layout}" 2> /dev/null  | awk '{
-        print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
-      }'
-    )"
+    variants+="$(localectl --no-pager list-x11-keymap-variants "${keyboard_layout}" 2> /dev/null  | awk '{
+      print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
+    }')"
     
     if has_failed; then
       abort 'Unable to list layout variants.'
@@ -459,11 +440,9 @@ ask_user () {
   local select_keyboard_options
   select_keyboard_options () {
     local options=''
-    options="$(
-      localectl --no-pager list-x11-keymap-options 2> /dev/null | awk '{
-        print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
-      }'
-    )"
+    options="$(localectl --no-pager list-x11-keymap-options 2> /dev/null | awk '{
+      print "{\"key\":\""$0"\",\"value\":\""$0"\"},"
+    }')"
     
     if has_failed; then
       abort 'Unable to list keyboard options.'
@@ -619,8 +598,12 @@ ask_user () {
     clear
   done
 
+  local disk=''
+  disk="$(jq -cer '.disk' "${SETTINGS_FILE}")" ||
+    abort 'Unable to read disk setting.'
+
   local prompt=''
-  prompt+='All data in the disk will be lost!'
+  prompt+="All data in ${disk} disk will be lost!"
   prompt+='\nDo you really want to proceed?'
 
   confirm "${prompt}" || abort
@@ -652,8 +635,7 @@ run () {
 
   bash "${script_file}" 2>&1 |
     tee -a "${log_file}" 2>&1 |
-    tqdm --desc "${file_name^}:" --ncols 50 \
-      --bar-format "${BAR_FORMAT}" --total ${total} >> "${log_file}.tqdm"
+    tqdm --desc "${file_name^}:" --ncols 50 --bar-format "${BAR_FORMAT}" --total ${total} >> "${log_file}.tqdm"
 
   if has_failed; then
     log ERROR "Script ${file_name}.sh has failed." >> "${log_file}"
@@ -693,8 +675,7 @@ install () {
 
   arch-chroot /mnt runuser -u "${user_name}" -- cd /stack && "${script_file}" 2>&1 |
     tee -a "${log_file}" 2>&1 |
-    tqdm --desc "${file_name^}:" --ncols 50 \
-      --bar-format "${BAR_FORMAT}" --total ${total} >> "${log_file}.tqdm"
+    tqdm --desc "${file_name^}:" --ncols 50 --bar-format "${BAR_FORMAT}" --total ${total} >> "${log_file}.tqdm"
   
   if has_failed; then
     log ERROR "Script ${file_name}.sh has failed." >> "${log_file}"
@@ -704,7 +685,7 @@ install () {
 
 # Grants temporary sudo permissions.
 # Arguments:
-#  perm: a permission key
+#  perm: a permission rule key
 grant () {
   local key="${1}"
 
@@ -729,7 +710,7 @@ grant () {
 
 # Revokes temporarily granted sudo permissions.
 # Arguments:
-#  perm: a permission key
+#  perm: a permission rule key
 revoke () {
   local key="${1}"
 
