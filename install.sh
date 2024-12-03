@@ -673,7 +673,9 @@ install () {
     abort "Unable to read the total of ${file_name}.sh."
   fi
 
-  arch-chroot /mnt runuser -u "${user_name}" -- cd /stack && "${script_file}" 2>&1 |
+  local cmd="cd /stack && ./${script_file}"
+
+  arch-chroot /mnt runuser -u "${user_name}" -- bash -c "${cmd}" 2>&1 |
     tee -a "${log_file}" 2>&1 |
     tqdm --desc "${file_name^}:" --ncols 50 --bar-format "${BAR_FORMAT}" --total ${total} >> "${log_file}.tqdm"
   

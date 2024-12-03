@@ -12,7 +12,7 @@ install () {
   local branch="${1:-"master"}"
 
   local repo_url='https://github.com/tzeikob/stack.git'
-  local repo_home='/tmp/stack'
+  local repo_home='/stack'
 
   rm -rf "${repo_home}"
 
