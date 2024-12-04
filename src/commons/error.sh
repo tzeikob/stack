@@ -29,12 +29,25 @@ has_not_failed () {
 }
 
 # Aborts the current process logging the given error message.
+# Options:
+#  n: print an empty line before, -nn 2 lines and so on
 # Arguments:
 #  level:   optionally one of INFO, WARN, ERROR
 #  message: an error message to print
 # Outputs:
 #  An error messsage.
 abort () {
+  local OPTIND opt
+
+  while getopts ':n' opt; do
+    case "${opt}" in
+     'n') printf '\n';;
+    esac
+  done
+
+  # Collect arguments
+  shift $((OPTIND - 1))
+
   local level message
 
   if is_true "$# >= 2"; then

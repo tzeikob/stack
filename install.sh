@@ -586,7 +586,7 @@ ask_user () {
     
     log 'Review your installation settings:'
     jq 'del(.user_password, .root_password)' "${SETTINGS_FILE}" ||
-      abort 'Unable to read installation settings.'
+      abort -n 'Unable to read installation settings.'
 
     confirm -n 'Do you want to ask for settings again?' || abort
     is_not_given "${REPLY}" && abort 'User input is required.'
@@ -630,7 +630,7 @@ run () {
 
   if has_failed; then
     log ERROR "Unable to read the total of ${file_name}.sh." >> "${log_file}"
-    abort "Unable to read the total of ${file_name}.sh."
+    abort -n "Unable to read the total of ${file_name}.sh."
   fi
 
   bash "${script_file}" 2>&1 |
@@ -639,7 +639,7 @@ run () {
 
   if has_failed; then
     log ERROR "Script ${file_name}.sh has failed." >> "${log_file}"
-    abort 'A fatal error has been occurred.'
+    abort -n 'Oops, a fatal error has been occurred.'
   fi
 }
 
@@ -661,7 +661,7 @@ install () {
 
     if has_failed; then
       log ERROR 'Unable to read the user_name setting.' >> "${log_file}"
-      abort 'Unable to read user_name setting.'
+      abort -n 'Unable to read user_name setting.'
     fi
   fi
 
@@ -670,7 +670,7 @@ install () {
 
   if has_failed; then
     log ERROR "Unable to read the total of ${file_name}.sh." >> "${log_file}"
-    abort "Unable to read the total of ${file_name}.sh."
+    abort -n "Unable to read the total of ${file_name}.sh."
   fi
 
   local cmd="cd /stack && ./${script_file}"
@@ -681,7 +681,7 @@ install () {
   
   if has_failed; then
     log ERROR "Script ${file_name}.sh has failed." >> "${log_file}"
-    abort 'A fatal error has been occurred.'
+    abort -n 'Oops, a fatal error has been occurred.'
   fi
 }
 
@@ -698,7 +698,7 @@ grant () {
       rule='%wheel ALL=(ALL:ALL) NOPASSWD: ALL'
       ;;
     *)
-      abort 'Invalid permission key value.'
+      abort -n 'Invalid permission key value.'
       ;;
   esac
 
@@ -706,7 +706,7 @@ grant () {
   sed -i "s/^# \(${rule}\)/\1/" /mnt/etc/sudoers
 
   if has_failed || ! grep -q "^${rule}" /mnt/etc/sudoers; then
-    abort "Failed to grant ${key} permission."
+    abort -n "Failed to grant ${key} permission."
   fi
 }
 
@@ -723,7 +723,7 @@ revoke () {
       rule='%wheel ALL=(ALL:ALL) NOPASSWD: ALL'
       ;;
     *)
-      log 'Invalid permission key value.'
+      log -n 'Invalid permission key value.'
       return 0
       ;;
   esac
@@ -732,7 +732,7 @@ revoke () {
   sed -i "s/^\(${rule}\)/# \1/" /mnt/etc/sudoers
 
   if has_failed || ! grep -q "^# ${rule}" /mnt/etc/sudoers; then
-    log "Failed to revoke ${key} permission."
+    log -n "Failed to revoke ${key} permission."
   fi
 }
 
