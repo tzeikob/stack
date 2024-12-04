@@ -456,7 +456,7 @@ setup_locales () {
 
   local langs_file="/home/${user_name}/.config/stack/langs.json"
 
-  local query=".locale = \"${locale}\" | .locales += $lcs"
+  local query=".locale = \"${locale}\" | .locales += \$lcs"
 
   local langs_settings=''
   langs_settings="$(jq -e --argjson lcs "${locales}" "${query}" "${langs_file}")" ||
