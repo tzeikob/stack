@@ -277,7 +277,8 @@ install_base_packages () {
   pkgs+=($(grep -E '(stp|all):pac' packages.x86_64 | cut -d ':' -f 3)) ||
     abort ERROR 'Failed to read packages from packages.x86_64 file.'
 
-  pacman -S --needed --noconfirm ${pkgs[@]} 2>&1 ||
+  # Pass yes to pacman to accept iptables replacement with iptables-nft
+  printf '%s\n' y | pacman -S --needed --noconfirm ${pkgs[@]} 2>&1 ||
     abort ERROR 'Failed to install base packages.'
 
   log INFO 'Base packages have been installed.'
