@@ -321,7 +321,7 @@ install_aur_packages () {
   user_name="$(jq -cer '.user_name' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read user_name setting.'
 
-  sudo -u "${user_name}" yay -S --needed --noconfirm --removemake ${pkgs[@]} 2>&1 ||
+  sudo -u "${user_name}" yay -S --needed --noconfirm --removemake --mflags --nocheck ${pkgs[@]} 2>&1 ||
     abort ERROR 'Failed to install AUR packages.'
 
   log INFO 'AUR packages have been installed.'
