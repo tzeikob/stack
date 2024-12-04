@@ -9,6 +9,84 @@ source src/commons/math.sh
 
 SETTINGS_FILE=./settings.json
 
+# Syncs root files to new system.
+sync_root_files () {
+  log INFO 'Syncing the root file system...'
+
+  local user_name=''
+  user_name="$(jq -cer '.user_name' "${SETTINGS_FILE}")" ||
+    abort ERROR 'Unable to read user_name setting.'
+  
+  # Rename user home to align with the new system
+  if not_equals "${user_name}" 'user'; then
+    mv airootfs/home/user "airootfs/home/${user_name}" ||
+      abort ERROR "Failed to rename home folder for ${user_name}."
+  fi
+
+  rsync -av airootfs/ / \
+    --exclude usr/local/bin/stack ||
+    abort ERROR 'Failed to sync the root file system.'
+  
+  mkdir -p /var/log/stack
+  
+  log INFO 'Root file system has been synced.'
+}
+
+# Syncs the commons script files.
+sync_commons () {
+  log INFO 'Syncing the commons files...'
+
+  mkdir -p /opt/stack ||
+    abort ERROR 'Failed to create the /opt/stack folder.'
+
+  rsync -av src/commons/ /opt/stack/commons ||
+    abort ERROR 'Failed to sync the commons files.'
+  
+  sed -i 's;source src;source /opt/stack;' /opt/stack/commons/* ||
+    abort ERROR 'Failed to fix source paths to /opt/stack.'
+  
+  log INFO 'Source paths fixed to /opt/stack.'
+  log INFO 'Commons files have been synced.'
+}
+
+# Syncs the tools script files.
+sync_tools () {
+  log INFO 'Syncing the tools files...'
+
+  mkdir -p /opt/stack ||
+    abort ERROR 'Failed to create the /opt/stack folder.'
+
+  rsync -av src/tools/ /opt/stack/tools ||
+    abort ERROR 'Failed to sync the tools files.'
+  
+  sed -i 's;source src;source /opt/stack;' /opt/stack/tools/**/* ||
+    abort ERROR 'Failed to fix source paths to /opt/stack.'
+  
+  log INFO 'Source paths fixed to /opt/stack.'
+
+  # Create and restore all symlinks for every tool
+  mkdir -p /usr/local/stack ||
+    abort ERROR 'Failed to create the /usr/local/stack folder.'
+  
+  local main_files
+  main_files=($(find /opt/stack/tools -type f -name 'main.sh')) ||
+    abort ERROR 'Failed to get the list of main script file paths.'
+  
+  local main_file
+  for main_file in "${main_files[@]}"; do
+    # Extrack the tool handle name
+    local tool_name=''
+    tool_name="$(echo "${main_file}" | sed 's;/opt/stack/tools/\(.*\)/main.sh;\1;')" ||
+      abort ERROR 'Failed to extract tool handle name.'
+
+    ln -sf "${main_file}" "/usr/local/stack/${tool_name}" ||
+      abort ERROR "Failed to create symlink for ${main_file} file."
+  done
+
+  log INFO 'Tools symlinks have been created.'
+  log INFO 'Tools files have been synced.'
+}
+
 # Sets the host name of the system.
 set_host_name () {
   log INFO 'Setting the host name...'
@@ -244,84 +322,6 @@ install_aur_packages () {
     abort ERROR 'Failed to install AUR packages.'
 
   log INFO 'AUR packages have been installed.'
-}
-
-# Syncs root files to new system.
-sync_root_files () {
-  log INFO 'Syncing the root file system...'
-
-  local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS_FILE}")" ||
-    abort ERROR 'Unable to read user_name setting.'
-  
-  # Rename user home to align with the new system
-  if not_equals "${user_name}" 'user'; then
-    mv airootfs/home/user "airootfs/home/${user_name}" ||
-      abort ERROR "Failed to rename home folder for ${user_name}."
-  fi
-
-  rsync -av airootfs/ / \
-    --exclude usr/local/bin/stack ||
-    abort ERROR 'Failed to sync the root file system.'
-  
-  mkdir -p /var/log/stack
-  
-  log INFO 'Root file system has been synced.'
-}
-
-# Syncs the commons script files.
-sync_commons () {
-  log INFO 'Syncing the commons files...'
-
-  mkdir -p /opt/stack ||
-    abort ERROR 'Failed to create the /opt/stack folder.'
-
-  rsync -av src/commons/ /opt/stack/commons ||
-    abort ERROR 'Failed to sync the commons files.'
-  
-  sed -i 's;source src;source /opt/stack;' /opt/stack/commons/* ||
-    abort ERROR 'Failed to fix source paths to /opt/stack.'
-  
-  log INFO 'Source paths fixed to /opt/stack.'
-  log INFO 'Commons files have been synced.'
-}
-
-# Syncs the tools script files.
-sync_tools () {
-  log INFO 'Syncing the tools files...'
-
-  mkdir -p /opt/stack ||
-    abort ERROR 'Failed to create the /opt/stack folder.'
-
-  rsync -av src/tools/ /opt/stack/tools ||
-    abort ERROR 'Failed to sync the tools files.'
-  
-  sed -i 's;source src;source /opt/stack;' /opt/stack/tools/**/* ||
-    abort ERROR 'Failed to fix source paths to /opt/stack.'
-  
-  log INFO 'Source paths fixed to /opt/stack.'
-
-  # Create and restore all symlinks for every tool
-  mkdir -p /usr/local/stack ||
-    abort ERROR 'Failed to create the /usr/local/stack folder.'
-  
-  local main_files
-  main_files=($(find /opt/stack/tools -type f -name 'main.sh')) ||
-    abort ERROR 'Failed to get the list of main script file paths.'
-  
-  local main_file
-  for main_file in "${main_files[@]}"; do
-    # Extrack the tool handle name
-    local tool_name=''
-    tool_name="$(echo "${main_file}" | sed 's;/opt/stack/tools/\(.*\)/main.sh;\1;')" ||
-      abort ERROR 'Failed to extract tool handle name.'
-
-    ln -sf "${main_file}" "/usr/local/stack/${tool_name}" ||
-      abort ERROR "Failed to create symlink for ${main_file} file."
-  done
-
-  log INFO 'Tools symlinks have been created.'
-  log INFO 'Tools files have been synced.'
 }
 
 # Fixes the os release data.
@@ -1106,7 +1106,11 @@ if not_equals "$(id -u)" 0; then
   abort ERROR 'Script system.sh must be run as root user.'
 fi
 
-set_host_name &&
+
+sync_root_files &&
+  sync_commons &&
+  sync_tools &&
+  set_host_name &&
   set_root_user &&
   set_sudoer_user &&
   set_mirrors &&
@@ -1115,9 +1119,6 @@ set_host_name &&
   install_base_packages &&
   install_aur_package_manager &&
   install_aur_packages &&
-  sync_root_files &&
-  sync_commons &&
-  sync_tools &&
   fix_release_data &&
   setup_display_server &&
   setup_screen_locker &&
