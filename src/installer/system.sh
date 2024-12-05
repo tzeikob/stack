@@ -608,7 +608,7 @@ setup_boot_loader () {
   log INFO 'Boot loader config file created successfully.'
 
   local vm_vendor=''
-  vm_vendor="$(jq -cer '.vm_vendor' "${SETTINGS_FILE}")" ||
+  vm_vendor="$(jq -cer '.vm_vendor//""' "${SETTINGS_FILE}")" ||
     abort ERROR 'Failed to read the vm_vendor setting.'
 
   if is_yes "${uefi_mode}" && equals "${vm_vendor}" 'oracle'; then
