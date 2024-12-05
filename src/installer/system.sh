@@ -501,19 +501,8 @@ setup_keyboard () {
     abort ERROR 'Unable to read keyboard_layout setting.'
   
   local layout_variant=''
-  layout_variant="$(jq -cer '.layout_variant|if . == "default" then "" else . end' "${SETTINGS_FILE}")" ||
+  layout_variant="$(jq -cer '.layout_variant' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read layout_variant setting.'
-  
-  local keyboard_conf='/etc/X11/xorg.conf.d/00-keyboard.conf'
-
-  sed -i \
-    -e "s/#MODEL#/${keyboard_model}/" \
-    -e "s/#OPTIONS#/${keyboard_options}/" \
-    -e "s/#LAYOUTS#/${keyboard_layout}/" \
-    -e "s/#VARIANTS#/${layout_variant}/" "${keyboard_conf}" ||
-    abort ERROR 'Failed to set Xorg keyboard settings.'
-
-  log INFO 'Xorg keyboard has been set.'
 
   # Save keyboard settings to the user config
   local user_name=''
@@ -526,7 +515,7 @@ setup_keyboard () {
   query+=".keymap = \"${keyboard_map}\" | "
   query+=".model = \"${keyboard_model}\" | "
   query+=".options = \"${keyboard_options}\" | "
-  query+=".layouts = [{.code: \"${keyboard_layout}\" .variant = \"${layout_variant}\"}]"
+  query+=".layouts = [{.code: \"${keyboard_layout}\" .variant = \"${layout_variant}\"}}]"
 
   local langs_settings=''
   langs_settings="$(jq -e "${query}" "${langs_file}")" &&
@@ -535,6 +524,22 @@ setup_keyboard () {
     abort ERROR 'Failed to save keyboard to langs settings.'
   
   log INFO 'Keyboard saved to langs settings.'
+  
+  local keyboard_conf='/etc/X11/xorg.conf.d/00-keyboard.conf'
+
+  # Make sure default variant is set blank for xorg configuration
+  if equals "${layout_variant}" 'default'; then
+    layout_variant=''
+  fi
+
+  sed -i \
+    -e "s/#MODEL#/${keyboard_model}/" \
+    -e "s/#OPTIONS#/${keyboard_options}/" \
+    -e "s/#LAYOUTS#/${keyboard_layout}/" \
+    -e "s/#VARIANTS#/${layout_variant}/" "${keyboard_conf}" ||
+    abort ERROR 'Failed to set Xorg keyboard settings.'
+
+  log INFO 'Xorg keyboard has been set.'
   log INFO 'Keyboard settings have been applied.'
 }
 
