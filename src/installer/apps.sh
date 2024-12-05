@@ -220,4 +220,4 @@ install_chrome &&
 
 log INFO 'Script apps.sh has finished.'
 
-resolve 1900 && sleep 2
+resolve 1800 && sleep 2

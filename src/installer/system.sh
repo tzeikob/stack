@@ -1148,4 +1148,4 @@ sync_root_files &&
 
 log INFO 'Script system.sh has finished.'
 
-resolve 2060 && sleep 2
+resolve 4100 && sleep 2

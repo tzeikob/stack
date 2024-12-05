@@ -218,4 +218,4 @@ sync_clock &&
 
 log INFO 'Script bootstrap.sh has finished.'
 
-resolve 660 && sleep 2
+resolve 890 && sleep 2
