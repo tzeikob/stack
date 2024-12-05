@@ -828,12 +828,13 @@ setup_shell_environment () {
 
   log INFO 'Default terminal set to cool-retro-term.'
   log INFO 'Default editor set to helix.'
-  
-  local bashrc_file="/home/${user_name}/.bashrc"
+
+  cp /etc/skel/.bashrc "/home/${user_name}" ||
+    abort ERROR 'Failed to create the .bashrc file.'
 
   sed -i \
     -e '/PS1.*/d' \
-    -e '$a\'$'\n''source "${HOME}/.stackrc"' "${bashrc_file}" ||
+    -e '$a\'$'\n''source "${HOME}/.stackrc"' "/home/${user_name}/.bashrc" ||
     abort ERROR 'Failed to source .stackrc into .bashrc.'
 
   cp "/home/${user_name}/.stackrc" /root/.stackrc ||
