@@ -515,7 +515,7 @@ setup_keyboard () {
   query+=".keymap = \"${keyboard_map}\" | "
   query+=".model = \"${keyboard_model}\" | "
   query+=".options = \"${keyboard_options}\" | "
-  query+=".layouts = [{.code: \"${keyboard_layout}\" .variant = \"${layout_variant}\"}}]"
+  query+=".layouts = [{code: \"${keyboard_layout}\", variant: \"${layout_variant}\"}]"
 
   local langs_settings=''
   langs_settings="$(jq -e "${query}" "${langs_file}")" &&
