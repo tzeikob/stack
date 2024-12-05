@@ -738,7 +738,7 @@ setup_theme () {
     abort ERROR 'Failed to set theme in GTK settings.'
   
   # Reset the cool-retro-term settings and profile
-  ./${HOME}/.config/cool-retro-term/reset "${HOME}" ||
+  bash /home/${user_name}/.config/cool-retro-term/reset "/home/${user_name}" ||
     abort ERROR 'Failed to reset the cool retro term theme.'
   
   log INFO 'Cool retro term theme has been reset.'
