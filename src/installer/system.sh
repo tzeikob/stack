@@ -974,7 +974,7 @@ restore_user_permissions () {
   chown -R ${user_name}:${user_name} "/home/${user_name}" ||
     abort ERROR 'Failed to restore user permissions.'
   
-  lof INFO 'User home permissions have been restored.'
+  log INFO 'User home permissions have been restored.'
 }
 
 # Enables system services.
