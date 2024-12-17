@@ -168,6 +168,233 @@ set_sudoer_user () {
   log INFO "Sudoer user ${user_name} has been setup."
 }
 
+# Sets up the root and user shell environments.
+set_bash () {
+  log INFO 'Setting up the bash shell environment.'
+
+  local user_name=''
+  user_name="$(jq -cer '.user_name' "${SETTINGS_FILE}")" ||
+    abort ERROR 'Unable to read user_name setting.'
+
+  local stackrc_file="/home/${user_name}/.stackrc"
+
+  # Set the default terminal and text editor
+  sed -i \
+    -e 's/#TERMINAL#/alacritty/' \
+    -e 's/#EDITOR#/helix/' "${stackrc_file}" ||
+    abort ERROR 'Failed to set the terminal defaults.'
+
+  log INFO 'Default terminal set to cool-retro-term.'
+  log INFO 'Default editor set to helix.'
+
+  cp /etc/skel/.bashrc "/home/${user_name}" ||
+    abort ERROR 'Failed to create the .bashrc file.'
+
+  sed -i \
+    -e '/PS1.*/d' \
+    -e '$a\'$'\n''source "${HOME}/.stackrc"' "/home/${user_name}/.bashrc" ||
+    abort ERROR 'Failed to source .stackrc into .bashrc.'
+
+  cp "/home/${user_name}/.stackrc" /root/.stackrc ||
+    abort ERROR 'Failed to copy .stackrc for the root user.'
+
+  cp /etc/skel/.bash_profile /root ||
+    abort ERROR 'Failed to create root .bash_profile file.'
+
+  cp /etc/skel/.bashrc /root ||
+    abort ERROR 'Failed to create root .bashrc file.'
+
+  sed -i \
+    -e '/PS1.*/d' \
+    -e '$a\'$'\n''source "${HOME}/.stackrc"' /root/.bashrc ||
+    abort ERROR 'Failed to source .stackrc into the root .bashrc.'
+  
+  log INFO 'Bash shell environment has been setup.'
+}
+
+# Sets the system locale along with the locale environment variables.
+set_locales () {
+  local locales=''
+  locales="$(jq -cer '.locales' "${SETTINGS_FILE}")" ||
+    abort ERROR 'Unable to read locales setting.'
+
+  log INFO 'Generating system locales...'
+
+  echo "${locales}" | jq -cer '.[]' >> /etc/locale.gen ||
+    abort ERROR 'Failed to flush locales to locales.gen.'
+
+  locale-gen 2>&1 ||
+    abort ERROR 'Failed to generate system locales.'
+
+  log INFO 'System locales have been generated.'
+
+  # Set as system locale the locale selected first
+  local locale=''
+  locale="$(echo "${locales}" | jq -cer '.[0]' | cut -d ' ' -f 1)" ||
+    abort ERROR 'Failed to read the default locale.'
+
+  printf '%s\n' \
+    "LANG=${locale}" \
+    "LANGUAGE=${locale}:en:C" \
+    "LC_CTYPE=${locale}" \
+    "LC_NUMERIC=${locale}" \
+    "LC_TIME=${locale}" \
+    "LC_COLLATE=${locale}" \
+    "LC_MONETARY=${locale}" \
+    "LC_MESSAGES=${locale}" \
+    "LC_PAPER=${locale}" \
+    "LC_NAME=${locale}" \
+    "LC_ADDRESS=${locale}" \
+    "LC_TELEPHONE=${locale}" \
+    "LC_MEASUREMENT=${locale}" \
+    "LC_IDENTIFICATION=${locale}" \
+    "LC_ALL=" | tee /etc/locale.conf > /dev/null ||
+    abort ERROR 'Failed to set locale env variables.'
+
+  # Unset previous set variables
+  unset LANG LANGUAGE LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE \
+        LC_MONETARY LC_MESSAGES LC_PAPER LC_NAME LC_ADDRESS \
+        LC_TELEPHONE LC_MEASUREMENT LC_IDENTIFICATION LC_ALL ||
+        abort ERROR 'Failed to unset locale variables.'
+  
+  # Save locale settings to the user config
+  local user_name=''
+  user_name="$(jq -cer '.user_name' "${SETTINGS_FILE}")" ||
+    abort ERROR 'Unable to read user_name setting.'
+
+  local langs_file="/home/${user_name}/.config/stack/langs.json"
+
+  local query=".locale = \"${locale}\" | .locales += \$lcs"
+
+  local langs_settings=''
+  langs_settings="$(jq -e --argjson lcs "${locales}" "${query}" "${langs_file}")" ||
+    abort ERROR 'Failed to parse locale settings to json object.'
+
+  echo "${langs_settings}" > "${langs_file}" &&
+    chown -R ${user_name}:${user_name} "${langs_file}" ||
+    abort ERROR 'Failed to save locales into the langs setting file.'
+  
+  log INFO 'Locales has been save into the langs settings.'
+  log INFO "Locale has been set to ${locale}."
+}
+
+# Sets keyboard related settings.
+set_keyboard () {
+  log INFO 'Applying keyboard settings...'
+
+  local keyboard_map=''
+  keyboard_map="$(jq -cer '.keyboard_map' "${SETTINGS_FILE}")" ||
+    abort ERROR 'Unable to read keyboard_map setting.'
+
+  sed -i "s/#KEYMAP#/${keyboard_map}/" /etc/vconsole.conf ||
+    abort ERROR 'Failed to add keymap to vconsole.'
+
+  log INFO "Virtual console keymap set to ${keyboard_map}."
+
+  loadkeys "${keyboard_map}" 2>&1 ||
+    abort ERROR 'Failed to load keyboard map keys.'
+
+  log INFO 'Keyboard map keys has been loaded.'
+
+  local keyboard_model=''
+  keyboard_model="$(jq -cer '.keyboard_model' "${SETTINGS_FILE}")" ||
+    abort ERROR 'Unable to read keyboard_model setting.'
+
+  local keyboard_options=''
+  keyboard_options="$(jq -cer '.keyboard_options' "${SETTINGS_FILE}")" ||
+    abort ERROR 'Unable to read keyboard_options setting.'
+
+  local keyboard_layout=''
+  keyboard_layout="$(jq -cer '.keyboard_layout' "${SETTINGS_FILE}")" ||
+    abort ERROR 'Unable to read keyboard_layout setting.'
+  
+  local layout_variant=''
+  layout_variant="$(jq -cer '.layout_variant' "${SETTINGS_FILE}")" ||
+    abort ERROR 'Unable to read layout_variant setting.'
+
+  # Save keyboard settings to the user config
+  local user_name=''
+  user_name="$(jq -cer '.user_name' "${SETTINGS_FILE}")" ||
+    abort ERROR 'Unable to read user_name setting.'
+  
+  local langs_file="/home/${user_name}/.config/stack/langs.json"
+  
+  local query=''
+  query+=".keymap = \"${keyboard_map}\" | "
+  query+=".model = \"${keyboard_model}\" | "
+  query+=".options = \"${keyboard_options}\" | "
+  query+=".layouts = [{code: \"${keyboard_layout}\", variant: \"${layout_variant}\"}]"
+
+  local langs_settings=''
+  langs_settings="$(jq -e "${query}" "${langs_file}")" &&
+    echo "${langs_settings}" > "${langs_file}" &&
+    chown -R ${user_name}:${user_name} "${langs_file}" ||
+    abort ERROR 'Failed to save keyboard to langs settings.'
+  
+  log INFO 'Keyboard saved to langs settings.'
+  
+  local keyboard_conf='/etc/X11/xorg.conf.d/00-keyboard.conf'
+
+  # Make sure default variant is set blank for xorg configuration
+  if equals "${layout_variant}" 'default'; then
+    layout_variant=''
+  fi
+
+  sed -i \
+    -e "s/#MODEL#/${keyboard_model}/" \
+    -e "s/#OPTIONS#/${keyboard_options}/" \
+    -e "s/#LAYOUTS#/${keyboard_layout}/" \
+    -e "s/#VARIANTS#/${layout_variant}/" "${keyboard_conf}" ||
+    abort ERROR 'Failed to set Xorg keyboard settings.'
+
+  log INFO 'Xorg keyboard has been set.'
+  log INFO 'Keyboard settings have been applied.'
+}
+
+# Sets the system timezone.
+set_timezone () {
+  log INFO 'Setting the system timezone...'
+
+  local timezone=''
+  timezone="$(jq -cer '.timezone' "${SETTINGS_FILE}")" ||
+    abort ERROR 'Unable to read timezone setting.'
+
+  ln -sf "/usr/share/zoneinfo/${timezone}" /etc/localtime ||
+    abort ERROR 'Failed to set the timezone.'
+
+  log INFO "Timezone has been set to ${timezone}."
+
+  local ntp_server='time.google.com'
+
+  sed -i "s/^#NTP=/NTP=${ntp_server}/" /etc/systemd/timesyncd.conf ||
+    abort ERROR 'Failed to set the NTP server.'
+
+  log INFO "NTP server has been set to ${ntp_server}."
+
+  hwclock --systohc --utc 2>&1 ||
+    abort ERROR 'Failed to sync hardware to system clock.'
+
+  log INFO 'Hardware clock has been synchronized to system clock.'
+}
+
+# Sets the os release data.
+set_release_data () {
+  local version=''
+  version="$(date +%Y.%m.%d)" ||
+    abort ERROR 'Failed to create version number.'
+
+  sed -i "s/#VERSION#/${version}/" /etc/os-release ||
+    abort ERROR 'Failed to set os release version.'
+  
+  ln -sf /etc/os-release /etc/stack-release ||
+    abort ERROR 'Failed to create the stack-release symlink.'
+
+  rm -f /etc/arch-release ||
+    abort ERROR 'Unable to remove the arch-release file.'
+  
+  log INFO 'Release data have been set to stack linux.'
+}
+
 # Sets the pacman package databases mirrors.
 set_mirrors () {
   log INFO 'Setting up package databases mirrors...'
@@ -327,24 +554,6 @@ install_aur_packages () {
   log INFO 'AUR packages have been installed.'
 }
 
-# Fixes the os release data.
-fix_release_data () {
-  local version=''
-  version="$(date +%Y.%m.%d)" ||
-    abort ERROR 'Failed to create version number.'
-
-  sed -i "s/#VERSION#/${version}/" /etc/os-release ||
-    abort ERROR 'Failed to set os release version.'
-  
-  ln -sf /etc/os-release /etc/stack-release ||
-    abort ERROR 'Failed to create the stack-release symlink.'
-
-  rm -f /etc/arch-release ||
-    abort ERROR 'Unable to remove the arch-release file.'
-  
-  log INFO 'Release data have been set to stack linux.'
-}
-
 # Sets up the Xorg display server packages.
 setup_display_server () {
   log INFO 'Setting up the display server...'
@@ -402,171 +611,6 @@ setup_screen_locker () {
 
   log INFO 'Locker service has been enabled.'
   log INFO 'Screen locker has been setup.'
-}
-
-# Sets the system locale along with the locale environment variables.
-setup_locales () {
-  local locales=''
-  locales="$(jq -cer '.locales' "${SETTINGS_FILE}")" ||
-    abort ERROR 'Unable to read locales setting.'
-
-  log INFO 'Generating system locales...'
-
-  echo "${locales}" | jq -cer '.[]' >> /etc/locale.gen ||
-    abort ERROR 'Failed to flush locales to locales.gen.'
-
-  locale-gen 2>&1 ||
-    abort ERROR 'Failed to generate system locales.'
-
-  log INFO 'System locales have been generated.'
-
-  # Set as system locale the locale selected first
-  local locale=''
-  locale="$(echo "${locales}" | jq -cer '.[0]' | cut -d ' ' -f 1)" ||
-    abort ERROR 'Failed to read the default locale.'
-
-  printf '%s\n' \
-    "LANG=${locale}" \
-    "LANGUAGE=${locale}:en:C" \
-    "LC_CTYPE=${locale}" \
-    "LC_NUMERIC=${locale}" \
-    "LC_TIME=${locale}" \
-    "LC_COLLATE=${locale}" \
-    "LC_MONETARY=${locale}" \
-    "LC_MESSAGES=${locale}" \
-    "LC_PAPER=${locale}" \
-    "LC_NAME=${locale}" \
-    "LC_ADDRESS=${locale}" \
-    "LC_TELEPHONE=${locale}" \
-    "LC_MEASUREMENT=${locale}" \
-    "LC_IDENTIFICATION=${locale}" \
-    "LC_ALL=" | tee /etc/locale.conf > /dev/null ||
-    abort ERROR 'Failed to set locale env variables.'
-
-  # Unset previous set variables
-  unset LANG LANGUAGE LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE \
-        LC_MONETARY LC_MESSAGES LC_PAPER LC_NAME LC_ADDRESS \
-        LC_TELEPHONE LC_MEASUREMENT LC_IDENTIFICATION LC_ALL ||
-        abort ERROR 'Failed to unset locale variables.'
-  
-  # Save locale settings to the user config
-  local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS_FILE}")" ||
-    abort ERROR 'Unable to read user_name setting.'
-
-  local langs_file="/home/${user_name}/.config/stack/langs.json"
-
-  local query=".locale = \"${locale}\" | .locales += \$lcs"
-
-  local langs_settings=''
-  langs_settings="$(jq -e --argjson lcs "${locales}" "${query}" "${langs_file}")" ||
-    abort ERROR 'Failed to parse locale settings to json object.'
-
-  echo "${langs_settings}" > "${langs_file}" &&
-    chown -R ${user_name}:${user_name} "${langs_file}" ||
-    abort ERROR 'Failed to save locales into the langs setting file.'
-  
-  log INFO 'Locales has been save into the langs settings.'
-  log INFO "Locale has been set to ${locale}."
-}
-
-# Sets keyboard related settings.
-setup_keyboard () {
-  log INFO 'Applying keyboard settings...'
-
-  local keyboard_map=''
-  keyboard_map="$(jq -cer '.keyboard_map' "${SETTINGS_FILE}")" ||
-    abort ERROR 'Unable to read keyboard_map setting.'
-
-  sed -i "s/#KEYMAP#/${keyboard_map}/" /etc/vconsole.conf ||
-    abort ERROR 'Failed to add keymap to vconsole.'
-
-  log INFO "Virtual console keymap set to ${keyboard_map}."
-
-  loadkeys "${keyboard_map}" 2>&1 ||
-    abort ERROR 'Failed to load keyboard map keys.'
-
-  log INFO 'Keyboard map keys has been loaded.'
-
-  local keyboard_model=''
-  keyboard_model="$(jq -cer '.keyboard_model' "${SETTINGS_FILE}")" ||
-    abort ERROR 'Unable to read keyboard_model setting.'
-
-  local keyboard_options=''
-  keyboard_options="$(jq -cer '.keyboard_options' "${SETTINGS_FILE}")" ||
-    abort ERROR 'Unable to read keyboard_options setting.'
-
-  local keyboard_layout=''
-  keyboard_layout="$(jq -cer '.keyboard_layout' "${SETTINGS_FILE}")" ||
-    abort ERROR 'Unable to read keyboard_layout setting.'
-  
-  local layout_variant=''
-  layout_variant="$(jq -cer '.layout_variant' "${SETTINGS_FILE}")" ||
-    abort ERROR 'Unable to read layout_variant setting.'
-
-  # Save keyboard settings to the user config
-  local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS_FILE}")" ||
-    abort ERROR 'Unable to read user_name setting.'
-  
-  local langs_file="/home/${user_name}/.config/stack/langs.json"
-  
-  local query=''
-  query+=".keymap = \"${keyboard_map}\" | "
-  query+=".model = \"${keyboard_model}\" | "
-  query+=".options = \"${keyboard_options}\" | "
-  query+=".layouts = [{code: \"${keyboard_layout}\", variant: \"${layout_variant}\"}]"
-
-  local langs_settings=''
-  langs_settings="$(jq -e "${query}" "${langs_file}")" &&
-    echo "${langs_settings}" > "${langs_file}" &&
-    chown -R ${user_name}:${user_name} "${langs_file}" ||
-    abort ERROR 'Failed to save keyboard to langs settings.'
-  
-  log INFO 'Keyboard saved to langs settings.'
-  
-  local keyboard_conf='/etc/X11/xorg.conf.d/00-keyboard.conf'
-
-  # Make sure default variant is set blank for xorg configuration
-  if equals "${layout_variant}" 'default'; then
-    layout_variant=''
-  fi
-
-  sed -i \
-    -e "s/#MODEL#/${keyboard_model}/" \
-    -e "s/#OPTIONS#/${keyboard_options}/" \
-    -e "s/#LAYOUTS#/${keyboard_layout}/" \
-    -e "s/#VARIANTS#/${layout_variant}/" "${keyboard_conf}" ||
-    abort ERROR 'Failed to set Xorg keyboard settings.'
-
-  log INFO 'Xorg keyboard has been set.'
-  log INFO 'Keyboard settings have been applied.'
-}
-
-# Sets the system timezone.
-setup_system_timezone () {
-  log INFO 'Setting the system timezone...'
-
-  local timezone=''
-  timezone="$(jq -cer '.timezone' "${SETTINGS_FILE}")" ||
-    abort ERROR 'Unable to read timezone setting.'
-
-  ln -sf "/usr/share/zoneinfo/${timezone}" /etc/localtime ||
-    abort ERROR 'Failed to set the timezone.'
-
-  log INFO "Timezone has been set to ${timezone}."
-
-  local ntp_server='time.google.com'
-
-  sed -i "s/^#NTP=/NTP=${ntp_server}/" /etc/systemd/timesyncd.conf ||
-    abort ERROR 'Failed to set the NTP server.'
-
-  log INFO "NTP server has been set to ${ntp_server}."
-
-  hwclock --systohc --utc 2>&1 ||
-    abort ERROR 'Failed to sync hardware to system clock.'
-
-  log INFO 'Hardware clock has been synchronized to system clock.'
 }
 
 # Installs and configures the boot loader.
@@ -808,50 +852,6 @@ setup_fonts () {
 
   log INFO 'Fonts cache has been updated.'
   log INFO 'Extra glyphs have been installed.'
-}
-
-# Sets up the root and user shell environments.
-setup_shell_environment () {
-  log INFO 'Setting up the shell environment.'
-
-  local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS_FILE}")" ||
-    abort ERROR 'Unable to read user_name setting.'
-
-  local stackrc_file="/home/${user_name}/.stackrc"
-
-  # Set the default terminal and text editor
-  sed -i \
-    -e 's/#TERMINAL#/alacritty/' \
-    -e 's/#EDITOR#/helix/' "${stackrc_file}" ||
-    abort ERROR 'Failed to set the terminal defaults.'
-
-  log INFO 'Default terminal set to cool-retro-term.'
-  log INFO 'Default editor set to helix.'
-
-  cp /etc/skel/.bashrc "/home/${user_name}" ||
-    abort ERROR 'Failed to create the .bashrc file.'
-
-  sed -i \
-    -e '/PS1.*/d' \
-    -e '$a\'$'\n''source "${HOME}/.stackrc"' "/home/${user_name}/.bashrc" ||
-    abort ERROR 'Failed to source .stackrc into .bashrc.'
-
-  cp "/home/${user_name}/.stackrc" /root/.stackrc ||
-    abort ERROR 'Failed to copy .stackrc for the root user.'
-
-  cp /etc/skel/.bash_profile /root ||
-    abort ERROR 'Failed to create root .bash_profile file.'
-
-  cp /etc/skel/.bashrc /root ||
-    abort ERROR 'Failed to create root .bashrc file.'
-
-  sed -i \
-    -e '/PS1.*/d' \
-    -e '$a\'$'\n''source "${HOME}/.stackrc"' /root/.bashrc ||
-    abort ERROR 'Failed to source .stackrc into the root .bashrc.'
-  
-  log INFO 'Shell environment has been setup.'
 }
 
 # Boost system performance on various tasks.
@@ -1115,31 +1115,30 @@ if not_equals "$(id -u)" 0; then
   abort ERROR 'Script system.sh must be run as root user.'
 fi
 
-
 sync_root_files &&
   sync_commons &&
   sync_tools &&
   set_host_name &&
   set_root_user &&
   set_sudoer_user &&
+  set_bash &&
+  set_locales &&
+  set_keyboard &&
+  set_timezone &&
+  set_release_data &&
   set_mirrors &&
   sync_package_databases &&
   install_drivers &&
   install_base_packages &&
   install_aur_package_manager &&
   install_aur_packages &&
-  fix_release_data &&
   setup_display_server &&
   setup_screen_locker &&
-  setup_locales &&
-  setup_keyboard &&
-  setup_system_timezone &&
   setup_boot_loader &&
   setup_login_screen &&
   setup_file_manager &&
   setup_theme &&
   setup_fonts &&
-  setup_shell_environment &&
   boost_performance &&
   configure_security &&
   restore_user_permissions &&
