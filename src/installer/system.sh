@@ -1059,11 +1059,7 @@ enable_services () {
   sed -i "s;#HOME#;/home/${user_name};g" \
     "/home/${user_name}/.config/systemd/user/fix-layout.service" ||
     abort ERROR 'Failed to set the home in fix layout service.'
-  
-  sudo -u "${user_name}" systemctl --user enable mpd.service 2>&1 ||
-    abort ERROR 'Failed to enable mpd service.'
 
-  log INFO 'MPD service has been enabled.'
   log INFO 'System services have been enabled.'
 }
 
