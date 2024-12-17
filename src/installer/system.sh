@@ -1143,7 +1143,8 @@ sync_root_files &&
   configure_security &&
   restore_user_permissions &&
   enable_services &&
-  create_hash_file
+  create_hash_file ||
+  abort
 
 log INFO 'Script system.sh has finished.'
 

@@ -216,7 +216,8 @@ install_chrome &&
   install_vmware &&
   install_libre_office &&
   install_foliate &&
-  install_transmission
+  install_transmission ||
+  abort
 
 log INFO 'Script apps.sh has finished.'
 

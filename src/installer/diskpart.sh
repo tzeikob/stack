@@ -422,7 +422,8 @@ wipe_disk &&
   mount_file_system &&
   make_swap_space &&
   create_file_system_table &&
-  report
+  report ||
+  abort
 
 log INFO 'Script diskpart.sh has finished.'
 

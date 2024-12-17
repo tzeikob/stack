@@ -214,7 +214,8 @@ sync_clock &&
   install_kernel &&
   copy_installation_files &&
   restore_clock &&
-  restore_mirrors
+  restore_mirrors ||
+  abort
 
 log INFO 'Script bootstrap.sh has finished.'
 

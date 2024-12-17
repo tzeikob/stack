@@ -167,7 +167,8 @@ install_node &&
   install_bun &&
   install_go &&
   install_rust &&
-  install_docker
+  install_docker ||
+  abort
 
 log INFO 'Script sdkits.sh has finished.'
 
