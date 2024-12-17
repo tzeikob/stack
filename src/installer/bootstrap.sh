@@ -139,7 +139,7 @@ copy_installation_files () {
   local target='/mnt/stack'
 
   rm -rf "${target}" &&
-    rsync -av /stack/ "${target}" --exclude .git --exclude .gitignore ||
+    rsync -av /stack/ "${target}" ||
     abort ERROR 'Unable to copy installation files.'
 
   mkdir -p /mnt/var/log/stack/installer
