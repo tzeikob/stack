@@ -1042,7 +1042,7 @@ enable_services () {
     abort ERROR 'Failed to read the vm setting.'
   
   local vm_vendor=''
-  vm_vendor="$(jq -cer '.vm_vendor' "${SETTINGS_FILE}")" ||
+  vm_vendor="$(jq -cer '.vm_vendor//""' "${SETTINGS_FILE}")" ||
     abort ERROR 'Failed to read the vm_vendor setting.'
 
   if is_yes "${vm}" && equals "${vm_vendor}" 'oracle'; then
