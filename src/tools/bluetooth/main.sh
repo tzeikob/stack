@@ -10,7 +10,7 @@ source src/commons/math.sh
 source src/commons/validators.sh
 source src/tools/bluetooth/commands.sh
 
-LOGS='/var/log/stack/bluetooth.log'
+LOGS='/var/log/stack/tools/bluetooth.log'
 
 # Shows the help message.
 # Arguments:

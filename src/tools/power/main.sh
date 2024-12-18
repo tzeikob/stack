@@ -10,7 +10,7 @@ source src/commons/math.sh
 source src/commons/validators.sh
 source src/tools/power/commands.sh
 
-LOGS='/var/log/stack/power.log'
+LOGS='/var/log/stack/tools/power.log'
 
 # Shows the help message.
 # Arguments:

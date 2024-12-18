@@ -166,7 +166,9 @@ sync_root_files () {
   
   log INFO 'Home directories have been created.'
 
-  mkdir -p "${ROOT_FS}/var/log/stack"
+  mkdir -p \
+    "${ROOT_FS}/var/log/stack" \
+    "${ROOT_FS}/var/log/stack/tools"
 
   log INFO 'Logs directory has been created.'
   

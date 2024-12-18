@@ -10,7 +10,7 @@ source src/commons/math.sh
 source src/commons/validators.sh
 source src/tools/security/commands.sh
 
-LOGS='/var/log/stack/security.log'
+LOGS='/var/log/stack/tools/security.log'
 
 # Shows the help message.
 # Arguments:

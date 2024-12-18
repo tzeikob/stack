@@ -9,6 +9,68 @@ source src/commons/math.sh
 
 SETTINGS_FILE=./settings.json
 
+# Sets up the root and sudoer user of the system.
+set_users () {
+  log INFO 'Setting up the system users...'
+
+  local root_password=''
+  root_password="$(jq -cer '.root_password' "${SETTINGS_FILE}")" ||
+    abort ERROR 'Unable to read root_password setting.'
+
+  echo "root:${root_password}" | chpasswd 2>&1 ||
+    abort ERROR 'Failed to set password to root user.'
+
+  log INFO 'Password has been given to root user.'
+
+  groupadd stack ||
+    abort ERROR 'Failed to create user group stack.'
+  
+  log INFO 'Stack user group has been created.'
+
+  local groups='wheel,stack,audio,video,optical,storage'
+
+  local vm=''
+  vm="$(jq -cer '.vm' "${SETTINGS_FILE}")" ||
+    abort ERROR 'Failed to read the vm setting.'
+
+  if is_yes "${vm}"; then
+    groupadd 'libvirt' 2>&1
+    groups="${groups},libvirt"
+
+    log INFO 'Virtual machine libvirt user group has been created.'
+  fi
+
+  local user_name=''
+  user_name="$(jq -cer '.user_name' "${SETTINGS_FILE}")" ||
+    abort ERROR 'Unable to read user_name setting.'
+
+  useradd -m -G "${groups}" -s /bin/bash "${user_name}" 2>&1 &&
+    chown -R ${user_name}:${user_name} "/home/${user_name}" ||
+    abort ERROR 'Failed to create the sudoer user.'
+
+  log INFO "Sudoer user ${user_name} has been created."
+
+  local rule='%wheel ALL=(ALL:ALL) ALL'
+
+  sed -i "s/^# \(${rule}\)/\1/" /etc/sudoers ||
+    abort ERROR 'Failed to grant sudo permissions to wheel group.'
+
+  if ! grep -q "^${rule}" /etc/sudoers; then
+    abort ERROR 'Failed to grant sudo permissions to wheel group.'
+  fi
+
+  log INFO 'Sudo permissions have been granted to sudoer user.'
+
+  local user_password=''
+  user_password="$(jq -cer '.user_password' "${SETTINGS_FILE}")" ||
+    abort ERROR 'Unable to read user_password setting.'
+
+  echo "${user_name}:${user_password}" | chpasswd 2>&1 ||
+    abort ERROR "Failed to set password to user ${user_name}."
+
+  log INFO "Password has been given to user ${user_name}."
+}
+
 # Syncs root files to new system.
 sync_root_files () {
   log INFO 'Syncing the root file system...'
@@ -27,8 +89,9 @@ sync_root_files () {
     --exclude usr/local/bin/stack ||
     abort ERROR 'Failed to sync the root file system.'
   
-  mkdir -p /var/log/stack
-  
+  chown -R ${user_name}:${user_name} "/home/${user_name}" ||
+    abort ERROR 'Failed to restore user permissions.'
+
   log INFO 'Root file system has been synced.'
 }
 
@@ -87,6 +150,16 @@ sync_tools () {
   log INFO 'Tools files have been synced.'
 }
 
+# Sets up the stack logs directories and permissions.
+set_logs_home () {
+  mkdir -p /var/log/stack /var/log/stack/tools &&
+    chown -R :stack /var/log/stack &&
+    chmod -R 775 /var/log/stack ||
+    abort ERROR 'Failed to create /var/log/stack directories.'
+  
+  log INFO 'Log directories /var/log/stack have been created.'
+}
+
 # Sets the host name of the system.
 set_host_name () {
   log INFO 'Setting the host name...'
@@ -104,68 +177,6 @@ set_host_name () {
     abort ERROR 'Failed to add host name to hosts.'
 
   log INFO 'Host name has been added to hosts file.'
-}
-
-# Sets up the root user of the system.
-set_root_user () {
-  log INFO 'Setting up the root user...'
-
-  local root_password=''
-  root_password="$(jq -cer '.root_password' "${SETTINGS_FILE}")" ||
-    abort ERROR 'Unable to read root_password setting.'
-
-  echo "root:${root_password}" | chpasswd 2>&1 ||
-    abort ERROR 'Failed to set password to root user.'
-
-  log INFO 'Password has been given to root user.'
-  log INFO 'Root user has been setup.'
-}
-
-# Sets up the sudoer user of the system.
-set_sudoer_user () {
-  log INFO 'Setting up the sudoer user...'
-
-  local groups='wheel,audio,video,optical,storage'
-
-  local vm=''
-  vm="$(jq -cer '.vm' "${SETTINGS_FILE}")" ||
-    abort ERROR 'Failed to read the vm setting.'
-
-  if is_yes "${vm}"; then
-    groupadd 'libvirt' 2>&1
-    groups="${groups},libvirt"
-  fi
-
-  local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS_FILE}")" ||
-    abort ERROR 'Unable to read user_name setting.'
-
-  useradd -m -G "${groups}" -s /bin/bash "${user_name}" 2>&1 &&
-    chown -R ${user_name}:${user_name} "/home/${user_name}" ||
-    abort ERROR 'Failed to create the sudoer user.'
-
-  log INFO "Sudoer user ${user_name} has been created."
-
-  local rule='%wheel ALL=(ALL:ALL) ALL'
-
-  sed -i "s/^# \(${rule}\)/\1/" /etc/sudoers ||
-    abort ERROR 'Failed to grant sudo permissions to wheel group.'
-
-  if ! grep -q "^${rule}" /etc/sudoers; then
-    abort ERROR 'Failed to grant sudo permissions to wheel group.'
-  fi
-
-  log INFO 'Sudo permissions have been granted to sudoer user.'
-
-  local user_password=''
-  user_password="$(jq -cer '.user_password' "${SETTINGS_FILE}")" ||
-    abort ERROR 'Unable to read user_password setting.'
-
-  echo "${user_name}:${user_password}" | chpasswd 2>&1 ||
-    abort ERROR "Failed to set password to user ${user_name}."
-
-  log INFO "Password has been given to user ${user_name}."
-  log INFO "Sudoer user ${user_name} has been setup."
 }
 
 # Sets up the root and user shell environments.
@@ -1113,12 +1124,12 @@ if not_equals "$(id -u)" 0; then
   abort ERROR 'Script system.sh must be run as root user.'
 fi
 
-sync_root_files &&
+set_users &&
+  sync_root_files &&
   sync_commons &&
   sync_tools &&
+  set_logs_home &&
   set_host_name &&
-  set_root_user &&
-  set_sudoer_user &&
   set_bash &&
   set_locales &&
   set_keyboard &&
