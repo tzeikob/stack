@@ -187,12 +187,13 @@ set_bash () {
   log INFO 'Default terminal set to cool-retro-term.'
   log INFO 'Default editor set to helix.'
 
-  cp /etc/skel/.bashrc "/home/${user_name}" ||
+  local bashrc_file="/home/${user_name}/.bashrc"
+
+  cp /etc/skel/.bashrc "${bashrc_file}" ||
     abort ERROR 'Failed to create the .bashrc file.'
 
-  sed -i \
-    -e '/PS1.*/d' \
-    -e '$a\'$'\n''source "${HOME}/.stackrc"' "/home/${user_name}/.bashrc" ||
+  sed -i '/^PS1.*/d' "${bashrc_file}" &&
+    echo 'source "${HOME}/.stackrc"' >> "${bashrc_file}" ||
     abort ERROR 'Failed to source .stackrc into .bashrc.'
 
   cp "/home/${user_name}/.stackrc" /root/.stackrc ||
@@ -200,13 +201,14 @@ set_bash () {
 
   cp /etc/skel/.bash_profile /root ||
     abort ERROR 'Failed to create root .bash_profile file.'
+  
+  bashrc_file='/root/.bashrc'
 
-  cp /etc/skel/.bashrc /root ||
+  cp /etc/skel/.bashrc "${bashrc_file}" ||
     abort ERROR 'Failed to create root .bashrc file.'
 
-  sed -i \
-    -e '/PS1.*/d' \
-    -e '$a\'$'\n''source "${HOME}/.stackrc"' /root/.bashrc ||
+  sed -i '/^PS1.*/d' "${bashrc_file}" &&
+    echo 'source "${HOME}/.stackrc"' >> "${bashrc_file}" ||
     abort ERROR 'Failed to source .stackrc into the root .bashrc.'
   
   log INFO 'Bash shell environment has been setup.'
