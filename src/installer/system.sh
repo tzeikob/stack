@@ -25,7 +25,7 @@ set_users () {
   groupadd stack ||
     abort ERROR 'Failed to create user group stack.'
   
-  log INFO 'Stack user group has been created.'
+  log INFO 'User group stack has been created.'
 
   local groups='wheel,stack,audio,video,optical,storage'
 
@@ -37,7 +37,7 @@ set_users () {
     groupadd 'libvirt' 2>&1
     groups="${groups},libvirt"
 
-    log INFO 'Virtual machine libvirt user group has been created.'
+    log INFO 'User group libvirt has been created.'
   fi
 
   local user_name=''
@@ -200,15 +200,16 @@ set_bash () {
 
   local bashrc_file="/home/${user_name}/.bashrc"
 
-  cp /etc/skel/.bashrc "${bashrc_file}" ||
-    abort ERROR 'Failed to create the .bashrc file.'
-
   sed -i '/^PS1.*/d' "${bashrc_file}" &&
-    echo 'source "${HOME}/.stackrc"' >> "${bashrc_file}" ||
+    echo -e '\nsource "${HOME}/.stackrc"' >> "${bashrc_file}" ||
     abort ERROR 'Failed to source .stackrc into .bashrc.'
 
   cp "/home/${user_name}/.stackrc" /root/.stackrc ||
     abort ERROR 'Failed to copy .stackrc for the root user.'
+
+  # Remove nnn dependencies from root .stackrc file
+  sed -i "/nnn/d" /root/.stackrc ||
+    abort ERROR 'Failed to remove nnn shell hooks.'
 
   cp /etc/skel/.bash_profile /root ||
     abort ERROR 'Failed to create root .bash_profile file.'
