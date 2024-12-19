@@ -428,7 +428,7 @@ setup_display_server () {
 setup_shell_environment () {
   local stackrc_file="${ROOT_FS}/root/.stackrc"
 
-  # Set the defauilt terminal and text editor
+  # Set the default terminal and text editor
   sed -i 's/#TERMINAL#/cool-retro-term/' "${stackrc_file}" ||
     abort ERROR 'Failed to set the default terminal.'
 
