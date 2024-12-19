@@ -3,13 +3,19 @@
 set -o pipefail
 
 source /opt/stack/commons/error.sh
+source /opt/stack/commons/validators.sh
 source /opt/stack/tools/cloud/helpers.sh
 
 # Reads for synced remote cloud services
 # and prints them out one by one.
 run () {
+  if file_not_exists "${HOME}/.config/rclone/rclone.conf"; then
+    echo ''
+    return 0
+  fi
+
   local remotes=''
-  remotes="$(find_remotes)"
+  remotes="$(find_remotes 2>&1)"
 
   if has_failed; then
     echo 'Err!'
