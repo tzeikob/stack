@@ -154,7 +154,7 @@ sync_tools () {
 set_logs_home () {
   mkdir -p /var/log/stack /var/log/stack/tools &&
     chown -R :stack /var/log/stack &&
-    chmod -R 775 /var/log/stack ||
+    chmod -R 775 /var/log/stack/tools ||
     abort ERROR 'Failed to create /var/log/stack directories.'
   
   log INFO 'Log directories /var/log/stack have been created.'
