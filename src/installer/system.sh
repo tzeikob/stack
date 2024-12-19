@@ -206,25 +206,9 @@ set_bash () {
   
   cp /etc/skel/.bash_profile /root ||
     abort ERROR 'Failed to create root .bash_profile file.'
-  
-  cp "/home/${user_name}/.prompt" /root/.prompt ||
-    abort ERROR 'Failed to copy .prompt for the root user.'
 
-  cp "/home/${user_name}/.stackrc" /root/.stackrc ||
-    abort ERROR 'Failed to copy .stackrc for the root user.'
-
-  # Remove nnn dependencies from root .stackrc file
-  sed -i "/nnn/d" /root/.stackrc ||
-    abort ERROR 'Failed to remove nnn shell hooks.'
-  
-  bashrc_file='/root/.bashrc'
-
-  cp /etc/skel/.bashrc "${bashrc_file}" ||
+  cp /etc/skel/.bashrc /root ||
     abort ERROR 'Failed to create root .bashrc file.'
-
-  sed -i '/^PS1.*/d' "${bashrc_file}" &&
-    echo -e '\nsource "${HOME}/.stackrc"' >> "${bashrc_file}" ||
-    abort ERROR 'Failed to source .stackrc into the root .bashrc.'
   
   log INFO 'Bash shell environment has been setup.'
 }
