@@ -275,7 +275,7 @@ set_locales () {
     chown -R ${user_name}:${user_name} "${langs_file}" ||
     abort ERROR 'Failed to save locales into the langs setting file.'
   
-  log INFO 'Locales has been save into the langs settings.'
+  log INFO 'Locales have been save into the langs settings.'
   log INFO "Locale has been set to ${locale}."
 }
 
