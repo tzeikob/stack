@@ -965,7 +965,7 @@ configure_security () {
 
   local security_file="${config_home}/security.json"
 
-  echo "${security_settings}" > "${security_file}" &&
+  echo "${security_settings}" | jq . > "${security_file}" &&
     chown -R ${user_name}:${user_name} "${config_home}" ||
     abort ERROR 'Failed to set screen locker interval.'
   
