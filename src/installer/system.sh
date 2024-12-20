@@ -205,10 +205,17 @@ set_bash () {
     abort ERROR 'Failed to source .stackrc into .bashrc.'
   
   cp /etc/skel/.bash_profile /root ||
-    abort ERROR 'Failed to create root .bash_profile file.'
+    abort ERROR 'Failed to copy root .bash_profile file.'
 
   cp /etc/skel/.bashrc /root ||
-    abort ERROR 'Failed to create root .bashrc file.'
+    abort ERROR 'Failed to copy root .bashrc file.'
+  
+  cp "/home/${user_name}/.prompt" /root ||
+    abort ERROR 'Failed to copy root .prompt file.'
+  
+    sed -i '/^PS1.*/d' /root/.bashrc &&
+    echo -e '\nsource "${HOME}/.prompt"' >> /root/.bashrc ||
+    abort ERROR 'Failed to source .prompt into root .bashrc.'
   
   log INFO 'Bash shell environment has been setup.'
 }

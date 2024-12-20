@@ -167,6 +167,16 @@ update_tools () {
   log INFO 'Tools files have been updated.'
 }
 
+# Fixes the root bash configuration and environment.
+fix_root_bash () {
+  log INFO 'Fixing root bash shell environment...'
+  
+  cp "/home/${USER}/.prompt" /root ||
+    abort ERROR 'Failed to copy root .prompt file.'
+  
+  log INFO 'Bash shell environment has been fixed.'
+}
+
 # Fixes user and system services.
 fix_services () {
   log INFO 'Fixing user and system services...'
@@ -215,6 +225,7 @@ sync_package_databases &&
   update_root_files &&
   update_commons &&
   update_tools &&
+  fix_root_bash &&
   fix_services &&
   restore_user_permissions &&
   update_hash_file
