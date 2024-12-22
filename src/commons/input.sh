@@ -56,7 +56,7 @@ ask () {
 
   REPLY=''
 
-  echo "${prompt}"
+  echo -e "${prompt}"
   read -re REPLY 2>&1
 
   # Print a blank line after user input
@@ -92,7 +92,7 @@ ask_secret () {
 
   REPLY=''
 
-  echo "${prompt}"
+  echo -e "${prompt}"
 
   local char=''
   while IFS= read -rs -n1 char; do
