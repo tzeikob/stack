@@ -8,7 +8,7 @@ AES=$'╬'
 AES_LN=$'╬\n'
 KVS=$'▒'
 
-CLR=$'\u001b[33m'
+CLR=$'\u001b[1;33m'
 RST=$'\u001b[0m'
 
 # Shows a prompt asking the user to enter the
@@ -20,13 +20,8 @@ RST=$'\u001b[0m'
 prompt () {
   local label="${1:-"prompt"}"
 
-  label="${CLR}${label}>> ${RST}"
-
   REPLY=''
-
-  read -rep "${label}" REPLY 2>&1
-  
-  history -s "${REPLY}"
+  REPLY=$(rlwrap -o -H "/tmp/${label}.history" -S "${CLR}${label}${RST}  " cat)
 }
 
 # Asks the user to enter a value, where the answer is

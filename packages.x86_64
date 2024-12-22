@@ -111,6 +111,7 @@ all:aur:smenu
 all:aur:xkblayout-state-git
 all:pac:efibootmgr
 all:pac:irssi
+all:pac:rlwrap
 
 stp:pac:bluez
 stp:pac:bluez-utils
