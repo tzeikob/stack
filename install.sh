@@ -18,6 +18,7 @@ SETTINGS_FILE=./settings.json
 LOGS=/var/log/stack/installer
 
 BAR_FORMAT='{desc:10}  {percentage:3.0f}%|{bar}|  ET{elapsed}'
+BAR_COLOR='#d19d38'
 
 # Initializes the installer.
 init () {
@@ -613,6 +614,18 @@ ask_user () {
     abort 'Sure, maybe next time!'
   fi
 
+  local branch=''
+  branch="$(git branch --show-current)" ||
+    abort ERROR 'Failed to read the current branch.'
+  
+  local commit=''
+  commit="$(git log --pretty=format:'%h' -n 1)" ||
+    abort ERROR 'Failed to read the last commit id.'
+  
+  local version="${branch}:${commit}"
+
+  log "Installing Stack Linux ${version}:"
+
   sleep 2
 }
 
@@ -635,7 +648,8 @@ run () {
 
   bash "${script_file}" 2>&1 |
     tee -a "${log_file}" 2>&1 |
-    tqdm --desc "${file_name^}:" --ncols 50 --bar-format "${BAR_FORMAT}" --total ${total} >> "${log_file}.tqdm"
+    tqdm --desc "${file_name^}:" --ncols 50 --bar-format "${BAR_FORMAT}" \
+      --colour "${BAR_COLOR}" --total ${total} >> "${log_file}.tqdm"
 
   if has_failed; then
     log ERROR "Script ${file_name}.sh has failed." >> "${log_file}"
@@ -677,7 +691,8 @@ install () {
 
   arch-chroot /mnt runuser -u "${user_name}" -- bash -c "${cmd}" 2>&1 |
     tee -a "${log_file}" 2>&1 |
-    tqdm --desc "${file_name^}:" --ncols 50 --bar-format "${BAR_FORMAT}" --total ${total} >> "${log_file}.tqdm"
+    tqdm --desc "${file_name^}:" --ncols 50 --bar-format "${BAR_FORMAT}" \
+      --colour "${BAR_COLOR}" --total ${total} >> "${log_file}.tqdm"
   
   if has_failed; then
     log ERROR "Script ${file_name}.sh has failed." >> "${log_file}"
