@@ -218,7 +218,7 @@ ask_user () {
 
     if is_no "${REPLY}"; then
       local settings=''
-      settings="$(jq -er '.swap_on = "no"' "${SETTINGS_FILE}")" &&
+      settings="$(jq -er '.swap_on = "no" | del(.swap_size, .swap_type)' "${SETTINGS_FILE}")" &&
         echo "${settings}" > "${SETTINGS_FILE}" ||
         abort 'Failed to save swap_on setting.'
       
