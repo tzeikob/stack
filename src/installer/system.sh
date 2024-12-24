@@ -426,6 +426,34 @@ set_mirrors () {
   log INFO "Package databases mirrors set to ${mirrors}."
 }
 
+# Boost system performance on package build tasks.
+boost_package_builds () {
+  log INFO 'Boosting package builds performance...'
+
+  local cores=''
+  cores="$(grep -c '^processor' /proc/cpuinfo 2>&1)" ||
+    abort ERROR 'Failed to read cpu data.'
+
+  if is_not_integer "${cores}" '[1,]'; then
+    abort ERROR 'Unable to resolve CPU cores.'
+  fi
+
+  local conf_file='/etc/makepkg.conf'
+
+  sed -i \
+  -e "s/#MAKEFLAGS=\"-j2\"/MAKEFLAGS=\"-j${cores}\"/g" \
+  -e "s/COMPRESSXZ=(xz -c -z -)/COMPRESSXZ=(xz -c -z --threads=${cores} -)/g" \
+  -e "s/COMPRESSZST=(zstd -c -z -q -)/COMPRESSZST=(zstd -c -z -q --threads=${cores} -)/g" \
+  -e 's/^\(OPTIONS.*\) debug \(.*\)/\1 !debug \2/g' "${conf_file}" ||
+    abort ERROR 'Failed to set make options.'
+
+  log INFO "Make flags set to ${cores} CPU cores."
+  log INFO 'Compression threads have been set.'
+  log INFO 'Package debug option has been disabled.'
+
+  log INFO 'Boosting package builds has been completed.'
+}
+
 # Synchronizes the package databases to the master.
 sync_package_databases () {
   log INFO 'Starting to synchronize package databases...'
@@ -862,31 +890,9 @@ setup_fonts () {
   log INFO 'Extra glyphs have been installed.'
 }
 
-# Boost system performance on various tasks.
-boost_performance () {
-  log INFO 'Boosting system performance...'
-
-  local cores=''
-  cores="$(
-    grep -c '^processor' /proc/cpuinfo 2>&1
-  )" || abort ERROR 'Failed to read cpu data.'
-
-  if is_not_integer "${cores}" '[1,]'; then
-    abort ERROR 'Unable to resolve CPU cores.'
-  fi
-
-  local conf_file='/etc/makepkg.conf'
-
-  sed -i \
-  -e "s/#MAKEFLAGS=\"-j2\"/MAKEFLAGS=\"-j${cores}\"/g" \
-  -e "s/COMPRESSXZ=(xz -c -z -)/COMPRESSXZ=(xz -c -z --threads=${cores} -)/g" \
-  -e "s/COMPRESSZST=(zstd -c -z -q -)/COMPRESSZST=(zstd -c -z -q --threads=${cores} -)/g" "${conf_file}" ||
-    abort ERROR 'Failed to set make options.'
-
-  log INFO "Make flags set to ${cores} CPU cores."
-  log INFO 'Compression threads have been set.'
-
-  log INFO 'Increasing the limit of inotify watches...'
+# Boost the file system's various operations.
+boost_file_system () {
+  log INFO 'Boosting the file system performance...'
 
   local limit=524288
   echo "fs.inotify.max_user_watches=${limit}" >> /etc/sysctl.conf ||
@@ -896,7 +902,7 @@ boost_performance () {
     abort ERROR 'Failed to update the max limit to inotify watches.'
 
   log INFO "Inotify watches limit has been set to ${limit}."
-  log INFO 'Boosting has been completed.'
+  log INFO 'Boosting file system has been completed.'
 }
 
 # Applies various system security settings.
@@ -1131,6 +1137,7 @@ set_users &&
   set_timezone &&
   set_release_data &&
   set_mirrors &&
+  boost_package_builds &&
   sync_package_databases &&
   install_drivers &&
   install_base_packages &&
@@ -1143,7 +1150,7 @@ set_users &&
   setup_file_manager &&
   setup_theme &&
   setup_fonts &&
-  boost_performance &&
+  boost_file_system &&
   configure_security &&
   restore_user_permissions &&
   enable_services &&
