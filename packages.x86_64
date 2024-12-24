@@ -112,6 +112,7 @@ all:aur:xkblayout-state-git
 all:pac:efibootmgr
 all:pac:irssi
 all:pac:rlwrap
+all:pac:archiso
 
 stp:pac:bluez
 stp:pac:bluez-utils
