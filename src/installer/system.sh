@@ -906,7 +906,7 @@ boost_file_system () {
 }
 
 # Applies various system security settings.
-configure_security () {
+secure_system () {
   log INFO 'Hardening system security...'
 
   local deny=3
@@ -1151,7 +1151,7 @@ set_users &&
   setup_theme &&
   setup_fonts &&
   boost_file_system &&
-  configure_security &&
+  secure_system &&
   restore_user_permissions &&
   enable_services &&
   create_hash_file ||
