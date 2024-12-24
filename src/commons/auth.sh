@@ -15,12 +15,13 @@ authenticate_user () {
     return 0
   fi
 
-  log 'Permission needed for this operation.'
-
   # Invalidate user's cached credentials
   sudo -K
 
-  ask_secret 'Enter current password:' || return $?
+  local prompt='Permission needed for this operation.'
+  prompt+='\nEnter current password:'
+
+  ask_secret "${prompt}" || return $?
   is_empty "${REPLY}" && log 'Password is required.' && return 2
 
   local password="${REPLY}"
