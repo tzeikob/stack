@@ -761,7 +761,7 @@ clean () {
   local settings=''
   settings="$(jq 'del(.user_password, .root_password)' "${SETTINGS_FILE}")" &&
     echo 'Installation settings set to:' > "${LOGS}/settings.log" &&
-    echo "${settings}\n" >> "${LOGS}/settings.log" ||
+    echo -e "${settings}\n" >> "${LOGS}/settings.log" ||
     log 'Unable to read installation settings.'
 
   # Copy the installation log files to the new system
