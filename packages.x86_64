@@ -145,6 +145,5 @@ stp:pac:libmpcdec
 stp:pac:speex
 stp:pac:taglib
 stp:pac:wavpack
-stp:aur:digimend-kernel-drivers-dkms-git
 
 bld:pac:xf86-video-qxl
