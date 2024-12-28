@@ -9,39 +9,6 @@ source src/commons/math.sh
 
 SETTINGS_FILE=./settings.json
 
-# Synchronizes the system clock to the current time.
-sync_clock () {
-  log INFO 'Updating the system clock...'
-
-  timedatectl status | jc --parser timedatectl > /tmp/clock.bk ||
-    abort ERROR 'Failed to backup the clock settings.'
-  
-  log INFO 'Clock settings backed up to /tmp/clock.bk.'
-
-  local timezone=''
-  timezone="$(jq -cer '.timezone' "${SETTINGS_FILE}")" ||
-    abort ERROR 'Unable to read timezone setting.'
-
-  timedatectl set-timezone "${timezone}" 2>&1 ||
-    abort ERROR 'Unable to set timezone.'
-
-  log INFO "Timezone has been set to ${timezone}."
-
-  timedatectl set-ntp true 2>&1 ||
-    abort ERROR 'Failed to enable NTP mode.'
-
-  log INFO 'NTP mode has been enabled.'
-
-  while timedatectl status 2>&1 | grep -q 'System clock synchronized: no'; do
-    sleep 1
-  done
-
-  timedatectl status 2>&1 ||
-    abort ERROR 'Failed to show system time status.'
-
-  log INFO 'System clock has been updated.'
-}
-
 # Sets the pacman mirrors list.
 set_mirrors () {
   log INFO 'Setting up package databases mirrors list...'
@@ -158,33 +125,6 @@ copy_installation_files () {
   log INFO 'Installation files have been copied.'
 }
 
-# Restores the clock timezone and NTP service.
-restore_clock () {
-  log INFO 'Restoring clock settings...'
-
-  local timezone=''
-  timezone="$(jq -cer '.time_zone|split(" ")[0]' /tmp/clock.bk)"
-
-  if has_not_failed; then
-    timedatectl set-timezone "${timezone}" 2>&1 &&
-      log INFO "Timezone restored back to ${timezone}." ||
-      log WARN "Unable to restore clock timezone to ${timezone}."
-  else
-    log WARN 'Unable to read timezone from clock backup file.'
-  fi
-  
-  local ntp_service=''
-  ntp_service="$(jq -cer '.ntp_service | . == "active"' /tmp/clock.bk)"
-
-  if has_not_failed; then
-    timedatectl set-ntp "${ntp_service}" 2>&1 &&
-      log INFO "NTP service restored back to ${ntp_service}." ||
-      log WARN "Unable to restore NTP service to ${ntp_service}."
-  else
-    log WARN 'Unable to read NTP service from clock backup file.'
-  fi
-}
-
 # Restores the pacman mirror list.
 restore_mirrors () {
   log INFO 'Restoring pacman mirror list...'
@@ -218,14 +158,12 @@ resolve () {
 log INFO 'Script bootstrap.sh started.'
 log INFO 'Starting the bootstrap process...'
 
-sync_clock &&
-  set_mirrors &&
+set_mirrors &&
   sync_package_databases &&
   update_keyring &&
   copy_pacman_hooks &&
   install_kernel &&
   copy_installation_files &&
-  restore_clock &&
   restore_mirrors ||
   abort
 
