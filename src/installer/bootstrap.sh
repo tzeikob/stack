@@ -13,10 +13,10 @@ SETTINGS_FILE=./settings.json
 set_mirrors () {
   log INFO 'Setting up package databases mirrors list...'
 
-  cp /etc/pacman.d/mirrorlist /tmp/mirrorlist.bk ||
+  cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bk ||
     abort ERROR 'Failed to backup the pacman mirror list.'
   
-  log INFO 'Pacman mirror list backed up to /tmp/mirrorlist.bk.'
+  log INFO 'Pacman mirror list backed up to /etc/pacman.d/mirrorlist.bk.'
 
   local mirrors=''
   mirrors="$(jq -cer '.mirrors|join(",")' "${SETTINGS_FILE}")" ||
@@ -129,7 +129,7 @@ copy_installation_files () {
 restore_mirrors () {
   log INFO 'Restoring pacman mirror list...'
 
-  mv /tmp/mirrorlist.bk /etc/pacman.d/mirrorlist &&
+  mv /etc/pacman.d/mirrorlist.bk /etc/pacman.d/mirrorlist &&
     log INFO 'Pacman mirror list has been restored.' ||
     log WARN 'Unable to restore the pacman mirror list.'
 }
