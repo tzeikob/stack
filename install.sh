@@ -617,14 +617,8 @@ ask_user () {
   local branch=''
   branch="$(git branch --show-current)" ||
     abort ERROR 'Failed to read the current branch.'
-  
-  local commit=''
-  commit="$(git log --pretty=format:'%h' -n 1)" ||
-    abort ERROR 'Failed to read the last commit id.'
-  
-  local version="${branch}:${commit}"
 
-  log "Installing Stack Linux ${version}:"
+  log "Installing Stack Linux ${branch}:"
 
   sleep 2
 }
