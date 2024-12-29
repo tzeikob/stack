@@ -20,13 +20,11 @@ show_status () {
 
   pactl --format=json info | jq -cer --arg SPC ${space} "\"${query}\"" || return 1
 
-  local query='.[] | select(.unit == "pipewire-pulse.service") | .active | lbln("Service")'
+  local query='.[] | select(.unit == "pipewire-pulse.service") | .active | lbl("Service")'
 
   systemctl --user -a | jc --systemctl | jq -cer --arg SPC ${space} "${query}" || return 1
 
-  local query=''
-  query+='to_entries[] | (.key + 1) as $k | .value.properties |'
-  query+='."device.nick"//."device.alias" | lbln("Card[\($k)]"; "unknown")'
+  local query='[.[] | .properties | ."device.nick"//."device.alias"] | tree("Cards"; "unknown")'
 
   find_cards | jq -cer --arg SPC ${space} "${query}" || return 1
 
@@ -37,7 +35,7 @@ show_status () {
   query+='\(.properties | ."device.nick"//."device.alias"  | lbln("Output"))'
   query+='\(.active_port                                   | lbln("Port"))'
   query+='\(.volume | keys[0] as $k | .[$k].db | no_spaces | lbln("Volume"))'
-  query+='\(.mute | yes_no                                 | lbln("Mute"))'
+  query+='\(.mute | yes_no                                 | lbl("Mute"))'
 
   query=".[] | select(.name == \"${sink}\") | select(.active_port) | \"${query}\""
 
@@ -115,8 +113,6 @@ restart () {
     log 'Pipewire service restarted.' &&
   systemctl --user restart pipewire-session-manager.service &&
     sleep 0.5 &&
-  systemctl --user restart pipewire-media-session.service &&
-    sleep 0.5 &&
   systemctl --user restart pipewire-pulse.socket &&
     sleep 0.5 &&
     log 'Pulse socket restarted.' &&
@@ -154,7 +150,7 @@ list_cards () {
 
   local query=''
   query+='\(.properties | ."device.nick"//."device.alias" | lbln("Model"))'
-  query+='\(.properties | ."device.vendor.name"           | olbln("Vendor")'
+  query+='\(.properties | ."device.vendor.name"           | olbln("Vendor"))'
   query+='\(.name                                         | lbl("Name"))'
 
   query="[.[] | \"${query}\"] | join(\"\n\n\")"
@@ -197,11 +193,11 @@ list_ports () {
   fi
 
   local query=''
-  query+='.[]'
+  query+="[.[] | select(.name | contains(\"${type}\"))] | .[]"
   query+=' |= .'
   query+=' | map(('
   query+='   .ports[] + {'
-  query+='    index, state, mute, properties,'
+  query+='    state, mute, properties,'
   query+='    volume: (.volume | keys[0] as $k | .[$k].db | no_spaces)'
   query+='   }'
   query+='  )) | .[] |'
@@ -382,7 +378,7 @@ turn_default () {
   elif is_not_valid_volume "${volume}"; then
     log 'Invalid volume value.'
     return 2
-  elif is_integer "${volume}" '[0,150]'; then
+  elif is_not_integer "${volume}" '[0,150]'; then
     log 'Volume value is out of range.'
     return 2
   fi

@@ -93,7 +93,9 @@ pick_module () {
 
   local option='{key: .parent.name, value: "\(.name) [\(.parent.properties | ."device.nick"//."device.alias" | dft("..."))]"}'
 
-  local query="[.[] |= . | map((.ports[] + {parent: {name, properties}})) | .[] | ${option}]"
+  local query="[.[] | select(.name | contains(\"${type}\"))] | .[]"
+  query+="|= . | map((.ports[] + {parent: {name, properties}})) | .[] | ${option}"
+  query="[${query}]"
   
   local object='sinks'
   if equals "${type}" 'input'; then
