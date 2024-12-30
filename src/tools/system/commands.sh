@@ -384,7 +384,7 @@ upgrade_stack () {
 
   local repo_home='/tmp/stack'
 
-  rm -rf "${repo_home}"
+  sudo rm -rf "${repo_home}"
 
   git clone --single-branch --branch "${branch}" --depth 1 "${repo_url}" "${repo_home}"
 
@@ -397,5 +397,5 @@ upgrade_stack () {
 
   ./upgrade.sh
 
-  cd ~ && rm -rf "${repo_home}"
+  sudo rm -rf "${repo_home}"
 }
