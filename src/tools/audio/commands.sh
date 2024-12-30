@@ -113,6 +113,7 @@ restart () {
     log 'Pipewire service restarted.' &&
   systemctl --user restart pipewire-session-manager.service &&
     sleep 0.5 &&
+    log 'Pipewire session restarted.' &&
   systemctl --user restart pipewire-pulse.socket &&
     sleep 0.5 &&
     log 'Pulse socket restarted.' &&
