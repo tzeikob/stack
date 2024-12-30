@@ -96,6 +96,9 @@ update_root_files () {
       abort ERROR "Failed to rename user home for ${USER}."
   fi
 
+  # Restore root privileged file system
+  sudo chown -R root:root airootfs/etc airootfs/usr src/commons src/tools
+
   sudo rsync -av airootfs/ / \
     --exclude usr/local/bin/stack \
     --exclude etc/X11/xorg.conf.d/00-keyboard.conf \
@@ -171,7 +174,7 @@ update_tools () {
 fix_root_bash () {
   log INFO 'Fixing root bash shell environment...'
   
-  cp "/home/${USER}/.prompt" /root ||
+  sudo cp "/home/${USER}/.prompt" /root ||
     abort ERROR 'Failed to copy root .prompt file.'
   
   log INFO 'Bash shell environment has been fixed.'
