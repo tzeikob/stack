@@ -74,7 +74,7 @@ fix_config_values () {
   user_id="$(id -u "${USER}" 2>&1)" ||
     abort ERROR 'Failed to get the user id.'
 
-  sed -i "s/#USER_ID#/${user_id}/g" airootfs/etc/systemd/system/lock@.service &&
+  sed -i "s/#USER_ID#/${user_id}/g" airootfs/etc/systemd/system/lock@.service ||
     abort ERROR 'Failed to set the user id in lock service.'
 
   log INFO "Lock user id set to ${user_id} for user ${USER}."
