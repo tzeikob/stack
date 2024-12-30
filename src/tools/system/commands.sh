@@ -317,8 +317,8 @@ upgrade_stack () {
 
   local prompt=''
   prompt+='This operation may break your system!'
-  prompt+='\nPlease consider taking a backup first.'
-  promtp+='\nDo you really want to proceed?'
+  prompt+='\nPlease consider taking a backup first!'
+  prompt+='\nDo you really want to proceed?'
 
   confirm "${prompt}" || return $?
   is_empty "${REPLY}" && log 'Confirmation is required.' && return 2
