@@ -18,13 +18,13 @@ show_status () {
 
   find_adapter | jq -cer --arg SPC ${space} "${query}" || return 1
 
-  local query='.[] | select(.unit == "acpid.service") | .active | olbl("ACPID")'
+  local query='[.[] | select(.unit == "acpid.service")][0] | .active | olbl("ACPID")'
 
-  systemctl -a | jc --systemctl | jq -cr --arg SPC ${space} "${query}" || return 1
+  systemctl -a | jc --systemctl | jq -cer --arg SPC ${space} "${query}" || return 1
 
-  local query='.[] | select(.unit == "tlp.service") | .active | olbl("TLP")'
+  local query='[.[] | select(.unit == "tlp.service")][0] | .active | olbl("TLP")'
 
-  systemctl -a | jc --systemctl | jq -cr --arg SPC ${space} "${query}" || return 1
+  systemctl -a | jc --systemctl | jq -cer --arg SPC ${space} "${query}" || return 1
 
   if file_exists "${POWER_SETTINGS}"; then
     local query='.screensaver.interval | unit(" mins") | lbl("Screensaver"; "off")'
@@ -326,7 +326,7 @@ set_charging () {
   done
 
   # Restart TLP only if it is enabled
-  local query='.[] | select(.unit == "tlp.service")'
+  local query='[.[] | select(.unit == "tlp.service")][0]//""'
 
   local tlp_process=''
   tlp_process="$(systemctl -a | jc --systemctl | jq -cr "${query}")" || return 1

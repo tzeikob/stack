@@ -15,9 +15,9 @@ source src/tools/bluetooth/helpers.sh
 show_status () {
   local space=15
 
-  local query='.[] | select(.unit == ."bluetooth.service") | .active | lbl("Service")'
+  local query='[.[] | select(.unit == "bluetooth.service")][0] | .active | lbl("Service")'
 
-  systemctl  -a | jc --systemctl | jq -cer --arg SPC ${space} "${query}" || return 1
+  systemctl -a | jc --systemctl | jq -cer --arg SPC ${space} "${query}" || return 1
 
   local query=''
   query+='\(.name         | lbln("Controller"))'

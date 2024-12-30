@@ -15,7 +15,7 @@ source src/tools/networks/helpers.sh
 show_status () {
   local space=13
 
-  local query='.[] | select(.unit == "NetworkManager.service") | .active | lbl("Service")'
+  local query='[.[] | select(.unit == "NetworkManager.service")][0] | .active | lbl("Service")'
 
   systemctl -a | jc --systemctl | jq -cer --arg SPC ${space} "${query}" || return 1
 

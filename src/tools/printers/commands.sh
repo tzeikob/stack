@@ -15,9 +15,9 @@ source src/tools/printers/helpers.sh
 show_status () {
   local space=10
 
-  local query='.[] | select(.unit == "cups.service") | .active | lbl("Service")'
+  local query='[.[] | select(.unit == "cups.service")][0] | .active | lbl("Service")'
 
-  systemctl -a | jc --systemctl | jq -cr --arg SPC ${space} "${query}" | || return 1
+  systemctl -a | jc --systemctl | jq -cer --arg SPC ${space} "${query}" | || return 1
 
   local query=''
   query+='\(.[0] | lbln("Cups"))'
