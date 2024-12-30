@@ -324,7 +324,7 @@ upgrade_stack () {
   is_empty "${REPLY}" && log 'Confirmation is required.' && return 2
   
   if is_not_yes "${REPLY}"; then
-    log 'No upgrade has been applied.'
+    log 'No stack upgrades have been applied.'
     return 2
   fi
 
@@ -378,8 +378,8 @@ upgrade_stack () {
   fi
 
   if equals "${local_commit}" "${remote_commit}"; then
-    echo 'No upgrades have found.'
-    return 2
+    echo 'Stack is up to date, no upgrades found.'
+    return 0
   fi
 
   local repo_home='/tmp/stack'
@@ -389,7 +389,7 @@ upgrade_stack () {
   git clone --single-branch --branch "${branch}" --depth 1 "${repo_url}" "${repo_home}"
 
   if has_failed; then
-    log "Failed to clone the ${branch} branch of stack repository."
+    log "Failed to clone stack branch ${branch}."
     return 2
   fi
 
