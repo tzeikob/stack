@@ -268,20 +268,8 @@ set_power () {
   log "Power mode set to ${mode}."
 }
 
-# Sets scanning mode to on or off.
-# Arguments:
-#  mode: on or off
-set_scan () {
-  local mode="${1}"
-
-  if is_not_given "${mode}"; then
-    log 'Missing scanning mode.'
-    return 2
-  elif is_not_toggle "${mode}"; then
-    log 'Invalid scanning mode.'
-    return 2
-  fi
-
+# Starts the scanning process for about 120 seconds.
+scan () {
   find_controller 1> /dev/null
   
   if has_failed; then
@@ -292,17 +280,9 @@ set_scan () {
   # Kill any running scanning proccesses
   kill_scanning_proccesses || return 1
   
-  if is_on "${mode}"; then
-    bluetoothctl scan on 1> /dev/null &
+  bluetoothctl --timeout 120 scan on 1> /dev/null &
 
-    is_not_scanning &&
-      log 'Failed to enable scanning mode.' && return 2
-  else
-    is_scanning &&
-      log 'Failed to disable scanning mode.' && return 2
-  fi
-
-  log "Scanning mode set to ${mode}."
+  log "Scanning mode enabled for 120 seconds."
 }
 
 # Sets the default controller discoverable mode to on/off.

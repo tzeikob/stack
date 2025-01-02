@@ -125,7 +125,7 @@ pick_device () {
 
 # Kills any running bluetooth scanning proccesses.
 kill_scanning_proccesses () {
-  local query='.command | test("^bluetoothctl scan on")'
+  local query='.command | test("^bluetoothctl .* scan on")'
   query=".[] | select(${query}) |.pid"
 
   local pids=''

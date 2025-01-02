@@ -51,7 +51,6 @@ show_help () {
     '' '' \
     'set controller <address>' 'Set the default controller.' \
     'set power on|off' 'Set the default controller power to on or off.' \
-    'set scan on|off' 'Set the default controller scan mode to on or off.' \
     'set discoverable on|off' 'Set the default controller to be discoverable.' \
     'set pairable on|off' 'Set the default controller to be pairable.' \
     '' '' \
@@ -59,6 +58,7 @@ show_help () {
     'disconnect device <address>' 'Disconnect a bluetooth device.' \
     'remove device <address>' 'Removes a bluetooth device.' \
     '' '' \
+    'scan' 'Scan for available bluetooth devices.' \
     'restart' 'Restart the bluetooth service.'
 }
 
@@ -81,12 +81,12 @@ execute () {
     'list devices') list_devices "${3}";;
     'set controller') set_controller "${3}";;
     'set power') set_power "${3}";;
-    'set scan') set_scan "${3}";;
     'set discoverable') set_discoverable "${3}";;
     'set pairable') set_pairable "${3}";;
     'connect device') connect_device "${3}";;
     'disconnect device') disconnect_device "${3}";;
     'remove device') remove_device "${3}";;
+    'scan') scan;;
     'restart') restart_bluetooth;;
     *)
       log 'Ooops, invalid or unknown command!'
