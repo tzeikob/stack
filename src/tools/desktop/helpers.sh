@@ -31,7 +31,7 @@ resolve_status () {
   status+="\"server\": \"Xorg ${server::-1}\","
 
   local compositor=''
-  compositor="$(pacman -Qi picom | grep -Po '^Version\s*: \K.+')" || return 1
+  compositor="$(picom --version | sed 's/^v\(.*\) (.*/\1/')" || return 1
 
   status+="\"compositor\": \"Picom ${compositor}\","
 
