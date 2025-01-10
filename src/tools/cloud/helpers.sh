@@ -70,7 +70,7 @@ find_remotes () {
     else
       results+="${remote},"
     fi
-  done; <<< "${remotes}"
+  done <<< "${remotes}"
   
   # Remove extra comma after the last array element
   results="${results:+${results::-1}}"
