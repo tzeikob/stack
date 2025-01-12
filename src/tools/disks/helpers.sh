@@ -23,9 +23,6 @@ find_swap () {
     printf frm, "used", $4
   }')" || return 1
 
-  # Remove last comma
-  swap="${swap:+${swap::-1}}"
-
   swap+="$(cat /proc/meminfo | grep -E 'Swap.*' | awk -F':' '{
     gsub(/^[ \t]+/,"",$1)
     gsub(/[ \t]+$/,"",$1)
@@ -267,7 +264,7 @@ is_system_disk () {
   local disk=''
   disk="$(find_disk "${path}")" || return 1
 
-  local system_paths='/ | /home | /boot | /var | /log | /swap'
+  local system_paths='/|/home|/boot|/var|/log|/swap'
 
   # Check if any partition's mountpoint is a system path
   local is_system_path="if . then . | test(\"^(${system_paths})$\") else false end"
@@ -334,7 +331,7 @@ is_system_partition () {
     return 1
   fi
 
-  local system_paths='/ | /home | /boot | /var | /log | /swap'
+  local system_paths='/|/home|/boot|/var|/log|/swap'
 
   # Check if partition mountpoint is a system path
   local is_system_path="if . then . | test(\"^(${system_paths})$\") else false end"

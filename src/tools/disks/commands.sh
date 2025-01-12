@@ -17,7 +17,7 @@ show_status () {
 
   local parts=''
   parts+='\(.path)'
-  parts+='\(.fstype | uppercase | dft("UNKW") | append)'
+  parts+='\(.fstype | uppercase | append)'
   parts+='\(.size | opt | append)'
   parts+='\(."fsuse%" | opt | append)'
   parts=".[] | \"${parts}\""
@@ -75,7 +75,7 @@ show_disk () {
 
   local parts=''
   parts+='\(.path)'
-  parts+='\(.fstype   | uppercase | dft("UNKW") | append)'
+  parts+='\(.fstype   | uppercase | append)'
   parts+='\(.size     | opt | append)'
   parts+='\(."fsuse%" | opt | append)'
   parts+='\(.label    | opt | enclose | append)'
@@ -132,7 +132,7 @@ show_partition () {
   query+='\(.name                              | lbln("Name"))'
   query+='\(.path                              | lbln("Path"))'
   query+='\(.mountpoint//.veracrypt.mountpoint | olbln("Mount"))'
-  query+='\(.fstype | uppercase                | lbln("File System"; "UNKW"))'
+  query+='\(.fstype | uppercase                | lbln("File System"))'
   query+='\(.rm                                | lbln("Removable"))'
   query+='\(.ro                                | lbln("ReadOnly"))'
   query+='\(.hotplug                           | lbln("HotPlug"))'
@@ -184,7 +184,7 @@ show_rom () {
   query+='\(.name               | lbln("Name"))'
   query+='\(.path               | lbln("Path"))'
   query+='\(.mountpoint         | olbl("Mount"))'
-  query+='\(.fstype | uppercase | lbln("File System"; "UNKW"))'
+  query+='\(.fstype | uppercase | lbln("File System"))'
   query+='\(.rm                 | lbln("Removable"))'
   query+='\(.ro                 | lbln("ReadOnly"))'
   query+='\(.tran               | lbln("Transfer"))'
