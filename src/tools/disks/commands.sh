@@ -1192,7 +1192,7 @@ create_encrypted () {
   tr -dc 'A-Za-z0-9!"#$%&'\''()*+,-./:;<=>?@[\]^_`{|}~' < /dev/urandom |
     head -c 350 > "${rand_text_file}"
 
-  sudo veracrypt -t --create "${path}1" --password "${key}" \
+  veracrypt -t --create "${path}1" --password "${key}" \
     --volume-type normal --encryption AES --hash sha-512 --filesystem "${fs_type}" \
     --pim 0 --keyfiles '' --random-source "${rand_text_file}"
 

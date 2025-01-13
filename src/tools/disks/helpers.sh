@@ -440,7 +440,7 @@ mount_encrypted_device () {
   local mount_point="${HOME}/mounts/encrypted/${folder_name}"
 
   mkdir -p "${mount_point}" &&
-  sudo veracrypt -t --mount "${path}" "${mount_point}" --password "${key}" \
+  veracrypt -t --mount "${path}" "${mount_point}" --password "${key}" \
     --pim 0 --keyfiles '' --protect-hidden no --non-interactive 1> /dev/null
 
   if has_failed; then
@@ -474,7 +474,7 @@ unmount_encrypted_device () {
   fi
 
   sync &&
-  sudo veracrypt -t --dismount "${path}" 1> /dev/null || return 1
+  veracrypt -t --dismount "${path}" 1> /dev/null || return 1
 
   local folder_name=''
   folder_name="$(echo "${path:1}" | tr '/' '_')"
