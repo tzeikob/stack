@@ -25,13 +25,13 @@ show_status () {
 
   find_layout_state | jq -cer --arg SPC ${space} "\"${query}\"" || return 1
 
-  local query='tree("Locales")'
+  local query='treeln("Locales")'
 
   find_installed_locales | jq -cer --arg SPC ${space} "${query}" || return 1
 
   local query=''
   query+='\(.lang              | lbln("Language"))'
-  query+='\(.lc_type           | lbln("Type"))'
+  query+='\(.lc_ctype           | lbln("Type"))'
   query+='\(.lc_numeric        | lbln("Numeric"))'
   query+='\(.lc_time           | lbln("Time"))'
   query+='\(.lc_collate        | lbln("Collate"))'
