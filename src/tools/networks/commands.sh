@@ -748,6 +748,7 @@ add_vpn () {
     return 2
   fi
 
+  nmcli connection modify "${name}" +vpn.data password-flags=0 1> /dev/null || return 1
   nmcli connection modify "${name}" +vpn.data username="${username}" 1> /dev/null || return 1
   nmcli connection modify "${name}" +vpn.secrets password="${password}" 1> /dev/null || return 1
 
