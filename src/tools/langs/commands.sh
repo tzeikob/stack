@@ -31,7 +31,7 @@ show_status () {
 
   local query=''
   query+='\(.lang              | lbln("Language"))'
-  query+='\(.lc_ctype           | lbln("Type"))'
+  query+='\(.lc_ctype          | lbln("Type"))'
   query+='\(.lc_numeric        | lbln("Numeric"))'
   query+='\(.lc_time           | lbln("Time"))'
   query+='\(.lc_collate        | lbln("Collate"))'
