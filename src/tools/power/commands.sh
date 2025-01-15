@@ -20,11 +20,19 @@ show_status () {
 
   local query='[.[] | select(.unit == "acpid.service")][0] | .active | olbl("ACPID")'
 
-  systemctl -a | jc --systemctl | jq -cer --arg SPC ${space} "${query}" || return 1
+  local acpid_output="$(systemctl -a | jc --systemctl | jq -cer --arg SPC ${space} "${query}")" || return 1
+
+  if is_given "${acpid_output}"; then
+    echo "${acpid_output}"
+  fi
 
   local query='[.[] | select(.unit == "tlp.service")][0] | .active | olbl("TLP")'
 
-  systemctl -a | jc --systemctl | jq -cer --arg SPC ${space} "${query}" || return 1
+  local tlp_output="$(systemctl -a | jc --systemctl | jq -cer --arg SPC ${space} "${query}")" || return 1
+
+  if is_given "${tlp_output}"; then
+    echo "${tlp_output}"
+  fi
 
   if file_exists "${POWER_SETTINGS}"; then
     local query='.screensaver.interval | unit(" mins") | lbl("Screensaver"; "off")'
