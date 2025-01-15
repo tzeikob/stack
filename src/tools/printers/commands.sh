@@ -17,7 +17,7 @@ show_status () {
 
   local query='[.[] | select(.unit == "cups.service")][0] | .active | lbl("Service")'
 
-  systemctl -a | jc --systemctl | jq -cer --arg SPC ${space} "${query}" | || return 1
+  systemctl -a | jc --systemctl | jq -cer --arg SPC ${space} "${query}" || return 1
 
   local query=''
   query+='\(.[0] | lbln("Cups"))'
