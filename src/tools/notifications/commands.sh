@@ -101,7 +101,7 @@ list_all () {
 
   local sent_time=''
   sent_time+='.timestamp.data | ($u|tonumber) - (. / 1000000 | round) |'
-  sent_time+='($e|tonumber) - . | strftime("%H:%M:%S")'
+  sent_time+='($e|tonumber) - . | localtime | strftime("%H:%M:%S")'
 
   local query=''
   query+='\(.id.data      | lbln("ID"))'
