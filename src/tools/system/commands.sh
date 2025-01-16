@@ -30,7 +30,7 @@ show_status () {
   query+='\(.age | unit(" hours") | lbln("Age"))'
   query+='\(.latest               | lbl("Latest"))'
 
-  find_reflector_settings | jq -cer --arg SPC ${space} "${query}" || return 1
+  find_reflector_settings | jq -cer --arg SPC ${space} "\"${query}\"" || return 1
   
   local query=''
   query+='\(.pacman + .aur | length | lbln("Packages"))'
