@@ -294,7 +294,7 @@ apply_updates () {
     return 2
   fi
 
-  yay --noconfirm -Syu
+  yay --noconfirm --sudoloop -Syu
 
   if has_failed; then
     echo '{"status": -1}' > "${UPDATES_STATE_FILE}"
