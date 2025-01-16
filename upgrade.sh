@@ -29,8 +29,14 @@ install_official_packages () {
   pkgs+=($(grep -E '(stp|all):pac' packages.x86_64 | cut -d ':' -f 3)) ||
     abort ERROR 'Failed to read packages from packages.x86_64 file.'
 
-  sudo pacman -S --needed --noconfirm ${pkgs[@]} 2>&1 ||
-    abort ERROR 'Failed to install new official packages.'
+  local pkg='';
+  for pkg in "${pkgs[@]}"; do
+    log INFO "Installing package ${pkg}..."
+
+    sudo pacman -S --needed --noconfirm ${pkg} 2>&1 &&
+      log INFO "Package ${pkg} has been installed." ||
+      log WARN "Failed to install package ${pkg}."
+  done
 
   log INFO 'New official packages have been installed.'
 }
@@ -43,8 +49,15 @@ install_aur_packages () {
   pkgs+=($(grep -E '(stp|all):aur' packages.x86_64 | cut -d ':' -f 3)) ||
     abort ERROR 'Failed to read packages from packages.x86_64 file.'
 
-  yay -S --needed --noconfirm --removemake ${pkgs[@]} 2>&1 ||
-    abort ERROR 'Failed to install new AUR packages.'
+
+  local pkg='';
+  for pkg in "${pkgs[@]}"; do
+    log INFO "Installing package ${pkg}..."
+
+    yay -S --needed --noconfirm --removemake ${pkg[@]} 2>&1 &&
+      log INFO "Package ${pkg} has been installed." ||
+      log WARN "Failed to install package ${pkg}."
+  done
   
   log INFO 'New AUR packages have been installed.'
 }

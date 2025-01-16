@@ -5,45 +5,50 @@ set -o pipefail
 source /opt/stack/commons/math.sh
 source /opt/stack/commons/validators.sh
 
-UPDATES_STATE_FILE=/tmp/updates_state
+UPDATES_FILE=/tmp/updates
+
+COLOR_READY='B2E39C'
+COLOR_CHECKING='FEE066'
+COLOR_OUTDATED='F27D52'
+COLOR_UPDATING='008ACC'
 
 # Reads the special updates state file which is expected
 # to contain a json object with a status code and the total
 # number of outdated packages. A status code of -1 means
 # something is wrong or broken, 0 that the system is up to
-# date, 1 when there are updates to be applied and 2 means
-# checking for updates and 3 when the system is currently
-# updating. If the file is missing the system should be
-# considered as in an unknown state.
+# date, 1 when there are updates to be applied, 2 when
+# searching for updates and 3 when applying updates. If the file
+# is missing the system could be considered as in checking state.
 run () {
   local output color
   
-  if file_exists "${UPDATES_STATE_FILE}"; then
+  if file_exists "${UPDATES_FILE}"; then
     local status=''
-    status="$(jq -cr '.status' "${UPDATES_STATE_FILE}")"
+    status="$(jq -cr '.status' "${UPDATES_FILE}")"
+
+    local total=''
+    total="$(jq -cr '.total//empty' "${UPDATES_FILE}")"
 
     if is_not_integer "${status}" || is_true "${status} = -1"; then
       output='Err!'
     elif is_true "${status} = 0"; then
-      output='Ready'
-      color='B2E39C'
+      output="$(printf '%03d' ${total:-"000"})"
+      color="${COLOR_READY}"
     elif is_true "${status} = 1"; then
-      local total=''
-      total="$(jq -cr '.total' "${UPDATES_STATE_FILE}")"
-
       output="$(printf '%03d' ${total})"
-      color='F27D52'
+      color="${COLOR_OUTDATED}"
     elif is_true "${status} = 2"; then
-      output='Cheking'
-      color='2222FF'
+      output="$(printf '%03d' ${total:-"000"})"
+      color="${COLOR_CHECKING}"
     elif is_true "${status} = 3"; then
-      output='Updating'
-      color='2222FF'
+      output="$(printf '%03d' ${total})"
+      color="${COLOR_UPDATING}"
     else
-      output='Unkwn!'
+      output='Err!'
     fi
   else
-    output='Unkwn!'
+    output='000'
+    color="${COLOR_CHECKING}"
   fi
 
   if is_not_empty "${color}"; then

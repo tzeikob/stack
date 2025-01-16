@@ -7,7 +7,7 @@ source src/commons/math.sh
 source src/commons/validators.sh
 source src/tools/system/helpers.sh
 
-UPDATES_STATE_FILE=/tmp/updates_state
+UPDATES_FILE=/tmp/updates
 
 # Shows the current status of system.
 # Outputs:
@@ -139,27 +139,27 @@ set_mirrors () {
 # Checks for currently available outdated packages
 # and updates the updates state file accordingly.
 check_updates () {
-  # Don't proceed if an updating operation is in progress
-  if file_exists "${UPDATES_STATE_FILE}"; then
-    local status=''
-    status="$(jq -cr '.status' "${UPDATES_STATE_FILE}")"
+  log 'Processing system updates...'
 
-    if is_true "${status} = 3"; then
-      log 'Unable to proceed while the system is updating.'
+  if file_exists "${UPDATES_FILE}"; then
+    local state=''
+    state="$(jq -cer '.' "${UPDATES_FILE}")"
+
+    if has_failed; then
+      log 'Unable to read the updates state file.'
       return 2
     fi
+
+    echo "${state}" | jq -cer '.status = 2' > "${UPDATES_FILE}"
+  else
+    echo '{"status": 2}' > "${UPDATES_FILE}"
   fi
-
-  # Mark updates state as system is checking for updates
-  echo '{"status": 2}' > "${UPDATES_STATE_FILE}"
-
-  log 'Processing system updates...'
 
   local pacman_pkgs=''
   pacman_pkgs="$(find_outdated_pacman_packages)"
 
   if has_failed; then
-    echo '{"status": -1}' > "${UPDATES_STATE_FILE}"
+    echo '{"status": -1}' > "${UPDATES_FILE}"
 
     log 'Unable to search for outdated pacman packages.'
     return 2
@@ -169,7 +169,7 @@ check_updates () {
   aur_pkgs="$(find_outdated_aur_packages)"
 
   if has_failed; then
-    echo '{"status": -1}' > "${UPDATES_STATE_FILE}"
+    echo '{"status": -1}' > "${UPDATES_FILE}"
 
     log 'Unable to search for outdated AUR packages.'
     return 2
@@ -182,21 +182,30 @@ check_updates () {
   total="$(echo "${all_updates}" | jq -cer 'length')"
 
   if has_failed || is_not_integer "${total}" || is_true "${total} < 0"; then
-    echo '{"status": -1}' > "${UPDATES_STATE_FILE}"
+    echo '{"status": -1}' > "${UPDATES_FILE}"
 
     log 'Unable to resolve the total number of updates.'
     return 2
   fi
 
   if is_true "${total} = 0"; then
-    echo '{"status": 0}' > "${UPDATES_STATE_FILE}"
+    echo '{"status": 0, "total": 0}' > "${UPDATES_FILE}"
 
     log 'No available updates have found.'
     return 0
   fi
 
+  log "Found ${total} updates."
+
   # Update the updates state file
-  echo "{\"status\": 1, \"total\": ${total}}" > "${UPDATES_STATE_FILE}"
+  local state=''
+  state+='"status": 1,'
+  state+="\"total\": ${total},"
+  state+="\"pacman\": ${pacman_pkgs},"
+  state+="\"aur\": ${aur_pkgs}"
+  state="{${state}}"
+
+  echo "${state}" > "${UPDATES_FILE}"
   
   # Send a notification to the user
   if on_script_mode && is_true "${total} > 0"; then
@@ -209,26 +218,15 @@ check_updates () {
 # Outputs:
 #  A long list of outdated packages.
 list_updates () {
-  log 'Processing system updates...'
-
-  local pacman_pkgs=''
-  pacman_pkgs="$(find_outdated_pacman_packages)"
+  check_updates &> /dev/null
 
   if has_failed; then
-    log 'Unable to search for outdated pacman packages.'
-    return 2
-  fi
-
-  local aur_pkgs=''
-  aur_pkgs="$(find_outdated_aur_packages)"
-
-  if has_failed; then
-    log 'Unable to search for outdated AUR packages.'
+    log 'Failed to check for latest updates.'
     return 2
   fi
 
   local all_updates=''
-  all_updates="$(jq -ncer --argjson p "${pacman_pkgs}" --argjson a "${aur_pkgs}" '$p + $a')"
+  all_updates="$(jq -cer '.pacman//[] + .aur//[]' ${UPDATES_FILE})"
 
   local total=0
   total="$(echo "${all_updates}" | jq -cer 'length')"
@@ -271,42 +269,99 @@ apply_updates () {
     return 2
   fi
 
-  # Don't proceed if system is checking for updates
-  if file_exists "${UPDATES_STATE_FILE}"; then
-    local status=''
-    status="$(jq -cr '.status' "${UPDATES_STATE_FILE}")"
+  check_updates &> /dev/null
 
-    if is_true "${status} = 2"; then
-      log 'Unable to proceed while system is checking for updates.'
-      return 2
+  if has_failed; then
+    log 'Failed to check for latest updates.'
+    return 2
+  fi
+
+  # Read the updates state file once
+  local updates=''
+  updates="$(cat ${UPDATES_FILE})"
+
+  # Make sure packages databases are synced
+  sudo pacman -Syy
+
+  if has_failed; then
+    log 'Unable to sync packages databases.'
+    return 2
+  fi
+
+  local failed_total=0
+
+  local pacman_pkgs=''
+  pacman_pkgs="$(jq -cer '.pacman//[] | .[]' ${updates})"
+
+  if has_failed; then
+    log 'Unable to read pacman outdated packages.'
+    return 2
+  fi
+
+  while read -r pkg; do
+    local name=''
+    name="$(echo "${pkg}" | jq -cr .name)"
+
+    local current=''
+    current="$(echo "${pkg}" | jq -cr .current)"
+
+    local latest=''
+    latest="$(echo "${pkg}" | jq -cr .latest)"
+
+    log "Updating ${name} from ${current} to ${latest}..."
+
+    sudo pacman --noconfirm --needed -S ${name}
+
+    if has_failed; then
+      failed_total=$(calc "${failed_total} + 1")
+
+      log "Package ${name} failed to be updated."
     fi
-  fi
+    
+    # Refresh sudo interval
+    sudo -v
+  done <<< "${pacman_pkgs}"
 
-  # Mark updating state in updates registry file
-  echo '{"status": 3}' > "${UPDATES_STATE_FILE}"
-
-  sudo pacman --noconfirm -Syu
+  local aur_pkgs=''
+  aur_pkgs="$(jq -cer '.aur//[] | .[]' ${updates})"
 
   if has_failed; then
-    echo '{"status": -1}' > "${UPDATES_STATE_FILE}"
-
-    log 'Failed to update pacman packages.'
+    log 'Unable to read aur outdated packages.'
     return 2
   fi
 
-  yay --noconfirm --sudoloop -Syu
+  while read -r pkg; do
+    local name=''
+    name="$(echo "${pkg}" | jq -cr .name)"
 
-  if has_failed; then
-    echo '{"status": -1}' > "${UPDATES_STATE_FILE}"
+    local current=''
+    current="$(echo "${pkg}" | jq -cr .current)"
 
-    log 'Failed to update AUR packages.'
-    return 2
+    local latest=''
+    latest="$(echo "${pkg}" | jq -cr .latest)"
+
+    log "Updating ${name} from ${current} to ${latest}..."
+
+    yay --noconfirm --needed -S ${name}
+
+    if has_failed; then
+      failed_total=$(calc "${failed_total} + 1")
+      
+      log "Package ${name} failed to be updated."
+    fi
+    
+    # Refresh sudo interval
+    sudo -v
+  done <<< "${aur_pkgs}"
+
+  # Check again for unfulfiled updates
+  check_updates &> /dev/null
+
+  if is_true "${failed_total} > 0"; then
+    log "${failed_total} packages failed to be updated."
   fi
 
-  # Mark ready state in updates registry file
-  echo '{"status": 0}' > "${UPDATES_STATE_FILE}"
-
-  log 'System is now up to date, please reboot!'
+  log 'System update has finished.'
 }
 
 # Clones and checkouts the latest version of the stack repository
@@ -326,20 +381,6 @@ upgrade_stack () {
   if is_not_yes "${REPLY}"; then
     log 'No stack upgrades have been applied.'
     return 2
-  fi
-
-  # Block the operation if system is checking or updating packages
-  if file_exists "${UPDATES_STATE_FILE}"; then
-    local status=''
-    status="$(jq -cr '.status' "${UPDATES_STATE_FILE}")"
-
-    if is_true "${status} = 2"; then
-      log 'Unable to proceed while system is checking for updates.'
-      return 2
-    elif is_true "${status} = 3"; then
-      log 'Unable to proceed while system is updating.'
-      return 2
-    fi
   fi
 
   local hash_file='/opt/stack/.hash'
