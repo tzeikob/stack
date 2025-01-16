@@ -60,11 +60,12 @@ find_password_status () {
   local status=''
 
   status="$(passwd -S | awk '{
-    status="protected"
+    status = "protected"
+
     if ($2 == "L") {
-      status="locked"
+      status = "locked"
     } else if ($2 == "NP") {
-      status="no password"
+      status = "no password"
     }
 
     frm = "\"%s\": \"%s\","
@@ -85,7 +86,7 @@ find_faillock_status () {
   local status=''
 
   status="$(cat /etc/security/faillock.conf | awk '{
-    key=''
+    key = ""
 
     if ($0 ~ /^deny =.*/) {
       key = "failed_attempts"
@@ -95,9 +96,8 @@ find_faillock_status () {
       key = "fail_interval"
     }
 
-     frm = "\"%s\": \"%s\","
-     printf frm, key, $3
-    }
+    frm = "\"%s\": \"%s\","
+    printf frm, key, $3
   }')" || return 1
 
   # Remove last comma
