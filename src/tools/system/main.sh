@@ -66,9 +66,15 @@ execute () {
     'show status') show_status;;
     'set mirrors') set_mirrors "${3}" "${4}" "${@:5}";;
     'list packages') list_packages "${3}";;
-    'check updates') check_updates;;
-    'list updates') list_updates;;
-    'apply updates') apply_updates;;
+    'check updates')
+      flock -x ${UPDATES_FILE} \
+      -c "source /opt/stack/tools/system/commands.sh; ON_SCRIPT_MODE=${ON_SCRIPT_MODE} check_updates";;
+    'list updates')
+      flock -s ${UPDATES_FILE} \
+      -c "source /opt/stack/tools/system/commands.sh; list_updates";;
+    'apply updates')
+      flock -x ${UPDATES_FILE} \
+      -c "source /opt/stack/tools/system/commands.sh; ON_SCRIPT_MODE=${ON_SCRIPT_MODE} apply_updates";;
     'upgrade stack') upgrade_stack;;
     *)
       log 'Ooops, invalid or unknown command!'

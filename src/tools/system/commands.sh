@@ -1,5 +1,6 @@
 #!/bin/bash
 
+source src/commons/process.sh
 source src/commons/error.sh
 source src/commons/logger.sh
 source src/commons/auth.sh
@@ -137,22 +138,17 @@ set_mirrors () {
 }
 
 # Checks for currently available outdated packages
-# and updates the updates state file accordingly.
+# and updates the updates file accordingly.
 check_updates () {
   log 'Processing system updates...'
 
-  if file_exists "${UPDATES_FILE}"; then
-    local state=''
-    state="$(jq -cer '.' "${UPDATES_FILE}")"
+  local updates=''
+  updates="$(cat "${UPDATES_FILE}" | jq -cer .)"
 
-    if has_failed; then
-      log 'Unable to read the updates state file.'
-      return 2
-    fi
-
-    echo "${state}" | jq -cer '.status = 2' > "${UPDATES_FILE}"
-  else
+  if has_failed; then
     echo '{"status": 2}' > "${UPDATES_FILE}"
+  else
+    echo "${updates}" | jq -cer '.status = 2' > "${UPDATES_FILE}"
   fi
 
   local pacman_pkgs=''
@@ -175,11 +171,11 @@ check_updates () {
     return 2
   fi
 
-  local all_updates=''
-  all_updates="$(jq -ncer --argjson p "${pacman_pkgs}" --argjson a "${aur_pkgs}" '$p + $a')"
+  local pkgs=''
+  pkgs="$(jq -ncer --argjson p "${pacman_pkgs}" --argjson a "${aur_pkgs}" '$p + $a')"
 
   local total=0
-  total="$(echo "${all_updates}" | jq -cer 'length')"
+  total="$(echo "${pkgs}" | jq -cer 'length')"
 
   if has_failed || is_not_integer "${total}" || is_true "${total} < 0"; then
     echo '{"status": -1}' > "${UPDATES_FILE}"
@@ -197,20 +193,20 @@ check_updates () {
 
   log "Found ${total} updates."
 
-  # Update the updates state file
-  local state=''
-  state+='"status": 1,'
-  state+="\"total\": ${total},"
-  state+="\"pacman\": ${pacman_pkgs},"
-  state+="\"aur\": ${aur_pkgs}"
-  state="{${state}}"
+  # Update the updates file
+  local updates=''
+  updates+='"status": 1,'
+  updates+="\"total\": ${total},"
+  updates+="\"pacman\": ${pacman_pkgs},"
+  updates+="\"aur\": ${aur_pkgs}"
+  updates="{${updates}}"
 
-  echo "${state}" > "${UPDATES_FILE}"
-  
+  echo "${updates}" > "${UPDATES_FILE}"
+
   # Send a notification to the user
   if on_script_mode && is_true "${total} > 0"; then
-    notify-send -u NORMAL -a 'System Updates' 'System out of date!' \
-      "Heads up, found ${total} update(s)!"
+    notify-send -u NORMAL -a 'System Updates' 'Update your system!' \
+      "Heads up! Found ${total} updates!"
   fi
 }
 
@@ -218,18 +214,16 @@ check_updates () {
 # Outputs:
 #  A long list of outdated packages.
 list_updates () {
-  check_updates &> /dev/null
+  local pkgs=''
+  pkgs="$(jq -cer '.pacman//[] + .aur//[]' "${UPDATES_FILE}")"
 
   if has_failed; then
-    log 'Failed to check for latest updates.'
+    log 'Unable to read updates file.'
     return 2
   fi
 
-  local all_updates=''
-  all_updates="$(jq -cer '.pacman//[] + .aur//[]' ${UPDATES_FILE})"
-
   local total=0
-  total="$(echo "${all_updates}" | jq -cer 'length')"
+  total="$(echo "${pkgs}" | jq -cer 'length')"
 
   if has_failed || is_not_integer "${total}" || is_true "${total} < 0"; then
     log 'Unable to resolve the total number of updates.'
@@ -249,7 +243,7 @@ list_updates () {
 
   query="[.[] | \"${query}\"] | join(\"\n\n\")"
 
-  echo "${all_updates}" | jq -cr --arg SPC 10 "${query}" || return 1
+  echo "${pkgs}" | jq -cr --arg SPC 10 "${query}" || return 1
 }
 
 # Applies any available updates to the system.
@@ -269,16 +263,21 @@ apply_updates () {
     return 2
   fi
 
-  check_updates &> /dev/null
+  local updates=''
+  updates="$(jq -cer . "${UPDATES_FILE}")"
 
   if has_failed; then
-    log 'Failed to check for latest updates.'
+    log 'Unable to read the updates file.'
     return 2
   fi
 
-  # Read the updates state file once
-  local updates=''
-  updates="$(cat ${UPDATES_FILE})"
+  # Mark updates file as state updating
+  echo "${updates}" | jq -cer '.status = 3' > "${UPDATES_FILE}"
+
+  if has_failed; then
+    log 'Unable to modify udpates file.'
+    return 2
+  fi
 
   # Make sure packages databases are synced
   sudo pacman -Syy
@@ -291,7 +290,7 @@ apply_updates () {
   local failed_total=0
 
   local pacman_pkgs=''
-  pacman_pkgs="$(jq -cer '.pacman//[] | .[]' ${updates})"
+  pacman_pkgs="$(jq -cer '.pacman//[] | .[]' "${UPDATES_FILE}")"
 
   if has_failed; then
     log 'Unable to read pacman outdated packages.'
@@ -323,7 +322,7 @@ apply_updates () {
   done <<< "${pacman_pkgs}"
 
   local aur_pkgs=''
-  aur_pkgs="$(jq -cer '.aur//[] | .[]' ${updates})"
+  aur_pkgs="$(jq -cer '.aur//[] | .[]' "${UPDATES_FILE}")"
 
   if has_failed; then
     log 'Unable to read aur outdated packages.'

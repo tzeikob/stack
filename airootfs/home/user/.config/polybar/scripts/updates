@@ -12,13 +12,14 @@ COLOR_CHECKING='FEE066'
 COLOR_OUTDATED='F27D52'
 COLOR_UPDATING='008ACC'
 
-# Reads the special updates state file which is expected
-# to contain a json object with a status code and the total
+# Reads the special updates file which is expected to
+# contain a json object with a status code and the total
 # number of outdated packages. A status code of -1 means
 # something is wrong or broken, 0 that the system is up to
 # date, 1 when there are updates to be applied, 2 when
-# searching for updates and 3 when applying updates. If the file
-# is missing the system could be considered as in checking state.
+# searching for updates and 3 when applying updates. If the
+# file is missing the system could be considered as in
+# checking state.
 run () {
   local output color
   
