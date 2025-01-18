@@ -443,9 +443,7 @@ upgrade_stack () {
   local repo_url='https://github.com/tzeikob/stack.git'
 
   local remote_commit=''
-  remote_commit="$(
-    git ls-remote "${repo_url}" "${branch}" | awk '{print $1}'
-  )"
+  remote_commit="$(git ls-remote "${repo_url}" "${branch}" | awk '{print $1}')"
 
   if has_failed; then
     log 'Unable to resolve the stack remote commit.'
@@ -454,7 +452,7 @@ upgrade_stack () {
 
   if equals "${local_commit}" "${remote_commit}"; then
     echo 'Stack is up to date, no upgrades found.'
-    return 0
+    return 2
   fi
 
   local repo_home='/tmp/stack'

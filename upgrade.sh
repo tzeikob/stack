@@ -49,7 +49,6 @@ install_aur_packages () {
   pkgs+=($(grep -E '(stp|all):aur' packages.x86_64 | cut -d ':' -f 3)) ||
     abort ERROR 'Failed to read packages from packages.x86_64 file.'
 
-
   local pkg='';
   for pkg in "${pkgs[@]}"; do
     log INFO "Installing package ${pkg}..."
