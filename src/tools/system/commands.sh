@@ -292,7 +292,7 @@ apply_updates () {
   local query='.pacman//[] | if length > 0 then .[] else "" end'
 
   local pacman_pkgs=''
-  pacman_pkgs="$(jq -cer "${query}" "${UPDATES_FILE}")"
+  pacman_pkgs="$(echo "${updates}" | jq -cer "${query}")"
 
   if has_failed; then
     log 'Unable to read pacman outdated packages.'
@@ -330,7 +330,7 @@ apply_updates () {
   local query='.aur//[] | if length > 0 then .[] else "" end'
 
   local aur_pkgs=''
-  aur_pkgs="$(jq -cer "${query}" "${UPDATES_FILE}")"
+  aur_pkgs="$(echo "${updates}" | jq -cer "${query}")"
 
   if has_failed; then
     log 'Unable to read aur outdated packages.'
