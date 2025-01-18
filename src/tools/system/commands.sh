@@ -215,7 +215,7 @@ check_updates () {
 #  A long list of outdated packages.
 list_updates () {
   local pkgs=''
-  pkgs="$(jq -cer '.pacman//[] + .aur//[]' "${UPDATES_FILE}")"
+  pkgs="$(jq -cer '(.pacman//[]) + (.aur//[])' "${UPDATES_FILE}")"
 
   if has_failed; then
     log 'Unable to read updates file.'
