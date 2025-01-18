@@ -191,7 +191,7 @@ check_updates () {
     return 0
   fi
 
-  log "Found ${total} updates."
+  log "Found ${total} total updates."
 
   # Update the updates file
   local updates=''
@@ -271,10 +271,24 @@ apply_updates () {
     return 2
   fi
 
+  local total=''
+  total="$(echo "${updates}" | jq -cer '(.pacman//[]) + (.aur//[]) | length')"
+
+  if has_failed; then
+    log 'Failed to resolve the total number of udpates.'
+    return 2
+  elif is_true "${total} = 0"; then
+    log 'No updates found to be applied.'
+    return 2
+  fi
+
   # Mark updates file as state updating
   echo "${updates}" | jq -cer '.status = 3' > "${UPDATES_FILE}"
 
   if has_failed; then
+    # Mark updates file back to the previous state
+    echo "${updates}" | jq -cer '.status = 1' > "${UPDATES_FILE}"
+
     log 'Unable to modify udpates file.'
     return 2
   fi
@@ -283,6 +297,9 @@ apply_updates () {
   sudo pacman -Syy
 
   if has_failed; then
+    # Mark updates file back to the previous state
+    echo "${updates}" | jq -cer '.status = 1' > "${UPDATES_FILE}"
+
     log 'Unable to sync packages databases.'
     return 2
   fi
@@ -295,6 +312,9 @@ apply_updates () {
   pacman_pkgs="$(echo "${updates}" | jq -cer "${query}")"
 
   if has_failed; then
+    # Mark updates file back to the previous state
+    echo "${updates}" | jq -cer '.status = 1' > "${UPDATES_FILE}"
+
     log 'Unable to read pacman outdated packages.'
     return 2
   fi
@@ -333,6 +353,9 @@ apply_updates () {
   aur_pkgs="$(echo "${updates}" | jq -cer "${query}")"
 
   if has_failed; then
+    # Mark updates file back to the previous state
+    echo "${updates}" | jq -cer '.status = 1' > "${UPDATES_FILE}"
+
     log 'Unable to read aur outdated packages.'
     return 2
   fi
