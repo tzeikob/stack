@@ -68,14 +68,16 @@ execute () {
     'list packages') list_packages "${3}";;
     'check updates')
       flock -x ${UPDATES_FILE} \
-      -c "source /opt/stack/tools/system/commands.sh; ON_SCRIPT_MODE=${ON_SCRIPT_MODE} check_updates";;
+        -c "source /opt/stack/tools/system/commands.sh; ON_SCRIPT_MODE=${ON_SCRIPT_MODE} check_updates";;
     'list updates')
       flock -s ${UPDATES_FILE} \
-      -c "source /opt/stack/tools/system/commands.sh; list_updates";;
+        -c "source /opt/stack/tools/system/commands.sh; list_updates";;
     'apply updates')
       flock -x ${UPDATES_FILE} \
-      -c "source /opt/stack/tools/system/commands.sh; ON_SCRIPT_MODE=${ON_SCRIPT_MODE} apply_updates";;
-    'upgrade stack') upgrade_stack;;
+        -c "source /opt/stack/tools/system/commands.sh; ON_SCRIPT_MODE=${ON_SCRIPT_MODE} apply_updates";;
+    'upgrade stack')
+      flock -x ${UPDATES_FILE} \
+        -c "source /opt/stack/tools/system/commands.sh; upgrade_stack";;
     *)
       log 'Ooops, invalid or unknown command!'
       return 2;;
