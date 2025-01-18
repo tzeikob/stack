@@ -289,8 +289,10 @@ apply_updates () {
 
   local failed_total=0
 
+  local query='.pacman//[] | if length > 0 then .[] else "" end'
+
   local pacman_pkgs=''
-  pacman_pkgs="$(jq -cer '.pacman//[] | .[]' "${UPDATES_FILE}")"
+  pacman_pkgs="$(jq -cer "${query}" "${UPDATES_FILE}")"
 
   if has_failed; then
     log 'Unable to read pacman outdated packages.'
@@ -298,6 +300,10 @@ apply_updates () {
   fi
 
   while read -r pkg; do
+    if is_empty "${pkg}"; then
+      continue
+    fi
+
     local name=''
     name="$(echo "${pkg}" | jq -cr .name)"
 
@@ -321,8 +327,10 @@ apply_updates () {
     sudo -v
   done <<< "${pacman_pkgs}"
 
+  local query='.aur//[] | if length > 0 then .[] else "" end'
+
   local aur_pkgs=''
-  aur_pkgs="$(jq -cer '.aur//[] | .[]' "${UPDATES_FILE}")"
+  aur_pkgs="$(jq -cer "${query}" "${UPDATES_FILE}")"
 
   if has_failed; then
     log 'Unable to read aur outdated packages.'
@@ -330,6 +338,10 @@ apply_updates () {
   fi
 
   while read -r pkg; do
+    if is_empty "${pkg}"; then
+      continue
+    fi
+
     local name=''
     name="$(echo "${pkg}" | jq -cr .name)"
 
