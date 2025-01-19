@@ -147,10 +147,24 @@ check_updates () {
   updates="$(cat "${UPDATES_FILE}" | jq -cer .)"
 
   if has_failed; then
-    echo '{"status": 2}' > "${UPDATES_FILE}"
+    updates='{"status": 2}'
   else
-    echo "${updates}" | jq -cer '.status = 2' > "${UPDATES_FILE}"
+    updates="$(echo "${updates}" | jq -cer '.status = 2')"
   fi
+
+  echo "${updates}" > "${UPDATES_FILE}"
+
+  local installed_pkgs=''
+  installed_pkgs="$(find_installed_packages | jq -cer '.pacman + .aur | length')"
+
+  if has_failed; then
+    echo '{"status": -1}' > "${UPDATES_FILE}"
+
+    log 'Unable to resolve total installed packages.'
+    return 2
+  fi
+
+  echo "${updates}" | jq -cer ".installed = ${installed_pkgs}" > "${UPDATES_FILE}"
 
   local pacman_pkgs=''
   pacman_pkgs="$(find_outdated_pacman_packages)"
@@ -186,7 +200,7 @@ check_updates () {
   fi
 
   if is_true "${total} = 0"; then
-    echo '{"status": 0, "total": 0}' > "${UPDATES_FILE}"
+    echo "{\"status\": 0, \"total\": 0, \"installed\": ${installed_pkgs}}" > "${UPDATES_FILE}"
 
     log 'No available updates have found.'
     return 0
@@ -198,6 +212,7 @@ check_updates () {
   local updates=''
   updates+='"status": 1,'
   updates+="\"total\": ${total},"
+  updates+="\"installed\": ${installed_pkgs},"
   updates+="\"pacman\": ${pacman_pkgs},"
   updates+="\"aur\": ${aur_pkgs}"
   updates="{${updates}}"

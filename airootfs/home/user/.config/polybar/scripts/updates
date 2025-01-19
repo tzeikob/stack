@@ -13,13 +13,14 @@ COLOR_OUTDATED='F27D52'
 COLOR_UPDATING='008ACC'
 
 # Reads the special updates file which is expected to
-# contain a json object with a status code and the total
-# number of outdated packages. A status code of -1 means
-# something is wrong or broken, 0 that the system is up to
-# date, 1 when there are updates to be applied, 2 when
-# searching for updates and 3 when applying updates. If the
-# file is missing the system could be considered as in
-# checking state.
+# contain a json object with a status code, the total
+# installed packages and the total number of outdated
+# packages. A status code of -1 means something is wrong
+# or broken, 0 that the system is up to date, 1 when
+# there are updates to be applied, 2 when searching for
+# updates and 3 when applying updates. If the file is
+# missing the system could be considered as in checking
+# state.
 run () {
   local output color
   
@@ -27,13 +28,16 @@ run () {
     local status=''
     status="$(jq -cr '.status' "${UPDATES_FILE}")"
 
+    local installed=''
+    installed="$(jq -cr '.installed//"000"' "${UPDATES_FILE}")"
+
     local total=''
     total="$(jq -cr '.total//empty' "${UPDATES_FILE}")"
 
     if is_not_integer "${status}" || is_true "${status} = -1"; then
       output='Err!'
     elif is_true "${status} = 0"; then
-      output="$(printf '%03d' ${total:-"000"})"
+      output="$(printf '%03d' ${installed:-"000"})"
       color="${COLOR_READY}"
     elif is_true "${status} = 1"; then
       output="$(printf '%03d' ${total})"
