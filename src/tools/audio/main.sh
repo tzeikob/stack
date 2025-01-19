@@ -24,7 +24,7 @@ show_help () {
     printf 'Usage: audio [OPTIONS] COMMAND [OBJECT] [ARGUMENTS]...\n'
     
     printf '\nOPTIONS\n'
-    printf ' %-10s %s\n' \
+    printf ' %-6s %s\n' \
       '-h' 'Show this help message.' \
       '-q' 'Do not play beep sounds.' \
       '-s' 'Run on script mode.'
@@ -34,11 +34,11 @@ show_help () {
     printf 'Usage: COMMAND [OBJECT] [ARGUMENTS]...\n'
 
     printf '\nCOMMANDS\n'
-    printf ' %-32s %s\n' \
+    printf ' %-30s %s\n' \
       'help' 'Show this help message.'
   fi
 
-  printf ' %-32s %s\n' \
+  printf ' %-30s %s\n' \
     'show status' 'Show a report of the system audio.' \
     '' '' \
     'list cards' 'List all cards of the system.' \

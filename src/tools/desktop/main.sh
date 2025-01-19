@@ -24,7 +24,7 @@ show_help () {
     printf 'Usage: desktop [OPTIONS] COMMAND [OBJECT] [ARGUMENTS]...\n'
     
     printf '\nOPTIONS\n'
-    printf ' %-8s %s\n' \
+    printf ' %-6s %s\n' \
       '-h' 'Show this help message.' \
       '-q' 'Do not play beep sounds.' \
       '-s' 'Run on script mode.'
@@ -34,12 +34,12 @@ show_help () {
     printf 'Usage: COMMAND [OBJECT] [ARGUMENTS]...\n'
 
     printf '\nCOMMANDS\n'
-    printf ' %-35s %s\n' \
+    printf ' %-32s %s\n' \
       'help' 'Show this help message.' \
       '' ''
   fi
 
-  printf ' %-35s %s\n' \
+  printf ' %-32s %s\n' \
     'show status' 'Show the status of the desktop environment.' \
     'show pointer <name>' 'Show a pointing device.' \
     'show tablet <name>' 'Show a tablet device.' \

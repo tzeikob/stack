@@ -24,7 +24,7 @@ show_help () {
     printf 'Usage: networks [OPTIONS] COMMAND [OBJECT] [ARGUMENTS]...\n'
     
     printf '\nOPTIONS\n'
-    printf ' %-8s %s\n' \
+    printf ' %-6s %s\n' \
       '-h' 'Show this help message.' \
       '-q' 'Do not play beep sounds.' \
       '-s' 'Run on script mode.'
@@ -34,12 +34,12 @@ show_help () {
     printf 'Usage: COMMAND [OBJECT] [ARGUMENTS]...\n'
 
     printf '\nCOMMANDS\n'
-    printf ' %-65s %s\n' \
+    printf ' %-67s %s\n' \
       'help' 'Show this help message.' \
       '' ''
   fi
 
-  printf ' %-65s %s\n' \
+  printf ' %-67s %s\n' \
     'show status' 'Show the current status of networking.' \
     'show device <name>' 'Show the data of a device.' \
     'show connection <name>' 'Show the data of a connection.' \

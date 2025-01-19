@@ -24,7 +24,7 @@ show_help () {
     printf 'Usage: notifications [OPTIONS] COMMAND [OBJECT] [ARGUMENTS]...\n'
     
     printf '\nOPTIONS\n'
-    printf ' %-8s %s\n' \
+    printf ' %-6s %s\n' \
       '-h' 'Show this help message.' \
       '-q' 'Do not play beep sounds.' \
       '-s' 'Run on script mode.'
@@ -39,7 +39,7 @@ show_help () {
       '' ''
   fi
 
-  printf ' %-28s %s\n' \
+  printf ' %-19s %s\n' \
     'show status' 'Show the status of notifications.' \
     '' '' \
     'list all id|app' 'List all notifications by id or app.' \
