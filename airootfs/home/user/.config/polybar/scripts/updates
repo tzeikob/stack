@@ -43,7 +43,7 @@ run () {
       output="$(printf '%03d' ${total})"
       color="${COLOR_OUTDATED}"
     elif is_true "${status} = 2"; then
-      output="$(printf '%03d' ${total:-"000"})"
+      output="$(printf '%03d' ${installed})"
       color="${COLOR_CHECKING}"
     elif is_true "${status} = 3"; then
       output="$(printf '%03d' ${total})"
