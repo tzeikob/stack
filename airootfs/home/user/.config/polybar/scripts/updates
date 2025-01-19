@@ -32,12 +32,12 @@ run () {
     installed="$(jq -cr '.installed//"000"' "${UPDATES_FILE}")"
 
     local total=''
-    total="$(jq -cr '.total//empty' "${UPDATES_FILE}")"
+    total="$(jq -cr '.total//"000"' "${UPDATES_FILE}")"
 
     if is_not_integer "${status}" || is_true "${status} = -1"; then
       output='Err!'
     elif is_true "${status} = 0"; then
-      output="$(printf '%03d' ${installed:-"000"})"
+      output="$(printf '%03d' ${installed})"
       color="${COLOR_READY}"
     elif is_true "${status} = 1"; then
       output="$(printf '%03d' ${total})"
