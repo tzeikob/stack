@@ -20,6 +20,7 @@ show_status () {
   query+='\(.os      | lbln("System"))'
   query+='\(.kernel  | lbln("Kernel"))'
   query+='\(.shell   | lbln("Shell"))'
+  query+='\(.stack   | olbln("Stack"))'
   query+='\(.libalpm | lbln("Libalpm"))'
   query+='\(.pacman  | lbln("Pacman"))'
   query+='\(.yay     | lbln("Yay"))'

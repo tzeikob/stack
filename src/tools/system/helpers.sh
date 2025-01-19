@@ -42,6 +42,18 @@ find_system_status () {
 
   status="$(echo "${status}" | jq -cer ".yay = \"${yay_version}\"")" || return 1
 
+  local stack_hash='/opt/stack/.hash'
+
+  if file_exists "${stack_hash}"; then
+    local branch=''
+    branch="$(jq -cer '.branch' "${stack_hash}")" || return 1
+
+    local commit=''
+    commit="$(jq -cer '.commit' "${stack_hash}")" || return 1
+
+    status="$(echo "${status}" | jq -cer ".stack = \"${branch} [${commit:0:5}]\"")" || return 1
+  fi
+
   echo "${status}"
 }
 
