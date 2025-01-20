@@ -11,49 +11,54 @@ COLOR_READY='B2E39C'
 COLOR_CHECKING='FEE066'
 COLOR_OUTDATED='F27D52'
 COLOR_UPDATING='008ACC'
+COLOR_ERROR='BB0000'
 
-# Reads the special updates file which is expected to
-# contain a json object with a status code, the total
-# installed packages and the total number of outdated
-# packages. A status code of -1 means something is wrong
-# or broken, 0 that the system is up to date, 1 when
+# Calculates the total installed packages and reads the
+# special updates file which is expected to contain a
+# json object with a status code, and the total number
+# of outdated packages. A status code of -1 means something
+# is wrong or broken, 0 that the system is up to date, 1 when
 # there are updates to be applied, 2 when searching for
 # updates and 3 when applying updates. If the file is
-# missing the system could be considered as in checking
+# missing the system could be considered as in failure
 # state.
 run () {
-  local output color
+  local installed=''
+  installed="$(pacman -Q | wc -l)"
+
+  local output
+  output="$(printf '%03d' ${installed:-"---"})"
+
+  local color
   
   if file_exists "${UPDATES_FILE}"; then
     local status=''
     status="$(jq -cr '.status' "${UPDATES_FILE}")"
 
-    local installed=''
-    installed="$(jq -cr '.installed//"000"' "${UPDATES_FILE}")"
-
     local total=''
     total="$(jq -cr '.total//"000"' "${UPDATES_FILE}")"
 
     if is_not_integer "${status}" || is_true "${status} = -1"; then
-      output='Err!'
+      color="${COLOR_ERROR}"
     elif is_true "${status} = 0"; then
-      output="$(printf '%03d' ${installed})"
       color="${COLOR_READY}"
     elif is_true "${status} = 1"; then
       output="$(printf '%03d' ${total})"
       color="${COLOR_OUTDATED}"
     elif is_true "${status} = 2"; then
-      output="$(printf '%03d' ${installed})"
+      if is_true "${total} > 0"; then
+        output="$(printf '%03d' ${total})"
+      fi
+
       color="${COLOR_CHECKING}"
     elif is_true "${status} = 3"; then
       output="$(printf '%03d' ${total})"
       color="${COLOR_UPDATING}"
     else
-      output='Err!'
+      color="${COLOR_ERROR}"
     fi
   else
-    output='000'
-    color="${COLOR_CHECKING}"
+    color="${COLOR_ERROR}"
   fi
 
   if is_not_empty "${color}"; then
