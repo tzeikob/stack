@@ -1154,7 +1154,7 @@ set_color () {
   file_name="$(basename ${profile})" || return 1
 
   mkdir -p "${COLORS_HOME}" &&
-    cp "${profile}" "${COLORS_HOME}/${file_name}" || return 1
+    cp -n "${profile}" "${COLORS_HOME}/${file_name}" || return 1
 
   local index=''
   index="$(echo "${output}" | jq -cer '.index')" || return 1
