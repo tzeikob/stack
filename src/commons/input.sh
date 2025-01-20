@@ -21,7 +21,7 @@ prompt () {
   local label="${1:-"prompt"}"
 
   REPLY=''
-  REPLY=$(rlwrap -o -H "/tmp/${label}.history" -S "${CLR}${label}${RST}  " cat)
+  REPLY=$(rlwrap -co -H "/tmp/${label}.history" -S "${CLR}${label}${RST}  " cat)
 }
 
 # Asks the user to enter a value, where the answer is
