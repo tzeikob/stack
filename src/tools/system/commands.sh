@@ -287,8 +287,8 @@ apply_updates () {
   echo "${updates}" | jq -cer '.status = 3' > "${UPDATES_FILE}"
 
   if has_failed; then
-    # Mark updates file back to the previous state
-    echo "${updates}" | jq -cer '.status = 1' > "${UPDATES_FILE}"
+    # Restore previous updates file
+    echo "${updates}" > "${UPDATES_FILE}"
 
     log 'Unable to modify udpates file.'
     return 2
@@ -298,28 +298,44 @@ apply_updates () {
   sudo pacman -Syy
 
   if has_failed; then
-    # Mark updates file back to the previous state
-    echo "${updates}" | jq -cer '.status = 1' > "${UPDATES_FILE}"
+    # Restore previous updates file
+    echo "${updates}" > "${UPDATES_FILE}"
 
     log 'Unable to sync packages databases.'
     return 2
   fi
 
-  local failed_total=0
-
+  # Read the pacman outdated packages
   local query='.pacman//[] | if length > 0 then .[] else "" end'
 
   local pacman_pkgs=''
   pacman_pkgs="$(echo "${updates}" | jq -cer "${query}")"
 
   if has_failed; then
-    # Mark updates file back to the previous state
-    echo "${updates}" | jq -cer '.status = 1' > "${UPDATES_FILE}"
+    # Restore the previous updates file
+    echo "${updates}" > "${UPDATES_FILE}"
 
     log 'Unable to read pacman outdated packages.'
     return 2
   fi
 
+  # Read the aur outdated packages
+  local query='.aur//[] | if length > 0 then .[] else "" end'
+
+  local aur_pkgs=''
+  aur_pkgs="$(echo "${updates}" | jq -cer "${query}")"
+
+  if has_failed; then
+    # Restore the previous updates file
+    echo "${updates}" > "${UPDATES_FILE}"
+
+    log 'Unable to read aur outdated packages.'
+    return 2
+  fi
+
+  local failed_total=0
+
+  # Iterate over the pacman packages and update one by one
   while read -r pkg; do
     if is_empty "${pkg}"; then
       continue
@@ -348,19 +364,7 @@ apply_updates () {
     sudo -v
   done <<< "${pacman_pkgs}"
 
-  local query='.aur//[] | if length > 0 then .[] else "" end'
-
-  local aur_pkgs=''
-  aur_pkgs="$(echo "${updates}" | jq -cer "${query}")"
-
-  if has_failed; then
-    # Mark updates file back to the previous state
-    echo "${updates}" | jq -cer '.status = 1' > "${UPDATES_FILE}"
-
-    log 'Unable to read aur outdated packages.'
-    return 2
-  fi
-
+  # Iterate over the aur packages and update one by one
   while read -r pkg; do
     if is_empty "${pkg}"; then
       continue
@@ -394,9 +398,9 @@ apply_updates () {
 
   if is_true "${failed_total} > 0"; then
     log "${failed_total} packages failed to be updated."
+  else
+    log 'All system packages are now up to date.'
   fi
-
-  log 'System update has finished.'
 }
 
 # Clones and checkouts the latest version of the stack repository
