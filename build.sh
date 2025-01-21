@@ -852,7 +852,7 @@ save_build_version () {
   echo "${version}" | jq . > "${ROOT_FS}/root/.version" ||
     abort ERROR 'Failed to save the version file.'
   
-  log INFO "Build version set to ${branch}:${commit}."
+  log INFO "Build version set to ${branch} [${commit:0:5}]."
 }
 
 # Creates the iso file of the live media.

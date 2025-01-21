@@ -1094,7 +1094,7 @@ create_hash_file () {
     jq . > /opt/stack/.hash ||
     abort ERROR 'Failed to create the stack hash file.'
   
-  log INFO "Stack hash file set to ${branch}:${commit}."
+  log INFO "Stack hash file set to ${branch} [${commit:0:5}]."
 }
 
 # Prints dummy log lines to fake tqdm progress bar, when a

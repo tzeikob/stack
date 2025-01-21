@@ -233,7 +233,7 @@ update_hash_file () {
     sudo tee /opt/stack/.hash &> /dev/null ||
     abort ERROR 'Failed to update the stack hash file.'
   
-  log INFO "Stack hash file updated to ${branch}:${commit}."
+  log INFO "Stack hash file updated to ${branch} [${commit:0:5}]."
 }
 
 log INFO 'Starting the upgrade process...'
