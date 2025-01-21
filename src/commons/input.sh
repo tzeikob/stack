@@ -34,7 +34,7 @@ prompt () {
 #  A prompt text line.
 ask () {
   # Trap ctrl-c abort signals for read cmd
-  trap "echo; return 1" SIGINT INT
+  trap "echo; exit 1" SIGINT INT
 
   local OPTIND opt
 
@@ -70,7 +70,7 @@ ask () {
 #  A prompt text line.
 ask_secret () {
   # Trap ctrl-c abort signals for read cmd
-  trap "echo; return 1" SIGINT INT
+  trap "echo; exit 1" SIGINT INT
   
   local OPTIND opt
 
@@ -142,7 +142,14 @@ confirm () {
   echo -e "${CLR}${prompt}${RST}"
 
   REPLY="$(echo "${options}" |
-    LC_CTYPE=C.UTF-8 smenu -nm -/ prefix -W "${AES_LN}" -S /\(.*"${KVS}"\)//v)" || return 1
+    LC_CTYPE=C.UTF-8 smenu -nm -/ prefix -W "${AES_LN}" -S /\(.*"${KVS}"\)//v)"
+  
+  local exit_code=$?
+
+  # Exit if user entered ctrl-c to abort
+  if has_failed ${exit_code}; then
+    is_true "${exit_code = 130}" && exit 1 || return 1
+  fi
   
   # Print a blank line after user input
   echo
@@ -205,7 +212,14 @@ pick_one () {
   echo -e "${CLR}${prompt}${RST}"
 
   REPLY="$(echo "${options}" |
-    LC_CTYPE=C.UTF-8 smenu -nm -/ prefix -W "${AES_LN}" "${args[@]}" -S /\(.*"${KVS}"\)//v)" || return 1
+    LC_CTYPE=C.UTF-8 smenu -nm -/ prefix -W "${AES_LN}" "${args[@]}" -S /\(.*"${KVS}"\)//v)"
+  
+  local exit_code=$?
+
+  # Exit if user entered ctrl-c to abort
+  if has_failed ${exit_code}; then
+    is_true "${exit_code = 130}" && exit 1 || return 1
+  fi
   
   # Print a blank line after user input
   echo
@@ -269,7 +283,14 @@ pick_many () {
   echo -e "${CLR}${prompt}${RST}"
 
   REPLY="$(echo "${options}" |
-    LC_CTYPE=C.UTF-8 smenu -nm -/ prefix -W "${AES_LN}" "${args[@]}" -S /\(.*"${KVS}"\)//v -P "${AES}")" || return 1
+    LC_CTYPE=C.UTF-8 smenu -nm -/ prefix -W "${AES_LN}" "${args[@]}" -S /\(.*"${KVS}"\)//v -P "${AES}")"
+  
+  local exit_code=$?
+
+  # Exit if user entered ctrl-c to abort
+  if has_failed ${exit_code}; then
+    is_true "${exit_code = 130}" && exit 1 || return 1
+  fi
   
   # Print a blank line after user input
   echo
