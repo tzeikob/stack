@@ -409,19 +409,6 @@ apply_updates () {
 upgrade_stack () {
   authenticate_user || return $?
 
-  local prompt=''
-  prompt+='This operation may break your system!'
-  prompt+='\nPlease consider taking a backup first!'
-  prompt+='\nDo you really want to proceed?'
-
-  confirm "${prompt}" || return $?
-  is_empty "${REPLY}" && log 'Confirmation is required.' && return 2
-  
-  if is_not_yes "${REPLY}"; then
-    log 'No stack upgrades have been applied.'
-    return 2
-  fi
-
   local hash_file='/opt/stack/.hash'
 
   if file_not_exists "${hash_file}"; then
@@ -457,6 +444,20 @@ upgrade_stack () {
 
   if equals "${local_commit}" "${remote_commit}"; then
     echo 'Stack is up to date, no upgrades found.'
+    return 2
+  fi
+
+
+  local prompt=''
+  prompt+="Stack will upgrade to ${branch} [${remote_commit:0:5}]."
+  prompt+='\nPlease consider taking a backup first!'
+  prompt+='\nDo you really want to proceed?'
+
+  confirm "${prompt}" || return $?
+  is_empty "${REPLY}" && log 'Confirmation is required.' && return 2
+  
+  if is_not_yes "${REPLY}"; then
+    log 'No stack upgrades have been applied.'
     return 2
   fi
 
