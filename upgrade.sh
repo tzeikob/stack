@@ -212,6 +212,11 @@ restore_user_permissions () {
     abort ERROR 'Failed to restore user permissions.'
   
   log INFO "Permissions under /home/${user} restored."
+
+  sudo chown -R root:root /tmp/.X11-unix ||
+    abort ERROR 'Failed to restore xorg temp files permissions.'
+  
+  log INFO 'Xorg temp files permissions have been restored.'
 }
 
 # Updates the stack hash file.
