@@ -387,9 +387,19 @@ set_timezone () {
 
 # Sets the os release data.
 set_release_data () {
-  local version=''
-  version="$(date +%Y.%m.%d)" ||
-    abort ERROR 'Failed to create version number.'
+  local branch=''
+  branch="$(git branch --show-current)" ||
+    abort ERROR 'Failed to read the current branch.'
+
+  local commit_date=''
+  commit_date="$(git log -1 --format='%at' | jq -cer 'strftime("%Y-%m-%d")')" ||
+    abort ERROR 'Failed to read the commit date'
+
+  local commit=''
+  commit="$(git log --pretty=format:'%H' -n 1)" ||
+    abort ERROR 'Failed to read the last commit id.'
+
+  local version="${commit_date} ${branch} ${commit:0:5}"
 
   sed -i "s/#VERSION#/${version}/" /etc/os-release ||
     abort ERROR 'Failed to set os release version.'

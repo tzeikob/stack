@@ -63,9 +63,19 @@ install_aur_packages () {
 
 # Fixes global configuration variables.
 fix_config_values () {
-  local version=''
-  version="$(date +%Y.%m.%d)" ||
-    abort ERROR 'Failed to create release version.'
+  local branch=''
+  branch="$(git branch --show-current)" ||
+    abort ERROR 'Failed to read the current branch.'
+
+  local commit_date=''
+  commit_date="$(git log -1 --format='%at' | jq -cer 'strftime("%Y-%m-%d")')" ||
+    abort ERROR 'Failed to read the commit date'
+
+  local commit=''
+  commit="$(git log --pretty=format:'%H' -n 1)" ||
+    abort ERROR 'Failed to read the last commit id.'
+
+  local version="${commit_date} ${branch} ${commit:0:5}"
   
   sed -i "s/#VERSION#/${version}/" airootfs/etc/os-release ||
     abort ERROR 'Failed to set release version.'
