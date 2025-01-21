@@ -168,7 +168,8 @@ sync_root_files () {
 
   mkdir -p \
     "${ROOT_FS}/var/log/stack" \
-    "${ROOT_FS}/var/log/stack/tools"
+    "${ROOT_FS}/var/log/stack/tools" \
+    "${ROOT_FS}/var/log/stack/bars"
 
   log INFO 'Logs directory has been created.'
   

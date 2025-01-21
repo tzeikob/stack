@@ -5,6 +5,7 @@ set -o pipefail
 source /opt/stack/commons/math.sh
 source /opt/stack/commons/validators.sh
 
+LOGS='/var/log/stack/bars/updates.log'
 UPDATES_FILE=/tmp/updates
 
 COLOR_READY='B2E39C'
@@ -24,7 +25,7 @@ COLOR_ERROR='BB0000'
 # state.
 run () {
   local installed=''
-  installed="$(pacman -Q | wc -l)"
+  installed="$(pacman -Q | wc -l 2> "${LOGS}")"
 
   local output
   output="$(printf '%03d' ${installed:-"---"})"

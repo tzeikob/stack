@@ -6,6 +6,8 @@ source /opt/stack/commons/error.sh
 source /opt/stack/commons/validators.sh
 source /opt/stack/tools/cloud/helpers.sh
 
+LOGS='/var/log/stack/bars/remotes.log'
+
 # Reads for synced remote cloud services
 # and prints them out one by one.
 run () {
@@ -15,7 +17,7 @@ run () {
   fi
 
   local remotes=''
-  remotes="$(find_remotes 2>&1)"
+  remotes="$(find_remotes 2> "${LOGS}")"
 
   if has_failed; then
     echo 'Err!'

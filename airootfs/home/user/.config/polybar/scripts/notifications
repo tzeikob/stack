@@ -6,11 +6,13 @@ source /opt/stack/commons/error.sh
 source /opt/stack/commons/math.sh
 source /opt/stack/tools/notifications/helpers.sh
 
+LOGS='/var/log/stack/bars/notifications.log'
+
 # Reads the state of notifications and prints
 # out the total number of pending ones.
 run () {
   local state=''
-  state="$(get_notifications_state)"
+  state="$(get_notifications_state 2> "${LOGS}")"
 
   if has_failed; then
     echo 'Err!'

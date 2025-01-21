@@ -6,11 +6,13 @@ source /opt/stack/commons/error.sh
 source /opt/stack/commons/math.sh
 source /opt/stack/commons/validators.sh
 
+LOGS='/var/log/stack/bars/power.log'
+
 # Reads the system's power and battery data and
 # prints the current status of power suplly.
 run () {
   local batteries=''
-  batteries="$(acpi -b -i | jc --acpi)"
+  batteries="$(acpi -b -i | jc --acpi 2> "${LOGS}")"
 
   if has_failed; then
     echo ' Err!'

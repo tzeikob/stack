@@ -5,11 +5,13 @@ set -o pipefail
 source /opt/stack/commons/error.sh
 source /opt/stack/commons/math.sh
 
+LOGS='/var/log/stack/bars/memory.log'
+
 # Prints the current memory usage and utilization.
 run () {
   # Read current memory usage and utilization
   local stats=0
-  stats="$(top -bn1 | awk '/MiB Mem/{printf "%05d,%f", int($8), $8/$4}')"
+  stats="$(top -bn1 | awk '/MiB Mem/{printf "%05d,%f", int($8), $8/$4}' 2> "${LOGS}")"
 
   if has_failed; then
     echo 'Err!'

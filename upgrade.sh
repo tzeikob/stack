@@ -108,6 +108,20 @@ fix_config_values () {
   log INFO "Fix layout service home set to /home/${USER}."
 }
 
+# Fixes up the stack logs directories and permissions.
+fix_logs_home () {
+  mkdir -p \
+    /var/log/stack \
+    /var/log/stack/tools \
+    /var/log/stack/bars &&
+    chmod -R 775 /var/log/stack/tools &&
+    chmod -R 775 /var/log/stack/bars &&
+    chown -R :stack /var/log/stack ||
+    abort ERROR 'Failed to set /var/log/stack directories.'
+  
+  log INFO 'Log directories /var/log/stack have been set.'
+}
+
 # Updates the root file system.
 update_root_files () {
   log INFO 'Updating the root file system...'
@@ -252,6 +266,7 @@ sync_package_databases &&
   install_official_packages &&
   install_aur_packages &&
   fix_config_values &&
+  fix_logs_home &&
   update_root_files &&
   update_commons &&
   update_tools &&

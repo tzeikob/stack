@@ -4,6 +4,7 @@ set -o pipefail
 
 source /opt/stack/commons/validators.sh
 
+LOGS='/var/log/stack/bars/time.log'
 CLOCK_SETTINGS="${HOME}/.config/stack/clock.json"
 
 # Prints the current time endlessly.

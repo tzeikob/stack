@@ -5,11 +5,13 @@ set -o pipefail
 source /opt/stack/commons/error.sh
 source /opt/stack/commons/math.sh
 
+LOGS='/var/log/stack/bars/cpu.log'
+
 # Prints the current CPU speed rates and utilization.
 run () {
   # Calculate the average of the frequencies of each cpu core
   local freqs=''
-  freqs="$(cat /proc/cpuinfo | awk '/cpu MHz/{printf "%f,",$4}')"
+  freqs="$(cat /proc/cpuinfo | awk '/cpu MHz/{printf "%f,",$4}' 2> "${LOGS}")"
 
   if has_failed; then
     echo 'Err!'
@@ -17,7 +19,7 @@ run () {
   fi
   
   local avg_freq=0
-  avg_freq="$(calc "floor(average(${freqs::-1}))" | xargs printf "%04d")"
+  avg_freq="$(calc "floor(average(${freqs::-1}))" | xargs printf "%04d" 2> "${LOGS}")"
 
   if has_failed; then
     echo 'Err!'
@@ -26,7 +28,7 @@ run () {
 
   # Sum current user and sys cpu utilizations
   local util=0
-  util="$(top -bn1 | awk '/Cpu/{print $2 + $4}')"
+  util="$(top -bn1 | awk '/Cpu/{print $2 + $4}' 2> "${LOGS}")"
 
   if has_failed; then
     echo 'Err!'

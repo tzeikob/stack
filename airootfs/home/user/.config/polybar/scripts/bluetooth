@@ -6,11 +6,13 @@ source /opt/stack/commons/error.sh
 source /opt/stack/commons/validators.sh
 source /opt/stack/tools/bluetooth/helpers.sh
 
+LOGS='/var/log/stack/bars/bluetooth.log'
+
 # Reads the status of the default bluetooth
 # controller and prints its name out.
 run () {
   local controller=''
-  controller="$(find_controller)"
+  controller="$(find_controller 2> "${LOGS}")"
 
   if has_failed; then
     echo 'Err!'
