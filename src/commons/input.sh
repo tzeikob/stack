@@ -148,7 +148,7 @@ confirm () {
 
   # Exit if user entered ctrl-c to abort
   if has_failed ${exit_code}; then
-    is_true "${exit_code = 130}" && exit 1 || return 1
+    is_true "${exit_code} = 130" && exit 1 || return 1
   fi
   
   # Print a blank line after user input
@@ -218,7 +218,7 @@ pick_one () {
 
   # Exit if user entered ctrl-c to abort
   if has_failed ${exit_code}; then
-    is_true "${exit_code = 130}" && exit 1 || return 1
+    is_true "${exit_code} = 130" && exit 1 || return 1
   fi
   
   # Print a blank line after user input
@@ -289,7 +289,7 @@ pick_many () {
 
   # Exit if user entered ctrl-c to abort
   if has_failed ${exit_code}; then
-    is_true "${exit_code = 130}" && exit 1 || return 1
+    is_true "${exit_code} = 130" && exit 1 || return 1
   fi
   
   # Print a blank line after user input
