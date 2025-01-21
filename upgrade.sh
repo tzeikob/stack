@@ -110,13 +110,13 @@ fix_config_values () {
 
 # Fixes up the stack logs directories and permissions.
 fix_logs_home () {
-  mkdir -p \
+  sudo mkdir -p \
     /var/log/stack \
     /var/log/stack/tools \
     /var/log/stack/bars &&
-    chmod -R 775 /var/log/stack/tools &&
-    chmod -R 775 /var/log/stack/bars &&
-    chown -R :stack /var/log/stack ||
+    sudo chmod -R 775 /var/log/stack/tools &&
+    sudo chmod -R 775 /var/log/stack/bars &&
+    sudo chown -R :stack /var/log/stack ||
     abort ERROR 'Failed to set /var/log/stack directories.'
   
   log INFO 'Log directories /var/log/stack have been set.'
