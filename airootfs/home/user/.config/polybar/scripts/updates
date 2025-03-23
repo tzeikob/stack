@@ -14,7 +14,7 @@ COLOR_OUTDATED='F27D52'
 COLOR_UPDATING='008ACC'
 COLOR_ERROR='BB0000'
 
-# Calculates the total installed packages and reads the
+# calculates the total installed packages then reads the
 # special updates file which is expected to contain a
 # json object with a status code, and the total number
 # of outdated packages. A status code of -1 means something

@@ -273,17 +273,17 @@ apply_updates () {
   fi
 
   local total=''
-  total="$(echo "${updates}" | jq -cer '(.pacman//[]) + (.aur//[]) | length')"
+  total="$(echo "${updates}" | jq -cer '.total')"
 
   if has_failed; then
-    log 'Failed to resolve the total number of udpates.'
+    log 'Failed to resolve the total number of updates.'
     return 2
   elif is_true "${total} = 0"; then
     log 'No updates found to be applied.'
     return 2
   fi
 
-  # Mark updates file as state updating
+  # Set state to updating in updates file
   echo "${updates}" | jq -cer '.status = 3' > "${UPDATES_FILE}"
 
   if has_failed; then
@@ -305,102 +305,36 @@ apply_updates () {
     return 2
   fi
 
-  # Read the pacman outdated packages
-  local query='.pacman//[] | if length > 0 then .[] else "" end'
+  # Update all the outdated pacman packages
+  log 'Updating pacman packages...'
 
-  local pacman_pkgs=''
-  pacman_pkgs="$(echo "${updates}" | jq -cer "${query}")"
-
-  if has_failed; then
-    # Restore the previous updates file
-    echo "${updates}" > "${UPDATES_FILE}"
-
-    log 'Unable to read pacman outdated packages.'
-    return 2
-  fi
-
-  # Read the aur outdated packages
-  local query='.aur//[] | if length > 0 then .[] else "" end'
-
-  local aur_pkgs=''
-  aur_pkgs="$(echo "${updates}" | jq -cer "${query}")"
+  sudo pacman --noconfirm -Syu
 
   if has_failed; then
     # Restore the previous updates file
-    echo "${updates}" > "${UPDATES_FILE}"
+    echo "${updates}" | jq -cer '.status = -1' > "${UPDATES_FILE}"
 
-    log 'Unable to read aur outdated packages.'
+    log 'Unable to update outdated pacman packages.'
     return 2
   fi
 
-  local failed_total=0
+  # Update all outdated aur packages
+  log 'Updating aur packages...'
 
-  # Iterate over the pacman packages and update one by one
-  while read -r pkg; do
-    if is_empty "${pkg}"; then
-      continue
-    fi
+  yay --noconfirm --sudoloop -Syu
 
-    local name=''
-    name="$(echo "${pkg}" | jq -cr .name)"
+  if has_failed; then
+    # Restore the previous updates file
+    echo "${updates}" | jq -cer '.status = -1' > "${UPDATES_FILE}"
 
-    local current=''
-    current="$(echo "${pkg}" | jq -cr .current)"
-
-    local latest=''
-    latest="$(echo "${pkg}" | jq -cr .latest)"
-
-    log "Updating ${name} from ${current} to ${latest}..."
-
-    sudo pacman --noconfirm --needed -S ${name}
-
-    if has_failed; then
-      failed_total=$(calc "${failed_total} + 1")
-
-      log "Package ${name} failed to be updated."
-    fi
-    
-    # Refresh sudo interval
-    sudo -v
-  done <<< "${pacman_pkgs}"
-
-  # Iterate over the aur packages and update one by one
-  while read -r pkg; do
-    if is_empty "${pkg}"; then
-      continue
-    fi
-
-    local name=''
-    name="$(echo "${pkg}" | jq -cr .name)"
-
-    local current=''
-    current="$(echo "${pkg}" | jq -cr .current)"
-
-    local latest=''
-    latest="$(echo "${pkg}" | jq -cr .latest)"
-
-    log "Updating ${name} from ${current} to ${latest}..."
-
-    yay --noconfirm --needed -S ${name}
-
-    if has_failed; then
-      failed_total=$(calc "${failed_total} + 1")
-      
-      log "Package ${name} failed to be updated."
-    fi
-    
-    # Refresh sudo interval
-    sudo -v
-  done <<< "${aur_pkgs}"
+    log 'Unable to update outdated aur packages.'
+    return 2
+  fi
 
   # Check again for unfulfiled updates
   check_updates &> /dev/null
 
-  if is_true "${failed_total} > 0"; then
-    log "${failed_total} packages failed to be updated."
-  else
-    log 'All system packages are now up to date.'
-  fi
+  log 'System update process is completed.'
 }
 
 # Clones and checkouts the latest version of the stack repository
@@ -446,7 +380,6 @@ upgrade_stack () {
     echo 'Stack is up to date, no upgrades found.'
     return 2
   fi
-
 
   local prompt=''
   prompt+="Stack will upgrade to ${branch} [${remote_commit:0:5}]."
