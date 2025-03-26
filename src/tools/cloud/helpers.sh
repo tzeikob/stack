@@ -26,8 +26,7 @@ find_remotes () {
   local mounts=''
   mounts="$(< /proc/mounts)"
 
-  local results=''
-  local remote=''
+  local remote='' results=''
 
   while read -r remote; do
     if is_empty "${remote}"; then

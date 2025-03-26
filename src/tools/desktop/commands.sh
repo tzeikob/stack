@@ -206,8 +206,7 @@ set_pointer_speed () {
     print a[1]
   }')" || return 1
 
-  local succeed='false'
-  local device=''
+  local device='' succeed='false'
 
   while read -r device; do
     # Assume this is a mouse device and set its acceleration speed
@@ -751,8 +750,7 @@ fix_workspaces () {
   monitors="$(bspc query --monitors --names)" || return 1
 
   # Assign workspaces to monitors by order
-  local index=1
-  local monitor=''
+  local monitor='' index=1
 
   while read -r monitor; do
     local slots=0
@@ -829,6 +827,7 @@ init_workspaces () {
       extras="$(echo "${desktops}" | jq -cer "[.[] | .name] | .[length - ${subtract}:] | .[]")" || return 1
 
       local extra=''
+
       while read -r extra; do
         bspc desktop "${extra}" -r && bspc wm --adopt-orphans
       done <<< "${extras}"
@@ -836,8 +835,7 @@ init_workspaces () {
   done <<< "${monitors}"
 
   # Loop again monitors to fill possible empty workspace slots
-  local index=1
-  local monitor=''
+  local monitor='' index=1
 
   while read -r monitor; do
     local slots=2

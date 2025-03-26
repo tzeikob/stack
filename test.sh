@@ -35,6 +35,7 @@ traverse_files () {
     if is_not_empty "${files}" && not_match "${files}" '^ *$'; then
       # Collect recursivelly every sourced file walking the execution path
       local file=''
+
       while read -r file; do
         echo "${root}"$'\n'"$(traverse_files "${file}")"
       done <<< "${files}"
@@ -82,6 +83,7 @@ test_no_func_overriden () {
   )
 
   local root=''
+
   for root in "${roots[@]}"; do
     local files=''
     files=$(traverse_files "${root}" | sort -u) ||
@@ -90,6 +92,7 @@ test_no_func_overriden () {
     local all_funcs=''
 
     local file=''
+
     while read -r file; do
       local funcs=''
       funcs=$(grep '.*( *) *{.*' "${file}" | cut -d '(' -f 1)
@@ -102,6 +105,7 @@ test_no_func_overriden () {
     done <<< "${files}"
 
     local func=''
+
     while read -r func; do
       # Skip empty lines
       if is_empty "${func}" || match "${func}" '^ *$'; then
@@ -134,6 +138,7 @@ test_local_var_declarations () {
     abort ERROR 'Unable to list source files.'
   
   local file=''
+  
   for file in "${files[@]}"; do
     local declarations=''
     declarations=$(grep -e '^ *local  *.*=.*' "${file}")
@@ -143,6 +148,7 @@ test_local_var_declarations () {
     fi
 
     local declaration=''
+
     while read -r declaration; do
       # Skip empty lines
       if is_empty "${declaration}" || match "${declaration}" '^ *$'; then

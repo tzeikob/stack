@@ -700,6 +700,7 @@ is_locale_set () {
   )
 
   local var=''
+  
   for var in "${vars[@]}"; do
     # Read the value of the next env variable
     local value=''
@@ -781,6 +782,7 @@ apply_locale_settings () {
   locales="$(jq -cr '.locales[] | select(. != "C.UTF-8 UTF-8")' "${LANGS_SETTINGS}")"
 
   local locale=''
+
   while read -r locale; do
     echo "${locale}" | sudo tee -a /etc/locale.gen 1> /dev/null
   done <<< "${locales}"

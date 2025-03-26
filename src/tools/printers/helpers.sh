@@ -128,6 +128,7 @@ discover_destinations () {
 
   if has_not_failed && is_not_empty "${hosts}"; then
     local host=''
+    
     while read -r host; do
       destinations+="$(/usr/lib/cups/backend/snmp "${host}" 2>&1 |
         awk '/^network\s.*:\/\//{

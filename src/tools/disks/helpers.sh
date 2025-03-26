@@ -514,6 +514,7 @@ unmount_partitions () {
 
   if is_not_empty "${parts}"; then
     local part=''
+
     while read -r part; do
       unmount_device "${part}"
 
@@ -528,6 +529,7 @@ unmount_partitions () {
 
   if is_not_empty "${volumes}"; then
     local volume=''
+    
     while read -r volume; do
       unmount_encrypted_device "${volume}"
 

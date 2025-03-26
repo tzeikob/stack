@@ -51,6 +51,7 @@ show_status () {
   query="[.[] | \"${query}\"] | join(\"\n\")"
 
   local device=''
+  
   while read -r device; do
     echo
     find_device "${device}" | jq -cer --arg SPC ${space} "${query}" || return 1

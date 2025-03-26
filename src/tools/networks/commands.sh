@@ -81,6 +81,7 @@ show_status () {
   query+='\(.connection_type                                 | lbl("Type"))'
 
   local connection=''
+  
   while read -r connection; do
     echo
     find_connection "${connection}" | jq -cer --arg SPC ${space} "\"${query}\"" || return 1

@@ -27,6 +27,8 @@ run () {
     return 1
   fi
 
+  local pid=''
+
   for pid in "${pids}"; do
     # Find to which desktop the scratchpad window is now
     local scratchpad_desktop=''

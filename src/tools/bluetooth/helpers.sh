@@ -134,6 +134,7 @@ kill_scanning_proccesses () {
   # Clean any scanning processes one by one
   if is_not_empty "${pids}"; then
     local pid=''
+    
     while read -r pid; do
       kill "${pid}"
     done <<< "${pids}"

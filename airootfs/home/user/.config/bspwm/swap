@@ -36,6 +36,8 @@ run () {
   fi
 
   # Set windows back to sticky mode
+  local node=''
+  
   for node in ${nodes[@]}; do
     bspc node "${node}" -g sticky
 

@@ -18,6 +18,7 @@ kill_screen_locker () {
   # Kill processes one by one
   if is_not_empty "${pids}"; then
     local pid=''
+    
     while read -r pid; do
       kill "${pid}"
     done <<< "${pids}"

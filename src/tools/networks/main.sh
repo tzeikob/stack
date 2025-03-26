@@ -112,7 +112,7 @@ execute () {
 }
 
 run () {
-  local opt=''
+  local OPTIND='' opt=''
 
   while getopts ':hqs' opt; do
     case "${opt}" in
@@ -130,7 +130,8 @@ run () {
   done
 
   # Collect command arguments
-  shift $(calc "${OPTIND} - 1")
+  shift $((OPTIND - 1))
+  
   local args_len=$#
 
   if is_true "${args_len} = 0" && on_script_mode; then

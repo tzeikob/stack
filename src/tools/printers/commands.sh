@@ -44,6 +44,7 @@ show_status () {
     query+='\(.uri       | lbl("URI"))'
 
     local destination=''
+    
     while read -r destination; do
       echo
       find_destination "${destination}" | jq -cer --arg SPC ${space} "\"${query}\"" || return 1

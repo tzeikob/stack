@@ -16,6 +16,7 @@ download () {
   }'
 
   local url=''
+  
   for url in ${urls}; do
     wget -P "${output}" "${url}" -q --show-progress || return 1
   done
@@ -39,8 +40,7 @@ find_hosts () {
   local ips=''
   ips="$(echo "${map}" | awk '/Up$/{print $2}')" || return 1
 
-  local ip=''
-  local hosts=''
+  local ip='' hosts=''
 
   while read -r ip; do
     local host_map=''

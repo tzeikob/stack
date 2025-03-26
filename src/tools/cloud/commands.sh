@@ -310,8 +310,7 @@ mount_all () {
   # Iterate over remote names and mount remotes one by one
   remotes="$(echo "${remotes}" | jq -cr '.[] | .name')" || return 1
 
-  local failed=0
-  local remote=''
+  local remote='' failed=0
 
   while read -r remote; do
     mount_remote "${remote}"

@@ -622,6 +622,7 @@ mirror_output () {
 
   # Validate each one of the given targets
   local target_name=''
+
   for target_name in "${targets[@]}"; do
     if equals "${target_name}" "${name}"; then
       log 'Source output cannot be in targets.'
@@ -772,6 +773,7 @@ set_layout () {
 
   # Validate each one of the given outputs
   local name=''
+  
   for name in "${outputs[@]}"; do
     local output=''
     output="$(find_output "${name}")"
@@ -1285,8 +1287,7 @@ restore_colors () {
   xcalib_cmds="$(echo "${outputs}" | jq -cr --argjson c "${colors}" "${query}")" || return 1
 
   # Iterate over xcalib commands and execute one by one
-  local failed=0
-  local xcalib_cmd=''
+  local xcalib_cmd='' failed=0
 
   while read -r xcalib_cmd; do
     local result=''

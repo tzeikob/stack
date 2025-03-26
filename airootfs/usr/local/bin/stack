@@ -54,7 +54,7 @@ execute () {
 }
 
 run () {
-  local opt=''
+  local OPTIND='' opt=''
 
   while getopts ':h' opt; do
     case "${opt}" in

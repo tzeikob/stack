@@ -319,6 +319,7 @@ set_charging () {
   fi
 
   local index=0
+  
   for index in 0 1; do
     if grep -qE "^START_CHARGE_THRESH_BAT${index}=" "${config_file}"; then
       sudo sed -i "s/^\(START_CHARGE_THRESH_BAT${index}=\).*/\1${start}/" "${config_file}"

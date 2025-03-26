@@ -390,6 +390,7 @@ list_mounts () {
   disks="$(find_disks | jq -cer '.[] | .path')" || return 1
 
   local disk=''
+  
   while read -r disk; do
     local parts=''
     parts="$(find_partitions "${disk}" mounted |

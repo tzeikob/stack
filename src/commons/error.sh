@@ -37,7 +37,7 @@ has_not_failed () {
 # Outputs:
 #  An error messsage.
 abort () {
-  local OPTIND opt
+  local OPTIND='' opt=''
 
   while getopts ':n' opt; do
     case "${opt}" in

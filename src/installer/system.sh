@@ -135,7 +135,8 @@ sync_tools () {
   main_files=($(find /opt/stack/tools -type f -name 'main.sh')) ||
     abort ERROR 'Failed to get the list of main script file paths.'
   
-  local main_file
+  local main_file=''
+
   for main_file in "${main_files[@]}"; do
     # Extrack the tool handle name
     local tool_name=''

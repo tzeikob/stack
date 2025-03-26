@@ -36,7 +36,7 @@ ask () {
   # Trap ctrl-c abort signals for read cmd
   trap "echo; exit 1" SIGINT INT
 
-  local OPTIND opt
+  local OPTIND='' opt=''
 
   while getopts ':n' opt; do
     case "${opt}" in
@@ -72,7 +72,7 @@ ask_secret () {
   # Trap ctrl-c abort signals for read cmd
   trap "echo; exit 1" SIGINT INT
   
-  local OPTIND opt
+  local OPTIND='' opt=''
 
   while getopts ':n' opt; do
     case "${opt}" in
@@ -90,6 +90,7 @@ ask_secret () {
   echo -e "${prompt}"
 
   local char=''
+
   while IFS= read -rs -n1 char; do
     if [[ ${char} == $'\0' ]]; then
       break
@@ -122,7 +123,7 @@ ask_secret () {
 # Outputs:
 #  A menu of yes or no options.
 confirm () {
-  local OPTIND opt
+  local OPTIND='' opt=''
 
   while getopts ':n' opt; do
     case "${opt}" in
@@ -173,7 +174,7 @@ confirm () {
 # Outputs:
 #  A menu of the given options.
 pick_one () {
-  local OPTIND opt
+  local OPTIND='' opt=''
 
   while getopts ':n' opt; do
     case "${opt}" in
@@ -244,7 +245,7 @@ pick_one () {
 # Outputs:
 #  A menu of the given options.
 pick_many () {
-  local OPTIND opt
+  local OPTIND='' opt=''
 
   while getopts ':n' opt; do
     case "${opt}" in

@@ -86,6 +86,7 @@ restore_files () {
     picked="$(echo "${picked}" | jq -cer 'join(" ")')" || return 1
 
     local key=''
+
     for key in ${picked}; do
       # Match file by trash-restore index key
       local query=".[] | select(.key == \"${key}\") | .value"
@@ -105,6 +106,7 @@ restore_files () {
     file_keys="${file_keys:+${file_keys::-1}}"
   else
     local path=''
+
     for path in "${paths[@]}"; do
       # Match file by file path
       local query=".[] | select(.value == \"${path}\") | .key"
@@ -202,6 +204,7 @@ remove_files () {
   fi
 
   local path=''
+  
   for path in "${paths[@]}"; do
     local query=".[] | select(.key == \"${path}\")"
 

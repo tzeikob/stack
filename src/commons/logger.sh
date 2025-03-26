@@ -13,7 +13,7 @@ source src/commons/validators.sh
 # Outputs:
 #  Prints the message in [<level>] <message> form.
 log () {
-  local OPTIND opt
+  local OPTIND='' opt=''
 
   while getopts ':n' opt; do
     case "${opt}" in

@@ -476,8 +476,7 @@ set_mute () {
   fi
 
   # Execute each pactl command
-  local failed='false'
-  local pactl_cmd=''
+  local pactl_cmd='' failed='false'
 
   while read -r pactl_cmd; do
     ${pactl_cmd}

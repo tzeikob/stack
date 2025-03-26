@@ -38,6 +38,7 @@ check_build_deps () {
   local deps=(archiso rsync sqlite3)
 
   local dep=''
+
   for dep in "${deps[@]}"; do
     if ! pacman -Qi "${dep}" > /dev/null 2>&1; then
       abort ERROR "Package dependency ${dep} is not installed."
@@ -74,6 +75,7 @@ declare_official_packages () {
   local pkgs_file="${PROFILE_DIR}/packages.x86_64"
 
   local pkg=''
+
   for pkg in "${pkgs[@]}"; do
     if ! grep -Eq "^${pkg}$" "${pkgs_file}"; then
       echo "${pkg}" >> "${pkgs_file}"
@@ -108,6 +110,7 @@ build_aur_packages () {
     abort ERROR 'Failed to read packages from packages.x86_64 file.'
 
   local name=''
+
   for name in "${names[@]}"; do
     # Build the next AUR package
     git clone "https://aur.archlinux.org/${name}.git" "${AUR_DIR}/${name}" ||
@@ -221,7 +224,8 @@ sync_tools () {
   main_files=($(find "${ROOT_FS}/opt/stack/tools" -type f -name 'main.sh' | sed "s;${ROOT_FS};;")) ||
     abort ERROR 'Failed to get the list of main script file paths.'
   
-  local main_file
+  local main_file=''
+
   for main_file in "${main_files[@]}"; do
     # Extrack the tool handle name
     local tool_name
@@ -513,6 +517,7 @@ setup_desktop () {
   local scripts=(bluetooth cpu memory notifications power remotes updates)
 
   local script=''
+
   for script in "${scripts[@]}"; do
     rm -f "${polybar_home}/scripts/${script}" ||
       abort ERROR "Failed to remove polybar script ${script}."
@@ -550,6 +555,7 @@ setup_desktop () {
   local names=(alacritty mpd ncmpcpp nnn)
 
   local name=''
+
   for name in "${names[@]}"; do
     rm -rf "${ROOT_FS}/root/.config/${name}" ||
       abort ERROR "Failed to remove configuration ${name}."
@@ -831,6 +837,7 @@ set_file_permissions () {
   )
 
   local perm=''
+  
   for perm in "${perms[@]}"; do
     local path=''
     path="$(echo "${perm}" | cut -d ' ' -f 1)" ||

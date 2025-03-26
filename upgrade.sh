@@ -29,7 +29,8 @@ install_official_packages () {
   pkgs+=($(grep -E '(stp|all):pac' packages.x86_64 | cut -d ':' -f 3)) ||
     abort ERROR 'Failed to read packages from packages.x86_64 file.'
 
-  local pkg='';
+  local pkg=''
+
   for pkg in "${pkgs[@]}"; do
     log INFO "Installing package ${pkg}..."
 
@@ -49,7 +50,8 @@ install_aur_packages () {
   pkgs+=($(grep -E '(stp|all):aur' packages.x86_64 | cut -d ':' -f 3)) ||
     abort ERROR 'Failed to read packages from packages.x86_64 file.'
 
-  local pkg='';
+  local pkg=''
+
   for pkg in "${pkgs[@]}"; do
     log INFO "Installing package ${pkg}..."
 
@@ -191,7 +193,8 @@ update_tools () {
   main_files=($(find /opt/stack/tools -type f -name 'main.sh')) ||
     abort ERROR 'Failed to get the list of main script file paths.'
   
-  local main_file
+  local main_file=''
+  
   for main_file in "${main_files[@]}"; do
     # Extrack the tool handle name
     local tool_name=''
