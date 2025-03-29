@@ -102,7 +102,7 @@ install_kernel () {
 
   linux_pkgs+=' linux-firmware'
 
-  local util_pkgs='reflector rsync sudo jq libqalculate'
+  local util_pkgs='git reflector rsync sudo jq libqalculate'
 
   pacstrap /mnt base ${linux_pkgs} ${util_pkgs} 2>&1 ||
     abort ERROR 'Failed to pacstrap kernel and base packages.'
