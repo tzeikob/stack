@@ -81,6 +81,7 @@ all:pac:xorg-xdpyinfo
 all:pac:acpi
 all:pac:acpi_call
 all:pac:acpid
+all:pac:acpilight
 all:pac:tlp
 all:pac:xcalib
 all:pac:networkmanager
