@@ -47,7 +47,6 @@ show_power_menu () {
   options+='Reboot\n'
   options+='Suspend\n'
   options+='Lock\n'
-  options+='Blank\n'
   options+='Logout'
 
   local hide_prompt='inputbar {children: [entry];}'
@@ -62,7 +61,6 @@ show_power_menu () {
     'Reboot') power -qs reboot;;
     'Suspend') power -qs suspend;;
     'Lock') security -qs lock screen;;
-    'Blank') power -qs blank;;
     'Logout') security -qs logout user;;
     *) exit 1;;
   esac
