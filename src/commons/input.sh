@@ -18,6 +18,9 @@ RST=$'\u001b[0m'
 # Outputs:
 #  A minimal prompt line.
 prompt () {
+  # Trap ctrl-c abort signals for read cmd
+  trap "echo 'Exited with status code 1'; exit 1" SIGINT INT
+
   local label="${1:-"prompt"}"
 
   REPLY=''
@@ -34,7 +37,7 @@ prompt () {
 #  A prompt text line.
 ask () {
   # Trap ctrl-c abort signals for read cmd
-  trap "echo; exit 1" SIGINT INT
+  trap "echo 'Exited with status code 1'; exit 1" SIGINT INT
 
   local OPTIND='' opt=''
 
@@ -70,7 +73,7 @@ ask () {
 #  A prompt text line.
 ask_secret () {
   # Trap ctrl-c abort signals for read cmd
-  trap "echo; exit 1" SIGINT INT
+  trap "echo 'Exited with status code 1'; exit 1" SIGINT INT
   
   local OPTIND='' opt=''
 
@@ -149,7 +152,7 @@ confirm () {
 
   # Exit if user entered ctrl-c to abort
   if has_failed ${exit_code}; then
-    is_true "${exit_code} = 130" && exit 1 || return 1
+    is_true "${exit_code} = 130" && echo 'Exited with status code 1' && exit 1 || return 1
   fi
   
   # Print a blank line after user input
@@ -219,7 +222,7 @@ pick_one () {
 
   # Exit if user entered ctrl-c to abort
   if has_failed ${exit_code}; then
-    is_true "${exit_code} = 130" && exit 1 || return 1
+    is_true "${exit_code} = 130" && echo 'Exited with status code 1' && exit 1 || return 1
   fi
   
   # Print a blank line after user input
@@ -290,7 +293,7 @@ pick_many () {
 
   # Exit if user entered ctrl-c to abort
   if has_failed ${exit_code}; then
-    is_true "${exit_code} = 130" && exit 1 || return 1
+    is_true "${exit_code} = 130" && echo 'Exited with status code 1' && exit 1 || return 1
   fi
   
   # Print a blank line after user input
