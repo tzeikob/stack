@@ -115,6 +115,7 @@ all:pac:irssi
 all:pac:rlwrap
 all:pac:archiso
 all:pac:s-tui
+all:pac:fzf
 
 stp:pac:bluez
 stp:pac:bluez-utils
