@@ -264,7 +264,7 @@ rename_distro () {
 
   local version="${commit_date} ${branch} ${commit:0:5}"
 
-  sed -i "s/#VERSION#/${version}/" "${ROOT_FS}/etc/os-release" ||
+  sed -i "s;#VERSION#;${version};" "${ROOT_FS}/etc/os-release" ||
     abort ERROR 'Failed to set build version.'
   
   ln -sf /etc/os-release "${ROOT_FS}/etc/stack-release" ||
