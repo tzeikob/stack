@@ -122,8 +122,13 @@ build_aur_packages () {
 
     # Create the custom local repo database
     cp ${AUR_DIR}/${name}/${name}-*-x86_64.pkg.tar.zst "${repo_home}" &&
-      repo-add "${repo_home}/custom.db.tar.gz" ${repo_home}/${name}-*-x86_64.pkg.tar.zst ||
-      abort ERROR "Failed to add the ${name} package into the custom repository."
+      repo-add "${repo_home}/custom.db.tar.gz" ${repo_home}/${name}-*-x86_64.pkg.tar.zst
+    
+    if has_failed; then
+      cp ${AUR_DIR}/${name}/${name}-*-any.pkg.tar.zst "${repo_home}" &&
+        repo-add "${repo_home}/custom.db.tar.gz" ${repo_home}/${name}-*-any.pkg.tar.zst ||
+        abort ERROR "Failed to add the ${name} package into the custom repository."
+    fi
 
     local pkgs_file="${PROFILE_DIR}/packages.x86_64"
 
