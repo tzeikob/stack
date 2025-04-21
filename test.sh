@@ -68,7 +68,6 @@ test_no_func_overriden () {
     airootfs/etc/pacman.d/scripts/*
     airootfs/home/user/.config/bspwm/resize
     airootfs/home/user/.config/bspwm/rules
-    airootfs/home/user/.config/bspwm/scratchpad
     airootfs/home/user/.config/bspwm/swap
     airootfs/home/user/.config/dunst/hook
     airootfs/home/user/.config/polybar/scripts/*

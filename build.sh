@@ -237,14 +237,6 @@ sync_tools () {
   done
 
   log INFO 'Tools symlinks have been created.'
-
-  # Disable init scratchpad command for the live media
-  local desktop_main="${ROOT_FS}/opt/stack/tools/desktop/main.sh"
-
-  sed -i "/.*scratchpad.*/d" "${desktop_main}" &&
-    log INFO 'Scratchpad has been removed from desktop tool.' ||
-    abort ERROR 'Failed to remove scratchpad from desktop tool.'
-
   log INFO 'Tools files have been synced.'
 }
 
@@ -486,14 +478,6 @@ setup_desktop () {
 
   local bspwm_home="${config_home}/bspwm"
 
-  rm -f "${bspwm_home}/scratchpad" ||
-    abort ERROR 'Failed to remove scratchpad bspwm script.'
-
-  sed -i \
-    -e '/desktop -qs init scratchpad &/d' \
-    -e '/bspc rule -a scratch sticky=off state=floating hidden=on/d' "${bspwm_home}/bspwmrc" ||
-    abort ERROR 'Failed to remove the scratchpad lines from the .bspwmrc file.'
-
   # Add a hook to open the welcome terminal once at login
   printf '%s\n' \
     '' \
@@ -531,8 +515,7 @@ setup_desktop () {
   sed -i \
     -e '/# Lock the screen./,+3d' \
     -e '/# Take a screen shot./,+3d' \
-    -e '/# Start recording your screen./,+3d' \
-    -e '/# Show and hide the scratchpad termimal./,+3d' "${sxhkdrc_file}" ||
+    -e '/# Start recording your screen./,+3d' "${sxhkdrc_file}" ||
     abort ERROR 'Failed to remove not supported key bindings.'
 
   log INFO 'Sxhkd configuration has been set.'
