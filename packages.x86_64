@@ -116,7 +116,6 @@ all:pac:rlwrap
 all:pac:archiso
 all:pac:s-tui
 all:pac:fzf
-all:pac:tmux
 all:aur:tdrop-git
 
 stp:pac:bluez
