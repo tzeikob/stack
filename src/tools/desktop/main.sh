@@ -70,7 +70,6 @@ show_help () {
     'set backend xrender|glx' 'Set the compositor backend engine.' \
     'set vsync on|off' 'Enable or disable compositor vsync mode.' \
     '' '' \
-    'init scratchpad' 'Initialize the sticky scratchpad terminal.' \
     'init bars' 'Initialize status bars.' \
     'init bindings' 'Initialize keyboard bindings.' \
     '' '' \
@@ -109,7 +108,6 @@ execute () {
     'remove workspace') remove_workspace "${3}";;
     'fix workspaces') fix_workspaces;;
     'init workspaces') init_workspaces;;
-    'init scratchpad') init_scratchpad;;
     'init bars') init_bars;;
     'init bindings') init_bindings;;
     'start') start;;

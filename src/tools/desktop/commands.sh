@@ -891,30 +891,6 @@ init_workspaces () {
   log 'Desktop workspaces have set.'
 }
 
-# Initiates the sticky scratchpad terminal window.
-init_scratchpad () {
-  local scratchpad="${TERMINAL} --class scratch,scratch"
-
-  # Kill any other instances of scratchpad terminals
-  kill_process "${scratchpad}"
-
-  # Make sure the scratchpad PWD is set to home  
-  cd "${HOME}"
-
-  # Launch a new instance of scratchpad terminal
-  ${scratchpad} &
-
-  # Dettach it from the current shell to suppress kill outputs
-  disown $! && sleep 1
-
-  if is_process_down "${scratchpad}"; then
-    log 'Failed to launch scratchpad.'
-    return 2
-  fi
-
-  log 'Scratchpad has been launched.'
-}
-
 # Initiates desktop status bars.
 init_bars () {  
   # Terminate already running bar instances
@@ -998,7 +974,7 @@ start () {
 
 # Restarts the desktop user interface along with
 # various complementary services like key bindings,
-# wallpaper, scratchpad and etc.
+# wallpaper and etc.
 restart () {
   # Kill any running picom processes
   kill_process '^picom.*'

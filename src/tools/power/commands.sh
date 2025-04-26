@@ -20,7 +20,8 @@ show_status () {
 
   local query='[.[] | select(.unit == "acpid.service")][0] | .active | olbl("ACPID")'
 
-  local acpid_output="$(systemctl -a | jc --systemctl | jq -cer --arg SPC ${space} "${query}")" || return 1
+  local acpid_output=""
+  acpid_output="$(systemctl -a | jc --systemctl | jq -cer --arg SPC ${space} "${query}")" || return 1
 
   if is_given "${acpid_output}"; then
     echo "${acpid_output}"
@@ -28,7 +29,8 @@ show_status () {
 
   local query='[.[] | select(.unit == "tlp.service")][0] | .active | olbl("TLP")'
 
-  local tlp_output="$(systemctl -a | jc --systemctl | jq -cer --arg SPC ${space} "${query}")" || return 1
+  local tlp_output=""
+  tlp_output="$(systemctl -a | jc --systemctl | jq -cer --arg SPC ${space} "${query}")" || return 1
 
   if is_given "${tlp_output}"; then
     echo "${tlp_output}"

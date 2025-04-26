@@ -81,7 +81,7 @@ all:pac:xorg-xdpyinfo
 all:pac:acpi
 all:pac:acpi_call
 all:pac:acpid
-all:pac:acpilight
+all:aur:acpilight
 all:pac:tlp
 all:pac:xcalib
 all:pac:networkmanager
@@ -116,6 +116,7 @@ all:pac:rlwrap
 all:pac:archiso
 all:pac:s-tui
 all:pac:fzf
+all:aur:tdrop-git
 
 stp:pac:bluez
 stp:pac:bluez-utils
