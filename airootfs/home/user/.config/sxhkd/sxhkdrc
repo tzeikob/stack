@@ -56,7 +56,7 @@ super + ctrl + {1-9, 0, minus, equal}
 
 # Show and hide the scratchpad termimal.
 super + Return
-  tdrop -ma -w -4 ${TERMINAL}
+  tdrop -ma -w 90% -x 5% -h 60% -y 20% -n 1 ${TERMINAL}
 
 # Open a new terminal window.
 super + alt + Return
