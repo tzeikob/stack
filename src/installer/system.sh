@@ -598,8 +598,11 @@ install_aur_packages () {
   local user_name=''
   user_name="$(jq -cer '.user_name' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read user_name setting.'
+  
+  # Set yes as default to prompt on replacing conflicted packages
+  local yes=4
 
-  sudo -u "${user_name}" yay -S --needed --noconfirm --removemake --mflags --nocheck ${pkgs[@]} 2>&1 ||
+  sudo -u "${user_name}" yay -S --needed --noconfirm --removemake --mflags --nocheck --ask ${yes} ${pkgs[@]} 2>&1 ||
     abort ERROR 'Failed to install AUR packages.'
 
   log INFO 'AUR packages have been installed.'
