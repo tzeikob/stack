@@ -105,7 +105,7 @@ build_aur_packages () {
     abort ERROR 'Failed to create the local repo folder.'
 
   # Collect all the AUR packages the live media needs
-  local names=(yay)
+  local names=(yay smenu)
   names+=($(grep -E '(bld|all):aur' packages.x86_64 | cut -d ':' -f 3)) ||
     abort ERROR 'Failed to read packages from packages.x86_64 file.'
 

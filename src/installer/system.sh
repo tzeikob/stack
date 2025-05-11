@@ -604,6 +604,25 @@ install_aur_packages () {
 
   sudo -u "${user_name}" yay -S --needed --noconfirm --removemake --mflags --nocheck --ask ${yes} ${pkgs[@]} 2>&1 ||
     abort ERROR 'Failed to install AUR packages.'
+  
+  log INFO 'Installing smenu package from source.'
+
+  local previous_dir=${PWD}
+
+  git clone https://github.com/p-gen/smenu.git ||
+    abort ERROR 'Failed to clone smenu git repository.'
+  
+  cd smenu
+
+  ./build.sh ||
+    abort ERROR 'Failed to build smenu package.'
+  
+  make install ||
+    abort ERROR 'Failed to install smenu package.'
+  
+  cd ${previous_dir} && rm -rf smenu
+  
+  log INFO 'Package smenu has been installed.'
 
   log INFO 'AUR packages have been installed.'
 }
