@@ -108,7 +108,6 @@ all:pac:firefox
 all:pac:torbrowser-launcher
 all:pac:ttf-font-awesome
 all:pac:noto-fonts-emoji
-all:aur:smenu
 all:aur:xkblayout-state-git
 all:pac:efibootmgr
 all:pac:irssi
