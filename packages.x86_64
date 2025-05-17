@@ -116,6 +116,7 @@ all:pac:archiso
 all:pac:s-tui
 all:pac:fzf
 all:aur:tdrop-git
+all:pac:os-prober
 
 stp:pac:bluez
 stp:pac:bluez-utils

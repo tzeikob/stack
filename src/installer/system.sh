@@ -716,6 +716,7 @@ setup_boot_loader () {
     -e 's/(GRUB_CMDLINE_LINUX_DEFAULT=".*)"/\1 consoleblank=300"/' \
     -e 's/# *(GRUB_SAVEDEFAULT.*)/\1/' \
     -e '/GRUB_SAVEDEFAULT/i GRUB_DEFAULT=saved' \
+    -e 's/#? *(GRUB_DISABLE_OS_PROBER)=.*/\1=false/' \
     -e 's/# *(GRUB_DISABLE_SUBMENU.*)/\1/' /etc/default/grub ||
     abort ERROR 'Failed to set boot loader properties.'
 
