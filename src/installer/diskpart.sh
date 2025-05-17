@@ -190,6 +190,7 @@ format_partitions () {
   disk="$(jq -cer '.disk' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read disk setting.'
 
+  # Append prefix for each partition of nvme disks
   local postfix=''
   if match "${disk}" '^/dev/nvme'; then
     postfix='p'
@@ -261,8 +262,9 @@ mount_file_system () {
   disk="$(jq -cer '.disk' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read disk setting.'
 
+  # Append prefix for each partition of nvme disks
   local postfix=''
-  if match "${disk}" '/dev/^nvme'; then
+  if match "${disk}" '^/dev/nvme'; then
     postfix='p'
   fi
 
@@ -337,8 +339,9 @@ make_swap_space () {
   disk="$(jq -cer '.disk' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read disk setting.'
 
+  # Append prefix for each partition of nvme disks
   local postfix=''
-  if match "${disk}" '/dev/^nvme'; then
+  if match "${disk}" '^/dev/nvme'; then
     postfix='p'
   fi
 
