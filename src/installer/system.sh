@@ -911,7 +911,7 @@ setup_fonts () {
 
   git clone --filter=blob:none --sparse https://github.com/google/fonts.git /tmp/google-fonts 2>&1 &&
     cd /tmp/google-fonts &&
-    git sparse-checkout add apache/cousine apache/robotomono ofl/sharetechmono ofl/spacemono 2>&1 &&
+    git sparse-checkout add apache/cousine ofl/robotomono ofl/sharetechmono ofl/spacemono 2>&1 &&
     cp -r apache/cousine ofl/robotomono ofl/sharetechmono ofl/spacemono "${fonts_home}" &&
     cd "${previous_dir}" &&
     rm -rf /tmp/google-fonts ||
