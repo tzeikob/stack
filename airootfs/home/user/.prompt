@@ -65,14 +65,14 @@ git_color () {
   echo -e '\e[1;35m'
 }
 
-reset_color () {
+reset_colors () {
   echo -e '\e[m'
 }
 
 if [ "$(id -u)" = 0 ]; then
-  PS1='\[$(exit_color)\]${ELAPSED} \[$(user_color)\][\u] \[$(dir_color)\]\W\[$(git_color)\]$(branch)\[$(reset_color)\]  '
+  PS1='\[$(exit_color)\]${ELAPSED} \[$(user_color)\][\u] \[$(dir_color)\]\W\[$(git_color)\]$(branch)\[$(reset_colors)\]  '
 else
-  PS1='\[$(exit_color)\]${ELAPSED} \[$(dir_color)\]\W\[$(git_color)\]$(branch)\[$(reset_color)\]  '
+  PS1='\[$(exit_color)\]${ELAPSED} \[$(dir_color)\]\W\[$(git_color)\]$(branch)\[$(reset_colors)\]  '
 fi
 
 PS2=' '
