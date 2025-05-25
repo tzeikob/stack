@@ -29,7 +29,7 @@ if [ -d /etc/X11/xinit/xinitrc.d ]; then
  unset f
 fi
 
-displays -qs restore layout
+displays -qsn restore layout || displays -qs fix primary
 displays -qs restore colors &
 notifications -qs start &
 security -qs init locker &

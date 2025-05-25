@@ -937,15 +937,17 @@ restore_layout () {
     return 2
   fi
 
-  # Give time to xrandr to settle
-  sleep 1
+  if is_empty "${NO_DESKTOP_RESTART}" || not_equals "${NO_DESKTOP_RESTART}" 'true'; then
+    # Give time to xrandr to settle
+    sleep 1
 
-  # Make sure desktop workspaces and other modules are fixed
-  desktop -qs fix workspaces 1> /dev/null &&
-    desktop -qs restart 1> /dev/null
+    # Make sure desktop workspaces and other modules are fixed
+    desktop -qs fix workspaces 1> /dev/null &&
+      desktop -qs restart 1> /dev/null
 
-  if has_failed; then
-    log 'Failed to reload desktop.'
+    if has_failed; then
+      log 'Failed to reload desktop.'
+    fi
   fi
 
   log 'Layout has been restored.'
@@ -1304,4 +1306,40 @@ restore_colors () {
   fi
 
   log 'Color settings have been restored.'
+}
+
+# Detects if the primary output is set to a disconnected
+# inactive output and if so, sets the primary to the first
+# connected and active output.
+fix_primary () {
+  local primary=''
+  primary="$(find_outputs 'primary' | jq -cer '.[0]')" || return 1
+
+  if is_active "${primary}"; then
+    log 'Primary is already set.'
+    return 2
+  fi
+
+  local active_outputs=''
+  active_outputs="$(find_outputs 'active')" || return 1
+
+  local len=0
+  len="$(echo "${active_outputs}" | jq -cer '.lenght')" || return 1
+
+  if is_true "${len} = 0"; then
+    log 'No active outputs have found.'
+    return 2
+  fi
+
+  local new_primary=''
+  new_primary="$(echo "${active_outputs}" | jq -cer '.[0] | .device_name')" || return 1
+
+  xrandr --output "${new_primary}" --primary
+
+  if has_failed; then
+    log "Failed to set output ${new_primary} as primary."
+    return 2
+  fi
+
+  log "Primary set to output ${new_primary}."
 }
