@@ -47,6 +47,7 @@ show_help () {
     '' '' \
     'set mode <name> <resolution> <rate>' 'Set the mode of an output.' \
     'set primary <name>' 'Set an output as primary.' \
+    'fix primary' 'Fixes primary set to inactive or disconnected output.' \
     'set on|off <name>' 'Activate or de-activate an output.' \
     'rotate output <name> <mode>' 'Rotate an output to normal, right, left or inverted.' \
     'reflect output <name> <mode>' 'Reflect an output to normal, x, y or xy.' \
@@ -87,6 +88,7 @@ execute () {
     'set layout') set_layout "${3}" "${@:4}";;
     'set mode') set_mode "${3}" "${4}" "${5}";;
     'set primary') set_primary "${3}";;
+    'fix primary') fix_primary;;
     'set on') set_on "${3}";;
     'set off') set_off "${3}";;
     'set color') set_color "${3}" "${4}";;
