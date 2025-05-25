@@ -937,15 +937,17 @@ restore_layout () {
     return 2
   fi
 
-  # Give time to xrandr to settle
-  sleep 1
+  if is_empty "${NO_DESKTOP_RESTART}" || not_equals "${NO_DESKTOP_RESTART}" 'true'; then
+    # Give time to xrandr to settle
+    sleep 1
 
-  # Make sure desktop workspaces and other modules are fixed
-  desktop -qs fix workspaces 1> /dev/null &&
-    desktop -qs restart 1> /dev/null
+    # Make sure desktop workspaces and other modules are fixed
+    desktop -qs fix workspaces 1> /dev/null &&
+      desktop -qs restart 1> /dev/null
 
-  if has_failed; then
-    log 'Failed to reload desktop.'
+    if has_failed; then
+      log 'Failed to reload desktop.'
+    fi
   fi
 
   log 'Layout has been restored.'

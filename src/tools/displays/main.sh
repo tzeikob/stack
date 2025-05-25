@@ -118,6 +118,7 @@ run () {
         return 0;;
      'q') ON_QUIET_MODE='true';;
      's') ON_SCRIPT_MODE='true';;
+     'n') NO_DESKTOP_RESTART='true';;
      *)
       log "Ooops, invalid or unknown option -${OPTARG}!"
       beep 2
