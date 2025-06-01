@@ -532,7 +532,7 @@ install_drivers () {
       gpu_pkgs='nvidia-lts'
     fi
 
-    gpu_pkgs+=' nvidia-utils nvidia-settings'
+    gpu_pkgs+=' nvidia-utils'
   elif equals "${gpu_vendor}" 'amd'; then
     gpu_pkgs='xf86-video-amdgpu'
   elif equals "${gpu_vendor}" 'intel'; then
