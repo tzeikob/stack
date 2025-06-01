@@ -609,10 +609,10 @@ install_aur_packages () {
 
   local previous_dir=${PWD}
 
-  git clone https://github.com/p-gen/smenu.git ||
+  git clone https://github.com/p-gen/smenu.git /tmp/smenu ||
     abort ERROR 'Failed to clone smenu git repository.'
   
-  cd smenu
+  cd /tmp/smenu
 
   ./build.sh ||
     abort ERROR 'Failed to build smenu package.'
@@ -620,7 +620,7 @@ install_aur_packages () {
   make install ||
     abort ERROR 'Failed to install smenu package.'
   
-  cd ${previous_dir} && rm -rf smenu
+  cd ${previous_dir} && rm -rf /tmp/smenu
   
   log INFO 'Package smenu has been installed.'
 
