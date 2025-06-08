@@ -629,7 +629,7 @@ install_source_packages () {
   
   install_smenu
 
-  log "Source packages have been installed"
+  log "Source packages have been installed."
 }
 
 # Sets up the Xorg display server packages.

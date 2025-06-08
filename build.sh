@@ -64,7 +64,7 @@ copy_iso_profile () {
 
 # Adds and removes all the official packages the live media
 # depends on, by declaring them into the packages.x86_64 file.
-declare_official_packages () {
+declare_packages () {
   log INFO 'Adding official packages in packages.x86_64 file...'
 
   # Collect all the official packages the live media needs
@@ -95,7 +95,7 @@ declare_official_packages () {
 # Builds and adds all the AUR packages the live media depends
 # on, into the packages file via local custom repositories.
 build_aur_packages () {
-  log INFO 'Building the AUR packages...'
+  log INFO 'Building AUR packages...'
 
   local previous_dir=${PWD}
 
@@ -105,7 +105,7 @@ build_aur_packages () {
     abort ERROR 'Failed to create the local repo folder.'
 
   # Collect all the AUR packages the live media needs
-  local names=(yay smenu)
+  local names=(yay)
   names+=($(grep -E '(bld|all):aur' packages.x86_64 | cut -d ':' -f 3)) ||
     abort ERROR 'Failed to read packages from packages.x86_64 file.'
 
@@ -114,10 +114,10 @@ build_aur_packages () {
   for name in "${names[@]}"; do
     # Build the next AUR package
     git clone "https://aur.archlinux.org/${name}.git" "${AUR_DIR}/${name}" ||
-      abort ERROR "Failed to clone the AUR ${name} package repo."
+      abort ERROR "Failed to clone AUR ${name} package repo."
   
     cd "${AUR_DIR}/${name}"
-    makepkg || abort ERROR "Failed to build the AUR ${name} package."
+    makepkg || abort ERROR "Failed to build AUR ${name} package."
     cd ${previous_dir}
 
     # Create the custom local repo database
@@ -127,7 +127,7 @@ build_aur_packages () {
     if has_failed; then
       cp ${AUR_DIR}/${name}/${name}-*-any.pkg.tar.zst "${repo_home}" &&
         repo-add "${repo_home}/custom.db.tar.gz" ${repo_home}/${name}-*-any.pkg.tar.zst ||
-        abort ERROR "Failed to add the ${name} package into the custom repository."
+        abort ERROR "Failed to add ${name} package into the custom repository."
     fi
 
     local pkgs_file="${PROFILE_DIR}/packages.x86_64"
@@ -142,7 +142,7 @@ build_aur_packages () {
   done
 
   rm -rf "${AUR_DIR}" ||
-    abort ERROR 'Failed to remove the AUR temporary folder.'
+    abort ERROR 'Failed to remove AUR temporary folder.'
 
   local pacman_conf="${PROFILE_DIR}/pacman.conf"
 
@@ -155,6 +155,40 @@ build_aur_packages () {
     abort ERROR 'Failed to define the custom local repo.'
 
   log INFO 'AUR packages set in packages.x86_64 file.'
+}
+
+# Builds third party packages from source.
+build_source_packages () {
+  local install_smenu
+  install_smenu () {
+    log INFO 'Building smenu package...'
+
+    local root_fs_local=''
+    root_fs_local="$(realpath ${ROOT_FS}/usr/local)"
+
+    local previous_dir=${PWD}
+
+    git clone https://github.com/p-gen/smenu.git /tmp/smenu ||
+      abort ERROR 'Failed to clone smenu git repository.'
+    
+    cd /tmp/smenu
+
+    ./build.sh --prefix="${root_fs_local}" ||
+      abort ERROR 'Failed to build smenu package.'
+    
+    make install && rm -rf "${root_fs_local}/share/man" ||
+      abort ERROR 'Failed to install smenu package.'
+    
+    cd ${previous_dir} && rm -rf /tmp/smenu
+    
+    log INFO 'Package smenu has been built.'
+  }
+
+  log "Building source packages..."
+  
+  install_smenu
+
+  log "Source packages have been built."
 }
 
 # Syncs the root files to new system.
@@ -820,8 +854,7 @@ set_file_permissions () {
     '/root/.config/cool-retro-term/reset 0:0:755'
     '/opt/stack/commons/ 0:0:755'
     '/opt/stack/tools/ 0:0:755'
-    '/usr/local/bin/stack 0:0:755'
-    '/usr/local/bin/tqdm 0:0:755'
+    '/usr/local/bin/ 0:0:755'
   )
 
   local perm=''
@@ -881,8 +914,9 @@ log INFO 'Starting the build process...'
 init &&
   check_build_deps &&
   copy_iso_profile &&
-  declare_official_packages &&
+  declare_packages &&
   build_aur_packages &&
+  build_source_packages &&
   sync_root_files &&
   sync_commons &&
   sync_tools &&

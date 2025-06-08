@@ -77,7 +77,7 @@ install_source_packages () {
   
   install_smenu
 
-  log "Source packages have been installed"
+  log "Source packages have been installed."
 }
 
 # Fixes global configuration variables.
