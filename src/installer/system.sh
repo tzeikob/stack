@@ -547,9 +547,9 @@ install_drivers () {
   log INFO 'System drivers have been installed.'
 }
 
-# Installs the base packages of the system.
-install_base_packages () {
-  log INFO 'Installing the base packages...'
+# Installs packages from the official repositories.
+install_packages () {
+  log INFO 'Installing official packages...'
 
   local pkgs=()
   pkgs+=($(grep -E '(stp|all):pac' packages.x86_64 | cut -d ':' -f 3)) ||
@@ -559,13 +559,13 @@ install_base_packages () {
   local yes=4
 
   pacman -S --needed --noconfirm --ask ${yes} ${pkgs[@]} 2>&1 ||
-    abort ERROR 'Failed to install base packages.'
+    abort ERROR 'Failed to install official packages.'
 
-  log INFO 'Base packages have been installed.'
+  log INFO 'Official packages have been installed.'
 }
 
-# Installs the user repository package manager.
-install_aur_package_manager () {
+# Installs the packages from the AUR repositories.
+install_aur_packages () {
   log INFO 'Installing the AUR package manager...'
 
   local user_name=''
@@ -585,46 +585,51 @@ install_aur_package_manager () {
     abort ERROR 'Failed to install the AUR package manager.'
 
   log INFO 'AUR package manager has been installed.'
-}
 
-# Installs all the AUR packages the system depends on.
-install_aur_packages () {
   log INFO 'Installing AUR packages...'
 
   local pkgs=()
   pkgs+=($(grep -E '(stp|all):aur' packages.x86_64 | cut -d ':' -f 3)) ||
     abort ERROR 'Failed to read packages from packages.x86_64 file.'
   
-  local user_name=''
-  user_name="$(jq -cer '.user_name' "${SETTINGS_FILE}")" ||
-    abort ERROR 'Unable to read user_name setting.'
-  
   # Set yes as default to prompt on replacing conflicted packages
   local yes=4
 
   sudo -u "${user_name}" yay -S --needed --noconfirm --removemake --mflags --nocheck --ask ${yes} ${pkgs[@]} 2>&1 ||
     abort ERROR 'Failed to install AUR packages.'
-  
-  log INFO 'Installing smenu package from source.'
-
-  local previous_dir=${PWD}
-
-  git clone https://github.com/p-gen/smenu.git /tmp/smenu ||
-    abort ERROR 'Failed to clone smenu git repository.'
-  
-  cd /tmp/smenu
-
-  ./build.sh ||
-    abort ERROR 'Failed to build smenu package.'
-  
-  make install ||
-    abort ERROR 'Failed to install smenu package.'
-  
-  cd ${previous_dir} && rm -rf /tmp/smenu
-  
-  log INFO 'Package smenu has been installed.'
 
   log INFO 'AUR packages have been installed.'
+}
+
+# Installs packages from third party source repositories.
+install_source_packages () {
+  local install_smenu
+  install_smenu () {
+    log INFO 'Installing smenu package...'
+
+    local previous_dir=${PWD}
+
+    git clone https://github.com/p-gen/smenu.git /tmp/smenu ||
+      abort ERROR 'Failed to clone smenu git repository.'
+    
+    cd /tmp/smenu
+
+    ./build.sh ||
+      abort ERROR 'Failed to build smenu package.'
+    
+    make install ||
+      abort ERROR 'Failed to install smenu package.'
+    
+    cd ${previous_dir} && rm -rf /tmp/smenu
+    
+    log INFO 'Package smenu has been installed.'
+  }
+
+  log "Installing source packages..."
+  
+  install_smenu
+
+  log "Source packages have been installed"
 }
 
 # Sets up the Xorg display server packages.
@@ -1178,9 +1183,9 @@ set_users &&
   boost_package_builds &&
   sync_package_databases &&
   install_drivers &&
-  install_base_packages &&
-  install_aur_package_manager &&
+  install_packages &&
   install_aur_packages &&
+  install_source_packages &&
   setup_display_server &&
   setup_screen_locker &&
   setup_boot_loader &&

@@ -21,32 +21,63 @@ sync_package_databases () {
   log INFO 'Package databases have been synced.'
 }
 
-# Installs new official package dependencies.
-install_official_packages () {
-  log INFO 'Installing new official packages...'
+# Installs or upgrades packages from the official repositories.
+install_packages () {
+  log INFO 'Installing official packages...'
 
   local pkgs=()
   pkgs+=($(grep -E '(stp|all):pac' packages.x86_64 | cut -d ':' -f 3)) ||
     abort ERROR 'Failed to read packages from packages.x86_64 file.'
 
   sudo pacman -S --needed --noconfirm ${pkgs[@]} 2>&1 ||
-    abort ERROR 'Failed to install new base packages.'
+    abort ERROR 'Failed to install official packages.'
 
-  log INFO 'New official packages have been installed.'
+  log INFO 'Official packages have been installed.'
 }
 
-# Installs new AUR package dependencies.
+# Installs or upgrades packages from the AUR repositories.
 install_aur_packages () {
-  log INFO 'Installing new AUR packages...'
+  log INFO 'Installing AUR packages...'
 
   local pkgs=()
   pkgs+=($(grep -E '(stp|all):aur' packages.x86_64 | cut -d ':' -f 3)) ||
     abort ERROR 'Failed to read packages from packages.x86_64 file.'
 
   yay -S --needed --noconfirm --removemake ${pkgs[@]} 2>&1 ||
-    abort ERROR 'Failed to install new AUR packages.'
+    abort ERROR 'Failed to install AUR packages.'
   
-  log INFO 'New AUR packages have been installed.'
+  log INFO 'AUR packages have been installed.'
+}
+
+# Installs or upgrades packages from third party source repositories.
+install_source_packages () {
+  local install_smenu
+  install_smenu () {
+    log INFO 'Installing smenu package...'
+
+    local previous_dir=${PWD}
+
+    git clone https://github.com/p-gen/smenu.git /tmp/smenu ||
+      abort ERROR 'Failed to clone smenu git repository.'
+    
+    cd /tmp/smenu
+
+    ./build.sh ||
+      abort ERROR 'Failed to build smenu package.'
+    
+    sudo make install ||
+      abort ERROR 'Failed to install smenu package.'
+    
+    cd ${previous_dir} && rm -rf /tmp/smenu
+    
+    log INFO 'Package smenu has been installed.'
+  }
+
+  log "Installing source packages..."
+  
+  install_smenu
+
+  log "Source packages have been installed"
 }
 
 # Fixes global configuration variables.
@@ -252,8 +283,9 @@ update_hash_file () {
 log INFO 'Starting the upgrade process...'
 
 sync_package_databases &&
-  install_official_packages &&
+  install_packages &&
   install_aur_packages &&
+  install_source_packages &&
   fix_config_values &&
   fix_logs_home &&
   update_root_files &&
