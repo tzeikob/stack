@@ -55,7 +55,7 @@ resolve_status () {
 
   status+="\"kernel\": \"${kernel}\","
 
-  status+="\"shell\": \"Bash ${BASH_VERSION}\")"
+  status+="\"shell\": \"Bash ${BASH_VERSION}\""
 
   echo "{${status}}"
 }
