@@ -22,7 +22,7 @@ resolve_system_status () {
 
   status+="\"kernel\": \"${kernel}\","
 
-  status+="\"shell\": \"Bash ${BASH_VERSION}\")"
+  status+="\"shell\": \"${SHELL}\")"
 
   status="{${status}}"
   

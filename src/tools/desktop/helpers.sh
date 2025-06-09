@@ -53,9 +53,7 @@ resolve_status () {
   local kernel=''
   kernel="$(uname -a | jc --uname | jq -cer '.kernel_release')" || return 1
 
-  status+="\"kernel\": \"${kernel}\","
-
-  status+="\"shell\": \"Bash ${BASH_VERSION}\""
+  status+="\"kernel\": \"${kernel}\""
 
   echo "{${status}}"
 }

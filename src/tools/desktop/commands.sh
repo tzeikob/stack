@@ -16,7 +16,6 @@ show_status () {
   local query=''
   query+='\(.os         | lbln("System"))'
   query+='\(.kernel     | lbln("Kernel"))'
-  query+='\(.shell      | lbln("Shell"))'
   query+='\(.server     | lbln("Graphics"))'
   query+='\n'
   query+='\(.compositor | lbln("Compositor"))'
