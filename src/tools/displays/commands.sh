@@ -1324,7 +1324,7 @@ fix_primary () {
   active_outputs="$(find_outputs 'active')" || return 1
 
   local len=0
-  len="$(echo "${active_outputs}" | jq -cer '.lenght')" || return 1
+  len="$(echo "${active_outputs}" | jq -cer 'length')" || return 1
 
   if is_true "${len} = 0"; then
     log 'No active outputs have found.'
