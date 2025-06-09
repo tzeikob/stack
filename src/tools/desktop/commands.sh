@@ -22,9 +22,6 @@ show_status () {
   query+='\(.compositor | lbln("Compositor"))'
   query+='\(.wm         | lbln("Windows"))'
   query+='\(.bars       | lbln("Bars"))'
-  query+='\(.theme      | lbln("Theme"))'
-  query+='\(.icons      | lbln("Icons"))'
-  query+='\(.wallpaper  | lbl("Wallpaper"; "none"))'
 
   resolve_status | jq -cer --arg SPC 13 "\"${query}\"" || return 1
 }

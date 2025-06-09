@@ -45,32 +45,19 @@ resolve_status () {
 
   status+="\"bars\": \"Polybar ${bars}\","
 
-  if file_exists "${DESKTOP_SETTINGS}"; then
-    local query='.wallpaper | if . then "\(.name) [\(.mode | downcase)]" else "none" end'
+  local os=''
+  os="$(uname -a | jc --uname | jq -cer '"Stack Linux \(.machine)"')" || return 1
 
-    local wallpaper=''
-    wallpaper="$(jq -cr "${query}" "${DESKTOP_SETTINGS}")" || return 1
+  status+="\"os\": \"${os}\","
 
-    status+="\"wallpaper\": \"${wallpaper}\","
-  fi
+  local kernel=''
+  kernel="$(uname -a | jc --uname | jq -cer '.kernel_release')" || return 1
 
-  local fields='OS|Kernel|Shell|Theme|Icons'
+  status+="\"kernel\": \"${kernel}\","
 
-  status+="$(neofetch --off --stdout |
-    awk -F':' '/^('"${fields}"')/{
-      gsub(/^[ \t]+/,"",$2)
-      gsub(/[ \t]+$/,"",$2)
+  status+="\"shell\": \"Bash ${BASH_VERSION}\")"
 
-      frm = "\"%s\": \"%s\","
-      printf frm, tolower($1), $2
-    }'
-  )" || return 1
-
-  # Remove the last extra comma after the last field
-  status="${status:+${status::-1}}"
-  status="{${status}}"
-
-  echo "${status}"
+  echo "{${status}}"
 }
 
 # Returns the list of any wallpapers found under

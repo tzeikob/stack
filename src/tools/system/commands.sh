@@ -25,7 +25,7 @@ show_status () {
   query+='\(.pacman  | lbln("Pacman"))'
   query+='\(.yay     | lbln("Yay"))'
 
-  find_system_status | jq -cer --arg SPC ${space} "\"${query}\"" || return 1
+  resolve_system_status | jq -cer --arg SPC ${space} "\"${query}\"" || return 1
 
   local query=''
   query+='\(.mirrors              | lbln("Mirrors"))'

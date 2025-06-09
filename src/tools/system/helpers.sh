@@ -7,23 +7,22 @@ source src/commons/validators.sh
 # Returns various info of the system status.
 # Outputs:
 #  A json object of system data.
-find_system_status () {
+resolve_system_status () {
   local fields='OS|Kernel|Shell'
 
   local status=''
 
-  status+="$(neofetch --off --stdout |
-    awk -F':' '/^('"${fields}"')/{
-      gsub(/^[ \t]+/,"",$2)
-      gsub(/[ \t]+$/,"",$2)
+  local os=''
+  os="$(uname -a | jc --uname | jq -cer '"Stack Linux \(.machine)"')" || return 1
 
-      frm="\"%s\":\"%s\","
-      printf frm, tolower($1), $2
-    }'
-  )" || return 1
+  status+="\"os\": \"${os}\","
 
-  # Remove the last extra comma after the last field
-  status="${status:+${status::-1}}"
+  local kernel=''
+  kernel="$(uname -a | jc --uname | jq -cer '.kernel_release')" || return 1
+
+  status+="\"kernel\": \"${kernel}\","
+
+  status+="\"shell\": \"Bash ${BASH_VERSION}\")"
 
   status="{${status}}"
   
