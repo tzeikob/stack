@@ -127,7 +127,6 @@ stp:pac:pipewire-jack
 stp:pac:nnn
 stp:pac:fzf
 stp:pac:figlet
-stp:aur:figlet-fonts
 stp:aur:figlet-fonts-extra
 stp:aur:xautolock
 stp:pac:python-cairo
