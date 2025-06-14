@@ -28,8 +28,11 @@ install_packages () {
   local pkgs=()
   pkgs+=($(grep -E '(stp|all):pac' packages.x86_64 | cut -d ':' -f 3)) ||
     abort ERROR 'Failed to read packages from packages.x86_64 file.'
+  
+  # Set yes as default to prompt on replacing conflicted packages
+  local yes=4
 
-  sudo pacman -S --needed --noconfirm ${pkgs[@]} 2>&1 ||
+  sudo pacman -S --needed --noconfirm --ask ${yes} ${pkgs[@]} 2>&1 ||
     abort ERROR 'Failed to install official packages.'
 
   log INFO 'Official packages have been installed.'
@@ -42,8 +45,11 @@ install_aur_packages () {
   local pkgs=()
   pkgs+=($(grep -E '(stp|all):aur' packages.x86_64 | cut -d ':' -f 3)) ||
     abort ERROR 'Failed to read packages from packages.x86_64 file.'
+  
+  # Set yes as default to prompt on replacing conflicted packages
+  local yes=4
 
-  yay -S --needed --noconfirm --removemake ${pkgs[@]} 2>&1 ||
+  yay -S --needed --noconfirm --removemake --ask ${yes} ${pkgs[@]} 2>&1 ||
     abort ERROR 'Failed to install AUR packages.'
   
   log INFO 'AUR packages have been installed.'
