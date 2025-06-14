@@ -11,7 +11,7 @@ POWER_SETTINGS="${CONFIG_HOME}/power.json"
 # Outputs:
 #  A json object of ac power data.
 find_adapter () {
-  acpi -a | jc --acpi | jq -cer '.[0]' || return 1
+  acpi -a | jc --acpi | jq -cr 'if .[0] then . else "" end' || return 1
 }
 
 # Finds the battery power data.

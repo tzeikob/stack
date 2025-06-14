@@ -5,53 +5,39 @@ set -o pipefail
 source /opt/stack/commons/error.sh
 source /opt/stack/commons/math.sh
 source /opt/stack/commons/validators.sh
+source /opt/stack/tools/power/helpers.sh
 
 LOGS='/var/log/stack/bars/power.log'
 
 # Reads the system's power and battery data and
 # prints the current status of power suplly.
 run () {
-  local batteries=''
-  batteries="$(acpi -b -i | jc --acpi 2> "${LOGS}")"
+  local adapter=''
+  adapter="$(find_adapter)"
 
   if has_failed; then
     echo ' Err!'
     return 0
   fi
 
-  # Check if the system has not a battery device
-  local query='length > 0'
+  if is_empty "${adapter}"; then
+    echo ' Online'
+    return 0
+  fi
 
-  local has_battery='false'
-  has_battery="$(echo "${batteries}" | jq -cr "${query}")"
+  local battery=''
+  battery="$(find_battery)"
 
   if has_failed; then
     echo ' Err!'
     return 0
   fi
 
-  # Read the AC adapter status in case no battery found
-  if is_not_true "${has_battery}"; then
-    local query='if length > 0 then .[0]."on-line" else false end'
-
-    local is_online='true'
-    is_online="$(acpi -a | jc --acpi | jq -cr "${query}")"
-
-    if has_failed || is_not_true "${is_online}"; then
-      echo ' Err!'
-    else
-      echo ' Online'
-    fi
-
-    return 0
-  fi
-
-  # Otherwise resolve battery status
   local state=''
-  state="$(echo "${batteries}" | jq -cr '.[0].state')"
+  state="$(echo "${battery}" | jq -cr '.state')"
 
   local charge=''
-  charge="$(echo "${batteries}" | jq -cr '.[0].charge_percent')"
+  charge="$(echo "${battery}" | jq -cr '.charge_percent')"
 
   local output=''
 

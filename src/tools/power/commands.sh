@@ -14,9 +14,16 @@ source src/tools/power/helpers.sh
 show_status () {
   local space=15
 
-  local query='."on-line" | on_off | lbl("Adapter")'
+  local adapter=''
+  adapter="$(find_adapter)" || return 1
 
-  find_adapter | jq -cer --arg SPC ${space} "${query}" || return 1
+  if is_not_empty "${adapter}"; then
+    local query='."on-line" | on_off | lbl("Adapter")'
+
+    echo "${adapter}" | jq -cer --arg SPC ${space} "${query}" || return 1
+  else
+    echo 'true' | jq -cer --arg SPC ${space} '. | on_off | lbl("Adapter")'
+  fi
 
   local query='[.[] | select(.unit == "acpid.service")][0] | .active | olbl("ACPID")'
 
@@ -47,24 +54,26 @@ show_status () {
   local power_settings=''
   power_settings="$(find_login_power_settings)" || return 1
 
-  local query=''
-  query+='\(.docked   | lbln("Docked"))'
-  query+='\(.lid_down | lbln("Lid Down"))'
+  if is_not_empty "${adapter}"; then
+    local query=''
+    query+='\(.docked   | lbln("Docked"))'
+    query+='\(.lid_down | lbln("Lid Down"))'
 
-  echo "${power_settings}" | jq -cer --arg SPC ${space} "\"${query}\"" || return 1
+    echo "${power_settings}" | jq -cer --arg SPC ${space} "\"${query}\"" || return 1
 
-  local query=''
-  query+='\(.battery | yes_no                                                 | lbln("Battery"))'
-  query+='\(.state | downcase                                                 | lbln("State"))'
-  query+='\(.charge_percent | unit("%")                                       | lbln("Charge"))'
-  query+='\(.design_capacity_mah | unit("mAh")                                | lbln("Capacity"))'
-  query+='\(.current_now | unit("mAh")                                        | lbln("Current"))'
-  query+='\(.charge_now | unit("mAh")                                         | lbln("Load"))'
-  query+='\("[\(.start_charge_at | dft(0))%, \(.stop_charge_at | dft(100))%]" | lbln("Thresholds"))'
+    local query=''
+    query+='\(.battery | yes_no                                                 | lbln("Battery"))'
+    query+='\(.state | downcase                                                 | lbln("State"))'
+    query+='\(.charge_percent | unit("%")                                       | lbln("Charge"))'
+    query+='\(.design_capacity_mah | unit("mAh")                                | lbln("Capacity"))'
+    query+='\(.current_now | unit("mAh")                                        | lbln("Current"))'
+    query+='\(.charge_now | unit("mAh")                                         | lbln("Load"))'
+    query+='\("[\(.start_charge_at | dft(0))%, \(.stop_charge_at | dft(100))%]" | lbl("Thresholds"))'
 
-  query="if . then \"${query}\" end"
+    query="if . then \"${query}\" end"
 
-  find_battery | jq -cer --arg SPC ${space} "${query}" || return 1
+    find_battery | jq -cer --arg SPC ${space} "${query}" || return 1
+  fi
 
   local query=''
   query+='\(.on_power     | lbln("On Power"))'
@@ -75,6 +84,7 @@ show_status () {
   query+='\(.on_docked    | lbln("On Docked"))'
   query+='\(.on_idle      | lbl("On Idle"))'
 
+  echo
   echo "${power_settings}" | jq -cer --arg SPC ${space} "\"${query}\"" || return 1
 }
 
@@ -285,6 +295,14 @@ set_charging () {
 
   local start="${1}"
   local stop="${2}"
+
+  local adapter=''
+  adapter="$(find_adapter)" || return 1
+
+  if is_empty "${adapter}"; then
+    log 'No battery found on system.'
+    return 2
+  fi
 
   if is_not_given "${start}"; then
     log 'Missing the charging start threshold.'
