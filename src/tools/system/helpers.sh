@@ -8,8 +8,6 @@ source src/commons/validators.sh
 # Outputs:
 #  A json object of system data.
 resolve_system_status () {
-  local fields='OS|Kernel|Shell'
-
   local status=''
 
   local os=''
@@ -20,9 +18,7 @@ resolve_system_status () {
   local kernel=''
   kernel="$(uname -a | jc --uname | jq -cer '.kernel_release')" || return 1
 
-  status+="\"kernel\": \"${kernel}\","
-
-  status+="\"shell\": \"${SHELL}\")"
+  status+="\"kernel\": \"${kernel}\""
 
   status="{${status}}"
   

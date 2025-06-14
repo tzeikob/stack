@@ -19,7 +19,6 @@ show_status () {
   local query=''
   query+='\(.os      | lbln("System"))'
   query+='\(.kernel  | lbln("Kernel"))'
-  query+='\(.shell   | lbln("Shell"))'
   query+='\(.stack   | olbln("Stack"))'
   query+='\(.libalpm | lbln("Libalpm"))'
   query+='\(.pacman  | lbln("Pacman"))'
