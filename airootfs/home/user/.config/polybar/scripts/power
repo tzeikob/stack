@@ -13,7 +13,7 @@ LOGS='/var/log/stack/bars/power.log'
 # prints the current status of power suplly.
 run () {
   local adapter=''
-  adapter="$(find_adapter)"
+  adapter="$(find_adapter 2> "${LOGS}")"
 
   if has_failed; then
     echo ' Err!'
@@ -26,7 +26,7 @@ run () {
   fi
 
   local battery=''
-  battery="$(find_battery)"
+  battery="$(find_battery 2> "${LOGS}")"
 
   if has_failed; then
     echo ' Err!'
