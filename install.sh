@@ -160,9 +160,10 @@ ask_user () {
 
     local trim='.|gsub("^\\s+|\\s+$";"")'
     local vendor="\(.vendor|if . then .|${trim} else empty end)"
+    local model="\(.model|if . then .|${trim} else empty end)"
 
     local value=''
-    value+="[\"${vendor}\", .rev, .serial, .size]|join(\" \")"
+    value+="[\"${vendor}\", \"${model}\", .size]|join(\" \")"
     value="\(${value}|if . != \"\" then \" [\(.|${trim})]\" else empty end)"
     value="\(.path)${value}"
 

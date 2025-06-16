@@ -688,7 +688,7 @@ pick_disk () {
   fi
 
   local key='key: .path'
-  local value='value: "\(.path)\(.vendor | trim | opt | append)\(.size | opt | append)"'
+  local value='value: "\(.path)\(.vendor | trim | opt | append)\(.model | trim | opt | append)\(.size | opt | append)"'
   local option="{${key}, ${value}}"
 
   local query="[.[] | ${option}]"
