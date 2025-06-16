@@ -53,7 +53,31 @@ resolve_status () {
   local kernel=''
   kernel="$(uname -a | jc --uname | jq -cer '.kernel_release')" || return 1
 
-  status+="\"kernel\": \"${kernel}\""
+  status+="\"kernel\": \"${kernel}\","
+
+  status+="$(cat "${HOME}/.config/picom/picom.conf" | awk '{
+    key=""
+    
+    if ($0 ~ /^backend/) {
+      key="backend"
+    } else if ($0 ~ /^vsync/) {
+      key="vsync"
+    } else {
+      next
+    }
+
+    n=split($0, a, "=");
+    
+    gsub(/^[ \t]+/,"",a[n]);
+    gsub(/[ \t]+$/,"",a[n]);
+    gsub(/[";]/,"",a[n]);
+
+    frm = "\"%s\": \"%s\","
+    printf frm, key, a[n]
+  }')" || return 1
+
+  # Remove last comma
+  status="${status:+${status::-1}}"
 
   echo "{${status}}"
 }

@@ -21,6 +21,9 @@ show_status () {
   query+='\(.compositor | lbln("Compositor"))'
   query+='\(.wm         | lbln("Windows"))'
   query+='\(.bars       | lbln("Bars"))'
+  query+='\n'
+  query+='\(.backend    | lbln("Backend"))'
+  query+='\(.vsync      | lbl("Vsync"))'
 
   resolve_status | jq -cer --arg SPC 13 "\"${query}\"" || return 1
 }
