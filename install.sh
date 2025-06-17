@@ -665,7 +665,7 @@ install () {
   local user_name='root'
 
   # Execute user related tasks as sudoer user
-  if match "${file_name}" '^(sdkits|apps)$'; then
+  if equals "${file_name}" 'apps'; then
     user_name="$(jq -cer '.user_name' "${SETTINGS_FILE}")"
 
     if has_failed; then
@@ -769,7 +769,6 @@ clean () {
     "/mnt/${LOGS}/diskpart.log" \
     "/mnt/${LOGS}/bootstrap.log" \
     "/mnt/${LOGS}/system.log" \
-    "/mnt/${LOGS}/sdkits.log" \
     "/mnt/${LOGS}/apps.log" >> "/mnt/${LOGS}/all.log" ||
     log 'Unable to reduce all logs into one file.'
 
@@ -796,7 +795,6 @@ init &&
   run bootstrap &&
   grant nopasswd &&
   install system &&
-  install sdkits &&
   install apps &&
   revoke nopasswd &&
   clean &&
