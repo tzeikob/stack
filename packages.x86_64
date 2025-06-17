@@ -104,6 +104,7 @@ all:pac:trash-cli
 all:pac:cool-retro-term
 all:pac:helix
 all:pac:firefox
+all:aur:google-chrome
 all:pac:torbrowser-launcher
 all:pac:ttf-font-awesome
 all:pac:noto-fonts-emoji
