@@ -53,28 +53,6 @@ install_node () {
   log INFO 'Node runtime engine has been installed.'
 }
 
-# Installs the deno javascript runtime engine.
-install_deno () {
-  log INFO 'Installing the deno runtime engine...'
-
-  sudo pacman -S --needed --noconfirm deno 2>&1 &&
-    log INFO 'Deno runtime engine has been installed.' ||
-    log WARN 'Failed to install deno.'  
-}
-
-# Installs the bun javascript runtime engine.
-install_bun () {
-  log INFO 'Installing the bun runtime engine...'
-
-  local url='https://bun.sh/install'
-
-  curl "${url}" -sSLo /tmp/bun-install.sh \
-    --connect-timeout 5 --max-time 15 --retry 3 --retry-delay 0 --retry-max-time 60 2>&1 &&
-    bash /tmp/bun-install.sh 2>&1 &&
-    log INFO 'Bun runtime engine has been installed.' ||
-    log WARN 'Failed to install bun.'
-}
-
 # Installs the go programming language.
 install_go () {
   log INFO 'Installing the go programming language...'
@@ -163,8 +141,6 @@ if equals "$(id -u)" 0; then
 fi
 
 install_node &&
-  install_deno &&
-  install_bun &&
   install_go &&
   install_rust &&
   install_docker ||

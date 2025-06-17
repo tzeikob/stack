@@ -55,42 +55,6 @@ install_dbeaver () {
     log WARN 'Failed to install dbeaver client.'
 }
 
-# Installs the discord.
-install_discord () {
-  log INFO 'Installing the discord...'
-
-  sudo pacman -S --needed --noconfirm discord 2>&1 &&
-    log INFO 'Discord has been installed.' ||
-    log WARN 'Failed to install discord.'
-}
-
-# Installs the slack.
-install_slack () {
-  log INFO 'Installing the slack...'
-
-  yay -S --needed --noconfirm --removemake slack-electron 2>&1 &&
-    log INFO 'Slack has been installed.' ||
-    log WARN 'Failed to install slack.'
-}
-
-# Installs the skype.
-install_skype () {
-  log INFO 'Installing the skype...'
-
-  yay -S --needed --noconfirm --removemake skypeforlinux-bin 2>&1 &&
-    log INFO 'Skype has been installed.' ||
-    log WARN 'Failed to install skype.'
-}
-
-# Installs the filezilla client.
-install_filezilla () {
-  log INFO 'Installing the filezilla client...'
-
-  sudo pacman -S --needed --noconfirm filezilla 2>&1 &&
-    log INFO 'Filezilla client has been installed.' ||
-    log WARN 'Failed to install filezilla.'
-}
-
 # Installs the virtual box.
 install_virtual_box () {
   log INFO 'Installing the virtual box...'
@@ -123,56 +87,6 @@ install_virtual_box () {
     log WARN 'Failed to add user to vboxusers group.'
 
   log INFO 'Virtual box has been installed.'
-}
-
-# Installs the vmware.
-install_vmware () {
-  log INFO 'Installing the vmware...'
-
-  sudo pacman -S --needed --noconfirm fuse2 gtkmm pcsclite libcanberra 2>&1 &&
-    yay -S --needed --noconfirm --removemake vmware-workstation 2>&1
-  
-  if has_failed; then
-    log WARN 'Failed to install vmware.'
-    return 0
-  fi
-
-  sudo systemctl enable vmware-networks.service 2>&1 &&
-    log INFO 'Service vmware-networks has been enabled.' ||
-    log WARN 'Failed to enable vmware-networks service.'
-
-  sudo systemctl enable vmware-usbarbitrator.service 2>&1 &&
-    log INFO 'Service vmware-usbarbitrator has been enabled.' ||
-    log WARN 'Failed to enabled vmware-usbarbitrator service.'
-  
-  log INFO 'Vmware has been installed.'
-}
-
-# Installs the libre office.
-install_libre_office () {
-  log INFO 'Installing the libre office...'
-
-  sudo pacman -S --needed --noconfirm libreoffice-fresh 2>&1 &&
-    log INFO 'Libre office has been installed.' ||
-    log WARN 'Failed to install libre office.'
-}
-
-# Installs the foliate epub reader.
-install_foliate () {
-  log INFO 'Installing foliate epub reader...'
-
-  sudo pacman -S --needed --noconfirm foliate poppler 2>&1 &&
-    log INFO 'Foliate epub reader has been installed.' ||
-    log WARN 'Failed to install foliate epub reader.'
-}
-
-# Installs the transmission torrent client.
-install_transmission () {
-  log INFO 'Installing the transmission torrent client...'
-
-  sudo pacman -S --needed --noconfirm transmission-cli transmission-gtk 2>&1 &&
-    log INFO 'Transmission torrent client has been installed.' ||
-    log WARN 'Failed to install transmission torrent client.'
 }
 
 # Prints dummy log lines to fake tqdm progress bar, when a
@@ -208,15 +122,7 @@ install_chrome &&
   install_compass &&
   install_studio3t &&
   install_dbeaver &&
-  install_discord &&
-  install_slack &&
-  install_skype &&
-  install_filezilla &&
-  install_virtual_box &&
-  install_vmware &&
-  install_libre_office &&
-  install_foliate &&
-  install_transmission ||
+  install_virtual_box ||
   abort
 
 log INFO 'Script apps.sh has finished.'

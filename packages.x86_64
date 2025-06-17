@@ -116,6 +116,7 @@ all:pac:s-tui
 all:pac:fzf
 all:aur:tdrop-git
 all:pac:os-prober
+all:pac:transmission-cli
 
 stp:pac:bluez
 stp:pac:bluez-utils
