@@ -627,48 +627,59 @@ ask_user () {
   sleep 2
 }
 
-# Executes a preparation task script with the given file name.
-# Arguments:
-#  file_name: the name of a task script
-run () {
-  local file_name="${1}"
+# Runs the disk partitioning tasks.
+run_diskpart () {
+  log 'Partitioning the system disk...'
 
-  local script_file="src/installer/${file_name}.sh"
-
-  log "Executing the ${file_name}.sh script..."
-
-  bash "${script_file}" 2>&1 >> "${LOG_FILE}"
+  bash src/installer/diskpart.sh 2>&1 >> "${LOG_FILE}"
 
   if has_failed; then
     abort -n 'Oops, a fatal error has been occurred.'
   fi
 
-  log "Script ${file_name}.sh has been fininshed."
+  log 'System disk partitions are ready.'
 }
 
-# Executes an installation script with the given file name via
-# chroot into the installation disk as root or sudoer user.
-# Arguments:
-#  file_name: the name of an installation script
-install () {
-  local file_name="${1}"
+# Runs the bootstrap installation tasks.
+run_bootstrap () {
+  log 'Installing the linux kernel...'
 
-  local script_file="src/installer/${file_name}.sh"
+  bash src/installer/bootstrap.sh 2>&1 >> "${LOG_FILE}"
 
-  local user_name='root'
-
-  # Execute user related tasks as sudoer user
-  if equals "${file_name}" 'apps'; then
-    user_name="$(jq -cer '.user_name' "${SETTINGS_FILE}")"
-
-    if has_failed; then
-      abort -n 'Unable to read user_name setting.'
-    fi
+  if has_failed; then
+    abort -n 'Oops, a fatal error has been occurred.'
   fi
 
-  log "Executing the ${file_name}.sh script..."
+  log 'Linux kernel has been installed.'
+}
 
-  local cmd="cd /stack && ./${script_file}"
+# Executes the base system installation and setup tasks.
+install_system () {
+  log 'Setting up the base system and packages...'
+
+  local cmd='cd /stack && ./src/installer/system.sh'
+
+  arch-chroot /mnt runuser -u root -- bash -c "${cmd}" 2>&1 >> "${LOG_FILE}"
+  
+  if has_failed; then
+    abort -n 'Oops, a fatal error has been occurred.'
+  fi
+
+  log 'System setup has been completed.'
+}
+
+# Executes the applications installation tasks.
+install_apps () {
+  log 'Installing the extra applications...'
+
+  local user_name=''
+  user_name="$(jq -cer '.user_name' "${SETTINGS_FILE}")"
+
+  if has_failed; then
+    abort -n 'Unable to read user_name setting.'
+  fi
+
+  local cmd='cd /stack && ./src/installer/apps.sh'
 
   arch-chroot /mnt runuser -u "${user_name}" -- bash -c "${cmd}" 2>&1 >> "${LOG_FILE}"
   
@@ -676,7 +687,7 @@ install () {
     abort -n 'Oops, a fatal error has been occurred.'
   fi
 
-  log "Script ${file_name}.sh has been fininshed."
+  log 'Applications have been installed.'
 }
 
 # Grants temporary sudo permissions.
@@ -760,11 +771,11 @@ init &&
   welcome &&
   detect &&
   ask_user &&
-  run diskpart &&
-  run bootstrap &&
+  run_diskpart &&
+  run_bootstrap &&
   grant nopasswd &&
-  install system &&
-  install apps &&
+  install_system &&
+  install_apps &&
   revoke nopasswd &&
   clean &&
   restart
