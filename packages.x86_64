@@ -67,7 +67,6 @@ all:pac:xf86-input-wacom
 all:pac:cairo
 all:pac:bc
 all:pac:xdotool
-all:pac:python-tqdm
 all:pac:libqalculate
 all:pac:iptables-nft
 all:pac:virtualbox-guest-utils

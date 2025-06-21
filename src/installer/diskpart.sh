@@ -415,27 +415,6 @@ report () {
     awk '{print " "$0}' || abort ERROR 'Unable to list disk info.'
 }
 
-# Prints dummy log lines to fake tqdm progress bar, when a
-# task gives less lines than it is expected to print and so
-# it resolves with fake lines to emulate completion.
-# Arguments:
-#  total: the log lines the task is expected to print
-# Outputs:
-#  Fake dummy log lines.
-resolve () {
-  local total="${1}"
-
-  local log_file='/var/log/stack/installer/diskpart.log'
-
-  local lines=0
-  lines=$(cat "${log_file}" | wc -l)
-
-  local fake_lines=0
-  fake_lines=$(calc "${total} - ${lines}")
-
-  seq ${fake_lines} | xargs -I -- echo '~'
-}
-
 log INFO 'Script diskpart.sh started.'
 log INFO 'Starting the disk partitioning...'
 
@@ -449,5 +428,3 @@ wipe_disk &&
   abort
 
 log INFO 'Script diskpart.sh has finished.'
-
-resolve 90 && sleep 2

@@ -134,27 +134,6 @@ restore_mirrors () {
     log WARN 'Unable to restore the pacman mirror list.'
 }
 
-# Prints dummy log lines to fake tqdm progress bar, when a
-# task gives less lines than it is expected to print and so
-# it resolves with fake lines to emulate completion.
-# Arguments:
-#  total: the log lines the task is expected to print
-# Outputs:
-#  Fake dummy log lines.
-resolve () {
-  local total="${1}"
-
-  local log_file='/var/log/stack/installer/bootstrap.log'
-
-  local lines=0
-  lines=$(cat "${log_file}" | wc -l)
-
-  local fake_lines=0
-  fake_lines=$(calc "${total} - ${lines}")
-
-  seq ${fake_lines} | xargs -I -- echo '~'
-}
-
 log INFO 'Script bootstrap.sh started.'
 log INFO 'Starting the bootstrap process...'
 
@@ -168,5 +147,3 @@ set_mirrors &&
   abort
 
 log INFO 'Script bootstrap.sh has finished.'
-
-resolve 1010 && sleep 2
