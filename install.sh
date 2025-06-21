@@ -691,53 +691,24 @@ install_apps () {
 }
 
 # Grants temporary sudo permissions.
-# Arguments:
-#  perm: a permission rule key
-grant () {
-  local key="${1}"
+grant_perms () {
+  local rule='%wheel ALL=(ALL:ALL) NOPASSWD: ALL'
 
-  local rule=''
-
-  case "${key}" in
-    'nopasswd')
-      rule='%wheel ALL=(ALL:ALL) NOPASSWD: ALL'
-      ;;
-    *)
-      abort -n 'Invalid permission key value.'
-      ;;
-  esac
-
-  # Grant permission
   sed -i "s/^# \(${rule}\)/\1/" /mnt/etc/sudoers
 
   if has_failed || ! grep -q "^${rule}" /mnt/etc/sudoers; then
-    abort -n "Failed to grant ${key} permission."
+    abort -n 'Failed to grant permissions.'
   fi
 }
 
 # Revokes temporarily granted sudo permissions.
-# Arguments:
-#  perm: a permission rule key
-revoke () {
-  local key="${1}"
+revoke_perms () {
+  local rule='%wheel ALL=(ALL:ALL) NOPASSWD: ALL'
 
-  local rule=''
-
-  case "${key}" in
-    'nopasswd')
-      rule='%wheel ALL=(ALL:ALL) NOPASSWD: ALL'
-      ;;
-    *)
-      log -n 'Invalid permission key value.'
-      return 0
-      ;;
-  esac
-
-  # Revoke permission
   sed -i "s/^\(${rule}\)/# \1/" /mnt/etc/sudoers
 
   if has_failed || ! grep -q "^# ${rule}" /mnt/etc/sudoers; then
-    log -n "Failed to revoke ${key} permission."
+    log -n 'Failed to revoke permissions.'
   fi
 }
 
@@ -773,9 +744,9 @@ init &&
   ask_user &&
   run_diskpart &&
   run_bootstrap &&
-  grant nopasswd &&
+  grant_perms &&
   install_system &&
   install_apps &&
-  revoke nopasswd &&
+  revoke_perms &&
   clean &&
   restart
