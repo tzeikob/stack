@@ -183,27 +183,6 @@ install_dbeaver () {
     log WARN 'Failed to install dbeaver client.'
 }
 
-# Prints dummy log lines to fake tqdm progress bar, when a
-# task gives less lines than it is expected to print and so
-# it resolves with fake lines to emulate completion.
-# Arguments:
-#  total: the log lines the task is expected to print
-# Outputs:
-#  Fake dummy log lines.
-resolve () {
-  local total="${1}"
-
-  local log_file='/var/log/stack/installer/apps.log'
-
-  local lines=0
-  lines=$(cat "${log_file}" | wc -l)
-
-  local fake_lines=0
-  fake_lines=$(calc "${total} - ${lines}")
-
-  seq ${fake_lines} | xargs -I -- echo '~'
-}
-
 log INFO 'Script apps.sh started.'
 log INFO 'Installing some extra apps...'
 
@@ -223,5 +202,3 @@ install_node &&
   abort
 
 log INFO 'Script apps.sh has finished.'
-
-resolve 1800 && sleep 2

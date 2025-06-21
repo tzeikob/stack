@@ -1140,27 +1140,6 @@ create_hash_file () {
   log INFO "Stack hash file set to ${branch} [${commit:0:5}]."
 }
 
-# Prints dummy log lines to fake tqdm progress bar, when a
-# task gives less lines than it is expected to print and so
-# it resolves with fake lines to emulate completion.
-# Arguments:
-#  total: the log lines the task is expected to print
-# Outputs:
-#  Fake dummy log lines.
-resolve () {
-  local total="${1}"
-
-  local log_file='/var/log/stack/installer/system.log'
-
-  local lines=0
-  lines=$(cat "${log_file}" | wc -l)
-
-  local fake_lines=0
-  fake_lines=$(calc "${total} - ${lines}")
-
-  seq ${fake_lines} | xargs -I -- echo '~'
-}
-
 log INFO 'Script system.sh started.'
 log INFO 'Installing the system...'
 
@@ -1201,5 +1180,3 @@ set_users &&
   abort
 
 log INFO 'Script system.sh has finished.'
-
-resolve 4500 && sleep 2

@@ -17,9 +17,6 @@ source src/commons/math.sh
 SETTINGS_FILE=./settings.json
 LOGS=/var/log/stack/installer
 
-BAR_FORMAT='{desc:10}  {percentage:3.0f}%|{bar}|  ET{elapsed}'
-BAR_COLOR='#d19d38'
-
 # Initializes the installer.
 init () {
   # Reset possibly existing log files
@@ -633,23 +630,16 @@ run () {
   local script_file="src/installer/${file_name}.sh"
   local log_file="${LOGS}/${file_name}.log"
 
-  local total=0
-  total=$(grep 'resolve [0-9].*' "${script_file}" | cut -d ' ' -f 2)
+  log "Executing the ${file_name}.sh script..."
 
-  if has_failed; then
-    log ERROR "Unable to read the total of ${file_name}.sh." >> "${log_file}"
-    abort -n "Unable to read the total of ${file_name}.sh."
-  fi
-
-  bash "${script_file}" 2>&1 |
-    tee -a "${log_file}" 2>&1 |
-    tqdm --desc "${file_name^}:" --ncols 50 --bar-format "${BAR_FORMAT}" \
-      --colour "${BAR_COLOR}" --total ${total} >> "${log_file}.tqdm"
+  bash "${script_file}" 2>&1 | tee -a "${log_file}" 2>&1
 
   if has_failed; then
     log ERROR "Script ${file_name}.sh has failed." >> "${log_file}"
     abort -n 'Oops, a fatal error has been occurred.'
   fi
+
+  log "Script ${file_name}.sh has been fininshed."
 }
 
 # Executes an installation script with the given file name via
@@ -674,25 +664,19 @@ install () {
     fi
   fi
 
-  local total=0
-  total=$(grep 'resolve [0-9].*' "${script_file}" | cut -d ' ' -f 2)
-
-  if has_failed; then
-    log ERROR "Unable to read the total of ${file_name}.sh." >> "${log_file}"
-    abort -n "Unable to read the total of ${file_name}.sh."
-  fi
+  log "Executing the ${file_name}.sh script..."
 
   local cmd="cd /stack && ./${script_file}"
 
   arch-chroot /mnt runuser -u "${user_name}" -- bash -c "${cmd}" 2>&1 |
-    tee -a "${log_file}" 2>&1 |
-    tqdm --desc "${file_name^}:" --ncols 50 --bar-format "${BAR_FORMAT}" \
-      --colour "${BAR_COLOR}" --total ${total} >> "${log_file}.tqdm"
+    tee -a "${log_file}" 2>&1
   
   if has_failed; then
     log ERROR "Script ${file_name}.sh has failed." >> "${log_file}"
     abort -n 'Oops, a fatal error has been occurred.'
   fi
+
+  log "Script ${file_name}.sh has been fininshed."
 }
 
 # Grants temporary sudo permissions.
