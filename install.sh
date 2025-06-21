@@ -14,14 +14,16 @@ source src/commons/validators.sh
 source src/commons/text.sh
 source src/commons/math.sh
 
+LOGS_HOME=/var/log/stack
+LOG_FILE="${LOGS_HOME}/install.log"
 SETTINGS_FILE=./settings.json
-LOGS=/var/log/stack/installer
+
 
 # Initializes the installer.
 init () {
-  # Reset possibly existing log files
-  rm -rf "${LOGS}"
-  mkdir -p "${LOGS}"
+  # Reset logs
+  mkdir -p "${LOGS_HOME}"
+  echo '' > "${LOG_FILE}"
 
   # Initialize settings file
   echo '{}' > "${SETTINGS_FILE}"
@@ -616,7 +618,11 @@ ask_user () {
   branch="$(git branch --show-current)" ||
     abort ERROR 'Failed to read the current branch.'
 
-  log "Installing Stack Linux ${branch}:"
+  if equals "${branch}" "master"; then
+    log "Installing Stack Linux:"
+  else
+    log "Installing Stack Linux branch ${branch}:"
+  fi
 
   sleep 2
 }
@@ -628,14 +634,12 @@ run () {
   local file_name="${1}"
 
   local script_file="src/installer/${file_name}.sh"
-  local log_file="${LOGS}/${file_name}.log"
 
   log "Executing the ${file_name}.sh script..."
 
-  bash "${script_file}" 2>&1 | tee -a "${log_file}" 2>&1
+  bash "${script_file}" 2>&1 >> "${LOG_FILE}"
 
   if has_failed; then
-    log ERROR "Script ${file_name}.sh has failed." >> "${log_file}"
     abort -n 'Oops, a fatal error has been occurred.'
   fi
 
@@ -650,7 +654,6 @@ install () {
   local file_name="${1}"
 
   local script_file="src/installer/${file_name}.sh"
-  local log_file="/mnt/${LOGS}/${file_name}.log"
 
   local user_name='root'
 
@@ -659,7 +662,6 @@ install () {
     user_name="$(jq -cer '.user_name' "${SETTINGS_FILE}")"
 
     if has_failed; then
-      log ERROR 'Unable to read the user_name setting.' >> "${log_file}"
       abort -n 'Unable to read user_name setting.'
     fi
   fi
@@ -668,11 +670,9 @@ install () {
 
   local cmd="cd /stack && ./${script_file}"
 
-  arch-chroot /mnt runuser -u "${user_name}" -- bash -c "${cmd}" 2>&1 |
-    tee -a "${log_file}" 2>&1
+  arch-chroot /mnt runuser -u "${user_name}" -- bash -c "${cmd}" 2>&1 >> "${LOG_FILE}"
   
   if has_failed; then
-    log ERROR "Script ${file_name}.sh has failed." >> "${log_file}"
     abort -n 'Oops, a fatal error has been occurred.'
   fi
 
@@ -736,29 +736,14 @@ clean () {
   rm -rf /mnt/stack ||
     log 'Unable to remove installation files.'
 
-  # Add into logs the selected installation settings
-  local settings=''
-  settings="$(jq 'del(.user_password, .root_password)' "${SETTINGS_FILE}")" &&
-    echo 'Installation settings set to:' > "${LOGS}/settings.log" &&
-    echo -e "${settings}\n" >> "${LOGS}/settings.log" ||
-    log 'Unable to read installation settings.'
-
   # Copy the installation log files to the new system
-  mkdir -p "/mnt/${LOGS}" &&
-    cp ${LOGS}/* "/mnt/${LOGS}" ||
-    log 'Unable to copy log files to the new system.'
+  mkdir -p "/mnt/${LOGS_HOME}" &&
+    cp ${LOG_FILE} "/mnt/${LOGS_HOME}" ||
+    log 'Unable to copy log file to the new system.'
 
-  # Append all logs in chronological order
-  cat "/mnt/${LOGS}/settings.log" \
-    "/mnt/${LOGS}/diskpart.log" \
-    "/mnt/${LOGS}/bootstrap.log" \
-    "/mnt/${LOGS}/system.log" \
-    "/mnt/${LOGS}/apps.log" >> "/mnt/${LOGS}/all.log" ||
-    log 'Unable to reduce all logs into one file.'
-
-  # Clean redundant log files from live media
-  rm -rf "${LOGS}" ||
-    log 'Unable to remove log files from live media.'
+  # Clean redundant log file from live media
+  rm -f "${LOG_FILE}" ||
+    log 'Unable to remove log file from live media.'
 }
 
 # Restarts the system.
