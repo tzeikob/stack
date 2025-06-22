@@ -609,15 +609,15 @@ install_source_packages () {
 
     local previous_dir=${PWD}
 
-    git clone https://github.com/p-gen/smenu.git /tmp/smenu ||
+    git clone https://github.com/p-gen/smenu.git /tmp/smenu 2>&1 ||
       abort ERROR 'Failed to clone smenu git repository.'
     
     cd /tmp/smenu
 
-    ./build.sh ||
+    ./build.sh 2>&1 ||
       abort ERROR 'Failed to build smenu package.'
     
-    make install ||
+    make install 2>&1 ||
       abort ERROR 'Failed to install smenu package.'
     
     cd ${previous_dir} && rm -rf /tmp/smenu
