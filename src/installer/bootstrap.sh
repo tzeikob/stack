@@ -69,20 +69,13 @@ update_keyring () {
   log INFO 'Keyring has been updated successfully.'
 }
 
-# Copies the neccessary pacman hook scripts needed for the
-# pacstrap process.
-copy_pacman_hooks () {
-  log INFO 'Copying pacman hook scripts to new system...'
-
-  rsync -av /etc/pacman.d/scripts /mnt/etc/pacman.d ||
-    abort ERROR 'Unable to copy pacman hook scripts.'
-
-  log INFO 'Pacman hook scripts have been copied.'
-}
-
 # Installs the linux kernel.
 install_kernel () {
   log INFO 'Installing the linux kernel...'
+
+  # Copy mandatory pacman scripts for pacstrap
+  rsync -av /etc/pacman.d/scripts /mnt/etc/pacman.d ||
+    abort ERROR 'Unable to copy pacman scripts.'
 
   local kernel=''
   kernel="$(jq -cer '.kernel' "${SETTINGS_FILE}")" ||
@@ -125,7 +118,6 @@ log INFO 'Starting the bootstrap process...'
 set_mirrors &&
   sync_package_databases &&
   update_keyring &&
-  copy_pacman_hooks &&
   install_kernel &&
   restore_mirrors ||
   abort
