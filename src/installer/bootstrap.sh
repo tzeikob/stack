@@ -110,21 +110,6 @@ install_kernel () {
   log INFO 'Linux kernel has been installed.'
 }
 
-# Copies the installation files to new system.
-copy_installation_files () {
-  log INFO 'Copying installation files to new system...'
-
-  local target='/mnt/stack'
-
-  rm -rf "${target}" &&
-    rsync -av /stack/ "${target}" ||
-    abort ERROR 'Unable to copy installation files.'
-
-  mkdir -p /mnt/var/log/stack/installer
-
-  log INFO 'Installation files have been copied.'
-}
-
 # Restores the pacman mirror list.
 restore_mirrors () {
   log INFO 'Restoring pacman mirror list...'
@@ -142,7 +127,6 @@ set_mirrors &&
   update_keyring &&
   copy_pacman_hooks &&
   install_kernel &&
-  copy_installation_files &&
   restore_mirrors ||
   abort
 

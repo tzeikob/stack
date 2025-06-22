@@ -657,6 +657,13 @@ run_bootstrap () {
 install_system () {
   log 'Setting up the base system and packages...'
 
+  local target='/mnt/stack'
+
+  rm -rf "${target}" && rsync -av /stack/ "${target}" ||
+    abort -n 'Oops, failed to copy installation files.'
+
+  mkdir -p /mnt/var/log/stack
+
   local cmd='cd /stack && ./src/installer/system.sh'
 
   arch-chroot /mnt runuser -u root -- bash -c "${cmd}" 2>&1 >> "${LOG_FILE}"
