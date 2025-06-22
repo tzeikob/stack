@@ -18,8 +18,8 @@ show_status () {
   local parts=''
   parts+='\(.path)'
   parts+='\(.fstype       | dft("UNKW") | uppercase | append)'
-  parts+='\(.size         | opt        | append)'
-  parts+='\(."fsuse%"     | opt        | append)'
+  parts+='\(.size         | opt         | append)'
+  parts+='\(."fsuse%"     | opt         | append)'
   parts=".[] | \"${parts}\""
 
   local query=''
@@ -76,9 +76,9 @@ show_disk () {
   local parts=''
   parts+='\(.path)'
   parts+='\(.fstype       | dft("UNKW") | uppercase | append)'
-  parts+='\(.size         | opt        | append)'
-  parts+='\(."fsuse%"     | opt        | append)'
-  parts+='\(.label        | opt        | enclose | append)'
+  parts+='\(.size         | opt         | append)'
+  parts+='\(."fsuse%"     | opt         | append)'
+  parts+='\(.label        | opt         | enclose | append)'
   parts=".[] | \"${parts}\""
 
   local query=''
@@ -132,7 +132,7 @@ show_partition () {
   query+='\(.name                              | lbln("Name"))'
   query+='\(.path                              | lbln("Path"))'
   query+='\(.mountpoint//.veracrypt.mountpoint | olbln("Mount"))'
-  query+='\(.fstype | dft("UNKW") | uppercase   | lbln("File System"))'
+  query+='\(.fstype | dft("UNKW") | uppercase  | lbln("File System"))'
   query+='\(.parttypename                      | olbln("Type"))'
   query+='\(.rm                                | lbln("Removable"))'
   query+='\(.ro                                | lbln("ReadOnly"))'
@@ -147,10 +147,10 @@ show_partition () {
   query+='\(.veracrypt.mode                    | olbln("Mode"))'
   query+='\(.veracrypt.block_size              | olbln("Block"))'
   query+='\(.veracrypt.device                  | olbln("Mapped"))'
-  query+='\(.size                              | lbln("Size"))'
-  query+='\(.fsavail                           | lbln("Free Space"))'
-  query+='\(.fsused                            | lbln("Used Space"))'
-  query+='\(."fsuse%"                          | lbl("Utilization"))'
+  query+='\(.fsavail                           | olbln("Free Space"))'
+  query+='\(.fsused                            | olbln("Used Space"))'
+  query+='\(."fsuse%"                          | olbln("Utilization"))'
+  query+='\(.size                              | lbl("Size"))'
 
   echo "${part}" | jq -cer --arg SPC 14 "\"${query}\"" || return 1
 }
@@ -182,25 +182,25 @@ show_rom () {
   rom="$(find_rom "${path}")" || return 1
 
   local query=''
-  query+='\(.name                            | lbln("Name"))'
-  query+='\(.path                            | lbln("Path"))'
-  query+='\(.mountpoint                      | olbl("Mount"))'
+  query+='\(.name                             | lbln("Name"))'
+  query+='\(.path                             | lbln("Path"))'
+  query+='\(.mountpoint                       | olbl("Mount"))'
   query+='\(.fstype | dft("UNKW") | uppercase | lbln("File System"))'
-  query+='\(.rm                              | lbln("Removable"))'
-  query+='\(.ro                              | lbln("ReadOnly"))'
-  query+='\(.tran                            | lbln("Transfer"))'
-  query+='\(.hotplug                         | lbln("HotPlug"))'
-  query+='\(.label                           | olbln("Label"))'
-  query+='\(.uuid                            | olbln("UUID"))'
-  query+='\(.vendor | trim                   | lbln("Vendor"))'
-  query+='\(.model                           | lbln("Model"))'
-  query+='\(.rev                             | lbln("Revision"))'
-  query+='\(.serial                          | lbln("Serial"))'
-  query+='\(.size                            | olbln("Size"))'
-  query+='\(.fsavail                         | olbln("Free Space"))'
-  query+='\(.fsused                          | olbln("Used Space"))'
-  query+='\(."fsuse%"                        | olbln("Utilization"))'
-  query+='\(.state                           | lbl("State"))'
+  query+='\(.rm                               | lbln("Removable"))'
+  query+='\(.ro                               | lbln("ReadOnly"))'
+  query+='\(.tran                             | lbln("Transfer"))'
+  query+='\(.hotplug                          | lbln("HotPlug"))'
+  query+='\(.label                            | olbln("Label"))'
+  query+='\(.uuid                             | olbln("UUID"))'
+  query+='\(.vendor | trim                    | lbln("Vendor"))'
+  query+='\(.model                            | lbln("Model"))'
+  query+='\(.rev                              | lbln("Revision"))'
+  query+='\(.serial                           | lbln("Serial"))'
+  query+='\(.size                             | olbln("Size"))'
+  query+='\(.fsavail                          | olbln("Free Space"))'
+  query+='\(.fsused                           | olbln("Used Space"))'
+  query+='\(."fsuse%"                         | olbln("Utilization"))'
+  query+='\(.state                            | lbl("State"))'
 
   echo "${rom}" | jq -cer --arg SPC 14 "\"${query}\"" || return 1
 }
@@ -277,7 +277,7 @@ list_partitions () {
 
   query="[.[] | \"${query}\"] | join(\"\n\n\")"
 
-  echo "${parts}" | jq -cer --arg SPC 12 "${query}" || return 1
+  echo "${parts}" | jq -cer --arg SPC 14 "${query}" || return 1
 }
 
 # Shows the list of rom block devices.
