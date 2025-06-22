@@ -50,7 +50,7 @@ welcome () {
 
 # Detects any hardware data to collect extra
 # required props to install the new system.
-detect () {
+detect_system () {
   local is_uefi
   is_uefi () {
     local uefi_mode='no'
@@ -653,8 +653,8 @@ run_bootstrap () {
   log 'Linux kernel has been installed.'
 }
 
-# Executes the base system installation and setup tasks.
-install_system () {
+# Setups the base system and installs system packages.
+setup_system () {
   log 'Setting up the base system and packages...'
 
   local target='/mnt/stack'
@@ -747,12 +747,12 @@ restart () {
 
 init &&
   welcome &&
-  detect &&
+  detect_system &&
   ask_user &&
   run_diskpart &&
   run_bootstrap &&
   grant_perms &&
-  install_system &&
+  setup_system &&
   install_apps &&
   revoke_perms &&
   clean &&
