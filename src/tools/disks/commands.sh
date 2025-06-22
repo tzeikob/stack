@@ -17,8 +17,7 @@ show_status () {
 
   local parts=''
   parts+='\(.path)'
-  parts+='\(.fstype       | dft("UNK") | uppercase | append)'
-  parts+='\(.parttypename | opt        | uppercase | enclose | append)'
+  parts+='\(.fstype       | dft("UNKW") | uppercase | append)'
   parts+='\(.size         | opt        | append)'
   parts+='\(."fsuse%"     | opt        | append)'
   parts=".[] | \"${parts}\""
@@ -76,8 +75,7 @@ show_disk () {
 
   local parts=''
   parts+='\(.path)'
-  parts+='\(.fstype       | dft("UNK") | uppercase | append)'
-  parts+='\(.parttypename | opt        | uppercase | enclose | append)'
+  parts+='\(.fstype       | dft("UNKW") | uppercase | append)'
   parts+='\(.size         | opt        | append)'
   parts+='\(."fsuse%"     | opt        | append)'
   parts+='\(.label        | opt        | enclose | append)'
@@ -134,8 +132,8 @@ show_partition () {
   query+='\(.name                              | lbln("Name"))'
   query+='\(.path                              | lbln("Path"))'
   query+='\(.mountpoint//.veracrypt.mountpoint | olbln("Mount"))'
-  query+='\(.fstype | dft("UNK") | uppercase   | lbln("File System"))'
-  query+='\(.parttypename | uppercase          | olbln("Type"))'
+  query+='\(.fstype | dft("UNKW") | uppercase   | lbln("File System"))'
+  query+='\(.parttypename                      | olbln("Type"))'
   query+='\(.rm                                | lbln("Removable"))'
   query+='\(.ro                                | lbln("ReadOnly"))'
   query+='\(.hotplug                           | lbln("HotPlug"))'
@@ -187,7 +185,7 @@ show_rom () {
   query+='\(.name                            | lbln("Name"))'
   query+='\(.path                            | lbln("Path"))'
   query+='\(.mountpoint                      | olbl("Mount"))'
-  query+='\(.fstype | dft("UNK") | uppercase | lbln("File System"))'
+  query+='\(.fstype | dft("UNKW") | uppercase | lbln("File System"))'
   query+='\(.rm                              | lbln("Removable"))'
   query+='\(.ro                              | lbln("ReadOnly"))'
   query+='\(.tran                            | lbln("Transfer"))'
@@ -269,11 +267,13 @@ list_partitions () {
   fi
 
   local query=''
-  query+='\(.name               | lbln("Name"))'
-  query+='\(.veracrypt | yes_no | olbln("Encrypted"))'
-  query+='\(.path               | lbln("Path"))'
-  query+='\(.label              | olbln("Label"))'
-  query+='\(.size               | lbl("Size"))'
+  query+='\(.name                             | lbln("Name"))'
+  query+='\(.veracrypt | yes_no               | olbln("Encrypted"))'
+  query+='\(.path                             | lbln("Path"))'
+  query+='\(.fstype | dft("UNKW") | uppercase | lbln("File System"))'
+  query+='\(.parttypename                     | olbln("Type"))'
+  query+='\(.label                            | olbln("Label"))'
+  query+='\(.size                             | lbl("Size"))'
 
   query="[.[] | \"${query}\"] | join(\"\n\n\")"
 
