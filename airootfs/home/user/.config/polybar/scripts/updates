@@ -2,6 +2,7 @@
 
 set -o pipefail
 
+source /opt/stack/commons/error.sh
 source /opt/stack/commons/math.sh
 source /opt/stack/commons/validators.sh
 
@@ -14,7 +15,7 @@ COLOR_OUTDATED='F27D52'
 COLOR_UPDATING='008ACC'
 COLOR_ERROR='BB0000'
 
-# calculates the total installed packages then reads the
+# Calculates the total installed packages then reads the
 # special updates file which is expected to contain a
 # json object with a status code, and the total number
 # of outdated packages. A status code of -1 means something
@@ -27,33 +28,28 @@ run () {
   local installed=''
   installed="$(pacman -Q | wc -l 2> "${LOGS}")"
 
-  local output
+  if has_failed; then
+    installed='---'
+  fi
+
+  local output=''
   output="$(printf '%03d' ${installed:-"---"})"
 
-  local color
+  local color=''
   
   if file_exists "${UPDATES_FILE}"; then
     local status=''
     status="$(jq -cr '.status' "${UPDATES_FILE}")"
-
-    local total=''
-    total="$(jq -cr '.total//"000"' "${UPDATES_FILE}")"
 
     if is_not_integer "${status}" || is_true "${status} = -1"; then
       color="${COLOR_ERROR}"
     elif is_true "${status} = 0"; then
       color="${COLOR_READY}"
     elif is_true "${status} = 1"; then
-      output="$(printf '%03d' ${total})"
       color="${COLOR_OUTDATED}"
     elif is_true "${status} = 2"; then
-      if is_true "${total} > 0"; then
-        output="$(printf '%03d' ${total})"
-      fi
-
       color="${COLOR_CHECKING}"
     elif is_true "${status} = 3"; then
-      output="$(printf '%03d' ${total})"
       color="${COLOR_UPDATING}"
     else
       color="${COLOR_ERROR}"
