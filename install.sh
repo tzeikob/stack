@@ -659,7 +659,7 @@ setup_system () {
 
   local target='/mnt/stack'
 
-  rm -rf "${target}" && rsync -av /stack/ "${target}" ||
+  rm -rf "${target}" && rsync -qav /stack/ "${target}" ||
     abort -n 'Oops, failed to copy installation files.'
 
   mkdir -p /mnt/var/log/stack
