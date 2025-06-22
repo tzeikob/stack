@@ -17,9 +17,10 @@ show_status () {
 
   local parts=''
   parts+='\(.path)'
-  parts+='\(.fstype   | dft("UNK") | uppercase | append)'
-  parts+='\(.size     | opt        | append)'
-  parts+='\(."fsuse%" | opt        | append)'
+  parts+='\(.fstype       | dft("UNK") | uppercase | append)'
+  parts+='\(.parttypename | opt        | uppercase | enclose | append)'
+  parts+='\(.size         | opt        | append)'
+  parts+='\(."fsuse%"     | opt        | append)'
   parts=".[] | \"${parts}\""
 
   local query=''
@@ -75,10 +76,11 @@ show_disk () {
 
   local parts=''
   parts+='\(.path)'
-  parts+='\(.fstype   | dft("UNK") | uppercase | append)'
-  parts+='\(.size     | opt        | append)'
-  parts+='\(."fsuse%" | opt        | append)'
-  parts+='\(.label    | opt        | enclose | append)'
+  parts+='\(.fstype       | dft("UNK") | uppercase | append)'
+  parts+='\(.parttypename | opt        | uppercase | enclose | append)'
+  parts+='\(.size         | opt        | append)'
+  parts+='\(."fsuse%"     | opt        | append)'
+  parts+='\(.label        | opt        | enclose | append)'
   parts=".[] | \"${parts}\""
 
   local query=''
@@ -133,6 +135,7 @@ show_partition () {
   query+='\(.path                              | lbln("Path"))'
   query+='\(.mountpoint//.veracrypt.mountpoint | olbln("Mount"))'
   query+='\(.fstype | dft("UNK") | uppercase   | lbln("File System"))'
+  query+='\(.parttypename | uppercase          | olbln("Type"))'
   query+='\(.rm                                | lbln("Removable"))'
   query+='\(.ro                                | lbln("ReadOnly"))'
   query+='\(.hotplug                           | lbln("HotPlug"))'

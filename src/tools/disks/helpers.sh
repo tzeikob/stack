@@ -49,7 +49,7 @@ find_swap () {
 find_disks () {
   local fields='name,path,type,size,rm,ro,tran,hotplug,state,'
   fields+='vendor,model,rev,serial,mountpoint,mountpoints,'
-  fields+='label,uuid,fstype,fsver,fsavail,fsused,fsuse%'
+  fields+='label,uuid,fstype,fsver,fsavail,fsused,fsuse%,parttypename'
 
   local query='[.blockdevices[] | select(.type == "disk")]'
 
@@ -137,7 +137,7 @@ find_partition () {
   # Collect the partition data reported by lsblk
   local fields='name,path,type,size,rm,ro,tran,hotplug,state,'
   fields+='vendor,model,rev,serial,mountpoint,mountpoints,'
-  fields+='label,uuid,fstype,fsver,fsavail,fsused,fsuse%'
+  fields+='label,uuid,fstype,fsver,fsavail,fsused,fsuse%,parttypename'
 
   local query='.blockdevices[0] | select(.type == "part")'
 
