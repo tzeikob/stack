@@ -13,6 +13,7 @@ source src/commons/logger.sh
 source src/commons/validators.sh
 source src/commons/text.sh
 source src/commons/math.sh
+source src/commons/process.sh
 
 LOGS_HOME=/var/log/stack
 LOG_FILE="${LOGS_HOME}/install.log"
@@ -599,13 +600,18 @@ ask_user () {
     clear
   done
 
+  local branch=''
+  branch="$(git branch --show-current)" ||
+    abort ERROR 'Failed to read the current branch.'
+
   local disk=''
   disk="$(jq -cer '.disk' "${SETTINGS_FILE}")" ||
     abort 'Unable to read disk setting.'
 
   local prompt=''
-  prompt+="All data in ${disk} disk will be lost!"
-  prompt+='\nDo you really want to proceed?'
+  prompt+="Installing Stack Linux [${branch}].\n"
+  prompt+="All data in ${disk} disk will be lost!\n"
+  prompt+='Do you really want to proceed?'
 
   confirm "${prompt}" || abort
   is_not_given "${REPLY}" && abort 'User input is required.'
@@ -613,49 +619,41 @@ ask_user () {
   if is_no "${REPLY}"; then
     abort 'Sure, maybe next time!'
   fi
-
-  local branch=''
-  branch="$(git branch --show-current)" ||
-    abort ERROR 'Failed to read the current branch.'
-
-  if equals "${branch}" "master"; then
-    log "Installing Stack Linux:"
-  else
-    log "Installing Stack Linux branch ${branch}:"
-  fi
-
-  sleep 2
 }
 
 # Runs the disk partitioning tasks.
 run_diskpart () {
   log 'Partitioning the system disk...'
 
-  bash src/installer/diskpart.sh 2>&1 >> "${LOG_FILE}"
+  bash src/installer/diskpart.sh 2>&1 >> "${LOG_FILE}" &
+
+  spin $! "${LOG_FILE}"
 
   if has_failed; then
     abort -n 'Oops, a fatal error has been occurred.'
   fi
 
-  log 'System disk partitions are ready.'
+  log -u 'System disk partitioning is ready.'
 }
 
 # Runs the bootstrap installation tasks.
 run_bootstrap () {
   log 'Installing the linux kernel...'
 
-  bash src/installer/bootstrap.sh 2>&1 >> "${LOG_FILE}"
+  bash src/installer/bootstrap.sh 2>&1 >> "${LOG_FILE}" &
+
+  spin $! "${LOG_FILE}"
 
   if has_failed; then
     abort -n 'Oops, a fatal error has been occurred.'
   fi
 
-  log 'Linux kernel has been installed.'
+  log -u 'Linux kernel has been installed.'
 }
 
 # Setups the base system and installs system packages.
 setup_system () {
-  log 'Setting up the base system and packages...'
+  log 'Setting up the base system...'
 
   local target='/mnt/stack'
 
@@ -666,13 +664,15 @@ setup_system () {
 
   local cmd='cd /stack && ./src/installer/system.sh'
 
-  arch-chroot /mnt runuser -u root -- bash -c "${cmd}" 2>&1 >> "${LOG_FILE}"
+  arch-chroot /mnt runuser -u root -- bash -c "${cmd}" 2>&1 >> "${LOG_FILE}" &
+
+  spin $! "${LOG_FILE}"
   
   if has_failed; then
     abort -n 'Oops, a fatal error has been occurred.'
   fi
 
-  log 'System setup has been completed.'
+  log -u 'System setup has been completed.'
 }
 
 # Executes the applications installation tasks.
@@ -688,13 +688,15 @@ install_apps () {
 
   local cmd='cd /stack && ./src/installer/apps.sh'
 
-  arch-chroot /mnt runuser -u "${user_name}" -- bash -c "${cmd}" 2>&1 >> "${LOG_FILE}"
+  arch-chroot /mnt runuser -u "${user_name}" -- bash -c "${cmd}" 2>&1 >> "${LOG_FILE}" &
+
+  spin $! "${LOG_FILE}"
   
   if has_failed; then
     abort -n 'Oops, a fatal error has been occurred.'
   fi
 
-  log 'Applications have been installed.'
+  log -u 'Applications have been installed.'
 }
 
 # Grants temporary sudo permissions.

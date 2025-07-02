@@ -33,6 +33,66 @@ kill_process () {
   sleep 1
 }
 
+# Prints a progress animation as long as the given
+# process is still up and running, blocking the
+# current thread unitl the given process resolves.
+# Arguments:
+#  pid:      the id of the running process
+#  log_file: the log file the process is logging to
+spin () {
+  local pid="${1}"
+  local log_file="${2}"
+
+  local foreground=$(tput setaf 3)
+  local reset_colors=$(tput sgr0)
+
+  local icons=''
+  local icons_length=${#icons}
+
+  local i=0
+  local previous_length=0
+
+  while ps -a | awk '{print $1}' | grep -q "${pid}"; do
+    local icon="${icons:i++%icons_length:1}"
+
+    local log='Please wait...'
+
+    if file_exists "${log_file}"; then
+      local last_log=''
+      last_log="$(tail -n1 "${log_file}")"
+
+      if is_not_empty "${last_log}"; then
+        local clean_log=''
+        clean_log="$(echo "${last_log}" | sed 's/^[^A-Za-z]*//')"
+
+        log="${clean_log^}"
+      fi
+    fi
+
+    local message="${icon} ${log}"
+
+    local spaces=0
+    spaces=$((${#message} - ${previous_length}))
+
+    # Make sure previous longer lines not overlaping the current
+    if [[ ${spaces} -lt 0 ]]; then
+      printf "\r%s%${spaces}s" "${foreground}${message}${reset_colors}"
+    else
+      printf '\r%s' "${foreground}${message}${reset_colors}"
+    fi
+
+    previous_length=${#message}
+
+    sleep 0.12
+  done
+
+  wait ${pid}
+
+  # Clear the log line
+  tput cub $(tput cols)
+  tput el
+}
+
 # Checks if we run on script mode or not by checking
 # if the flag ON_SCRIPT_MODE has been set indicating
 # the call was made by a not human.
