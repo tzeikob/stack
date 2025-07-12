@@ -7,6 +7,7 @@ source src/commons/validators.sh
 # No arguments means nothing to log on to the console.
 # Options:
 #  n: print an empty line before, -nn 2 lines and so on
+#  u: move up one line and clear it
 # Arguments:
 #  level:   optionally one of INFO, WARN, ERROR
 #  message: an optional message to show
@@ -15,9 +16,10 @@ source src/commons/validators.sh
 log () {
   local OPTIND='' opt=''
 
-  while getopts ':n' opt; do
+  while getopts ':nu' opt; do
     case "${opt}" in
      'n') printf '\n';;
+     'u') tput cuu 1; tput cub $(tput cols); tput el;;
     esac
   done
 
