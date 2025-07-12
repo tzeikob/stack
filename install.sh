@@ -660,8 +660,6 @@ setup_system () {
   rm -rf "${target}" && rsync -qav /stack/ "${target}" ||
     abort -n 'Oops, failed to copy installation files.'
 
-  mkdir -p /mnt/var/log/stack
-
   local cmd='cd /stack && ./src/installer/system.sh'
 
   arch-chroot /mnt runuser -u root -- bash -c "${cmd}" 2>&1 >> "${LOG_FILE}" &
