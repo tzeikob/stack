@@ -406,7 +406,7 @@ set_release_data () {
 
   local version="${commit_date} ${branch} ${commit:0:5}"
 
-  sed -i "s/#VERSION#/${version}/" /etc/os-release ||
+  sed -i "s;#VERSION#;${version};" /etc/os-release ||
     abort ERROR 'Failed to set os release version.'
   
   ln -sf /etc/os-release /etc/stack-release ||
