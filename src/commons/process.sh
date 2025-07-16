@@ -54,7 +54,7 @@ spin () {
   local previous_log='Please wait...'
   local previous_length=0
 
-  while ps -a | awk '{print $1}' | grep -q "${pid}"; do
+  while test -d /proc/"${pid}"; do
     local icon="${icons:i++%icons_length:1}"
 
     local log=''
