@@ -1,6 +1,7 @@
 #!/bin/bash
 
 source src/commons/validators.sh
+source src/commons/text.sh
 
 # Checks if any processes matching the given command
 # pattern are running.
@@ -50,26 +51,28 @@ spin () {
   local icons_length=${#icons}
 
   local i=0
+  local previous_log='Please wait...'
   local previous_length=0
 
   while ps -a | awk '{print $1}' | grep -q "${pid}"; do
     local icon="${icons:i++%icons_length:1}"
 
-    local log='Please wait...'
+    local log=''
 
     if file_exists "${log_file}"; then
       local last_log=''
       last_log="$(tail -n1 "${log_file}")"
 
-      if is_not_empty "${last_log}"; then
-        local clean_log=''
-        clean_log="$(echo "${last_log}" | sed 's/^[^A-Za-z]*//')"
-
-        log="${clean_log^}"
+      if is_not_empty "${last_log}" && match "${last_log}" '^(INFO|WARN|ERROR) '; then
+        log="$(echo "${last_log}" | sed -E 's/^(INFO|WARN|ERROR) //' | trim)"
       fi
     fi
 
-    local message="${icon} ${log}"
+    if is_empty "${log}"; then
+      log="${previous_log}"
+    fi
+
+    local message="${icon} ${log^}"
 
     local spaces=0
     spaces=$((${#message} - ${previous_length}))
@@ -81,6 +84,7 @@ spin () {
       printf '\r%s' "${foreground}${message}${reset_colors}"
     fi
 
+    previous_log="${log}"
     previous_length=${#message}
 
     sleep 0.12
@@ -88,9 +92,13 @@ spin () {
 
   wait ${pid}
 
+  local exit_code=$?
+
   # Clear the log line
   tput cub $(tput cols)
   tput el
+
+  return ${exit_code}
 }
 
 # Checks if we run on script mode or not by checking

@@ -625,11 +625,11 @@ install_source_packages () {
     log INFO 'Package smenu has been installed.'
   }
 
-  log "Installing source packages..."
+  log INFO 'Installing source packages...'
   
   install_smenu
 
-  log "Source packages have been installed."
+  log INFO 'Source packages have been installed.'
 }
 
 # Sets up the Xorg display server packages.
