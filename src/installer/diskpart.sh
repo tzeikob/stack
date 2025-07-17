@@ -30,7 +30,7 @@ wipe_disk () {
     log INFO 'Folder /mnt is not mounted.'
   fi
 
-  log INFO 'Start now erasing disk data...'
+  log INFO 'Start erasing disk data...'
 
   local disk=''
   disk="$(jq -cer '.disk' "${SETTINGS_FILE}")" ||
@@ -291,10 +291,14 @@ mount_file_system () {
       fi
     fi
 
+    log INFO 'Mounting root partition...'
+
     mount -o "${mount_opts}" "${disk}${postfix}${root_index}" /mnt 2>&1 ||
       abort ERROR 'Failed to mount root partition to /mnt.'
 
     log INFO 'Root partition has been mounted to /mnt.'
+
+    log INFO 'Mounting boot partition...'
 
     mount --mkdir "${disk}${postfix}1" /mnt/boot 2>&1 ||
       abort ERROR 'Failed to mount boot partition to /mnt/boot.'
@@ -312,6 +316,8 @@ mount_file_system () {
         root_index=2
       fi
     fi
+
+    log INFO 'Mounting root partition...'
 
     mount -o "${mount_opts}" "${disk}${postfix}${root_index}" /mnt 2>&1 ||
       abort ERROR 'Failed to mount root partition to /mnt.'
@@ -385,7 +391,7 @@ make_swap_space () {
 
     log INFO "Swap file has been set to ${swap_file}."
   else
-    log INFO 'Skipping swap space, invalid swap type.'
+    log WARN 'Skipping swap space, invalid swap type.'
   fi
 }
 
@@ -402,8 +408,6 @@ create_file_system_table () {
 
 # Prints an overall report of the installation disk.
 report () {
-  log INFO 'Disk layout is now set to:\n'
-
   local disk=''
   disk="$(jq -cer '.disk' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read disk setting.'

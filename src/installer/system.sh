@@ -145,6 +145,8 @@ sync_tools () {
 
     ln -sf "${main_file}" "/usr/local/stack/${tool_name}" ||
       abort ERROR "Failed to create symlink for ${main_file} file."
+    
+    log INFO "Symlink for tool ${tool_name} is created."
   done
 
   log INFO 'Tools symlinks have been created.'
@@ -492,6 +494,8 @@ sync_package_databases () {
 
     log INFO "GPG keyserver ${keyserver} has been added."
   fi
+
+  log INFO 'Synchronizing package databases...'
 
   pacman -Syy 2>&1 ||
     abort ERROR 'Failed to synchronize package databases.'
@@ -1024,6 +1028,8 @@ secure_system () {
 
 # Restores the user home permissions.
 restore_user_permissions () {
+  log INFO 'Restoring user home permissions...'
+
   local user_name=''
   user_name="$(jq -cer '.user_name' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read user_name setting.'
@@ -1122,6 +1128,8 @@ enable_services () {
 
 # Creates the stack hash file.
 create_hash_file () {
+  log INFO 'Creating the stack hash file...'
+  
   local branch=''
   branch="$(git branch --show-current)" ||
     abort ERROR 'Failed to read the current branch.'

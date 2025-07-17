@@ -97,6 +97,8 @@ install_docker () {
 
   log INFO 'Docker packages have been installed.'
 
+  log INFO 'Enabling docker service...'
+
   sudo systemctl enable docker.service 2>&1 &&
     log INFO 'Docker service has been enabled.' ||
     log WARN 'Failed to enable docker service.'

@@ -638,7 +638,7 @@ run_diskpart () {
 
 # Runs the bootstrap installation tasks.
 run_bootstrap () {
-  log 'Installing the linux kernel...'
+  log 'Installing the base packages...'
 
   bash src/installer/bootstrap.sh 2>&1 >> "${LOG_FILE}" &
 
@@ -648,7 +648,7 @@ run_bootstrap () {
     abort -n 'Oops, a fatal error has been occurred.'
   fi
 
-  log -u 'Linux kernel has been installed.'
+  log -u 'Base packages have been installed.'
 }
 
 # Setups the base system and installs system packages.

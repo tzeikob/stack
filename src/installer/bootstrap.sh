@@ -21,6 +21,8 @@ set_mirrors () {
   local mirrors=''
   mirrors="$(jq -cer '.mirrors|join(",")' "${SETTINGS_FILE}")" ||
     abort ERROR 'Unable to read mirrors setting.'
+  
+  log INFO 'Fetching package databases mirrors...'
 
   reflector --country "${mirrors}" \
     --age 48 --sort age --latest 40 --save /etc/pacman.d/mirrorlist 2>&1 ||
@@ -53,6 +55,8 @@ sync_package_databases () {
     log INFO "GPG keyserver ${keyserver} has been added."
   fi
 
+  log INFO 'Synchronizing package databases...'
+
   pacman -Syy 2>&1 ||
     abort ERROR 'Failed to synchronize package databases.'
 
@@ -71,11 +75,15 @@ update_keyring () {
 
 # Installs the linux kernel.
 install_kernel () {
-  log INFO 'Installing the linux kernel...'
+  log INFO 'Copying pacman hook scripts...'
 
   # Copy mandatory pacman scripts for pacstrap
   rsync -av /etc/pacman.d/scripts /mnt/etc/pacman.d ||
     abort ERROR 'Unable to copy pacman scripts.'
+  
+  log INFO 'Pacman hook scripts have been copied.'
+
+  log INFO 'Installing the linux kernel...'
 
   local kernel=''
   kernel="$(jq -cer '.kernel' "${SETTINGS_FILE}")" ||
