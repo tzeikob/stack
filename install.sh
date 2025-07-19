@@ -17,8 +17,8 @@ source src/commons/process.sh
 
 LOGS_HOME=/var/log/stack
 LOG_FILE="${LOGS_HOME}/install.log"
+PROGRESS_FILE="${LOGS_HOME}/progress.log"
 SETTINGS_FILE=./settings.json
-
 
 # Initializes the installer.
 init () {
@@ -625,9 +625,11 @@ ask_user () {
 run_diskpart () {
   log 'Partitioning the system disk...'
 
-  bash src/installer/diskpart.sh 2>&1 >> "${LOG_FILE}" &
+  bash src/installer/diskpart.sh 2>&1 |
+    tee -a "${LOG_FILE}" |
+    grep --line-buffered -E '^(INFO|WARN|ERROR) ' >> "${PROGRESS_FILE}" &
 
-  spin $! "${LOG_FILE}"
+  spin $! "${PROGRESS_FILE}"
 
   if has_failed; then
     abort -n 'Oops, a fatal error has been occurred.'
@@ -640,9 +642,11 @@ run_diskpart () {
 run_bootstrap () {
   log 'Installing the base packages...'
 
-  bash src/installer/bootstrap.sh 2>&1 >> "${LOG_FILE}" &
+  bash src/installer/bootstrap.sh 2>&1 |
+    tee -a "${LOG_FILE}" |
+    grep --line-buffered -E '^(INFO|WARN|ERROR) ' >> "${PROGRESS_FILE}" &
 
-  spin $! "${LOG_FILE}"
+  spin $! "${PROGRESS_FILE}"
 
   if has_failed; then
     abort -n 'Oops, a fatal error has been occurred.'
@@ -662,9 +666,11 @@ setup_system () {
 
   local cmd='cd /stack && ./src/installer/system.sh'
 
-  arch-chroot /mnt runuser -u root -- bash -c "${cmd}" 2>&1 >> "${LOG_FILE}" &
+  arch-chroot /mnt runuser -u root -- bash -c "${cmd}" 2>&1 |
+    tee -a "${LOG_FILE}" |
+    grep --line-buffered -E '^(INFO|WARN|ERROR) ' >> "${PROGRESS_FILE}" &
 
-  spin $! "${LOG_FILE}"
+  spin $! "${PROGRESS_FILE}"
   
   if has_failed; then
     abort -n 'Oops, a fatal error has been occurred.'
@@ -686,9 +692,11 @@ install_apps () {
 
   local cmd='cd /stack && ./src/installer/apps.sh'
 
-  arch-chroot /mnt runuser -u "${user_name}" -- bash -c "${cmd}" 2>&1 >> "${LOG_FILE}" &
+  arch-chroot /mnt runuser -u "${user_name}" -- bash -c "${cmd}" 2>&1 |
+    tee -a "${LOG_FILE}" |
+    grep --line-buffered -E '^(INFO|WARN|ERROR) ' >> "${PROGRESS_FILE}" &
 
-  spin $! "${LOG_FILE}"
+  spin $! "${PROGRESS_FILE}"
   
   if has_failed; then
     abort -n 'Oops, a fatal error has been occurred.'
@@ -730,8 +738,8 @@ clean () {
     cp ${LOG_FILE} "/mnt/${LOGS_HOME}" ||
     log 'Unable to copy log file to the new system.'
 
-  # Clean redundant log file from live media
-  rm -f "${LOG_FILE}" ||
+  # Clean redundant log files from live media
+  rm -f "${LOG_FILE}" "${PROGRESS_FILE}" ||
     log 'Unable to remove log file from live media.'
 }
 

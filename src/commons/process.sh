@@ -38,11 +38,11 @@ kill_process () {
 # process is still up and running, blocking the
 # current thread unitl the given process resolves.
 # Arguments:
-#  pid:      the id of the running process
-#  log_file: the log file the process is logging to
+#  pid:           the id of the running process
+#  progress_file: the progress file the process is logging to
 spin () {
   local pid="${1}"
-  local log_file="${2}"
+  local progress_file="${2}"
 
   local foreground=$(tput setaf 3)
   local reset_colors=$(tput sgr0)
@@ -59,11 +59,11 @@ spin () {
 
     local log=''
 
-    if file_exists "${log_file}"; then
+    if file_exists "${progress_file}"; then
       local last_log=''
-      last_log="$(tail -n1 "${log_file}")"
+      last_log="$(tail -n1 "${progress_file}")"
 
-      if is_not_empty "${last_log}" && match "${last_log}" '^(INFO|WARN|ERROR) '; then
+      if is_not_empty "${last_log}"; then
         log="$(echo "${last_log}" | sed -E 's/^(INFO|WARN|ERROR) //' | trim)"
       fi
     fi
