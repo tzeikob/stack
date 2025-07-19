@@ -1,0 +1,10 @@
+[Trigger]
+Type = Package
+Operation = Install
+Operation = Upgrade
+Target = lsb-release
+
+[Action]
+Description = Fix os release data and meta files
+When = PostTransaction
+Exec = /bin/bash /etc/pacman.d/scripts/fix-release

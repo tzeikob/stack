@@ -1,0 +1,11 @@
+source "${HOME}/.prompt"
+
+export TERMINAL=#TERMINAL#
+export EDITOR=#EDITOR#
+
+alias sudo='sudo '
+alias tt='trash-put -i'
+alias rm='rm -i'
+
+source "${HOME}/.config/nnn/env"
+alias N='sudo -E nnn -dH'

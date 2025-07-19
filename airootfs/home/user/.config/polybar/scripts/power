@@ -1,0 +1,61 @@
+#!/bin/bash
+
+set -o pipefail
+
+source /opt/stack/commons/error.sh
+source /opt/stack/commons/math.sh
+source /opt/stack/commons/validators.sh
+source /opt/stack/tools/power/helpers.sh
+
+LOGS='/var/log/stack/bars/power.log'
+
+# Reads the system's power and battery data and
+# prints the current status of power suplly.
+run () {
+  local adapter=''
+  adapter="$(find_adapter 2> "${LOGS}")"
+
+  if has_failed; then
+    echo ' Err!'
+    return 0
+  fi
+
+  if is_empty "${adapter}"; then
+    echo ' Online'
+    return 0
+  fi
+
+  local battery=''
+  battery="$(find_battery 2> "${LOGS}")"
+
+  if has_failed; then
+    echo ' Err!'
+    return 0
+  fi
+
+  local state=''
+  state="$(echo "${battery}" | jq -cr '.state')"
+
+  local charge=''
+  charge="$(echo "${battery}" | jq -cr '.charge_percent')"
+
+  local output=''
+
+  if equals "${state}" 'Charging'; then
+    if is_true "${charge} < 99"; then
+      output=" ${charge}%"
+    else
+      output=" Full"
+    fi
+  elif is_true "${charge} >= 99"; then
+    output=" Full"
+  elif is_true "${charge} <= 10"; then
+    output=" Drained"
+  else
+    output=" ${charge}%"
+  fi
+
+  echo "${output}"
+}
+
+run "$@"

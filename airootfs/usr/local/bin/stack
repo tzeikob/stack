@@ -1,0 +1,76 @@
+#!/bin/bash
+
+set -o pipefail
+
+source /opt/stack/commons/error.sh
+
+# Clones the Stack Linux repository and launches
+# the installation script.
+# Arguments:
+#  branch: the branch to checkout, default to master
+install () {
+  local branch="${1:-"master"}"
+
+  local repo_url='https://github.com/tzeikob/stack.git'
+  local repo_home='/stack'
+
+  rm -rf "${repo_home}"
+
+  git clone "${repo_url}" --branch "${branch}" "${repo_home}" > /dev/null 2>&1 ||
+    abort 'Failed to download installation files!'
+
+  cd "${repo_home}" && ./install.sh
+}
+
+# Shows the help message.
+# Outputs:
+#  A long help message.
+show_help () {
+  printf 'Usage: stack [OPTIONS] COMMAND...\n'
+    
+  printf '\nOPTIONS\n'
+  printf ' %-10s %s\n' \
+    '-h' 'Show this help message.'
+
+  printf '\nCOMMANDS\n'
+  printf ' %-18s %s\n' \
+    'install <branch>' 'Starts a new installation of Stack Linux.'
+}
+
+# Routes to the corresponding operation by matching
+# the given command along with the list of arguments.
+# Arguments:
+#   command: the command to execute
+#   args:    a list of arguments
+execute () {
+  local command="${1}"
+  
+  case "${command}" in
+    'install') install "${2}";;
+    *)
+      echo 'Ooops, invalid or unknown command!'
+      return 1;;
+  esac
+}
+
+run () {
+  local OPTIND='' opt=''
+
+  while getopts ':h' opt; do
+    case "${opt}" in
+     'h')
+        show_help
+        return 0;;
+     *)
+      echo "Ooops, invalid or unknown option -${OPTARG}!"
+      return $?;;
+    esac
+  done
+
+  # Collect command arguments
+  shift $((${OPTIND} - 1))
+
+  execute "$@"
+}
+
+run "$@"

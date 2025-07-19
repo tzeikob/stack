@@ -1,0 +1,43 @@
+#!/bin/bash
+
+set -o pipefail
+
+source /opt/stack/commons/validators.sh
+source /opt/stack/commons/logger.sh
+source /opt/stack/commons/error.sh
+
+# Plays the popup sound for the incoming notification
+# based on the notification's parameters.
+# Arguments:
+#  appname: the notification caller
+#  summary: the summary of the notification
+#  body:    the body of the notification
+#  icon:    the notification icon
+#  urgency: the urgency value
+run () {
+  local appname="${1}"
+  local summary="${2}"
+  local body="${3}"
+  local urgency="${5}"
+
+  local sound='normal'
+
+  if equals "${urgency}" 'CRITICAL'; then
+    sound='critical'
+  fi
+
+  local sound_file="/usr/share/sounds/system/${sound}.wav"
+
+  if command -v pw-play &> /dev/null; then
+    LC_ALL=en_US.UTF-8 pw-play --volume=0.5 "${sound_file}" &> /dev/null
+  elif command -v aplay &> /dev/null; then
+    aplay "${sound_file}" &> /dev/null
+  fi
+
+  if has_failed; then
+    log 'Failed to play the notification sound.'
+    return 1
+  fi
+}
+
+run "$@"

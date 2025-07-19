@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# Checks if there are orphan pacman packages
+# and prints a warning message.
+run () {
+  local pkgs=()
+  pkgs=($(pacman -Qdt))
+
+  if [[ ${#pkgs[@]} -gt 0 ]]; then
+    echo 'Some orphan packages were found:'
+    echo "${pkgs[@]}"
+  fi
+}
+
+run "$@"

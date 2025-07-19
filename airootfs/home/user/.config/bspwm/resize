@@ -1,0 +1,56 @@
+#!/bin/bash
+
+set -o pipefail
+
+source /opt/stack/commons/validators.sh
+source /opt/stack/commons/logger.sh
+source /opt/stack/commons/error.sh
+
+# Resizes the windows according to the given direction
+# and delta factors.
+# Arguments:
+#  side:  left, right, up, down
+#  delta: an integer number
+run () {
+  local side="${1}"
+  local delta="${2:-"10"}"
+
+  local orientation=''
+
+  if equals "${side}" 'right'; then
+    orientation='horizontal'
+  elif equals "${side}" 'left'; then
+    orientation='horizontal'
+    delta=-${delta}
+  elif equals "${side}" 'up'; then
+    orientation='vertical'
+    delta=-${delta}
+  elif equals "${side}" 'down'; then
+    orientation='vertical'
+  fi
+
+  local x=0
+  local y=0
+  local direction=''
+  local opposite=''
+
+  if equals "${orientation}" 'horizontal'; then
+    x=${delta}
+    direction='right'
+    opposite='left'
+  elif equals "${orientation}" 'vertical'; then
+    y=${delta}
+    direction='top'
+    opposite='bottom'
+  fi
+
+  bspc node -z "${direction}" "${x}" "${y}" ||
+    bspc node -z "${opposite}" "${x}" "${y}"
+  
+  if has_failed; then
+    log 'Failed to resize the focused window.'
+    return 1
+  fi
+}
+
+run "$@"

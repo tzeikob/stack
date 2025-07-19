@@ -1,0 +1,77 @@
+#!/bin/bash
+
+set -o pipefail
+
+# Opens a rofi launcher to search for applications.
+show_apps_menu () {
+  rofi -show drun
+}
+
+# Opens a rofi launcher to show the currently open windows.
+show_windows_menu () {
+  rofi -show window
+}
+
+# Opens a rofi launcher to show the keyboard bindings.
+show_key_bindings () {
+  awk '{
+    if ($0 ~ /^# /) {
+      text=$0
+      gsub(/\043 /, "", text)
+
+      getline combo
+      combo=tolower(combo)
+
+      gsub(/bracketleft/, "[", combo)
+      gsub(/bracketright/, "]", combo)
+      gsub(/comma/, ",", combo)
+      gsub(/period/, ".", combo)
+      gsub(/semicolon/, "\073", combo)
+      gsub(/apostrophe/, "\047", combo)
+      gsub(/minus/, "-", combo)
+      gsub(/equal/, "=", combo)
+      gsub(/backslash/, "\\", combo)
+      gsub(/{/, "", combo)
+      gsub(/}/, "", combo)
+
+      printf "%-45s  %-30s\n", combo, text
+    }
+  }' "${HOME}/.config/sxhkd/sxhkdrc" |
+   rofi -dmenu -i -p 'Search' -theme-str "window {width: 60%;}"
+}
+
+# Opens a rofi launcher to show the power and login operations.
+show_power_menu () {
+  local options=''
+  options+='Shutdown\n'
+  options+='Reboot\n'
+  options+='Suspend\n'
+  options+='Lock\n'
+  options+='Logout'
+
+  local hide_prompt='inputbar {children: [entry];}'
+  local exact_lines='listview {lines: 6;}'
+  local theme="${hide_prompt} ${exact_lines}"
+
+  local chosen=''
+  chosen="$(printf "${options}" | rofi -dmenu -i -theme-str "${theme}")"
+
+  case "${chosen}" in
+    'Shutdown') power -qs shutdown;;
+    'Reboot') power -qs reboot;;
+    'Suspend') power -qs suspend;;
+    'Lock') security -qs lock screen;;
+    'Logout') security -qs logout user;;
+    *) exit 1;;
+  esac
+}
+
+case "${1}" in
+ 'apps') show_apps_menu;;
+ 'windows') show_windows_menu;;
+ 'bindings') show_key_bindings;;
+ 'power') show_power_menu;;
+ *)
+  echo 'Ooops, invalid launch menu!'
+  exit 1;;
+esac

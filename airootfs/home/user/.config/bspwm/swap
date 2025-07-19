@@ -1,0 +1,59 @@
+#!/bin/bash
+
+set -o pipefail
+
+source /opt/stack/commons/logger.sh
+source /opt/stack/commons/error.sh
+
+# Swaps the windows in the currently focused desktop
+# with those of the given desktop.
+# Arguments:
+#  target: the index of the target desktop
+run () {
+  local target="${1}"
+
+  # Set any sticky window of the source and target to not sticky
+  local nodes=()
+  nodes+=($(bspc query -N -n .sticky -d focused))
+  nodes+=($(bspc query -N -n .sticky -d "${target}"))
+
+  local node=''
+  
+  for node in ${nodes[@]}; do
+    bspc node "${node}" -g sticky
+
+    if has_failed; then
+      log "Failed to set window ${node} to not sticky."
+      return 1
+    fi
+  done
+  
+  bspc desktop -s "${target}" --follow
+
+  if has_failed; then
+    log "Failed to set focused desktop to ${target}."
+    return 1
+  fi
+
+  # Set windows back to sticky mode
+  local node=''
+  
+  for node in ${nodes[@]}; do
+    bspc node "${node}" -g sticky
+
+    if has_failed; then
+      log "Failed to set window ${node} back to sticky."
+      return 1
+    fi
+  done
+
+  # Fix any desktop inconsistencies caused by the swap
+  desktop -qs fix workspaces
+
+  if has_failed; then
+    log 'Failed to fix desktop workspaces.'
+    return 1
+  fi
+}
+
+run "$@"

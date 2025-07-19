@@ -1,0 +1,33 @@
+[
+  {
+    "text": "Stack",
+    "obj_string": {
+      "backgroundColor": "#241f31",
+      "fontColor": "#c061cb",
+      "flickering": 0.1,
+      "horizontalSync": 0.08,
+      "staticNoise": 0.12,
+      "chromaColor": 1,
+      "saturationColor": 0.7522,
+      "screenCurvature": 0.3,
+      "glowingLine": 0.2,
+      "burnIn": 0.25,
+      "bloom": 0.55,
+      "rasterization": 0,
+      "jitter": 0.2,
+      "rbgShift": 0,
+      "brightness": 0.5,
+      "contrast": 0.8,
+      "ambientLight": 0.2,
+      "windowOpacity": 1,
+      "fontName": "TERMINUS_SCALED",
+      "fontWidth": 1,
+      "margin": 0.5,
+      "blinkingCursor": true,
+      "frameMargin": 0.5,
+      "name": "Stack",
+      "version": 2
+    },
+    "builtin": false
+  }
+]

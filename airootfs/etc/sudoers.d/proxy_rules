@@ -1,0 +1,1 @@
+Defaults env_keep += "http_proxy HTTP_PROXY https_proxy HTTPS_PROXY ftp_proxy FTP_PROXY rsync_proxy RSYNC_PROXY all_proxy ALL_PROXY no_proxy NO_PROXY"

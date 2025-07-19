@@ -1,0 +1,37 @@
+#!/bin/bash
+
+set -o pipefail
+
+source /opt/stack/commons/error.sh
+source /opt/stack/commons/validators.sh
+source /opt/stack/tools/bluetooth/helpers.sh
+
+LOGS='/var/log/stack/bars/bluetooth.log'
+
+# Reads the status of the default bluetooth
+# controller and prints its name out.
+run () {
+  local controller=''
+  controller="$(find_controller 2> "${LOGS}")"
+
+  if has_failed; then
+    echo 'Err!'
+    return 0
+  fi
+  
+  local name=''
+  name="$(echo "${controller}" | jq -cr ".[0]|.name")"
+
+  local is_powered=''
+  is_powered="$(echo "${controller}" | jq -cr '.[0]|.powered')"
+
+  local output="${name}"
+  
+  if equals "${is_powered}" 'no'; then
+    output="%{F#707880}${name}%{F-}"
+  fi
+  
+  echo "${output}"
+}
+
+run "$@"

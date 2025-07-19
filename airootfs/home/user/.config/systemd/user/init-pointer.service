@@ -1,0 +1,10 @@
+[Unit]
+Description=service to initialize the desktops pointer settings
+
+[Service]
+Type=simple
+Environment=PATH=/usr/local/stack:/usr/local/sbin:/usr/local/bin:/usr/bin
+ExecStart=/usr/local/stack/desktop -qs init pointer
+
+[Install]
+WantedBy=default.target

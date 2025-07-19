@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Ncmpcpp
+comment=Console music player
+Exec=ncmpcpp
+Terminal=true
+Icon=ncmpcpp
+MimeType=audio/mpeg
+Catogories=Music;Player;ConsoleOnly
+Keywords=Music;Player;Audio

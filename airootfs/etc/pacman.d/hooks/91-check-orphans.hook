@@ -1,0 +1,11 @@
+[Trigger]
+Type = Package
+Operation = Install
+Operation = Upgrade
+Operation = Remove
+Target = *
+
+[Action]
+Description = Search for any left over orphan packages
+When = PostTransaction
+Exec = /usr/bin/bash /etc/pacman.d/scripts/check-orphans

@@ -1,0 +1,10 @@
+[Unit]
+Description=service to initialize plugged-in tablets settings
+
+[Service]
+Type=simple
+Environment=PATH=/usr/local/stack:/usr/local/sbin:/usr/local/bin:/usr/bin
+ExecStart=/usr/local/stack/desktop -qs init tablets
+
+[Install]
+WantedBy=default.target

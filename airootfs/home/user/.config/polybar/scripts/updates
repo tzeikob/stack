@@ -1,0 +1,68 @@
+#!/bin/bash
+
+set -o pipefail
+
+source /opt/stack/commons/error.sh
+source /opt/stack/commons/math.sh
+source /opt/stack/commons/validators.sh
+
+LOGS='/var/log/stack/bars/updates.log'
+UPDATES_FILE=/tmp/updates
+
+COLOR_READY='B2E39C'
+COLOR_CHECKING='FEE066'
+COLOR_OUTDATED='F27D52'
+COLOR_UPDATING='008ACC'
+COLOR_ERROR='BB0000'
+
+# Calculates the total installed packages then reads the
+# special updates file which is expected to contain a
+# json object with a status code, and the total number
+# of outdated packages. A status code of -1 means something
+# is wrong or broken, 0 that the system is up to date, 1 when
+# there are updates to be applied, 2 when searching for
+# updates and 3 when applying updates. If the file is
+# missing the system could be considered as in failure
+# state.
+run () {
+  local installed=''
+  installed="$(pacman -Q | wc -l 2> "${LOGS}")"
+
+  if has_failed; then
+    installed='---'
+  fi
+
+  local output=''
+  output="$(printf '%03d' ${installed:-"---"})"
+
+  local color=''
+  
+  if file_exists "${UPDATES_FILE}"; then
+    local status=''
+    status="$(jq -cr '.status' "${UPDATES_FILE}")"
+
+    if is_not_integer "${status}" || is_true "${status} = -1"; then
+      color="${COLOR_ERROR}"
+    elif is_true "${status} = 0"; then
+      color="${COLOR_READY}"
+    elif is_true "${status} = 1"; then
+      color="${COLOR_OUTDATED}"
+    elif is_true "${status} = 2"; then
+      color="${COLOR_CHECKING}"
+    elif is_true "${status} = 3"; then
+      color="${COLOR_UPDATING}"
+    else
+      color="${COLOR_ERROR}"
+    fi
+  else
+    color="${COLOR_ERROR}"
+  fi
+
+  if is_not_empty "${color}"; then
+    output="${output}%{F#00000000}:%{F-}%{F#${color}}●%{F-}"
+  fi
+
+  echo "${output}"
+}
+
+run "$@"
