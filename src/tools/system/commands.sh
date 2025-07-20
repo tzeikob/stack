@@ -42,7 +42,7 @@ show_status () {
   find_installed_packages | jq -cr --arg SPC ${space} "\"${query}\"" || return 1
 }
 
-# List the currently install packages filtered
+# Lists the currently install packages filtered
 # by the given repository.
 # Arguments:
 #  repository: pacman, aur or none
@@ -77,6 +77,20 @@ list_packages () {
   fi
 
   echo "${pkgs}" | jq -cer --arg SPC 10 "${query}" || return 1
+}
+
+# Cleans the pacman packages cache registry.
+clean_packages () {
+  log 'Cleaning packages cache...'
+
+  paccache -rv --nocolor
+
+  if has_failed; then
+    log 'Failed to clean packages cache.'
+    return 2
+  fi
+
+  log 'Packages cache has been cleaned.'
 }
 
 # Sets the mirrors of package databases to the given countries.

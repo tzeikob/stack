@@ -43,6 +43,7 @@ show_help () {
     '' '' \
     'set mirrors <age> <latest> <countries>' 'Set the mirrors of package databases.' \
     'list packages pacman|aur' 'Show the list of installed packages.' \
+    'clean packages' 'Cleans the pacman packages cache.' \
     '' '' \
     'check updates' 'Check for available updates.' \
     'list updates' 'Show the list of available updates.' \
@@ -66,6 +67,7 @@ execute () {
     'show status') show_status;;
     'set mirrors') set_mirrors "${3}" "${4}" "${@:5}";;
     'list packages') list_packages "${3}";;
+    'clean packages') clean_packages;;
     'check updates')
       flock -x ${UPDATES_FILE} \
         -c "source /opt/stack/tools/system/commands.sh; ON_SCRIPT_MODE=${ON_SCRIPT_MODE} check_updates";;
