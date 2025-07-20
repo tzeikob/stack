@@ -83,7 +83,7 @@ list_packages () {
 clean_packages () {
   log 'Cleaning packages cache...'
 
-  paccache -rv --nocolor
+  paccache -rvv --nocolor
 
   if has_failed; then
     log 'Failed to clean packages cache.'

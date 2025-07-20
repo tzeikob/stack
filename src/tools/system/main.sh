@@ -43,7 +43,7 @@ show_help () {
     '' '' \
     'set mirrors <age> <latest> <countries>' 'Set the mirrors of package databases.' \
     'list packages pacman|aur' 'Show the list of installed packages.' \
-    'clean packages' 'Cleans the pacman packages cache.' \
+    'clean packages' 'Clean the pacman packages cache.' \
     '' '' \
     'check updates' 'Check for available updates.' \
     'list updates' 'Show the list of available updates.' \
