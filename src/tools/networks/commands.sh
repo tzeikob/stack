@@ -9,6 +9,9 @@ source src/commons/math.sh
 source src/commons/validators.sh
 source src/tools/networks/helpers.sh
 
+HOTSPOT_PID_FILE='/tmp/hotspot.pid'
+HOTSPOT_SSID="${HOSTNAME}-AP"
+
 # Shows the current status of the system networking.
 # Outputs:
 #  A long list of networking data.
@@ -34,6 +37,14 @@ show_status () {
   query+='\(.wifi_hw      | lbl("Antenna"))'
 
   find_status | jq -cer --arg SPC ${space} --argjson d "${devices}" "\"${query}\"" || return 1
+
+  local hotspot='down'
+
+  if file_exists "${HOTSPOT_PID_FILE}"; then
+    hotspot="up [${HOTSPOT_SSID}]"
+  fi
+
+  echo "\"${hotspot}\"" | jq -cer --arg SPC ${space} "\"\(. | lbl(\"Hotspot\"))\"" || return 1
 
   local query=''
   query+='\("\(.as | split(" ") | "\(.[1]) \(.[2])") [\(.isp)]" | lbln("ISP"))'
@@ -1203,4 +1214,98 @@ power_wifi () {
   fi
 
   log "Wifi power set to ${mode}."
+}
+
+# Starts up the hostpot broadcaster.
+# Arguments:
+#  broadcaster: the wlan interface to broadcast the network
+#  provider:    the network interface providing internet access
+up_hotspot () {
+  authenticate_user || return $?
+
+  if file_exists "${HOTSPOT_PID_FILE}"; then
+    log 'Hotspot is already up.'
+    return 2
+  fi
+
+  local broadcaster="${1}"
+  local provider="${2}"
+
+  if is_not_given "${broadcaster}"; then
+    on_script_mode &&
+      log 'Missing broadcasting network device name.' && return 2
+    
+    pick_device 'wifi' || return $?
+    is_empty "${REPLY}" && log 'Broadcasting network device name required.' && return 2
+    broadcaster="${REPLY}"
+  fi
+
+  if is_not_network_device "${broadcaster}"; then
+    log "Network device ${broadcaster} not found."
+    return 2
+  fi
+
+  if is_not_given "${provider}"; then
+    on_script_mode &&
+      log 'Missing network provider device name.' && return 2
+    
+    pick_device 'ethernet' || return $?
+    is_empty "${REPLY}" && log 'Network provider device name required.' && return 2
+    provider="${REPLY}"
+  fi
+
+  if is_not_network_device "${provider}"; then
+    log "Network device ${provider} not found."
+    return 2
+  fi
+
+  local key=''
+  key="$(gpg --gen-random --armor 1 8)"
+
+  if has_failed; then
+    log 'Failed to create random secret key.'
+    returm 2
+  fi
+
+  log 'Starting up hotspot...'
+
+  sudo create_ap --daemon --pidfile "${HOTSPOT_PID_FILE}" --logfile "${LOGS}" \
+    -m bridge "${broadcaster}" "${provider}" "${HOTSPOT_SSID}" "${key}"
+
+  if has_failed; then
+    log 'Failed to start up hotspot.'
+    return 2
+  fi
+
+  log "Hostspot started with ssid ${HOTSPOT_SSID} and key ${key}."
+}
+
+
+# Shuts the hotspot down.
+down_hotspot () {
+  authenticate_user || return $?
+
+  if file_not_exists "${HOTSPOT_PID_FILE}"; then
+    log 'Hotspot is already down.'
+    return 2
+  fi
+
+  local pid=''
+  pid="$(sudo cat "${HOTSPOT_PID_FILE}")"
+
+  if has_failed; then
+    log 'Failed to read the hotspot pid.'
+    return 2
+  fi
+
+  log 'Shutting down hotspot...'
+
+  sudo create_ap --stop "${pid}" 1>&2
+
+  if has_failed; then
+    log 'Failed to shutdown hotspot.'
+    return 2
+  fi
+
+  log 'Hostspot is now shutdown.'
 }

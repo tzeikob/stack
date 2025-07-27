@@ -117,6 +117,9 @@ all:pac:fzf
 all:aur:tdrop-git
 all:pac:os-prober
 all:pac:transmission-cli
+all:pac:haveged
+all:pac:dnsmasq
+all:aur:linux-wifi-hotspot
 
 stp:pac:bluez
 stp:pac:bluez-utils

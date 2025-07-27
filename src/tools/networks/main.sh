@@ -52,6 +52,9 @@ show_help () {
     'down device <name>' 'Disable a network device.' \
     'remove device <name>' 'Remove a software network device.' \
     '' '' \
+    'up hotspot <broacaster> <provider>' 'Start up a hotspot for wifi connections.' \
+    'down hotspot' 'Shut hotspot broacaster down.' \
+    '' '' \
     'add ethernet <device> <name> <ip> <gate> <dns>' 'Add a static ethernet connection.' \
     'add dhcp <device> <name>' 'Add a dhcp ethernet connection.' \
     'add wifi <device> <ssid> <secret>' 'Add a wifi connection.' \
@@ -101,6 +104,8 @@ execute () {
     'add vpn') add_vpn "${3}" "${4}" "${5}";;
     'add proxy') add_proxy "${3}" "${4}" "${5}" "${6}" "${7}" "${8}";;
     'remove device') remove_device "${3}";;
+    'up hotspot') up_hotspot "${3}" "${4}";;
+    'down hotspot') down_hotspot;;
     'remove connection') remove_connection "${3}";;
     'remove proxy') remove_proxy "${3}";;
     'set proxy') set_proxy "${3}";;
