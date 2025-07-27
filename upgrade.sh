@@ -102,7 +102,7 @@ fix_config_values () {
 
   local version="${commit_date} ${branch} ${commit:0:5}"
   
-  sed -i "s/#VERSION#/${version}/" airootfs/etc/os-release ||
+  sed -i "s;#VERSION#;${version};" airootfs/etc/os-release ||
     abort ERROR 'Failed to set release version.'
   
   log INFO "New release version set to ${version}."

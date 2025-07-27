@@ -44,8 +44,9 @@ spin () {
   local pid="${1}"
   local progress_file="${2}"
 
-  local foreground=$(tput setaf 3)
-  local reset_colors=$(tput sgr0)
+  local foreground reset_colors
+  foreground=$(tput setaf 3)
+  reset_colors=$(tput sgr0)
 
   local icons=''
   local icons_length=${#icons}
